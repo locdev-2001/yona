@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ApiError } from 'dashboard/helper/apiClient';
 import type { StickerBrowseParams, StickerBrowseResult, StickerItem } from 'dashboard/conversation/stickerApi';
 import { t } from '../../../i18n';
+import { StickerDisplaySizeProvider } from 'shared/sticker/stickerDisplaySize';
 import StickerPicker from './StickerPicker';
 
 const HELLO: StickerItem = { id: '98930', image_url: 'https://cdn.zalo.test/98930.webp', pack_id: '61900', label: null };
@@ -47,18 +48,26 @@ describe('StickerPicker', () => {
         );
     });
 
-    it('sticker kho Yona trong lưới chỉ là ảnh poster tĩnh, không phát bản động', async () => {
+    it('sticker kho Yona trong lưới là ảnh WebP ở cạnh hiển thị đã cấu hình', async () => {
         const yonaSticker: StickerItem = {
             id: 'yona:12',
-            image_url: 'https://yona.test/storage/stickers/ab/poster.webp',
+            image_url: 'https://yona.test/storage/stickers/ab/sticker.webp',
             pack_id: 'yona:3',
             label: 'Mèo vẫy',
         };
-        renderPicker(vi.fn().mockResolvedValue(browsed({ stickers: [yonaSticker], packs: [] })));
+        render(
+            <StickerDisplaySizeProvider size={80}>
+                <StickerPicker
+                    loadStickers={vi.fn().mockResolvedValue(browsed({ stickers: [yonaSticker], packs: [] }))}
+                    onSelect={vi.fn()}
+                />
+            </StickerDisplaySizeProvider>,
+        );
 
         await waitFor(() => expect(stickerButtons()).toHaveLength(1));
-        expect(stickerButtons()[0].querySelector('img')?.getAttribute('src')).toBe(yonaSticker.image_url);
-        expect(screen.getByTestId('sticker-picker').querySelector('[data-sticker-player], lottie-player')).toBeNull();
+        const image = stickerButtons()[0].querySelector('img');
+        expect(image?.getAttribute('src')).toBe(yonaSticker.image_url);
+        expect(image?.style.width).toBe('80px');
     });
 
     it('gõ từ khoá thì chờ ngừng gõ 400ms rồi mới tìm, đúng một lần', async () => {

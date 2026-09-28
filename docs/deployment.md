@@ -814,49 +814,34 @@ số phá cache, lệch nhau là cảnh báo.
 /www/server/nginx/sbin/nginx -t && /etc/init.d/nginx reload
 ```
 
-### Tệp kho sticker và wasm của trình phát
+### Tệp kho sticker
 
-Tệp kho sticker (`/storage/stickers/<2 ký tự>/<hash>/anim.json`, `poster.webp`,
-`static.png`) đặt theo hash nội dung của animation: nội dung đổi là đường dẫn
-đổi, nên cache một năm kèm `immutable` được. Thêm vào `cache-policy.conf`:
+Tệp kho sticker (`/storage/stickers/<2 ký tự>/<hash>/sticker.webp`, `static.png`,
+`original.<đuôi>`) đặt theo hash của ảnh gốc + thông số chỉnh: nội dung đổi là
+đường dẫn đổi, nên cache một năm kèm `immutable` được. Thêm vào `cache-policy.conf`:
 
 ```nginx
 # Khớp tiền tố ^~ thắng rule regex ảnh/js của aaPanel. add_header ở cấp location
 # nuốt mất header kế thừa từ server block, nên chép lại nguyên dòng
 # Strict-Transport-Security đang có ở server block vào đây.
 location ^~ /storage/stickers/ {
-    # Không "always": trang 404 (tệp chưa render) không được cache một năm.
+    # Không "always": trang 404 (tệp chưa dựng) không được cache một năm.
     add_header Cache-Control "public, max-age=31536000, immutable";
     add_header Strict-Transport-Security "<giá trị y hệt server block>" always;
     access_log /dev/null;
 }
 ```
 
-`anim.json` là chữ JSON, phải được nén (gzip/brotli) ở Cloudflare hoặc nginx.
+Ngoại lệ duy nhất là `php artisan stickers:rerender` (sau khi đổi
+`STICKER_IMAGE_SIZE`): nó ghi đè `sticker.webp` và `static.png` tại chỗ, nên chạy
+xong thì purge cache Cloudflare cho tiền tố `/storage/stickers/`; trình duyệt đã
+tải bản cũ vẫn giữ bản cũ tới khi hết cache.
 
-Trình phát sticker động (ThorVG) nạp `thorvg-<hash>.wasm` từ `/build/assets/`
-(đã có `location ^~ /build/assets/` cache 1 năm ở trên), không bao giờ tải từ CDN
-ngoài. nginx phải trả `Content-Type: application/wasm` cho đuôi `.wasm`. Sai MIME
-không làm hỏng việc phát (trang tự tải bytes rồi gói lại đúng kiểu) nhưng
-`application/octet-stream` không được nén ở edge. Kiểm và thêm nếu thiếu:
-
-```bash
-grep -n wasm /www/server/nginx/conf/mime.types
-# thiếu thì thêm dòng này vào khối types { } của mime.types rồi nginx -t, reload:
-#     application/wasm                                 wasm;
-```
-
-Kiểm sau reload (lấy tên tệp thật từ `public/build/assets/` và một sticker đã
-xuất bản):
+Kiểm sau reload (lấy một sticker đã xuất bản):
 
 ```bash
-curl -sI https://yona.vn/build/assets/thorvg-<hash>.wasm | grep -i '^content-type'
-# mong đợi: content-type: application/wasm
-curl -sI https://yona.vn/storage/stickers/<2 ký tự>/<hash>/poster.webp | grep -Ei '^(cache-control|strict-transport-security)'
-# mong đợi: public, max-age=31536000, immutable và vẫn còn strict-transport-security
-curl -s -o /dev/null -w '%{size_download}\n' -H 'Accept-Encoding: gzip' \
-    https://yona.vn/storage/stickers/<2 ký tự>/<hash>/anim.json
-# nhỏ hơn hẳn kích thước tệp trên đĩa nghĩa là đã nén
+curl -sI https://yona.vn/storage/stickers/<2 ký tự>/<hash>/sticker.webp | grep -Ei '^(content-type|cache-control|strict-transport-security)'
+# mong đợi: image/webp, public, max-age=31536000, immutable và vẫn còn strict-transport-security
 ```
 
 ### IP thật của khách sau Cloudflare
@@ -1311,16 +1296,29 @@ thường; để trống = không ai có quyền):
 YONA_SYSTEM_ADMIN_EMAILS=founder@yona.vn,ops@yona.vn
 ```
 
-Đổi xong chạy `php artisan config:cache`. Gỡ một email khỏi danh sách là mọi token
-nền tảng người đó tạo bị từ chối (403) ngay ở lượt gọi sau. Kho riêng của account
+Đổi xong chạy `php artisan config:cache`. Gỡ một email khỏi danh sách là người đó
+mất quyền kho nền tảng ngay ở lượt gọi sau. Kho riêng của account
 dùng được khi account bật cờ `custom_stickers` (mặc định tắt ở `config/features.php`;
 Super Admin chưa có nút bật, bật theo account qua cột `accounts.feature_flags`, ví
 dụ Platform API cập nhật account với `features`) hoặc khi người dùng có quyền hệ
-thống; account chưa đủ quyền vẫn thấy mục Kho sticker nhưng ở trạng thái khoá. Mỗi lần upload,
-`RenderStickerJob` (hàng đợi `stickers`, supervisor Horizon `supervisor-stickers` một process) gọi renderer Node `services/sticker-renderer`
-dựng `poster.webp` + `static.png` từ Lottie/TGS. Supervisor `supervisor-stickers` không chạy thì
-sticker nằm mãi ở trạng thái đang xử lý; renderer chưa cài hoặc hỏng thì sticker
-thành `failed`. Cả hai trường hợp đều không hiện trong bảng chọn.
+thống; account chưa đủ quyền vẫn thấy mục Kho sticker nhưng ở trạng thái khoá.
+
+Sticker làm từ ảnh tải lên (PNG, JPG, WebP, GIF và WebP động) kèm thông số cắt +
+xoá nền. Mỗi lần tải, ảnh gốc được lưu thành `original.<đuôi>` rồi
+`RenderStickerJob` (hàng đợi `stickers`, supervisor Horizon `supervisor-stickers`
+một process) gọi renderer Node `services/sticker-renderer` dựng `sticker.webp`
+(động nếu ảnh gốc động) và `static.png` (gửi sang Zalo và kênh ngoài), cả hai vuông
+cạnh `STICKER_IMAGE_SIZE`. Supervisor `supervisor-stickers` không chạy thì sticker
+nằm mãi ở trạng thái đang xử lý; renderer chưa cài hoặc hỏng thì sticker thành
+`failed`. Cả hai trường hợp đều không hiện trong bảng chọn. PHP
+(`upload_max_filesize`, `post_max_size`) và nginx (`client_max_body_size`) phải
+nhận được ít nhất `STICKER_MAX_ORIGINAL_MB`, nếu không ảnh lớn bị từ chối là quá cỡ.
+
+**Chuyển từ sticker Lottie.** `php artisan migrate` (bước migrate của `deploy.sh`)
+chạy `convert_stickers_to_images`: sticker Lottie đã dựng xong lấy `static.png` sẵn
+có làm ảnh hiển thị (tĩnh), sticker chưa dựng xong thành `failed`; tin đã gửi vẫn
+hiện ảnh tĩnh của nó. Sticker Lottie không có ảnh gốc nên `stickers:rerender` bỏ
+qua chúng; muốn sticker động thì tải lại bằng ảnh GIF/WebP.
 
 **Cài renderer.** Renderer có workspace pnpm riêng nên `pnpm install` ở gốc không
 chạm tới; `deploy.sh` cài nó ở bước `sticker renderer` (ngay sau `zalo bridge`).
@@ -1333,53 +1331,38 @@ corepack pnpm --dir services/sticker-renderer install --frozen-lockfile --prod
 sudo -u www node -e "require.resolve('sharp', { paths: ['services/sticker-renderer'] }); console.log(process.execPath)"
 ```
 
-Renderer cần Node `>=18.17` (`services/sticker-renderer/package.json`) và
-`prlimit` (gói `util-linux`, có sẵn trên Ubuntu/Debian): mỗi lượt render bị cắt
-bộ nhớ bằng `prlimit --data` và cắt thời gian. Biến trong `.env` Laravel (đọc ở
+Renderer cần Node `^18.17 || ^20.3 || >=21` (theo `sharp`,
+`services/sticker-renderer/package.json`) và `prlimit` (gói `util-linux`, có sẵn
+trên Ubuntu/Debian): mỗi lượt dựng bị cắt bộ nhớ bằng `prlimit --data` và cắt thời
+gian. Renderer tự từ chối ảnh trên 20 MB, trên 25 triệu điểm ảnh mỗi khung, quá 200
+khung hoặc hoạt ảnh dài quá 10 giây. Biến trong `.env` Laravel (đọc ở
 `config/yona.php` → `stickers`, mẫu ở `.env.example`), mặc định dùng được luôn:
 
 | Biến | Mặc định | Ý nghĩa |
 |---|---|---|
 | `STICKER_RENDERER` | `node` | Chọn renderer trong `config/yona.php` → `stickers.renderers` |
 | `STICKER_RENDERER_NODE_BINARY` | `node` | Đường dẫn node mà worker Horizon thấy (nvm/aaPanel không nằm trong PATH của `www` thì ghi đường dẫn tuyệt đối) |
-| `STICKER_RENDERER_TIMEOUT` | `10` | Giây tối đa cho một lượt render |
+| `STICKER_RENDERER_TIMEOUT` | `10` | Giây tối đa cho một lượt dựng |
 | `STICKER_RENDERER_MEMORY_LIMITER` | `prlimit` | `none` chỉ dùng ở máy không có `prlimit` (macOS), không dùng trên server |
-| `STICKER_RENDERER_MEMORY_MB` | `384` | Trần bộ nhớ dữ liệu của tiến trình render |
-| `STICKER_OUTBOUND_IMAGE_SIZE` | `64` | Cạnh (px) ảnh PNG gửi sang kênh không phát được hoạt ảnh (Zalo…), từ 32 đến 512 |
+| `STICKER_RENDERER_MEMORY_MB` | `512` | Trần bộ nhớ dữ liệu của tiến trình dựng; tính cả stack luồng của libvips, dưới 512 thì GIF động lớn hỏng |
+| `STICKER_IMAGE_SIZE` | `64` | Cạnh (px) tệp sticker `sticker.webp` và `static.png`, từ 16 đến 512 |
+| `STICKER_DISPLAY_SIZE` | `64` | Cạnh (px CSS) khi hiện sticker ở hộp thư và widget; tăng riêng được cho màn retina |
+| `STICKER_MAX_ORIGINAL_MB` | `10` | Trần dung lượng ảnh gốc tải lên, tối đa 20 (trần của renderer) |
 
 Đổi biến xong chạy `php artisan config:cache` rồi `php artisan horizon:terminate`
-(Supervisor tự dựng lại worker). Đổi `STICKER_OUTBOUND_IMAGE_SIZE` hoặc cách dựng
-ảnh thì chạy thêm `php artisan stickers:rerender` (thử trước bằng `--dry-run`) để
-dựng lại ảnh của sticker đã có; sticker vẫn dùng được trong lúc hàng đợi `stickers`
-chạy.
+(Supervisor tự dựng lại worker). Đổi `STICKER_IMAGE_SIZE` hoặc cách dựng thì chạy
+thêm `php artisan stickers:rerender` (thử trước bằng `--dry-run`) để dựng lại
+sticker đã có từ ảnh gốc + thông số chỉnh đã lưu, rồi purge cache như mục 7;
+sticker vẫn dùng được trong lúc hàng đợi `stickers` chạy.
 
-**Nginx và sao lưu.** Cache tệp sticker và MIME wasm: mục 7, "Tệp kho sticker và
-wasm của trình phát". Sao lưu `storage/app/public/stickers` cùng database: mục 4.
+**Nginx và sao lưu.** Cache tệp sticker: mục 7, "Tệp kho sticker". Sao lưu
+`storage/app/public/stickers` cùng database: mục 4; thư mục này có cả ảnh gốc, thiếu
+ảnh gốc thì không dựng lại được khi đổi cỡ.
 
-**MCP cho AI tự tạo sticker.** Endpoint `POST https://yona.vn/mcp/stickers` (MCP
-qua HTTP, gói `laravel/mcp`) và REST cùng lõi `https://yona.vn/api/v1/sticker_library/sticker_packs…`.
-Cả hai chỉ nhận **token sticker** tạo trong Cài đặt, gửi qua
-`Authorization: Bearer <token>`; token Platform App không còn vào được kho
-sticker. Mỗi token chạm đúng một kho: kho riêng của account tạo token, hoặc kho
-nền tảng (chỉ người có quyền hệ thống tạo được). Không cần lệnh nào trên server.
-
-1. Đăng nhập dashboard bằng quản trị viên account → Cài đặt → Kho sticker → tab
-   "MCP cho AI" → nhập tên, chọn kho → Tạo token. Token và lệnh thêm vào Claude
-   Code hiện **đúng một lần**; bảng chỉ lưu sha256 của token.
-2. Dán lệnh đã dựng sẵn, dạng:
-   ```bash
-   claude mcp add --transport http yona-stickers https://yona.vn/mcp/stickers --header "Authorization: Bearer <token>"
-   ```
-   URL lấy từ `APP_URL`, nên `APP_URL` production phải là `https://yona.vn`.
-3. Thử nhanh: `curl -s -X POST https://yona.vn/mcp/stickers -H 'Content-Type: application/json' -H 'Accept: application/json, text/event-stream' -H "Authorization: Bearer <token>" -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'`
-   phải liệt kê 8 tool; token sai hay đã thu hồi trả 401, người tạo mất quyền
-   (bị gỡ khỏi `YONA_SYSTEM_ADMIN_EMAILS`, bị hạ khỏi quản trị viên, account tắt
-   cờ khi không có quyền hệ thống) trả 403.
-
-Thu hồi: cùng tab "MCP cho AI" → Thu hồi. Danh sách hiện lần dùng cuối của từng
-token. Câu lỗi trả về theo `APP_LOCALE` (production là `vi`); thêm `?locale=vi`
-vào URL nếu cần ép. Platform App "MCP sticker" tạo theo hướng dẫn cũ không còn
-tác dụng với kho sticker: xoá ở `/super_admin/platform_apps` nếu không dùng việc khác.
+**Không có MCP hay REST bằng token cho kho sticker.** Migration
+`drop_sticker_mcp_tokens_table` xoá bảng token, token đã cấp mất hiệu lực. Xoá
+Platform App "MCP sticker" ở `/super_admin/platform_apps` nếu nó không dùng cho việc
+khác.
 
 **Chuyển disk sang R2/S3** (tuỳ chọn, chỉ bằng env; mặc định là đĩa local
 `storage/app/public/stickers`, phục vụ qua `/storage/stickers` sau

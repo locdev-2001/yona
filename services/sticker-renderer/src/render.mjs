@@ -2,40 +2,45 @@
 import { mkdir, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import { resolve, join } from 'node:path';
 import { Worker } from 'node:worker_threads';
+import { DEFAULT_EDIT, parseEdit } from './edit-options.mjs';
 import { RenderError } from './render-error.mjs';
 
-const DEFAULT_TIMEOUT_MS = 5000;
+const DEFAULT_TIMEOUT_MS = 10_000;
 const MAX_TIMEOUT_MS = 60_000;
-const MAX_INPUT_BYTES = 2 * 1024 * 1024;
-const POSTER_FILE = 'poster.webp';
+const MAX_INPUT_BYTES = 20 * 1024 * 1024;
+const MAX_EDIT_BYTES = 1024 * 1024;
+const STICKER_FILE = 'sticker.webp';
 const STATIC_FILE = 'static.png';
 const TIMEOUT_OPTION = '--timeout-ms=';
-const STATIC_SIZE_OPTION = '--static-size=';
-const DEFAULT_STATIC_SIZE = 512;
-const MIN_STATIC_SIZE = 32;
-const MAX_STATIC_SIZE = 512;
+const SIZE_OPTION = '--size=';
+const EDIT_OPTION = '--edit=';
+const DEFAULT_SIZE = 64;
+const MIN_SIZE = 16;
+const MAX_SIZE = 512;
+const USAGE = 'Usage: render.mjs <input> <outDir> [--size=64] [--edit=<file.json>] [--timeout-ms=N]';
 const WORKER_URL = new URL('./render-worker.mjs', import.meta.url);
 
 function parseArguments(argv) {
     const positional = argv.filter((argument) => !argument.startsWith('--'));
     const options = argv.filter((argument) => argument.startsWith('--'));
     let timeoutMs = DEFAULT_TIMEOUT_MS;
-    let staticSize = DEFAULT_STATIC_SIZE;
+    let size = DEFAULT_SIZE;
+    let editPath = null;
 
     for (const option of options) {
         if (option.startsWith(TIMEOUT_OPTION)) {
             timeoutMs = integerOption(option, TIMEOUT_OPTION, 1, MAX_TIMEOUT_MS);
-        } else if (option.startsWith(STATIC_SIZE_OPTION)) {
-            staticSize = integerOption(option, STATIC_SIZE_OPTION, MIN_STATIC_SIZE, MAX_STATIC_SIZE);
+        } else if (option.startsWith(SIZE_OPTION)) {
+            size = integerOption(option, SIZE_OPTION, MIN_SIZE, MAX_SIZE);
+        } else if (option.startsWith(EDIT_OPTION) && option.length > EDIT_OPTION.length) {
+            editPath = resolve(option.slice(EDIT_OPTION.length));
         } else {
             throw new RenderError('usage', `Unknown option: ${option}`);
         }
     }
-    if (positional.length !== 2) {
-        throw new RenderError('usage', 'Usage: render.mjs <input.json|input.tgs> <outDir> [--timeout-ms=N] [--static-size=N]');
-    }
+    if (positional.length !== 2) throw new RenderError('usage', USAGE);
 
-    return { inputPath: resolve(positional[0]), outDir: resolve(positional[1]), timeoutMs, staticSize };
+    return { inputPath: resolve(positional[0]), outDir: resolve(positional[1]), timeoutMs, size, editPath };
 }
 
 function integerOption(option, prefix, min, max) {
@@ -68,9 +73,26 @@ async function readInput(inputPath) {
     }
 }
 
-function renderInWorker(inputBytes, staticSize, timeoutMs) {
+async function readEdit(editPath) {
+    if (!editPath) return DEFAULT_EDIT;
+    let editText;
+    try {
+        if ((await stat(editPath)).size > MAX_EDIT_BYTES) throw new Error(`${editPath} exceeds ${MAX_EDIT_BYTES} bytes`);
+        editText = await readFile(editPath, 'utf8');
+    } catch (error) {
+        throw new RenderError('usage', `Cannot read edit file: ${error.message}`);
+    }
+    try {
+        return parseEdit(JSON.parse(editText));
+    } catch (error) {
+        if (error instanceof RenderError) throw error;
+        throw new RenderError('usage', `Edit file is not valid JSON: ${error.message}`);
+    }
+}
+
+function renderInWorker(inputBytes, edit, size, timeoutMs) {
     return new Promise((resolvePromise, rejectPromise) => {
-        const worker = new Worker(WORKER_URL, { workerData: { inputBytes, staticSize } });
+        const worker = new Worker(WORKER_URL, { workerData: { inputBytes, edit, size } });
         let settled = false;
         const settle = (outcome) => {
             if (settled) return;
@@ -96,24 +118,25 @@ function renderInWorker(inputBytes, staticSize, timeoutMs) {
 }
 
 async function writeOutputs(outDir, rendered) {
-    const posterPath = join(outDir, POSTER_FILE);
+    const stickerPath = join(outDir, STICKER_FILE);
     const staticPath = join(outDir, STATIC_FILE);
     try {
         await mkdir(outDir, { recursive: true });
-        await writeFile(posterPath, rendered.posterWebp);
+        await writeFile(stickerPath, rendered.stickerWebp);
         await writeFile(staticPath, rendered.staticPng);
     } catch (error) {
-        await Promise.all([rm(posterPath, { force: true }), rm(staticPath, { force: true })]);
+        await Promise.all([rm(stickerPath, { force: true }), rm(staticPath, { force: true })]);
         throw new RenderError('output_failed', error.message);
     }
 
-    return { poster: posterPath, static: staticPath };
+    return { image: stickerPath, static: staticPath };
 }
 
 async function main() {
-    const { inputPath, outDir, timeoutMs, staticSize } = parseArguments(process.argv.slice(2));
+    const { inputPath, outDir, timeoutMs, size, editPath } = parseArguments(process.argv.slice(2));
+    const edit = await readEdit(editPath);
     const inputBytes = await readInput(inputPath);
-    const rendered = await renderInWorker(inputBytes, staticSize, timeoutMs);
+    const rendered = await renderInWorker(inputBytes, edit, size, timeoutMs);
     const outputPaths = await writeOutputs(outDir, rendered);
 
     return { ...outputPaths, ...rendered.details };

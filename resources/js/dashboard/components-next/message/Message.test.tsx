@@ -1,4 +1,4 @@
-import { fireEvent, render, waitFor } from '@testing-library/react';
+import { fireEvent, render } from '@testing-library/react';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import Message from './Message';
@@ -8,7 +8,6 @@ import { setLocale } from '../../../i18n';
 vi.mock('dashboard/components/widgets/conversation/components/GalleryView', () => ({
     default: () => <div data-testid="gallery" />,
 }));
-vi.mock('shared/sticker/thorvgLoader', () => ({ createLottiePlayer: vi.fn() }));
 
 // Tin của agent bot (message_type outgoing, sender.type = agent_bot) phải đứng
 // bên phải như tin agent và dùng bong bóng variant `bot` — Message.vue gốc.
@@ -121,7 +120,7 @@ describe('Message với sticker', () => {
         expect(container.querySelector('[data-bubble-name="text"]')).not.toBeNull();
     });
 
-    it('sticker kho Yona đi qua trình phát với poster, không dùng ảnh tĩnh của đính kèm', async () => {
+    it('sticker kho Yona hiện image_url (WebP) ở cạnh hiển thị, không dùng ảnh tĩnh của đính kèm', () => {
         const container = renderMessage(
             stickerMessage({
                 attachments: [{ id: 9, file_type: 'image', data_url: 'https://yona.test/s/static.png', thumb_url: '' }],
@@ -129,34 +128,39 @@ describe('Message với sticker', () => {
                     sticker: {
                         source: 'yona',
                         id: 12,
+                        image_url: 'https://yona.test/s/sticker.webp',
                         url: 'https://yona.test/s/static.png',
-                        poster_url: 'https://yona.test/s/poster.webp',
-                        animation_url: 'https://yona.test/s/anim.json',
                     },
                 },
             }),
         );
 
-        // Poster hiện ngay cả khi chunk trình phát chưa về.
-        expect(container.querySelector('[data-bubble-name="sticker"] img')?.getAttribute('src')).toBe(
-            'https://yona.test/s/poster.webp',
-        );
-
-        const player = await waitFor(() => {
-            const found = container.querySelector('[data-bubble-name="sticker"] [data-sticker-player]');
-            expect(found).not.toBeNull();
-            return found;
-        });
-        expect(player?.className).toContain('size-32');
-        expect(player?.querySelector('img')?.getAttribute('src')).toBe('https://yona.test/s/poster.webp');
+        const image = container.querySelector('[data-bubble-name="sticker"] img');
+        expect(image?.getAttribute('src')).toBe('https://yona.test/s/sticker.webp');
+        expect(image?.getAttribute('width')).toBe('64');
+        expect((image as HTMLImageElement).style.width).toBe('64px');
     });
 
-    it('sticker Zalo (không có source) vẫn là ảnh tĩnh, không qua trình phát', () => {
+    it('sticker kho Yona gửi trước khi đổi sang ảnh (payload cũ chỉ có url) vẫn hiện ảnh tĩnh', () => {
         const container = renderMessage(
-            stickerMessage({ content_attributes: { sticker: { id: '98930', url: STICKER_URL } } }),
+            stickerMessage({
+                attachments: [{ id: 9, file_type: 'image', data_url: 'https://yona.test/old/static.png', thumb_url: '' }],
+                content_attributes: {
+                    sticker: { source: 'yona', id: 7, url: 'https://yona.test/old/static.png' },
+                },
+            }),
         );
 
-        expect(container.querySelector('[data-sticker-player]')).toBeNull();
+        expect(container.querySelector('[data-bubble-name="sticker"] img')?.getAttribute('src')).toBe(
+            'https://yona.test/old/static.png',
+        );
+    });
+
+    it('sticker Zalo (không có source) hiện ảnh đính kèm', () => {
+        const container = renderMessage(
+            stickerMessage({ content_attributes: { sticker: { id: '98930', url: 'https://cdn.zalo.test/khac.webp' } } }),
+        );
+
         expect(container.querySelector('[data-bubble-name="sticker"] img')?.getAttribute('src')).toBe(STICKER_URL);
     });
 

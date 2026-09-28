@@ -4,36 +4,49 @@ use App\Jobs\Stickers\RenderStickerJob;
 use App\Models\Sticker;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
+use Tests\Support\YonaStickers;
 
 beforeEach(function () {
     $this->disk = Storage::fake(Sticker::DISK);
     Queue::fake();
 });
 
-function readyStickerWithAnimation(string $animationJson): Sticker
-{
-    $paths = RenderStickerJob::storagePaths(hash('sha256', $animationJson));
-    Storage::disk(Sticker::DISK)->put($paths['animation_path'], $animationJson);
-
-    return Sticker::factory()->create([...$paths, 'status' => Sticker::STATUS_READY, 'content_hash' => hash('sha256', $animationJson)]);
-}
-
-it('xếp job dựng lại cho mọi sticker ready từ đúng Lottie đang lưu, bỏ qua sticker chưa ready', function () {
-    $ready = readyStickerWithAnimation('{"v":"5.7.0","nm":"a"}');
+it('xếp job dựng lại cho sticker ready có ảnh gốc, bỏ qua sticker chưa ready và sticker Lottie cũ', function () {
+    $ready = YonaStickers::ready();
     Sticker::factory()->processing()->create();
+    $legacy = YonaStickers::legacyLottie();
 
-    $this->artisan('stickers:rerender')->assertSuccessful();
+    $this->artisan('stickers:rerender')
+        ->expectsOutputToContain('Đã xếp dựng lại 1 sticker')
+        ->expectsOutputToContain('1 sticker không có ảnh gốc')
+        ->assertSuccessful();
 
     Queue::assertPushed(RenderStickerJob::class, 1);
-    Queue::assertPushed(RenderStickerJob::class, fn (RenderStickerJob $job) => $job->sticker->is($ready)
-        && $job->refreshing
-        && $job->animationJson === '{"v":"5.7.0","nm":"a"}');
+    Queue::assertPushed(RenderStickerJob::class, fn (RenderStickerJob $job) => $job->sticker->is($ready) && $job->refreshing);
+    expect($legacy->fresh()->only(['image_path', 'static_path']))->toBe($legacy->only(['image_path', 'static_path']));
 });
 
-it('--dry-run chỉ đếm, không xếp job', function () {
-    readyStickerWithAnimation('{"v":"5.7.0","nm":"b"}');
+it('bỏ qua sticker mất ảnh gốc trên disk và báo số lượng', function () {
+    $lost = YonaStickers::ready();
+    $this->disk->delete($lost->original_path);
 
-    $this->artisan('stickers:rerender --dry-run')->expectsOutputToContain('Sẽ dựng lại 1 sticker')->assertSuccessful();
+    $this->artisan('stickers:rerender')
+        ->expectsOutputToContain('Đã xếp dựng lại 0 sticker')
+        ->expectsOutputToContain('1 sticker thiếu ảnh gốc trên disk')
+        ->assertSuccessful();
+
+    Queue::assertNothingPushed();
+});
+
+it('--dry-run đếm đúng như lượt chạy thật mà không xếp job', function () {
+    YonaStickers::ready();
+    YonaStickers::ready();
+    YonaStickers::legacyLottie();
+
+    $this->artisan('stickers:rerender --dry-run')
+        ->expectsOutputToContain('Sẽ dựng lại 2 sticker')
+        ->expectsOutputToContain('1 sticker không có ảnh gốc')
+        ->assertSuccessful();
 
     Queue::assertNothingPushed();
 });

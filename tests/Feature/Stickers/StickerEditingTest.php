@@ -7,7 +7,6 @@ use App\Models\StickerPack;
 use App\Models\SuperAdmin;
 use App\Models\User;
 use App\Services\Stickers\StickerTags;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Tests\Support\FakeStickerRenderer;
 use Tests\Support\YonaStickers;
@@ -16,11 +15,6 @@ use Tests\Support\YonaStickers;
 // Super Admin lẫn kho riêng của tenant — cùng một action qua concern chung.
 
 const EDITING_SUPER_ADMIN_API = '/super_admin/api/sticker_packs';
-
-function editingFixture(string $name): UploadedFile
-{
-    return UploadedFile::fake()->createWithContent($name, file_get_contents(base_path("tests/Fixtures/stickers/{$name}")));
-}
 
 function editingTenantUser(Account $account, int $role): User
 {
@@ -88,7 +82,7 @@ describe('kho chung (Super Admin)', function () {
 
     it('upload nhận keywords[] kèm tệp và trả keywords trong chi tiết bộ', function () {
         $this->post(EDITING_SUPER_ADMIN_API."/{$this->pack->id}/stickers", [
-            'file' => editingFixture('ball-with-poster-marker.json'),
+            'file' => YonaStickers::imageUpload('ball.png'),
             'label' => 'Bóng',
             'keywords' => ['Bóng', 'nảy'],
         ], ['Accept' => 'application/json'])

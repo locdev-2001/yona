@@ -77,6 +77,8 @@ export interface WebsiteChannelConfigPayload {
     reactions?: string[];
     reply_time: string;
     stickers?: WidgetSticker[];
+    // Cạnh hiển thị sticker (px CSS), cấu hình ở máy chủ.
+    sticker_display_size?: number;
     timezone: string;
     utc_off_set: string;
     website_name: string;
@@ -175,7 +177,7 @@ export interface MessageAttachment {
 }
 
 // Sticker đã lưu: máy chủ tra danh mục và ghi lại ảnh; tin tạm phía khách chỉ có mã.
-// Sticker kho Yona có thêm `source: 'yona'`, poster và bản động (Lottie).
+// Sticker kho Yona có thêm `source: 'yona'` và `image_url` (WebP, có thể động).
 export type MessageSticker =
     | string
     | {
@@ -183,8 +185,8 @@ export type MessageSticker =
           url?: string;
           thumbnail?: string;
           source?: string;
-          poster_url?: string;
-          animation_url?: string;
+          // Sticker kho Yona: WebP (có thể động); `url` là PNG tĩnh.
+          image_url?: string;
       };
 
 export interface MessageSender {
@@ -310,6 +312,7 @@ export interface MessagesOfDay {
 export interface ChannelMessagingPolicy {
     recallWindowSeconds: number;
     stickers: WidgetSticker[];
+    stickerDisplaySize?: number;
     reactions: string[];
 }
 

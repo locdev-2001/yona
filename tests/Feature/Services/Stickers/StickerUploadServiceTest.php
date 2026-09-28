@@ -3,67 +3,84 @@
 use App\Jobs\Stickers\RenderStickerJob;
 use App\Models\Sticker;
 use App\Models\StickerPack;
-use App\Services\Stickers\LottieDocumentValidator;
-use App\Services\Stickers\LottieMinifier;
+use App\Services\Stickers\StickerFileLayout;
 use App\Services\Stickers\StickerRenderer;
 use App\Services\Stickers\StickerUploadService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Lang;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
+use Tests\Support\YonaStickers;
 
 beforeEach(function () {
     Queue::fake();
+    $this->disk = Storage::fake(Sticker::DISK);
     $this->service = app(StickerUploadService::class);
     $this->pack = StickerPack::factory()->create();
-    $this->fixture = fn (string $name): string => file_get_contents(base_path("tests/Fixtures/stickers/{$name}"));
-    $this->upload = fn (string $fixture, ?string $uploadName = null): UploadedFile => UploadedFile::fake()
-        ->createWithContent($uploadName ?? $fixture, ($this->fixture)($fixture));
-    $this->minified = fn (string $fixture): string => (new LottieMinifier)
-        ->minify((new LottieDocumentValidator)->inspect(($this->fixture)($fixture))['document']);
-    $this->rejectionMessage = function (Closure $upload): string {
+    $this->rejection = function (Closure $upload): array {
         try {
             $upload();
         } catch (ValidationException $exception) {
-            return $exception->errors()['file'][0];
+            return $exception->errors();
         }
 
         throw new RuntimeException('Upload was not rejected.');
     };
 });
 
-it('creates a processing sticker keyed by the hash of the minified animation and queues its render', function () {
-    $sticker = $this->service->upload($this->pack, ($this->upload)('ball-with-poster-marker.json'), 'Bóng nảy');
+it('lưu ảnh gốc, tạo sticker processing theo hash ảnh gốc + thông số chỉnh và xếp job dựng', function () {
+    $pngBytes = YonaStickers::png(96, seed: 3);
+    $edit = '{"crop":{"x":0.1,"y":0.05,"w":0.8,"h":0.8},"removeBackground":true,"tolerance":12,"feather":0,"edits":[{"op":"wand-remove","x":0.5,"y":0.1,"tolerance":12}]}';
 
-    $animationJson = ($this->minified)('ball-with-poster-marker.json');
-    expect($sticker->fresh()->only(['sticker_pack_id', 'label', 'content_hash', 'status', 'width', 'height', 'frame_count', 'duration_ms', 'byte_size', 'position']))->toBe([
+    $sticker = $this->service->upload($this->pack, UploadedFile::fake()->createWithContent('dot.png', $pngBytes), 'Chấm đỏ', [], $edit)->fresh();
+
+    $expectedHash = hash('sha256', $pngBytes."\n".json_encode(json_decode($edit, true)));
+    expect($sticker->only(['sticker_pack_id', 'label', 'content_hash', 'status', 'original_path', 'width', 'height', 'frame_count', 'duration_ms', 'byte_size', 'position', 'image_path', 'static_path']))->toBe([
         'sticker_pack_id' => $this->pack->id,
-        'label' => 'Bóng nảy',
-        'content_hash' => hash('sha256', $animationJson),
+        'label' => 'Chấm đỏ',
+        'content_hash' => $expectedHash,
         'status' => Sticker::STATUS_PROCESSING,
-        'width' => 512,
-        'height' => 512,
-        'frame_count' => 60,
-        'duration_ms' => 2000,
-        'byte_size' => strlen($animationJson),
+        'original_path' => StickerFileLayout::originalPath($expectedHash, 'png'),
+        'width' => 64,
+        'height' => 64,
+        'frame_count' => null,
+        'duration_ms' => null,
+        'byte_size' => null,
         'position' => 0,
-    ]);
-    Queue::assertPushedOn('stickers', RenderStickerJob::class, fn (RenderStickerJob $job) => $job->sticker->is($sticker)
-        && $job->animationJson === $animationJson);
+        'image_path' => null,
+        'static_path' => null,
+    ])
+        ->and($sticker->edit_params)->toEqual(json_decode($edit, true))
+        ->and($this->disk->get($sticker->original_path))->toBe($pngBytes);
+    Queue::assertPushedOn('stickers', RenderStickerJob::class, fn (RenderStickerJob $job) => $job->sticker->is($sticker) && ! $job->refreshing);
 });
 
-it('accepts the gzip TGS form of a sticker', function () {
-    $sticker = $this->service->upload($this->pack, ($this->upload)('spinner-with-precomp.tgs'), null);
+it('không gửi thông số chỉnh thì để trống edit_params cho trình dựng dùng mặc định', function (?string $edit) {
+    $sticker = $this->service->upload($this->pack, YonaStickers::imageUpload(), editJson: $edit)->fresh();
 
-    expect($sticker->content_hash)->toBe(hash('sha256', ($this->minified)('spinner-with-precomp.json')))
-        ->and($sticker->label)->toBeNull();
-    Queue::assertPushed(RenderStickerJob::class, 1);
+    expect($sticker->edit_params)->toBeNull()
+        ->and($sticker->status)->toBe(Sticker::STATUS_PROCESSING);
+})->with(['null' => [null], 'chuỗi rỗng' => [''], 'object rỗng' => ['{}']]);
+
+it('lưu ảnh gốc theo loại ảnh đọc từ nội dung, không theo đuôi tệp', function () {
+    $sticker = $this->service->upload($this->pack, UploadedFile::fake()->createWithContent('actually-png.gif', YonaStickers::png(64)));
+
+    expect($sticker->original_path)->toEndWith('/original.png');
 });
 
-it('returns the existing sticker when the same animation is uploaded again to the same pack', function () {
-    $first = $this->service->upload($this->pack, ($this->upload)('ball-with-poster-marker.json'), 'Lần đầu');
+it('nhận GIF động và đuôi viết hoa', function () {
+    $sticker = $this->service->upload($this->pack, YonaStickers::animatedUpload('WAVE.GIF'));
 
-    $again = $this->service->upload($this->pack, ($this->upload)('ball-with-poster-marker.tgs'), 'Lần hai');
+    expect($sticker->original_path)->toEndWith('/original.gif')
+        ->and($sticker->status)->toBe(Sticker::STATUS_PROCESSING);
+});
+
+it('cùng ảnh cùng thông số chỉnh tải lại vào cùng bộ thì trả sticker cũ, không dựng lại', function () {
+    $edit = '{"tolerance":12,"removeBackground":true}';
+    $first = $this->service->upload($this->pack, YonaStickers::imageUpload('a.png'), 'Lần đầu', [], $edit);
+
+    $again = $this->service->upload($this->pack, YonaStickers::imageUpload('b.png'), 'Lần hai', [], '{ "removeBackground": true, "tolerance": 12.0 }');
 
     expect($again->is($first))->toBeTrue()
         ->and($again->label)->toBe('Lần đầu')
@@ -71,33 +88,46 @@ it('returns the existing sticker when the same animation is uploaded again to th
     Queue::assertPushed(RenderStickerJob::class, 1);
 });
 
-it('does not render a ready duplicate again', function () {
-    $first = $this->service->upload($this->pack, ($this->upload)('ball-with-poster-marker.json'));
-    $first->update(['status' => Sticker::STATUS_READY, ...RenderStickerJob::storagePaths($first->content_hash)]);
+it('cùng ảnh khác thông số chỉnh là sticker khác', function () {
+    $keepBackground = $this->service->upload($this->pack, YonaStickers::imageUpload(), editJson: '{"removeBackground":false}');
+    $removeBackground = $this->service->upload($this->pack, YonaStickers::imageUpload(), editJson: '{"removeBackground":true}');
 
-    $again = $this->service->upload($this->pack, ($this->upload)('ball-with-poster-marker.json'));
+    expect($removeBackground->is($keepBackground))->toBeFalse()
+        ->and($removeBackground->content_hash)->not->toBe($keepBackground->content_hash)
+        ->and(dirname($removeBackground->original_path))->not->toBe(dirname($keepBackground->original_path));
+    Queue::assertPushed(RenderStickerJob::class, 2);
+});
+
+it('sticker trùng đã ready thì không dựng lại', function () {
+    $first = $this->service->upload($this->pack, YonaStickers::imageUpload());
+    $first->update(['status' => Sticker::STATUS_READY, ...StickerFileLayout::renderedPaths($first->content_hash)]);
+
+    $again = $this->service->upload($this->pack, YonaStickers::imageUpload());
 
     expect($again->fresh()->status)->toBe(Sticker::STATUS_READY);
     Queue::assertPushed(RenderStickerJob::class, 1);
 });
 
-it('retries the render when the same animation failed before', function () {
-    $first = $this->service->upload($this->pack, ($this->upload)('ball-with-poster-marker.json'));
-    $first->update(['status' => Sticker::STATUS_FAILED, 'failure_code' => 'render_timeout']);
+it('sticker trùng từng hỏng thì lưu lại ảnh gốc và dựng lại', function () {
+    $first = $this->service->upload($this->pack, YonaStickers::imageUpload());
+    $this->disk->deleteDirectory(StickerFileLayout::directory($first->content_hash));
+    $first->update(['status' => Sticker::STATUS_FAILED, 'failure_code' => StickerRenderer::RENDER_TIMEOUT, 'original_path' => null]);
 
-    $again = $this->service->upload($this->pack, ($this->upload)('ball-with-poster-marker.json'));
+    $again = $this->service->upload($this->pack, YonaStickers::imageUpload());
 
     expect($again->is($first))->toBeTrue()
-        ->and($again->fresh()->only(['status', 'failure_code']))->toBe(['status' => Sticker::STATUS_PROCESSING, 'failure_code' => null]);
+        ->and($again->fresh()->only(['status', 'failure_code', 'original_path']))
+        ->toBe(['status' => Sticker::STATUS_PROCESSING, 'failure_code' => null, 'original_path' => $first->fresh()->original_path])
+        ->and($this->disk->exists((string) $again->fresh()->original_path))->toBeTrue();
     Queue::assertPushed(RenderStickerJob::class, 2);
 });
 
-it('queues the render again for a sticker stuck in processing long after any render would have ended', function () {
-    $first = $this->service->upload($this->pack, ($this->upload)('ball-with-poster-marker.json'));
+it('xếp dựng lại sticker kẹt processing quá lâu sau mọi lượt dựng', function () {
+    $first = $this->service->upload($this->pack, YonaStickers::imageUpload());
     $this->travel(StickerUploadService::STALE_PROCESSING_SECONDS + 1)->seconds();
 
-    $again = $this->service->upload($this->pack, ($this->upload)('ball-with-poster-marker.json'));
-    $thirdRightAfter = $this->service->upload($this->pack, ($this->upload)('ball-with-poster-marker.json'));
+    $again = $this->service->upload($this->pack, YonaStickers::imageUpload());
+    $thirdRightAfter = $this->service->upload($this->pack, YonaStickers::imageUpload());
 
     expect($again->is($first))->toBeTrue()
         ->and($thirdRightAfter->is($first))->toBeTrue()
@@ -105,78 +135,88 @@ it('queues the render again for a sticker stuck in processing long after any ren
     Queue::assertPushed(RenderStickerJob::class, 2);
 });
 
-it('keeps separate stickers for the same animation in different packs', function () {
+it('cùng ảnh ở hai bộ là hai sticker dùng chung tệp theo hash', function () {
     $otherPack = StickerPack::factory()->create();
 
-    $first = $this->service->upload($this->pack, ($this->upload)('ball-with-poster-marker.json'));
-    $second = $this->service->upload($otherPack, ($this->upload)('ball-with-poster-marker.json'));
+    $first = $this->service->upload($this->pack, YonaStickers::imageUpload());
+    $second = $this->service->upload($otherPack, YonaStickers::imageUpload());
 
     expect($second->is($first))->toBeFalse()
-        ->and($second->content_hash)->toBe($first->content_hash);
+        ->and($second->content_hash)->toBe($first->content_hash)
+        ->and($second->original_path)->toBe($first->original_path);
     Queue::assertPushed(RenderStickerJob::class, 2);
 });
 
-it('appends new stickers after the last one in the pack', function () {
-    $this->service->upload($this->pack, ($this->upload)('ball-with-poster-marker.json'));
-    $second = $this->service->upload($this->pack, ($this->upload)('pulse-without-marker.json'));
+it('sticker mới xếp sau sticker cuối của bộ', function () {
+    $this->service->upload($this->pack, YonaStickers::imageUpload(seed: 1));
+    $second = $this->service->upload($this->pack, YonaStickers::imageUpload(seed: 2));
 
     expect($second->position)->toBe(1);
 });
 
-it('trims the label and stores a blank one as none', function (string $label, ?string $expected) {
-    $sticker = $this->service->upload($this->pack, ($this->upload)('ball-with-poster-marker.json'), $label);
+it('cắt khoảng trắng của nhãn, nhãn trống thành không có nhãn', function (string $label, ?string $expected) {
+    $sticker = $this->service->upload($this->pack, YonaStickers::imageUpload(), $label);
 
     expect($sticker->label)->toBe($expected);
 })->with([
-    'padded' => ['  Vẫy tay  ', 'Vẫy tay'],
-    'blank' => ['   ', null],
+    'có khoảng trắng' => ['  Vẫy tay  ', 'Vẫy tay'],
+    'trống' => ['   ', null],
 ]);
 
-it('rejects a file with a translated message and creates nothing', function (Closure $makeUpload, string $expectedCode) {
-    $message = ($this->rejectionMessage)(fn () => $this->service->upload($this->pack, $makeUpload(), null));
+it('ghi ảnh gốc hỏng thì sticker failed, không xếp job', function () {
+    $failingDisk = Mockery::mock($this->disk)->makePartial();
+    $failingDisk->shouldReceive('putFileAs')->andReturn(false);
+    Storage::set(Sticker::DISK, $failingDisk);
 
-    expect($message)->toBe(__("errors.sticker_uploads.{$expectedCode}", LottieDocumentValidator::limitPlaceholders()))
+    $sticker = $this->service->upload($this->pack, YonaStickers::imageUpload());
+
+    expect($sticker->fresh()->only(['status', 'failure_code']))
+        ->toBe(['status' => Sticker::STATUS_FAILED, 'failure_code' => RenderStickerJob::STORAGE_WRITE_FAILED]);
+    Queue::assertNothingPushed();
+});
+
+it('từ chối ảnh bằng câu đã dịch và không tạo gì', function (Closure $makeUpload, string $expectedCode) {
+    $errors = ($this->rejection)(fn () => $this->service->upload($this->pack, $makeUpload()));
+
+    expect($errors)->toBe(['file' => [__("errors.sticker_uploads.{$expectedCode}", StickerUploadService::limitPlaceholders())]])
+        ->and(Sticker::query()->count())->toBe(0)
+        ->and($this->disk->allFiles())->toBe([]);
+    Queue::assertNothingPushed();
+})->with([
+    'đuôi Lottie' => [fn () => UploadedFile::fake()->createWithContent('ball.json', '{"v":"5.7.4"}'), StickerUploadService::UNSUPPORTED_FILE_TYPE],
+    'đuôi TGS' => [fn () => UploadedFile::fake()->createWithContent('ball.tgs', gzencode('{}')), StickerUploadService::UNSUPPORTED_FILE_TYPE],
+    'đuôi ảnh nhưng nội dung không phải ảnh' => [fn () => UploadedFile::fake()->createWithContent('fake.png', 'không phải ảnh'), StickerUploadService::UNSUPPORTED_FILE_TYPE],
+    'ảnh loại không nhận (BMP)' => [fn () => UploadedFile::fake()->createWithContent('pic.png', "BM\x36\x00\x00\x00\x00\x00\x00\x00\x36\x00\x00\x00\x28\x00\x00\x00\x01\x00\x00\x00\x01\x00\x00\x00\x01\x00\x18\x00".str_repeat("\x00", 28)), StickerUploadService::UNSUPPORTED_FILE_TYPE],
+    'vượt trần dung lượng' => [fn () => UploadedFile::fake()->create('big.png', StickerUploadService::maxUploadBytes() / 1024 + 1, 'image/png'), StickerUploadService::FILE_TOO_LARGE],
+    'PHP chặn vì quá upload_max_filesize' => [fn () => new UploadedFile(base_path(YonaStickers::ANIMATED_FIXTURE), 'big.gif', 'image/gif', UPLOAD_ERR_INI_SIZE, true), StickerUploadService::FILE_TOO_LARGE],
+    'tải lên dở dang' => [fn () => new UploadedFile(base_path(YonaStickers::ANIMATED_FIXTURE), 'half.gif', 'image/gif', UPLOAD_ERR_PARTIAL, true), StickerUploadService::FILE_UNREADABLE],
+]);
+
+it('từ chối thông số chỉnh sai hợp đồng ở trường edit', function (string $edit) {
+    $errors = ($this->rejection)(fn () => $this->service->upload($this->pack, YonaStickers::imageUpload(), editJson: $edit));
+
+    expect($errors)->toBe(['edit' => [__('errors.sticker_uploads.invalid_edit')]])
         ->and(Sticker::query()->count())->toBe(0);
     Queue::assertNothingPushed();
 })->with([
-    'not a Lottie extension' => [fn () => UploadedFile::fake()->createWithContent('ball.png', 'png'), StickerUploadService::UNSUPPORTED_FILE_TYPE],
-    'over the upload limit' => [fn () => UploadedFile::fake()->createWithContent('big.json', str_repeat(' ', LottieDocumentValidator::MAX_UPLOAD_BYTES + 1)), LottieDocumentValidator::FILE_TOO_LARGE],
-    'expression' => [fn () => UploadedFile::fake()->createWithContent('expression.json', file_get_contents(base_path('tests/Fixtures/stickers/expression.json'))), LottieDocumentValidator::EXPRESSION_NOT_ALLOWED],
-    'gzip bomb' => [fn () => UploadedFile::fake()->createWithContent('bomb.tgs', file_get_contents(base_path('tests/Fixtures/stickers/gzip-bomb.tgs'))), LottieDocumentValidator::DECOMPRESSED_TOO_LARGE],
+    'JSON hỏng' => ['{"crop":'],
+    'không phải object' => ['[1,2]'],
+    'dung sai vượt 100' => ['{"tolerance":101}'],
 ]);
 
-it('validates the minified JSON it is about to store, not only the uploaded file', function () {
-    // Làm tròn hai chữ số đưa fr 0.004 về 0: tệp gốc qua, bản sẽ lưu thì không.
-    $document = json_decode(($this->fixture)('ball-with-poster-marker.json'), true);
-    $document = [...$document, 'fr' => 0.004, 'ip' => 0, 'op' => 0.01];
-    $raw = json_encode($document);
-    expect((new LottieDocumentValidator)->inspect($raw))->toHaveKey('document');
+it('điền trần dung lượng vào câu báo lỗi', function () {
+    config(['yona.stickers.max_original_mb' => 3]);
 
-    $message = ($this->rejectionMessage)(fn () => $this->service->upload($this->pack, UploadedFile::fake()->createWithContent('tiny-rate.json', $raw)));
+    $errors = ($this->rejection)(fn () => $this->service->upload($this->pack, UploadedFile::fake()->create('big.png', 3 * 1024 + 1, 'image/png')));
 
-    expect($message)->toBe(__('errors.sticker_uploads.invalid_lottie'))
-        ->and(Sticker::query()->count())->toBe(0);
-    Queue::assertNothingPushed();
+    expect($errors['file'][0])->toBe('Uploaded images can be at most 3 MB.');
 });
 
-it('fills the limits into the rejection message', function () {
-    $oversized = UploadedFile::fake()->createWithContent('big.json', str_repeat(' ', LottieDocumentValidator::MAX_UPLOAD_BYTES + 1));
-
-    expect(($this->rejectionMessage)(fn () => $this->service->upload($this->pack, $oversized, null)))
-        ->toBe('Sticker files can be at most 100 KB.');
-});
-
-it('accepts an upper-case extension', function () {
-    $sticker = $this->service->upload($this->pack, ($this->upload)('ball-with-poster-marker.tgs', 'BALL.TGS'));
-
-    expect($sticker->status)->toBe(Sticker::STATUS_PROCESSING);
-});
-
-it('has a message in every locale for every rejection and render failure code', function (string $locale) {
-    $codes = collect([LottieDocumentValidator::class, StickerUploadService::class, StickerRenderer::class, RenderStickerJob::class])
+it('mọi mã từ chối và mã dựng hỏng đều có câu ở mọi ngôn ngữ', function (string $locale) {
+    $codes = collect([StickerUploadService::class, StickerRenderer::class, RenderStickerJob::class])
         ->flatMap(fn (string $class) => array_filter((new ReflectionClass($class))->getConstants(ReflectionClassConstant::IS_PUBLIC), 'is_string'))
         ->values();
 
-    expect($codes)->toContain(LottieDocumentValidator::POLYSTAR_TOO_COMPLEX, StickerRenderer::RENDER_TIMEOUT, RenderStickerJob::STORAGE_WRITE_FAILED)
+    expect($codes)->toContain(StickerUploadService::INVALID_EDIT, StickerRenderer::IMAGE_EMPTY, RenderStickerJob::ORIGINAL_MISSING)
         ->and($codes->reject(fn (string $code) => Lang::has("errors.sticker_uploads.{$code}", $locale, false))->values()->all())->toBe([]);
 })->with(['vi', 'en']);

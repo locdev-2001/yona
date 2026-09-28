@@ -5,124 +5,95 @@ namespace App\Services\Stickers;
 use App\Jobs\Stickers\RenderStickerJob;
 use App\Models\Sticker;
 use App\Models\StickerPack;
+use finfo;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
-use stdClass;
+use InvalidArgumentException;
 
-// Lối vào duy nhất cho mọi upload sticker (Super Admin lẫn tenant): kiểm tra
-// an toàn và rút gọn ngay trong request, phần render chạy trong queue.
+// Lối vào duy nhất cho mọi lượt tải sticker (Super Admin lẫn tenant): kiểm ảnh
+// và thông số chỉnh ngay trong request, lưu ảnh gốc, phần dựng chạy trong queue.
 final class StickerUploadService
 {
-    public const ACCEPTED_EXTENSIONS = ['json', 'tgs'];
+    public const ACCEPTED_EXTENSIONS = ['png', 'jpg', 'jpeg', 'webp', 'gif'];
 
     public const UNSUPPORTED_FILE_TYPE = 'unsupported_file_type';
 
     public const FILE_UNREADABLE = 'file_unreadable';
 
-    // Lâu hơn hẳn mọi lượt render (RenderStickerJob tối đa 90 giây, hàng đợi
+    public const FILE_TOO_LARGE = 'file_too_large';
+
+    public const INVALID_EDIT = 'invalid_edit';
+
+    // Lâu hơn hẳn mọi lượt dựng (RenderStickerJob tối đa 90 giây, hàng đợi
     // retry_after 180 giây): quá mốc này mà còn `processing` là job đã mất.
     public const STALE_PROCESSING_SECONDS = 15 * 60;
 
     private const UPLOAD_FIELD = 'file';
 
+    private const EDIT_FIELD = 'edit';
+
     private const CONTENT_HASH_ALGORITHM = 'sha256';
 
-    public function __construct(
-        private readonly LottieDocumentValidator $validator,
-        private readonly LottieMinifier $minifier,
-    ) {}
+    // Loại ảnh đọc từ nội dung tệp (không tin đuôi tệp) → đuôi của ảnh gốc lưu lại.
+    private const ORIGINAL_EXTENSIONS_BY_MIME = [
+        'image/png' => 'png',
+        'image/jpeg' => 'jpg',
+        'image/webp' => 'webp',
+        'image/gif' => 'gif',
+    ];
+
+    private const OVERSIZED_UPLOAD_ERRORS = [UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE];
+
+    public static function maxUploadBytes(): int
+    {
+        return (int) config('yona.stickers.max_original_mb') * 1024 * 1024;
+    }
+
+    /** @return array<string, int> */
+    public static function limitPlaceholders(): array
+    {
+        return ['max_upload_mb' => intdiv(self::maxUploadBytes(), 1024 * 1024)];
+    }
 
     /**
-     * Cùng nội dung upload lại vào cùng bộ thì trả sticker cũ; sticker cũ đã
-     * hỏng hoặc kẹt `processing` quá lâu thì được dựng lại.
+     * Cùng ảnh gốc với cùng thông số chỉnh tải lại vào cùng bộ thì trả sticker
+     * cũ; sticker cũ đã hỏng hoặc kẹt `processing` quá lâu thì được dựng lại.
      *
      * @param  array<mixed>  $keywords
      *
-     * @throws ValidationException khi tệp bị từ chối, câu báo lỗi ở errors.sticker_uploads.*
+     * @throws ValidationException khi ảnh hoặc thông số chỉnh bị từ chối, câu báo lỗi ở errors.sticker_uploads.*
      */
-    public function upload(StickerPack $pack, UploadedFile $file, ?string $label = null, array $keywords = []): Sticker
+    public function upload(StickerPack $pack, UploadedFile $file, ?string $label = null, array $keywords = [], ?string $editJson = null): Sticker
     {
-        return $this->store($pack, $this->preparedAnimation($this->readUpload($file)), $label, $keywords);
-    }
-
-    /**
-     * Nội dung tệp đã có sẵn trong bộ nhớ (Platform API, MCP): cùng cổng kiểm như
-     * upload tệp, `$extension` là đuôi tệp gốc (json hoặc tgs).
-     *
-     * @param  array<mixed>  $keywords
-     *
-     * @throws ValidationException khi nội dung bị từ chối, câu báo lỗi ở errors.sticker_uploads.*
-     */
-    public function uploadContents(StickerPack $pack, string $contents, string $extension, ?string $label = null, array $keywords = []): Sticker
-    {
-        return $this->store($pack, $this->prepareContents($contents, $extension), $label, $keywords);
-    }
-
-    /**
-     * Kiểm và rút gọn nội dung như lúc tải lên nhưng không lưu gì: đúng bản JSON
-     * mà kho sẽ lưu, kèm tài liệu đã giải mã.
-     *
-     * @return array{json: string, document: stdClass}
-     *
-     * @throws ValidationException khi nội dung bị từ chối, câu báo lỗi ở errors.sticker_uploads.*
-     */
-    public function prepareContents(string $contents, string $extension): array
-    {
-        $this->assertAcceptedExtension($extension);
-        if (strlen($contents) > LottieDocumentValidator::MAX_UPLOAD_BYTES) {
-            throw $this->rejection(LottieDocumentValidator::FILE_TOO_LARGE);
-        }
-
-        return $this->preparedAnimation($contents);
-    }
-
-    /**
-     * @return array{width: int, height: int, frame_count: int, duration_ms: int}
-     */
-    public static function animationMetrics(stdClass $document): array
-    {
-        $frameSpan = $document->op - $document->ip;
-
-        return [
-            'width' => (int) round($document->w),
-            'height' => (int) round($document->h),
-            'frame_count' => (int) round($frameSpan),
-            'duration_ms' => (int) round($frameSpan / $document->fr * 1000),
-        ];
-    }
-
-    /**
-     * @return array{json: string, document: stdClass}
-     */
-    private function preparedAnimation(string $uploadedBytes): array
-    {
-        $animationJson = $this->minifier->minify($this->validated($this->validator->inspect($uploadedBytes)));
-
-        // Rút gọn đổi số (0.0 thành 0, làm tròn) nên kiểm lại đúng bản sẽ lưu:
-        // trình phát đọc bản này, không đọc tệp gốc.
-        return ['json' => $animationJson, 'document' => $this->validated($this->validator->inspectStored($animationJson))];
-    }
-
-    /**
-     * @param  array{json: string, document: stdClass}  $prepared
-     * @param  array<mixed>  $keywords
-     */
-    private function store(StickerPack $pack, array $prepared, ?string $label, array $keywords): Sticker
-    {
-        ['json' => $animationJson, 'document' => $document] = $prepared;
+        $edit = $this->parsedEdit($editJson);
+        $originalExtension = $this->originalExtension($file);
+        $contentHash = $this->contentHash($file, $edit);
 
         $sticker = $pack->stickers()->createOrFirst(
-            ['content_hash' => hash(self::CONTENT_HASH_ALGORITHM, $animationJson)],
-            $this->newStickerAttributes($pack, $document, $animationJson, $label, $keywords),
+            ['content_hash' => $contentHash],
+            $this->newStickerAttributes($pack, $label, $keywords),
         );
 
         if (! $sticker->wasRecentlyCreated && ! $this->needsRender($sticker)) {
             return $sticker;
         }
 
+        $originalPath = StickerFileLayout::originalPath($contentHash, $originalExtension);
+        if (! $this->storeOriginal($file, $originalPath)) {
+            $sticker->update(['status' => Sticker::STATUS_FAILED, 'failure_code' => RenderStickerJob::STORAGE_WRITE_FAILED]);
+
+            return $sticker;
+        }
+
         // touch() lưu luôn mốc thời gian: hạn kẹt tính lại từ lượt dựng này.
-        $sticker->fill(['status' => Sticker::STATUS_PROCESSING, 'failure_code' => null])->touch();
-        RenderStickerJob::dispatch($sticker, $animationJson)->afterCommit();
+        $sticker->fill([
+            'original_path' => $originalPath,
+            'edit_params' => $edit->isEmpty() ? null : $edit->params,
+            'status' => Sticker::STATUS_PROCESSING,
+            'failure_code' => null,
+        ])->touch();
+        RenderStickerJob::dispatch($sticker)->afterCommit();
 
         return $sticker;
     }
@@ -134,62 +105,74 @@ final class StickerUploadService
                 && $sticker->updated_at->lte(now()->subSeconds(self::STALE_PROCESSING_SECONDS)));
     }
 
-    /**
-     * @param  array{document: stdClass}|array{rejection: string}  $inspection
-     */
-    private function validated(array $inspection): stdClass
+    private function parsedEdit(?string $editJson): StickerEdit
     {
-        return $inspection['document'] ?? throw $this->rejection($inspection['rejection']);
+        try {
+            return StickerEdit::fromJson($editJson);
+        } catch (InvalidArgumentException) {
+            throw $this->rejection(self::INVALID_EDIT, self::EDIT_FIELD);
+        }
     }
 
-    private function assertAcceptedExtension(string $extension): void
+    private function originalExtension(UploadedFile $file): string
     {
-        if (! in_array(strtolower($extension), self::ACCEPTED_EXTENSIONS, true)) {
+        if (! in_array(strtolower($file->getClientOriginalExtension()), self::ACCEPTED_EXTENSIONS, true)) {
             throw $this->rejection(self::UNSUPPORTED_FILE_TYPE);
         }
+        if (! $file->isValid()) {
+            throw $this->rejection(in_array($file->getError(), self::OVERSIZED_UPLOAD_ERRORS, true) ? self::FILE_TOO_LARGE : self::FILE_UNREADABLE);
+        }
+        if ($file->getSize() > self::maxUploadBytes()) {
+            throw $this->rejection(self::FILE_TOO_LARGE);
+        }
+
+        $sniffedMimeType = (new finfo(FILEINFO_MIME_TYPE))->file((string) $file->getRealPath());
+
+        return self::ORIGINAL_EXTENSIONS_BY_MIME[$sniffedMimeType] ?? throw $this->rejection(self::UNSUPPORTED_FILE_TYPE);
     }
 
-    private function readUpload(UploadedFile $file): string
+    private function contentHash(UploadedFile $file, StickerEdit $edit): string
     {
-        $this->assertAcceptedExtension($file->getClientOriginalExtension());
-        if (! $file->isValid()) {
+        $context = hash_init(self::CONTENT_HASH_ALGORITHM);
+        if (! hash_update_file($context, (string) $file->getRealPath())) {
             throw $this->rejection(self::FILE_UNREADABLE);
         }
-        if ($file->getSize() > LottieDocumentValidator::MAX_UPLOAD_BYTES) {
-            throw $this->rejection(LottieDocumentValidator::FILE_TOO_LARGE);
-        }
+        hash_update($context, "\n".$edit->json());
 
-        // Đọc có trần: kích thước khai báo sai cũng không kéo cả tệp lớn vào bộ nhớ.
-        $bytes = @file_get_contents((string) $file->getRealPath(), false, null, 0, LottieDocumentValidator::MAX_UPLOAD_BYTES + 1);
-        if ($bytes === false) {
-            throw $this->rejection(self::FILE_UNREADABLE);
-        }
+        return hash_final($context);
+    }
 
-        return $bytes;
+    // Disk `stickers` không ném lỗi khi ghi hỏng nên phải kiểm giá trị trả về.
+    private function storeOriginal(UploadedFile $file, string $originalPath): bool
+    {
+        return Storage::disk(Sticker::DISK)->putFileAs(dirname($originalPath), $file, basename($originalPath)) !== false;
     }
 
     /**
+     * Cạnh ảnh là cạnh sticker sẽ dựng; số khung, thời lượng, dung lượng chỉ
+     * biết sau khi dựng.
+     *
      * @param  array<mixed>  $keywords
      * @return array<string, mixed>
      */
-    private function newStickerAttributes(StickerPack $pack, stdClass $document, string $animationJson, ?string $label, array $keywords): array
+    private function newStickerAttributes(StickerPack $pack, ?string $label, array $keywords): array
     {
         $lastPosition = $pack->stickers()->max('position');
 
         return [
             'label' => StickerTags::label($label),
             'keywords' => StickerTags::keywords($keywords),
-            ...self::animationMetrics($document),
-            'byte_size' => strlen($animationJson),
+            'width' => Sticker::imageSize(),
+            'height' => Sticker::imageSize(),
             'status' => Sticker::STATUS_PROCESSING,
             'position' => $lastPosition === null ? 0 : (int) $lastPosition + 1,
         ];
     }
 
-    private function rejection(string $code): ValidationException
+    private function rejection(string $code, string $field = self::UPLOAD_FIELD): ValidationException
     {
         return ValidationException::withMessages([
-            self::UPLOAD_FIELD => __("errors.sticker_uploads.{$code}", LottieDocumentValidator::limitPlaceholders()),
+            $field => __("errors.sticker_uploads.{$code}", self::limitPlaceholders()),
         ]);
     }
 }

@@ -1,14 +1,43 @@
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ApiError } from 'dashboard/helper/apiClient';
 import { setLocale } from '../../../i18n';
 import StickerLibraryManager, { PROCESSING_POLL_INTERVAL_MS } from './StickerLibraryManager';
 import type { StickerLibraryApi } from './stickerLibraryApi';
+import { decodeStickerSource } from './stickerSourceImage';
+import { prepareStickerUpload } from './stickerUploadFile';
 import type { LibrarySticker, LibraryStickerPackDetail } from './types';
 
-beforeAll(() => setLocale('vi'));
+vi.mock('./stickerSourceImage', async importOriginal => ({
+    ...(await importOriginal<typeof import('./stickerSourceImage')>()),
+    decodeStickerSource: vi.fn(),
+}));
+vi.mock('./stickerUploadFile', async importOriginal => ({
+    ...(await importOriginal<typeof import('./stickerUploadFile')>()),
+    prepareStickerUpload: vi.fn(async (file: File) => file),
+}));
+
+// Ảnh 20×20: chấm đỏ giữa nền trắng.
+function dotOnWhite() {
+    const side = 20;
+    const rgba = new Uint8ClampedArray(side * side * 4);
+    for (let index = 0; index < side * side; index++) {
+        const x = index % side;
+        const y = Math.floor(index / side);
+        const inDot = x >= 6 && x < 14 && y >= 6 && y < 14;
+        rgba.set(inDot ? [230, 20, 20, 255] : [255, 255, 255, 255], index * 4);
+    }
+
+    return { width: side, height: side, rgba };
+}
+
+beforeAll(() => {
+    setLocale('vi');
+    vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null);
+});
 afterAll(() => setLocale('en'));
+beforeEach(() => vi.mocked(decodeStickerSource).mockResolvedValue({ pixels: dotOnWhite(), animated: false }));
 afterEach(() => vi.useRealTimers());
 
 const sticker = (overrides: Partial<LibrarySticker> = {}): LibrarySticker => ({
@@ -18,11 +47,11 @@ const sticker = (overrides: Partial<LibrarySticker> = {}): LibrarySticker => ({
     status: 'ready',
     failure_message: null,
     position: 0,
-    width: 512,
-    height: 512,
-    poster_url: '/stickers/poster.webp',
+    width: 64,
+    height: 64,
+    frames: 1,
+    image_url: '/stickers/sticker.webp',
     static_url: '/stickers/static.png',
-    animation_url: '/stickers/anim.json',
     ...overrides,
 });
 
@@ -32,7 +61,7 @@ const packDetail = (overrides: Partial<LibraryStickerPackDetail> = {}): LibraryS
     published: false,
     published_at: null,
     stickers_count: 1,
-    cover_url: '/stickers/poster.webp',
+    cover_url: '/stickers/sticker.webp',
     stickers: [sticker()],
     ...overrides,
 });
@@ -41,7 +70,7 @@ function fakeApi(overrides: Partial<StickerLibraryApi> = {}): StickerLibraryApi 
     const pack = packDetail();
 
     return {
-        listPacks: vi.fn().mockResolvedValue({ payload: [pack], meta: { max_upload_kb: 100, accepted_extensions: ['json', 'tgs'] } }),
+        listPacks: vi.fn().mockResolvedValue({ payload: [pack], meta: { max_upload_kb: 10240, accepted_extensions: ['png', 'jpg', 'jpeg', 'webp', 'gif'], image_size: 64 } }),
         createPack: vi.fn(),
         getPack: vi.fn().mockResolvedValue(pack),
         renamePack: vi.fn(),
@@ -57,7 +86,7 @@ function fakeApi(overrides: Partial<StickerLibraryApi> = {}): StickerLibraryApi 
 
 async function openFirstPack() {
     fireEvent.click(await screen.findByRole('button', { name: /Chó vui/ }));
-    await screen.findByRole('button', { name: 'Tải sticker lên' });
+    await screen.findByRole('button', { name: 'Thêm sticker' });
 }
 
 describe('StickerLibraryManager', () => {
@@ -67,7 +96,8 @@ describe('StickerLibraryManager', () => {
 
         await openFirstPack();
         expect(screen.getByText('Sẵn sàng')).toBeTruthy();
-        expect(screen.getByText(/tối đa 100 KB/)).toBeTruthy();
+        expect(screen.getByText(/tối đa 10 MB\. Sticker tạo ra luôn là 64×64/)).toBeTruthy();
+        expect(screen.getByRole('img', { name: 'Chó vẫy' }).getAttribute('src')).toBe('/stickers/sticker.webp');
 
         fireEvent.click(screen.getByRole('button', { name: 'Xuất bản' }));
         await waitFor(() => expect(api.setPublished).toHaveBeenCalledWith(3, true));
@@ -85,25 +115,89 @@ describe('StickerLibraryManager', () => {
         expect(await screen.findByText('Bộ này chưa có sticker nào.')).toBeTruthy();
     });
 
-    it('tải nhiều tệp lần lượt, tệp bị từ chối hiện đúng câu lỗi kèm tên tệp', async () => {
-        const rejection = new ApiError(422, { errors: { file: ['Sticker không được dùng expression.'] } });
+    it('chọn nhiều ảnh thì mở trình chỉnh lần lượt từng ảnh; tệp sai loại bị từ chối kèm tên tệp', async () => {
+        const uploadSticker = vi.fn().mockResolvedValue(sticker({ id: 12, status: 'processing', image_url: null }));
+        const api = fakeApi({ uploadSticker });
+        render(<StickerLibraryManager api={api} />);
+        await openFirstPack();
+
+        const first = new File(['a'], 'meo.png', { type: 'image/png' });
+        const notImage = new File(['{}'], 'cu.json', { type: 'application/json' });
+        const second = new File(['b'], 'cho.gif', { type: 'image/gif' });
+        fireEvent.change(screen.getByTestId('sticker-file-input'), { target: { files: [first, notImage, second] } });
+
+        expect(await screen.findByText('cu.json: chỉ nhận ảnh PNG, JPG, WebP hoặc GIF.')).toBeTruthy();
+        const editor = await screen.findByRole('dialog');
+        expect(editor).toHaveTextContent('Ảnh 1/2 · meo.png');
+
+        fireEvent.change(await within(editor).findByLabelText('Nhãn'), { target: { value: 'Mèo' } });
+        await waitFor(() => expect(within(editor).getByRole('button', { name: 'Lưu sticker' })).toBeEnabled());
+        fireEvent.click(within(editor).getByRole('button', { name: 'Lưu sticker' }));
+
+        await waitFor(() => expect(screen.getByRole('dialog')).toHaveTextContent('Ảnh 2/2 · cho.gif'));
+        expect(uploadSticker).toHaveBeenCalledTimes(1);
+        expect(uploadSticker).toHaveBeenCalledWith(3, first, {
+            edit: expect.objectContaining({ removeBackground: true, tolerance: 20, feather: 0, edits: [] }),
+            label: 'Mèo',
+            keywords: [],
+        });
+        await waitFor(() => expect(api.getPack).toHaveBeenCalledTimes(2));
+
+        fireEvent.click(await within(screen.getByRole('dialog')).findByRole('button', { name: 'Bỏ qua ảnh này' }));
+        await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+        expect(uploadSticker).toHaveBeenCalledTimes(1);
+    });
+
+    it('ảnh động nặng quá giới hạn bị từ chối ngay; ảnh tĩnh nặng vẫn mở trình chỉnh và gửi bản đã thu nhỏ', async () => {
+        const shrunk = new File(['nho'], 'to.jpg', { type: 'image/jpeg' });
+        vi.mocked(prepareStickerUpload).mockResolvedValueOnce(shrunk);
+        const uploadSticker = vi.fn().mockResolvedValue(sticker({ id: 12, status: 'processing' }));
+        const pack = packDetail();
         const api = fakeApi({
-            uploadSticker: vi.fn().mockResolvedValueOnce(sticker({ id: 12 })).mockRejectedValueOnce(rejection),
+            uploadSticker,
+            listPacks: vi.fn().mockResolvedValue({
+                payload: [pack],
+                meta: { max_upload_kb: 1, accepted_extensions: ['png', 'jpg', 'jpeg', 'webp', 'gif'], image_size: 64 },
+            }),
         });
         render(<StickerLibraryManager api={api} />);
         await openFirstPack();
 
-        const good = new File(['{}'], 'tot.json', { type: 'application/json' });
-        const bad = new File(['{}'], 'xau.json', { type: 'application/json' });
-        fireEvent.change(screen.getByTestId('sticker-file-input'), { target: { files: [good, bad] } });
+        // GIF hai khung, đệm cho vượt 1 KB.
+        const gifFrame = [0x21, 0xf9, 4, 0, 10, 0, 0, 0, 0x2c, 0, 0, 0, 0, 1, 0, 1, 0, 0x00, 2, 2, 0x4c, 0x01, 0];
+        const gifBytes = [0x47, 0x49, 0x46, 0x38, 0x39, 0x61, 1, 0, 1, 0, 0, 0, 0, ...gifFrame, ...gifFrame, 0x3b];
+        const heavyGif = new File([Uint8Array.from(gifBytes), new Uint8Array(2048)], 'dong.gif', { type: 'image/gif' });
+        const heavyStill = new File([new Uint8Array(4096)], 'to.png', { type: 'image/png' });
+        fireEvent.change(screen.getByTestId('sticker-file-input'), { target: { files: [heavyGif, heavyStill] } });
 
-        expect(await screen.findByText('xau.json: Sticker không được dùng expression.')).toBeTruthy();
-        expect(api.uploadSticker).toHaveBeenNthCalledWith(1, 3, good);
-        expect(api.uploadSticker).toHaveBeenNthCalledWith(2, 3, bad);
+        expect(await screen.findByText(/dong\.gif: ảnh động lớn hơn 1 KB/)).toBeTruthy();
+        const editor = await screen.findByRole('dialog');
+        expect(editor).toHaveTextContent('Ảnh 1/1 · to.png');
+
+        await waitFor(() => expect(within(editor).getByRole('button', { name: 'Lưu sticker' })).toBeEnabled());
+        fireEvent.click(within(editor).getByRole('button', { name: 'Lưu sticker' }));
+
+        await waitFor(() => expect(uploadSticker).toHaveBeenCalledTimes(1));
+        expect(prepareStickerUpload).toHaveBeenCalledWith(heavyStill, 1024);
+        expect(uploadSticker.mock.calls[0][1]).toBe(shrunk);
+    });
+
+    it('đóng trình chỉnh thì bỏ các ảnh còn lại', async () => {
+        const api = fakeApi();
+        render(<StickerLibraryManager api={api} />);
+        await openFirstPack();
+
+        fireEvent.change(screen.getByTestId('sticker-file-input'), {
+            target: { files: [new File(['a'], 'a.png', { type: 'image/png' }), new File(['b'], 'b.webp', { type: 'image/webp' })] },
+        });
+        fireEvent.click(await screen.findByRole('button', { name: 'Đóng trình chỉnh' }));
+
+        expect(screen.queryByRole('dialog')).toBeNull();
+        expect(api.uploadSticker).not.toHaveBeenCalled();
     });
 
     it('hiện lỗi i18n của sticker hỏng', async () => {
-        const failed = sticker({ status: 'failed', failure_message: 'Sticker quá phức tạp.', poster_url: null });
+        const failed = sticker({ status: 'failed', failure_message: 'Sticker quá phức tạp.', image_url: null });
         render(<StickerLibraryManager api={fakeApi({ getPack: vi.fn().mockResolvedValue(packDetail({ stickers: [failed] })) })} />);
         await openFirstPack();
 
@@ -112,7 +206,7 @@ describe('StickerLibraryManager', () => {
     });
 
     it('tự làm mới khi còn sticker đang xử lý', async () => {
-        const processing = packDetail({ stickers: [sticker({ status: 'processing', poster_url: null })] });
+        const processing = packDetail({ stickers: [sticker({ status: 'processing', image_url: null, frames: null })] });
         const getPack = vi.fn().mockResolvedValueOnce(processing).mockResolvedValue(packDetail());
         const api = fakeApi({ getPack });
         vi.useFakeTimers({ shouldAdvanceTime: true });
@@ -218,22 +312,5 @@ describe('StickerLibraryManager', () => {
 
         expect(screen.queryByLabelText('Nhãn')).toBeNull();
         expect(api.updateSticker).not.toHaveBeenCalled();
-    });
-
-    it('từ khoá của lượt tải áp cho mọi tệp trong lượt đó', async () => {
-        const api = fakeApi({ uploadSticker: vi.fn().mockResolvedValue(sticker({ id: 12 })) });
-        render(<StickerLibraryManager api={api} />);
-        await openFirstPack();
-
-        fireEvent.change(screen.getByLabelText('Từ khoá cho các tệp sắp tải (tuỳ chọn)'), {
-            target: { value: 'chào, hello' },
-        });
-        const first = new File(['{}'], 'a.json', { type: 'application/json' });
-        const second = new File(['{}'], 'b.json', { type: 'application/json' });
-        fireEvent.change(screen.getByTestId('sticker-file-input'), { target: { files: [first, second] } });
-
-        await waitFor(() => expect(api.uploadSticker).toHaveBeenCalledTimes(2));
-        expect(api.uploadSticker).toHaveBeenNthCalledWith(1, 3, first, ['chào', 'hello']);
-        expect(api.uploadSticker).toHaveBeenNthCalledWith(2, 3, second, ['chào', 'hello']);
     });
 });

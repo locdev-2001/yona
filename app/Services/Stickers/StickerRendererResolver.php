@@ -4,8 +4,8 @@ namespace App\Services\Stickers;
 
 use UnexpectedValueException;
 
-// Chỗ duy nhất chọn driver dựng ảnh sticker theo config('yona.stickers.renderer'):
-// job dựng ảnh khi upload và bản xem trước cho AI dùng chung.
+// Chỗ duy nhất chọn driver dựng sticker theo config('yona.stickers.renderer'),
+// dùng cho cả lượt dựng khi tải lên lẫn lượt dựng lại.
 final class StickerRendererResolver
 {
     public function renderer(): StickerRenderer

@@ -2,7 +2,6 @@
 
 namespace App\Services\Stickers;
 
-use App\Jobs\Stickers\RenderStickerJob;
 use App\Models\Attachment;
 use App\Models\Sticker;
 use Illuminate\Support\Facades\Storage;
@@ -10,10 +9,11 @@ use Illuminate\Support\Facades\Storage;
 // Nơi duy nhất quyết định xoá tệp kho sticker. Tệp đặt theo hash nội dung nên
 // dùng chung giữa các bộ (kể cả khác account), và tin đã gửi mượn thẳng ảnh
 // tĩnh: chỉ xoá khi không còn sticker nào khác đang dùng hoặc đang dựng, và
-// không còn đính kèm nào trỏ tới.
+// không còn đính kèm nào trỏ tới. Xoá là xoá cả thư mục hash, gồm ảnh gốc và
+// tệp của thời sticker Lottie.
 final class StickerFileJanitor
 {
-    // Mỗi hash kéo theo ba đường dẫn trong whereIn: giữ xa trần 65535 tham số
+    // Mỗi hash kéo theo hai đường dẫn trong whereIn: giữ xa trần 65535 tham số
     // bind của PostgreSQL khi dọn cả kho của một account.
     private const HASHES_PER_LOOKUP = 500;
 
@@ -33,7 +33,7 @@ final class StickerFileJanitor
         $released = [];
         foreach (collect($contentHashes)->unique()->values()->chunk(self::HASHES_PER_LOOKUP) as $hashBatch) {
             foreach ($this->unreferenced($hashBatch->values()->all(), $ignoredStickerId) as $contentHash) {
-                $this->deleteFiles($contentHash);
+                Storage::disk(Sticker::DISK)->deleteDirectory(StickerFileLayout::directory($contentHash));
                 $released[] = $contentHash;
             }
         }
@@ -49,7 +49,7 @@ final class StickerFileJanitor
     {
         $hashByPath = [];
         foreach ($contentHashes as $contentHash) {
-            foreach (RenderStickerJob::storagePaths($contentHash) as $path) {
+            foreach (StickerFileLayout::renderedPaths($contentHash) as $path) {
                 $hashByPath[$path] = $contentHash;
             }
         }
@@ -70,13 +70,5 @@ final class StickerFileJanitor
             ->all();
 
         return array_values(array_diff($contentHashes, $usedByAnotherSticker, $borrowedByMessage));
-    }
-
-    private function deleteFiles(string $contentHash): void
-    {
-        $storagePaths = array_values(RenderStickerJob::storagePaths($contentHash));
-        $disk = Storage::disk(Sticker::DISK);
-        $disk->delete($storagePaths);
-        $disk->deleteDirectory(dirname($storagePaths[0]));
     }
 }

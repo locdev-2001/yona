@@ -9,9 +9,12 @@ export interface LibrarySticker {
     position: number;
     width: number;
     height: number;
-    poster_url: string | null;
+    // Số khung (> 1 là ảnh động); null khi đang xử lý.
+    frames: number | null;
+    // WebP ở cạnh sticker, động nếu ảnh gốc động.
+    image_url: string | null;
+    // PNG tĩnh gửi kênh ngoài.
     static_url: string | null;
-    animation_url: string | null;
 }
 
 export interface LibraryStickerChanges {
@@ -34,32 +37,7 @@ export interface LibraryStickerPackDetail extends LibraryStickerPack {
 
 export interface StickerLibraryListing {
     payload: LibraryStickerPack[];
-    meta: { max_upload_kb: number; accepted_extensions: string[] };
-}
-
-export type StickerMcpTokenScope = 'account' | 'platform';
-
-export interface StickerMcpToken {
-    id: number;
-    name: string;
-    scope: StickerMcpTokenScope;
-    created_by: string | null;
-    created_at: string | null;
-    last_used_at: string | null;
-}
-
-export interface StickerMcpTokenListing {
-    payload: StickerMcpToken[];
-    meta: {
-        usable_scopes: StickerMcpTokenScope[];
-        mcp_url: string;
-        skill: { name: string; prompt: string };
-    };
-}
-
-export interface IssuedStickerMcpToken extends StickerMcpToken {
-    token: string;
-    mcp_url: string;
+    meta: { max_upload_kb: number; accepted_extensions: string[]; image_size: number };
 }
 
 export interface StickerLibraryAccess {

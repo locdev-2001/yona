@@ -23,7 +23,7 @@ describe('StickerSuggestions', () => {
         expect(screen.queryByRole('toolbar')).toBeNull();
     });
 
-    it('mỗi sticker là một nút ảnh poster, không nhãn thì dùng tên chung', () => {
+    it('mỗi sticker là một nút ảnh, không nhãn thì dùng tên chung', () => {
         renderRow();
 
         expect(screen.getByRole('toolbar', { name: 'Sticker gợi ý' })).toBeInTheDocument();

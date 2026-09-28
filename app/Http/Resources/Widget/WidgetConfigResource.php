@@ -5,6 +5,7 @@ namespace App\Http\Resources\Widget;
 use App\Channels\Capability;
 use App\Models\Channel\WebWidget;
 use App\Models\ContactInbox;
+use App\Models\Sticker as LibrarySticker;
 use App\Services\Channels\Stickers\Sticker;
 use App\Services\Channels\Stickers\StickerLibrary;
 use DateTimeZone;
@@ -46,6 +47,7 @@ final class WidgetConfigResource
                 'recall_window' => (int) $channel->recallWindow()->totalSeconds,
                 'reactions' => config('messaging.widget_reactions'),
                 'reply_time' => $channel->reply_time,
+                'sticker_display_size' => LibrarySticker::displaySize(),
                 // Widget lọc gợi ý khi gõ ngay trên máy khách nên cần sẵn từ khoá.
                 'stickers' => array_map(
                     fn (Sticker $sticker) => [...$sticker->toApi(), 'keywords' => $sticker->keywords],

@@ -9,7 +9,7 @@ use App\Http\Requests\Stickers\UploadStickerRequest;
 use App\Http\Resources\Stickers\LibraryStickerPackResource;
 use App\Http\Resources\Stickers\LibraryStickerResource;
 use App\Models\Account;
-use App\Services\Stickers\LottieDocumentValidator;
+use App\Models\Sticker;
 use App\Services\Stickers\StickerLibraryManager;
 use App\Services\Stickers\StickerUploadService;
 use Illuminate\Http\JsonResponse;
@@ -24,8 +24,9 @@ trait ManagesStickerLibrary
         return response()->json([
             'payload' => LibraryStickerPackResource::collection($this->stickerLibrary()->packs($owner))->toArray($request),
             'meta' => [
-                'max_upload_kb' => intdiv(LottieDocumentValidator::MAX_UPLOAD_BYTES, 1024),
+                'max_upload_kb' => intdiv(StickerUploadService::maxUploadBytes(), 1024),
                 'accepted_extensions' => StickerUploadService::ACCEPTED_EXTENSIONS,
+                'image_size' => Sticker::imageSize(),
             ],
         ]);
     }
@@ -69,7 +70,13 @@ trait ManagesStickerLibrary
     protected function uploadSticker(UploadStickerRequest $request, ?Account $owner, int $packId): JsonResponse
     {
         $library = $this->stickerLibrary();
-        $sticker = $library->upload($library->findPack($owner, $packId), $request->stickerFile(), $request->stickerLabel(), $request->stickerKeywords());
+        $sticker = $library->upload(
+            $library->findPack($owner, $packId),
+            $request->stickerFile(),
+            $request->stickerLabel(),
+            $request->stickerKeywords(),
+            $request->stickerEdit(),
+        );
 
         return response()->json((new LibraryStickerResource($sticker->refresh()))->toArray($request), 201);
     }

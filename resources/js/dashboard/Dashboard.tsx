@@ -11,13 +11,14 @@ import CommandBar from 'dashboard/commands/CommandBar';
 import { refreshPushSubscription, vapidPublicKeyOf } from 'dashboard/helper/pushHelper';
 import { bindUnreadIndicators } from 'dashboard/notifications/unreadIndicators';
 import UnreadTitleSync from 'dashboard/notifications/components/UnreadTitleSync';
+import { StickerDisplaySizeProvider } from 'shared/sticker/stickerDisplaySize';
 import type { DashboardPageProps } from './types';
 
 // Port từ dashboard/routes/dashboard/Dashboard.vue (shell)
 // Copilot/UpgradePage/KeyShortcutModal: EE hoặc vào nhóm sau. CommandBar: khung + snooze (B5), phần còn lại B10.
 export default function Dashboard({ children }: { children: ReactNode }) {
     const [isMobileSidebarOpen, setMobileSidebarOpen] = useState(false);
-    const { auth, globalConfig, currentAccount } = usePage<DashboardPageProps>().props;
+    const { auth, globalConfig, currentAccount, stickerDisplaySize } = usePage<DashboardPageProps>().props;
     const fontSize = auth.user?.ui_settings?.font_size as string | undefined;
     const vapidPublicKey = vapidPublicKeyOf(globalConfig);
 
@@ -38,22 +39,24 @@ export default function Dashboard({ children }: { children: ReactNode }) {
     }, [accountId]);
 
     return (
-        <div className="flex flex-grow overflow-hidden text-n-slate-12 h-screen w-full">
-            <Sidebar
-                isMobileSidebarOpen={isMobileSidebarOpen}
-                onCloseMobileSidebar={() => setMobileSidebarOpen(false)}
-            />
-            <main className="flex flex-1 h-full w-full min-h-0 px-0 overflow-hidden bg-n-surface-1">
-                {children}
-                <MobileSidebarLauncher
+        <StickerDisplaySizeProvider size={stickerDisplaySize}>
+            <div className="flex flex-grow overflow-hidden text-n-slate-12 h-screen w-full">
+                <Sidebar
                     isMobileSidebarOpen={isMobileSidebarOpen}
-                    onToggle={() => setMobileSidebarOpen(open => !open)}
+                    onCloseMobileSidebar={() => setMobileSidebarOpen(false)}
                 />
-                <CommandBar />
-            </main>
-            <SnackbarContainer />
-            <RealtimeProvider />
-            <UnreadTitleSync />
-        </div>
+                <main className="flex flex-1 h-full w-full min-h-0 px-0 overflow-hidden bg-n-surface-1">
+                    {children}
+                    <MobileSidebarLauncher
+                        isMobileSidebarOpen={isMobileSidebarOpen}
+                        onToggle={() => setMobileSidebarOpen(open => !open)}
+                    />
+                    <CommandBar />
+                </main>
+                <SnackbarContainer />
+                <RealtimeProvider />
+                <UnreadTitleSync />
+            </div>
+        </StickerDisplaySizeProvider>
     );
 }

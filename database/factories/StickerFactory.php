@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Models\Sticker;
 use App\Models\StickerPack;
+use App\Services\Stickers\StickerFileLayout;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 /** @extends Factory<Sticker> */
@@ -14,21 +15,20 @@ class StickerFactory extends Factory
     public function definition(): array
     {
         $contentHash = hash('sha256', fake()->unique()->uuid());
-        $directory = substr($contentHash, 0, 2).'/'.$contentHash;
 
         return [
             'sticker_pack_id' => StickerPack::factory(),
             'label' => fake()->word(),
             'keywords' => [],
-            'animation_path' => "{$directory}/anim.json",
-            'poster_path' => "{$directory}/poster.webp",
-            'static_path' => "{$directory}/static.png",
+            ...StickerFileLayout::renderedPaths($contentHash),
+            'original_path' => StickerFileLayout::originalPath($contentHash, 'png'),
+            'edit_params' => null,
             'content_hash' => $contentHash,
-            'width' => 512,
-            'height' => 512,
-            'frame_count' => 90,
-            'duration_ms' => 3000,
-            'byte_size' => 24_000,
+            'width' => 64,
+            'height' => 64,
+            'frame_count' => 1,
+            'duration_ms' => 0,
+            'byte_size' => 2_400,
             'status' => Sticker::STATUS_READY,
             'position' => 0,
         ];
@@ -37,9 +37,11 @@ class StickerFactory extends Factory
     public function processing(): static
     {
         return $this->state([
-            'animation_path' => null,
-            'poster_path' => null,
+            'image_path' => null,
             'static_path' => null,
+            'frame_count' => null,
+            'duration_ms' => null,
+            'byte_size' => null,
             'status' => Sticker::STATUS_PROCESSING,
         ]);
     }
@@ -47,6 +49,7 @@ class StickerFactory extends Factory
     public function failed(string $failureCode): static
     {
         return $this->processing()->state([
+            'original_path' => null,
             'status' => Sticker::STATUS_FAILED,
             'failure_code' => $failureCode,
         ]);

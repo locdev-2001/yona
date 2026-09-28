@@ -2,8 +2,9 @@
 
 namespace App\Services\Stickers;
 
-// Hợp đồng trung tính của trình dựng ảnh tĩnh cho sticker. Driver cụ thể chọn
-// qua config('yona.stickers.renderer'); pipeline chỉ biết hợp đồng này.
+// Hợp đồng trung tính của trình dựng sticker từ ảnh. Driver cụ thể chọn qua
+// config('yona.stickers.renderer'); pipeline chỉ biết hợp đồng này. Mã lỗi cũng
+// là khoá bản dịch errors.sticker_uploads.*.
 interface StickerRenderer
 {
     public const RENDER_FAILED = 'render_failed';
@@ -12,12 +13,23 @@ interface StickerRenderer
 
     public const RENDERER_UNAVAILABLE = 'renderer_unavailable';
 
+    public const IMAGE_UNREADABLE = 'image_unreadable';
+
+    public const IMAGE_TOO_LARGE = 'image_too_large';
+
+    public const TOO_MANY_FRAMES = 'too_many_frames';
+
+    // Xoá nền xong không còn điểm ảnh nào: sticker sẽ trong suốt hoàn toàn.
+    public const IMAGE_EMPTY = 'image_empty';
+
     /**
-     * Dựng poster (webp 256px) và ảnh tĩnh png vuông cạnh yona.stickers.outbound_image_size vào $outputDirectory.
-     * `poster_frame` là số khung Lottie tuyệt đối (cùng hệ với ip/op).
+     * Cắt, xoá nền theo `$edit` (hợp đồng edit của kho sticker; rỗng = mặc định
+     * của trình dựng) rồi dựng vào $outputDirectory hai tệp vuông cạnh $size:
+     * `image_path` WebP (động nếu ảnh gốc động) và `static_path` PNG tĩnh.
      * Thất bại trả mã lỗi ổn định thay vì ném, và không để lại tệp.
      *
-     * @return array{poster_path: string, static_path: string, poster_frame: int|float}|array{failure: string}
+     * @param  array<string, mixed>  $edit
+     * @return array{image_path: string, static_path: string, width: int, height: int, frames: int, duration_ms: int}|array{failure: string}
      */
-    public function render(string $animationPath, string $outputDirectory): array;
+    public function render(string $imagePath, string $outputDirectory, array $edit, int $size): array;
 }

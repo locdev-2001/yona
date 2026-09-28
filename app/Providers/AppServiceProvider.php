@@ -34,7 +34,6 @@ use App\Search\SearchEngine;
 use App\Services\Analytics\PlausibleProxy;
 use App\Services\Messaging\PublicFlowService;
 use App\Services\Stickers\StickerLibraryManager;
-use App\Services\Stickers\StickerLibraryTarget;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Validation\Factory as ValidationFactory;
@@ -172,13 +171,11 @@ class AppServiceProvider extends ServiceProvider
             Limit::perMinute(self::PUBLIC_FLOW_SUBMITS_PER_MINUTE_BY_IP)->by('ip:'.$request->ip()),
         ]);
 
-        // Khoá theo kho: kho riêng theo account (dashboard hay token cùng một nhịp),
-        // kho nền tảng theo người quản trị hoặc theo token: một bên không làm
-        // nghẽn hàng đợi render của cả hệ thống.
+        // Khoá theo kho: kho riêng theo account, kho nền tảng theo người quản trị:
+        // một bên không làm nghẽn hàng đợi render của cả hệ thống.
         RateLimiter::for('sticker-uploads', fn (Request $request) => Limit::perMinute(StickerLibraryManager::UPLOADS_PER_MINUTE)
             ->by(match (true) {
                 $request->route('account') !== null => 'account:'.$request->route('account'),
-                StickerLibraryTarget::fromRequest($request) !== null => StickerLibraryTarget::fromRequest($request)->rateLimitKey(),
                 $request->user('super_admin') !== null => 'super-admin:'.$request->user('super_admin')->getAuthIdentifier(),
                 default => 'user:'.$request->user()?->getAuthIdentifier(),
             })

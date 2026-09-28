@@ -49,7 +49,7 @@ export interface StickerSuggestionResult {
     stickers: StickerItem[];
 }
 
-// Gợi ý khi gõ: tối đa 8 sticker khớp nhãn/từ khoá, image_url là ảnh poster.
+// Gợi ý khi gõ: tối đa 8 sticker khớp nhãn/từ khoá, image_url là ảnh sticker (WebP).
 export function fetchStickerSuggestions(
     accountId: number,
     conversationId: number,

@@ -58,7 +58,6 @@ use App\Http\Controllers\WebApi\Reports\SummaryReportsController;
 use App\Http\Controllers\WebApi\SearchController;
 use App\Http\Controllers\WebApi\Settings\CustomStickerPacksController;
 use App\Http\Controllers\WebApi\Settings\PlatformStickerPacksController;
-use App\Http\Controllers\WebApi\Settings\StickerMcpTokensController;
 use App\Http\Controllers\WebApi\TeamMembersController;
 use App\Http\Controllers\WebApi\TeamsController;
 use App\Http\Controllers\WebApi\UploadController;
@@ -483,12 +482,6 @@ Route::middleware(['auth.api_token', 'auth', 'account.scope'])
                 Route::delete('/{packId}/stickers/{stickerId}', [CustomStickerPacksController::class, 'destroySticker'])
                     ->whereNumber(['packId', 'stickerId']);
             });
-
-        // Token cho AI gọi MCP/REST kho sticker; phạm vi dùng được do StickerLibraryAccess quyết.
-        Route::get('/sticker_mcp_tokens', [StickerMcpTokensController::class, 'index']);
-        Route::post('/sticker_mcp_tokens', [StickerMcpTokensController::class, 'store']);
-        Route::delete('/sticker_mcp_tokens/{tokenId}', [StickerMcpTokensController::class, 'destroy'])->whereNumber('tokenId');
-        Route::get('/sticker_library_skill', [StickerMcpTokensController::class, 'skill']);
 
         Route::post('/actions/contact_merge', [ContactMergesController::class, 'create']);
 

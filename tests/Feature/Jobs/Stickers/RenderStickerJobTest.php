@@ -5,45 +5,30 @@ use App\Models\Attachment;
 use App\Models\Message;
 use App\Models\Sticker;
 use App\Models\StickerPack;
+use App\Services\Stickers\StickerFileLayout;
 use App\Services\Stickers\StickerRenderer;
 use App\Services\Stickers\StickerUploadService;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
+use Tests\Support\FakeStickerRenderer;
+use Tests\Support\YonaStickers;
 
 beforeEach(function () {
     $this->disk = Storage::fake(Sticker::DISK);
-    $this->animationJson = '{"v":"5.7.0","fr":30,"ip":0,"op":60,"w":512,"h":512,"layers":[]}';
-    $this->contentHash = hash('sha256', $this->animationJson);
-    $this->storagePaths = RenderStickerJob::storagePaths($this->contentHash);
-    $this->sticker = Sticker::factory()->processing()->create(['content_hash' => $this->contentHash]);
+    $this->contentHash = hash('sha256', 'original + edit');
+    $this->renderedPaths = StickerFileLayout::renderedPaths($this->contentHash);
+    $this->originalPath = StickerFileLayout::originalPath($this->contentHash, 'png');
+    $this->originalBytes = YonaStickers::png(128);
+    $this->disk->put($this->originalPath, $this->originalBytes);
+    $this->edit = ['crop' => ['x' => 0.1, 'y' => 0, 'w' => 0.8, 'h' => 0.8], 'tolerance' => 12];
+    $this->sticker = Sticker::factory()->processing()->create([
+        'content_hash' => $this->contentHash,
+        'original_path' => $this->originalPath,
+        'edit_params' => $this->edit,
+    ]);
+    $this->renderer = FakeStickerRenderer::install();
 
-    // Renderer giả: ghi hai ảnh vào thư mục được giao, hoặc làm theo kịch bản của từng test.
-    $this->renderer = new class implements StickerRenderer
-    {
-        public ?Closure $scenario = null;
-
-        /** @var list<array{animation_json: string, animation_path: string, output_directory: string}> */
-        public array $calls = [];
-
-        public function render(string $animationPath, string $outputDirectory): array
-        {
-            $this->calls[] = ['animation_json' => file_get_contents($animationPath), 'animation_path' => $animationPath, 'output_directory' => $outputDirectory];
-            if ($this->scenario !== null) {
-                return ($this->scenario)($outputDirectory);
-            }
-
-            File::ensureDirectoryExists($outputDirectory);
-            File::put("{$outputDirectory}/poster.webp", 'poster-bytes');
-            File::put("{$outputDirectory}/static.png", 'static-bytes');
-
-            return ['poster_path' => "{$outputDirectory}/poster.webp", 'static_path' => "{$outputDirectory}/static.png", 'poster_frame' => 30];
-        }
-    };
-    app()->instance('tests.sticker-renderer', $this->renderer);
-    config(['yona.stickers.renderer' => 'fake', 'yona.stickers.renderers.fake.class' => 'tests.sticker-renderer']);
-
-    $this->runJob = fn (?Sticker $sticker = null) => (new RenderStickerJob($sticker ?? $this->sticker, $this->animationJson))->handle();
+    $this->runJob = fn (?Sticker $sticker = null, bool $refreshing = false) => (new RenderStickerJob($sticker ?? $this->sticker, $refreshing))->handle();
     $this->failWritesTo = function (string $failingFile): void {
         $realDisk = $this->disk;
         $failingDisk = Mockery::mock($realDisk)->makePartial();
@@ -54,55 +39,90 @@ beforeEach(function () {
     };
 });
 
-it('stores the animation, poster and still under the content hash and marks the sticker ready', function () {
+it('dựng từ ảnh gốc + thông số chỉnh đã lưu, ghi sticker.webp và static.png theo hash rồi chuyển ready', function () {
+    config(['yona.stickers.image_size' => 72]);
+    $this->renderer->scenario = fn (string $image, string $output, array $edit, int $size) => FakeStickerRenderer::writeOutputs($output, $size, 'webp-bytes', 'png-bytes', frames: 4);
+
     ($this->runJob)();
 
     $sticker = $this->sticker->fresh();
     $directory = substr($this->contentHash, 0, 2).'/'.$this->contentHash;
-    expect($this->storagePaths)->toBe([
-        'animation_path' => "{$directory}/anim.json",
-        'poster_path' => "{$directory}/poster.webp",
-        'static_path' => "{$directory}/static.png",
-    ])
-        ->and($sticker->status)->toBe(Sticker::STATUS_READY)
-        ->and($sticker->failure_code)->toBeNull()
-        ->and($sticker->only(['animation_path', 'poster_path', 'static_path']))->toBe($this->storagePaths)
-        ->and($this->disk->get($this->storagePaths['animation_path']))->toBe($this->animationJson)
-        ->and($this->disk->get($this->storagePaths['poster_path']))->toBe('poster-bytes')
-        ->and($this->disk->get($this->storagePaths['static_path']))->toBe('static-bytes')
-        ->and($this->renderer->calls[0]['animation_json'])->toBe($this->animationJson);
+    expect($this->renderedPaths)->toBe(['image_path' => "{$directory}/sticker.webp", 'static_path' => "{$directory}/static.png"])
+        ->and($sticker->only(['status', 'failure_code', 'image_path', 'static_path', 'original_path', 'width', 'height', 'frame_count', 'duration_ms', 'byte_size']))->toBe([
+            'status' => Sticker::STATUS_READY,
+            'failure_code' => null,
+            ...$this->renderedPaths,
+            'original_path' => $this->originalPath,
+            'width' => 72,
+            'height' => 72,
+            'frame_count' => 4,
+            'duration_ms' => 400,
+            'byte_size' => strlen('webp-bytes'),
+        ])
+        ->and($this->disk->get($this->renderedPaths['image_path']))->toBe('webp-bytes')
+        ->and($this->disk->get($this->renderedPaths['static_path']))->toBe('png-bytes')
+        ->and($this->disk->get($this->originalPath))->toBe($this->originalBytes)
+        ->and($this->renderer->calls)->toHaveCount(1)
+        ->and($this->renderer->calls[0])->toMatchArray(['image_bytes' => $this->originalBytes, 'edit' => $this->edit, 'size' => 72])
+        ->and(basename($this->renderer->calls[0]['image_path']))->toBe('original.png');
 });
 
-it('removes its scratch workspace whether the render succeeds or fails', function (?string $failure) {
+it('không có thông số chỉnh thì giao trình dựng edit rỗng để dùng mặc định', function () {
+    $this->sticker->update(['edit_params' => null]);
+
+    ($this->runJob)();
+
+    expect($this->renderer->calls[0]['edit'])->toBe([])
+        ->and($this->sticker->fresh()->status)->toBe(Sticker::STATUS_READY);
+});
+
+it('dọn thư mục làm việc tạm dù dựng được hay hỏng', function (?string $failure) {
     if ($failure !== null) {
         $this->renderer->scenario = fn () => ['failure' => $failure];
     }
 
     ($this->runJob)();
 
-    expect(File::exists(dirname($this->renderer->calls[0]['animation_path'])))->toBeFalse();
+    expect(File::exists(dirname($this->renderer->calls[0]['image_path'])))->toBeFalse();
 })->with([
-    'success' => [null],
-    'failure' => [StickerRenderer::RENDER_FAILED],
+    'dựng được' => [null],
+    'hỏng' => [StickerRenderer::RENDER_FAILED],
 ]);
 
-it('marks the sticker failed with the renderer failure code and stores nothing', function (string $failure) {
+it('trình dựng báo lỗi thì sticker failed kèm mã, không để lại tệp nào kể cả ảnh gốc', function (string $failure) {
     $this->renderer->scenario = fn () => ['failure' => $failure];
 
     ($this->runJob)();
 
-    $sticker = $this->sticker->fresh();
-    expect($sticker->status)->toBe(Sticker::STATUS_FAILED)
-        ->and($sticker->failure_code)->toBe($failure)
-        ->and($sticker->only(['animation_path', 'poster_path', 'static_path']))->toBe(['animation_path' => null, 'poster_path' => null, 'static_path' => null])
+    expect($this->sticker->fresh()->only(['status', 'failure_code', 'image_path', 'static_path', 'original_path']))->toBe([
+        'status' => Sticker::STATUS_FAILED,
+        'failure_code' => $failure,
+        'image_path' => null,
+        'static_path' => null,
+        'original_path' => null,
+    ])
         ->and($this->disk->allFiles())->toBe([]);
 })->with([
     StickerRenderer::RENDER_FAILED,
     StickerRenderer::RENDER_TIMEOUT,
     StickerRenderer::RENDERER_UNAVAILABLE,
+    StickerRenderer::IMAGE_UNREADABLE,
+    StickerRenderer::IMAGE_TOO_LARGE,
+    StickerRenderer::TOO_MANY_FRAMES,
+    StickerRenderer::IMAGE_EMPTY,
 ]);
 
-it('treats an unexpected renderer exception as the renderer being unavailable', function () {
+it('ảnh gốc không còn trên disk thì sticker failed, không gọi trình dựng', function () {
+    $this->disk->delete($this->originalPath);
+
+    ($this->runJob)();
+
+    expect($this->renderer->calls)->toBe([])
+        ->and($this->sticker->fresh()->only(['status', 'failure_code']))
+        ->toBe(['status' => Sticker::STATUS_FAILED, 'failure_code' => RenderStickerJob::ORIGINAL_MISSING]);
+});
+
+it('lỗi bất ngờ của trình dựng tính là trình dựng chưa sẵn sàng', function () {
     $this->renderer->scenario = fn () => throw new RuntimeException('sharp crashed');
 
     ($this->runJob)();
@@ -112,7 +132,7 @@ it('treats an unexpected renderer exception as the renderer being unavailable', 
         ->and($this->disk->allFiles())->toBe([]);
 });
 
-it('fails the sticker and removes the files already written when a disk write fails', function (string $failingFile) {
+it('ghi disk hỏng thì sticker failed và dọn tệp đã ghi', function (string $failingFile) {
     ($this->failWritesTo)($failingFile);
 
     ($this->runJob)();
@@ -120,26 +140,28 @@ it('fails the sticker and removes the files already written when a disk write fa
     expect($this->sticker->fresh()->only(['status', 'failure_code']))
         ->toBe(['status' => Sticker::STATUS_FAILED, 'failure_code' => RenderStickerJob::STORAGE_WRITE_FAILED])
         ->and($this->disk->allFiles())->toBe([]);
-})->with(['anim.json', 'poster.webp', 'static.png']);
+})->with(['sticker.webp', 'static.png']);
 
-it('leaves shared files alone when another sticker with the same content still uses them', function () {
-    Sticker::factory()->create(['content_hash' => $this->contentHash, ...$this->storagePaths]);
-    foreach ($this->storagePaths as $path) {
+it('không đụng tệp dùng chung khi sticker khác cùng nội dung còn dùng', function () {
+    Sticker::factory()->create(['content_hash' => $this->contentHash, ...$this->renderedPaths, 'original_path' => $this->originalPath]);
+    foreach ($this->renderedPaths as $path) {
         $this->disk->put($path, 'already published');
     }
     ($this->failWritesTo)('static.png');
 
     ($this->runJob)();
 
-    expect($this->sticker->fresh()->status)->toBe(Sticker::STATUS_FAILED)
-        ->and($this->disk->get($this->storagePaths['static_path']))->toBe('already published');
-    foreach ($this->storagePaths as $path) {
+    $failed = $this->sticker->fresh();
+    expect($failed->status)->toBe(Sticker::STATUS_FAILED)
+        ->and($failed->original_path)->toBe($this->originalPath)
+        ->and($this->disk->get($this->renderedPaths['static_path']))->toBe('already published');
+    foreach ([...$this->renderedPaths, $this->originalPath] as $path) {
         $this->disk->assertExists($path);
     }
 });
 
-it('leaves shared files alone while a sent message still borrows them', function () {
-    foreach ($this->storagePaths as $path) {
+it('không đụng tệp dùng chung khi tin đã gửi còn mượn ảnh tĩnh', function () {
+    foreach ($this->renderedPaths as $path) {
         $this->disk->put($path, 'already published');
     }
     $message = Message::factory()->create();
@@ -147,19 +169,19 @@ it('leaves shared files alone while a sent message still borrows them', function
         'account_id' => $message->account_id,
         'file_type' => Attachment::FILE_TYPE_IMAGE,
         'disk' => Sticker::DISK,
-        'path' => $this->storagePaths['static_path'],
+        'path' => $this->renderedPaths['static_path'],
     ]);
     $this->renderer->scenario = fn () => ['failure' => StickerRenderer::RENDER_FAILED];
 
     ($this->runJob)();
 
     expect($this->sticker->fresh()->status)->toBe(Sticker::STATUS_FAILED);
-    foreach ($this->storagePaths as $path) {
+    foreach ($this->renderedPaths as $path) {
         $this->disk->assertExists($path);
     }
 });
 
-it('does nothing for a sticker that is no longer processing', function () {
+it('bỏ qua sticker không còn processing', function () {
     $readySticker = Sticker::factory()->create();
 
     ($this->runJob)($readySticker);
@@ -168,26 +190,26 @@ it('does nothing for a sticker that is no longer processing', function () {
         ->and($readySticker->fresh()->status)->toBe(Sticker::STATUS_READY);
 });
 
-it('marks a sticker still processing as timed out when the worker gives up on the job', function () {
-    (new RenderStickerJob($this->sticker, $this->animationJson))->failed(new RuntimeException('Job has timed out.'));
+it('worker bỏ job giữa chừng thì sticker còn processing thành hết giờ', function () {
+    (new RenderStickerJob($this->sticker))->failed(new RuntimeException('Job has timed out.'));
 
     expect($this->sticker->fresh()->only(['status', 'failure_code']))
         ->toBe(['status' => Sticker::STATUS_FAILED, 'failure_code' => StickerRenderer::RENDER_TIMEOUT]);
 });
 
-it('runs one attempt on its own queue with a deadline longer than any render', function () {
-    $job = new RenderStickerJob($this->sticker, $this->animationJson);
+it('chạy một lần trên hàng đợi riêng với hạn dài hơn mọi lượt dựng', function () {
+    $job = new RenderStickerJob($this->sticker);
 
     expect($job->queue)->toBe('stickers')
         ->and($job->tries)->toBe(1)
         ->and($job->timeout)->toBeGreaterThan(60);
 });
 
-// Render nặng CPU/bộ nhớ: một supervisor riêng chạy đúng một process, không nằm
-// trong các tier của tin nhắn nên upload dồn dập không làm chậm việc gửi tin.
-it('is served by a dedicated single-process supervisor outside the message tiers', function () {
+// Dựng nặng CPU/bộ nhớ: một supervisor riêng chạy đúng một process, không nằm
+// trong các tier của tin nhắn nên tải lên dồn dập không làm chậm việc gửi tin.
+it('do một supervisor riêng một process phục vụ, ngoài các tier tin nhắn', function () {
     $supervisor = config('horizon.defaults.supervisor-stickers');
-    $job = new RenderStickerJob($this->sticker, $this->animationJson);
+    $job = new RenderStickerJob($this->sticker);
 
     expect($supervisor['queue'])->toBe([$job->queue])
         ->and($supervisor['maxProcesses'])->toBe(1)
@@ -196,60 +218,77 @@ it('is served by a dedicated single-process supervisor outside the message tiers
         ->and(config('horizon.defaults.supervisor-1.queue'))->not->toContain('stickers');
 });
 
-it('turns an uploaded TGS into a ready sticker with real images', function () {
-    config([
-        'yona.stickers.renderer' => 'node',
-        'yona.stickers.memory_limiter' => is_executable('/usr/bin/prlimit') ? 'prlimit' : 'none',
-    ]);
-    $pack = StickerPack::factory()->create();
-    $upload = UploadedFile::fake()->createWithContent('ball.tgs', file_get_contents(base_path('tests/Fixtures/stickers/ball-with-poster-marker.tgs')));
-
-    $sticker = app(StickerUploadService::class)->upload($pack, $upload, 'Bóng nảy')->fresh();
-
-    expect($sticker->status)->toBe(Sticker::STATUS_READY)
-        ->and($sticker->only(['animation_path', 'poster_path', 'static_path']))->toBe(RenderStickerJob::storagePaths($sticker->content_hash))
-        ->and(hash('sha256', $this->disk->get($sticker->animation_path)))->toBe($sticker->content_hash)
-        ->and(getimagesizefromstring($this->disk->get($sticker->poster_path)))->toMatchArray([0 => 256, 1 => 256, 'mime' => 'image/webp'])
-        ->and(getimagesizefromstring($this->disk->get($sticker->static_path)))->toMatchArray([0 => 64, 1 => 64, 'mime' => 'image/png']);
-})->group('renderer')->skip(
-    fn () => ! is_dir(base_path('services/sticker-renderer/node_modules/@thorvg/lottie-player')),
-    'Chưa cài services/sticker-renderer (corepack pnpm --dir services/sticker-renderer install).',
-);
-
-it('dựng lại sticker đã ready: ghi đè ảnh tại đúng đường dẫn cũ, sticker vẫn ready', function () {
+it('dựng lại sticker đã ready: ghi đè đúng đường dẫn cũ, cập nhật cỡ theo config, vẫn ready', function () {
     ($this->runJob)();
-    $this->renderer->scenario = function (string $outputDirectory) {
-        File::ensureDirectoryExists($outputDirectory);
-        File::put("{$outputDirectory}/poster.webp", 'poster-v2');
-        File::put("{$outputDirectory}/static.png", 'static-v2');
+    config(['yona.stickers.image_size' => 96]);
+    $this->renderer->scenario = fn (string $image, string $output, array $edit, int $size) => FakeStickerRenderer::writeOutputs($output, $size, 'webp-v2', 'png-v2');
 
-        return ['poster_path' => "{$outputDirectory}/poster.webp", 'static_path' => "{$outputDirectory}/static.png", 'poster_frame' => 30];
-    };
-
-    (new RenderStickerJob($this->sticker->fresh(), $this->animationJson, refreshing: true))->handle();
+    ($this->runJob)($this->sticker->fresh(), true);
 
     $sticker = $this->sticker->fresh();
-    expect($sticker->status)->toBe(Sticker::STATUS_READY)
-        ->and($sticker->only(['animation_path', 'poster_path', 'static_path']))->toBe($this->storagePaths)
-        ->and($this->disk->get($this->storagePaths['static_path']))->toBe('static-v2')
-        ->and($this->disk->get($this->storagePaths['poster_path']))->toBe('poster-v2');
+    expect($sticker->only(['status', 'image_path', 'static_path', 'width', 'height']))
+        ->toBe(['status' => Sticker::STATUS_READY, ...$this->renderedPaths, 'width' => 96, 'height' => 96])
+        ->and($this->renderer->calls[1]['size'])->toBe(96)
+        ->and($this->renderer->calls[1]['edit'])->toEqual($this->edit)
+        ->and($this->disk->get($this->renderedPaths['static_path']))->toBe('png-v2')
+        ->and($this->disk->get($this->renderedPaths['image_path']))->toBe('webp-v2');
 });
 
-it('dựng lại hỏng thì sticker giữ ready và ảnh cũ', function () {
+it('dựng lại hỏng thì sticker giữ ready và tệp cũ', function () {
     ($this->runJob)();
     $this->renderer->scenario = fn () => ['failure' => StickerRenderer::RENDER_FAILED];
 
-    (new RenderStickerJob($this->sticker->fresh(), $this->animationJson, refreshing: true))->handle();
+    ($this->runJob)($this->sticker->fresh(), true);
 
     $sticker = $this->sticker->fresh();
-    expect($sticker->status)->toBe(Sticker::STATUS_READY)
-        ->and($sticker->failure_code)->toBeNull()
-        ->and($this->disk->get($this->storagePaths['static_path']))->toBe('static-bytes');
+    expect($sticker->only(['status', 'failure_code']))->toBe(['status' => Sticker::STATUS_READY, 'failure_code' => null])
+        ->and($this->disk->get($this->renderedPaths['static_path']))->toBe('static-png')
+        ->and($this->disk->get($this->originalPath))->toBe($this->originalBytes);
 });
 
-it('lệnh dựng lại không chạm sticker đang processing', function () {
-    (new RenderStickerJob($this->sticker, $this->animationJson, refreshing: true))->handle();
+it('lượt dựng lại không chạm sticker đang processing', function () {
+    ($this->runJob)(null, true);
 
     expect($this->renderer->calls)->toBe([])
         ->and($this->sticker->fresh()->status)->toBe(Sticker::STATUS_PROCESSING);
 });
+
+describe('với trình dựng thật', function () {
+    beforeEach(function () {
+        config([
+            'yona.stickers.renderer' => 'node',
+            'yona.stickers.memory_limiter' => is_executable('/usr/bin/prlimit') ? 'prlimit' : 'none',
+        ]);
+        $this->pack = StickerPack::factory()->create();
+    });
+
+    it('biến ảnh PNG tải lên thành sticker ready với tệp 64×64 thật', function () {
+        $sticker = app(StickerUploadService::class)->upload($this->pack, YonaStickers::imageUpload('dot.png', side: 400), 'Chấm')->fresh();
+
+        expect($sticker->only(['status', 'width', 'height', 'frame_count']))->toBe(['status' => Sticker::STATUS_READY, 'width' => 64, 'height' => 64, 'frame_count' => 1])
+            ->and($sticker->only(['image_path', 'static_path']))->toBe(StickerFileLayout::renderedPaths($sticker->content_hash))
+            ->and(getimagesizefromstring($this->disk->get($sticker->image_path)))->toMatchArray([0 => 64, 1 => 64, 'mime' => 'image/webp'])
+            ->and(getimagesizefromstring($this->disk->get($sticker->static_path)))->toMatchArray([0 => 64, 1 => 64, 'mime' => 'image/png'])
+            ->and($sticker->byte_size)->toBe(strlen($this->disk->get($sticker->image_path)));
+    });
+
+    it('biến GIF động thành WebP động 64×64 cùng số khung, PNG tĩnh cho kênh ngoài', function () {
+        $sticker = app(StickerUploadService::class)->upload($this->pack, YonaStickers::animatedUpload())->fresh();
+        $webp = $this->disk->get($sticker->image_path);
+
+        expect($sticker->only(['status', 'frame_count', 'duration_ms']))->toBe(['status' => Sticker::STATUS_READY, 'frame_count' => 4, 'duration_ms' => 480])
+            ->and(str_contains($webp, 'ANIM') && substr_count($webp, 'ANMF') === 4)->toBeTrue()
+            ->and(getimagesizefromstring($this->disk->get($sticker->static_path)))->toMatchArray([0 => 64, 1 => 64, 'mime' => 'image/png']);
+    });
+
+    it('xoá nền hết sạch thì sticker failed với lời nhắc chỉnh độ nhạy', function () {
+        $sticker = app(StickerUploadService::class)
+            ->upload($this->pack, YonaStickers::imageUpload(), editJson: '{"removeBackground":true,"tolerance":100}')
+            ->fresh();
+
+        expect($sticker->only(['status', 'failure_code']))->toBe(['status' => Sticker::STATUS_FAILED, 'failure_code' => StickerRenderer::IMAGE_EMPTY]);
+    });
+})->group('renderer')->skip(
+    fn () => ! is_dir(base_path('services/sticker-renderer/node_modules/sharp')),
+    'Chưa cài services/sticker-renderer (corepack pnpm --dir services/sticker-renderer install).',
+);

@@ -2,19 +2,19 @@ import { after, before, describe, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFile } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { mkdtemp, readdir, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, rm, stat, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { gzipSync } from 'node:zlib';
 import sharp from 'sharp';
 
 const CLI_PATH = fileURLToPath(new URL('./render.mjs', import.meta.url));
-const FIXTURE_DIR = fileURLToPath(new URL('../../../tests/Fixtures/stickers/', import.meta.url));
-const MAX_RENDER_MS = 2000;
-const POSTER_SIZE = 256;
-const STATIC_SIZE = 512;
-const OPAQUE_ALPHA = 250;
+const STICKER_SIZE = 64;
+const MAX_LARGE_JPEG_MS = 2000;
+const RED = [220, 30, 30];
+const HALO_THRESHOLD = 24;
+const GIF_FRAMES = 10;
+const GIF_DELAY_MS = 80;
 
 let workDir;
 
@@ -40,36 +40,8 @@ function runCli(args) {
     });
 }
 
-async function renderFixture(fixtureName, extraArgs = []) {
-    const outDir = join(workDir, `${fixtureName}-${Math.random().toString(36).slice(2)}`);
-    const run = await runCli([join(FIXTURE_DIR, fixtureName), outDir, ...extraArgs]);
-    assert.equal(run.exitCode, 0, `render failed: ${JSON.stringify(run.output)} ${run.stderr}`);
-
-    return { ...run, outDir };
-}
-
-async function readRgba(imagePath) {
-    const { data, info } = await sharp(imagePath).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
-
-    return {
-        pixelAt(x, y) {
-            const offset = (y * info.width + x) * 4;
-            const [red, green, blue, alpha] = data.subarray(offset, offset + 4);
-
-            return { red, green, blue, alpha };
-        },
-    };
-}
-
-async function assertTransparentImage(imagePath, expectedFormat, expectedSize) {
-    const metadata = await sharp(imagePath).metadata();
-    assert.equal(metadata.format, expectedFormat);
-    assert.equal(metadata.width, expectedSize);
-    assert.equal(metadata.height, expectedSize);
-    assert.equal(metadata.hasAlpha, true);
-
-    const image = await readRgba(imagePath);
-    assert.equal(image.pixelAt(0, 0).alpha, 0, 'góc ảnh phải trong suốt');
+function uniqueName(prefix) {
+    return `${prefix}-${Math.random().toString(36).slice(2)}`;
 }
 
 async function writeWorkFile(name, contents) {
@@ -79,174 +51,255 @@ async function writeWorkFile(name, contents) {
     return filePath;
 }
 
-async function assertRenderError(inputPath, expectedCode, extraArgs = []) {
-    const outDir = join(workDir, `error-${expectedCode}-${Math.random().toString(36).slice(2)}`);
+async function writeSvgAs(name, svg, format) {
+    return writeWorkFile(name, await sharp(Buffer.from(svg)).toFormat(format).toBuffer());
+}
+
+async function renderOk(inputPath, extraArgs = []) {
+    const outDir = join(workDir, uniqueName('out'));
     const run = await runCli([inputPath, outDir, ...extraArgs]);
+    assert.equal(run.exitCode, 0, `render failed: ${JSON.stringify(run.output)} ${run.stderr}`);
 
-    assert.notEqual(run.exitCode, 0);
-    assert.deepEqual(run.output, { error: expectedCode });
-    assert.equal(existsSync(outDir) ? (await readdir(outDir)).length : 0, 0, 'lỗi thì không được ghi tệp ra');
-
-    return run;
+    return { ...run, outDir };
 }
 
-function repeaterBombLottie(copiesPerLevel) {
-    const staticValue = (k) => ({ a: 0, k });
-    const groupTransform = { ty: 'tr', p: staticValue([0, 0]), a: staticValue([0, 0]), s: staticValue([100, 100]), r: staticValue(0), o: staticValue(100) };
-    const repeater = {
-        ty: 'rp',
-        c: staticValue(copiesPerLevel),
-        o: staticValue(0),
-        m: 1,
-        tr: { ty: 'tr', p: staticValue([1, 0]), a: staticValue([0, 0]), s: staticValue([100, 100]), r: staticValue(1), so: staticValue(100), eo: staticValue(100) },
-    };
-    const innerGroup = {
-        ty: 'gr',
-        it: [
-            { ty: 'el', p: staticValue([0, 0]), s: staticValue([50, 50]) },
-            { ty: 'fl', c: staticValue([1, 0, 0, 1]), o: staticValue(100) },
-            repeater,
-            groupTransform,
-        ],
-    };
+async function renderWithEdit(inputPath, edit) {
+    const editPath = await writeWorkFile(`${uniqueName('edit')}.json`, JSON.stringify(edit));
 
-    return {
-        v: '5.7.0', fr: 30, ip: 0, op: 30, w: 512, h: 512,
-        layers: [{
-            ty: 4, ip: 0, op: 30, st: 0,
-            ks: { o: staticValue(100), r: staticValue(0), p: staticValue([256, 256]), a: staticValue([0, 0]), s: staticValue([100, 100]) },
-            shapes: [{ ty: 'gr', it: [innerGroup, repeater, groupTransform] }],
-        }],
-    };
+    return renderOk(inputPath, [`--edit=${editPath}`]);
 }
 
-describe('render thành công', () => {
-    for (const fixtureName of ['ball-with-poster-marker.json', 'ball-with-poster-marker.tgs', 'pulse-without-marker.json', 'embedded-bitmap.json']) {
-        test(`${fixtureName}: ra poster.webp 256px và static.png 512px nền trong suốt trong ≤2s`, async () => {
-            const { output, outDir, elapsedMs } = await renderFixture(fixtureName);
+async function readRgba(imagePath) {
+    const { data, info } = await sharp(imagePath).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
 
-            assert.ok(elapsedMs <= MAX_RENDER_MS, `render mất ${Math.round(elapsedMs)}ms`);
-            assert.equal(output.poster, join(outDir, 'poster.webp'));
-            assert.equal(output.static, join(outDir, 'static.png'));
-            await assertTransparentImage(output.poster, 'webp', POSTER_SIZE);
-            await assertTransparentImage(output.static, 'png', STATIC_SIZE);
-        });
+    return { data, width: info.width, height: info.height };
+}
+
+function pixel(image, x, y) {
+    const offset = (y * image.width + x) * 4;
+
+    return Array.from(image.data.subarray(offset, offset + 4));
+}
+
+function assertCleanTransparency(image) {
+    for (let offset = 0; offset < image.data.length; offset += 4) {
+        if (image.data[offset + 3] !== 0) continue;
+        assert.deepEqual(Array.from(image.data.subarray(offset, offset + 3)), [0, 0, 0], 'điểm trong suốt phải RGB 0');
     }
+}
 
-    test('--static-size dựng ảnh tĩnh gửi kênh ngoài đúng cỡ, poster giữ nguyên', async () => {
-        const { output } = await renderFixture('ball-with-poster-marker.json', ['--static-size=128']);
+/** Mỗi khung một điểm sáng ở vị trí khác: bộ mã hoá GIF gộp các khung giống nhau thành một. */
+function distinctFramesGif(frameCount, delayMs) {
+    const side = 16;
+    const frameBytes = side * side * 3;
+    const strip = Buffer.alloc(frameBytes * frameCount);
+    for (let frame = 0; frame < frameCount; frame++) strip.fill(255, frame * frameBytes + frame * 3, frame * frameBytes + frame * 3 + 3);
 
-        await assertTransparentImage(output.static, 'png', 128);
-        await assertTransparentImage(output.poster, 'webp', POSTER_SIZE);
-        assert.equal(output.staticSize, 128);
+    return sharp(strip, { raw: { width: side, height: side * frameCount, channels: 3, pageHeight: side } })
+        .gif({ delay: Array(frameCount).fill(delayMs) })
+        .toBuffer();
+}
+
+function stickerSvg() {
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400">
+        <rect width="600" height="400" fill="rgb(128,128,128)"/>
+        <circle cx="300" cy="200" r="150" fill="white"/>
+        <circle cx="300" cy="200" r="130" fill="rgb(${RED})"/></svg>`;
+}
+
+describe('render.mjs', () => {
+    test('JPG sticker viền trắng trên nền xám → webp + png 64×64, nền trong suốt, giữ viền trắng', async () => {
+        const inputPath = await writeSvgAs('sticker.jpg', stickerSvg(), 'jpeg');
+        const run = await renderOk(inputPath);
+
+        assert.deepEqual(Object.keys(run.output).sort(), ['durationMs', 'frames', 'height', 'image', 'static', 'warnings', 'width']);
+        assert.equal(run.output.image, join(run.outDir, 'sticker.webp'));
+        assert.equal(run.output.static, join(run.outDir, 'static.png'));
+        assert.equal(run.output.width, STICKER_SIZE);
+        assert.equal(run.output.frames, 1);
+        assert.equal(run.output.durationMs, 0);
+        assert.deepEqual(run.output.warnings, []);
+
+        const webpMetadata = await sharp(run.output.image).metadata();
+        assert.equal(webpMetadata.format, 'webp');
+        assert.equal(webpMetadata.width, STICKER_SIZE);
+        assert.equal(webpMetadata.height, STICKER_SIZE);
+        assert.equal(webpMetadata.hasAlpha, true);
+
+        const pngMetadata = await sharp(run.output.static).metadata();
+        assert.equal(pngMetadata.format, 'png');
+        assert.equal(pngMetadata.width, STICKER_SIZE);
+        assert.ok(pngMetadata.paletteBitDepth, 'static.png phải dùng bảng màu');
+
+        for (const imagePath of [run.output.image, run.output.static]) {
+            const image = await readRgba(imagePath);
+            assert.deepEqual(pixel(image, 0, 0), [0, 0, 0, 0]);
+            const border = pixel(image, 32, 3);
+            assert.ok(border[3] === 255 && border[0] > 240 && border[1] > 240 && border[2] > 240, `viền trắng mất: ${border}`);
+            const center = pixel(image, 32, 32);
+            assert.ok(center[0] > 200 && center[1] < 60 && center[3] === 255, `ruột đỏ sai: ${center}`);
+            assertCleanTransparency(image);
+        }
     });
 
-    test('--static-size ngoài khoảng cho phép là lỗi usage', async () => {
-        const inputPath = join(FIXTURE_DIR, 'ball-with-poster-marker.json');
+    test('vật đỏ trên nền trắng: đặt lên nền đen không có quầng trắng quanh viền', async () => {
+        const inputPath = await writeSvgAs('red-on-white.png', `<svg xmlns="http://www.w3.org/2000/svg" width="500" height="500">
+            <rect width="500" height="500" fill="white"/>
+            <path d="M250 60 L440 420 L60 420 Z" fill="rgb(${RED})"/></svg>`, 'png');
+        const run = await renderOk(inputPath);
 
-        await assertRenderError(inputPath, 'usage', ['--static-size=4']);
-        await assertRenderError(inputPath, 'usage', ['--static-size=1024']);
+        for (const imagePath of [run.output.image, run.output.static]) {
+            const image = await readRgba(imagePath);
+            assertCleanTransparency(image);
+            for (let offset = 0; offset < image.data.length; offset += 4) {
+                const alpha = image.data[offset + 3];
+                for (let channel = 0; channel < 3; channel++) {
+                    const onBlack = (image.data[offset + channel] * alpha) / 255;
+                    assert.ok(onBlack <= RED[channel] + HALO_THRESHOLD, `quầng sáng ở ${imagePath} kênh ${channel}: ${onBlack}`);
+                }
+            }
+        }
     });
-});
 
-describe('chọn khung ảnh tĩnh', () => {
-    for (const fixtureName of ['ball-with-poster-marker.json', 'ball-with-poster-marker.tgs']) {
-        test(`${fixtureName}: dùng khung của marker poster`, async () => {
-            const { output } = await renderFixture(fixtureName);
+    test('PNG trong suốt sẵn giữ nguyên hình', async () => {
+        const inputPath = await writeSvgAs('transparent.png', `<svg xmlns="http://www.w3.org/2000/svg" width="300" height="300">
+            <rect x="50" y="50" width="200" height="200" fill="white"/></svg>`, 'png');
+        const run = await renderWithEdit(inputPath, { removeBackground: true, tolerance: 100 });
 
-            assert.equal(output.frame, 45);
-            assert.deepEqual(output.warnings, []);
-            assert.equal(output.width, 512);
-            assert.equal(output.height, 512);
-            assert.equal(output.frames, 60);
-            assert.equal(output.duration, 2);
+        const image = await readRgba(run.output.static);
+        assert.deepEqual(pixel(image, 32, 32), [255, 255, 255, 255], 'hình trắng không bị xoá dù dung sai tối đa');
+        assert.deepEqual(run.output.warnings, []);
+    });
 
-            const image = await readRgba(output.static);
-            const ballAtMarkerFrame = image.pixelAt(384, 256);
-            assert.ok(ballAtMarkerFrame.alpha >= OPAQUE_ALPHA);
-            assert.ok(ballAtMarkerFrame.red > 200 && ballAtMarkerFrame.green < 60);
-            assert.equal(image.pixelAt(128, 256).alpha, 0, 'bóng ở khung giữa không được xuất hiện');
+    test('crop chuẩn hoá chỉ lấy phần được chọn; removeBackground false giữ nền', async () => {
+        const inputPath = await writeSvgAs('two-squares.png', `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="200">
+            <rect width="400" height="200" fill="white"/>
+            <rect x="40" y="40" width="120" height="120" fill="red"/>
+            <rect x="240" y="40" width="120" height="120" fill="blue"/></svg>`, 'png');
 
-            const halfTransparentHalo = image.pixelAt(256, 96).alpha;
-            assert.ok(halfTransparentHalo > 100 && halfTransparentHalo < 160, `alpha halo = ${halfTransparentHalo}`);
+        const cropped = await renderWithEdit(inputPath, { crop: { x: 0, y: 0, w: 0.5, h: 1 }, removeBackground: true, tolerance: 20, feather: 0, edits: [] });
+        const croppedImage = await readRgba(cropped.output.static);
+        const [red, , blue, alpha] = pixel(croppedImage, 32, 32);
+        assert.ok(red > 240 && blue < 20 && alpha === 255, 'giữa ảnh phải là ô đỏ, không có ô xanh');
+
+        const kept = await renderWithEdit(inputPath, { crop: { x: 0, y: 0, w: 0.5, h: 1 }, removeBackground: false });
+        assert.deepEqual(pixel(await readRgba(kept.output.static), 6, 6), [255, 255, 255, 255], 'không xoá nền thì nền trắng vẫn còn');
+    });
+
+    test('edits theo toạ độ chuẩn hoá: wand-remove xoá lỗ kín, brush-keep khôi phục', async () => {
+        const inputPath = await writeSvgAs('ring.png', `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200">
+            <rect width="200" height="200" fill="white"/>
+            <circle cx="100" cy="100" r="80" fill="none" stroke="rgb(${RED})" stroke-width="20"/></svg>`, 'png');
+
+        const removed = await renderWithEdit(inputPath, { edits: [{ op: 'wand-remove', x: 0.5, y: 0.5, tolerance: 20 }] });
+        assert.equal(pixel(await readRgba(removed.output.static), 32, 32)[3], 0);
+
+        const restored = await renderWithEdit(inputPath, {
+            edits: [
+                { op: 'wand-remove', x: 0.5, y: 0.5, tolerance: 20 },
+                { op: 'brush-keep', points: [[0.5, 0.5]], radius: 0.1 },
+            ],
         });
-    }
-
-    test('không có marker poster: lấy khung giữa (ip+op)/2 và cảnh báo', async () => {
-        const { output } = await renderFixture('pulse-without-marker.json');
-
-        assert.equal(output.frame, 50);
-        assert.deepEqual(output.warnings, ['poster_marker_missing']);
-        assert.equal(output.frames, 80);
-
-        const center = (await readRgba(output.static)).pixelAt(256, 256);
-        assert.ok(center.alpha >= OPAQUE_ALPHA);
-        assert.ok(center.red > 200 && center.green < 60 && center.blue < 60, `tâm phải đỏ, nhận ${JSON.stringify(center)}`);
+        assert.deepEqual(pixel(await readRgba(restored.output.static), 32, 32), [255, 255, 255, 255]);
     });
 
-    test('marker poster nằm ngoài [ip, op): lấy khung giữa và cảnh báo', async () => {
-        const document = {
-            v: '5.7.0', fr: 30, ip: 0, op: 40, w: 128, h: 128,
-            markers: [{ cm: 'poster', tm: 400, dr: 0 }],
-            layers: [{
-                ty: 4, ip: 0, op: 40, st: 0,
-                ks: { o: { a: 0, k: 100 }, r: { a: 0, k: 0 }, p: { a: 0, k: [64, 64] }, a: { a: 0, k: [0, 0] }, s: { a: 0, k: [100, 100] } },
-                shapes: [{ ty: 'rc', p: { a: 0, k: [0, 0] }, s: { a: 0, k: [40, 40] }, r: { a: 0, k: 0 } }, { ty: 'fl', c: { a: 0, k: [0, 0, 1, 1] }, o: { a: 0, k: 100 } }],
-            }],
-        };
-        const inputPath = await writeWorkFile('marker-out-of-range.json', JSON.stringify(document));
-        const run = await runCli([inputPath, join(workDir, 'marker-out-of-range')]);
+    test('GIF 10 khung → WebP động 64×64 đúng số khung và độ trễ; static.png 64×64 bảng màu', async () => {
+        const side = 120;
+        const frameBytes = side * side * 3;
+        const strip = Buffer.alloc(frameBytes * GIF_FRAMES, 255);
+        for (let frame = 0; frame < GIF_FRAMES; frame++) {
+            const left = 20 + frame * 6;
+            for (let y = 40; y < 80; y++) {
+                for (let x = left; x < left + 30; x++) strip.set([30, 60, 200], frame * frameBytes + (y * side + x) * 3);
+            }
+        }
+        const gif = await sharp(strip, { raw: { width: side, height: side * GIF_FRAMES, channels: 3, pageHeight: side } })
+            .gif({ delay: Array(GIF_FRAMES).fill(GIF_DELAY_MS), loop: 0 })
+            .toBuffer();
+        const run = await renderOk(await writeWorkFile('moving.gif', gif));
 
-        assert.equal(run.exitCode, 0);
-        assert.equal(run.output.frame, 20);
-        assert.deepEqual(run.output.warnings, ['poster_marker_out_of_range']);
+        assert.equal(run.output.frames, GIF_FRAMES);
+        assert.equal(run.output.durationMs, GIF_FRAMES * GIF_DELAY_MS);
+        const metadata = await sharp(run.output.image, { animated: true }).metadata();
+        assert.equal(metadata.format, 'webp');
+        assert.equal(metadata.pages, GIF_FRAMES);
+        assert.equal(metadata.width, STICKER_SIZE);
+        assert.equal(metadata.pageHeight, STICKER_SIZE);
+        assert.deepEqual(metadata.delay, Array(GIF_FRAMES).fill(GIF_DELAY_MS));
+        assert.equal(metadata.loop, 0);
+
+        const staticMetadata = await sharp(run.output.static).metadata();
+        assert.equal(staticMetadata.width, STICKER_SIZE);
+        assert.equal(staticMetadata.height, STICKER_SIZE);
+        assert.ok(staticMetadata.paletteBitDepth);
     });
 
-    test('bitmap nhúng được vẽ ra ảnh', async () => {
-        const { output } = await renderFixture('embedded-bitmap.json');
+    test('JPG 4000×3000 xử lý dưới 2 giây', async () => {
+        const jpeg = await sharp({ create: { width: 4000, height: 3000, channels: 3, background: '#d8d8d8' } })
+            .composite([{ input: Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="4000" height="3000">
+                <circle cx="2000" cy="1500" r="1100" fill="rgb(${RED})"/></svg>`) }])
+            .jpeg({ quality: 85 })
+            .toBuffer();
+        const run = await renderOk(await writeWorkFile('large.jpg', jpeg));
 
-        assert.equal(output.frame, 10);
-        const center = (await readRgba(output.static)).pixelAt(256, 256);
-        assert.ok(center.alpha >= OPAQUE_ALPHA && center.green > 120 && center.red < 60, JSON.stringify(center));
-    });
-});
-
-describe('lỗi đầu vào', () => {
-    test('JSON hỏng', async () => {
-        await assertRenderError(join(FIXTURE_DIR, 'broken.json'), 'invalid_json');
+        assert.ok(run.elapsedMs < MAX_LARGE_JPEG_MS, `mất ${Math.round(run.elapsedMs)}ms`);
+        assert.equal(pixel(await readRgba(run.output.static), 0, 0)[3], 0);
     });
 
-    test('JSON hợp lệ nhưng không phải Lottie', async () => {
-        await assertRenderError(await writeWorkFile('not-lottie.json', '{"hello":"world"}'), 'invalid_lottie');
+    test('quá --timeout-ms thì dừng cứng, báo timeout, không ghi tệp', async () => {
+        const inputPath = await writeSvgAs('timeout.jpg', stickerSvg(), 'jpeg');
+        const outDir = join(workDir, uniqueName('timeout'));
+        const run = await runCli([inputPath, outDir, '--timeout-ms=1']);
+
+        assert.equal(run.exitCode, 1);
+        assert.deepEqual(run.output, { error: 'timeout' });
+        assert.equal(existsSync(join(outDir, 'sticker.webp')), false);
     });
 
-    test('Lottie có khung thời gian rỗng', async () => {
-        await assertRenderError(await writeWorkFile('empty-timeline.json', '{"v":"5.7.0","fr":30,"ip":10,"op":10,"w":64,"h":64,"layers":[]}'), 'invalid_lottie');
+    test('nền phẳng một màu bị xoá hết thì cảnh báo mask_empty', async () => {
+        const inputPath = await writeWorkFile('flat.png', await sharp({ create: { width: 50, height: 50, channels: 3, background: '#336699' } }).png().toBuffer());
+        const run = await renderOk(inputPath);
+
+        assert.deepEqual(run.output.warnings, ['mask_empty']);
     });
 
-    test('tệp không tồn tại', async () => {
-        await assertRenderError(join(workDir, 'missing.json'), 'input_unreadable');
+    test('--size đổi cạnh đầu ra', async () => {
+        const run = await renderOk(await writeSvgAs('sized.png', stickerSvg(), 'png'), ['--size=128']);
+        assert.equal((await sharp(run.output.image).metadata()).width, 128);
+        assert.equal(run.output.width, 128);
     });
 
-    test('gzip hỏng', async () => {
-        await assertRenderError(await writeWorkFile('corrupt.tgs', Buffer.from([0x1f, 0x8b, 0x08, 0x00, 0xde, 0xad, 0xbe, 0xef])), 'invalid_gzip');
+    describe('mã lỗi', () => {
+        const cases = [
+            ['thiếu tham số', async () => ['only-one-arg'], 'usage'],
+            ['tuỳ chọn lạ', async () => [await writeSvgAs('opt.png', stickerSvg(), 'png'), join(workDir, 'x'), '--frame=1'], 'usage'],
+            ['size ngoài khoảng', async () => [await writeSvgAs('size.png', stickerSvg(), 'png'), join(workDir, 'x'), '--size=8'], 'usage'],
+            ['edit.json không phải JSON', async () => [await writeSvgAs('e1.png', stickerSvg(), 'png'), join(workDir, 'x'), `--edit=${await writeWorkFile('bad.json', '{')}`], 'usage'],
+            ['edit.json sai giá trị', async () => [await writeSvgAs('e2.png', stickerSvg(), 'png'), join(workDir, 'x'), `--edit=${await writeWorkFile('bad2.json', '{"tolerance":150}')}`], 'usage'],
+            ['edit.json thao tác lạ', async () => [await writeSvgAs('e3.png', stickerSvg(), 'png'), join(workDir, 'x'), `--edit=${await writeWorkFile('bad3.json', '{"edits":[{"op":"erase"}]}')}`], 'usage'],
+            ['tệp không tồn tại', async () => [join(workDir, 'missing.png'), join(workDir, 'x')], 'input_unreadable'],
+            ['không phải ảnh', async () => [await writeWorkFile('garbage.png', 'not an image'), join(workDir, 'x')], 'input_unreadable'],
+            ['định dạng không hỗ trợ', async () => [await writeWorkFile('vector.svg', stickerSvg()), join(workDir, 'x')], 'unsupported_format'],
+            ['tệp quá 20 MB', async () => [await writeWorkFile('huge.png', Buffer.alloc(20 * 1024 * 1024 + 1)), join(workDir, 'x')], 'input_too_large'],
+            ['quá 25 megapixel', async () => [await writeWorkFile('mega.jpg', await sharp({ create: { width: 5001, height: 5001, channels: 3, background: '#fff' } }).jpeg().toBuffer()), join(workDir, 'x')], 'input_too_large'],
+            ['quá 200 khung', async () => [await writeWorkFile('frames.gif', await distinctFramesGif(201, 100)), join(workDir, 'x')], 'too_many_frames'],
+            ['ảnh động dài quá 10 giây', async () => [await writeWorkFile('long.gif', await distinctFramesGif(3, 5000)), join(workDir, 'x')], 'input_too_large'],
+        ];
+
+        for (const [name, buildArgs, expectedCode] of cases) {
+            test(`${name} → ${expectedCode}`, async () => {
+                const run = await runCli(await buildArgs());
+                assert.equal(run.exitCode, 1, run.stderr);
+                assert.deepEqual(run.output, { error: expectedCode });
+            });
+        }
     });
 
-    test('gzip bomb bị chặn theo trần giải nén', async () => {
-        await assertRenderError(await writeWorkFile('bomb.tgs', gzipSync(Buffer.alloc(64 * 1024 * 1024, 0x20))), 'input_too_large');
-    });
+    test('cỡ tệp đầu ra điển hình nằm trong ngân sách', async () => {
+        const run = await renderOk(await writeSvgAs('budget.jpg', stickerSvg(), 'jpeg'));
+        const [webpBytes, pngBytes] = await Promise.all([stat(run.output.image), stat(run.output.static)]).then((stats) => stats.map((item) => item.size));
 
-    test('thiếu tham số', async () => {
-        const run = await runCli([]);
-
-        assert.notEqual(run.exitCode, 0);
-        assert.deepEqual(run.output, { error: 'usage' });
-    });
-
-    test('render quá thời gian thì bị cắt cứng', async () => {
-        const inputPath = await writeWorkFile('repeater-bomb.json', JSON.stringify(repeaterBombLottie(1000)));
-        const run = await assertRenderError(inputPath, 'timeout', ['--timeout-ms=300']);
-
-        assert.ok(run.elapsedMs < 3000, `timeout phải cắt sớm, mất ${Math.round(run.elapsedMs)}ms`);
+        assert.ok(webpBytes < 8 * 1024, `sticker.webp ${webpBytes} bytes`);
+        assert.ok(pngBytes < 8 * 1024, `static.png ${pngBytes} bytes`);
     });
 });

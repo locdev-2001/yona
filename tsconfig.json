@@ -17,7 +17,8 @@
         "paths": {
             "dashboard/*": ["resources/js/dashboard/*"],
             "shared/*": ["resources/js/shared/*"],
-            "v3/*": ["resources/js/v3/*"]
+            "v3/*": ["resources/js/v3/*"],
+            "sticker-renderer/*": ["services/sticker-renderer/src/*"]
         }
     },
     "include": ["resources/js/**/*"],

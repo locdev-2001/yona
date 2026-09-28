@@ -43,9 +43,17 @@ it('cấu hình widget lộ danh sách sticker account thấy được kèm từ
     $config = $this->postJson($this->session->url('config'), [], $this->session->headers())->assertOk()->json();
 
     expect($config['website_channel_config']['stickers'])->toBe([
-        ['id' => "yona:{$this->waving->id}", 'image_url' => $this->waving->poster_url, 'pack_id' => "yona:{$this->pack->id}", 'label' => 'Chó vẫy tay', 'keywords' => ['chào', 'hi']],
-        ['id' => "yona:{$this->thanks->id}", 'image_url' => $this->thanks->poster_url, 'pack_id' => "yona:{$this->pack->id}", 'label' => 'Mèo cảm ơn', 'keywords' => []],
+        ['id' => "yona:{$this->waving->id}", 'image_url' => $this->waving->image_url, 'pack_id' => "yona:{$this->pack->id}", 'label' => 'Chó vẫy tay', 'keywords' => ['chào', 'hi']],
+        ['id' => "yona:{$this->thanks->id}", 'image_url' => $this->thanks->image_url, 'pack_id' => "yona:{$this->pack->id}", 'label' => 'Mèo cảm ơn', 'keywords' => []],
     ]);
+});
+
+it('cấu hình widget mang cạnh hiển thị sticker lấy từ config', function () {
+    config(['yona.stickers.display_size' => 80]);
+
+    $config = $this->postJson($this->session->url('config'), [], $this->session->headers())->assertOk()->json();
+
+    expect($config['website_channel_config']['sticker_display_size'])->toBe(80);
 });
 
 it('kho chưa có sticker nào thì danh sách rỗng', function () {

@@ -50,7 +50,7 @@ it('khớp từ khoá bắt đầu bằng từ gõ, trả đúng shape của b�
         ->assertOk()
         ->assertExactJson(['stickers' => [[
             'id' => "yona:{$thanks->id}",
-            'image_url' => $thanks->poster_url,
+            'image_url' => $thanks->image_url,
             'pack_id' => "yona:{$this->pack->id}",
             'label' => 'Mèo',
         ]]]);

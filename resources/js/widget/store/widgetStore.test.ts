@@ -71,12 +71,13 @@ beforeEach(() => {
 afterEach(() => vi.useRealTimers());
 
 describe('chính sách nhắn tin của kênh', () => {
-    it('lấy hạn thu hồi và danh mục sticker từ cấu hình vừa tải', () => {
+    it('lấy hạn thu hồi, danh mục sticker và cạnh hiển thị sticker từ cấu hình vừa tải', () => {
         apiMock.configListeners.forEach(listener =>
             listener({
                 website_channel_config: {
                     recall_window: 300,
                     stickers: [{ id: 'hi', image_url: '/hi.png', pack_id: null, label: null }],
+                    sticker_display_size: 72,
                     reactions: ['👍', '❤️'],
                 },
             }),
@@ -85,6 +86,7 @@ describe('chính sách nhắn tin của kênh', () => {
         expect(widgetStore.getState().messagingPolicy).toStrictEqual({
             recallWindowSeconds: 300,
             stickers: [{ id: 'hi', image_url: '/hi.png', pack_id: null, label: null }],
+            stickerDisplaySize: 72,
             reactions: ['👍', '❤️'],
         });
     });

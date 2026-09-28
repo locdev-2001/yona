@@ -1,21 +1,14 @@
-// Sticker kho Yona: máy chủ trả `source: 'yona'` kèm poster và bản động (Lottie).
-// Sticker nền tảng (Zalo…) không có `source` và vẫn hiện bằng ảnh như cũ.
-
-export interface AnimatedStickerSource {
-    posterUrl: string;
-    animationUrl: string | null;
-}
+// Sticker kho Yona trong `content_attributes.sticker` mang `source: 'yona'`: tin mới có
+// `image_url` (WebP, có thể động) và `url` (PNG tĩnh); tin cũ máy chủ trả `image_url`
+// là ảnh tĩnh cũ, hoặc chỉ còn `url`. Sticker nền tảng (Zalo…) không có `source`.
 
 const nonEmptyString = (value: unknown): string | null => (typeof value === 'string' && value !== '' ? value : null);
 
-export function animatedStickerSource(sticker: unknown): AnimatedStickerSource | null {
+export function yonaStickerImageUrl(sticker: unknown): string | null {
     if (!sticker || typeof sticker !== 'object') return null;
 
     const payload = sticker as Record<string, unknown>;
     if (payload.source !== 'yona') return null;
 
-    const posterUrl = nonEmptyString(payload.poster_url) ?? nonEmptyString(payload.url);
-    if (!posterUrl) return null;
-
-    return { posterUrl, animationUrl: nonEmptyString(payload.animation_url) };
+    return nonEmptyString(payload.image_url) ?? nonEmptyString(payload.url);
 }

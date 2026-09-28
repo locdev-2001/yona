@@ -178,12 +178,11 @@ return [
 
     'widget_token_expiry_days' => (int) env('WIDGET_TOKEN_EXPIRY', 180),
 
-    // Dựng ảnh tĩnh cho sticker upload. `renderer` chọn một mục trong
-    // `renderers`; thêm trình render khác = thêm một mục, không sửa pipeline.
-    // Trình render chạy trong tiến trình con bị cắt theo `timeout_seconds` và
-    // bị giới hạn bộ nhớ ở tầng hệ điều hành bằng `prlimit --data`: wasm của
-    // ThorVG tự phình tới 2 GiB, còn giới hạn không gian địa chỉ (--as) không
-    // dùng được vì V8 giữ chỗ hàng GB địa chỉ ảo cho wasm. macOS không có
+    // Sticker làm từ ảnh tải lên (PNG, JPG, WebP, GIF/WebP động). `renderer`
+    // chọn một mục trong `renderers`; thêm trình dựng khác = thêm một mục, không
+    // sửa pipeline. Trình dựng chạy trong tiến trình con bị cắt theo
+    // `timeout_seconds` và bị giới hạn bộ nhớ dữ liệu ở tầng hệ điều hành bằng
+    // `prlimit --data` (tính cả stack của các luồng libvips). macOS không có
     // prlimit: chạy local thì đặt STICKER_RENDERER_MEMORY_LIMITER=none.
     'stickers' => [
         'renderer' => env('STICKER_RENDERER', 'node'),
@@ -194,11 +193,16 @@ return [
                 'script' => base_path('services/sticker-renderer/src/render.mjs'),
             ],
         ],
-        // Cạnh (px) của ảnh PNG vuông gửi sang kênh không phát được hoạt ảnh (Zalo...): nhỏ như sticker, không thành ảnh lớn.
-        'outbound_image_size' => (int) env('STICKER_OUTBOUND_IMAGE_SIZE', 64),
+        // Cạnh (px) của tệp sticker vuông: WebP hiển thị trong Yona và PNG gửi kênh ngoài (Zalo...).
+        'image_size' => (int) env('STICKER_IMAGE_SIZE', 64),
+        // Cạnh (px CSS) khi hiện sticker ở hộp thư và widget; tách khỏi cạnh tệp để màn retina tăng riêng được.
+        'display_size' => (int) env('STICKER_DISPLAY_SIZE', 64),
+        // Trần dung lượng ảnh gốc tải lên. Trình dựng còn tự chặn ảnh trên 20 MB,
+        // 25 triệu điểm ảnh mỗi khung, 200 khung hoặc hoạt ảnh dài quá 10 giây.
+        'max_original_mb' => (int) env('STICKER_MAX_ORIGINAL_MB', 10),
         'timeout_seconds' => (int) env('STICKER_RENDERER_TIMEOUT', 10),
         'memory_limiter' => env('STICKER_RENDERER_MEMORY_LIMITER', 'prlimit'),
-        'memory_limit_mb' => (int) env('STICKER_RENDERER_MEMORY_MB', 384),
+        'memory_limit_mb' => (int) env('STICKER_RENDERER_MEMORY_MB', 512),
     ],
 
     'available_locales' => [

@@ -36,8 +36,8 @@ const SEND_FACE_IDLE_CLASS = 'bg-[var(--yona-chat-send-idle)] text-[var(--yona-c
 const NO_STICKERS: WidgetSticker[] = [];
 const STICKER_SUGGESTION_CLASS_NAMES = {
     root: 'mb-[9px] flex items-center gap-1 overflow-x-auto no-scrollbar',
-    item: 'flex size-14 flex-none items-center justify-center rounded-xl outline-none hover:bg-[var(--yona-chat-hover)] focus-visible:ring-2 focus-visible:ring-[var(--yona-chat-accent)] active:scale-[0.97]',
-    image: 'size-full object-contain p-1',
+    item: 'flex flex-none items-center justify-center rounded-xl p-1 outline-none hover:bg-[var(--yona-chat-hover)] focus-visible:ring-2 focus-visible:ring-[var(--yona-chat-accent)] active:scale-[0.97]',
+    image: '',
     dismiss:
         'ms-auto flex size-11 flex-none items-center justify-center rounded-full text-[var(--yona-chat-ink-muted)] outline-none hover:bg-[var(--yona-chat-hover)] hover:text-[var(--yona-chat-ink)] focus-visible:ring-2 focus-visible:ring-[var(--yona-chat-accent)] active:scale-[0.97]',
 };

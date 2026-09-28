@@ -1,5 +1,7 @@
 import { useState } from 'react';
 
+import StickerImage from 'shared/sticker/StickerImage';
+
 import EmojiPicker, { EMOJI_CELL_CLASS, EMOJI_GRID_CLASS } from '../EmojiPicker';
 import { readRecentReactions, rememberRecentReaction } from './composerStorage';
 import type { RecentReaction } from './composerStorage';
@@ -17,7 +19,7 @@ interface StickerPanelProps {
 
 const STICKER_GRID_CLASS = 'grid grid-cols-4 gap-[9px]';
 const STICKER_CELL_CLASS =
-    'flex items-center justify-center w-full aspect-square rounded-xl hover:bg-[var(--yona-chat-hover)] active:scale-[0.97]';
+    'flex items-center justify-center w-full aspect-square rounded-xl p-1 hover:bg-[var(--yona-chat-hover)] active:scale-[0.97]';
 
 // Panel nằm TRÊN ô nhập: tab Sticker (chỉ khi kênh có danh mục sticker), Emoji
 // (khi hộp thư bật bộ chọn biểu tượng cảm xúc) và Gần đây.
@@ -97,7 +99,7 @@ export default function StickerPanel({ stickers, canPickEmoji = true, onSelectEm
                                 aria-label={sticker.label || t('STICKER_PANEL.STICKER_ALT')}
                                 onClick={() => pickSticker(sticker)}
                             >
-                                <img src={sticker.image_url} alt="" className="object-contain w-full h-full p-1" />
+                                <StickerImage src={sticker.image_url} />
                             </button>
                         ))}
                     </div>
@@ -116,7 +118,7 @@ export default function StickerPanel({ stickers, canPickEmoji = true, onSelectEm
                                 {reaction.kind === 'emoji' ? (
                                     reaction.value
                                 ) : (
-                                    <img src={reaction.imageUrl} alt="" className="object-contain w-full h-full p-1" />
+                                    <StickerImage src={reaction.imageUrl} />
                                 )}
                             </button>
                         ))}

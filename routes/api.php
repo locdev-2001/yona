@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Controllers\Api\V1\StickerLibraryPacksController;
 use App\Http\Controllers\Api\Webhooks\FacebookController as FacebookWebhooksController;
 use App\Http\Controllers\Api\Webhooks\InstagramController as InstagramWebhooksController;
 use App\Http\Controllers\Api\Webhooks\LineController as LineWebhooksController;
@@ -31,7 +30,6 @@ use App\Http\Controllers\Widget\PresenceController;
 use App\Http\Controllers\Widget\ReactionsController;
 use App\Http\Controllers\Widget\UpdatesController;
 use App\Http\Middleware\AuthenticatePlatformApp;
-use App\Http\Middleware\AuthenticateStickerLibraryToken;
 use App\Http\Middleware\EnsureWidgetContact;
 use App\Http\Middleware\ResolveOrCreateWidgetContact;
 use App\Http\Middleware\ResolveWidgetChannel;
@@ -123,28 +121,6 @@ Route::middleware(AuthenticatePlatformApp::class)
         Route::delete('/accounts/{account}/account_users', [PlatformAccountUsersController::class, 'destroy'])->whereNumber('account');
     });
 // F7 Platform API — END
-
-// Kho sticker bằng token sticker tạo trong Cài đặt (Bearer): cùng cổng, cùng
-// lõi với MCP /mcp/stickers; kho được chạm là kho mà token cấp.
-Route::middleware([AuthenticateStickerLibraryToken::class, 'throttle:120,1'])
-    ->prefix('/api/v1/sticker_library/sticker_packs')
-    ->group(function () {
-        Route::get('/', [StickerLibraryPacksController::class, 'index']);
-        Route::post('/', [StickerLibraryPacksController::class, 'store']);
-        Route::get('/{packId}', [StickerLibraryPacksController::class, 'show'])->whereNumber('packId');
-        Route::match(['put', 'patch'], '/{packId}', [StickerLibraryPacksController::class, 'update'])->whereNumber('packId');
-        Route::delete('/{packId}', [StickerLibraryPacksController::class, 'destroy'])->whereNumber('packId');
-        Route::post('/{packId}/publish', [StickerLibraryPacksController::class, 'publish'])->whereNumber('packId');
-        Route::post('/{packId}/unpublish', [StickerLibraryPacksController::class, 'unpublish'])->whereNumber('packId');
-        Route::post('/{packId}/stickers', [StickerLibraryPacksController::class, 'upload'])
-            ->whereNumber('packId')
-            ->middleware('throttle:sticker-uploads');
-        Route::put('/{packId}/stickers/order', [StickerLibraryPacksController::class, 'reorder'])->whereNumber('packId');
-        Route::patch('/{packId}/stickers/{stickerId}', [StickerLibraryPacksController::class, 'updateSticker'])
-            ->whereNumber(['packId', 'stickerId']);
-        Route::delete('/{packId}/stickers/{stickerId}', [StickerLibraryPacksController::class, 'destroySticker'])
-            ->whereNumber(['packId', 'stickerId']);
-    });
 
 // F2-F5 webhook nhận từ kênh ngoài (/webhooks/*) — BEGIN (agent f2f5-be sở hữu khối này)
 // Webhook nhà cung cấp. Không session, không CSRF: mỗi kênh

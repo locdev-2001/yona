@@ -29,9 +29,10 @@ class Sticker extends Model
         'sticker_pack_id',
         'label',
         'keywords',
-        'animation_path',
-        'poster_path',
+        'image_path',
         'static_path',
+        'original_path',
+        'edit_params',
         'content_hash',
         'width',
         'height',
@@ -53,6 +54,7 @@ class Sticker extends Model
     {
         return [
             'keywords' => 'array',
+            'edit_params' => 'array',
             'width' => 'integer',
             'height' => 'integer',
             'frame_count' => 'integer',
@@ -86,16 +88,22 @@ class Sticker extends Model
                 ->where(fn (Builder $owner) => $owner->whereNull('account_id')->orWhere('account_id', $account->id)));
     }
 
-    /** @return Attribute<string|null, never> */
-    protected function animationUrl(): Attribute
+    /** Cạnh (px) của tệp sticker vuông, cả WebP lẫn PNG gửi kênh ngoài. */
+    public static function imageSize(): int
     {
-        return Attribute::get(fn () => self::diskUrl($this->animation_path));
+        return (int) config('yona.stickers.image_size');
+    }
+
+    /** Cạnh (px CSS) khi hiện sticker ở hộp thư và widget. */
+    public static function displaySize(): int
+    {
+        return (int) config('yona.stickers.display_size');
     }
 
     /** @return Attribute<string|null, never> */
-    protected function posterUrl(): Attribute
+    protected function imageUrl(): Attribute
     {
-        return Attribute::get(fn () => self::diskUrl($this->poster_path));
+        return Attribute::get(fn () => self::diskUrl($this->image_path));
     }
 
     /** @return Attribute<string|null, never> */

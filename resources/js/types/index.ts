@@ -31,5 +31,7 @@ export interface SharedPageProps {
     auth: { user: AuthUser | null };
     globalConfig: GlobalConfig;
     flash: { alert: string | null };
+    // Cạnh hiển thị sticker (px CSS), cấu hình ở máy chủ.
+    stickerDisplaySize?: number;
     [key: string]: unknown;
 }

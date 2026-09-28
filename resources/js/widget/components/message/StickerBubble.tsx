@@ -1,18 +1,18 @@
-import AnimatedSticker from 'shared/sticker/AnimatedSticker';
-import { animatedStickerSource } from 'shared/sticker/stickerPayload';
+import StickerImage from 'shared/sticker/StickerImage';
+import { yonaStickerImageUrl } from 'shared/sticker/stickerPayload';
 
 import { useWidgetState } from '../../store/hooks';
 import { t } from '../../i18n';
 import type { WidgetMessage } from '../../types';
 
-// Ảnh sticker: máy chủ đã ghi sẵn url khi lưu; tin tạm phía khách chỉ có mã thì
-// tra danh mục sticker của kênh.
+// Ảnh sticker: máy chủ đã ghi sẵn url khi lưu (sticker kho Yona có `image_url` WebP,
+// có thể động); tin tạm phía khách chỉ có mã thì tra danh mục sticker của kênh.
 export function stickerImageUrl(
     message: WidgetMessage,
     catalog: { id: string; image_url: string }[],
 ): string | undefined {
     const sticker = message.content_attributes?.sticker;
-    if (sticker && typeof sticker === 'object') return sticker.url || sticker.thumbnail;
+    if (sticker && typeof sticker === 'object') return yonaStickerImageUrl(sticker) ?? (sticker.url || sticker.thumbnail);
     if (typeof sticker === 'string') {
         const fromCatalog = catalog.find(item => item.id === sticker)?.image_url;
         if (fromCatalog) return fromCatalog;
@@ -20,25 +20,18 @@ export function stickerImageUrl(
     return message.attachments?.[0]?.data_url;
 }
 
-// Sticker đứng trần 100×100, không bong bóng. Sticker kho Yona thì phát bản động.
+// Sticker đứng trần ở cạnh hiển thị đã cấu hình, không bong bóng.
 export default function StickerBubble({ message }: { message: WidgetMessage }) {
     const catalog = useWidgetState(state => state.messagingPolicy.stickers);
-    const animated = animatedStickerSource(message.content_attributes?.sticker);
     const url = stickerImageUrl(message, catalog);
-    const stickerClass = `yona-sticker h-[100px] w-[100px] ${message.status === 'in_progress' ? 'opacity-60' : ''}`;
-
-    if (animated) {
-        return (
-            <AnimatedSticker
-                className={stickerClass}
-                posterUrl={animated.posterUrl}
-                animationUrl={animated.animationUrl}
-                alt={t('STICKER_PANEL.STICKER_ALT')}
-            />
-        );
-    }
 
     if (!url) return null;
 
-    return <img src={url} alt={t('STICKER_PANEL.STICKER_ALT')} className={`${stickerClass} object-contain`} />;
+    return (
+        <StickerImage
+            src={url}
+            alt={t('STICKER_PANEL.STICKER_ALT')}
+            className={`yona-sticker ${message.status === 'in_progress' ? 'opacity-60' : ''}`}
+        />
+    );
 }

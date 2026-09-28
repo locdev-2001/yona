@@ -27,7 +27,6 @@ vi.mock('./StickerLibraryManager', () => ({
         return <div data-testid="library-manager">{api.baseUrl}</div>;
     },
 }));
-vi.mock('./StickerMcpTokens', () => ({ default: () => <div data-testid="mcp-tokens" /> }));
 
 class ResizeObserverStub {
     observe() {}
@@ -50,30 +49,21 @@ beforeEach(() => {
 const tabNames = () => screen.getAllByRole('button').map(button => button.textContent?.trim());
 
 describe('trang Cài đặt / Kho sticker', () => {
-    it('chưa có quyền: kho riêng và MCP hiện trạng thái khoá, không có kho nền tảng, không có nút giả', () => {
+    it('chưa có quyền: kho riêng hiện trạng thái khoá, không có kho nền tảng, không có nút giả', () => {
         pageProps.stickerLibraryAccess = { accountLibrary: false, platformLibrary: false };
         render(<CustomStickersIndex />);
 
-        expect(tabNames()).toEqual(['Kho riêng', 'MCP cho AI']);
+        expect(tabNames()).toEqual(['Kho riêng']);
         expect(screen.getByRole('note')).toHaveTextContent('Chưa mở cho account này');
         expect(screen.queryByTestId('library-manager')).not.toBeInTheDocument();
-
-        fireEvent.click(screen.getByRole('button', { name: 'MCP cho AI' }));
-
-        expect(screen.getByRole('note')).toHaveTextContent('Token MCP cho AI chỉ tạo được');
-        expect(screen.queryByTestId('mcp-tokens')).not.toBeInTheDocument();
     });
 
-    it('account dùng được kho riêng: hiện trình quản lý kho riêng và khối MCP', () => {
+    it('account dùng được kho riêng: chỉ có tab kho riêng, hiện trình quản lý kho riêng', () => {
         pageProps.stickerLibraryAccess = { accountLibrary: true, platformLibrary: false };
         render(<CustomStickersIndex />);
 
+        expect(tabNames()).toEqual(['Kho riêng']);
         expect(screen.getByTestId('library-manager')).toHaveTextContent('/api/v1/accounts/7');
-        expect(tabNames()).not.toContain('Kho nền tảng');
-
-        fireEvent.click(screen.getByRole('button', { name: 'MCP cho AI' }));
-
-        expect(screen.getByTestId('mcp-tokens')).toBeInTheDocument();
         expect(screen.queryByRole('note')).not.toBeInTheDocument();
     });
 
@@ -101,9 +91,9 @@ describe('trang Cài đặt / Kho sticker', () => {
         expect(window.location.search).toBe('');
     });
 
-    it('?tab= không có quyền hoặc lạ thì mở kho riêng', () => {
+    it.each(['platform', 'unknown'])('?tab=%s không có quyền hoặc lạ thì mở kho riêng', requestedTab => {
         pageProps.stickerLibraryAccess = { accountLibrary: true, platformLibrary: false };
-        window.history.replaceState(null, '', '/app/accounts/7/settings/stickers?tab=platform');
+        window.history.replaceState(null, '', `/app/accounts/7/settings/stickers?tab=${requestedTab}`);
         render(<CustomStickersIndex />);
 
         expect(screen.getByTestId('library-manager')).toHaveTextContent('/api/v1/accounts/7');

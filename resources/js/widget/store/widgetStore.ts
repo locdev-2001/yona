@@ -1002,6 +1002,7 @@ api.onConfigLoaded(({ website_channel_config: channelPayload }) => {
     widgetStore.setMessagingPolicy({
         recallWindowSeconds: channelPayload.recall_window ?? 0,
         stickers: channelPayload.stickers ?? [],
+        stickerDisplaySize: channelPayload.sticker_display_size,
         reactions: channelPayload.reactions ?? [],
     });
 });

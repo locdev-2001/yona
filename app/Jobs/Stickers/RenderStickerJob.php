@@ -5,6 +5,7 @@ namespace App\Jobs\Stickers;
 use App\Jobs\ApplicationJob;
 use App\Models\Sticker;
 use App\Services\Stickers\StickerFileJanitor;
+use App\Services\Stickers\StickerFileLayout;
 use App\Services\Stickers\StickerRenderer;
 use App\Services\Stickers\StickerRendererResolver;
 use Illuminate\Contracts\Filesystem\Filesystem;
@@ -14,23 +15,20 @@ use Illuminate\Support\Str;
 use Throwable;
 use UnexpectedValueException;
 
-// Dựng ảnh cho một sticker vừa upload rồi ghi ba tệp lên disk `stickers` theo
-// hash nội dung. Hỏng ở bất kỳ bước nào: sticker `failed` kèm mã, không để lại
-// tệp dở. Dựng lại (`refreshing`) sticker đã `ready` thì ghi đè đúng các đường
-// dẫn cũ; hỏng thì chỉ báo lỗi, sticker vẫn dùng ảnh cũ. Disk `stickers` không ném lỗi khi ghi hỏng nên mọi lệnh ghi đều kiểm
-// giá trị trả về.
+// Dựng sticker từ ảnh gốc đã lưu + thông số chỉnh của nó rồi ghi `sticker.webp`
+// và `static.png` lên disk `stickers` theo hash nội dung. Hỏng ở bất kỳ bước nào:
+// sticker `failed` kèm mã, không để lại tệp dở. Dựng lại (`refreshing`) sticker
+// đã `ready` thì ghi đè đúng các đường dẫn cũ; hỏng thì chỉ báo lỗi, sticker vẫn
+// dùng ảnh cũ. Disk `stickers` không ném lỗi khi ghi hỏng nên mọi lệnh ghi đều
+// kiểm giá trị trả về.
 class RenderStickerJob extends ApplicationJob
 {
     public const STORAGE_WRITE_FAILED = 'storage_write_failed';
 
+    public const ORIGINAL_MISSING = 'original_missing';
+
     // Hàng đợi riêng, supervisor-stickers một process (config/horizon.php).
     private const QUEUE = 'stickers';
-
-    private const ANIMATION_FILE = 'anim.json';
-
-    private const POSTER_FILE = 'poster.webp';
-
-    private const STATIC_FILE = 'static.png';
 
     private const RENDER_OUTPUT_DIRECTORY = 'rendered';
 
@@ -38,31 +36,14 @@ class RenderStickerJob extends ApplicationJob
 
     public int $tries = 1;
 
-    // Dài hơn timeout tối đa của tiến trình render (60 giây cộng thời gian khởi động).
+    // Dài hơn timeout tối đa của tiến trình dựng (60 giây cộng thời gian khởi động).
     public int $timeout = 90;
 
     public function __construct(
         public readonly Sticker $sticker,
-        public readonly string $animationJson,
         public readonly bool $refreshing = false,
     ) {
         $this->onQueue(self::QUEUE);
-    }
-
-    /**
-     * Đường dẫn tương đối trên disk `stickers`: {hash[0:2]}/{hash}/tệp.
-     *
-     * @return array{animation_path: string, poster_path: string, static_path: string}
-     */
-    public static function storagePaths(string $contentHash): array
-    {
-        $directory = substr($contentHash, 0, 2).'/'.$contentHash;
-
-        return [
-            'animation_path' => "{$directory}/".self::ANIMATION_FILE,
-            'poster_path' => "{$directory}/".self::POSTER_FILE,
-            'static_path' => "{$directory}/".self::STATIC_FILE,
-        ];
     }
 
     public function handle(): void
@@ -75,21 +56,32 @@ class RenderStickerJob extends ApplicationJob
         $workspace = sys_get_temp_dir().'/'.self::WORKSPACE_PREFIX.Str::uuid();
 
         try {
-            $failure = $this->renderIntoStorage($workspace);
+            $outcome = $this->renderIntoStorage($workspace);
         } catch (Throwable $exception) {
             report($exception);
-            $failure = StickerRenderer::RENDERER_UNAVAILABLE;
+            $outcome = ['failure' => StickerRenderer::RENDERER_UNAVAILABLE];
         } finally {
             File::deleteDirectory($workspace);
         }
 
-        if ($this->refreshing) {
-            $failure === null || report(new UnexpectedValueException("Dựng lại sticker {$this->sticker->getKey()} hỏng: {$failure}"));
+        if (isset($outcome['failure']) && $this->refreshing) {
+            report(new UnexpectedValueException("Dựng lại sticker {$this->sticker->getKey()} hỏng: {$outcome['failure']}"));
 
             return;
         }
 
-        $failure === null ? $this->markReady() : $this->markFailed($failure);
+        if (isset($outcome['failure'])) {
+            $this->markFailed($outcome['failure']);
+
+            return;
+        }
+
+        $this->sticker->update([
+            ...StickerFileLayout::renderedPaths($this->sticker->content_hash),
+            ...$outcome,
+            'status' => Sticker::STATUS_READY,
+            'failure_code' => null,
+        ]);
     }
 
     // Worker chỉ gọi hook này khi job bị giết giữa chừng (quá $timeout), vì
@@ -101,58 +93,60 @@ class RenderStickerJob extends ApplicationJob
         }
     }
 
-    private function renderIntoStorage(string $workspace): ?string
+    /**
+     * @return array{width: int, height: int, frame_count: int, duration_ms: int, byte_size: int}|array{failure: string}
+     */
+    private function renderIntoStorage(string $workspace): array
     {
-        $animationPath = "{$workspace}/".self::ANIMATION_FILE;
+        $originalPath = $this->sticker->original_path;
+        $original = $originalPath === null ? null : $this->disk()->get($originalPath);
+        if ($original === null) {
+            return ['failure' => self::ORIGINAL_MISSING];
+        }
+
+        $inputPath = "{$workspace}/".basename($originalPath);
         File::ensureDirectoryExists($workspace);
-        if (File::put($animationPath, $this->animationJson) === false) {
-            return StickerRenderer::RENDERER_UNAVAILABLE;
+        if (File::put($inputPath, $original) === false) {
+            return ['failure' => StickerRenderer::RENDERER_UNAVAILABLE];
         }
 
-        $rendered = app(StickerRendererResolver::class)->renderer()->render($animationPath, "{$workspace}/".self::RENDER_OUTPUT_DIRECTORY);
+        $rendered = app(StickerRendererResolver::class)->renderer()->render(
+            $inputPath,
+            "{$workspace}/".self::RENDER_OUTPUT_DIRECTORY,
+            $this->sticker->edit_params ?? [],
+            Sticker::imageSize(),
+        );
         if (isset($rendered['failure'])) {
-            return $rendered['failure'];
+            return ['failure' => $rendered['failure']];
         }
 
-        $contentsByColumn = [
-            'animation_path' => $this->animationJson,
-            'poster_path' => File::get($rendered['poster_path']),
-            'static_path' => File::get($rendered['static_path']),
-        ];
-        foreach (self::storagePaths($this->sticker->content_hash) as $column => $path) {
-            if (! $this->disk()->put($path, $contentsByColumn[$column])) {
-                return self::STORAGE_WRITE_FAILED;
+        foreach (StickerFileLayout::renderedPaths($this->sticker->content_hash) as $column => $path) {
+            if (! $this->disk()->put($path, File::get($rendered[$column]))) {
+                return ['failure' => self::STORAGE_WRITE_FAILED];
             }
         }
 
-        return null;
+        return [
+            'width' => $rendered['width'],
+            'height' => $rendered['height'],
+            'frame_count' => $rendered['frames'],
+            'duration_ms' => $rendered['duration_ms'],
+            'byte_size' => (int) File::size($rendered['image_path']),
+        ];
     }
 
-    private function markReady(): void
-    {
-        $this->sticker->update([
-            ...self::storagePaths($this->sticker->content_hash),
-            'status' => Sticker::STATUS_READY,
-            'failure_code' => null,
-        ]);
-    }
-
+    // Ảnh gốc nằm chung thư mục hash nên bị dọn cùng: tải lại ảnh là dựng lại được.
     private function markFailed(string $failureCode): void
     {
-        $this->discardStoredFiles();
+        $released = app(StickerFileJanitor::class)->releaseIfUnreferenced($this->sticker->content_hash, $this->sticker->getKey());
 
         $this->sticker->update([
-            'animation_path' => null,
-            'poster_path' => null,
+            'image_path' => null,
             'static_path' => null,
+            ...($released ? ['original_path' => null] : []),
             'status' => Sticker::STATUS_FAILED,
             'failure_code' => $failureCode,
         ]);
-    }
-
-    private function discardStoredFiles(): void
-    {
-        app(StickerFileJanitor::class)->releaseIfUnreferenced($this->sticker->content_hash, $this->sticker->getKey());
     }
 
     private function disk(): Filesystem

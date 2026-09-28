@@ -1,5 +1,12 @@
 import { ApiError, deleteJson, getJson, patchJson, postForm, postJson, putJson } from 'dashboard/helper/apiClient';
 import type { LibrarySticker, LibraryStickerChanges, LibraryStickerPackDetail, StickerLibraryListing } from './types';
+import type { StickerEdit } from './stickerEdit';
+
+export interface StickerUpload {
+    edit: StickerEdit;
+    label: string | null;
+    keywords: string[];
+}
 
 const TOO_MANY_REQUESTS = 429;
 const MAX_THROTTLE_RETRIES = 3;
@@ -40,9 +47,12 @@ export function createStickerLibraryApi(baseUrl: string) {
         setPublished: (packId: number, published: boolean) =>
             postJson<LibraryStickerPackDetail>(`${packUrl(packId)}/${published ? 'publish' : 'unpublish'}`, {}),
         deletePack: (packId: number) => deleteJson(packUrl(packId)),
-        uploadSticker: (packId: number, file: File, keywords: string[] = []) => {
+        // Gửi ảnh gốc kèm tham số chỉnh; máy chủ dựng sticker bằng đúng `edit` đó.
+        uploadSticker: (packId: number, file: File, { edit, label, keywords }: StickerUpload) => {
             const form = new FormData();
             form.append('file', file);
+            form.append('edit', JSON.stringify(edit));
+            if (label) form.append('label', label);
             keywords.forEach(keyword => form.append('keywords[]', keyword));
 
             return withThrottleRetry(() => postForm<LibrarySticker>(`${packUrl(packId)}/stickers`, form));

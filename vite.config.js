@@ -2,7 +2,6 @@ import { defineConfig } from 'vite';
 import laravel from 'laravel-vite-plugin';
 import react from '@vitejs/plugin-react';
 
-import { thorvgWithoutCdnFallback } from './resources/js/shared/sticker/thorvgBuildPlugin.ts';
 import { viteAliases } from './vite.aliases.js';
 
 export default defineConfig({
@@ -29,7 +28,6 @@ export default defineConfig({
             refresh: true,
         }),
         react(),
-        thorvgWithoutCdnFallback(),
     ],
     resolve: {
         alias: viteAliases(__dirname),

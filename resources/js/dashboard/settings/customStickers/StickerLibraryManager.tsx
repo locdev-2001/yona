@@ -3,10 +3,22 @@ import type { FormEvent } from 'react';
 
 import { t } from '../../../i18n';
 import { parseApiErrorMessage } from 'dashboard/helper/apiClient';
+import { formatBytes } from 'shared/helpers/FileHelper';
+import StickerImage from 'shared/sticker/StickerImage';
 import { formatKeywords, parseKeywordInput } from './stickerKeywords';
 import ConfirmActionDialog from './ConfirmActionDialog';
 import type { ConfirmActionRequest } from './ConfirmActionDialog';
-import type { StickerLibraryApi } from './stickerLibraryApi';
+import StickerImageEditor from './StickerImageEditor';
+import type { StickerLibraryApi, StickerUpload } from './stickerLibraryApi';
+import { isAnimatedImageBytes } from './stickerSourceImage';
+import { prepareStickerUpload } from './stickerUploadFile';
+import {
+    DANGER_BUTTON_CLASS,
+    ICON_BUTTON_CLASS,
+    INPUT_CLASS,
+    PRIMARY_BUTTON_CLASS,
+    SECONDARY_BUTTON_CLASS,
+} from './stickerLibraryStyles';
 import type {
     LibrarySticker,
     LibraryStickerChanges,
@@ -15,9 +27,8 @@ import type {
     LibraryStickerStatus,
 } from './types';
 
-// Màn quản trị kho sticker dùng chung cho Super Admin và tenant. Chỉ dùng màu
-// tĩnh của theme (slate/woot/green/red/yellow) vì console Super Admin không
-// nạp biến màu của dashboard.
+// Màn quản trị kho sticker dùng chung cho Super Admin và tenant: bộ sticker, thêm
+// sticker từ ảnh (qua trình chỉnh), sắp xếp, sửa nhãn và từ khoá.
 
 export const PROCESSING_POLL_INTERVAL_MS = 3000;
 
@@ -27,16 +38,16 @@ const STATUS_TONE: Record<LibraryStickerStatus, string> = {
     failed: 'bg-red-50 text-red-700',
 };
 
-// reset-base: console Super Admin tô xanh mọi <button> (button:not(.reset-base)).
-const BUTTON_CLASS =
-    'reset-base inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1.5 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50';
-const PRIMARY_BUTTON_CLASS = `${BUTTON_CLASS} bg-woot-500 text-white hover:bg-woot-600`;
-const SECONDARY_BUTTON_CLASS = `${BUTTON_CLASS} border border-slate-200 bg-white text-slate-800 hover:bg-slate-50`;
-const DANGER_BUTTON_CLASS = `${BUTTON_CLASS} border border-red-200 bg-white text-red-700 hover:bg-red-50`;
-const ICON_BUTTON_CLASS =
-    'reset-base inline-flex size-7 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40';
-const INPUT_CLASS =
-    'w-full rounded-md border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-900 focus:border-woot-500 focus:outline-none';
+interface EditorQueue {
+    packId: number;
+    files: File[];
+    index: number;
+}
+
+// Cạnh tệp sticker khi máy chủ chưa báo (meta.image_size).
+const FALLBACK_IMAGE_SIZE = 64;
+
+const fileExtension = (file: File) => file.name.split('.').pop()?.toLowerCase() ?? '';
 
 const errorMessage = (error: unknown) => parseApiErrorMessage(error) || t('STICKER_LIBRARY.ACTION_ERROR');
 
@@ -172,9 +183,7 @@ function StickerCard({
     return (
         <li className="flex flex-col gap-2 rounded-lg border border-slate-100 p-2" data-testid="library-sticker">
             <div className="flex aspect-square items-center justify-center overflow-hidden rounded-md bg-slate-50">
-                {sticker.poster_url ? (
-                    <img src={sticker.poster_url} alt={sticker.label ?? ''} className="size-full object-contain" loading="lazy" />
-                ) : null}
+                {sticker.image_url ? <StickerImage src={sticker.image_url} alt={sticker.label ?? ''} /> : null}
             </div>
             <span className={`self-start rounded px-1.5 py-0.5 text-xs font-medium ${STATUS_TONE[sticker.status]}`}>
                 {t(`STICKER_LIBRARY.STATUS.${sticker.status}`)}
@@ -190,7 +199,7 @@ function StickerCard({
             ) : (
                 <StickerDetails sticker={sticker} />
             )}
-            <div className="flex items-center gap-1">
+            <div className="flex flex-wrap items-center gap-1">
                 <button
                     type="button"
                     className={ICON_BUTTON_CLASS}
@@ -241,15 +250,15 @@ export default function StickerLibraryManager({ api }: { api: StickerLibraryApi 
     const [packs, setPacks] = useState<LibraryStickerPack[]>([]);
     const [maxUploadKb, setMaxUploadKb] = useState(0);
     const [acceptedExtensions, setAcceptedExtensions] = useState<string[]>([]);
+    const [imageSize, setImageSize] = useState(FALLBACK_IMAGE_SIZE);
     const [isLoading, setLoading] = useState(true);
     const [loadFailed, setLoadFailed] = useState(false);
     const [selectedPack, setSelectedPack] = useState<LibraryStickerPackDetail | null>(null);
     const [newPackName, setNewPackName] = useState('');
     const [nameDraft, setNameDraft] = useState('');
     const [isBusy, setBusy] = useState(false);
-    const [uploadProgress, setUploadProgress] = useState<{ done: number; total: number } | null>(null);
+    const [editorQueue, setEditorQueue] = useState<EditorQueue | null>(null);
     const [uploadErrors, setUploadErrors] = useState<string[]>([]);
-    const [uploadKeywordsDraft, setUploadKeywordsDraft] = useState('');
     const [actionError, setActionError] = useState<string | null>(null);
     const [pendingConfirmation, setPendingConfirmation] = useState<ConfirmActionRequest | null>(null);
     const closeConfirmation = useCallback(() => setPendingConfirmation(null), []);
@@ -261,6 +270,7 @@ export default function StickerLibraryManager({ api }: { api: StickerLibraryApi 
             setPacks(listing.payload);
             setMaxUploadKb(listing.meta.max_upload_kb);
             setAcceptedExtensions(listing.meta.accepted_extensions);
+            setImageSize(listing.meta.image_size || FALLBACK_IMAGE_SIZE);
             setLoadFailed(false);
         } catch {
             setLoadFailed(true);
@@ -363,36 +373,45 @@ export default function StickerLibraryManager({ api }: { api: StickerLibraryApi 
         });
     };
 
-    const uploadFiles = async (files: File[]) => {
-        if (!selectedPack || files.length === 0) return;
+    const uploadLimitBytes = maxUploadKb * 1024;
+    const uploadLimit = formatBytes(uploadLimitBytes, 1);
 
-        const packId = selectedPack.id;
-        const keywords = parseKeywordInput(uploadKeywordsDraft);
-        const upload = (file: File) =>
-            keywords.length > 0 ? api.uploadSticker(packId, file, keywords) : api.uploadSticker(packId, file);
-        const failures: string[] = [];
-        setUploadErrors([]);
-        setUploadProgress({ done: 0, total: files.length });
-        for (const [index, file] of files.entries()) {
-            try {
-                await upload(file);
-            } catch (error) {
-                failures.push(
-                    t('STICKER_LIBRARY.UPLOAD_FAILED_FILE', {
-                        filename: file.name,
-                        message: parseApiErrorMessage(error) || t('STICKER_LIBRARY.UPLOAD_FAILED'),
-                    }),
-                );
-            }
-            setUploadProgress({ done: index + 1, total: files.length });
+    // Ảnh tĩnh quá nặng sẽ được thu nhỏ lúc lưu; chỉ ảnh động quá nặng mới bị từ chối ngay.
+    const rejectionOf = async (file: File): Promise<string | null> => {
+        if (!acceptedExtensions.includes(fileExtension(file))) {
+            return t('STICKER_LIBRARY.FILE_TYPE_REJECTED', { filename: file.name });
         }
-        setUploadProgress(null);
-        setUploadErrors(failures);
+        if (uploadLimitBytes > 0 && file.size > uploadLimitBytes && isAnimatedImageBytes(new Uint8Array(await file.arrayBuffer()))) {
+            return t('STICKER_LIBRARY.FILE_ANIMATED_TOO_LARGE', { filename: file.name, limit: uploadLimit });
+        }
+        return null;
+    };
 
-        await runAction(async () => {
-            showPack(await api.getPack(packId));
+    const openEditor = async (files: File[]) => {
+        if (!selectedPack || files.length === 0) return;
+        const packId = selectedPack.id;
+        const rejections = await Promise.all(files.map(rejectionOf));
+        const editable = files.filter((_, index) => rejections[index] === null);
+        setUploadErrors(rejections.filter((message): message is string => message !== null));
+        if (editable.length > 0) setEditorQueue({ packId, files: editable, index: 0 });
+    };
+
+    const refreshPack = (packId: number) =>
+        runAction(async () => {
+            const pack = await api.getPack(packId);
+            setSelectedPack(current => (current?.id === pack.id ? pack : current));
             await loadPacks();
         });
+
+    const advanceEditor = () =>
+        setEditorQueue(queue => (queue && queue.index + 1 < queue.files.length ? { ...queue, index: queue.index + 1 } : null));
+
+    const saveEditedSticker = async (upload: StickerUpload) => {
+        if (!editorQueue) return;
+        const { packId, files, index } = editorQueue;
+        await api.uploadSticker(packId, await prepareStickerUpload(files[index], uploadLimitBytes), upload);
+        advanceEditor();
+        void refreshPack(packId);
     };
 
     const moveSticker = (stickerId: number, offset: -1 | 1) => {
@@ -457,8 +476,6 @@ export default function StickerLibraryManager({ api }: { api: StickerLibraryApi 
             </div>
         );
     }
-
-    const isUploading = uploadProgress !== null;
 
     return (
         <div className="flex w-full flex-col gap-4 md:flex-row md:items-start">
@@ -534,14 +551,12 @@ export default function StickerLibraryManager({ api }: { api: StickerLibraryApi 
                                     type="button"
                                     className={PRIMARY_BUTTON_CLASS}
                                     onClick={() => fileInputRef.current?.click()}
-                                    disabled={isBusy || isUploading}
+                                    disabled={isBusy || editorQueue !== null}
                                 >
-                                    {isUploading
-                                        ? t('STICKER_LIBRARY.UPLOADING', { done: uploadProgress.done, total: uploadProgress.total })
-                                        : t('STICKER_LIBRARY.UPLOAD')}
+                                    {t('STICKER_LIBRARY.UPLOAD')}
                                 </button>
                                 <span className="text-xs text-slate-600">
-                                    {t('STICKER_LIBRARY.UPLOAD_HINT', { maxKb: maxUploadKb })}
+                                    {t('STICKER_LIBRARY.UPLOAD_HINT', { limit: uploadLimit, size: imageSize })}
                                 </span>
                                 <input
                                     ref={fileInputRef}
@@ -553,20 +568,10 @@ export default function StickerLibraryManager({ api }: { api: StickerLibraryApi 
                                     onChange={event => {
                                         const files = Array.from(event.target.files ?? []);
                                         event.target.value = '';
-                                        void uploadFiles(files);
+                                        void openEditor(files);
                                     }}
                                 />
                             </div>
-                            <label className="flex max-w-md flex-col gap-1 text-xs text-slate-700">
-                                {t('STICKER_LIBRARY.UPLOAD_KEYWORDS')}
-                                <input
-                                    className={INPUT_CLASS}
-                                    value={uploadKeywordsDraft}
-                                    onChange={event => setUploadKeywordsDraft(event.target.value)}
-                                    placeholder={t('STICKER_LIBRARY.KEYWORDS_PLACEHOLDER')}
-                                    disabled={isUploading}
-                                />
-                            </label>
                             {uploadErrors.length > 0 ? (
                                 <ul role="alert" className="m-0 flex list-none flex-col gap-1 p-0 text-sm text-red-700">
                                     {uploadErrors.map(message => (
@@ -598,6 +603,18 @@ export default function StickerLibraryManager({ api }: { api: StickerLibraryApi 
                 )}
             </section>
             <ConfirmActionDialog request={pendingConfirmation} onClose={closeConfirmation} />
+            {editorQueue ? (
+                <StickerImageEditor
+                    key={`${editorQueue.packId}-${editorQueue.index}`}
+                    file={editorQueue.files[editorQueue.index]}
+                    position={editorQueue.index + 1}
+                    total={editorQueue.files.length}
+                    imageSize={imageSize}
+                    onSave={saveEditedSticker}
+                    onSkip={advanceEditor}
+                    onClose={() => setEditorQueue(null)}
+                />
+            ) : null}
         </div>
     );
 }

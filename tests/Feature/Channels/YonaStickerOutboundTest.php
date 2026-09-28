@@ -105,7 +105,7 @@ describe('Zalo', function () {
         $recent = app(StickerLibrary::class)->browse($this->inbox, null, null);
 
         expect(array_column($found['stickers'], 'id'))->toBe(["yona:{$this->sticker->id}", '98930'])
-            ->and($recent['packs'])->toBe([['id' => "yona:{$this->sticker->sticker_pack_id}", 'cover_url' => $this->sticker->poster_url]]);
+            ->and($recent['packs'])->toBe([['id' => "yona:{$this->sticker->sticker_pack_id}", 'cover_url' => $this->sticker->image_url]]);
     });
 
     it('gửi sticker Yona thì bridge nhận lệnh gửi ảnh PNG, không nhận lệnh sticker', function () {
@@ -140,8 +140,8 @@ describe('Zalo', function () {
         Message::query()->whereKey($message->id)->first()->delete();
 
         Storage::disk(Sticker::DISK)->assertExists($this->sticker->static_path);
-        Storage::disk(Sticker::DISK)->assertExists($this->sticker->poster_path);
-        Storage::disk(Sticker::DISK)->assertExists($this->sticker->animation_path);
+        Storage::disk(Sticker::DISK)->assertExists($this->sticker->image_path);
+        Storage::disk(Sticker::DISK)->assertExists($this->sticker->original_path);
     });
 });
 

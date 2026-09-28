@@ -24,7 +24,7 @@ class LibraryStickerPackResource extends JsonResource
             'published' => $pack->published_at !== null,
             'published_at' => $pack->published_at?->toIso8601String(),
             'stickers_count' => $pack->stickers_count ?? ($pack->relationLoaded('stickers') ? $pack->stickers->count() : null),
-            'cover_url' => $cover?->poster_url,
+            'cover_url' => $cover?->image_url,
         ];
     }
 

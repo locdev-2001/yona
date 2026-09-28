@@ -14,11 +14,13 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * Kho sticker của chính Yona (bảng `stickers`), dùng được trên mọi kênh gửi được
- * ảnh: ra ngoài là ảnh PNG tĩnh mượn từ disk stickers, trong Yona là sticker động.
- * Mã sticker và mã bộ mang tiền tố `yona:` để không lẫn với mã của nền tảng.
+ * ảnh: ra ngoài là ảnh PNG tĩnh mượn từ disk stickers, trong Yona là ảnh WebP
+ * (động nếu ảnh gốc động). Mã sticker và mã bộ mang tiền tố `yona:` để không lẫn
+ * với mã của nền tảng.
  *
  * Payload ghi vào tin chỉ giữ đường dẫn trên disk, không giữ URL: đổi tên miền
  * hay chuyển disk sang R2 thì tin cũ vẫn đọc đúng, URL dựng lúc đọc (forReader).
+ * Tin gửi thời sticker Lottie không có `image_path`: đọc ra ảnh tĩnh PNG của nó.
  * Ai thấy sticker nào do Sticker::visibleTo() quyết định.
  */
 final class YonaStickerCatalog implements StickerCatalog
@@ -39,13 +41,12 @@ final class YonaStickerCatalog implements StickerCatalog
 
     private const STATIC_FILENAME_PATTERN = 'sticker-%d.png';
 
-    private const REQUIRED_PATH_KEYS = ['animation_path', 'poster_path', 'static_path'];
+    private const PATH_KEYS = ['image_path', 'static_path'];
 
-    /** Khoá URL trả cho người đọc → khoá đường dẫn trong payload. `url` là ảnh tĩnh, trùng khoá của payload sticker nền tảng. */
+    /** Khoá URL trả cho người đọc → accessor URL của model. `url` là ảnh tĩnh, trùng khoá của payload sticker nền tảng. */
     private const READER_URL_KEYS = [
+        'image_url' => 'image_url',
         'url' => 'static_url',
-        'poster_url' => 'poster_url',
-        'animation_url' => 'animation_url',
     ];
 
     public static function owns(string $stickerOrPackId): bool
@@ -129,13 +130,8 @@ final class YonaStickerCatalog implements StickerCatalog
             'path' => $sticker->payload['static_path'],
             'filename' => sprintf(self::STATIC_FILENAME_PATTERN, $sticker->payload['id']),
             'content_type' => self::STATIC_CONTENT_TYPE,
-            'meta' => ['width' => self::outboundImageSize(), 'height' => self::outboundImageSize()],
+            'meta' => ['width' => LibrarySticker::imageSize(), 'height' => LibrarySticker::imageSize()],
         ]);
-    }
-
-    public static function outboundImageSize(): int
-    {
-        return (int) config('yona.stickers.outbound_image_size');
     }
 
     /**
@@ -160,7 +156,7 @@ final class YonaStickerCatalog implements StickerCatalog
             ->get()
             ->map(fn (LibrarySticker $cover) => [
                 'id' => self::ID_PREFIX.$cover->sticker_pack_id,
-                'cover_url' => (string) $cover->poster_url,
+                'cover_url' => (string) $cover->image_url,
             ])
             ->values()
             ->all();
@@ -264,23 +260,23 @@ final class YonaStickerCatalog implements StickerCatalog
             'source' => self::SOURCE,
             'id' => $model->id,
             'pack_id' => $model->sticker_pack_id,
-            'animation_path' => (string) $model->animation_path,
-            'poster_path' => (string) $model->poster_path,
+            'image_path' => (string) $model->image_path,
             'static_path' => (string) $model->static_path,
             'width' => $model->width,
             'height' => $model->height,
+            'frames' => $model->frame_count,
         ], $model->label, $model->keywords ?? []);
     }
 
     /**
-     * @param  array{source: string, id: int, pack_id: int, animation_path: string, poster_path: string, static_path: string, width: int|null, height: int|null}  $payload
+     * @param  array{source: string, id: int, pack_id: int, image_path: string, static_path: string, width: int|null, height: int|null, frames: int|null}  $payload
      * @param  list<string>  $keywords
      */
     private function stickerFromPayload(array $payload, ?string $label, array $keywords = []): Sticker
     {
         return new Sticker(
             id: self::ID_PREFIX.$payload['id'],
-            imageUrl: (string) self::filesOf($payload)->poster_url,
+            imageUrl: (string) self::filesOf($payload)->image_url,
             packId: self::ID_PREFIX.$payload['pack_id'],
             label: filled($label) ? $label : null,
             payload: $payload,
@@ -292,16 +288,20 @@ final class YonaStickerCatalog implements StickerCatalog
      * Bản ghi tạm (không lưu) chỉ để mượn cách dựng URL của model — URL của tệp
      * kho chỉ dựng ở một nơi.
      *
-     * @param  array{animation_path: string, poster_path: string, static_path: string}  $payload
+     * @param  array{image_path: string, static_path: string}  $payload
      */
     private static function filesOf(array $payload): LibrarySticker
     {
-        return new LibrarySticker(array_intersect_key($payload, array_flip(self::REQUIRED_PATH_KEYS)));
+        return new LibrarySticker(array_intersect_key($payload, array_flip(self::PATH_KEYS)));
     }
 
     /**
+     * Payload tin thời Lottie (có `animation_path`/`poster_path`, không có
+     * `image_path`) thành payload ảnh với ảnh hiển thị là ảnh tĩnh PNG: tệp này
+     * còn nguyên vì đính kèm của chính tin đó mượn nó.
+     *
      * @param  array<string, mixed>  $stored
-     * @return array{source: string, id: int, pack_id: int, animation_path: string, poster_path: string, static_path: string, width: int|null, height: int|null}|null
+     * @return array{source: string, id: int, pack_id: int, image_path: string, static_path: string, width: int|null, height: int|null, frames: int|null}|null
      */
     private static function validPayload(array $stored): ?array
     {
@@ -316,22 +316,27 @@ final class YonaStickerCatalog implements StickerCatalog
             return null;
         }
 
-        foreach (self::REQUIRED_PATH_KEYS as $key) {
-            if (! is_string($stored[$key] ?? null) || trim($stored[$key]) === '') {
-                return null;
-            }
+        $staticPath = self::filledString($stored['static_path'] ?? null);
+
+        if ($staticPath === null) {
+            return null;
         }
 
         return [
             'source' => self::SOURCE,
             'id' => $id,
             'pack_id' => $packId,
-            'animation_path' => $stored['animation_path'],
-            'poster_path' => $stored['poster_path'],
-            'static_path' => $stored['static_path'],
+            'image_path' => self::filledString($stored['image_path'] ?? null) ?? $staticPath,
+            'static_path' => $staticPath,
             'width' => self::positiveInt($stored['width'] ?? null),
             'height' => self::positiveInt($stored['height'] ?? null),
+            'frames' => self::positiveInt($stored['frames'] ?? null),
         ];
+    }
+
+    private static function filledString(mixed $value): ?string
+    {
+        return is_string($value) && trim($value) !== '' ? $value : null;
     }
 
     private static function libraryId(string $prefixedId): ?int

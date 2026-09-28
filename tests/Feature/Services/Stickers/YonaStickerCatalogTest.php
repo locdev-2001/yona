@@ -45,7 +45,7 @@ it('tra sticker của kho chung theo mã yona:{id}', function () {
 
     expect($found->id)->toBe("yona:{$sticker->id}")
         ->and($found->packId)->toBe("yona:{$sticker->sticker_pack_id}")
-        ->and($found->imageUrl)->toBe($sticker->poster_url)
+        ->and($found->imageUrl)->toBe($sticker->image_url)
         ->and($found->label)->toBe('Chào')
         ->and($found->payload)->toBe(YonaStickers::storedPayload($sticker));
 });
@@ -122,7 +122,7 @@ it('dựng lại sticker từ payload đã lưu mà không truy vấn', function
 
     expect(DB::getQueryLog())->toBe([])
         ->and($rebuilt->id)->toBe("yona:{$sticker->id}")
-        ->and($rebuilt->imageUrl)->toBe($sticker->poster_url)
+        ->and($rebuilt->imageUrl)->toBe($sticker->image_url)
         ->and($rebuilt->payload)->toBe($payload);
 });
 
@@ -131,8 +131,10 @@ it('chỉ nhận payload khai nguồn yona; payload Zalo và payload widget cũ 
 })->with([
     'sticker Zalo' => [['id' => 98930, 'cateId' => 61900, 'type' => 7, 'url' => 'https://zalo-api.zadn.vn/sticker/98930.webp']],
     'sticker widget cũ' => [['id' => 'cho-vay-tay', 'cateId' => 'cho', 'url' => 'https://cdn.example/cho.png', 'thumbnail' => 'https://cdn.example/cho.png']],
-    'thiếu ảnh tĩnh' => [['source' => 'yona', 'id' => 1, 'pack_id' => 1, 'animation_path' => 'a/anim.json', 'poster_path' => 'a/poster.webp']],
-    'mã không hợp lệ' => [['source' => 'yona', 'id' => 0, 'pack_id' => 1, 'animation_path' => 'a', 'poster_path' => 'b', 'static_path' => 'c']],
+    'thiếu ảnh tĩnh' => [['source' => 'yona', 'id' => 1, 'pack_id' => 1, 'image_path' => 'a/sticker.webp']],
+    'Lottie cũ thiếu ảnh tĩnh' => [['source' => 'yona', 'id' => 1, 'pack_id' => 1, 'animation_path' => 'a/anim.json', 'poster_path' => 'a/poster.webp']],
+    'ảnh tĩnh rỗng' => [['source' => 'yona', 'id' => 1, 'pack_id' => 1, 'image_path' => 'a/sticker.webp', 'static_path' => ' ']],
+    'mã không hợp lệ' => [['source' => 'yona', 'id' => 0, 'pack_id' => 1, 'image_path' => 'b', 'static_path' => 'c']],
 ]);
 
 it('danh mục Zalo không nhận payload của kho Yona', function () {
@@ -143,7 +145,7 @@ it('danh mục Zalo không nhận payload của kho Yona', function () {
 });
 
 it('đính kèm là tệp mượn trên disk stickers trỏ ảnh tĩnh, không bao giờ nằm trên disk public', function () {
-    config(['yona.stickers.outbound_image_size' => 96]);
+    config(['yona.stickers.image_size' => 96]);
     $sticker = YonaStickers::ready(attributes: ['width' => 320, 'height' => 240]);
 
     $attachment = $this->catalog->attachmentFor($this->catalog->fromStored(YonaStickers::storedPayload($sticker)), $this->inbox);
@@ -197,10 +199,10 @@ it('gần đây gồm sticker Yona đã dùng trong hộp thư, bỏ sticker acc
         'query' => null,
         'pack_id' => null,
         'stickers' => [
-            ['id' => "yona:{$kept->id}", 'image_url' => $kept->poster_url, 'pack_id' => "yona:{$pack->id}", 'label' => null],
+            ['id' => "yona:{$kept->id}", 'image_url' => $kept->image_url, 'pack_id' => "yona:{$pack->id}", 'label' => null],
         ],
         'packs' => [
-            ['id' => "yona:{$pack->id}", 'cover_url' => $kept->poster_url],
+            ['id' => "yona:{$pack->id}", 'cover_url' => $kept->image_url],
         ],
     ]);
 });
@@ -245,8 +247,8 @@ it('mỗi bộ của kho một mục theo thứ tự bộ, ảnh bìa là sticke
     $firstCover = YonaStickers::ready($firstPack, ['position' => 1]);
 
     expect($this->catalog->packs($this->inbox->account))->toBe([
-        ['id' => "yona:{$firstPack->id}", 'cover_url' => $firstCover->poster_url],
-        ['id' => "yona:{$laterPack->id}", 'cover_url' => $laterCover->poster_url],
+        ['id' => "yona:{$firstPack->id}", 'cover_url' => $firstCover->image_url],
+        ['id' => "yona:{$laterPack->id}", 'cover_url' => $laterCover->image_url],
     ]);
 });
 
@@ -259,8 +261,75 @@ it('bảng chọn theo bộ của kho định tuyến theo tiền tố mã bộ'
         'query' => null,
         'pack_id' => "yona:{$pack->id}",
         'stickers' => [
-            ['id' => "yona:{$sticker->id}", 'image_url' => $sticker->poster_url, 'pack_id' => "yona:{$pack->id}", 'label' => 'Vẫy tay'],
+            ['id' => "yona:{$sticker->id}", 'image_url' => $sticker->image_url, 'pack_id' => "yona:{$pack->id}", 'label' => 'Vẫy tay'],
         ],
         'packs' => [],
     ]);
+});
+
+// Tin gửi thời sticker Lottie mang `animation_path`/`poster_path`, không có
+// `image_path`: vẫn phải hiện ảnh (PNG tĩnh của chính tin) và gửi lại được.
+describe('payload tin thời Lottie', function () {
+    beforeEach(function () {
+        $this->legacy = YonaStickers::legacyLottie(attributes: ['label' => 'Vẫy tay']);
+        $this->legacyPayload = YonaStickers::legacyStoredPayload($this->legacy);
+    });
+
+    it('người đọc nhận image_url và url đều là ảnh tĩnh PNG, không bao giờ có animation_url hay poster_url', function () {
+        $staticUrl = Storage::disk(Sticker::DISK)->url($this->legacy->static_path);
+
+        $read = $this->catalog->forReader($this->legacyPayload);
+
+        expect($read)->toBe([...$this->legacyPayload, 'image_url' => $staticUrl, 'url' => $staticUrl])
+            ->and($read)->not->toHaveKeys(['animation_url', 'poster_url'])
+            ->and(Storage::disk(Sticker::DISK)->exists($this->legacy->static_path))->toBeTrue();
+    });
+
+    it('tương đương payload ảnh của cùng sticker: cùng mã, cùng bộ, cùng ảnh hiển thị và ảnh gửi đi', function () {
+        $fromLegacy = $this->catalog->fromStored($this->legacyPayload);
+        $fromCurrent = $this->catalog->fromStored(YonaStickers::storedPayload($this->legacy));
+
+        expect($fromLegacy->toApi())->toBe([...$fromCurrent->toApi(), 'label' => null])
+            ->and($fromLegacy->imageUrl)->toBe($this->legacy->static_url)
+            ->and($fromLegacy->payload)->toBe([
+                'source' => 'yona',
+                'id' => $this->legacy->id,
+                'pack_id' => $this->legacy->sticker_pack_id,
+                'image_path' => $this->legacy->static_path,
+                'static_path' => $this->legacy->static_path,
+                'width' => 512,
+                'height' => 512,
+                'frames' => null,
+            ])
+            ->and($this->catalog->attachmentFor($fromLegacy, $this->inbox)->path)
+            ->toBe($this->catalog->attachmentFor($fromCurrent, $this->inbox)->path);
+    });
+
+    it('bảng chọn, gợi ý và danh sách widget trả ảnh tĩnh của sticker Lottie đã chuyển', function () {
+        expect($this->catalog->find($this->inbox, "yona:{$this->legacy->id}")->imageUrl)->toBe($this->legacy->static_url)
+            ->and($this->catalog->packs($this->inbox->account))->toBe([
+                ['id' => "yona:{$this->legacy->sticker_pack_id}", 'cover_url' => $this->legacy->static_url],
+            ]);
+    });
+});
+
+it('payload tin mới mang đường dẫn ảnh WebP, ảnh tĩnh và số khung', function () {
+    $animated = YonaStickers::ready(attributes: ['frame_count' => 12, 'duration_ms' => 1200]);
+
+    $payload = $this->catalog->find($this->inbox, "yona:{$animated->id}")->payload;
+
+    expect($payload)->toBe([
+        'source' => 'yona',
+        'id' => $animated->id,
+        'pack_id' => $animated->sticker_pack_id,
+        'image_path' => $animated->image_path,
+        'static_path' => $animated->static_path,
+        'width' => 64,
+        'height' => 64,
+        'frames' => 12,
+    ])
+        ->and($this->catalog->forReader($payload))->toMatchArray([
+            'image_url' => Storage::disk(Sticker::DISK)->url($animated->image_path),
+            'url' => Storage::disk(Sticker::DISK)->url($animated->static_path),
+        ]);
 });

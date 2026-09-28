@@ -26,14 +26,9 @@ function customStickersUser(Account $account, int $role = AccountUser::ROLE_ADMI
     return $user;
 }
 
-function customStickersFixture(string $name): UploadedFile
-{
-    return UploadedFile::fake()->createWithContent($name, file_get_contents(base_path("tests/Fixtures/stickers/{$name}")));
-}
-
 beforeEach(function () {
     $this->disk = Storage::fake(Sticker::DISK);
-    FakeStickerRenderer::install();
+    $this->renderer = FakeStickerRenderer::install();
     $this->account = Account::factory()->create();
     $this->admin = customStickersUser($this->account);
     $this->api = "/api/v1/accounts/{$this->account->id}/sticker_packs";
@@ -65,7 +60,7 @@ describe('chưa có quyền dùng kho riêng (cờ tắt, không có quyền h�
         $this->getJson("{$this->api}/{$pack->id}")->assertForbidden();
         $this->patchJson("{$this->api}/{$pack->id}", ['name' => 'Lén'])->assertForbidden();
         $this->postJson("{$this->api}/{$pack->id}/publish")->assertForbidden();
-        $this->post("{$this->api}/{$pack->id}/stickers", ['file' => customStickersFixture('spinner-with-precomp.tgs')], ['Accept' => 'application/json'])->assertForbidden();
+        $this->post("{$this->api}/{$pack->id}/stickers", ['file' => YonaStickers::animatedUpload()], ['Accept' => 'application/json'])->assertForbidden();
         $this->putJson("{$this->api}/{$pack->id}/stickers/order", ['sticker_ids' => [$sticker->id]])->assertForbidden();
         $this->deleteJson("{$this->api}/{$pack->id}/stickers/{$sticker->id}")->assertForbidden();
         $this->deleteJson("{$this->api}/{$pack->id}")->assertForbidden();
@@ -99,7 +94,7 @@ describe('quyền hệ thống khi cờ tắt', function () {
     it('dựng bộ trong kho riêng và account thấy ngay khi xuất bản', function () {
         $this->actingAs($this->admin);
         $packId = $this->postJson($this->api, ['name' => 'Bộ nội bộ'])->assertCreated()->json('id');
-        $stickerId = $this->post("{$this->api}/{$packId}/stickers", ['file' => customStickersFixture('ball-with-poster-marker.json')], ['Accept' => 'application/json'])
+        $stickerId = $this->post("{$this->api}/{$packId}/stickers", ['file' => YonaStickers::imageUpload()], ['Accept' => 'application/json'])
             ->assertCreated()
             ->json('id');
         $this->postJson("{$this->api}/{$packId}/publish")->assertOk();
@@ -146,7 +141,7 @@ describe('kho nền tảng trong Cài đặt', function () {
         $this->actingAs($this->admin);
 
         $packId = $this->postJson($this->platformApi, ['name' => 'Chung mới'])->assertCreated()->json('id');
-        $this->post("{$this->platformApi}/{$packId}/stickers", ['file' => customStickersFixture('ball-with-poster-marker.json')], ['Accept' => 'application/json'])
+        $this->post("{$this->platformApi}/{$packId}/stickers", ['file' => YonaStickers::imageUpload()], ['Accept' => 'application/json'])
             ->assertCreated();
         $this->postJson("{$this->platformApi}/{$packId}/publish")->assertOk()->assertJsonPath('published', true);
 
@@ -185,7 +180,7 @@ describe('cờ custom_stickers bật', function () {
         $packId = $this->postJson($this->api, ['name' => 'Mèo shop'])->assertCreated()->json('id');
         expect(StickerPack::query()->find($packId)->account_id)->toBe($this->account->id);
 
-        $stickerId = $this->post("{$this->api}/{$packId}/stickers", ['file' => customStickersFixture('ball-with-poster-marker.json')], ['Accept' => 'application/json'])
+        $stickerId = $this->post("{$this->api}/{$packId}/stickers", ['file' => YonaStickers::imageUpload()], ['Accept' => 'application/json'])
             ->assertCreated()
             ->assertJsonPath('status', Sticker::STATUS_READY)
             ->json('id');
@@ -214,13 +209,39 @@ describe('cờ custom_stickers bật', function () {
         expect($this->getJson($this->api)->assertOk()->json('payload'))->toBe([]);
     });
 
-    it('tệp ác ý bị từ chối bằng đúng câu lỗi', function () {
+    it('tệp không phải ảnh nhận được bị từ chối bằng đúng câu lỗi', function () {
         $pack = YonaStickers::tenantPack($this->account);
 
         $this->actingAs($this->admin)
-            ->post("{$this->api}/{$pack->id}/stickers", ['file' => customStickersFixture('text-layer.json')], ['Accept' => 'application/json'])
+            ->post("{$this->api}/{$pack->id}/stickers", ['file' => UploadedFile::fake()->createWithContent('ball.tgs', gzencode('{}'))], ['Accept' => 'application/json'])
             ->assertUnprocessable()
-            ->assertJsonPath('errors.file.0', __('errors.sticker_uploads.text_not_allowed'));
+            ->assertJsonPath('errors.file.0', __('errors.sticker_uploads.unsupported_file_type'));
+    });
+
+    it('tải ảnh kèm thông số cắt + xoá nền: trả sticker với URL ảnh WebP và PNG, lưu thông số để dựng lại', function () {
+        $pack = YonaStickers::tenantPack($this->account);
+        $edit = ['crop' => ['x' => 0, 'y' => 0, 'w' => 0.5, 'h' => 0.5], 'removeBackground' => true, 'tolerance' => 20, 'feather' => 1, 'edits' => [['op' => 'brush-keep', 'points' => [[0.4, 0.4]], 'radius' => 0.05]]];
+
+        $response = $this->actingAs($this->admin)
+            ->post("{$this->api}/{$pack->id}/stickers", ['file' => YonaStickers::imageUpload(), 'edit' => json_encode($edit), 'label' => 'Chấm', 'keywords' => ['chấm']], ['Accept' => 'application/json'])
+            ->assertCreated();
+
+        $sticker = Sticker::query()->findOrFail($response->json('id'));
+        expect($response->json())->toBe([
+            'id' => $sticker->id,
+            'label' => 'Chấm',
+            'keywords' => ['chấm'],
+            'status' => Sticker::STATUS_READY,
+            'failure_message' => null,
+            'position' => 0,
+            'width' => 64,
+            'height' => 64,
+            'frames' => 1,
+            'image_url' => $sticker->image_url,
+            'static_url' => $sticker->static_url,
+        ])
+            ->and($sticker->edit_params)->toEqual($edit)
+            ->and($this->renderer->calls[0]['edit'])->toEqual($edit);
     });
 
     it('xoá bộ kho riêng dọn tệp không còn ai dùng', function () {
@@ -276,4 +297,13 @@ describe('cờ custom_stickers bật', function () {
             ->assertJsonPath('errors.name.0', __('errors.sticker_library.too_many_packs', ['max' => StickerLibraryManager::MAX_PACKS_PER_ACCOUNT]));
         expect(StickerPack::query()->where('account_id', $this->account->id)->count())->toBe(StickerLibraryManager::MAX_PACKS_PER_ACCOUNT);
     });
+});
+
+it('trang dashboard nhận cạnh hiển thị sticker từ config qua shared prop', function () {
+    config(['yona.stickers.display_size' => 72]);
+
+    $this->actingAs($this->admin)
+        ->get("/app/accounts/{$this->account->id}/settings/custom-stickers")
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page->where('stickerDisplaySize', 72));
 });

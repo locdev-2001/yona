@@ -95,8 +95,7 @@ it('builds file urls from the stickers disk when they are read', function () {
     $reloaded = $sticker->fresh();
 
     expect($reloaded->static_url)->toBe('https://cdn.example.test/stickers/'.$sticker->static_path)
-        ->and($reloaded->poster_url)->toBe('https://cdn.example.test/stickers/'.$sticker->poster_path)
-        ->and($reloaded->animation_url)->toBe('https://cdn.example.test/stickers/'.$sticker->animation_path);
+        ->and($reloaded->image_url)->toBe('https://cdn.example.test/stickers/'.$sticker->image_path);
 
     config(['filesystems.disks.stickers.url' => 'https://assets.example.test/s']);
     Storage::forgetDisk('stickers');
@@ -108,5 +107,5 @@ it('has no url for a file that is not rendered yet', function () {
     $sticker = Sticker::factory()->processing()->create();
 
     expect($sticker->static_url)->toBeNull()
-        ->and($sticker->poster_url)->toBeNull();
+        ->and($sticker->image_url)->toBeNull();
 });

@@ -5,7 +5,7 @@ namespace App\Services\Stickers;
 use Illuminate\Support\Str;
 
 // Nhãn và từ khoá của sticker: nguồn duy nhất của giới hạn và cách chuẩn hoá,
-// dùng chung cho upload, sửa tay, Platform API lẫn MCP.
+// dùng chung cho upload, sửa tay và Platform API.
 final class StickerTags
 {
     public const MAX_LABEL_LENGTH = 255;
@@ -15,7 +15,7 @@ final class StickerTags
     public const MAX_KEYWORD_LENGTH = 40;
 
     /**
-     * Luật kiểm nhãn + từ khoá dùng chung cho mọi mặt tiền (form request, MCP).
+     * Luật kiểm nhãn + từ khoá dùng chung cho mọi form request.
      *
      * @return array<string, list<string>>
      */

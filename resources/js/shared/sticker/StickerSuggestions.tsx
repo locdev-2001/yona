@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { KeyboardEvent, ReactNode } from 'react';
 
+import StickerImage from './StickerImage';
+
 export interface StickerSuggestionItem {
     id: string;
     image_url: string;
@@ -31,8 +33,8 @@ interface StickerSuggestionsProps<T extends StickerSuggestionItem> {
 
 const DEFAULT_CLASS_NAMES: Required<StickerSuggestionsClassNames> = {
     root: 'flex items-center gap-1',
-    item: 'flex size-14 flex-none items-center justify-center rounded-md active:scale-[0.97]',
-    image: 'size-full object-contain p-1',
+    item: 'flex flex-none items-center justify-center rounded-md p-1 active:scale-[0.97]',
+    image: '',
     dismiss: 'ms-auto flex size-11 flex-none items-center justify-center rounded-md active:scale-[0.97]',
 };
 
@@ -115,7 +117,7 @@ export default function StickerSuggestions<T extends StickerSuggestionItem>({
                     onKeyDown={event => handleItemKeyDown(event, index)}
                     onFocus={() => setActiveIndex(index)}
                 >
-                    <img src={sticker.image_url} alt="" className={styles.image} loading="lazy" draggable={false} />
+                    <StickerImage src={sticker.image_url} className={styles.image} />
                 </button>
             ))}
             <button type="button" aria-label={labels.dismiss} title={labels.dismiss} className={styles.dismiss} onClick={onDismiss}>

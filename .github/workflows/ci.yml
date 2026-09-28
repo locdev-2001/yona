@@ -71,7 +71,7 @@ jobs:
           psql -h 127.0.0.1 -U postgres -d "${DB_DATABASE}" \
             -c "CREATE EXTENSION IF NOT EXISTS pg_trgm; CREATE EXTENSION IF NOT EXISTS pgcrypto;"
 
-      # Test nhóm renderer gọi CLI sticker thật (ThorVG + sharp, trần prlimit, cắt
+      # Test nhóm renderer gọi CLI sticker thật (sharp, trần prlimit, cắt
       # tiến trình treo); thiếu node_modules thì các test đó tự skip.
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
@@ -139,8 +139,8 @@ jobs:
       - name: node --test
         run: node --test src/*.test.mjs
 
-  # Renderer sticker: render thật bằng ThorVG wasm + sharp, chặn việc nâng bản
-  # @thorvg/lottie-player làm hỏng im lặng phần nạp engine.
+  # Renderer sticker: xoá nền, cắt, co 64×64 bằng sharp; chặn việc nâng bản sharp
+  # làm hỏng im lặng phần dựng WebP động.
   sticker-renderer:
     runs-on: ubuntu-latest
     defaults:
@@ -155,5 +155,5 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      - name: node --test
-        run: node --test src/*.test.mjs
+      - name: node --test (gồm src/image)
+        run: pnpm test

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 
 import Spinner from 'shared/components/Spinner';
 import { emitter } from 'shared/helpers/emitter';
+import { StickerDisplaySizeProvider } from 'shared/sticker/stickerDisplaySize';
 
 import { setLocale as setApiLocale } from './api/client';
 import { CAMPAIGN_SNOOZE_DURATION, WIDGET_BUS_EVENTS } from './helpers/constants';
@@ -41,6 +42,7 @@ export default function App() {
     const isFetchingList = useWidgetState(state => state.uiFlags.isFetchingList);
     const conversationSize = useWidgetState(state => Object.keys(state.conversations).length);
     const unreadMessageCount = useWidgetState(selectUnreadMessageCount);
+    const stickerDisplaySize = useWidgetState(state => state.messagingPolicy.stickerDisplaySize);
 
     // SDK báo khung đang hiện kiểu điện thoại (toàn màn) hay khung nổi trên máy tính; chưa
     // báo (mở /widget trực tiếp, cửa sổ riêng) thì chưa biết.
@@ -372,15 +374,17 @@ export default function App() {
                 .filter(Boolean)
                 .join(' ')}
         >
-            <WidgetMessageHost>
-                {route === WIDGET_ROUTES.CAMPAIGNS ? (
-                    <Campaigns />
-                ) : isUnreadView ? (
-                    <UnreadMessages />
-                ) : (
-                    view
-                )}
-            </WidgetMessageHost>
+            <StickerDisplaySizeProvider size={stickerDisplaySize}>
+                <WidgetMessageHost>
+                    {route === WIDGET_ROUTES.CAMPAIGNS ? (
+                        <Campaigns />
+                    ) : isUnreadView ? (
+                        <UnreadMessages />
+                    ) : (
+                        view
+                    )}
+                </WidgetMessageHost>
+            </StickerDisplaySizeProvider>
         </div>
     );
 }

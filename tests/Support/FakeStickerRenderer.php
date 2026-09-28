@@ -3,25 +3,62 @@
 namespace Tests\Support;
 
 use App\Services\Stickers\StickerRenderer;
+use Closure;
 use Illuminate\Support\Facades\File;
 
-// Trình render giả cho test đi trọn luồng upload → job → ready mà không cần Node.
+// Trình dựng giả theo hợp đồng StickerRenderer: test đi trọn luồng tải lên → job
+// → ready mà không cần Node. Ghi lại mọi lượt gọi; `scenario` thay kết quả khi
+// test cần lỗi hoặc tệp khác.
 final class FakeStickerRenderer implements StickerRenderer
 {
     private const CONTAINER_KEY = 'tests.fake-sticker-renderer';
 
-    public static function install(): void
+    /** @var (Closure(string, string, array<string, mixed>, int): array<string, mixed>)|null */
+    public ?Closure $scenario = null;
+
+    /** @var list<array{image_bytes: string, image_path: string, output_directory: string, edit: array<string, mixed>, size: int}> */
+    public array $calls = [];
+
+    public static function install(): self
     {
-        app()->instance(self::CONTAINER_KEY, new self);
+        $renderer = new self;
+        app()->instance(self::CONTAINER_KEY, $renderer);
         config(['yona.stickers.renderer' => 'fake', 'yona.stickers.renderers.fake.class' => self::CONTAINER_KEY]);
+
+        return $renderer;
     }
 
-    public function render(string $animationPath, string $outputDirectory): array
+    public function render(string $imagePath, string $outputDirectory, array $edit, int $size): array
+    {
+        $this->calls[] = [
+            'image_bytes' => (string) file_get_contents($imagePath),
+            'image_path' => $imagePath,
+            'output_directory' => $outputDirectory,
+            'edit' => $edit,
+            'size' => $size,
+        ];
+
+        if ($this->scenario !== null) {
+            return ($this->scenario)($imagePath, $outputDirectory, $edit, $size);
+        }
+
+        return self::writeOutputs($outputDirectory, $size);
+    }
+
+    /** @return array{image_path: string, static_path: string, width: int, height: int, frames: int, duration_ms: int} */
+    public static function writeOutputs(string $outputDirectory, int $size, string $imageBytes = 'sticker-webp', string $staticBytes = 'static-png', int $frames = 1): array
     {
         File::ensureDirectoryExists($outputDirectory);
-        File::put("{$outputDirectory}/poster.webp", 'poster-bytes');
-        File::put("{$outputDirectory}/static.png", 'static-bytes');
+        File::put("{$outputDirectory}/sticker.webp", $imageBytes);
+        File::put("{$outputDirectory}/static.png", $staticBytes);
 
-        return ['poster_path' => "{$outputDirectory}/poster.webp", 'static_path' => "{$outputDirectory}/static.png", 'poster_frame' => 0];
+        return [
+            'image_path' => "{$outputDirectory}/sticker.webp",
+            'static_path' => "{$outputDirectory}/static.png",
+            'width' => $size,
+            'height' => $size,
+            'frames' => $frames,
+            'duration_ms' => $frames > 1 ? $frames * 100 : 0,
+        ];
     }
 }

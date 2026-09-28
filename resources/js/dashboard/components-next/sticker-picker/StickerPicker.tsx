@@ -6,6 +6,7 @@ import Input from 'dashboard/components-next/input/Input';
 import Spinner from 'dashboard/components-next/spinner/Spinner';
 import { parseApiErrorMessage } from 'dashboard/helper/apiClient';
 import { isTouchOnlyDevice } from 'shared/helpers/kbd';
+import StickerImage from 'shared/sticker/StickerImage';
 import type { StickerBrowseParams, StickerBrowseResult, StickerItem } from 'dashboard/conversation/stickerApi';
 import { t } from '../../../i18n';
 
@@ -204,15 +205,10 @@ export default function StickerPicker({ loadStickers, onSelect }: StickerPickerP
                                 type="button"
                                 aria-label={sticker.label ?? t('CONVERSATION.STICKER_PICKER.STICKER')}
                                 title={sticker.label ?? undefined}
-                                className={`flex items-center justify-center w-full h-[72px] p-1 rounded-lg transition-colors hover:bg-n-alpha-2 active:scale-[0.97] ${FOCUS_RING}`}
+                                className={`flex items-center justify-center w-full p-1 rounded-lg transition-colors hover:bg-n-alpha-2 active:scale-[0.97] ${FOCUS_RING}`}
                                 onClick={() => onSelect(sticker)}
                             >
-                                <img
-                                    src={sticker.image_url}
-                                    alt=""
-                                    loading="lazy"
-                                    className="object-contain size-full pointer-events-none"
-                                />
+                                <StickerImage src={sticker.image_url} className="pointer-events-none" />
                             </button>
                         ))}
                     </div>

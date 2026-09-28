@@ -103,14 +103,14 @@ ra kênh ngoài là sticker gốc của nền tảng hoặc một ảnh, không 
   `app/Services/Zalo/ZaloStickerCatalog.php`), cùng contract `StickerCatalog`.
   Mã kho Yona mang tiền tố `yona:` và định tuyến theo tiền tố. Sticker nền tảng
   cần năng lực `outbound_sticker`; sticker Yona chỉ cần `outbound_image` vì ra
-  ngoài là ảnh PNG tĩnh (`outboundCapabilityFor()`). Động (Lottie) chỉ phát trong
-  dashboard và widget.
+  ngoài là ảnh PNG tĩnh (`outboundCapabilityFor()`). Sticker động (WebP động) chỉ
+  chạy trong dashboard và widget.
 - **Ai thấy gì:** một nguồn là `Sticker::visibleTo($account)`: sticker `ready`
   trong bộ đã xuất bản, của kho nền tảng (`account_id` null) và kho riêng của
   chính account. Cờ `custom_stickers` không ẩn nội dung, chỉ góp vào luật "ai được
   quản lý" dưới đây.
 - **Ai được quản lý kho nào:** một nguồn là `StickerLibraryAccess`
-  (`app/Services/Stickers/`), dùng ở trang cài đặt, API dashboard, REST và MCP.
+  (`app/Services/Stickers/`), dùng ở trang cài đặt và API dashboard.
   Kho riêng: quản trị viên account, và account bật cờ `custom_stickers` hoặc người
   đó có quyền hệ thống. Kho nền tảng: chỉ người có quyền hệ thống. Quyền hệ thống
   = email user trong `YONA_SYSTEM_ADMIN_EMAILS`, đọc DUY NHẤT ở
@@ -118,24 +118,30 @@ ra kênh ngoài là sticker gốc của nền tảng hoặc một ảnh, không 
   viên; phần chưa đủ quyền hiện khoá, API trả 403 (`EnsureStickerLibraryAccess`).
   Kho nền tảng trong dashboard ở `/api/v1/platform_sticker_library/sticker_packs…`;
   console Super Admin giữ nguyên `/super_admin/api/sticker_packs…`. Hai mặt tiền
-  này và REST bằng token dùng chung action `ServesStickerLibrary` (chỉ khác
-  `libraryOwner()`), kho riêng dùng `CustomStickerPacksController`.
+  này dùng chung action `ServesStickerLibrary` (chỉ khác `libraryOwner()`), kho
+  riêng dùng `CustomStickerPacksController`. Không có MCP hay REST bằng token cho
+  kho sticker (đã gỡ 28/09/2026).
 - **Payload lưu đường dẫn, URL dựng lúc đọc:** tin chỉ giữ đường dẫn trên disk
   `stickers` (`config/filesystems.php`), không giữ URL; `MessageResource` gọi
-  `StickerLibrary::forReader()` dựng `url` (PNG), `poster_url`, `animation_url`,
-  `source: yona`. Đổi tên miền hay chuyển disk sang R2 thì tin cũ vẫn đúng.
+  `StickerLibrary::forReader()` dựng `image_url` (WebP 64×64, có thể động), `url`
+  (PNG tĩnh), `source: yona`. Tin cũ mang payload Lottie (`animation_path`,
+  `poster_path`) vẫn đọc được: `image_url` = `url` = PNG tĩnh. Đổi tên miền hay chuyển disk sang R2 thì tin cũ vẫn đúng.
 - **Tệp mượn:** đính kèm của tin sticker trỏ thẳng tệp trên disk `stickers`, không
   sao chép. `Attachment::ownsStoredFile()` trả false cho disk thuộc
   `config('yona.attachment_borrowed_disks')`, nên xoá, thu hồi hay chuyển tiếp tin
   không đụng tệp kho. Xoá tệp kho chỉ ở `StickerFileJanitor`, khi không còn sticker
   hay đính kèm nào trỏ tới hash đó.
-- **Pipeline upload:** `StickerUploadService` kiểm và thu gọn Lottie/TGS
-  (`LottieDocumentValidator`, `LottieMinifier`), tạo sticker `processing`, rồi
-  `RenderStickerJob` (hàng đợi riêng `stickers`, một process) gọi `StickerRenderer`. Bản cài đặt
-  `NodeStickerRenderer` chạy `services/sticker-renderer` (ThorVG wasm) trong tiến
-  trình con có cắt thời gian và `prlimit --data` (`config/yona.php` → `stickers`).
-  Tệp ghi theo hash nội dung: `<2 ký tự>/<hash>/anim.json`, `poster.webp`,
-  `static.png`. Hỏng bước nào thì sticker `failed` kèm mã.
+- **Pipeline upload (sticker từ ảnh):** người dùng tải PNG, JPG, WebP, GIF hoặc
+  WebP động kèm tham số chỉnh `edit` (cắt, xoá nền, dung sai, đũa thần, cọ; kiểm ở
+  `StickerEdit`). `StickerUploadService` kiểm loại tệp thật, lưu ảnh gốc, tạo
+  sticker `processing`; `RenderStickerJob` (hàng đợi riêng `stickers`, một
+  process) gọi `StickerRenderer`. Bản cài đặt `NodeStickerRenderer` chạy
+  `services/sticker-renderer` (sharp) trong tiến trình con có cắt thời gian và
+  `prlimit --data` (`config/yona.php` → `stickers`): cắt, xoá nền không AI, trim,
+  co về `image_size` (mặc định 64×64). Tệp theo hash ảnh gốc + `edit`
+  (`StickerFileLayout`): `<2 ký tự>/<hash>/original.<đuôi>`, `sticker.webp`,
+  `static.png`. Hỏng bước nào thì sticker `failed` kèm mã. `stickers:rerender`
+  dựng lại từ ảnh gốc khi đổi cỡ.
 - **Nhãn và từ khoá:** `StickerTags` (`app/Services/Stickers/`) là nguồn duy nhất
   của giới hạn và cách chuẩn hoá (chữ thường, bỏ rỗng/trùng, tối đa 20 từ × 40 ký
   tự). Sửa qua `StickerLibraryManager::updateSticker()`; route
@@ -148,27 +154,13 @@ ra kênh ngoài là sticker gốc của nền tảng hoặc một ảnh, không 
   không phân biệt hoa thường, không cần extension), khớp trọn đứng trước, tối đa
   8; `q` dưới 2 ký tự hay hộp thư không dùng được kho thì rỗng. Widget không gọi
   API: `stickers` trong `/widget/config` mang sẵn `keywords` để lọc tại chỗ.
-- **Mặt tiền cho AI (MCP + REST):** `routes/ai.php` mở `POST /mcp/stickers`
-  (`app/Mcp/Servers/StickerLibraryServer.php`, gói `laravel/mcp`), REST cùng lõi ở
-  `/api/v1/sticker_library/sticker_packs…` (`routes/api.php`). Cả hai qua một
-  cổng `AuthenticateStickerLibraryToken`: `Authorization: Bearer <token sticker>`
-  (bảng `sticker_mcp_tokens`, chỉ lưu sha256, `scope` = `account`|`platform`), kiểm
-  lại quyền người tạo bằng `StickerLibraryAccess::targetFor()` ở MỖI lượt gọi rồi gắn
-  `StickerLibraryTarget` (kho được chạm) vào request; sai/thu hồi 401, mất quyền
-  403. Token tạo, liệt kê, thu hồi trong Cài đặt (`StickerMcpTokensController`,
-  `/api/v1/accounts/{account}/sticker_mcp_tokens`), token thô trả đúng một lần.
-  Platform App không còn quyền nào với kho sticker. Tool trong
-  `app/Mcp/Tools/Stickers/` chỉ đọc kho từ `StickerLibraryTarget` (không có thì từ
-  chối) và gọi đúng `StickerLibraryManager`; `upload_sticker` nhận `lottie_json`
-  hoặc `tgs_base64` rồi đi `StickerUploadService::uploadContents()`, cùng cổng kiểm
-  với upload tay. Resource `yona://stickers/lottie-guide` (`LottieAuthoringGuide`,
-  cũng gửi trong `instructions` lúc initialize) dựng giới hạn từ hằng số của
-  `LottieDocumentValidator`.
-- **Trình phát:** `resources/js/shared/sticker/StickerPlayer.tsx` dùng chung cho
-  dashboard và widget: hiện poster ngay, chỉ nạp ThorVG (chunk riêng, wasm tự host
-  qua `thorvgLoader.ts`) khi sticker vào khung nhìn, ra khỏi khung thì dừng; mọi
-  lỗi giữ poster. Plugin Vite `thorvgBuildPlugin.ts` gỡ đường tải wasm dự phòng từ
-  CDN ngoài khỏi bundle.
+- **Xoá nền không AI, một lõi:** `services/sticker-renderer/src/image/background-mask.mjs`
+  (ESM thuần) loang màu 8 hướng từ mép ảnh theo khoảng cách màu Lab, áp đũa thần
+  và cọ, khử màu nền ở viền để nền trong suốt tuyệt đối, không quầng. Trình chỉnh
+  ở trình duyệt dùng đúng file này để xem trước; renderer dùng nó cho bản cuối và
+  mọi khung ảnh động.
+- **Hiển thị:** sticker Yona là `<img>` từ `image_url` (WebP động tự chạy), cạnh
+  `display_size` (Inertia `stickerDisplaySize`, widget `sticker_display_size`).
 
 ## 4. Realtime
 

@@ -7,7 +7,7 @@ export function viteAliases(projectRoot) {
         dashboard: path.resolve(projectRoot, 'resources/js/dashboard'),
         shared: path.resolve(projectRoot, 'resources/js/shared'),
         v3: path.resolve(projectRoot, 'resources/js/v3'),
-        // Gói không khai `exports` cho tệp wasm nên trỏ thẳng vào dist.
-        'thorvg-dist': path.resolve(projectRoot, 'node_modules/@thorvg/lottie-player/dist'),
+        // Lõi xoá nền của renderer sticker chạy cả trong trình duyệt để xem trước đúng như bản dựng ở máy chủ.
+        'sticker-renderer': path.resolve(projectRoot, 'services/sticker-renderer/src'),
     };
 }

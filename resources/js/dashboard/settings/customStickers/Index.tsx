@@ -7,16 +7,14 @@ import SettingsWrapper from '../SettingsWrapper';
 import BaseSettingsHeader from '../BaseSettingsHeader';
 import TabBar from 'dashboard/components-next/tabbar/TabBar';
 import StickerLibraryManager from './StickerLibraryManager';
-import StickerMcpTokens from './StickerMcpTokens';
 import { createStickerLibraryApi } from './stickerLibraryApi';
-import { createStickerMcpTokensApi } from './stickerMcpTokensApi';
 import type { DashboardPageProps } from '../../types';
 import { currentQuery, replaceQuery } from '../../reports/helpers/urlQuery';
 import type { StickerLibraryAccess } from './types';
 
 export const PLATFORM_STICKER_LIBRARY_API_BASE = '/api/v1/platform_sticker_library';
 
-type StickerLibraryTab = 'account' | 'platform' | 'mcp';
+type StickerLibraryTab = 'account' | 'platform';
 
 export const TAB_QUERY_KEY = 'tab';
 const DEFAULT_TAB: StickerLibraryTab = 'account';
@@ -37,21 +35,18 @@ function LockedNotice({ message }: { message: string }) {
     );
 }
 
-// Cài đặt / Kho sticker: mở cho mọi quản trị viên. Kho riêng và MCP chỉ dùng được
-// khi máy chủ báo có quyền (StickerLibraryAccess); kho nền tảng chỉ hiện với
-// tài khoản có quyền hệ thống.
+// Cài đặt / Kho sticker: mở cho mọi quản trị viên. Kho riêng chỉ dùng được khi
+// máy chủ báo có quyền (StickerLibraryAccess); kho nền tảng chỉ hiện với tài
+// khoản có quyền hệ thống.
 export default function CustomStickersIndex() {
     const { currentAccount, stickerLibraryAccess } = usePage<CustomStickersPageProps>().props;
     const accountId = currentAccount!.id;
     const accountApi = useMemo(() => createStickerLibraryApi(`/api/v1/accounts/${accountId}`), [accountId]);
     const platformApi = useMemo(() => createStickerLibraryApi(PLATFORM_STICKER_LIBRARY_API_BASE), []);
-    const tokensApi = useMemo(() => createStickerMcpTokensApi(accountId), [accountId]);
-    const canUseMcp = stickerLibraryAccess.accountLibrary || stickerLibraryAccess.platformLibrary;
 
     const tabs = [
         { label: t('STICKER_LIBRARY.TABS.ACCOUNT'), value: 'account' },
         ...(stickerLibraryAccess.platformLibrary ? [{ label: t('STICKER_LIBRARY.TABS.PLATFORM'), value: 'platform' }] : []),
-        { label: t('STICKER_LIBRARY.TABS.MCP'), value: 'mcp' },
     ];
     const [activeTab, setActiveTab] = useState<StickerLibraryTab>(() => {
         const requested = currentQuery()[TAB_QUERY_KEY];
@@ -88,8 +83,6 @@ export default function CustomStickersIndex() {
                             <StickerLibraryManager api={platformApi} />
                         </div>
                     )}
-                    {activeTab === 'mcp' &&
-                        (canUseMcp ? <StickerMcpTokens api={tokensApi} /> : <LockedNotice message={t('STICKER_LIBRARY.LOCKED_MCP')} />)}
                 </div>
             </SettingsWrapper>
         </Dashboard>

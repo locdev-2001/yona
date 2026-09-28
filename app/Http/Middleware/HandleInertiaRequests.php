@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\Sticker;
 use App\Services\Notification\VapidService;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -43,6 +44,7 @@ class HandleInertiaRequests extends Middleware
             'flash' => [
                 'alert' => $request->session()->get('alert'),
             ],
+            'stickerDisplaySize' => Sticker::displaySize(),
         ];
     }
 }

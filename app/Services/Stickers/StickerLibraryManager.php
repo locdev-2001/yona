@@ -82,23 +82,11 @@ final class StickerLibraryManager
     }
 
     /** @param  array<mixed>  $keywords */
-    public function upload(StickerPack $pack, UploadedFile $file, ?string $label = null, array $keywords = []): Sticker
+    public function upload(StickerPack $pack, UploadedFile $file, ?string $label = null, array $keywords = [], ?string $editJson = null): Sticker
     {
         $this->ensureRoomFor($pack);
 
-        return $this->uploads->upload($pack, $file, $label, $keywords);
-    }
-
-    /**
-     * Nội dung tệp gửi thẳng (Platform API, MCP), không qua tệp upload.
-     *
-     * @param  array<mixed>  $keywords
-     */
-    public function uploadContents(StickerPack $pack, string $contents, string $extension, ?string $label = null, array $keywords = []): Sticker
-    {
-        $this->ensureRoomFor($pack);
-
-        return $this->uploads->uploadContents($pack, $contents, $extension, $label, $keywords);
+        return $this->uploads->upload($pack, $file, $label, $keywords, $editJson);
     }
 
     /** @param  array<mixed>  $keywords */
