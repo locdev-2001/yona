@@ -76,8 +76,18 @@ export function customStickerParams({ sticker, threadId, isGroup, clientId }) {
     };
 }
 
-function customStickerEndpoint(ctx, isGroup) {
-    return `${ctx.zpwServiceMap.file[0]}/api/${isGroup ? 'group' : 'message'}/photo_url`;
+// zca-js giữ bản đồ dịch vụ trên `api`, không đưa vào `ctx` của callback custom: đọc ở chỗ gọi.
+function customStickerEndpoint(fileService, isGroup) {
+    return `${fileService}/api/${isGroup ? 'group' : 'message'}/photo_url`;
+}
+
+function fileServiceOf(api) {
+    const fileService = api?.zpwServiceMap?.file?.[0];
+    if (typeof fileService !== 'string' || fileService === '') {
+        throw new Error('custom_sticker_file_service_missing');
+    }
+
+    return fileService;
 }
 
 /** Đăng ký một lần cho mỗi phiên: `custom()` khai thuộc tính không ghi đè được. */
@@ -85,13 +95,13 @@ export function ensureCustomStickerApi(api) {
     if (typeof api[CUSTOM_STICKER_METHOD] === 'function') {
         return;
     }
-    api.custom(CUSTOM_STICKER_METHOD, async ({ ctx, utils, props }) => {
+    api.custom(CUSTOM_STICKER_METHOD, async ({ utils, props }) => {
         const params = customStickerParams({ ...props, clientId: Date.now() });
         const encryptedParams = utils.encodeAES(JSON.stringify(params));
         if (!encryptedParams) {
             throw new Error('custom_sticker_encrypt_failed');
         }
-        const response = await utils.request(utils.makeURL(customStickerEndpoint(ctx, props.isGroup), { nretry: 0 }), {
+        const response = await utils.request(utils.makeURL(customStickerEndpoint(props.fileService, props.isGroup), { nretry: 0 }), {
             method: 'POST',
             body: new URLSearchParams({ params: encryptedParams }),
         });
@@ -103,5 +113,5 @@ export function ensureCustomStickerApi(api) {
 export async function sendCustomSticker(api, { sticker, threadId, isGroup }) {
     ensureCustomStickerApi(api);
 
-    return api[CUSTOM_STICKER_METHOD]({ sticker, threadId, isGroup });
+    return api[CUSTOM_STICKER_METHOD]({ sticker, threadId, isGroup, fileService: fileServiceOf(api) });
 }

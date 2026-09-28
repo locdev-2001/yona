@@ -12,6 +12,7 @@ const timing = { lap() {}, recordBytes() {} };
 function fakeSlot() {
     const calls = [];
     const api = {
+        zpwServiceMap: { file: ['https://files.zalo.test'] },
         custom(name, callback) {
             Object.defineProperty(api, name, { value: (props) => callback({ props }) });
         },
@@ -42,6 +43,7 @@ test('custom_sticker đi đường sticker tự tạo, không gửi tệp, khôn
                 sticker: { staticUrl: STATIC_URL, animationUrl: STATIC_URL, width: 128, height: 128 },
                 threadId: '555',
                 isGroup: true,
+                fileService: 'https://files.zalo.test',
             },
         },
     ]);

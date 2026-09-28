@@ -15,10 +15,13 @@ const STATIC_URL = 'https://yona.test/storage/stickers/1/7/static-128.png';
 const ANIMATION_URL = 'https://yona.test/storage/stickers/1/7/sticker-256.webp';
 const FILE_SERVICE = 'https://files.zalo.test';
 
-/** Giả `api.custom` đúng ngữ nghĩa zca-js 2.1.2: khai thuộc tính không ghi, không cấu hình lại được. */
-function fakeZcaApi(response = { msgId: 5501 }) {
+/**
+ * Giả `api.custom` đúng ngữ nghĩa zca-js 2.1.2: khai thuộc tính không ghi, không cấu hình lại được;
+ * bản đồ dịch vụ nằm trên `api`, `ctx` của callback KHÔNG có (từng làm production hỏng).
+ */
+function fakeZcaApi(response = { msgId: 5501 }, zpwServiceMap = { file: [FILE_SERVICE] }) {
     const requests = [];
-    const ctx = { zpwServiceMap: { file: [FILE_SERVICE] } };
+    const ctx = { imei: 'fake-imei' };
     const utils = {
         encodeAES: (plain) => `enc(${plain})`,
         makeURL: (base, params) => `${base}?${new URLSearchParams(params)}`,
@@ -29,6 +32,7 @@ function fakeZcaApi(response = { msgId: 5501 }) {
         resolve: async () => response,
     };
     const api = {
+        zpwServiceMap,
         custom(name, callback) {
             Object.defineProperty(api, name, {
                 value: (props) => callback({ ctx, utils, props }),
@@ -160,4 +164,11 @@ test('method sticker tự tạo không lộ ra dispatcher /zca', async () => {
 
     assert.equal(allowlist.has(CUSTOM_STICKER_METHOD), false);
     assert.throws(() => invokeMethod(api, allowlist, CUSTOM_STICKER_METHOD, [{}]), (error) => error.code === 'METHOD_NOT_ALLOWED');
+});
+
+test('sendCustomSticker: phiên chưa có bản đồ dịch vụ tệp thì báo lỗi rõ, không gọi Zalo', async () => {
+    const { api, requests } = fakeZcaApi(undefined, null);
+
+    await assert.rejects(() => sendCustomSticker(api, { sticker, threadId: '42', isGroup: false }), /custom_sticker_file_service_missing/);
+    assert.equal(requests.length, 0);
 });
