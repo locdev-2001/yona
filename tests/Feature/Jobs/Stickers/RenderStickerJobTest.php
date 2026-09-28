@@ -175,12 +175,25 @@ it('marks a sticker still processing as timed out when the worker gives up on th
         ->toBe(['status' => Sticker::STATUS_FAILED, 'failure_code' => StickerRenderer::RENDER_TIMEOUT]);
 });
 
-it('runs one attempt on the low queue with a deadline longer than any render', function () {
+it('runs one attempt on its own queue with a deadline longer than any render', function () {
     $job = new RenderStickerJob($this->sticker, $this->animationJson);
 
-    expect($job->queue)->toBe('low')
+    expect($job->queue)->toBe('stickers')
         ->and($job->tries)->toBe(1)
         ->and($job->timeout)->toBeGreaterThan(60);
+});
+
+// Render nặng CPU/bộ nhớ: một supervisor riêng chạy đúng một process, không nằm
+// trong các tier của tin nhắn nên upload dồn dập không làm chậm việc gửi tin.
+it('is served by a dedicated single-process supervisor outside the message tiers', function () {
+    $supervisor = config('horizon.defaults.supervisor-stickers');
+    $job = new RenderStickerJob($this->sticker, $this->animationJson);
+
+    expect($supervisor['queue'])->toBe([$job->queue])
+        ->and($supervisor['maxProcesses'])->toBe(1)
+        ->and($supervisor['timeout'])->toBeGreaterThan($job->timeout)
+        ->and($supervisor['timeout'])->toBeLessThan(config('queue.connections.redis.retry_after'))
+        ->and(config('horizon.defaults.supervisor-1.queue'))->not->toContain('stickers');
 });
 
 it('turns an uploaded TGS into a ready sticker with real images', function () {

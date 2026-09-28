@@ -229,6 +229,21 @@ return [
             'timeout' => 150,
             'nice' => 0,
         ],
+
+        // Render sticker ăn CPU và tới 384MB mỗi lượt (prlimit): tách khỏi các tier
+        // tin nhắn, đúng một process để upload dồn dập không làm chậm việc gửi tin.
+        'supervisor-stickers' => [
+            'connection' => 'redis',
+            'queue' => ['stickers'],
+            'balance' => false,
+            'maxProcesses' => 1,
+            'maxTime' => 3600,
+            'maxJobs' => 0,
+            'memory' => 256,
+            'tries' => 1,
+            'timeout' => 150,
+            'nice' => 0,
+        ],
     ],
 
     'environments' => [

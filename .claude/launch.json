@@ -33,7 +33,7 @@
             "runtimeArgs": [
                 "artisan",
                 "queue:listen",
-                "--queue=critical,high,medium,default,mailers,low,scheduled_jobs,purgable",
+                "--queue=critical,high,medium,default,mailers,low,scheduled_jobs,purgable,stickers",
                 "--tries=1"
             ]
         }

@@ -1304,8 +1304,8 @@ Kho chung do Super Admin quản (`/super_admin/sticker_packs`); kho riêng của
 account nằm sau cờ `custom_stickers` (mặc định tắt ở `config/features.php`;
 Super Admin chưa có nút bật, bật theo account qua cột `accounts.feature_flags`,
 ví dụ Platform API cập nhật account với `features`). Mỗi lần upload,
-`RenderStickerJob` (hàng đợi `low`) gọi renderer Node `services/sticker-renderer`
-dựng `poster.webp` + `static.png` từ Lottie/TGS. Worker `low` không chạy thì
+`RenderStickerJob` (hàng đợi `stickers`, supervisor Horizon `supervisor-stickers` một process) gọi renderer Node `services/sticker-renderer`
+dựng `poster.webp` + `static.png` từ Lottie/TGS. Supervisor `supervisor-stickers` không chạy thì
 sticker nằm mãi ở trạng thái đang xử lý; renderer chưa cài hoặc hỏng thì sticker
 thành `failed`. Cả hai trường hợp đều không hiện trong bảng chọn.
 

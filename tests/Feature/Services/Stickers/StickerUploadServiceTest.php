@@ -48,7 +48,7 @@ it('creates a processing sticker keyed by the hash of the minified animation and
         'byte_size' => strlen($animationJson),
         'position' => 0,
     ]);
-    Queue::assertPushedOn('low', RenderStickerJob::class, fn (RenderStickerJob $job) => $job->sticker->is($sticker)
+    Queue::assertPushedOn('stickers', RenderStickerJob::class, fn (RenderStickerJob $job) => $job->sticker->is($sticker)
         && $job->animationJson === $animationJson);
 });
 

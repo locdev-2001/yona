@@ -83,7 +83,7 @@ up: ## Bật cả môi trường sau khi mở máy: yona serve + queue worker + 
 	@if [ -f storage/logs/worker.pid ] && kill -0 $$(cat storage/logs/worker.pid) 2>/dev/null; then \
 		echo "worker: đã chạy sẵn (pid $$(cat storage/logs/worker.pid))"; \
 	else \
-		nohup $(PHP) artisan queue:listen --queue=$(QUEUE_TIERS) --tries=1 > storage/logs/worker.log 2>&1 & \
+		nohup $(PHP) artisan queue:listen --queue=$(QUEUE_TIERS),stickers --tries=1 > storage/logs/worker.log 2>&1 & \
 		echo $$! > storage/logs/worker.pid; \
 		echo "worker: đã start (queue:listen $(QUEUE_TIERS) — log: storage/logs/worker.log)"; \
 	fi
@@ -97,7 +97,7 @@ up: ## Bật cả môi trường sau khi mở máy: yona serve + queue worker + 
 	@$(MAKE) --no-print-directory status
 
 worker: ## Queue worker foreground (dev): đủ tier theo config/queue_tiers.php
-	$(ARTISAN) queue:listen --queue=$(QUEUE_TIERS) --tries=1
+	$(ARTISAN) queue:listen --queue=$(QUEUE_TIERS),stickers --tries=1
 
 reverb: ## Reverb websocket server foreground (cổng theo .env)
 	$(ARTISAN) reverb:start --debug

@@ -21,7 +21,8 @@ class RenderStickerJob extends ApplicationJob
 {
     public const STORAGE_WRITE_FAILED = 'storage_write_failed';
 
-    private const QUEUE = 'low';
+    // Hàng đợi riêng, supervisor-stickers một process (config/horizon.php).
+    private const QUEUE = 'stickers';
 
     private const ANIMATION_FILE = 'anim.json';
 

@@ -120,7 +120,7 @@ ra kênh ngoài là sticker gốc của nền tảng hoặc một ảnh, không 
   hay đính kèm nào trỏ tới hash đó.
 - **Pipeline upload:** `StickerUploadService` kiểm và thu gọn Lottie/TGS
   (`LottieDocumentValidator`, `LottieMinifier`), tạo sticker `processing`, rồi
-  `RenderStickerJob` (hàng đợi `low`) gọi `StickerRenderer`. Bản cài đặt
+  `RenderStickerJob` (hàng đợi riêng `stickers`, một process) gọi `StickerRenderer`. Bản cài đặt
   `NodeStickerRenderer` chạy `services/sticker-renderer` (ThorVG wasm) trong tiến
   trình con có cắt thời gian và `prlimit --data` (`config/yona.php` → `stickers`).
   Tệp ghi theo hash nội dung: `<2 ký tự>/<hash>/anim.json`, `poster.webp`,
