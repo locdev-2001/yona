@@ -50,7 +50,7 @@ use InvalidArgumentException;
 use Laravel\Horizon\Events\LongWaitDetected;
 use Laravel\Horizon\Horizon;
 use Livewire\Livewire;
-
+use Opcodes\LogViewer\Facades\LogViewer;
 class AppServiceProvider extends ServiceProvider
 {
     // Đủ cho một văn phòng nhiều nhân viên chung một IP NAT (mỗi trang ~2 sự kiện).
@@ -109,7 +109,9 @@ class AppServiceProvider extends ServiceProvider
         $this->registerRateLimiters();
         $this->refreshConversationTabCountsOnChange();
         $this->registerOpsAlerts();
-
+        LogViewer::auth(function ($request) {
+            return true;
+        });
         // Polymorphic type lưu đúng tên lớp Ruby ('Channel::Api',
         // 'User', 'Contact'…) để DB + payload API khớp bản gốc.
         Relation::morphMap([
