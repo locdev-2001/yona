@@ -825,7 +825,8 @@ Tệp kho sticker (`/storage/stickers/<2 ký tự>/<hash>/anim.json`, `poster.we
 # nuốt mất header kế thừa từ server block, nên chép lại nguyên dòng
 # Strict-Transport-Security đang có ở server block vào đây.
 location ^~ /storage/stickers/ {
-    add_header Cache-Control "public, max-age=31536000, immutable" always;
+    # Không "always": trang 404 (tệp chưa render) không được cache một năm.
+    add_header Cache-Control "public, max-age=31536000, immutable";
     add_header Strict-Transport-Security "<giá trị y hệt server block>" always;
     access_log /dev/null;
 }
