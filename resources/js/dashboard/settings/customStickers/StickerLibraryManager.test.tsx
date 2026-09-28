@@ -14,25 +14,36 @@ vi.mock('./stickerUploadFile', async importOriginal => ({
     prepareStickerUpload: vi.fn(async (file: File) => file),
 }));
 
-// Trình chỉnh ảnh có bộ test riêng; ở đây chỉ cần hợp đồng onSave/onSkip/onClose.
+vi.mock('./stickerSourceImage', async importOriginal => ({
+    ...(await importOriginal<typeof import('./stickerSourceImage')>()),
+    loadImage: vi.fn(async () => ({ width: 10, height: 10 })),
+    releaseImage: vi.fn(),
+}));
+
+// Trình chỉnh ảnh có bộ test riêng; ở đây chỉ cần hợp đồng files/rejected/onUpload/onClose.
 vi.mock('./StickerImageEditor', () => ({
-    default: ({ file, position, total, onSave, onSkip, onClose }: {
-        file: File;
-        position: number;
-        total: number;
-        onSave: (upload: unknown) => Promise<void>;
-        onSkip: () => void;
-        onClose: () => void;
+    default: ({ files, rejected, onUpload, onClose }: {
+        files: File[];
+        rejected: { name: string }[];
+        onUpload: (file: File, upload: unknown, options: object) => Promise<{ id: number; existing: boolean }>;
+        onClose: (summary: { addedIds: number[]; existingIds: number[]; skipped: number }) => void;
     }) => (
-        <div role="dialog" aria-label="Chỉnh sticker">
-            <span>{`Ảnh ${position}/${total} · ${file.name}`}</span>
-            <button type="button" onClick={() => void onSave({ edit: { crop: null }, label: 'Mèo', keywords: [] })}>
+        <div role="dialog" aria-label="Thêm sticker">
+            <span>{`${files.map(file => file.name).join(', ')} · bỏ qua ${rejected.map(file => file.name).join(', ')}`}</span>
+            <button
+                type="button"
+                onClick={async () => {
+                    const created = await onUpload(files[0], { edit: { crop: null }, label: 'Mèo', keywords: [] }, {});
+                    onClose({
+                        addedIds: created.existing ? [] : [created.id],
+                        existingIds: created.existing ? [created.id] : [],
+                        skipped: files.length - 1,
+                    });
+                }}
+            >
                 Lưu sticker
             </button>
-            <button type="button" onClick={onSkip}>
-                Bỏ qua ảnh này
-            </button>
-            <button type="button" onClick={onClose}>
+            <button type="button" onClick={() => onClose({ addedIds: [], existingIds: [], skipped: files.length })}>
                 Đóng trình chỉnh
             </button>
         </div>
@@ -198,8 +209,8 @@ describe('StickerLibraryManager · desktop', () => {
         expect(await screen.findByRole('button', { name: /Chó cực vui/ })).toBeInTheDocument();
     });
 
-    it('chọn nhiều ảnh: tệp sai loại báo bằng toast, trình chỉnh chỉ đếm ảnh hợp lệ, xong hàng đợi thì tóm tắt', async () => {
-        const uploadSticker = vi.fn().mockResolvedValue(sticker({ id: 12, status: 'processing', image_url: null }));
+    it('chọn nhiều ảnh: lọc trước khi mở, trình chỉnh chỉ nhận ảnh hợp lệ kèm tệp bị loại, xong thì tóm tắt', async () => {
+        const uploadSticker = vi.fn().mockResolvedValue({ ...sticker({ id: 12, status: 'processing', image_url: null }), existing: false });
         const api = fakeApi({ uploadSticker });
         render(<StickerLibraryManager api={api} />);
         await grid();
@@ -209,17 +220,13 @@ describe('StickerLibraryManager · desktop', () => {
         const second = new File(['b'], 'cho.gif', { type: 'image/gif' });
         fireEvent.change(screen.getByTestId('sticker-file-input'), { target: { files: [first, notImage, second] } });
 
-        expect(await screen.findByText(/Bỏ qua 1 tệp\. cu\.json: chỉ nhận ảnh PNG/)).toBeInTheDocument();
-        expect(await screen.findByText('Ảnh 1/2 · meo.png')).toBeInTheDocument();
-
+        expect(await screen.findByText('meo.png, cho.gif · bỏ qua cu.json')).toBeInTheDocument();
         fireEvent.click(screen.getByRole('button', { name: 'Lưu sticker' }));
-        expect(await screen.findByText('Ảnh 2/2 · cho.gif')).toBeInTheDocument();
-        expect(uploadSticker).toHaveBeenCalledWith(3, first, { edit: { crop: null }, label: 'Mèo', keywords: [] });
 
-        fireEvent.click(screen.getByRole('button', { name: 'Bỏ qua ảnh này' }));
-        await waitFor(() => expect(screen.queryByText('Ảnh 2/2 · cho.gif')).toBeNull());
         expect(await screen.findByText('Đã thêm 1 sticker · Bỏ qua 1')).toBeInTheDocument();
+        expect(uploadSticker).toHaveBeenCalledWith(3, first, { edit: { crop: null }, label: 'Mèo', keywords: [] }, {});
         expect(prepareStickerUpload).toHaveBeenCalledWith(first, 10240 * 1024);
+        expect(screen.queryByRole('dialog', { name: 'Thêm sticker' })).toBeNull();
     });
 
     it('ảnh trùng (existing: true) không tính là sticker mới', async () => {
@@ -233,22 +240,15 @@ describe('StickerLibraryManager · desktop', () => {
         expect(await screen.findByText('1 ảnh đã có')).toBeInTheDocument();
     });
 
-    it('đóng trình chỉnh khi còn nhiều ảnh thì hỏi; Tiếp tục chỉnh giữ hàng đợi, Bỏ thì đóng', async () => {
+    it('không còn tệp hợp lệ nào thì không mở trình chỉnh, chỉ báo lỗi', async () => {
         const api = fakeApi();
         render(<StickerLibraryManager api={api} />);
         await grid();
 
-        fireEvent.change(screen.getByTestId('sticker-file-input'), {
-            target: { files: [new File(['a'], 'a.png', { type: 'image/png' }), new File(['b'], 'b.webp', { type: 'image/webp' })] },
-        });
-        fireEvent.click(await screen.findByRole('button', { name: 'Đóng trình chỉnh' }));
-        const confirm = await screen.findByRole('alertdialog', { name: 'Bỏ 2 ảnh chưa lưu?' });
-        fireEvent.click(within(confirm).getByRole('button', { name: 'Tiếp tục chỉnh' }));
-        expect(screen.getByText('Ảnh 1/2 · a.png')).toBeInTheDocument();
+        fireEvent.change(screen.getByTestId('sticker-file-input'), { target: { files: [new File(['x'], 'a.txt', { type: 'text/plain' })] } });
 
-        fireEvent.click(screen.getByRole('button', { name: 'Đóng trình chỉnh' }));
-        fireEvent.click(within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Bỏ' }));
-        await waitFor(() => expect(screen.queryByText(/Ảnh 1\/2/)).toBeNull());
+        expect(await screen.findByText('Bỏ qua 1 tệp: a.txt (không phải ảnh PNG, JPG, WebP, GIF).')).toBeInTheDocument();
+        expect(screen.queryByRole('dialog', { name: 'Thêm sticker' })).toBeNull();
         expect(api.uploadSticker).not.toHaveBeenCalled();
     });
 

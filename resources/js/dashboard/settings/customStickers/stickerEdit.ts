@@ -1,9 +1,11 @@
 import type { BackgroundMaskEdit } from 'sticker-renderer/image/background-mask.mjs';
+import { FIT_CONTAIN, FIT_COVER, MAX_CROP_OVERFLOW } from 'sticker-renderer/image/sticker-geometry.mjs';
+import type { FitMode, GeometryRect } from 'sticker-renderer/image/sticker-geometry.mjs';
 
 // Tham số chỉnh ảnh gửi kèm ảnh gốc (trường `edit` của API tải sticker). Máy chủ và
 // bản xem trước cùng dựng từ đúng JSON này nên thấy gì thì ra nấy.
-// Toạ độ `crop` chuẩn hoá theo ảnh gốc; toạ độ và bán kính của `edits` chuẩn hoá theo
-// ảnh đã cắt (bán kính theo cạnh dài của vùng cắt).
+// Toạ độ `crop` chuẩn hoá theo ảnh gốc và được vượt biên (phần vượt trong suốt); toạ độ
+// và bán kính của `edits` chuẩn hoá theo vùng lấy (bán kính theo cạnh dài vùng lấy).
 
 export const MAX_STICKER_EDITS = 200;
 export const MAX_BRUSH_STROKE_POINTS = 2000;
@@ -12,6 +14,10 @@ export const MAX_BRUSH_STROKE_POINTS = 2000;
 export const MAX_TOTAL_BRUSH_POINTS = 40000;
 const MIN_BRUSH_POINT_SPACING = 0.005;
 const COORDINATE_DECIMALS = 4;
+export const SUBJECT_PADDING_RATIO = 0.08;
+// Khung Tuỳ chỉnh lớn tối đa gấp đôi cạnh dài ảnh (hợp đồng cho tới 17 lần, quá xa thì vật chỉ còn một chấm).
+const MAX_CROP_SIDE_RATIO = 2;
+const MAX_CROP_SPAN = MAX_CROP_OVERFLOW * 2 + 1;
 
 export interface NormalizedRect {
     x: number;
@@ -21,23 +27,20 @@ export interface NormalizedRect {
 }
 
 export type StickerEditOperation = BackgroundMaskEdit;
+export type StickerFit = FitMode;
 
 export interface StickerEdit {
     crop: NormalizedRect | null;
+    fit: StickerFit;
     removeBackground: boolean;
     tolerance: number;
     feather: number;
     edits: StickerEditOperation[];
 }
 
-export interface PixelRect {
-    left: number;
-    top: number;
-    width: number;
-    height: number;
-}
+export type PixelRect = GeometryRect;
 
-// Khung cắt vuông, tính bằng điểm ảnh của ảnh đang chỉnh.
+// Khung lấy vuông, tính bằng điểm ảnh của ảnh đang chỉnh; được thò ra ngoài ảnh.
 export interface CropSquare {
     left: number;
     top: number;
@@ -49,6 +52,11 @@ export interface ImageSize {
     height: number;
 }
 
+// Ôm chủ thể: khung ôm vật, cắt sát (cover). Vừa khung: cả ảnh trong ô vuông theo cạnh dài.
+// Tuỳ chỉnh: khung người dùng kéo, giữ nguyên khung làm sticker (phần trống thành lề trong suốt).
+export type StickerFraming = 'subject' | 'fit' | 'custom';
+export const FRAMINGS: readonly StickerFraming[] = ['subject', 'fit', 'custom'];
+
 export type WandOperation = 'wand-remove' | 'wand-keep';
 export type BrushOperation = 'brush-remove' | 'brush-keep';
 
@@ -59,6 +67,7 @@ export type SourceEdit =
     | { op: BrushOperation; points: [number, number][]; radius: number };
 
 export interface StickerDraft {
+    framing: StickerFraming;
     crop: CropSquare;
     removeBackground: boolean;
     tolerance: number;
@@ -73,88 +82,87 @@ const roundCoordinate = (value: number) => {
     return clamp(Math.round(value * factor) / factor, 0, 1);
 };
 
+export const fitOfFraming = (framing: StickerFraming): StickerFit => (framing === 'subject' ? FIT_COVER : FIT_CONTAIN);
+
 export function minimumCropSide(size: ImageSize): number {
     const shortSide = Math.min(size.width, size.height);
 
     return Math.min(shortSide, Math.max(8, Math.round(shortSide * 0.05)));
 }
 
-/** Không làm tròn: x + w làm tròn lên có thể vượt 1 và bị máy chủ từ chối. */
+export function maximumCropSide(size: ImageSize): number {
+    const { width, height } = size;
+
+    return Math.floor(Math.min(Math.max(width, height) * MAX_CROP_SIDE_RATIO, MAX_CROP_SPAN * Math.min(width, height)));
+}
+
+/** Giữ khung trong giới hạn hợp đồng: phải chồng lên ảnh ít nhất một cạnh tối thiểu, không thò quá xa. */
+export function clampCrop(crop: CropSquare, size: ImageSize): CropSquare {
+    const side = Math.round(clamp(crop.side, minimumCropSide(size), maximumCropSide(size)));
+    const overlap = minimumCropSide(size);
+    const axis = (start: number, extent: number) =>
+        Math.round(
+            clamp(start, Math.max(-MAX_CROP_OVERFLOW * extent, overlap - side), Math.min(extent - overlap, (MAX_CROP_OVERFLOW + 1) * extent - side)),
+        );
+
+    return { side, left: axis(crop.left, size.width), top: axis(crop.top, size.height) };
+}
+
+/** Không làm tròn, không kẹp: vùng lấy được vượt biên ảnh theo hợp đồng. */
 export function normalizedCrop(crop: CropSquare, size: ImageSize): NormalizedRect {
-    const x = crop.left / size.width;
-    const y = crop.top / size.height;
-
-    return { x, y, w: Math.min(crop.side / size.width, 1 - x), h: Math.min(crop.side / size.height, 1 - y) };
+    return { x: crop.left / size.width, y: crop.top / size.height, w: crop.side / size.width, h: crop.side / size.height };
 }
 
-/** Cùng cách làm tròn với renderer: mép trái/trên làm tròn xuống, mép phải/dưới làm tròn lên. */
-export function cropPixelRect(crop: NormalizedRect | null, size: ImageSize): PixelRect {
-    if (!crop) return { left: 0, top: 0, width: size.width, height: size.height };
-    const left = Math.min(size.width - 1, Math.floor(crop.x * size.width));
-    const top = Math.min(size.height - 1, Math.floor(crop.y * size.height));
-    const right = Math.max(left + 1, Math.min(size.width, Math.ceil((crop.x + crop.w) * size.width)));
-    const bottom = Math.max(top + 1, Math.min(size.height, Math.ceil((crop.y + crop.h) * size.height)));
+/** Khung vuông ôm vật, chừa lề; vừa trong ảnh thì kẹp vào ảnh, lớn hơn cạnh ngắn thì căn giữa vật. */
+export function subjectCrop(subject: PixelRect | null, size: ImageSize, paddingRatio = SUBJECT_PADDING_RATIO): CropSquare {
+    if (!subject) return fitCrop(size);
+    const side = Math.max(Math.ceil(Math.max(subject.width, subject.height) * (1 + 2 * paddingRatio)), minimumCropSide(size));
+    const centerX = subject.left + subject.width / 2;
+    const centerY = subject.top + subject.height / 2;
+    const place = (center: number, extent: number) =>
+        side <= extent ? clamp(Math.round(center - side / 2), 0, extent - side) : Math.round(center - side / 2);
 
-    return { left, top, width: right - left, height: bottom - top };
+    return clampCrop({ side, left: place(centerX, size.width), top: place(centerY, size.height) }, size);
 }
 
-/** Khung vuông ôm phần không phải nền, chừa lề; không có vật thì lấy hình vuông lớn nhất ở giữa. */
-export function defaultCrop(subject: PixelRect | null, size: ImageSize, paddingRatio = 0.08): CropSquare {
-    const maxSide = Math.min(size.width, size.height);
-    const bounds = subject ?? { left: 0, top: 0, width: size.width, height: size.height };
-    const side = clamp(
-        Math.ceil(Math.max(bounds.width, bounds.height) * (1 + 2 * paddingRatio)),
-        minimumCropSide(size),
-        maxSide,
-    );
-    const centerX = bounds.left + bounds.width / 2;
-    const centerY = bounds.top + bounds.height / 2;
+/** Ô vuông theo cạnh dài, ảnh nằm giữa; phần thiếu là lề trong suốt. */
+export function fitCrop(size: ImageSize): CropSquare {
+    const side = Math.max(size.width, size.height);
 
-    return {
-        left: clamp(Math.round(centerX - side / 2), 0, size.width - side),
-        top: clamp(Math.round(centerY - side / 2), 0, size.height - side),
-        side,
-    };
+    return { side, left: Math.floor((size.width - side) / 2), top: Math.floor((size.height - side) / 2) };
 }
 
 export function moveCrop(crop: CropSquare, deltaX: number, deltaY: number, size: ImageSize): CropSquare {
-    return {
-        side: crop.side,
-        left: clamp(Math.round(crop.left + deltaX), 0, size.width - crop.side),
-        top: clamp(Math.round(crop.top + deltaY), 0, size.height - crop.side),
-    };
+    return clampCrop({ side: crop.side, left: crop.left + deltaX, top: crop.top + deltaY }, size);
 }
 
 export type CropCorner = 'nw' | 'ne' | 'sw' | 'se';
 
-/** Kéo một góc: góc đối diện đứng yên, cạnh theo trục kéo xa hơn, không ra ngoài ảnh. */
+/** Kéo một góc: góc đối diện đứng yên, cạnh theo trục kéo xa hơn. */
 export function resizeCrop(crop: CropSquare, corner: CropCorner, pointerX: number, pointerY: number, size: ImageSize): CropSquare {
     const growsRight = corner === 'ne' || corner === 'se';
     const growsDown = corner === 'sw' || corner === 'se';
     const anchorX = growsRight ? crop.left : crop.left + crop.side;
     const anchorY = growsDown ? crop.top : crop.top + crop.side;
-    const roomX = growsRight ? size.width - anchorX : anchorX;
-    const roomY = growsDown ? size.height - anchorY : anchorY;
     const requested = Math.max(Math.abs(pointerX - anchorX), Math.abs(pointerY - anchorY));
-    const side = Math.round(clamp(requested, minimumCropSide(size), Math.min(roomX, roomY)));
+    const side = Math.round(clamp(requested, minimumCropSide(size), maximumCropSide(size)));
 
-    return {
-        side,
-        left: growsRight ? anchorX : anchorX - side,
-        top: growsDown ? anchorY : anchorY - side,
-    };
+    return clampCrop(
+        {
+            side,
+            left: growsRight ? anchorX : anchorX - side,
+            top: growsDown ? anchorY : anchorY - side,
+        },
+        size,
+    );
 }
 
 export function resizeCropAroundCenter(crop: CropSquare, delta: number, size: ImageSize): CropSquare {
-    const side = Math.round(clamp(crop.side + delta, minimumCropSide(size), Math.min(size.width, size.height)));
+    const side = Math.round(clamp(crop.side + delta, minimumCropSide(size), maximumCropSide(size)));
     const centerX = crop.left + crop.side / 2;
     const centerY = crop.top + crop.side / 2;
 
-    return {
-        side,
-        left: clamp(Math.round(centerX - side / 2), 0, size.width - side),
-        top: clamp(Math.round(centerY - side / 2), 0, size.height - side),
-    };
+    return clampCrop({ side, left: centerX - side / 2, top: centerY - side / 2 }, size);
 }
 
 type Point = [number, number];
@@ -287,6 +295,7 @@ export function canAddStickerEdit(edit: StickerEdit): boolean {
 export function toStickerEdit(draft: StickerDraft, size: ImageSize): StickerEdit {
     return {
         crop: normalizedCrop(draft.crop, size),
+        fit: fitOfFraming(draft.framing),
         removeBackground: draft.removeBackground,
         tolerance: draft.tolerance,
         feather: 0,

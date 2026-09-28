@@ -1,388 +1,539 @@
 import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
-import type { FormEvent, KeyboardEvent } from 'react';
+import type { FormEvent, ReactNode } from 'react';
+
+import { DEFAULT_TOLERANCE } from 'sticker-renderer/image/background-mask.mjs';
 
 import { t } from '../../../i18n';
 import { parseApiErrorMessage } from 'dashboard/helper/apiClient';
-import { useStickerDisplaySize } from 'shared/sticker/stickerDisplaySize';
 import StickerEditStage from './StickerEditStage';
-import type { EditorTool, RenderedPreview } from './StickerEditStage';
-import { drawComposedSticker, pixelsToCanvas } from './stickerCanvas';
-import { canAddStickerEdit, toStickerEdit } from './stickerEdit';
-import type { BrushOperation, ImageSize, StickerDraft, StickerEdit, WandOperation } from './stickerEdit';
+import type { EditorTool } from './StickerEditStage';
+import { SegmentedControl, StickerPreviewPair, StickerSlider } from './StickerEditorControls';
+import StickerMetaFields, { changesFromDraft } from './StickerMetaFields';
+import type { StickerMetaDraft } from './StickerMetaFields';
+import { canAddStickerEdit, fitCrop, FRAMINGS, subjectCrop, toStickerEdit } from './stickerEdit';
+import type { BrushOperation, ImageSize, StickerDraft, StickerFraming, WandOperation } from './stickerEdit';
+import { useFramePlayback, useStickerPreview } from './stickerEditorHooks';
 import { createEditorState, stickerEditorReducer } from './stickerEditorState';
-import { parseKeywordInput } from './stickerKeywords';
-import {
-    CHECKERBOARD_STYLE,
-    INPUT_CLASS,
-    PRIMARY_BUTTON_CLASS,
-    SECONDARY_BUTTON_CLASS,
-    TOGGLE_BUTTON_CLASS,
-    TOGGLE_OFF_CLASS,
-    TOGGLE_ON_CLASS,
-} from './stickerLibraryStyles';
-import type { PixelRect } from './stickerEdit';
-import type { RenderedCrop } from './stickerMaskRender';
-import type { StickerMaskRunner } from './stickerMaskRunner';
-import type { DecodedStickerSource } from './stickerSourceImage';
+import { hasMetaErrors, stickerMetaErrorsFromApi, validateStickerMeta } from './stickerLimits';
+import type { StickerLimits, StickerMetaErrors } from './stickerLimits';
 import type { StickerUpload } from './stickerLibraryApi';
+import { IconButton, MOBILE_QUERY, Spinner, StickerButton, Switch, useMediaQuery } from './stickerLibraryUi';
+import type { LoadedStickerSource } from './stickerMaskRender';
+import type { StickerMaskRunner } from './stickerMaskRunner';
 import { StickerFileTooLargeError } from './stickerUploadFile';
+import type { UploadedSticker } from './types';
+
+export interface EditableSource {
+    size: ImageSize;
+    sourceCanvas: HTMLCanvasElement | null;
+    loaded: LoadedStickerSource;
+}
 
 interface StickerEditorWorkspaceProps {
-    source: DecodedStickerSource;
+    source: EditableSource;
     runner: StickerMaskRunner;
     initialDraft: StickerDraft;
     imageSize: number;
-    onSave: (upload: StickerUpload) => Promise<void>;
+    limits: StickerLimits;
+    position: number;
+    total: number;
+    hasLaterImages: boolean;
+    isSaving: boolean;
+    existing: UploadedSticker | null;
+    // Có hộp xác nhận chồng lên: phím tắt của trình chỉnh tạm nghỉ.
+    shortcutsPaused: boolean;
+    onSave: (upload: StickerUpload, onThrottleWait: (delayMs: number) => void) => Promise<void>;
+    onUpdateExisting: (upload: StickerUpload) => Promise<void>;
     onSkip: () => void;
+    onCancel: () => void;
+    onDirtyChange: (dirty: boolean) => void;
 }
 
 const DEFAULT_BRUSH_PERCENT = 5;
 const MIN_BRUSH_PERCENT = 1;
 const MAX_BRUSH_PERCENT = 25;
-const ZOOMED_PREVIEW_PIXELS = 256;
+const BRUSH_PREVIEW_MS = 800;
+// Dải chip chế độ đè trên vùng ảnh ở điện thoại: cao 44px cộng lề.
+const MOBILE_MODES_OVERLAY_PX = 52;
+const THROTTLE_TICK_MS = 250;
+const EMPTY_META: StickerMetaDraft = { label: '', keywords: [], keywordInput: '' };
+const TOOL_SHORTCUT: Record<EditorTool, string> = { crop: 'V', wand: 'W', brush: 'B' };
+const TOOL_BY_KEY: Record<string, EditorTool> = { v: 'crop', w: 'wand', b: 'brush' };
+const TOOL_LABEL: Record<EditorTool, string> = { crop: 'TOOL_FRAMING', wand: 'TOOL_WAND', brush: 'TOOL_BRUSH' };
+const FRAMING_LABEL: Record<StickerFraming, string> = { subject: 'FRAMING_SUBJECT', fit: 'FRAMING_FIT', custom: 'FRAMING_CUSTOM' };
+const FRAMING_HINT: Record<StickerFraming, string> = { subject: 'HINT_SUBJECT', fit: 'HINT_FIT', custom: 'HINT_CUSTOM' };
+const TOOL_HINT: Record<Exclude<EditorTool, 'crop'>, string> = { wand: 'HINT_WAND', brush: 'HINT_BRUSH' };
 const TOOLS: EditorTool[] = ['crop', 'wand', 'brush'];
-const TOOL_LABEL: Record<EditorTool, string> = { crop: 'TOOL_CROP', wand: 'TOOL_WAND', brush: 'TOOL_BRUSH' };
-const TOOL_HINT: Record<EditorTool, string> = { crop: 'HINT_CROP', wand: 'HINT_WAND', brush: 'HINT_BRUSH' };
-const WAND_MODES: { op: WandOperation; label: string }[] = [
-    { op: 'wand-remove', label: 'WAND_REMOVE' },
-    { op: 'wand-keep', label: 'WAND_KEEP' },
-];
-const BRUSH_MODES: { op: BrushOperation; label: string }[] = [
-    { op: 'brush-remove', label: 'BRUSH_REMOVE' },
-    { op: 'brush-keep', label: 'BRUSH_KEEP' },
-];
-const LABEL_MAX_LENGTH = 100;
+const WAND_MODES: WandOperation[] = ['wand-remove', 'wand-keep'];
+const WAND_LABEL: Record<WandOperation, string> = { 'wand-remove': 'WAND_REMOVE', 'wand-keep': 'WAND_KEEP' };
+const BRUSH_MODES: BrushOperation[] = ['brush-remove', 'brush-keep'];
+const BRUSH_LABEL: Record<BrushOperation, string> = { 'brush-remove': 'BRUSH_REMOVE', 'brush-keep': 'BRUSH_KEEP' };
+
+type SettingsTab = 'image' | 'details';
 
 const editorText = (key: string, params?: Record<string, string | number>) => t(`STICKER_LIBRARY.EDITOR.${key}`, params);
 
-const saveErrorMessage = (error: unknown) =>
-    error instanceof StickerFileTooLargeError
-        ? editorText('IMAGE_TOO_LARGE')
-        : parseApiErrorMessage(error) || t('STICKER_LIBRARY.UPLOAD_FAILED');
+const isAbort = (error: unknown) => error instanceof DOMException && error.name === 'AbortError';
 
-interface MaskPreviewState {
-    preview: (RenderedPreview & { opaqueBounds: PixelRect | null }) | null;
-    isRendering: boolean;
-    hasFailed: boolean;
-}
+const isTypingTarget = (target: EventTarget | null) => {
+    if (!(target instanceof HTMLElement)) return false;
+    if (target.isContentEditable || target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement) return true;
 
-// Mỗi lần bản nháp đổi thì dựng lại bản xem trước; đang dựng dở thì chỉ giữ lượt
-// mới nhất để kéo thanh hay tô cọ liên tục không dồn hàng đợi.
-function useMaskPreview(runner: StickerMaskRunner, edit: StickerEdit): MaskPreviewState {
-    const [state, setState] = useState<MaskPreviewState>({ preview: null, isRendering: true, hasFailed: false });
-    const latestEditRef = useRef(edit);
-    const isRenderingRef = useRef(false);
-    const isMountedRef = useRef(true);
-    latestEditRef.current = edit;
+    return target instanceof HTMLInputElement && !['checkbox', 'radio', 'range', 'button'].includes(target.type);
+};
+
+function useThrottleCountdown(isSaving: boolean) {
+    const [until, setUntil] = useState<number | null>(null);
+    const [now, setNow] = useState(() => Date.now());
 
     useEffect(() => {
-        isMountedRef.current = true;
-        return () => {
-            isMountedRef.current = false;
-        };
-    }, []);
+        if (!isSaving) setUntil(null);
+    }, [isSaving]);
 
     useEffect(() => {
-        if (isRenderingRef.current) return;
+        if (until === null) return undefined;
+        const timer = window.setInterval(() => setNow(Date.now()), THROTTLE_TICK_MS);
 
-        const renderLatest = () => {
-            const target = latestEditRef.current;
-            isRenderingRef.current = true;
-            setState(current => ({ ...current, isRendering: true }));
-            runner
-                .render(target)
-                .then(
-                    (result: RenderedCrop) => {
-                        if (!isMountedRef.current) return;
-                        const preview = { edit: target, canvas: pixelsToCanvas(result), opaqueBounds: result.opaqueBounds };
-                        setState({ preview, isRendering: false, hasFailed: false });
-                    },
-                    () => {
-                        if (isMountedRef.current) setState(current => ({ ...current, isRendering: false, hasFailed: true }));
-                    },
-                )
-                .finally(() => {
-                    isRenderingRef.current = false;
-                    if (isMountedRef.current && latestEditRef.current !== target) renderLatest();
-                });
-        };
+        return () => window.clearInterval(timer);
+    }, [until]);
 
-        renderLatest();
-    }, [runner, edit]);
+    const seconds = until === null ? null : Math.max(0, Math.ceil((until - now) / 1000));
 
-    return state;
+    return { seconds, startWaiting: (delayMs: number) => { setNow(Date.now()); setUntil(Date.now() + delayMs); } };
 }
 
-function StickerPreview({ preview, imageSize }: { preview: MaskPreviewState['preview']; imageSize: number }) {
-    const displaySize = useStickerDisplaySize();
-    const zoomedRef = useRef<HTMLCanvasElement>(null);
-    const actualRef = useRef<HTMLCanvasElement>(null);
-
-    useEffect(() => {
-        for (const target of [zoomedRef.current, actualRef.current]) {
-            if (target) drawComposedSticker(target, preview?.canvas ?? null, preview?.opaqueBounds ?? null);
-        }
-    }, [preview]);
-
-    return (
-        <div className="flex items-end gap-4">
-            <figure className="m-0 flex flex-col items-center gap-1">
-                <canvas
-                    ref={zoomedRef}
-                    width={ZOOMED_PREVIEW_PIXELS}
-                    height={ZOOMED_PREVIEW_PIXELS}
-                    className="size-32 border border-slate-200"
-                    style={CHECKERBOARD_STYLE}
-                    data-testid="sticker-preview-zoomed"
-                />
-                <figcaption className="text-xs text-slate-600">{editorText('PREVIEW_ZOOMED')}</figcaption>
-            </figure>
-            <figure className="m-0 flex flex-col items-center gap-1">
-                <canvas
-                    ref={actualRef}
-                    width={imageSize}
-                    height={imageSize}
-                    className="border border-slate-200"
-                    style={{ ...CHECKERBOARD_STYLE, backgroundSize: '8px 8px', width: displaySize, height: displaySize }}
-                    data-testid="sticker-preview-actual"
-                />
-                <figcaption className="text-xs text-slate-600">{editorText('PREVIEW_ACTUAL', { size: imageSize })}</figcaption>
-            </figure>
-        </div>
-    );
-}
-
-function ToggleButton({ pressed, onClick, disabled, children }: { pressed: boolean; onClick: () => void; disabled?: boolean; children: string }) {
-    return (
-        <button
-            type="button"
-            aria-pressed={pressed}
-            disabled={disabled}
-            onClick={onClick}
-            className={`${TOGGLE_BUTTON_CLASS} ${pressed ? TOGGLE_ON_CLASS : TOGGLE_OFF_CLASS}`}
-        >
-            {children}
-        </button>
-    );
-}
-
-export default function StickerEditorWorkspace({ source, runner, initialDraft, imageSize, onSave, onSkip }: StickerEditorWorkspaceProps) {
+export default function StickerEditorWorkspace({
+    source,
+    runner,
+    initialDraft,
+    imageSize,
+    limits,
+    position,
+    total,
+    hasLaterImages,
+    isSaving,
+    existing,
+    shortcutsPaused,
+    onSave,
+    onUpdateExisting,
+    onSkip,
+    onCancel,
+    onDirtyChange,
+}: StickerEditorWorkspaceProps) {
+    const isMobile = useMediaQuery(MOBILE_QUERY);
     const [state, dispatch] = useReducer(stickerEditorReducer, initialDraft, createEditorState);
     const { draft } = state;
-    const size: ImageSize = useMemo(() => ({ width: source.pixels.width, height: source.pixels.height }), [source]);
-    const sourceCanvas = useMemo(() => pixelsToCanvas(source.pixels), [source]);
+    const { size, loaded } = source;
     const edit = useMemo(() => toStickerEdit(draft, size), [draft, size]);
-    const { preview, isRendering, hasFailed } = useMaskPreview(runner, edit);
+    const { preview, isRendering, hasFailed } = useStickerPreview(runner, edit);
+    const playback = useFramePlayback(loaded.delays);
+    const throttle = useThrottleCountdown(isSaving);
 
     const [tool, setTool] = useState<EditorTool>('crop');
     const [wandMode, setWandMode] = useState<WandOperation>('wand-remove');
     const [brushMode, setBrushMode] = useState<BrushOperation>('brush-remove');
     const [brushPercent, setBrushPercent] = useState(DEFAULT_BRUSH_PERCENT);
-    const [labelDraft, setLabelDraft] = useState('');
-    const [keywordsDraft, setKeywordsDraft] = useState('');
-    const [isSaving, setSaving] = useState(false);
+    const [showBrushPreview, setShowBrushPreview] = useState(false);
+    const [meta, setMeta] = useState<StickerMetaDraft>(EMPTY_META);
+    const [apiErrors, setApiErrors] = useState<StickerMetaErrors>({});
     const [saveError, setSaveError] = useState<string | null>(null);
+    const [isUpdatingExisting, setUpdatingExisting] = useState(false);
+    const [settingsTab, setSettingsTab] = useState<SettingsTab>('image');
 
+    const changes = changesFromDraft(meta);
+    const localErrors = validateStickerMeta(changes, limits);
+    const metaErrors: StickerMetaErrors = { label: apiErrors.label ?? localErrors.label, keywords: apiErrors.keywords ?? localErrors.keywords };
+    const isMetaValid = !hasMetaErrors(localErrors);
     const canEdit = canAddStickerEdit(edit);
-    const isEmptyResult = preview !== null && preview.edit === edit && preview.opaqueBounds === null;
-    const canSave = !isSaving && !hasFailed && preview !== null && !isEmptyResult;
-    const brushRadiusOfCrop = brushPercent / 100;
+    const isPreviewCurrent = preview !== null && preview.edit === edit && !isRendering;
+    const isEmptyResult = isPreviewCurrent && preview.isEmpty;
+    const canSave = !isSaving && !hasFailed && isPreviewCurrent && !preview.isEmpty && isMetaValid && existing === null;
+    const brushRadius = brushPercent / 100;
+    const isAnimated = loaded.delays.length > 1;
+    const isDirty = state.undoStack.length > 0 || changes.label !== null || changes.keywords.length > 0;
 
-    const save = async (event: FormEvent) => {
-        event.preventDefault();
+    useEffect(() => onDirtyChange(isDirty), [isDirty, onDirtyChange]);
+
+    useEffect(() => {
+        if (!showBrushPreview) return undefined;
+        const timer = window.setTimeout(() => setShowBrushPreview(false), BRUSH_PREVIEW_MS);
+
+        return () => window.clearTimeout(timer);
+    }, [showBrushPreview, brushPercent]);
+
+    const changeBrushPercent = (next: number) => {
+        const clamped = Math.min(MAX_BRUSH_PERCENT, Math.max(MIN_BRUSH_PERCENT, next));
+        setBrushPercent(clamped);
+        setShowBrushPreview(true);
+    };
+
+    const chooseFraming = (framing: StickerFraming) => {
+        const crop = framing === 'subject' ? subjectCrop(loaded.subject.subject, size) : framing === 'fit' ? fitCrop(size) : draft.crop;
+        dispatch({ type: 'set-framing', framing, crop });
+    };
+
+    const upload = (): StickerUpload => ({ edit, ...changes });
+
+    const save = async () => {
         if (!canSave) return;
-        setSaving(true);
         setSaveError(null);
         try {
-            await onSave({ edit, label: labelDraft.trim() || null, keywords: parseKeywordInput(keywordsDraft) });
+            await onSave(upload(), throttle.startWaiting);
         } catch (error) {
-            setSaveError(saveErrorMessage(error));
-            setSaving(false);
+            if (isAbort(error)) return;
+            const fieldErrors = stickerMetaErrorsFromApi(error, changes, limits);
+            if (fieldErrors) {
+                setApiErrors(fieldErrors);
+                if (isMobile) setSettingsTab('details');
+                return;
+            }
+            setSaveError(
+                error instanceof StickerFileTooLargeError ? editorText('IMAGE_TOO_LARGE') : parseApiErrorMessage(error) || t('STICKER_LIBRARY.UPLOAD_FAILED'),
+            );
         }
     };
 
-    const undoOnShortcut = (event: KeyboardEvent<HTMLFormElement>) => {
-        const target = event.target as HTMLElement;
-        if (target.tagName === 'INPUT' && (target as HTMLInputElement).type !== 'range') return;
-        if (event.key.toLowerCase() !== 'z' || !(event.ctrlKey || event.metaKey) || event.shiftKey) return;
-        event.preventDefault();
-        dispatch({ type: 'undo' });
+    const updateExisting = async () => {
+        setUpdatingExisting(true);
+        setSaveError(null);
+        try {
+            await onUpdateExisting(upload());
+        } catch (error) {
+            setSaveError(parseApiErrorMessage(error) || t('STICKER_LIBRARY.ACTION_ERROR'));
+            setUpdatingExisting(false);
+        }
     };
 
-    return (
-        <form className="flex min-h-0 flex-1 flex-col" onSubmit={event => void save(event)} onKeyDown={undoOnShortcut}>
-            <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto p-4 md:flex-row">
-                <div className="flex min-w-0 flex-1 flex-col gap-3">
-                    <div className="flex gap-2" role="group" aria-label={editorText('TOOLS')}>
-                        {TOOLS.map(item => (
-                            <ToggleButton key={item} pressed={tool === item} onClick={() => setTool(item)}>
-                                {editorText(TOOL_LABEL[item])}
-                            </ToggleButton>
-                        ))}
-                    </div>
-                    {tool === 'wand' ? (
-                        <div className="flex gap-2">
-                            {WAND_MODES.map(mode => (
-                                <ToggleButton key={mode.op} pressed={wandMode === mode.op} onClick={() => setWandMode(mode.op)}>
-                                    {editorText(mode.label)}
-                                </ToggleButton>
-                            ))}
-                        </div>
-                    ) : null}
-                    {tool === 'brush' ? (
-                        <div className="flex flex-col gap-2">
-                            <div className="flex gap-2">
-                                {BRUSH_MODES.map(mode => (
-                                    <ToggleButton key={mode.op} pressed={brushMode === mode.op} onClick={() => setBrushMode(mode.op)}>
-                                        {editorText(mode.label)}
-                                    </ToggleButton>
-                                ))}
-                            </div>
-                            <label className="flex items-center gap-3 text-xs text-slate-700">
-                                <span className="shrink-0">{editorText('BRUSH_SIZE')}</span>
-                                <input
-                                    type="range"
-                                    min={MIN_BRUSH_PERCENT}
-                                    max={MAX_BRUSH_PERCENT}
-                                    value={brushPercent}
-                                    onChange={event => setBrushPercent(Number(event.target.value))}
-                                    className="h-11 min-w-0 flex-1 accent-woot-500 md:h-9"
-                                />
-                            </label>
-                        </div>
-                    ) : null}
-                    <p className="m-0 text-xs text-slate-600">{editorText(TOOL_HINT[tool])}</p>
-                    <div className="p-4">
-                        <StickerEditStage
-                            sourceCanvas={sourceCanvas}
-                            size={size}
-                            crop={draft.crop}
-                            tool={tool}
-                            rendered={preview}
-                            brushRadius={brushRadiusOfCrop}
-                            canEdit={canEdit}
-                            onCropChange={crop => dispatch({ type: 'crop-change', crop })}
-                            onCropCommit={before => dispatch({ type: 'crop-commit', before })}
-                            onWand={([x, y]) => dispatch({ type: 'wand', op: wandMode, x, y })}
-                            onBrushStart={point =>
-                                dispatch({
-                                    type: 'brush-start',
-                                    op: brushMode,
-                                    point,
-                                    radius: (brushRadiusOfCrop * draft.crop.side) / Math.max(size.width, size.height),
-                                })
-                            }
-                            onBrushExtend={point => dispatch({ type: 'brush-extend', point })}
+    // Phím tắt nghe ở cấp hộp thoại (focus có thể đang ở nền canvas, không ở ô nào).
+    const shortcutRef = useRef<(event: KeyboardEvent) => void>(() => undefined);
+    shortcutRef.current = event => {
+        if (shortcutsPaused || event.altKey) return;
+        const withModifier = event.ctrlKey || event.metaKey;
+        const key = event.key.toLowerCase();
+        if (withModifier && event.key === 'Enter') {
+            event.preventDefault();
+            void save();
+            return;
+        }
+        if (isTypingTarget(event.target)) return;
+        if (withModifier && (key === 'z' || key === 'y')) {
+            event.preventDefault();
+            dispatch({ type: key === 'y' || event.shiftKey ? 'redo' : 'undo' });
+            return;
+        }
+        if (withModifier) return;
+        if (TOOL_BY_KEY[key]) {
+            event.preventDefault();
+            setTool(TOOL_BY_KEY[key]);
+        } else if (event.key === '[' || event.key === ']') {
+            event.preventDefault();
+            setTool('brush');
+            changeBrushPercent(brushPercent + (event.key === ']' ? 1 : -1));
+        }
+    };
+
+    useEffect(() => {
+        const onKeyDown = (event: KeyboardEvent) => shortcutRef.current(event);
+        document.addEventListener('keydown', onKeyDown);
+
+        return () => document.removeEventListener('keydown', onKeyDown);
+    }, []);
+
+    const submit = (event: FormEvent) => {
+        event.preventDefault();
+        void save();
+    };
+
+    const toolbar = (
+        <div className="flex h-11 shrink-0 items-center gap-2">
+            <div className="min-w-0 flex-1">
+                <SegmentedControl
+                    label={editorText('TOOLS')}
+                    options={TOOLS.map(item => ({ value: item, label: editorText(TOOL_LABEL[item]), shortcut: TOOL_SHORTCUT[item] }))}
+                    value={tool}
+                    onChange={setTool}
+                />
+            </div>
+            <IconButton icon="i-lucide-undo-2" label={editorText('UNDO')} aria-keyshortcuts="Control+Z" disabled={state.undoStack.length === 0} onClick={() => dispatch({ type: 'undo' })} />
+            <IconButton icon="i-lucide-redo-2" label={editorText('REDO')} aria-keyshortcuts="Control+Shift+Z" disabled={state.redoStack.length === 0} onClick={() => dispatch({ type: 'redo' })} />
+        </div>
+    );
+
+    const toolModes = (
+        <div className="flex h-11 shrink-0 items-center gap-2">
+            {tool === 'crop' ? (
+                <div className="min-w-0 flex-1">
+                    <SegmentedControl
+                        label={editorText('FRAMING')}
+                        options={FRAMINGS.map(framing => ({ value: framing, label: editorText(FRAMING_LABEL[framing]) }))}
+                        value={draft.framing}
+                        onChange={chooseFraming}
+                    />
+                </div>
+            ) : null}
+            {tool === 'wand' ? (
+                <div className="min-w-0 flex-1">
+                    <SegmentedControl
+                        label={editorText('WAND_MODE')}
+                        options={WAND_MODES.map(mode => ({ value: mode, label: editorText(WAND_LABEL[mode]) }))}
+                        value={wandMode}
+                        onChange={setWandMode}
+                    />
+                </div>
+            ) : null}
+            {tool === 'brush' ? (
+                <>
+                    <div className="min-w-0 flex-1">
+                        <SegmentedControl
+                            label={editorText('BRUSH_MODE')}
+                            options={BRUSH_MODES.map(mode => ({ value: mode, label: editorText(BRUSH_LABEL[mode]) }))}
+                            value={brushMode}
+                            onChange={setBrushMode}
                         />
                     </div>
-                    {source.animated ? <p className="m-0 text-xs text-slate-600">{editorText('ANIMATED_NOTE')}</p> : null}
-                    {!canEdit ? (
-                        <p role="status" className="m-0 text-xs text-yellow-800">
-                            {editorText('EDIT_LIMIT')}
-                        </p>
-                    ) : null}
-                </div>
+                    <div role="group" aria-label={editorText('BRUSH_SIZE')} className="flex shrink-0 items-center">
+                        <IconButton
+                            icon="i-lucide-minus"
+                            label={editorText('DECREASE', { label: editorText('BRUSH_SIZE') })}
+                            aria-keyshortcuts="["
+                            disabled={brushPercent <= MIN_BRUSH_PERCENT}
+                            onClick={() => changeBrushPercent(brushPercent - 1)}
+                        />
+                        <span className="w-10 text-center text-sm tabular-nums text-n-slate-12" aria-live="polite">
+                            {editorText('BRUSH_SIZE_VALUE', { size: brushPercent })}
+                        </span>
+                        <IconButton
+                            icon="i-lucide-plus"
+                            label={editorText('INCREASE', { label: editorText('BRUSH_SIZE') })}
+                            aria-keyshortcuts="]"
+                            disabled={brushPercent >= MAX_BRUSH_PERCENT}
+                            onClick={() => changeBrushPercent(brushPercent + 1)}
+                        />
+                    </div>
+                </>
+            ) : null}
+        </div>
+    );
 
-                <div className="flex w-full flex-col gap-4 md:w-72 md:shrink-0">
-                    <div className="flex flex-col gap-2">
-                        <label className="flex min-h-11 items-center gap-2 text-sm text-slate-900 md:min-h-9">
-                            <input
-                                type="checkbox"
-                                checked={draft.removeBackground}
-                                onChange={event => dispatch({ type: 'set-remove-background', enabled: event.target.checked })}
-                                className="size-4 accent-woot-500"
-                            />
-                            {editorText('REMOVE_BACKGROUND')}
-                        </label>
-                        <label className="flex flex-col gap-1 text-xs text-slate-700">
-                            <span className="flex justify-between">
-                                <span>{editorText('TOLERANCE')}</span>
-                                <span className="tabular-nums text-slate-900">{draft.tolerance}</span>
-                            </span>
-                            <input
-                                type="range"
-                                min={0}
-                                max={100}
-                                value={draft.tolerance}
-                                onChange={event => dispatch({ type: 'set-tolerance', tolerance: Number(event.target.value) })}
-                                className="h-11 w-full accent-woot-500 md:h-9"
-                            />
-                        </label>
-                        <p className="m-0 text-xs text-slate-600">{editorText('TOLERANCE_HINT')}</p>
-                        <div className="flex gap-2">
-                            <button
-                                type="button"
-                                className={`${SECONDARY_BUTTON_CLASS} flex-1`}
-                                onClick={() => dispatch({ type: 'undo' })}
-                                disabled={state.undoStack.length === 0}
-                            >
-                                {editorText('UNDO')}
-                            </button>
-                            <button
-                                type="button"
-                                className={`${SECONDARY_BUTTON_CLASS} flex-1`}
-                                onClick={() => dispatch({ type: 'use-original' })}
-                                disabled={!draft.removeBackground && draft.edits.length === 0}
-                            >
-                                {editorText('USE_ORIGINAL')}
-                            </button>
+    const hint = tool === 'crop' ? FRAMING_HINT[draft.framing] : TOOL_HINT[tool];
+    const canvasArea = (
+        <div className={`relative overflow-hidden rounded-lg bg-n-alpha-1 ${isMobile ? 'h-[min(45dvh,100vw)] shrink-0' : 'min-h-0 flex-1'}`}>
+            <StickerEditStage
+                sourceCanvas={source.sourceCanvas}
+                size={size}
+                crop={draft.crop}
+                tool={tool}
+                preview={preview}
+                frameIndex={playback.frameIndex}
+                motionBounds={isAnimated ? loaded.subject.subject : null}
+                brushRadius={brushRadius}
+                showBrushPreview={showBrushPreview}
+                canEdit={canEdit}
+                topInsetPx={isMobile ? MOBILE_MODES_OVERLAY_PX : 0}
+                onCropChange={crop => dispatch({ type: 'crop-change', crop })}
+                onCropCommit={() => dispatch({ type: 'crop-commit' })}
+                onCropNudge={crop => dispatch({ type: 'crop-nudge', crop, at: Date.now() })}
+                onWand={([x, y]) => dispatch({ type: 'wand', op: wandMode, x, y })}
+                onBrushStart={point =>
+                    dispatch({
+                        type: 'brush-start',
+                        op: brushMode,
+                        point,
+                        radius: (brushRadius * draft.crop.side) / Math.max(size.width, size.height),
+                    })
+                }
+                onBrushExtend={point => dispatch({ type: 'brush-extend', point })}
+            />
+            {isMobile ? (
+                <div className="absolute inset-x-2 top-2 z-10 rounded-lg bg-n-solid-1/90 px-1 shadow-sm">{toolModes}</div>
+            ) : null}
+            {isAnimated ? (
+                <div className="absolute bottom-2 right-2 z-10 flex items-center gap-1 rounded-lg bg-n-solid-1/90 pr-2 shadow-sm">
+                    <IconButton
+                        icon={playback.isPlaying ? 'i-lucide-pause' : 'i-lucide-play'}
+                        label={editorText(playback.isPlaying ? 'PAUSE' : 'PLAY')}
+                        onClick={playback.togglePlaying}
+                    />
+                    <span className="text-xs tabular-nums text-n-slate-12">
+                        {editorText('FRAME_OF', { index: playback.frameIndex + 1, total: playback.frameCount })}
+                    </span>
+                </div>
+            ) : null}
+            {isEmptyResult ? (
+                <div role="status" className="absolute inset-x-2 bottom-2 z-20 flex items-center gap-2 rounded-lg bg-n-amber-3 px-3 py-1.5 text-sm text-n-amber-11 shadow">
+                    <span className="min-w-0 flex-1">{editorText('EMPTY_RESULT')}</span>
+                    <StickerButton tone="secondary" icon="i-lucide-undo-2" disabled={state.undoStack.length === 0} onClick={() => dispatch({ type: 'undo' })}>
+                        {editorText('UNDO')}
+                    </StickerButton>
+                </div>
+            ) : null}
+        </div>
+    );
+
+    const notices = (
+        <>
+            {loaded.animationUnavailable ? <p className="m-0 text-xs text-n-slate-11">{editorText('ANIMATION_UNAVAILABLE')}</p> : null}
+            {!canEdit ? (
+                <p role="status" className="m-0 text-xs text-n-amber-11">
+                    {editorText('EDIT_LIMIT')}
+                </p>
+            ) : null}
+            {hasFailed ? (
+                <p role="alert" className="m-0 text-xs text-n-ruby-11">
+                    {editorText('PROCESS_FAILED')}
+                </p>
+            ) : null}
+        </>
+    );
+
+    const backgroundSettings = (
+        <div className="flex flex-col gap-2">
+            <Switch
+                checked={draft.removeBackground}
+                label={editorText('REMOVE_BACKGROUND')}
+                onChange={enabled => dispatch({ type: 'set-remove-background', enabled })}
+            />
+            <div className="flex flex-col gap-1">
+                <span className={`text-xs ${draft.removeBackground ? 'text-n-slate-11' : 'text-n-slate-10'}`}>{editorText('TOLERANCE')}</span>
+                <StickerSlider
+                    label={editorText('TOLERANCE')}
+                    value={draft.tolerance}
+                    min={0}
+                    max={100}
+                    disabled={!draft.removeBackground}
+                    onChange={tolerance => dispatch({ type: 'set-tolerance', tolerance })}
+                />
+            </div>
+            {draft.removeBackground ? <p className="m-0 text-xs text-n-slate-11">{editorText('TOLERANCE_HINT')}</p> : null}
+        </div>
+    );
+
+    const useOriginal = (
+        <button
+            type="button"
+            className="reset-base self-start border-0 bg-transparent p-0 text-sm font-medium text-n-brand underline-offset-2 hover:underline disabled:cursor-not-allowed disabled:text-n-slate-10 disabled:no-underline"
+            disabled={!draft.removeBackground && draft.edits.length === 0 && draft.tolerance === DEFAULT_TOLERANCE}
+            onClick={() => dispatch({ type: 'use-original' })}
+        >
+            {editorText('USE_ORIGINAL')}
+        </button>
+    );
+
+    const metaFields = (
+        <StickerMetaFields
+            draft={meta}
+            limits={limits}
+            errors={metaErrors}
+            disabled={isSaving}
+            onChange={(next, field) => {
+                setMeta(next);
+                setApiErrors(current => ({ ...current, [field]: undefined }));
+            }}
+        />
+    );
+
+    const preview128 = <StickerPreviewPair preview={preview} frameIndex={playback.frameIndex} imageSize={imageSize} isRendering={isRendering} />;
+
+    const saveLabel: ReactNode =
+        throttle.seconds !== null
+            ? editorText('WAITING_FOR_SERVER', { seconds: throttle.seconds })
+            : isSaving
+              ? editorText('SAVING')
+              : hasLaterImages
+                ? editorText('SAVE_AND_NEXT', { index: position, total })
+                : editorText('SAVE');
+
+    return (
+        <form className="contents" onSubmit={submit} noValidate>
+            <div className="flex min-h-0 flex-col">
+                {existing ? (
+                    <div role="status" className="flex shrink-0 flex-wrap items-center gap-2 border-0 border-b border-solid border-n-weak bg-n-amber-3 px-4 py-2 text-sm text-n-amber-11">
+                        <span className="min-w-0 flex-1">
+                            {existing.label
+                                ? editorText('EXISTING_LABELLED', { slot: existing.position + 1, label: existing.label })
+                                : editorText('EXISTING', { slot: existing.position + 1 })}
+                        </span>
+                        <StickerButton tone="secondary" busy={isUpdatingExisting} disabled={!isMetaValid} onClick={() => void updateExisting()}>
+                            {editorText('UPDATE_EXISTING')}
+                        </StickerButton>
+                        <StickerButton tone="ghost" disabled={isUpdatingExisting} onClick={onSkip}>
+                            {editorText('SKIP_EXISTING')}
+                        </StickerButton>
+                    </div>
+                ) : null}
+                {isMobile ? (
+                    <div className="flex min-h-0 flex-1 flex-col">
+                        <div className="flex shrink-0 flex-col gap-1 px-4 pt-2">
+                            {canvasArea}
+                            {toolbar}
+                        </div>
+                        <div role="tablist" aria-label={editorText('SETTINGS')} className="flex shrink-0 gap-1 border-0 border-b border-solid border-n-weak px-4">
+                            {(['image', 'details'] as const).map(tab => (
+                                <button
+                                    key={tab}
+                                    type="button"
+                                    role="tab"
+                                    aria-selected={settingsTab === tab}
+                                    onClick={() => setSettingsTab(tab)}
+                                    className={`reset-base h-11 flex-1 border-0 border-b-2 border-solid bg-transparent text-sm font-medium ${
+                                        settingsTab === tab ? 'border-n-brand text-n-slate-12' : 'border-transparent text-n-slate-11'
+                                    }`}
+                                >
+                                    {editorText(tab === 'image' ? 'TAB_IMAGE' : 'TAB_DETAILS')}
+                                    {tab === 'details' && hasMetaErrors(metaErrors) ? <span className="ml-1 text-n-ruby-11">•</span> : null}
+                                </button>
+                            ))}
+                        </div>
+                        <div role="tabpanel" className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto overflow-x-hidden px-6 py-4">
+                            {settingsTab === 'image' ? (
+                                <>
+                                    <p className="m-0 text-xs text-n-slate-11">{editorText(hint)}</p>
+                                    {notices}
+                                    {preview128}
+                                    {backgroundSettings}
+                                    {useOriginal}
+                                </>
+                            ) : (
+                                metaFields
+                            )}
                         </div>
                     </div>
-
-                    <section className="flex flex-col gap-2" aria-label={editorText('PREVIEW')}>
-                        <div className="flex items-center justify-between">
-                            <h4 className="m-0 text-sm font-medium text-slate-900">{editorText('PREVIEW')}</h4>
-                            {isRendering ? <span className="text-xs text-slate-600">{editorText('PROCESSING')}</span> : null}
+                ) : (
+                    <div className="grid min-h-0 flex-1 grid-cols-[minmax(0,1fr)_300px]">
+                        <div className="flex min-h-0 flex-col gap-2 p-4">
+                            {toolbar}
+                            {toolModes}
+                            {canvasArea}
+                            <p className="m-0 h-4 shrink-0 truncate text-xs text-n-slate-11">{editorText(hint)}</p>
                         </div>
-                        <StickerPreview preview={preview} imageSize={imageSize} />
-                        {hasFailed ? (
-                            <p role="alert" className="m-0 text-xs text-red-700">
-                                {editorText('PROCESS_FAILED')}
-                            </p>
-                        ) : null}
-                        {isEmptyResult ? (
-                            <p role="status" className="m-0 text-xs text-yellow-800">
-                                {editorText('EMPTY_RESULT')}
-                            </p>
-                        ) : null}
-                    </section>
-
-                    <div className="flex flex-col gap-2">
-                        <label className="flex flex-col gap-1 text-xs text-slate-700">
-                            {t('STICKER_LIBRARY.LABEL')}
-                            <input
-                                className={INPUT_CLASS}
-                                value={labelDraft}
-                                onChange={event => setLabelDraft(event.target.value)}
-                                maxLength={LABEL_MAX_LENGTH}
-                            />
-                        </label>
-                        <label className="flex flex-col gap-1 text-xs text-slate-700">
-                            {t('STICKER_LIBRARY.KEYWORDS')}
-                            <input
-                                className={INPUT_CLASS}
-                                value={keywordsDraft}
-                                onChange={event => setKeywordsDraft(event.target.value)}
-                                placeholder={t('STICKER_LIBRARY.KEYWORDS_PLACEHOLDER')}
-                            />
-                        </label>
-                        <p className="m-0 text-xs text-slate-600">{t('STICKER_LIBRARY.KEYWORDS_HINT')}</p>
+                        <div className="flex min-h-0 flex-col gap-5 overflow-y-auto overflow-x-hidden border-0 border-l border-solid border-n-weak p-4">
+                            {preview128}
+                            {notices}
+                            {backgroundSettings}
+                            {metaFields}
+                            {useOriginal}
+                        </div>
                     </div>
-                </div>
+                )}
             </div>
 
-            <footer className="flex flex-wrap items-center justify-end gap-2 border-t border-slate-100 px-4 py-3">
-                {saveError ? (
-                    <p role="alert" className="m-0 mr-auto text-sm text-red-700">
-                        {saveError}
-                    </p>
-                ) : null}
-                <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={onSkip} disabled={isSaving}>
-                    {editorText('SKIP')}
-                </button>
-                <button type="submit" className={PRIMARY_BUTTON_CLASS} disabled={!canSave}>
-                    {isSaving ? editorText('SAVING') : editorText('SAVE')}
-                </button>
+            <footer className="flex min-h-16 items-center gap-2 border-0 border-t border-solid border-n-weak px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] md:pb-3">
+                <StickerButton tone="secondary" disabled={isSaving} onClick={total > 1 ? onSkip : onCancel}>
+                    {total > 1 ? editorText('SKIP') : editorText('CANCEL')}
+                </StickerButton>
+                <p role={saveError ? 'alert' : undefined} className="m-0 min-w-0 flex-1 truncate text-sm text-n-ruby-11" title={saveError ?? undefined}>
+                    {saveError}
+                </p>
+                {existing ? null : (
+                    <StickerButton type="submit" tone="primary" disabled={!canSave} aria-keyshortcuts="Control+Enter">
+                        {isRendering || isSaving ? (
+                            <span aria-hidden="true" className="inline-flex">
+                                <Spinner size={16} className="text-white" />
+                            </span>
+                        ) : null}
+                        {saveLabel}
+                    </StickerButton>
+                )}
             </footer>
         </form>
     );

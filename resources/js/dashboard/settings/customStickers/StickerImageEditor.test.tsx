@@ -1,17 +1,23 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Mock } from 'vitest';
 
 import { ApiError } from 'dashboard/helper/apiClient';
 import { setLocale } from '../../../i18n';
 import StickerImageEditor from './StickerImageEditor';
+import type { RejectedUpload } from './prepareUploadQueue';
 import type { StickerEdit } from './stickerEdit';
-import type { StickerUpload } from './stickerLibraryApi';
+import type { StickerUpload, UploadOptions } from './stickerLibraryApi';
+import { DEFAULT_STICKER_LIMITS } from './stickerLimits';
 import type { SourcePixels } from './stickerMaskRender';
 import { decodeStickerSource } from './stickerSourceImage';
 import { StickerFileTooLargeError } from './stickerUploadFile';
+import type { UploadedSticker } from './types';
 
-const { renderedEdits } = vi.hoisted(() => ({ renderedEdits: [] as StickerEdit[] }));
+const { renderedEdits, renderGate } = vi.hoisted(() => ({
+    renderedEdits: [] as StickerEdit[],
+    renderGate: { wait: null as Promise<void> | null },
+}));
 
 vi.mock('./stickerSourceImage', async importOriginal => ({
     ...(await importOriginal<typeof import('./stickerSourceImage')>()),
@@ -26,8 +32,9 @@ vi.mock('./stickerMaskRunner', async importOriginal => {
             const runner = actual.createInThreadMaskRunner();
             return {
                 ...runner,
-                render: (edit: StickerEdit) => {
+                render: async (edit: StickerEdit) => {
                     renderedEdits.push(edit);
+                    if (renderGate.wait) await renderGate.wait;
                     return runner.render(edit);
                 },
             };
@@ -37,46 +44,77 @@ vi.mock('./stickerMaskRunner', async importOriginal => {
 
 const SIDE = 100;
 const STAGE_PX = 400;
+// Công cụ Vùng lấy nhìn cả ảnh cùng lề 12% cạnh dài: ảnh 100px thì vùng nhìn là -12..112.
+const CROP_VIEW = { origin: -12, extent: 124 };
 
-// Vật đỏ 40×40 giữa nền xám 100×100.
-function redSquareOnGrey(): SourcePixels {
-    const rgba = new Uint8ClampedArray(SIDE * SIDE * 4);
-    for (let y = 0; y < SIDE; y++) {
-        for (let x = 0; x < SIDE; x++) {
-            const inSubject = x >= 30 && x < 70 && y >= 30 && y < 70;
-            rgba.set(inSubject ? [220, 30, 30, 255] : [200, 200, 200, 255], (y * SIDE + x) * 4);
-        }
+function paint(width: number, height: number, isSubject: (x: number, y: number) => boolean): SourcePixels {
+    const rgba = new Uint8ClampedArray(width * height * 4);
+    for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) rgba.set(isSubject(x, y) ? [220, 30, 30, 255] : [200, 200, 200, 255], (y * width + x) * 4);
     }
 
-    return { width: SIDE, height: SIDE, rgba };
+    return { width, height, rgba };
 }
+
+// Vật đỏ 40×40 giữa nền xám 100×100.
+const redSquareOnGrey = () => paint(SIDE, SIDE, (x, y) => x >= 30 && x < 70 && y >= 30 && y < 70);
+
+const decoded = (pixels: SourcePixels, animated = false) => ({ pixels, animated, bytes: new ArrayBuffer(8) });
+
+const uploaded = (overrides: Partial<UploadedSticker> = {}): UploadedSticker => ({
+    id: 21,
+    label: null,
+    keywords: [],
+    status: 'processing',
+    failure_message: null,
+    position: 0,
+    width: 64,
+    height: 64,
+    frames: null,
+    image_url: null,
+    static_url: null,
+    existing: false,
+    ...overrides,
+});
 
 beforeAll(() => {
     setLocale('vi');
     vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null);
 });
 afterAll(() => setLocale('en'));
+// Đóng trình chỉnh gọi history.back(); jsdom phát popstate ở lượt sau, chờ nó xong để không lẫn sang test kế.
+afterEach(() => new Promise(resolve => setTimeout(resolve, 20)));
 beforeEach(() => {
     renderedEdits.length = 0;
-    vi.mocked(decodeStickerSource).mockReset().mockResolvedValue({ pixels: redSquareOnGrey(), animated: false });
+    renderGate.wait = null;
+    window.history.replaceState(null, '', '/app/accounts/7/settings/custom-stickers');
+    vi.mocked(decodeStickerSource).mockReset().mockResolvedValue(decoded(redSquareOnGrey()));
 });
 
-type SaveMock = Mock<(upload: StickerUpload) => Promise<void>>;
+type UploadMock = Mock<(file: File, upload: StickerUpload, options: UploadOptions) => Promise<UploadedSticker>>;
 
-function renderEditor({ onSave = vi.fn<(upload: StickerUpload) => Promise<void>>().mockResolvedValue(undefined) }: { onSave?: SaveMock } = {}) {
+interface EditorSetup {
+    names?: string[];
+    rejected?: RejectedUpload[];
+    onUpload?: UploadMock;
+}
+
+function renderEditor({ names = ['meo.png'], rejected = [], onUpload = vi.fn().mockResolvedValue(uploaded()) as UploadMock }: EditorSetup = {}) {
     const props = {
-        file: new File(['png'], 'meo.png', { type: 'image/png' }),
-        position: 1,
-        total: 2,
+        files: names.map(name => new File(['png'], name, { type: 'image/png' })),
+        rejected,
         imageSize: 64,
-        onSave,
-        onSkip: vi.fn(),
+        limits: DEFAULT_STICKER_LIMITS,
+        onUpload,
+        onUpdateExisting: vi.fn().mockResolvedValue(undefined),
         onClose: vi.fn(),
     };
     render(<StickerImageEditor {...props} />);
 
     return props;
 }
+
+const saveButton = () => screen.getByRole('button', { name: /^(Lưu sticker|Lưu và tiếp)/ });
 
 async function openStage() {
     const stage = await screen.findByTestId('sticker-edit-stage');
@@ -86,86 +124,145 @@ async function openStage() {
     return stage;
 }
 
-const saveButton = () => screen.getByRole('button', { name: 'Lưu sticker' });
-
-async function savedUpload(props: ReturnType<typeof renderEditor>): Promise<StickerUpload> {
+async function savedUpload(props: ReturnType<typeof renderEditor>, call = 0): Promise<StickerUpload> {
     await waitFor(() => expect(saveButton()).toBeEnabled());
     fireEvent.click(saveButton());
-    await waitFor(() => expect(props.onSave).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(props.onUpload).toHaveBeenCalledTimes(call + 1));
 
-    return props.onSave.mock.calls[0][0];
+    return props.onUpload.mock.calls[call][1];
 }
+
+// Toạ độ trên màn của một điểm ảnh khi đang ở công cụ Vùng lấy.
+const cropClient = (pixel: number) => ((pixel - CROP_VIEW.origin) / CROP_VIEW.extent) * STAGE_PX;
 
 const tap = (element: HTMLElement, clientX: number, clientY: number, pointerType = 'mouse') => {
     fireEvent.pointerDown(element, { clientX, clientY, pointerId: 1, pointerType, button: 0 });
     fireEvent.pointerUp(element, { clientX, clientY, pointerId: 1, pointerType, button: 0 });
 };
 
-describe('StickerImageEditor', () => {
-    it('khung cắt mặc định ôm vật; Lưu gửi edit đúng hợp đồng kèm nhãn và từ khoá', async () => {
+const tool = (name: string) => within(screen.getByRole('group', { name: 'Công cụ' })).getByRole('button', { name });
+const toolbarUndo = () => screen.getAllByRole('button', { name: 'Hoàn tác' })[0];
+
+describe('StickerImageEditor · vùng lấy', () => {
+    it('mặc định Ôm chủ thể; Lưu gửi edit đúng hợp đồng (fit cover) kèm nhãn và từ khoá', async () => {
         const props = renderEditor();
         await openStage();
-        expect(screen.getByText(/Ảnh 1\/2 · meo\.png/)).toBeInTheDocument();
+        expect(screen.getByRole('heading', { level: 3, name: 'Thêm sticker · Ảnh 1/1' })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Ôm chủ thể' })).toHaveAttribute('aria-pressed', 'true');
 
         fireEvent.change(screen.getByLabelText('Nhãn'), { target: { value: '  Mèo vẫy ' } });
         fireEvent.change(screen.getByLabelText('Từ khoá'), { target: { value: 'haha, hihi, HAHA' } });
         const upload = await savedUpload(props);
 
         expect(upload).toEqual({
-            edit: { crop: { x: 0.27, y: 0.27, w: 0.47, h: 0.47 }, removeBackground: true, tolerance: 20, feather: 0, edits: [] },
+            edit: { crop: { x: 0.27, y: 0.27, w: 0.47, h: 0.47 }, fit: 'cover', removeBackground: true, tolerance: 20, feather: 0, edits: [] },
             label: 'Mèo vẫy',
             keywords: ['haha', 'hihi'],
         });
     });
 
-    it('kéo khung bằng cảm ứng và kéo góc bằng chuột để đổi cỡ khung vuông', async () => {
+    it('Vừa khung đặt cả ảnh vào ô vuông theo cạnh dài (fit contain)', async () => {
+        const props = renderEditor();
+        await openStage();
+
+        fireEvent.click(screen.getByRole('button', { name: 'Vừa khung' }));
+
+        expect((await savedUpload(props)).edit).toMatchObject({ crop: { x: 0, y: 0, w: 1, h: 1 }, fit: 'contain' });
+    });
+
+    it('ảnh dọc có hai vật lớn không cùng lọt một ô vuông thì tự chọn Vừa khung, khung thò ra hai bên', async () => {
+        vi.mocked(decodeStickerSource).mockResolvedValue(decoded(paint(30, 90, (x, y) => x >= 3 && x < 27 && ((y >= 3 && y < 27) || (y >= 63 && y < 87)))));
+        const props = renderEditor();
+        await openStage();
+
+        expect(screen.getByRole('button', { name: 'Vừa khung' })).toHaveAttribute('aria-pressed', 'true');
+        expect((await savedUpload(props)).edit).toMatchObject({ crop: { x: -1, y: 0, w: 3, h: 1 }, fit: 'contain' });
+    });
+
+    it('kéo khung chuyển sang Tuỳ chỉnh (fit contain); kéo góc được phóng khung', async () => {
         const props = renderEditor();
         const stage = await openStage();
 
         fireEvent.pointerDown(stage, { clientX: 200, clientY: 200, pointerId: 7, pointerType: 'touch' });
         fireEvent.pointerMove(stage, { clientX: 240, clientY: 180, pointerId: 7, pointerType: 'touch' });
         fireEvent.pointerUp(stage, { clientX: 240, clientY: 180, pointerId: 7, pointerType: 'touch' });
+        expect(screen.getByRole('button', { name: 'Tuỳ chỉnh' })).toHaveAttribute('aria-pressed', 'true');
 
         const corner = screen.getByTestId('sticker-crop-frame').querySelector<HTMLElement>('[data-crop-corner="se"]')!;
-        fireEvent.pointerDown(corner, { clientX: 336, clientY: 296, pointerId: 1, pointerType: 'mouse', button: 0 });
+        fireEvent.pointerDown(corner, { clientX: cropClient(86), clientY: cropClient(68), pointerId: 1, pointerType: 'mouse', button: 0 });
         fireEvent.pointerMove(stage, { clientX: 380, clientY: 330, pointerId: 1, pointerType: 'mouse' });
         fireEvent.pointerUp(stage, { clientX: 380, clientY: 330, pointerId: 1, pointerType: 'mouse' });
 
         const { edit } = await savedUpload(props);
-        expect(edit.crop).toEqual({ x: 0.37, y: 0.22, w: 0.61, h: 0.61 });
+        expect(edit).toMatchObject({ crop: { x: 0.39, y: 0.21, w: 0.69, h: 0.69 }, fit: 'contain' });
     });
 
-    it('phím mũi tên di chuyển khung cắt', async () => {
+    it('phím mũi tên liền nhau di chuyển khung, một lần Ctrl+Z hoàn tác cả loạt', async () => {
         const props = renderEditor();
         await openStage();
+        const frame = screen.getByTestId('sticker-crop-frame');
 
-        fireEvent.keyDown(screen.getByTestId('sticker-crop-frame'), { key: 'ArrowLeft', shiftKey: true });
+        fireEvent.keyDown(frame, { key: 'ArrowLeft', shiftKey: true });
+        fireEvent.keyDown(frame, { key: 'ArrowLeft' });
+        fireEvent.keyDown(document.body, { key: 'z', ctrlKey: true });
+        fireEvent.keyDown(frame, { key: 'ArrowLeft', shiftKey: true });
 
-        const { edit } = await savedUpload(props);
-        expect(edit.crop).toMatchObject({ x: 0.17, y: 0.27 });
+        expect((await savedUpload(props)).edit.crop).toMatchObject({ x: 0.17, y: 0.27 });
     });
+});
 
-    it('kéo dung sai thì dựng lại xem trước; dung sai quá cao xoá sạch thì báo và không cho lưu', async () => {
+describe('StickerImageEditor · xoá nền, đũa thần, cọ', () => {
+    it('kéo dung sai lên hết cỡ thì xoá sạch: báo đè trên ảnh, không cho lưu, Hoàn tác ngay tại chỗ', async () => {
         renderEditor();
         await openStage();
 
-        fireEvent.change(screen.getByRole('slider', { name: /Dung sai/ }), { target: { value: '100' } });
+        fireEvent.keyDown(screen.getByRole('slider', { name: 'Dung sai' }), { key: 'End' });
 
         await waitFor(() => expect(renderedEdits.at(-1)?.tolerance).toBe(100));
-        expect(await screen.findByText('Không còn gì sau khi xoá nền. Giảm dung sai hoặc bấm Dùng ảnh gốc.')).toBeInTheDocument();
+        const warning = await screen.findByText('Không còn gì sau khi xoá nền');
         expect(saveButton()).toBeDisabled();
 
-        fireEvent.change(screen.getByRole('slider', { name: /Dung sai/ }), { target: { value: '30' } });
+        fireEvent.click(within(warning.parentElement!).getByRole('button', { name: 'Hoàn tác' }));
         await waitFor(() => expect(saveButton()).toBeEnabled());
     });
 
-    it('đũa thần: chạm vào ảnh đã phóng vùng cắt thì thêm lượt xoá vùng tại đúng điểm chạm', async () => {
+    it('tắt Xoá nền thì Dung sai bị khoá; Dùng ảnh gốc đưa dung sai về 20', async () => {
+        const props = renderEditor();
+        await openStage();
+        fireEvent.click(screen.getByRole('button', { name: 'Tăng Dung sai' }));
+
+        fireEvent.click(screen.getByRole('switch', { name: 'Xoá nền' }));
+        expect(screen.getByRole('slider', { name: 'Dung sai' })).toHaveAttribute('aria-disabled', 'true');
+        expect(screen.getByRole('button', { name: 'Tăng Dung sai' })).toBeDisabled();
+
+        fireEvent.click(screen.getByRole('button', { name: 'Dùng ảnh gốc' }));
+        expect((await savedUpload(props)).edit).toMatchObject({ removeBackground: false, tolerance: 20, edits: [] });
+    });
+
+    it('thanh trượt không đổi giá trị khi chạm lên track, chỉ đổi khi kéo núm', async () => {
+        renderEditor();
+        await openStage();
+        const slider = screen.getByRole('slider', { name: 'Dung sai' });
+        const track = slider.parentElement!;
+        track.getBoundingClientRect = () => ({ left: 0, top: 0, width: 100, height: 40, right: 100, bottom: 40, x: 0, y: 0, toJSON: () => ({}) });
+
+        fireEvent.pointerDown(track, { clientX: 80, clientY: 10, pointerId: 3, pointerType: 'touch' });
+        fireEvent.pointerMove(track, { clientX: 80, clientY: 200, pointerId: 3, pointerType: 'touch' });
+        expect(slider).toHaveAttribute('aria-valuenow', '20');
+
+        fireEvent.pointerDown(slider, { clientX: 20, clientY: 10, pointerId: 4, pointerType: 'touch' });
+        fireEvent.pointerMove(slider, { clientX: 45, clientY: 10, pointerId: 4, pointerType: 'touch' });
+        fireEvent.pointerUp(slider, { clientX: 45, clientY: 10, pointerId: 4, pointerType: 'touch' });
+        expect(slider).toHaveAttribute('aria-valuenow', '45');
+    });
+
+    it('đũa thần: chạm vào ảnh đã phóng vùng lấy thì thêm lượt xoá / giữ tại đúng điểm chạm', async () => {
         const props = renderEditor();
         const stage = await openStage();
 
-        fireEvent.click(screen.getByRole('button', { name: 'Đũa thần' }));
+        fireEvent.click(tool('Đũa thần'));
         tap(stage, 200, 200, 'touch');
-        fireEvent.click(screen.getByRole('button', { name: 'Giữ vùng' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Giữ' }));
         tap(stage, 100, 300);
 
         const { edit } = await savedUpload(props);
@@ -179,20 +276,22 @@ describe('StickerImageEditor', () => {
         const props = renderEditor();
         const stage = await openStage();
 
-        fireEvent.click(screen.getByRole('button', { name: 'Đũa thần' }));
+        fireEvent.click(tool('Đũa thần'));
         fireEvent.pointerDown(stage, { clientX: 100, clientY: 100, pointerId: 1, pointerType: 'mouse', button: 0 });
         fireEvent.pointerUp(stage, { clientX: 180, clientY: 100, pointerId: 1, pointerType: 'mouse', button: 0 });
 
         expect((await savedUpload(props)).edit.edits).toEqual([]);
     });
 
-    it('cọ khôi phục theo cỡ cọ đã chọn, một nét gồm các điểm đã tô', async () => {
+    it('cọ khôi phục theo cỡ cọ đã chọn bằng −/+, hiện vòng xem trước cỡ cọ, một nét gồm các điểm đã tô', async () => {
         const props = renderEditor();
         const stage = await openStage();
 
-        fireEvent.click(screen.getByRole('button', { name: 'Cọ' }));
+        fireEvent.click(tool('Cọ'));
         fireEvent.click(screen.getByRole('button', { name: 'Khôi phục' }));
-        fireEvent.change(screen.getByRole('slider', { name: 'Cỡ cọ' }), { target: { value: '10' } });
+        for (let step = 0; step < 5; step++) fireEvent.click(screen.getByRole('button', { name: 'Tăng Cỡ cọ' }));
+        expect(screen.getByText('10%')).toBeInTheDocument();
+        expect(screen.getByTestId('sticker-brush-preview')).toBeInTheDocument();
         fireEvent.pointerDown(stage, { clientX: 40, clientY: 40, pointerId: 1, pointerType: 'mouse', button: 0 });
         fireEvent.pointerMove(stage, { clientX: 120, clientY: 40, pointerId: 1, pointerType: 'mouse' });
         fireEvent.pointerUp(stage, { clientX: 120, clientY: 40, pointerId: 1, pointerType: 'mouse' });
@@ -201,70 +300,198 @@ describe('StickerImageEditor', () => {
         expect(edit.edits).toEqual([{ op: 'brush-keep', points: [[0.1, 0.1], [0.3, 0.1]], radius: 0.1 }]);
     });
 
-    it('hoàn tác bỏ bước cuối; chưa có bước nào thì nút hoàn tác tắt', async () => {
+    it('phím tắt cấp hộp: W/B/V đổi công cụ, Ctrl+Z hoàn tác và Ctrl+Shift+Z làm lại dù focus ở nền', async () => {
         const props = renderEditor();
         const stage = await openStage();
-        const undo = screen.getByRole('button', { name: 'Hoàn tác' });
-        expect(undo).toBeDisabled();
 
-        fireEvent.click(screen.getByRole('button', { name: 'Đũa thần' }));
+        fireEvent.keyDown(document.body, { key: 'w' });
+        expect(tool('Đũa thần')).toHaveAttribute('aria-pressed', 'true');
         tap(stage, 20, 20);
-        tap(stage, 200, 200);
-        expect(await screen.findByText(/Không còn gì sau khi xoá nền/)).toBeInTheDocument();
-        fireEvent.click(undo);
+        fireEvent.keyDown(document.body, { key: 'z', ctrlKey: true });
+        expect(toolbarUndo()).toBeDisabled();
+        fireEvent.keyDown(document.body, { key: 'z', ctrlKey: true, shiftKey: true });
+        fireEvent.keyDown(document.body, { key: 'b' });
+        expect(tool('Cọ')).toHaveAttribute('aria-pressed', 'true');
+        fireEvent.keyDown(document.body, { key: 'v' });
+        expect(tool('Vùng lấy')).toHaveAttribute('aria-pressed', 'true');
 
-        const { edit } = await savedUpload(props);
-        expect(edit.edits).toEqual([{ op: 'wand-remove', x: 0.05, y: 0.05, tolerance: 20 }]);
+        expect((await savedUpload(props)).edit.edits).toEqual([{ op: 'wand-remove', x: 0.05, y: 0.05, tolerance: 20 }]);
     });
 
-    it('Dùng ảnh gốc tắt xoá nền và bỏ mọi nét chỉnh', async () => {
+    it('gõ chữ V trong ô nhãn không đổi công cụ; Ctrl+Enter lưu', async () => {
         const props = renderEditor();
-        const stage = await openStage();
+        await openStage();
+        fireEvent.click(tool('Đũa thần'));
 
-        fireEvent.click(screen.getByRole('button', { name: 'Đũa thần' }));
-        tap(stage, 200, 200);
-        fireEvent.click(screen.getByRole('button', { name: 'Dùng ảnh gốc' }));
+        const label = screen.getByLabelText('Nhãn');
+        fireEvent.keyDown(label, { key: 'v' });
+        expect(tool('Đũa thần')).toHaveAttribute('aria-pressed', 'true');
+        fireEvent.keyDown(label, { key: 'Enter', ctrlKey: true });
 
-        expect(screen.getByRole('checkbox', { name: 'Xoá nền' })).not.toBeChecked();
-        const { edit } = await savedUpload(props);
-        expect(edit).toMatchObject({ removeBackground: false, edits: [] });
+        await waitFor(() => expect(props.onUpload).toHaveBeenCalledTimes(1));
     });
 
-    it('ảnh động báo đang xem trước khung đầu', async () => {
-        vi.mocked(decodeStickerSource).mockResolvedValue({ pixels: redSquareOnGrey(), animated: true });
+    it('không cho lưu khi bản xem trước chưa theo kịp bản nháp', async () => {
         renderEditor();
+        await openStage();
+        let release: () => void = () => undefined;
+        renderGate.wait = new Promise(resolve => {
+            release = resolve;
+        });
 
-        expect(await screen.findByText('Ảnh động: đang xem trước khung đầu, sticker vẫn giữ chuyển động.')).toBeInTheDocument();
+        fireEvent.click(screen.getByRole('button', { name: 'Tăng Dung sai' }));
+        expect(saveButton()).toBeDisabled();
+
+        renderGate.wait = null;
+        await act(async () => release());
+        await waitFor(() => expect(saveButton()).toBeEnabled());
     });
 
-    it('không đọc được ảnh thì báo lỗi, cho bỏ qua', async () => {
-        vi.mocked(decodeStickerSource).mockRejectedValue(new Error('broken'));
-        const props = renderEditor();
+    it('ảnh động mà trình duyệt không giải mã được từng khung: báo rõ và mặc định Vừa khung', async () => {
+        vi.mocked(decodeStickerSource).mockResolvedValue(decoded(redSquareOnGrey(), true));
+        renderEditor({ names: ['cho.gif'] });
 
-        expect(await screen.findByRole('alert')).toHaveTextContent('Không đọc được ảnh này.');
+        expect(await screen.findByText(/Trình duyệt này chưa xem trước được ảnh động/)).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Vừa khung' })).toHaveAttribute('aria-pressed', 'true');
+    });
+});
+
+describe('StickerImageEditor · lưu và hàng chờ', () => {
+    it('nhiều ảnh: dải hàng chờ, "Lưu và tiếp (1/2)", bỏ qua ảnh cuối thì hiện tóm tắt, Xong trả kết quả', async () => {
+        const props = renderEditor({ names: ['a.png', 'b.png'], rejected: [{ name: 'not-image.txt', reason: 'type' }] });
+        await openStage();
+
+        expect(screen.getByText('2/3 ảnh hợp lệ · bỏ qua not-image.txt (không phải ảnh PNG, JPG, WebP, GIF)')).toBeInTheDocument();
+        expect(within(screen.getByRole('list', { name: 'Hàng chờ ảnh' })).getAllByRole('listitem')).toHaveLength(2);
+        expect(saveButton()).toHaveTextContent('Lưu và tiếp (1/2)');
+
+        await savedUpload(props);
+        expect(await screen.findByRole('heading', { level: 3, name: 'Thêm sticker · Ảnh 2/2' })).toBeInTheDocument();
+        await waitFor(() => expect(saveButton()).toHaveTextContent('Lưu sticker'));
+
         fireEvent.click(screen.getByRole('button', { name: 'Bỏ qua ảnh này' }));
-        expect(props.onSkip).toHaveBeenCalledTimes(1);
+        expect(await screen.findByText('Đã thêm 1 · Bỏ qua 1 · 1 tệp không hợp lệ')).toBeInTheDocument();
+        fireEvent.click(screen.getByRole('button', { name: 'Xong' }));
+
+        expect(props.onClose).toHaveBeenCalledWith({ addedIds: [21], existingIds: [], skipped: 1 });
+    });
+
+    it('một ảnh lưu xong thì đóng luôn, nút trái ghi Huỷ', async () => {
+        const props = renderEditor();
+        await openStage();
+        expect(screen.getByRole('button', { name: 'Huỷ' })).toBeInTheDocument();
+
+        await savedUpload(props);
+
+        await waitFor(() => expect(props.onClose).toHaveBeenCalledWith({ addedIds: [21], existingIds: [], skipped: 0 }));
+    });
+
+    it('ảnh đã có trong bộ: báo ô và nhãn cũ, cập nhật nhãn và từ khoá cho sticker cũ', async () => {
+        const onUpload = vi.fn().mockResolvedValue(uploaded({ id: 5, position: 2, label: 'Sao', existing: true })) as UploadMock;
+        const props = renderEditor({ onUpload });
+        await openStage();
+        fireEvent.change(screen.getByLabelText('Nhãn'), { target: { value: 'Sao vàng' } });
+
+        await savedUpload(props);
+        expect(await screen.findByText('Ảnh này đã có trong bộ (ô 3, nhãn «Sao»).')).toBeInTheDocument();
+        fireEvent.click(screen.getByRole('button', { name: 'Cập nhật nhãn và từ khoá cho sticker cũ' }));
+
+        await waitFor(() => expect(props.onUpdateExisting).toHaveBeenCalledWith(5, { label: 'Sao vàng', keywords: [] }));
+        await waitFor(() => expect(props.onClose).toHaveBeenCalledWith({ addedIds: [], existingIds: [5], skipped: 0 }));
+    });
+
+    it('máy chủ báo nhãn quá dài: lỗi đặt dưới ô Nhãn, giữ trình chỉnh', async () => {
+        const onUpload = vi.fn().mockRejectedValue(new ApiError(422, { message: 'x', errors: { label: ['too long'] } })) as UploadMock;
+        const props = renderEditor({ onUpload });
+        await openStage();
+
+        await savedUpload(props);
+
+        expect(await screen.findByText('Nhãn tối đa 255 ký tự')).toBeInTheDocument();
+        expect(props.onClose).not.toHaveBeenCalled();
     });
 
     it('ảnh thu nhỏ rồi vẫn quá nặng thì báo rõ, giữ trình chỉnh', async () => {
-        renderEditor({ onSave: vi.fn<(upload: StickerUpload) => Promise<void>>().mockRejectedValue(new StickerFileTooLargeError()) });
+        const onUpload = vi.fn().mockRejectedValue(new StickerFileTooLargeError()) as UploadMock;
+        renderEditor({ onUpload });
         await openStage();
 
         fireEvent.click(saveButton());
 
         expect(await screen.findByRole('alert')).toHaveTextContent('Ảnh quá lớn, thu nhỏ rồi vẫn vượt giới hạn tải lên.');
+        expect(saveButton()).toBeEnabled();
+    });
+});
+
+describe('StickerImageEditor · đóng', () => {
+    it('chưa chỉnh gì thì X đóng ngay, không hỏi', async () => {
+        const props = renderEditor();
+        await openStage();
+
+        fireEvent.click(screen.getByRole('button', { name: 'Đóng trình chỉnh' }));
+
+        expect(props.onClose).toHaveBeenCalledWith({ addedIds: [], existingIds: [], skipped: 1 });
+        expect(screen.queryByRole('alertdialog')).toBeNull();
     });
 
-    it('máy chủ từ chối thì giữ trình chỉnh và hiện câu lỗi; nút đóng gọi onClose', async () => {
-        const onSave = vi.fn<(upload: StickerUpload) => Promise<void>>().mockRejectedValue(new ApiError(422, { message: 'Ảnh quá lớn.' }));
-        const props = renderEditor({ onSave });
+    it('đã chỉnh hoặc còn ảnh thì hỏi trước khi đóng (X và Esc); Tiếp tục chỉnh giữ nguyên', async () => {
+        const props = renderEditor({ names: ['a.png', 'b.png', 'c.png'] });
+        await openStage();
+
+        fireEvent.keyDown(document, { key: 'Escape' });
+        const confirm = await screen.findByRole('alertdialog', { name: 'Bỏ 3 ảnh chưa lưu?' });
+        fireEvent.click(within(confirm).getByRole('button', { name: 'Tiếp tục chỉnh' }));
+        expect(props.onClose).not.toHaveBeenCalled();
+
+        fireEvent.click(screen.getByRole('button', { name: 'Đóng trình chỉnh' }));
+        fireEvent.click(within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Bỏ' }));
+        expect(props.onClose).toHaveBeenCalledWith({ addedIds: [], existingIds: [], skipped: 3 });
+    });
+
+    it('đang gửi thì X bị khoá; Esc hỏi rồi huỷ lượt gửi', async () => {
+        let signal: AbortSignal | undefined;
+        const onUpload = vi.fn((_file: File, _upload: StickerUpload, options: UploadOptions) => {
+            signal = options.signal;
+            return new Promise<UploadedSticker>(() => undefined);
+        }) as UploadMock;
+        const props = renderEditor({ onUpload });
         await openStage();
 
         fireEvent.click(saveButton());
+        await waitFor(() => expect(screen.getByRole('button', { name: 'Đóng trình chỉnh' })).toBeDisabled());
 
-        expect(await screen.findByRole('alert')).toHaveTextContent('Ảnh quá lớn.');
-        expect(saveButton()).toBeEnabled();
-        fireEvent.click(screen.getByRole('button', { name: 'Đóng trình chỉnh' }));
+        fireEvent.keyDown(document, { key: 'Escape' });
+        fireEvent.click(within(await screen.findByRole('alertdialog', { name: 'Bỏ 1 ảnh chưa lưu?' })).getByRole('button', { name: 'Bỏ' }));
+
+        expect(signal?.aborted).toBe(true);
+        expect(props.onClose).toHaveBeenCalledWith({ addedIds: [], existingIds: [], skipped: 1 });
+    });
+
+    it('mở thì thêm một mục lịch sử; Back đóng hộp thay vì rời trang', async () => {
+        window.history.replaceState({ page: { component: 'Settings' } }, '', window.location.href);
+        const props = renderEditor();
+        await openStage();
+        expect(window.history.state).toEqual({ page: { component: 'Settings' }, stickerImageEditor: true });
+
+        act(() => {
+            window.dispatchEvent(new PopStateEvent('popstate', { state: null }));
+        });
+
         expect(props.onClose).toHaveBeenCalledTimes(1);
+    });
+
+    it('Back khi đã chỉnh thì hỏi; Tiếp tục chỉnh đặt lại mục lịch sử', async () => {
+        const props = renderEditor();
+        await openStage();
+        fireEvent.change(screen.getByLabelText('Nhãn'), { target: { value: 'Mèo' } });
+        window.history.replaceState(null, '', window.location.href);
+
+        act(() => {
+            window.dispatchEvent(new PopStateEvent('popstate', { state: null }));
+        });
+        fireEvent.click(within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Tiếp tục chỉnh' }));
+
+        expect(props.onClose).not.toHaveBeenCalled();
+        expect(window.history.state).toMatchObject({ stickerImageEditor: true });
     });
 });

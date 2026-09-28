@@ -2,10 +2,10 @@ import { describe, expect, it } from 'vitest';
 
 import { MAX_BRUSH_STROKE_POINTS } from './stickerEdit';
 import type { StickerDraft } from './stickerEdit';
-import { createEditorState, stickerEditorReducer } from './stickerEditorState';
+import { createEditorState, NUDGE_MERGE_MS, stickerEditorReducer } from './stickerEditorState';
 import type { StickerEditorAction, StickerEditorState } from './stickerEditorState';
 
-const INITIAL: StickerDraft = { crop: { left: 0, top: 0, side: 100 }, removeBackground: true, tolerance: 20, edits: [] };
+const INITIAL: StickerDraft = { framing: 'subject', crop: { left: 0, top: 0, side: 100 }, removeBackground: true, tolerance: 20, edits: [] };
 
 const run = (...actions: StickerEditorAction[]): StickerEditorState =>
     actions.reduce(stickerEditorReducer, createEditorState(INITIAL));
@@ -59,26 +59,57 @@ describe('trạng thái trình chỉnh sticker', () => {
         expect(state.undoStack).toHaveLength(1);
     });
 
-    it('kéo khung chỉ ghi bước hoàn tác khi thả tay và khung thật sự đổi', () => {
+    it('kéo khung chỉ ghi một bước khi thả tay, chuyển sang Tuỳ chỉnh; chạm không kéo thì không ghi', () => {
         const moved = run(
             { type: 'crop-change', crop: { left: 10, top: 0, side: 100 } },
             { type: 'crop-change', crop: { left: 20, top: 5, side: 90 } },
-            { type: 'crop-commit', before: INITIAL.crop },
+            { type: 'crop-commit' },
         );
-        expect(moved.draft.crop).toEqual({ left: 20, top: 5, side: 90 });
+        expect(moved.draft).toMatchObject({ framing: 'custom', crop: { left: 20, top: 5, side: 90 } });
         expect(moved.undoStack).toHaveLength(1);
-        expect(stickerEditorReducer(moved, { type: 'undo' }).draft.crop).toEqual(INITIAL.crop);
+        expect(stickerEditorReducer(moved, { type: 'undo' }).draft).toEqual(INITIAL);
 
-        expect(run({ type: 'crop-commit', before: INITIAL.crop }).undoStack).toHaveLength(0);
+        const tapped = run({ type: 'crop-change', crop: INITIAL.crop }, { type: 'crop-commit' });
+        expect(tapped.undoStack).toHaveLength(0);
+        expect(tapped.draft).toEqual(INITIAL);
     });
 
-    it('dùng ảnh gốc tắt xoá nền và bỏ mọi nét chỉnh, hoàn tác lấy lại', () => {
-        const edited = run({ type: 'wand', op: 'wand-remove', x: 0.2, y: 0.2 }, { type: 'use-original' });
-        expect(edited.draft).toMatchObject({ removeBackground: false, edits: [] });
+    it('phím mũi tên liền nhau gộp một bước; cách nhau quá lâu thì tách bước', () => {
+        const nudged = run(
+            { type: 'crop-nudge', crop: { left: 1, top: 0, side: 100 }, at: 1000 },
+            { type: 'crop-nudge', crop: { left: 2, top: 0, side: 100 }, at: 1100 },
+            { type: 'crop-nudge', crop: { left: 3, top: 0, side: 100 }, at: 1200 },
+        );
+        expect(nudged.undoStack).toHaveLength(1);
+
+        const later = stickerEditorReducer(nudged, { type: 'crop-nudge', crop: { left: 4, top: 0, side: 100 }, at: 1200 + NUDGE_MERGE_MS + 1 });
+        expect(later.undoStack).toHaveLength(2);
+    });
+
+    it('làm lại lấy lại bước vừa hoàn tác; thao tác mới xoá ngăn làm lại', () => {
+        const undone = run({ type: 'wand', op: 'wand-remove', x: 0.2, y: 0.2 }, { type: 'undo' });
+        expect(undone.redoStack).toHaveLength(1);
+
+        const redone = stickerEditorReducer(undone, { type: 'redo' });
+        expect(redone.draft.edits).toHaveLength(1);
+
+        expect(stickerEditorReducer(undone, { type: 'set-remove-background', enabled: false }).redoStack).toHaveLength(0);
+    });
+
+    it('đổi cách lấy vùng là một bước hoàn tác', () => {
+        const fitted = run({ type: 'set-framing', framing: 'fit', crop: { left: 0, top: -50, side: 200 } });
+        expect(fitted.draft).toMatchObject({ framing: 'fit', crop: { left: 0, top: -50, side: 200 } });
+        expect(stickerEditorReducer(fitted, { type: 'undo' }).draft).toEqual(INITIAL);
+    });
+
+    it('dùng ảnh gốc tắt xoá nền, bỏ mọi nét chỉnh, dung sai về mặc định; hoàn tác lấy lại', () => {
+        const edited = run({ type: 'set-tolerance', tolerance: 60 }, { type: 'wand', op: 'wand-remove', x: 0.2, y: 0.2 }, { type: 'use-original' });
+        expect(edited.draft).toMatchObject({ removeBackground: false, edits: [], tolerance: 20 });
 
         expect(stickerEditorReducer(edited, { type: 'undo' }).draft).toMatchObject({
             removeBackground: true,
-            edits: [{ op: 'wand-remove', x: 0.2, y: 0.2, tolerance: 20 }],
+            tolerance: 60,
+            edits: [{ op: 'wand-remove', x: 0.2, y: 0.2, tolerance: 60 }],
         });
     });
 

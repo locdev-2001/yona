@@ -15,7 +15,7 @@ import StickerImageEditor from './StickerImageEditor';
 import StickerPackHeader from './StickerPackHeader';
 import StickerPackList from './StickerPackList';
 import { StickerThumb } from './StickerTile';
-import type { StickerLibraryApi, StickerUpload } from './stickerLibraryApi';
+import type { StickerLibraryApi, StickerUpload, UploadOptions } from './stickerLibraryApi';
 import { DEFAULT_STICKER_LIMITS, stickerLimitsFromMeta, stickerMetaErrorsFromApi } from './stickerLimits';
 import {
     MOBILE_QUERY,
@@ -26,7 +26,9 @@ import {
     useMediaQuery,
     useStickerToast,
 } from './stickerLibraryUi';
-import { isAnimatedImageBytes } from './stickerSourceImage';
+import { describeRejected, prepareUploadQueue } from './prepareUploadQueue';
+import type { RejectedUpload } from './prepareUploadQueue';
+import type { EditorQueueSummary } from './stickerEditorQueue';
 import { prepareStickerUpload } from './stickerUploadFile';
 import { useProcessingPoll } from './useProcessingPoll';
 import type { LibrarySticker, LibraryStickerChanges, LibraryStickerPack, LibraryStickerPackDetail, StickerLibraryListing } from './types';
@@ -49,18 +51,14 @@ interface Pending {
 
 const IDLE: Pending = { creating: false, rename: false, publish: false, reorder: false, deleting: new Set(), saving: new Set() };
 
-interface EditorQueue {
+interface EditorSession {
     packId: number;
     files: File[];
-    index: number;
-    addedIds: number[];
-    existingIds: number[];
-    skipped: number;
+    rejected: RejectedUpload[];
 }
 
 const POLLED_FIELDS = ['status', 'image_url', 'static_url', 'frames', 'failure_message', 'width', 'height'] as const;
 
-const fileExtension = (file: File) => file.name.split('.').pop()?.toLowerCase() ?? '';
 const queryPackId = () => {
     const value = Number(currentQuery()[PACK_QUERY_KEY]);
 
@@ -102,7 +100,7 @@ function StickerLibrary({ api }: { api: StickerLibraryApi }) {
     const [selectedStickerId, setSelectedStickerId] = useState<number | null>(null);
     const [isCreateOpen, setCreateOpen] = useState(false);
     const [sortBaseline, setSortBaseline] = useState<number[] | null>(null);
-    const [editorQueue, setEditorQueue] = useState<EditorQueue | null>(null);
+    const [editorSession, setEditorSession] = useState<EditorSession | null>(null);
     const [confirmation, setConfirmation] = useState<ConfirmActionRequest | null>(null);
     const [flashIds, setFlashIds] = useState<ReadonlySet<number>>(new Set());
     const [isDraggingFiles, setDraggingFiles] = useState(false);
@@ -200,7 +198,10 @@ function StickerLibrary({ api }: { api: StickerLibraryApi }) {
         const params = packId === null ? others : { ...others, [PACK_QUERY_KEY]: String(packId) };
         if (push) {
             const search = new URLSearchParams(params).toString();
-            window.history.pushState({ ...(window.history.state ?? {}), [MOBILE_SCREEN_STATE]: true }, '', `${window.location.pathname}${search ? `?${search}` : ''}`);
+            // Mục bên dưới để state null: Back về danh sách thì Inertia không dựng lại cả trang (mất toast, bộ đang chọn).
+            const pageState: unknown = window.history.state;
+            window.history.replaceState(null, '', window.location.href);
+            window.history.pushState({ ...(pageState ?? {}), [MOBILE_SCREEN_STATE]: true }, '', `${window.location.pathname}${search ? `?${search}` : ''}`);
         } else {
             replaceQuery(params);
         }
@@ -480,83 +481,41 @@ function StickerLibrary({ api }: { api: StickerLibraryApi }) {
         },
     });
 
-    const screenFiles = async (files: File[]) => {
-        const rejections = await Promise.all(
-            files.map(async file => {
-                if (!acceptedExtensions.includes(fileExtension(file))) return t('STICKER_LIBRARY.FILE_TYPE_REJECTED', { filename: file.name });
-                if (uploadLimitBytes > 0 && file.size > uploadLimitBytes && isAnimatedImageBytes(new Uint8Array(await file.arrayBuffer()))) {
-                    return t('STICKER_LIBRARY.FILE_ANIMATED_TOO_LARGE', { filename: file.name, limit: uploadLimit });
-                }
-
-                return null;
-            }),
-        );
-
-        return {
-            accepted: files.filter((_, index) => rejections[index] === null),
-            rejected: rejections.filter((message): message is string => message !== null),
-        };
-    };
-
     const openEditor = async (files: File[]) => {
-        if (!currentDetail || files.length === 0 || editorQueue) return;
+        if (!currentDetail || files.length === 0 || editorSession) return;
         const packId = currentDetail.id;
-        const { accepted, rejected } = await screenFiles(files);
-        if (rejected.length > 0) {
-            toast({ message: t('STICKER_LIBRARY.FILES_REJECTED', { count: rejected.length, details: rejected.join(' ') }), tone: 'error', durationMs: null });
-        }
-        if (accepted.length > 0) setEditorQueue({ packId, files: accepted, index: 0, addedIds: [], existingIds: [], skipped: 0 });
-    };
-
-    const finishQueue = (queue: EditorQueue) => {
-        setEditorQueue(null);
-        const touchedIds = [...queue.addedIds, ...queue.existingIds];
-        if (touchedIds.length === 0) return;
-        const summary = queue.addedIds.length > 0 ? [t('STICKER_LIBRARY.STICKERS_ADDED', { count: queue.addedIds.length })] : [];
-        if (queue.skipped > 0) summary.push(t('STICKER_LIBRARY.STICKERS_SKIPPED', { count: queue.skipped }));
-        if (queue.existingIds.length > 0) summary.push(t('STICKER_LIBRARY.STICKERS_EXISTING', { count: queue.existingIds.length }));
-        toast({ message: summary.join(' · ') });
-        setFlashIds(new Set(touchedIds));
-        window.setTimeout(() => setFlashIds(new Set()), FLASH_MS);
-        window.setTimeout(() => document.querySelector(`[data-sticker-id="${touchedIds[0]}"]`)?.scrollIntoView({ block: 'nearest' }));
-    };
-
-    const advanceEditor = (queue: EditorQueue, outcome: { addedId?: number; existingId?: number; skipped?: boolean }) => {
-        const next: EditorQueue = {
-            ...queue,
-            index: queue.index + 1,
-            addedIds: outcome.addedId !== undefined ? [...queue.addedIds, outcome.addedId] : queue.addedIds,
-            existingIds: outcome.existingId !== undefined ? [...queue.existingIds, outcome.existingId] : queue.existingIds,
-            skipped: queue.skipped + (outcome.skipped ? 1 : 0),
-        };
-        if (next.index >= next.files.length) finishQueue(next);
-        else setEditorQueue(next);
-    };
-
-    const saveEditedSticker = async (upload: StickerUpload) => {
-        if (!editorQueue) return;
-        const queue = editorQueue;
-        const created = await api.uploadSticker(queue.packId, await prepareStickerUpload(queue.files[queue.index], uploadLimitBytes), upload);
-        // Ảnh trùng: máy chủ trả sticker cũ kèm `existing: true`, không tính là sticker mới.
-        advanceEditor(queue, created?.existing ? { existingId: created.id } : { addedId: created?.id });
-        void loadDetail(queue.packId);
-    };
-
-    const closeEditor = () => {
-        if (!editorQueue) return;
-        const queue = editorQueue;
-        const remaining = queue.files.length - queue.index;
-        if (remaining <= 1) {
-            finishQueue({ ...queue, skipped: queue.skipped + remaining });
+        const { valid, rejected } = await prepareUploadQueue(files, { acceptedExtensions, maxBytes: uploadLimitBytes });
+        if (valid.length === 0) {
+            toast({ message: t('STICKER_LIBRARY.FILES_REJECTED', { count: rejected.length, details: describeRejected(rejected) }), tone: 'error', durationMs: null });
             return;
         }
-        setConfirmation({
-            title: t('STICKER_LIBRARY.DISCARD_QUEUE_TITLE', { count: remaining }),
-            message: t('STICKER_LIBRARY.DISCARD_QUEUE_MESSAGE'),
-            confirmLabel: t('STICKER_LIBRARY.DISCARD'),
-            cancelLabel: t('STICKER_LIBRARY.KEEP_EDITING_IMAGES'),
-            onConfirm: () => finishQueue({ ...queue, skipped: queue.skipped + remaining }),
-        });
+        setEditorSession({ packId, files: valid, rejected });
+    };
+
+    const uploadEditedSticker = async (packId: number, file: File, upload: StickerUpload, options: UploadOptions) => {
+        const created = await api.uploadSticker(packId, await prepareStickerUpload(file, uploadLimitBytes), upload, options);
+        void loadDetail(packId);
+
+        return created;
+    };
+
+    const updateExistingSticker = async (packId: number, stickerId: number, changes: LibraryStickerChanges) => {
+        await api.updateSticker(packId, stickerId, changes);
+        void loadDetail(packId);
+    };
+
+    const closeEditor = (packId: number, summary: EditorQueueSummary) => {
+        setEditorSession(null);
+        void loadDetail(packId);
+        const touchedIds = [...summary.addedIds, ...summary.existingIds];
+        if (touchedIds.length === 0) return;
+        const parts = summary.addedIds.length > 0 ? [t('STICKER_LIBRARY.STICKERS_ADDED', { count: summary.addedIds.length })] : [];
+        if (summary.skipped > 0) parts.push(t('STICKER_LIBRARY.STICKERS_SKIPPED', { count: summary.skipped }));
+        if (summary.existingIds.length > 0) parts.push(t('STICKER_LIBRARY.STICKERS_EXISTING', { count: summary.existingIds.length }));
+        toast({ message: parts.join(' · ') });
+        setFlashIds(new Set(touchedIds));
+        window.setTimeout(() => setFlashIds(new Set()), FLASH_MS);
+        window.setTimeout(() => document.querySelector<HTMLElement>(`[data-sticker-id="${touchedIds[0]}"]`)?.scrollIntoView?.({ block: 'nearest' }));
     };
 
     const pickFiles = () => fileInputRef.current?.click();
@@ -566,7 +525,7 @@ function StickerLibrary({ api }: { api: StickerLibraryApi }) {
         const onPaste = (event: ClipboardEvent) => {
             const active = document.activeElement;
             if (active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement || (active as HTMLElement | null)?.isContentEditable) return;
-            if (confirmation || editorQueue || !currentDetail) return;
+            if (confirmation || editorSession || !currentDetail) return;
             const files = Array.from(event.clipboardData?.files ?? []).filter(file => file.type.startsWith('image/'));
             if (files.length === 0) return;
             event.preventDefault();
@@ -640,7 +599,7 @@ function StickerLibrary({ api }: { api: StickerLibraryApi }) {
     const selectedSticker = selectedIndex >= 0 ? stickers[selectedIndex] : null;
     const readyCount = stickers.filter(sticker => sticker.status === 'ready').length;
     const failedCount = stickers.filter(sticker => sticker.status === 'failed').length;
-    const canAddSticker = stickers.length < limits.maxStickers && editorQueue === null;
+    const canAddSticker = stickers.length < limits.maxStickers && editorSession === null;
     const isSorting = sortBaseline !== null;
     const showListScreen = !isMobile || selectedPackId === null;
     const showDetailScreen = !isMobile || selectedPackId !== null;
@@ -812,16 +771,15 @@ function StickerLibrary({ api }: { api: StickerLibraryApi }) {
                 }}
             />
             <ConfirmActionDialog request={confirmation} onClose={() => setConfirmation(null)} />
-            {editorQueue ? (
+            {editorSession ? (
                 <StickerImageEditor
-                    key={`${editorQueue.packId}-${editorQueue.index}`}
-                    file={editorQueue.files[editorQueue.index]}
-                    position={editorQueue.index + 1}
-                    total={editorQueue.files.length}
+                    files={editorSession.files}
+                    rejected={editorSession.rejected}
                     imageSize={meta?.image_size ?? 0}
-                    onSave={saveEditedSticker}
-                    onSkip={() => advanceEditor(editorQueue, { skipped: true })}
-                    onClose={closeEditor}
+                    limits={limits}
+                    onUpload={(file, upload, options) => uploadEditedSticker(editorSession.packId, file, upload, options)}
+                    onUpdateExisting={(stickerId, changes) => updateExistingSticker(editorSession.packId, stickerId, changes)}
+                    onClose={summary => closeEditor(editorSession.packId, summary)}
                 />
             ) : null}
         </div>

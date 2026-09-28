@@ -1,15 +1,18 @@
+import { cropGeometry } from 'sticker-renderer/image/sticker-geometry.mjs';
 import { describe, expect, it } from 'vitest';
 
 import {
     brushPointCount,
     canAddStickerEdit,
-    cropPixelRect,
-    defaultCrop,
+    clampCrop,
+    fitCrop,
     MAX_BRUSH_STROKE_POINTS,
     MAX_STICKER_EDITS,
     MAX_TOTAL_BRUSH_POINTS,
+    maximumCropSide,
     moveCrop,
     resizeCrop,
+    subjectCrop,
     toStickerEdit,
 } from './stickerEdit';
 import type { SourceEdit, StickerDraft } from './stickerEdit';
@@ -17,6 +20,7 @@ import type { SourceEdit, StickerDraft } from './stickerEdit';
 const SIZE = { width: 400, height: 200 };
 
 const draft = (overrides: Partial<StickerDraft> = {}): StickerDraft => ({
+    framing: 'subject',
     crop: { left: 100, top: 0, side: 200 },
     removeBackground: true,
     tolerance: 20,
@@ -24,37 +28,63 @@ const draft = (overrides: Partial<StickerDraft> = {}): StickerDraft => ({
     ...overrides,
 });
 
-describe('khung cắt vuông', () => {
-    it('mặc định ôm vật, chừa lề, nằm trong ảnh', () => {
-        const crop = defaultCrop({ left: 180, top: 60, width: 40, height: 80 }, SIZE);
+describe('vùng lấy vuông', () => {
+    it('Ôm chủ thể: ôm vật, chừa lề 8%, nằm trong ảnh khi vừa', () => {
+        const crop = subjectCrop({ left: 180, top: 60, width: 40, height: 80 }, SIZE);
 
-        expect(crop.side).toBeGreaterThan(80);
+        expect(crop.side).toBe(Math.ceil(80 * 1.16));
         expect(Math.abs(crop.left + crop.side / 2 - 200)).toBeLessThanOrEqual(1);
         expect(crop.top).toBeGreaterThanOrEqual(0);
         expect(crop.top + crop.side).toBeLessThanOrEqual(SIZE.height);
     });
 
-    it('không tìm thấy vật thì lấy hình vuông lớn nhất ở giữa', () => {
-        expect(defaultCrop(null, SIZE)).toEqual({ left: 100, top: 0, side: 200 });
+    it('Ôm chủ thể: vật lớn hơn cạnh ngắn thì khung căn giữa vật, thò ra ngoài ảnh chứ không cắt vật', () => {
+        const crop = subjectCrop({ left: 50, top: 10, width: 300, height: 180 }, SIZE);
+
+        expect(crop.side).toBe(348);
+        expect(crop.top).toBeLessThan(0);
+        expect(crop.top + crop.side).toBeGreaterThan(SIZE.height);
     });
 
-    it('kéo khung không ra ngoài ảnh', () => {
-        expect(moveCrop({ left: 150, top: 0, side: 100 }, 500, -50, SIZE)).toEqual({ left: 300, top: 0, side: 100 });
+    it('không tìm thấy vật hoặc chọn Vừa khung: ô vuông theo cạnh dài, ảnh nằm giữa', () => {
+        expect(subjectCrop(null, SIZE)).toEqual({ left: 0, top: -100, side: 400 });
+        expect(fitCrop({ width: 300, height: 900 })).toEqual({ left: -300, top: 0, side: 900 });
     });
 
-    it('kéo góc dưới phải thì góc trên trái đứng yên, cạnh không vượt mép ảnh', () => {
-        expect(resizeCrop({ left: 100, top: 20, side: 50 }, 'se', 400, 60, SIZE)).toEqual({ left: 100, top: 20, side: 180 });
+    it('kéo khung được ra ngoài ảnh nhưng vẫn phải chồng lên ảnh', () => {
+        const moved = moveCrop({ left: 150, top: 0, side: 100 }, 5000, -5000, SIZE);
+
+        expect(moved.left).toBe(SIZE.width - 10);
+        expect(moved.top).toBe(10 - 100);
+    });
+
+    it('kéo góc dưới phải thì góc trên trái đứng yên, được lớn hơn cạnh ngắn của ảnh', () => {
+        expect(resizeCrop({ left: 100, top: 20, side: 50 }, 'se', 400, 60, SIZE)).toEqual({ left: 100, top: 20, side: 300 });
     });
 
     it('kéo góc trên trái thu nhỏ quanh góc dưới phải', () => {
         expect(resizeCrop({ left: 100, top: 20, side: 100 }, 'nw', 170, 90, SIZE)).toEqual({ left: 170, top: 90, side: 30 });
     });
 
-    it('toạ độ chuẩn hoá của khung cắt dựng lại đúng vùng điểm ảnh', () => {
-        const edit = toStickerEdit(draft({ crop: { left: 37, top: 11, side: 123 } }), SIZE);
+    it('khung không lớn quá gấp đôi cạnh dài', () => {
+        expect(clampCrop({ left: -2000, top: -2000, side: 5000 }, SIZE).side).toBe(maximumCropSide(SIZE));
+        expect(maximumCropSide(SIZE)).toBe(800);
+    });
 
-        expect(edit.crop!.x + edit.crop!.w).toBeLessThanOrEqual(1);
-        expect(cropPixelRect(edit.crop, SIZE)).toMatchObject({ left: 37, top: 11 });
+    it('toạ độ chuẩn hoá (kể cả vượt biên) dựng lại đúng vùng điểm ảnh bằng hình học của renderer', () => {
+        const inside = toStickerEdit(draft({ crop: { left: 37, top: 11, side: 123 } }), SIZE);
+        expect(cropGeometry(inside.crop, SIZE.width, SIZE.height).frame).toEqual({ left: 37, top: 11, width: 123, height: 123 });
+
+        const overflowing = toStickerEdit(draft({ framing: 'custom', crop: { left: -30, top: -50, side: 300 } }), SIZE);
+        const { frame, region } = cropGeometry(overflowing.crop, SIZE.width, SIZE.height);
+        expect(frame).toEqual({ left: -30, top: -50, width: 300, height: 300 });
+        expect(region).toEqual({ left: 0, top: 0, width: 270, height: 200 });
+    });
+
+    it('Ôm chủ thể gửi fit cover; Vừa khung và Tuỳ chỉnh gửi fit contain', () => {
+        expect(toStickerEdit(draft(), SIZE).fit).toBe('cover');
+        expect(toStickerEdit(draft({ framing: 'fit' }), SIZE).fit).toBe('contain');
+        expect(toStickerEdit(draft({ framing: 'custom' }), SIZE).fit).toBe('contain');
     });
 });
 
@@ -72,6 +102,7 @@ describe('toStickerEdit', () => {
 
         expect(edit).toEqual({
             crop: { x: 0.25, y: 0, w: 0.5, h: 1 },
+            fit: 'cover',
             removeBackground: true,
             tolerance: 20,
             feather: 0,

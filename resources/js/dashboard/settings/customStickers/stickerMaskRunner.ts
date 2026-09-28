@@ -1,39 +1,40 @@
-import { detectSubjectBounds, renderStickerCrop } from './stickerMaskRender';
-import type { RenderedCrop, SourcePixels } from './stickerMaskRender';
-import type { PixelRect, StickerEdit } from './stickerEdit';
+import { loadSourceFrames, renderSticker } from './stickerMaskRender';
+import type { LoadedStickerSource, RenderedSticker, SourceFrames, StickerSourceInput } from './stickerMaskRender';
+import type { StickerEdit } from './stickerEdit';
 
 // Chạy lõi xoá nền ngoài luồng giao diện (Web Worker) để kéo dung sai hay tô cọ
 // không làm đơ màn hình. Trình duyệt không có Worker, hoặc Worker không nạp được,
 // thì chạy cùng hàm đó ngay trên luồng chính.
 
 export type StickerMaskRequest =
-    | { id: number; type: 'load'; source: SourcePixels }
+    | { id: number; type: 'load'; input: StickerSourceInput }
     | { id: number; type: 'render'; edit: StickerEdit };
 
 export type StickerMaskResponse =
-    | { id: number; type: 'loaded'; subjectBounds: PixelRect | null }
-    | { id: number; type: 'rendered'; result: RenderedCrop }
+    | { id: number; type: 'loaded'; loaded: LoadedStickerSource }
+    | { id: number; type: 'rendered'; result: RenderedSticker }
     | { id: number; type: 'failed'; message: string };
 
 export interface StickerMaskRunner {
-    load(source: SourcePixels): Promise<PixelRect | null>;
-    render(edit: StickerEdit): Promise<RenderedCrop>;
+    load(input: StickerSourceInput): Promise<LoadedStickerSource>;
+    render(edit: StickerEdit): Promise<RenderedSticker>;
     dispose(): void;
 }
 
 const MISSING_SOURCE = 'Sticker source image is not loaded';
 
 export function createInThreadMaskRunner(): StickerMaskRunner {
-    let source: SourcePixels | null = null;
+    let source: SourceFrames | null = null;
 
     return {
-        load: async loaded => {
-            source = loaded;
-            return detectSubjectBounds(loaded);
+        load: async input => {
+            const { frames, loaded } = await loadSourceFrames(input);
+            source = frames;
+            return loaded;
         },
         render: async edit => {
             if (!source) throw new Error(MISSING_SOURCE);
-            return renderStickerCrop(source, edit);
+            return renderSticker(source, edit);
         },
         dispose: () => {
             source = null;
@@ -62,7 +63,7 @@ export function createStickerMaskRunner(): StickerMaskRunner {
     const worker: Worker = spawned;
 
     let isWorkerUsable = true;
-    let loadedSource: SourcePixels | null = null;
+    let loadedInput: StickerSourceInput | null = null;
     let nextRequestId = 0;
     const pending = new Map<number, PendingRequest>();
 
@@ -72,7 +73,7 @@ export function createStickerMaskRunner(): StickerMaskRunner {
         worker.terminate();
         const stranded = [...pending.values()];
         pending.clear();
-        const reloaded = loadedSource ? fallback.load(loadedSource) : Promise.resolve(null);
+        const reloaded = loadedInput ? fallback.load(loadedInput) : Promise.resolve(null);
         void reloaded.finally(() => stranded.forEach(request => request.retryInThread()));
     };
 
@@ -108,12 +109,15 @@ export function createStickerMaskRunner(): StickerMaskRunner {
     }
 
     return {
-        load: source => {
-            loadedSource = source;
+        load: input => {
+            loadedInput = input;
             return send(
-                { id: nextRequestId++, type: 'load', source },
-                response => (response.type === 'loaded' ? response.subjectBounds : null),
-                () => fallback.load(source),
+                { id: nextRequestId++, type: 'load', input },
+                response => {
+                    if (response.type !== 'loaded') throw new Error(`Unexpected ${response.type} response`);
+                    return response.loaded;
+                },
+                () => fallback.load(input),
             );
         },
         render: edit =>
@@ -127,7 +131,7 @@ export function createStickerMaskRunner(): StickerMaskRunner {
             ),
         dispose: () => {
             pending.clear();
-            loadedSource = null;
+            loadedInput = null;
             fallback.dispose();
             if (isWorkerUsable) worker.terminate();
             isWorkerUsable = false;

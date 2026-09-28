@@ -1,42 +1,53 @@
-import { MAX_BRUSH_STROKE_POINTS } from './stickerEdit';
-import type { BrushOperation, CropSquare, SourceEdit, StickerDraft, WandOperation } from './stickerEdit';
+import { DEFAULT_TOLERANCE } from 'sticker-renderer/image/background-mask.mjs';
 
-// Trạng thái trình chỉnh sticker: bản nháp hiện tại và các bước để hoàn tác.
-// Mỗi thao tác của người dùng (một lần bấm đũa thần, một nét cọ, một lần kéo khung,
-// một lượt kéo thanh dung sai) là một bước hoàn tác. Khung cắt đổi liên tục khi kéo
-// (crop-change) và chỉ ghi bước hoàn tác lúc thả tay (crop-commit, kèm khung trước khi kéo).
+import { MAX_BRUSH_STROKE_POINTS } from './stickerEdit';
+import type { BrushOperation, CropSquare, SourceEdit, StickerDraft, StickerFraming, WandOperation } from './stickerEdit';
+
+// Trạng thái trình chỉnh sticker: bản nháp hiện tại cùng hai ngăn hoàn tác / làm lại.
+// Mỗi thao tác của người dùng (một lần bấm đũa thần, một nét cọ, một lần kéo khung, một lượt
+// kéo thanh dung sai, một loạt phím mũi tên liền nhau) là một bước. Khung đổi liên tục khi kéo
+// (crop-change) và chỉ ghi bước lúc thả tay (crop-commit).
 
 const MAX_UNDO_STEPS = 100;
+// Các lần nhấn phím mũi tên cách nhau dưới ngần này gộp thành một bước hoàn tác.
+export const NUDGE_MERGE_MS = 500;
 
-type ActionKind = 'crop' | 'tolerance' | 'other';
+type ActionKind = 'tolerance' | 'nudge' | 'other';
 
 export interface StickerEditorState {
     draft: StickerDraft;
     undoStack: StickerDraft[];
-    lastActionKind: ActionKind | null;
+    redoStack: StickerDraft[];
+    lastAction: { kind: ActionKind; at: number } | null;
+    // Bản nháp lúc bắt đầu kéo khung, để cả lượt kéo thành một bước.
+    gestureStart: StickerDraft | null;
 }
 
 export type StickerEditorAction =
-    | { type: 'reset'; draft: StickerDraft }
+    | { type: 'set-framing'; framing: StickerFraming; crop: CropSquare }
     | { type: 'crop-change'; crop: CropSquare }
-    | { type: 'crop-commit'; before: CropSquare }
+    | { type: 'crop-commit' }
+    | { type: 'crop-nudge'; crop: CropSquare; at: number }
     | { type: 'set-remove-background'; enabled: boolean }
     | { type: 'set-tolerance'; tolerance: number }
     | { type: 'wand'; op: WandOperation; x: number; y: number }
     | { type: 'brush-start'; op: BrushOperation; point: [number, number]; radius: number }
     | { type: 'brush-extend'; point: [number, number] }
     | { type: 'use-original' }
-    | { type: 'undo' };
+    | { type: 'undo' }
+    | { type: 'redo' };
 
 export function createEditorState(draft: StickerDraft): StickerEditorState {
-    return { draft, undoStack: [], lastActionKind: null };
+    return { draft, undoStack: [], redoStack: [], lastAction: null, gestureStart: null };
 }
 
-function withUndoStep(state: StickerEditorState, kind: ActionKind, draft: StickerDraft): StickerEditorState {
+function withUndoStep(state: StickerEditorState, kind: ActionKind, draft: StickerDraft, at = 0, before = state.draft): StickerEditorState {
     return {
         draft,
-        undoStack: [...state.undoStack, state.draft].slice(-MAX_UNDO_STEPS),
-        lastActionKind: kind,
+        undoStack: [...state.undoStack, before].slice(-MAX_UNDO_STEPS),
+        redoStack: [],
+        lastAction: { kind, at },
+        gestureStart: null,
     };
 }
 
@@ -51,18 +62,27 @@ function extendLastStroke(edits: SourceEdit[], point: [number, number]): SourceE
     return [...edits, { op: stroke.op, radius: stroke.radius, points: [lastPoint, point] }];
 }
 
+const sameCrop = (first: CropSquare, second: CropSquare) => first.left === second.left && first.top === second.top && first.side === second.side;
+
 export function stickerEditorReducer(state: StickerEditorState, action: StickerEditorAction): StickerEditorState {
     const { draft } = state;
     switch (action.type) {
-        case 'reset':
-            return createEditorState(action.draft);
+        case 'set-framing':
+            if (draft.framing === action.framing && sameCrop(draft.crop, action.crop)) return state;
+            return withUndoStep(state, 'other', { ...draft, framing: action.framing, crop: action.crop });
         case 'crop-change':
-            return { ...state, draft: { ...draft, crop: action.crop } };
+            return { ...state, draft: { ...draft, framing: 'custom', crop: action.crop }, gestureStart: state.gestureStart ?? draft };
         case 'crop-commit': {
-            const { before } = action;
-            const unchanged = before.left === draft.crop.left && before.top === draft.crop.top && before.side === draft.crop.side;
-            if (unchanged) return state;
-            return withUndoStep({ ...state, draft: { ...draft, crop: before } }, 'crop', draft);
+            const before = state.gestureStart;
+            if (!before) return state;
+            if (sameCrop(before.crop, draft.crop)) return { ...state, draft: before, gestureStart: null };
+            return withUndoStep(state, 'other', draft, 0, before);
+        }
+        case 'crop-nudge': {
+            if (sameCrop(draft.crop, action.crop)) return state;
+            const next = { ...draft, framing: 'custom' as const, crop: action.crop };
+            const merges = state.lastAction?.kind === 'nudge' && action.at - state.lastAction.at < NUDGE_MERGE_MS;
+            return merges ? { ...state, draft: next, lastAction: { kind: 'nudge', at: action.at } } : withUndoStep(state, 'nudge', next, action.at);
         }
         case 'set-remove-background':
             if (draft.removeBackground === action.enabled) return state;
@@ -70,7 +90,7 @@ export function stickerEditorReducer(state: StickerEditorState, action: StickerE
         case 'set-tolerance': {
             if (draft.tolerance === action.tolerance) return state;
             const next = { ...draft, tolerance: action.tolerance };
-            return state.lastActionKind === 'tolerance' ? { ...state, draft: next } : withUndoStep(state, 'tolerance', next);
+            return state.lastAction?.kind === 'tolerance' ? { ...state, draft: next } : withUndoStep(state, 'tolerance', next);
         }
         case 'wand':
             return withUndoStep(state, 'other', {
@@ -85,12 +105,17 @@ export function stickerEditorReducer(state: StickerEditorState, action: StickerE
         case 'brush-extend':
             return { ...state, draft: { ...draft, edits: extendLastStroke(draft.edits, action.point) } };
         case 'use-original':
-            if (!draft.removeBackground && draft.edits.length === 0) return state;
-            return withUndoStep(state, 'other', { ...draft, removeBackground: false, edits: [] });
+            if (!draft.removeBackground && draft.edits.length === 0 && draft.tolerance === DEFAULT_TOLERANCE) return state;
+            return withUndoStep(state, 'other', { ...draft, removeBackground: false, edits: [], tolerance: DEFAULT_TOLERANCE });
         case 'undo': {
             const previous = state.undoStack[state.undoStack.length - 1];
             if (!previous) return state;
-            return { draft: previous, undoStack: state.undoStack.slice(0, -1), lastActionKind: null };
+            return { draft: previous, undoStack: state.undoStack.slice(0, -1), redoStack: [...state.redoStack, draft], lastAction: null, gestureStart: null };
+        }
+        case 'redo': {
+            const next = state.redoStack[state.redoStack.length - 1];
+            if (!next) return state;
+            return { draft: next, undoStack: [...state.undoStack, draft], redoStack: state.redoStack.slice(0, -1), lastAction: null, gestureStart: null };
         }
     }
 }

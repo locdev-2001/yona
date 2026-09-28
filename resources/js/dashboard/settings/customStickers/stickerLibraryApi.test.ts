@@ -18,6 +18,7 @@ const { createStickerLibraryApi } = await import('./stickerLibraryApi');
 const stickerFile = () => new File(['png'], 'meo.png', { type: 'image/png' });
 const EDIT: StickerEdit = {
     crop: { x: 0.1, y: 0.05, w: 0.8, h: 0.8 },
+    fit: 'contain',
     removeBackground: true,
     tolerance: 12,
     feather: 0,
@@ -55,6 +56,23 @@ describe('uploadSticker khi máy chủ giới hạn lượt tải', () => {
         postForm.mockRejectedValueOnce(rejection);
 
         await expect(createStickerLibraryApi('/super_admin/api').uploadSticker(3, stickerFile(), upload())).rejects.toBe(rejection);
+        expect(postForm).toHaveBeenCalledTimes(1);
+    });
+
+    it('báo thời gian chờ và huỷ được trong lúc chờ gửi lại', async () => {
+        postForm.mockRejectedValue(throttled(3));
+        const controller = new AbortController();
+        const onThrottleWait = vi.fn();
+
+        const sending = createStickerLibraryApi('/super_admin/api').uploadSticker(3, stickerFile(), upload(), { signal: controller.signal, onThrottleWait });
+        const outcome = expect(sending).rejects.toMatchObject({ name: 'AbortError' });
+        await vi.advanceTimersByTimeAsync(10);
+        expect(onThrottleWait).toHaveBeenCalledWith(3000);
+        expect(postForm.mock.calls[0][2]).toEqual({ signal: controller.signal });
+
+        controller.abort();
+        await outcome;
+        await vi.advanceTimersByTimeAsync(5000);
         expect(postForm).toHaveBeenCalledTimes(1);
     });
 

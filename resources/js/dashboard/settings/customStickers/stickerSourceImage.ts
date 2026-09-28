@@ -1,14 +1,15 @@
 import type { SourcePixels } from './stickerMaskRender';
 
-// Giải mã ảnh người dùng chọn thành buffer RGBA để xem trước. Ảnh lớn thu về cạnh
-// dài PREVIEW_MAX_EDGE: toạ độ chỉnh ảnh đều chuẩn hoá 0..1 nên máy chủ dựng trên ảnh
-// gốc vẫn khớp. Ảnh động chỉ xem trước khung đầu; máy chủ áp cùng chỉnh cho mọi khung.
+// Giải mã ảnh người dùng chọn thành buffer RGBA (khung đầu) để xem trước. Ảnh lớn thu về
+// cạnh dài PREVIEW_MAX_EDGE: toạ độ chỉnh ảnh đều chuẩn hoá 0..1 nên máy chủ dựng trên ảnh
+// gốc vẫn khớp. Ảnh động kèm nguyên byte để worker giải mã từng khung.
 
 export const PREVIEW_MAX_EDGE = 1024;
 
 export interface DecodedStickerSource {
     pixels: SourcePixels;
     animated: boolean;
+    bytes: ArrayBuffer;
 }
 
 const GIF_EXTENSION = 0x21;
@@ -105,6 +106,7 @@ export async function decodeStickerSource(file: File): Promise<DecodedStickerSou
         return {
             pixels: { width, height, rgba: context.getImageData(0, 0, width, height).data },
             animated: isAnimatedImageBytes(new Uint8Array(bytes)),
+            bytes,
         };
     } finally {
         releaseImage(image);
