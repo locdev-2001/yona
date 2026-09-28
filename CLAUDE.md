@@ -6,6 +6,7 @@
 > - **Việc đang mở theo dõi ở Công việc của dash.yona.vn** qua MCP `yona-dash` (skill `yona-issues`), không phải trong file này và không tạo GitHub issue nữa: `list_tasks` với `tag: "P0"`.
 > - Thư mục `refs/` (không theo dõi trong git) chứa mã tham khảo bên ngoài: chỉ đọc lấy ý tưởng, **CẤM** mở mọi thư mục `enterprise/` trong đó (giấy phép thương mại). Code, comment, copy, commit, task không nhắc tên nguồn; nghĩa vụ giấy phép nằm ở `THIRD_PARTY_NOTICES.md`.
 > - **Làm UI bề mặt công khai:** gọi skill `yona-ui` (`.claude/skills/yona-ui/`). Nghiệm thu bằng `npm run check:ui`, không phải bằng mắt mình.
+> - **Tạo bộ sticker cho kho Yona:** gọi skill `yona-sticker-pack` qua MCP `yona-stickers`. Nguồn duy nhất `resources/skills/yona-sticker-pack/SKILL.md` (chính file khách tải ở tab MCP); `.claude/skills/` và `.agents/skills/` chỉ là symlink, sửa skill thì sửa file gốc.
 > - **DoD:** Pest + vitest + tsc + pint + build xanh, bảng đối chiếu hành vi khi dựng tính năng từ mã tham khảo trong `refs/` (ghi ở báo cáo, không vào code), nghiệm thu trên trình duyệt như người dùng cuối. Thiếu 1 = chưa done.
 > - DB dev = `yona_rw`. **Cấm** `migrate:fresh/refresh/wipe`. Cổng dev lấy từ `.env`: app **8610**, Reverb **8611**, Zalo bridge **8612**.
 > - **Cấm tạo tài khoản thử trên production.** Thử luồng khách thì làm ở local (xem README, mục Chạy local).
