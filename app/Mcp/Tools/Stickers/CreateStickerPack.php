@@ -12,7 +12,7 @@ use Laravel\Mcp\Server\Attributes\Description;
 use Laravel\Mcp\Server\Attributes\Name;
 
 #[Name('create_sticker_pack')]
-#[Description('Tạo một bộ sticker mới trong kho chung (chưa xuất bản, chưa ai thấy). Trả về bộ vừa tạo kèm id để tải sticker vào.')]
+#[Description('Tạo một bộ sticker mới trong kho của token (chưa xuất bản, chưa ai thấy). Trả về bộ vừa tạo kèm id để tải sticker vào.')]
 class CreateStickerPack extends StickerLibraryTool
 {
     /** @return array<string, mixed> */
@@ -27,6 +27,6 @@ class CreateStickerPack extends StickerLibraryTool
     {
         $validated = $request->validate(StickerPackRequest::nameRules());
 
-        return $this->packResponse($library->createPack(self::SHARED_LIBRARY_OWNER, trim($validated['name'])));
+        return $this->packResponse($library->createPack($this->libraryOwner(), trim($validated['name'])));
     }
 }

@@ -119,17 +119,14 @@ it('từ gõ ngắn hơn 2 ký tự hay ký tự đại diện LIKE thì không 
     expect(suggestedIds($this->getJson(suggestionsUrl($this->account, $this->conversation, $query))))->toBe([]);
 })->with(['một ký tự' => 'h', 'rỗng' => '', 'phần trăm' => '%%', 'gạch dưới' => '__']);
 
-it('cách ly: chỉ sticker account thấy được — bộ chưa xuất bản, kho riêng tenant khác, kho riêng khi cờ tắt đều không hiện', function () {
+it('cách ly: chỉ sticker account thấy được — bộ chưa xuất bản, kho riêng tenant khác, sticker chưa xong đều không hiện; kho riêng của chính account hiện dù cờ tắt', function () {
     YonaStickers::ready(StickerPack::factory()->unpublished()->create(), ['keywords' => ['haha']]);
     YonaStickers::ready(YonaStickers::tenantPack(Account::factory()->create()), ['keywords' => ['haha']]);
     $own = YonaStickers::ready(YonaStickers::tenantPack($this->account), ['keywords' => ['haha']]);
     Sticker::factory()->processing()->for($this->pack, 'stickerPack')->create(['keywords' => ['haha']]);
 
-    expect(suggestedIds($this->getJson(suggestionsUrl($this->account, $this->conversation, 'haha'))))->toBe([]);
-
-    YonaStickers::enableCustomStickers($this->account);
-
-    expect(suggestedIds($this->getJson(suggestionsUrl($this->account, $this->conversation, 'haha'))))->toBe(["yona:{$own->id}"]);
+    expect($this->account->featureEnabled(Sticker::CUSTOM_STICKERS_FEATURE))->toBeFalse()
+        ->and(suggestedIds($this->getJson(suggestionsUrl($this->account, $this->conversation, 'haha'))))->toBe(["yona:{$own->id}"]);
 });
 
 it('hộp thư không gửi được ảnh thì mảng rỗng, không lỗi', function () {

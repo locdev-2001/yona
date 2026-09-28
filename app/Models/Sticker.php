@@ -69,24 +69,21 @@ class Sticker extends Model
     }
 
     /**
-     * Nguồn duy nhất của quy tắc "account nào thấy sticker nào": kho chung cho
-     * mọi account, kho riêng của chính account khi cờ custom_stickers bật; chỉ
-     * sticker đã xử lý xong trong bộ đã xuất bản.
+     * Nguồn duy nhất của quy tắc "account nào thấy sticker nào": kho nền tảng
+     * cho mọi account, kho riêng chỉ cho chính account đó; chỉ sticker đã xử lý
+     * xong trong bộ đã xuất bản. Ai được tạo bộ trong kho riêng do
+     * StickerLibraryAccess quyết; bộ đã xuất bản thì account luôn thấy.
      *
      * @param  Builder<self>  $query
      * @return Builder<self>
      */
     public function scopeVisibleTo(Builder $query, Account $account): Builder
     {
-        $includesOwnLibrary = $account->featureEnabled(self::CUSTOM_STICKERS_FEATURE);
-
         return $query
             ->where('status', self::STATUS_READY)
             ->whereHas('stickerPack', fn (Builder $pack) => $pack
                 ->published()
-                ->where(fn (Builder $owner) => $includesOwnLibrary
-                    ? $owner->whereNull('account_id')->orWhere('account_id', $account->id)
-                    : $owner->whereNull('account_id')));
+                ->where(fn (Builder $owner) => $owner->whereNull('account_id')->orWhere('account_id', $account->id)));
     }
 
     /** @return Attribute<string|null, never> */

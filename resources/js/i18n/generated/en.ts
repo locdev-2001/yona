@@ -3680,7 +3680,9 @@ const messages: Record<string, unknown> = {
             "pack_full": "A pack holds at most :max stickers. Remove some or create a new pack.",
             "too_many_packs": "An account can have at most :max sticker packs.",
             "upload_throttled": "Too many sticker uploads at once. Please wait a moment and try again.",
-            "not_found": "This pack or sticker was not found in the shared library.",
+            "not_found": "This pack or sticker was not found in this library.",
+            "forbidden": "Your account is not allowed to use this sticker library.",
+            "invalid_token": "The sticker library token is invalid or has been revoked.",
             "invalid_base64": "tgs_base64 is not a valid base64 string."
         },
         "widget_recall": {
@@ -9740,7 +9742,46 @@ const messages: Record<string, unknown> = {
         "NO_KEYWORDS": "No keywords yet",
         "SAVE_STICKER": "Save",
         "CANCEL": "Cancel",
-        "UPLOAD_KEYWORDS": "Keywords for the files you upload next (optional)"
+        "UPLOAD_KEYWORDS": "Keywords for the files you are about to upload (optional)",
+        "PAGE_HEADER": "Sticker library",
+        "PAGE_DESCRIPTION": "Build sticker packs for your inboxes and widget, and give AI assistants a token to create stickers over MCP.",
+        "TABS": {
+            "ACCOUNT": "Account library",
+            "PLATFORM": "Platform library",
+            "MCP": "MCP for AI"
+        },
+        "PLATFORM_DESCRIPTION": "The shared Yona library: published packs show in every account. Only system accounts see this section.",
+        "LOCKED_TITLE": "Not available for this account yet",
+        "LOCKED_ACCOUNT_LIBRARY": "Custom sticker libraries are currently limited to Yona system accounts. Once the feature is opened to your account, this section works right away.",
+        "LOCKED_MCP": "MCP tokens for AI can only be created when the account can use a custom sticker library or you have system access.",
+        "MCP": {
+            "DESCRIPTION": "Each token lets one AI assistant (Claude Code, Cursor…) create and edit stickers in exactly one library over MCP. The token is shown only once, when created.",
+            "NAME_LABEL": "Token name",
+            "NAME_PLACEHOLDER": "Claude on Lan's laptop",
+            "SCOPE_LABEL": "Library",
+            "SCOPE": {
+                "account": "Account library",
+                "platform": "Platform library"
+            },
+            "CREATE": "Create token",
+            "CREATED_TITLE": "New token, copy it now: it cannot be shown again after you close this",
+            "TOKEN_LABEL": "Token",
+            "COMMAND_LABEL": "Command to add it to Claude Code",
+            "COPY": "Copy",
+            "COPIED": "Copied",
+            "COPY_FAILED": "Could not copy, please select the text and copy it manually.",
+            "DISMISS": "I have copied it",
+            "LIST_TITLE": "Active tokens",
+            "EMPTY": "No tokens yet.",
+            "LOADING": "Loading tokens…",
+            "LOAD_ERROR": "Could not load tokens, please try again.",
+            "CREATED_BY": "Created by {name}",
+            "LAST_USED": "Last used {time}",
+            "NEVER_USED": "Never used",
+            "REVOKE": "Revoke",
+            "REVOKE_CONFIRM": "Revoke token “{name}”? Any AI using it loses access immediately.",
+            "REVOKED": "Token revoked"
+        }
     },
     "SUMMARY_REPORTS": {
         "INBOX": "Inbox",

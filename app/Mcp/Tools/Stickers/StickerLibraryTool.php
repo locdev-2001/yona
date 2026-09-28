@@ -2,12 +2,13 @@
 
 namespace App\Mcp\Tools\Stickers;
 
-use App\Http\Middleware\AuthenticatePlatformApp;
 use App\Http\Resources\Stickers\LibraryStickerPackResource;
 use App\Http\Resources\Stickers\LibraryStickerResource;
+use App\Models\Account;
 use App\Models\Sticker;
 use App\Models\StickerPack;
 use App\Services\Stickers\StickerLibraryManager;
+use App\Services\Stickers\StickerLibraryTarget;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\JsonSchema\Types\Type;
@@ -16,14 +17,22 @@ use Laravel\Mcp\Response;
 use Laravel\Mcp\ResponseFactory;
 use Laravel\Mcp\Server\Tool;
 
-// Nền của mọi tool MCP kho sticker: chỉ thao tác kho chung (chủ kho = null) qua
-// đúng StickerLibraryManager, trả cùng hình dạng với API quản trị kho.
+// Nền của mọi tool MCP kho sticker: chỉ thao tác đúng kho mà token cấp
+// (StickerLibraryTarget do AuthenticateStickerLibraryToken gắn vào request) qua
+// StickerLibraryManager, trả cùng hình dạng với API quản trị kho. Không có kho
+// được cấp thì từ chối, không rơi về kho nào mặc định.
 abstract class StickerLibraryTool extends Tool
 {
-    protected const SHARED_LIBRARY_OWNER = null;
+    private ?StickerLibraryTarget $target = null;
 
     public function handle(Request $request, StickerLibraryManager $library): Response|ResponseFactory
     {
+        $this->target = StickerLibraryTarget::fromRequest(request());
+
+        if ($this->target === null) {
+            return Response::error(__('errors.sticker_library.forbidden'));
+        }
+
         try {
             return $this->respond($request, $library);
         } catch (ModelNotFoundException) {
@@ -33,10 +42,14 @@ abstract class StickerLibraryTool extends Tool
 
     abstract protected function respond(Request $request, StickerLibraryManager $library): Response|ResponseFactory;
 
-    // Platform App gọi qua /mcp/stickers; không qua HTTP (test, stdio) thì dùng chung một khoá.
-    protected function callerKey(): string
+    protected function libraryTarget(): StickerLibraryTarget
     {
-        return (string) (request()->attributes->get(AuthenticatePlatformApp::PLATFORM_APP)?->getKey() ?? 'local');
+        return $this->target ?? throw new \LogicException('Tool kho sticker chạy khi chưa có kho được cấp.');
+    }
+
+    protected function libraryOwner(): ?Account
+    {
+        return $this->libraryTarget()->owner;
     }
 
     protected function packIdSchema(JsonSchema $schema): Type
@@ -63,7 +76,7 @@ abstract class StickerLibraryTool extends Tool
 
     protected function findPack(StickerLibraryManager $library, Request $request): StickerPack
     {
-        return $library->findPack(self::SHARED_LIBRARY_OWNER, (int) $request->get('pack_id'));
+        return $library->findPack($this->libraryOwner(), (int) $request->get('pack_id'));
     }
 
     protected function findSticker(StickerLibraryManager $library, Request $request): Sticker

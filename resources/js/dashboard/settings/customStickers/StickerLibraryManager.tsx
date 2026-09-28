@@ -130,7 +130,7 @@ function StickerDetails({ sticker }: { sticker: LibrarySticker }) {
         <div className="flex flex-col gap-1">
             {sticker.label ? <span className="truncate text-sm text-slate-900">{sticker.label}</span> : null}
             {sticker.keywords.length > 0 ? (
-                <ul className="flex flex-wrap gap-1" aria-label={t('STICKER_LIBRARY.KEYWORDS')}>
+                <ul className="m-0 flex list-none flex-wrap gap-1 p-0" aria-label={t('STICKER_LIBRARY.KEYWORDS')}>
                     {sticker.keywords.map(keyword => (
                         <li key={keyword} className="rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-800">
                             {keyword}
@@ -464,7 +464,7 @@ export default function StickerLibraryManager({ api }: { api: StickerLibraryApi 
                 {packs.length === 0 ? (
                     <p className="text-sm text-slate-600">{t('STICKER_LIBRARY.EMPTY')}</p>
                 ) : (
-                    <ul className="flex flex-col gap-1">
+                    <ul className="m-0 flex list-none flex-col gap-1 p-0">
                         {packs.map(pack => (
                             <PackListItem
                                 key={pack.id}
@@ -552,7 +552,7 @@ export default function StickerLibraryManager({ api }: { api: StickerLibraryApi 
                                 />
                             </label>
                             {uploadErrors.length > 0 ? (
-                                <ul role="alert" className="flex flex-col gap-1 text-sm text-red-700">
+                                <ul role="alert" className="m-0 flex list-none flex-col gap-1 p-0 text-sm text-red-700">
                                     {uploadErrors.map(message => (
                                         <li key={message}>{message}</li>
                                     ))}
@@ -563,7 +563,7 @@ export default function StickerLibraryManager({ api }: { api: StickerLibraryApi 
                         {selectedPack.stickers.length === 0 ? (
                             <p className="text-sm text-slate-600">{t('STICKER_LIBRARY.NO_STICKERS')}</p>
                         ) : (
-                            <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+                            <ul className="m-0 grid list-none grid-cols-2 p-0 gap-3 sm:grid-cols-3 lg:grid-cols-5">
                                 {selectedPack.stickers.map((sticker, index) => (
                                     <StickerCard
                                         key={sticker.id}

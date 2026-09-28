@@ -3680,7 +3680,9 @@ const messages: Record<string, unknown> = {
             "pack_full": "Mỗi bộ có tối đa :max sticker. Bạn xoá bớt hoặc tạo bộ mới nhé.",
             "too_many_packs": "Mỗi account có tối đa :max bộ sticker.",
             "upload_throttled": "Bạn tải sticker hơi nhanh, chờ một chút rồi thử lại nhé.",
-            "not_found": "Không tìm thấy bộ hoặc sticker này trong kho chung.",
+            "not_found": "Không tìm thấy bộ hoặc sticker này trong kho.",
+            "forbidden": "Tài khoản của bạn chưa được dùng kho sticker này.",
+            "invalid_token": "Token kho sticker không đúng hoặc đã bị thu hồi.",
             "invalid_base64": "tgs_base64 không phải chuỗi base64 hợp lệ."
         },
         "widget_recall": {
@@ -9740,7 +9742,46 @@ const messages: Record<string, unknown> = {
         "NO_KEYWORDS": "Chưa có từ khoá",
         "SAVE_STICKER": "Lưu",
         "CANCEL": "Huỷ",
-        "UPLOAD_KEYWORDS": "Từ khoá cho các tệp sắp tải (tuỳ chọn)"
+        "UPLOAD_KEYWORDS": "Từ khoá cho các tệp sắp tải (tuỳ chọn)",
+        "PAGE_HEADER": "Kho sticker",
+        "PAGE_DESCRIPTION": "Dựng bộ sticker cho hộp thư và widget, và cấp token cho AI tự tạo sticker qua MCP.",
+        "TABS": {
+            "ACCOUNT": "Kho riêng",
+            "PLATFORM": "Kho nền tảng",
+            "MCP": "MCP cho AI"
+        },
+        "PLATFORM_DESCRIPTION": "Kho chung của Yona: bộ đã xuất bản hiện với mọi account. Chỉ tài khoản có quyền hệ thống thấy mục này.",
+        "LOCKED_TITLE": "Chưa mở cho account này",
+        "LOCKED_ACCOUNT_LIBRARY": "Kho sticker riêng hiện chỉ dành cho tài khoản có quyền hệ thống của Yona. Khi tính năng mở cho account của bạn, mục này sẽ dùng được ngay.",
+        "LOCKED_MCP": "Token MCP cho AI chỉ tạo được khi account dùng được kho sticker riêng hoặc bạn có quyền hệ thống.",
+        "MCP": {
+            "DESCRIPTION": "Mỗi token cho một trợ lý AI (Claude Code, Cursor…) quyền tạo và sửa sticker trong đúng một kho qua MCP. Token chỉ hiện một lần lúc tạo.",
+            "NAME_LABEL": "Tên token",
+            "NAME_PLACEHOLDER": "Claude trên máy của Lan",
+            "SCOPE_LABEL": "Kho được chạm",
+            "SCOPE": {
+                "account": "Kho riêng của account",
+                "platform": "Kho nền tảng"
+            },
+            "CREATE": "Tạo token",
+            "CREATED_TITLE": "Token mới, chép ngay: đóng lại là không xem lại được",
+            "TOKEN_LABEL": "Token",
+            "COMMAND_LABEL": "Lệnh thêm vào Claude Code",
+            "COPY": "Chép",
+            "COPIED": "Đã chép",
+            "COPY_FAILED": "Không chép được, bạn bôi đen rồi chép tay nhé.",
+            "DISMISS": "Đã chép xong",
+            "LIST_TITLE": "Token đang dùng",
+            "EMPTY": "Chưa có token nào.",
+            "LOADING": "Đang tải danh sách token…",
+            "LOAD_ERROR": "Không tải được danh sách token, bạn thử lại nhé.",
+            "CREATED_BY": "Tạo bởi {name}",
+            "LAST_USED": "Dùng lần cuối {time}",
+            "NEVER_USED": "Chưa dùng lần nào",
+            "REVOKE": "Thu hồi",
+            "REVOKE_CONFIRM": "Thu hồi token “{name}”? AI đang dùng token này sẽ mất quyền ngay.",
+            "REVOKED": "Đã thu hồi token"
+        }
     },
     "SUMMARY_REPORTS": {
         "INBOX": "Hộp thư",

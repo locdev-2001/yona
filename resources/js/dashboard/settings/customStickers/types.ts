@@ -36,3 +36,29 @@ export interface StickerLibraryListing {
     payload: LibraryStickerPack[];
     meta: { max_upload_kb: number; accepted_extensions: string[] };
 }
+
+export type StickerMcpTokenScope = 'account' | 'platform';
+
+export interface StickerMcpToken {
+    id: number;
+    name: string;
+    scope: StickerMcpTokenScope;
+    created_by: string | null;
+    created_at: string | null;
+    last_used_at: string | null;
+}
+
+export interface StickerMcpTokenListing {
+    payload: StickerMcpToken[];
+    meta: { usable_scopes: StickerMcpTokenScope[]; mcp_url: string };
+}
+
+export interface IssuedStickerMcpToken extends StickerMcpToken {
+    token: string;
+    mcp_url: string;
+}
+
+export interface StickerLibraryAccess {
+    accountLibrary: boolean;
+    platformLibrary: boolean;
+}

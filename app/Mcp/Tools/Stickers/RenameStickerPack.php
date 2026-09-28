@@ -13,7 +13,7 @@ use Laravel\Mcp\Server\Attributes\Name;
 use Laravel\Mcp\Server\Tools\Annotations\IsIdempotent;
 
 #[Name('rename_sticker_pack')]
-#[Description('Đổi tên một bộ sticker của kho chung.')]
+#[Description('Đổi tên một bộ sticker trong kho của token.')]
 #[IsIdempotent]
 class RenameStickerPack extends StickerLibraryTool
 {

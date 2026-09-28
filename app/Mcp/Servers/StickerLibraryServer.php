@@ -15,16 +15,24 @@ use Laravel\Mcp\Server;
 use Laravel\Mcp\Server\Attributes\Name;
 use Laravel\Mcp\Server\Attributes\Version;
 
-// MCP của kho sticker chung Yona (chỉ kho chung, account_id null). Xác thực bằng
-// token Platform App ở route; mọi tool đi qua StickerLibraryManager như Platform API.
+// MCP của kho sticker Yona. Xác thực bằng token sticker tạo trong Cài đặt
+// (AuthenticateStickerLibraryToken ở route); mỗi token chỉ chạm một kho: kho riêng
+// của account tạo token hoặc kho nền tảng. Mọi tool đi qua StickerLibraryManager
+// như REST /api/v1/sticker_library.
 #[Name('Yona Stickers')]
 #[Version('1.0.0')]
 class StickerLibraryServer extends Server
 {
     public const PATH = '/mcp/stickers';
 
+    public static function endpointUrl(): string
+    {
+        return rtrim((string) config('app.url'), '/').self::PATH;
+    }
+
     private const INTRODUCTION = <<<'MARKDOWN'
-        Máy chủ này quản lý kho sticker CHUNG của Yona: bộ đã xuất bản hiện cho mọi account.
+        Máy chủ này quản lý đúng một kho sticker Yona, do token quyết: kho riêng của một
+        account (bộ đã xuất bản chỉ hiện trong account đó) hoặc kho nền tảng (hiện cho mọi account).
         Quy trình: list_sticker_packs → create_sticker_pack → upload_sticker (mỗi sticker kèm
         label và keywords) → get_sticker_pack chờ mọi sticker `ready` → set_sticker_pack_published.
         Sticker `failed` thì đọc failure_message, sửa Lottie rồi tải lại.

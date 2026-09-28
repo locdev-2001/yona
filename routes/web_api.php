@@ -57,14 +57,15 @@ use App\Http\Controllers\WebApi\Reports\ReportsController;
 use App\Http\Controllers\WebApi\Reports\SummaryReportsController;
 use App\Http\Controllers\WebApi\SearchController;
 use App\Http\Controllers\WebApi\Settings\CustomStickerPacksController;
+use App\Http\Controllers\WebApi\Settings\PlatformStickerPacksController;
+use App\Http\Controllers\WebApi\Settings\StickerMcpTokensController;
 use App\Http\Controllers\WebApi\TeamMembersController;
 use App\Http\Controllers\WebApi\TeamsController;
 use App\Http\Controllers\WebApi\UploadController;
 use App\Http\Controllers\WebApi\WebhooksController;
 use App\Http\Controllers\WebApi\WidgetUpdatesController;
 use App\Http\Controllers\WebApi\ZaloConnectionsController;
-use App\Http\Middleware\EnsureAccountFeatureEnabled;
-use App\Models\Sticker;
+use App\Http\Middleware\EnsureStickerLibraryAccess;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 
@@ -88,6 +89,28 @@ Route::middleware('auth')->prefix('/api/v1')->group(function () {
     Route::delete('/profile/sessions/{id}', [ProfileSessionsController::class, 'destroy'])->whereNumber('id');
     // F8 MFA + user sessions — END
 });
+
+// Kho sticker nền tảng (kho chung) trong Cài đặt của dashboard: chỉ người có
+// quyền hệ thống; cùng action với console Super Admin.
+Route::middleware(['auth', EnsureStickerLibraryAccess::class.':'.EnsureStickerLibraryAccess::PLATFORM_LIBRARY])
+    ->prefix('/api/v1/platform_sticker_library/sticker_packs')
+    ->group(function () {
+        Route::get('/', [PlatformStickerPacksController::class, 'index']);
+        Route::post('/', [PlatformStickerPacksController::class, 'store']);
+        Route::get('/{packId}', [PlatformStickerPacksController::class, 'show'])->whereNumber('packId');
+        Route::match(['put', 'patch'], '/{packId}', [PlatformStickerPacksController::class, 'update'])->whereNumber('packId');
+        Route::delete('/{packId}', [PlatformStickerPacksController::class, 'destroy'])->whereNumber('packId');
+        Route::post('/{packId}/publish', [PlatformStickerPacksController::class, 'publish'])->whereNumber('packId');
+        Route::post('/{packId}/unpublish', [PlatformStickerPacksController::class, 'unpublish'])->whereNumber('packId');
+        Route::post('/{packId}/stickers', [PlatformStickerPacksController::class, 'upload'])
+            ->whereNumber('packId')
+            ->middleware('throttle:sticker-uploads');
+        Route::put('/{packId}/stickers/order', [PlatformStickerPacksController::class, 'reorder'])->whereNumber('packId');
+        Route::patch('/{packId}/stickers/{stickerId}', [PlatformStickerPacksController::class, 'updateSticker'])
+            ->whereNumber(['packId', 'stickerId']);
+        Route::delete('/{packId}/stickers/{stickerId}', [PlatformStickerPacksController::class, 'destroySticker'])
+            ->whereNumber(['packId', 'stickerId']);
+    });
 
 // resource :notification_subscriptions (số ít, không gắn account). Nhận cả phiên
 // lẫn header api_access_token như Api::BaseController của bản gốc.
@@ -439,9 +462,9 @@ Route::middleware(['auth.api_token', 'auth', 'account.scope'])
         Route::post('/widget_updates/{updateId}/publish', [WidgetUpdatesController::class, 'publish'])->whereNumber('updateId');
         Route::post('/widget_updates/{updateId}/unpublish', [WidgetUpdatesController::class, 'unpublish'])->whereNumber('updateId');
 
-        // Kho sticker riêng của account (cùng lõi với kho chung của Super Admin);
-        // cờ custom_stickers tắt thì cả nhóm trả 404.
-        Route::middleware(EnsureAccountFeatureEnabled::class.':'.Sticker::CUSTOM_STICKERS_FEATURE)
+        // Kho sticker riêng của account (cùng lõi với kho nền tảng); ai dùng được
+        // do StickerLibraryAccess quyết: chưa có quyền thì 403.
+        Route::middleware(EnsureStickerLibraryAccess::class.':'.EnsureStickerLibraryAccess::ACCOUNT_LIBRARY)
             ->prefix('/sticker_packs')
             ->group(function () {
                 Route::get('/', [CustomStickerPacksController::class, 'index']);
@@ -460,6 +483,11 @@ Route::middleware(['auth.api_token', 'auth', 'account.scope'])
                 Route::delete('/{packId}/stickers/{stickerId}', [CustomStickerPacksController::class, 'destroySticker'])
                     ->whereNumber(['packId', 'stickerId']);
             });
+
+        // Token cho AI gọi MCP/REST kho sticker; phạm vi dùng được do StickerLibraryAccess quyết.
+        Route::get('/sticker_mcp_tokens', [StickerMcpTokensController::class, 'index']);
+        Route::post('/sticker_mcp_tokens', [StickerMcpTokensController::class, 'store']);
+        Route::delete('/sticker_mcp_tokens/{tokenId}', [StickerMcpTokensController::class, 'destroy'])->whereNumber('tokenId');
 
         Route::post('/actions/contact_merge', [ContactMergesController::class, 'create']);
 

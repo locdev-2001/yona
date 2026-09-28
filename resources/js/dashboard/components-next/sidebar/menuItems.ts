@@ -308,7 +308,6 @@ export function buildMenuItems(
                 {
                     name: 'Settings Custom Stickers',
                     permissions: ['administrator'],
-                    featureFlag: 'custom_stickers',
                     label: t('STICKER_LIBRARY.MENU'),
                     icon: 'i-lucide-sticker',
                     to: scoped('settings/custom-stickers'),

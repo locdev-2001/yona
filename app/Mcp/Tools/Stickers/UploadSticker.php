@@ -14,14 +14,14 @@ use Laravel\Mcp\Server\Attributes\Description;
 use Laravel\Mcp\Server\Attributes\Name;
 
 #[Name('upload_sticker')]
-#[Description('Tải một sticker động vào bộ của kho chung: gửi đúng MỘT trong hai, lottie_json (chuỗi JSON Lottie) hoặc tgs_base64 (tệp .tgs mã hoá base64). Tệp qua cùng cổng kiểm như tải tay; bị từ chối thì trả câu lỗi nói rõ giới hạn nào. Sticker mới ở trạng thái processing, dựng ảnh xong mới ready: gọi get_sticker_pack để xem. Đọc resource hướng dẫn viết Lottie trước khi tự viết.')]
+#[Description('Tải một sticker động vào một bộ trong kho của token: gửi đúng MỘT trong hai, lottie_json (chuỗi JSON Lottie) hoặc tgs_base64 (tệp .tgs mã hoá base64). Tệp qua cùng cổng kiểm như tải tay; bị từ chối thì trả câu lỗi nói rõ giới hạn nào. Sticker mới ở trạng thái processing, dựng ảnh xong mới ready: gọi get_sticker_pack để xem. Đọc resource hướng dẫn viết Lottie trước khi tự viết.')]
 class UploadSticker extends StickerLibraryTool
 {
     private const LOTTIE_EXTENSION = 'json';
 
     private const TGS_EXTENSION = 'tgs';
 
-    private const THROTTLE_KEY_PREFIX = 'mcp-sticker-uploads:platform-app:';
+    private const THROTTLE_KEY_PREFIX = 'mcp-sticker-uploads:';
 
     private const THROTTLE_WINDOW_SECONDS = 60;
 
@@ -46,7 +46,7 @@ class UploadSticker extends StickerLibraryTool
         ]);
         $pack = $this->findPack($library, $request);
 
-        $throttleKey = self::THROTTLE_KEY_PREFIX.$this->callerKey();
+        $throttleKey = self::THROTTLE_KEY_PREFIX.$this->libraryTarget()->rateLimitKey();
         if (RateLimiter::tooManyAttempts($throttleKey, StickerLibraryManager::UPLOADS_PER_MINUTE)) {
             return Response::error(__('errors.sticker_library.upload_throttled'));
         }

@@ -4,7 +4,6 @@ namespace App\Providers;
 
 use App\Database\PostgresConnection;
 use App\Finders\ConversationFinder;
-use App\Http\Middleware\AuthenticatePlatformApp;
 use App\Listeners\Alerts\AlertOnJobFailure;
 use App\Listeners\Alerts\AlertOnLongWaitDetected;
 use App\Livewire\Pulse\SearchOutboxCard;
@@ -35,6 +34,7 @@ use App\Search\SearchEngine;
 use App\Services\Analytics\PlausibleProxy;
 use App\Services\Messaging\PublicFlowService;
 use App\Services\Stickers\StickerLibraryManager;
+use App\Services\Stickers\StickerLibraryTarget;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Validation\Factory as ValidationFactory;
@@ -172,13 +172,15 @@ class AppServiceProvider extends ServiceProvider
             Limit::perMinute(self::PUBLIC_FLOW_SUBMITS_PER_MINUTE_BY_IP)->by('ip:'.$request->ip()),
         ]);
 
-        // Khoá theo account (kho riêng), theo Platform App hoặc theo người quản trị
-        // (kho chung): một bên không làm nghẽn hàng đợi render của cả hệ thống.
+        // Khoá theo kho: kho riêng theo account (dashboard hay token cùng một nhịp),
+        // kho nền tảng theo người quản trị hoặc theo token: một bên không làm
+        // nghẽn hàng đợi render của cả hệ thống.
         RateLimiter::for('sticker-uploads', fn (Request $request) => Limit::perMinute(StickerLibraryManager::UPLOADS_PER_MINUTE)
             ->by(match (true) {
                 $request->route('account') !== null => 'account:'.$request->route('account'),
-                $request->attributes->has(AuthenticatePlatformApp::PLATFORM_APP) => 'platform-app:'.$request->attributes->get(AuthenticatePlatformApp::PLATFORM_APP)->getKey(),
-                default => 'super-admin:'.$request->user('super_admin')?->getAuthIdentifier(),
+                StickerLibraryTarget::fromRequest($request) !== null => StickerLibraryTarget::fromRequest($request)->rateLimitKey(),
+                $request->user('super_admin') !== null => 'super-admin:'.$request->user('super_admin')->getAuthIdentifier(),
+                default => 'user:'.$request->user()?->getAuthIdentifier(),
             })
             ->response(fn (Request $request, array $headers) => response()->json([
                 'message' => __('errors.sticker_library.upload_throttled'),

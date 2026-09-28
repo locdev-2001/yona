@@ -68,16 +68,12 @@ it('tenant B không resolve được sticker trong kho riêng của tenant A', f
         ->toThrow(StickerCatalogException::class, __('errors.stickers.not_found', [], $other->locale));
 });
 
-it('cờ custom_stickers tắt thì sticker trong kho riêng của chính tenant không resolve được', function () {
+// Cờ custom_stickers chỉ quyết ai được dựng kho riêng, không ẩn bộ đã xuất bản.
+it('sticker trong kho riêng của chính tenant resolve được dù cờ custom_stickers tắt', function () {
     $owner = Account::factory()->create(['feature_flags' => ['custom_stickers' => false]]);
     $own = YonaStickers::ready(YonaStickers::tenantPack($owner));
-    $ownerInbox = yonaCatalogInbox($owner);
 
-    expect($this->catalog->find($ownerInbox, "yona:{$own->id}"))->toBeNull();
-
-    YonaStickers::enableCustomStickers($owner);
-
-    expect($this->catalog->find($ownerInbox->fresh(), "yona:{$own->id}"))->not->toBeNull();
+    expect($this->catalog->find(yonaCatalogInbox($owner), "yona:{$own->id}"))->not->toBeNull();
 });
 
 // `_` giờ là ký tự ngăn cách của search_fold (như mọi ô tìm khác), không còn là

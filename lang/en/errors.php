@@ -121,7 +121,9 @@ return [
         'pack_full' => 'A pack holds at most :max stickers. Remove some or create a new pack.',
         'too_many_packs' => 'An account can have at most :max sticker packs.',
         'upload_throttled' => 'Too many sticker uploads at once. Please wait a moment and try again.',
-        'not_found' => 'This pack or sticker was not found in the shared library.',
+        'not_found' => 'This pack or sticker was not found in this library.',
+        'forbidden' => 'Your account is not allowed to use this sticker library.',
+        'invalid_token' => 'The sticker library token is invalid or has been revoked.',
         'invalid_base64' => 'tgs_base64 is not a valid base64 string.',
     ],
     'widget_recall' => [

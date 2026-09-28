@@ -13,7 +13,7 @@ use Laravel\Mcp\Server\Attributes\Name;
 use Laravel\Mcp\Server\Tools\Annotations\IsIdempotent;
 
 #[Name('update_sticker')]
-#[Description('Sửa nhãn và/hoặc từ khoá của một sticker trong kho chung. Khoá nào không gửi thì giữ nguyên. Từ khoá là chữ agent/khách gõ để hiện gợi ý sticker (ví dụ "cảm ơn", "ok", "haha").')]
+#[Description('Sửa nhãn và/hoặc từ khoá của một sticker trong kho của token. Khoá nào không gửi thì giữ nguyên. Từ khoá là chữ agent/khách gõ để hiện gợi ý sticker (ví dụ "cảm ơn", "ok", "haha").')]
 #[IsIdempotent]
 class UpdateSticker extends StickerLibraryTool
 {

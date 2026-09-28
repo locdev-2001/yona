@@ -1,6 +1,7 @@
 <?php
 
 use App\Channels\Capability;
+use App\Models\Account;
 use App\Models\Attachment;
 use App\Models\Conversation;
 use App\Models\Sticker;
@@ -34,10 +35,10 @@ it('kênh widget khai inbound_sticker và dùng kho sticker Yona, không có dan
         ->and(app(StickerLibrary::class)->listing($this->session->inbox, Capability::InboundSticker))->toHaveCount(2);
 });
 
-it('cấu hình widget lộ danh sách sticker account thấy được kèm từ khoá để lọc gợi ý tại chỗ, bỏ sticker chưa xong hoặc bộ chưa xuất bản', function () {
+it('cấu hình widget lộ danh sách sticker account thấy được kèm từ khoá để lọc gợi ý tại chỗ, bỏ sticker chưa xong, bộ chưa xuất bản hoặc kho riêng của account khác', function () {
     Sticker::factory()->processing()->for($this->pack, 'stickerPack')->create();
     YonaStickers::ready(StickerPack::factory()->unpublished()->create());
-    YonaStickers::ready(YonaStickers::tenantPack($this->session->account));
+    YonaStickers::ready(YonaStickers::tenantPack(Account::factory()->create()));
 
     $config = $this->postJson($this->session->url('config'), [], $this->session->headers())->assertOk()->json();
 

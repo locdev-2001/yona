@@ -118,8 +118,8 @@ describe('kho riêng (tenant)', function () {
         $this->url = "/api/v1/accounts/{$this->account->id}/sticker_packs/{$this->pack->id}/stickers/{$this->sticker->id}";
     });
 
-    it('cờ custom_stickers tắt thì PATCH trả 404 và không đổi gì', function () {
-        $this->actingAs($this->admin)->patchJson($this->url, ['label' => 'Lén', 'keywords' => ['lén']])->assertNotFound();
+    it('chưa có quyền dùng kho riêng thì PATCH trả 403 và không đổi gì', function () {
+        $this->actingAs($this->admin)->patchJson($this->url, ['label' => 'Lén', 'keywords' => ['lén']])->assertForbidden();
 
         expect($this->sticker->fresh()->label)->toBe('Giữ')
             ->and($this->sticker->fresh()->keywords)->toBe([]);

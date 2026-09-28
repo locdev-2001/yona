@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\App\ContactsController;
+use App\Http\Controllers\App\CustomStickersSettingsController;
 use App\Http\Controllers\App\DashboardController;
 use App\Http\Controllers\App\InboxesSettingsController;
 use App\Http\Controllers\App\OnboardingsController;
@@ -36,12 +37,10 @@ use App\Http\Controllers\SuperAdmin\SessionsController as SuperAdminSessionsCont
 use App\Http\Controllers\SuperAdmin\SettingsController as SuperAdminSettingsController;
 use App\Http\Controllers\SuperAdmin\StickerPacksController as SuperAdminStickerPacksController;
 use App\Http\Controllers\SuperAdmin\UsersController as SuperAdminUsersController;
-use App\Http\Middleware\EnsureAccountFeatureEnabled;
 use App\Http\Middleware\EnsureSuperAdminMfaEnrolled;
 use App\Http\Middleware\RestrictWidgetEmbedding;
 use App\Http\Middleware\SuperAdminInertia;
 use App\Models\Account;
-use App\Models\Sticker;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -190,9 +189,8 @@ Route::middleware('auth')->group(function () {
             // hình tài khoản nhận tiền + mã QR VietQR.
             Route::get('/settings/payment-accounts', fn (Account $account) => Inertia::render('dashboard/settings/paymentAccounts/Index'))
                 ->name('settings_payment_accounts');
-            // Kho sticker riêng: chỉ tồn tại khi account bật cờ custom_stickers.
-            Route::get('/settings/custom-stickers', fn (Account $account) => Inertia::render('dashboard/settings/customStickers/Index'))
-                ->middleware(EnsureAccountFeatureEnabled::class.':'.Sticker::CUSTOM_STICKERS_FEATURE)
+            // Kho sticker + token MCP: mở cho mọi quản trị viên, phần chưa có quyền hiện khoá.
+            Route::get('/settings/custom-stickers', [CustomStickersSettingsController::class, 'show'])
                 ->name('settings_custom_stickers');
 
             Route::get('/settings/teams', fn (Account $account) => redirect("/app/accounts/{$account->id}/settings/teams/list"));

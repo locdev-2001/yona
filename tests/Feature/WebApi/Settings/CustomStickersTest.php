@@ -14,8 +14,9 @@ use Illuminate\Support\Facades\Storage;
 use Tests\Support\FakeStickerRenderer;
 use Tests\Support\YonaStickers;
 
-// Kho sticker riêng của tenant: cùng lõi với kho chung, ẩn hoàn toàn khi cờ
-// custom_stickers tắt (mặc định).
+// Kho sticker riêng của tenant và kho nền tảng trong Cài đặt: cùng lõi với
+// console Super Admin. Kho riêng dùng được khi cờ custom_stickers bật hoặc người
+// dùng có quyền hệ thống; kho nền tảng chỉ người có quyền hệ thống.
 
 function customStickersUser(Account $account, int $role = AccountUser::ROLE_ADMINISTRATOR): User
 {
@@ -38,35 +39,120 @@ beforeEach(function () {
     $this->api = "/api/v1/accounts/{$this->account->id}/sticker_packs";
 });
 
-describe('cờ custom_stickers tắt', function () {
-    it('mặc định tắt', function () {
+describe('chưa có quyền dùng kho riêng (cờ tắt, không có quyền hệ thống)', function () {
+    it('cờ mặc định tắt', function () {
         expect($this->account->featureEnabled(Sticker::CUSTOM_STICKERS_FEATURE))->toBeFalse()
             ->and($this->account->enabledFeatures())->not->toHaveKey(Sticker::CUSTOM_STICKERS_FEATURE);
     });
 
-    it('trang cài đặt trả 404', function () {
+    it('trang cài đặt vẫn mở nhưng báo khoá cả hai kho', function () {
         $this->actingAs($this->admin)
             ->get("/app/accounts/{$this->account->id}/settings/custom-stickers")
-            ->assertNotFound();
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('dashboard/settings/customStickers/Index')
+                ->where('stickerLibraryAccess.accountLibrary', false)
+                ->where('stickerLibraryAccess.platformLibrary', false));
     });
 
-    it('mọi endpoint API trả 404 và không tạo gì', function () {
+    it('mọi endpoint API trả 403 và không đổi gì', function () {
         $pack = YonaStickers::tenantPack($this->account);
         $sticker = YonaStickers::ready($pack);
         $this->actingAs($this->admin);
 
-        $this->getJson($this->api)->assertNotFound();
-        $this->postJson($this->api, ['name' => 'Lén'])->assertNotFound();
-        $this->getJson("{$this->api}/{$pack->id}")->assertNotFound();
-        $this->patchJson("{$this->api}/{$pack->id}", ['name' => 'Lén'])->assertNotFound();
-        $this->postJson("{$this->api}/{$pack->id}/publish")->assertNotFound();
-        $this->post("{$this->api}/{$pack->id}/stickers", ['file' => customStickersFixture('spinner-with-precomp.tgs')], ['Accept' => 'application/json'])->assertNotFound();
-        $this->putJson("{$this->api}/{$pack->id}/stickers/order", ['sticker_ids' => [$sticker->id]])->assertNotFound();
-        $this->deleteJson("{$this->api}/{$pack->id}/stickers/{$sticker->id}")->assertNotFound();
-        $this->deleteJson("{$this->api}/{$pack->id}")->assertNotFound();
+        $this->getJson($this->api)->assertForbidden();
+        $this->postJson($this->api, ['name' => 'Lén'])->assertForbidden();
+        $this->getJson("{$this->api}/{$pack->id}")->assertForbidden();
+        $this->patchJson("{$this->api}/{$pack->id}", ['name' => 'Lén'])->assertForbidden();
+        $this->postJson("{$this->api}/{$pack->id}/publish")->assertForbidden();
+        $this->post("{$this->api}/{$pack->id}/stickers", ['file' => customStickersFixture('spinner-with-precomp.tgs')], ['Accept' => 'application/json'])->assertForbidden();
+        $this->putJson("{$this->api}/{$pack->id}/stickers/order", ['sticker_ids' => [$sticker->id]])->assertForbidden();
+        $this->deleteJson("{$this->api}/{$pack->id}/stickers/{$sticker->id}")->assertForbidden();
+        $this->deleteJson("{$this->api}/{$pack->id}")->assertForbidden();
 
         expect(StickerPack::query()->count())->toBe(1)
+            ->and($pack->fresh()->name)->not->toBe('Lén')
             ->and($sticker->fresh())->not->toBeNull();
+    });
+
+    it('nhân viên không phải quản trị viên vẫn nhận 401 như mọi API cài đặt', function () {
+        $agent = customStickersUser($this->account, AccountUser::ROLE_AGENT);
+
+        $this->actingAs($agent)->getJson($this->api)->assertUnauthorized();
+    });
+});
+
+describe('quyền hệ thống khi cờ tắt', function () {
+    beforeEach(function () {
+        YonaStickers::grantSystemAdmin($this->admin);
+    });
+
+    it('trang báo mở cả kho riêng lẫn kho nền tảng', function () {
+        $this->actingAs($this->admin)
+            ->get("/app/accounts/{$this->account->id}/settings/custom-stickers")
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->where('stickerLibraryAccess.accountLibrary', true)
+                ->where('stickerLibraryAccess.platformLibrary', true));
+    });
+
+    it('dựng bộ trong kho riêng và account thấy ngay khi xuất bản', function () {
+        $this->actingAs($this->admin);
+        $packId = $this->postJson($this->api, ['name' => 'Bộ nội bộ'])->assertCreated()->json('id');
+        $stickerId = $this->post("{$this->api}/{$packId}/stickers", ['file' => customStickersFixture('ball-with-poster-marker.json')], ['Accept' => 'application/json'])
+            ->assertCreated()
+            ->json('id');
+        $this->postJson("{$this->api}/{$packId}/publish")->assertOk();
+
+        $inbox = Inbox::factory()->create(['account_id' => $this->account->id]);
+        $listingIds = array_map(fn ($sticker) => $sticker->id, app(StickerLibrary::class)->listing($inbox->fresh(), Capability::OutboundImage));
+
+        expect(StickerPack::query()->find($packId)->account_id)->toBe($this->account->id)
+            ->and($listingIds)->toBe(["yona:{$stickerId}"]);
+    });
+
+    it('bị gỡ khỏi danh sách thì lại nhận 403', function () {
+        config(['yona.system_admin_emails' => '']);
+
+        $this->actingAs($this->admin)->getJson($this->api)->assertForbidden();
+    });
+});
+
+describe('kho nền tảng trong Cài đặt', function () {
+    beforeEach(function () {
+        $this->platformApi = '/api/v1/platform_sticker_library/sticker_packs';
+    });
+
+    it('quản trị viên account không có quyền hệ thống nhận 403, kể cả khi cờ bật', function () {
+        YonaStickers::enableCustomStickers($this->account);
+        $pack = StickerPack::factory()->create(['name' => 'Chung']);
+        $this->actingAs($this->admin);
+
+        $this->getJson($this->platformApi)->assertForbidden();
+        $this->postJson($this->platformApi, ['name' => 'Lén'])->assertForbidden();
+        $this->patchJson("{$this->platformApi}/{$pack->id}", ['name' => 'Lén'])->assertForbidden();
+        $this->deleteJson("{$this->platformApi}/{$pack->id}")->assertForbidden();
+
+        expect($pack->fresh()->name)->toBe('Chung');
+    });
+
+    it('chưa đăng nhập thì không vào được', function () {
+        $this->getJson($this->platformApi)->assertUnauthorized();
+    });
+
+    it('người có quyền hệ thống quản lý kho nền tảng, không chạm kho riêng của tenant', function () {
+        YonaStickers::grantSystemAdmin($this->admin);
+        $tenantPack = YonaStickers::tenantPack(Account::factory()->create());
+        $this->actingAs($this->admin);
+
+        $packId = $this->postJson($this->platformApi, ['name' => 'Chung mới'])->assertCreated()->json('id');
+        $this->post("{$this->platformApi}/{$packId}/stickers", ['file' => customStickersFixture('ball-with-poster-marker.json')], ['Accept' => 'application/json'])
+            ->assertCreated();
+        $this->postJson("{$this->platformApi}/{$packId}/publish")->assertOk()->assertJsonPath('published', true);
+
+        expect(StickerPack::query()->find($packId)->account_id)->toBeNull()
+            ->and(array_column($this->getJson($this->platformApi)->assertOk()->json('payload'), 'id'))->toBe([$packId]);
+        $this->getJson("{$this->platformApi}/{$tenantPack->id}")->assertNotFound();
     });
 });
 
@@ -80,7 +166,10 @@ describe('cờ custom_stickers bật', function () {
         $this->actingAs($this->admin)
             ->get("/app/accounts/{$this->account->id}/settings/custom-stickers")
             ->assertOk()
-            ->assertInertia(fn ($page) => $page->component('dashboard/settings/customStickers/Index'));
+            ->assertInertia(fn ($page) => $page
+                ->component('dashboard/settings/customStickers/Index')
+                ->where('stickerLibraryAccess.accountLibrary', true)
+                ->where('stickerLibraryAccess.platformLibrary', false));
     });
 
     it('nhân viên không phải quản trị viên bị chặn', function () {

@@ -119,7 +119,9 @@ return [
         'pack_full' => 'Mỗi bộ có tối đa :max sticker. Bạn xoá bớt hoặc tạo bộ mới nhé.',
         'too_many_packs' => 'Mỗi account có tối đa :max bộ sticker.',
         'upload_throttled' => 'Bạn tải sticker hơi nhanh, chờ một chút rồi thử lại nhé.',
-        'not_found' => 'Không tìm thấy bộ hoặc sticker này trong kho chung.',
+        'not_found' => 'Không tìm thấy bộ hoặc sticker này trong kho.',
+        'forbidden' => 'Tài khoản của bạn chưa được dùng kho sticker này.',
+        'invalid_token' => 'Token kho sticker không đúng hoặc đã bị thu hồi.',
         'invalid_base64' => 'tgs_base64 không phải chuỗi base64 hợp lệ.',
     ],
     'widget_recall' => [

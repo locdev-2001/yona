@@ -282,18 +282,14 @@ describe('chuyển tiếp', function () {
         'sticker không còn sẵn sàng' => [fn (Sticker $sticker) => $sticker->update(['status' => Sticker::STATUS_FAILED])],
     ]);
 
-    it('sticker kho riêng bị chặn khi tenant tắt cờ custom_stickers', function () {
+    it('sticker kho riêng chuyển tiếp được trong chính account, dù cờ custom_stickers tắt', function () {
         $account = $this->source->account;
-        YonaStickers::enableCustomStickers($account);
         $own = YonaStickers::ready(YonaStickers::tenantPack($account));
         $source = yonaOutboundSticker($this->source->conversation()->sole(), "yona:{$own->id}");
         $target = yonaOutboundConversation(Inbox::factory()->facebookPage()->create(['account_id' => $account->id]));
 
-        expect(ForwardRequirements::check($source->fresh(), $target->fresh(), 'vi'))->toBeNull();
-
-        YonaStickers::enableCustomStickers($account->fresh(), false);
-
-        expect(ForwardRequirements::check($source->fresh(), $target->fresh(), 'vi')?->code)->toBe(ForwardBlock::STICKER_UNAVAILABLE);
+        expect($account->featureEnabled(Sticker::CUSTOM_STICKERS_FEATURE))->toBeFalse()
+            ->and(ForwardRequirements::check($source->fresh(), $target->fresh(), 'vi'))->toBeNull();
     });
 
     it('sticker Yona sang hộp thư không nhận ảnh bị chặn vì thiếu outbound_image', function () {

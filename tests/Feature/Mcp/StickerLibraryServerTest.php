@@ -11,9 +11,12 @@ use App\Mcp\Tools\Stickers\SetStickerPackPublished;
 use App\Mcp\Tools\Stickers\UpdateSticker;
 use App\Mcp\Tools\Stickers\UploadSticker;
 use App\Models\Account;
+use App\Models\AccountUser;
 use App\Models\PlatformApp;
 use App\Models\Sticker;
+use App\Models\StickerMcpToken;
 use App\Models\StickerPack;
+use App\Models\User;
 use App\Services\Stickers\LottieDocumentValidator;
 use App\Services\Stickers\StickerLibraryManager;
 use Illuminate\Support\Facades\RateLimiter;
@@ -23,8 +26,9 @@ use Illuminate\Testing\TestResponse;
 use Tests\Support\FakeStickerRenderer;
 use Tests\Support\YonaStickers;
 
-// MCP kho sticker chung: mỗi tool đi qua StickerLibraryManager/StickerUploadService
-// như upload tay; route HTTP /mcp/stickers xác thực bằng token Platform App.
+// MCP kho sticker: mỗi tool đi qua StickerLibraryManager/StickerUploadService như
+// upload tay và chỉ chạm kho mà token cấp; route HTTP /mcp/stickers xác thực bằng
+// token sticker tạo trong Cài đặt (không còn nhận token Platform App).
 
 function mcpStickerFixture(string $name): string
 {
@@ -40,13 +44,20 @@ function mcpCall(string $token, string $method, array $params = [], int $id = 1)
     ]);
 }
 
+const MCP_PLATFORM_UPLOAD_THROTTLE_KEY = 'mcp-sticker-uploads:platform-library';
+
 beforeEach(function () {
     Storage::fake(Sticker::DISK);
     FakeStickerRenderer::install();
-    RateLimiter::clear('mcp-sticker-uploads:platform-app:local');
+    RateLimiter::clear(MCP_PLATFORM_UPLOAD_THROTTLE_KEY);
+    config(['yona.system_admin_emails' => '']);
 });
 
-describe('tools', function () {
+describe('tools (kho nền tảng)', function () {
+    beforeEach(function () {
+        YonaStickers::actAsLibrary(null);
+    });
+
     it('đăng ký đủ 8 tool và resource hướng dẫn Lottie', function () {
         StickerLibraryServer::tools()->assertRegistered([
             ListStickerPacks::class, GetStickerPack::class, CreateStickerPack::class, RenameStickerPack::class,
@@ -161,7 +172,7 @@ describe('tools', function () {
     it('upload_sticker vượt nhịp tải thì báo chờ', function () {
         $pack = StickerPack::factory()->create();
         foreach (range(1, StickerLibraryManager::UPLOADS_PER_MINUTE) as $attempt) {
-            RateLimiter::hit('mcp-sticker-uploads:platform-app:local', 60);
+            RateLimiter::hit(MCP_PLATFORM_UPLOAD_THROTTLE_KEY, 60);
         }
 
         StickerLibraryServer::tool(UploadSticker::class, ['pack_id' => $pack->id, 'lottie_json' => mcpStickerFixture('ball-with-poster-marker.json')])
@@ -230,14 +241,94 @@ describe('tools', function () {
     });
 });
 
-describe('HTTP /mcp/stickers', function () {
+describe('tools (kho riêng của account)', function () {
     beforeEach(function () {
-        $this->token = PlatformApp::factory()->create()->accessToken->token;
+        $this->account = Account::factory()->create();
+        YonaStickers::actAsLibrary($this->account);
     });
 
-    it('token sai hay thiếu thì 401', function () {
-        mcpCall('sai-token', 'tools/list')->assertUnauthorized();
+    it('list, create, upload chỉ trong kho của account được cấp', function () {
+        $own = YonaStickers::tenantPack($this->account);
+        StickerPack::factory()->create(['name' => 'Chung']);
+        YonaStickers::tenantPack(Account::factory()->create());
+
+        StickerLibraryServer::tool(ListStickerPacks::class)
+            ->assertStructuredContent(fn (AssertableJson $json) => $json->has('packs', 1)->where('packs.0.id', $own->id)->etc());
+
+        StickerLibraryServer::tool(CreateStickerPack::class, ['name' => 'Shop'])->assertOk();
+        $created = StickerPack::query()->where('name', 'Shop')->sole();
+        StickerLibraryServer::tool(UploadSticker::class, ['pack_id' => $created->id, 'lottie_json' => mcpStickerFixture('ball-with-poster-marker.json')])->assertOk();
+
+        expect($created->account_id)->toBe($this->account->id)
+            ->and($created->stickers()->count())->toBe(1);
+    });
+
+    it('không chạm bộ kho chung hay bộ của account khác', function () {
+        $global = StickerPack::factory()->create(['name' => 'Chung']);
+        $foreign = YonaStickers::tenantPack(Account::factory()->create());
+
+        foreach ([$global, $foreign] as $pack) {
+            StickerLibraryServer::tool(RenameStickerPack::class, ['pack_id' => $pack->id, 'name' => 'Lén'])
+                ->assertHasErrors([__('errors.sticker_library.not_found')]);
+            StickerLibraryServer::tool(UploadSticker::class, ['pack_id' => $pack->id, 'lottie_json' => mcpStickerFixture('ball-with-poster-marker.json')])
+                ->assertHasErrors([__('errors.sticker_library.not_found')]);
+        }
+
+        expect($global->fresh()->name)->toBe('Chung')
+            ->and(Sticker::query()->count())->toBe(0);
+    });
+});
+
+it('tool chạy khi chưa có kho được cấp thì từ chối, không rơi về kho chung', function () {
+    StickerPack::factory()->create();
+
+    StickerLibraryServer::tool(ListStickerPacks::class)->assertHasErrors([__('errors.sticker_library.forbidden')]);
+    StickerLibraryServer::tool(CreateStickerPack::class, ['name' => 'Lén'])->assertHasErrors([__('errors.sticker_library.forbidden')]);
+
+    expect(StickerPack::query()->count())->toBe(1);
+});
+
+describe('HTTP /mcp/stickers', function () {
+    beforeEach(function () {
+        $this->account = Account::factory()->create();
+        $this->admin = User::factory()->create();
+        AccountUser::factory()->create(['account_id' => $this->account->id, 'user_id' => $this->admin->id, 'role' => AccountUser::ROLE_ADMINISTRATOR]);
+        YonaStickers::grantSystemAdmin($this->admin);
+        $this->token = YonaStickers::issueToken($this->account, $this->admin, StickerMcpToken::SCOPE_PLATFORM);
+    });
+
+    it('token sai, thiếu hay đã thu hồi thì 401', function () {
+        mcpCall('sai-token', 'tools/list')->assertUnauthorized()->assertHeader('WWW-Authenticate');
         $this->postJson(StickerLibraryServer::PATH, ['jsonrpc' => '2.0', 'id' => 1, 'method' => 'tools/list'])->assertUnauthorized();
+
+        StickerMcpToken::query()->delete();
+        mcpCall($this->token, 'tools/list')->assertUnauthorized();
+    });
+
+    it('token Platform App không còn vào được MCP', function () {
+        $platformToken = PlatformApp::factory()->create()->accessToken->token;
+
+        mcpCall($platformToken, 'tools/list')->assertUnauthorized();
+        $this->postJson(StickerLibraryServer::PATH, ['jsonrpc' => '2.0', 'id' => 1, 'method' => 'tools/list'], ['api_access_token' => $platformToken])
+            ->assertUnauthorized();
+    });
+
+    it('mất quyền hệ thống sau khi tạo token nền tảng thì 403', function () {
+        config(['yona.system_admin_emails' => '']);
+
+        mcpCall($this->token, 'tools/call', ['name' => 'create_sticker_pack', 'arguments' => ['name' => 'Lén']])->assertForbidden();
+        expect(StickerPack::query()->count())->toBe(0);
+    });
+
+    it('token kho riêng qua HTTP chỉ tạo bộ trong account của token', function () {
+        $accountToken = YonaStickers::issueToken($this->account, $this->admin);
+        StickerPack::factory()->create(['name' => 'Chung']);
+
+        $created = mcpCall($accountToken, 'tools/call', ['name' => 'create_sticker_pack', 'arguments' => ['name' => 'Shop']])->assertOk();
+        $listed = mcpCall($accountToken, 'tools/call', ['name' => 'list_sticker_packs', 'arguments' => (object) []], 2)->assertOk();
+
+        expect(StickerPack::query()->find($created->json('result.structuredContent.id'))->account_id)->toBe($this->account->id)
+            ->and(array_column($listed->json('result.structuredContent.packs'), 'name'))->toBe(['Shop']);
     });
 
     it('initialize trả instructions có hướng dẫn Lottie, tools/list đủ tool, gọi upload_sticker qua HTTP', function () {
@@ -263,6 +354,7 @@ describe('HTTP /mcp/stickers', function () {
 
         expect($upload->json('result.isError'))->toBeFalse()
             ->and($upload->json('result.structuredContent.keywords'))->toBe(['bóng'])
-            ->and($pack->stickers()->sole()->status)->toBe(Sticker::STATUS_READY);
+            ->and($pack->stickers()->sole()->status)->toBe(Sticker::STATUS_READY)
+            ->and(StickerMcpToken::query()->where('scope', StickerMcpToken::SCOPE_PLATFORM)->sole()->last_used_at)->not->toBeNull();
     });
 });

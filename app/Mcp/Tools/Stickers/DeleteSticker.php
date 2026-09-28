@@ -12,7 +12,7 @@ use Laravel\Mcp\Server\Attributes\Name;
 use Laravel\Mcp\Server\Tools\Annotations\IsDestructive;
 
 #[Name('delete_sticker')]
-#[Description('Xoá một sticker khỏi bộ của kho chung. Tin đã gửi trước đó vẫn hiện ảnh. Trả về bộ sau khi xoá.')]
+#[Description('Xoá một sticker khỏi một bộ trong kho của token. Tin đã gửi trước đó vẫn hiện ảnh. Trả về bộ sau khi xoá.')]
 #[IsDestructive]
 class DeleteSticker extends StickerLibraryTool
 {

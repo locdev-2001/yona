@@ -1300,10 +1300,22 @@ job outbox tự bỏ các dòng còn tồn.
 
 ### Kho sticker
 
-Kho chung do Super Admin quản (`/super_admin/sticker_packs`); kho riêng của
-account nằm sau cờ `custom_stickers` (mặc định tắt ở `config/features.php`;
-Super Admin chưa có nút bật, bật theo account qua cột `accounts.feature_flags`,
-ví dụ Platform API cập nhật account với `features`). Mỗi lần upload,
+Kho nền tảng (kho chung, mọi account thấy bộ đã xuất bản) do console Super Admin
+(`/super_admin/sticker_packs`) và **tài khoản có quyền hệ thống** quản, ngay trong
+Cài đặt → Kho sticker của dashboard. Quyền hệ thống = email user nằm trong
+`YONA_SYSTEM_ADMIN_EMAILS` (nhiều email cách nhau dấu phẩy, không phân biệt hoa
+thường; để trống = không ai có quyền):
+
+```dotenv
+YONA_SYSTEM_ADMIN_EMAILS=founder@yona.vn,ops@yona.vn
+```
+
+Đổi xong chạy `php artisan config:cache`. Gỡ một email khỏi danh sách là mọi token
+nền tảng người đó tạo bị từ chối (403) ngay ở lượt gọi sau. Kho riêng của account
+dùng được khi account bật cờ `custom_stickers` (mặc định tắt ở `config/features.php`;
+Super Admin chưa có nút bật, bật theo account qua cột `accounts.feature_flags`, ví
+dụ Platform API cập nhật account với `features`) hoặc khi người dùng có quyền hệ
+thống; account chưa đủ quyền vẫn thấy mục Kho sticker nhưng ở trạng thái khoá. Mỗi lần upload,
 `RenderStickerJob` (hàng đợi `stickers`, supervisor Horizon `supervisor-stickers` một process) gọi renderer Node `services/sticker-renderer`
 dựng `poster.webp` + `static.png` từ Lottie/TGS. Supervisor `supervisor-stickers` không chạy thì
 sticker nằm mãi ở trạng thái đang xử lý; renderer chưa cài hoặc hỏng thì sticker
@@ -1339,27 +1351,30 @@ bộ nhớ bằng `prlimit --data` và cắt thời gian. Biến trong `.env` La
 **Nginx và sao lưu.** Cache tệp sticker và MIME wasm: mục 7, "Tệp kho sticker và
 wasm của trình phát". Sao lưu `storage/app/public/stickers` cùng database: mục 4.
 
-**MCP cho AI tự tạo sticker (kho chung).** Endpoint `POST https://yona.vn/mcp/stickers`
-(MCP qua HTTP, gói `laravel/mcp`), chỉ thao tác kho chung. Xác thực bằng token của
-một Platform App, gửi qua `Authorization: Bearer <token>` hoặc header
-`api_access_token`; Platform API REST tương ứng nằm ở `/platform/api/v1/sticker_packs`.
-Token này quản được TOÀN BỘ kho chung (mọi account thấy bộ đã xuất bản), nên tạo
-một Platform App riêng cho việc này và giữ token như secret.
+**MCP cho AI tự tạo sticker.** Endpoint `POST https://yona.vn/mcp/stickers` (MCP
+qua HTTP, gói `laravel/mcp`) và REST cùng lõi `https://yona.vn/api/v1/sticker_library/sticker_packs…`.
+Cả hai chỉ nhận **token sticker** tạo trong Cài đặt, gửi qua
+`Authorization: Bearer <token>`; token Platform App không còn vào được kho
+sticker. Mỗi token chạm đúng một kho: kho riêng của account tạo token, hoặc kho
+nền tảng (chỉ người có quyền hệ thống tạo được). Không cần lệnh nào trên server.
 
-1. Super Admin → `/super_admin/platform_apps` → tạo app (ví dụ "MCP sticker") →
-   mở app vừa tạo, chép `access_token`. Hoặc trên server:
-   ```bash
-   php artisan tinker --execute '$app = App\Models\PlatformApp::create(["name" => "MCP sticker"]); echo $app->accessToken->token;'
-   ```
-2. Khai trong client MCP, ví dụ Claude Code:
+1. Đăng nhập dashboard bằng quản trị viên account → Cài đặt → Kho sticker → tab
+   "MCP cho AI" → nhập tên, chọn kho → Tạo token. Token và lệnh thêm vào Claude
+   Code hiện **đúng một lần**; bảng chỉ lưu sha256 của token.
+2. Dán lệnh đã dựng sẵn, dạng:
    ```bash
    claude mcp add --transport http yona-stickers https://yona.vn/mcp/stickers --header "Authorization: Bearer <token>"
    ```
+   URL lấy từ `APP_URL`, nên `APP_URL` production phải là `https://yona.vn`.
 3. Thử nhanh: `curl -s -X POST https://yona.vn/mcp/stickers -H 'Content-Type: application/json' -H 'Accept: application/json, text/event-stream' -H "Authorization: Bearer <token>" -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'`
-   phải liệt kê 8 tool; token sai trả 401.
+   phải liệt kê 8 tool; token sai hay đã thu hồi trả 401, người tạo mất quyền
+   (bị gỡ khỏi `YONA_SYSTEM_ADMIN_EMAILS`, bị hạ khỏi quản trị viên, account tắt
+   cờ khi không có quyền hệ thống) trả 403.
 
-Thu hồi: xoá Platform App ở `/super_admin/platform_apps` (token mất theo). Câu lỗi
-trả về theo `APP_LOCALE` (production là `vi`); thêm `?locale=vi` vào URL nếu cần ép.
+Thu hồi: cùng tab "MCP cho AI" → Thu hồi. Danh sách hiện lần dùng cuối của từng
+token. Câu lỗi trả về theo `APP_LOCALE` (production là `vi`); thêm `?locale=vi`
+vào URL nếu cần ép. Platform App "MCP sticker" tạo theo hướng dẫn cũ không còn
+tác dụng với kho sticker: xoá ở `/super_admin/platform_apps` nếu không dùng việc khác.
 
 **Chuyển disk sang R2/S3** (tuỳ chọn, chỉ bằng env; mặc định là đĩa local
 `storage/app/public/stickers`, phục vụ qua `/storage/stickers` sau

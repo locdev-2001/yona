@@ -4,7 +4,10 @@ namespace Tests\Support;
 
 use App\Models\Account;
 use App\Models\Sticker;
+use App\Models\StickerMcpToken;
 use App\Models\StickerPack;
+use App\Models\User;
+use App\Services\Stickers\StickerLibraryTarget;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 
@@ -32,6 +35,23 @@ final class YonaStickers
     public static function tenantPack(Account $account): StickerPack
     {
         return StickerPack::factory()->forAccount($account)->create();
+    }
+
+    // Thêm email của user vào YONA_SYSTEM_ADMIN_EMAILS của lượt test.
+    public static function grantSystemAdmin(User $user): void
+    {
+        config(['yona.system_admin_emails' => trim(config('yona.system_admin_emails', '').','.$user->email, ',')]);
+    }
+
+    public static function issueToken(Account $account, User $creator, string $scope = StickerMcpToken::SCOPE_ACCOUNT): string
+    {
+        return StickerMcpToken::issue($account, $creator, 'AI thử', $scope)['plainTextToken'];
+    }
+
+    // Gọi thẳng tool MCP (không qua HTTP) như thể token đã cấp kho này.
+    public static function actAsLibrary(?Account $owner): void
+    {
+        (new StickerLibraryTarget($owner))->attachTo(request());
     }
 
     public static function enableCustomStickers(Account $account, bool $enabled = true): void

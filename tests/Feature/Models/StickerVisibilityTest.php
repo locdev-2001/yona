@@ -6,8 +6,8 @@ use App\Models\StickerPack;
 use Illuminate\Support\Facades\Storage;
 
 // Ai thấy sticker nào: kho chung (account_id NULL) cho mọi account, kho của
-// tenant chỉ cho chính tenant đó và chỉ khi cờ custom_stickers bật. Chỉ bộ đã
-// xuất bản và sticker đã xử lý xong mới hiện.
+// tenant chỉ cho chính tenant đó. Chỉ bộ đã xuất bản và sticker đã xử lý xong
+// mới hiện.
 
 function visibleStickerIds(Account $account): array
 {
@@ -35,17 +35,15 @@ it('keeps a tenant library inside its own account', function () {
         ->and(visibleStickerIds($other))->toBe([]);
 });
 
-it('hides the tenant library from its own account while the flag is off', function () {
-    $account = accountWithCustomStickers(false);
+// Cờ chỉ quyết ai được dựng kho riêng (StickerLibraryAccess); bộ đã xuất bản
+// trong kho riêng, dù do người có quyền hệ thống dựng khi cờ tắt, vẫn hiện.
+it('shows the published tenant library to its own account whatever the flag', function (bool $flag) {
+    $account = accountWithCustomStickers($flag);
     $shared = Sticker::factory()->create();
     $own = Sticker::factory()->for(StickerPack::factory()->forAccount($account))->create();
 
-    expect(visibleStickerIds($account))->toBe([$shared->id]);
-
-    $account->forceFill(['feature_flags' => ['custom_stickers' => true]])->save();
-
     expect(visibleStickerIds($account))->toBe([$shared->id, $own->id]);
-});
+})->with(['cờ tắt' => false, 'cờ bật' => true]);
 
 it('keeps the flag off by default', function () {
     expect(config('features.custom_stickers'))->toBeFalse();

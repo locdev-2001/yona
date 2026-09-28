@@ -12,7 +12,7 @@ use Laravel\Mcp\Server\Attributes\Name;
 use Laravel\Mcp\Server\Tools\Annotations\IsIdempotent;
 
 #[Name('set_sticker_pack_published')]
-#[Description('Xuất bản (published = true) hoặc gỡ xuất bản một bộ của kho chung. Bộ đã xuất bản thì MỌI account Yona thấy các sticker đã dựng xong (ready) trong bộ; chỉ xuất bản khi đã kiểm tra bằng get_sticker_pack.')]
+#[Description('Xuất bản (published = true) hoặc gỡ xuất bản một bộ trong kho của token. Bộ đã xuất bản thì các sticker đã dựng xong (ready) hiện ngay: kho nền tảng hiện với MỌI account Yona, kho riêng chỉ hiện trong account đó; chỉ xuất bản khi đã kiểm tra bằng get_sticker_pack.')]
 #[IsIdempotent]
 class SetStickerPackPublished extends StickerLibraryTool
 {

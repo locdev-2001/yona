@@ -70,6 +70,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Tài khoản có quyền hệ thống
+    |--------------------------------------------------------------------------
+    |
+    | Email user (bảng users, không phải console Super Admin) cách nhau bằng dấu
+    | phẩy. Chỉ App\Support\SystemAccess đọc giá trị này; so khớp bỏ khoảng
+    | trắng, không phân biệt hoa thường. Để trống = không ai có quyền hệ thống.
+    |
+    */
+
+    'system_admin_emails' => env('YONA_SYSTEM_ADMIN_EMAILS', ''),
+
+    /*
+    |--------------------------------------------------------------------------
     | Blocked email domains
     |--------------------------------------------------------------------------
     |

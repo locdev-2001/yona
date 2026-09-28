@@ -106,9 +106,20 @@ ra kênh ngoài là sticker gốc của nền tảng hoặc một ảnh, không 
   ngoài là ảnh PNG tĩnh (`outboundCapabilityFor()`). Động (Lottie) chỉ phát trong
   dashboard và widget.
 - **Ai thấy gì:** một nguồn là `Sticker::visibleTo($account)`: sticker `ready`
-  trong bộ đã xuất bản, của kho chung (`account_id` null) và thêm kho riêng của
-  account khi cờ `custom_stickers` bật. Cờ tắt thì trang và API kho riêng trả 404
-  (`EnsureAccountFeatureEnabled`).
+  trong bộ đã xuất bản, của kho nền tảng (`account_id` null) và kho riêng của
+  chính account. Cờ `custom_stickers` không ẩn nội dung, chỉ góp vào luật "ai được
+  quản lý" dưới đây.
+- **Ai được quản lý kho nào:** một nguồn là `StickerLibraryAccess`
+  (`app/Services/Stickers/`), dùng ở trang cài đặt, API dashboard, REST và MCP.
+  Kho riêng: quản trị viên account, và account bật cờ `custom_stickers` hoặc người
+  đó có quyền hệ thống. Kho nền tảng: chỉ người có quyền hệ thống. Quyền hệ thống
+  = email user trong `YONA_SYSTEM_ADMIN_EMAILS`, đọc DUY NHẤT ở
+  `App\Support\SystemAccess`. Trang Cài đặt → Kho sticker mở cho mọi quản trị
+  viên; phần chưa đủ quyền hiện khoá, API trả 403 (`EnsureStickerLibraryAccess`).
+  Kho nền tảng trong dashboard ở `/api/v1/platform_sticker_library/sticker_packs…`;
+  console Super Admin giữ nguyên `/super_admin/api/sticker_packs…`. Hai mặt tiền
+  này và REST bằng token dùng chung action `ServesStickerLibrary` (chỉ khác
+  `libraryOwner()`), kho riêng dùng `CustomStickerPacksController`.
 - **Payload lưu đường dẫn, URL dựng lúc đọc:** tin chỉ giữ đường dẫn trên disk
   `stickers` (`config/filesystems.php`), không giữ URL; `MessageResource` gọi
   `StickerLibrary::forReader()` dựng `url` (PNG), `poster_url`, `animation_url`,
@@ -128,8 +139,8 @@ ra kênh ngoài là sticker gốc của nền tảng hoặc một ảnh, không 
 - **Nhãn và từ khoá:** `StickerTags` (`app/Services/Stickers/`) là nguồn duy nhất
   của giới hạn và cách chuẩn hoá (chữ thường, bỏ rỗng/trùng, tối đa 20 từ × 40 ký
   tự). Sửa qua `StickerLibraryManager::updateSticker()`; route
-  `PATCH …/sticker_packs/{packId}/stickers/{stickerId}` ở cả console Super Admin,
-  kho riêng tenant và Platform API; upload nhận thêm `keywords[]`.
+  `PATCH …/sticker_packs/{packId}/stickers/{stickerId}` ở mọi mặt tiền quản lý
+  kho; upload nhận thêm `keywords[]`.
 - **Gợi ý khi gõ:** dashboard gọi `GET /api/v1/accounts/{account}/conversations/{id}/stickers/suggestions?q=`
   → `StickerLibrary::suggest()` → `YonaStickerCatalog::suggest()`: chỉ kho Yona (không
   hỏi bridge), cùng gate năng lực và `Sticker::visibleTo()` như bảng chọn, khớp nhãn
@@ -137,16 +148,22 @@ ra kênh ngoài là sticker gốc của nền tảng hoặc một ảnh, không 
   không phân biệt hoa thường, không cần extension), khớp trọn đứng trước, tối đa
   8; `q` dưới 2 ký tự hay hộp thư không dùng được kho thì rỗng. Widget không gọi
   API: `stickers` trong `/widget/config` mang sẵn `keywords` để lọc tại chỗ.
-- **Mặt tiền cho AI (MCP):** `routes/ai.php` mở `POST /mcp/stickers`
-  (`app/Mcp/Servers/StickerLibraryServer.php`, gói `laravel/mcp`), xác thực bằng
-  token Platform App (`AuthenticatePlatformApp`, nhận cả `Authorization: Bearer`),
-  CHỈ kho chung. Tool trong `app/Mcp/Tools/Stickers/` gọi đúng
-  `StickerLibraryManager`; `upload_sticker` nhận `lottie_json` hoặc `tgs_base64` rồi
-  đi `StickerUploadService::uploadContents()`, cùng cổng kiểm với upload tay.
-  Resource `yona://stickers/lottie-guide` (`LottieAuthoringGuide`, cũng gửi trong
-  `instructions` lúc initialize) dựng giới hạn từ hằng số của `LottieDocumentValidator`.
-  REST tương ứng: `/platform/api/v1/sticker_packs…`; console Super Admin và Platform
-  API dùng chung action ở `ServesSharedStickerLibrary`.
+- **Mặt tiền cho AI (MCP + REST):** `routes/ai.php` mở `POST /mcp/stickers`
+  (`app/Mcp/Servers/StickerLibraryServer.php`, gói `laravel/mcp`), REST cùng lõi ở
+  `/api/v1/sticker_library/sticker_packs…` (`routes/api.php`). Cả hai qua một
+  cổng `AuthenticateStickerLibraryToken`: `Authorization: Bearer <token sticker>`
+  (bảng `sticker_mcp_tokens`, chỉ lưu sha256, `scope` = `account`|`platform`), kiểm
+  lại quyền người tạo bằng `StickerLibraryAccess::targetFor()` ở MỖI lượt gọi rồi gắn
+  `StickerLibraryTarget` (kho được chạm) vào request; sai/thu hồi 401, mất quyền
+  403. Token tạo, liệt kê, thu hồi trong Cài đặt (`StickerMcpTokensController`,
+  `/api/v1/accounts/{account}/sticker_mcp_tokens`), token thô trả đúng một lần.
+  Platform App không còn quyền nào với kho sticker. Tool trong
+  `app/Mcp/Tools/Stickers/` chỉ đọc kho từ `StickerLibraryTarget` (không có thì từ
+  chối) và gọi đúng `StickerLibraryManager`; `upload_sticker` nhận `lottie_json`
+  hoặc `tgs_base64` rồi đi `StickerUploadService::uploadContents()`, cùng cổng kiểm
+  với upload tay. Resource `yona://stickers/lottie-guide` (`LottieAuthoringGuide`,
+  cũng gửi trong `instructions` lúc initialize) dựng giới hạn từ hằng số của
+  `LottieDocumentValidator`.
 - **Trình phát:** `resources/js/shared/sticker/StickerPlayer.tsx` dùng chung cho
   dashboard và widget: hiện poster ngay, chỉ nạp ThorVG (chunk riêng, wasm tự host
   qua `thorvgLoader.ts`) khi sticker vào khung nhìn, ra khỏi khung thì dừng; mọi

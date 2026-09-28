@@ -1,10 +1,10 @@
 <?php
 
-use App\Http\Middleware\AuthenticatePlatformApp;
+use App\Http\Middleware\AuthenticateStickerLibraryToken;
 use App\Mcp\Servers\StickerLibraryServer;
 use Laravel\Mcp\Facades\Mcp;
 
-// Mặt tiền MCP (HTTP): cùng lõi với Platform API, xác thực bằng token Platform App
-// (header api_access_token hoặc Authorization: Bearer).
+// Mặt tiền MCP (HTTP) của kho sticker: cùng cổng token sticker và cùng lõi với
+// REST /api/v1/sticker_library.
 Mcp::web(StickerLibraryServer::PATH, StickerLibraryServer::class)
-    ->middleware(['api', AuthenticatePlatformApp::class, 'throttle:120,1']);
+    ->middleware(['api', AuthenticateStickerLibraryToken::class, 'throttle:120,1']);
