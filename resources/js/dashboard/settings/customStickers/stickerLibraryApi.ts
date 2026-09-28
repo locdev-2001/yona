@@ -1,5 +1,5 @@
 import { ApiError, deleteJson, getJson, patchJson, postForm, postJson, putJson } from 'dashboard/helper/apiClient';
-import type { LibrarySticker, LibraryStickerPackDetail, StickerLibraryListing } from './types';
+import type { LibrarySticker, LibraryStickerChanges, LibraryStickerPackDetail, StickerLibraryListing } from './types';
 
 const TOO_MANY_REQUESTS = 429;
 const MAX_THROTTLE_RETRIES = 3;
@@ -30,6 +30,7 @@ async function withThrottleRetry<T>(send: () => Promise<T>): Promise<T> {
 export function createStickerLibraryApi(baseUrl: string) {
     const packsUrl = `${baseUrl}/sticker_packs`;
     const packUrl = (packId: number) => `${packsUrl}/${packId}`;
+    const stickerUrl = (packId: number, stickerId: number) => `${packUrl(packId)}/stickers/${stickerId}`;
 
     return {
         listPacks: () => getJson<StickerLibraryListing>(packsUrl),
@@ -39,15 +40,18 @@ export function createStickerLibraryApi(baseUrl: string) {
         setPublished: (packId: number, published: boolean) =>
             postJson<LibraryStickerPackDetail>(`${packUrl(packId)}/${published ? 'publish' : 'unpublish'}`, {}),
         deletePack: (packId: number) => deleteJson(packUrl(packId)),
-        uploadSticker: (packId: number, file: File) => {
+        uploadSticker: (packId: number, file: File, keywords: string[] = []) => {
             const form = new FormData();
             form.append('file', file);
+            keywords.forEach(keyword => form.append('keywords[]', keyword));
 
             return withThrottleRetry(() => postForm<LibrarySticker>(`${packUrl(packId)}/stickers`, form));
         },
         reorderStickers: (packId: number, stickerIds: number[]) =>
             putJson<LibraryStickerPackDetail>(`${packUrl(packId)}/stickers/order`, { sticker_ids: stickerIds }),
-        deleteSticker: (packId: number, stickerId: number) => deleteJson(`${packUrl(packId)}/stickers/${stickerId}`),
+        updateSticker: (packId: number, stickerId: number, changes: LibraryStickerChanges) =>
+            patchJson<LibrarySticker>(stickerUrl(packId, stickerId), { ...changes }),
+        deleteSticker: (packId: number, stickerId: number) => deleteJson(stickerUrl(packId, stickerId)),
     };
 }
 

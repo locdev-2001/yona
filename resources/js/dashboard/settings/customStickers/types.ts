@@ -3,6 +3,7 @@ export type LibraryStickerStatus = 'processing' | 'ready' | 'failed';
 export interface LibrarySticker {
     id: number;
     label: string | null;
+    keywords: string[];
     status: LibraryStickerStatus;
     failure_message: string | null;
     position: number;
@@ -11,6 +12,11 @@ export interface LibrarySticker {
     poster_url: string | null;
     static_url: string | null;
     animation_url: string | null;
+}
+
+export interface LibraryStickerChanges {
+    label: string | null;
+    keywords: string[];
 }
 
 export interface LibraryStickerPack {

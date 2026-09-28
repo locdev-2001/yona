@@ -14,6 +14,7 @@ afterEach(() => vi.useRealTimers());
 const sticker = (overrides: Partial<LibrarySticker> = {}): LibrarySticker => ({
     id: 11,
     label: 'Chó vẫy',
+    keywords: [],
     status: 'ready',
     failure_message: null,
     position: 0,
@@ -48,6 +49,7 @@ function fakeApi(overrides: Partial<StickerLibraryApi> = {}): StickerLibraryApi 
         deletePack: vi.fn(),
         uploadSticker: vi.fn(),
         reorderStickers: vi.fn(),
+        updateSticker: vi.fn(),
         deleteSticker: vi.fn(),
         ...overrides,
     };
@@ -142,5 +144,71 @@ describe('StickerLibraryManager', () => {
         fireEvent.click(screen.getAllByRole('button', { name: 'Xoá sticker' })[0]);
         await waitFor(() => expect(api.deleteSticker).toHaveBeenCalledWith(3, 2));
         confirmSpy.mockRestore();
+    });
+
+    it('sửa nhãn và từ khoá của một sticker, lưu qua PATCH rồi hiện chip từ khoá mới', async () => {
+        const updateSticker = vi
+            .fn()
+            .mockResolvedValue(sticker({ label: 'Cười lớn', keywords: ['haha', 'hihi'] }));
+        const api = fakeApi({ updateSticker });
+        render(<StickerLibraryManager api={api} />);
+        await openFirstPack();
+        expect(screen.getByText('Chưa có từ khoá')).toBeTruthy();
+
+        fireEvent.click(screen.getByRole('button', { name: 'Sửa nhãn và từ khoá' }));
+        fireEvent.change(screen.getByLabelText('Nhãn'), { target: { value: '  Cười lớn ' } });
+        fireEvent.change(screen.getByLabelText('Từ khoá'), { target: { value: ' haha, hihi ,, HAHA ' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Lưu' }));
+
+        await waitFor(() =>
+            expect(updateSticker).toHaveBeenCalledWith(3, 11, { label: 'Cười lớn', keywords: ['haha', 'hihi'] }),
+        );
+        expect(await screen.findByText('hihi')).toBeTruthy();
+        expect(screen.getByText('Cười lớn')).toBeTruthy();
+        expect(screen.queryByLabelText('Nhãn')).toBeNull();
+    });
+
+    it('xoá trắng nhãn thì gửi null; máy chủ từ chối thì giữ form và báo lỗi', async () => {
+        const rejection = new ApiError(422, { message: 'Từ khoá quá dài.' });
+        const updateSticker = vi.fn().mockRejectedValue(rejection);
+        render(<StickerLibraryManager api={fakeApi({ updateSticker })} />);
+        await openFirstPack();
+
+        fireEvent.click(screen.getByRole('button', { name: 'Sửa nhãn và từ khoá' }));
+        fireEvent.change(screen.getByLabelText('Nhãn'), { target: { value: '   ' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Lưu' }));
+
+        await waitFor(() => expect(updateSticker).toHaveBeenCalledWith(3, 11, { label: null, keywords: [] }));
+        expect(await screen.findByRole('alert')).toHaveTextContent('Từ khoá quá dài.');
+        expect(screen.getByLabelText('Nhãn')).toBeTruthy();
+    });
+
+    it('huỷ sửa thì không gọi máy chủ', async () => {
+        const api = fakeApi();
+        render(<StickerLibraryManager api={api} />);
+        await openFirstPack();
+
+        fireEvent.click(screen.getByRole('button', { name: 'Sửa nhãn và từ khoá' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Huỷ' }));
+
+        expect(screen.queryByLabelText('Nhãn')).toBeNull();
+        expect(api.updateSticker).not.toHaveBeenCalled();
+    });
+
+    it('từ khoá của lượt tải áp cho mọi tệp trong lượt đó', async () => {
+        const api = fakeApi({ uploadSticker: vi.fn().mockResolvedValue(sticker({ id: 12 })) });
+        render(<StickerLibraryManager api={api} />);
+        await openFirstPack();
+
+        fireEvent.change(screen.getByLabelText('Từ khoá cho các tệp sắp tải (tuỳ chọn)'), {
+            target: { value: 'chào, hello' },
+        });
+        const first = new File(['{}'], 'a.json', { type: 'application/json' });
+        const second = new File(['{}'], 'b.json', { type: 'application/json' });
+        fireEvent.change(screen.getByTestId('sticker-file-input'), { target: { files: [first, second] } });
+
+        await waitFor(() => expect(api.uploadSticker).toHaveBeenCalledTimes(2));
+        expect(api.uploadSticker).toHaveBeenNthCalledWith(1, 3, first, ['chào', 'hello']);
+        expect(api.uploadSticker).toHaveBeenNthCalledWith(2, 3, second, ['chào', 'hello']);
     });
 });

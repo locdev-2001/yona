@@ -45,6 +45,25 @@ export function fetchStickers(
     );
 }
 
+export interface StickerSuggestionResult {
+    stickers: StickerItem[];
+}
+
+// Gợi ý khi gõ: tối đa 8 sticker khớp nhãn/từ khoá, image_url là ảnh poster.
+export function fetchStickerSuggestions(
+    accountId: number,
+    conversationId: number,
+    query: string,
+    signal?: AbortSignal,
+): Promise<StickerSuggestionResult> {
+    const search = new URLSearchParams({ q: query });
+
+    return getJson<StickerSuggestionResult>(
+        `/api/v1/accounts/${accountId}/conversations/${conversationId}/stickers/suggestions?${search.toString()}`,
+        { signal },
+    );
+}
+
 /**
  * Sticker đi một mình ra khách: không trong ghi chú riêng, không khi khung soạn đang khoá.
  * Kênh không có sticker riêng mà gửi được ảnh vẫn nhận sticker kho Yona dạng ảnh tĩnh.

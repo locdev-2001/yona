@@ -2862,7 +2862,9 @@ const messages: Record<string, unknown> = {
             "EMPTY_PACK": "Bộ này chưa có sticker nào.",
             "NO_RESULTS": "Không tìm thấy sticker cho “{query}”.",
             "LOAD_FAILED": "Chưa tải được sticker, bạn thử lại nhé.",
-            "RETRY": "Thử lại"
+            "RETRY": "Thử lại",
+            "SUGGESTIONS": "Sticker gợi ý",
+            "DISMISS_SUGGESTIONS": "Ẩn sticker gợi ý"
         },
         "VISIBLE_TO_AGENTS": "Lưu ý riêng: Chỉ hiển thị với bạn và nhóm của bạn",
         "CHANGE_STATUS": "Trạng thái hội thoại đã thay đổi",
@@ -3677,7 +3679,9 @@ const messages: Record<string, unknown> = {
         "sticker_library": {
             "pack_full": "Mỗi bộ có tối đa :max sticker. Bạn xoá bớt hoặc tạo bộ mới nhé.",
             "too_many_packs": "Mỗi account có tối đa :max bộ sticker.",
-            "upload_throttled": "Bạn tải sticker hơi nhanh, chờ một chút rồi thử lại nhé."
+            "upload_throttled": "Bạn tải sticker hơi nhanh, chờ một chút rồi thử lại nhé.",
+            "not_found": "Không tìm thấy bộ hoặc sticker này trong kho chung.",
+            "invalid_base64": "tgs_base64 không phải chuỗi base64 hợp lệ."
         },
         "widget_recall": {
             "capability_not_supported": "Kênh này chưa cho thu hồi tin nhắn.",
@@ -9727,7 +9731,16 @@ const messages: Record<string, unknown> = {
         "DELETE_STICKER": "Xoá sticker",
         "DELETE_STICKER_CONFIRM": "Xoá sticker này khỏi bộ? Tin đã gửi vẫn giữ ảnh.",
         "ACTION_ERROR": "Không thực hiện được, bạn thử lại nhé.",
-        "SAVED": "Đã lưu"
+        "SAVED": "Đã lưu",
+        "EDIT_STICKER": "Sửa nhãn và từ khoá",
+        "LABEL": "Nhãn",
+        "KEYWORDS": "Từ khoá",
+        "KEYWORDS_PLACEHOLDER": "haha, cảm ơn, chào",
+        "KEYWORDS_HINT": "Cách nhau bằng dấu phẩy. Gõ một từ khoá khi chat thì sticker hiện ra để gợi ý.",
+        "NO_KEYWORDS": "Chưa có từ khoá",
+        "SAVE_STICKER": "Lưu",
+        "CANCEL": "Huỷ",
+        "UPLOAD_KEYWORDS": "Từ khoá cho các tệp sắp tải (tuỳ chọn)"
     },
     "SUMMARY_REPORTS": {
         "INBOX": "Hộp thư",
@@ -10258,7 +10271,9 @@ const messages: Record<string, unknown> = {
             "TAB_EMOJI": "Emoji",
             "TAB_RECENT": "Gần đây",
             "RECENT_EMPTY": "Chưa có gì ở đây.",
-            "STICKER_ALT": "Sticker"
+            "STICKER_ALT": "Sticker",
+            "SUGGESTIONS": "Sticker gợi ý",
+            "DISMISS_SUGGESTIONS": "Ẩn sticker gợi ý"
         },
         "ATTACHMENT_STATE": {
             "UPLOADING": "Đang gửi {count} ảnh…",

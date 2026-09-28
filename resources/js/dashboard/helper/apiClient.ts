@@ -32,6 +32,7 @@ export type UploadProgressHandler = (loadedBytes: number, totalBytes: number) =>
 
 export interface RequestOptions {
     onUploadProgress?: UploadProgressHandler;
+    signal?: AbortSignal;
 }
 
 const NULL_BODY_STATUSES = [101, 204, 205, 304];
@@ -44,9 +45,11 @@ function sendWithUploadProgress(
     headers: Record<string, string>,
     body: BodyInit | undefined,
     onUploadProgress: UploadProgressHandler,
+    signal?: AbortSignal,
 ): Promise<Response> {
     return new Promise((resolve, reject) => {
         const xhr = new XMLHttpRequest();
+        signal?.addEventListener('abort', () => xhr.abort(), { once: true });
         xhr.open(method, url);
         xhr.withCredentials = true;
         Object.entries(headers).forEach(([name, value]) => xhr.setRequestHeader(name, value));
@@ -78,12 +81,12 @@ async function request<T>(
         Accept: 'application/json',
         'X-Requested-With': 'XMLHttpRequest',
     };
-    const { onUploadProgress } = options;
+    const { onUploadProgress, signal } = options;
     const response = await sendWithSessionRecovery(() => {
         const headersWithToken = { ...headers, 'X-XSRF-TOKEN': xsrfToken() };
         return onUploadProgress
-            ? sendWithUploadProgress(url, method, headersWithToken, body, onUploadProgress)
-            : fetch(url, { method, headers: headersWithToken, credentials: 'same-origin', body });
+            ? sendWithUploadProgress(url, method, headersWithToken, body, onUploadProgress, signal)
+            : fetch(url, { method, headers: headersWithToken, credentials: 'same-origin', body, signal });
     });
 
     if (!response.ok) {
@@ -96,8 +99,8 @@ async function request<T>(
     return (rawBody ? JSON.parse(rawBody) : null) as T;
 }
 
-export function getJson<T = unknown>(url: string): Promise<T> {
-    return request<T>(url, 'GET');
+export function getJson<T = unknown>(url: string, options?: RequestOptions): Promise<T> {
+    return request<T>(url, 'GET', undefined, undefined, options);
 }
 
 export function postJson<T = unknown>(url: string, body: Record<string, unknown>): Promise<T> {

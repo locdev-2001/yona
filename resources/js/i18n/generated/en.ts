@@ -2862,7 +2862,9 @@ const messages: Record<string, unknown> = {
             "EMPTY_PACK": "This pack has no stickers yet.",
             "NO_RESULTS": "No stickers found for “{query}”.",
             "LOAD_FAILED": "Could not load stickers, please try again.",
-            "RETRY": "Try again"
+            "RETRY": "Try again",
+            "SUGGESTIONS": "Suggested stickers",
+            "DISMISS_SUGGESTIONS": "Hide suggested stickers"
         },
         "VISIBLE_TO_AGENTS": "Private Note: Only visible to you and your team",
         "CHANGE_STATUS": "Conversation status changed",
@@ -3677,7 +3679,9 @@ const messages: Record<string, unknown> = {
         "sticker_library": {
             "pack_full": "A pack holds at most :max stickers. Remove some or create a new pack.",
             "too_many_packs": "An account can have at most :max sticker packs.",
-            "upload_throttled": "Too many sticker uploads at once. Please wait a moment and try again."
+            "upload_throttled": "Too many sticker uploads at once. Please wait a moment and try again.",
+            "not_found": "This pack or sticker was not found in the shared library.",
+            "invalid_base64": "tgs_base64 is not a valid base64 string."
         },
         "widget_recall": {
             "capability_not_supported": "This channel does not support unsending messages.",
@@ -9727,7 +9731,16 @@ const messages: Record<string, unknown> = {
         "DELETE_STICKER": "Delete sticker",
         "DELETE_STICKER_CONFIRM": "Delete this sticker from the pack? Sent messages keep their images.",
         "ACTION_ERROR": "Something went wrong, please try again.",
-        "SAVED": "Saved"
+        "SAVED": "Saved",
+        "EDIT_STICKER": "Edit label and keywords",
+        "LABEL": "Label",
+        "KEYWORDS": "Keywords",
+        "KEYWORDS_PLACEHOLDER": "haha, thanks, hello",
+        "KEYWORDS_HINT": "Separate with commas. Typing a keyword in chat suggests this sticker.",
+        "NO_KEYWORDS": "No keywords yet",
+        "SAVE_STICKER": "Save",
+        "CANCEL": "Cancel",
+        "UPLOAD_KEYWORDS": "Keywords for the files you upload next (optional)"
     },
     "SUMMARY_REPORTS": {
         "INBOX": "Inbox",
@@ -10258,7 +10271,9 @@ const messages: Record<string, unknown> = {
             "TAB_EMOJI": "Emoji",
             "TAB_RECENT": "Recent",
             "RECENT_EMPTY": "Nothing here yet.",
-            "STICKER_ALT": "Sticker"
+            "STICKER_ALT": "Sticker",
+            "SUGGESTIONS": "Suggested stickers",
+            "DISMISS_SUGGESTIONS": "Hide suggested stickers"
         },
         "ATTACHMENT_STATE": {
             "UPLOADING": "Sending {count} photo… | Sending {count} photos…",

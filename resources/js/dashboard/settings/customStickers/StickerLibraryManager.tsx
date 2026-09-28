@@ -3,8 +3,15 @@ import type { FormEvent } from 'react';
 
 import { t } from '../../../i18n';
 import { parseApiErrorMessage } from 'dashboard/helper/apiClient';
+import { formatKeywords, parseKeywordInput } from './stickerKeywords';
 import type { StickerLibraryApi } from './stickerLibraryApi';
-import type { LibrarySticker, LibraryStickerPack, LibraryStickerPackDetail, LibraryStickerStatus } from './types';
+import type {
+    LibrarySticker,
+    LibraryStickerChanges,
+    LibraryStickerPack,
+    LibraryStickerPackDetail,
+    LibraryStickerStatus,
+} from './types';
 
 // Màn quản trị kho sticker dùng chung cho Super Admin và tenant. Chỉ dùng màu
 // tĩnh của theme (slate/woot/green/red/yellow) vì console Super Admin không
@@ -66,6 +73,77 @@ function PackListItem({
     );
 }
 
+function StickerDetailsForm({
+    sticker,
+    busy,
+    onSave,
+    onCancel,
+}: {
+    sticker: LibrarySticker;
+    busy: boolean;
+    onSave: (changes: LibraryStickerChanges) => void;
+    onCancel: () => void;
+}) {
+    const [labelDraft, setLabelDraft] = useState(sticker.label ?? '');
+    const [keywordsDraft, setKeywordsDraft] = useState(formatKeywords(sticker.keywords));
+
+    const submit = (event: FormEvent) => {
+        event.preventDefault();
+        onSave({ label: labelDraft.trim() || null, keywords: parseKeywordInput(keywordsDraft) });
+    };
+
+    return (
+        <form className="flex flex-col gap-2" onSubmit={submit}>
+            <label className="flex flex-col gap-1 text-xs text-slate-700">
+                {t('STICKER_LIBRARY.LABEL')}
+                <input
+                    className={INPUT_CLASS}
+                    value={labelDraft}
+                    onChange={event => setLabelDraft(event.target.value)}
+                    maxLength={100}
+                />
+            </label>
+            <label className="flex flex-col gap-1 text-xs text-slate-700">
+                {t('STICKER_LIBRARY.KEYWORDS')}
+                <input
+                    className={INPUT_CLASS}
+                    value={keywordsDraft}
+                    onChange={event => setKeywordsDraft(event.target.value)}
+                    placeholder={t('STICKER_LIBRARY.KEYWORDS_PLACEHOLDER')}
+                />
+            </label>
+            <p className="text-xs text-slate-600">{t('STICKER_LIBRARY.KEYWORDS_HINT')}</p>
+            <div className="flex gap-2">
+                <button type="submit" className={PRIMARY_BUTTON_CLASS} disabled={busy}>
+                    {t('STICKER_LIBRARY.SAVE_STICKER')}
+                </button>
+                <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={onCancel} disabled={busy}>
+                    {t('STICKER_LIBRARY.CANCEL')}
+                </button>
+            </div>
+        </form>
+    );
+}
+
+function StickerDetails({ sticker }: { sticker: LibrarySticker }) {
+    return (
+        <div className="flex flex-col gap-1">
+            {sticker.label ? <span className="truncate text-sm text-slate-900">{sticker.label}</span> : null}
+            {sticker.keywords.length > 0 ? (
+                <ul className="flex flex-wrap gap-1" aria-label={t('STICKER_LIBRARY.KEYWORDS')}>
+                    {sticker.keywords.map(keyword => (
+                        <li key={keyword} className="rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-800">
+                            {keyword}
+                        </li>
+                    ))}
+                </ul>
+            ) : (
+                <span className="text-xs text-slate-600">{t('STICKER_LIBRARY.NO_KEYWORDS')}</span>
+            )}
+        </div>
+    );
+}
+
 function StickerCard({
     sticker,
     isFirst,
@@ -73,6 +151,7 @@ function StickerCard({
     busy,
     onMove,
     onDelete,
+    onSaveDetails,
 }: {
     sticker: LibrarySticker;
     isFirst: boolean;
@@ -80,7 +159,14 @@ function StickerCard({
     busy: boolean;
     onMove: (offset: -1 | 1) => void;
     onDelete: () => void;
+    onSaveDetails: (changes: LibraryStickerChanges) => Promise<boolean>;
 }) {
+    const [isEditing, setEditing] = useState(false);
+
+    const saveDetails = async (changes: LibraryStickerChanges) => {
+        if (await onSaveDetails(changes)) setEditing(false);
+    };
+
     return (
         <li className="flex flex-col gap-2 rounded-lg border border-slate-100 p-2" data-testid="library-sticker">
             <div className="flex aspect-square items-center justify-center overflow-hidden rounded-md bg-slate-50">
@@ -92,6 +178,16 @@ function StickerCard({
                 {t(`STICKER_LIBRARY.STATUS.${sticker.status}`)}
             </span>
             {sticker.failure_message ? <p className="text-xs text-red-700">{sticker.failure_message}</p> : null}
+            {isEditing ? (
+                <StickerDetailsForm
+                    sticker={sticker}
+                    busy={busy}
+                    onSave={changes => void saveDetails(changes)}
+                    onCancel={() => setEditing(false)}
+                />
+            ) : (
+                <StickerDetails sticker={sticker} />
+            )}
             <div className="flex items-center gap-1">
                 <button
                     type="button"
@@ -112,6 +208,17 @@ function StickerCard({
                     title={t('STICKER_LIBRARY.MOVE_DOWN')}
                 >
                     →
+                </button>
+                <button
+                    type="button"
+                    className={ICON_BUTTON_CLASS}
+                    onClick={() => setEditing(editing => !editing)}
+                    disabled={busy}
+                    aria-label={t('STICKER_LIBRARY.EDIT_STICKER')}
+                    aria-expanded={isEditing}
+                    title={t('STICKER_LIBRARY.EDIT_STICKER')}
+                >
+                    ✎
                 </button>
                 <button
                     type="button"
@@ -140,6 +247,7 @@ export default function StickerLibraryManager({ api }: { api: StickerLibraryApi 
     const [isBusy, setBusy] = useState(false);
     const [uploadProgress, setUploadProgress] = useState<{ done: number; total: number } | null>(null);
     const [uploadErrors, setUploadErrors] = useState<string[]>([]);
+    const [uploadKeywordsDraft, setUploadKeywordsDraft] = useState('');
     const [actionError, setActionError] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -249,12 +357,15 @@ export default function StickerLibraryManager({ api }: { api: StickerLibraryApi 
         if (!selectedPack || files.length === 0) return;
 
         const packId = selectedPack.id;
+        const keywords = parseKeywordInput(uploadKeywordsDraft);
+        const upload = (file: File) =>
+            keywords.length > 0 ? api.uploadSticker(packId, file, keywords) : api.uploadSticker(packId, file);
         const failures: string[] = [];
         setUploadErrors([]);
         setUploadProgress({ done: 0, total: files.length });
         for (const [index, file] of files.entries()) {
             try {
-                await api.uploadSticker(packId, file);
+                await upload(file);
             } catch (error) {
                 failures.push(
                     t('STICKER_LIBRARY.UPLOAD_FAILED_FILE', {
@@ -286,6 +397,24 @@ export default function StickerLibraryManager({ api }: { api: StickerLibraryApi 
             showPack(await api.reorderStickers(selectedPack.id, orderedIds));
             await loadPacks();
         });
+    };
+
+    const saveStickerDetails = async (stickerId: number, changes: LibraryStickerChanges): Promise<boolean> => {
+        if (!selectedPack) return false;
+        const packId = selectedPack.id;
+        let saved = false;
+
+        await runAction(async () => {
+            const updated = await api.updateSticker(packId, stickerId, changes);
+            setSelectedPack(current =>
+                current?.id === packId
+                    ? { ...current, stickers: current.stickers.map(sticker => (sticker.id === updated.id ? updated : sticker)) }
+                    : current,
+            );
+            saved = true;
+        });
+
+        return saved;
     };
 
     const deleteSticker = (stickerId: number) => {
@@ -412,6 +541,16 @@ export default function StickerLibraryManager({ api }: { api: StickerLibraryApi 
                                     }}
                                 />
                             </div>
+                            <label className="flex max-w-md flex-col gap-1 text-xs text-slate-700">
+                                {t('STICKER_LIBRARY.UPLOAD_KEYWORDS')}
+                                <input
+                                    className={INPUT_CLASS}
+                                    value={uploadKeywordsDraft}
+                                    onChange={event => setUploadKeywordsDraft(event.target.value)}
+                                    placeholder={t('STICKER_LIBRARY.KEYWORDS_PLACEHOLDER')}
+                                    disabled={isUploading}
+                                />
+                            </label>
                             {uploadErrors.length > 0 ? (
                                 <ul role="alert" className="flex flex-col gap-1 text-sm text-red-700">
                                     {uploadErrors.map(message => (
@@ -434,6 +573,7 @@ export default function StickerLibraryManager({ api }: { api: StickerLibraryApi 
                                         busy={isBusy}
                                         onMove={offset => moveSticker(sticker.id, offset)}
                                         onDelete={() => deleteSticker(sticker.id)}
+                                        onSaveDetails={changes => saveStickerDetails(sticker.id, changes)}
                                     />
                                 ))}
                             </ul>

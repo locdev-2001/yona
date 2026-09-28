@@ -53,6 +53,8 @@ export interface WidgetSticker {
     image_url: string;
     pack_id: string | null;
     label: string | null;
+    // Từ khoá để gợi ý khi gõ; cấu hình từ máy chủ cũ có thể chưa có trường này.
+    keywords?: string[];
 }
 
 export interface WebsiteChannelConfigPayload {

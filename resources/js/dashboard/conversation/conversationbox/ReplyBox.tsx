@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { usePage } from '@inertiajs/react';
 import { debounce, getRecipients, trimContent } from '@ext/utils';
 
@@ -42,7 +42,11 @@ import type { Inbox } from 'dashboard/settings/inboxes/types';
 import type { DashboardPageProps } from '../../types';
 import { useConversation } from '../ConversationContext';
 import { useGroupMembers } from '../groupMembersApi';
-import { canPickSticker, fetchStickers } from '../stickerApi';
+import { canPickSticker, fetchStickerSuggestions, fetchStickers } from '../stickerApi';
+import type { StickerItem } from '../stickerApi';
+import StickerSuggestions from 'shared/sticker/StickerSuggestions';
+import { stickerSuggestionQuery } from 'shared/sticker/stickerSuggestionQuery';
+import { useStickerSuggestions } from './useStickerSuggestions';
 import type { ConversationMessage } from '../types';
 import { buildOutgoingContentAttributes } from './outgoingContentAttributes';
 import ReplyToMessage from './ReplyToMessage';
@@ -69,6 +73,14 @@ import type { CannedCardPayload } from 'dashboard/conversation/composer/SendCard
 // variables. Dán (Ctrl+V) hoặc thả tệp vào ô soạn = đính kèm như nút kẹp giấy.
 
 const DEFAULT_CHANNEL_TYPE = 'Channel::Api';
+
+const STICKER_SUGGESTION_CLASS_NAMES = {
+    root: 'flex items-center gap-1 pt-2 pb-1 overflow-x-auto no-scrollbar',
+    item: 'flex items-center justify-center shrink-0 size-14 p-1 rounded-lg transition-colors hover:bg-n-alpha-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-n-brand active:scale-[0.97]',
+    image: 'object-contain size-full pointer-events-none',
+    dismiss:
+        'flex items-center justify-center shrink-0 ms-auto size-8 rounded-lg text-n-slate-11 hover:bg-n-alpha-2 hover:text-n-slate-12 focus-visible:outline focus-visible:outline-2 focus-visible:outline-n-brand',
+};
 
 // useKbd(['$mod', '+', 'enter']) của bản gốc: '⌘ + ↵' (mac) / 'CTRL + ↵'.
 function cmdEnterShortcutLabel(): string {
@@ -188,7 +200,20 @@ export default function ReplyBox({
     const isReplyButtonDisabled =
         isEditorDisabled || isUploading || (!hasAttachments && (isMessageEmpty || message.length > maxLength));
     // hasMeaningfulEditorContent gốc: nội dung ngoài chữ ký.
-    const hasContent = !isMessageEmpty && removeSignature(message, messageSignature, channelType).trim() !== '';
+    const messageWithoutSignature = removeSignature(message, messageSignature, channelType);
+    const hasContent = !isMessageEmpty && messageWithoutSignature.trim() !== '';
+
+    // Gợi ý sticker khi gõ: chỉ khi được gửi sticker và chưa kèm tệp (tệp thì chữ là chú thích).
+    const stickerQuery = canSendSticker && !hasAttachments ? stickerSuggestionQuery(messageWithoutSignature) : null;
+    const loadStickerSuggestions = useCallback(
+        (query: string, signal: AbortSignal) =>
+            fetchStickerSuggestions(accountId, conversationId, query, signal).then(result => result.stickers),
+        [accountId, conversationId],
+    );
+    const { stickers: suggestedStickers, dismiss: dismissStickerSuggestions } = useStickerSuggestions(
+        stickerQuery,
+        loadStickerSuggestions,
+    );
 
     // Trên thiết bị cảm ứng, placeholder bỏ phần gợi ý phím tắt.
     const isTouchOnly = isTouchOnlyDevice();
@@ -395,6 +420,20 @@ export default function ReplyBox({
         onMessageSent?.();
     };
 
+    // Sticker gợi ý thay cho cụm chữ vừa gõ (như Zalo): gửi sticker, dọn ô soạn;
+    // tin đang trả lời vẫn giữ cho câu kế tiếp.
+    const sendSuggestedSticker = (sticker: StickerItem) => {
+        sendSticker(sticker);
+        removeFromDraft();
+        clearMessage();
+        editorRef.current?.focusEditorInputField();
+    };
+
+    const closeStickerSuggestions = () => {
+        dismissStickerSuggestions();
+        editorRef.current?.focusEditorInputField();
+    };
+
     // getKeyboardEvents gốc: Cmd/Ctrl+K mở command bar ngay cả khi đang focus editor.
     useKeyboardEvents({
         '$mod+KeyK': {
@@ -554,7 +593,12 @@ export default function ReplyBox({
                 onSetReplyMode={setReplyMode}
                 onToggleEditorSize={toggleEditorSize}
             />
-            <div className="reply-box__top">
+            <div
+                className="reply-box__top"
+                onKeyDown={event => {
+                    if (event.key === 'Escape' && suggestedStickers.length > 0) dismissStickerSuggestions();
+                }}
+            >
                 {!isOnPrivateNote && replyTarget ? (
                     <ReplyToMessage message={replyTarget} onDismiss={() => onClearReplyTarget?.()} />
                 ) : null}
@@ -570,6 +614,18 @@ export default function ReplyBox({
                         }}
                     />
                 ) : null}
+                <StickerSuggestions
+                    stickers={suggestedStickers}
+                    labels={{
+                        list: t('CONVERSATION.STICKER_PICKER.SUGGESTIONS'),
+                        dismiss: t('CONVERSATION.STICKER_PICKER.DISMISS_SUGGESTIONS'),
+                        stickerFallback: t('CONVERSATION.STICKER_PICKER.STICKER'),
+                    }}
+                    dismissIcon={<span className="i-lucide-x size-4" aria-hidden="true" />}
+                    classNames={STICKER_SUGGESTION_CLASS_NAMES}
+                    onPick={sendSuggestedSticker}
+                    onDismiss={closeStickerSuggestions}
+                />
                 <Editor
                     ref={editorRef}
                     pickerBoundaryRef={replyBoxRef}

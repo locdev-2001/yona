@@ -1,10 +1,12 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { ButtonHTMLAttributes } from 'react';
 import { createTypingIndicator } from '@ext/utils';
 
 import { fitAutoGrowHeight } from 'shared/helpers/autoGrowField';
 import { checkFileSizeLimit, DEFAULT_MAXIMUM_FILE_UPLOAD_SIZE } from 'shared/helpers/FileHelper';
 import { ALLOWED_FILE_TYPES } from 'shared/constants/messages';
+import StickerSuggestions, { useDismissibleQuery } from 'shared/sticker/StickerSuggestions';
+import { matchStickersByKeyword, stickerSuggestionQuery } from 'shared/sticker/stickerSuggestionQuery';
 
 import { TYPING_INDICATOR_IDLE_TIME } from '../helpers/constants';
 import { useWidgetState } from '../store/hooks';
@@ -12,9 +14,9 @@ import { widgetStore } from '../store/widgetStore';
 import { t } from '../i18n';
 import AttachMenu from './composer/AttachMenu';
 import AttachmentTray from './composer/AttachmentTray';
-import { ArrowRightIcon, PlusIcon, SmileIcon } from './message/icons';
+import { ArrowRightIcon, CloseIcon, PlusIcon, SmileIcon } from './message/icons';
 import StickerPanel from './composer/StickerPanel';
-import { readComposerDraft, writeComposerDraft } from './composer/composerStorage';
+import { readComposerDraft, rememberRecentReaction, writeComposerDraft } from './composer/composerStorage';
 import FailureBlock from './message/FailureBlock';
 import type { WidgetSticker } from '../types';
 
@@ -30,6 +32,15 @@ const PILL_FACE_IDLE_CLASS =
 const PILL_FACE_ACTIVE_CLASS = 'bg-[var(--yona-chat-solid)] text-[var(--yona-chat-on-solid)]';
 const SEND_FACE_READY_CLASS = 'bg-[var(--yona-chat-accent)] text-[var(--yona-chat-on-accent)]';
 const SEND_FACE_IDLE_CLASS = 'bg-[var(--yona-chat-send-idle)] text-[var(--yona-chat-on-send-idle)]';
+
+const NO_STICKERS: WidgetSticker[] = [];
+const STICKER_SUGGESTION_CLASS_NAMES = {
+    root: 'mb-[9px] flex items-center gap-1 overflow-x-auto no-scrollbar',
+    item: 'flex size-14 flex-none items-center justify-center rounded-xl outline-none hover:bg-[var(--yona-chat-hover)] focus-visible:ring-2 focus-visible:ring-[var(--yona-chat-accent)] active:scale-[0.97]',
+    image: 'size-full object-contain p-1',
+    dismiss:
+        'ms-auto flex size-11 flex-none items-center justify-center rounded-full text-[var(--yona-chat-ink-muted)] outline-none hover:bg-[var(--yona-chat-hover)] hover:text-[var(--yona-chat-ink)] focus-visible:ring-2 focus-visible:ring-[var(--yona-chat-accent)] active:scale-[0.97]',
+};
 
 function PillButton({ faceClass, children, ...buttonProps }: ButtonHTMLAttributes<HTMLButtonElement> & { faceClass: string }) {
     return (
@@ -93,6 +104,20 @@ export default function ChatInputWrap({ onSendMessage, onSendFiles, onSendSticke
     const reactionLabel = t(reactionButtonLabelKey(canPickEmoji, canPickStickers));
 
     const hasContent = userInput.trim().length > 0 || pendingFiles.length > 0;
+
+    // Gợi ý sticker khi gõ: lọc tại chỗ trong danh mục đã có, không gọi mạng. Có tệp
+    // đang chờ thì chữ là chú thích; đang mở bảng khác thì không chen thêm hàng gợi ý.
+    const stickerQuery =
+        canPickStickers && !pendingFiles.length && openPanel === null ? stickerSuggestionQuery(userInput) : null;
+    const { isDismissed: isStickerSuggestionDismissed, dismiss: dismissStickerSuggestions } =
+        useDismissibleQuery(stickerQuery);
+    const suggestedStickers = useMemo(
+        () =>
+            stickerQuery !== null && !isStickerSuggestionDismissed
+                ? matchStickersByKeyword(stickers, stickerQuery)
+                : NO_STICKERS,
+        [stickers, stickerQuery, isStickerSuggestionDismissed],
+    );
 
     const typingIndicator = useRef(
         createTypingIndicator(
@@ -169,6 +194,19 @@ export default function ChatInputWrap({ onSendMessage, onSendFiles, onSendSticke
         return () => document.removeEventListener('paste', handleClipboardPaste);
     });
 
+    // Sticker gợi ý thay cho cụm chữ vừa gõ (như Zalo): gửi sticker, dọn ô nhập.
+    const sendSuggestedSticker = (sticker: WidgetSticker) => {
+        rememberRecentReaction({ kind: 'sticker', id: sticker.id, imageUrl: sticker.image_url });
+        setUserInput('');
+        void onSendSticker(sticker);
+        focusInput();
+    };
+
+    const closeStickerSuggestions = () => {
+        dismissStickerSuggestions();
+        focusInput();
+    };
+
     const togglePanel = (panel: Exclude<ComposerPanel, null>) =>
         setOpenPanel(current => (current === panel ? null : panel));
 
@@ -183,9 +221,13 @@ export default function ChatInputWrap({ onSendMessage, onSendFiles, onSendSticke
         <div
             className="relative"
             onKeyDown={event => {
-                if (event.key === 'Escape' && openPanel) {
+                if (event.key !== 'Escape') return;
+                if (openPanel) {
                     event.stopPropagation();
                     setOpenPanel(null);
+                } else if (suggestedStickers.length) {
+                    event.stopPropagation();
+                    dismissStickerSuggestions();
                 }
             }}
         >
@@ -231,6 +273,18 @@ export default function ChatInputWrap({ onSendMessage, onSendFiles, onSendSticke
                     onAddMore={() => openPicker('image')}
                 />
             ) : null}
+            <StickerSuggestions
+                stickers={suggestedStickers}
+                labels={{
+                    list: t('STICKER_PANEL.SUGGESTIONS'),
+                    dismiss: t('STICKER_PANEL.DISMISS_SUGGESTIONS'),
+                    stickerFallback: t('STICKER_PANEL.STICKER_ALT'),
+                }}
+                dismissIcon={<CloseIcon size={14} />}
+                classNames={STICKER_SUGGESTION_CLASS_NAMES}
+                onPick={sendSuggestedSticker}
+                onDismiss={closeStickerSuggestions}
+            />
             <div className="yona-composer-pill relative z-50 flex items-end gap-1 rounded-[24px] border border-[var(--yona-chat-line)] bg-[var(--yona-chat-field)] py-[5px] pe-[6px] ps-4">
                 <textarea
                     id="chat-input"
