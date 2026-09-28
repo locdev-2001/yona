@@ -1,6 +1,11 @@
 import { afterEach, describe, expect, it } from 'vitest';
+import { router } from '@inertiajs/react';
 
-import { GO_TO_COMMANDS, buildGoToActions } from './useGoToCommandHotKeys';
+import { t } from '../../i18n';
+import { buildGoToActions } from './useGoToCommandHotKeys';
+import { buildMenuItems } from 'dashboard/components-next/sidebar/menuItems';
+import { filterMenuByRole } from 'dashboard/components-next/sidebar/permissions';
+import type { AccountRole, SidebarMenuChild } from 'dashboard/components-next/sidebar/provider';
 import { KEYS, SHORTCUT_KEYS } from './shortcutKeys';
 import { clearCommandBarActions, getCommandBarActions, setCommandBarActions } from './commandBarStore';
 import type { CommandBarAction } from 'dashboard/helper/commandbar/actions';
@@ -36,25 +41,64 @@ describe('commandBarStore', () => {
     });
 });
 
+function sidebarDestinationUrls(role: AccountRole, features: Record<string, boolean> = {}): string[] {
+    const collect = (items: SidebarMenuChild[]): string[] =>
+        items.flatMap(item => [...(item.to ? [item.to] : []), ...collect(item.children ?? [])]);
+    return collect(filterMenuByRole(buildMenuItems(2), role, features));
+}
+
+function visitedUrl(item: CommandBarAction): string {
+    const visits: string[] = [];
+    const originalVisit = router.visit;
+    router.visit = ((url: string) => visits.push(url)) as typeof router.visit;
+    item.handler?.();
+    router.visit = originalVisit;
+    return visits[0];
+}
+
 describe('buildGoToActions', () => {
-    it('quản trị viên thấy đủ danh sách, đúng thứ tự gốc', () => {
-        const actions = buildGoToActions(2, true);
-        expect(actions).toHaveLength(GO_TO_COMMANDS.length);
-        expect(actions.map(item => item.id)).toEqual(GO_TO_COMMANDS.map(command => command.id));
+    it.each<AccountRole>(['administrator', 'agent'])('mọi mục điều hướng sidebar (%s) đều tìm được bằng Ctrl+K', role => {
+        const commandUrls = buildGoToActions(2, role).map(visitedUrl);
+
+        expect(commandUrls).toEqual(expect.arrayContaining(sidebarDestinationUrls(role)));
     });
 
-    it('agent chỉ thấy các đích không giới hạn quản trị', () => {
-        const actions = buildGoToActions(2, false);
-        const expected = GO_TO_COMMANDS.filter(command => !command.adminOnly).map(command => command.id);
+    it('tìm được Kho sticker và Chuyển khoản', () => {
+        const titles = buildGoToActions(2, 'administrator').map(item => item.title);
 
-        expect(actions.map(item => item.id)).toEqual(expected);
-        expect(actions.map(item => item.id)).toContain('open_canned_response_settings');
-        expect(actions.map(item => item.id)).not.toContain('open_agent_settings');
+        expect(titles).toEqual(expect.arrayContaining([t('STICKER_LIBRARY.MENU'), t('SIDEBAR.PAYMENT_ACCOUNTS')]));
     });
 
-    it('mỗi action có icon + handler', () => {
-        buildGoToActions(2, true).forEach(item => {
-            expect(item.icon).toBeTruthy();
+    it('agent không thấy đích chỉ dành cho quản trị viên', () => {
+        const commandUrls = buildGoToActions(2, 'agent').map(visitedUrl);
+
+        expect(commandUrls).toContain('/app/accounts/2/settings/canned-response/list');
+        expect(commandUrls).not.toContain('/app/accounts/2/settings/agents/list');
+        expect(commandUrls).not.toContain('/app/accounts/2/settings/custom-stickers');
+    });
+
+    it('mục theo cờ tính năng chỉ có khi account bật cờ, giống sidebar', () => {
+        const withoutFlag = buildGoToActions(2, 'administrator').map(visitedUrl);
+        const withFlag = buildGoToActions(2, 'administrator', { whatsapp_campaign: true }).map(visitedUrl);
+
+        expect(withoutFlag).not.toContain('/app/accounts/2/campaigns/whatsapp');
+        expect(withFlag).toContain('/app/accounts/2/campaigns/whatsapp');
+    });
+
+    it('mục con không tên riêng vẫn tìm được theo tên nhóm cha', () => {
+        const overview = buildGoToActions(2, 'administrator').find(
+            item => visitedUrl(item) === '/app/accounts/2/reports/overview',
+        );
+
+        expect(overview?.keywords).toContain(t('SIDEBAR.REPORTS'));
+    });
+
+    it('mỗi action có id duy nhất, icon SVG và handler', () => {
+        const actions = buildGoToActions(2, 'administrator');
+
+        expect(new Set(actions.map(item => item.id)).size).toBe(actions.length);
+        actions.forEach(item => {
+            expect(item.icon, item.title).toMatch(/^<svg/);
             expect(typeof item.handler).toBe('function');
         });
     });

@@ -103,3 +103,52 @@ export const ICON_BELL = `<svg role="img" class="ninja-icon" width="18" height="
 export const ICON_LAYOUT_TEMPLATE = `<svg role="img" class="ninja-icon" width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><rect width="18" height="7" x="3" y="3" rx="1"/><rect width="9" height="7" x="3" y="14" rx="1"/><rect width="5" height="7" x="16" y="14" rx="1"/></g></svg>`;
 
 export const ICON_DATABASE = `<svg role="img" class="ninja-icon" width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/></g></svg>`;
+
+export const ICON_AT_SIGN = `<svg role="img" class="ninja-icon" width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><circle cx="12" cy="12" r="4"/><path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-4 8"/></g></svg>`;
+
+export const ICON_USER_ROUND_CHECK = `<svg role="img" class="ninja-icon" width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M2 21a8 8 0 0 1 13.292-6"/><circle cx="10" cy="8" r="5"/><path d="m16 19l2 2l4-4"/></g></svg>`;
+
+export const ICON_NEWSPAPER = `<svg role="img" class="ninja-icon" width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M15 18h-5m8-4h-8m-6 8h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-4 0v-9a2 2 0 0 1 2-2h2"/><rect width="8" height="4" x="10" y="6" rx="1"/></g></svg>`;
+
+export const ICON_LANDMARK = `<svg role="img" class="ninja-icon" width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 18v-7m1.119-8.795a2 2 0 0 1 1.762 0l7.84 3.846A.5.5 0 0 1 20.5 7h-17a.5.5 0 0 1-.22-.949zM14 18v-7m4 7v-7M3 22h18M6 18v-7"/></svg>`;
+
+export const ICON_STICKER = `<svg role="img" class="ninja-icon" width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M21 9a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 15 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2z"/><path d="M15 3v5a1 1 0 0 0 1 1h5M8 13h.01M16 13h.01M10 16s.8 1 2 1c1.3 0 2-1 2-1"/></g></svg>`;
+
+export const ICON_WORKFLOW = `<svg role="img" class="ninja-icon" width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><rect width="8" height="8" x="3" y="3" rx="2"/><path d="M7 11v4a2 2 0 0 0 2 2h4"/><rect width="8" height="8" x="13" y="13" rx="2"/></g></svg>`;
+
+export const ICON_SHIELD = `<svg role="img" class="ninja-icon" width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></svg>`;
+
+export const ICON_BOLT = `<svg role="img" class="ninja-icon" width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16"/><circle cx="12" cy="12" r="4"/></g></svg>`;
+
+// Icon của mục sidebar (class iconify) → SVG cho ninja-keys: shadow DOM của
+// ninja-keys không nhận class CSS nên phải có SVG riêng cho từng icon điều hướng.
+export const NAVIGATION_ICONS: Record<string, string> = {
+    'i-lucide-message-circle': ICON_MESSAGE_CIRCLE,
+    'i-lucide-inbox': ICON_INBOX,
+    'i-lucide-at-sign': ICON_AT_SIGN,
+    'i-lucide-user-round-check': ICON_USER_ROUND_CHECK,
+    'i-lucide-clock-alert': ICON_CLOCK_ALERT,
+    'i-lucide-contact': ICON_CONTACT,
+    'i-lucide-chart-spline': ICON_CHART,
+    'i-lucide-megaphone': ICON_MEGAPHONE,
+    'i-lucide-library-big': ICON_LIBRARY,
+    'i-lucide-bolt': ICON_BOLT,
+    'i-lucide-briefcase': ICON_BRIEFCASE,
+    'i-lucide-square-user': ICON_SQUARE_USER,
+    'i-lucide-users': ICON_USERS,
+    'i-lucide-layout-template': ICON_LAYOUT_TEMPLATE,
+    'i-lucide-tags': ICON_TAGS,
+    'i-lucide-newspaper': ICON_NEWSPAPER,
+    'i-lucide-landmark': ICON_LANDMARK,
+    'i-lucide-sticker': ICON_STICKER,
+    'i-lucide-code': ICON_CODE,
+    'i-lucide-repeat': ICON_REPEAT,
+    'i-lucide-bot': ICON_BOT,
+    'i-lucide-toy-brick': ICON_TOY_BRICK,
+    'i-lucide-message-square-quote': ICON_MESSAGE_QUOTE,
+    'i-lucide-blocks': ICON_BLOCKS,
+    'i-lucide-database': ICON_DATABASE,
+    'i-lucide-workflow': ICON_WORKFLOW,
+    'i-lucide-shield': ICON_SHIELD,
+    'i-lucide-user-pen': ICON_USER_PEN,
+};
