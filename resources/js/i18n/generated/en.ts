@@ -3680,6 +3680,7 @@ const messages: Record<string, unknown> = {
             "pack_full": "A pack holds at most :max stickers. Remove some or create a new pack.",
             "too_many_packs": "An account can have at most :max sticker packs.",
             "upload_throttled": "Too many sticker uploads at once. Please wait a moment and try again.",
+            "preview_throttled": "Too many sticker previews at once. Please wait a moment and try again.",
             "not_found": "This pack or sticker was not found in this library.",
             "forbidden": "Your account is not allowed to use this sticker library.",
             "invalid_token": "The sticker library token is invalid or has been revoked.",
@@ -9755,9 +9756,9 @@ const messages: Record<string, unknown> = {
         "LOCKED_ACCOUNT_LIBRARY": "Custom sticker libraries are currently limited to Yona system accounts. Once the feature is opened to your account, this section works right away.",
         "LOCKED_MCP": "MCP tokens for AI can only be created when the account can use a custom sticker library or you have system access.",
         "MCP": {
-            "DESCRIPTION": "Each token lets one AI assistant (Claude Code, Cursor…) create and edit stickers in exactly one library over MCP. The token is shown only once, when created.",
+            "DESCRIPTION": "Each token lets one AI assistant (Claude Code, Codex, Cursor…) create and edit stickers in exactly one library over MCP. The token is shown only once, when created.",
             "NAME_LABEL": "Token name",
-            "NAME_PLACEHOLDER": "Claude on Lan's laptop",
+            "NAME_PLACEHOLDER": "AI assistant on Lan's laptop",
             "SCOPE_LABEL": "Library",
             "SCOPE": {
                 "account": "Account library",
@@ -9766,7 +9767,15 @@ const messages: Record<string, unknown> = {
             "CREATE": "Create token",
             "CREATED_TITLE": "New token, copy it now: it cannot be shown again after you close this",
             "TOKEN_LABEL": "Token",
-            "COMMAND_LABEL": "Command to add it to Claude Code",
+            "ASSISTANT_LABEL": "Your AI assistant",
+            "ASSISTANTS": {
+                "other": "Other assistant"
+            },
+            "SETUP_HINT": {
+                "claude_code": "Run this in your terminal",
+                "codex": "Paste into ~/.codex/config.toml",
+                "other": "Paste into the mcpServers section of your assistant's MCP config"
+            },
             "COPY": "Copy",
             "COPIED": "Copied",
             "COPY_FAILED": "Could not copy, please select the text and copy it manually.",
@@ -9780,7 +9789,16 @@ const messages: Record<string, unknown> = {
             "NEVER_USED": "Never used",
             "REVOKE": "Revoke",
             "REVOKE_CONFIRM": "Revoke token “{name}”? Any AI using it loses access immediately.",
-            "REVOKED": "Token revoked"
+            "REVOKED": "Token revoked",
+            "REVOKE_TITLE": "Revoke MCP token",
+            "SKILL": {
+                "TITLE": "Skill for AI",
+                "DESCRIPTION": "Teach your AI assistant to draw a whole sticker pack around one consistent character.",
+                "DOWNLOAD": "Download SKILL.md",
+                "INSTALL_AT": "Option 1: copy the file into {path}.",
+                "INSTALL_OTHER": "Option 1: copy the file into your assistant's skills folder, in a subfolder named {name}.",
+                "USE_PROMPT": "Option 2: call the {prompt} prompt over MCP, nothing to install."
+            }
         }
     },
     "SUMMARY_REPORTS": {

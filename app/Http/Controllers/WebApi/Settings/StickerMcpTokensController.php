@@ -5,12 +5,15 @@ namespace App\Http\Controllers\WebApi\Settings;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Stickers\StoreStickerMcpTokenRequest;
 use App\Http\Resources\Stickers\StickerMcpTokenResource;
+use App\Mcp\Prompts\DesignStickerPackPrompt;
 use App\Mcp\Servers\StickerLibraryServer;
 use App\Models\Account;
 use App\Models\StickerMcpToken;
 use App\Services\Stickers\StickerLibraryAccess;
+use App\Services\Stickers\StickerPackSkill;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 // Token MCP/REST kho sticker trong Cài đặt: mỗi quản trị viên chỉ thấy, tạo và
 // thu hồi token của những phạm vi mình đang được dùng (StickerLibraryAccess).
@@ -31,7 +34,11 @@ class StickerMcpTokensController extends Controller
 
         return response()->json([
             'payload' => StickerMcpTokenResource::collection($tokens)->toArray($request),
-            'meta' => ['usable_scopes' => $scopes, 'mcp_url' => StickerLibraryServer::endpointUrl()],
+            'meta' => [
+                'usable_scopes' => $scopes,
+                'mcp_url' => StickerLibraryServer::endpointUrl(),
+                'skill' => ['name' => StickerPackSkill::NAME, 'prompt' => DesignStickerPackPrompt::NAME],
+            ],
         ]);
     }
 
@@ -58,6 +65,14 @@ class StickerMcpTokensController extends Controller
         $token->delete();
 
         return response()->json(null, 200);
+    }
+
+    // Tệp SKILL.md dạy trợ lý AI tạo bộ sticker: ai tạo được token MCP thì tải được.
+    public function skill(Request $request, Account $account): BinaryFileResponse
+    {
+        $this->usableScopes($request, $account);
+
+        return response()->download(StickerPackSkill::path(), StickerPackSkill::DOWNLOAD_NAME, ['Content-Type' => StickerPackSkill::MIME_TYPE]);
     }
 
     /** @return list<string> */

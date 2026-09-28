@@ -2,11 +2,13 @@
 
 namespace App\Mcp\Servers;
 
+use App\Mcp\Prompts\DesignStickerPackPrompt;
 use App\Mcp\Resources\LottieAuthoringGuide;
 use App\Mcp\Tools\Stickers\CreateStickerPack;
 use App\Mcp\Tools\Stickers\DeleteSticker;
 use App\Mcp\Tools\Stickers\GetStickerPack;
 use App\Mcp\Tools\Stickers\ListStickerPacks;
+use App\Mcp\Tools\Stickers\PreviewSticker;
 use App\Mcp\Tools\Stickers\RenameStickerPack;
 use App\Mcp\Tools\Stickers\SetStickerPackPublished;
 use App\Mcp\Tools\Stickers\UpdateSticker;
@@ -33,9 +35,11 @@ class StickerLibraryServer extends Server
     private const INTRODUCTION = <<<'MARKDOWN'
         Máy chủ này quản lý đúng một kho sticker Yona, do token quyết: kho riêng của một
         account (bộ đã xuất bản chỉ hiện trong account đó) hoặc kho nền tảng (hiện cho mọi account).
-        Quy trình: list_sticker_packs → create_sticker_pack → upload_sticker (mỗi sticker kèm
-        label và keywords) → get_sticker_pack chờ mọi sticker `ready` → set_sticker_pack_published.
+        Quy trình: list_sticker_packs → create_sticker_pack → với mỗi sticker: preview_sticker xem
+        ảnh poster để tự kiểm, sửa tới khi đạt → upload_sticker (kèm label và keywords) →
+        get_sticker_pack chờ mọi sticker `ready` → hỏi người dùng rồi mới set_sticker_pack_published.
         Sticker `failed` thì đọc failure_message, sửa Lottie rồi tải lại.
+        Tạo trọn một bộ đồng bộ một nhân vật: dùng prompt `design_sticker_pack` (skill đầy đủ các bước).
 
 
         MARKDOWN;
@@ -45,10 +49,15 @@ class StickerLibraryServer extends Server
         GetStickerPack::class,
         CreateStickerPack::class,
         RenameStickerPack::class,
+        PreviewSticker::class,
         UploadSticker::class,
         UpdateSticker::class,
         SetStickerPackPublished::class,
         DeleteSticker::class,
+    ];
+
+    protected array $prompts = [
+        DesignStickerPackPrompt::class,
     ];
 
     protected array $resources = [

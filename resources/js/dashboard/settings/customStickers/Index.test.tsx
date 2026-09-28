@@ -44,6 +44,7 @@ afterAll(() => {
 });
 beforeEach(() => {
     libraryApiBases.length = 0;
+    window.history.replaceState(null, '', '/app/accounts/7/settings/stickers');
 });
 
 const tabNames = () => screen.getAllByRole('button').map(button => button.textContent?.trim());
@@ -83,5 +84,28 @@ describe('trang Cài đặt / Kho sticker', () => {
         fireEvent.click(screen.getByRole('button', { name: 'Kho nền tảng' }));
 
         expect(screen.getByTestId('library-manager')).toHaveTextContent(PLATFORM_STICKER_LIBRARY_API_BASE);
+    });
+
+    it('tab đang mở ghi vào ?tab= và mở lại đúng tab khi tải lại trang', () => {
+        pageProps.stickerLibraryAccess = { accountLibrary: true, platformLibrary: true };
+        const { unmount } = render(<CustomStickersIndex />);
+
+        fireEvent.click(screen.getByRole('button', { name: 'Kho nền tảng' }));
+        expect(window.location.search).toBe('?tab=platform');
+        unmount();
+
+        render(<CustomStickersIndex />);
+        expect(screen.getByTestId('library-manager')).toHaveTextContent(PLATFORM_STICKER_LIBRARY_API_BASE);
+
+        fireEvent.click(screen.getByRole('button', { name: 'Kho riêng' }));
+        expect(window.location.search).toBe('');
+    });
+
+    it('?tab= không có quyền hoặc lạ thì mở kho riêng', () => {
+        pageProps.stickerLibraryAccess = { accountLibrary: true, platformLibrary: false };
+        window.history.replaceState(null, '', '/app/accounts/7/settings/stickers?tab=platform');
+        render(<CustomStickersIndex />);
+
+        expect(screen.getByTestId('library-manager')).toHaveTextContent('/api/v1/accounts/7');
     });
 });

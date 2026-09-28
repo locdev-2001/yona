@@ -11,11 +11,15 @@ import StickerMcpTokens from './StickerMcpTokens';
 import { createStickerLibraryApi } from './stickerLibraryApi';
 import { createStickerMcpTokensApi } from './stickerMcpTokensApi';
 import type { DashboardPageProps } from '../../types';
+import { currentQuery, replaceQuery } from '../../reports/helpers/urlQuery';
 import type { StickerLibraryAccess } from './types';
 
 export const PLATFORM_STICKER_LIBRARY_API_BASE = '/api/v1/platform_sticker_library';
 
 type StickerLibraryTab = 'account' | 'platform' | 'mcp';
+
+export const TAB_QUERY_KEY = 'tab';
+const DEFAULT_TAB: StickerLibraryTab = 'account';
 
 interface CustomStickersPageProps extends DashboardPageProps {
     stickerLibraryAccess: StickerLibraryAccess;
@@ -49,7 +53,15 @@ export default function CustomStickersIndex() {
         ...(stickerLibraryAccess.platformLibrary ? [{ label: t('STICKER_LIBRARY.TABS.PLATFORM'), value: 'platform' }] : []),
         { label: t('STICKER_LIBRARY.TABS.MCP'), value: 'mcp' },
     ];
-    const [activeTab, setActiveTab] = useState<StickerLibraryTab>('account');
+    const [activeTab, setActiveTab] = useState<StickerLibraryTab>(() => {
+        const requested = currentQuery()[TAB_QUERY_KEY];
+        return tabs.some(tab => tab.value === requested) ? (requested as StickerLibraryTab) : DEFAULT_TAB;
+    });
+    const changeTab = (tab: StickerLibraryTab) => {
+        setActiveTab(tab);
+        const { [TAB_QUERY_KEY]: _previousTab, ...otherParams } = currentQuery();
+        replaceQuery(tab === DEFAULT_TAB ? otherParams : { ...otherParams, [TAB_QUERY_KEY]: tab });
+    };
 
     return (
         <Dashboard>
@@ -59,7 +71,7 @@ export default function CustomStickersIndex() {
                     <TabBar
                         tabs={tabs}
                         initialActiveTab={tabs.findIndex(tab => tab.value === activeTab)}
-                        onTabChanged={tab => setActiveTab(tab.value as StickerLibraryTab)}
+                        onTabChanged={tab => changeTab(tab.value as StickerLibraryTab)}
                     />
                     {activeTab === 'account' &&
                         (stickerLibraryAccess.accountLibrary ? (

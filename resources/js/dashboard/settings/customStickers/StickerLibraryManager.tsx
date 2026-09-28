@@ -4,6 +4,8 @@ import type { FormEvent } from 'react';
 import { t } from '../../../i18n';
 import { parseApiErrorMessage } from 'dashboard/helper/apiClient';
 import { formatKeywords, parseKeywordInput } from './stickerKeywords';
+import ConfirmActionDialog from './ConfirmActionDialog';
+import type { ConfirmActionRequest } from './ConfirmActionDialog';
 import type { StickerLibraryApi } from './stickerLibraryApi';
 import type {
     LibrarySticker,
@@ -249,6 +251,8 @@ export default function StickerLibraryManager({ api }: { api: StickerLibraryApi 
     const [uploadErrors, setUploadErrors] = useState<string[]>([]);
     const [uploadKeywordsDraft, setUploadKeywordsDraft] = useState('');
     const [actionError, setActionError] = useState<string | null>(null);
+    const [pendingConfirmation, setPendingConfirmation] = useState<ConfirmActionRequest | null>(null);
+    const closeConfirmation = useCallback(() => setPendingConfirmation(null), []);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const loadPacks = useCallback(async () => {
@@ -344,12 +348,18 @@ export default function StickerLibraryManager({ api }: { api: StickerLibraryApi 
     };
 
     const deletePack = () => {
-        if (!selectedPack || !window.confirm(t('STICKER_LIBRARY.DELETE_PACK_CONFIRM', { name: selectedPack.name }))) return;
+        if (!selectedPack) return;
 
-        void runAction(async () => {
-            await api.deletePack(selectedPack.id);
-            setSelectedPack(null);
-            await loadPacks();
+        setPendingConfirmation({
+            title: t('STICKER_LIBRARY.DELETE_PACK'),
+            message: t('STICKER_LIBRARY.DELETE_PACK_CONFIRM', { name: selectedPack.name }),
+            confirmLabel: t('STICKER_LIBRARY.DELETE_PACK'),
+            onConfirm: () =>
+                void runAction(async () => {
+                    await api.deletePack(selectedPack.id);
+                    setSelectedPack(null);
+                    await loadPacks();
+                }),
         });
     };
 
@@ -418,12 +428,18 @@ export default function StickerLibraryManager({ api }: { api: StickerLibraryApi 
     };
 
     const deleteSticker = (stickerId: number) => {
-        if (!selectedPack || !window.confirm(t('STICKER_LIBRARY.DELETE_STICKER_CONFIRM'))) return;
+        if (!selectedPack) return;
 
-        void runAction(async () => {
-            await api.deleteSticker(selectedPack.id, stickerId);
-            showPack(await api.getPack(selectedPack.id));
-            await loadPacks();
+        setPendingConfirmation({
+            title: t('STICKER_LIBRARY.DELETE_STICKER'),
+            message: t('STICKER_LIBRARY.DELETE_STICKER_CONFIRM'),
+            confirmLabel: t('STICKER_LIBRARY.DELETE_STICKER'),
+            onConfirm: () =>
+                void runAction(async () => {
+                    await api.deleteSticker(selectedPack.id, stickerId);
+                    showPack(await api.getPack(selectedPack.id));
+                    await loadPacks();
+                }),
         });
     };
 
@@ -581,6 +597,7 @@ export default function StickerLibraryManager({ api }: { api: StickerLibraryApi 
                     </>
                 )}
             </section>
+            <ConfirmActionDialog request={pendingConfirmation} onClose={closeConfirmation} />
         </div>
     );
 }

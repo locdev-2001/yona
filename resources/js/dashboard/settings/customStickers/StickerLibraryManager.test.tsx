@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { ApiError } from 'dashboard/helper/apiClient';
@@ -134,7 +134,7 @@ describe('StickerLibraryManager', () => {
             getPack: vi.fn().mockResolvedValue(two),
             reorderStickers: vi.fn().mockResolvedValue(packDetail({ stickers: [sticker({ id: 2 }), sticker({ id: 1 })] })),
         });
-        const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+        const browserConfirm = vi.spyOn(window, 'confirm');
         render(<StickerLibraryManager api={api} />);
         await openFirstPack();
 
@@ -142,8 +142,33 @@ describe('StickerLibraryManager', () => {
         await waitFor(() => expect(api.reorderStickers).toHaveBeenCalledWith(3, [2, 1]));
 
         fireEvent.click(screen.getAllByRole('button', { name: 'Xoá sticker' })[0]);
+        const dialog = screen.getByRole('alertdialog');
+        expect(dialog).toHaveTextContent('Xoá sticker này khỏi bộ?');
+        fireEvent.click(within(dialog).getByRole('button', { name: 'Huỷ' }));
+        expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+        expect(api.deleteSticker).not.toHaveBeenCalled();
+
+        fireEvent.click(screen.getAllByRole('button', { name: 'Xoá sticker' })[0]);
+        fireEvent.click(within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Xoá sticker' }));
         await waitFor(() => expect(api.deleteSticker).toHaveBeenCalledWith(3, 2));
-        confirmSpy.mockRestore();
+        expect(browserConfirm).not.toHaveBeenCalled();
+        browserConfirm.mockRestore();
+    });
+
+    it('xoá bộ qua hộp xác nhận, Esc thì đóng mà không xoá', async () => {
+        const api = fakeApi();
+        render(<StickerLibraryManager api={api} />);
+        await openFirstPack();
+
+        fireEvent.click(screen.getByRole('button', { name: 'Xoá bộ' }));
+        expect(screen.getByRole('alertdialog')).toHaveTextContent('cùng mọi sticker trong bộ');
+        fireEvent.keyDown(window, { key: 'Escape' });
+        expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+        expect(api.deletePack).not.toHaveBeenCalled();
+
+        fireEvent.click(screen.getByRole('button', { name: 'Xoá bộ' }));
+        fireEvent.click(within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Xoá bộ' }));
+        await waitFor(() => expect(api.deletePack).toHaveBeenCalledWith(3));
     });
 
     it('sửa nhãn và từ khoá của một sticker, lưu qua PATCH rồi hiện chip từ khoá mới', async () => {

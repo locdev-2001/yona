@@ -3680,6 +3680,7 @@ const messages: Record<string, unknown> = {
             "pack_full": "Mỗi bộ có tối đa :max sticker. Bạn xoá bớt hoặc tạo bộ mới nhé.",
             "too_many_packs": "Mỗi account có tối đa :max bộ sticker.",
             "upload_throttled": "Bạn tải sticker hơi nhanh, chờ một chút rồi thử lại nhé.",
+            "preview_throttled": "Bạn xem thử sticker hơi nhanh, chờ một chút rồi thử lại nhé.",
             "not_found": "Không tìm thấy bộ hoặc sticker này trong kho.",
             "forbidden": "Tài khoản của bạn chưa được dùng kho sticker này.",
             "invalid_token": "Token kho sticker không đúng hoặc đã bị thu hồi.",
@@ -9755,9 +9756,9 @@ const messages: Record<string, unknown> = {
         "LOCKED_ACCOUNT_LIBRARY": "Kho sticker riêng hiện chỉ dành cho tài khoản có quyền hệ thống của Yona. Khi tính năng mở cho account của bạn, mục này sẽ dùng được ngay.",
         "LOCKED_MCP": "Token MCP cho AI chỉ tạo được khi account dùng được kho sticker riêng hoặc bạn có quyền hệ thống.",
         "MCP": {
-            "DESCRIPTION": "Mỗi token cho một trợ lý AI (Claude Code, Cursor…) quyền tạo và sửa sticker trong đúng một kho qua MCP. Token chỉ hiện một lần lúc tạo.",
+            "DESCRIPTION": "Mỗi token cho một trợ lý AI (Claude Code, Codex, Cursor…) quyền tạo và sửa sticker trong đúng một kho qua MCP. Token chỉ hiện một lần lúc tạo.",
             "NAME_LABEL": "Tên token",
-            "NAME_PLACEHOLDER": "Claude trên máy của Lan",
+            "NAME_PLACEHOLDER": "Trợ lý AI trên máy của Lan",
             "SCOPE_LABEL": "Kho được chạm",
             "SCOPE": {
                 "account": "Kho riêng của account",
@@ -9766,7 +9767,15 @@ const messages: Record<string, unknown> = {
             "CREATE": "Tạo token",
             "CREATED_TITLE": "Token mới, chép ngay: đóng lại là không xem lại được",
             "TOKEN_LABEL": "Token",
-            "COMMAND_LABEL": "Lệnh thêm vào Claude Code",
+            "ASSISTANT_LABEL": "Trợ lý AI bạn dùng",
+            "ASSISTANTS": {
+                "other": "Trợ lý khác"
+            },
+            "SETUP_HINT": {
+                "claude_code": "Chạy lệnh này trong terminal",
+                "codex": "Dán vào tệp ~/.codex/config.toml",
+                "other": "Dán vào mục mcpServers trong cấu hình MCP của trợ lý"
+            },
             "COPY": "Chép",
             "COPIED": "Đã chép",
             "COPY_FAILED": "Không chép được, bạn bôi đen rồi chép tay nhé.",
@@ -9780,7 +9789,16 @@ const messages: Record<string, unknown> = {
             "NEVER_USED": "Chưa dùng lần nào",
             "REVOKE": "Thu hồi",
             "REVOKE_CONFIRM": "Thu hồi token “{name}”? AI đang dùng token này sẽ mất quyền ngay.",
-            "REVOKED": "Đã thu hồi token"
+            "REVOKED": "Đã thu hồi token",
+            "REVOKE_TITLE": "Thu hồi token MCP",
+            "SKILL": {
+                "TITLE": "Skill cho AI",
+                "DESCRIPTION": "Dạy trợ lý AI cách vẽ cả bộ sticker đồng bộ một nhân vật.",
+                "DOWNLOAD": "Tải SKILL.md",
+                "INSTALL_AT": "Cách 1: chép tệp vào {path}.",
+                "INSTALL_OTHER": "Cách 1: chép tệp vào thư mục skills của trợ lý, trong thư mục con {name}.",
+                "USE_PROMPT": "Cách 2: gọi prompt {prompt} từ MCP, không cần cài."
+            }
         }
     },
     "SUMMARY_REPORTS": {

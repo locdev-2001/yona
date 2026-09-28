@@ -12,6 +12,7 @@ use App\Services\Stickers\StickerLibraryTarget;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\JsonSchema\Types\Type;
+use Illuminate\Support\Facades\RateLimiter;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
 use Laravel\Mcp\ResponseFactory;
@@ -23,6 +24,8 @@ use Laravel\Mcp\Server\Tool;
 // được cấp thì từ chối, không rơi về kho nào mặc định.
 abstract class StickerLibraryTool extends Tool
 {
+    private const THROTTLE_WINDOW_SECONDS = 60;
+
     private ?StickerLibraryTarget $target = null;
 
     public function handle(Request $request, StickerLibraryManager $library): Response|ResponseFactory
@@ -45,6 +48,18 @@ abstract class StickerLibraryTool extends Tool
     protected function libraryTarget(): StickerLibraryTarget
     {
         return $this->target ?? throw new \LogicException('Tool kho sticker chạy khi chưa có kho được cấp.');
+    }
+
+    // Mỗi kho một nhịp riêng cho từng loại thao tác; còn lượt thì tính luôn lượt này.
+    protected function throttled(string $keyPrefix, int $perMinute): bool
+    {
+        $throttleKey = $keyPrefix.$this->libraryTarget()->rateLimitKey();
+        if (RateLimiter::tooManyAttempts($throttleKey, $perMinute)) {
+            return true;
+        }
+        RateLimiter::hit($throttleKey, self::THROTTLE_WINDOW_SECONDS);
+
+        return false;
     }
 
     protected function libraryOwner(): ?Account

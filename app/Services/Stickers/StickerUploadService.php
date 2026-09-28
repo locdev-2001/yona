@@ -42,7 +42,7 @@ final class StickerUploadService
      */
     public function upload(StickerPack $pack, UploadedFile $file, ?string $label = null, array $keywords = []): Sticker
     {
-        return $this->store($pack, $this->readUpload($file), $label, $keywords);
+        return $this->store($pack, $this->preparedAnimation($this->readUpload($file)), $label, $keywords);
     }
 
     /**
@@ -55,21 +55,61 @@ final class StickerUploadService
      */
     public function uploadContents(StickerPack $pack, string $contents, string $extension, ?string $label = null, array $keywords = []): Sticker
     {
+        return $this->store($pack, $this->prepareContents($contents, $extension), $label, $keywords);
+    }
+
+    /**
+     * Kiểm và rút gọn nội dung như lúc tải lên nhưng không lưu gì: đúng bản JSON
+     * mà kho sẽ lưu, kèm tài liệu đã giải mã.
+     *
+     * @return array{json: string, document: stdClass}
+     *
+     * @throws ValidationException khi nội dung bị từ chối, câu báo lỗi ở errors.sticker_uploads.*
+     */
+    public function prepareContents(string $contents, string $extension): array
+    {
         $this->assertAcceptedExtension($extension);
         if (strlen($contents) > LottieDocumentValidator::MAX_UPLOAD_BYTES) {
             throw $this->rejection(LottieDocumentValidator::FILE_TOO_LARGE);
         }
 
-        return $this->store($pack, $contents, $label, $keywords);
+        return $this->preparedAnimation($contents);
     }
 
-    /** @param  array<mixed>  $keywords */
-    private function store(StickerPack $pack, string $uploadedBytes, ?string $label, array $keywords): Sticker
+    /**
+     * @return array{width: int, height: int, frame_count: int, duration_ms: int}
+     */
+    public static function animationMetrics(stdClass $document): array
+    {
+        $frameSpan = $document->op - $document->ip;
+
+        return [
+            'width' => (int) round($document->w),
+            'height' => (int) round($document->h),
+            'frame_count' => (int) round($frameSpan),
+            'duration_ms' => (int) round($frameSpan / $document->fr * 1000),
+        ];
+    }
+
+    /**
+     * @return array{json: string, document: stdClass}
+     */
+    private function preparedAnimation(string $uploadedBytes): array
     {
         $animationJson = $this->minifier->minify($this->validated($this->validator->inspect($uploadedBytes)));
+
         // Rút gọn đổi số (0.0 thành 0, làm tròn) nên kiểm lại đúng bản sẽ lưu:
         // trình phát đọc bản này, không đọc tệp gốc.
-        $document = $this->validated($this->validator->inspectStored($animationJson));
+        return ['json' => $animationJson, 'document' => $this->validated($this->validator->inspectStored($animationJson))];
+    }
+
+    /**
+     * @param  array{json: string, document: stdClass}  $prepared
+     * @param  array<mixed>  $keywords
+     */
+    private function store(StickerPack $pack, array $prepared, ?string $label, array $keywords): Sticker
+    {
+        ['json' => $animationJson, 'document' => $document] = $prepared;
 
         $sticker = $pack->stickers()->createOrFirst(
             ['content_hash' => hash(self::CONTENT_HASH_ALGORITHM, $animationJson)],
@@ -134,16 +174,12 @@ final class StickerUploadService
      */
     private function newStickerAttributes(StickerPack $pack, stdClass $document, string $animationJson, ?string $label, array $keywords): array
     {
-        $frameSpan = $document->op - $document->ip;
         $lastPosition = $pack->stickers()->max('position');
 
         return [
             'label' => StickerTags::label($label),
             'keywords' => StickerTags::keywords($keywords),
-            'width' => (int) round($document->w),
-            'height' => (int) round($document->h),
-            'frame_count' => (int) round($frameSpan),
-            'duration_ms' => (int) round($frameSpan / $document->fr * 1000),
+            ...self::animationMetrics($document),
             'byte_size' => strlen($animationJson),
             'status' => Sticker::STATUS_PROCESSING,
             'position' => $lastPosition === null ? 0 : (int) $lastPosition + 1,

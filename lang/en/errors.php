@@ -121,6 +121,7 @@ return [
         'pack_full' => 'A pack holds at most :max stickers. Remove some or create a new pack.',
         'too_many_packs' => 'An account can have at most :max sticker packs.',
         'upload_throttled' => 'Too many sticker uploads at once. Please wait a moment and try again.',
+        'preview_throttled' => 'Too many sticker previews at once. Please wait a moment and try again.',
         'not_found' => 'This pack or sticker was not found in this library.',
         'forbidden' => 'Your account is not allowed to use this sticker library.',
         'invalid_token' => 'The sticker library token is invalid or has been revoked.',

@@ -1,10 +1,12 @@
 <?php
 
+use App\Mcp\Prompts\DesignStickerPackPrompt;
 use App\Mcp\Servers\StickerLibraryServer;
 use App\Models\Account;
 use App\Models\AccountUser;
 use App\Models\StickerMcpToken;
 use App\Models\User;
+use App\Services\Stickers\StickerPackSkill;
 use Tests\Support\YonaStickers;
 
 // Token MCP kho sticker trong Cài đặt: tạo, liệt kê, thu hồi theo đúng phạm vi
@@ -65,6 +67,7 @@ it('cờ bật: tạo token kho riêng, token thô hiện đúng một lần, b�
         ->assertJsonMissingPath('payload.0.token')
         ->assertJsonMissingPath('payload.0.token_hash')
         ->assertJsonPath('meta.usable_scopes', [StickerMcpToken::SCOPE_ACCOUNT])
+        ->assertJsonPath('meta.skill', ['name' => StickerPackSkill::NAME, 'prompt' => DesignStickerPackPrompt::NAME])
         ->assertDontSee($plainTextToken);
 });
 
@@ -124,4 +127,17 @@ it('không thấy, không thu hồi được token của account khác', functio
     $this->deleteJson("{$this->api}/{$foreign->id}")->assertNotFound();
 
     expect($foreign->fresh())->not->toBeNull();
+});
+
+it('tải SKILL.md tạo bộ sticker: ai dùng được token MCP thì tải được, chưa có quyền kho nào thì 403', function () {
+    $skillUrl = "/api/v1/accounts/{$this->account->id}/sticker_library_skill";
+    $this->actingAs($this->admin);
+
+    $this->get($skillUrl)->assertForbidden();
+
+    YonaStickers::enableCustomStickers($this->account);
+    $response = $this->get($skillUrl)->assertOk()->assertDownload(StickerPackSkill::DOWNLOAD_NAME);
+
+    expect($response->headers->get('Content-Type'))->toStartWith('text/markdown')
+        ->and(file_get_contents($response->baseResponse->getFile()->getPathname()))->toBe(app(StickerPackSkill::class)->document());
 });

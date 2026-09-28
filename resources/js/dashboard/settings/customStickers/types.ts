@@ -50,7 +50,11 @@ export interface StickerMcpToken {
 
 export interface StickerMcpTokenListing {
     payload: StickerMcpToken[];
-    meta: { usable_scopes: StickerMcpTokenScope[]; mcp_url: string };
+    meta: {
+        usable_scopes: StickerMcpTokenScope[];
+        mcp_url: string;
+        skill: { name: string; prompt: string };
+    };
 }
 
 export interface IssuedStickerMcpToken extends StickerMcpToken {

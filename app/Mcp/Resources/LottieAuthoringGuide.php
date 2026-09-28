@@ -54,6 +54,7 @@ class LottieAuthoringGuide extends Resource
         - Mỗi bộ tối đa :max_stickers_per_pack sticker. Tải lại đúng nội dung cũ vào cùng bộ trả về sticker cũ.
         - Nhãn tối đa :max_label ký tự; tối đa :max_keywords từ khoá, mỗi từ tối đa :max_keyword_length ký tự. Từ khoá là chữ người dùng gõ để hiện gợi ý sticker, so khớp không dấu.
         - Bộ chỉ hiện cho mọi account sau `set_sticker_pack_published` với `published: true`.
+        - Kênh chat ngoài không phát hoạt ảnh nhận ảnh tĩnh vuông :outbound_image_size px dựng từ sticker: nét dày, ít chi tiết nhỏ, tương phản rõ, biểu cảm nằm ở mắt và miệng to để còn nhận ra ở cỡ này.
 
         ## Mẫu tối thiểu (quả bóng nảy, qua được kiểm tra)
         ```json
@@ -74,6 +75,7 @@ class LottieAuthoringGuide extends Resource
             'max_label' => StickerTags::MAX_LABEL_LENGTH,
             'max_keywords' => StickerTags::MAX_KEYWORDS,
             'max_keyword_length' => StickerTags::MAX_KEYWORD_LENGTH,
+            'outbound_image_size' => (int) config('yona.stickers.outbound_image_size'),
             'example' => self::MINIMAL_EXAMPLE,
         ];
         // Khoá dài thay trước để `:max_keywords` không bị `:max_keyword...` ăn mất phần đầu.

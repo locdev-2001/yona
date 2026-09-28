@@ -6,6 +6,7 @@ use App\Mcp\Tools\Stickers\CreateStickerPack;
 use App\Mcp\Tools\Stickers\DeleteSticker;
 use App\Mcp\Tools\Stickers\GetStickerPack;
 use App\Mcp\Tools\Stickers\ListStickerPacks;
+use App\Mcp\Tools\Stickers\PreviewSticker;
 use App\Mcp\Tools\Stickers\RenameStickerPack;
 use App\Mcp\Tools\Stickers\SetStickerPackPublished;
 use App\Mcp\Tools\Stickers\UpdateSticker;
@@ -58,10 +59,10 @@ describe('tools (kho nền tảng)', function () {
         YonaStickers::actAsLibrary(null);
     });
 
-    it('đăng ký đủ 8 tool và resource hướng dẫn Lottie', function () {
+    it('đăng ký đủ 9 tool và resource hướng dẫn Lottie', function () {
         StickerLibraryServer::tools()->assertRegistered([
             ListStickerPacks::class, GetStickerPack::class, CreateStickerPack::class, RenameStickerPack::class,
-            UploadSticker::class, UpdateSticker::class, SetStickerPackPublished::class, DeleteSticker::class,
+            PreviewSticker::class, UploadSticker::class, UpdateSticker::class, SetStickerPackPublished::class, DeleteSticker::class,
         ]);
         StickerLibraryServer::resources()->assertRegistered(LottieAuthoringGuide::class);
     });
@@ -343,7 +344,7 @@ describe('HTTP /mcp/stickers', function () {
         $toolNames = array_column(mcpCall($this->token, 'tools/list', id: 2)->assertOk()->json('result.tools'), 'name');
         expect($toolNames)->toEqualCanonicalizing([
             'list_sticker_packs', 'get_sticker_pack', 'create_sticker_pack', 'rename_sticker_pack',
-            'upload_sticker', 'update_sticker', 'set_sticker_pack_published', 'delete_sticker',
+            'preview_sticker', 'upload_sticker', 'update_sticker', 'set_sticker_pack_published', 'delete_sticker',
         ]);
 
         $pack = StickerPack::factory()->create();

@@ -488,6 +488,7 @@ Route::middleware(['auth.api_token', 'auth', 'account.scope'])
         Route::get('/sticker_mcp_tokens', [StickerMcpTokensController::class, 'index']);
         Route::post('/sticker_mcp_tokens', [StickerMcpTokensController::class, 'store']);
         Route::delete('/sticker_mcp_tokens/{tokenId}', [StickerMcpTokensController::class, 'destroy'])->whereNumber('tokenId');
+        Route::get('/sticker_library_skill', [StickerMcpTokensController::class, 'skill']);
 
         Route::post('/actions/contact_merge', [ContactMergesController::class, 'create']);
 
