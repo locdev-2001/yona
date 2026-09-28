@@ -15,6 +15,8 @@ const pages = import.meta.glob([
     './dashboard/notifications/*.tsx',
     './dashboard/reports/*.tsx',
     './dashboard/search/*.tsx',
+    // Test đặt cạnh trang; không loại thì mỗi file test thành một chunk trong bản build.
+    '!./**/*.test.tsx',
 ]);
 
 createInertiaApp({

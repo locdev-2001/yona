@@ -7,6 +7,8 @@ import Layout from './components/Layout';
 const pages = import.meta.glob<{ default: PageComponent }>([
     './pages/*.tsx',
     './resource/*.tsx',
+    // Test đặt cạnh trang; không loại thì mỗi file test thành một chunk trong bản build.
+    '!./**/*.test.tsx',
 ]);
 
 type PageComponent = ComponentType & {
