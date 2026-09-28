@@ -18,7 +18,7 @@ final class NodeStickerRenderer implements StickerRenderer
 
     private const DRIVER_NAME = 'node';
 
-    // Khoảng --timeout-ms và --size mà CLI chấp nhận.
+    // Khoảng --timeout-ms, --size và --static-size mà CLI chấp nhận.
     private const MAX_TIMEOUT_SECONDS = 60;
 
     private const MIN_SIZE = 16;
@@ -52,7 +52,7 @@ final class NodeStickerRenderer implements StickerRenderer
         'too_many_frames' => self::TOO_MANY_FRAMES,
     ];
 
-    public function render(string $imagePath, string $outputDirectory, array $edit, int $size): array
+    public function render(string $imagePath, string $outputDirectory, array $edit, int $size, int $staticSize): array
     {
         $timeoutSeconds = $this->timeoutSeconds();
         $editPath = $edit === [] ? null : $this->writeEditFile($edit);
@@ -68,7 +68,8 @@ final class NodeStickerRenderer implements StickerRenderer
                 (string) config(self::CONFIG_KEY.'.renderers.'.self::DRIVER_NAME.'.script'),
                 $imagePath,
                 $outputDirectory,
-                '--size='.max(self::MIN_SIZE, min($size, self::MAX_SIZE)),
+                '--size='.self::clampSize($size),
+                '--static-size='.self::clampSize($staticSize),
                 '--timeout-ms='.($timeoutSeconds * 1000),
                 ...($editPath === null ? [] : ['--edit='.$editPath]),
             ]);
@@ -86,6 +87,11 @@ final class NodeStickerRenderer implements StickerRenderer
         return $result->successful()
             ? $this->renderedFiles($result, $outputDirectory)
             : ['failure' => $this->failureCode($result)];
+    }
+
+    private static function clampSize(int $size): int
+    {
+        return max(self::MIN_SIZE, min($size, self::MAX_SIZE));
     }
 
     private function timeoutSeconds(): int

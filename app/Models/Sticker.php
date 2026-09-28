@@ -88,10 +88,16 @@ class Sticker extends Model
                 ->where(fn (Builder $owner) => $owner->whereNull('account_id')->orWhere('account_id', $account->id)));
     }
 
-    /** Cạnh (px) của tệp sticker vuông, cả WebP lẫn PNG gửi kênh ngoài. */
+    /** Cạnh (px) của sticker.webp vuông hiển thị trong Yona. */
     public static function imageSize(): int
     {
         return (int) config('yona.stickers.image_size');
+    }
+
+    /** Cạnh (px) của static.png vuông gửi kênh ngoài. */
+    public static function outboundImageSize(): int
+    {
+        return (int) config('yona.stickers.outbound_image_size');
     }
 
     /** Cạnh (px CSS) khi hiện sticker ở hộp thư và widget. */

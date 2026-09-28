@@ -13,10 +13,10 @@ final class FakeStickerRenderer implements StickerRenderer
 {
     private const CONTAINER_KEY = 'tests.fake-sticker-renderer';
 
-    /** @var (Closure(string, string, array<string, mixed>, int): array<string, mixed>)|null */
+    /** @var (Closure(string, string, array<string, mixed>, int, int): array<string, mixed>)|null */
     public ?Closure $scenario = null;
 
-    /** @var list<array{image_bytes: string, image_path: string, output_directory: string, edit: array<string, mixed>, size: int}> */
+    /** @var list<array{image_bytes: string, image_path: string, output_directory: string, edit: array<string, mixed>, size: int, static_size: int}> */
     public array $calls = [];
 
     public static function install(): self
@@ -28,7 +28,7 @@ final class FakeStickerRenderer implements StickerRenderer
         return $renderer;
     }
 
-    public function render(string $imagePath, string $outputDirectory, array $edit, int $size): array
+    public function render(string $imagePath, string $outputDirectory, array $edit, int $size, int $staticSize): array
     {
         $this->calls[] = [
             'image_bytes' => (string) file_get_contents($imagePath),
@@ -36,10 +36,11 @@ final class FakeStickerRenderer implements StickerRenderer
             'output_directory' => $outputDirectory,
             'edit' => $edit,
             'size' => $size,
+            'static_size' => $staticSize,
         ];
 
         if ($this->scenario !== null) {
-            return ($this->scenario)($imagePath, $outputDirectory, $edit, $size);
+            return ($this->scenario)($imagePath, $outputDirectory, $edit, $size, $staticSize);
         }
 
         return self::writeOutputs($outputDirectory, $size);

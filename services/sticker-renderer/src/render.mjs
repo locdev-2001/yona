@@ -13,11 +13,12 @@ const STICKER_FILE = 'sticker.webp';
 const STATIC_FILE = 'static.png';
 const TIMEOUT_OPTION = '--timeout-ms=';
 const SIZE_OPTION = '--size=';
+const STATIC_SIZE_OPTION = '--static-size=';
 const EDIT_OPTION = '--edit=';
 const DEFAULT_SIZE = 64;
 const MIN_SIZE = 16;
 const MAX_SIZE = 512;
-const USAGE = 'Usage: render.mjs <input> <outDir> [--size=64] [--edit=<file.json>] [--timeout-ms=N]';
+const USAGE = 'Usage: render.mjs <input> <outDir> [--size=64] [--static-size=128] [--edit=<file.json>] [--timeout-ms=N]';
 const WORKER_URL = new URL('./render-worker.mjs', import.meta.url);
 
 function parseArguments(argv) {
@@ -25,6 +26,7 @@ function parseArguments(argv) {
     const options = argv.filter((argument) => argument.startsWith('--'));
     let timeoutMs = DEFAULT_TIMEOUT_MS;
     let size = DEFAULT_SIZE;
+    let staticSize = null;
     let editPath = null;
 
     for (const option of options) {
@@ -32,6 +34,8 @@ function parseArguments(argv) {
             timeoutMs = integerOption(option, TIMEOUT_OPTION, 1, MAX_TIMEOUT_MS);
         } else if (option.startsWith(SIZE_OPTION)) {
             size = integerOption(option, SIZE_OPTION, MIN_SIZE, MAX_SIZE);
+        } else if (option.startsWith(STATIC_SIZE_OPTION)) {
+            staticSize = integerOption(option, STATIC_SIZE_OPTION, MIN_SIZE, MAX_SIZE);
         } else if (option.startsWith(EDIT_OPTION) && option.length > EDIT_OPTION.length) {
             editPath = resolve(option.slice(EDIT_OPTION.length));
         } else {
@@ -40,7 +44,7 @@ function parseArguments(argv) {
     }
     if (positional.length !== 2) throw new RenderError('usage', USAGE);
 
-    return { inputPath: resolve(positional[0]), outDir: resolve(positional[1]), timeoutMs, size, editPath };
+    return { inputPath: resolve(positional[0]), outDir: resolve(positional[1]), timeoutMs, sizes: { size, staticSize: staticSize ?? size }, editPath };
 }
 
 function integerOption(option, prefix, min, max) {
@@ -90,9 +94,9 @@ async function readEdit(editPath) {
     }
 }
 
-function renderInWorker(inputBytes, edit, size, timeoutMs) {
+function renderInWorker(inputBytes, edit, sizes, timeoutMs) {
     return new Promise((resolvePromise, rejectPromise) => {
-        const worker = new Worker(WORKER_URL, { workerData: { inputBytes, edit, size } });
+        const worker = new Worker(WORKER_URL, { workerData: { inputBytes, edit, sizes } });
         let settled = false;
         const settle = (outcome) => {
             if (settled) return;
@@ -133,10 +137,10 @@ async function writeOutputs(outDir, rendered) {
 }
 
 async function main() {
-    const { inputPath, outDir, timeoutMs, size, editPath } = parseArguments(process.argv.slice(2));
+    const { inputPath, outDir, timeoutMs, sizes, editPath } = parseArguments(process.argv.slice(2));
     const edit = await readEdit(editPath);
     const inputBytes = await readInput(inputPath);
-    const rendered = await renderInWorker(inputBytes, edit, size, timeoutMs);
+    const rendered = await renderInWorker(inputBytes, edit, sizes, timeoutMs);
     const outputPaths = await writeOutputs(outDir, rendered);
 
     return { ...outputPaths, ...rendered.details };

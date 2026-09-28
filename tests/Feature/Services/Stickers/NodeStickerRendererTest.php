@@ -45,7 +45,7 @@ beforeEach(function () {
         File::put("{$this->outputDirectory}/sticker.webp", 'webp');
         File::put("{$this->outputDirectory}/static.png", 'png');
     };
-    $this->render = fn (array $edit = [], int $size = 64) => (new NodeStickerRenderer)->render($this->imagePath, $this->outputDirectory, $edit, $size);
+    $this->render = fn (array $edit = [], int $size = 64, int $staticSize = 128) => (new NodeStickerRenderer)->render($this->imagePath, $this->outputDirectory, $edit, $size, $staticSize);
 
     config([
         'yona.stickers.renderers.node.binary' => 'node',
@@ -67,7 +67,7 @@ it('chạy CLI dưới trần bộ nhớ dữ liệu, timeout tiến trình dài
 
     Process::assertRan(fn (PendingProcess $process) => $process->command === [
         'prlimit', '--data='.(256 * 1024 * 1024),
-        'node', '/opt/renderer/render.mjs', $this->imagePath, $this->outputDirectory, '--size=64', '--timeout-ms=7000',
+        'node', '/opt/renderer/render.mjs', $this->imagePath, $this->outputDirectory, '--size=64', '--static-size=128', '--timeout-ms=7000',
     ] && $process->timeout === 7 + 3);
 });
 
@@ -199,14 +199,14 @@ describe('với trình dựng thật', function () {
         ]);
     });
 
-    it('cắt, xoá nền và dựng PNG thành WebP + PNG vuông đúng cạnh yêu cầu', function () {
+    it('cắt, xoá nền và dựng WebP cạnh sticker + PNG cạnh kênh ngoài', function () {
         File::put($this->imagePath, YonaStickers::png(300));
 
-        $rendered = ($this->render)(['crop' => ['x' => 0.1, 'y' => 0.1, 'w' => 0.8, 'h' => 0.8], 'tolerance' => 12], 48);
+        $rendered = ($this->render)(['crop' => ['x' => 0.1, 'y' => 0.1, 'w' => 0.8, 'h' => 0.8], 'tolerance' => 12], 48, 96);
 
         expect($rendered)->toMatchArray(['width' => 48, 'height' => 48, 'frames' => 1, 'duration_ms' => 0])
             ->and(getimagesize($rendered['image_path']))->toMatchArray([0 => 48, 1 => 48, 'mime' => 'image/webp'])
-            ->and(getimagesize($rendered['static_path']))->toMatchArray([0 => 48, 1 => 48, 'mime' => 'image/png']);
+            ->and(getimagesize($rendered['static_path']))->toMatchArray([0 => 96, 1 => 96, 'mime' => 'image/png']);
     });
 
     it('GIF động ra WebP động giữ số khung và thời lượng', function () {
@@ -259,3 +259,15 @@ describe('với tiến trình thật', function () {
         expect(($this->render)())->toBe(['failure' => StickerRenderer::RENDERER_UNAVAILABLE]);
     });
 });
+
+it('truyền cạnh ảnh gửi kênh ngoài vào --static-size, kẹp trong khoảng CLI nhận', function (int $staticSize, string $expected) {
+    Process::fake(['*' => Process::result('{"error":"render_failed"}', exitCode: 1)]);
+
+    ($this->render)([], 64, $staticSize);
+
+    Process::assertRan(fn (PendingProcess $process) => in_array($expected, $process->command, true));
+})->with([
+    'mặc định 128' => [128, '--static-size=128'],
+    'dưới sàn' => [2, '--static-size=16'],
+    'vượt trần' => [2048, '--static-size=512'],
+]);

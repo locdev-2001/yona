@@ -193,8 +193,11 @@ return [
                 'script' => base_path('services/sticker-renderer/src/render.mjs'),
             ],
         ],
-        // Cạnh (px) của tệp sticker vuông: WebP hiển thị trong Yona và PNG gửi kênh ngoài (Zalo...).
+        // Cạnh (px) của sticker.webp vuông hiển thị trong Yona.
         'image_size' => (int) env('STICKER_IMAGE_SIZE', 64),
+        // Cạnh (px) của PNG gửi kênh ngoài (Zalo...): kênh ngoài phóng to ảnh quá nhỏ làm vỡ hình,
+        // nên ảnh này dựng riêng ở cỡ gần sticker gốc của Zalo.
+        'outbound_image_size' => (int) env('STICKER_OUTBOUND_IMAGE_SIZE', 128),
         // Cạnh (px CSS) khi hiện sticker ở hộp thư và widget; tách khỏi cạnh tệp để màn retina tăng riêng được.
         'display_size' => (int) env('STICKER_DISPLAY_SIZE', 64),
         // Trần dung lượng ảnh gốc tải lên. Trình dựng còn tự chặn ảnh trên 20 MB,

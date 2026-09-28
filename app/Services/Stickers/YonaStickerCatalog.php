@@ -130,7 +130,7 @@ final class YonaStickerCatalog implements StickerCatalog
             'path' => $sticker->payload['static_path'],
             'filename' => sprintf(self::STATIC_FILENAME_PATTERN, $sticker->payload['id']),
             'content_type' => self::STATIC_CONTENT_TYPE,
-            'meta' => ['width' => LibrarySticker::imageSize(), 'height' => LibrarySticker::imageSize()],
+            'meta' => ['width' => LibrarySticker::outboundImageSize(), 'height' => LibrarySticker::outboundImageSize()],
         ]);
     }
 

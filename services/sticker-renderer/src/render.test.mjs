@@ -112,7 +112,7 @@ describe('render.mjs', () => {
         const inputPath = await writeSvgAs('sticker.jpg', stickerSvg(), 'jpeg');
         const run = await renderOk(inputPath);
 
-        assert.deepEqual(Object.keys(run.output).sort(), ['durationMs', 'frames', 'height', 'image', 'static', 'warnings', 'width']);
+        assert.deepEqual(Object.keys(run.output).sort(), ['durationMs', 'frames', 'height', 'image', 'static', 'staticSize', 'warnings', 'width']);
         assert.equal(run.output.image, join(run.outDir, 'sticker.webp'));
         assert.equal(run.output.static, join(run.outDir, 'static.png'));
         assert.equal(run.output.width, STICKER_SIZE);
@@ -129,7 +129,8 @@ describe('render.mjs', () => {
         const pngMetadata = await sharp(run.output.static).metadata();
         assert.equal(pngMetadata.format, 'png');
         assert.equal(pngMetadata.width, STICKER_SIZE);
-        assert.ok(pngMetadata.paletteBitDepth, 'static.png phải dùng bảng màu');
+        assert.equal(pngMetadata.paletteBitDepth, undefined, 'static.png đủ màu, không dùng bảng 256 màu');
+        assert.equal(run.output.staticSize, STICKER_SIZE, 'không truyền --static-size thì ảnh tĩnh cùng cỡ sticker');
 
         for (const imagePath of [run.output.image, run.output.static]) {
             const image = await readRgba(imagePath);
@@ -203,7 +204,7 @@ describe('render.mjs', () => {
         assert.deepEqual(pixel(await readRgba(restored.output.static), 32, 32), [255, 255, 255, 255]);
     });
 
-    test('GIF 10 khung → WebP động 64×64 đúng số khung và độ trễ; static.png 64×64 bảng màu', async () => {
+    test('GIF 10 khung → WebP động 64×64 đúng số khung và độ trễ; static.png 64×64 đủ màu', async () => {
         const side = 120;
         const frameBytes = side * side * 3;
         const strip = Buffer.alloc(frameBytes * GIF_FRAMES, 255);
@@ -231,7 +232,7 @@ describe('render.mjs', () => {
         const staticMetadata = await sharp(run.output.static).metadata();
         assert.equal(staticMetadata.width, STICKER_SIZE);
         assert.equal(staticMetadata.height, STICKER_SIZE);
-        assert.ok(staticMetadata.paletteBitDepth);
+        assert.equal(staticMetadata.paletteBitDepth, undefined);
     });
 
     test('JPG 4000×3000 xử lý dưới 2 giây', async () => {
@@ -295,11 +296,48 @@ describe('render.mjs', () => {
         }
     });
 
+    test('--static-size dựng ảnh tĩnh kênh ngoài ở cỡ riêng, co thẳng từ ảnh gốc chứ không phóng to bản 64', async () => {
+        const inputPath = await writeSvgAs('sharp.jpg', stickerSvg(), 'jpeg');
+        const run = await renderOk(inputPath, ['--static-size=128']);
+
+        assert.equal(run.output.width, STICKER_SIZE);
+        assert.equal(run.output.staticSize, 128);
+        assert.equal((await sharp(run.output.image).metadata()).width, STICKER_SIZE);
+        const staticMetadata = await sharp(run.output.static).metadata();
+        assert.equal(staticMetadata.width, 128);
+        assert.equal(staticMetadata.height, 128);
+        assert.equal(staticMetadata.paletteBitDepth, undefined);
+
+        const image = await readRgba(run.output.static);
+        assert.deepEqual(pixel(image, 0, 0), [0, 0, 0, 0]);
+        let detailedBlocks = 0;
+        for (let blockY = 0; blockY < 128; blockY += 2) {
+            for (let blockX = 0; blockX < 128; blockX += 2) {
+                const corner = pixel(image, blockX, blockY).join();
+                const same = [[1, 0], [0, 1], [1, 1]].every(([dx, dy]) => pixel(image, blockX + dx, blockY + dy).join() === corner);
+                if (!same) detailedBlocks++;
+            }
+        }
+        assert.ok(detailedBlocks > 50, `ảnh tĩnh 128 giống bản 64 phóng to (chỉ ${detailedBlocks} ô 2×2 có chi tiết)`);
+    });
+
+    test('--static-size ngoài khoảng cho phép là lỗi usage', async () => {
+        const inputPath = await writeSvgAs('bad-size.jpg', stickerSvg(), 'jpeg');
+        const run = await runCli([inputPath, join(workDir, uniqueName('out')), '--static-size=4']);
+
+        assert.equal(run.exitCode, 1);
+        assert.deepEqual(run.output, { error: 'usage' });
+    });
+
     test('cỡ tệp đầu ra điển hình nằm trong ngân sách', async () => {
         const run = await renderOk(await writeSvgAs('budget.jpg', stickerSvg(), 'jpeg'));
         const [webpBytes, pngBytes] = await Promise.all([stat(run.output.image), stat(run.output.static)]).then((stats) => stats.map((item) => item.size));
 
         assert.ok(webpBytes < 8 * 1024, `sticker.webp ${webpBytes} bytes`);
         assert.ok(pngBytes < 8 * 1024, `static.png ${pngBytes} bytes`);
+
+        const outbound = await renderOk(await writeSvgAs('budget-128.jpg', stickerSvg(), 'jpeg'), ['--static-size=128']);
+        const outboundBytes = (await stat(outbound.output.static)).size;
+        assert.ok(outboundBytes < 20 * 1024, `static.png 128px ${outboundBytes} bytes`);
     });
 });

@@ -115,6 +115,7 @@ class RenderStickerJob extends ApplicationJob
             "{$workspace}/".self::RENDER_OUTPUT_DIRECTORY,
             $this->sticker->edit_params ?? [],
             Sticker::imageSize(),
+            Sticker::outboundImageSize(),
         );
         if (isset($rendered['failure'])) {
             return ['failure' => $rendered['failure']];

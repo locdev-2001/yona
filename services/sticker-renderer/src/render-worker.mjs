@@ -5,7 +5,7 @@ import { RenderError } from './render-error.mjs';
 const inputBytes = Buffer.from(workerData.inputBytes.buffer, workerData.inputBytes.byteOffset, workerData.inputBytes.byteLength);
 
 try {
-    parentPort.postMessage({ rendered: await renderStickerImage(inputBytes, workerData.edit, workerData.size) });
+    parentPort.postMessage({ rendered: await renderStickerImage(inputBytes, workerData.edit, workerData.sizes) });
 } catch (error) {
     const code = error instanceof RenderError ? error.code : 'render_failed';
     parentPort.postMessage({ errorCode: code, errorDetail: String(error?.stack ?? error) });

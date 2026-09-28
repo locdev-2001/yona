@@ -1,6 +1,5 @@
 import sharp from 'sharp';
 import { applyMask, buildMask } from './background-mask.mjs';
-import { zeroTransparentPaletteColors } from './png-palette.mjs';
 import { RenderError } from '../render-error.mjs';
 
 export const MAX_INPUT_PIXELS = 25_000_000;
@@ -157,10 +156,12 @@ async function resizeFrames(strip, side, frameCount, size) {
 }
 
 /**
- * Ảnh tĩnh: WebP lossless (ở 64px nặng ngang lossy, giữ đúng màu, điểm trong suốt giữ RGB 0).
- * Ảnh động: WebP lossy, nhẹ bằng khoảng một nửa lossless; bộ mã hoá ảnh động không giữ RGB dưới vùng trong suốt dù chọn kiểu nào.
+ * sticker.webp: tĩnh thì lossless (ở 64px nặng ngang lossy, giữ đúng màu, điểm trong suốt giữ RGB 0); động thì lossy,
+ * nhẹ bằng khoảng một nửa lossless (bộ mã hoá ảnh động không giữ RGB dưới vùng trong suốt dù chọn kiểu nào).
+ * static.png gửi kênh ngoài: co thẳng từ khung đầu ở cỡ riêng (kênh ngoài phóng to ảnh quá nhỏ làm vỡ hình), PNG đủ màu
+ * vì bảng 256 màu làm răng cưa viền.
  */
-async function encodeOutputs(strip, side, frameCount, delays, size) {
+async function encodeOutputs(strip, side, frameCount, delays, { size, staticSize }) {
     const resized = await resizeFrames(strip, side, frameCount, size);
     const animated = frameCount > 1;
     const stickerWebp = animated
@@ -170,18 +171,19 @@ async function encodeOutputs(strip, side, frameCount, delays, size) {
         : await sharp(resized, { raw: { width: size, height: size, channels: CHANNELS } })
             .webp({ lossless: true, effort: STATIC_WEBP_EFFORT })
             .toBuffer();
-    const palettePng = await sharp(resized.subarray(0, size * size * CHANNELS), { raw: { width: size, height: size, channels: CHANNELS } })
-        .png({ palette: true, compressionLevel: 9, effort: 10 })
+    const staticFrame = await resizeFrames(strip, side, 1, staticSize);
+    const staticPng = await sharp(staticFrame, { raw: { width: staticSize, height: staticSize, channels: CHANNELS } })
+        .png({ compressionLevel: 9, adaptiveFiltering: true })
         .toBuffer();
 
-    return { stickerWebp, staticPng: zeroTransparentPaletteColors(palettePng) };
+    return { stickerWebp, staticPng };
 }
 
 /**
  * Dựng sticker từ ảnh: giải mã (mọi khung) → cắt → xoá nền từng khung (edits chung) → trim → vuông → co về size.
- * Trả buffer sticker.webp (động nếu nguồn nhiều khung), static.png (khung đầu, bảng màu) và thông số.
+ * Trả buffer sticker.webp (động nếu nguồn nhiều khung, cạnh `size`), static.png (khung đầu, cạnh `staticSize`) và thông số.
  */
-export async function renderStickerImage(inputBytes, edit, size) {
+export async function renderStickerImage(inputBytes, edit, { size, staticSize = size }) {
     const source = await readMetadata(inputBytes);
     const decoded = await decodeFrames(inputBytes, source);
     const region = cropRectangle(edit.crop, decoded.width, decoded.height);
@@ -206,11 +208,11 @@ export async function renderStickerImage(inputBytes, edit, size) {
     if (autoRemovedTotal === 0) warnings.push('mask_full');
 
     const { strip, side } = placeOnSquare(frames, region.width, bounds ?? { left: 0, top: 0, width: region.width, height: region.height });
-    const { stickerWebp, staticPng } = await encodeOutputs(strip, side, frames.length, source.delays, size);
+    const { stickerWebp, staticPng } = await encodeOutputs(strip, side, frames.length, source.delays, { size, staticSize });
 
     return {
         stickerWebp,
         staticPng,
-        details: { width: size, height: size, frames: frames.length, durationMs: source.durationMs, warnings },
+        details: { width: size, height: size, staticSize, frames: frames.length, durationMs: source.durationMs, warnings },
     };
 }

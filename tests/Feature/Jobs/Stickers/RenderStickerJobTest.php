@@ -220,7 +220,7 @@ it('do một supervisor riêng một process phục vụ, ngoài các tier tin n
 
 it('dựng lại sticker đã ready: ghi đè đúng đường dẫn cũ, cập nhật cỡ theo config, vẫn ready', function () {
     ($this->runJob)();
-    config(['yona.stickers.image_size' => 96]);
+    config(['yona.stickers.image_size' => 96, 'yona.stickers.outbound_image_size' => 160]);
     $this->renderer->scenario = fn (string $image, string $output, array $edit, int $size) => FakeStickerRenderer::writeOutputs($output, $size, 'webp-v2', 'png-v2');
 
     ($this->runJob)($this->sticker->fresh(), true);
@@ -229,6 +229,7 @@ it('dựng lại sticker đã ready: ghi đè đúng đường dẫn cũ, cập 
     expect($sticker->only(['status', 'image_path', 'static_path', 'width', 'height']))
         ->toBe(['status' => Sticker::STATUS_READY, ...$this->renderedPaths, 'width' => 96, 'height' => 96])
         ->and($this->renderer->calls[1]['size'])->toBe(96)
+        ->and($this->renderer->calls[1]['static_size'])->toBe(160)
         ->and($this->renderer->calls[1]['edit'])->toEqual($this->edit)
         ->and($this->disk->get($this->renderedPaths['static_path']))->toBe('png-v2')
         ->and($this->disk->get($this->renderedPaths['image_path']))->toBe('webp-v2');
@@ -262,13 +263,13 @@ describe('với trình dựng thật', function () {
         $this->pack = StickerPack::factory()->create();
     });
 
-    it('biến ảnh PNG tải lên thành sticker ready với tệp 64×64 thật', function () {
+    it('biến ảnh PNG tải lên thành sticker ready: WebP 64×64 trong Yona, PNG 128×128 gửi kênh ngoài', function () {
         $sticker = app(StickerUploadService::class)->upload($this->pack, YonaStickers::imageUpload('dot.png', side: 400), 'Chấm')->fresh();
 
         expect($sticker->only(['status', 'width', 'height', 'frame_count']))->toBe(['status' => Sticker::STATUS_READY, 'width' => 64, 'height' => 64, 'frame_count' => 1])
             ->and($sticker->only(['image_path', 'static_path']))->toBe(StickerFileLayout::renderedPaths($sticker->content_hash))
             ->and(getimagesizefromstring($this->disk->get($sticker->image_path)))->toMatchArray([0 => 64, 1 => 64, 'mime' => 'image/webp'])
-            ->and(getimagesizefromstring($this->disk->get($sticker->static_path)))->toMatchArray([0 => 64, 1 => 64, 'mime' => 'image/png'])
+            ->and(getimagesizefromstring($this->disk->get($sticker->static_path)))->toMatchArray([0 => 128, 1 => 128, 'mime' => 'image/png'])
             ->and($sticker->byte_size)->toBe(strlen($this->disk->get($sticker->image_path)));
     });
 
@@ -278,7 +279,7 @@ describe('với trình dựng thật', function () {
 
         expect($sticker->only(['status', 'frame_count', 'duration_ms']))->toBe(['status' => Sticker::STATUS_READY, 'frame_count' => 4, 'duration_ms' => 480])
             ->and(str_contains($webp, 'ANIM') && substr_count($webp, 'ANMF') === 4)->toBeTrue()
-            ->and(getimagesizefromstring($this->disk->get($sticker->static_path)))->toMatchArray([0 => 64, 1 => 64, 'mime' => 'image/png']);
+            ->and(getimagesizefromstring($this->disk->get($sticker->static_path)))->toMatchArray([0 => 128, 1 => 128, 'mime' => 'image/png']);
     });
 
     it('xoá nền hết sạch thì sticker failed với lời nhắc chỉnh độ nhạy', function () {
