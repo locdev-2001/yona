@@ -47,11 +47,9 @@ final class StickerFileJanitor
      */
     private function unreferenced(array $contentHashes, ?int $ignoredStickerId): array
     {
-        $hashByPath = [];
+        $hashByDirectory = [];
         foreach ($contentHashes as $contentHash) {
-            foreach (StickerFileLayout::renderedPaths($contentHash) as $path) {
-                $hashByPath[$path] = $contentHash;
-            }
+            $hashByDirectory[StickerFileLayout::directory($contentHash)] = $contentHash;
         }
 
         $usedByAnotherSticker = Sticker::query()
@@ -61,12 +59,16 @@ final class StickerFileJanitor
             ->distinct()
             ->pluck('content_hash')
             ->all();
+        // Theo thư mục chứ không theo tên tệp: tin cũ có thể mượn tệp của cỡ trước.
         $borrowedByMessage = Attachment::query()
             ->where('disk', Sticker::DISK)
-            ->whereIn('path', array_keys($hashByPath))
+            ->where(fn ($query) => collect(array_keys($hashByDirectory))
+                ->each(fn (string $directory) => $query->orWhere('path', 'like', "{$directory}/%")))
             ->distinct()
             ->pluck('path')
-            ->map(fn (string $path) => $hashByPath[$path])
+            ->map(fn (string $path) => $hashByDirectory[dirname($path)] ?? null)
+            ->filter()
+            ->values()
             ->all();
 
         return array_values(array_diff($contentHashes, $usedByAnotherSticker, $borrowedByMessage));

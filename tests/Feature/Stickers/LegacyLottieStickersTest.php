@@ -167,3 +167,17 @@ describe('tin đã gửi mang payload Lottie', function () {
         expect($this->disk->allFiles())->toBe([]);
     });
 });
+
+it('xoá sticker sau khi đổi cỡ vẫn giữ tệp cỡ cũ mà tin đã gửi còn mượn', function () {
+    config(['yona.stickers.outbound_image_size' => 64]);
+    $sticker = YonaStickers::ready();
+    $oldStatic = $sticker->static_path;
+    $this->disk->put($oldStatic, 'png-64');
+    legacyStickerMessage($this->conversation, ['id' => $sticker->id, 'static_path' => $oldStatic]);
+
+    config(['yona.stickers.outbound_image_size' => 128]);
+    app(StickerLibraryManager::class)->deleteSticker($sticker);
+
+    expect($oldStatic)->toEndWith('/static-64.png')
+        ->and($this->disk->exists($oldStatic))->toBeTrue();
+});

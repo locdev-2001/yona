@@ -832,10 +832,12 @@ location ^~ /storage/stickers/ {
 }
 ```
 
-Ngoại lệ duy nhất là `php artisan stickers:rerender` (sau khi đổi
-`STICKER_IMAGE_SIZE` hoặc `STICKER_OUTBOUND_IMAGE_SIZE`): nó ghi đè `sticker.webp` và `static.png` tại chỗ, nên chạy
-xong thì purge cache Cloudflare cho tiền tố `/storage/stickers/`; trình duyệt đã
-tải bản cũ vẫn giữ bản cũ tới khi hết cache.
+Tên tệp sticker mang cạnh ảnh (`sticker-64.webp`, `static-128.png`), nên
+`php artisan stickers:rerender` sau khi đổi `STICKER_IMAGE_SIZE` hoặc
+`STICKER_OUTBOUND_IMAGE_SIZE` ghi ra URL mới, không cần purge cache. Tệp cỡ cũ
+nằm lại trong cùng thư mục cho tin đã gửi, dọn khi không còn gì trỏ tới. Chỉ bản
+đầu (tên `sticker.webp`/`static.png`, trước 28/09) từng bị ghi đè tại chỗ: nếu
+còn thấy ảnh cũ thì purge tiền tố `/storage/stickers/` một lần.
 
 Kiểm sau reload (lấy một sticker đã xuất bản):
 
@@ -1353,7 +1355,7 @@ khung hoặc hoạt ảnh dài quá 10 giây. Biến trong `.env` Laravel (đọ
 Đổi biến xong chạy `php artisan config:cache` rồi `php artisan horizon:terminate`
 (Supervisor tự dựng lại worker). Đổi `STICKER_IMAGE_SIZE`, `STICKER_OUTBOUND_IMAGE_SIZE` hoặc cách dựng thì chạy
 thêm `php artisan stickers:rerender` (thử trước bằng `--dry-run`) để dựng lại
-sticker đã có từ ảnh gốc + thông số chỉnh đã lưu, rồi purge cache như mục 7;
+sticker đã có từ ảnh gốc + thông số chỉnh đã lưu (ra tệp mới theo cỡ, không cần purge cache);
 sticker vẫn dùng được trong lúc hàng đợi `stickers` chạy.
 
 **Nginx và sao lưu.** Cache tệp sticker: mục 7, "Tệp kho sticker". Sao lưu

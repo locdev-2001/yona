@@ -39,15 +39,16 @@ beforeEach(function () {
     };
 });
 
-it('dựng từ ảnh gốc + thông số chỉnh đã lưu, ghi sticker.webp và static.png theo hash rồi chuyển ready', function () {
+it('dựng từ ảnh gốc + thông số chỉnh đã lưu, ghi tệp mang cạnh ảnh theo hash rồi chuyển ready', function () {
     config(['yona.stickers.image_size' => 72]);
+    $this->renderedPaths = StickerFileLayout::renderedPaths($this->contentHash);
     $this->renderer->scenario = fn (string $image, string $output, array $edit, int $size) => FakeStickerRenderer::writeOutputs($output, $size, 'webp-bytes', 'png-bytes', frames: 4);
 
     ($this->runJob)();
 
     $sticker = $this->sticker->fresh();
     $directory = substr($this->contentHash, 0, 2).'/'.$this->contentHash;
-    expect($this->renderedPaths)->toBe(['image_path' => "{$directory}/sticker.webp", 'static_path' => "{$directory}/static.png"])
+    expect($this->renderedPaths)->toBe(['image_path' => "{$directory}/sticker-72.webp", 'static_path' => "{$directory}/static-128.png"])
         ->and($sticker->only(['status', 'failure_code', 'image_path', 'static_path', 'original_path', 'width', 'height', 'frame_count', 'duration_ms', 'byte_size']))->toBe([
             'status' => Sticker::STATUS_READY,
             'failure_code' => null,
@@ -140,14 +141,14 @@ it('ghi disk hỏng thì sticker failed và dọn tệp đã ghi', function (str
     expect($this->sticker->fresh()->only(['status', 'failure_code']))
         ->toBe(['status' => Sticker::STATUS_FAILED, 'failure_code' => RenderStickerJob::STORAGE_WRITE_FAILED])
         ->and($this->disk->allFiles())->toBe([]);
-})->with(['sticker.webp', 'static.png']);
+})->with(['sticker-64.webp', 'static-128.png']);
 
 it('không đụng tệp dùng chung khi sticker khác cùng nội dung còn dùng', function () {
     Sticker::factory()->create(['content_hash' => $this->contentHash, ...$this->renderedPaths, 'original_path' => $this->originalPath]);
     foreach ($this->renderedPaths as $path) {
         $this->disk->put($path, 'already published');
     }
-    ($this->failWritesTo)('static.png');
+    ($this->failWritesTo)('static-128.png');
 
     ($this->runJob)();
 
@@ -218,9 +219,11 @@ it('do một supervisor riêng một process phục vụ, ngoài các tier tin n
         ->and(config('horizon.defaults.supervisor-1.queue'))->not->toContain('stickers');
 });
 
-it('dựng lại sticker đã ready: ghi đè đúng đường dẫn cũ, cập nhật cỡ theo config, vẫn ready', function () {
+it('dựng lại sticker đã ready theo cỡ mới: tệp mang cạnh mới (URL mới, không đè cache cũ), vẫn ready, tệp cũ còn cho tin đã gửi', function () {
     ($this->runJob)();
+    $oldPaths = $this->renderedPaths;
     config(['yona.stickers.image_size' => 96, 'yona.stickers.outbound_image_size' => 160]);
+    $this->renderedPaths = StickerFileLayout::renderedPaths($this->contentHash);
     $this->renderer->scenario = fn (string $image, string $output, array $edit, int $size) => FakeStickerRenderer::writeOutputs($output, $size, 'webp-v2', 'png-v2');
 
     ($this->runJob)($this->sticker->fresh(), true);
@@ -230,6 +233,9 @@ it('dựng lại sticker đã ready: ghi đè đúng đường dẫn cũ, cập 
         ->toBe(['status' => Sticker::STATUS_READY, ...$this->renderedPaths, 'width' => 96, 'height' => 96])
         ->and($this->renderer->calls[1]['size'])->toBe(96)
         ->and($this->renderer->calls[1]['static_size'])->toBe(160)
+        ->and($this->renderedPaths['static_path'])->toEndWith('/static-160.png')
+        ->and($this->renderedPaths)->not->toBe($oldPaths)
+        ->and($this->disk->exists($oldPaths['static_path']))->toBeTrue()
         ->and($this->renderer->calls[1]['edit'])->toEqual($this->edit)
         ->and($this->disk->get($this->renderedPaths['static_path']))->toBe('png-v2')
         ->and($this->disk->get($this->renderedPaths['image_path']))->toBe('webp-v2');
