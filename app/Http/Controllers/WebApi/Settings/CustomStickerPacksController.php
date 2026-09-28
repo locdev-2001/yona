@@ -6,6 +6,7 @@ use App\Http\Controllers\Concerns\ManagesStickerLibrary;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Stickers\ReorderStickersRequest;
 use App\Http\Requests\Stickers\StickerPackRequest;
+use App\Http\Requests\Stickers\UpdateStickerRequest;
 use App\Http\Requests\Stickers\UploadStickerRequest;
 use App\Models\Account;
 use Illuminate\Http\JsonResponse;
@@ -71,6 +72,13 @@ class CustomStickerPacksController extends Controller
         $this->authorizeAdministrator($request);
 
         return $this->uploadSticker($request, $account, $packId);
+    }
+
+    public function updateSticker(UpdateStickerRequest $request, Account $account, int $packId, int $stickerId): JsonResponse
+    {
+        $this->authorizeAdministrator($request);
+
+        return $this->updateLibrarySticker($request, $account, $packId, $stickerId);
     }
 
     public function reorder(ReorderStickersRequest $request, Account $account, int $packId): JsonResponse

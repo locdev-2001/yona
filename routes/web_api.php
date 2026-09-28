@@ -218,6 +218,10 @@ Route::middleware(['auth.api_token', 'auth', 'account.scope'])
         Route::get('/conversations/{conversationId}/stickers', [StickersController::class, 'index'])
             ->whereNumber('conversationId')
             ->middleware('throttle:60,1');
+        // Gợi ý khi gõ chỉ đọc DB của kho nên nới nhịp hơn bảng chọn; FE vẫn debounce.
+        Route::get('/conversations/{conversationId}/stickers/suggestions', [StickersController::class, 'suggestions'])
+            ->whereNumber('conversationId')
+            ->middleware('throttle:120,1');
         Route::get('/conversations/{conversationId}/labels', [ConversationLabelsController::class, 'index'])->whereNumber('conversationId');
         Route::post('/conversations/{conversationId}/labels', [ConversationLabelsController::class, 'create'])->whereNumber('conversationId');
         // resource :draft_messages (singular) — mot ban nhap moi conversation.
@@ -451,6 +455,8 @@ Route::middleware(['auth.api_token', 'auth', 'account.scope'])
                     ->whereNumber('packId')
                     ->middleware('throttle:sticker-uploads');
                 Route::put('/{packId}/stickers/order', [CustomStickerPacksController::class, 'reorder'])->whereNumber('packId');
+                Route::patch('/{packId}/stickers/{stickerId}', [CustomStickerPacksController::class, 'updateSticker'])
+                    ->whereNumber(['packId', 'stickerId']);
                 Route::delete('/{packId}/stickers/{stickerId}', [CustomStickerPacksController::class, 'destroySticker'])
                     ->whereNumber(['packId', 'stickerId']);
             });

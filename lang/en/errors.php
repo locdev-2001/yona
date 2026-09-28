@@ -121,6 +121,8 @@ return [
         'pack_full' => 'A pack holds at most :max stickers. Remove some or create a new pack.',
         'too_many_packs' => 'An account can have at most :max sticker packs.',
         'upload_throttled' => 'Too many sticker uploads at once. Please wait a moment and try again.',
+        'not_found' => 'This pack or sticker was not found in the shared library.',
+        'invalid_base64' => 'tgs_base64 is not a valid base64 string.',
     ],
     'widget_recall' => [
         'capability_not_supported' => 'This channel does not support unsending messages.',

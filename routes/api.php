@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\Webhooks\ZaloController as ZaloWebhooksController;
 use App\Http\Controllers\Platform\Api\V1\AccountsController as PlatformAccountsController;
 use App\Http\Controllers\Platform\Api\V1\AccountUsersController as PlatformAccountUsersController;
 use App\Http\Controllers\Platform\Api\V1\AgentBotsController as PlatformAgentBotsController;
+use App\Http\Controllers\Platform\Api\V1\StickerPacksController as PlatformStickerPacksController;
 use App\Http\Controllers\Platform\Api\V1\UsersController as PlatformUsersController;
 use App\Http\Controllers\Public\AnalyticsProxyController;
 use App\Http\Controllers\Widget\BroadcastingAuthController;
@@ -119,6 +120,25 @@ Route::middleware(AuthenticatePlatformApp::class)
         Route::get('/accounts/{account}/account_users', [PlatformAccountUsersController::class, 'index'])->whereNumber('account');
         Route::post('/accounts/{account}/account_users', [PlatformAccountUsersController::class, 'store'])->whereNumber('account');
         Route::delete('/accounts/{account}/account_users', [PlatformAccountUsersController::class, 'destroy'])->whereNumber('account');
+
+        // Kho sticker chung (cùng action với console Super Admin và MCP /mcp/stickers).
+        Route::prefix('/sticker_packs')->group(function () {
+            Route::get('/', [PlatformStickerPacksController::class, 'index']);
+            Route::post('/', [PlatformStickerPacksController::class, 'store']);
+            Route::get('/{packId}', [PlatformStickerPacksController::class, 'show'])->whereNumber('packId');
+            Route::match(['put', 'patch'], '/{packId}', [PlatformStickerPacksController::class, 'update'])->whereNumber('packId');
+            Route::delete('/{packId}', [PlatformStickerPacksController::class, 'destroy'])->whereNumber('packId');
+            Route::post('/{packId}/publish', [PlatformStickerPacksController::class, 'publish'])->whereNumber('packId');
+            Route::post('/{packId}/unpublish', [PlatformStickerPacksController::class, 'unpublish'])->whereNumber('packId');
+            Route::post('/{packId}/stickers', [PlatformStickerPacksController::class, 'upload'])
+                ->whereNumber('packId')
+                ->middleware('throttle:sticker-uploads');
+            Route::put('/{packId}/stickers/order', [PlatformStickerPacksController::class, 'reorder'])->whereNumber('packId');
+            Route::patch('/{packId}/stickers/{stickerId}', [PlatformStickerPacksController::class, 'updateSticker'])
+                ->whereNumber(['packId', 'stickerId']);
+            Route::delete('/{packId}/stickers/{stickerId}', [PlatformStickerPacksController::class, 'destroySticker'])
+                ->whereNumber(['packId', 'stickerId']);
+        });
     });
 // F7 Platform API — END
 

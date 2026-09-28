@@ -80,6 +80,8 @@ it('cờ custom_stickers tắt thì sticker trong kho riêng của chính tenant
     expect($this->catalog->find($ownerInbox->fresh(), "yona:{$own->id}"))->not->toBeNull();
 });
 
+// `_` giờ là ký tự ngăn cách của search_fold (như mọi ô tìm khác), không còn là
+// chữ; ký tự đại diện `%` vẫn phải là chữ thường.
 it('tìm theo nhãn hoặc từ khoá, không phân biệt hoa thường; ký tự đại diện của LIKE là chữ thường', function () {
     $pack = StickerPack::factory()->create();
     $hello = YonaStickers::ready($pack, ['label' => 'Hello bạn', 'position' => 1]);
@@ -90,7 +92,18 @@ it('tìm theo nhãn hoặc từ khoá, không phân biệt hoa thường; ký t�
 
     expect(yonaCatalogIds($this->catalog->search($this->inbox, 'HELLO')))->toBe(["yona:{$hello->id}", "yona:{$thanks->id}"])
         ->and(yonaCatalogIds($this->catalog->search($this->inbox, '50%')))->toBe(["yona:{$sale->id}"])
-        ->and($this->catalog->search($this->inbox, 'Giảm 5_'))->toBe([]);
+        ->and($this->catalog->search($this->inbox, 'Giảm 5%0'))->toBe([]);
+});
+
+it('bảng chọn tìm không dấu theo từng chữ, cả nhãn lẫn từ khoá', function () {
+    $pack = StickerPack::factory()->create();
+    $plainKeyword = YonaStickers::ready($pack, ['label' => 'Mèo', 'keywords' => ['cam on'], 'position' => 1]);
+    $accentedLabel = YonaStickers::ready($pack, ['label' => 'Chó cảm ơn', 'position' => 2]);
+    YonaStickers::ready($pack, ['label' => 'Buồn', 'position' => 3]);
+
+    expect(yonaCatalogIds($this->catalog->search($this->inbox, 'cảm ơn')))->toBe(["yona:{$plainKeyword->id}", "yona:{$accentedLabel->id}"])
+        ->and(yonaCatalogIds($this->catalog->search($this->inbox, 'ON CAM')))->toBe(["yona:{$plainKeyword->id}", "yona:{$accentedLabel->id}"])
+        ->and(yonaCatalogIds($this->catalog->search($this->inbox, 'đường')))->toBe([]);
 });
 
 it('theo bộ trả sticker của bộ theo thứ tự trong bộ; mã bộ lạ trả rỗng', function () {

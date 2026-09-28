@@ -125,6 +125,28 @@ ra kênh ngoài là sticker gốc của nền tảng hoặc một ảnh, không 
   trình con có cắt thời gian và `prlimit --data` (`config/yona.php` → `stickers`).
   Tệp ghi theo hash nội dung: `<2 ký tự>/<hash>/anim.json`, `poster.webp`,
   `static.png`. Hỏng bước nào thì sticker `failed` kèm mã.
+- **Nhãn và từ khoá:** `StickerTags` (`app/Services/Stickers/`) là nguồn duy nhất
+  của giới hạn và cách chuẩn hoá (chữ thường, bỏ rỗng/trùng, tối đa 20 từ × 40 ký
+  tự). Sửa qua `StickerLibraryManager::updateSticker()`; route
+  `PATCH …/sticker_packs/{packId}/stickers/{stickerId}` ở cả console Super Admin,
+  kho riêng tenant và Platform API; upload nhận thêm `keywords[]`.
+- **Gợi ý khi gõ:** dashboard gọi `GET /api/v1/accounts/{account}/conversations/{id}/stickers/suggestions?q=`
+  → `StickerLibrary::suggest()` → `YonaStickerCatalog::suggest()`: chỉ kho Yona (không
+  hỏi bridge), cùng gate năng lực và `Sticker::visibleTo()` như bảng chọn, khớp nhãn
+  hoặc một từ khoá bằng/bắt đầu bằng `q` qua hàm SQL `search_fold` (không dấu,
+  không phân biệt hoa thường, không cần extension), khớp trọn đứng trước, tối đa
+  8; `q` dưới 2 ký tự hay hộp thư không dùng được kho thì rỗng. Widget không gọi
+  API: `stickers` trong `/widget/config` mang sẵn `keywords` để lọc tại chỗ.
+- **Mặt tiền cho AI (MCP):** `routes/ai.php` mở `POST /mcp/stickers`
+  (`app/Mcp/Servers/StickerLibraryServer.php`, gói `laravel/mcp`), xác thực bằng
+  token Platform App (`AuthenticatePlatformApp`, nhận cả `Authorization: Bearer`),
+  CHỈ kho chung. Tool trong `app/Mcp/Tools/Stickers/` gọi đúng
+  `StickerLibraryManager`; `upload_sticker` nhận `lottie_json` hoặc `tgs_base64` rồi
+  đi `StickerUploadService::uploadContents()`, cùng cổng kiểm với upload tay.
+  Resource `yona://stickers/lottie-guide` (`LottieAuthoringGuide`, cũng gửi trong
+  `instructions` lúc initialize) dựng giới hạn từ hằng số của `LottieDocumentValidator`.
+  REST tương ứng: `/platform/api/v1/sticker_packs…`; console Super Admin và Platform
+  API dùng chung action ở `ServesSharedStickerLibrary`.
 - **Trình phát:** `resources/js/shared/sticker/StickerPlayer.tsx` dùng chung cho
   dashboard và widget: hiện poster ngay, chỉ nạp ThorVG (chunk riêng, wasm tự host
   qua `thorvgLoader.ts`) khi sticker vào khung nhìn, ra khỏi khung thì dừng; mọi

@@ -25,6 +25,7 @@ class LibraryStickerResource extends JsonResource
         return [
             'id' => $sticker->id,
             'label' => $sticker->label,
+            'keywords' => $sticker->keywords ?? [],
             'status' => $status,
             'failure_message' => $status === Sticker::STATUS_FAILED && $failureCode !== null
                 ? __("errors.sticker_uploads.{$failureCode}", LottieDocumentValidator::limitPlaceholders())

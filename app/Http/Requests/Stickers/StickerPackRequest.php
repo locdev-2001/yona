@@ -17,9 +17,13 @@ class StickerPackRequest extends FormRequest
     /** @return array<string, mixed> */
     public function rules(): array
     {
-        return [
-            'name' => ['required', 'string', 'max:'.self::MAX_NAME_LENGTH],
-        ];
+        return self::nameRules();
+    }
+
+    /** @return array<string, list<string>> */
+    public static function nameRules(): array
+    {
+        return ['name' => ['required', 'string', 'max:'.self::MAX_NAME_LENGTH]];
     }
 
     public function packName(): string

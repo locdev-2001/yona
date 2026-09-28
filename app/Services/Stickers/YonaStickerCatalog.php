@@ -8,6 +8,7 @@ use App\Models\Inbox;
 use App\Models\Sticker as LibrarySticker;
 use App\Services\Channels\Stickers\Sticker;
 use App\Services\Channels\Stickers\StickerCatalog;
+use App\Support\SearchTerm;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 
@@ -30,6 +31,10 @@ final class YonaStickerCatalog implements StickerCatalog
 
     public const LISTING_LIMIT = 200;
 
+    public const SUGGESTION_LIMIT = 8;
+
+    private const KEYWORD_MATCH_SQL = 'EXISTS (SELECT 1 FROM jsonb_array_elements_text(stickers.keywords) AS keyword WHERE %s)';
+
     private const STATIC_CONTENT_TYPE = 'image/png';
 
     private const STATIC_FILENAME_PATTERN = 'sticker-%d.png';
@@ -48,15 +53,41 @@ final class YonaStickerCatalog implements StickerCatalog
         return str_starts_with($stickerOrPackId, self::ID_PREFIX);
     }
 
+    /** Nhãn hoặc một từ khoá chứa đủ mọi chữ của từ khoá tìm, so không dấu như mọi ô tìm (SearchTerm). */
     public function search(Inbox $inbox, string $query): array
     {
-        $pattern = '%'.addcslashes($query, '%_\\').'%';
+        $term = new SearchTerm($query);
+        [$labelMatch, $labelBindings] = $term->foldedMatch('stickers.label');
+        [$keywordMatch, $keywordBindings] = $term->foldedMatch('keyword');
 
         return $this->stickersFrom($this->ordered($inbox->account)
             ->where(fn (Builder $match) => $match
-                ->where('stickers.label', 'ilike', $pattern)
-                ->orWhereRaw('EXISTS (SELECT 1 FROM jsonb_array_elements_text(stickers.keywords) AS keyword WHERE keyword ILIKE ?)', [$pattern]))
+                ->whereRaw($labelMatch, $labelBindings)
+                ->orWhereRaw(sprintf(self::KEYWORD_MATCH_SQL, $keywordMatch), $keywordBindings))
             ->limit(self::SEARCH_LIMIT)
+            ->get());
+    }
+
+    /**
+     * Gợi ý khi gõ theo luật của StickerKeywordMatch: hạng khớp tốt trước, cùng
+     * hạng theo thứ tự trong kho.
+     *
+     * @return list<Sticker>
+     */
+    public function suggest(Account $account, string $prefix): array
+    {
+        $rank = StickerKeywordMatch::rankFor($prefix);
+
+        if ($rank === null) {
+            return [];
+        }
+
+        [$rankSql, $rankBindings] = $rank;
+
+        return $this->stickersFrom($this->inLibraryOrder($this->visible($account)
+            ->whereRaw("({$rankSql}) IS NOT NULL", $rankBindings)
+            ->orderByRaw($rankSql, $rankBindings))
+            ->limit(self::SUGGESTION_LIMIT)
             ->get());
     }
 
@@ -185,10 +216,25 @@ final class YonaStickerCatalog implements StickerCatalog
     /** @return Builder<LibrarySticker> */
     private function ordered(Account $account): Builder
     {
+        return $this->inLibraryOrder($this->visible($account));
+    }
+
+    /** @return Builder<LibrarySticker> */
+    private function visible(Account $account): Builder
+    {
         return LibrarySticker::query()
             ->visibleTo($account)
             ->join('sticker_packs', 'sticker_packs.id', '=', 'stickers.sticker_pack_id')
-            ->select('stickers.*')
+            ->select('stickers.*');
+    }
+
+    /**
+     * @param  Builder<LibrarySticker>  $query
+     * @return Builder<LibrarySticker>
+     */
+    private function inLibraryOrder(Builder $query): Builder
+    {
+        return $query
             ->orderBy('sticker_packs.position')
             ->orderBy('sticker_packs.id')
             ->orderBy('stickers.position')
@@ -221,11 +267,14 @@ final class YonaStickerCatalog implements StickerCatalog
             'static_path' => (string) $model->static_path,
             'width' => $model->width,
             'height' => $model->height,
-        ], $model->label);
+        ], $model->label, $model->keywords ?? []);
     }
 
-    /** @param array{source: string, id: int, pack_id: int, animation_path: string, poster_path: string, static_path: string, width: int|null, height: int|null} $payload */
-    private function stickerFromPayload(array $payload, ?string $label): Sticker
+    /**
+     * @param  array{source: string, id: int, pack_id: int, animation_path: string, poster_path: string, static_path: string, width: int|null, height: int|null}  $payload
+     * @param  list<string>  $keywords
+     */
+    private function stickerFromPayload(array $payload, ?string $label, array $keywords = []): Sticker
     {
         return new Sticker(
             id: self::ID_PREFIX.$payload['id'],
@@ -233,6 +282,7 @@ final class YonaStickerCatalog implements StickerCatalog
             packId: self::ID_PREFIX.$payload['pack_id'],
             label: filled($label) ? $label : null,
             payload: $payload,
+            keywords: array_values($keywords),
         );
     }
 

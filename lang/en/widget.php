@@ -253,6 +253,8 @@ return [
         'TAB_RECENT' => 'Recent',
         'RECENT_EMPTY' => 'Nothing here yet.',
         'STICKER_ALT' => 'Sticker',
+        'SUGGESTIONS' => 'Suggested stickers',
+        'DISMISS_SUGGESTIONS' => 'Hide suggested stickers',
     ],
     'ATTACHMENT_STATE' => [
         'UPLOADING' => 'Sending {count} photo… | Sending {count} photos…',

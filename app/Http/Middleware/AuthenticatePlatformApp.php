@@ -9,14 +9,15 @@ use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 // Port từ `ensure_access_token`/`set_platform_app` của
-// Header api_access_token phải trỏ tới token do một PlatformApp sở hữu.
+// Header api_access_token phải trỏ tới token do một PlatformApp sở hữu. Client
+// MCP thường chỉ gửi được `Authorization: Bearer`, nên nhận cả dạng đó.
 class AuthenticatePlatformApp
 {
     public const PLATFORM_APP = 'platformApp';
 
     public function handle(Request $request, Closure $next): Response
     {
-        $token = $request->header('api_access_token');
+        $token = $request->header('api_access_token') ?? $request->bearerToken();
         $owner = $token ? AccessToken::query()->where('token', $token)->first()?->owner : null;
 
         if (! $owner instanceof PlatformApp) {

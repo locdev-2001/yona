@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Database\PostgresConnection;
 use App\Finders\ConversationFinder;
+use App\Http\Middleware\AuthenticatePlatformApp;
 use App\Listeners\Alerts\AlertOnJobFailure;
 use App\Listeners\Alerts\AlertOnLongWaitDetected;
 use App\Livewire\Pulse\SearchOutboxCard;
@@ -171,12 +172,14 @@ class AppServiceProvider extends ServiceProvider
             Limit::perMinute(self::PUBLIC_FLOW_SUBMITS_PER_MINUTE_BY_IP)->by('ip:'.$request->ip()),
         ]);
 
-        // Khoá theo account (kho riêng) hoặc theo người quản trị (kho chung):
-        // một tenant không làm nghẽn hàng đợi render của cả hệ thống.
+        // Khoá theo account (kho riêng), theo Platform App hoặc theo người quản trị
+        // (kho chung): một bên không làm nghẽn hàng đợi render của cả hệ thống.
         RateLimiter::for('sticker-uploads', fn (Request $request) => Limit::perMinute(StickerLibraryManager::UPLOADS_PER_MINUTE)
-            ->by($request->route('account') !== null
-                ? 'account:'.$request->route('account')
-                : 'super-admin:'.$request->user('super_admin')?->getAuthIdentifier())
+            ->by(match (true) {
+                $request->route('account') !== null => 'account:'.$request->route('account'),
+                $request->attributes->has(AuthenticatePlatformApp::PLATFORM_APP) => 'platform-app:'.$request->attributes->get(AuthenticatePlatformApp::PLATFORM_APP)->getKey(),
+                default => 'super-admin:'.$request->user('super_admin')?->getAuthIdentifier(),
+            })
             ->response(fn (Request $request, array $headers) => response()->json([
                 'message' => __('errors.sticker_library.upload_throttled'),
                 'retry_after' => (int) ($headers['Retry-After'] ?? 60),

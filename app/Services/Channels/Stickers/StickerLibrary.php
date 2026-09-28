@@ -70,6 +70,22 @@ final class StickerLibrary
     }
 
     /**
+     * Gợi ý sticker khi agent gõ: chỉ kho Yona (tra DB, không hỏi nền tảng) và chỉ
+     * khi hộp thư dùng được kho như bảng chọn. Không đủ điều kiện thì rỗng, không lỗi,
+     * vì lời gọi đi theo từng phím gõ.
+     *
+     * @return array{stickers: list<array{id: string, image_url: string, pack_id: string|null, label: string|null}>}
+     */
+    public function suggest(Inbox $inbox, ?string $query): array
+    {
+        $keyword = $this->searchableQuery($query);
+        $usesLibrary = $inbox->supports($this->libraryCapability(Capability::OutboundSticker));
+        $stickers = $keyword !== null && $usesLibrary ? $this->library->suggest($inbox->account, $keyword) : [];
+
+        return ['stickers' => array_map(fn (Sticker $sticker) => $sticker->toApi(), $stickers)];
+    }
+
+    /**
      * `$direction` là năng lực kênh phải khai cho chiều của tin: agent gửi cần
      * `outbound_sticker`, khách gửi từ bề mặt của kênh cần `inbound_sticker`.
      */

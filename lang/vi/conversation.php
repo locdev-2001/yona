@@ -555,6 +555,8 @@ return [
         'NO_RESULTS' => 'Không tìm thấy sticker cho “{query}”.',
         'LOAD_FAILED' => 'Chưa tải được sticker, bạn thử lại nhé.',
         'RETRY' => 'Thử lại',
+        'SUGGESTIONS' => 'Sticker gợi ý',
+        'DISMISS_SUGGESTIONS' => 'Ẩn sticker gợi ý',
     ],
     'VISIBLE_TO_AGENTS' => 'Lưu ý riêng: Chỉ hiển thị với bạn và nhóm của bạn',
     'CHANGE_STATUS' => 'Trạng thái hội thoại đã thay đổi',

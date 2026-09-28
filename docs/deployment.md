@@ -1339,6 +1339,28 @@ bộ nhớ bằng `prlimit --data` và cắt thời gian. Biến trong `.env` La
 **Nginx và sao lưu.** Cache tệp sticker và MIME wasm: mục 7, "Tệp kho sticker và
 wasm của trình phát". Sao lưu `storage/app/public/stickers` cùng database: mục 4.
 
+**MCP cho AI tự tạo sticker (kho chung).** Endpoint `POST https://yona.vn/mcp/stickers`
+(MCP qua HTTP, gói `laravel/mcp`), chỉ thao tác kho chung. Xác thực bằng token của
+một Platform App, gửi qua `Authorization: Bearer <token>` hoặc header
+`api_access_token`; Platform API REST tương ứng nằm ở `/platform/api/v1/sticker_packs`.
+Token này quản được TOÀN BỘ kho chung (mọi account thấy bộ đã xuất bản), nên tạo
+một Platform App riêng cho việc này và giữ token như secret.
+
+1. Super Admin → `/super_admin/platform_apps` → tạo app (ví dụ "MCP sticker") →
+   mở app vừa tạo, chép `access_token`. Hoặc trên server:
+   ```bash
+   php artisan tinker --execute '$app = App\Models\PlatformApp::create(["name" => "MCP sticker"]); echo $app->accessToken->token;'
+   ```
+2. Khai trong client MCP, ví dụ Claude Code:
+   ```bash
+   claude mcp add --transport http yona-stickers https://yona.vn/mcp/stickers --header "Authorization: Bearer <token>"
+   ```
+3. Thử nhanh: `curl -s -X POST https://yona.vn/mcp/stickers -H 'Content-Type: application/json' -H 'Accept: application/json, text/event-stream' -H "Authorization: Bearer <token>" -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'`
+   phải liệt kê 8 tool; token sai trả 401.
+
+Thu hồi: xoá Platform App ở `/super_admin/platform_apps` (token mất theo). Câu lỗi
+trả về theo `APP_LOCALE` (production là `vi`); thêm `?locale=vi` vào URL nếu cần ép.
+
 **Chuyển disk sang R2/S3** (tuỳ chọn, chỉ bằng env; mặc định là đĩa local
 `storage/app/public/stickers`, phục vụ qua `/storage/stickers` sau
 `storage:link`):

@@ -42,4 +42,13 @@ return [
     'DELETE_STICKER_CONFIRM' => 'Delete this sticker from the pack? Sent messages keep their images.',
     'ACTION_ERROR' => 'Something went wrong, please try again.',
     'SAVED' => 'Saved',
+    'EDIT_STICKER' => 'Edit label and keywords',
+    'LABEL' => 'Label',
+    'KEYWORDS' => 'Keywords',
+    'KEYWORDS_PLACEHOLDER' => 'haha, thanks, hello',
+    'KEYWORDS_HINT' => 'Separate with commas. Typing a keyword in chat suggests this sticker.',
+    'NO_KEYWORDS' => 'No keywords yet',
+    'SAVE_STICKER' => 'Save',
+    'CANCEL' => 'Cancel',
+    'UPLOAD_KEYWORDS' => 'Keywords for the files you upload next (optional)',
 ];

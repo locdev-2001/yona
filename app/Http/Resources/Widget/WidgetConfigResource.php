@@ -46,8 +46,9 @@ final class WidgetConfigResource
                 'recall_window' => (int) $channel->recallWindow()->totalSeconds,
                 'reactions' => config('messaging.widget_reactions'),
                 'reply_time' => $channel->reply_time,
+                // Widget lọc gợi ý khi gõ ngay trên máy khách nên cần sẵn từ khoá.
                 'stickers' => array_map(
-                    fn (Sticker $sticker) => $sticker->toApi(),
+                    fn (Sticker $sticker) => [...$sticker->toApi(), 'keywords' => $sticker->keywords],
                     app(StickerLibrary::class)->listing($inbox, Capability::InboundSticker),
                 ),
                 'timezone' => $inbox->timezone,

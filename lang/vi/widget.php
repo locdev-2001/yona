@@ -251,6 +251,8 @@ return [
         'TAB_RECENT' => 'Gần đây',
         'RECENT_EMPTY' => 'Chưa có gì ở đây.',
         'STICKER_ALT' => 'Sticker',
+        'SUGGESTIONS' => 'Sticker gợi ý',
+        'DISMISS_SUGGESTIONS' => 'Ẩn sticker gợi ý',
     ],
     'ATTACHMENT_STATE' => [
         'UPLOADING' => 'Đang gửi {count} ảnh…',

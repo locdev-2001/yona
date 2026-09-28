@@ -6,7 +6,6 @@ use App\Jobs\Stickers\RenderStickerJob;
 use App\Models\Sticker;
 use App\Models\StickerPack;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use stdClass;
 
@@ -26,8 +25,6 @@ final class StickerUploadService
 
     private const UPLOAD_FIELD = 'file';
 
-    private const MAX_LABEL_LENGTH = 255;
-
     private const CONTENT_HASH_ALGORITHM = 'sha256';
 
     public function __construct(
@@ -39,18 +36,44 @@ final class StickerUploadService
      * Cùng nội dung upload lại vào cùng bộ thì trả sticker cũ; sticker cũ đã
      * hỏng hoặc kẹt `processing` quá lâu thì được dựng lại.
      *
+     * @param  array<mixed>  $keywords
+     *
      * @throws ValidationException khi tệp bị từ chối, câu báo lỗi ở errors.sticker_uploads.*
      */
-    public function upload(StickerPack $pack, UploadedFile $file, ?string $label = null): Sticker
+    public function upload(StickerPack $pack, UploadedFile $file, ?string $label = null, array $keywords = []): Sticker
     {
-        $animationJson = $this->minifier->minify($this->validated($this->validator->inspect($this->readUpload($file))));
+        return $this->store($pack, $this->readUpload($file), $label, $keywords);
+    }
+
+    /**
+     * Nội dung tệp đã có sẵn trong bộ nhớ (Platform API, MCP): cùng cổng kiểm như
+     * upload tệp, `$extension` là đuôi tệp gốc (json hoặc tgs).
+     *
+     * @param  array<mixed>  $keywords
+     *
+     * @throws ValidationException khi nội dung bị từ chối, câu báo lỗi ở errors.sticker_uploads.*
+     */
+    public function uploadContents(StickerPack $pack, string $contents, string $extension, ?string $label = null, array $keywords = []): Sticker
+    {
+        $this->assertAcceptedExtension($extension);
+        if (strlen($contents) > LottieDocumentValidator::MAX_UPLOAD_BYTES) {
+            throw $this->rejection(LottieDocumentValidator::FILE_TOO_LARGE);
+        }
+
+        return $this->store($pack, $contents, $label, $keywords);
+    }
+
+    /** @param  array<mixed>  $keywords */
+    private function store(StickerPack $pack, string $uploadedBytes, ?string $label, array $keywords): Sticker
+    {
+        $animationJson = $this->minifier->minify($this->validated($this->validator->inspect($uploadedBytes)));
         // Rút gọn đổi số (0.0 thành 0, làm tròn) nên kiểm lại đúng bản sẽ lưu:
         // trình phát đọc bản này, không đọc tệp gốc.
         $document = $this->validated($this->validator->inspectStored($animationJson));
 
         $sticker = $pack->stickers()->createOrFirst(
             ['content_hash' => hash(self::CONTENT_HASH_ALGORITHM, $animationJson)],
-            $this->newStickerAttributes($pack, $document, $animationJson, $label),
+            $this->newStickerAttributes($pack, $document, $animationJson, $label, $keywords),
         );
 
         if (! $sticker->wasRecentlyCreated && ! $this->needsRender($sticker)) {
@@ -79,11 +102,16 @@ final class StickerUploadService
         return $inspection['document'] ?? throw $this->rejection($inspection['rejection']);
     }
 
-    private function readUpload(UploadedFile $file): string
+    private function assertAcceptedExtension(string $extension): void
     {
-        if (! in_array(strtolower($file->getClientOriginalExtension()), self::ACCEPTED_EXTENSIONS, true)) {
+        if (! in_array(strtolower($extension), self::ACCEPTED_EXTENSIONS, true)) {
             throw $this->rejection(self::UNSUPPORTED_FILE_TYPE);
         }
+    }
+
+    private function readUpload(UploadedFile $file): string
+    {
+        $this->assertAcceptedExtension($file->getClientOriginalExtension());
         if (! $file->isValid()) {
             throw $this->rejection(self::FILE_UNREADABLE);
         }
@@ -101,15 +129,17 @@ final class StickerUploadService
     }
 
     /**
+     * @param  array<mixed>  $keywords
      * @return array<string, mixed>
      */
-    private function newStickerAttributes(StickerPack $pack, stdClass $document, string $animationJson, ?string $label): array
+    private function newStickerAttributes(StickerPack $pack, stdClass $document, string $animationJson, ?string $label, array $keywords): array
     {
         $frameSpan = $document->op - $document->ip;
         $lastPosition = $pack->stickers()->max('position');
 
         return [
-            'label' => filled($label) ? Str::limit(trim($label), self::MAX_LABEL_LENGTH, '') : null,
+            'label' => StickerTags::label($label),
+            'keywords' => StickerTags::keywords($keywords),
             'width' => (int) round($document->w),
             'height' => (int) round($document->h),
             'frame_count' => (int) round($frameSpan),

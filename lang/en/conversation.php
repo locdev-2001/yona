@@ -554,6 +554,8 @@ return [
         'NO_RESULTS' => 'No stickers found for “{query}”.',
         'LOAD_FAILED' => 'Could not load stickers, please try again.',
         'RETRY' => 'Try again',
+        'SUGGESTIONS' => 'Suggested stickers',
+        'DISMISS_SUGGESTIONS' => 'Hide suggested stickers',
     ],
     'VISIBLE_TO_AGENTS' => 'Private Note: Only visible to you and your team',
     'CHANGE_STATUS' => 'Conversation status changed',

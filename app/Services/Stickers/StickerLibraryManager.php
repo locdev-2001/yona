@@ -81,15 +81,35 @@ final class StickerLibraryManager
         return $pack;
     }
 
-    public function upload(StickerPack $pack, UploadedFile $file, ?string $label = null): Sticker
+    /** @param  array<mixed>  $keywords */
+    public function upload(StickerPack $pack, UploadedFile $file, ?string $label = null, array $keywords = []): Sticker
     {
-        if ($pack->stickers()->count() >= self::MAX_STICKERS_PER_PACK) {
-            throw ValidationException::withMessages([
-                'file' => __('errors.sticker_library.pack_full', ['max' => self::MAX_STICKERS_PER_PACK]),
-            ]);
-        }
+        $this->ensureRoomFor($pack);
 
-        return $this->uploads->upload($pack, $file, $label);
+        return $this->uploads->upload($pack, $file, $label, $keywords);
+    }
+
+    /**
+     * Nội dung tệp gửi thẳng (Platform API, MCP), không qua tệp upload.
+     *
+     * @param  array<mixed>  $keywords
+     */
+    public function uploadContents(StickerPack $pack, string $contents, string $extension, ?string $label = null, array $keywords = []): Sticker
+    {
+        $this->ensureRoomFor($pack);
+
+        return $this->uploads->uploadContents($pack, $contents, $extension, $label, $keywords);
+    }
+
+    /** @param  array<mixed>  $keywords */
+    public function updateSticker(Sticker $sticker, ?string $label, array $keywords): Sticker
+    {
+        $sticker->update([
+            'label' => StickerTags::label($label),
+            'keywords' => StickerTags::keywords($keywords),
+        ]);
+
+        return $sticker;
     }
 
     /** @param  list<int>  $orderedStickerIds */
@@ -140,6 +160,15 @@ final class StickerLibraryManager
     public function releaseFilesOf(array $contentHashes): void
     {
         $this->janitor->releaseAllUnreferenced($contentHashes);
+    }
+
+    private function ensureRoomFor(StickerPack $pack): void
+    {
+        if ($pack->stickers()->count() >= self::MAX_STICKERS_PER_PACK) {
+            throw ValidationException::withMessages([
+                'file' => __('errors.sticker_library.pack_full', ['max' => self::MAX_STICKERS_PER_PACK]),
+            ]);
+        }
     }
 
     /** @return Builder<StickerPack> */

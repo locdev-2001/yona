@@ -42,4 +42,13 @@ return [
     'DELETE_STICKER_CONFIRM' => 'Xoá sticker này khỏi bộ? Tin đã gửi vẫn giữ ảnh.',
     'ACTION_ERROR' => 'Không thực hiện được, bạn thử lại nhé.',
     'SAVED' => 'Đã lưu',
+    'EDIT_STICKER' => 'Sửa nhãn và từ khoá',
+    'LABEL' => 'Nhãn',
+    'KEYWORDS' => 'Từ khoá',
+    'KEYWORDS_PLACEHOLDER' => 'haha, cảm ơn, chào',
+    'KEYWORDS_HINT' => 'Cách nhau bằng dấu phẩy. Gõ một từ khoá khi chat thì sticker hiện ra để gợi ý.',
+    'NO_KEYWORDS' => 'Chưa có từ khoá',
+    'SAVE_STICKER' => 'Lưu',
+    'CANCEL' => 'Huỷ',
+    'UPLOAD_KEYWORDS' => 'Từ khoá cho các tệp sắp tải (tuỳ chọn)',
 ];

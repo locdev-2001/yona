@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Stickers;
 
+use App\Services\Stickers\StickerTags;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\UploadedFile;
 
@@ -19,7 +20,7 @@ class UploadStickerRequest extends FormRequest
     {
         return [
             'file' => ['required', 'file'],
-            'label' => ['nullable', 'string', 'max:255'],
+            ...StickerTags::validationRules(),
         ];
     }
 
@@ -32,5 +33,11 @@ class UploadStickerRequest extends FormRequest
     public function stickerLabel(): ?string
     {
         return $this->validated('label');
+    }
+
+    /** @return list<string> */
+    public function stickerKeywords(): array
+    {
+        return array_values($this->validated('keywords') ?? []);
     }
 }

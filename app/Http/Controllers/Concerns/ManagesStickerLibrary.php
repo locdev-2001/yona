@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Concerns;
 
 use App\Http\Requests\Stickers\ReorderStickersRequest;
 use App\Http\Requests\Stickers\StickerPackRequest;
+use App\Http\Requests\Stickers\UpdateStickerRequest;
 use App\Http\Requests\Stickers\UploadStickerRequest;
 use App\Http\Resources\Stickers\LibraryStickerPackResource;
 use App\Http\Resources\Stickers\LibraryStickerResource;
@@ -68,9 +69,18 @@ trait ManagesStickerLibrary
     protected function uploadSticker(UploadStickerRequest $request, ?Account $owner, int $packId): JsonResponse
     {
         $library = $this->stickerLibrary();
-        $sticker = $library->upload($library->findPack($owner, $packId), $request->stickerFile(), $request->stickerLabel());
+        $sticker = $library->upload($library->findPack($owner, $packId), $request->stickerFile(), $request->stickerLabel(), $request->stickerKeywords());
 
         return response()->json((new LibraryStickerResource($sticker->refresh()))->toArray($request), 201);
+    }
+
+    protected function updateLibrarySticker(UpdateStickerRequest $request, ?Account $owner, int $packId, int $stickerId): JsonResponse
+    {
+        $library = $this->stickerLibrary();
+        $sticker = $library->findSticker($library->findPack($owner, $packId), $stickerId);
+        $library->updateSticker($sticker, $request->stickerLabel($sticker), $request->stickerKeywords($sticker));
+
+        return response()->json((new LibraryStickerResource($sticker))->toArray($request));
     }
 
     protected function reorderStickers(ReorderStickersRequest $request, ?Account $owner, int $packId): JsonResponse

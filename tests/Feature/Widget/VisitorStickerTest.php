@@ -24,7 +24,7 @@ beforeEach(function () {
         'contact_inbox_id' => $this->session->contactInbox->id,
     ]);
     $this->pack = StickerPack::factory()->create(['position' => 1]);
-    $this->waving = YonaStickers::ready($this->pack, ['label' => 'Chó vẫy tay', 'position' => 1]);
+    $this->waving = YonaStickers::ready($this->pack, ['label' => 'Chó vẫy tay', 'keywords' => ['chào', 'hi'], 'position' => 1]);
     $this->thanks = YonaStickers::ready($this->pack, ['label' => 'Mèo cảm ơn', 'position' => 2]);
 });
 
@@ -34,7 +34,7 @@ it('kênh widget khai inbound_sticker và dùng kho sticker Yona, không có dan
         ->and(app(StickerLibrary::class)->listing($this->session->inbox, Capability::InboundSticker))->toHaveCount(2);
 });
 
-it('cấu hình widget lộ danh sách sticker account thấy được, bỏ sticker chưa xong hoặc bộ chưa xuất bản', function () {
+it('cấu hình widget lộ danh sách sticker account thấy được kèm từ khoá để lọc gợi ý tại chỗ, bỏ sticker chưa xong hoặc bộ chưa xuất bản', function () {
     Sticker::factory()->processing()->for($this->pack, 'stickerPack')->create();
     YonaStickers::ready(StickerPack::factory()->unpublished()->create());
     YonaStickers::ready(YonaStickers::tenantPack($this->session->account));
@@ -42,8 +42,8 @@ it('cấu hình widget lộ danh sách sticker account thấy được, bỏ sti
     $config = $this->postJson($this->session->url('config'), [], $this->session->headers())->assertOk()->json();
 
     expect($config['website_channel_config']['stickers'])->toBe([
-        ['id' => "yona:{$this->waving->id}", 'image_url' => $this->waving->poster_url, 'pack_id' => "yona:{$this->pack->id}", 'label' => 'Chó vẫy tay'],
-        ['id' => "yona:{$this->thanks->id}", 'image_url' => $this->thanks->poster_url, 'pack_id' => "yona:{$this->pack->id}", 'label' => 'Mèo cảm ơn'],
+        ['id' => "yona:{$this->waving->id}", 'image_url' => $this->waving->poster_url, 'pack_id' => "yona:{$this->pack->id}", 'label' => 'Chó vẫy tay', 'keywords' => ['chào', 'hi']],
+        ['id' => "yona:{$this->thanks->id}", 'image_url' => $this->thanks->poster_url, 'pack_id' => "yona:{$this->pack->id}", 'label' => 'Mèo cảm ơn', 'keywords' => []],
     ]);
 });
 
