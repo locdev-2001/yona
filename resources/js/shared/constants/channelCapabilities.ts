@@ -25,6 +25,7 @@ export const CHANNEL_CAPABILITIES = [
     'outbound_audio',
     'outbound_file',
     'outbound_sticker',
+    'outbound_custom_sticker',
     'outbound_location',
     'outbound_contact_card',
     'outbound_reply_to',

@@ -103,8 +103,10 @@ ra kênh ngoài là sticker gốc của nền tảng hoặc một ảnh, không 
   `app/Services/Zalo/ZaloStickerCatalog.php`), cùng contract `StickerCatalog`.
   Mã kho Yona mang tiền tố `yona:` và định tuyến theo tiền tố. Sticker nền tảng
   cần năng lực `outbound_sticker`; sticker Yona chỉ cần `outbound_image` vì ra
-  ngoài là ảnh PNG tĩnh (`outboundCapabilityFor()`). Sticker động (WebP động) chỉ
-  chạy trong dashboard và widget.
+  ngoài là ảnh PNG tĩnh (`outboundCapabilityFor()`). Kênh khai
+  `outbound_custom_sticker` (Zalo) nhận sticker Yona dạng sticker tự tạo của nền
+  tảng qua URL công khai của disk `stickers` (bridge `custom-sticker.mjs`), nên hiện
+  gọn như sticker gốc và ảnh động vẫn chạy.
 - **Ai thấy gì:** một nguồn là `Sticker::visibleTo($account)`: sticker `ready`
   trong bộ đã xuất bản, của kho nền tảng (`account_id` null) và kho riêng của
   chính account. Cờ `custom_stickers` không ẩn nội dung, chỉ góp vào luật "ai được

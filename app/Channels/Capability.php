@@ -38,6 +38,8 @@ enum Capability: string
     case OutboundAudio = 'outbound_audio';
     case OutboundFile = 'outbound_file';
     case OutboundSticker = 'outbound_sticker';
+    // Gửi sticker của kho Yona thành sticker gốc cỡ gọn của nền tảng (không phải một ảnh).
+    case OutboundCustomSticker = 'outbound_custom_sticker';
     case OutboundLocation = 'outbound_location';
     case OutboundContactCard = 'outbound_contact_card';
     case OutboundReplyTo = 'outbound_reply_to';

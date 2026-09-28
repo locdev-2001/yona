@@ -197,6 +197,8 @@ class Zalo extends Model implements DeclaresCapabilities, DeclaresPlatform
      * outbound_reply_to: trả lời chỉ gồm tệp (không chú thích) thì Zalo gửi tệp
      * không kèm trích dẫn — giới hạn của nền tảng, tin vẫn đi bình thường.
      * outbound_mention: chỉ có tác dụng trong nhóm; chat 1-1 gửi như chữ thường.
+     * outbound_custom_sticker: sticker kho Yona đi loại tin sticker tự tạo, Zalo tự
+     * tải ảnh qua URL công khai của disk stickers; tin này không mang trích dẫn.
      */
     public function capabilities(): CapabilitySet
     {
@@ -222,6 +224,7 @@ class Zalo extends Model implements DeclaresCapabilities, DeclaresPlatform
             Capability::OutboundAudio,
             Capability::OutboundFile,
             Capability::OutboundSticker,
+            Capability::OutboundCustomSticker,
             Capability::OutboundReplyTo,
             Capability::OutboundMention,
             Capability::OutboundReaction,

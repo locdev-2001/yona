@@ -2,14 +2,17 @@
 
 namespace App\Services\Zalo;
 
+use App\Channels\Capability;
 use App\Messaging\Delivery\DeliveryPlanner;
 use App\Models\Attachment;
 use App\Models\Channel\Zalo;
 use App\Models\Message;
+use App\Models\Sticker as LibrarySticker;
 use App\Services\Channels\BaseSendOnChannelService;
 use App\Services\Channels\ChannelMessageStatus;
 use App\Services\Messages\Forwarding\MessageForwarder;
 use App\Services\Messages\OutboundMentionsBuilder;
+use App\Services\Stickers\YonaStickerCatalog;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -199,8 +202,8 @@ class SendOnZaloService extends BaseSendOnChannelService
     }
 
     /**
-     * Một phần = một lượt gọi bridge. Sticker của Zalo đi lệnh sticker riêng (sticker
-     * nguồn khác đi như ảnh qua đính kèm của nó); tin chữ chuyển tiếp trong
+     * Một phần = một lượt gọi bridge. Sticker của Zalo đi lệnh sticker riêng, sticker
+     * kho Yona đi lệnh sticker tự tạo (không gửi đính kèm của nó); tin chữ chuyển tiếp trong
      * cùng phiên đi lệnh chuyển tiếp gốc; tin có đính kèm thì mỗi tệp một phần, chú
      * thích + trích dẫn + nhắc tên bám vào tệp đầu tiên (zca gộp caption vào chính
      * tin đính kèm).
@@ -220,6 +223,12 @@ class SendOnZaloService extends BaseSendOnChannelService
 
         if ($sticker !== null) {
             return [$this->part([...$thread, 'sticker' => $sticker])];
+        }
+
+        $customSticker = $this->customSticker($channel);
+
+        if ($customSticker !== null) {
+            return [$this->part([...$thread, 'custom_sticker' => $customSticker])];
         }
 
         $attachments = $this->sendableAttachments();
@@ -287,6 +296,26 @@ class SendOnZaloService extends BaseSendOnChannelService
         $sticker = $this->message->content_attributes['sticker'] ?? null;
 
         return is_array($sticker) && app(ZaloStickerCatalog::class)->fromStored($sticker) !== null ? $sticker : null;
+    }
+
+    /**
+     * Sticker của kho Yona đi loại tin sticker tự tạo của Zalo (cỡ gọn như sticker
+     * gốc) thay vì đính kèm ảnh bị Zalo phóng to. Zalo tự tải ảnh qua URL công khai.
+     *
+     * @return array{static_url: string, animation_url: string, width: int, height: int}|null
+     */
+    private function customSticker(Zalo $channel): ?array
+    {
+        $sticker = $this->message->content_attributes['sticker'] ?? null;
+
+        if (! is_array($sticker) || ! $channel->capabilities()->has(Capability::OutboundCustomSticker)) {
+            return null;
+        }
+
+        $urls = app(YonaStickerCatalog::class)->publicImageUrls($sticker);
+        $edge = LibrarySticker::outboundImageSize();
+
+        return $urls === null ? null : [...$urls, 'width' => $edge, 'height' => $edge];
     }
 
     /**

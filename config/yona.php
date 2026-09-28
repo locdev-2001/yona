@@ -198,8 +198,8 @@ return [
         // Cạnh (px) của PNG gửi kênh ngoài (Zalo...): kênh ngoài phóng to ảnh quá nhỏ làm vỡ hình,
         // nên ảnh này dựng riêng ở cỡ gần sticker gốc của Zalo.
         'outbound_image_size' => (int) env('STICKER_OUTBOUND_IMAGE_SIZE', 128),
-        // Cạnh (px CSS) khi hiện sticker ở hộp thư và widget; tách khỏi cạnh tệp để màn retina tăng riêng được.
-        'display_size' => (int) env('STICKER_DISPLAY_SIZE', 128),
+        // Cạnh (px CSS) khi hiện sticker ở hộp thư và widget; không khai thì bằng cạnh tệp STICKER_IMAGE_SIZE.
+        'display_size' => (int) env('STICKER_DISPLAY_SIZE', env('STICKER_IMAGE_SIZE', 128)),
         // Trần dung lượng ảnh gốc tải lên. Trình dựng còn tự chặn ảnh trên 20 MB,
         // 25 triệu điểm ảnh mỗi khung, 200 khung hoặc hoạt ảnh dài quá 10 giây.
         'max_original_mb' => (int) env('STICKER_MAX_ORIGINAL_MB', 10),

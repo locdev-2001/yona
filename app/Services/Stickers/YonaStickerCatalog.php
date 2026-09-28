@@ -221,6 +221,30 @@ final class YonaStickerCatalog implements StickerCatalog
         ];
     }
 
+    /**
+     * URL công khai tuyệt đối cho kênh tự tải ảnh sticker từ Yona: ảnh tĩnh PNG gửi
+     * kênh ngoài và ảnh WebP hiển thị (động nếu ảnh gốc động). Null = không phải
+     * sticker của kho.
+     *
+     * @param  array<string, mixed>  $stored
+     * @return array{static_url: string, animation_url: string}|null
+     */
+    public function publicImageUrls(array $stored): ?array
+    {
+        $payload = self::validPayload($stored);
+
+        if ($payload === null) {
+            return null;
+        }
+
+        $files = self::filesOf($payload);
+
+        return [
+            'static_url' => url((string) $files->static_url),
+            'animation_url' => url((string) $files->image_url),
+        ];
+    }
+
     /** @return Builder<LibrarySticker> */
     private function ordered(Account $account): Builder
     {

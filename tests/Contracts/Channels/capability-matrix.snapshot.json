@@ -295,6 +295,7 @@
         "outbound_audio",
         "outbound_file",
         "outbound_sticker",
+        "outbound_custom_sticker",
         "outbound_reply_to",
         "outbound_mention",
         "outbound_reaction",

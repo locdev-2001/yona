@@ -116,6 +116,7 @@ it('dựng tin sticker từ danh mục đã có trong cache rồi gửi đúng b
         ->and($sends[0]['sticker']['cateId'])->toBe(61900)
         ->and($sends[0]->data())->not->toHaveKey('text')
         ->and($sends[0]->data())->not->toHaveKey('file_url')
+        ->and($sends[0]->data())->not->toHaveKey('custom_sticker')
         ->and($message->refresh()->source_id)->toBe('sent-sticker-1')
         ->and(stickerSendRequests('/personal-messages/stickers/detail'))->toBeEmpty();
 });

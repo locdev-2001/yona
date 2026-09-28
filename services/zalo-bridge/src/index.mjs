@@ -15,6 +15,7 @@ import { zcaReactionCode } from './reaction-icons.mjs';
 import { buildSendMessageContent } from './send-content.mjs';
 import { sendForwardOrFallback } from './forward-content.mjs';
 import { stickerSendPayload } from './stickers.mjs';
+import { parseCustomSticker, sendCustomSticker } from './custom-sticker.mjs';
 import { SEND_TIMING_LOG_TAG, startSendTiming } from './send-timing.mjs';
 import { SEND_VIDEO_LOG_TAG, sendVideoOrFile, videoToolsFromEnv } from './send-video.mjs';
 import { registerUiActionsRoutes } from './routes/ui-actions.mjs';
@@ -2213,7 +2214,13 @@ async function bridgeSendTextOrMedia(slot, body) {
     const hasFile = typeof body?.file_url === 'string' && body.file_url.trim() !== '';
     const timing = startSendTiming({
         messageId: body?.message_id,
-        mediaKind: hasFile ? String(body?.media_kind || '').trim().toLowerCase() : body?.sticker ? 'sticker' : 'text',
+        mediaKind: hasFile
+            ? String(body?.media_kind || '').trim().toLowerCase()
+            : body?.custom_sticker
+              ? 'custom_sticker'
+              : body?.sticker
+                ? 'sticker'
+                : 'text',
     });
     let ok = false;
     try {
@@ -2226,8 +2233,20 @@ async function bridgeSendTextOrMedia(slot, body) {
 }
 
 export async function sendTextOrMediaThroughZca(slot, body, timing) {
-    const { thread_id, thread_type, text, file_url, media_kind, filename, content_type, quote, sticker, mentions, forward } =
-        body || {};
+    const {
+        thread_id,
+        thread_type,
+        text,
+        file_url,
+        media_kind,
+        filename,
+        content_type,
+        quote,
+        sticker,
+        custom_sticker,
+        mentions,
+        forward,
+    } = body || {};
     if (!thread_id) {
         throw new Error('thread_id required');
     }
@@ -2236,12 +2255,23 @@ export async function sendTextOrMediaThroughZca(slot, body, timing) {
     const hasFile = fileUrl !== '';
 
     // Chuyển tiếp gốc chỉ cho tin chữ; bị Zalo từ chối thì tự gửi lại nội dung.
-    if (forward && !hasFile && !sticker) {
+    if (forward && !hasFile && !sticker && !custom_sticker) {
         const sendResult = await sendForwardOrFallback(slot.api, {
             text,
             forward,
             threadId: String(thread_id),
             threadType: tt,
+        });
+        timing.lap('zalo_send');
+        return registerAllOutboundSourceIds(slot, sendResult);
+    }
+
+    const customSticker = parseCustomSticker(custom_sticker, FETCH_ALLOWED_HOSTS);
+    if (customSticker) {
+        const sendResult = await sendCustomSticker(slot.api, {
+            sticker: customSticker,
+            threadId: String(thread_id),
+            isGroup: tt === ThreadType.Group,
         });
         timing.lap('zalo_send');
         return registerAllOutboundSourceIds(slot, sendResult);

@@ -20,15 +20,17 @@ use App\Services\Messages\Forwarding\ForwardException;
 use App\Services\Messages\Forwarding\ForwardRequirements;
 use App\Services\Messages\Forwarding\MessageForwarder;
 use App\Services\Telegram\SendOnTelegramService;
+use App\Services\Zalo\SendOnZaloService;
 use Illuminate\Http\Client\Request as ClientRequest;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Tests\Support\YonaStickers;
 
-// Sticker của kho Yona ra mọi kênh ngoài là MỘT ảnh PNG tĩnh (đính kèm mượn của
-// kho), đi đúng đường gửi ảnh sẵn có của từng driver. Zalo chỉ dùng lệnh sticker
-// gốc cho sticker của chính Zalo.
+// Sticker của kho Yona ra kênh ngoài là MỘT ảnh PNG tĩnh (đính kèm mượn của kho),
+// đi đúng đường gửi ảnh sẵn có của từng driver. Zalo khai outbound_custom_sticker
+// nên đi lệnh sticker tự tạo (Zalo tự tải ảnh qua URL công khai); lệnh sticker gốc
+// chỉ dành cho sticker của chính Zalo.
 
 const YONA_OUTBOUND_ZALO_STICKER_URL = 'https://zalo-api.zadn.vn/api/emoticon/sticker/webpc?eid=98930&size=130';
 
@@ -108,7 +110,7 @@ describe('Zalo', function () {
             ->and($recent['packs'])->toBe([['id' => "yona:{$this->sticker->sticker_pack_id}", 'cover_url' => $this->sticker->image_url]]);
     });
 
-    it('gửi sticker Yona thì bridge nhận lệnh gửi GIF (Zalo khai outbound_gif), không nhận lệnh sticker', function () {
+    it('gửi sticker Yona thì bridge nhận lệnh sticker tự tạo với URL công khai và cỡ gửi đi, không gửi tệp', function () {
         fakeYonaOutboundZaloBridge();
 
         $response = $this->actingAs(yonaOutboundAgent($this->inbox))->postJson(
@@ -118,39 +120,67 @@ describe('Zalo', function () {
 
         $message = Message::findOrFail($response->json('id'));
         $sends = yonaOutboundRequests('/personal-messages/send');
+        $edge = Sticker::outboundImageSize();
 
         expect($message->content_attributes['sticker'])->toBe(YonaStickers::storedPayload($this->sticker))
             ->and($response->json('content_attributes.sticker'))->toBe(YonaStickers::readerPayload($this->sticker))
             ->and($sends)->toHaveCount(1)
-            ->and($sends[0]->data())->not->toHaveKey('sticker')
-            ->and($sends[0]->data())->not->toHaveKey('text')
-            ->and($sends[0]['media_kind'])->toBe('gif')
-            ->and($sends[0]['filename'])->toBe("sticker-{$this->sticker->id}.gif")
-            ->and($sends[0]['content_type'])->toBe('image/gif')
-            ->and($message->attachments()->sole()->only(['path', 'content_type', 'meta']))->toBe([
-                'path' => $this->sticker->gif_path,
-                'content_type' => 'image/gif',
-                'meta' => ['width' => Sticker::outboundImageSize(), 'height' => Sticker::outboundImageSize()],
+            ->and($sends[0]['custom_sticker'])->toBe([
+                'static_url' => url($this->sticker->static_url),
+                'animation_url' => url($this->sticker->image_url),
+                'width' => $edge,
+                'height' => $edge,
             ])
+            ->and($sends[0]['custom_sticker']['static_url'])->toStartWith('http')
+            ->and($sends[0]['custom_sticker']['static_url'])->toEndWith($this->sticker->static_path)
+            ->and($sends[0]['custom_sticker']['animation_url'])->toEndWith($this->sticker->image_path)
+            ->and(array_keys($sends[0]->data()))->not->toContain('sticker', 'file_url', 'media_kind', 'text')
             ->and($message->refresh()->source_id)->toBe('sent-yona-sticker');
-
-        expectYonaStickerImage($sends[0]['file_url'], $message);
     });
 
-    it('sticker chưa có bản GIF (dựng trước khi có GIF) vẫn gửi Zalo bằng ảnh PNG', function () {
+    it('luồng nhóm cũng đi lệnh sticker tự tạo', function () {
         fakeYonaOutboundZaloBridge();
-        $this->sticker->update(['gif_path' => null]);
+        $group = yonaOutboundConversation($this->inbox, ['thread_id' => '5550001', 'thread_type' => 1]);
 
-        $response = $this->actingAs(yonaOutboundAgent($this->inbox))->postJson(
-            "/api/v1/accounts/{$this->inbox->account_id}/conversations/{$this->conversation->display_id}/messages",
-            ['content_type' => 'sticker', 'sticker_id' => "yona:{$this->sticker->id}"],
-        )->assertOk();
+        yonaOutboundSticker($group, "yona:{$this->sticker->id}");
         $sends = yonaOutboundRequests('/personal-messages/send');
 
-        expect($response->json('content_attributes.sticker'))->not->toHaveKey('gif_path')
-            ->and($sends[0]['media_kind'])->toBe('image')
-            ->and($sends[0]['filename'])->toBe("sticker-{$this->sticker->id}.png")
-            ->and($sends[0]['content_type'])->toBe('image/png');
+        expect($sends)->toHaveCount(1)
+            ->and((int) $sends[0]['thread_type'])->toBe(1)
+            ->and($sends[0]['custom_sticker']['static_url'])->toBe(url($this->sticker->static_url));
+    });
+
+    it('tin sticker thời Lottie (không có image_path) gửi lại được, ảnh động là ảnh tĩnh PNG', function () {
+        fakeYonaOutboundZaloBridge();
+        Queue::fake();
+        $legacy = YonaStickers::legacyLottie();
+        $message = $this->conversation->messages()->create([
+            'account_id' => $this->conversation->account_id,
+            'inbox_id' => $this->conversation->inbox_id,
+            'message_type' => Message::TYPE_OUTGOING,
+            'content_type' => Message::CONTENT_TYPES['sticker'],
+            'content_attributes' => ['sticker' => YonaStickers::legacyStoredPayload($legacy)],
+        ]);
+
+        (new SendOnZaloService($message))->perform();
+        $sends = yonaOutboundRequests('/personal-messages/send');
+
+        expect($sends)->toHaveCount(1)
+            ->and($sends[0]['custom_sticker']['static_url'])->toBe(url($legacy->static_url))
+            ->and($sends[0]['custom_sticker']['animation_url'])->toBe(url($legacy->static_url))
+            ->and($message->refresh()->source_id)->toBe('sent-yona-sticker');
+    });
+
+    it('bridge từ chối URL sticker (host ngoài allowlist) thì tin báo lỗi tải ảnh, không im lặng', function () {
+        Http::fake([
+            zaloBridgePattern('personal-messages/send') => Http::response(['ok' => false, 'message' => 'fetch_host_not_allowed'], 500),
+            zaloBridgePattern('*') => Http::response(['ok' => true]),
+        ]);
+
+        $message = yonaOutboundSticker($this->conversation, "yona:{$this->sticker->id}");
+
+        expect($message->refresh()->statusName())->toBe('failed')
+            ->and($message->content_attributes['external_error']['code'])->toBe(SendOnZaloService::ERROR_MEDIA_FETCH_FAILED);
     });
 
     it('thu hồi rồi xoá tin sticker Yona không xoá tệp trong kho', function () {

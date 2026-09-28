@@ -6,6 +6,7 @@ import {
     parseSearchInput,
     searchCatalog,
 } from '../stickers.mjs';
+import { INVALID_CUSTOM_STICKER } from '../custom-sticker.mjs';
 
 function recipientTypeToThreadType(rt) {
     if (rt == null || rt === '') {
@@ -166,6 +167,7 @@ export function registerPersonalMessageRoutes(app, deps) {
                 content_type: req.body?.content_type,
                 quote: req.body?.quote,
                 sticker: req.body?.sticker,
+                custom_sticker: req.body?.custom_sticker,
                 mentions: req.body?.mentions,
                 forward: req.body?.forward,
             });
@@ -182,7 +184,8 @@ export function registerPersonalMessageRoutes(app, deps) {
             if (
                 msg === 'thread_id required' ||
                 msg === 'thread_id and text or file_url required' ||
-                msg === 'invalid media_kind'
+                msg === 'invalid media_kind' ||
+                msg === INVALID_CUSTOM_STICKER
             ) {
                 return res.status(400).json({ ok: false, message: msg });
             }
