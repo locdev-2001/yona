@@ -10,25 +10,41 @@ const MAX_INPUT_BYTES = 2 * 1024 * 1024;
 const POSTER_FILE = 'poster.webp';
 const STATIC_FILE = 'static.png';
 const TIMEOUT_OPTION = '--timeout-ms=';
+const STATIC_SIZE_OPTION = '--static-size=';
+const DEFAULT_STATIC_SIZE = 512;
+const MIN_STATIC_SIZE = 32;
+const MAX_STATIC_SIZE = 512;
 const WORKER_URL = new URL('./render-worker.mjs', import.meta.url);
 
 function parseArguments(argv) {
     const positional = argv.filter((argument) => !argument.startsWith('--'));
     const options = argv.filter((argument) => argument.startsWith('--'));
     let timeoutMs = DEFAULT_TIMEOUT_MS;
+    let staticSize = DEFAULT_STATIC_SIZE;
 
     for (const option of options) {
-        const requestedTimeout = option.startsWith(TIMEOUT_OPTION) ? Number(option.slice(TIMEOUT_OPTION.length)) : NaN;
-        if (!Number.isInteger(requestedTimeout) || requestedTimeout <= 0 || requestedTimeout > MAX_TIMEOUT_MS) {
-            throw new RenderError('usage', `Unknown or invalid option: ${option}`);
+        if (option.startsWith(TIMEOUT_OPTION)) {
+            timeoutMs = integerOption(option, TIMEOUT_OPTION, 1, MAX_TIMEOUT_MS);
+        } else if (option.startsWith(STATIC_SIZE_OPTION)) {
+            staticSize = integerOption(option, STATIC_SIZE_OPTION, MIN_STATIC_SIZE, MAX_STATIC_SIZE);
+        } else {
+            throw new RenderError('usage', `Unknown option: ${option}`);
         }
-        timeoutMs = requestedTimeout;
     }
     if (positional.length !== 2) {
-        throw new RenderError('usage', 'Usage: render.mjs <input.json|input.tgs> <outDir> [--timeout-ms=N]');
+        throw new RenderError('usage', 'Usage: render.mjs <input.json|input.tgs> <outDir> [--timeout-ms=N] [--static-size=N]');
     }
 
-    return { inputPath: resolve(positional[0]), outDir: resolve(positional[1]), timeoutMs };
+    return { inputPath: resolve(positional[0]), outDir: resolve(positional[1]), timeoutMs, staticSize };
+}
+
+function integerOption(option, prefix, min, max) {
+    const value = Number(option.slice(prefix.length));
+    if (!Number.isInteger(value) || value < min || value > max) {
+        throw new RenderError('usage', `Invalid option: ${option}`);
+    }
+
+    return value;
 }
 
 async function readInput(inputPath) {
@@ -52,9 +68,9 @@ async function readInput(inputPath) {
     }
 }
 
-function renderInWorker(inputBytes, timeoutMs) {
+function renderInWorker(inputBytes, staticSize, timeoutMs) {
     return new Promise((resolvePromise, rejectPromise) => {
-        const worker = new Worker(WORKER_URL, { workerData: { inputBytes } });
+        const worker = new Worker(WORKER_URL, { workerData: { inputBytes, staticSize } });
         let settled = false;
         const settle = (outcome) => {
             if (settled) return;
@@ -95,9 +111,9 @@ async function writeOutputs(outDir, rendered) {
 }
 
 async function main() {
-    const { inputPath, outDir, timeoutMs } = parseArguments(process.argv.slice(2));
+    const { inputPath, outDir, timeoutMs, staticSize } = parseArguments(process.argv.slice(2));
     const inputBytes = await readInput(inputPath);
-    const rendered = await renderInWorker(inputBytes, timeoutMs);
+    const rendered = await renderInWorker(inputBytes, staticSize, timeoutMs);
     const outputPaths = await writeOutputs(outDir, rendered);
 
     return { ...outputPaths, ...rendered.details };

@@ -13,7 +13,7 @@ interface StickerRenderer
     public const RENDERER_UNAVAILABLE = 'renderer_unavailable';
 
     /**
-     * Dựng poster (webp 256px) và ảnh tĩnh (png 512px) vào $outputDirectory.
+     * Dựng poster (webp 256px) và ảnh tĩnh png vuông cạnh yona.stickers.outbound_image_size vào $outputDirectory.
      * `poster_frame` là số khung Lottie tuyệt đối (cùng hệ với ip/op).
      * Thất bại trả mã lỗi ổn định thay vì ném, và không để lại tệp.
      *

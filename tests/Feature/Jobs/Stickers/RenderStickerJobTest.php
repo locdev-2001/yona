@@ -210,8 +210,46 @@ it('turns an uploaded TGS into a ready sticker with real images', function () {
         ->and($sticker->only(['animation_path', 'poster_path', 'static_path']))->toBe(RenderStickerJob::storagePaths($sticker->content_hash))
         ->and(hash('sha256', $this->disk->get($sticker->animation_path)))->toBe($sticker->content_hash)
         ->and(getimagesizefromstring($this->disk->get($sticker->poster_path)))->toMatchArray([0 => 256, 1 => 256, 'mime' => 'image/webp'])
-        ->and(getimagesizefromstring($this->disk->get($sticker->static_path)))->toMatchArray([0 => 512, 1 => 512, 'mime' => 'image/png']);
+        ->and(getimagesizefromstring($this->disk->get($sticker->static_path)))->toMatchArray([0 => 64, 1 => 64, 'mime' => 'image/png']);
 })->group('renderer')->skip(
     fn () => ! is_dir(base_path('services/sticker-renderer/node_modules/@thorvg/lottie-player')),
     'Chưa cài services/sticker-renderer (corepack pnpm --dir services/sticker-renderer install).',
 );
+
+it('dựng lại sticker đã ready: ghi đè ảnh tại đúng đường dẫn cũ, sticker vẫn ready', function () {
+    ($this->runJob)();
+    $this->renderer->scenario = function (string $outputDirectory) {
+        File::ensureDirectoryExists($outputDirectory);
+        File::put("{$outputDirectory}/poster.webp", 'poster-v2');
+        File::put("{$outputDirectory}/static.png", 'static-v2');
+
+        return ['poster_path' => "{$outputDirectory}/poster.webp", 'static_path' => "{$outputDirectory}/static.png", 'poster_frame' => 30];
+    };
+
+    (new RenderStickerJob($this->sticker->fresh(), $this->animationJson, refreshing: true))->handle();
+
+    $sticker = $this->sticker->fresh();
+    expect($sticker->status)->toBe(Sticker::STATUS_READY)
+        ->and($sticker->only(['animation_path', 'poster_path', 'static_path']))->toBe($this->storagePaths)
+        ->and($this->disk->get($this->storagePaths['static_path']))->toBe('static-v2')
+        ->and($this->disk->get($this->storagePaths['poster_path']))->toBe('poster-v2');
+});
+
+it('dựng lại hỏng thì sticker giữ ready và ảnh cũ', function () {
+    ($this->runJob)();
+    $this->renderer->scenario = fn () => ['failure' => StickerRenderer::RENDER_FAILED];
+
+    (new RenderStickerJob($this->sticker->fresh(), $this->animationJson, refreshing: true))->handle();
+
+    $sticker = $this->sticker->fresh();
+    expect($sticker->status)->toBe(Sticker::STATUS_READY)
+        ->and($sticker->failure_code)->toBeNull()
+        ->and($this->disk->get($this->storagePaths['static_path']))->toBe('static-bytes');
+});
+
+it('lệnh dựng lại không chạm sticker đang processing', function () {
+    (new RenderStickerJob($this->sticker, $this->animationJson, refreshing: true))->handle();
+
+    expect($this->renderer->calls)->toBe([])
+        ->and($this->sticker->fresh()->status)->toBe(Sticker::STATUS_PROCESSING);
+});

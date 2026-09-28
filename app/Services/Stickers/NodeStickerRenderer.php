@@ -46,6 +46,7 @@ final class NodeStickerRenderer implements StickerRenderer
                 $animationPath,
                 $outputDirectory,
                 '--timeout-ms='.($timeoutSeconds * 1000),
+                '--static-size='.(int) config(self::CONFIG_KEY.'.outbound_image_size'),
             ]);
         } catch (ProcessTimedOutException) {
             return ['failure' => self::RENDER_TIMEOUT];

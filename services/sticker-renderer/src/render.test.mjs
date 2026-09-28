@@ -40,9 +40,9 @@ function runCli(args) {
     });
 }
 
-async function renderFixture(fixtureName) {
+async function renderFixture(fixtureName, extraArgs = []) {
     const outDir = join(workDir, `${fixtureName}-${Math.random().toString(36).slice(2)}`);
-    const run = await runCli([join(FIXTURE_DIR, fixtureName), outDir]);
+    const run = await runCli([join(FIXTURE_DIR, fixtureName), outDir, ...extraArgs]);
     assert.equal(run.exitCode, 0, `render failed: ${JSON.stringify(run.output)} ${run.stderr}`);
 
     return { ...run, outDir };
@@ -132,6 +132,21 @@ describe('render thành công', () => {
             await assertTransparentImage(output.static, 'png', STATIC_SIZE);
         });
     }
+
+    test('--static-size dựng ảnh tĩnh gửi kênh ngoài đúng cỡ, poster giữ nguyên', async () => {
+        const { output } = await renderFixture('ball-with-poster-marker.json', ['--static-size=128']);
+
+        await assertTransparentImage(output.static, 'png', 128);
+        await assertTransparentImage(output.poster, 'webp', POSTER_SIZE);
+        assert.equal(output.staticSize, 128);
+    });
+
+    test('--static-size ngoài khoảng cho phép là lỗi usage', async () => {
+        const inputPath = join(FIXTURE_DIR, 'ball-with-poster-marker.json');
+
+        await assertRenderError(inputPath, 'usage', ['--static-size=4']);
+        await assertRenderError(inputPath, 'usage', ['--static-size=1024']);
+    });
 });
 
 describe('chọn khung ảnh tĩnh', () => {

@@ -143,6 +143,7 @@ it('danh mục Zalo không nhận payload của kho Yona', function () {
 });
 
 it('đính kèm là tệp mượn trên disk stickers trỏ ảnh tĩnh, không bao giờ nằm trên disk public', function () {
+    config(['yona.stickers.outbound_image_size' => 96]);
     $sticker = YonaStickers::ready(attributes: ['width' => 320, 'height' => 240]);
 
     $attachment = $this->catalog->attachmentFor($this->catalog->fromStored(YonaStickers::storedPayload($sticker)), $this->inbox);
@@ -152,7 +153,7 @@ it('đính kèm là tệp mượn trên disk stickers trỏ ảnh tĩnh, không 
         ->and($attachment->file_type)->toBe(Attachment::FILE_TYPE_IMAGE)
         ->and($attachment->content_type)->toBe('image/png')
         ->and($attachment->filename)->toBe("sticker-{$sticker->id}.png")
-        ->and($attachment->meta)->toBe(['width' => 320, 'height' => 240])
+        ->and($attachment->meta)->toBe(['width' => 96, 'height' => 96])
         ->and($attachment->account_id)->toBe($this->inbox->account_id)
         ->and($attachment->external_url)->toBeNull()
         ->and($attachment->ownsStoredFile())->toBeFalse();

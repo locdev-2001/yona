@@ -1345,9 +1345,13 @@ bộ nhớ bằng `prlimit --data` và cắt thời gian. Biến trong `.env` La
 | `STICKER_RENDERER_TIMEOUT` | `10` | Giây tối đa cho một lượt render |
 | `STICKER_RENDERER_MEMORY_LIMITER` | `prlimit` | `none` chỉ dùng ở máy không có `prlimit` (macOS), không dùng trên server |
 | `STICKER_RENDERER_MEMORY_MB` | `384` | Trần bộ nhớ dữ liệu của tiến trình render |
+| `STICKER_OUTBOUND_IMAGE_SIZE` | `64` | Cạnh (px) ảnh PNG gửi sang kênh không phát được hoạt ảnh (Zalo…), từ 32 đến 512 |
 
 Đổi biến xong chạy `php artisan config:cache` rồi `php artisan horizon:terminate`
-(Supervisor tự dựng lại worker).
+(Supervisor tự dựng lại worker). Đổi `STICKER_OUTBOUND_IMAGE_SIZE` hoặc cách dựng
+ảnh thì chạy thêm `php artisan stickers:rerender` (thử trước bằng `--dry-run`) để
+dựng lại ảnh của sticker đã có; sticker vẫn dùng được trong lúc hàng đợi `stickers`
+chạy.
 
 **Nginx và sao lưu.** Cache tệp sticker và MIME wasm: mục 7, "Tệp kho sticker và
 wasm của trình phát". Sao lưu `storage/app/public/stickers` cùng database: mục 4.

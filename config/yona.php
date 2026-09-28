@@ -194,6 +194,8 @@ return [
                 'script' => base_path('services/sticker-renderer/src/render.mjs'),
             ],
         ],
+        // Cạnh (px) của ảnh PNG vuông gửi sang kênh không phát được hoạt ảnh (Zalo...): nhỏ như sticker, không thành ảnh lớn.
+        'outbound_image_size' => (int) env('STICKER_OUTBOUND_IMAGE_SIZE', 64),
         'timeout_seconds' => (int) env('STICKER_RENDERER_TIMEOUT', 10),
         'memory_limiter' => env('STICKER_RENDERER_MEMORY_LIMITER', 'prlimit'),
         'memory_limit_mb' => (int) env('STICKER_RENDERER_MEMORY_MB', 384),

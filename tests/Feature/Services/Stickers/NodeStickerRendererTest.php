@@ -52,7 +52,7 @@ it('runs the CLI under a data-segment limit and a process timeout above the CLI 
 
     Process::assertRan(fn (PendingProcess $process) => $process->command === [
         'prlimit', '--data='.(256 * 1024 * 1024),
-        'node', '/opt/renderer/render.mjs', $this->animationPath, $this->outputDirectory, '--timeout-ms=7000',
+        'node', '/opt/renderer/render.mjs', $this->animationPath, $this->outputDirectory, '--timeout-ms=7000', '--static-size=64',
     ] && $process->timeout === 7 + 3);
 });
 
@@ -80,11 +80,20 @@ it('keeps the CLI timeout inside the range the CLI accepts', function (int $conf
 
     (new NodeStickerRenderer)->render($this->animationPath, $this->outputDirectory);
 
-    Process::assertRan(fn (PendingProcess $process) => end($process->command) === $expectedOption);
+    Process::assertRan(fn (PendingProcess $process) => in_array($expectedOption, $process->command, true));
 })->with([
     'zero' => [0, '--timeout-ms=1000'],
     'above the CLI ceiling' => [600, '--timeout-ms=60000'],
 ]);
+
+it('asks the CLI for the outbound image size configured for other channels', function () {
+    config(['yona.stickers.outbound_image_size' => 96]);
+    Process::fake(['*' => Process::result('{"error":"render_failed"}', exitCode: 1)]);
+
+    (new NodeStickerRenderer)->render($this->animationPath, $this->outputDirectory);
+
+    Process::assertRan(fn (PendingProcess $process) => end($process->command) === '--static-size=96');
+});
 
 it('returns the files the CLI reports and the absolute poster frame', function () {
     File::ensureDirectoryExists($this->outputDirectory);
@@ -163,14 +172,14 @@ describe('with the real renderer', function () {
         };
     });
 
-    it('renders a minified sticker to a 256px poster and a 512px still at the poster marker', function () {
+    it('renders a minified sticker to a 256px poster and a 64px outbound still at the poster marker', function () {
         ($this->writeMinifiedFixture)('ball-with-poster-marker.tgs');
 
         $rendered = (new NodeStickerRenderer)->render($this->animationPath, $this->outputDirectory);
 
         expect($rendered)->toMatchArray(['poster_frame' => 45])
             ->and(getimagesize($rendered['poster_path']))->toMatchArray([0 => 256, 1 => 256, 'mime' => 'image/webp'])
-            ->and(getimagesize($rendered['static_path']))->toMatchArray([0 => 512, 1 => 512, 'mime' => 'image/png']);
+            ->and(getimagesize($rendered['static_path']))->toMatchArray([0 => 64, 1 => 64, 'mime' => 'image/png']);
     });
 
     it('fails the render instead of growing past the memory limit', function () {

@@ -6,6 +6,7 @@ use App\Jobs\ApplicationJob;
 use App\Models\Sticker;
 use App\Services\Stickers\StickerFileJanitor;
 use App\Services\Stickers\StickerRenderer;
+use App\Services\Stickers\StickerRendererResolver;
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Storage;
@@ -15,7 +16,8 @@ use UnexpectedValueException;
 
 // Dựng ảnh cho một sticker vừa upload rồi ghi ba tệp lên disk `stickers` theo
 // hash nội dung. Hỏng ở bất kỳ bước nào: sticker `failed` kèm mã, không để lại
-// tệp dở. Disk `stickers` không ném lỗi khi ghi hỏng nên mọi lệnh ghi đều kiểm
+// tệp dở. Dựng lại (`refreshing`) sticker đã `ready` thì ghi đè đúng các đường
+// dẫn cũ; hỏng thì chỉ báo lỗi, sticker vẫn dùng ảnh cũ. Disk `stickers` không ném lỗi khi ghi hỏng nên mọi lệnh ghi đều kiểm
 // giá trị trả về.
 class RenderStickerJob extends ApplicationJob
 {
@@ -42,6 +44,7 @@ class RenderStickerJob extends ApplicationJob
     public function __construct(
         public readonly Sticker $sticker,
         public readonly string $animationJson,
+        public readonly bool $refreshing = false,
     ) {
         $this->onQueue(self::QUEUE);
     }
@@ -64,7 +67,8 @@ class RenderStickerJob extends ApplicationJob
 
     public function handle(): void
     {
-        if ($this->sticker->status !== Sticker::STATUS_PROCESSING) {
+        $expectedStatus = $this->refreshing ? Sticker::STATUS_READY : Sticker::STATUS_PROCESSING;
+        if ($this->sticker->status !== $expectedStatus) {
             return;
         }
 
@@ -79,6 +83,12 @@ class RenderStickerJob extends ApplicationJob
             File::deleteDirectory($workspace);
         }
 
+        if ($this->refreshing) {
+            $failure === null || report(new UnexpectedValueException("Dựng lại sticker {$this->sticker->getKey()} hỏng: {$failure}"));
+
+            return;
+        }
+
         $failure === null ? $this->markReady() : $this->markFailed($failure);
     }
 
@@ -86,7 +96,7 @@ class RenderStickerJob extends ApplicationJob
     // handle() tự bắt mọi lỗi của nó.
     public function failed(?Throwable $exception): void
     {
-        if ($this->sticker->fresh()?->status === Sticker::STATUS_PROCESSING) {
+        if (! $this->refreshing && $this->sticker->fresh()?->status === Sticker::STATUS_PROCESSING) {
             $this->markFailed(StickerRenderer::RENDER_TIMEOUT);
         }
     }
@@ -99,7 +109,7 @@ class RenderStickerJob extends ApplicationJob
             return StickerRenderer::RENDERER_UNAVAILABLE;
         }
 
-        $rendered = $this->renderer()->render($animationPath, "{$workspace}/".self::RENDER_OUTPUT_DIRECTORY);
+        $rendered = app(StickerRendererResolver::class)->renderer()->render($animationPath, "{$workspace}/".self::RENDER_OUTPUT_DIRECTORY);
         if (isset($rendered['failure'])) {
             return $rendered['failure'];
         }
@@ -116,18 +126,6 @@ class RenderStickerJob extends ApplicationJob
         }
 
         return null;
-    }
-
-    private function renderer(): StickerRenderer
-    {
-        $driver = (string) config('yona.stickers.renderer');
-        $renderer = app((string) config("yona.stickers.renderers.{$driver}.class"));
-
-        if (! $renderer instanceof StickerRenderer) {
-            throw new UnexpectedValueException("Sticker renderer [{$driver}] does not implement ".StickerRenderer::class.'.');
-        }
-
-        return $renderer;
     }
 
     private function markReady(): void
