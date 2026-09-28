@@ -290,6 +290,7 @@
         "inbound_caption",
         "outbound_text",
         "outbound_image",
+        "outbound_gif",
         "outbound_video",
         "outbound_audio",
         "outbound_file",

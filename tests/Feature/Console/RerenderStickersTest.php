@@ -2,8 +2,10 @@
 
 use App\Jobs\Stickers\RenderStickerJob;
 use App\Models\Sticker;
+use App\Services\Stickers\StickerFileLayout;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
+use Tests\Support\FakeStickerRenderer;
 use Tests\Support\YonaStickers;
 
 beforeEach(function () {
@@ -49,4 +51,18 @@ it('--dry-run đếm đúng như lượt chạy thật mà không xếp job', fu
         ->assertSuccessful();
 
     Queue::assertNothingPushed();
+});
+
+it('sticker dựng trước khi có bản GIF: dựng lại xong có gif_path và tệp GIF', function () {
+    FakeStickerRenderer::install();
+    $sticker = YonaStickers::ready();
+    $sticker->update(['gif_path' => null]);
+
+    $this->artisan('stickers:rerender')->assertSuccessful();
+    Queue::pushed(RenderStickerJob::class)->each(fn (RenderStickerJob $job) => $job->handle());
+
+    $sticker->refresh();
+    expect($sticker->gif_path)->toBe(StickerFileLayout::renderedPaths($sticker->content_hash)['gif_path'])
+        ->and($this->disk->exists($sticker->gif_path))->toBeTrue()
+        ->and($sticker->status)->toBe(Sticker::STATUS_READY);
 });

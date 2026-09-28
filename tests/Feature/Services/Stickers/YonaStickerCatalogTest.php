@@ -324,6 +324,7 @@ it('payload tin mới mang đường dẫn ảnh WebP, ảnh tĩnh và số khun
         'pack_id' => $animated->sticker_pack_id,
         'image_path' => $animated->image_path,
         'static_path' => $animated->static_path,
+        'gif_path' => $animated->gif_path,
         'width' => 64,
         'height' => 64,
         'frames' => 12,

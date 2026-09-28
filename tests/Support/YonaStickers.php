@@ -29,6 +29,7 @@ final class YonaStickers
         $disk = Storage::disk(Sticker::DISK);
         $disk->put($sticker->static_path, self::png(64));
         $disk->put($sticker->image_path, 'sticker-webp');
+        $disk->put($sticker->gif_path, 'sticker-gif');
         $disk->put($sticker->original_path, self::png(256));
 
         return $sticker;
@@ -46,7 +47,7 @@ final class YonaStickers
         $sticker = Sticker::factory()
             ->for($pack ?? StickerPack::factory()->create(), 'stickerPack')
             ->create(['original_path' => null, ...$attributes]);
-        $sticker->update(['image_path' => $sticker->static_path]);
+        $sticker->update(['image_path' => $sticker->static_path, 'gif_path' => null]);
 
         $disk = Storage::disk(Sticker::DISK);
         $disk->put($sticker->static_path, self::png(64));
@@ -139,6 +140,7 @@ final class YonaStickers
             'pack_id' => $sticker->sticker_pack_id,
             'image_path' => $sticker->image_path,
             'static_path' => $sticker->static_path,
+            ...($sticker->gif_path === null ? [] : ['gif_path' => $sticker->gif_path]),
             'width' => $sticker->width,
             'height' => $sticker->height,
             'frames' => $sticker->frame_count,

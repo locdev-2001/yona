@@ -20,6 +20,12 @@ class UpdateStickerRequest extends FormRequest
         return StickerTags::validationRules();
     }
 
+    /** @return array<string, string> */
+    public function messages(): array
+    {
+        return StickerTags::validationMessages();
+    }
+
     public function stickerLabel(Sticker $current): ?string
     {
         return $this->has('label') ? $this->validated('label') : $current->label;

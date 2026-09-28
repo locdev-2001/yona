@@ -26,6 +26,7 @@ function rendererSummary(string $outputDirectory, array $overrides = []): string
     return json_encode([
         'image' => "{$outputDirectory}/sticker.webp",
         'static' => "{$outputDirectory}/static.png",
+        'gif' => "{$outputDirectory}/sticker.gif",
         'width' => 64,
         'height' => 64,
         'frames' => 1,
@@ -44,6 +45,7 @@ beforeEach(function () {
         File::ensureDirectoryExists($this->outputDirectory);
         File::put("{$this->outputDirectory}/sticker.webp", 'webp');
         File::put("{$this->outputDirectory}/static.png", 'png');
+        File::put("{$this->outputDirectory}/sticker.gif", 'gif');
     };
     $this->render = fn (array $edit = [], int $size = 64, int $staticSize = 128) => (new NodeStickerRenderer)->render($this->imagePath, $this->outputDirectory, $edit, $size, $staticSize);
 
@@ -126,6 +128,7 @@ it('trả tệp và số đo CLI báo về', function () {
     expect(($this->render)())->toBe([
         'image_path' => "{$this->outputDirectory}/sticker.webp",
         'static_path' => "{$this->outputDirectory}/static.png",
+        'gif_path' => "{$this->outputDirectory}/sticker.gif",
         'width' => 64,
         'height' => 64,
         'frames' => 12,
@@ -147,6 +150,7 @@ it('báo thành công mà thiếu tệp hoặc số đo thì tính là dựng h�
     expect(($this->render)())->toBe(['failure' => StickerRenderer::RENDER_FAILED]);
 })->with([
     'thiếu tệp' => [fn (string $output) => rendererSummary($output, ['image' => "{$output}/missing.webp"])],
+    'thiếu GIF' => [fn (string $output) => rendererSummary($output, ['gif' => null])],
     'không báo đường dẫn' => [fn () => json_encode(['width' => 64, 'height' => 64, 'frames' => 1, 'durationMs' => 0])],
     'tệp nằm ngoài thư mục đầu ra' => [function (string $output, string $workspace) {
         File::put("{$workspace}/stray.webp", 'webp');

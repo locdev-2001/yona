@@ -1,620 +1,894 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import type { FormEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { DragEvent } from 'react';
 
 import { t } from '../../../i18n';
 import { parseApiErrorMessage } from 'dashboard/helper/apiClient';
 import { formatBytes } from 'shared/helpers/FileHelper';
-import StickerImage from 'shared/sticker/StickerImage';
-import { formatKeywords, parseKeywordInput } from './stickerKeywords';
+import { currentQuery, replaceQuery } from '../../reports/helpers/urlQuery';
 import ConfirmActionDialog from './ConfirmActionDialog';
 import type { ConfirmActionRequest } from './ConfirmActionDialog';
+import StickerDetailPanel from './StickerDetailPanel';
+import type { StickerSaveResult } from './StickerDetailPanel';
+import StickerGrid from './StickerGrid';
+import type { StickerMoveTarget } from './StickerGrid';
 import StickerImageEditor from './StickerImageEditor';
+import StickerPackHeader from './StickerPackHeader';
+import StickerPackList from './StickerPackList';
+import { StickerThumb } from './StickerTile';
 import type { StickerLibraryApi, StickerUpload } from './stickerLibraryApi';
+import { DEFAULT_STICKER_LIMITS, stickerLimitsFromMeta, stickerMetaErrorsFromApi } from './stickerLimits';
+import {
+    MOBILE_QUERY,
+    Modal,
+    StickerButton,
+    StickerToastProvider,
+    WIDE_QUERY,
+    useMediaQuery,
+    useStickerToast,
+} from './stickerLibraryUi';
 import { isAnimatedImageBytes } from './stickerSourceImage';
 import { prepareStickerUpload } from './stickerUploadFile';
-import {
-    DANGER_BUTTON_CLASS,
-    ICON_BUTTON_CLASS,
-    INPUT_CLASS,
-    PRIMARY_BUTTON_CLASS,
-    SECONDARY_BUTTON_CLASS,
-} from './stickerLibraryStyles';
-import type {
-    LibrarySticker,
-    LibraryStickerChanges,
-    LibraryStickerPack,
-    LibraryStickerPackDetail,
-    LibraryStickerStatus,
-} from './types';
+import { useProcessingPoll } from './useProcessingPoll';
+import type { LibrarySticker, LibraryStickerChanges, LibraryStickerPack, LibraryStickerPackDetail, StickerLibraryListing } from './types';
 
-// Màn quản trị kho sticker dùng chung cho Super Admin và tenant: bộ sticker, thêm
-// sticker từ ảnh (qua trình chỉnh), sắp xếp, sửa nhãn và từ khoá.
+export const PACK_QUERY_KEY = 'pack';
+export const REORDER_DEBOUNCE_MS = 400;
+const FLASH_MS = 1500;
+const MOBILE_SCREEN_STATE = 'stickerPackScreen';
 
-export const PROCESSING_POLL_INTERVAL_MS = 3000;
+type LoadState = 'loading' | 'failed' | 'ready';
 
-const STATUS_TONE: Record<LibraryStickerStatus, string> = {
-    processing: 'bg-yellow-50 text-yellow-800',
-    ready: 'bg-green-50 text-green-800',
-    failed: 'bg-red-50 text-red-700',
-};
+interface Pending {
+    creating: boolean;
+    rename: boolean;
+    publish: boolean;
+    reorder: boolean;
+    deleting: ReadonlySet<number>;
+    saving: ReadonlySet<number>;
+}
+
+const IDLE: Pending = { creating: false, rename: false, publish: false, reorder: false, deleting: new Set(), saving: new Set() };
 
 interface EditorQueue {
     packId: number;
     files: File[];
     index: number;
+    addedIds: number[];
+    existingIds: number[];
+    skipped: number;
 }
 
-// Cạnh tệp sticker khi máy chủ chưa báo (meta.image_size).
-const FALLBACK_IMAGE_SIZE = 64;
+const POLLED_FIELDS = ['status', 'image_url', 'static_url', 'frames', 'failure_message', 'width', 'height'] as const;
 
 const fileExtension = (file: File) => file.name.split('.').pop()?.toLowerCase() ?? '';
+const queryPackId = () => {
+    const value = Number(currentQuery()[PACK_QUERY_KEY]);
 
-const errorMessage = (error: unknown) => parseApiErrorMessage(error) || t('STICKER_LIBRARY.ACTION_ERROR');
+    return Number.isInteger(value) && value > 0 ? value : null;
+};
+const withToggled = (set: ReadonlySet<number>, id: number, on: boolean) => {
+    const next = new Set(set);
+    if (on) next.add(id);
+    else next.delete(id);
 
-const hasProcessing = (pack: LibraryStickerPackDetail | null) =>
-    !!pack?.stickers.some(sticker => sticker.status === 'processing');
+    return next;
+};
+const orderStickers = (stickers: LibrarySticker[], ids: number[]) => {
+    const byId = new Map(stickers.map(sticker => [sticker.id, sticker]));
 
-function PackListItem({
-    pack,
-    selected,
-    onSelect,
-}: {
-    pack: LibraryStickerPack;
-    selected: boolean;
-    onSelect: () => void;
-}) {
-    return (
-        <li>
-            <button
-                type="button"
-                onClick={onSelect}
-                aria-current={selected ? 'true' : undefined}
-                className={`reset-base flex w-full items-center gap-3 rounded-lg border-0 px-2 py-2 text-left text-slate-900 shadow-none hover:bg-slate-50 ${selected ? 'bg-slate-100 ring-1 ring-woot-500' : 'bg-white'}`}
-            >
-                <span className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-md bg-slate-100">
-                    {pack.cover_url ? <img src={pack.cover_url} alt="" className="size-10 object-contain" /> : null}
-                </span>
-                <span className="flex min-w-0 flex-col">
-                    <span className="truncate text-sm font-medium text-slate-900">{pack.name}</span>
-                    <span className="text-xs text-slate-600">
-                        {t('STICKER_LIBRARY.STICKERS_COUNT', { count: pack.stickers_count ?? 0 })} ·{' '}
-                        {pack.published ? t('STICKER_LIBRARY.PUBLISHED') : t('STICKER_LIBRARY.DRAFT')}
-                    </span>
-                </span>
-            </button>
-        </li>
-    );
-}
+    return ids.map(id => byId.get(id)).filter((sticker): sticker is LibrarySticker => sticker !== undefined);
+};
+const packSummary = (detail: LibraryStickerPackDetail): LibraryStickerPack => ({
+    id: detail.id,
+    name: detail.name,
+    published: detail.published,
+    published_at: detail.published_at,
+    stickers_count: detail.stickers.length,
+    cover_url: detail.stickers[0]?.image_url ?? null,
+});
 
-function StickerDetailsForm({
-    sticker,
-    busy,
-    onSave,
-    onCancel,
-}: {
-    sticker: LibrarySticker;
-    busy: boolean;
-    onSave: (changes: LibraryStickerChanges) => void;
-    onCancel: () => void;
-}) {
-    const [labelDraft, setLabelDraft] = useState(sticker.label ?? '');
-    const [keywordsDraft, setKeywordsDraft] = useState(formatKeywords(sticker.keywords));
+function StickerLibrary({ api }: { api: StickerLibraryApi }) {
+    const toast = useStickerToast();
+    const isMobile = useMediaQuery(MOBILE_QUERY);
+    const isWide = useMediaQuery(WIDE_QUERY);
 
-    const submit = (event: FormEvent) => {
-        event.preventDefault();
-        onSave({ label: labelDraft.trim() || null, keywords: parseKeywordInput(keywordsDraft) });
-    };
-
-    return (
-        <form className="flex flex-col gap-2" onSubmit={submit}>
-            <label className="flex flex-col gap-1 text-xs text-slate-700">
-                {t('STICKER_LIBRARY.LABEL')}
-                <input
-                    className={INPUT_CLASS}
-                    value={labelDraft}
-                    onChange={event => setLabelDraft(event.target.value)}
-                    maxLength={100}
-                />
-            </label>
-            <label className="flex flex-col gap-1 text-xs text-slate-700">
-                {t('STICKER_LIBRARY.KEYWORDS')}
-                <input
-                    className={INPUT_CLASS}
-                    value={keywordsDraft}
-                    onChange={event => setKeywordsDraft(event.target.value)}
-                    placeholder={t('STICKER_LIBRARY.KEYWORDS_PLACEHOLDER')}
-                />
-            </label>
-            <p className="text-xs text-slate-600">{t('STICKER_LIBRARY.KEYWORDS_HINT')}</p>
-            <div className="flex gap-2">
-                <button type="submit" className={PRIMARY_BUTTON_CLASS} disabled={busy}>
-                    {t('STICKER_LIBRARY.SAVE_STICKER')}
-                </button>
-                <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={onCancel} disabled={busy}>
-                    {t('STICKER_LIBRARY.CANCEL')}
-                </button>
-            </div>
-        </form>
-    );
-}
-
-function StickerDetails({ sticker }: { sticker: LibrarySticker }) {
-    return (
-        <div className="flex flex-col gap-1">
-            {sticker.label ? <span className="truncate text-sm text-slate-900">{sticker.label}</span> : null}
-            {sticker.keywords.length > 0 ? (
-                <ul className="m-0 flex list-none flex-wrap gap-1 p-0" aria-label={t('STICKER_LIBRARY.KEYWORDS')}>
-                    {sticker.keywords.map(keyword => (
-                        <li key={keyword} className="rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-800">
-                            {keyword}
-                        </li>
-                    ))}
-                </ul>
-            ) : (
-                <span className="text-xs text-slate-600">{t('STICKER_LIBRARY.NO_KEYWORDS')}</span>
-            )}
-        </div>
-    );
-}
-
-function StickerCard({
-    sticker,
-    isFirst,
-    isLast,
-    busy,
-    onMove,
-    onDelete,
-    onSaveDetails,
-}: {
-    sticker: LibrarySticker;
-    isFirst: boolean;
-    isLast: boolean;
-    busy: boolean;
-    onMove: (offset: -1 | 1) => void;
-    onDelete: () => void;
-    onSaveDetails: (changes: LibraryStickerChanges) => Promise<boolean>;
-}) {
-    const [isEditing, setEditing] = useState(false);
-
-    const saveDetails = async (changes: LibraryStickerChanges) => {
-        if (await onSaveDetails(changes)) setEditing(false);
-    };
-
-    return (
-        <li className="flex flex-col gap-2 rounded-lg border border-slate-100 p-2" data-testid="library-sticker">
-            <div className="flex aspect-square items-center justify-center overflow-hidden rounded-md bg-slate-50">
-                {sticker.image_url ? <StickerImage src={sticker.image_url} alt={sticker.label ?? ''} /> : null}
-            </div>
-            <span className={`self-start rounded px-1.5 py-0.5 text-xs font-medium ${STATUS_TONE[sticker.status]}`}>
-                {t(`STICKER_LIBRARY.STATUS.${sticker.status}`)}
-            </span>
-            {sticker.failure_message ? <p className="text-xs text-red-700">{sticker.failure_message}</p> : null}
-            {isEditing ? (
-                <StickerDetailsForm
-                    sticker={sticker}
-                    busy={busy}
-                    onSave={changes => void saveDetails(changes)}
-                    onCancel={() => setEditing(false)}
-                />
-            ) : (
-                <StickerDetails sticker={sticker} />
-            )}
-            <div className="flex flex-wrap items-center gap-1">
-                <button
-                    type="button"
-                    className={ICON_BUTTON_CLASS}
-                    onClick={() => onMove(-1)}
-                    disabled={busy || isFirst}
-                    aria-label={t('STICKER_LIBRARY.MOVE_UP')}
-                    title={t('STICKER_LIBRARY.MOVE_UP')}
-                >
-                    ←
-                </button>
-                <button
-                    type="button"
-                    className={ICON_BUTTON_CLASS}
-                    onClick={() => onMove(1)}
-                    disabled={busy || isLast}
-                    aria-label={t('STICKER_LIBRARY.MOVE_DOWN')}
-                    title={t('STICKER_LIBRARY.MOVE_DOWN')}
-                >
-                    →
-                </button>
-                <button
-                    type="button"
-                    className={ICON_BUTTON_CLASS}
-                    onClick={() => setEditing(editing => !editing)}
-                    disabled={busy}
-                    aria-label={t('STICKER_LIBRARY.EDIT_STICKER')}
-                    aria-expanded={isEditing}
-                    title={t('STICKER_LIBRARY.EDIT_STICKER')}
-                >
-                    ✎
-                </button>
-                <button
-                    type="button"
-                    className={`${ICON_BUTTON_CLASS} ml-auto text-red-700`}
-                    onClick={onDelete}
-                    disabled={busy}
-                    aria-label={t('STICKER_LIBRARY.DELETE_STICKER')}
-                    title={t('STICKER_LIBRARY.DELETE_STICKER')}
-                >
-                    ✕
-                </button>
-            </div>
-        </li>
-    );
-}
-
-export default function StickerLibraryManager({ api }: { api: StickerLibraryApi }) {
+    const [loadState, setLoadState] = useState<LoadState>('loading');
+    const [isRetrying, setRetrying] = useState(false);
     const [packs, setPacks] = useState<LibraryStickerPack[]>([]);
-    const [maxUploadKb, setMaxUploadKb] = useState(0);
-    const [acceptedExtensions, setAcceptedExtensions] = useState<string[]>([]);
-    const [imageSize, setImageSize] = useState(FALLBACK_IMAGE_SIZE);
-    const [isLoading, setLoading] = useState(true);
-    const [loadFailed, setLoadFailed] = useState(false);
-    const [selectedPack, setSelectedPack] = useState<LibraryStickerPackDetail | null>(null);
-    const [newPackName, setNewPackName] = useState('');
-    const [nameDraft, setNameDraft] = useState('');
-    const [isBusy, setBusy] = useState(false);
+    const [meta, setMeta] = useState<StickerLibraryListing['meta'] | null>(null);
+    const [requestedPackId, setRequestedPackId] = useState<number | null>(queryPackId);
+    const [detail, setDetail] = useState<LibraryStickerPackDetail | null>(null);
+    const [pending, setPending] = useState<Pending>(IDLE);
+    const [selectedStickerId, setSelectedStickerId] = useState<number | null>(null);
+    const [isCreateOpen, setCreateOpen] = useState(false);
+    const [sortBaseline, setSortBaseline] = useState<number[] | null>(null);
     const [editorQueue, setEditorQueue] = useState<EditorQueue | null>(null);
-    const [uploadErrors, setUploadErrors] = useState<string[]>([]);
-    const [actionError, setActionError] = useState<string | null>(null);
-    const [pendingConfirmation, setPendingConfirmation] = useState<ConfirmActionRequest | null>(null);
-    const closeConfirmation = useCallback(() => setPendingConfirmation(null), []);
+    const [confirmation, setConfirmation] = useState<ConfirmActionRequest | null>(null);
+    const [flashIds, setFlashIds] = useState<ReadonlySet<number>>(new Set());
+    const [isDraggingFiles, setDraggingFiles] = useState(false);
+
+    const limits = useMemo(() => (meta ? stickerLimitsFromMeta(meta) : DEFAULT_STICKER_LIMITS), [meta]);
+    const uploadLimitBytes = (meta?.max_upload_kb ?? 0) * 1024;
+    const uploadLimit = formatBytes(uploadLimitBytes, 1);
+    const acceptedExtensions = meta?.accepted_extensions ?? [];
+
+    const selectedPackId =
+        requestedPackId !== null && packs.some(pack => pack.id === requestedPackId) ? requestedPackId : isMobile ? null : (packs[0]?.id ?? null);
+    const currentDetail = detail?.id === selectedPackId ? detail : null;
+
+    const selectedPackRef = useRef(selectedPackId);
+    selectedPackRef.current = selectedPackId;
+    const loadedPackRef = useRef<number | null>(null);
+    loadedPackRef.current = detail?.id ?? null;
+    const loadSeq = useRef(0);
+    const mutationSeq = useRef(0);
+    const detailDirty = useRef(false);
+    const reorderTimer = useRef<number | undefined>(undefined);
+    const reorderBaseline = useRef<{ packId: number; ids: number[] } | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const loadPacks = useCallback(async () => {
-        try {
-            const listing = await api.listPacks();
-            setPacks(listing.payload);
-            setMaxUploadKb(listing.meta.max_upload_kb);
-            setAcceptedExtensions(listing.meta.accepted_extensions);
-            setImageSize(listing.meta.image_size || FALLBACK_IMAGE_SIZE);
-            setLoadFailed(false);
-        } catch {
-            setLoadFailed(true);
-        } finally {
-            setLoading(false);
-        }
-    }, [api]);
+    const setPendingFlag = (key: 'creating' | 'rename' | 'publish' | 'reorder', on: boolean) => setPending(current => ({ ...current, [key]: on }));
+    const errorToast = useCallback((error: unknown) => toast({ message: parseApiErrorMessage(error) || t('STICKER_LIBRARY.ACTION_ERROR'), tone: 'error' }), [toast]);
+
+    const updateDetail = useCallback((packId: number, update: (pack: LibraryStickerPackDetail) => LibraryStickerPackDetail) => {
+        mutationSeq.current += 1;
+        setDetail(current => (current?.id === packId ? update(current) : current));
+    }, []);
+
+    const mergePackSummary = useCallback((summary: Partial<LibraryStickerPack> & { id: number }) => {
+        setPacks(current => current.map(pack => (pack.id === summary.id ? { ...pack, ...summary } : pack)));
+    }, []);
+
+    const loadPacks = useCallback(
+        async (mode: 'initial' | 'refresh') => {
+            try {
+                const listing = await api.listPacks();
+                setPacks(listing.payload);
+                setMeta(listing.meta);
+                setLoadState('ready');
+            } catch {
+                if (mode === 'initial') setLoadState(current => (current === 'ready' ? current : 'failed'));
+                else toast({ message: t('STICKER_LIBRARY.REFRESH_FAILED'), tone: 'error', action: { label: t('STICKER_LIBRARY.RETRY'), onClick: () => void loadPacks('refresh') } });
+            }
+        },
+        [api, toast],
+    );
 
     useEffect(() => {
-        void loadPacks();
+        void loadPacks('initial');
     }, [loadPacks]);
 
-    const showPack = (pack: LibraryStickerPackDetail) => {
-        setSelectedPack(pack);
-        setNameDraft(pack.name);
-    };
-
-    const selectedPackId = selectedPack?.id;
-    const waitingForRender = hasProcessing(selectedPack);
+    // Chỉ nhận phản hồi của lượt tải mới nhất, cho đúng bộ đang chọn, và chưa bị thao tác nào sau đó vượt mặt.
+    const loadDetail = useCallback(
+        async (packId: number) => {
+            const seq = (loadSeq.current += 1);
+            const mutationAtIssue = mutationSeq.current;
+            try {
+                const pack = await api.getPack(packId);
+                if (seq !== loadSeq.current || selectedPackRef.current !== packId) return;
+                if (mutationAtIssue !== mutationSeq.current && loadedPackRef.current === packId) {
+                    void loadDetail(packId);
+                    return;
+                }
+                setDetail(pack);
+                mergePackSummary(packSummary(pack));
+            } catch {
+                if (selectedPackRef.current === packId) {
+                    toast({ message: t('STICKER_LIBRARY.REFRESH_FAILED'), tone: 'error', action: { label: t('STICKER_LIBRARY.RETRY'), onClick: () => void loadDetail(packId) } });
+                }
+            }
+        },
+        [api, mergePackSummary, toast],
+    );
 
     useEffect(() => {
-        if (!waitingForRender || selectedPackId === undefined) return undefined;
+        setSelectedStickerId(null);
+        setSortBaseline(null);
+        if (selectedPackId !== null) void loadDetail(selectedPackId);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [selectedPackId]);
 
-        const timer = window.setTimeout(() => {
-            api.getPack(selectedPackId)
-                .then(pack => {
-                    setSelectedPack(current => (current?.id === pack.id ? pack : current));
-                    if (!hasProcessing(pack)) void loadPacks();
-                })
-                .catch(() => undefined);
-        }, PROCESSING_POLL_INTERVAL_MS);
+    useEffect(() => {
+        const onPopState = () => setRequestedPackId(queryPackId());
+        window.addEventListener('popstate', onPopState);
 
-        return () => window.clearTimeout(timer);
-    }, [api, loadPacks, selectedPack, selectedPackId, waitingForRender]);
+        return () => window.removeEventListener('popstate', onPopState);
+    }, []);
 
-    const runAction = async (action: () => Promise<void>) => {
-        setBusy(true);
-        setActionError(null);
-        try {
-            await action();
-        } catch (error) {
-            setActionError(errorMessage(error));
-        } finally {
-            setBusy(false);
+    const writePackQuery = (packId: number | null, push: boolean) => {
+        const { [PACK_QUERY_KEY]: _previous, ...others } = currentQuery();
+        const params = packId === null ? others : { ...others, [PACK_QUERY_KEY]: String(packId) };
+        if (push) {
+            const search = new URLSearchParams(params).toString();
+            window.history.pushState({ ...(window.history.state ?? {}), [MOBILE_SCREEN_STATE]: true }, '', `${window.location.pathname}${search ? `?${search}` : ''}`);
+        } else {
+            replaceQuery(params);
         }
+    };
+
+    const confirmDiscardThen = (action: () => void) => {
+        if (!detailDirty.current) {
+            action();
+            return;
+        }
+        setConfirmation({
+            title: t('STICKER_LIBRARY.DISCARD_CHANGES_TITLE'),
+            message: t('STICKER_LIBRARY.DISCARD_CHANGES_MESSAGE'),
+            confirmLabel: t('STICKER_LIBRARY.DISCARD'),
+            cancelLabel: t('STICKER_LIBRARY.KEEP_EDITING'),
+            onConfirm: () => {
+                detailDirty.current = false;
+                action();
+            },
+        });
     };
 
     const selectPack = (packId: number) =>
-        runAction(async () => {
-            setUploadErrors([]);
-            showPack(await api.getPack(packId));
+        confirmDiscardThen(() => {
+            setRequestedPackId(packId);
+            writePackQuery(packId, isMobile && packId !== selectedPackId);
         });
 
-    const createPack = (event: FormEvent) => {
-        event.preventDefault();
-        const name = newPackName.trim();
-        if (!name) return;
+    const backToList = () =>
+        confirmDiscardThen(() => {
+            if (window.history.state?.[MOBILE_SCREEN_STATE]) {
+                window.history.back();
+                return;
+            }
+            setRequestedPackId(null);
+            writePackQuery(null, false);
+        });
 
-        void runAction(async () => {
+    const createPack = async (name: string) => {
+        setPendingFlag('creating', true);
+        try {
             const pack = await api.createPack(name);
-            setNewPackName('');
-            showPack(pack);
-            await loadPacks();
-        });
+            setPacks(current => [...current, packSummary(pack)]);
+            setDetail(pack);
+            setCreateOpen(false);
+            setRequestedPackId(pack.id);
+            writePackQuery(pack.id, isMobile);
+            void loadPacks('refresh');
+        } catch (error) {
+            errorToast(error);
+        } finally {
+            setPendingFlag('creating', false);
+        }
     };
 
-    const renamePack = (event: FormEvent) => {
-        event.preventDefault();
-        const name = nameDraft.trim();
-        if (!selectedPack || !name) return;
+    const renamePack = async (name: string): Promise<boolean> => {
+        if (!currentDetail) return false;
+        const packId = currentDetail.id;
+        setPendingFlag('rename', true);
+        try {
+            const pack = await api.renamePack(packId, name);
+            updateDetail(packId, current => ({ ...current, name: pack.name }));
+            mergePackSummary({ id: packId, name: pack.name });
+            toast({ message: t('STICKER_LIBRARY.RENAMED') });
 
-        void runAction(async () => {
-            showPack(await api.renamePack(selectedPack.id, name));
-            await loadPacks();
-        });
+            return true;
+        } catch (error) {
+            errorToast(error);
+
+            return false;
+        } finally {
+            setPendingFlag('rename', false);
+        }
     };
 
-    const togglePublished = () => {
-        if (!selectedPack) return;
+    const setPublished = async (published: boolean) => {
+        if (!currentDetail) return;
+        const { id: packId, name } = currentDetail;
+        setPendingFlag('publish', true);
+        try {
+            const pack = await api.setPublished(packId, published);
+            updateDetail(packId, current => ({ ...current, published: pack.published, published_at: pack.published_at }));
+            mergePackSummary({ id: packId, published: pack.published, published_at: pack.published_at });
+            toast(
+                pack.published
+                    ? { message: t('STICKER_LIBRARY.PUBLISHED_TOAST', { name }) }
+                    : { message: t('STICKER_LIBRARY.UNPUBLISHED_TOAST'), action: { label: t('STICKER_LIBRARY.UNDO'), onClick: () => void republish(packId) } },
+            );
+        } catch (error) {
+            errorToast(error);
+        } finally {
+            setPendingFlag('publish', false);
+        }
+    };
 
-        void runAction(async () => {
-            showPack(await api.setPublished(selectedPack.id, !selectedPack.published));
-            await loadPacks();
-        });
+    const republish = async (packId: number) => {
+        try {
+            const pack = await api.setPublished(packId, true);
+            updateDetail(packId, current => ({ ...current, published: pack.published, published_at: pack.published_at }));
+            mergePackSummary({ id: packId, published: pack.published, published_at: pack.published_at });
+        } catch (error) {
+            errorToast(error);
+        }
     };
 
     const deletePack = () => {
-        if (!selectedPack) return;
-
-        setPendingConfirmation({
+        if (!currentDetail) return;
+        const { id: packId, name } = currentDetail;
+        setConfirmation({
             title: t('STICKER_LIBRARY.DELETE_PACK'),
-            message: t('STICKER_LIBRARY.DELETE_PACK_CONFIRM', { name: selectedPack.name }),
+            message: t('STICKER_LIBRARY.DELETE_PACK_CONFIRM', { name, count: currentDetail.stickers.length }),
             confirmLabel: t('STICKER_LIBRARY.DELETE_PACK'),
-            onConfirm: () =>
-                void runAction(async () => {
-                    await api.deletePack(selectedPack.id);
-                    setSelectedPack(null);
-                    await loadPacks();
-                }),
+            onConfirm: async () => {
+                try {
+                    await api.deletePack(packId);
+                    const index = packs.findIndex(pack => pack.id === packId);
+                    const remaining = packs.filter(pack => pack.id !== packId);
+                    const neighbour = remaining[index] ?? remaining[index - 1] ?? null;
+                    setPacks(remaining);
+                    setDetail(null);
+                    const nextId = isMobile ? null : (neighbour?.id ?? null);
+                    setRequestedPackId(nextId);
+                    writePackQuery(nextId, false);
+                    toast({ message: t('STICKER_LIBRARY.PACK_DELETED', { name }) });
+                    void loadPacks('refresh');
+                } catch (error) {
+                    errorToast(error);
+                }
+            },
         });
     };
 
-    const uploadLimitBytes = maxUploadKb * 1024;
-    const uploadLimit = formatBytes(uploadLimitBytes, 1);
+    const persistOrder = (packId: number, ids: number[]) => {
+        window.clearTimeout(reorderTimer.current);
+        reorderTimer.current = window.setTimeout(async () => {
+            setPendingFlag('reorder', true);
+            try {
+                await api.reorderStickers(packId, ids);
+                reorderBaseline.current = null;
+                void loadPacks('refresh');
+            } catch {
+                const baseline = reorderBaseline.current;
+                reorderBaseline.current = null;
+                if (baseline?.packId === packId) updateDetail(packId, current => ({ ...current, stickers: orderStickers(current.stickers, baseline.ids) }));
+                toast({ message: t('STICKER_LIBRARY.REORDER_FAILED'), tone: 'error' });
+            } finally {
+                setPendingFlag('reorder', false);
+            }
+        }, REORDER_DEBOUNCE_MS);
+    };
 
-    // Ảnh tĩnh quá nặng sẽ được thu nhỏ lúc lưu; chỉ ảnh động quá nặng mới bị từ chối ngay.
-    const rejectionOf = async (file: File): Promise<string | null> => {
-        if (!acceptedExtensions.includes(fileExtension(file))) {
-            return t('STICKER_LIBRARY.FILE_TYPE_REJECTED', { filename: file.name });
+    const applyLocalOrder = (ids: number[]) => {
+        if (!currentDetail) return;
+        const packId = currentDetail.id;
+        if (!reorderBaseline.current) reorderBaseline.current = { packId, ids: currentDetail.stickers.map(sticker => sticker.id) };
+        updateDetail(packId, current => ({ ...current, stickers: orderStickers(current.stickers, ids) }));
+    };
+
+    const reorderStickers = (ids: number[]) => {
+        if (!currentDetail) return;
+        applyLocalOrder(ids);
+        if (sortBaseline === null) persistOrder(currentDetail.id, ids);
+    };
+
+    const moveSticker = (stickerId: number, target: StickerMoveTarget) => {
+        if (!currentDetail) return;
+        const rest = currentDetail.stickers.map(sticker => sticker.id).filter(id => id !== stickerId);
+        reorderStickers(target === 'first' ? [stickerId, ...rest] : [...rest, stickerId]);
+    };
+
+    const failedFirst = () => {
+        if (!currentDetail) return;
+        const failed = currentDetail.stickers.filter(sticker => sticker.status === 'failed').map(sticker => sticker.id);
+        const others = currentDetail.stickers.filter(sticker => sticker.status !== 'failed').map(sticker => sticker.id);
+        reorderStickers([...failed, ...others]);
+    };
+
+    const startSort = () => currentDetail && setSortBaseline(currentDetail.stickers.map(sticker => sticker.id));
+    const cancelSort = () => {
+        if (currentDetail && sortBaseline) updateDetail(currentDetail.id, current => ({ ...current, stickers: orderStickers(current.stickers, sortBaseline) }));
+        reorderBaseline.current = null;
+        setSortBaseline(null);
+    };
+    const finishSort = () => {
+        if (currentDetail && sortBaseline) {
+            const ids = currentDetail.stickers.map(sticker => sticker.id);
+            if (ids.join() !== sortBaseline.join()) persistOrder(currentDetail.id, ids);
+            else reorderBaseline.current = null;
         }
-        if (uploadLimitBytes > 0 && file.size > uploadLimitBytes && isAnimatedImageBytes(new Uint8Array(await file.arrayBuffer()))) {
-            return t('STICKER_LIBRARY.FILE_ANIMATED_TOO_LARGE', { filename: file.name, limit: uploadLimit });
-        }
-        return null;
+        setSortBaseline(null);
     };
 
-    const openEditor = async (files: File[]) => {
-        if (!selectedPack || files.length === 0) return;
-        const packId = selectedPack.id;
-        const rejections = await Promise.all(files.map(rejectionOf));
-        const editable = files.filter((_, index) => rejections[index] === null);
-        setUploadErrors(rejections.filter((message): message is string => message !== null));
-        if (editable.length > 0) setEditorQueue({ packId, files: editable, index: 0 });
-    };
-
-    const refreshPack = (packId: number) =>
-        runAction(async () => {
-            const pack = await api.getPack(packId);
-            setSelectedPack(current => (current?.id === pack.id ? pack : current));
-            await loadPacks();
-        });
-
-    const advanceEditor = () =>
-        setEditorQueue(queue => (queue && queue.index + 1 < queue.files.length ? { ...queue, index: queue.index + 1 } : null));
-
-    const saveEditedSticker = async (upload: StickerUpload) => {
-        if (!editorQueue) return;
-        const { packId, files, index } = editorQueue;
-        await api.uploadSticker(packId, await prepareStickerUpload(files[index], uploadLimitBytes), upload);
-        advanceEditor();
-        void refreshPack(packId);
-    };
-
-    const moveSticker = (stickerId: number, offset: -1 | 1) => {
-        if (!selectedPack) return;
-        const orderedIds = selectedPack.stickers.map(sticker => sticker.id);
-        const from = orderedIds.indexOf(stickerId);
-        const to = from + offset;
-        if (from < 0 || to < 0 || to >= orderedIds.length) return;
-        [orderedIds[from], orderedIds[to]] = [orderedIds[to], orderedIds[from]];
-
-        void runAction(async () => {
-            showPack(await api.reorderStickers(selectedPack.id, orderedIds));
-            await loadPacks();
-        });
-    };
-
-    const saveStickerDetails = async (stickerId: number, changes: LibraryStickerChanges): Promise<boolean> => {
-        if (!selectedPack) return false;
-        const packId = selectedPack.id;
-        let saved = false;
-
-        await runAction(async () => {
+    const saveSticker = async (stickerId: number, changes: LibraryStickerChanges): Promise<StickerSaveResult> => {
+        if (!currentDetail) return { ok: false, errors: null };
+        const packId = currentDetail.id;
+        setPending(current => ({ ...current, saving: withToggled(current.saving, stickerId, true) }));
+        try {
             const updated = await api.updateSticker(packId, stickerId, changes);
-            setSelectedPack(current =>
-                current?.id === packId
-                    ? { ...current, stickers: current.stickers.map(sticker => (sticker.id === updated.id ? updated : sticker)) }
-                    : current,
-            );
-            saved = true;
-        });
+            updateDetail(packId, current => ({
+                ...current,
+                stickers: current.stickers.map(sticker => (sticker.id === updated.id ? { ...sticker, label: updated.label, keywords: updated.keywords } : sticker)),
+            }));
+            toast({ message: t('STICKER_LIBRARY.SAVED') });
 
-        return saved;
+            return { ok: true };
+        } catch (error) {
+            const fieldErrors = stickerMetaErrorsFromApi(error, changes, limits);
+            if (!fieldErrors) errorToast(error);
+
+            return { ok: false, errors: fieldErrors };
+        } finally {
+            setPending(current => ({ ...current, saving: withToggled(current.saving, stickerId, false) }));
+        }
     };
 
     const deleteSticker = (stickerId: number) => {
-        if (!selectedPack) return;
-
-        setPendingConfirmation({
+        if (!currentDetail) return;
+        const packId = currentDetail.id;
+        const index = currentDetail.stickers.findIndex(sticker => sticker.id === stickerId);
+        const sticker = currentDetail.stickers[index];
+        if (!sticker) return;
+        const neighbour = currentDetail.stickers[index + 1] ?? currentDetail.stickers[index - 1];
+        setConfirmation({
             title: t('STICKER_LIBRARY.DELETE_STICKER'),
-            message: t('STICKER_LIBRARY.DELETE_STICKER_CONFIRM'),
+            message: t('STICKER_LIBRARY.DELETE_STICKER_CONFIRM', { name: currentDetail.name }),
             confirmLabel: t('STICKER_LIBRARY.DELETE_STICKER'),
-            onConfirm: () =>
-                void runAction(async () => {
-                    await api.deleteSticker(selectedPack.id, stickerId);
-                    showPack(await api.getPack(selectedPack.id));
-                    await loadPacks();
-                }),
+            preview: (
+                <span className="flex size-12 shrink-0 items-center justify-center rounded-lg border border-solid border-n-weak bg-n-solid-1">
+                    <StickerThumb sticker={sticker} animate={false} className="size-10" />
+                </span>
+            ),
+            onConfirm: async () => {
+                setPending(current => ({ ...current, deleting: withToggled(current.deleting, stickerId, true) }));
+                try {
+                    await api.deleteSticker(packId, stickerId);
+                    detailDirty.current = false;
+                    updateDetail(packId, current => ({ ...current, stickers: current.stickers.filter(item => item.id !== stickerId) }));
+                    setSelectedStickerId(current => (current === stickerId ? null : current));
+                    toast({ message: t('STICKER_LIBRARY.STICKER_DELETED') });
+                    if (neighbour) window.setTimeout(() => document.querySelector<HTMLElement>(`[data-sticker-id="${neighbour.id}"]`)?.focus());
+                    void loadPacks('refresh');
+                } catch (error) {
+                    errorToast(error);
+                } finally {
+                    setPending(current => ({ ...current, deleting: withToggled(current.deleting, stickerId, false) }));
+                }
+            },
         });
     };
 
-    if (isLoading) {
-        return <p className="p-4 text-sm text-slate-600">{t('STICKER_LIBRARY.LOADING')}</p>;
-    }
+    const processingIds = currentDetail?.stickers.filter(sticker => sticker.status === 'processing').map(sticker => sticker.id) ?? [];
+    const poll = useProcessingPoll({
+        resetKey: `${selectedPackId}:${processingIds.join(',')}`,
+        active: processingIds.length > 0,
+        poll: async () => {
+            if (selectedPackId === null) return;
+            const packId = selectedPackId;
+            const fresh = await api.getPack(packId);
+            if (selectedPackRef.current !== packId) return;
+            const freshById = new Map(fresh.stickers.map(sticker => [sticker.id, sticker]));
+            setDetail(current =>
+                current?.id === packId
+                    ? {
+                          ...current,
+                          stickers: current.stickers.map(sticker => {
+                              const polled = freshById.get(sticker.id);
+                              if (!polled) return sticker;
+                              const merged = { ...sticker };
+                              POLLED_FIELDS.forEach(field => Object.assign(merged, { [field]: polled[field] }));
 
-    if (loadFailed) {
+                              return merged;
+                          }),
+                      }
+                    : current,
+            );
+            if (!fresh.stickers.some(sticker => sticker.status === 'processing')) void loadPacks('refresh');
+        },
+    });
+
+    const screenFiles = async (files: File[]) => {
+        const rejections = await Promise.all(
+            files.map(async file => {
+                if (!acceptedExtensions.includes(fileExtension(file))) return t('STICKER_LIBRARY.FILE_TYPE_REJECTED', { filename: file.name });
+                if (uploadLimitBytes > 0 && file.size > uploadLimitBytes && isAnimatedImageBytes(new Uint8Array(await file.arrayBuffer()))) {
+                    return t('STICKER_LIBRARY.FILE_ANIMATED_TOO_LARGE', { filename: file.name, limit: uploadLimit });
+                }
+
+                return null;
+            }),
+        );
+
+        return {
+            accepted: files.filter((_, index) => rejections[index] === null),
+            rejected: rejections.filter((message): message is string => message !== null),
+        };
+    };
+
+    const openEditor = async (files: File[]) => {
+        if (!currentDetail || files.length === 0 || editorQueue) return;
+        const packId = currentDetail.id;
+        const { accepted, rejected } = await screenFiles(files);
+        if (rejected.length > 0) {
+            toast({ message: t('STICKER_LIBRARY.FILES_REJECTED', { count: rejected.length, details: rejected.join(' ') }), tone: 'error', durationMs: null });
+        }
+        if (accepted.length > 0) setEditorQueue({ packId, files: accepted, index: 0, addedIds: [], existingIds: [], skipped: 0 });
+    };
+
+    const finishQueue = (queue: EditorQueue) => {
+        setEditorQueue(null);
+        const touchedIds = [...queue.addedIds, ...queue.existingIds];
+        if (touchedIds.length === 0) return;
+        const summary = queue.addedIds.length > 0 ? [t('STICKER_LIBRARY.STICKERS_ADDED', { count: queue.addedIds.length })] : [];
+        if (queue.skipped > 0) summary.push(t('STICKER_LIBRARY.STICKERS_SKIPPED', { count: queue.skipped }));
+        if (queue.existingIds.length > 0) summary.push(t('STICKER_LIBRARY.STICKERS_EXISTING', { count: queue.existingIds.length }));
+        toast({ message: summary.join(' · ') });
+        setFlashIds(new Set(touchedIds));
+        window.setTimeout(() => setFlashIds(new Set()), FLASH_MS);
+        window.setTimeout(() => document.querySelector(`[data-sticker-id="${touchedIds[0]}"]`)?.scrollIntoView({ block: 'nearest' }));
+    };
+
+    const advanceEditor = (queue: EditorQueue, outcome: { addedId?: number; existingId?: number; skipped?: boolean }) => {
+        const next: EditorQueue = {
+            ...queue,
+            index: queue.index + 1,
+            addedIds: outcome.addedId !== undefined ? [...queue.addedIds, outcome.addedId] : queue.addedIds,
+            existingIds: outcome.existingId !== undefined ? [...queue.existingIds, outcome.existingId] : queue.existingIds,
+            skipped: queue.skipped + (outcome.skipped ? 1 : 0),
+        };
+        if (next.index >= next.files.length) finishQueue(next);
+        else setEditorQueue(next);
+    };
+
+    const saveEditedSticker = async (upload: StickerUpload) => {
+        if (!editorQueue) return;
+        const queue = editorQueue;
+        const created = await api.uploadSticker(queue.packId, await prepareStickerUpload(queue.files[queue.index], uploadLimitBytes), upload);
+        // Ảnh trùng: máy chủ trả sticker cũ kèm `existing: true`, không tính là sticker mới.
+        advanceEditor(queue, created?.existing ? { existingId: created.id } : { addedId: created?.id });
+        void loadDetail(queue.packId);
+    };
+
+    const closeEditor = () => {
+        if (!editorQueue) return;
+        const queue = editorQueue;
+        const remaining = queue.files.length - queue.index;
+        if (remaining <= 1) {
+            finishQueue({ ...queue, skipped: queue.skipped + remaining });
+            return;
+        }
+        setConfirmation({
+            title: t('STICKER_LIBRARY.DISCARD_QUEUE_TITLE', { count: remaining }),
+            message: t('STICKER_LIBRARY.DISCARD_QUEUE_MESSAGE'),
+            confirmLabel: t('STICKER_LIBRARY.DISCARD'),
+            cancelLabel: t('STICKER_LIBRARY.KEEP_EDITING_IMAGES'),
+            onConfirm: () => finishQueue({ ...queue, skipped: queue.skipped + remaining }),
+        });
+    };
+
+    const pickFiles = () => fileInputRef.current?.click();
+
+    // Dán ảnh khi không có ô nhập nào đang giữ focus cũng mở trình chỉnh.
+    useEffect(() => {
+        const onPaste = (event: ClipboardEvent) => {
+            const active = document.activeElement;
+            if (active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement || (active as HTMLElement | null)?.isContentEditable) return;
+            if (confirmation || editorQueue || !currentDetail) return;
+            const files = Array.from(event.clipboardData?.files ?? []).filter(file => file.type.startsWith('image/'));
+            if (files.length === 0) return;
+            event.preventDefault();
+            void openEditor(files);
+        };
+        document.addEventListener('paste', onPaste);
+
+        return () => document.removeEventListener('paste', onPaste);
+    });
+
+    const hasFiles = (event: DragEvent) => Array.from(event.dataTransfer?.types ?? []).includes('Files');
+    const dropZoneHandlers = {
+        onDragEnter: (event: DragEvent) => {
+            if (!hasFiles(event) || !currentDetail) return;
+            event.preventDefault();
+            setDraggingFiles(true);
+        },
+        onDragOver: (event: DragEvent) => {
+            if (!hasFiles(event) || !currentDetail) return;
+            event.preventDefault();
+            event.dataTransfer.dropEffect = 'copy';
+        },
+        onDragLeave: (event: DragEvent) => {
+            if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setDraggingFiles(false);
+        },
+        onDrop: (event: DragEvent) => {
+            if (!hasFiles(event)) return;
+            event.preventDefault();
+            setDraggingFiles(false);
+            void openEditor(Array.from(event.dataTransfer.files));
+        },
+    };
+
+    const selectSticker = (stickerId: number) => {
+        if (stickerId === selectedStickerId) return;
+        confirmDiscardThen(() => setSelectedStickerId(stickerId));
+    };
+    const closeDetail = () =>
+        confirmDiscardThen(() => {
+            setSelectedStickerId(null);
+            detailDirty.current = false;
+        });
+    const onDirtyChange = useCallback((dirty: boolean) => {
+        detailDirty.current = dirty;
+    }, []);
+
+    if (loadState === 'loading') return <LibrarySkeleton />;
+
+    if (loadState === 'failed') {
         return (
-            <div className="flex items-center gap-3 p-4 text-sm text-red-700">
-                <span>{t('STICKER_LIBRARY.LOAD_ERROR')}</span>
-                <button type="button" className={SECONDARY_BUTTON_CLASS} onClick={() => void loadPacks()}>
+            <div className="flex w-full flex-col items-center justify-center gap-3 py-16 text-center">
+                <span className="i-lucide-cloud-off size-10 text-n-slate-9" aria-hidden="true" />
+                <p className="m-0 text-sm font-medium text-n-slate-12">{t('STICKER_LIBRARY.LOAD_ERROR')}</p>
+                <StickerButton
+                    tone="secondary"
+                    busy={isRetrying}
+                    onClick={async () => {
+                        setRetrying(true);
+                        await loadPacks('initial');
+                        setRetrying(false);
+                    }}
+                >
                     {t('STICKER_LIBRARY.RETRY')}
-                </button>
+                </StickerButton>
             </div>
         );
     }
 
+    const stickers = currentDetail?.stickers ?? [];
+    const selectedIndex = stickers.findIndex(sticker => sticker.id === selectedStickerId);
+    const selectedSticker = selectedIndex >= 0 ? stickers[selectedIndex] : null;
+    const readyCount = stickers.filter(sticker => sticker.status === 'ready').length;
+    const failedCount = stickers.filter(sticker => sticker.status === 'failed').length;
+    const canAddSticker = stickers.length < limits.maxStickers && editorQueue === null;
+    const isSorting = sortBaseline !== null;
+    const showListScreen = !isMobile || selectedPackId === null;
+    const showDetailScreen = !isMobile || selectedPackId !== null;
+    const openCreate = () => setCreateOpen(true);
+
+    const detailPanel = selectedSticker && currentDetail ? (
+        <StickerDetailPanel
+            key={selectedSticker.id}
+            sticker={selectedSticker}
+            index={selectedIndex}
+            total={stickers.length}
+            limits={limits}
+            saving={pending.saving.has(selectedSticker.id)}
+            deleting={pending.deleting.has(selectedSticker.id)}
+            reorderEnabled={!isSorting}
+            showHeaderClose={isWide}
+            onSave={changes => saveSticker(selectedSticker.id, changes)}
+            onDirtyChange={onDirtyChange}
+            onRequestClose={closeDetail}
+            onMove={target => moveSticker(selectedSticker.id, target)}
+            onDelete={() => deleteSticker(selectedSticker.id)}
+        />
+    ) : null;
+
     return (
-        <div className="flex w-full flex-col gap-4 md:flex-row md:items-start">
-            <aside className="flex w-full flex-col gap-3 md:w-72 md:shrink-0">
-                <h2 className="text-sm font-semibold text-slate-900">{t('STICKER_LIBRARY.PACKS_TITLE')}</h2>
-                <form className="flex gap-2" onSubmit={createPack}>
-                    <input
-                        className={INPUT_CLASS}
-                        value={newPackName}
-                        onChange={event => setNewPackName(event.target.value)}
-                        placeholder={t('STICKER_LIBRARY.NEW_PACK_PLACEHOLDER')}
-                        aria-label={t('STICKER_LIBRARY.NEW_PACK_PLACEHOLDER')}
-                        maxLength={100}
+        <div className="flex h-full min-h-0 w-full flex-col md:flex-row">
+            {showListScreen ? (
+                <aside className="flex min-h-0 w-full shrink-0 flex-col md:w-60 md:border-0 md:border-r md:border-solid md:border-n-weak md:pr-4">
+                    <StickerPackList
+                        packs={packs}
+                        selectedPackId={selectedPackId}
+                        isMobile={isMobile}
+                        isCreating={pending.creating}
+                        creatingDraftOpen={isCreateOpen}
+                        maxNameLength={limits.maxPackNameLength}
+                        onSelect={selectPack}
+                        onOpenCreate={openCreate}
+                        onCloseCreate={() => setCreateOpen(false)}
+                        onCreate={name => void createPack(name)}
                     />
-                    <button type="submit" className={PRIMARY_BUTTON_CLASS} disabled={isBusy || !newPackName.trim()}>
-                        {t('STICKER_LIBRARY.CREATE_PACK')}
-                    </button>
-                </form>
-                {packs.length === 0 ? (
-                    <p className="text-sm text-slate-600">{t('STICKER_LIBRARY.EMPTY')}</p>
-                ) : (
-                    <ul className="m-0 flex list-none flex-col gap-1 p-0">
-                        {packs.map(pack => (
-                            <PackListItem
-                                key={pack.id}
-                                pack={pack}
-                                selected={pack.id === selectedPackId}
-                                onSelect={() => void selectPack(pack.id)}
-                            />
-                        ))}
-                    </ul>
-                )}
-            </aside>
+                    {isMobile && packs.length === 0 ? <EmptyLibrary onCreate={openCreate} /> : null}
+                </aside>
+            ) : null}
 
-            <section className="flex min-w-0 flex-1 flex-col gap-4 rounded-lg border border-slate-100 bg-white p-4">
-                {actionError ? (
-                    <p role="alert" className="text-sm text-red-700">
-                        {actionError}
-                    </p>
-                ) : null}
-                {!selectedPack ? (
-                    <p className="text-sm text-slate-600">{t('STICKER_LIBRARY.SELECT_PACK')}</p>
-                ) : (
-                    <>
-                        <form className="flex flex-wrap items-end gap-2" onSubmit={renamePack}>
-                            <label className="flex min-w-48 flex-1 flex-col gap-1 text-xs text-slate-700">
-                                {t('STICKER_LIBRARY.PACK_NAME_LABEL')}
-                                <input
-                                    className={INPUT_CLASS}
-                                    value={nameDraft}
-                                    onChange={event => setNameDraft(event.target.value)}
-                                    maxLength={100}
-                                />
-                            </label>
-                            <button
-                                type="submit"
-                                className={SECONDARY_BUTTON_CLASS}
-                                disabled={isBusy || !nameDraft.trim() || nameDraft.trim() === selectedPack.name}
-                            >
-                                {t('STICKER_LIBRARY.SAVE_NAME')}
-                            </button>
-                            <button type="button" className={PRIMARY_BUTTON_CLASS} onClick={togglePublished} disabled={isBusy}>
-                                {selectedPack.published ? t('STICKER_LIBRARY.UNPUBLISH') : t('STICKER_LIBRARY.PUBLISH')}
-                            </button>
-                            <button type="button" className={DANGER_BUTTON_CLASS} onClick={deletePack} disabled={isBusy}>
-                                {t('STICKER_LIBRARY.DELETE_PACK')}
-                            </button>
-                        </form>
-
-                        <div className="flex flex-col gap-2">
-                            <div className="flex flex-wrap items-center gap-3">
-                                <button
-                                    type="button"
-                                    className={PRIMARY_BUTTON_CLASS}
-                                    onClick={() => fileInputRef.current?.click()}
-                                    disabled={isBusy || editorQueue !== null}
-                                >
-                                    {t('STICKER_LIBRARY.UPLOAD')}
-                                </button>
-                                <span className="text-xs text-slate-600">
-                                    {t('STICKER_LIBRARY.UPLOAD_HINT', { limit: uploadLimit, size: imageSize })}
-                                </span>
-                                <input
-                                    ref={fileInputRef}
-                                    type="file"
-                                    multiple
-                                    hidden
-                                    data-testid="sticker-file-input"
-                                    accept={acceptedExtensions.map(extension => `.${extension}`).join(',')}
-                                    onChange={event => {
-                                        const files = Array.from(event.target.files ?? []);
-                                        event.target.value = '';
-                                        void openEditor(files);
-                                    }}
+            {showDetailScreen ? (
+                <section
+                    className="relative flex min-h-0 min-w-0 flex-1 flex-col md:overflow-y-auto md:pl-6"
+                    aria-label={currentDetail?.name}
+                    {...dropZoneHandlers}
+                >
+                    {packs.length === 0 ? (
+                        <EmptyLibrary onCreate={openCreate} />
+                    ) : !currentDetail ? (
+                        <GridSkeleton />
+                    ) : (
+                        <>
+                            <div className="bg-n-surface-1 md:sticky md:top-0 md:z-10 md:pb-3">
+                                <StickerPackHeader
+                                    pack={currentDetail}
+                                    packs={packs}
+                                    stickerCount={stickers.length}
+                                    readyCount={readyCount}
+                                    failedCount={failedCount}
+                                    maxStickers={limits.maxStickers}
+                                    maxNameLength={limits.maxPackNameLength}
+                                    imageSize={meta?.image_size ?? 0}
+                                    uploadLimit={uploadLimit}
+                                    isMobile={isMobile}
+                                    isRenaming={pending.rename}
+                                    isPublishing={pending.publish}
+                                    canAddSticker={canAddSticker}
+                                    onRename={renamePack}
+                                    onTogglePublished={published => void setPublished(published)}
+                                    onAddSticker={pickFiles}
+                                    onDeletePack={deletePack}
+                                    onFailedFirst={failedFirst}
+                                    onStartSort={startSort}
+                                    onBack={backToList}
                                 />
                             </div>
-                            {uploadErrors.length > 0 ? (
-                                <ul role="alert" className="m-0 flex list-none flex-col gap-1 p-0 text-sm text-red-700">
-                                    {uploadErrors.map(message => (
-                                        <li key={message}>{message}</li>
-                                    ))}
-                                </ul>
-                            ) : null}
-                        </div>
-
-                        {selectedPack.stickers.length === 0 ? (
-                            <p className="text-sm text-slate-600">{t('STICKER_LIBRARY.NO_STICKERS')}</p>
-                        ) : (
-                            <ul className="m-0 grid list-none grid-cols-2 p-0 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-                                {selectedPack.stickers.map((sticker, index) => (
-                                    <StickerCard
-                                        key={sticker.id}
-                                        sticker={sticker}
-                                        isFirst={index === 0}
-                                        isLast={index === selectedPack.stickers.length - 1}
-                                        busy={isBusy}
-                                        onMove={offset => moveSticker(sticker.id, offset)}
-                                        onDelete={() => deleteSticker(sticker.id)}
-                                        onSaveDetails={changes => saveStickerDetails(sticker.id, changes)}
+                            {isSorting ? <p className="m-0 pb-2 text-xs text-n-slate-11">{t('STICKER_LIBRARY.SORT_HINT')}</p> : null}
+                            <div className="pb-24 pt-2 md:pb-6">
+                                {stickers.length === 0 ? (
+                                    <EmptyPackDropZone isMobile={isMobile} imageSize={meta?.image_size ?? 0} onPick={pickFiles} />
+                                ) : (
+                                    <StickerGrid
+                                        packName={currentDetail.name}
+                                        stickers={stickers}
+                                        selectedStickerId={selectedStickerId}
+                                        deletingIds={pending.deleting}
+                                        flashIds={flashIds}
+                                        pollExhausted={poll.exhausted}
+                                        sortMode={isSorting}
+                                        reorderEnabled={!isMobile || isSorting}
+                                        canAdd={canAddSticker && !isMobile}
+                                        onOpen={selectSticker}
+                                        onDelete={deleteSticker}
+                                        onMove={moveSticker}
+                                        onReorder={reorderStickers}
+                                        onRetryPoll={poll.retry}
+                                        onAdd={pickFiles}
                                     />
-                                ))}
-                            </ul>
-                        )}
-                    </>
-                )}
-            </section>
-            <ConfirmActionDialog request={pendingConfirmation} onClose={closeConfirmation} />
+                                )}
+                            </div>
+                            {isDraggingFiles ? (
+                                <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center rounded-xl border-2 border-dashed border-n-brand bg-n-brand/10">
+                                    <p className="m-0 rounded-lg bg-n-solid-1 px-4 py-2 text-sm font-medium text-n-slate-12 shadow">
+                                        {t('STICKER_LIBRARY.DROP_HERE', { name: currentDetail.name })}
+                                    </p>
+                                </div>
+                            ) : null}
+                            {isMobile ? (
+                                <div className="fixed bottom-[calc(16px+env(safe-area-inset-bottom))] left-16 right-4 z-40 flex gap-2">
+                                    {isSorting ? (
+                                        <>
+                                            <StickerButton tone="secondary" size="lg" className="flex-1 shadow-lg" onClick={cancelSort}>
+                                                {t('STICKER_LIBRARY.CANCEL')}
+                                            </StickerButton>
+                                            <StickerButton tone="primary" size="lg" className="flex-1 shadow-lg" onClick={finishSort}>
+                                                {t('STICKER_LIBRARY.SORT_DONE')}
+                                            </StickerButton>
+                                        </>
+                                    ) : (
+                                        <StickerButton
+                                            tone="primary"
+                                            size="lg"
+                                            icon="i-lucide-plus"
+                                            className="flex-1 shadow-lg"
+                                            disabled={!canAddSticker}
+                                            onClick={pickFiles}
+                                        >
+                                            {t('STICKER_LIBRARY.ADD_STICKER')}
+                                        </StickerButton>
+                                    )}
+                                </div>
+                            ) : null}
+                        </>
+                    )}
+                </section>
+            ) : null}
+
+            {detailPanel && isWide ? (
+                <aside className="flex w-80 shrink-0 flex-col border-0 border-l border-solid border-n-weak" aria-label={t('STICKER_LIBRARY.DETAIL_TITLE')}>
+                    {detailPanel}
+                </aside>
+            ) : null}
+            {!isWide ? (
+                <Modal
+                    open={detailPanel !== null}
+                    title={t('STICKER_LIBRARY.DETAIL_TITLE')}
+                    variant="drawer"
+                    onRequestClose={closeDetail}
+                >
+                    {detailPanel}
+                </Modal>
+            ) : null}
+
+            <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                hidden
+                data-testid="sticker-file-input"
+                accept={acceptedExtensions.map(extension => `.${extension}`).join(',')}
+                onChange={event => {
+                    const files = Array.from(event.target.files ?? []);
+                    event.target.value = '';
+                    void openEditor(files);
+                }}
+            />
+            <ConfirmActionDialog request={confirmation} onClose={() => setConfirmation(null)} />
             {editorQueue ? (
                 <StickerImageEditor
                     key={`${editorQueue.packId}-${editorQueue.index}`}
                     file={editorQueue.files[editorQueue.index]}
                     position={editorQueue.index + 1}
                     total={editorQueue.files.length}
-                    imageSize={imageSize}
+                    imageSize={meta?.image_size ?? 0}
                     onSave={saveEditedSticker}
-                    onSkip={advanceEditor}
-                    onClose={() => setEditorQueue(null)}
+                    onSkip={() => advanceEditor(editorQueue, { skipped: true })}
+                    onClose={closeEditor}
                 />
             ) : null}
         </div>
+    );
+}
+
+function EmptyLibrary({ onCreate }: { onCreate: () => void }) {
+    return (
+        <div className="flex flex-1 flex-col items-center justify-center gap-4 py-16 text-center">
+            <span className="i-lucide-sticker size-10 text-n-slate-9" aria-hidden="true" />
+            <p className="m-0 text-sm font-medium text-n-slate-12">{t('STICKER_LIBRARY.EMPTY_TITLE')}</p>
+            <StickerButton tone="primary" icon="i-lucide-plus" onClick={onCreate}>
+                {t('STICKER_LIBRARY.CREATE_FIRST')}
+            </StickerButton>
+        </div>
+    );
+}
+
+function EmptyPackDropZone({ isMobile, imageSize, onPick }: { isMobile: boolean; imageSize: number; onPick: () => void }) {
+    return (
+        <div className="flex min-h-[200px] flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-n-slate-7 p-6 text-center">
+            <span className="i-lucide-image-plus size-8 text-n-slate-9" aria-hidden="true" />
+            <p className="m-0 text-sm font-medium text-n-slate-12">
+                {isMobile ? t('STICKER_LIBRARY.EMPTY_PACK_MOBILE') : t('STICKER_LIBRARY.EMPTY_PACK_DROP')}
+            </p>
+            <StickerButton tone="secondary" onClick={onPick}>
+                {t('STICKER_LIBRARY.CHOOSE_IMAGES')}
+            </StickerButton>
+            <p className="m-0 text-xs text-n-slate-11">{t('STICKER_LIBRARY.EMPTY_PACK_FORMATS', { size: imageSize })}</p>
+        </div>
+    );
+}
+
+const SKELETON_TILES = Array.from({ length: 8 }, (_, index) => index);
+
+function GridSkeleton() {
+    return (
+        <div aria-busy="true" className="flex flex-col gap-4">
+            <div className="h-10 w-64 animate-pulse rounded-lg bg-n-alpha-2" />
+            <div className="grid grid-cols-4 gap-2 md:grid-cols-[repeat(auto-fill,88px)]">
+                {SKELETON_TILES.map(index => (
+                    <div key={index} className="aspect-square animate-pulse rounded-xl bg-n-alpha-2" />
+                ))}
+            </div>
+        </div>
+    );
+}
+
+function LibrarySkeleton() {
+    return (
+        <div className="flex w-full flex-col gap-4 md:flex-row" aria-busy="true" aria-label={t('STICKER_LIBRARY.LOADING')}>
+            <div className="flex flex-col gap-2 md:w-60 md:pr-4">
+                {[0, 1, 2].map(index => (
+                    <div key={index} className="h-12 animate-pulse rounded-lg bg-n-alpha-2" />
+                ))}
+            </div>
+            <div className="flex-1 md:pl-6">
+                <GridSkeleton />
+            </div>
+        </div>
+    );
+}
+
+export default function StickerLibraryManager({ api }: { api: StickerLibraryApi }) {
+    return (
+        <StickerToastProvider>
+            <StickerLibrary api={api} />
+        </StickerToastProvider>
     );
 }

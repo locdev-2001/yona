@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { DEFAULT_STICKER_DISPLAY_SIZE } from 'shared/sticker/stickerDisplaySize';
 import StickerPanel from './StickerPanel';
 
 beforeEach(() => window.localStorage.clear());
@@ -20,7 +21,7 @@ describe('StickerPanel', () => {
         expect(screen.getByRole('tab', { name: 'Stickers' })).toHaveAttribute('aria-selected', 'true');
         const image = screen.getByRole('button', { name: 'Mèo vẫy' }).querySelector('img');
         expect(image).toHaveAttribute('src', '/storage/stickers/ab/sticker.webp');
-        expect(image?.style.width).toBe('64px');
+        expect(image?.style.width).toBe(`${DEFAULT_STICKER_DISPLAY_SIZE}px`);
     });
 
     it('sticker vừa gửi hiện trong tab Gần đây', () => {

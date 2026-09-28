@@ -20,6 +20,7 @@ export const CHANNEL_CAPABILITIES = [
     'inbound_forward',
     'outbound_text',
     'outbound_image',
+    'outbound_gif',
     'outbound_video',
     'outbound_audio',
     'outbound_file',

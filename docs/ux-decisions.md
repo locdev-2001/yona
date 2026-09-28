@@ -206,3 +206,11 @@ Kiến trúc: [system-architecture.md](system-architecture.md).
 | Trang công khai `/invite/{token}` | `noindex` (không có gì để xếp hạng, cùng lý do trang cảm ơn đặt lời demo); không nằm sau middleware `guest` hay `auth` vì phải phục vụ cả hai loại khách | Một route phục vụ đúng hai luồng thay vì tách hai route trùng logic | 25/09/2026 |
 | Thông báo lỗi link | Bốn trạng thái riêng: không tồn tại / đã thu hồi / đã hết hạn / đã hết lượt — không gộp thành một câu "link không hợp lệ" | Người nhận biết chính xác cần xin lại hay đã bị chặn | 25/09/2026 |
 | Giới hạn đã biết | Người đã có tài khoản nhưng đang ở trạng thái khách trên trang mời chỉ có đường dẫn tới `/app/login` (không quay lại tự động trang mời sau khi đăng nhập) — họ cần mở lại link mời sau khi đăng nhập để tham gia một chạm | Tránh mở rộng luồng đăng nhập hiện có để mang theo URL quay lại; không chặn luồng chính (tài khoản mới ký thẳng, tài khoản cũ có sẵn thì một chạm ngay) | 25/09/2026 |
+
+## Kho sticker (Cài đặt · Kho sticker, console Super Admin)
+
+| Màn | Quyết định | Lý do | Ngày |
+|---|---|---|---|
+| Lưới sticker | Ô 88px chỉ có ảnh, **không có chữ** trên ô: nhãn và số từ khoá nằm ở `aria-label`/`title`; sticker chưa có từ khoá chỉ mang chấm vàng 6px. Sửa nhãn, từ khoá, thứ tự, xoá gom vào menu ⋯ (khi có chuột) và ngăn chi tiết (320px ≥1280px, ngăn phủ bên phải dưới 1280px, bottom sheet dưới 768px) | Thẻ cũ cao ~290px cho ảnh 64px, chữ "Sẵn sàng/Chưa có từ khoá" lặp ở mọi thẻ; kho là bảng ảnh, người quản trị nhận sticker bằng mắt | 28/09/2026 |
+| Header bộ | Xuất bản là **Switch** cạnh huy hiệu trạng thái, bị khoá khi bộ chưa có sticker sẵn sàng; tắt Switch thì toast "Đã chuyển về nháp" có nút **Hoàn tác**. Nút chính duy nhất là "+ Thêm sticker"; Đổi tên/Xoá bộ trong menu ⋯ | Hai nút primary tranh nhau và xuất bản được bộ rỗng; gỡ xuất bản là thao tác làm khách mất sticker nên phải lấy lại được một chạm | 28/09/2026 |
+| Điện thoại | **Hai màn** điều khiển bằng `?pack=` (danh sách bộ → chi tiết bộ, nút ‹ và Back của trình duyệt quay lại); "+ Thêm sticker" là thanh cố định đáy, chừa chỗ nút menu nổi. Kéo đổi chỗ chỉ có trong chế độ **Sắp xếp** (menu ⋯, nhấn giữ 250ms, bấm Xong mới lưu) | Chi tiết bộ nằm dưới cả danh sách nên chọn bộ xong không thấy gì; chạm giữ ngoài chế độ riêng sẽ tranh cử chỉ cuộn | 28/09/2026 |

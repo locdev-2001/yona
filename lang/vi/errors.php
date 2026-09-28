@@ -108,6 +108,12 @@ return [
         'too_many_packs' => 'Mỗi account có tối đa :max bộ sticker.',
         'upload_throttled' => 'Bạn tải sticker hơi nhanh, chờ một chút rồi thử lại nhé.',
         'forbidden' => 'Tài khoản của bạn chưa được dùng kho sticker này.',
+        'label_too_long' => 'Nhãn tối đa :max ký tự.',
+        'too_many_keywords' => 'Tối đa :max từ khoá.',
+        'keyword_not_text' => 'Từ khoá phải là chữ.',
+        'keyword_too_long' => 'Từ khoá «:input» dài quá :max ký tự.',
+        'pack_name_required' => 'Bạn đặt tên cho bộ sticker nhé.',
+        'pack_name_too_long' => 'Tên bộ tối đa :max ký tự.',
     ],
     'widget_recall' => [
         'capability_not_supported' => 'Kênh này chưa cho thu hồi tin nhắn.',

@@ -1,5 +1,5 @@
 import { ApiError, deleteJson, getJson, patchJson, postForm, postJson, putJson } from 'dashboard/helper/apiClient';
-import type { LibrarySticker, LibraryStickerChanges, LibraryStickerPackDetail, StickerLibraryListing } from './types';
+import type { LibrarySticker, LibraryStickerChanges, LibraryStickerPackDetail, StickerLibraryListing, UploadedSticker } from './types';
 import type { StickerEdit } from './stickerEdit';
 
 export interface StickerUpload {
@@ -55,7 +55,7 @@ export function createStickerLibraryApi(baseUrl: string) {
             if (label) form.append('label', label);
             keywords.forEach(keyword => form.append('keywords[]', keyword));
 
-            return withThrottleRetry(() => postForm<LibrarySticker>(`${packUrl(packId)}/stickers`, form));
+            return withThrottleRetry(() => postForm<UploadedSticker>(`${packUrl(packId)}/stickers`, form));
         },
         reorderStickers: (packId: number, stickerIds: number[]) =>
             putJson<LibraryStickerPackDetail>(`${packUrl(packId)}/stickers/order`, { sticker_ids: stickerIds }),

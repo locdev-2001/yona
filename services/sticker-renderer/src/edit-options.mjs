@@ -1,13 +1,14 @@
 import { DEFAULT_FEATHER, DEFAULT_TOLERANCE, EDIT_OPERATIONS, MAX_FEATHER } from './image/background-mask.mjs';
 import { RenderError } from './render-error.mjs';
+import { CROP_BOUND_EPSILON, DEFAULT_FIT, FIT_MODES, MAX_CROP_OVERFLOW, MIN_CROP_SIDE } from './image/sticker-geometry.mjs';
 
 const MAX_EDITS = 500;
 const MAX_BRUSH_POINTS = 5000;
 const MAX_BRUSH_RADIUS = 1;
-const MIN_CROP_SIDE = 1e-4;
 
 export const DEFAULT_EDIT = Object.freeze({
     crop: null,
+    fit: DEFAULT_FIT,
     removeBackground: true,
     tolerance: DEFAULT_TOLERANCE,
     feather: DEFAULT_FEATHER,
@@ -33,13 +34,23 @@ function numberInRange(value, min, max, field) {
 function parseCrop(crop) {
     if (crop === null || crop === undefined) return null;
     if (!isPlainObject(crop)) throw invalid('crop must be an object or null');
-    const x = numberInRange(crop.x, 0, 1, 'crop.x');
-    const y = numberInRange(crop.y, 0, 1, 'crop.y');
-    const w = numberInRange(crop.w, MIN_CROP_SIDE, 1, 'crop.w');
-    const h = numberInRange(crop.h, MIN_CROP_SIDE, 1, 'crop.h');
-    if (x + w > 1 + 1e-6 || y + h > 1 + 1e-6) throw invalid('crop exceeds image bounds');
+    const x = numberInRange(crop.x, -MAX_CROP_OVERFLOW, 1, 'crop.x');
+    const y = numberInRange(crop.y, -MAX_CROP_OVERFLOW, 1, 'crop.y');
+    const w = numberInRange(crop.w, MIN_CROP_SIDE, 1 + 2 * MAX_CROP_OVERFLOW, 'crop.w');
+    const h = numberInRange(crop.h, MIN_CROP_SIDE, 1 + 2 * MAX_CROP_OVERFLOW, 'crop.h');
+    if (x + w > 1 + MAX_CROP_OVERFLOW + CROP_BOUND_EPSILON || y + h > 1 + MAX_CROP_OVERFLOW + CROP_BOUND_EPSILON) {
+        throw invalid(`crop overflows the image by more than ${MAX_CROP_OVERFLOW}`);
+    }
+    if (x >= 1 || y >= 1 || x + w <= 0 || y + h <= 0) throw invalid('crop does not overlap the image');
 
-    return { x, y, w: Math.min(w, 1 - x), h: Math.min(h, 1 - y) };
+    return { x, y, w, h };
+}
+
+function parseFit(fit) {
+    if (fit === undefined) return DEFAULT_FIT;
+    if (!FIT_MODES.includes(fit)) throw invalid(`fit must be one of ${FIT_MODES.join(', ')}`);
+
+    return fit;
 }
 
 function parsePoint(point, field) {
@@ -83,6 +94,7 @@ export function parseEdit(rawEdit) {
 
     return {
         crop: parseCrop(rawEdit.crop),
+        fit: parseFit(rawEdit.fit),
         removeBackground: rawEdit.removeBackground ?? DEFAULT_EDIT.removeBackground,
         tolerance: rawEdit.tolerance === undefined ? DEFAULT_EDIT.tolerance : numberInRange(rawEdit.tolerance, 0, 100, 'tolerance'),
         feather: rawEdit.feather === undefined ? DEFAULT_EDIT.feather : numberInRange(rawEdit.feather, 0, MAX_FEATHER, 'feather'),

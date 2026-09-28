@@ -2,6 +2,7 @@
 
 namespace App\Services\Stickers;
 
+use App\Channels\Capability;
 use App\Models\Account;
 use App\Models\Attachment;
 use App\Models\Inbox;
@@ -14,8 +15,8 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * Kho sticker của chính Yona (bảng `stickers`), dùng được trên mọi kênh gửi được
- * ảnh: ra ngoài là ảnh PNG tĩnh mượn từ disk stickers, trong Yona là ảnh WebP
- * (động nếu ảnh gốc động). Mã sticker và mã bộ mang tiền tố `yona:` để không lẫn
+ * ảnh: ra ngoài là GIF (kênh khai outbound_gif, sticker đã có bản GIF) hoặc ảnh
+ * PNG tĩnh, mượn từ disk stickers; trong Yona là ảnh WebP (động nếu ảnh gốc động). Mã sticker và mã bộ mang tiền tố `yona:` để không lẫn
  * với mã của nền tảng.
  *
  * Payload ghi vào tin chỉ giữ đường dẫn trên disk, không giữ URL: đổi tên miền
@@ -40,6 +41,10 @@ final class YonaStickerCatalog implements StickerCatalog
     private const STATIC_CONTENT_TYPE = 'image/png';
 
     private const STATIC_FILENAME_PATTERN = 'sticker-%d.png';
+
+    private const GIF_CONTENT_TYPE = 'image/gif';
+
+    private const GIF_FILENAME_PATTERN = 'sticker-%d.gif';
 
     private const PATH_KEYS = ['image_path', 'static_path'];
 
@@ -123,13 +128,18 @@ final class YonaStickerCatalog implements StickerCatalog
     /** Đính kèm là tệp mượn trên disk stickers: xoá hay chuyển tiếp tin không đụng tới tệp của kho. */
     public function attachmentFor(Sticker $sticker, Inbox $inbox): Attachment
     {
+        $gifPath = $sticker->payload['gif_path'] ?? null;
+        [$path, $filenamePattern, $contentType] = $gifPath !== null && $inbox->supports(Capability::OutboundGif)
+            ? [$gifPath, self::GIF_FILENAME_PATTERN, self::GIF_CONTENT_TYPE]
+            : [$sticker->payload['static_path'], self::STATIC_FILENAME_PATTERN, self::STATIC_CONTENT_TYPE];
+
         return new Attachment([
             'account_id' => $inbox->account_id,
             'file_type' => Attachment::FILE_TYPE_IMAGE,
             'disk' => LibrarySticker::DISK,
-            'path' => $sticker->payload['static_path'],
-            'filename' => sprintf(self::STATIC_FILENAME_PATTERN, $sticker->payload['id']),
-            'content_type' => self::STATIC_CONTENT_TYPE,
+            'path' => $path,
+            'filename' => sprintf($filenamePattern, $sticker->payload['id']),
+            'content_type' => $contentType,
             'meta' => ['width' => LibrarySticker::outboundImageSize(), 'height' => LibrarySticker::outboundImageSize()],
         ]);
     }
@@ -262,6 +272,7 @@ final class YonaStickerCatalog implements StickerCatalog
             'pack_id' => $model->sticker_pack_id,
             'image_path' => (string) $model->image_path,
             'static_path' => (string) $model->static_path,
+            ...(filled($model->gif_path) ? ['gif_path' => $model->gif_path] : []),
             'width' => $model->width,
             'height' => $model->height,
             'frames' => $model->frame_count,
@@ -269,7 +280,7 @@ final class YonaStickerCatalog implements StickerCatalog
     }
 
     /**
-     * @param  array{source: string, id: int, pack_id: int, image_path: string, static_path: string, width: int|null, height: int|null, frames: int|null}  $payload
+     * @param  array{source: string, id: int, pack_id: int, image_path: string, static_path: string, gif_path?: string, width: int|null, height: int|null, frames: int|null}  $payload
      * @param  list<string>  $keywords
      */
     private function stickerFromPayload(array $payload, ?string $label, array $keywords = []): Sticker
@@ -301,7 +312,7 @@ final class YonaStickerCatalog implements StickerCatalog
      * còn nguyên vì đính kèm của chính tin đó mượn nó.
      *
      * @param  array<string, mixed>  $stored
-     * @return array{source: string, id: int, pack_id: int, image_path: string, static_path: string, width: int|null, height: int|null, frames: int|null}|null
+     * @return array{source: string, id: int, pack_id: int, image_path: string, static_path: string, gif_path?: string, width: int|null, height: int|null, frames: int|null}|null
      */
     private static function validPayload(array $stored): ?array
     {
@@ -322,12 +333,15 @@ final class YonaStickerCatalog implements StickerCatalog
             return null;
         }
 
+        $gifPath = self::filledString($stored['gif_path'] ?? null);
+
         return [
             'source' => self::SOURCE,
             'id' => $id,
             'pack_id' => $packId,
             'image_path' => self::filledString($stored['image_path'] ?? null) ?? $staticPath,
             'static_path' => $staticPath,
+            ...($gifPath === null ? [] : ['gif_path' => $gifPath]),
             'width' => self::positiveInt($stored['width'] ?? null),
             'height' => self::positiveInt($stored['height'] ?? null),
             'frames' => self::positiveInt($stored['frames'] ?? null),

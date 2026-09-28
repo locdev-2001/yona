@@ -28,6 +28,21 @@ final class StickerTags
         ];
     }
 
+    /**
+     * Câu lỗi theo trường (label, keywords, keywords.N) để client đặt ngay dưới ô nhập.
+     *
+     * @return array<string, string>
+     */
+    public static function validationMessages(): array
+    {
+        return [
+            'label.max' => __('errors.sticker_library.label_too_long'),
+            'keywords.max' => __('errors.sticker_library.too_many_keywords'),
+            'keywords.*.string' => __('errors.sticker_library.keyword_not_text'),
+            'keywords.*.max' => __('errors.sticker_library.keyword_too_long'),
+        ];
+    }
+
     public static function label(?string $label): ?string
     {
         $trimmed = trim((string) $label);

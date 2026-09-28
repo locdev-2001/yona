@@ -1,79 +1,62 @@
-import { useEffect, useRef } from 'react';
+import { useId, useRef } from 'react';
+import type { ReactNode } from 'react';
 
 import { t } from '../../../i18n';
+import { Modal, StickerButton } from './stickerLibraryUi';
 
 export interface ConfirmActionRequest {
     title: string;
     message: string;
     confirmLabel: string;
+    cancelLabel?: string;
+    tone?: 'danger' | 'primary';
+    preview?: ReactNode;
     onConfirm: () => void;
+    onCancel?: () => void;
 }
 
-// Hộp xác nhận của màn kho sticker. Tự vẽ bằng màu tĩnh của theme vì màn này còn
-// chạy trong console Super Admin, nơi không nạp biến màu mà Dialog của dashboard cần.
-export default function ConfirmActionDialog({
-    request,
-    onClose,
-}: {
-    request: ConfirmActionRequest | null;
-    onClose: () => void;
-}) {
-    const cancelButtonRef = useRef<HTMLButtonElement>(null);
+// Hộp xác nhận: giữa màn trên desktop, bottom sheet trên điện thoại (nút xác nhận ở trên).
+export default function ConfirmActionDialog({ request, onClose }: { request: ConfirmActionRequest | null; onClose: () => void }) {
+    const cancelRef = useRef<HTMLButtonElement>(null);
+    const messageId = useId();
 
-    useEffect(() => {
-        if (!request) return;
-        cancelButtonRef.current?.focus();
-        const closeOnEscape = (event: KeyboardEvent) => {
-            if (event.key === 'Escape') onClose();
-        };
-        window.addEventListener('keydown', closeOnEscape);
-
-        return () => window.removeEventListener('keydown', closeOnEscape);
-    }, [request, onClose]);
-
-    if (!request) return null;
+    const cancel = () => {
+        onClose();
+        request?.onCancel?.();
+    };
 
     const confirm = () => {
         onClose();
-        request.onConfirm();
+        request?.onConfirm();
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 p-4" onClick={onClose}>
-            <div
-                role="alertdialog"
-                aria-modal="true"
-                aria-labelledby="confirm-action-title"
-                aria-describedby="confirm-action-message"
-                className="flex w-full max-w-md flex-col gap-4 rounded-xl bg-white p-6 shadow-xl"
-                onClick={event => event.stopPropagation()}
-            >
-                <div className="flex flex-col gap-2">
-                    <h3 id="confirm-action-title" className="m-0 text-base font-semibold text-slate-900">
-                        {request.title}
-                    </h3>
-                    <p id="confirm-action-message" className="m-0 text-sm text-slate-600">
-                        {request.message}
-                    </p>
+        <Modal
+            open={request !== null}
+            title={request?.title ?? ''}
+            role="alertdialog"
+            describedBy={messageId}
+            initialFocusRef={cancelRef}
+            onRequestClose={cancel}
+        >
+            {request ? (
+                <div className="flex flex-col gap-5 px-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] pt-1 md:pb-5">
+                    <div className="flex items-center gap-3">
+                        {request.preview}
+                        <p id={messageId} className="m-0 text-sm text-n-slate-11">
+                            {request.message}
+                        </p>
+                    </div>
+                    <div className="flex flex-col-reverse gap-2 md:flex-row md:justify-end">
+                        <StickerButton ref={cancelRef} tone="secondary" size="sheet" onClick={cancel}>
+                            {request.cancelLabel ?? t('STICKER_LIBRARY.CANCEL')}
+                        </StickerButton>
+                        <StickerButton tone={request.tone ?? 'danger'} size="sheet" onClick={confirm}>
+                            {request.confirmLabel}
+                        </StickerButton>
+                    </div>
                 </div>
-                <div className="flex justify-end gap-2">
-                    <button
-                        ref={cancelButtonRef}
-                        type="button"
-                        className="reset-base inline-flex items-center justify-center rounded-md border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-800 hover:bg-slate-50"
-                        onClick={onClose}
-                    >
-                        {t('STICKER_LIBRARY.CANCEL')}
-                    </button>
-                    <button
-                        type="button"
-                        className="reset-base inline-flex items-center justify-center rounded-md bg-red-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-700"
-                        onClick={confirm}
-                    >
-                        {request.confirmLabel}
-                    </button>
-                </div>
-            </div>
-        </div>
+            ) : null}
+        </Modal>
     );
 }

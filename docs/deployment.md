@@ -832,7 +832,7 @@ location ^~ /storage/stickers/ {
 }
 ```
 
-Tên tệp sticker mang cạnh ảnh (`sticker-64.webp`, `static-128.png`), nên
+Tên tệp sticker mang cạnh ảnh (`sticker-64.webp`, `static-128.png`, `sticker-128.gif`), nên
 `php artisan stickers:rerender` sau khi đổi `STICKER_IMAGE_SIZE` hoặc
 `STICKER_OUTBOUND_IMAGE_SIZE` ghi ra URL mới, không cần purge cache. Tệp cỡ cũ
 nằm lại trong cùng thư mục cho tin đã gửi, dọn khi không còn gì trỏ tới. Chỉ bản
@@ -1309,8 +1309,12 @@ Sticker làm từ ảnh tải lên (PNG, JPG, WebP, GIF và WebP động) kèm t
 xoá nền. Mỗi lần tải, ảnh gốc được lưu thành `original.<đuôi>` rồi
 `RenderStickerJob` (hàng đợi `stickers`, supervisor Horizon `supervisor-stickers`
 một process) gọi renderer Node `services/sticker-renderer` dựng `sticker.webp`
-(động nếu ảnh gốc động, cạnh `STICKER_IMAGE_SIZE`) và `static.png` (gửi sang Zalo
-và kênh ngoài, cạnh `STICKER_OUTBOUND_IMAGE_SIZE`, PNG đủ màu). Supervisor `supervisor-stickers` không chạy thì sticker
+(động nếu ảnh gốc động, cạnh `STICKER_IMAGE_SIZE`), `static.png` (gửi kênh ngoài,
+cạnh `STICKER_OUTBOUND_IMAGE_SIZE`, PNG đủ màu) và `sticker.gif` (cùng cạnh, động
+như ảnh gốc, trong suốt 1 bit; kênh khai năng lực `outbound_gif` như Zalo nhận bản
+này để không bị phóng to như ảnh chụp). Sau khi deploy bản có GIF, chạy
+`php artisan migrate` (cột `gif_path`) rồi `php artisan stickers:rerender` để
+sticker cũ có bản GIF; trong lúc chờ, sticker chưa có GIF vẫn gửi bằng PNG. Supervisor `supervisor-stickers` không chạy thì sticker
 nằm mãi ở trạng thái đang xử lý; renderer chưa cài hoặc hỏng thì sticker thành
 `failed`. Cả hai trường hợp đều không hiện trong bảng chọn. PHP
 (`upload_max_filesize`, `post_max_size`) và nginx (`client_max_body_size`) phải
@@ -1347,9 +1351,9 @@ khung hoặc hoạt ảnh dài quá 10 giây. Biến trong `.env` Laravel (đọ
 | `STICKER_RENDERER_TIMEOUT` | `10` | Giây tối đa cho một lượt dựng |
 | `STICKER_RENDERER_MEMORY_LIMITER` | `prlimit` | `none` chỉ dùng ở máy không có `prlimit` (macOS), không dùng trên server |
 | `STICKER_RENDERER_MEMORY_MB` | `512` | Trần bộ nhớ dữ liệu của tiến trình dựng; tính cả stack luồng của libvips, dưới 512 thì GIF động lớn hỏng |
-| `STICKER_IMAGE_SIZE` | `64` | Cạnh (px) `sticker.webp` hiển thị trong Yona, từ 16 đến 512 |
+| `STICKER_IMAGE_SIZE` | `128` | Cạnh (px) `sticker.webp` hiển thị trong Yona, từ 16 đến 512 |
 | `STICKER_OUTBOUND_IMAGE_SIZE` | `128` | Cạnh (px) `static.png` gửi Zalo và kênh ngoài, từ 16 đến 512; Zalo phóng to ảnh nhỏ hơn mức này làm vỡ hình |
-| `STICKER_DISPLAY_SIZE` | `64` | Cạnh (px CSS) khi hiện sticker ở hộp thư và widget; tăng riêng được cho màn retina |
+| `STICKER_DISPLAY_SIZE` | `128` | Cạnh (px CSS) khi hiện sticker ở hộp thư và widget; tăng riêng được cho màn retina |
 | `STICKER_MAX_ORIGINAL_MB` | `10` | Trần dung lượng ảnh gốc tải lên, tối đa 20 (trần của renderer) |
 
 Đổi biến xong chạy `php artisan config:cache` rồi `php artisan horizon:terminate`

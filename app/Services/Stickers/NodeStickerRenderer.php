@@ -141,13 +141,14 @@ final class NodeStickerRenderer implements StickerRenderer
      * Đường dẫn ảnh lấy từ báo cáo của CLI, chỉ nhận tệp có thật nằm trong thư
      * mục đầu ra đã giao.
      *
-     * @return array{image_path: string, static_path: string, width: int, height: int, frames: int, duration_ms: int}|array{failure: string}
+     * @return array{image_path: string, static_path: string, gif_path: string, width: int, height: int, frames: int, duration_ms: int}|array{failure: string}
      */
     private function renderedFiles(ProcessResult $result, string $outputDirectory): array
     {
         $summary = $this->lastJsonLine($result->output());
         $imagePath = $this->outputFile($summary['image'] ?? null, $outputDirectory);
         $staticPath = $this->outputFile($summary['static'] ?? null, $outputDirectory);
+        $gifPath = $this->outputFile($summary['gif'] ?? null, $outputDirectory);
         $metrics = [
             'width' => $this->positiveInt($summary['width'] ?? null),
             'height' => $this->positiveInt($summary['height'] ?? null),
@@ -155,7 +156,7 @@ final class NodeStickerRenderer implements StickerRenderer
         ];
         $durationMs = $summary['durationMs'] ?? null;
 
-        if ($imagePath === null || $staticPath === null || in_array(null, $metrics, true) || ! is_int($durationMs) || $durationMs < 0) {
+        if ($imagePath === null || $staticPath === null || $gifPath === null || in_array(null, $metrics, true) || ! is_int($durationMs) || $durationMs < 0) {
             return ['failure' => self::RENDER_FAILED];
         }
 
@@ -163,7 +164,7 @@ final class NodeStickerRenderer implements StickerRenderer
             return ['failure' => self::IMAGE_EMPTY];
         }
 
-        return ['image_path' => $imagePath, 'static_path' => $staticPath, ...$metrics, 'duration_ms' => $durationMs];
+        return ['image_path' => $imagePath, 'static_path' => $staticPath, 'gif_path' => $gifPath, ...$metrics, 'duration_ms' => $durationMs];
     }
 
     private function outputFile(mixed $reportedPath, string $outputDirectory): ?string

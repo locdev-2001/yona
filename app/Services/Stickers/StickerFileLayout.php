@@ -15,6 +15,8 @@ final class StickerFileLayout
 
     private const STATIC_FILE_PATTERN = 'static-%d.png';
 
+    private const GIF_FILE_PATTERN = 'sticker-%d.gif';
+
     private const ORIGINAL_BASENAME = 'original';
 
     public static function directory(string $contentHash): string
@@ -26,7 +28,7 @@ final class StickerFileLayout
      * Tệp trình dựng ghi ra ở cỡ đang cấu hình, cũng là các tệp tin gửi đi mượn làm
      * đính kèm. Tin cũ có thể còn mượn tệp cỡ trước trong cùng thư mục.
      *
-     * @return array{image_path: string, static_path: string}
+     * @return array{image_path: string, static_path: string, gif_path: string}
      */
     public static function renderedPaths(string $contentHash): array
     {
@@ -35,6 +37,7 @@ final class StickerFileLayout
         return [
             'image_path' => "{$directory}/".sprintf(self::IMAGE_FILE_PATTERN, Sticker::imageSize()),
             'static_path' => "{$directory}/".sprintf(self::STATIC_FILE_PATTERN, Sticker::outboundImageSize()),
+            'gif_path' => "{$directory}/".sprintf(self::GIF_FILE_PATTERN, Sticker::outboundImageSize()),
         ];
     }
 

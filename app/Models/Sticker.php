@@ -31,6 +31,7 @@ class Sticker extends Model
         'keywords',
         'image_path',
         'static_path',
+        'gif_path',
         'original_path',
         'edit_params',
         'content_hash',

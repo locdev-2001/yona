@@ -15,8 +15,8 @@ use Illuminate\Support\Str;
 use Throwable;
 use UnexpectedValueException;
 
-// Dựng sticker từ ảnh gốc đã lưu + thông số chỉnh của nó rồi ghi `sticker.webp`
-// và `static.png` lên disk `stickers` theo hash nội dung. Hỏng ở bất kỳ bước nào:
+// Dựng sticker từ ảnh gốc đã lưu + thông số chỉnh của nó rồi ghi các tệp dựng
+// (StickerFileLayout::renderedPaths) lên disk `stickers` theo hash nội dung. Hỏng ở bất kỳ bước nào:
 // sticker `failed` kèm mã, không để lại tệp dở. Dựng lại (`refreshing`) sticker
 // đã `ready` thì ghi đè đúng các đường dẫn cũ; hỏng thì chỉ báo lỗi, sticker vẫn
 // dùng ảnh cũ. Disk `stickers` không ném lỗi khi ghi hỏng nên mọi lệnh ghi đều
@@ -142,8 +142,7 @@ class RenderStickerJob extends ApplicationJob
         $released = app(StickerFileJanitor::class)->releaseIfUnreferenced($this->sticker->content_hash, $this->sticker->getKey());
 
         $this->sticker->update([
-            'image_path' => null,
-            'static_path' => null,
+            ...array_fill_keys(array_keys(StickerFileLayout::renderedPaths($this->sticker->content_hash)), null),
             ...($released ? ['original_path' => null] : []),
             'status' => Sticker::STATUS_FAILED,
             'failure_code' => $failureCode,

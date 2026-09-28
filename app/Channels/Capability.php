@@ -32,6 +32,8 @@ enum Capability: string
     // §2.2 Nội dung tin đi
     case OutboundText = 'outbound_text';
     case OutboundImage = 'outbound_image';
+    // Gửi được GIF như ảnh động giữ đúng cỡ (không coi là ảnh chụp để phóng to).
+    case OutboundGif = 'outbound_gif';
     case OutboundVideo = 'outbound_video';
     case OutboundAudio = 'outbound_audio';
     case OutboundFile = 'outbound_file';

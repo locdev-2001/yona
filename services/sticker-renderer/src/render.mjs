@@ -11,6 +11,7 @@ const MAX_INPUT_BYTES = 20 * 1024 * 1024;
 const MAX_EDIT_BYTES = 1024 * 1024;
 const STICKER_FILE = 'sticker.webp';
 const STATIC_FILE = 'static.png';
+const GIF_FILE = 'sticker.gif';
 const TIMEOUT_OPTION = '--timeout-ms=';
 const SIZE_OPTION = '--size=';
 const STATIC_SIZE_OPTION = '--static-size=';
@@ -124,16 +125,18 @@ function renderInWorker(inputBytes, edit, sizes, timeoutMs) {
 async function writeOutputs(outDir, rendered) {
     const stickerPath = join(outDir, STICKER_FILE);
     const staticPath = join(outDir, STATIC_FILE);
+    const gifPath = join(outDir, GIF_FILE);
     try {
         await mkdir(outDir, { recursive: true });
         await writeFile(stickerPath, rendered.stickerWebp);
         await writeFile(staticPath, rendered.staticPng);
+        await writeFile(gifPath, rendered.outboundGif);
     } catch (error) {
-        await Promise.all([rm(stickerPath, { force: true }), rm(staticPath, { force: true })]);
+        await Promise.all([stickerPath, staticPath, gifPath].map((filePath) => rm(filePath, { force: true })));
         throw new RenderError('output_failed', error.message);
     }
 
-    return { image: stickerPath, static: staticPath };
+    return { image: stickerPath, static: staticPath, gif: gifPath };
 }
 
 async function main() {

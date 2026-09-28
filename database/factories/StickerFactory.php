@@ -39,6 +39,7 @@ class StickerFactory extends Factory
         return $this->state([
             'image_path' => null,
             'static_path' => null,
+            'gif_path' => null,
             'frame_count' => null,
             'duration_ms' => null,
             'byte_size' => null,

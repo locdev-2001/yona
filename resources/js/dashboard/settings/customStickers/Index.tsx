@@ -6,7 +6,8 @@ import Dashboard from '../../Dashboard';
 import SettingsWrapper from '../SettingsWrapper';
 import BaseSettingsHeader from '../BaseSettingsHeader';
 import TabBar from 'dashboard/components-next/tabbar/TabBar';
-import StickerLibraryManager from './StickerLibraryManager';
+import StickerLibraryManager, { PACK_QUERY_KEY } from './StickerLibraryManager';
+import { InfoTip } from './stickerLibraryUi';
 import { createStickerLibraryApi } from './stickerLibraryApi';
 import type { DashboardPageProps } from '../../types';
 import { currentQuery, replaceQuery } from '../../reports/helpers/urlQuery';
@@ -54,35 +55,39 @@ export default function CustomStickersIndex() {
     });
     const changeTab = (tab: StickerLibraryTab) => {
         setActiveTab(tab);
-        const { [TAB_QUERY_KEY]: _previousTab, ...otherParams } = currentQuery();
+        const { [TAB_QUERY_KEY]: _previousTab, [PACK_QUERY_KEY]: _previousPack, ...otherParams } = currentQuery();
         replaceQuery(tab === DEFAULT_TAB ? otherParams : { ...otherParams, [TAB_QUERY_KEY]: tab });
     };
 
+    const manager = (api: typeof accountApi) => (
+        <div className="min-h-0 flex-1">
+            <StickerLibraryManager api={api} />
+        </div>
+    );
+
     return (
         <Dashboard>
-            <SettingsWrapper>
-                <div className="flex w-full flex-col gap-6 px-6 py-8">
-                    <BaseSettingsHeader title={t('STICKER_LIBRARY.PAGE_HEADER')} description={t('STICKER_LIBRARY.PAGE_DESCRIPTION')} />
-                    <TabBar
-                        tabs={tabs}
-                        initialActiveTab={tabs.findIndex(tab => tab.value === activeTab)}
-                        onTabChanged={tab => changeTab(tab.value as StickerLibraryTab)}
+            <SettingsWrapper wide>
+                <div className="flex w-full flex-col gap-4 md:h-[calc(100dvh-3rem)]">
+                    <BaseSettingsHeader
+                        title={t('STICKER_LIBRARY.PAGE_HEADER')}
+                        description={
+                            <span className="inline-flex flex-wrap items-center gap-1">
+                                {activeTab === 'platform' ? t('STICKER_LIBRARY.PLATFORM_DESCRIPTION') : t('STICKER_LIBRARY.PAGE_DESCRIPTION')}
+                                <InfoTip label={t('STICKER_LIBRARY.INFO_LABEL')} text={t('STICKER_LIBRARY.PAGE_INFO')} />
+                            </span>
+                        }
                     />
+                    {tabs.length >= 2 ? (
+                        <TabBar
+                            tabs={tabs}
+                            initialActiveTab={tabs.findIndex(tab => tab.value === activeTab)}
+                            onTabChanged={tab => changeTab(tab.value as StickerLibraryTab)}
+                        />
+                    ) : null}
                     {activeTab === 'account' &&
-                        (stickerLibraryAccess.accountLibrary ? (
-                            <div className="flex flex-col gap-4">
-                                <p className="text-sm text-n-slate-11">{t('STICKER_LIBRARY.ACCOUNT_DESCRIPTION')}</p>
-                                <StickerLibraryManager api={accountApi} />
-                            </div>
-                        ) : (
-                            <LockedNotice message={t('STICKER_LIBRARY.LOCKED_ACCOUNT_LIBRARY')} />
-                        ))}
-                    {activeTab === 'platform' && stickerLibraryAccess.platformLibrary && (
-                        <div className="flex flex-col gap-4">
-                            <p className="text-sm text-n-slate-11">{t('STICKER_LIBRARY.PLATFORM_DESCRIPTION')}</p>
-                            <StickerLibraryManager api={platformApi} />
-                        </div>
-                    )}
+                        (stickerLibraryAccess.accountLibrary ? manager(accountApi) : <LockedNotice message={t('STICKER_LIBRARY.LOCKED_ACCOUNT_LIBRARY')} />)}
+                    {activeTab === 'platform' && stickerLibraryAccess.platformLibrary ? manager(platformApi) : null}
                 </div>
             </SettingsWrapper>
         </Dashboard>

@@ -1,6 +1,7 @@
 import { fireEvent, render } from '@testing-library/react';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
+import { DEFAULT_STICKER_DISPLAY_SIZE } from 'shared/sticker/stickerDisplaySize';
 import Message from './Message';
 import type { ConversationMessage } from 'dashboard/conversation/types';
 import { setLocale } from '../../../i18n';
@@ -137,8 +138,8 @@ describe('Message với sticker', () => {
 
         const image = container.querySelector('[data-bubble-name="sticker"] img');
         expect(image?.getAttribute('src')).toBe('https://yona.test/s/sticker.webp');
-        expect(image?.getAttribute('width')).toBe('64');
-        expect((image as HTMLImageElement).style.width).toBe('64px');
+        expect(image?.getAttribute('width')).toBe(String(DEFAULT_STICKER_DISPLAY_SIZE));
+        expect((image as HTMLImageElement).style.width).toBe(`${DEFAULT_STICKER_DISPLAY_SIZE}px`);
     });
 
     it('sticker kho Yona gửi trước khi đổi sang ảnh (payload cũ chỉ có url) vẫn hiện ảnh tĩnh', () => {

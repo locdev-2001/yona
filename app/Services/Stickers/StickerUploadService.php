@@ -5,6 +5,7 @@ namespace App\Services\Stickers;
 use App\Jobs\Stickers\RenderStickerJob;
 use App\Models\Sticker;
 use App\Models\StickerPack;
+use Closure;
 use finfo;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -64,11 +65,16 @@ final class StickerUploadService
      *
      * @throws ValidationException khi ảnh hoặc thông số chỉnh bị từ chối, câu báo lỗi ở errors.sticker_uploads.*
      */
-    public function upload(StickerPack $pack, UploadedFile $file, ?string $label = null, array $keywords = [], ?string $editJson = null): Sticker
+    public function upload(StickerPack $pack, UploadedFile $file, ?string $label = null, array $keywords = [], ?string $editJson = null, ?Closure $ensureRoom = null): Sticker
     {
         $edit = $this->parsedEdit($editJson);
         $originalExtension = $this->originalExtension($file);
         $contentHash = $this->contentHash($file, $edit);
+
+        // Ảnh đã có trong bộ thì trả sticker cũ kể cả khi bộ đã đầy; chỉ sticker mới mới tốn chỗ.
+        if ($ensureRoom !== null && ! $pack->stickers()->where('content_hash', $contentHash)->exists()) {
+            $ensureRoom();
+        }
 
         $sticker = $pack->stickers()->createOrFirst(
             ['content_hash' => $contentHash],

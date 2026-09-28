@@ -110,6 +110,12 @@ return [
         'too_many_packs' => 'An account can have at most :max sticker packs.',
         'upload_throttled' => 'Too many sticker uploads at once. Please wait a moment and try again.',
         'forbidden' => 'Your account is not allowed to use this sticker library.',
+        'label_too_long' => 'Labels can be at most :max characters.',
+        'too_many_keywords' => 'Use at most :max keywords.',
+        'keyword_not_text' => 'Keywords must be text.',
+        'keyword_too_long' => 'The keyword “:input” is longer than :max characters.',
+        'pack_name_required' => 'Give the sticker pack a name.',
+        'pack_name_too_long' => 'Pack names can be at most :max characters.',
     ],
     'widget_recall' => [
         'capability_not_supported' => 'This channel does not support unsending messages.',

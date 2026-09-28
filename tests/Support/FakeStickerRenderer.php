@@ -46,16 +46,18 @@ final class FakeStickerRenderer implements StickerRenderer
         return self::writeOutputs($outputDirectory, $size);
     }
 
-    /** @return array{image_path: string, static_path: string, width: int, height: int, frames: int, duration_ms: int} */
-    public static function writeOutputs(string $outputDirectory, int $size, string $imageBytes = 'sticker-webp', string $staticBytes = 'static-png', int $frames = 1): array
+    /** @return array{image_path: string, static_path: string, gif_path: string, width: int, height: int, frames: int, duration_ms: int} */
+    public static function writeOutputs(string $outputDirectory, int $size, string $imageBytes = 'sticker-webp', string $staticBytes = 'static-png', int $frames = 1, string $gifBytes = 'sticker-gif'): array
     {
         File::ensureDirectoryExists($outputDirectory);
         File::put("{$outputDirectory}/sticker.webp", $imageBytes);
         File::put("{$outputDirectory}/static.png", $staticBytes);
+        File::put("{$outputDirectory}/sticker.gif", $gifBytes);
 
         return [
             'image_path' => "{$outputDirectory}/sticker.webp",
             'static_path' => "{$outputDirectory}/static.png",
+            'gif_path' => "{$outputDirectory}/sticker.gif",
             'width' => $size,
             'height' => $size,
             'frames' => $frames,

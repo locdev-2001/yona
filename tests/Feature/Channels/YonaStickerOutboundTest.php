@@ -108,7 +108,7 @@ describe('Zalo', function () {
             ->and($recent['packs'])->toBe([['id' => "yona:{$this->sticker->sticker_pack_id}", 'cover_url' => $this->sticker->image_url]]);
     });
 
-    it('gửi sticker Yona thì bridge nhận lệnh gửi ảnh PNG, không nhận lệnh sticker', function () {
+    it('gửi sticker Yona thì bridge nhận lệnh gửi GIF (Zalo khai outbound_gif), không nhận lệnh sticker', function () {
         fakeYonaOutboundZaloBridge();
 
         $response = $this->actingAs(yonaOutboundAgent($this->inbox))->postJson(
@@ -124,12 +124,33 @@ describe('Zalo', function () {
             ->and($sends)->toHaveCount(1)
             ->and($sends[0]->data())->not->toHaveKey('sticker')
             ->and($sends[0]->data())->not->toHaveKey('text')
-            ->and($sends[0]['media_kind'])->toBe('image')
-            ->and($sends[0]['filename'])->toBe("sticker-{$this->sticker->id}.png")
-            ->and($sends[0]['content_type'])->toBe('image/png')
+            ->and($sends[0]['media_kind'])->toBe('gif')
+            ->and($sends[0]['filename'])->toBe("sticker-{$this->sticker->id}.gif")
+            ->and($sends[0]['content_type'])->toBe('image/gif')
+            ->and($message->attachments()->sole()->only(['path', 'content_type', 'meta']))->toBe([
+                'path' => $this->sticker->gif_path,
+                'content_type' => 'image/gif',
+                'meta' => ['width' => Sticker::outboundImageSize(), 'height' => Sticker::outboundImageSize()],
+            ])
             ->and($message->refresh()->source_id)->toBe('sent-yona-sticker');
 
         expectYonaStickerImage($sends[0]['file_url'], $message);
+    });
+
+    it('sticker chưa có bản GIF (dựng trước khi có GIF) vẫn gửi Zalo bằng ảnh PNG', function () {
+        fakeYonaOutboundZaloBridge();
+        $this->sticker->update(['gif_path' => null]);
+
+        $response = $this->actingAs(yonaOutboundAgent($this->inbox))->postJson(
+            "/api/v1/accounts/{$this->inbox->account_id}/conversations/{$this->conversation->display_id}/messages",
+            ['content_type' => 'sticker', 'sticker_id' => "yona:{$this->sticker->id}"],
+        )->assertOk();
+        $sends = yonaOutboundRequests('/personal-messages/send');
+
+        expect($response->json('content_attributes.sticker'))->not->toHaveKey('gif_path')
+            ->and($sends[0]['media_kind'])->toBe('image')
+            ->and($sends[0]['filename'])->toBe("sticker-{$this->sticker->id}.png")
+            ->and($sends[0]['content_type'])->toBe('image/png');
     });
 
     it('thu hồi rồi xoá tin sticker Yona không xoá tệp trong kho', function () {
@@ -267,7 +288,7 @@ describe('chuyển tiếp', function () {
         expect($forwarded->content_attributes['sticker'])->toBe(YonaStickers::storedPayload($this->sticker))
             ->and($forwarded->attachments()->sole()->only(['disk', 'path']))
             ->toBe(['disk' => Sticker::DISK, 'path' => $this->sticker->static_path])
-            ->and(Storage::disk(Sticker::DISK)->allFiles())->toHaveCount(3);
+            ->and(Storage::disk(Sticker::DISK)->allFiles())->toHaveCount(4);
     });
 
     it('sticker Yona account không còn thấy bị chặn ngay ở danh sách đích, không hứa rồi gửi hỏng', function (Closure $hide) {

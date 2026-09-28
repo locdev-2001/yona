@@ -21,6 +21,7 @@ vi.mock('./stickerLibraryApi', () => ({
     createStickerLibraryApi: (baseUrl: string) => ({ baseUrl }),
 }));
 vi.mock('./StickerLibraryManager', () => ({
+    PACK_QUERY_KEY: 'pack',
     default: ({ api }: { api: { baseUrl: string } }) => {
         libraryApiBases.push(api.baseUrl);
 
@@ -46,23 +47,23 @@ beforeEach(() => {
     window.history.replaceState(null, '', '/app/accounts/7/settings/stickers');
 });
 
-const tabNames = () => screen.getAllByRole('button').map(button => button.textContent?.trim());
+const tabNames = () => screen.queryAllByRole('button').map(button => button.textContent?.trim());
 
 describe('trang Cài đặt / Kho sticker', () => {
     it('chưa có quyền: kho riêng hiện trạng thái khoá, không có kho nền tảng, không có nút giả', () => {
         pageProps.stickerLibraryAccess = { accountLibrary: false, platformLibrary: false };
         render(<CustomStickersIndex />);
 
-        expect(tabNames()).toEqual(['Kho riêng']);
-        expect(screen.getByRole('note')).toHaveTextContent('Chưa mở cho account này');
+        expect(tabNames()).toEqual([]);
+        expect(screen.getByRole('note')).toHaveTextContent('Chưa mở cho tài khoản này');
         expect(screen.queryByTestId('library-manager')).not.toBeInTheDocument();
     });
 
-    it('account dùng được kho riêng: chỉ có tab kho riêng, hiện trình quản lý kho riêng', () => {
+    it('chỉ có một kho thì không hiện thanh tab, hiện thẳng trình quản lý kho riêng', () => {
         pageProps.stickerLibraryAccess = { accountLibrary: true, platformLibrary: false };
         render(<CustomStickersIndex />);
 
-        expect(tabNames()).toEqual(['Kho riêng']);
+        expect(tabNames()).toEqual([]);
         expect(screen.getByTestId('library-manager')).toHaveTextContent('/api/v1/accounts/7');
         expect(screen.queryByRole('note')).not.toBeInTheDocument();
     });
@@ -78,6 +79,7 @@ describe('trang Cài đặt / Kho sticker', () => {
 
     it('tab đang mở ghi vào ?tab= và mở lại đúng tab khi tải lại trang', () => {
         pageProps.stickerLibraryAccess = { accountLibrary: true, platformLibrary: true };
+        window.history.replaceState(null, '', '/app/accounts/7/settings/stickers?pack=3');
         const { unmount } = render(<CustomStickersIndex />);
 
         fireEvent.click(screen.getByRole('button', { name: 'Kho nền tảng' }));

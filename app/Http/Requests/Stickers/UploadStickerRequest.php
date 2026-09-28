@@ -32,6 +32,12 @@ class UploadStickerRequest extends FormRequest
         return $this->file('file');
     }
 
+    /** @return array<string, string> */
+    public function messages(): array
+    {
+        return StickerTags::validationMessages();
+    }
+
     public function stickerLabel(): ?string
     {
         return $this->validated('label');

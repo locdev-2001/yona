@@ -8,11 +8,14 @@ use JsonException;
 /**
  * Thông số cắt + xoá nền của một sticker, cùng một JSON cho trường `edit` của API
  * tải lên, cột `stickers.edit_params` và tệp --edit của trình dựng. Toạ độ chuẩn
- * hoá 0..1: `crop` theo ảnh gốc, `edits` và `radius` theo ảnh đã cắt.
+ * hoá: `crop` theo ảnh gốc (được vượt biên, phần vượt trong suốt), `edits` và
+ * `radius` theo vùng lấy. `fit` cover cắt sát phần còn thấy được, contain đặt
+ * nguyên vùng lấy vào ô vuông theo cạnh dài.
  *
- * Chỉ giữ khoá đã gửi, theo thứ tự cố định, số nguyên viết như số nguyên: cùng
- * một chỉnh sửa luôn ra cùng một chuỗi, nên content_hash (ảnh gốc + chuỗi này)
- * nhận ra sticker trùng. Khoá vắng mặt dùng mặc định của trình dựng.
+ * Chỉ giữ khoá đã gửi (trừ `fit` mặc định, để hash sticker cũ không đổi), theo
+ * thứ tự cố định, số nguyên viết như số nguyên: cùng một chỉnh sửa luôn ra cùng
+ * một chuỗi, nên content_hash (ảnh gốc + chuỗi này) nhận ra sticker trùng. Khoá
+ * vắng mặt dùng mặc định của trình dựng.
  */
 final class StickerEdit
 {
@@ -28,6 +31,14 @@ final class StickerEdit
     public const MAX_FEATHER = 4;
 
     public const MIN_CROP_SIDE = 0.0001;
+
+    public const MAX_CROP_OVERFLOW = 8;
+
+    public const FIT_COVER = 'cover';
+
+    public const FIT_CONTAIN = 'contain';
+
+    public const FITS = [self::FIT_COVER, self::FIT_CONTAIN];
 
     public const WAND_OPERATIONS = ['wand-remove', 'wand-keep'];
 
@@ -93,6 +104,10 @@ final class StickerEdit
             $params['crop'] = self::crop($root['crop']);
         }
 
+        if (array_key_exists('fit', $root) && self::fit($root['fit']) !== self::FIT_COVER) {
+            $params['fit'] = $root['fit'];
+        }
+
         if (array_key_exists('removeBackground', $root)) {
             $params['removeBackground'] = is_bool($root['removeBackground'])
                 ? $root['removeBackground']
@@ -121,18 +136,32 @@ final class StickerEdit
             throw self::invalid('crop must be an object or null');
         }
 
+        $maxSide = 1 + 2 * self::MAX_CROP_OVERFLOW;
         $rectangle = [
-            'x' => self::number($crop['x'] ?? null, 0, 1, 'crop.x'),
-            'y' => self::number($crop['y'] ?? null, 0, 1, 'crop.y'),
-            'w' => self::number($crop['w'] ?? null, self::MIN_CROP_SIDE, 1, 'crop.w'),
-            'h' => self::number($crop['h'] ?? null, self::MIN_CROP_SIDE, 1, 'crop.h'),
+            'x' => self::number($crop['x'] ?? null, -self::MAX_CROP_OVERFLOW, 1, 'crop.x'),
+            'y' => self::number($crop['y'] ?? null, -self::MAX_CROP_OVERFLOW, 1, 'crop.y'),
+            'w' => self::number($crop['w'] ?? null, self::MIN_CROP_SIDE, $maxSide, 'crop.w'),
+            'h' => self::number($crop['h'] ?? null, self::MIN_CROP_SIDE, $maxSide, 'crop.h'),
         ];
+        $right = $rectangle['x'] + $rectangle['w'];
+        $bottom = $rectangle['y'] + $rectangle['h'];
 
-        if (1 + self::CROP_BOUND_EPSILON < $rectangle['x'] + $rectangle['w'] || 1 + self::CROP_BOUND_EPSILON < $rectangle['y'] + $rectangle['h']) {
-            throw self::invalid('crop exceeds the image');
+        if (1 + self::MAX_CROP_OVERFLOW + self::CROP_BOUND_EPSILON < max($right, $bottom)) {
+            throw self::invalid('crop overflows the image by more than '.self::MAX_CROP_OVERFLOW);
+        }
+
+        if ($rectangle['x'] >= 1 || $rectangle['y'] >= 1 || $right <= 0 || $bottom <= 0) {
+            throw self::invalid('crop does not overlap the image');
         }
 
         return $rectangle;
+    }
+
+    private static function fit(mixed $fit): string
+    {
+        return in_array($fit, self::FITS, true)
+            ? $fit
+            : throw self::invalid('fit must be one of '.implode(', ', self::FITS));
     }
 
     /** @return list<array<string, mixed>> */

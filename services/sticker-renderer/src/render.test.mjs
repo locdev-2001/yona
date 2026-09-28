@@ -112,7 +112,8 @@ describe('render.mjs', () => {
         const inputPath = await writeSvgAs('sticker.jpg', stickerSvg(), 'jpeg');
         const run = await renderOk(inputPath);
 
-        assert.deepEqual(Object.keys(run.output).sort(), ['durationMs', 'frames', 'height', 'image', 'static', 'staticSize', 'warnings', 'width']);
+        assert.deepEqual(Object.keys(run.output).sort(), ['durationMs', 'frames', 'gif', 'height', 'image', 'static', 'staticSize', 'warnings', 'width']);
+        assert.equal(run.output.gif, join(run.outDir, 'sticker.gif'));
         assert.equal(run.output.image, join(run.outDir, 'sticker.webp'));
         assert.equal(run.output.static, join(run.outDir, 'static.png'));
         assert.equal(run.output.width, STICKER_SIZE);
@@ -235,6 +236,208 @@ describe('render.mjs', () => {
         assert.equal(staticMetadata.paletteBitDepth, undefined);
     });
 
+    describe('fit và vùng lấy vượt biên', () => {
+        const TRIANGLE = [230, 40, 40];
+        const CIRCLE = [120, 40, 200];
+
+        function tallShapesSvg() {
+            return `<svg xmlns="http://www.w3.org/2000/svg" width="300" height="900">
+                <rect width="300" height="900" fill="white"/>
+                <path d="M150 40 L270 260 L30 260 Z" fill="rgb(${TRIANGLE})"/>
+                <circle cx="150" cy="720" r="120" fill="rgb(${CIRCLE})"/></svg>`;
+        }
+
+        function countColor(image, rgb) {
+            let count = 0;
+            for (let offset = 0; offset < image.data.length; offset += 4) {
+                if (image.data[offset + 3] < 200) continue;
+                if ([0, 1, 2].every((channel) => Math.abs(image.data[offset + channel] - rgb[channel]) < 40)) count++;
+            }
+
+            return count;
+        }
+
+        function opaqueColumns(image) {
+            const columns = new Set();
+            for (let y = 0; y < image.height; y++) {
+                for (let x = 0; x < image.width; x++) if (pixel(image, x, y)[3] > 0) columns.add(x);
+            }
+
+            return [Math.min(...columns), Math.max(...columns)];
+        }
+
+        test('contain: ảnh dọc 300×900 ra đủ cả tam giác lẫn hình tròn, lề hai bên trong suốt', async () => {
+            const inputPath = await writeSvgAs('tall-shapes.png', tallShapesSvg(), 'png');
+            const run = await renderWithEdit(inputPath, { fit: 'contain' });
+            const image = await readRgba(run.output.image);
+
+            assert.ok(countColor(image, TRIANGLE) > 20, 'mất tam giác');
+            assert.ok(countColor(image, CIRCLE) > 20, 'mất hình tròn');
+            const [firstColumn, lastColumn] = opaqueColumns(image);
+            assert.ok(firstColumn >= 20 && lastColumn <= 43, `cả ảnh 300 rộng phải nằm giữa ô 64: cột ${firstColumn}..${lastColumn}`);
+            assertCleanTransparency(image);
+        });
+
+        test('cover với khung vuông trong ảnh chỉ lấy một vật (đối chứng)', async () => {
+            const inputPath = await writeSvgAs('tall-cover.png', tallShapesSvg(), 'png');
+            const run = await renderWithEdit(inputPath, { crop: { x: 0, y: 0, w: 1, h: 1 / 3 } });
+            const image = await readRgba(run.output.image);
+
+            assert.ok(countColor(image, TRIANGLE) > 20);
+            assert.equal(countColor(image, CIRCLE), 0);
+        });
+
+        test('khung vuông lớn hơn cạnh ngắn (vượt biên) ra đúng như contain cả ảnh', async () => {
+            const inputPath = await writeSvgAs('tall-overflow.png', tallShapesSvg(), 'png');
+            const whole = await renderWithEdit(inputPath, { fit: 'contain' });
+            const overflow = await renderWithEdit(inputPath, { fit: 'contain', crop: { x: -1, y: 0, w: 3, h: 1 } });
+
+            assert.deepEqual((await readRgba(overflow.output.image)).data, (await readRgba(whole.output.image)).data);
+            assert.deepEqual((await readRgba(overflow.output.static)).data, (await readRgba(whole.output.static)).data);
+        });
+
+        test('vùng lấy vượt biên với cover: phần vượt không làm đổi kết quả', async () => {
+            const inputPath = await writeSvgAs('cover-overflow.png', stickerSvg(), 'png');
+            const plain = await renderOk(inputPath);
+            const overflow = await renderWithEdit(inputPath, { crop: { x: -0.5, y: -0.5, w: 2, h: 2 } });
+
+            assert.deepEqual((await readRgba(overflow.output.image)).data, (await readRgba(plain.output.image)).data);
+        });
+
+        test('edits theo toạ độ vùng lấy vượt biên; nhấp đũa thần vào phần trong suốt bị bỏ qua', async () => {
+            const inputPath = await writeSvgAs('ring-overflow.png', `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200">
+                <rect width="200" height="200" fill="white"/>
+                <circle cx="100" cy="100" r="80" fill="none" stroke="rgb(${RED})" stroke-width="20"/></svg>`, 'png');
+            const crop = { x: -0.5, y: -0.5, w: 2, h: 2 };
+
+            const removed = await renderWithEdit(inputPath, { fit: 'contain', crop, edits: [{ op: 'wand-remove', x: 0.5, y: 0.5, tolerance: 20 }] });
+            assert.equal(pixel(await readRgba(removed.output.static), 32, 32)[3], 0, 'tâm vùng lấy là tâm ảnh: lỗ phải bị xoá');
+
+            const outside = await renderWithEdit(inputPath, { fit: 'contain', crop, removeBackground: false, edits: [{ op: 'wand-remove', x: 0.05, y: 0.05 }] });
+            const background = pixel(await readRgba(outside.output.static), 20, 20);
+            assert.ok(background[3] === 255 && background.slice(0, 3).every((channel) => channel > 240), `nhấp ngoài ảnh không được loang xoá nền trắng: ${background}`);
+        });
+    });
+
+    describe('ảnh động vật chạy ngang', () => {
+        const side = 120;
+        const frameCount = 6;
+        const radius = 12;
+        const centers = Array.from({ length: frameCount }, (_, frame) => 20 + frame * 16);
+
+        async function runningDotGif() {
+            const frameBytes = side * side * 3;
+            const strip = Buffer.alloc(frameBytes * frameCount, 255);
+            centers.forEach((centerX, frame) => {
+                for (let y = 0; y < side; y++) {
+                    for (let x = 0; x < side; x++) {
+                        if ((x - centerX) ** 2 + (y - 60) ** 2 <= radius ** 2) strip.set([30, 160, 60], frame * frameBytes + (y * side + x) * 3);
+                    }
+                }
+            });
+
+            return sharp(strip, { raw: { width: side, height: side * frameCount, channels: 3, pageHeight: side } })
+                .gif({ delay: Array(frameCount).fill(100), loop: 0 })
+                .toBuffer();
+        }
+
+        async function frameOpacity(imagePath) {
+            const { data, info } = await sharp(imagePath, { animated: true }).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+            const pageHeight = info.pageHeight ?? info.height;
+            const frameBytes = info.width * pageHeight * 4;
+            const frames = info.height / pageHeight;
+
+            return Array.from({ length: frames }, (_, frame) => {
+                let opaque = 0;
+                let touchesEdge = false;
+                for (let y = 0; y < pageHeight; y++) {
+                    for (let x = 0; x < info.width; x++) {
+                        if (data[frame * frameBytes + (y * info.width + x) * 4 + 3] < 128) continue;
+                        opaque++;
+                        if (x === 0 || y === 0 || x === info.width - 1 || y === pageHeight - 1) touchesEdge = true;
+                    }
+                }
+
+                return { opaque, touchesEdge };
+            });
+        }
+
+        function assertEveryFrameWhole(frames) {
+            assert.equal(frames.length, frameCount);
+            const largest = Math.max(...frames.map((frame) => frame.opaque));
+            frames.forEach((frame, index) => {
+                assert.ok(frame.opaque > largest * 0.8, `khung ${index + 1} bị cắt: ${frame.opaque}/${largest}`);
+                assert.equal(frame.touchesEdge, false, `khung ${index + 1} chạm mép`);
+            });
+        }
+
+        test('không cắt: lấy hợp khung bao của mọi khung, không khung nào bị cắt hay trống', async () => {
+            const run = await renderOk(await writeWorkFile('running-dot.gif', await runningDotGif()));
+
+            assertEveryFrameWhole(await frameOpacity(run.output.image));
+        });
+
+        test('vùng lấy là hợp khung bao mọi khung (client gửi): giữ đủ mọi khung, cả cover lẫn contain', async () => {
+            const inputPath = await writeWorkFile('running-dot-crop.gif', await runningDotGif());
+            const left = (centers[0] - radius - 4) / side;
+            const right = (centers[frameCount - 1] + radius + 4) / side;
+            const crop = { x: left, y: (60 - radius - 4) / side, w: right - left, h: (2 * radius + 8) / side };
+
+            for (const fit of ['cover', 'contain']) {
+                const run = await renderWithEdit(inputPath, { crop, fit });
+                assertEveryFrameWhole(await frameOpacity(run.output.image));
+            }
+        });
+    });
+
+    describe('sticker.gif cho kênh ngoài', () => {
+        async function gifFrames(gifPath) {
+            const { data, info } = await sharp(gifPath, { animated: true }).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+
+            return { data, width: info.width, pageHeight: info.pageHeight ?? info.height, pages: info.height / (info.pageHeight ?? info.height) };
+        }
+
+        test('ảnh tĩnh: GIF một khung cạnh --static-size, trong suốt 1 bit, giữ màu vật', async () => {
+            const run = await renderOk(await writeSvgAs('gif-static.jpg', stickerSvg(), 'jpeg'), ['--static-size=128']);
+            const metadata = await sharp(run.output.gif).metadata();
+            const frames = await gifFrames(run.output.gif);
+
+            assert.equal(metadata.format, 'gif');
+            assert.equal(metadata.width, 128);
+            assert.equal(frames.pageHeight, 128);
+            assert.equal(frames.pages, 1);
+            for (let offset = 3; offset < frames.data.length; offset += 4) {
+                assert.ok(frames.data[offset] === 0 || frames.data[offset] === 255, `alpha ${frames.data[offset]} không phải 1 bit`);
+            }
+            const image = { data: frames.data, width: 128, height: 128 };
+            assert.equal(pixel(image, 0, 0)[3], 0, 'góc nền phải trong suốt');
+            const center = pixel(image, 64, 64);
+            assert.ok(center[0] > 180 && center[1] < 80 && center[3] === 255, `ruột đỏ sai: ${center}`);
+        });
+
+        test('ảnh động: GIF giữ đủ khung và độ trễ của nguồn', async () => {
+            const side = 120;
+            const frameBytes = side * side * 3;
+            const strip = Buffer.alloc(frameBytes * GIF_FRAMES, 255);
+            for (let frame = 0; frame < GIF_FRAMES; frame++) {
+                for (let y = 40; y < 80; y++) {
+                    for (let x = 20 + frame * 6; x < 50 + frame * 6; x++) strip.set([30, 60, 200], frame * frameBytes + (y * side + x) * 3);
+                }
+            }
+            const gif = await sharp(strip, { raw: { width: side, height: side * GIF_FRAMES, channels: 3, pageHeight: side } })
+                .gif({ delay: Array(GIF_FRAMES).fill(GIF_DELAY_MS), loop: 0 })
+                .toBuffer();
+            const run = await renderOk(await writeWorkFile('gif-moving.gif', gif), ['--static-size=128']);
+            const metadata = await sharp(run.output.gif, { animated: true }).metadata();
+
+            assert.equal(metadata.format, 'gif');
+            assert.equal(metadata.pages, GIF_FRAMES);
+            assert.equal(metadata.pageHeight, 128);
+            assert.deepEqual(metadata.delay, Array(GIF_FRAMES).fill(GIF_DELAY_MS));
+            assert.equal(metadata.loop, 0);
+        });
+    });
+
     test('JPG 4000×3000 xử lý dưới 2 giây', async () => {
         const jpeg = await sharp({ create: { width: 4000, height: 3000, channels: 3, background: '#d8d8d8' } })
             .composite([{ input: Buffer.from(`<svg xmlns="http://www.w3.org/2000/svg" width="4000" height="3000">
@@ -277,6 +480,9 @@ describe('render.mjs', () => {
             ['size ngoài khoảng', async () => [await writeSvgAs('size.png', stickerSvg(), 'png'), join(workDir, 'x'), '--size=8'], 'usage'],
             ['edit.json không phải JSON', async () => [await writeSvgAs('e1.png', stickerSvg(), 'png'), join(workDir, 'x'), `--edit=${await writeWorkFile('bad.json', '{')}`], 'usage'],
             ['edit.json sai giá trị', async () => [await writeSvgAs('e2.png', stickerSvg(), 'png'), join(workDir, 'x'), `--edit=${await writeWorkFile('bad2.json', '{"tolerance":150}')}`], 'usage'],
+            ['fit lạ', async () => [await writeSvgAs('e4.png', stickerSvg(), 'png'), join(workDir, 'x'), `--edit=${await writeWorkFile('bad4.json', '{"fit":"stretch"}')}`], 'usage'],
+            ['vùng lấy vượt biên quá xa', async () => [await writeSvgAs('e5.png', stickerSvg(), 'png'), join(workDir, 'x'), `--edit=${await writeWorkFile('bad5.json', '{"crop":{"x":-9,"y":0,"w":10,"h":1}}')}`], 'usage'],
+            ['vùng lấy không giao ảnh', async () => [await writeSvgAs('e6.png', stickerSvg(), 'png'), join(workDir, 'x'), `--edit=${await writeWorkFile('bad6.json', '{"crop":{"x":-3,"y":0,"w":2,"h":1}}')}`], 'usage'],
             ['edit.json thao tác lạ', async () => [await writeSvgAs('e3.png', stickerSvg(), 'png'), join(workDir, 'x'), `--edit=${await writeWorkFile('bad3.json', '{"edits":[{"op":"erase"}]}')}`], 'usage'],
             ['tệp không tồn tại', async () => [join(workDir, 'missing.png'), join(workDir, 'x')], 'input_unreadable'],
             ['không phải ảnh', async () => [await writeWorkFile('garbage.png', 'not an image'), join(workDir, 'x')], 'input_unreadable'],

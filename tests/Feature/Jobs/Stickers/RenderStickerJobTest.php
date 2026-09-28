@@ -42,14 +42,14 @@ beforeEach(function () {
 it('dựng từ ảnh gốc + thông số chỉnh đã lưu, ghi tệp mang cạnh ảnh theo hash rồi chuyển ready', function () {
     config(['yona.stickers.image_size' => 72]);
     $this->renderedPaths = StickerFileLayout::renderedPaths($this->contentHash);
-    $this->renderer->scenario = fn (string $image, string $output, array $edit, int $size) => FakeStickerRenderer::writeOutputs($output, $size, 'webp-bytes', 'png-bytes', frames: 4);
+    $this->renderer->scenario = fn (string $image, string $output, array $edit, int $size) => FakeStickerRenderer::writeOutputs($output, $size, 'webp-bytes', 'png-bytes', frames: 4, gifBytes: 'gif-bytes');
 
     ($this->runJob)();
 
     $sticker = $this->sticker->fresh();
     $directory = substr($this->contentHash, 0, 2).'/'.$this->contentHash;
-    expect($this->renderedPaths)->toBe(['image_path' => "{$directory}/sticker-72.webp", 'static_path' => "{$directory}/static-128.png"])
-        ->and($sticker->only(['status', 'failure_code', 'image_path', 'static_path', 'original_path', 'width', 'height', 'frame_count', 'duration_ms', 'byte_size']))->toBe([
+    expect($this->renderedPaths)->toBe(['image_path' => "{$directory}/sticker-72.webp", 'static_path' => "{$directory}/static-128.png", 'gif_path' => "{$directory}/sticker-128.gif"])
+        ->and($sticker->only(['status', 'failure_code', 'image_path', 'static_path', 'gif_path', 'original_path', 'width', 'height', 'frame_count', 'duration_ms', 'byte_size']))->toBe([
             'status' => Sticker::STATUS_READY,
             'failure_code' => null,
             ...$this->renderedPaths,
@@ -62,6 +62,7 @@ it('dựng từ ảnh gốc + thông số chỉnh đã lưu, ghi tệp mang cạ
         ])
         ->and($this->disk->get($this->renderedPaths['image_path']))->toBe('webp-bytes')
         ->and($this->disk->get($this->renderedPaths['static_path']))->toBe('png-bytes')
+        ->and($this->disk->get($this->renderedPaths['gif_path']))->toBe('gif-bytes')
         ->and($this->disk->get($this->originalPath))->toBe($this->originalBytes)
         ->and($this->renderer->calls)->toHaveCount(1)
         ->and($this->renderer->calls[0])->toMatchArray(['image_bytes' => $this->originalBytes, 'edit' => $this->edit, 'size' => 72])
@@ -95,11 +96,12 @@ it('trình dựng báo lỗi thì sticker failed kèm mã, không để lại t�
 
     ($this->runJob)();
 
-    expect($this->sticker->fresh()->only(['status', 'failure_code', 'image_path', 'static_path', 'original_path']))->toBe([
+    expect($this->sticker->fresh()->only(['status', 'failure_code', 'image_path', 'static_path', 'gif_path', 'original_path']))->toBe([
         'status' => Sticker::STATUS_FAILED,
         'failure_code' => $failure,
         'image_path' => null,
         'static_path' => null,
+        'gif_path' => null,
         'original_path' => null,
     ])
         ->and($this->disk->allFiles())->toBe([]);
@@ -133,22 +135,22 @@ it('lỗi bất ngờ của trình dựng tính là trình dựng chưa sẵn s�
         ->and($this->disk->allFiles())->toBe([]);
 });
 
-it('ghi disk hỏng thì sticker failed và dọn tệp đã ghi', function (string $failingFile) {
-    ($this->failWritesTo)($failingFile);
+it('ghi disk hỏng thì sticker failed và dọn tệp đã ghi', function (string $failingPathKey) {
+    ($this->failWritesTo)($this->renderedPaths[$failingPathKey]);
 
     ($this->runJob)();
 
     expect($this->sticker->fresh()->only(['status', 'failure_code']))
         ->toBe(['status' => Sticker::STATUS_FAILED, 'failure_code' => RenderStickerJob::STORAGE_WRITE_FAILED])
         ->and($this->disk->allFiles())->toBe([]);
-})->with(['sticker-64.webp', 'static-128.png']);
+})->with(['image_path', 'static_path', 'gif_path']);
 
 it('không đụng tệp dùng chung khi sticker khác cùng nội dung còn dùng', function () {
     Sticker::factory()->create(['content_hash' => $this->contentHash, ...$this->renderedPaths, 'original_path' => $this->originalPath]);
     foreach ($this->renderedPaths as $path) {
         $this->disk->put($path, 'already published');
     }
-    ($this->failWritesTo)('static-128.png');
+    ($this->failWritesTo)($this->renderedPaths['static_path']);
 
     ($this->runJob)();
 
@@ -229,11 +231,13 @@ it('dựng lại sticker đã ready theo cỡ mới: tệp mang cạnh mới (UR
     ($this->runJob)($this->sticker->fresh(), true);
 
     $sticker = $this->sticker->fresh();
-    expect($sticker->only(['status', 'image_path', 'static_path', 'width', 'height']))
+    expect($sticker->only(['status', 'image_path', 'static_path', 'gif_path', 'width', 'height']))
         ->toBe(['status' => Sticker::STATUS_READY, ...$this->renderedPaths, 'width' => 96, 'height' => 96])
         ->and($this->renderer->calls[1]['size'])->toBe(96)
         ->and($this->renderer->calls[1]['static_size'])->toBe(160)
         ->and($this->renderedPaths['static_path'])->toEndWith('/static-160.png')
+        ->and($this->renderedPaths['gif_path'])->toEndWith('/sticker-160.gif')
+        ->and($this->disk->exists($this->renderedPaths['gif_path']))->toBeTrue()
         ->and($this->renderedPaths)->not->toBe($oldPaths)
         ->and($this->disk->exists($oldPaths['static_path']))->toBeTrue()
         ->and($this->renderer->calls[1]['edit'])->toEqual($this->edit)
@@ -269,23 +273,26 @@ describe('với trình dựng thật', function () {
         $this->pack = StickerPack::factory()->create();
     });
 
-    it('biến ảnh PNG tải lên thành sticker ready: WebP 64×64 trong Yona, PNG 128×128 gửi kênh ngoài', function () {
+    it('biến ảnh PNG tải lên thành sticker ready: WebP cạnh image_size trong Yona, PNG cạnh outbound_image_size gửi kênh ngoài', function () {
         $sticker = app(StickerUploadService::class)->upload($this->pack, YonaStickers::imageUpload('dot.png', side: 400), 'Chấm')->fresh();
+        $side = Sticker::imageSize();
+        $outboundSide = Sticker::outboundImageSize();
 
-        expect($sticker->only(['status', 'width', 'height', 'frame_count']))->toBe(['status' => Sticker::STATUS_READY, 'width' => 64, 'height' => 64, 'frame_count' => 1])
-            ->and($sticker->only(['image_path', 'static_path']))->toBe(StickerFileLayout::renderedPaths($sticker->content_hash))
-            ->and(getimagesizefromstring($this->disk->get($sticker->image_path)))->toMatchArray([0 => 64, 1 => 64, 'mime' => 'image/webp'])
-            ->and(getimagesizefromstring($this->disk->get($sticker->static_path)))->toMatchArray([0 => 128, 1 => 128, 'mime' => 'image/png'])
+        expect($sticker->only(['status', 'width', 'height', 'frame_count']))->toBe(['status' => Sticker::STATUS_READY, 'width' => $side, 'height' => $side, 'frame_count' => 1])
+            ->and($sticker->only(['image_path', 'static_path', 'gif_path']))->toBe(StickerFileLayout::renderedPaths($sticker->content_hash))
+            ->and(getimagesizefromstring($this->disk->get($sticker->gif_path)))->toMatchArray([0 => $outboundSide, 1 => $outboundSide, 'mime' => 'image/gif'])
+            ->and(getimagesizefromstring($this->disk->get($sticker->image_path)))->toMatchArray([0 => $side, 1 => $side, 'mime' => 'image/webp'])
+            ->and(getimagesizefromstring($this->disk->get($sticker->static_path)))->toMatchArray([0 => $outboundSide, 1 => $outboundSide, 'mime' => 'image/png'])
             ->and($sticker->byte_size)->toBe(strlen($this->disk->get($sticker->image_path)));
     });
 
-    it('biến GIF động thành WebP động 64×64 cùng số khung, PNG tĩnh cho kênh ngoài', function () {
+    it('biến GIF động thành WebP động cùng số khung, PNG tĩnh cho kênh ngoài', function () {
         $sticker = app(StickerUploadService::class)->upload($this->pack, YonaStickers::animatedUpload())->fresh();
         $webp = $this->disk->get($sticker->image_path);
 
         expect($sticker->only(['status', 'frame_count', 'duration_ms']))->toBe(['status' => Sticker::STATUS_READY, 'frame_count' => 4, 'duration_ms' => 480])
             ->and(str_contains($webp, 'ANIM') && substr_count($webp, 'ANMF') === 4)->toBeTrue()
-            ->and(getimagesizefromstring($this->disk->get($sticker->static_path)))->toMatchArray([0 => 128, 1 => 128, 'mime' => 'image/png']);
+            ->and(getimagesizefromstring($this->disk->get($sticker->static_path)))->toMatchArray([0 => Sticker::outboundImageSize(), 1 => Sticker::outboundImageSize(), 'mime' => 'image/png']);
     });
 
     it('xoá nền hết sạch thì sticker failed với lời nhắc chỉnh độ nhạy', function () {

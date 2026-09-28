@@ -17,6 +17,11 @@ export interface LibrarySticker {
     static_url: string | null;
 }
 
+// Tải lên trả 201 kèm `existing: false`, hoặc 200 kèm `existing: true` và sticker đã có (ảnh trùng).
+export interface UploadedSticker extends LibrarySticker {
+    existing: boolean;
+}
+
 export interface LibraryStickerChanges {
     label: string | null;
     keywords: string[];
@@ -37,7 +42,16 @@ export interface LibraryStickerPackDetail extends LibraryStickerPack {
 
 export interface StickerLibraryListing {
     payload: LibraryStickerPack[];
-    meta: { max_upload_kb: number; accepted_extensions: string[]; image_size: number };
+    meta: {
+        max_upload_kb: number;
+        accepted_extensions: string[];
+        image_size: number;
+        max_label_length?: number;
+        max_keywords?: number;
+        max_keyword_length?: number;
+        max_stickers?: number;
+        max_pack_name_length?: number;
+    };
 }
 
 export interface StickerLibraryAccess {

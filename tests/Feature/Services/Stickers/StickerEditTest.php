@@ -42,6 +42,13 @@ it('trống, null, object rỗng hay crop null là không chỉnh', function (?s
     expect(StickerEdit::fromJson($json)->isEmpty())->toBeTrue();
 })->with(['null' => [null], 'chuỗi rỗng' => [''], 'khoảng trắng' => ['  '], 'object rỗng' => ['{}'], 'crop null' => ['{"crop":null}']]);
 
+it('fit contain được giữ, fit cover (mặc định) không ghi để hash sticker cũ không đổi', function () {
+    expect(StickerEdit::fromJson('{"removeBackground":true,"fit":"contain","crop":{"x":-1,"y":0,"w":3,"h":1}}')->json())
+        ->toBe('{"crop":{"x":-1,"y":0,"w":3,"h":1},"fit":"contain","removeBackground":true}')
+        ->and(StickerEdit::fromJson('{"fit":"cover","tolerance":20}')->json())
+        ->toBe(StickerEdit::fromJson('{"tolerance":20}')->json());
+});
+
 it('wand không ghi dung sai thì để trình dựng dùng mặc định', function () {
     expect(StickerEdit::fromJson('{"edits":[{"op":"wand-keep","x":0,"y":1}]}')->params)
         ->toBe(['edits' => [['op' => 'wand-keep', 'x' => 0, 'y' => 1]]]);
@@ -52,6 +59,10 @@ it('nhận biên của hợp đồng', function (array $edit) {
 })->with([
     'crop cả ảnh' => [['crop' => ['x' => 0, 'y' => 0, 'w' => 1, 'h' => 1]]],
     'crop sát mép phải dưới' => [['crop' => ['x' => 0.7, 'y' => 0.3, 'w' => 0.3, 'h' => 0.7]]],
+    'crop tràn ảnh (phần vượt trong suốt)' => [['crop' => ['x' => 0.5, 'y' => 0, 'w' => 0.6, 'h' => 1]]],
+    'khung vuông lớn hơn cạnh ngắn của ảnh dọc' => [['crop' => ['x' => -1, 'y' => 0, 'w' => 3, 'h' => 1]]],
+    'crop vượt biên đúng trần' => [['crop' => ['x' => -StickerEdit::MAX_CROP_OVERFLOW, 'y' => -StickerEdit::MAX_CROP_OVERFLOW, 'w' => 1 + 2 * StickerEdit::MAX_CROP_OVERFLOW, 'h' => 1 + 2 * StickerEdit::MAX_CROP_OVERFLOW]]],
+    'fit contain' => [['fit' => 'contain']],
     'dung sai và làm mềm tối đa' => [['tolerance' => 100, 'feather' => 4]],
     'đủ số lượt chỉnh' => [['edits' => array_fill(0, StickerEdit::MAX_EDITS, ['op' => 'wand-remove', 'x' => 0.5, 'y' => 0.5])]],
     'đủ số điểm cọ' => [['edits' => [['op' => 'brush-remove', 'points' => array_fill(0, StickerEdit::MAX_BRUSH_POINTS, [0.5, 0.5]), 'radius' => 1]]]],
@@ -65,9 +76,13 @@ it('từ chối thông số sai hợp đồng', function (string $json) {
     'chuỗi' => ['"crop"'],
     'crop không phải object' => ['{"crop":[0,0,1,1]}'],
     'crop thiếu cạnh' => ['{"crop":{"x":0,"y":0,"w":1}}'],
-    'crop tràn ảnh' => ['{"crop":{"x":0.5,"y":0,"w":0.6,"h":1}}'],
+    'crop vượt biên quá trần' => ['{"crop":{"x":-9,"y":0,"w":10,"h":1}}'],
+    'crop tràn phải quá trần' => ['{"crop":{"x":0.5,"y":0,"w":9,"h":1}}'],
+    'crop không giao ảnh' => ['{"crop":{"x":-3,"y":0,"w":2,"h":1}}'],
+    'crop bắt đầu ở mép phải' => ['{"crop":{"x":1,"y":0,"w":1,"h":1}}'],
+    'fit lạ' => ['{"fit":"stretch"}'],
+    'fit không phải chuỗi' => ['{"fit":1}'],
     'crop cạnh bằng 0' => ['{"crop":{"x":0,"y":0,"w":0,"h":1}}'],
-    'crop toạ độ âm' => ['{"crop":{"x":-0.1,"y":0,"w":0.5,"h":0.5}}'],
     'removeBackground là chuỗi' => ['{"removeBackground":"true"}'],
     'dung sai là chuỗi' => ['{"tolerance":"12"}'],
     'dung sai vượt 100' => ['{"tolerance":100.5}'],

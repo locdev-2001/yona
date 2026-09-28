@@ -234,11 +234,12 @@ describe('cờ custom_stickers bật', function () {
             'status' => Sticker::STATUS_READY,
             'failure_message' => null,
             'position' => 0,
-            'width' => 64,
-            'height' => 64,
+            'width' => Sticker::imageSize(),
+            'height' => Sticker::imageSize(),
             'frames' => 1,
             'image_url' => $sticker->image_url,
             'static_url' => $sticker->static_url,
+            'existing' => false,
         ])
             ->and($sticker->edit_params)->toEqual($edit)
             ->and($this->renderer->calls[0]['edit'])->toEqual($edit);

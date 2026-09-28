@@ -3,15 +3,19 @@ import type { ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 
 import Icon from 'dashboard/components-next/icon/Icon';
+import {
+    AUTO_SCROLL_STEP_PX,
+    autoScrollDirection,
+    nearestScrollParent,
+    passedDragThreshold,
+    verticalInsertBefore,
+} from 'shared/reorder/reorderGeometry';
 
 // Port từ components-next/DraggableReorderList/DraggableReorderList.vue.
 // Danh sách kéo thả có lật trang khi giữ ở mép; phải giữ nguyên khi đang tải
 // trang mới, nếu ẩn danh sách thì mất phần tử đang cầm.
-const DRAG_THRESHOLD = 5;
 const EDGE_BAND = 72; // px tính từ mép để nạp lệnh lật trang
 const AUTO_PAGE_DELAY = 600; // ms giữ ở mép trước khi lật
-const SCROLL_BAND = 60; // px sát trên/dưới thì tự cuộn
-const SCROLL_STEP = 10; // px mỗi khung hình khi đỗ ở mép
 const PILL = 36; // px, nút mũi tên lật trang ở mép
 const EDGE_BAND_W = 80; // px bề rộng dải sáng ở mỗi mép lật được
 
@@ -122,9 +126,9 @@ export default function DraggableReorderList<T extends ReorderItem>({
         const key = card?.dataset.dragId;
         if (!key || key === keyOf(current)) return;
 
-        const { top, height } = card!.getBoundingClientRect();
-        const above = point.y < top + height / 2;
-        setInsertBefore(above ? key : keyAfter(others(current), key));
+        setInsertBefore(
+            verticalInsertBefore(point.y, { key, rect: card!.getBoundingClientRect() }, others(current).map(keyOf)),
+        );
     }, [others]);
 
     const flip = useCallback(
@@ -169,16 +173,7 @@ export default function DraggableReorderList<T extends ReorderItem>({
     );
 
     // Tổ tiên cuộn được gần nhất, để kéo tới hàng nằm ngoài màn hình.
-    const scrollParent = (): HTMLElement | null => {
-        let element = rootRef.current?.parentElement ?? null;
-        while (element) {
-            const { overflowY } = getComputedStyle(element);
-            if (overflowY === 'auto' || overflowY === 'scroll') return element;
-            element = element.parentElement;
-        }
-
-        return null;
-    };
+    const scrollParent = (): HTMLElement | null => nearestScrollParent(rootRef.current);
 
     const stopAutoScroll = () => {
         if (rafRef.current !== undefined) cancelAnimationFrame(rafRef.current);
@@ -192,7 +187,7 @@ export default function DraggableReorderList<T extends ReorderItem>({
 
             return;
         }
-        scroller.scrollTop += scrollDirRef.current * SCROLL_STEP;
+        scroller.scrollTop += scrollDirRef.current * AUTO_SCROLL_STEP_PX;
         aim();
         aimEdge(stateRef.current.pointer.x);
         rafRef.current = requestAnimationFrame(autoScrollFrame);
@@ -203,12 +198,7 @@ export default function DraggableReorderList<T extends ReorderItem>({
             const scroller = scrollerRef.current;
             if (!scroller) return;
 
-            const rect = scroller.getBoundingClientRect();
-            const atTop = scroller.scrollTop <= 0;
-            const atBottom = scroller.scrollTop >= scroller.scrollHeight - scroller.clientHeight;
-            if (y < rect.top + SCROLL_BAND && !atTop) scrollDirRef.current = -1;
-            else if (y > rect.bottom - SCROLL_BAND && !atBottom) scrollDirRef.current = 1;
-            else scrollDirRef.current = 0;
+            scrollDirRef.current = autoScrollDirection(scroller, y);
 
             if (scrollDirRef.current && rafRef.current === undefined) {
                 rafRef.current = requestAnimationFrame(autoScrollFrame);
@@ -289,7 +279,7 @@ export default function DraggableReorderList<T extends ReorderItem>({
             if (!press) return;
 
             if (!stateRef.current.isDragging) {
-                if (Math.hypot(event.clientX - press.x, event.clientY - press.y) < DRAG_THRESHOLD) return;
+                if (!passedDragThreshold(press, { x: event.clientX, y: event.clientY })) return;
 
                 setDragging(true);
                 setDragged(press.item);

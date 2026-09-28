@@ -26,6 +26,15 @@ class StickerPackRequest extends FormRequest
         return ['name' => ['required', 'string', 'max:'.self::MAX_NAME_LENGTH]];
     }
 
+    /** @return array<string, string> */
+    public function messages(): array
+    {
+        return [
+            'name.required' => __('errors.sticker_library.pack_name_required'),
+            'name.max' => __('errors.sticker_library.pack_name_too_long'),
+        ];
+    }
+
     public function packName(): string
     {
         return trim((string) $this->validated('name'));

@@ -2,6 +2,7 @@
 
 use App\Builders\Messages\MessageBuilder;
 use App\Channels\Capability;
+use App\Http\Requests\Stickers\StickerPackRequest;
 use App\Models\Account;
 use App\Models\AccountUser;
 use App\Models\Attachment;
@@ -15,6 +16,7 @@ use App\Models\User;
 use App\Services\Channels\Stickers\StickerLibrary;
 use App\Services\Stickers\StickerFileLayout;
 use App\Services\Stickers\StickerLibraryManager;
+use App\Services\Stickers\StickerTags;
 use App\Services\Stickers\StickerUploadService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -91,10 +93,86 @@ it('tạo bộ, tải ảnh kèm thông số cắt, dựng xong rồi xuất b�
         ->assertOk()
         ->assertJsonPath('payload.0.stickers_count', 1)
         ->assertJsonPath('payload.0.cover_url', $sticker->image_url)
-        ->assertJsonPath('meta', ['max_upload_kb' => 10 * 1024, 'accepted_extensions' => ['png', 'jpg', 'jpeg', 'webp', 'gif'], 'image_size' => 64]);
+        ->assertJsonPath('meta', [
+            'max_upload_kb' => 10 * 1024,
+            'accepted_extensions' => ['png', 'jpg', 'jpeg', 'webp', 'gif'],
+            'image_size' => Sticker::imageSize(),
+            'max_label_length' => StickerTags::MAX_LABEL_LENGTH,
+            'max_keywords' => StickerTags::MAX_KEYWORDS,
+            'max_keyword_length' => StickerTags::MAX_KEYWORD_LENGTH,
+            'max_stickers' => StickerLibraryManager::MAX_STICKERS_PER_PACK,
+            'max_pack_name_length' => StickerPackRequest::MAX_NAME_LENGTH,
+        ]);
 
     $this->postJson(SUPER_ADMIN_STICKER_API."/{$packId}/unpublish")->assertOk()->assertJsonPath('published', false);
     expect(stickerListingIds($inbox))->toBe([]);
+});
+
+it('chi tiết bộ mang cùng meta giới hạn với danh sách, đúng số trong luật kiểm', function () {
+    $pack = StickerPack::factory()->create();
+    $listingMeta = $this->getJson(SUPER_ADMIN_STICKER_API)->assertOk()->json('meta');
+
+    foreach ([
+        $this->getJson(SUPER_ADMIN_STICKER_API."/{$pack->id}"),
+        $this->patchJson(SUPER_ADMIN_STICKER_API."/{$pack->id}", ['name' => 'Tên mới']),
+    ] as $response) {
+        $response->assertOk()->assertJsonPath('meta', $listingMeta);
+    }
+    $this->postJson(SUPER_ADMIN_STICKER_API, ['name' => 'Bộ mới'])->assertCreated()->assertJsonPath('meta', $listingMeta);
+
+    expect(StickerTags::validationRules()['label'])->toContain('max:'.$listingMeta['max_label_length'])
+        ->and(StickerTags::validationRules()['keywords'])->toContain('max:'.$listingMeta['max_keywords'])
+        ->and(StickerTags::validationRules()['keywords.*'])->toContain('max:'.$listingMeta['max_keyword_length'])
+        ->and(StickerPackRequest::nameRules()['name'])->toContain('max:'.$listingMeta['max_pack_name_length']);
+});
+
+it('tải lại đúng ảnh và thông số chỉnh đã có trong bộ: 200 kèm existing và sticker cũ, không ghi đè nhãn', function () {
+    $pack = StickerPack::factory()->create();
+    $edit = json_encode(['fit' => 'contain']);
+    $url = SUPER_ADMIN_STICKER_API."/{$pack->id}/stickers";
+
+    $firstId = $this->post($url, ['file' => YonaStickers::imageUpload(), 'edit' => $edit, 'label' => 'Sao'], ['Accept' => 'application/json'])
+        ->assertCreated()
+        ->assertJsonPath('existing', false)
+        ->json('id');
+
+    $this->post($url, ['file' => YonaStickers::imageUpload(), 'edit' => $edit, 'label' => 'Sao lần hai', 'keywords' => ['sao']], ['Accept' => 'application/json'])
+        ->assertOk()
+        ->assertJsonPath('existing', true)
+        ->assertJsonPath('id', $firstId)
+        ->assertJsonPath('label', 'Sao')
+        ->assertJsonPath('position', 0);
+
+    $this->post($url, ['file' => YonaStickers::imageUpload(), 'edit' => json_encode(['fit' => 'cover'])], ['Accept' => 'application/json'])
+        ->assertCreated()
+        ->assertJsonPath('existing', false);
+    expect($pack->stickers()->count())->toBe(2);
+});
+
+it('lỗi 422 của nhãn, từ khoá và tên bộ nằm đúng khoá trường, câu dễ hiểu', function () {
+    $pack = StickerPack::factory()->create();
+    $sticker = YonaStickers::ready($pack);
+    $stickerUrl = SUPER_ADMIN_STICKER_API."/{$pack->id}/stickers/{$sticker->id}";
+    $longKeyword = str_repeat('a', StickerTags::MAX_KEYWORD_LENGTH + 1);
+
+    $this->patchJson($stickerUrl, ['label' => str_repeat('n', StickerTags::MAX_LABEL_LENGTH + 1)])
+        ->assertUnprocessable()
+        ->assertJsonPath('errors.label.0', __('errors.sticker_library.label_too_long', ['max' => StickerTags::MAX_LABEL_LENGTH]));
+    $this->patchJson($stickerUrl, ['keywords' => array_map(fn ($index) => "tu{$index}", range(1, StickerTags::MAX_KEYWORDS + 1))])
+        ->assertUnprocessable()
+        ->assertJsonPath('errors.keywords.0', __('errors.sticker_library.too_many_keywords', ['max' => StickerTags::MAX_KEYWORDS]));
+    $keywordErrors = $this->patchJson($stickerUrl, ['keywords' => ['ổn', $longKeyword]])->assertUnprocessable()->json('errors');
+    expect(array_keys($keywordErrors))->toBe(['keywords.1'])
+        ->and($keywordErrors['keywords.1'][0])->toBe(__('errors.sticker_library.keyword_too_long', ['max' => StickerTags::MAX_KEYWORD_LENGTH, 'input' => $longKeyword]));
+    $this->post(SUPER_ADMIN_STICKER_API."/{$pack->id}/stickers", ['file' => YonaStickers::imageUpload(), 'keywords' => [$longKeyword]], ['Accept' => 'application/json'])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors('keywords.0');
+    $this->postJson(SUPER_ADMIN_STICKER_API, ['name' => str_repeat('b', StickerPackRequest::MAX_NAME_LENGTH + 1)])
+        ->assertUnprocessable()
+        ->assertJsonPath('errors.name.0', __('errors.sticker_library.pack_name_too_long', ['max' => StickerPackRequest::MAX_NAME_LENGTH]));
+    $this->postJson(SUPER_ADMIN_STICKER_API, ['name' => ''])
+        ->assertUnprocessable()
+        ->assertJsonPath('errors.name.0', __('errors.sticker_library.pack_name_required'));
 });
 
 it('tệp không phải ảnh nhận được hoặc thông số chỉnh sai bị từ chối bằng đúng câu lỗi, không tạo sticker', function (Closure $payload, string $field, string $code) {
@@ -265,5 +343,16 @@ it('bộ đã đủ số sticker tối đa thì từ chối tải thêm', functi
     $this->post(SUPER_ADMIN_STICKER_API."/{$pack->id}/stickers", ['file' => YonaStickers::imageUpload()], ['Accept' => 'application/json'])
         ->assertUnprocessable()
         ->assertJsonPath('errors.file.0', __('errors.sticker_library.pack_full', ['max' => StickerLibraryManager::MAX_STICKERS_PER_PACK]));
+    expect($pack->stickers()->count())->toBe(StickerLibraryManager::MAX_STICKERS_PER_PACK);
+});
+
+it('bộ đã đầy mà tải lại ảnh đã có thì trả sticker cũ (existing) thay vì báo đầy', function () {
+    $pack = StickerPack::factory()->create();
+    Sticker::factory()->count(StickerLibraryManager::MAX_STICKERS_PER_PACK - 1)->for($pack, 'stickerPack')->create();
+    $this->post(SUPER_ADMIN_STICKER_API."/{$pack->id}/stickers", ['file' => YonaStickers::imageUpload(seed: 7)], ['Accept' => 'application/json'])->assertCreated();
+
+    $this->post(SUPER_ADMIN_STICKER_API."/{$pack->id}/stickers", ['file' => YonaStickers::imageUpload(seed: 7)], ['Accept' => 'application/json'])
+        ->assertOk()
+        ->assertJsonPath('existing', true);
     expect($pack->stickers()->count())->toBe(StickerLibraryManager::MAX_STICKERS_PER_PACK);
 });

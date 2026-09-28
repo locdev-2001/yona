@@ -84,9 +84,7 @@ final class StickerLibraryManager
     /** @param  array<mixed>  $keywords */
     public function upload(StickerPack $pack, UploadedFile $file, ?string $label = null, array $keywords = [], ?string $editJson = null): Sticker
     {
-        $this->ensureRoomFor($pack);
-
-        return $this->uploads->upload($pack, $file, $label, $keywords, $editJson);
+        return $this->uploads->upload($pack, $file, $label, $keywords, $editJson, fn () => $this->ensureRoomFor($pack));
     }
 
     /** @param  array<mixed>  $keywords */
