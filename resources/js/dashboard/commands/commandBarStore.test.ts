@@ -3,6 +3,7 @@ import { router } from '@inertiajs/react';
 
 import { t } from '../../i18n';
 import { buildGoToActions } from './useGoToCommandHotKeys';
+import { NAVIGATION_ICONS } from 'dashboard/helper/commandbar/icons';
 import { buildMenuItems } from 'dashboard/components-next/sidebar/menuItems';
 import { filterMenuByRole } from 'dashboard/components-next/sidebar/permissions';
 import type { AccountRole, SidebarMenuChild } from 'dashboard/components-next/sidebar/provider';
@@ -56,6 +57,9 @@ function visitedUrl(item: CommandBarAction): string {
     return visits[0];
 }
 
+// Icon của nhóm chỉ để gập/mở (không có đường dẫn) nên không cần SVG cho command bar.
+const GROUP_ONLY_ICONS = ['i-lucide-folder', 'i-lucide-users', 'i-lucide-mailbox', 'i-lucide-tag', 'i-lucide-group'];
+
 describe('buildGoToActions', () => {
     it.each<AccountRole>(['administrator', 'agent'])('mọi mục điều hướng sidebar (%s) đều tìm được bằng Ctrl+K', role => {
         const commandUrls = buildGoToActions(2, role).map(visitedUrl);
@@ -91,6 +95,17 @@ describe('buildGoToActions', () => {
         );
 
         expect(overview?.keywords).toContain(t('SIDEBAR.REPORTS'));
+    });
+
+    it('mọi icon của mục sidebar có SVG tương ứng cho command bar', () => {
+        const collectIcons = (items: SidebarMenuChild[]): string[] =>
+            items.flatMap(item => [
+                ...(typeof item.icon === 'string' ? [item.icon] : []),
+                ...collectIcons(item.children ?? []),
+            ]);
+        const missing = collectIcons(buildMenuItems(2)).filter(icon => !NAVIGATION_ICONS[icon]);
+
+        expect(missing.filter(icon => !GROUP_ONLY_ICONS.includes(icon))).toEqual([]);
     });
 
     it('mỗi action có id duy nhất, icon SVG và handler', () => {
