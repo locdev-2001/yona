@@ -114,6 +114,9 @@ describe('ChatInputWrap', () => {
         expect(screen.getAllByRole('tab').map(tab => tab.textContent)).toStrictEqual(['Emoji', 'Recent']);
         expect(panel.compareDocumentPosition(screen.getByRole('textbox')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
 
+        // Lọc lưới trước khi truy vấn: tính accessible name của cả ~1850 nút emoji trên
+        // jsdom mất vài giây và làm test vượt trần khi chạy chung cả bộ.
+        fireEvent.change(screen.getByRole('searchbox'), { target: { value: 'grinning' } });
         fireEvent.click(screen.getAllByRole('button', { name: 'grinning face' })[0]);
         expect(screen.getByRole('textbox')).toHaveValue('😀');
     });
