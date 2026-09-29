@@ -249,6 +249,8 @@ export interface SendMessagePayload {
     content_type?: string;
     sticker_id?: string;
     files?: File[];
+    // Tệp âm thanh trong `files` là bản ghi âm thu ở ô soạn (kênh có tin thoại gửi thành tin thoại).
+    is_voice_message?: boolean;
     // Kênh email (buildCreatePayload gốc luôn gửi cc/bcc, to chỉ khi có).
     cc_emails?: string;
     bcc_emails?: string;
@@ -263,6 +265,7 @@ function buildCreateForm({
     echo_id: echoId,
     content_attributes: contentAttributes,
     files,
+    is_voice_message: isVoiceMessage,
     cc_emails: ccEmails,
     bcc_emails: bccEmails,
     to_emails: toEmails,
@@ -275,6 +278,9 @@ function buildCreateForm({
     // '1'/'0' theo quy ước multipart của repo (Show.tsx inbox) — PHP ép chuỗi
     // 'false' thành true nên KHÔNG dùng String(boolean) như bản gốc JS.
     form.append('private', isPrivate ? '1' : '0');
+    if (isVoiceMessage) {
+        form.append('is_voice_message', '1');
+    }
     if (echoId) {
         form.append('echo_id', echoId);
     }

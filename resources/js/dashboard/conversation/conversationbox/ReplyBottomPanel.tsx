@@ -14,8 +14,7 @@ import { t } from '../../../i18n';
 // Port từ dashboard/components/widgets/WootWriter/ReplyBottomPanel.vue.
 // Đính kèm: nút paperclip mở file picker (input file ẩn thay vue-upload
 // FileUpload) → onFileUpload từng file; upload thật + drag-drop (B9).
-// Bỏ ở B3: AudioRecorder thật (B9 — nút mic giữ chỗ theo cờ voice_recorder +
-// showFileUpload API inbox, ẩn khi private note), VideoCallButton
+// Nút mic mở máy ghi âm của khung soạn (onStartAudioRecording). Bỏ ở B3: VideoCallButton
 // (integrations), WhatsApp/Content templates (F5), quoted reply + insert
 // article (email/help center). EmojiIconPicker dùng bản portal của A6.
 // Khung soạn tự quyết nguồn dữ liệu và việc gửi; panel chỉ vẽ nút + bảng chọn.
@@ -29,6 +28,9 @@ interface ReplyBottomPanelProps {
     isOnPrivateNote: boolean;
     isEditorDisabled: boolean;
     showAudioRecorder: boolean;
+    // Đang xin quyền micro hoặc đang ghi: nút mic khoá tới khi dừng/huỷ.
+    isAudioRecording?: boolean;
+    onStartAudioRecording?: () => void;
     enableMultipleFileUpload?: boolean;
     isSendDisabled: boolean;
     sendButtonText: string;
@@ -51,6 +53,8 @@ export default function ReplyBottomPanel({
     isOnPrivateNote,
     isEditorDisabled,
     showAudioRecorder,
+    isAudioRecording = false,
+    onStartAudioRecording,
     enableMultipleFileUpload = true,
     isSendDisabled,
     sendButtonText,
@@ -70,7 +74,7 @@ export default function ReplyBottomPanel({
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const showAttachButton = !isEditorDisabled;
-    const showAudioRecorderButton = !isEditorDisabled && showAudioRecorder;
+    const showAudioRecorderButton = !isEditorDisabled && showAudioRecorder && Boolean(onStartAudioRecording);
     const showMessageSignatureButton = !isEditorDisabled && !isOnPrivateNote;
 
     const quotedReplyToggleTooltip = quotedReplyEnabled
@@ -155,11 +159,15 @@ export default function ReplyBottomPanel({
                 ) : null}
                 {showAudioRecorderButton ? (
                     <NextButton
+                        type="button"
                         title={t('CONVERSATION.REPLYBOX.TIP_AUDIORECORDER_ICON')}
                         icon="i-ph-microphone"
                         slate
                         faded
                         sm
+                        disabled={isAudioRecording}
+                        aria-pressed={isAudioRecording}
+                        onClick={onStartAudioRecording}
                     />
                 ) : null}
                 {showMessageSignatureButton ? (

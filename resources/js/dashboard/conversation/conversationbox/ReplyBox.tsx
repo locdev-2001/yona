@@ -54,6 +54,16 @@ import MessageSignatureMissingAlert from './MessageSignatureMissingAlert';
 import ReplyBoxBanner from './ReplyBoxBanner';
 import ReplyTopPanel from './ReplyTopPanel';
 import ReplyBottomPanel from './ReplyBottomPanel';
+import VoiceMessagePreview from './voiceRecorder/VoiceMessagePreview';
+import VoiceRecorderBar from './voiceRecorder/VoiceRecorderBar';
+import { useVoiceRecorder } from './voiceRecorder/useVoiceRecorder';
+import type { VoiceRecording } from './voiceRecorder/useVoiceRecorder';
+import {
+    MAX_VOICE_RECORDING_SECONDS,
+    VOICE_RECORDING_ERROR_KEYS,
+    isVoiceRecordingSupported,
+} from './voiceRecorder/voiceRecording';
+import type { VoiceRecordingError } from './voiceRecorder/voiceRecording';
 import type { ReplyStickerPicker } from './ReplyBottomPanel';
 import type { CannedCardPayload } from 'dashboard/conversation/composer/SendCardMenu/SendCardMenu';
 
@@ -68,9 +78,11 @@ import type { CannedCardPayload } from 'dashboard/conversation/composer/SendCard
 // và gửi kèm qua buildOutgoingContentAttributes. Nhắc tên thành viên nhóm: kênh
 // khai `outbound_mention` thì `@` ở chế độ Trả lời gợi ý thành viên, link mention
 // đổi về chữ `@Tên` + `content_attributes.mentions` lúc gửi. Sticker: kênh khai
-// `outbound_sticker` hoặc `outbound_image` thì có bảng chọn, chọn là gửi ngay. Bỏ: draft (B10), ghi
-// âm (voice recorder), email head/quoted reply, WhatsApp templates, copilot editor,
-// variables. Dán (Ctrl+V) hoặc thả tệp vào ô soạn = đính kèm như nút kẹp giấy.
+// `outbound_sticker` hoặc `outbound_image` thì có bảng chọn, chọn là gửi ngay. Ghi âm:
+// cờ `voice_recorder` + kênh khai `outbound_audio` + trình duyệt có MediaRecorder thì
+// nút mic mở máy ghi; bản ghi là một đính kèm `isVoiceMessage` (một bản mỗi tin),
+// gửi kèm cờ `is_voice_message` để kênh có tin thoại gửi thành tin thoại. Bỏ: draft
+// (B10), email head/quoted reply, WhatsApp templates, copilot editor, variables. Dán (Ctrl+V) hoặc thả tệp vào ô soạn = đính kèm như nút kẹp giấy.
 
 const DEFAULT_CHANNEL_TYPE = 'Channel::Api';
 
@@ -165,8 +177,11 @@ export default function ReplyBox({
     const isPrivate = isBotOwnedPendingConversation || replyType === REPLY_EDITOR_MODES.NOTE;
     const isOnPrivateNote = isPrivate;
     const isEditorDisabled = !isOnPrivateNote && !canReply;
-    // showAudioRecorder gốc = !isOnPrivateNote && showFileUpload (API inbox → true).
-    const showAudioRecorder = voiceRecorderEnabled && !isOnPrivateNote;
+    const showAudioRecorder =
+        voiceRecorderEnabled &&
+        !isOnPrivateNote &&
+        inboxSupports(inbox, 'outbound_audio') &&
+        isVoiceRecordingSupported();
 
     // Editor chỉ mở bảng thành viên ở chế độ Trả lời; nạp sẵn để đổi tab không phải chờ.
     const { members: groupMembers } = useGroupMembers(
@@ -196,6 +211,7 @@ export default function ReplyBox({
 
     const isMessageEmpty = !message.trim().replace(/\n/g, '').length;
     const hasAttachments = attachedFiles.length > 0;
+    const pendingVoiceMessage = attachedFiles.find(attachment => attachment.isVoiceMessage) ?? null;
     // isReplyButtonDisabled gốc: có đính kèm thì gửi được dù chưa gõ chữ.
     const isReplyButtonDisabled =
         isEditorDisabled || isUploading || (!hasAttachments && (isMessageEmpty || message.length > maxLength));
@@ -476,6 +492,7 @@ export default function ReplyBox({
                     content,
                     private: isPrivate,
                     files: attachedFiles.map((attachment) => attachment.resource),
+                    is_voice_message: pendingVoiceMessage !== null,
                     ...(contentAttributes ? { content_attributes: contentAttributes } : {}),
                     ...emailPayloadFields(),
                 },
@@ -562,6 +579,39 @@ export default function ReplyBox({
             ]);
         };
     };
+
+    // Một tin mang tối đa một bản ghi âm: ghi lại thì thay bản cũ.
+    const attachVoiceRecording = ({ file, reachedMaxDuration }: VoiceRecording) => {
+        if (!checkFileSizeLimit(file, DEFAULT_MAXIMUM_FILE_UPLOAD_SIZE)) {
+            useAlert(t('CONVERSATION.FILE_SIZE_LIMIT', { MAXIMUM_SUPPORTED_FILE_UPLOAD_SIZE: DEFAULT_MAXIMUM_FILE_UPLOAD_SIZE }));
+            return;
+        }
+        setAttachedFiles((current) => [
+            ...current.filter((attachment) => !attachment.isVoiceMessage),
+            { currentChatId: conversationId, resource: file, isPrivate, thumb: '', isVoiceMessage: true },
+        ]);
+        if (reachedMaxDuration) {
+            useAlert(
+                t('CONVERSATION.REPLYBOX.VOICE_RECORDER.MAX_DURATION_REACHED', {
+                    minutes: Math.round(MAX_VOICE_RECORDING_SECONDS / 60),
+                }),
+            );
+        }
+    };
+
+    const voiceRecorder = useVoiceRecorder({
+        onRecorded: attachVoiceRecording,
+        onError: (error: VoiceRecordingError) => useAlert(t(VOICE_RECORDING_ERROR_KEYS[error])),
+    });
+    const { cancel: cancelVoiceRecording } = voiceRecorder;
+
+    // Đổi hội thoại hoặc sang Lưu ý riêng giữa chừng: bỏ bản đang ghi, nhả micro.
+    useEffect(() => {
+        cancelVoiceRecording();
+    }, [conversationId, showAudioRecorder, cancelVoiceRecording]);
+
+    const discardVoiceMessage = () =>
+        setAttachedFiles((current) => current.filter((attachment) => !attachment.isVoiceMessage));
 
     // Dán hoặc thả tệp vào ô soạn: cùng luật loại tệp với nút kẹp giấy (ALLOWED_FILE_TYPES).
     const onAttachFiles = (files: File[]) => {
@@ -654,6 +704,23 @@ export default function ReplyBox({
                         onToggle={toggleQuotedReply}
                     />
                 ) : null}
+                {voiceRecorder.status !== 'idle' ? (
+                    <VoiceRecorderBar
+                        status={voiceRecorder.status}
+                        elapsedSeconds={voiceRecorder.elapsedSeconds}
+                        maxSeconds={voiceRecorder.maxSeconds}
+                        onStop={voiceRecorder.stop}
+                        onCancel={voiceRecorder.cancel}
+                    />
+                ) : null}
+                {pendingVoiceMessage ? (
+                    <VoiceMessagePreview
+                        recording={pendingVoiceMessage.resource}
+                        isSending={isUploading}
+                        onSend={onSendReply}
+                        onDiscard={discardVoiceMessage}
+                    />
+                ) : null}
                 {hasAttachments ? (
                     <div className="bg-transparent py-0 mb-2">
                         <AttachmentsPreview
@@ -673,6 +740,8 @@ export default function ReplyBox({
                 isOnPrivateNote={isOnPrivateNote}
                 isEditorDisabled={isEditorDisabled}
                 showAudioRecorder={showAudioRecorder}
+                isAudioRecording={voiceRecorder.status !== 'idle'}
+                onStartAudioRecording={() => void voiceRecorder.start()}
                 isSendDisabled={isReplyButtonDisabled}
                 sendButtonText={isUploading ? t('CONVERSATION.UPLOADING_ATTACHMENTS') : replyButtonLabel}
                 sendWithSignature={sendWithSignature}
