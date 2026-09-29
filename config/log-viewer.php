@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Middleware\EnsureSuperAdminMfaEnrolled;
+use App\Http\Middleware\EnsureLogViewerAccess;
 use Opcodes\LogViewer\Enums\SortingMethod;
 use Opcodes\LogViewer\Enums\SortingOrder;
 use Opcodes\LogViewer\Enums\Theme;
@@ -104,12 +104,11 @@ return [
     */
 
     // Log của Yona chứa nội dung tin nhắn khách, số điện thoại và payload
-    // webhook Zalo. Guard super_admin + bắt buộc 2FA là bắt buộc, không phải
-    // tuỳ chọn.
+    // webhook Zalo. Chỉ super admin (bắt buộc 2FA) hoặc user có email trong
+    // YONA_SYSTEM_ADMIN_EMAILS được xem.
     'middleware' => [
         'web',
-        'auth:super_admin',
-        EnsureSuperAdminMfaEnrolled::class,
+        EnsureLogViewerAccess::class,
         AuthorizeLogViewer::class,
     ],
 
@@ -125,8 +124,7 @@ return [
     // API nội bộ của giao diện đọc đúng dữ liệu đó — chặn y hệt.
     'api_middleware' => [
         EnsureFrontendRequestsAreStateful::class,
-        'auth:super_admin',
-        EnsureSuperAdminMfaEnrolled::class,
+        EnsureLogViewerAccess::class,
         AuthorizeLogViewer::class,
     ],
 
