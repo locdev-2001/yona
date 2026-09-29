@@ -1,5 +1,5 @@
 import StickerImage from 'shared/sticker/StickerImage';
-import { yonaStickerImageUrl } from 'shared/sticker/stickerPayload';
+import { yonaStickerImageUrl, yonaStickerStaticUrl } from 'shared/sticker/stickerPayload';
 
 import { useWidgetState } from '../../store/hooks';
 import { t } from '../../i18n';
@@ -30,6 +30,7 @@ export default function StickerBubble({ message }: { message: WidgetMessage }) {
     return (
         <StickerImage
             src={url}
+            staticSrc={yonaStickerStaticUrl(message.content_attributes?.sticker)}
             alt={t('STICKER_PANEL.STICKER_ALT')}
             className={`yona-sticker ${message.status === 'in_progress' ? 'opacity-60' : ''}`}
         />

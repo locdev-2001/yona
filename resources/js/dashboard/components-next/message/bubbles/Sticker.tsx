@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 
 import Icon from 'dashboard/components-next/icon/Icon';
 import StickerImage from 'shared/sticker/StickerImage';
-import { yonaStickerImageUrl } from 'shared/sticker/stickerPayload';
+import { yonaStickerImageUrl, yonaStickerStaticUrl } from 'shared/sticker/stickerPayload';
 
 import { t } from '../../../../i18n';
 import BaseBubble from './Base';
@@ -30,6 +30,7 @@ export default function StickerBubble() {
                 <StickerImage
                     className="skip-context-menu"
                     src={imageUrl}
+                    staticSrc={yonaStickerStaticUrl(contentAttributes.sticker)}
                     alt={t('CHAT_LIST.ATTACHMENTS.sticker.CONTENT')}
                     onError={() => setHasError(true)}
                 />
