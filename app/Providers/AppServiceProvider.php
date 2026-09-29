@@ -51,6 +51,7 @@ use Laravel\Horizon\Events\LongWaitDetected;
 use Laravel\Horizon\Horizon;
 use Livewire\Livewire;
 use Opcodes\LogViewer\Facades\LogViewer;
+
 class AppServiceProvider extends ServiceProvider
 {
     // Đủ cho một văn phòng nhiều nhân viên chung một IP NAT (mỗi trang ~2 sự kiện).
@@ -188,7 +189,7 @@ class AppServiceProvider extends ServiceProvider
     }
 
     /**
-     * Ba dashboard vận hành (/horizon, /pulse, /log-viewer) đã nằm sau
+     * Ba dashboard vận hành (/horizon, /pulse, /logs) đã nằm sau
      * middleware `auth:super_admin` + `EnsureSuperAdminMfaEnrolled` (khai trong
      * config của từng gói). Gate riêng của từng gói lại đọc user ở guard mặc
      * định — guard đó luôn null với phiên super admin — nên phải khai lại cho

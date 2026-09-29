@@ -319,7 +319,7 @@ php artisan tinker --execute="dump(DB::table('failed_jobs')->where('payload', 'l
 - Nhân viên giữ đăng nhập **30 ngày tính từ lần thao tác cuối**
   (`SESSION_LIFETIME=43200` phút, trượt: mỗi request gia hạn phiên và cookie).
   Còn `120` là ai không thao tác quá 2 giờ (gập máy qua đêm) sẽ bị đăng xuất.
-- Console `/super_admin` (cùng `/horizon`, `/pulse`, `/log-viewer`) dùng chung
+- Console `/super_admin` (cùng `/horizon`, `/pulse`, `/logs`) dùng chung
   cookie phiên nhưng tự đăng xuất sau `SUPER_ADMIN_IDLE_MINUTES` không thao tác
   trong vùng quản trị. Phiên nhân viên trên cùng trình duyệt không bị ảnh hưởng.
 - Phiên nằm ở Redis DB `REDIS_DB` (kết nối `default`), cache ở `REDIS_CACHE_DB`.
@@ -364,7 +364,7 @@ hạ `SESSION_LIFETIME` xuống `20160` (14 ngày) và báo founder.
 ### 2FA bắt buộc cho console quản trị
 
 - Super admin chưa bật 2FA bị chặn ở mọi trang của `/super_admin/*` (cùng
-  `/horizon`, `/pulse`, `/log-viewer`) trừ `/super_admin/mfa/setup` (QR + xác
+  `/horizon`, `/pulse`, `/logs`) trừ `/super_admin/mfa/setup` (QR + xác
   nhận mã + hiện mã dự phòng) và logout — không khoá lối ra, chỉ khoá lối vào
   phần còn lại của console. Luôn bắt buộc, không có cờ tắt.
 - **Việc phải làm ngay sau lần deploy đầu tiên có tính năng này**: đăng nhập
