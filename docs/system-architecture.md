@@ -39,10 +39,6 @@ PostgreSQL (`pg_trgm`) · Redis (cache, queue, session) · Laravel Reverb
   lõi.
 - Zalo cá nhân là một driver như mọi kênh khác (`Channel::Zalo`), nói chuyện với
   bridge Node qua `app/Services/Zalo/ZaloBridgeClient.php`.
-- Ghi âm ở ô soạn: bản ghi là đính kèm âm thanh mang `meta.is_voice_message`
-  (`Attachment::isVoiceMessage()`). Kênh khai `outbound_voice` gửi nó thành tin
-  thoại gốc (Zalo: bridge `send-voice.mjs` đổi sang m4a rồi `sendVoice`); kênh
-  khác gửi như mọi tệp âm thanh (`outbound_audio`).
 
 ### Tin nhắn có cấu trúc và hạ cấp theo kênh
 

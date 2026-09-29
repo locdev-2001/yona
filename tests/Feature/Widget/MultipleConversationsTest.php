@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Attachment;
 use App\Models\Contact;
 use App\Models\ContactInbox;
 use App\Models\Conversation;
@@ -140,5 +141,21 @@ describe('GET conversations/list', function () {
         $payload = $this->getJson($session->url('conversations/list'), $session->headers())->assertOk()->json('payload');
 
         expect($payload[0]['last_message']['preview'])->toBe('Đơn #GM1024 · Đang giao');
+    });
+
+    it('tin cuối là sticker thì thẻ Tiếp tục hội thoại ghi Sticker, không phải ảnh', function () {
+        $session = WidgetSession::make();
+        $conversation = sessionConversation($session);
+        $sticker = conversationMessage($conversation, Message::TYPE_OUTGOING, '', [
+            'content' => null,
+            'content_type' => Message::CONTENT_TYPES['sticker'],
+            'content_attributes' => ['sticker' => ['id' => 'wave']],
+        ]);
+        $sticker->attachments()->create(['account_id' => $sticker->account_id, 'file_type' => Attachment::FILE_TYPE_IMAGE, 'external_url' => 'https://cdn.yona.test/stickers/wave.png']);
+        app()->setLocale('vi');
+
+        $payload = $this->getJson($session->url('conversations/list'), $session->headers())->assertOk()->json('payload');
+
+        expect($payload[0]['last_message']['preview'])->toBe('Sticker');
     });
 });

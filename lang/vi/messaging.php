@@ -33,6 +33,7 @@ return [
         'deleted' => 'Tin nhắn đã thu hồi',
         'image' => 'Đã gửi một ảnh',
         'file' => 'Đã gửi một tệp',
+        'sticker' => 'Sticker',
     ],
     'delivery' => [
         'numbered_prompt' => 'Nhắn số tương ứng để chọn:',

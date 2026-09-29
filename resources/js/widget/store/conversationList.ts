@@ -63,13 +63,15 @@ export const conversationList = {
         const current = state.items.find(item => item.id === id);
         if (!current) return;
 
+        // Máy chủ gửi sẵn dòng xem trước khi content không tự nói lên tin (sticker, tin có cấu trúc).
+        const preview = message.preview_text || message.content;
         const fromShop = message.message_type === MESSAGE_TYPE.OUTGOING || message.message_type === MESSAGE_TYPE.TEMPLATE;
         const updated: ConversationListItem = {
             ...current,
             last_activity_at: message.created_at,
             unread_count: fromShop && !isOpen ? current.unread_count + 1 : current.unread_count,
-            last_message: message.content
-                ? { id: Number(message.id), preview: message.content, message_type: message.message_type, created_at: message.created_at }
+            last_message: preview
+                ? { id: Number(message.id), preview, message_type: message.message_type, created_at: message.created_at }
                 : current.last_message,
         };
 

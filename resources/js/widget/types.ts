@@ -203,6 +203,7 @@ export interface WidgetMessage {
     content?: string | null;
     message_type: number;
     content_type?: string;
+    preview_text?: string | null;
     content_attributes?: Record<string, unknown> & {
         deleted?: boolean;
         in_reply_to?: number;

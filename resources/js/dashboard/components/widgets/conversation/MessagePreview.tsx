@@ -1,9 +1,8 @@
 import { t } from '../../../../i18n';
-import { deletedMessageLabel } from 'dashboard/components-next/message/helpers/deletedMessage';
+import { messagePreviewBody } from 'dashboard/components-next/message/helpers/messagePreview';
 import FluentIcon from 'shared/components/FluentIcon/FluentIcon';
 import Icon from 'dashboard/components-next/icon/Icon';
 import HighlightedText from 'dashboard/search/components/HighlightedText';
-import { getPlainText } from 'shared/helpers/MessageFormatter';
 import { MESSAGE_TYPES } from '../../../conversation/constants';
 import type { ConversationMessage } from '../../../conversation/types';
 
@@ -36,17 +35,7 @@ export default function MessagePreview({
     const messageByAgent = message.message_type === MESSAGE_TYPES.OUTGOING;
     const isMessageAnActivity = message.message_type === MESSAGE_TYPES.ACTIVITY;
     const isMessagePrivate = message.private;
-    const isMessageSticker = message.content_type === 'sticker';
-
-    const emailSubject = (message.content_attributes as { email?: { subject?: string } } | null)?.email?.subject;
-    // Tin có cấu trúc (thẻ, chuyển khoản, chọn lịch…) thường không có content: máy chủ gửi sẵn dòng xem trước.
-    const previewText = message.preview_text;
-    const parsedLastMessage =
-        deletedMessageLabel(message.content_attributes) ?? (previewText || getPlainText(emailSubject || message.content));
-
-    const [firstAttachment] = message.attachments ?? [];
-    const lastMessageFileType = (firstAttachment as { file_type?: string } | undefined)?.file_type ?? '';
-    const attachmentIcon = ATTACHMENT_ICONS[lastMessageFileType];
+    const body = messagePreviewBody(message);
 
     const typeIconClass = '-mt-0.5 align-middle text-n-slate-11 inline-block';
 
@@ -61,27 +50,27 @@ export default function MessagePreview({
                     <FluentIcon size={16} className={typeIconClass} icon="info" />
                 ) : null
             ) : null}
-            {isMessageSticker ? (
+            {body.kind === 'sticker' ? (
                 <span>
                     <Icon icon="i-ph-sticker" className="-mt-0.5 align-middle inline-block text-n-slate-11 size-4" />{' '}
                     {t('CHAT_LIST.ATTACHMENTS.sticker.CONTENT')}
                 </span>
-            ) : message.content || previewText ? (
+            ) : body.kind === 'text' ? (
                 highlightQuery ? (
-                    <HighlightedText text={parsedLastMessage} query={highlightQuery} />
+                    <HighlightedText text={body.text} query={highlightQuery} />
                 ) : (
-                    <span>{parsedLastMessage}</span>
+                    <span>{body.text}</span>
                 )
-            ) : message.attachments ? (
+            ) : body.kind === 'attachment' ? (
                 <span>
-                    {attachmentIcon && showMessageType ? (
+                    {ATTACHMENT_ICONS[body.fileType] && showMessageType ? (
                         <FluentIcon
                             size={16}
                             className="-mt-0.5 align-middle inline-block text-n-slate-11"
-                            icon={attachmentIcon}
+                            icon={ATTACHMENT_ICONS[body.fileType]}
                         />
                     ) : null}{' '}
-                    {t(`CHAT_LIST.ATTACHMENTS.${lastMessageFileType}.CONTENT`)}
+                    {t(`CHAT_LIST.ATTACHMENTS.${body.fileType}.CONTENT`)}
                 </span>
             ) : (
                 <span>{defaultEmptyMessage || t('CHAT_LIST.NO_CONTENT')}</span>

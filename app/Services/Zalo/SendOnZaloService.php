@@ -67,9 +67,6 @@ class SendOnZaloService extends BaseSendOnChannelService
 
     private const GIF_CONTENT_TYPE = 'image/gif';
 
-    /** Bản ghi âm đi loại tin thoại của Zalo (phát ngay trong khung chat) thay vì thẻ tệp âm thanh. */
-    private const VOICE_MEDIA_KIND = 'voice';
-
     /** SendMessageQuote của zca — thiếu trường nhận dạng thì gửi không trích dẫn. */
     private const QUOTE_REQUIRED_FIELDS = ['msgId', 'cliMsgId', 'uidFrom', 'msgType', 'ts', 'content'];
 
@@ -278,7 +275,7 @@ class SendOnZaloService extends BaseSendOnChannelService
                 'quote' => $index === 0 ? $this->quotePayload() : null,
                 'mentions' => $index === 0 ? $this->mentionsPayload($channel, $text) : null,
                 'file_url' => $this->attachmentUrl($attachment),
-                'media_kind' => $this->mediaKind($channel, $attachment),
+                'media_kind' => $this->mediaKind($attachment),
                 // Không gửi hai trường này thì khách nhận `zbr-<uuid>.bin` (bridge tự đặt tên tạm).
                 'filename' => $attachment->filename,
                 'content_type' => $attachment->content_type,
@@ -380,17 +377,11 @@ class SendOnZaloService extends BaseSendOnChannelService
             ->all();
     }
 
-    private function mediaKind(Zalo $channel, Attachment $attachment): string
+    private function mediaKind(Attachment $attachment): string
     {
-        if ($attachment->isImage() && $attachment->content_type === self::GIF_CONTENT_TYPE) {
-            return self::GIF_MEDIA_KIND;
-        }
-
-        if ($attachment->isVoiceMessage() && $channel->capabilities()->has(Capability::OutboundVoice)) {
-            return self::VOICE_MEDIA_KIND;
-        }
-
-        return $attachment->fileTypeName();
+        return $attachment->isImage() && $attachment->content_type === self::GIF_CONTENT_TYPE
+            ? self::GIF_MEDIA_KIND
+            : $attachment->fileTypeName();
     }
 
     /** Tệp đã lưu trên đĩa là nguồn chính; đính kèm chỉ có URL ngoài vẫn phải được gửi, không im lặng bỏ. */

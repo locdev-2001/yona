@@ -1,7 +1,6 @@
 import { t } from '../../../../i18n';
 import Icon from 'dashboard/components-next/icon/Icon';
-import { getPlainText } from 'shared/helpers/MessageFormatter';
-import { deletedMessageLabel } from 'dashboard/components-next/message/helpers/deletedMessage';
+import { messagePreviewBody } from 'dashboard/components-next/message/helpers/messagePreview';
 import { MESSAGE_TYPES } from 'dashboard/conversation/constants';
 import type { ConversationMessage } from 'dashboard/conversation/types';
 
@@ -33,19 +32,10 @@ export default function MessagePreview({
     const messageByAgent = message.message_type === MESSAGE_TYPES.OUTGOING;
     const isMessageAnActivity = message.message_type === MESSAGE_TYPES.ACTIVITY;
     const isMessagePrivate = Boolean(message.private);
-    const contentAttributes = message.content_attributes as
-        | { email?: { subject?: string }; friend_request?: unknown }
-        | undefined;
-    const subject = contentAttributes?.email?.subject;
     // Năng lực `friend_request`: thẻ hội thoại nói rõ đây là lời mời, không phải
     // tin thường — lời nhắn kèm theo (nếu có) đã nằm trong bong bóng.
-    const isFriendRequest = Boolean(contentAttributes?.friend_request);
-    // Tin có cấu trúc (thẻ, lựa chọn…) có thể không có content: máy chủ gửi sẵn dòng xem trước.
-    const previewText = message.preview_text;
-    const parsedLastMessage = deletedMessageLabel(contentAttributes) ?? (previewText || getPlainText(subject || message.content));
-    const fileType = String(message.attachments?.[0]?.file_type ?? '');
-    const attachmentIcon = ATTACHMENT_ICONS[fileType];
-    const isMessageSticker = message.content_type === 'sticker';
+    const isFriendRequest = Boolean((message.content_attributes as { friend_request?: unknown } | undefined)?.friend_request);
+    const body = messagePreviewBody(message);
 
     const typeIcon = (extraClass: string) => {
         if (isMessagePrivate) return <Icon icon="i-lucide-lock-keyhole" className={extraClass} />;
@@ -71,23 +61,23 @@ export default function MessagePreview({
                         <Icon icon="i-lucide-user-plus" className="size-3.5" />
                         {t('CHAT_LIST.FRIEND_REQUEST')}
                     </span>
-                ) : isMessageSticker ? (
+                ) : body.kind === 'sticker' ? (
                     <span className="inline-grid grid-flow-col auto-cols-max items-center gap-1">
                         <Icon icon="i-ph-sticker" className="size-3.5" />
                         {t('CHAT_LIST.ATTACHMENTS.sticker.CONTENT')}
                     </span>
-                ) : message.content || previewText ? (
-                    parsedLastMessage
-                ) : message.attachments ? (
+                ) : body.kind === 'text' ? (
+                    body.text
+                ) : body.kind === 'attachment' ? (
                     <span className="inline-block align-middle truncate">
-                        {attachmentIcon && showMessageType ? (
+                        {ATTACHMENT_ICONS[body.fileType] && showMessageType ? (
                             <Icon
-                                icon={attachmentIcon}
+                                icon={ATTACHMENT_ICONS[body.fileType]}
                                 className="inline-block align-middle size-3.5 ltr:mr-1 rtl:ml-1"
                             />
                         ) : null}
                         <span className="inline-block align-middle">
-                            {t(`CHAT_LIST.ATTACHMENTS.${fileType}.CONTENT`)}
+                            {t(`CHAT_LIST.ATTACHMENTS.${body.fileType}.CONTENT`)}
                         </span>
                     </span>
                 ) : (

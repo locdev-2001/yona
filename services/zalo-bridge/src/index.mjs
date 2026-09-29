@@ -18,7 +18,6 @@ import { stickerSendPayload } from './stickers.mjs';
 import { parseCustomSticker, sendCustomSticker } from './custom-sticker.mjs';
 import { SEND_TIMING_LOG_TAG, startSendTiming } from './send-timing.mjs';
 import { SEND_VIDEO_LOG_TAG, sendVideoOrFile, videoToolsFromEnv } from './send-video.mjs';
-import { SEND_VOICE_LOG_TAG, sendVoiceOrFile, voiceToolsFromEnv } from './send-voice.mjs';
 import { registerUiActionsRoutes } from './routes/ui-actions.mjs';
 import { registerZcaDispatchRoutes } from './routes/zca-dispatch.mjs';
 import { registerCardRenderRoutes } from './routes/card-render.mjs';
@@ -126,9 +125,6 @@ const ZALO_OPTIONS = {
 // Gửi video dạng video gốc cần ffmpeg + ffprobe trên máy chạy bridge; thiếu, hoặc
 // tắt bằng ZALO_NATIVE_VIDEO=0, thì video đi đường tệp như cũ.
 const videoTools = videoToolsFromEnv();
-// Bản ghi âm thành tin thoại gốc cần ffmpeg (đổi sang m4a); thiếu, hoặc tắt bằng
-// ZALO_NATIVE_VOICE=0, thì bản ghi âm đi đường tệp âm thanh.
-const voiceTools = voiceToolsFromEnv();
 
 const slots = new Map();
 
@@ -2297,7 +2293,7 @@ export async function sendTextOrMediaThroughZca(slot, body, timing) {
               .trim()
               .toLowerCase()
         : '';
-    if (hasFile && !['image', 'gif', 'video', 'audio', 'voice', 'file'].includes(mediaKind)) {
+    if (hasFile && !['image', 'gif', 'video', 'audio', 'file'].includes(mediaKind)) {
         throw new Error('invalid media_kind');
     }
     let tmpPath = null;
@@ -2320,13 +2316,17 @@ export async function sendTextOrMediaThroughZca(slot, body, timing) {
             mentions,
             isGroup: tt === ThreadType.Group,
         });
-        const nativeMediaSend = { api: slot.api, content, threadId: String(thread_id), threadType: tt, messageId: body?.message_id };
         const sendResult =
             mediaKind === 'video'
-                ? await sendVideoOrFile({ ...nativeMediaSend, tools: videoTools })
-                : mediaKind === 'voice'
-                  ? await sendVoiceOrFile({ ...nativeMediaSend, tools: voiceTools })
-                  : await slot.api.sendMessage(content, String(thread_id), tt);
+                ? await sendVideoOrFile({
+                      api: slot.api,
+                      content,
+                      threadId: String(thread_id),
+                      threadType: tt,
+                      tools: videoTools,
+                      messageId: body?.message_id,
+                  })
+                : await slot.api.sendMessage(content, String(thread_id), tt);
         timing.lap('zalo_send');
         return registerAllOutboundSourceIds(slot, sendResult);
     } finally {
@@ -2820,8 +2820,6 @@ async function boot() {
     }, 6 * 60 * 60 * 1000);
     const nativeVideo = await videoTools.isAvailable();
     console.info(SEND_VIDEO_LOG_TAG, JSON.stringify({ native_video: nativeVideo, enabled: videoTools.enabled }));
-    const nativeVoice = await voiceTools.isAvailable();
-    console.info(SEND_VOICE_LOG_TAG, JSON.stringify({ native_voice: nativeVoice, enabled: voiceTools.enabled }));
     const app = buildExpress();
     app.listen(BRIDGE_HTTP_PORT, BRIDGE_HTTP_HOST, () => {
         console.info(

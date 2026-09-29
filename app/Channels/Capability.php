@@ -36,8 +36,6 @@ enum Capability: string
     case OutboundGif = 'outbound_gif';
     case OutboundVideo = 'outbound_video';
     case OutboundAudio = 'outbound_audio';
-    // Gửi bản ghi âm thành tin thoại gốc của nền tảng (phát ngay trong khung chat), không phải một tệp âm thanh.
-    case OutboundVoice = 'outbound_voice';
     case OutboundFile = 'outbound_file';
     case OutboundSticker = 'outbound_sticker';
     // Gửi sticker của kho Yona thành sticker gốc cỡ gọn của nền tảng (không phải một ảnh).

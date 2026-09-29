@@ -106,6 +106,18 @@ describe('danh sách hội thoại', () => {
         expect(conversationList.unreadTotal()).toBe(1);
     });
 
+    it('tin sticker qua realtime xem trước bằng dòng máy chủ gửi, không phải ảnh đính kèm', async () => {
+        apiMock.fetchConversationList.mockResolvedValueOnce({ payload: [item(1, 200)], meta: { has_more: false } });
+        await conversationList.load();
+
+        conversationList.applyMessage(
+            message({ id: 6, conversation_id: 1, created_at: 300, content: null, content_type: 'sticker', preview_text: 'Sticker' }),
+            { isOpen: false },
+        );
+
+        expect(conversationList.getState().items[0].last_message?.preview).toBe('Sticker');
+    });
+
     it('tin của chính khách không tính là chưa đọc; mở hội thoại thì về 0', async () => {
         apiMock.fetchConversationList.mockResolvedValueOnce({ payload: [item(1, 200, 2)], meta: { has_more: false } });
         await conversationList.load();

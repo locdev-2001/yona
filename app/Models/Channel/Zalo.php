@@ -222,7 +222,6 @@ class Zalo extends Model implements DeclaresCapabilities, DeclaresPlatform
             Capability::OutboundGif,
             Capability::OutboundVideo,
             Capability::OutboundAudio,
-            Capability::OutboundVoice,
             Capability::OutboundFile,
             Capability::OutboundSticker,
             Capability::OutboundCustomSticker,

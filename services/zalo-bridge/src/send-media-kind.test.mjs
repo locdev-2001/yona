@@ -36,7 +36,6 @@ const fileUrl = `http://127.0.0.1:${fileServer.address().port}/attachments/29/cl
 process.env.FFMPEG_PATH = path.join(toolsDir, 'ffmpeg');
 process.env.FFPROBE_PATH = path.join(toolsDir, 'ffprobe');
 process.env.ZALO_NATIVE_VIDEO = '1';
-process.env.ZALO_NATIVE_VOICE = '1';
 process.env.BRIDGE_FETCH_HOST_ALLOWLIST = '127.0.0.1';
 const { sendTextOrMediaThroughZca } = await import('./index.mjs');
 
@@ -59,7 +58,6 @@ function fakeSlot() {
                 : [{ fileType: 'video', fileUrl: VIDEO_CDN_URL, fileId: '1' }]
         ),
         sendVideo: record('sendVideo', () => ({ msgId: 7001 })),
-        sendVoice: record('sendVoice', () => ({ msgId: 7002 })),
         sendMessage: record('sendMessage', () => ({ message: null, attachment: [{ msgId: 8001 }] })),
     };
     return {
@@ -111,30 +109,4 @@ test('media_kind=file: cùng tệp mp4 vẫn đi sendMessage dạng tệp, khôn
     assert.equal(path.basename(content.attachments[0]), 'Clip San Pham.mp4');
     assert.deepEqual([threadId, threadType], [THREAD_ID, 0]);
     assert.deepEqual(result, { source_id: '8001', source_ids: ['8001'] });
-});
-
-test('media_kind=voice: tải bản ghi, đổi sang m4a rồi tải lên và sendVoice bằng fileUrl, không gửi tệp', async () => {
-    const { slot, callNames, callsTo } = fakeSlot();
-
-    const result = await sendTextOrMediaThroughZca(
-        slot,
-        { ...mediaBody('voice'), filename: 'voice-message-20260929-101500.webm', content_type: 'audio/webm' },
-        timing
-    );
-
-    assert.deepEqual(callNames(), ['uploadAttachment', 'sendVoice']);
-    const uploaded = callsTo('uploadAttachment')[0].args[0];
-    assert.equal(path.basename(uploaded), 'voice-message-20260929-101500-voice.m4a');
-    assert.deepEqual(callsTo('sendVoice')[0].args, [{ voiceUrl: VIDEO_CDN_URL }, THREAD_ID, 0]);
-    assert.deepEqual(result, { source_id: '7002', source_ids: ['7002'] });
-    assert.ok(slot.outboundEchoIds.has('7002'), 'msgId của tin thoại vào bộ chống echo');
-    assert.equal(existsSync(path.dirname(uploaded)), false, 'thư mục tải tạm đã dọn');
-});
-
-test('media_kind=audio: tệp âm thanh tải lên vẫn gửi dạng tệp, không thành tin thoại', async () => {
-    const { slot, callNames } = fakeSlot();
-
-    await sendTextOrMediaThroughZca(slot, { ...mediaBody('audio'), filename: 'nhac-cho.mp3', content_type: 'audio/mpeg' }, timing);
-
-    assert.deepEqual(callNames(), ['sendMessage']);
 });

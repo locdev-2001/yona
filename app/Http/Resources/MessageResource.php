@@ -5,7 +5,6 @@ namespace App\Http\Resources;
 use App\Http\Resources\Concerns\SerializesAttributeMaps;
 use App\Messaging\MessagePreview;
 use App\Messaging\Structured\LegacyWebhookAliases;
-use App\Messaging\Structured\StructuredTypeRegistry;
 use App\Models\Account;
 use App\Models\AgentBot;
 use App\Models\Attachment;
@@ -84,12 +83,12 @@ class MessageResource extends JsonResource
             : ['attachments' => $attachments->map(fn (Attachment $attachment) => $attachment->pushEventData())->values()->all()];
     }
 
-    // Dòng xem trước cho danh sách hội thoại; chỉ tin có cấu trúc mới cần (content có thể rỗng).
+    // Dòng xem trước cho danh sách hội thoại; chỉ gửi khi content không tự nói lên tin.
     private static function previewText(Message $message): ?string
     {
-        return app(StructuredTypeRegistry::class)->for($message->contentTypeName()) === null
-            ? null
-            : app(MessagePreview::class)->for($message);
+        $preview = app(MessagePreview::class);
+
+        return $preview->replacesContent($message) ? $preview->for($message) : null;
     }
 
     // Message#push_event_data: toàn bộ attributes + sender + tóm tắt conversation.

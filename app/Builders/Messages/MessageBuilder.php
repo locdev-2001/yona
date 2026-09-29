@@ -199,13 +199,13 @@ class MessageBuilder
 
     private function tagVoiceMessage(Attachment $attachment): void
     {
-        $isVoiceMessage = filter_var($this->params[Attachment::META_VOICE_MESSAGE] ?? false, FILTER_VALIDATE_BOOLEAN);
+        $isVoiceMessage = filter_var($this->params['is_voice_message'] ?? false, FILTER_VALIDATE_BOOLEAN);
 
         if (! $isVoiceMessage || $attachment->file_type !== Attachment::FILE_TYPE_AUDIO) {
             return;
         }
 
-        $attachment->meta = [...($attachment->meta ?? []), Attachment::META_VOICE_MESSAGE => true];
+        $attachment->meta = [...($attachment->meta ?? []), 'is_voice_message' => true];
     }
 
     /** @param list<Attachment> $attachments */

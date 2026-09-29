@@ -33,6 +33,7 @@ return [
         'deleted' => 'Message recalled',
         'image' => 'Sent a photo',
         'file' => 'Sent a file',
+        'sticker' => 'Sticker',
     ],
     'delivery' => [
         'numbered_prompt' => 'Reply with the number of your choice:',
