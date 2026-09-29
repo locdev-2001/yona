@@ -23,6 +23,7 @@ export const CHANNEL_CAPABILITIES = [
     'outbound_gif',
     'outbound_video',
     'outbound_audio',
+    'outbound_voice',
     'outbound_file',
     'outbound_sticker',
     'outbound_custom_sticker',

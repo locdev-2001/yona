@@ -16,9 +16,9 @@
  * Zalo đã nhận, nên ném tiếp để Laravel đánh dấu thất bại, tránh khách nhận hai
  * lần (cùng luật với chuyển tiếp gốc).
  */
-import { execFile } from 'node:child_process';
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { isDisabledFlag, loggableError, runMediaTool, siblingPath, uploadedUrl } from './media-tools.mjs';
 import { classifyZcaError } from './routes/personal-messages.mjs';
 
 export const SEND_VIDEO_LOG_TAG = '[zalo-bridge:send-video]';
@@ -27,23 +27,8 @@ export const SEND_VIDEO_LOG_TAG = '[zalo-bridge:send-video]';
 const NATIVE_VIDEO_EXTENSION = '.mp4';
 // Vỏ đổi được sang mp4 mà không mã hoá lại.
 const REMUXABLE_EXTENSIONS = new Set(['.mov']);
-const DISABLED_FLAG_VALUES = new Set(['0', 'false', 'off', 'no']);
-const TOOL_TIMEOUT_MS = 30000;
 const THUMBNAIL_MAX_WIDTH = 720;
 const THUMBNAIL_SEEK_SECONDS = 1;
-const LOG_ERROR_MAX_LENGTH = 160;
-
-function runTool(binary, args) {
-    return new Promise((resolve, reject) => {
-        execFile(binary, args, { timeout: TOOL_TIMEOUT_MS, maxBuffer: 1024 * 1024 }, (error, stdout) => {
-            if (error) {
-                reject(error);
-                return;
-            }
-            resolve(String(stdout));
-        });
-    });
-}
 
 function positiveNumber(value) {
     const number = Number(value);
@@ -84,7 +69,7 @@ export function parseProbeOutput(json) {
  * đường dẫn đặt qua env, mặc định tìm trong PATH. `enabled: false` là tắt hẳn
  * video gốc: không dò công cụ, mọi video đi đường tệp.
  */
-export function createVideoTools({ enabled = true, ffmpegPath = 'ffmpeg', ffprobePath = 'ffprobe', run = runTool } = {}) {
+export function createVideoTools({ enabled = true, ffmpegPath = 'ffmpeg', ffprobePath = 'ffprobe', run = runMediaTool } = {}) {
     let availability = null;
 
     return {
@@ -141,10 +126,8 @@ export function createVideoTools({ enabled = true, ffmpegPath = 'ffmpeg', ffprob
  * trỏ công cụ. Cách nạp lại: docs/deployment.md, mục 6.
  */
 export function videoToolsFromEnv(env = process.env, overrides = {}) {
-    const flag = String(env.ZALO_NATIVE_VIDEO ?? '').trim().toLowerCase();
-
     return createVideoTools({
-        enabled: !DISABLED_FLAG_VALUES.has(flag),
+        enabled: !isDisabledFlag(env.ZALO_NATIVE_VIDEO),
         ffmpegPath: env.FFMPEG_PATH || 'ffmpeg',
         ffprobePath: env.FFPROBE_PATH || 'ffprobe',
         ...overrides,
@@ -165,31 +148,6 @@ async function prepareStage(stage, work) {
     } catch (error) {
         throw new NativeVideoUnavailable(stage, error);
     }
-}
-
-/** Lỗi zca có thể chứa URL CDN mang token: chỉ giữ tên lỗi + câu đã che URL. */
-function loggableError(error) {
-    if (!error) {
-        return null;
-    }
-    const message = String(error.message ?? error)
-        .replace(/https?:\/\/\S+/gi, '[url]')
-        .slice(0, LOG_ERROR_MAX_LENGTH);
-    return `${error.name || 'Error'}: ${message}`;
-}
-
-function uploadedUrl(uploadResult, pick) {
-    const entry = Array.isArray(uploadResult) ? uploadResult[0] : null;
-    const url = entry ? pick(entry) : null;
-    if (typeof url !== 'string' || url === '') {
-        throw new Error('upload_without_url');
-    }
-    return url;
-}
-
-function siblingPath(videoPath, suffix) {
-    const stem = path.basename(videoPath, path.extname(videoPath));
-    return path.join(path.dirname(videoPath), `${stem}${suffix}`);
 }
 
 /** Tệp mp4 đổi vỏ từ video .mov; null khi video không cần đổi vỏ. */
