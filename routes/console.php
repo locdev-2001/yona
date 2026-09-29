@@ -44,6 +44,8 @@ Schedule::command('pulse:trim')->hourly();
 
 // Ảnh thẻ gửi qua kênh không có dạng gốc (Zalo): kênh đã tải về lúc gửi, bản cache chỉ còn tốn đĩa.
 Schedule::command('messaging:prune-card-images')->dailyAt('03:40');
+// Xoá sticker trước rồi mới xoá tin đã gửi thì tệp sticker bị bỏ lại trên đĩa.
+Schedule::command('stickers:prune-orphan-files')->weeklyOn(0, '03:50');
 // Dòng user_sessions của phiên đã hết hạn tự nhiên không ai xoá; để lại thì
 // chạm trần số phiên dù người dùng không còn phiên nào sống.
 Schedule::command('model:prune', ['--model' => [UserSession::class]])->dailyAt('03:10');

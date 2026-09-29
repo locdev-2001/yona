@@ -839,6 +839,17 @@ nằm lại trong cùng thư mục cho tin đã gửi, dọn khi không còn gì
 đầu (tên `sticker.webp`/`static.png`, trước 28/09) từng bị ghi đè tại chỗ: nếu
 còn thấy ảnh cũ thì purge tiền tố `/storage/stickers/` một lần.
 
+Xoá sticker lúc tin đã gửi còn mượn tệp thì thư mục hash được giữ; xoá tin sau đó
+không kéo tệp đi theo. Lịch `stickers:prune-orphan-files` (Chủ nhật 03:50) xoá cả
+thư mục hash không còn sticker nào dùng lẫn tin nào mượn, bỏ qua thư mục có tệp
+ghi trong 24 giờ qua (tải lên ghi ảnh gốc trước khi tạo bản ghi). URL đã xoá vẫn
+có thể còn trong cache CDN; tải lại đúng ảnh đó sinh lại đúng đường dẫn và nội dung
+nên không cần purge. Chạy tay, xem trước số thư mục sẽ xoá:
+
+```bash
+php artisan stickers:prune-orphan-files --dry-run
+```
+
 Kiểm sau reload (lấy một sticker đã xuất bản):
 
 ```bash

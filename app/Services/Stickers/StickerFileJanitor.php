@@ -30,15 +30,26 @@ final class StickerFileJanitor
      */
     public function releaseAllUnreferenced(iterable $contentHashes, ?int $ignoredStickerId = null): array
     {
-        $released = [];
-        foreach (collect($contentHashes)->unique()->values()->chunk(self::HASHES_PER_LOOKUP) as $hashBatch) {
-            foreach ($this->unreferenced($hashBatch->values()->all(), $ignoredStickerId) as $contentHash) {
-                Storage::disk(Sticker::DISK)->deleteDirectory(StickerFileLayout::directory($contentHash));
-                $released[] = $contentHash;
-            }
+        $released = $this->unreferencedAmong($contentHashes, $ignoredStickerId);
+        foreach ($released as $contentHash) {
+            Storage::disk(Sticker::DISK)->deleteDirectory(StickerFileLayout::directory($contentHash));
         }
 
         return $released;
+    }
+
+    /**
+     * @param  iterable<string>  $contentHashes
+     * @return list<string> các hash không còn sticker nào dùng lẫn đính kèm nào trỏ tới
+     */
+    public function unreferencedAmong(iterable $contentHashes, ?int $ignoredStickerId = null): array
+    {
+        $unreferenced = [];
+        foreach (collect($contentHashes)->unique()->values()->chunk(self::HASHES_PER_LOOKUP) as $hashBatch) {
+            array_push($unreferenced, ...$this->unreferenced($hashBatch->values()->all(), $ignoredStickerId));
+        }
+
+        return $unreferenced;
     }
 
     /**

@@ -24,6 +24,17 @@ final class StickerFileLayout
         return substr($contentHash, 0, 2).'/'.$contentHash;
     }
 
+    // Chiều ngược của directory(): tệp nằm ngoài bố cục {hash[0:2]}/{hash}/… thì null.
+    public static function contentHashOf(string $path): ?string
+    {
+        $segments = explode('/', $path);
+        if (count($segments) < 3 || ! ctype_xdigit($segments[1])) {
+            return null;
+        }
+
+        return self::directory($segments[1]) === "{$segments[0]}/{$segments[1]}" ? $segments[1] : null;
+    }
+
     /**
      * Tệp trình dựng ghi ra ở cỡ đang cấu hình, cũng là các tệp tin gửi đi mượn làm
      * đính kèm. Tin cũ có thể còn mượn tệp cỡ trước trong cùng thư mục.
