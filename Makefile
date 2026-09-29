@@ -3,7 +3,9 @@
 
 PHP      := php
 ARTISAN  := $(PHP) artisan
-COMPOSER := composer
+# Chạy composer bằng đúng PHP của artisan: shebang của composer có thể trỏ PHP hệ
+# thống khác phiên bản (tzdata hệ thống thiếu tên múi giờ cũ, Pest đỏ giả).
+COMPOSER := $(PHP) $(shell command -v composer)
 PSQL     := psql -h 127.0.0.1 -U postgres
 
 .DEFAULT_GOAL := help
