@@ -38,20 +38,20 @@ vi.mock('../ConversationContext', () => ({
 import ContactPanel from './ContactPanel';
 
 describe('ContactPanel accordions', () => {
-    // Lệch có chủ đích (ux-deviations.md): "Previous Conversations" đứng thứ hai
-    // thay vì áp chót, và là mục DUY NHẤT mở sẵn khi người dùng chưa từng chọn.
-    it('renders sections in the Yona order with previous conversations second', () => {
+    // Quyết định UX có chủ đích (docs/ux-decisions.md): "Ảnh, tệp, link" rồi "Hội thoại
+    // trước" ngay sau khối hành động; "Hội thoại trước" là mục DUY NHẤT mở sẵn.
+    it('renders sections in the Yona order: actions, shared media, then previous conversations', () => {
         const { getAllByRole } = render(<ContactPanel />);
 
         const headers = getAllByRole('button').filter(button => button.classList.contains('drag-handle'));
         expect(headers.map(header => header.textContent)).toEqual([
             'Conversation Actions',
+            'Media, files and links',
             'Previous Conversations',
             'Macros',
             'Conversation Information',
             'Contact Attributes',
             'Contact Notes',
-            'Media, files and links',
             'Conversation participants',
         ]);
     });

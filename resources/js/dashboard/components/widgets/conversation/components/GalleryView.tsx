@@ -40,6 +40,8 @@ interface GalleryViewProps {
     autoPlay?: boolean;
     onClose: () => void;
     onError?: () => void;
+    // Có thì thêm nút "Tới tin nhắn" cho mục đang xem; viewer tự đóng trước khi gọi.
+    onJumpToMessage?: (attachment: MessageAttachment) => void;
 }
 
 export default function GalleryView({
@@ -48,6 +50,7 @@ export default function GalleryView({
     autoPlay = false,
     onClose,
     onError,
+    onJumpToMessage,
 }: GalleryViewProps) {
     const { auth } = usePage<DashboardPageProps>().props;
     const currentUserId = auth.user?.id;
@@ -205,6 +208,19 @@ export default function GalleryView({
                                     />
                                 </div>
                             </>
+                        ) : null}
+                        {onJumpToMessage && activeAttachment.message_id ? (
+                            <NextButton
+                                icon="i-lucide-message-square-text"
+                                label={t('CONVERSATION_SIDEBAR.SHARED_FILES.JUMP_TO_MESSAGE')}
+                                slate
+                                faded
+                                sm
+                                onClick={() => {
+                                    onClose();
+                                    onJumpToMessage(activeAttachment);
+                                }}
+                            />
                         ) : null}
                         <NextButton
                             icon="i-lucide-download"

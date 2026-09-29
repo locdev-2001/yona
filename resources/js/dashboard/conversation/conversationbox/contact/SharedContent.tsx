@@ -6,6 +6,7 @@ import Button from 'dashboard/components-next/button/Button';
 import Spinner from 'dashboard/components-next/spinner/Spinner';
 import type { MessageAttachment } from 'dashboard/components-next/message/helpers/attachments';
 import Tabs from 'dashboard/components/ui/Tabs';
+import GalleryView from 'dashboard/components/widgets/conversation/components/GalleryView';
 import { useIsSmallScreen } from 'dashboard/composables/useViewportWidth';
 import { shortTimestamp } from 'shared/helpers/timeHelper';
 
@@ -14,6 +15,7 @@ import { fetchSharedAttachments, fetchSharedLinks } from '../../api';
 import type { LinkMessage } from '../../api';
 import { useConversation } from '../../ConversationContext';
 import { setContactPanelOverlayOpen } from '../../contactPanelVisibility';
+import { mediaAttachments } from './sharedAttachments';
 import { SHARED_CONTENT_TABS, linksOfMessages } from './sharedContentLinks';
 import type { SharedContentTab } from './sharedContentLinks';
 
@@ -118,21 +120,45 @@ type JumpToMessage = (messageId: number | undefined) => void;
 
 function MediaTab({ onJump }: { onJump: JumpToMessage }) {
     const list = useSharedAttachments('media');
+    const [viewedAttachment, setViewedAttachment] = useState<MessageAttachment | null>(null);
 
     return (
         <div className="flex flex-col gap-3">
-            <Media attachments={list.items} onSelect={attachment => onJump(attachment.message_id)} />
+            <Media
+                attachments={list.items}
+                showJumpToMessage
+                onSelect={setViewedAttachment}
+                onJumpToMessage={attachment => onJump(attachment.message_id)}
+            />
             <PageFooter list={list} isEmpty={!list.items.length} />
+            {viewedAttachment ? (
+                <GalleryView
+                    attachment={viewedAttachment}
+                    allAttachments={mediaAttachments(list.items)}
+                    autoPlay
+                    onClose={() => setViewedAttachment(null)}
+                    onJumpToMessage={attachment => onJump(attachment.message_id)}
+                />
+            ) : null}
         </div>
     );
 }
+
+const openInNewTab = (url: string | null | undefined) => {
+    if (url) window.open(url, '_blank', 'noopener,noreferrer');
+};
 
 function FilesTab({ onJump }: { onJump: JumpToMessage }) {
     const list = useSharedAttachments('files');
 
     return (
         <div className="flex flex-col gap-3">
-            <Files attachments={list.items} onSelect={attachment => onJump(attachment.message_id)} />
+            <Files
+                attachments={list.items}
+                showJumpToMessage
+                onSelect={attachment => openInNewTab(attachment.data_url)}
+                onJumpToMessage={attachment => onJump(attachment.message_id)}
+            />
             <PageFooter list={list} isEmpty={!list.items.length} />
         </div>
     );
@@ -147,25 +173,28 @@ function LinksTab({ onJump }: { onJump: JumpToMessage }) {
             <ul className="flex flex-col gap-1">
                 {links.map(link => (
                     <li key={link.key} className="flex items-center gap-2 rounded-lg hover:bg-n-alpha-2">
-                        <button
-                            type="button"
-                            data-testid="shared-link"
-                            className="flex flex-col items-start flex-1 min-w-0 gap-0.5 px-2 py-1.5 text-start"
-                            onClick={() => onJump(link.messageId)}
-                        >
-                            <span className="w-full text-sm font-medium truncate text-n-slate-12">{link.domain}</span>
-                            <span className="w-full text-xs truncate text-n-slate-11">{link.url}</span>
-                            <span className="text-xs text-n-slate-10">{shortTimestamp(link.createdAt, true)}</span>
-                        </button>
                         <a
                             href={link.url}
                             target="_blank"
                             rel="noopener noreferrer nofollow"
+                            data-testid="shared-link"
                             title={t('CONVERSATION_SIDEBAR.SHARED_FILES.OPEN_LINK')}
-                            className="flex-shrink-0 p-2 text-n-slate-11 hover:text-n-slate-12"
+                            className="flex flex-col items-start flex-1 min-w-0 gap-0.5 px-2 py-1.5 text-start"
                         >
-                            <span className="block i-lucide-external-link size-4" aria-hidden />
+                            <span className="w-full text-sm font-medium truncate text-n-slate-12">{link.domain}</span>
+                            <span className="w-full text-xs truncate text-n-slate-11">{link.url}</span>
+                            <span className="text-xs text-n-slate-10">{shortTimestamp(link.createdAt, true)}</span>
                         </a>
+                        <button
+                            type="button"
+                            data-testid="shared-link-jump"
+                            title={t('CONVERSATION_SIDEBAR.SHARED_FILES.JUMP_TO_MESSAGE')}
+                            aria-label={t('CONVERSATION_SIDEBAR.SHARED_FILES.JUMP_TO_MESSAGE')}
+                            className="flex-shrink-0 p-2 text-n-slate-11 hover:text-n-slate-12"
+                            onClick={() => onJump(link.messageId)}
+                        >
+                            <span className="block i-lucide-message-square-text size-4" aria-hidden />
+                        </button>
                     </li>
                 ))}
             </ul>
