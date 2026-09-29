@@ -2821,6 +2821,20 @@ const messages: Record<string, unknown> = {
             "IMAGE_UPLOAD_SUCCESS": "Image uploaded successfully",
             "START_AUDIO_RECORDING": "Start audio recording",
             "STOP_AUDIO_RECORDING": "Stop audio recording",
+            "VOICE_RECORDER": {
+                "RECORDING": "Recording",
+                "WAITING_FOR_PERMISSION": "Waiting for microphone permission…",
+                "CANCEL": "Cancel",
+                "PREVIEW": "Play back the recording",
+                "DISCARD": "Delete",
+                "SEND": "Send recording",
+                "MAX_DURATION_REACHED": "Recording stopped at the {minutes}-minute limit. Play it back, then send.",
+                "PERMISSION_DENIED": "Your browser has not allowed Yona to use the microphone. Click the lock icon next to the page address, allow Microphone, then try again.",
+                "NO_MICROPHONE": "No microphone found. Plug in a microphone or headset, then try again.",
+                "MICROPHONE_BUSY": "Another app is using the microphone (a call, a recorder…). Close it, then try again.",
+                "UNSUPPORTED": "This browser cannot record audio. Use a recent version of Chrome, Edge, Firefox or Safari.",
+                "FAILED": "Could not record audio. Please try again."
+            },
             "COPILOT_THINKING": "Copilot is thinking",
             "EMAIL_HEAD": {
                 "TO": "TO",
