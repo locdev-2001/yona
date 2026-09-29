@@ -1,5 +1,7 @@
 <?php
 
+use App\Models\Account;
+use App\Models\AccountUser;
 use App\Models\NotificationSubscription;
 use App\Models\User;
 use Tests\Support\BrowserPushSubscription;
@@ -160,5 +162,29 @@ describe('DELETE /api/v1/notification_subscriptions', function () {
             ->assertOk();
 
         expect(NotificationSubscription::query()->sole()->user_id)->toBe($otherUser->id);
+    });
+});
+
+function profileSettingsPage($test, User $user)
+{
+    $account = Account::factory()->create();
+    AccountUser::factory()->create(['account_id' => $account->id, 'user_id' => $user->id]);
+
+    return $test->actingAs($user)->get("/app/accounts/{$account->id}/profile/settings")->assertOk();
+}
+
+describe('dashboard biết người dùng từng bật thông báo đẩy', function () {
+    it('báo có đăng ký khi máy chủ còn giữ một đăng ký trình duyệt của người này', function () {
+        NotificationSubscription::registerBrowserPush($this->user, $this->browser->attributes());
+
+        profileSettingsPage($this, $this->user)
+            ->assertInertia(fn ($page) => $page->where('auth.user.has_push_subscription', true));
+    });
+
+    it('không tính đăng ký của người khác', function () {
+        NotificationSubscription::registerBrowserPush(User::factory()->create(), $this->browser->attributes());
+
+        profileSettingsPage($this, $this->user)
+            ->assertInertia(fn ($page) => $page->where('auth.user.has_push_subscription', false));
     });
 });

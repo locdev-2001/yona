@@ -9,6 +9,7 @@ export interface AuthUser {
     avatar_url: string;
     message_signature: string | null;
     pubsub_token: string;
+    has_push_subscription?: boolean;
 }
 
 export interface GlobalConfig {

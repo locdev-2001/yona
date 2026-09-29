@@ -8,13 +8,23 @@ const LOGOUT_URL = '/app/logout';
 // người dùng lại.
 const PUSH_DETACH_TIMEOUT_MS = 2000;
 
-export async function logout(): Promise<void> {
+async function signOut({ detachPush }: { detachPush: boolean }): Promise<void> {
     await Promise.race([
         Promise.all([
-            detachPushOnLogout().catch(() => undefined),
+            detachPush ? detachPushOnLogout().catch(() => undefined) : undefined,
             clearUnreadIndicators().catch(() => undefined),
         ]),
         new Promise(resolve => setTimeout(resolve, PUSH_DETACH_TIMEOUT_MS)),
     ]);
     router.post(LOGOUT_URL);
+}
+
+// Người dùng tự đăng xuất: gỡ đăng ký đẩy vì máy có thể dùng chung.
+export function logout(): Promise<void> {
+    return signOut({ detachPush: true });
+}
+
+// Máy chủ chấm dứt phiên: cùng người sẽ đăng nhập lại trên trình duyệt này nên giữ đăng ký.
+export function logoutKeepingPushSubscription(): Promise<void> {
+    return signOut({ detachPush: false });
 }

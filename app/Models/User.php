@@ -231,7 +231,12 @@ class User extends Authenticatable
 
     public function notificationSubscriptions(): HasMany
     {
-        return $this->hasMany(NotificationSubscription::class);
+        return $this->hasMany(NotificationSubscription::class, 'user_id');
+    }
+
+    public function browserPushSubscriptions(): HasMany
+    {
+        return $this->notificationSubscriptions()->where('subscription_type', NotificationSubscription::TYPE_BROWSER_PUSH);
     }
 
     // User#assigned_inboxes: admin thấy mọi inbox của account, agent chỉ inbox mình là member.

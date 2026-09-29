@@ -11,9 +11,8 @@ import {
     PushServiceUnavailableError,
     disablePush,
     enablePush,
-    getPushSubscription,
-    hasPushPermission,
     isPushSupported,
+    syncPushSubscription,
     vapidPublicKeyOf,
 } from 'dashboard/helper/pushHelper';
 import { t } from '../../../i18n';
@@ -67,8 +66,10 @@ function TableHeaderCell({ spanClass, children }: { spanClass: string; children:
 }
 
 export default function NotificationPreferences() {
-    const { currentAccount, globalConfig } = usePage<DashboardPageProps>().props;
+    const { auth, currentAccount, globalConfig } = usePage<DashboardPageProps>().props;
     const accountId = currentAccount.id;
+    const userId = auth.user?.id;
+    const hasServerPushSubscription = auth.user?.has_push_subscription ?? false;
     const vapidPublicKey = vapidPublicKeyOf(globalConfig);
     const isPushAvailable = isPushSupported(vapidPublicKey);
     const deliveryTypes: readonly DeliveryType[] = isPushAvailable ? ALL_DELIVERY_TYPES : ['email'];
@@ -90,15 +91,13 @@ export default function NotificationPreferences() {
         );
     }, [accountId]);
 
-    // Công tắc phản ánh trình duyệt NÀY đã có đăng ký push hay chưa (getPushSubscription).
+    // Công tắc phản ánh trình duyệt NÀY đã có đăng ký push hay chưa, đọc sau lượt
+    // đồng bộ lúc mở dashboard (có thể vừa tự đăng ký lại).
     useEffect(() => {
-        if (!isPushAvailable || !hasPushPermission()) return;
-
-        getPushSubscription().then(
-            subscription => setHasEnabledPush(subscription !== null),
-            () => setHasEnabledPush(false),
+        syncPushSubscription(userId, vapidPublicKey, hasServerPushSubscription).then(state =>
+            setHasEnabledPush(state === 'subscribed'),
         );
-    }, [isPushAvailable]);
+    }, [userId, vapidPublicKey, hasServerPushSubscription]);
 
     const isFlagSelected = (deliveryType: DeliveryType, notificationType: string) =>
         selectedFlags[deliveryType].includes(`${deliveryType}_${notificationType}`);
@@ -117,17 +116,17 @@ export default function NotificationPreferences() {
     };
 
     const togglePush = (enabled: boolean) => {
-        if (!isPushSupported(vapidPublicKey)) return;
+        if (!isPushSupported(vapidPublicKey) || userId === undefined) return;
 
         if (!enabled) {
-            disablePush()
+            disablePush(userId)
                 .catch(() => undefined)
                 .finally(() => setHasEnabledPush(false));
             return;
         }
 
         setPushServiceHintKey(null);
-        enablePush(vapidPublicKey).then(
+        enablePush(vapidPublicKey, userId).then(
             () => setHasEnabledPush(true),
             error => {
                 setHasEnabledPush(false);

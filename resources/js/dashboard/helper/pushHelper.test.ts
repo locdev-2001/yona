@@ -10,7 +10,7 @@ import {
     disablePush,
     enablePush,
     isPushSupported,
-    refreshPushSubscription,
+    syncPushSubscription,
     urlBase64ToUint8Array,
 } from './pushHelper';
 
@@ -19,6 +19,11 @@ import {
 
 const VAPID_KEY = 'BAECAwQ';
 const OTHER_VAPID_KEY = 'BAUGBwg';
+const USER_ID = 7;
+
+// Kết quả đồng bộ nhớ theo user trong module: mỗi test một user riêng.
+let nextUserId = 100;
+const freshUserId = () => nextUserId++;
 
 interface FakeSubscription {
     endpoint: string;
@@ -58,6 +63,7 @@ function installBrowserPush({
 }
 
 beforeEach(() => {
+    window.localStorage.clear();
     postJson.mockReset().mockResolvedValue({});
     deleteJson.mockReset().mockResolvedValue(null);
 });
@@ -92,7 +98,7 @@ describe('enablePush', () => {
     it('asks for permission, subscribes with the server key and saves the subscription', async () => {
         const browser = installBrowserPush();
 
-        await enablePush(VAPID_KEY);
+        await enablePush(VAPID_KEY, USER_ID);
 
         expect(browser.requestPermission).toHaveBeenCalledOnce();
         expect(browser.serviceWorker.register).toHaveBeenCalledWith('/sw.js');
@@ -113,7 +119,7 @@ describe('enablePush', () => {
     it('stops without subscribing when the user blocks notifications', async () => {
         const browser = installBrowserPush({ answer: 'denied' });
 
-        await expect(enablePush(VAPID_KEY)).rejects.toBeInstanceOf(PushPermissionDeniedError);
+        await expect(enablePush(VAPID_KEY, USER_ID)).rejects.toBeInstanceOf(PushPermissionDeniedError);
 
         expect(browser.pushManager.subscribe).not.toHaveBeenCalled();
         expect(postJson).not.toHaveBeenCalled();
@@ -123,7 +129,7 @@ describe('enablePush', () => {
         const existing = fakeSubscription('https://push.example/existing', VAPID_KEY);
         const browser = installBrowserPush({ permission: 'granted', existing });
 
-        await enablePush(VAPID_KEY);
+        await enablePush(VAPID_KEY, USER_ID);
 
         expect(browser.requestPermission).not.toHaveBeenCalled();
         expect(browser.pushManager.subscribe).not.toHaveBeenCalled();
@@ -134,7 +140,7 @@ describe('enablePush', () => {
         const stale = fakeSubscription('https://push.example/stale', OTHER_VAPID_KEY);
         const browser = installBrowserPush({ permission: 'granted', existing: stale });
 
-        await enablePush(VAPID_KEY);
+        await enablePush(VAPID_KEY, USER_ID);
 
         expect(stale.unsubscribe).toHaveBeenCalledOnce();
         expect(browser.pushManager.subscribe).toHaveBeenCalledOnce();
@@ -147,7 +153,7 @@ describe('disablePush', () => {
         const existing = fakeSubscription('https://push.example/existing', VAPID_KEY);
         installBrowserPush({ permission: 'granted', existing });
 
-        await disablePush();
+        await disablePush(USER_ID);
 
         expect(existing.unsubscribe).toHaveBeenCalledOnce();
         expect(deleteJson).toHaveBeenCalledWith('/api/v1/notification_subscriptions', {
@@ -158,33 +164,101 @@ describe('disablePush', () => {
     it('does nothing when this browser never subscribed', async () => {
         installBrowserPush({ permission: 'granted' });
 
-        await disablePush();
+        await disablePush(USER_ID);
 
         expect(deleteJson).not.toHaveBeenCalled();
     });
 });
 
-describe('refreshPushSubscription', () => {
+describe('syncPushSubscription', () => {
     it('re-sends an existing subscription once per signed-in user', async () => {
         const existing = fakeSubscription('https://push.example/existing', VAPID_KEY);
         installBrowserPush({ permission: 'granted', existing });
+        const [firstUser, secondUser] = [freshUserId(), freshUserId()];
 
-        await refreshPushSubscription(41, VAPID_KEY);
-        await refreshPushSubscription(41, VAPID_KEY);
+        expect(await syncPushSubscription(firstUser, VAPID_KEY, true)).toBe('subscribed');
+        await syncPushSubscription(firstUser, VAPID_KEY, true);
         expect(postJson).toHaveBeenCalledTimes(1);
 
-        await refreshPushSubscription(42, VAPID_KEY);
+        await syncPushSubscription(secondUser, VAPID_KEY, false);
         expect(postJson).toHaveBeenCalledTimes(2);
     });
 
     it('never prompts or subscribes a browser that has not opted in', async () => {
         const browser = installBrowserPush({ permission: 'default' });
 
-        await refreshPushSubscription(43, VAPID_KEY);
+        expect(await syncPushSubscription(freshUserId(), VAPID_KEY, false)).toBe('off');
 
         expect(browser.requestPermission).not.toHaveBeenCalled();
         expect(browser.serviceWorker.register).not.toHaveBeenCalled();
         expect(postJson).not.toHaveBeenCalled();
+    });
+
+    it('lặng lẽ đăng ký lại khi quyền còn mà trình duyệt mất đăng ký của người đã bật', async () => {
+        const userId = freshUserId();
+        const browser = installBrowserPush({ permission: 'granted' });
+        await enablePush(VAPID_KEY, userId);
+        browser.pushManager.getSubscription.mockResolvedValue(null);
+        browser.pushManager.subscribe.mockClear();
+        postJson.mockClear();
+
+        browser.pushManager.subscribe.mockImplementation(async () => {
+            browser.pushManager.getSubscription.mockResolvedValue(browser.created);
+            return browser.created;
+        });
+
+        expect(await syncPushSubscription(userId, VAPID_KEY, false)).toBe('subscribed');
+        expect(browser.requestPermission).not.toHaveBeenCalled();
+        expect(browser.pushManager.subscribe).toHaveBeenCalledOnce();
+        expect(postJson.mock.calls[0][1].subscription_attributes.endpoint).toBe('https://push.example/new');
+    });
+
+    it('trình duyệt quên cả lựa chọn đã nhớ thì dựa vào đăng ký còn trên máy chủ', async () => {
+        const browser = installBrowserPush({ permission: 'granted' });
+        browser.pushManager.subscribe.mockImplementation(async () => {
+            browser.pushManager.getSubscription.mockResolvedValue(browser.created);
+            return browser.created;
+        });
+
+        expect(await syncPushSubscription(freshUserId(), VAPID_KEY, false)).toBe('off');
+        expect(browser.pushManager.subscribe).not.toHaveBeenCalled();
+
+        expect(await syncPushSubscription(freshUserId(), VAPID_KEY, true)).toBe('subscribed');
+        expect(browser.pushManager.subscribe).toHaveBeenCalledOnce();
+    });
+
+    it('không tự bật lại cho người đã tắt trên trình duyệt này dù máy chủ còn đăng ký ở máy khác', async () => {
+        const userId = freshUserId();
+        const browser = installBrowserPush({ permission: 'granted' });
+        await disablePush(userId);
+
+        expect(await syncPushSubscription(userId, VAPID_KEY, true)).toBe('off');
+        expect(browser.pushManager.subscribe).not.toHaveBeenCalled();
+        expect(postJson).not.toHaveBeenCalled();
+    });
+
+    it('báo quyền bị thu hồi khi người đã bật trên trình duyệt này mất quyền thông báo', async () => {
+        const userId = freshUserId();
+        installBrowserPush({ permission: 'granted' });
+        await enablePush(VAPID_KEY, userId);
+
+        const browser = installBrowserPush({ permission: 'default' });
+
+        expect(await syncPushSubscription(userId, VAPID_KEY, true)).toBe('permission_revoked');
+        expect(browser.requestPermission).not.toHaveBeenCalled();
+    });
+
+    it('chưa từng bật trên trình duyệt này thì không nhắc, dù đã bật ở máy khác', async () => {
+        installBrowserPush({ permission: 'default' });
+
+        expect(await syncPushSubscription(freshUserId(), VAPID_KEY, true)).toBe('off');
+    });
+
+    it('đăng ký lại hỏng thì công tắc theo trình duyệt thật, không ném lỗi', async () => {
+        const browser = installBrowserPush({ permission: 'granted' });
+        browser.pushManager.subscribe.mockRejectedValue(new DOMException('push service error', 'AbortError'));
+
+        expect(await syncPushSubscription(freshUserId(), VAPID_KEY, true)).toBe('off');
     });
 });
 
@@ -235,7 +309,7 @@ describe('enablePush khi dịch vụ đẩy của trình duyệt từ chối', (
         browser.pushManager.subscribe.mockRejectedValue(new DOMException('Registration failed - push service error', 'AbortError'));
         Object.defineProperty(navigator, 'brave', { configurable: true, value: {} });
 
-        const failure = enablePush(VAPID_KEY);
+        const failure = enablePush(VAPID_KEY, USER_ID);
 
         await expect(failure).rejects.toBeInstanceOf(PushServiceUnavailableError);
         await expect(failure).rejects.toMatchObject({ isBrave: true });
@@ -246,6 +320,6 @@ describe('enablePush khi dịch vụ đẩy của trình duyệt từ chối', (
         const browser = installBrowserPush({ permission: 'granted' });
         browser.pushManager.subscribe.mockRejectedValue(new DOMException('bad key', 'InvalidAccessError'));
 
-        await expect(enablePush(VAPID_KEY)).rejects.toMatchObject({ name: 'InvalidAccessError' });
+        await expect(enablePush(VAPID_KEY, USER_ID)).rejects.toMatchObject({ name: 'InvalidAccessError' });
     });
 });

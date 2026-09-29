@@ -5,7 +5,6 @@ namespace App\Services\Notification;
 use App\Finders\NotificationFinder;
 use App\Models\Conversation;
 use App\Models\Notification;
-use App\Models\NotificationSubscription;
 use Illuminate\Support\Str;
 
 // phần trình duyệt (Yona không có app di động nên bỏ FCM và push relay hub).
@@ -35,9 +34,7 @@ class PushNotificationService
             return;
         }
 
-        $subscriptions = $this->notification->user->notificationSubscriptions()
-            ->where('subscription_type', NotificationSubscription::TYPE_BROWSER_PUSH)
-            ->get();
+        $subscriptions = $this->notification->user->browserPushSubscriptions()->get();
 
         if ($subscriptions->isEmpty() || ! $this->gateway->isAvailable()) {
             return;

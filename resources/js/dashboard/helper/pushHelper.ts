@@ -102,8 +102,39 @@ export class PushServiceUnavailableError extends Error {
     }
 }
 
+// subscribed: trình duyệt này đang nhận đẩy. permission_revoked: người này đã bật
+// trên trình duyệt này nhưng quyền thông báo bị thu hồi. off: còn lại.
+export type PushSyncState = 'subscribed' | 'permission_revoked' | 'off';
+
+let pushSync: { userId: number; state: Promise<PushSyncState> } | null = null;
+
+// Đăng ký đẩy có thể mất trong khi quyền vẫn còn (trình duyệt xoá dữ liệu trang khi
+// đóng), nên nhớ lựa chọn bật/tắt của từng người trên trình duyệt này để tự đăng ký
+// lại mà không bật trái ý ai — kể cả người dùng chung máy.
+const PUSH_PREFERENCE_KEY_PREFIX = 'yona.push.preference.';
+
+type PushPreference = 'enabled' | 'disabled';
+
+function readPushPreference(userId: number): PushPreference | null {
+    try {
+        const stored = window.localStorage.getItem(`${PUSH_PREFERENCE_KEY_PREFIX}${userId}`);
+
+        return stored === 'enabled' || stored === 'disabled' ? stored : null;
+    } catch {
+        return null;
+    }
+}
+
+function rememberPushPreference(userId: number, preference: PushPreference): void {
+    try {
+        window.localStorage.setItem(`${PUSH_PREFERENCE_KEY_PREFIX}${userId}`, preference);
+    } catch {
+        // Chế độ riêng tư chặn localStorage: chỉ mất khả năng tự đăng ký lại.
+    }
+}
+
 // requestPushPermissions + registerSubscription.
-export async function enablePush(vapidPublicKey: string): Promise<void> {
+export async function enablePush(vapidPublicKey: string, userId: number): Promise<void> {
     const permission = hasPushPermission() ? 'granted' : await Notification.requestPermission();
 
     if (permission !== 'granted') {
@@ -121,11 +152,16 @@ export async function enablePush(vapidPublicKey: string): Promise<void> {
     }
 
     await sendSubscriptionToServer(subscription);
+    rememberPushPreference(userId, 'enabled');
+    pushSync = null;
 }
 
 // Bản gốc chỉ gỡ ở trình duyệt; xoá luôn bản ghi phía máy chủ để không còn đẩy
 // vào một endpoint đã chết.
-export async function disablePush(): Promise<void> {
+export async function disablePush(userId: number): Promise<void> {
+    rememberPushPreference(userId, 'disabled');
+    pushSync = null;
+
     const subscription = await getPushSubscription();
     if (!subscription) return;
 
@@ -149,20 +185,50 @@ export async function detachPushOnLogout(): Promise<void> {
     await deleteJson(SUBSCRIPTIONS_URL, { endpoint });
 }
 
-let refreshedForUserId: number | null = null;
+async function resolvePushSync(
+    userId: number,
+    vapidPublicKey: string | null | undefined,
+    hasServerSubscription: boolean,
+): Promise<PushSyncState> {
+    if (!isPushSupported(vapidPublicKey)) return 'off';
 
-// App.vue lúc mở dashboard: trình duyệt đã đăng ký thì gửi lại cho máy chủ — bản
-// ghi có thể đã bị xoá (410) hoặc trình duyệt vừa đổi sang user khác. Đăng xuất
-// rồi đăng nhập không tải lại trang (Inertia) nên nhớ theo user, không theo lượt tải.
-export async function refreshPushSubscription(
+    const preference = readPushPreference(userId);
+    if (!hasPushPermission()) {
+        return preference === 'enabled' ? 'permission_revoked' : 'off';
+    }
+
+    const existing = await getPushSubscription();
+    // Mất cả lựa chọn đã nhớ (xoá dữ liệu trang) thì bản ghi trên máy chủ là dấu vết
+    // duy nhất cho thấy người này từng bật.
+    const wantsPush = preference === 'enabled' || (preference === null && hasServerSubscription);
+    if (!existing && !wantsPush) return 'off';
+
+    // Gửi lại hỏng thì lần mở sau thử lại; trạng thái vẫn theo trình duyệt thật.
+    await subscribe(vapidPublicKey)
+        .then(sendSubscriptionToServer)
+        .catch(() => undefined);
+
+    return (await getPushSubscription()) ? 'subscribed' : 'off';
+}
+
+// Lúc mở dashboard: trình duyệt đã đăng ký thì gửi lại cho máy chủ (bản ghi có thể
+// đã bị xoá vì 410, hoặc trình duyệt vừa đổi sang user khác); mất đăng ký mà người
+// này vẫn muốn nhận thì đăng ký lại lặng lẽ. Đăng xuất rồi đăng nhập không tải lại
+// trang (Inertia) nên nhớ theo user; màn cài đặt đọc chung kết quả này để công tắc
+// không đọc trước khi đăng ký lại xong.
+export function syncPushSubscription(
     userId: number | undefined,
     vapidPublicKey: string | null | undefined,
-): Promise<void> {
-    if (userId === undefined || refreshedForUserId === userId) return;
-    if (!isPushSupported(vapidPublicKey) || !hasPushPermission()) return;
-    refreshedForUserId = userId;
+    hasServerSubscription: boolean,
+): Promise<PushSyncState> {
+    if (userId === undefined) return Promise.resolve('off');
 
-    if (!(await getPushSubscription())) return;
+    if (pushSync?.userId !== userId) {
+        pushSync = {
+            userId,
+            state: resolvePushSync(userId, vapidPublicKey, hasServerSubscription).catch(() => 'off' as const),
+        };
+    }
 
-    await sendSubscriptionToServer(await subscribe(vapidPublicKey));
+    return pushSync.state;
 }

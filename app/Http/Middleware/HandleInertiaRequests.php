@@ -22,6 +22,9 @@ class HandleInertiaRequests extends Middleware
                     ]),
                     'avatar_url' => $request->user()->avatarUrl(),
                     'message_signature' => $request->user()->message_signature,
+                    // Trình duyệt mất đăng ký đẩy (xoá dữ liệu trang khi đóng) vẫn biết
+                    // người này từng bật để tự đăng ký lại.
+                    'has_push_subscription' => fn () => $request->user()->browserPushSubscriptions()->exists(),
                 ] : null,
             ],
             'globalConfig' => [

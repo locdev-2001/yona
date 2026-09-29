@@ -27,14 +27,18 @@ import NotificationPreferences from './NotificationPreferences';
 
 const VAPID_KEY = 'BAECAwQ';
 
-function withVapidKey(vapidPublicKey: string | null) {
+// Lượt đồng bộ đăng ký đẩy nhớ theo user trong module: mỗi test một user riêng.
+let nextUserId = 100;
+
+function withVapidKey(vapidPublicKey: string | null, { hasServerPushSubscription = false } = {}) {
     pageProps.current = {
+        auth: { user: { id: nextUserId++, has_push_subscription: hasServerPushSubscription } },
         currentAccount: { id: 5 },
         globalConfig: { vapidPublicKey },
     };
 }
 
-function installBrowserPush() {
+function installBrowserPush({ permission = 'default' as NotificationPermission } = {}) {
     const subscription = {
         endpoint: 'https://push.example/browser',
         options: { applicationServerKey: null },
@@ -51,13 +55,14 @@ function installBrowserPush() {
 
     Object.defineProperty(navigator, 'serviceWorker', { configurable: true, value: serviceWorker });
     vi.stubGlobal('PushManager', function PushManager() {});
-    vi.stubGlobal('Notification', { permission: 'default', requestPermission });
+    vi.stubGlobal('Notification', { permission, requestPermission });
 
-    return { pushManager, serviceWorker, requestPermission };
+    return { subscription, pushManager, serviceWorker, requestPermission };
 }
 
 beforeEach(() => {
     setLocale('vi');
+    window.localStorage.clear();
     postJson.mockReset().mockResolvedValue({});
     deleteJson.mockReset().mockResolvedValue(null);
 });
@@ -118,6 +123,21 @@ describe('NotificationPreferences — thông báo đẩy', () => {
             subscription_type: 'browser_push',
             subscription_attributes: { endpoint: 'https://push.example/browser', p256dh: 'p256dh-key', auth: 'auth-key' },
         });
+    });
+
+    it('mở lại trình duyệt mất đăng ký mà quyền còn: tự đăng ký lại và công tắc vẫn bật', async () => {
+        const browser = installBrowserPush({ permission: 'granted' });
+        browser.pushManager.subscribe.mockImplementation(async () => {
+            browser.pushManager.getSubscription.mockResolvedValue(browser.subscription);
+            return browser.subscription;
+        });
+        withVapidKey(VAPID_KEY, { hasServerPushSubscription: true });
+
+        render(<NotificationPreferences />);
+
+        await waitFor(() => expect(screen.getByRole('switch')).toHaveAttribute('aria-checked', 'true'));
+        expect(browser.requestPermission).not.toHaveBeenCalled();
+        expect(postJson).toHaveBeenCalledOnce();
     });
 
     it('giữ công tắc tắt và không lưu gì khi người dùng chặn thông báo', async () => {

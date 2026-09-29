@@ -1,4 +1,4 @@
-import { logout } from 'dashboard/helper/logout';
+import { logoutKeepingPushSubscription } from 'dashboard/helper/logout';
 import { BUS_EVENTS, emitter } from 'shared/helpers/emitter';
 import BaseActionCableConnector from './BaseActionCableConnector';
 import { realtimeStore } from './store';
@@ -108,7 +108,7 @@ class ActionCableConnector extends BaseActionCableConnector {
         emitter.emit(FETCH_CONVERSATION_STATS_EVENT);
     };
 
-    onLogout = () => logout();
+    onLogout = () => logoutKeepingPushSubscription();
 
     onReload = () => window.location.reload();
 

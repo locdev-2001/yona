@@ -11,7 +11,7 @@ vi.mock('dashboard/notifications/unreadIndicators', () => ({
     clearUnreadIndicators: () => clearUnreadIndicators(),
 }));
 
-import { logout } from './logout';
+import { logout, logoutKeepingPushSubscription } from './logout';
 
 describe('đăng xuất gỡ đăng ký thông báo đẩy của trình duyệt trước', () => {
     beforeEach(() => {
@@ -62,6 +62,14 @@ describe('đăng xuất gỡ đăng ký thông báo đẩy của trình duyệt 
 
         await logout();
 
+        expect(post).toHaveBeenCalledWith('/app/logout');
+    });
+
+    it('máy chủ chấm dứt phiên thì giữ đăng ký đẩy cho lần đăng nhập lại', async () => {
+        await logoutKeepingPushSubscription();
+
+        expect(detachPushOnLogout).not.toHaveBeenCalled();
+        expect(clearUnreadIndicators).toHaveBeenCalledOnce();
         expect(post).toHaveBeenCalledWith('/app/logout');
     });
 
