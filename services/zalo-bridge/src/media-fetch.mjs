@@ -17,6 +17,7 @@ export const MEDIA_KIND_DEFAULT_EXT = {
     gif: 'gif',
     video: 'mp4',
     audio: 'mp3',
+    voice: 'webm',
     file: 'bin',
 };
 
@@ -68,6 +69,11 @@ export function mimeToExt(ct) {
         'video/quicktime': 'mov',
         'audio/mpeg': 'mp3',
         'audio/mp3': 'mp3',
+        // Bản ghi âm của trình duyệt: WebM/Ogg Opus (Chrome, Firefox), mp4 AAC (Safari).
+        'audio/webm': 'webm',
+        'audio/ogg': 'ogg',
+        'audio/mp4': 'm4a',
+        'audio/aac': 'aac',
         'application/pdf': 'pdf',
     };
     return m[base] || null;

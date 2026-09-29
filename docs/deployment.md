@@ -626,6 +626,30 @@ tệp: Zalo có thể đã nhận, nên bridge báo thất bại để nhân vi�
 - Log `[zalo-bridge:send-timing]` ghi `bytes` và thời gian từng chặng của mỗi
   lượt gửi, dùng để xem video thật đang tốn bao lâu.
 
+### Gửi bản ghi âm dạng tin thoại: ffmpeg
+
+Bản ghi âm nhân viên thu bằng nút micro ở ô soạn tới khách Zalo thành **tin
+thoại** (bấm là nghe trong khung chat) chỉ khi máy chạy bridge có `ffmpeg`: trình
+duyệt ghi WebM/Ogg Opus (Chrome, Edge, Firefox) hoặc mp4 AAC (Safari), còn Zalo phát
+tin thoại m4a AAC, nên bridge đổi mã sang m4a mono 64 kbit/s, tải lên Zalo rồi gọi
+`sendVoice`. Thiếu ffmpeg thì bản ghi vẫn tới khách nhưng thành **tệp âm thanh**.
+Tệp âm thanh tải lên bằng nút kẹp giấy luôn đi dạng tệp, không thành tin thoại.
+
+Cài và trỏ `FFMPEG_PATH` như mục video ở trên (dùng chung). Sau khi nạp lại bridge:
+
+```bash
+grep 'zalo-bridge:send-voice' storage/logs/zalo-bridge/out.log | tail -1
+# mong đợi: [zalo-bridge:send-voice] {"native_voice":true,"enabled":true}
+```
+
+Bản ghi rơi về đường tệp để lại một dòng cảnh báo cùng thẻ trong `error.log`, có
+`message_id` và bước hỏng (`disabled`, `tools_missing`, `transcode`,
+`upload_voice`, `send_voice`). Tắt nhanh khi có sự cố (khách báo tin thoại không
+nghe được): đặt `ZALO_NATIVE_VOICE=0` trong `services/zalo-bridge/.env` rồi nạp
+lại bridge; bật lại bằng `ZALO_NATIVE_VOICE=1`, cùng luật giữ dòng như
+`ZALO_NATIVE_VIDEO`. `sendVoice` lỗi mạng hoặc quá giờ thì không rơi về tệp, như
+video gốc.
+
 ---
 
 

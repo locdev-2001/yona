@@ -108,6 +108,9 @@ class Attachment extends Model
         'files' => [self::FILE_TYPE_FILE],
     ];
 
+    // Đánh dấu bản ghi âm nhân viên thu ngay ở ô soạn (khác một tệp âm thanh tải lên).
+    public const META_VOICE_MESSAGE = 'is_voice_message';
+
     // displayName() viết bằng SQL, trùng biểu thức index index_attachments_on_folded_display_name.
     public const DISPLAY_NAME_SQL = "COALESCE(NULLIF(attachments.filename, ''), attachments.fallback_title)";
 
@@ -450,6 +453,11 @@ class Attachment extends Model
     public function isImage(): bool
     {
         return $this->file_type === self::FILE_TYPE_IMAGE;
+    }
+
+    public function isVoiceMessage(): bool
+    {
+        return $this->file_type === self::FILE_TYPE_AUDIO && ($this->meta[self::META_VOICE_MESSAGE] ?? false) === true;
     }
 
     public function withAttachedFile(): bool
