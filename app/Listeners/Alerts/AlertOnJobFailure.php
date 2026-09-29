@@ -25,7 +25,7 @@ class AlertOnJobFailure
         $signature = "job-failed:{$jobClass}:{$exceptionClass}";
 
         $this->alerter->send($signature, sprintf(
-            'Job lỗi: %s (%s) — queue: %s, job id: %s. Xem chi tiết ở /horizon hoặc /log-viewer.',
+            'Job lỗi: %s (%s) — queue: %s, job id: %s. Xem chi tiết ở /horizon hoặc /logs.',
             $jobClass,
             $exceptionClass,
             $event->job->getQueue(),

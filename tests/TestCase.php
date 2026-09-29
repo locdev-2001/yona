@@ -16,12 +16,16 @@ abstract class TestCase extends BaseTestCase
      */
     private const TEST_REDIS_DATABASE = 4;
 
+    /** Mỗi tiến trình `--parallel` một chỉ số riêng (10–15), để FLUSHDB và hàng đợi khoá theo id không đè nhau. */
+    private const PARALLEL_REDIS_DATABASES = [10, 11, 12, 13, 14, 15];
+
     private static bool $redisFlushed = false;
 
     protected function setUp(): void
     {
         parent::setUp();
 
+        $this->assignParallelRedisDatabase();
         $this->flushTestRedisOnce();
 
         // Test KHÔNG được ra Internet: thiếu Http::fake là đỏ ngay chỗ gọi, thay vì
@@ -49,7 +53,7 @@ abstract class TestCase extends BaseTestCase
             return;
         }
 
-        if ((int) config('database.redis.default.database') !== self::TEST_REDIS_DATABASE) {
+        if (! in_array((int) config('database.redis.default.database'), [self::TEST_REDIS_DATABASE, ...self::PARALLEL_REDIS_DATABASES], true)) {
             return;
         }
 
@@ -59,5 +63,18 @@ abstract class TestCase extends BaseTestCase
             // Không có redis (máy dev tối giản) thì test nào cần redis sẽ tự đỏ ở
             // chỗ của nó — không chặn cả suite ở đây.
         }
+    }
+
+    private function assignParallelRedisDatabase(): void
+    {
+        $token = (int) env('TEST_TOKEN', 0);
+
+        if ($token < 1 || (int) config('database.redis.default.database') !== self::TEST_REDIS_DATABASE) {
+            return;
+        }
+
+        $databases = self::PARALLEL_REDIS_DATABASES;
+        config(['database.redis.default.database' => $databases[($token - 1) % count($databases)]]);
+        Redis::purge();
     }
 }

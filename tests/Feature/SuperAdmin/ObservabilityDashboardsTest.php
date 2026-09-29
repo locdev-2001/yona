@@ -3,11 +3,11 @@
 use App\Models\SuperAdmin;
 use App\Models\User;
 
-// /horizon, /pulse và /log-viewer đọc payload job, URI request và toàn bộ log
+// /horizon, /pulse và /logs đọc payload job, URI request và toàn bộ log
 // (nội dung tin nhắn khách, số điện thoại, payload webhook Zalo). Ba dashboard
 // này do gói ngoài đăng ký route nên không nằm trong routes/web.php — test này
 // là chỗ duy nhất chặn việc nâng cấp gói làm hở guard.
-$dashboards = ['/horizon', '/pulse', '/log-viewer'];
+$dashboards = ['/horizon', '/pulse', '/logs'];
 
 it('bắt khách lạ đăng nhập console quản trị', function (string $path) {
     $this->get($path)->assertRedirect('/super_admin/sign_in');
