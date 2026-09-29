@@ -92,6 +92,7 @@ class FacebookPage extends Model implements DeclaresCapabilities, DeclaresPlatfo
             Capability::ThreadingContinuous,
             Capability::SessionOauth,
             Capability::SessionReauth,
+            Capability::SettingsSingleConversation,
         )->withTextFormat(TextFormat::Plain);
     }
 }

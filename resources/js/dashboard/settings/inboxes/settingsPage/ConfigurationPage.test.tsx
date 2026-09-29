@@ -13,22 +13,23 @@ vi.mock('@inertiajs/react', () => ({
 
 const WIDGET_SCRIPT = '<script>window.yonaSDK.run({websiteToken:"abc"})</script>';
 
-const inboxOfType = (channelType: string): Inbox =>
+const inboxDeclaring = (capabilities: string[]): Inbox =>
     ({
         id: 85,
         name: 'Yona',
-        channel_type: channelType,
+        capabilities,
         web_widget_script: WIDGET_SCRIPT,
+        inbox_identifier: 'inbox-identifier-85',
         selected_feature_flags: [],
     }) as unknown as Inbox;
 
-const renderPage = (channelType: string) =>
-    render(<ConfigurationPage inbox={inboxOfType(channelType)} onInboxUpdated={() => undefined} />);
+const renderPage = (capabilities: string[]) =>
+    render(<ConfigurationPage inbox={inboxDeclaring(capabilities)} onInboxUpdated={() => undefined} />);
 
 describe('ConfigurationPage — khối đoạn mã nhúng', () => {
     it('hiện đoạn mã nhúng ngay đầu tab Cấu hình của kênh Website', () => {
         setLocale('vi');
-        renderPage('Channel::WebWidget');
+        renderPage(['settings_web_widget']);
 
         const headings = screen.getAllByText(/Đoạn mã nhúng|Tên miền được phép/);
         expect(headings[0]).toHaveTextContent('Đoạn mã nhúng');
@@ -42,9 +43,16 @@ describe('ConfigurationPage — khối đoạn mã nhúng', () => {
     });
 
     it('không hiện khối đoạn mã nhúng ở kênh khác Website', () => {
-        renderPage('Channel::Api');
+        renderPage(['settings_client_api']);
 
         expect(screen.queryByText('Embed script')).not.toBeInTheDocument();
         expect(screen.queryByText('Customize the widget appearance')).not.toBeInTheDocument();
+        expect(document.querySelector('code')?.textContent).toContain('inbox-identifier-85');
+    });
+
+    it('kênh không khai khối cấu hình nào thì không mượn khối của kênh khác', () => {
+        renderPage(['session_qr', 'settings_single_conversation']);
+
+        expect(document.querySelector('code')).toBeNull();
     });
 });

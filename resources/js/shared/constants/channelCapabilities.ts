@@ -63,6 +63,13 @@ export const CHANNEL_CAPABILITIES = [
     'session_reauth',
     'session_disconnect',
     'health',
+    'settings_single_conversation',
+    'settings_webhook',
+    'settings_client_api',
+    'settings_web_widget',
+    'settings_pre_chat_form',
+    'settings_sender_name',
+    'settings_mail_server',
 ] as const;
 
 export type ChannelCapability = (typeof CHANNEL_CAPABILITIES)[number];

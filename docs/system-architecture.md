@@ -33,6 +33,13 @@ PostgreSQL (`pg_trgm`) · Redis (cache, queue, session) · Laravel Reverb
   interface `DeclaresCapabilities` (enum `Capability`); nền tảng hiển thị (logo,
   nhãn) khai qua `DeclaresPlatform`. Giao diện và lõi hỏi năng lực, không bao giờ
   rẽ nhánh theo `channel_type`.
+- Trang cài đặt hộp thư cũng dựng theo năng lực: nhóm `settings_*` (điều hướng hội
+  thoại, webhook, Client API, widget, form trước chat, tên người gửi, máy chủ thư)
+  là phần cấu hình kênh có thật **và** lõi áp dụng. Tab và khối lấy từ
+  `resources/js/dashboard/settings/inboxes/inboxSettingsTabs.ts`. Kênh khai
+  `settings_single_conversation` phải tạo hội thoại qua `IncomingConversationResolver`
+  hoặc `ConversationBuilder`; kênh có harness contract chạy thêm
+  `SingleConversationContract`.
 - Gửi tin: `SendReplyJob::CHANNEL_SERVICES`. Hành động khác (thu hồi, cảm xúc,
   thành viên nhóm, sticker): `app/Services/Channels/ChannelActionRegistry.php`.
 - **Thêm kênh = thêm driver** (model + service + một dòng đăng ký), không sửa

@@ -13,6 +13,6 @@ it('Telegram qua đủ các contract của những năng lực nó khai báo', f
     $executed = ChannelContractRunner::runDeclared($harness);
 
     // Khai báo nào có contract thì phải chạy thật; event_seen không khai nên bị bỏ qua.
-    expect($executed)->toBe(['inbound_image', 'outbound_file', 'outbound_reply_to', 'inbound_forward'])
+    expect($executed)->toBe(['inbound_image', 'outbound_file', 'outbound_reply_to', 'inbound_forward', 'settings_single_conversation'])
         ->and($harness->inbox()->supports(Capability::EventSeen))->toBeFalse();
 });

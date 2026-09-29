@@ -20,7 +20,10 @@
         "profile_phone",
         "profile_email",
         "identity_stable_id",
-        "threading_continuous"
+        "threading_continuous",
+        "settings_single_conversation",
+        "settings_webhook",
+        "settings_client_api"
     ],
     "Channel::Email": [
         "inbound_text",
@@ -42,7 +45,32 @@
         "identity_stable_id",
         "threading_continuous",
         "session_token",
-        "session_reauth"
+        "session_reauth",
+        "settings_sender_name",
+        "settings_mail_server"
+    ],
+    "Channel::Email (provider=google)": [
+        "inbound_text",
+        "inbound_rich_text",
+        "inbound_image",
+        "inbound_gif",
+        "inbound_video",
+        "inbound_audio",
+        "inbound_file",
+        "inbound_caption",
+        "outbound_text",
+        "outbound_image",
+        "outbound_video",
+        "outbound_audio",
+        "outbound_file",
+        "outbound_reply_to",
+        "profile_name",
+        "profile_email",
+        "identity_stable_id",
+        "threading_continuous",
+        "session_token",
+        "session_reauth",
+        "settings_sender_name"
     ],
     "Channel::FacebookPage": [
         "inbound_text",
@@ -66,7 +94,8 @@
         "identity_stable_id",
         "threading_continuous",
         "session_oauth",
-        "session_reauth"
+        "session_reauth",
+        "settings_single_conversation"
     ],
     "Channel::Instagram": [
         "inbound_text",
@@ -89,7 +118,8 @@
         "identity_stable_id",
         "threading_continuous",
         "session_oauth",
-        "session_reauth"
+        "session_reauth",
+        "settings_single_conversation"
     ],
     "Channel::Line": [
         "inbound_text",
@@ -112,7 +142,8 @@
         "profile_avatar",
         "identity_stable_id",
         "threading_continuous",
-        "session_token"
+        "session_token",
+        "settings_single_conversation"
     ],
     "Channel::Sms": [
         "inbound_text",
@@ -121,7 +152,8 @@
         "profile_phone",
         "identity_stable_id",
         "threading_continuous",
-        "session_token"
+        "session_token",
+        "settings_single_conversation"
     ],
     "Channel::Telegram": [
         "inbound_text",
@@ -148,7 +180,8 @@
         "profile_avatar",
         "identity_stable_id",
         "threading_continuous",
-        "session_token"
+        "session_token",
+        "settings_single_conversation"
     ],
     "Channel::Tiktok": [
         "inbound_text",
@@ -159,7 +192,8 @@
         "identity_stable_id",
         "threading_continuous",
         "session_oauth",
-        "session_reauth"
+        "session_reauth",
+        "settings_single_conversation"
     ],
     "Channel::TwilioSms": [
         "inbound_text",
@@ -169,7 +203,8 @@
         "profile_phone",
         "identity_stable_id",
         "threading_continuous",
-        "session_token"
+        "session_token",
+        "settings_single_conversation"
     ],
     "Channel::TwilioSms (medium=whatsapp)": [
         "inbound_text",
@@ -188,7 +223,8 @@
         "profile_phone",
         "identity_stable_id",
         "threading_continuous",
-        "session_token"
+        "session_token",
+        "settings_single_conversation"
     ],
     "Channel::TwitterProfile": [],
     "Channel::WebWidget": [
@@ -220,7 +256,9 @@
         "profile_phone",
         "profile_email",
         "identity_stable_id",
-        "threading_continuous"
+        "threading_continuous",
+        "settings_web_widget",
+        "settings_pre_chat_form"
     ],
     "Channel::Whatsapp": [
         "inbound_text",
@@ -245,7 +283,8 @@
         "identity_stable_id",
         "threading_continuous",
         "session_token",
-        "session_reauth"
+        "session_reauth",
+        "settings_single_conversation"
     ],
     "Channel::Whatsapp (provider=whatsapp_cloud)": [
         "inbound_text",
@@ -271,7 +310,8 @@
         "identity_stable_id",
         "threading_continuous",
         "session_token",
-        "session_reauth"
+        "session_reauth",
+        "settings_single_conversation"
     ],
     "Channel::Zalo": [
         "inbound_text",
@@ -318,6 +358,7 @@
         "session_qr",
         "session_reauth",
         "session_disconnect",
-        "health"
+        "health",
+        "settings_single_conversation"
     ]
 }

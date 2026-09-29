@@ -11,7 +11,7 @@ import {
     postJson,
     putForm,
 } from 'dashboard/helper/apiClient';
-import { INBOX_TYPES, getInboxIconByType } from 'dashboard/helper/inbox';
+import { getInboxIconByType } from 'dashboard/helper/inbox';
 import { accountScopedUrl } from 'dashboard/helper/URLHelper';
 import { copyTextToClipboard } from 'shared/helpers/clipboard';
 import { inboxSupports } from 'shared/composables/useInboxCapabilities';
@@ -43,14 +43,14 @@ import ConfigurationPage from './settingsPage/ConfigurationPage';
 import BotConfigurationPage from './settingsPage/BotConfigurationPage';
 import ZaloSessionBanner from './channels/ZaloSessionBanner';
 import { WEB_WIDGET_FEATURE_FLAGS, WELCOME_TAGLINE_MAX_LENGTH, toggleFeatureFlag } from './webWidgetHelpers';
+import { DEFAULT_INBOX_SETTINGS_TAB, inboxSettingsTabKeys } from './inboxSettingsTabs';
 import type { TimeZoneOption } from './helpers/businessHour';
 import type { UISettings } from 'dashboard/composables/useUISettings';
 import type { DashboardPageProps } from '../../types';
 import type { Inbox } from './types';
 
-// Port từ settings/inbox/Settings.vue — nhánh kênh API + Web Widget. Tab Bot
-// hiện trên thanh tab như oracle (feature tương ứng chưa port — nội dung trống,
-// vào cùng tính năng của nó).
+// Trang cài đặt một hộp thư. Tab và khối tuỳ kênh dựng theo năng lực `settings_*`
+// kênh tự khai (inboxSettingsTabs.ts), không theo loại kênh.
 interface ShowProps {
     inboxId: number;
     tab?: string | null;
@@ -75,53 +75,6 @@ const FEATURE_FLAG_LABELS: Record<string, string> = {
     use_inbox_avatar_for_bot: 'INBOX_MGMT.FEATURES.USE_INBOX_AVATAR_FOR_BOT',
 };
 
-// tabs() của Settings.vue: tab Configuration CHỈ có ở kênh thật sự có gì để cấu
-// hình (Twilio/Line/API/Email tự cấu hình/WhatsApp Cloud/Web widget). Kênh ngoài
-// danh sách này không có tab — ConfigurationPage rơi về nhánh API và hiện token
-// định danh + HMAC của kênh khác (bằng chứng: inbox Zalo 59).
-//
-// Zalo cố ý KHÔNG có tab: phần "cấu hình" của nó là tài khoản đang gắn + panel
-// QR, và thứ đó phải nằm ngay tab đầu — mất phiên là việc khẩn, không được giấu
-// sau một cú bấm. Thẻ tài khoản gate theo NĂNG LỰC `session_qr` (xem dưới).
-const CONFIGURATION_TAB_CHANNELS: string[] = [
-    INBOX_TYPES.TWILIO,
-    INBOX_TYPES.LINE,
-    INBOX_TYPES.API,
-    INBOX_TYPES.WEB,
-];
-
-// canLocktoSingleConversation của Settings.vue.
-const LOCK_TO_SINGLE_CONVERSATION_CHANNELS: string[] = [
-    INBOX_TYPES.SMS,
-    INBOX_TYPES.TWILIO,
-    INBOX_TYPES.WHATSAPP,
-    INBOX_TYPES.FB,
-    INBOX_TYPES.API,
-    INBOX_TYPES.INSTAGRAM,
-    INBOX_TYPES.LINE,
-    INBOX_TYPES.TIKTOK,
-    INBOX_TYPES.TELEGRAM,
-];
-
-function hasConfigurationTab(channelType: string, provider: string | null | undefined): boolean {
-    if (channelType === INBOX_TYPES.EMAIL) return !provider;
-    if (channelType === INBOX_TYPES.WHATSAPP) return provider === 'whatsapp_cloud';
-
-    return CONFIGURATION_TAB_CHANNELS.includes(channelType);
-}
-
-function tabKeysFor(channelType: string, provider: string | null | undefined): string[] {
-    return [
-        'inbox-settings',
-        'collaborators',
-        'business-hours',
-        'csat',
-        ...(channelType === INBOX_TYPES.WEB ? ['pre-chat-form'] : []),
-        ...(hasConfigurationTab(channelType, provider) ? ['configuration'] : []),
-        'bot-configuration',
-    ];
-}
-
 export default function InboxShow({ inboxId, tab = null, senderEmailAddress, timezoneOptions }: ShowProps) {
     const { auth, currentAccount } = usePage<DashboardPageProps>().props;
     const accountId = currentAccount!.id;
@@ -131,7 +84,7 @@ export default function InboxShow({ inboxId, tab = null, senderEmailAddress, tim
 
     const [inbox, setInbox] = useState<Inbox | null>(null);
     const [requestedTab] = useState(tab ?? '');
-    const [selectedTabKey, setSelectedTabKey] = useState('inbox-settings');
+    const [selectedTabKey, setSelectedTabKey] = useState(DEFAULT_INBOX_SETTINGS_TAB);
 
     // Form state của tab inbox-settings (syncInboxData).
     const [avatarFile, setAvatarFile] = useState<File | null>(null);
@@ -177,26 +130,22 @@ export default function InboxShow({ inboxId, tab = null, senderEmailAddress, tim
     useEffect(() => {
         void getJson<Inbox>(`/api/v1/accounts/${accountId}/inboxes/${inboxId}`).then(nextInbox => {
             syncInboxData(nextInbox);
-            const tabKeys = tabKeysFor(nextInbox.channel_type, nextInbox.provider);
-            setSelectedTabKey(tabKeys.includes(requestedTab) ? requestedTab : 'inbox-settings');
+            const tabKeys = inboxSettingsTabKeys(nextInbox);
+            setSelectedTabKey(tabKeys.includes(requestedTab) ? requestedTab : DEFAULT_INBOX_SETTINGS_TAB);
         });
     }, [accountId, inboxId, requestedTab]);
 
-    const isWebWidget = inbox?.channel_type === INBOX_TYPES.WEB;
-    const isApiInbox = inbox?.channel_type === INBOX_TYPES.API;
-    const isEmailChannel = inbox?.channel_type === INBOX_TYPES.EMAIL;
+    const hasWidgetSettings = inboxSupports(inbox, 'settings_web_widget');
+    const hasWebhookSettings = inboxSupports(inbox, 'settings_webhook');
+    const hasSenderNameSettings = inboxSupports(inbox, 'settings_sender_name');
+    const hasSingleConversationSettings = inboxSupports(inbox, 'settings_single_conversation');
     // Kênh đăng nhập bằng QR (Zalo hôm nay, kênh sau tự khai `session_qr`) hiện
-    // thẻ tài khoản + đường quét lại ngay đầu tab Cài đặt.
+    // thẻ tài khoản + đường quét lại ngay đầu tab Cài đặt: mất phiên là việc khẩn,
+    // không được giấu sau một tab khác.
     const hasQrSession = inboxSupports(inbox, 'session_qr');
-    // inboxName của Settings.vue: kênh email hiện kèm địa chỉ thư.
-    const inboxHeaderTitle = isEmailChannel ? `${inbox?.name} (${inbox?.email})` : (inbox?.name ?? '');
-    const tabKeys = useMemo(
-        () => tabKeysFor(inbox?.channel_type ?? '', inbox?.provider),
-        [inbox?.channel_type, inbox?.provider],
-    );
-    const canLockToSingleConversation = LOCK_TO_SINGLE_CONVERSATION_CHANNELS.includes(
-        inbox?.channel_type ?? '',
-    );
+    // Hộp thư có địa chỉ thư thì tiêu đề hiện kèm địa chỉ đó.
+    const inboxHeaderTitle = inbox?.email ? `${inbox.name} (${inbox.email})` : (inbox?.name ?? '');
+    const tabKeys = useMemo(() => inboxSettingsTabKeys(inbox), [inbox]);
     const selectedTabIndex = Math.max(tabKeys.indexOf(selectedTabKey), 0);
 
     const tabs: TabItem[] = useMemo(
@@ -208,7 +157,7 @@ export default function InboxShow({ inboxId, tab = null, senderEmailAddress, tim
         const tabKey = tabKeys[index];
         setSelectedTabKey(tabKey);
         const baseUrl = `/app/accounts/${accountId}/settings/inboxes/${inboxId}`;
-        window.history.replaceState(null, '', tabKey === 'inbox-settings' ? baseUrl : `${baseUrl}/${tabKey}`);
+        window.history.replaceState(null, '', tabKey === DEFAULT_INBOX_SETTINGS_TAB ? baseUrl : `${baseUrl}/${tabKey}`);
     };
 
     // shouldBeUrl của bản gốc: rỗng hợp lệ, có giá trị phải bắt đầu http.
@@ -363,10 +312,10 @@ export default function InboxShow({ inboxId, tab = null, senderEmailAddress, tim
                     </SettingIntroBanner>
                     <section className="w-full overflow-auto py-8">
                         <div className="max-w-7xl mx-auto w-full">
-                            {selectedTabKey === 'inbox-settings' ? (
+                            {selectedTabKey === DEFAULT_INBOX_SETTINGS_TAB ? (
                                 <div className="flex flex-col md:flex-row items-center lg:items-start justify-between gap-5 lg:gap-10 mx-6">
                                     <div
-                                        className={`flex-1 flex flex-col min-w-0 ${isWebWidget ? 'max-w-2xl' : 'max-w-4xl'}`}
+                                        className={`flex-1 flex flex-col min-w-0 ${hasWidgetSettings ? 'max-w-2xl' : 'max-w-4xl'}`}
                                     >
                                         {hasQrSession ? (
                                             <ZaloSessionBanner
@@ -399,7 +348,7 @@ export default function InboxShow({ inboxId, tab = null, senderEmailAddress, tim
                                         </div>
                                         <SettingsFieldSection
                                             label={t(
-                                                isWebWidget
+                                                hasWidgetSettings
                                                     ? 'INBOX_MGMT.ADD.WEBSITE_NAME.LABEL'
                                                     : 'INBOX_MGMT.ADD.CHANNEL_NAME.LABEL',
                                             )}
@@ -408,14 +357,14 @@ export default function InboxShow({ inboxId, tab = null, senderEmailAddress, tim
                                                 value={selectedInboxName}
                                                 className="[&>input]:!mb-0"
                                                 placeholder={t(
-                                                    isWebWidget
+                                                    hasWidgetSettings
                                                         ? 'INBOX_MGMT.ADD.WEBSITE_NAME.PLACEHOLDER'
                                                         : 'INBOX_MGMT.ADD.CHANNEL_NAME.PLACEHOLDER',
                                                 )}
                                                 onChange={setSelectedInboxName}
                                             />
                                         </SettingsFieldSection>
-                                        {isApiInbox ? (
+                                        {hasWebhookSettings ? (
                                             <SettingsFieldSection
                                                 label={t(
                                                     'INBOX_MGMT.ADD.WEBSITE_CHANNEL.CHANNEL_WEBHOOK_URL.LABEL',
@@ -439,7 +388,7 @@ export default function InboxShow({ inboxId, tab = null, senderEmailAddress, tim
                                             </SettingsFieldSection>
                                         ) : null}
 
-                                        {isApiInbox && inbox.secret ? (
+                                        {hasWebhookSettings && inbox.secret ? (
                                             <SettingsFieldSection
                                                 label={t(
                                                     'INBOX_MGMT.ADD.WEBSITE_CHANNEL.CHANNEL_WEBHOOK_SECRET.LABEL',
@@ -453,7 +402,7 @@ export default function InboxShow({ inboxId, tab = null, senderEmailAddress, tim
                                             </SettingsFieldSection>
                                         ) : null}
 
-                                        {canLockToSingleConversation ? (
+                                        {hasSingleConversationSettings ? (
                                             <SettingsFieldSection
                                                 label={t('INBOX_MGMT.SETTINGS_POPUP.LOCK_TO_SINGLE_CONVERSATION')}
                                                 className="[&>div>div]:justify-end [&>div>div]:flex lg:[&>div:first-child]:h-12 [&>div:first-child]:h-16"
@@ -466,9 +415,9 @@ export default function InboxShow({ inboxId, tab = null, senderEmailAddress, tim
                                             />
                                         ) : null}
 
-                                        {isEmailChannel ? <div className="py-2 mb-2">{senderNameSection}</div> : null}
+                                        {hasSenderNameSettings ? <div className="py-2 mb-2">{senderNameSection}</div> : null}
 
-                                        {isWebWidget ? (
+                                        {hasWidgetSettings ? (
                                             <SettingsAccordion
                                                 title={t('INBOX_MGMT.WIDGET_FEATURES')}
                                                 className="mt-6"
@@ -629,7 +578,7 @@ export default function InboxShow({ inboxId, tab = null, senderEmailAddress, tim
                                                 }
                                             />
 
-                                            {isWebWidget ? (
+                                            {hasWidgetSettings ? (
                                                 <SettingsToggleSection
                                                     value={emailCollectEnabled}
                                                     onChange={setEmailCollectEnabled}
@@ -642,7 +591,7 @@ export default function InboxShow({ inboxId, tab = null, senderEmailAddress, tim
                                                 />
                                             ) : null}
 
-                                            {isWebWidget ? (
+                                            {hasWidgetSettings ? (
                                                 <SettingsToggleSection
                                                     value={allowMessagesAfterResolved}
                                                     onChange={setAllowMessagesAfterResolved}
@@ -655,7 +604,7 @@ export default function InboxShow({ inboxId, tab = null, senderEmailAddress, tim
                                                 />
                                             ) : null}
 
-                                            {isWebWidget && isInboundEmailEnabled ? (
+                                            {hasWidgetSettings && isInboundEmailEnabled ? (
                                                 <SettingsToggleSection
                                                     value={continuityViaEmail}
                                                     onChange={setContinuityViaEmail}
@@ -681,7 +630,7 @@ export default function InboxShow({ inboxId, tab = null, senderEmailAddress, tim
                                         </div>
                                     </div>
 
-                                    {isWebWidget ? (
+                                    {hasWidgetSettings ? (
                                         <div className="flex-1 sticky top-4 self-start max-w-lg flex-shrink-0 w-full min-w-0">
                                             <div className="flex flex-col outline -outline-offset-1 outline-1 outline-n-weak w-full px-3 pt-3 pb-8 bg-n-surface-1 rounded-2xl min-h-[45rem] overflow-hidden">
                                                 <Widget
@@ -737,7 +686,7 @@ export default function InboxShow({ inboxId, tab = null, senderEmailAddress, tim
                             ) : null}
 
                             {selectedTabKey === 'configuration' ? (
-                                <div className={`mx-6 ${isWebWidget ? 'max-w-7xl' : 'max-w-4xl'}`}>
+                                <div className={`mx-6 ${hasWidgetSettings ? 'max-w-7xl' : 'max-w-4xl'}`}>
                                     <ConfigurationPage inbox={inbox} onInboxUpdated={syncInboxData} />
                                 </div>
                             ) : null}

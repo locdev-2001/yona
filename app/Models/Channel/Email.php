@@ -127,7 +127,7 @@ class Email extends Model implements DeclaresCapabilities, DeclaresPlatform
     /** Thư đến qua IMAP/mailbox: thân HTML thành markdown, tệp đính kèm giữ nguyên tên. */
     public function capabilities(): CapabilitySet
     {
-        return CapabilitySet::of(
+        $shared = CapabilitySet::of(
             Capability::InboundText,
             Capability::InboundRichText,
             Capability::InboundImage,
@@ -148,6 +148,10 @@ class Email extends Model implements DeclaresCapabilities, DeclaresPlatform
             Capability::ThreadingContinuous,
             Capability::SessionToken,
             Capability::SessionReauth,
+            Capability::SettingsSenderName,
         )->withTextFormat(TextFormat::Html);
+
+        // Hộp thư đăng nhập qua OAuth (Google, Microsoft) do nhà cung cấp giữ máy chủ thư.
+        return blank($this->provider) ? $shared->merge(CapabilitySet::of(Capability::SettingsMailServer)) : $shared;
     }
 }

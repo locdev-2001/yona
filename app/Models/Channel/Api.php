@@ -96,6 +96,9 @@ class Api extends Model implements DeclaresCapabilities, DeclaresPlatform
             Capability::ProfileEmail,
             Capability::IdentityStableId,
             Capability::ThreadingContinuous,
+            Capability::SettingsSingleConversation,
+            Capability::SettingsWebhook,
+            Capability::SettingsClientApi,
         )->withTextFormat(TextFormat::Markdown);
     }
 }

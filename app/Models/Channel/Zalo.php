@@ -248,6 +248,7 @@ class Zalo extends Model implements DeclaresCapabilities, DeclaresPlatform
             Capability::SessionReauth,
             Capability::SessionDisconnect,
             Capability::Health,
+            Capability::SettingsSingleConversation,
         )->withTextFormat(TextFormat::Plain);
     }
 }

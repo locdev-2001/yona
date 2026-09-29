@@ -68,6 +68,7 @@ it('mỗi kênh khai đúng định dạng chữ nó hiển thị được', fun
     expect($formats)->toBe([
         'Channel::Api' => TextFormat::Markdown,
         'Channel::Email' => TextFormat::Html,
+        'Channel::Email (provider=google)' => TextFormat::Html,
         'Channel::FacebookPage' => TextFormat::Plain,
         'Channel::Instagram' => TextFormat::Plain,
         'Channel::Line' => TextFormat::Plain,

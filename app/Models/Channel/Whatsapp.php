@@ -141,6 +141,7 @@ class Whatsapp extends Model implements DeclaresCapabilities, DeclaresPlatform
             Capability::ThreadingContinuous,
             Capability::SessionToken,
             Capability::SessionReauth,
+            Capability::SettingsSingleConversation,
         )->withTextFormat(TextFormat::WhatsApp);
 
         return $shared->merge($this->providerService()->capabilities());

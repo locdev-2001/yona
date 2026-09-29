@@ -85,6 +85,22 @@ enum Capability: string
     case SessionDisconnect = 'session_disconnect';
     case Health = 'health';
 
+    // §2.6 Cấu hình hộp thư: phần cài đặt kênh có thật VÀ lõi áp dụng nó. Trang cài đặt
+    // hộp thư chỉ dựng tab/khối theo các năng lực này, không rẽ nhánh theo `channel_type`.
+    // Khách nhắn lại sau khi hội thoại đã xong: mở lại hội thoại cũ hay tạo mới (`lock_to_single_conversation`).
+    case SettingsSingleConversation = 'settings_single_conversation';
+    // URL nhận sự kiện của hệ ngoài + khoá ký.
+    case SettingsWebhook = 'settings_webhook';
+    // Mã hộp thư + khoá HMAC cho Client API.
+    case SettingsClientApi = 'settings_client_api';
+    // Giao diện, hành vi, mã nhúng, tên miền được phép và xác minh danh tính của widget.
+    case SettingsWebWidget = 'settings_web_widget';
+    case SettingsPreChatForm = 'settings_pre_chat_form';
+    // Tên người gửi hiện trong thư đi.
+    case SettingsSenderName = 'settings_sender_name';
+    // Hộp thư tự cấu hình: địa chỉ chuyển tiếp, IMAP, SMTP (không qua OAuth của nhà cung cấp).
+    case SettingsMailServer = 'settings_mail_server';
+
     /** @return list<string> Giá trị của mọi năng lực, đúng thứ tự khai báo. */
     public static function allValues(): array
     {

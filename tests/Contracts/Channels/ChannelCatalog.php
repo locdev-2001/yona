@@ -2,6 +2,7 @@
 
 namespace Tests\Contracts\Channels;
 
+use App\Models\Channel\Email;
 use App\Models\Channel\TwilioSms;
 use App\Models\Channel\Whatsapp;
 use Illuminate\Database\Eloquent\Relations\Relation;
@@ -34,6 +35,7 @@ final class ChannelCatalog
             $variants[$type] = new $class;
         }
 
+        $variants['Channel::Email (provider=google)'] = new Email(['provider' => 'google']);
         $variants['Channel::TwilioSms (medium=whatsapp)'] = new TwilioSms(['medium' => 'whatsapp']);
         $variants['Channel::Whatsapp (provider=whatsapp_cloud)'] = new Whatsapp(['provider' => 'whatsapp_cloud']);
 

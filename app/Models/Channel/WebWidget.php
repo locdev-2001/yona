@@ -304,6 +304,8 @@ class WebWidget extends Model implements DeclaresCapabilities, DeclaresPlatform
             Capability::ProfileEmail,
             Capability::IdentityStableId,
             Capability::ThreadingContinuous,
+            Capability::SettingsWebWidget,
+            Capability::SettingsPreChatForm,
         )->withTextFormat(TextFormat::Markdown);
     }
 }

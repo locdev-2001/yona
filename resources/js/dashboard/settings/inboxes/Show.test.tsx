@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import capabilityMatrix from '../../../../../tests/Contracts/Channels/capability-matrix.snapshot.json';
 import { setLocale, t } from '../../../i18n';
 import InboxShow from './Show';
 import type { Inbox } from './types';
@@ -46,6 +47,7 @@ const webWidgetInbox = {
     id: 140,
     name: 'Shop Cũ Mai Anh',
     channel_type: 'Channel::WebWidget',
+    capabilities: capabilityMatrix['Channel::WebWidget'],
     avatar_url: '',
     business_name: null,
     sender_name_type: 'friendly',
@@ -111,5 +113,68 @@ describe('InboxShow — tab Cài đặt của hộp thư website', () => {
         }
         expect(screen.queryByDisplayValue('shopcu.vn')).not.toBeInTheDocument();
         expect(document.querySelector(`[placeholder="${t('INBOX_MGMT.ADD.WEBSITE_CHANNEL.CHANNEL_DOMAIN.PLACEHOLDER')}"]`)).toBeNull();
+    });
+});
+
+const zaloInbox = {
+    ...webWidgetInbox,
+    id: 59,
+    name: 'Zalo Shop Mai Anh',
+    channel_type: 'Channel::Zalo',
+    capabilities: capabilityMatrix['Channel::Zalo'],
+    zalo_state: 'connected',
+    zalo_display_name: 'Mai Anh',
+} as unknown as Inbox;
+
+const apiInbox = {
+    ...webWidgetInbox,
+    id: 12,
+    name: 'Kho API',
+    channel_type: 'Channel::Api',
+    capabilities: capabilityMatrix['Channel::Api'],
+    webhook_url: 'https://kho.vn/hook',
+} as unknown as Inbox;
+
+const renderInbox = async (inbox: Inbox) => {
+    getJson.mockImplementation((url: string) => Promise.resolve(url.endsWith(`/inboxes/${inbox.id}`) ? inbox : {}));
+    render(<InboxShow inboxId={inbox.id} senderEmailAddress="hello@yona.vn" timezoneOptions={[]} />);
+    await screen.findByDisplayValue(inbox.name);
+};
+
+const visibleTabNames = () =>
+    Array.from(document.querySelectorAll('li > a')).map(tab => tab.textContent?.trim() ?? '');
+
+describe('InboxShow — tab và khối dựng theo khai báo của kênh', () => {
+    beforeEach(() => {
+        setLocale('vi');
+        getJson.mockReset();
+    });
+
+    it('Zalo có mục Điều hướng hội thoại, không có tab Cấu hình hay Form trước chat', async () => {
+        await renderInbox(zaloInbox);
+
+        expect(screen.getByText(t('INBOX_MGMT.SETTINGS_POPUP.LOCK_TO_SINGLE_CONVERSATION'))).toBeInTheDocument();
+        expect(visibleTabNames()).not.toContain(t('INBOX_MGMT.TABS.CONFIGURATION'));
+        expect(visibleTabNames()).not.toContain(t('INBOX_MGMT.TABS.PRE_CHAT_FORM'));
+        expect(screen.queryByText(t('INBOX_MGMT.WIDGET_FEATURES'))).not.toBeInTheDocument();
+    });
+
+    it('Website có Form trước chat + Cấu hình, không có mục Điều hướng hội thoại', async () => {
+        await renderInbox(webWidgetInbox);
+
+        expect(visibleTabNames()).toEqual(
+            expect.arrayContaining([t('INBOX_MGMT.TABS.PRE_CHAT_FORM'), t('INBOX_MGMT.TABS.CONFIGURATION')]),
+        );
+        expect(screen.getByText(t('INBOX_MGMT.WIDGET_FEATURES'))).toBeInTheDocument();
+        expect(screen.queryByText(t('INBOX_MGMT.SETTINGS_POPUP.LOCK_TO_SINGLE_CONVERSATION'))).not.toBeInTheDocument();
+    });
+
+    it('API có ô webhook, mục Điều hướng hội thoại và tab Cấu hình', async () => {
+        await renderInbox(apiInbox);
+
+        expect(screen.getByDisplayValue('https://kho.vn/hook')).toBeInTheDocument();
+        expect(screen.getByText(t('INBOX_MGMT.SETTINGS_POPUP.LOCK_TO_SINGLE_CONVERSATION'))).toBeInTheDocument();
+        expect(visibleTabNames()).toContain(t('INBOX_MGMT.TABS.CONFIGURATION'));
+        expect(visibleTabNames()).not.toContain(t('INBOX_MGMT.TABS.PRE_CHAT_FORM'));
     });
 });
