@@ -144,6 +144,82 @@ tar -C /www/wwwroot/yona.vn/storage/app/public -czf /www/backup/yona-stickers-$(
 Tệp đặt theo hash nội dung nên chép chồng lên bản cũ an toàn. Đã chuyển disk
 sang R2 (mục 9, "Kho sticker") thì thư mục này không còn dùng: sao lưu bucket.
 
+### Thống kê truy vấn (`pg_stat_statements`)
+
+Gom thời gian chạy của mọi câu SQL (đã chuẩn hoá tham số thành `$1`, `$2`) để
+tìm truy vấn tốn nhất. Người có quyền root chạy, **một lần**. Bước 3 khởi động
+lại PostgreSQL: vài giây mất kết nối DB, request đang chạy lúc đó trả 500, job
+đang chạy có thể lỗi rồi được thử lại — chọn giờ thấp điểm.
+
+```bash
+PSQL="sudo -u postgres /www/server/pgsql/bin/psql -v ON_ERROR_STOP=1"
+
+# 1. Kiểm tra: phiên bản, thư viện có sẵn (aaPanel dựng từ source có thể thiếu
+#    contrib — thiếu một trong hai tệp thì DỪNG, báo lại), giá trị hiện tại.
+$PSQL -d postgres -Atc "SELECT version();"
+ls "$(/www/server/pgsql/bin/pg_config --pkglibdir)/pg_stat_statements.so" \
+   "$(/www/server/pgsql/bin/pg_config --sharedir)/extension/pg_stat_statements.control"
+$PSQL -d postgres -Atc "SHOW shared_preload_libraries;"
+
+# 2. Cấu hình (ALTER SYSTEM ghi vào postgresql.auto.conf, đè postgresql.conf).
+#    Bước 1 in ra rỗng: chạy nguyên khối dưới. In ra khác rỗng (ví dụ `abc`):
+#    giữ lại, mỗi thư viện một chuỗi riêng:
+#    ALTER SYSTEM SET shared_preload_libraries = 'abc', 'pg_stat_statements';
+#    (KHÔNG viết 'abc,pg_stat_statements' trong một chuỗi — Postgres coi đó là
+#    MỘT tên thư viện và lần khởi động sau sẽ không lên.)
+$PSQL -d postgres <<'SQL'
+ALTER SYSTEM SET shared_preload_libraries = 'pg_stat_statements';
+ALTER SYSTEM SET pg_stat_statements.max = 10000;
+ALTER SYSTEM SET pg_stat_statements.track = 'all';
+ALTER SYSTEM SET track_io_timing = on;
+SQL
+# Không được có dòng nào ở đây trước khi restart:
+$PSQL -d postgres -c "SELECT sourcefile, name, error FROM pg_file_settings WHERE error IS NOT NULL;"
+
+# 3. Restart. Tìm đúng tên dịch vụ của aaPanel trước, rồi restart bằng cái có thật.
+systemctl list-units --type=service --all | grep -iE 'postgres|pgsql'
+ls /etc/init.d | grep -iE 'postgres|pgsql'
+#   systemctl restart <tên dịch vụ>     hoặc     /etc/init.d/<tên> restart
+$PSQL -d postgres -Atc "SHOW shared_preload_libraries;"   # phải có pg_stat_statements
+cd /www/wwwroot/yona.vn && php artisan horizon:terminate   # worker mở lại kết nối DB sạch
+
+# 4. Bật extension trong DB của app, cho role chỉ đọc xem được truy vấn của mọi role.
+YONA_DB=$(grep -E '^DB_DATABASE=' /www/wwwroot/yona.vn/.env | cut -d= -f2- | tr -d "\"'")
+$PSQL -d "$YONA_DB" -c "CREATE EXTENSION IF NOT EXISTS pg_stat_statements;"
+$PSQL -d "$YONA_DB" -c "GRANT pg_read_all_stats TO yona_readonly;"
+
+# 5. Kiểm tra đã chạy
+$PSQL -d "$YONA_DB" -c "SELECT name, setting FROM pg_settings WHERE name IN ('shared_preload_libraries','pg_stat_statements.max','pg_stat_statements.track','track_io_timing');"
+$PSQL -d "$YONA_DB" -c "SELECT count(*) AS statements, (SELECT stats_reset FROM pg_stat_statements_info) FROM pg_stat_statements;"
+```
+
+Đọc số liệu (qua tunnel chỉ đọc: `.claude/skills/yona-issues/scripts/prod-db.sh "<SQL>"`,
+hoặc trên server `$PSQL -d "$YONA_DB"`). Đổi `ORDER BY` thành `calls` hay `rows`
+để xem top theo số lần gọi hay số dòng trả về:
+
+```sql
+SELECT queryid,
+       calls,
+       round(total_exec_time::numeric, 1)                                AS total_ms,
+       round(mean_exec_time::numeric, 2)                                 AS mean_ms,
+       round((100 * total_exec_time / sum(total_exec_time) OVER ())::numeric, 1) AS pct_total,
+       rows,
+       shared_blks_hit,
+       shared_blks_read,
+       round(blk_read_time::numeric, 1)                                  AS io_read_ms, -- PG 17+: shared_blk_read_time
+       left(regexp_replace(query, '\s+', ' ', 'g'), 300)                 AS query
+FROM pg_stat_statements
+WHERE dbid = (SELECT oid FROM pg_database WHERE datname = current_database())
+ORDER BY total_exec_time DESC   -- hoặc: calls DESC / rows DESC
+LIMIT 20;
+```
+
+Xoá số liệu để đo lại từ đầu (chỉ superuser):
+`$PSQL -d "$YONA_DB" -c "SELECT pg_stat_statements_reset();"`.
+Chạy lại bước 3 của `.claude/skills/yona-issues/references/prod-db-setup.md` sau
+đó vẫn an toàn: view `pg_stat_statements` không có cột bị ẩn nên role chỉ đọc
+vẫn đọc được.
+
 ---
 
 ## 5. `.env` production
