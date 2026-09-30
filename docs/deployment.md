@@ -1075,7 +1075,11 @@ Danh sách tier queue nằm ở `config/queue_tiers.php` — Horizon (production
 worker quét tuần tự từ `critical` xuống `purgable`, đúng như `queue:work
 --queue=...` trước đây; bật balance sẽ chia process theo hàng đợi và **mất ưu
 tiên tuyệt đối**. Tin nào đi `media` hay `high` chỉ do `SendReplyJob::queueFor`
-quyết định (có đính kèm = `media`).
+quyết định (có đính kèm = `media`). Thứ tự gửi ra kênh trong một hội thoại vẫn
+đúng thứ tự tạo tin dù tin đi hai hàng đợi: `App\Messaging\Delivery\OutboundOrder`
+chỉ đưa tin đầu hàng của hội thoại vào hàng đợi, tin sau chờ trên Redis (không
+giữ worker) và được đẩy khi tin trước gửi xong hoặc hỏng hẳn; job mất thì
+`SweepOutboundOrderJob` (mỗi phút) nhả hàng sau 10 phút. Cần Redis ≥ 6.0.6 (`LPOS`).
 
 > **Bất biến của hàng đợi, đừng phá:** `media_timeout` của kênh Zalo (120s,
 > `config/zalo.php`) < `timeout` của worker (150s, `config/horizon.php`) <

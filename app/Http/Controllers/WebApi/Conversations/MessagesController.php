@@ -8,7 +8,7 @@ use App\Exceptions\MessageValidationException;
 use App\Finders\MessageFinder;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\MessageResource;
-use App\Jobs\SendReplyJob;
+use App\Messaging\Delivery\OutboundOrder;
 use App\Models\Account;
 use App\Models\Conversation;
 use App\Models\Message;
@@ -98,7 +98,7 @@ class MessagesController extends Controller
 
         if ($this->claimMessageRetry($conversation, $message)) {
             $message->refresh();
-            SendReplyJob::dispatch($message);
+            app(OutboundOrder::class)->dispatch($message);
         }
 
         return response()->json((new MessageResource($message))->toArray($request));

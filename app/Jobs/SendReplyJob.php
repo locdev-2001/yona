@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Messaging\Delivery\OutboundOrder;
 use App\Models\Message;
 use App\Services\Email\SendOnEmailService;
 use App\Services\Facebook\SendOnFacebookService;
@@ -14,6 +15,7 @@ use App\Services\Tiktok\SendOnTiktokService;
 use App\Services\Twilio\SendOnTwilioService;
 use App\Services\Whatsapp\SendOnWhatsappService;
 use App\Services\Zalo\SendOnZaloService;
+use Throwable;
 
 /**
  * Mọi tin vừa tạo đi qua đây,
@@ -55,14 +57,21 @@ class SendReplyJob extends ApplicationJob
         return $message->attachments->isEmpty() ? self::TEXT_QUEUE : self::MEDIA_QUEUE;
     }
 
+    // Lỗi ném ra thì chưa nhả hàng: lượt thử lại vẫn là tin đầu hàng của hội thoại.
     public function handle(): void
     {
         $serviceClass = self::CHANNEL_SERVICES[$this->message->conversation->inbox->channel_type] ?? null;
 
-        if ($serviceClass === null) {
-            return;
+        if ($serviceClass !== null) {
+            (new $serviceClass($this->message))->perform();
         }
 
-        (new $serviceClass($this->message))->perform();
+        app(OutboundOrder::class)->release($this->message);
+    }
+
+    /** Hỏng sau lượt cuối: tin sau trong hội thoại không được chờ mãi. */
+    public function failed(?Throwable $exception): void
+    {
+        app(OutboundOrder::class)->release($this->message);
     }
 }
