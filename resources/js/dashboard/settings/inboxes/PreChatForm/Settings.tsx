@@ -38,8 +38,9 @@ export default function PreChatFormSettings({ inbox, uiSettings, onInboxUpdated 
             getPreChatFields({
                 preChatFormOptions: (inbox.pre_chat_form_options ?? {}) as PreChatFormOptions,
                 customAttributes: [],
+                defaults: inbox.pre_chat_form_defaults as PreChatFormOptions | null | undefined,
             }),
-        [inbox.pre_chat_form_options],
+        [inbox.pre_chat_form_options, inbox.pre_chat_form_defaults],
     );
 
     // setDefaults() — chạy lúc mount và mỗi lần inbox đổi, y bản gốc.

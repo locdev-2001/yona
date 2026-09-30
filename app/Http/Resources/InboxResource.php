@@ -10,6 +10,7 @@ use App\Models\Channel\Telegram;
 use App\Models\Channel\Tiktok;
 use App\Models\Channel\TwilioSms;
 use App\Models\Channel\TwitterProfile;
+use App\Models\Channel\WebWidget;
 use App\Models\Channel\Whatsapp;
 use App\Models\Inbox;
 use App\Services\Channels\ChannelSetupService;
@@ -176,6 +177,8 @@ class InboxResource extends JsonResource
             ...($this->administrator ? ['hmac_token' => $channel->hmac_token] : []),
             'pre_chat_form_enabled' => $channel->pre_chat_form_enabled,
             'pre_chat_form_options' => $channel->pre_chat_form_options,
+            // Nguồn chữ mặc định duy nhất: theo ngôn ngữ account, không theo giao diện người đang sửa.
+            'pre_chat_form_defaults' => WebWidget::defaultPreChatFormOptions($inbox->account?->locale),
             'continuity_via_email' => $channel->continuity_via_email,
             'widget_settings' => $channel->widgetSettings(),
             'help_center' => $this->helpCenterSummary($inbox),

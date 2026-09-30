@@ -271,6 +271,7 @@ describe('POST /api/v1/accounts/{id}/inboxes', function () {
             ->and($response->json('allowed_domains'))->toBe('')
             ->and($response->json('pre_chat_form_enabled'))->toBeFalse()
             ->and($response->json('pre_chat_form_options.pre_chat_fields'))->toHaveCount(3)
+            ->and($response->json('pre_chat_form_defaults.pre_chat_fields'))->toHaveCount(3)
             ->and($response->json('selected_feature_flags'))
             ->toBe(['attachments', 'emoji_picker', 'end_conversation'])
             ->and($response->json('website_token'))->not->toBeNull()
@@ -279,6 +280,24 @@ describe('POST /api/v1/accounts/{id}/inboxes', function () {
 
         $channel = WebWidget::query()->find($response->json('channel_id'));
         expect($channel->account_id)->toBe($account->id);
+    });
+
+    it('serves prechat default texts in the account locale', function () {
+        $account = Account::factory()->create(['locale' => 'en']);
+        $admin = inboxMemberOf($account, AccountUser::ROLE_ADMINISTRATOR);
+
+        $response = $this->actingAs($admin)
+            ->postJson("/api/v1/accounts/{$account->id}/inboxes", [
+                'name' => 'test',
+                'channel' => ['type' => 'web_widget', 'website_url' => 'test.com'],
+            ])
+            ->assertOk();
+
+        $expected = WebWidget::defaultPreChatFormOptions('en');
+
+        expect($response->json('pre_chat_form_defaults'))->toBe($expected)
+            ->and($response->json('pre_chat_form_defaults.pre_chat_message'))
+            ->not->toBe(WebWidget::defaultPreChatFormOptions('vi')['pre_chat_message']);
     });
 
     it('creates the webwidget inbox that allows messages after conversation is resolved', function () {

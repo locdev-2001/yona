@@ -1,9 +1,7 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-
-import { setLocale } from '../../i18n';
+import { describe, expect, it } from 'vitest';
 
 import { getCustomFields, getFormattedPreChatFields, getPreChatFields } from './preChat';
-import type { CustomAttributeDefinition, PreChatField } from './preChat';
+import type { CustomAttributeDefinition, PreChatField, PreChatFormOptions } from './preChat';
 
 // Port từ dashboard/helper/specs/preChat.spec.js (+ inboxFixture.js).
 const customFields = {
@@ -61,6 +59,16 @@ const customAttributesWithRegex: CustomAttributeDefinition[] = [
     },
 ];
 
+// Chữ mặc định server cấp theo ngôn ngữ account (account vi).
+const defaultsVi: PreChatFormOptions = {
+    pre_chat_message: 'Bạn để lại vài thông tin để chúng tôi hỗ trợ nhanh hơn nhé.',
+    pre_chat_fields: [
+        { name: 'emailAddress', type: 'email', label: 'Email', placeholder: 'Vui lòng nhập email', required: true, enabled: false },
+        { name: 'fullName', type: 'text', label: 'Tên đầy đủ', placeholder: 'Vui lòng nhập tên đầy đủ của bạn', required: false, enabled: false },
+        { name: 'phoneNumber', type: 'text', label: 'Số điện thoại', placeholder: 'Vui lòng nhập số điện thoại của bạn', required: false, enabled: false },
+    ],
+};
+
 describe('preChat helper', () => {
     it('trả lại đúng cấu hình khi không có thuộc tính tuỳ biến', () => {
         expect(getPreChatFields({ preChatFormOptions: customFields })).toEqual(customFields);
@@ -98,16 +106,17 @@ describe('preChat helper', () => {
         ]);
     });
 
-    it('lấy nhãn/placeholder mặc định từ bảng chuỗi widget khi trường chuẩn chưa có', () => {
+    it('lấy nhãn/placeholder mặc định do server cấp khi trường chuẩn chưa có', () => {
         expect(
             getFormattedPreChatFields({
                 preChatFields: [{ label: '', name: 'emailAddress', type: 'email', required: false, enabled: false }],
+                defaults: defaultsVi,
             }),
         ).toEqual([
             {
-                label: 'Email Address',
+                label: 'Email',
                 name: 'emailAddress',
-                placeholder: 'Please enter your email address',
+                placeholder: 'Vui lòng nhập email',
                 type: 'email',
                 required: false,
                 enabled: false,
@@ -115,10 +124,7 @@ describe('preChat helper', () => {
         ]);
     });
 
-    describe('khi giao diện tiếng Việt', () => {
-        beforeEach(() => setLocale('vi'));
-        afterEach(() => setLocale('en'));
-
+    describe('khi account tiếng Việt', () => {
         it('đổi nhãn tiếng Anh mặc định cũ của trường chuẩn sang tiếng Việt theo name', () => {
             const fields = getFormattedPreChatFields({
                 preChatFields: [
@@ -126,6 +132,7 @@ describe('preChat helper', () => {
                     { label: 'Full name', name: 'fullName', type: 'text', required: false, enabled: false },
                     { label: 'Phone number', name: 'phoneNumber', type: 'text', required: false, enabled: false },
                 ],
+                defaults: defaultsVi,
             });
 
             expect(fields.map(field => [field.label, field.placeholder])).toEqual([
@@ -147,17 +154,18 @@ describe('preChat helper', () => {
                         enabled: true,
                     },
                 ],
+                defaults: defaultsVi,
             });
 
             expect([field.label, field.placeholder]).toEqual(['Email công việc', 'ban@congty.vn']);
         });
 
         it('đổi lời nhắn mặc định cũ sang tiếng Việt, giữ lời nhắn tự đặt', () => {
-            expect(getPreChatFields({ preChatFormOptions: customFields }).pre_chat_message).toBe(
+            expect(getPreChatFields({ preChatFormOptions: customFields, defaults: defaultsVi }).pre_chat_message).toBe(
                 'Bạn để lại vài thông tin để chúng tôi hỗ trợ nhanh hơn nhé.',
             );
             expect(
-                getPreChatFields({ preChatFormOptions: { ...customFields, pre_chat_message: 'Chào bạn' } })
+                getPreChatFields({ preChatFormOptions: { ...customFields, pre_chat_message: 'Chào bạn' }, defaults: defaultsVi })
                     .pre_chat_message,
             ).toBe('Chào bạn');
         });

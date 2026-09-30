@@ -89,6 +89,8 @@ export interface Inbox {
     continuity_via_email?: boolean | null;
     pre_chat_form_enabled?: boolean | null;
     pre_chat_form_options?: Record<string, unknown> | null;
+    // Chữ mặc định theo ngôn ngữ account, do server cấp.
+    pre_chat_form_defaults?: Record<string, unknown> | null;
     // Kênh Email (_inbox.json.jbuilder mục Email Channel Attributes) — nhóm
     // imap_*/smtp_* chỉ trả về cho administrator.
     forwarding_enabled?: boolean;
