@@ -394,7 +394,8 @@ it('gửi tên tệp gốc và content-type thật của tệp .docx tới bridg
 
     expect($payload['filename'])->toBe('Báo giá tháng 9.docx')
         ->and($payload['content_type'])->toBe('application/vnd.openxmlformats-officedocument.wordprocessingml.document')
-        ->and($payload['media_kind'])->toBe('file');
+        ->and($payload['media_kind'])->toBe('file')
+        ->and($payload['max_bytes'])->toBe(Zalo::MAX_ATTACHMENT_BYTES);
 });
 
 it('giữ source_id của tệp đã gửi được và nêu tên tệp hỏng khi lượt sau lỗi', function () {
