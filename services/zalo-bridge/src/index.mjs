@@ -89,6 +89,8 @@ const BRIDGE_UI_SECRET = process.env.BRIDGE_UI_SECRET || '';
 const BRIDGE_ELEVATED_SECRET = process.env.BRIDGE_ELEVATED_SECRET || '';
 const LARAVEL_WEBHOOK_URL = process.env.LARAVEL_WEBHOOK_URL || '';
 const LARAVEL_WEBHOOK_SECRET = process.env.LARAVEL_WEBHOOK_SECRET || '';
+// Bật tạm để so tin sticker tự tạo thật của Zalo với tin bridge gửi; tắt lại khi xong.
+const BRIDGE_DEBUG_RAW_PHOTO = process.env.BRIDGE_DEBUG_RAW_PHOTO === '1';
 
 // Tier 1 outbox — khởi tạo sớm, start() gọi sau bootRestoreAllSessions()
 const outbox = createOutbox({
@@ -1876,6 +1878,9 @@ function startListenerForSlot(slotKey) {
             return;
         }
         noteSlotAlive(slot, cid, bid);
+        if (BRIDGE_DEBUG_RAW_PHOTO && message?.data?.msgType === 'chat.photo') {
+            console.log('[zalo-bridge:raw-photo]', JSON.stringify({ isSelf: message.isSelf, msgType: message.data.msgType, content: message.data.content, propertyExt: message.data.propertyExt }));
+        }
         const desc = parseInboundDescriptor(message);
         if (!desc) {
             return;
