@@ -21,6 +21,7 @@ use App\Models\Message;
 use App\Models\User;
 use App\Models\Webhook;
 use App\Services\Webhooks\Trigger;
+use Closure;
 use Illuminate\Support\Str;
 
 // Bắn payload ra
@@ -51,13 +52,11 @@ class WebhookListener extends BaseListener
         /** @var Conversation $conversation */
         [$conversation] = $this->extractConversationAndAccount($event);
 
-        $payload = [
+        $this->deliverWebhookPayloads($eventName, fn () => [
             ...ConversationResource::webhookData($conversation),
             'event' => $eventName,
             ...($withChangedAttributes ? ['changed_attributes' => $this->extractChangedAttributes($event)] : []),
-        ];
-
-        $this->deliverWebhookPayloads($payload, $conversation->inbox);
+        ], $conversation->inbox);
     }
 
     private function messageEvent(DomainEvent $event, string $eventName): void
@@ -70,7 +69,8 @@ class WebhookListener extends BaseListener
         }
 
         $this->deliverWebhookPayloads(
-            [...MessageResource::webhookData($message), 'event' => $eventName],
+            $eventName,
+            fn () => [...MessageResource::webhookData($message), 'event' => $eventName],
             $message->inbox,
         );
     }
@@ -80,7 +80,7 @@ class WebhookListener extends BaseListener
         /** @var ContactInbox $contactInbox */
         $contactInbox = $event->data['contact_inbox'];
 
-        $this->deliverWebhookPayloads([
+        $this->deliverWebhookPayloads('webwidget_triggered', fn () => [
             ...$contactInbox->webhookData(),
             'event' => 'webwidget_triggered',
             'event_info' => $event->data['event_info'] ?? null,
@@ -93,7 +93,8 @@ class WebhookListener extends BaseListener
         [$contact, $account] = $this->extractContactAndAccount($event);
 
         $this->deliverAccountWebhooks(
-            [...ContactResource::webhookData($contact), 'event' => 'contact_created'],
+            'contact_created',
+            fn () => [...ContactResource::webhookData($contact), 'event' => 'contact_created'],
             $account,
         );
     }
@@ -108,7 +109,7 @@ class WebhookListener extends BaseListener
             return;
         }
 
-        $this->deliverAccountWebhooks([
+        $this->deliverAccountWebhooks('contact_updated', fn () => [
             ...ContactResource::webhookData($contact),
             'event' => 'contact_updated',
             'changed_attributes' => $changedAttributes,
@@ -125,7 +126,7 @@ class WebhookListener extends BaseListener
             return;
         }
 
-        $this->deliverAccountWebhooks([
+        $this->deliverAccountWebhooks($eventName, fn () => [
             ...InboxResource::eventWebhookData($inbox),
             'event' => $eventName,
             ...($withChangedAttributes ? ['changed_attributes' => $changedAttributes] : []),
@@ -138,7 +139,7 @@ class WebhookListener extends BaseListener
         $conversation = $event->data['conversation'];
         $user = $event->data['user'] ?? null;
 
-        $this->deliverWebhookPayloads([
+        $this->deliverWebhookPayloads($eventName, fn () => [
             'event' => $eventName,
             'user' => match (true) {
                 $user instanceof User => UserResource::webhookData($user),
@@ -151,30 +152,43 @@ class WebhookListener extends BaseListener
         ], $conversation->inbox);
     }
 
-    private function deliverWebhookPayloads(array $payload, Inbox $inbox): void
+    /**
+     * Payload chỉ được dựng khi có ít nhất một nơi nhận: dựng payload hội thoại/tin
+     * tốn vài chục truy vấn, còn phần lớn account không đăng ký webhook nào.
+     *
+     * @param  Closure(): array<string, mixed>  $buildPayload
+     */
+    private function deliverWebhookPayloads(string $eventName, Closure $buildPayload, Inbox $inbox): void
     {
-        $this->deliverAccountWebhooks($payload, $inbox->account);
-        $this->deliverApiInboxWebhooks($payload, $inbox);
+        $payload = null;
+        $builtOnce = function () use (&$payload, $buildPayload): array {
+            return $payload ??= $buildPayload();
+        };
+
+        $this->deliverAccountWebhooks($eventName, $builtOnce, $inbox->account);
+        $this->deliverApiInboxWebhooks($builtOnce, $inbox);
     }
 
-    private function deliverAccountWebhooks(array $payload, Account $account): void
+    /** @param Closure(): array<string, mixed> $buildPayload */
+    private function deliverAccountWebhooks(string $eventName, Closure $buildPayload, Account $account): void
     {
         if (! $account->apiAndWebhooksEnabled()) {
             return;
         }
 
         $account->webhooks()->accountType()->get()
-            ->filter(fn (Webhook $webhook) => $webhook->isSubscribedTo($payload['event']))
+            ->filter(fn (Webhook $webhook) => $webhook->isSubscribedTo($eventName))
             ->each(fn (Webhook $webhook) => WebhookJob::dispatch(
                 $webhook->url,
-                $payload,
+                $buildPayload(),
                 Trigger::TYPE_ACCOUNT,
                 $webhook->secret,
                 (string) Str::uuid(),
             ));
     }
 
-    private function deliverApiInboxWebhooks(array $payload, Inbox $inbox): void
+    /** @param Closure(): array<string, mixed> $buildPayload */
+    private function deliverApiInboxWebhooks(Closure $buildPayload, Inbox $inbox): void
     {
         $channel = $inbox->channel;
 
@@ -184,7 +198,7 @@ class WebhookListener extends BaseListener
 
         WebhookJob::dispatch(
             $channel->webhook_url,
-            $payload,
+            $buildPayload(),
             Trigger::TYPE_API_INBOX,
             $channel->secret,
             (string) Str::uuid(),

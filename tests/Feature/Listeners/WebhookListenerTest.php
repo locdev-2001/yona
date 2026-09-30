@@ -3,6 +3,7 @@
 use App\Events\DomainEvent;
 use App\Events\EventType;
 use App\Jobs\WebhookJob;
+use App\Listeners\WebhookListener;
 use App\Models\Account;
 use App\Models\Contact;
 use App\Models\ContactInbox;
@@ -13,6 +14,7 @@ use App\Models\User;
 use App\Models\Webhook;
 use App\Services\Webhooks\Trigger;
 use Illuminate\Support\Facades\Queue;
+use Tests\Support\QueryCounter;
 
 // Port từ spec/listeners/webhook_listener_spec.rb.
 
@@ -137,4 +139,18 @@ it('gửi thêm webhook của kênh API khi inbox có webhook_url', function () 
         fn (WebhookJob $job) => $job->webhookType === Trigger::TYPE_API_INBOX
             && $job->url === 'https://example.com/channel'
     );
+});
+
+// Không ai nhận thì không dựng payload: dựng payload hội thoại tốn vài chục truy vấn
+// mà phần lớn account không có webhook nào — mỗi sự kiện gõ phím, tin mới đều trả.
+it('không dựng payload khi sự kiện không có nơi nhận', function () {
+    $this->webhook->delete();
+    $conversation = $this->conversation->fresh();
+
+    $counter = QueryCounter::measure(fn () => app(WebhookListener::class)->handle(
+        new DomainEvent(EventType::CONVERSATION_UPDATED, ['conversation' => $conversation, 'changed_attributes' => []])
+    ));
+
+    expect(collect($counter->statements())->filter(fn (string $sql) => str_contains($sql, '"messages"')))->toBeEmpty();
+    Queue::assertNotPushed(WebhookJob::class);
 });

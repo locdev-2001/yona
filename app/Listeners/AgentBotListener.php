@@ -13,6 +13,7 @@ use App\Models\Conversation;
 use App\Models\Inbox;
 use App\Models\Message;
 use App\Services\Webhooks\Trigger;
+use Closure;
 use Illuminate\Support\Str;
 
 // Đẩy sự kiện tới
@@ -38,13 +39,11 @@ class AgentBotListener extends BaseListener
         /** @var Conversation $conversation */
         [$conversation] = $this->extractConversationAndAccount($event);
 
-        $payload = [
+        $this->dispatchToBots($conversation->inbox, fn () => [
             ...ConversationResource::webhookData($conversation),
             'event' => $eventName,
             ...($withChangedAttributes ? ['changed_attributes' => $this->extractChangedAttributes($event)] : []),
-        ];
-
-        $this->dispatchToBots($conversation->inbox, $payload, $conversation);
+        ], $conversation);
     }
 
     private function messageEvent(DomainEvent $event, string $eventName): void
@@ -58,7 +57,7 @@ class AgentBotListener extends BaseListener
 
         $this->dispatchToBots(
             $message->inbox,
-            [...MessageResource::webhookData($message), 'event' => $eventName],
+            fn () => [...MessageResource::webhookData($message), 'event' => $eventName],
             $message->conversation,
         );
     }
@@ -68,7 +67,7 @@ class AgentBotListener extends BaseListener
         /** @var ContactInbox $contactInbox */
         $contactInbox = $event->data['contact_inbox'];
 
-        $this->dispatchToBots($contactInbox->inbox, [
+        $this->dispatchToBots($contactInbox->inbox, fn () => [
             ...$contactInbox->webhookData(),
             'event' => 'webwidget_triggered',
             'event_info' => $event->data['event_info'] ?? null,
@@ -92,8 +91,15 @@ class AgentBotListener extends BaseListener
         return collect($bots)->unique('id')->values()->all();
     }
 
-    private function dispatchToBots(Inbox $inbox, array $payload, ?Conversation $conversation = null): void
+    /**
+     * Payload chỉ dựng khi có bot nhận — phần lớn hộp thư không gắn bot nào.
+     *
+     * @param  Closure(): array<string, mixed>  $buildPayload
+     */
+    private function dispatchToBots(Inbox $inbox, Closure $buildPayload, ?Conversation $conversation = null): void
     {
+        $payload = null;
+
         foreach ($this->agentBotsFor($inbox, $conversation) as $agentBot) {
             if (blank($agentBot->outgoing_url)) {
                 continue;
@@ -101,7 +107,7 @@ class AgentBotListener extends BaseListener
 
             WebhookJob::dispatch(
                 $agentBot->outgoing_url,
-                $payload,
+                $payload ??= $buildPayload(),
                 Trigger::TYPE_AGENT_BOT,
                 $agentBot->secret,
                 (string) Str::uuid(),
