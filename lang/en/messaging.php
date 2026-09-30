@@ -28,6 +28,7 @@ return [
     ],
     'settings' => [
         'invalid_channel' => 'Invalid channel: check the channel type and its link or phone number.',
+        'invalid_alert_tone' => 'This alert sound is not in the list.',
     ],
     'preview' => [
         'deleted' => 'Message recalled',

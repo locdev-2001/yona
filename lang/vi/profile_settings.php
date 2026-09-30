@@ -185,6 +185,15 @@ return [
             'PUSH_PERMISSION_REVOKED_BANNER' => 'Trình duyệt này đã tắt quyền hiện thông báo của Yona nên bạn không còn nhận thông báo đẩy ở đây.',
             'PUSH_PERMISSION_REVOKED_ENABLE' => 'Bật lại',
             'PUSH_PERMISSION_REVOKED_TURN_OFF' => 'Tắt thông báo đẩy',
+            'SOUND' => [
+                'TITLE' => 'Âm báo khi khách nhắn tới',
+                'NOTE' => 'Kêu một tiếng khi có tin mới lúc bạn đang mở Yona trên trình duyệt.',
+                'SCOPE' => 'Kêu với',
+                'SCOPE_ALL' => 'Mọi tin nhắn mới',
+                'SCOPE_ASSIGNED' => 'Chỉ hội thoại giao cho tôi',
+                'ONLY_WHEN_HIDDEN' => 'Chỉ kêu khi tôi không mở tab Yona',
+                'ONLY_WHEN_HIDDEN_NOTE' => 'Đang xem Yona thì không kêu. Mở nhiều tab cùng lúc thì chỉ một tab kêu.',
+            ],
         ],
         'API' => [
             'UPDATE_SUCCESS' => 'Tùy chọn thông báo của bạn đã được cập nhật thành công',

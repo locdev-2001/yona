@@ -1,0 +1,4 @@
+{
+    "tones": ["ding", "bell", "chime", "drumroll", "magic", "ping", "ringtone"],
+    "default": "ding"
+}

@@ -287,6 +287,19 @@ const messages: Record<string, unknown> = {
             "PLACEHOLDER": "Chọn phạm vi ngày"
         }
     },
+    "ALERT_SOUND": {
+        "TONE_LABEL": "Âm báo",
+        "PREVIEW": "Nghe thử",
+        "TONES": {
+            "DING": "Ding",
+            "BELL": "Chuông",
+            "CHIME": "Chuông gió",
+            "DRUMROLL": "Trống dồn",
+            "MAGIC": "Phép màu",
+            "PING": "Ping",
+            "RINGTONE": "Nhạc chuông"
+        }
+    },
     "APP_GLOBAL": {
         "TRIAL_MESSAGE": "ngày dùng thử còn lại.",
         "TRAIL_BUTTON": "Mua Ngay",
@@ -8265,7 +8278,8 @@ const messages: Record<string, unknown> = {
             "duplicate_payment_account": "Ngân hàng và số tài khoản này đã được thêm."
         },
         "settings": {
-            "invalid_channel": "Kênh khác không hợp lệ: kiểm tra loại kênh và đường dẫn hoặc số điện thoại."
+            "invalid_channel": "Kênh khác không hợp lệ: kiểm tra loại kênh và đường dẫn hoặc số điện thoại.",
+            "invalid_alert_tone": "Âm báo không có trong danh sách."
         },
         "preview": {
             "deleted": "Tin nhắn đã thu hồi",
@@ -8993,7 +9007,16 @@ const messages: Record<string, unknown> = {
                 "PUSH_PERMISSION_DENIED": "Trình duyệt đang chặn thông báo của trang này. Hãy cho phép thông báo trong cài đặt trang của trình duyệt rồi bật lại.",
                 "PUSH_PERMISSION_REVOKED_BANNER": "Trình duyệt này đã tắt quyền hiện thông báo của Yona nên bạn không còn nhận thông báo đẩy ở đây.",
                 "PUSH_PERMISSION_REVOKED_ENABLE": "Bật lại",
-                "PUSH_PERMISSION_REVOKED_TURN_OFF": "Tắt thông báo đẩy"
+                "PUSH_PERMISSION_REVOKED_TURN_OFF": "Tắt thông báo đẩy",
+                "SOUND": {
+                    "TITLE": "Âm báo khi khách nhắn tới",
+                    "NOTE": "Kêu một tiếng khi có tin mới lúc bạn đang mở Yona trên trình duyệt.",
+                    "SCOPE": "Kêu với",
+                    "SCOPE_ALL": "Mọi tin nhắn mới",
+                    "SCOPE_ASSIGNED": "Chỉ hội thoại giao cho tôi",
+                    "ONLY_WHEN_HIDDEN": "Chỉ kêu khi tôi không mở tab Yona",
+                    "ONLY_WHEN_HIDDEN_NOTE": "Đang xem Yona thì không kêu. Mở nhiều tab cùng lúc thì chỉ một tab kêu."
+                }
             },
             "API": {
                 "UPDATE_SUCCESS": "Tùy chọn thông báo của bạn đã được cập nhật thành công",
@@ -10681,7 +10704,9 @@ const messages: Record<string, unknown> = {
             "POSITION_RIGHT": "Phải",
             "GREETING_LABEL": "Lời chào trang chủ",
             "GREETING_HINT": "Hiện ngay dưới tên shop ở màn trang chủ widget.",
-            "GREETING_PLACEHOLDER": "Chúng tôi có thể giúp gì?"
+            "GREETING_PLACEHOLDER": "Chúng tôi có thể giúp gì?",
+            "SOUND_LABEL": "Âm báo tin mới",
+            "SOUND_HINT": "Kêu trên website của bạn khi shop trả lời lúc khách đang mở trang."
         },
         "HOME": {
             "TITLE": "Trang chủ",

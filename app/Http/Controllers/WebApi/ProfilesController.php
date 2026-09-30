@@ -5,6 +5,7 @@ namespace App\Http\Controllers\WebApi;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Notifications\ConfirmationInstructions;
+use App\Support\AlertSound\AgentAlertPreference;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -46,6 +47,8 @@ class ProfilesController extends Controller
         $user->fill(collect($data)->only(['name', 'display_name', 'message_signature'])->all());
 
         if (array_key_exists('ui_settings', $data)) {
+            // Kiểm riêng: luật lồng trong cùng validate() làm validated() bỏ mất các khoá ui_settings khác.
+            $request->validate(AgentAlertPreference::rules());
             $user->ui_settings = array_merge($user->ui_settings ?? [], $data['ui_settings']);
         }
 

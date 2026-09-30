@@ -163,6 +163,35 @@ describe('PUT /api/v1/profile', function () {
             ->toBe(['font_size' => '18px', 'editor_message_key' => 'enter']);
     });
 
+    it('lưu tuỳ chọn âm báo tin mới vào ui_settings, giữ nguyên các tuỳ chọn khác', function () {
+        $user = User::factory()->create(['ui_settings' => ['font_size' => '18px']]);
+        $preference = ['enabled' => true, 'tone' => 'chime', 'scope' => 'assigned', 'only_when_hidden' => true];
+
+        $this->actingAs($user)
+            ->putJson('/api/v1/profile', ['ui_settings' => ['notification_sound' => $preference]])
+            ->assertOk()
+            ->assertJsonPath('ui_settings.notification_sound.tone', 'chime')
+            ->assertJsonPath('ui_settings.font_size', '18px');
+
+        expect($user->fresh()->ui_settings['notification_sound'])->toEqual($preference);
+    });
+
+    it('từ chối tuỳ chọn âm báo sai', function (array $preference, string $invalidField) {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->putJson('/api/v1/profile', ['ui_settings' => ['notification_sound' => $preference]])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors("ui_settings.notification_sound{$invalidField}");
+
+        expect($user->fresh()->ui_settings)->toBeEmpty();
+    })->with([
+        'âm không có trong danh sách' => [['enabled' => true, 'tone' => 'coi-xe', 'scope' => 'all', 'only_when_hidden' => false], '.tone'],
+        'phạm vi lạ' => [['enabled' => true, 'tone' => 'ding', 'scope' => 'team', 'only_when_hidden' => false], '.scope'],
+        'thiếu cờ bật/tắt' => [['tone' => 'ding', 'scope' => 'all', 'only_when_hidden' => false], '.enabled'],
+        'khoá lạ' => [['enabled' => true, 'tone' => 'ding', 'scope' => 'all', 'only_when_hidden' => false, 'volume' => 11], ''],
+    ]);
+
     it('populates the unconfirmed email and sends confirmation to the new address', function () {
         Notification::fake();
         $user = User::factory()->create(['email' => 'old@example.com']);

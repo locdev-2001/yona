@@ -287,6 +287,19 @@ const messages: Record<string, unknown> = {
             "PLACEHOLDER": "Select date range"
         }
     },
+    "ALERT_SOUND": {
+        "TONE_LABEL": "Sound",
+        "PREVIEW": "Preview",
+        "TONES": {
+            "DING": "Ding",
+            "BELL": "Bell",
+            "CHIME": "Chime",
+            "DRUMROLL": "Drumroll",
+            "MAGIC": "Magic",
+            "PING": "Ping",
+            "RINGTONE": "Ringtone"
+        }
+    },
     "APP_GLOBAL": {
         "TRIAL_MESSAGE": "days trial remaining.",
         "TRAIL_BUTTON": "Buy Now",
@@ -8265,7 +8278,8 @@ const messages: Record<string, unknown> = {
             "duplicate_payment_account": "This bank and account number were already added."
         },
         "settings": {
-            "invalid_channel": "Invalid channel: check the channel type and its link or phone number."
+            "invalid_channel": "Invalid channel: check the channel type and its link or phone number.",
+            "invalid_alert_tone": "This alert sound is not in the list."
         },
         "preview": {
             "deleted": "Message recalled",
@@ -8993,7 +9007,16 @@ const messages: Record<string, unknown> = {
                 "PUSH_PERMISSION_DENIED": "Notifications are blocked for this site. Allow them in your browser’s site settings, then turn this on again.",
                 "PUSH_PERMISSION_REVOKED_BANNER": "This browser no longer lets Yona show notifications, so push notifications have stopped here.",
                 "PUSH_PERMISSION_REVOKED_ENABLE": "Turn back on",
-                "PUSH_PERMISSION_REVOKED_TURN_OFF": "Turn off push notifications"
+                "PUSH_PERMISSION_REVOKED_TURN_OFF": "Turn off push notifications",
+                "SOUND": {
+                    "TITLE": "Sound when a customer messages",
+                    "NOTE": "Plays a sound for new messages while Yona is open in your browser.",
+                    "SCOPE": "Play for",
+                    "SCOPE_ALL": "Every new message",
+                    "SCOPE_ASSIGNED": "Only conversations assigned to me",
+                    "ONLY_WHEN_HIDDEN": "Only when I am not looking at Yona",
+                    "ONLY_WHEN_HIDDEN_NOTE": "No sound while a Yona tab is in front of you. With several tabs open, only one plays."
+                }
             },
             "API": {
                 "UPDATE_SUCCESS": "Your notification preferences are updated successfully",
@@ -10681,7 +10704,9 @@ const messages: Record<string, unknown> = {
             "POSITION_RIGHT": "Right",
             "GREETING_LABEL": "Home greeting",
             "GREETING_HINT": "Shown right under the shop name on the widget home screen.",
-            "GREETING_PLACEHOLDER": "How can we help?"
+            "GREETING_PLACEHOLDER": "How can we help?",
+            "SOUND_LABEL": "New message sound",
+            "SOUND_HINT": "Plays on your website when the shop replies while the visitor has the page open."
         },
         "HOME": {
             "TITLE": "Home",

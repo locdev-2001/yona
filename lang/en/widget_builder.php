@@ -54,6 +54,8 @@ return [
         'GREETING_LABEL' => 'Home greeting',
         'GREETING_HINT' => 'Shown right under the shop name on the widget home screen.',
         'GREETING_PLACEHOLDER' => 'How can we help?',
+        'SOUND_LABEL' => 'New message sound',
+        'SOUND_HINT' => 'Plays on your website when the shop replies while the visitor has the page open.',
     ],
 
     'HOME' => [

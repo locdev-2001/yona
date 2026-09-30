@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { usePage } from '@inertiajs/react';
 
 import NetworkNotification from 'dashboard/components/NetworkNotification';
+import NewMessageAlert from 'dashboard/alertSound/NewMessageAlert';
 import type { DashboardPageProps } from 'dashboard/types';
 import ActionCableConnector from './ActionCableConnector';
 import ReconnectService from './ReconnectService';
@@ -46,5 +47,10 @@ export default function RealtimeProvider() {
         ensureConnected({ accountId, userId, pubsubToken });
     }, [accountId, userId, pubsubToken]);
 
-    return <NetworkNotification />;
+    return (
+        <>
+            <NetworkNotification />
+            <NewMessageAlert />
+        </>
+    );
 }

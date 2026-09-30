@@ -18,16 +18,21 @@ import UserBasicDetails from './UserBasicDetails';
 import MessageSignature from './MessageSignature';
 import ChangePassword from './ChangePassword';
 import NotificationPreferences from './NotificationPreferences';
+import AlertSoundPreferences from './AlertSoundPreferences';
 import MfaSettingsCard from './MfaSettingsCard';
 import ActiveSessions from './ActiveSessions';
 import FontSize from './FontSize';
 import UserLanguageSelect from './UserLanguageSelect';
 import type { UISettings } from 'dashboard/composables/useUISettings';
+import {
+    ALERT_PREFERENCE_UI_SETTINGS_KEY,
+    agentAlertPreferenceOf,
+    type AgentAlertPreference,
+} from 'dashboard/alertSound/preference';
 import type { DashboardPageProps } from '../../types';
 
-// Port từ dashboard/routes/dashboard/settings/profile/Index.vue —
-// Audio alerts (chờ tệp âm thanh) / Access token vào theo roadmap;
-// các section còn lại đủ.
+// Port từ dashboard/routes/dashboard/settings/profile/Index.vue — Access token
+// vào theo roadmap; các section còn lại đủ.
 const HOT_KEYS = [
     {
         key: 'enter' as const,
@@ -153,6 +158,17 @@ export default function ProfileSettingsIndex() {
         }
     };
 
+    const updateAlertSound = async (preference: AgentAlertPreference) => {
+        try {
+            await updateUISettings({ [ALERT_PREFERENCE_UI_SETTINGS_KEY]: preference });
+            useAlert(t('PROFILE_SETTINGS.FORM.API.UPDATE_SUCCESS'));
+            // Bộ nghe tin mới đọc tuỳ chọn từ props `auth` dùng chung của mọi trang.
+            router.reload({ only: ['auth'] });
+        } catch (error) {
+            useAlert(parseApiErrorMessage(error) || t('PROFILE_SETTINGS.FORM.API.UPDATE_ERROR'));
+        }
+    };
+
     const updateLanguage = async (locale: string) => {
         try {
             await updateUISettings({ locale: locale || null });
@@ -259,7 +275,13 @@ export default function ProfileSettingsIndex() {
                         <ActiveSessions />
                     </SectionLayout>
                     <SectionLayout withBorder title={t('PROFILE_SETTINGS.FORM.NOTIFICATIONS.TITLE')}>
-                        <NotificationPreferences />
+                        <div className="flex flex-col gap-6">
+                            <NotificationPreferences />
+                            <AlertSoundPreferences
+                                value={agentAlertPreferenceOf(uiSettings)}
+                                onChange={preference => void updateAlertSound(preference)}
+                            />
+                        </div>
                     </SectionLayout>
                 </div>
             </SettingsWrapper>

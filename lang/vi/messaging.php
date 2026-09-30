@@ -28,6 +28,7 @@ return [
     ],
     'settings' => [
         'invalid_channel' => 'Kênh khác không hợp lệ: kiểm tra loại kênh và đường dẫn hoặc số điện thoại.',
+        'invalid_alert_tone' => 'Âm báo không có trong danh sách.',
     ],
     'preview' => [
         'deleted' => 'Tin nhắn đã thu hồi',

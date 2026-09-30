@@ -183,6 +183,15 @@ return [
             'PUSH_PERMISSION_REVOKED_BANNER' => 'This browser no longer lets Yona show notifications, so push notifications have stopped here.',
             'PUSH_PERMISSION_REVOKED_ENABLE' => 'Turn back on',
             'PUSH_PERMISSION_REVOKED_TURN_OFF' => 'Turn off push notifications',
+            'SOUND' => [
+                'TITLE' => 'Sound when a customer messages',
+                'NOTE' => 'Plays a sound for new messages while Yona is open in your browser.',
+                'SCOPE' => 'Play for',
+                'SCOPE_ALL' => 'Every new message',
+                'SCOPE_ASSIGNED' => 'Only conversations assigned to me',
+                'ONLY_WHEN_HIDDEN' => 'Only when I am not looking at Yona',
+                'ONLY_WHEN_HIDDEN_NOTE' => 'No sound while a Yona tab is in front of you. With several tabs open, only one plays.',
+            ],
         ],
         'API' => [
             'UPDATE_SUCCESS' => 'Your notification preferences are updated successfully',

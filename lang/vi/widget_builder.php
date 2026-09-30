@@ -54,6 +54,8 @@ return [
         'GREETING_LABEL' => 'Lời chào trang chủ',
         'GREETING_HINT' => 'Hiện ngay dưới tên shop ở màn trang chủ widget.',
         'GREETING_PLACEHOLDER' => 'Chúng tôi có thể giúp gì?',
+        'SOUND_LABEL' => 'Âm báo tin mới',
+        'SOUND_HINT' => 'Kêu trên website của bạn khi shop trả lời lúc khách đang mở trang.',
     ],
 
     'HOME' => [
