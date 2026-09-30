@@ -58,12 +58,30 @@ it('không cho xoá file log qua giao diện', function () {
     expect(Gate::forUser(SuperAdmin::factory()->create())->allows('deleteLogFile'))->toBeFalse();
 });
 
-it('giữ đúng thứ tự tier khi Horizon nuôi worker', function () {
-    $supervisor = config('horizon.defaults.supervisor-1');
+it('giữ đúng thứ tự tier khi Horizon nuôi worker, tệp gửi ở pool riêng', function () {
+    $tiers = require config_path('queue_tiers.php');
+    $supervisors = config('horizon.defaults');
 
-    expect($supervisor['queue'])->toBe(require config_path('queue_tiers.php'))
-        ->and($supervisor['balance'])->toBeFalse()
-        ->and($supervisor['timeout'])->toBeLessThan(config('queue.connections.redis.retry_after'));
+    expect($supervisors['supervisor-1']['queue'])->toBe(array_values(array_diff($tiers, ['media'])))
+        ->and($supervisors['supervisor-realtime']['queue'])->toBe(['critical'])
+        ->and($supervisors['supervisor-media']['queue'])->toBe(['media'])
+        ->and(array_diff($tiers, ...array_column($supervisors, 'queue')))->toBeEmpty();
+
+    foreach ($supervisors as $supervisor) {
+        expect($supervisor['balance'])->toBeFalse()
+            ->and($supervisor['timeout'])->toBeLessThan(config('queue.connections.redis.retry_after'));
+    }
+});
+
+// balance tắt thì Horizon hạ pool về minProcesses khi rảnh và chỉ thêm một process
+// mỗi 3 giây khi có việc: pool phải cố định để worker luôn đủ và ấm.
+it('mọi pool worker production cố định số process', function () {
+    $production = config('horizon.environments.production');
+
+    foreach (['supervisor-realtime', 'supervisor-1', 'supervisor-media'] as $name) {
+        expect($production[$name]['minProcesses'])->toBe($production[$name]['maxProcesses'])
+            ->and($production[$name]['maxProcesses'])->toBeGreaterThanOrEqual(1);
+    }
 });
 
 // Thẻ Pulse nạp lười (request Livewire riêng sau khi trang mở) và nhớ kết quả

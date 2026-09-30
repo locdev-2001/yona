@@ -337,14 +337,23 @@ it('gửi MỌI đính kèm của một tin và lưu đủ mọi source_id', fun
         ->and($message->status)->not->toBe(Message::STATUSES['failed']);
 });
 
-it('tin có tệp đã lưu được đẩy ra kênh ngay ở tier high, không đứng chờ trễ cố định', function () {
+it('tin có tệp đã lưu được đẩy ngay vào hàng đợi media riêng, không đứng chờ trễ cố định', function () {
     Queue::fake();
 
     zaloOutgoingWithFiles($this->conversation, [
         ['path' => 'zalo/anh.jpg', 'filename' => 'anh.jpg', 'content_type' => 'image/jpeg', 'file_type' => Attachment::FILE_TYPE_IMAGE],
     ]);
 
-    Queue::assertPushedOn('high', SendReplyJob::class, fn (SendReplyJob $job) => $job->delay === null);
+    Queue::assertPushedOn(SendReplyJob::MEDIA_QUEUE, SendReplyJob::class, fn (SendReplyJob $job) => $job->delay === null);
+});
+
+it('tin chữ đi hàng đợi high, không xếp sau tệp đang gửi ở hàng media', function () {
+    Queue::fake();
+
+    zaloOutgoing($this->conversation);
+
+    Queue::assertPushed(SendReplyJob::class, fn (SendReplyJob $job) => $job->queue === SendReplyJob::TEXT_QUEUE);
+    Queue::assertNotPushed(SendReplyJob::class, fn (SendReplyJob $job) => $job->queue === SendReplyJob::MEDIA_QUEUE);
 });
 
 it('ghi một dòng log thời gian từng chặng và gửi kèm message_id để bridge nối log', function () {

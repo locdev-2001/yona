@@ -1052,14 +1052,30 @@ stdout_logfile=/www/wwwroot/yona.vn/storage/logs/yona-horizon.log
 ```
 
 Supervisor chỉ nuôi **một** process: Horizon là master, nó tự đẻ worker con theo
-`config/horizon.php`. Số worker tối đa đặt bằng `HORIZON_MAX_PROCESSES` trong
-`.env` (mặc định 4), không còn `DEPLOY_QUEUE_PROCESSES`.
+`config/horizon.php`, chia ba pool cố định (số process không co giãn):
+
+| Pool (supervisor Horizon) | Hàng đợi | Biến `.env` | Mặc định |
+|---|---|---|---|
+| `supervisor-realtime` | `critical` (phát realtime, tắt/bật "đang nhập…") | `HORIZON_REALTIME_PROCESSES` | 2 |
+| `supervisor-1` | mọi tier còn lại theo thứ tự, `critical` đứng đầu | `HORIZON_MAX_PROCESSES` | 4 |
+| `supervisor-media` | `media` (tin gửi kèm tệp, tới 120s mỗi lượt) | `HORIZON_MEDIA_PROCESSES` | 2 |
+| `supervisor-stickers` | `stickers` | — | 1 |
+
+Mỗi worker tốn khoảng 60–100 MB RAM; mặc định là 9 process. Máy ít RAM thì hạ
+`HORIZON_MAX_PROCESSES` trước, giữ realtime ≥ 1 và media ≥ 1.
+
+Pool phải **cố định** (`minProcesses = maxProcesses`): khi `balance` tắt, Horizon
+hạ pool về `minProcesses` lúc hàng đợi rỗng rồi chỉ thêm **một** process mỗi 3 giây
+khi có việc, và process mới chạy việc đầu tiên chậm vì nạp lại toàn bộ mã. Cấu
+hình cũ (`minProcesses` mặc định 1, tối đa 4) vì thế co về **một** worker cho mọi
+việc mỗi lần hàng đợi rỗng (`vendor/laravel/horizon/src/AutoScaler.php`).
 
 Danh sách tier queue nằm ở `config/queue_tiers.php` — Horizon (production) và
 `Makefile` (dev) đọc cùng file đó, sửa một chỗ là đủ. `balance` để `false` nên
 worker quét tuần tự từ `critical` xuống `purgable`, đúng như `queue:work
 --queue=...` trước đây; bật balance sẽ chia process theo hàng đợi và **mất ưu
-tiên tuyệt đối**.
+tiên tuyệt đối**. Tin nào đi `media` hay `high` chỉ do `SendReplyJob::queueFor`
+quyết định (có đính kèm = `media`).
 
 > **Bất biến của hàng đợi, đừng phá:** `media_timeout` của kênh Zalo (120s,
 > `config/zalo.php`) < `timeout` của worker (150s, `config/horizon.php`) <

@@ -38,11 +38,21 @@ class SendReplyJob extends ApplicationJob
         'Channel::Zalo' => SendOnZaloService::class,
     ];
 
-    // Tier high: người gửi đang nhìn bong bóng chờ tick, không xếp sau
-    // thông báo/phân công ở tier default.
+    /** Tin chữ: người gửi đang nhìn bong bóng chờ tick, không xếp sau thông báo/phân công. */
+    public const TEXT_QUEUE = 'high';
+
+    /** Tin có tệp: tải và đẩy tệp tới 120s, chạy ở pool worker riêng (config/horizon.php). */
+    public const MEDIA_QUEUE = 'media';
+
     public function __construct(public readonly Message $message)
     {
-        $this->onQueue('high');
+        $this->onQueue(self::queueFor($message));
+    }
+
+    /** Chỗ DUY NHẤT quyết định tin đi hàng đợi nào. */
+    public static function queueFor(Message $message): string
+    {
+        return $message->attachments->isEmpty() ? self::TEXT_QUEUE : self::MEDIA_QUEUE;
     }
 
     public function handle(): void

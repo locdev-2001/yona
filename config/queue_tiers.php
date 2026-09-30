@@ -7,9 +7,13 @@
 // "require"` đọc được từ Makefile và deploy.sh mà không cần bootstrap Laravel.
 // Ba nơi đọc: config/horizon.php (worker production), Makefile (queue:listen
 // dev), deploy.sh (kiểm tra cấu hình).
+//
+// `media` là tin gửi kèm tệp (SendReplyJob::queueFor): production có supervisor
+// riêng cho nó (config/horizon.php), dev vẫn chạy chung một worker theo thứ tự này.
 return [
     'critical',
     'high',
+    'media',
     'medium',
     'default',
     'mailers',
