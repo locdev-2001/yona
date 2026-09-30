@@ -15,6 +15,7 @@ use App\Http\Controllers\Platform\Api\V1\AccountUsersController as PlatformAccou
 use App\Http\Controllers\Platform\Api\V1\AgentBotsController as PlatformAgentBotsController;
 use App\Http\Controllers\Platform\Api\V1\UsersController as PlatformUsersController;
 use App\Http\Controllers\Public\AnalyticsProxyController;
+use App\Http\Controllers\RequestSigningKeysController;
 use App\Http\Controllers\Widget\BroadcastingAuthController;
 use App\Http\Controllers\Widget\CampaignsController;
 use App\Http\Controllers\Widget\ConfigsController;
@@ -34,6 +35,8 @@ use App\Http\Middleware\EnsureWidgetContact;
 use App\Http\Middleware\ResolveOrCreateWidgetContact;
 use App\Http\Middleware\ResolveWidgetChannel;
 use App\Http\Middleware\VerifyZaloBridgeSecret;
+use App\Http\RateLimiting\MessagingRateLimiters;
+use App\Http\RequestSigning\ProtectedRoutes;
 use Illuminate\Support\Facades\Route;
 
 // Mặt tiền api: API cho BÊN NGOÀI gọi vào, xác thực bằng token, hợp đồng công
@@ -53,27 +56,34 @@ Route::middleware(ResolveWidgetChannel::class)
         Route::post('/events', [EventsController::class, 'store']);
         // Tab Tin nhắn: khách mới (chưa nhắn tin nào, chưa có contact) thấy danh sách rỗng, không 404.
         Route::get('/conversations/list', [ConversationsController::class, 'list']);
+        Route::post('/request_signing_key', [RequestSigningKeysController::class, 'store'])->defaults('surface', 'widget');
 
         // Hành động THẬT đầu tiên của khách — dựng contact_inbox lazy nếu chưa có.
         Route::middleware(ResolveOrCreateWidgetContact::class)->group(function () {
-            Route::post('/messages', [MessagesController::class, 'store']);
-            Route::post('/conversations', [ConversationsController::class, 'store']);
+            // Nhắn tin: ký + mã hoá + giới hạn nhịp theo khách (docs/system-architecture.md §10).
+            Route::middleware([ProtectedRoutes::middlewareFor('widget'), 'throttle:'.MessagingRateLimiters::WIDGET_WRITES])->group(function () {
+                Route::post('/messages', [MessagesController::class, 'store']);
+                Route::post('/conversations', [ConversationsController::class, 'store']);
+            });
             Route::match(['put', 'patch'], '/contact', [ContactsController::class, 'update']);
             Route::match(['put', 'patch'], '/contact/set_user', [ContactsController::class, 'setUser']);
         });
 
         Route::middleware(EnsureWidgetContact::class)->group(function () {
-            Route::post('/direct_uploads', [DirectUploadsController::class, 'store']);
+            Route::post('/direct_uploads', [DirectUploadsController::class, 'store'])->middleware('throttle:'.MessagingRateLimiters::WIDGET_WRITES);
             Route::post('/broadcasting/auth', [BroadcastingAuthController::class, 'authenticate']);
             Route::post('/presence', [PresenceController::class, 'update']);
 
-            Route::get('/messages', [MessagesController::class, 'index']);
-            Route::match(['put', 'patch'], '/messages/{messageId}', [MessagesController::class, 'update'])->whereNumber('messageId');
-            Route::delete('/messages/{messageId}', [MessagesController::class, 'destroy'])->whereNumber('messageId');
-            Route::post('/messages/{messageId}/reactions', [ReactionsController::class, 'store'])->whereNumber('messageId');
-            Route::delete('/messages/{messageId}/reactions', [ReactionsController::class, 'destroy'])->whereNumber('messageId');
-            // Sheet trong widget xin URL trang công khai thay vì tự ghép.
-            Route::post('/messages/{messageId}/flow', [MessageFlowLinksController::class, 'store'])->whereNumber('messageId');
+            Route::get('/messages', [MessagesController::class, 'index'])
+                ->middleware([ProtectedRoutes::middlewareFor('widget'), 'throttle:'.MessagingRateLimiters::WIDGET_READS]);
+            Route::middleware([ProtectedRoutes::middlewareFor('widget'), 'throttle:'.MessagingRateLimiters::WIDGET_WRITES])->group(function () {
+                Route::match(['put', 'patch'], '/messages/{messageId}', [MessagesController::class, 'update'])->whereNumber('messageId');
+                Route::delete('/messages/{messageId}', [MessagesController::class, 'destroy'])->whereNumber('messageId');
+                Route::post('/messages/{messageId}/reactions', [ReactionsController::class, 'store'])->whereNumber('messageId');
+                Route::delete('/messages/{messageId}/reactions', [ReactionsController::class, 'destroy'])->whereNumber('messageId');
+                // Sheet trong widget xin URL trang công khai thay vì tự ghép.
+                Route::post('/messages/{messageId}/flow', [MessageFlowLinksController::class, 'store'])->whereNumber('messageId');
+            });
 
             Route::get('/conversations', [ConversationsController::class, 'index']);
             Route::post('/conversations/destroy_custom_attributes', [ConversationsController::class, 'destroyCustomAttributes']);
@@ -93,7 +103,8 @@ Route::middleware(ResolveWidgetChannel::class)
 
 // F7 Platform API (/platform/api/v1/*) — BEGIN (agent f7 sở hữu khối này)
 // Platform API: xác thực bằng header api_access_token của một PlatformApp, không session/CSRF.
-Route::middleware(AuthenticatePlatformApp::class)
+// Không mã hoá (đối tác gọi server-to-server), chỉ giới hạn nhịp theo PlatformApp.
+Route::middleware([AuthenticatePlatformApp::class, 'throttle:'.MessagingRateLimiters::PLATFORM_API])
     ->prefix('/platform/api/v1')
     ->group(function () {
         Route::get('/users/{user}/login', [PlatformUsersController::class, 'login'])->whereNumber('user');

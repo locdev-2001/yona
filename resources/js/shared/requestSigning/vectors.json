@@ -1,0 +1,75 @@
+{
+    "encryption": {
+        "key": "ASNFZ4mrze8BI0VniavN7wEjRWeJq83vASNFZ4mrze8=",
+        "iv": "AAECAwQFBgcICQoL",
+        "plaintext": "{\"content\":\"Xin chào 👋 \\\"quote\\\"\",\"private\":false,\"echo_id\":\"e-1\"}",
+        "envelope": "AAECAwQFBgcICQoL+ib5cmiTR2bu6fMxL9bM4Cuk1x600NqCOVGnkX+iDG43rtVEVJTN7WkosN0peXXcZCdC2Qh4gNiIVnB/I0to7hapH78MklIyHZYD/atBsKpKGDuNI8o="
+    },
+    "signature": {
+        "key": "/ty6mHZUMhD+3LqYdlQyEP7cuph2VDIQ/ty6mHZUMhA=",
+        "method": "post",
+        "uri": "/api/v1/widget/messages?website_token=abc&locale=vi",
+        "timestamp": "1790000000",
+        "nonce": "bm9uY2UtMQ",
+        "body": "{\"_encrypted\":\"AAECAwQFBgcICQoL+ib5cmiTR2bu6fMxL9bM4Cuk1x600NqCOVGnkX+iDG43rtVEVJTN7WkosN0peXXcZCdC2Qh4gNiIVnB\\/I0to7hapH78MklIyHZYD\\/atBsKpKGDuNI8o=\"}",
+        "body_digest": "0053afa3c77c159b37134b92c953e751786c56eee9aa4a054322646e3c237e52",
+        "canonical": "v1\nPOST\n/api/v1/widget/messages?website_token=abc&locale=vi\n1790000000\nbm9uY2UtMQ\n0053afa3c77c159b37134b92c953e751786c56eee9aa4a054322646e3c237e52",
+        "signature": "41d67e99676f5146560bf1756ae6378f49e9e3ef4df4acb3ba37cb75f0526f88"
+    },
+    "empty_body_digest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "multipart": {
+        "fields": {
+            "_encrypted": "AAECAwQFBgcICQoL+ib5cmiTR2bu6fMxL9bM4Cuk1x600NqCOVGnkX+iDG43rtVEVJTN7WkosN0peXXcZCdC2Qh4gNiIVnB/I0to7hapH78MklIyHZYD/atBsKpKGDuNI8o=",
+            "_method": "PUT"
+        },
+        "file_contents": [
+            "hello",
+            ""
+        ],
+        "files": [
+            {
+                "sha256": "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824",
+                "size": 5
+            },
+            {
+                "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                "size": 0
+            }
+        ],
+        "digest": "1b6246790e5a8861295be8b94d8b5c27a6b1f7d1cff3aa6c0b5ea8b7626c2057"
+    },
+    "form": {
+        "entries": [
+            [
+                "content",
+                "Xin chào bạn"
+            ],
+            [
+                "private",
+                "1"
+            ],
+            [
+                "content_attributes",
+                "{\"a\":1}"
+            ],
+            [
+                "cc[]",
+                "x@y.vn"
+            ],
+            [
+                "cc[]",
+                "z@y.vn"
+            ]
+        ],
+        "encoded": "content=Xin+ch%C3%A0o+b%E1%BA%A1n&private=1&content_attributes=%7B%22a%22%3A1%7D&cc%5B%5D=x%40y.vn&cc%5B%5D=z%40y.vn",
+        "parsed": {
+            "content": "Xin chào bạn",
+            "private": "1",
+            "content_attributes": "{\"a\":1}",
+            "cc": [
+                "x@y.vn",
+                "z@y.vn"
+            ]
+        }
+    }
+}

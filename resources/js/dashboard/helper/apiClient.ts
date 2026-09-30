@@ -1,3 +1,4 @@
+import { RequestSigner, type KeyGrant } from 'shared/requestSigning/signer';
 import { sendWithSessionRecovery } from './sessionRecovery';
 
 // Client JSON tối giản cho web_api (session + CSRF cookie của Laravel).
@@ -36,6 +37,21 @@ export interface RequestOptions {
 }
 
 const NULL_BODY_STATUSES = [101, 204, 205, 304];
+
+const REQUEST_SIGNING_KEY_URL = '/api/v1/request_signing_key';
+
+// Không đi qua sendWithSessionRecovery: trang chưa đăng nhập xin khoá nhận 401 là chuyện bình
+// thường, không được tải lại trang. Không có khoá thì request đi thường, máy chủ trả 428 nếu cần.
+async function requestSigningGrant(): Promise<KeyGrant | null> {
+    const response = await fetch(REQUEST_SIGNING_KEY_URL, {
+        method: 'POST',
+        headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest', 'X-XSRF-TOKEN': xsrfToken() },
+        credentials: 'same-origin',
+    });
+    return response.ok ? ((await response.json()) as KeyGrant) : null;
+}
+
+const requestSigner = new RequestSigner(requestSigningGrant);
 
 // fetch chưa báo được tiến trình gửi lên: yêu cầu cần tiến trình đi qua XHR và
 // trả về Response như fetch để phần xử lý phiên/lỗi phía sau dùng chung.
@@ -82,12 +98,15 @@ async function request<T>(
         'X-Requested-With': 'XMLHttpRequest',
     };
     const { onUploadProgress, signal } = options;
-    const response = await sendWithSessionRecovery(() => {
-        const headersWithToken = { ...headers, 'X-XSRF-TOKEN': xsrfToken() };
-        return onUploadProgress
-            ? sendWithUploadProgress(url, method, headersWithToken, body, onUploadProgress, signal)
-            : fetch(url, { method, headers: headersWithToken, credentials: 'same-origin', body, signal });
-    });
+    const response = await sendWithSessionRecovery(() =>
+        requestSigner.send({ method, url, body }, (prepared) => {
+            const preparedHeaders = { ...headers, ...prepared.headers, 'X-XSRF-TOKEN': xsrfToken() };
+            const preparedBody = prepared.body ?? undefined;
+            return onUploadProgress
+                ? sendWithUploadProgress(url, method, preparedHeaders, preparedBody, onUploadProgress, signal)
+                : fetch(url, { method, headers: preparedHeaders, credentials: 'same-origin', body: preparedBody, signal });
+        }),
+    );
 
     if (!response.ok) {
         throw new ApiError(response.status, await response.json().catch(() => null));

@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Database\PostgresConnection;
 use App\Finders\ConversationFinder;
+use App\Http\RateLimiting\MessagingRateLimiters;
 use App\Listeners\Alerts\AlertOnJobFailure;
 use App\Listeners\Alerts\AlertOnLongWaitDetected;
 use App\Livewire\Pulse\SearchOutboxCard;
@@ -152,6 +153,8 @@ class AppServiceProvider extends ServiceProvider
 
     private function registerRateLimiters(): void
     {
+        MessagingRateLimiters::register();
+
         // Băm theo IP khách đã giải qua header CDN: IP kết nối có thể là IP edge
         // của Cloudflare, gộp nhiều khách vào chung một hạn mức.
         RateLimiter::for(

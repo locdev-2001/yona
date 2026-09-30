@@ -6,10 +6,13 @@ use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Redis;
 use RuntimeException;
+use Tests\Support\SignsProtectedRequests;
 use Throwable;
 
 abstract class TestCase extends BaseTestCase
 {
+    use SignsProtectedRequests;
+
     /**
      * Chỉ số redis mà phpunit.xml khai (`REDIS_DB`). Chỉ khi đang chạy đúng cấu
      * hình test này mới đổi sang chỉ số riêng của tiến trình; redis dev

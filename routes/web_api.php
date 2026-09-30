@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\Integrations\WebhooksController as SlackEventsWebhooksController;
+use App\Http\Controllers\RequestSigningKeysController;
 use App\Http\Controllers\WebApi\AccountsController;
 use App\Http\Controllers\WebApi\Actions\ContactMergesController;
 use App\Http\Controllers\WebApi\AgentBotsController;
@@ -65,6 +66,8 @@ use App\Http\Controllers\WebApi\WebhooksController;
 use App\Http\Controllers\WebApi\WidgetUpdatesController;
 use App\Http\Controllers\WebApi\ZaloConnectionsController;
 use App\Http\Middleware\EnsureStickerLibraryAccess;
+use App\Http\RateLimiting\MessagingRateLimiters;
+use App\Http\RequestSigning\ProtectedRoutes;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 
@@ -76,6 +79,7 @@ Route::middleware('auth')->prefix('/api/v1')->group(function () {
     Route::get('/profile', [ProfilesController::class, 'show']);
     Route::match(['put', 'patch'], '/profile', [ProfilesController::class, 'update']);
     Route::delete('/profile/avatar', [ProfilesController::class, 'destroyAvatar']);
+    Route::post('/request_signing_key', [RequestSigningKeysController::class, 'store'])->defaults('surface', 'dashboard');
 
     // F8 MFA + user sessions — BEGIN (agent f8 sở hữu khối này)
     // profile/mfa_controller.rb + profile/sessions_controller.rb: không gắn account.
@@ -195,29 +199,42 @@ Route::middleware(['auth.api_token', 'auth', 'account.scope'])
         Route::get('/conversations/unread_counts', [ConversationsController::class, 'unreadCounts']);
         // {conversationId} là display_id per-account, không phải khóa chính.
         Route::get('/conversations/{conversationId}', [ConversationsController::class, 'show'])->whereNumber('conversationId');
-        Route::get('/conversations/{conversationId}/messages', [MessagesController::class, 'index'])->whereNumber('conversationId');
-        Route::post('/conversations/{conversationId}/messages', [MessagesController::class, 'store'])->whereNumber('conversationId');
-        // messages#retry — gửi lại tin thất bại (docs/channel-capabilities.md §2.2 `outbound_retry`).
-        Route::post('/conversations/{conversationId}/messages/{messageId}/retry', [MessagesController::class, 'retry'])
-            ->whereNumber(['conversationId', 'messageId']);
-        // messages#destroy — xoá tin ở Yona; kênh khai `outbound_recall` thì thu hồi
-        // luôn ở kênh (docs/channel-capabilities.md §2.2, quyết định Q4 07/09).
-        Route::delete('/conversations/{conversationId}/messages/{messageId}', [MessagesController::class, 'destroy'])
-            ->whereNumber(['conversationId', 'messageId']);
-        // messages#reactions — agent thả/gỡ biểu cảm ra kênh (§2.2 `outbound_reaction`).
-        Route::post('/conversations/{conversationId}/messages/{messageId}/reactions', [MessagesController::class, 'storeReaction'])
-            ->whereNumber(['conversationId', 'messageId']);
-        Route::delete('/conversations/{conversationId}/messages/{messageId}/reactions', [MessagesController::class, 'destroyReaction'])
-            ->whereNumber(['conversationId', 'messageId']);
-        // Chuyển tiếp một tin sang hội thoại khác: danh sách đích (kèm lý do không nhận được) và lệnh chuyển.
-        Route::get('/conversations/{conversationId}/messages/{messageId}/forward_targets', [MessageForwardsController::class, 'targets'])
-            ->whereNumber(['conversationId', 'messageId']);
-        Route::post('/conversations/{conversationId}/messages/{messageId}/forward', [MessageForwardsController::class, 'store'])
-            ->whereNumber(['conversationId', 'messageId']);
-        // Đánh dấu thẻ chuyển khoản đã nhận tiền — ghi content_attributes.paid_at/paid_by, idempotent.
-        Route::post('/conversations/{conversationId}/messages/{messageId}/mark_bank_transfer_paid', [MessagesController::class, 'markBankTransferPaid'])
-            ->whereNumber(['conversationId', 'messageId']);
-        Route::post('/conversations/{conversationId}/direct_uploads', [DirectUploadsController::class, 'store'])->whereNumber('conversationId');
+        // Nhắn tin gọi từ trình duyệt: ký + mã hoá (request từ Application API bằng token chỉ bị
+        // giới hạn nhịp) — docs/system-architecture.md §10.
+        Route::middleware([ProtectedRoutes::middlewareFor('dashboard'), 'throttle:'.MessagingRateLimiters::DASHBOARD_READS])->group(function () {
+            Route::get('/conversations/{conversationId}/messages', [MessagesController::class, 'index'])->whereNumber('conversationId');
+            // Chuyển tiếp một tin sang hội thoại khác: danh sách đích (kèm lý do không nhận được).
+            Route::get('/conversations/{conversationId}/messages/{messageId}/forward_targets', [MessageForwardsController::class, 'targets'])
+                ->whereNumber(['conversationId', 'messageId']);
+            Route::get('/conversations/{conversationId}/search/messages', [SearchController::class, 'conversationMessages'])->whereNumber('conversationId');
+        });
+        Route::middleware([ProtectedRoutes::middlewareFor('dashboard'), 'throttle:'.MessagingRateLimiters::DASHBOARD_WRITES])->group(function () {
+            Route::post('/conversations/{conversationId}/messages', [MessagesController::class, 'store'])->whereNumber('conversationId');
+            // messages#retry — gửi lại tin thất bại (docs/channel-capabilities.md §2.2 `outbound_retry`).
+            Route::post('/conversations/{conversationId}/messages/{messageId}/retry', [MessagesController::class, 'retry'])
+                ->whereNumber(['conversationId', 'messageId']);
+            // messages#destroy — xoá tin ở Yona; kênh khai `outbound_recall` thì thu hồi
+            // luôn ở kênh (docs/channel-capabilities.md §2.2, quyết định Q4 07/09).
+            Route::delete('/conversations/{conversationId}/messages/{messageId}', [MessagesController::class, 'destroy'])
+                ->whereNumber(['conversationId', 'messageId']);
+            // messages#reactions — agent thả/gỡ biểu cảm ra kênh (§2.2 `outbound_reaction`).
+            Route::post('/conversations/{conversationId}/messages/{messageId}/reactions', [MessagesController::class, 'storeReaction'])
+                ->whereNumber(['conversationId', 'messageId']);
+            Route::delete('/conversations/{conversationId}/messages/{messageId}/reactions', [MessagesController::class, 'destroyReaction'])
+                ->whereNumber(['conversationId', 'messageId']);
+            Route::post('/conversations/{conversationId}/messages/{messageId}/forward', [MessageForwardsController::class, 'store'])
+                ->whereNumber(['conversationId', 'messageId']);
+            // Đánh dấu thẻ chuyển khoản đã nhận tiền — ghi content_attributes.paid_at/paid_by, idempotent.
+            Route::post('/conversations/{conversationId}/messages/{messageId}/mark_bank_transfer_paid', [MessagesController::class, 'markBankTransferPaid'])
+                ->whereNumber(['conversationId', 'messageId']);
+            // messages#translate — Google Translate.
+            Route::post('/conversations/{conversationId}/messages/{messageId}/translate', [MessagesController::class, 'translate'])
+                ->whereNumber(['conversationId', 'messageId']);
+        });
+        // Tải tệp trực tiếp không đi qua client của dashboard: chỉ giới hạn nhịp.
+        Route::post('/conversations/{conversationId}/direct_uploads', [DirectUploadsController::class, 'store'])
+            ->whereNumber('conversationId')
+            ->middleware('throttle:'.MessagingRateLimiters::DASHBOARD_WRITES);
         Route::match(['put', 'patch'], '/conversations/{conversationId}', [ConversationsController::class, 'update'])->whereNumber('conversationId');
         Route::post('/conversations/{conversationId}/toggle_typing_status', [ConversationsController::class, 'toggleTypingStatus'])->whereNumber('conversationId');
         Route::post('/conversations/{conversationId}/toggle_status', [ConversationsController::class, 'toggleStatus'])->whereNumber('conversationId');
@@ -381,9 +398,6 @@ Route::middleware(['auth.api_token', 'auth', 'account.scope'])
         Route::post('/integrations/dyte/create_a_meeting', [IntegrationDyteController::class, 'createAMeeting']);
         Route::post('/integrations/dyte/add_participant_to_meeting', [IntegrationDyteController::class, 'addParticipantToMeeting']);
 
-        // messages#translate — Google Translate.
-        Route::post('/conversations/{conversationId}/messages/{messageId}/translate', [MessagesController::class, 'translate'])
-            ->whereNumber(['conversationId', 'messageId']);
         // F6 integrations hooks + dashboard_apps — END
 
         // F2-F5 kênh ngoài (callbacks, register page…) — BEGIN (agent f2f5-be sở hữu khối này)
@@ -406,7 +420,6 @@ Route::middleware(['auth.api_token', 'auth', 'account.scope'])
         Route::get('/search/messages', [SearchController::class, 'messages']);
         Route::get('/search/contacts', [SearchController::class, 'contacts']);
         Route::get('/search/files', [SearchController::class, 'files']);
-        Route::get('/conversations/{conversationId}/search/messages', [SearchController::class, 'conversationMessages'])->whereNumber('conversationId');
         Route::get('/search/articles', [SearchController::class, 'articles']);
 
         // D2 báo cáo CSAT (csat_survey_responses_controller.rb).
