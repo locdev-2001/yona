@@ -76,3 +76,15 @@ it('never returns attachments of another contact', function () {
         ->assertOk()
         ->assertJsonPath('meta.total_count', 0);
 });
+
+it('loại đính kèm của tin sticker khỏi danh sách và total_count', function () {
+    $photo = contactAttachment($this->conversation, 'anh.png');
+    $sticker = contactAttachment($this->conversation, 'static.png');
+    $sticker->attachable->update(['content_type' => Message::CONTENT_TYPES['sticker']]);
+
+    $this->actingAs($this->agent)->getJson($this->url)
+        ->assertOk()
+        ->assertJsonPath('meta.total_count', 1)
+        ->assertJsonCount(1, 'payload')
+        ->assertJsonPath('payload.0.id', $photo->id);
+});

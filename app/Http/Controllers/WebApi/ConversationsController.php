@@ -107,6 +107,7 @@ class ConversationsController extends Controller
         $attachments = Attachment::query()
             ->whereMorphedTo('attachable', Message::class)
             ->whereIn('attachable_id', $conversation->messages()->select('id'))
+            ->excludingStickers()
             ->when($kindFileTypes !== null, fn ($query) => $query->whereIn('file_type', $kindFileTypes))
             ->with('attachable')
             ->orderByDesc('created_at')

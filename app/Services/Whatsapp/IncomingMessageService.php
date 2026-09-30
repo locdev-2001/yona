@@ -116,7 +116,8 @@ class IncomingMessageService
             // Echo đặt sẵn 'delivered' để SendReplyJob không gửi ngược ra ngoài.
             'status' => $this->outgoingEcho ? Message::STATUSES['delivered'] : Message::STATUSES['sent'],
             'source_id' => (string) $payload['id'],
-            'content_attributes' => $this->contentAttributes($payload),
+            'content_type' => $type === 'sticker' ? Message::CONTENT_TYPES['sticker'] : Message::CONTENT_TYPES['text'],
+            'content_attributes' => $this->contentAttributes($payload, $type),
         ]);
 
         if (! $this->outgoingEcho) {
@@ -149,9 +150,18 @@ class IncomingMessageService
      * @param  array<string, mixed>  $payload
      * @return array<string, mixed>
      */
-    private function contentAttributes(array $payload): array
+    private function contentAttributes(array $payload, ?string $type): array
     {
         $attributes = $this->outgoingEcho ? ['external_echo' => true] : [];
+
+        // Sticker vào contract lõi như Zalo. WhatsApp chỉ trả media id (URL tải cần
+        // token) nên không có `url`: ảnh đi qua đính kèm đã tải về.
+        if ($type === 'sticker' && filled(data_get($payload, 'sticker.id'))) {
+            $attributes['sticker'] = array_filter([
+                'id' => data_get($payload, 'sticker.id'),
+                'animated' => data_get($payload, 'sticker.animated'),
+            ], fn ($value) => $value !== null);
+        }
 
         if (filled(data_get($payload, 'context.id'))) {
             $attributes['in_reply_to_external_id'] = data_get($payload, 'context.id');

@@ -204,3 +204,22 @@ it('tin thường không có forwarded_from', function () {
 
     expect($message->content_attributes)->not->toHaveKey('forwarded_from');
 });
+
+it('sticker vào contract lõi: content_type sticker, không còn là ảnh thường', function () {
+    fakeTelegramApi();
+    $payload = ChannelFixture::load('telegram_text');
+    unset($payload['message']['text']);
+    $payload['message']['sticker'] = [
+        'file_id' => 'stk-file', 'file_unique_id' => 'stk-uniq', 'set_name' => 'BoSticker', 'emoji' => '😀',
+        'thumb' => ['file_id' => 'stk-thumb', 'file_unique_id' => 'stk-thumb-u'],
+    ];
+
+    (new TelegramEventsJob(['bot_token' => $this->channel->bot_token, 'telegram' => $payload]))->handle();
+
+    $message = Message::query()->latest('id')->first();
+
+    expect($message->content_type)->toBe(Message::CONTENT_TYPES['sticker'])
+        ->and($message->content_attributes['sticker']['id'])->toBe('stk-uniq')
+        ->and($message->content_attributes['sticker']['cateId'])->toBe('BoSticker')
+        ->and($message->attachments)->toHaveCount(1);
+});

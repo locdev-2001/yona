@@ -234,3 +234,26 @@ it('tệp document lấy loại theo nội dung: mp4 thành video, pdf vẫn là
     'video mp4' => [ChannelFixture::mp4Bytes(), 'video.mp4', Attachment::FILE_TYPE_VIDEO],
     'tài liệu pdf' => [ChannelFixture::pdfBytes(), 'bang-gia.pdf', Attachment::FILE_TYPE_FILE],
 ]);
+
+it('sticker vào contract lõi: content_type sticker kèm payload sticker', function () {
+    Storage::fake('public');
+    Http::fake([
+        'graph.facebook.com/*' => Http::response(['url' => 'https://lookaside.whatsapp.test/media/stk']),
+        'lookaside.whatsapp.test/*' => Http::response(ChannelFixture::jpegBytes(), 200, ['Content-Type' => 'image/jpeg']),
+    ]);
+    $payload = ChannelFixture::load('whatsapp_cloud_text');
+    $payload['entry'][0]['changes'][0]['value']['messages'][0] = [
+        'from' => '15557654321',
+        'id' => 'wamid.STK',
+        'timestamp' => '1662628935',
+        'type' => 'sticker',
+        'sticker' => ['id' => 'media-stk-1', 'mime_type' => 'image/webp', 'animated' => false],
+    ];
+
+    whatsappPost($payload)->assertOk();
+
+    $message = Message::query()->latest('id')->first();
+
+    expect($message->content_type)->toBe(Message::CONTENT_TYPES['sticker'])
+        ->and($message->content_attributes['sticker']['id'])->toBe('media-stk-1');
+});

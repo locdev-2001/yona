@@ -73,6 +73,7 @@ class ContactsController extends Controller
         $attachments = Attachment::query()
             ->whereMorphedTo('attachable', Message::class)
             ->whereIn('attachable_id', Message::query()->select('id')->whereIn('conversation_id', $conversationIds->keys()))
+            ->excludingStickers()
             ->with('attachable')
             ->orderByDesc('created_at')
             ->paginate(self::ATTACHMENT_RESULTS_PER_PAGE, ['*'], 'page', (int) $request->query('page', '1'));

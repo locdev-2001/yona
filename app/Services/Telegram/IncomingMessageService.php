@@ -67,7 +67,8 @@ class IncomingMessageService
             'account_id' => $this->inbox->account_id,
             'inbox_id' => $this->inbox->id,
             'message_type' => $isOutgoing ? Message::TYPE_OUTGOING : Message::TYPE_INCOMING,
-            'content_attributes' => $this->contentAttributes(),
+            'content_type' => $this->isStickerMessage() ? Message::CONTENT_TYPES['sticker'] : Message::CONTENT_TYPES['text'],
+            'content_attributes' => [...$this->contentAttributes(), ...$this->stickerAttributes()],
             'source_id' => (string) $this->messageId(),
         ]);
 
@@ -235,8 +236,33 @@ class IncomingMessageService
 
     private function isImageMessage(): bool
     {
-        return filled(data_get($this->params, 'message.photo'))
-            || filled(data_get($this->params, 'message.sticker.thumb'));
+        return filled(data_get($this->params, 'message.photo')) || $this->isStickerMessage();
+    }
+
+    private function isStickerMessage(): bool
+    {
+        return $this->hasMessageParams() && filled(data_get($this->params, 'message.sticker'));
+    }
+
+    /**
+     * Sticker vào contract lõi như Zalo (`content_type` sticker + `content_attributes.sticker`).
+     * Không có `url`: URL tệp Telegram nhúng bot token nên ảnh chỉ đi qua đính kèm đã tải về.
+     *
+     * @return array<string, array<string, mixed>>
+     */
+    private function stickerAttributes(): array
+    {
+        if (! $this->isStickerMessage()) {
+            return [];
+        }
+
+        $sticker = (array) data_get($this->params, 'message.sticker');
+
+        return ['sticker' => array_filter([
+            'id' => $sticker['file_unique_id'] ?? $sticker['file_id'] ?? null,
+            'cateId' => $sticker['set_name'] ?? null,
+            'emoji' => $sticker['emoji'] ?? null,
+        ], fn ($value) => filled($value))];
     }
 
     private function isAudioMessage(): bool

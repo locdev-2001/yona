@@ -66,6 +66,7 @@ class IncomingMessageService
             'account_id' => $this->inbox->account_id,
             'inbox_id' => $this->inbox->id,
             'content_type' => Message::CONTENT_TYPES[$this->messageContentType($event)],
+            'content_attributes' => $this->contentAttributes($event),
             'message_type' => Message::TYPE_INCOMING,
             'source_id' => (string) data_get($event, 'message.id'),
         ]);
@@ -93,24 +94,56 @@ class IncomingMessageService
         return match (data_get($event, 'message.type')) {
             'text' => data_get($event, 'message.text'),
             // Bản gốc chưa hiển thị sticker: nhúng ảnh sticker bằng markdown.
-            'sticker' => sprintf(
-                '![sticker-%s](%s)',
-                data_get($event, 'message.stickerId'),
-                sprintf(self::STICKER_IMAGE_URL, data_get($event, 'message.stickerId')),
-            ),
             default => null,
         };
     }
 
     /** @param array<string, mixed> $event */
+    /**
+     * Sticker vào contract lõi như Zalo: `content` rỗng, ảnh là đính kèm ngoài
+     * trỏ CDN LINE (không đổi nên khỏi tải về đĩa).
+     *
+     * @return array<string, mixed>
+     */
+    private function contentAttributes(array $event): array
+    {
+        if (! $this->isSticker($event) || blank(data_get($event, 'message.stickerId'))) {
+            return [];
+        }
+
+        $url = sprintf(self::STICKER_IMAGE_URL, data_get($event, 'message.stickerId'));
+
+        return ['sticker' => array_filter([
+            'id' => (string) data_get($event, 'message.stickerId'),
+            'cateId' => data_get($event, 'message.packageId'),
+            'url' => $url,
+            'thumbnail' => $url,
+        ], fn ($value) => filled($value))];
+    }
+
+    private function isSticker(array $event): bool
+    {
+        return data_get($event, 'message.type') === 'sticker';
+    }
+
     private function messageContentType(array $event): string
     {
-        return data_get($event, 'message.type') === 'sticker' ? 'sticker' : 'text';
+        return $this->isSticker($event) ? 'sticker' : 'text';
     }
 
     /** @param array<string, mixed> $lineMessage */
     private function attachFile(Message $message, array $lineMessage): void
     {
+        if (($lineMessage['type'] ?? null) === 'sticker' && filled($lineMessage['stickerId'] ?? null)) {
+            $message->pendingAttachments[] = new Attachment([
+                'account_id' => $message->account_id,
+                'file_type' => Attachment::FILE_TYPE_IMAGE,
+                'external_url' => sprintf(self::STICKER_IMAGE_URL, $lineMessage['stickerId']),
+            ]);
+
+            return;
+        }
+
         if (! in_array($lineMessage['type'] ?? null, self::BINARY_TYPES, true)) {
             return;
         }

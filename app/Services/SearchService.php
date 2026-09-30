@@ -235,7 +235,8 @@ class SearchService
             SearchTarget::Contacts => Contact::query()->where('contacts.account_id', $this->currentAccount->id),
             SearchTarget::Files => Attachment::query()
                 ->whereMorphedTo('attachable', Message::class)
-                ->whereIn('attachments.attachable_id', $this->permittedMessages()->select('messages.id')),
+                ->whereIn('attachments.attachable_id', $this->permittedMessages()->select('messages.id'))
+                ->excludingStickers(),
         };
     }
 

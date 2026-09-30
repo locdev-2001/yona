@@ -170,6 +170,20 @@ class Attachment extends Model
             ->whereIn('attachments.file_type', self::SEARCHABLE_FILE_TYPES);
     }
 
+    // Sticker mang một đính kèm ảnh (kể cả sticker kho Yona mượn static.png) nhưng
+    // không phải ảnh/tệp khách chia sẻ: lọc theo loại của TIN, không theo loại đính kèm.
+    /**
+     * @param  Builder<self>  $query
+     * @return Builder<self>
+     */
+    public function scopeExcludingStickers(Builder $query): Builder
+    {
+        return $query->whereNotIn(
+            'attachments.attachable_id',
+            Message::query()->select('messages.id')->where('messages.content_type', Message::CONTENT_TYPES['sticker']),
+        );
+    }
+
     public function isSearchDocument(): bool
     {
         return $this->attachable_type === (new Message)->getMorphClass()

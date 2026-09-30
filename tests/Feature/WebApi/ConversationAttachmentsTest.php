@@ -155,3 +155,16 @@ describe('GET /api/v1/accounts/{id}/conversations/{displayId}/links', function (
             ->assertUnauthorized();
     });
 });
+
+it('loại đính kèm của tin sticker khỏi danh sách và total_count', function () {
+    $photo = attachmentOnMessage($this->conversation, 'anh.png');
+    $sticker = attachmentOnMessage($this->conversation, 'static.png');
+    $sticker->attachable->update(['content_type' => Message::CONTENT_TYPES['sticker']]);
+
+    $this->actingAs($this->agent)
+        ->getJson("/api/v1/accounts/{$this->account->id}/conversations/{$this->conversation->display_id}/attachments")
+        ->assertOk()
+        ->assertJsonPath('meta.total_count', 1)
+        ->assertJsonCount(1, 'payload')
+        ->assertJsonPath('payload.0.id', $photo->id);
+});

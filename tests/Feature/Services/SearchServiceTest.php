@@ -641,6 +641,14 @@ describe('file search', function () {
         expect(searchResultIds('bao gia', 'Attachment'))->toBe([$file->id]);
     });
 
+    it('excludes attachments of sticker messages from files', function () {
+        $sticker = searchTestMessage(['content' => null, 'content_type' => Message::CONTENT_TYPES['sticker']]);
+        searchTestFile($sticker, ['filename' => 'Báo giá sticker.png', 'file_type' => Attachment::FILE_TYPE_IMAGE, 'content_type' => 'image/png']);
+        $file = searchTestFile($this->message, ['filename' => 'Báo giá thật.pdf']);
+
+        expect(searchResultIds('bao gia', 'Attachment'))->toBe([$file->id]);
+    });
+
     it('orders newest first with id as tiebreaker and pages fifteen at a time', function () {
         $sameMoment = now()->subMinute();
         $files = collect(range(1, 17))->map(fn (int $index) => searchTestFile($this->message, [

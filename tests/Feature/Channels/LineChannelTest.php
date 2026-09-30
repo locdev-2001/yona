@@ -96,3 +96,23 @@ it('gửi tin đi bằng push message', function () {
 
     expect($outgoing->fresh()->status)->toBe(Message::STATUSES['delivered']);
 });
+
+it('sticker vào contract lõi: content_type sticker, ảnh là đính kèm ngoài, không nhúng markdown', function () {
+    fakeLineApi();
+    $payload = ChannelFixture::load('line_text');
+    $payload['events'][0]['message'] = ['type' => 'sticker', 'id' => '555', 'stickerId' => '52002734', 'packageId' => '11537'];
+    $body = json_encode($payload);
+
+    $this->call('POST', "/webhooks/line/{$this->channel->line_channel_id}", [], [], [],
+        ['CONTENT_TYPE' => 'application/json', 'HTTP_X_LINE_SIGNATURE' => lineSignature($this->channel->line_channel_secret, $body)],
+        $body,
+    )->assertOk();
+
+    $message = Message::query()->latest('id')->first();
+    $url = 'https://stickershop.line-scdn.net/stickershop/v1/sticker/52002734/android/sticker.png';
+
+    expect($message->content)->toBeNull()
+        ->and($message->content_type)->toBe(Message::CONTENT_TYPES['sticker'])
+        ->and($message->content_attributes['sticker'])->toBe(['id' => '52002734', 'cateId' => '11537', 'url' => $url, 'thumbnail' => $url])
+        ->and($message->attachments()->first()->external_url)->toBe($url);
+});
