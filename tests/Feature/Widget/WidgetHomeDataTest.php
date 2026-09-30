@@ -51,11 +51,11 @@ describe('widget_settings', function () {
         $portal = Portal::factory()->create(['account_id' => $session->account->id]);
         $session->inbox->update(['portal_id' => $portal->id]);
         // Dashboard ghi cột này ở phase cấu hình (qua WidgetSettings::normalize); ở đây ghi thẳng.
-        $session->channel->forceFill(['widget_settings' => ['appearance' => ['launcher' => 'pill', 'launcher_label' => 'Chat với shop']]])->save();
+        $session->channel->forceFill(['widget_settings' => ['appearance' => ['launcher' => 'pill', 'launcher_label' => 'Chat với shop', 'position' => 'left']]])->save();
 
         $config = $this->postJson($session->url('config'), [], $session->headers())->assertOk()->json('website_channel_config');
 
-        expect($config['widget_settings']['appearance'])->toMatchArray(['launcher' => 'pill', 'launcher_label' => 'Chat với shop'])
+        expect($config['widget_settings']['appearance'])->toMatchArray(['launcher' => 'pill', 'launcher_label' => 'Chat với shop', 'position' => 'left'])
             ->and($config['portal']['slug'])->toBe($portal->slug);
     });
 });

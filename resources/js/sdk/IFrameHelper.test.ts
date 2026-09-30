@@ -495,6 +495,29 @@ describe('cấu hình launcher và phóng to từ dashboard', () => {
         expect(window.$yona.position).toBe('left');
     });
 
+    it('cấu hình bong bóng lưu ở máy chủ tới SDK qua tin loaded: vị trí, kiểu và tiêu đề đều áp dụng', () => {
+        vi.stubGlobal('matchMedia', vi.fn().mockReturnValue({ matches: false }));
+        vi.spyOn(IFrameHelper, 'onLoad').mockImplementation(() => {});
+        widgetHolder.classList.add('woot-widget-holder', 'woot-elements--right');
+        IFrameHelper.initPostMessageCommunication();
+
+        postFromWidget({
+            event: 'loaded',
+            config: {
+                authToken: 'visitor-token',
+                channelConfig: {
+                    widgetColor: '#1f93ff',
+                    widgetSettings: { appearance: { launcher: 'pill', launcher_label: 'Chat với shop', position: 'left' } },
+                },
+            },
+        });
+
+        expect(window.$yona.position).toBe('left');
+        expect(widgetHolder.classList.contains('woot-elements--left')).toBe(true);
+        expect(window.$yona.type).toBe('expanded_bubble');
+        expect(window.$yona.launcherTitle).toBe('Chat với shop');
+    });
+
     it('widget xin phóng to/thu nhỏ: khung chứa iframe đổi lớp tương ứng', () => {
         IFrameHelper.initPostMessageCommunication();
         postFromWidget({ event: 'setExpanded', expanded: true });

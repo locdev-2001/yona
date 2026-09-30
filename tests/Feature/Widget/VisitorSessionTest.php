@@ -43,6 +43,23 @@ it('does not create a contact until the visitor sends the first message', functi
         ->and(Contact::query()->count())->toBe($before + 1);
 });
 
+it('khung xem trước ở màn cấu hình (widget?preview=1) mở widget thật mà không đẻ liên hệ nháp', function () {
+    $session = WidgetSession::make();
+    $contactsBefore = Contact::query()->count();
+    $contactInboxesBefore = ContactInbox::query()->count();
+
+    $this->get('/widget?'.http_build_query(['website_token' => $session->channel->website_token, 'preview' => 1]))->assertOk();
+    // Đúng những gì widget ở chế độ xem trước gọi: /config (đọc dù là POST) và các GET;
+    // mọi POST khác bị chặn ngay ở client widget (resources/js/widget/api/client.ts).
+    $token = startVisitor($session);
+    foreach (['inbox_members', 'campaigns', 'updates', 'conversations/list'] as $readPath) {
+        $this->getJson($session->url($readPath), ['X-Auth-Token' => $token])->assertOk();
+    }
+
+    expect(Contact::query()->count())->toBe($contactsBefore)
+        ->and(ContactInbox::query()->count())->toBe($contactInboxesBefore);
+});
+
 it('returns the same visitor and the earlier messages when the page reloads with the stored token', function () {
     $session = WidgetSession::make();
     $token = startVisitor($session);
