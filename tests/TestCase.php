@@ -5,19 +5,30 @@ namespace Tests;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Redis;
+use RuntimeException;
 use Throwable;
 
 abstract class TestCase extends BaseTestCase
 {
     /**
-     * Chỉ số redis dành riêng cho test — khai trong phpunit.xml (`REDIS_DB`).
-     * Suite chỉ được xoá đúng chỉ số này; redis dev (`REDIS_DB=2`) không bao giờ
-     * bị đụng dù ai đó chạy test với .env lạ.
+     * Chỉ số redis mà phpunit.xml khai (`REDIS_DB`). Chỉ khi đang chạy đúng cấu
+     * hình test này mới đổi sang chỉ số riêng của tiến trình; redis dev
+     * (`REDIS_DB=2`, cache 3) không bao giờ bị đụng dù ai đó chạy test với .env lạ.
      */
     private const TEST_REDIS_DATABASE = 4;
 
-    /** Mỗi tiến trình `--parallel` một chỉ số riêng (10–15), để FLUSHDB và hàng đợi khoá theo id không đè nhau. */
-    private const PARALLEL_REDIS_DATABASES = [10, 11, 12, 13, 14, 15];
+    /**
+     * Mỗi tiến trình test (kể cả worker `--parallel` và phiên khác chạy cùng
+     * lúc trên máy) giữ riêng MỘT chỉ số trong nhóm này bằng khoá file, nên
+     * FLUSHDB, trạng thái trực tuyến, hàng đợi round-robin của tiến trình này
+     * không đè lên tiến trình khác. Chỉ số 4 để cuối vì mã test cũ dùng nó mặc định.
+     */
+    private const TEST_REDIS_DATABASE_POOL = [5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, self::TEST_REDIS_DATABASE];
+
+    private static ?int $processRedisDatabase = null;
+
+    /** @var resource|null Giữ mở suốt đời tiến trình; hệ điều hành nhả khoá khi tiến trình thoát. */
+    private static $processRedisDatabaseLock = null;
 
     private static bool $redisFlushed = false;
 
@@ -25,7 +36,7 @@ abstract class TestCase extends BaseTestCase
     {
         parent::setUp();
 
-        $this->assignParallelRedisDatabase();
+        $this->useProcessRedisDatabase();
         $this->flushTestRedisOnce();
 
         // Test KHÔNG được ra Internet: thiếu Http::fake là đỏ ngay chỗ gọi, thay vì
@@ -53,7 +64,7 @@ abstract class TestCase extends BaseTestCase
             return;
         }
 
-        if (! in_array((int) config('database.redis.default.database'), [self::TEST_REDIS_DATABASE, ...self::PARALLEL_REDIS_DATABASES], true)) {
+        if (! in_array((int) config('database.redis.default.database'), self::TEST_REDIS_DATABASE_POOL, true)) {
             return;
         }
 
@@ -65,16 +76,38 @@ abstract class TestCase extends BaseTestCase
         }
     }
 
-    private function assignParallelRedisDatabase(): void
+    // Ứng dụng dựng lại ở mỗi test nên phải gán lại config ở mỗi test.
+    private function useProcessRedisDatabase(): void
     {
-        $token = (int) env('TEST_TOKEN', 0);
-
-        if ($token < 1 || (int) config('database.redis.default.database') !== self::TEST_REDIS_DATABASE) {
+        if ((int) config('database.redis.default.database') !== self::TEST_REDIS_DATABASE) {
             return;
         }
 
-        $databases = self::PARALLEL_REDIS_DATABASES;
-        config(['database.redis.default.database' => $databases[($token - 1) % count($databases)]]);
+        $database = self::$processRedisDatabase ??= self::claimRedisDatabase();
+
+        config([
+            'database.redis.default.database' => $database,
+            'database.redis.cache.database' => $database,
+        ]);
         Redis::purge();
+    }
+
+    private static function claimRedisDatabase(): int
+    {
+        foreach (self::TEST_REDIS_DATABASE_POOL as $database) {
+            $lock = fopen(sys_get_temp_dir()."/yona-test-redis-db-{$database}.lock", 'c');
+
+            if ($lock !== false && flock($lock, LOCK_EX | LOCK_NB)) {
+                self::$processRedisDatabaseLock = $lock;
+
+                return $database;
+            }
+
+            if ($lock !== false) {
+                fclose($lock);
+            }
+        }
+
+        throw new RuntimeException('Hết chỉ số redis cho test: đã có '.count(self::TEST_REDIS_DATABASE_POOL).' tiến trình test đang chạy.');
     }
 }
