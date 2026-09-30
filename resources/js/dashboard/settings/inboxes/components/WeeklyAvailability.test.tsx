@@ -85,8 +85,8 @@ describe('WeeklyAvailability — đổi múi giờ', () => {
         patchJson.mockResolvedValue(inbox);
         const { container } = renderWeeklyAvailability(inbox);
 
-        fireEvent.click(screen.getByRole('button', { name: 'Bangkok (GMT+07:00)' }));
-        fireEvent.click(screen.getByRole('option', { name: 'UTC (UTC+00:00)' }));
+        fireEvent.click(screen.getByRole('button', { name: /Bangkok.*\(GMT\+07:00\)/ }));
+        fireEvent.click(screen.getByRole('option', { name: 'Giờ quốc tế (UTC) (GMT+00:00)' }));
 
         expect((await submittedPayload(container)).timezone).toBe('UTC');
     });

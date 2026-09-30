@@ -206,3 +206,19 @@
     }
   }
 }
+
+// Trang cài đặt cuộn dài: menubar "floating" của prosemirror-menu tự đổi sang
+// position: fixed khi cuộn qua mép trên, đè lên các ô bên dưới. Ép về luồng thường
+// (kể cả thanh đệm nó chèn thêm) để thanh công cụ luôn nằm trong khung editor.
+.editor-static-menubar {
+  .ProseMirror-menubar {
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
+    width: auto !important;
+  }
+
+  [class*='ProseMirror-menubar-spacer'] {
+    display: none !important;
+  }
+}

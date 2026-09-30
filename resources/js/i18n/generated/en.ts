@@ -6441,6 +6441,7 @@ const messages: Record<string, unknown> = {
             "UPDATE": "Update business hours settings",
             "TOGGLE_AVAILABILITY": "Enable business availability for this inbox",
             "UNAVAILABLE_MESSAGE_LABEL": "Unavailable message for visitors",
+            "UNAVAILABLE_MESSAGE_PLACEHOLDER": "Write the automatic reply...",
             "TOGGLE_HELP": "Visitors who write outside business hours receive the unavailable message below. The website widget also tells them you are away.",
             "DAY": {
                 "DAY": "Day",

@@ -18,6 +18,7 @@ import {
     timeZoneSelection,
 } from '../helpers/businessHour';
 import type { TimeSlot, TimeZoneOption } from '../helpers/businessHour';
+import { localizeTimeZoneOptions } from '../helpers/timezone-label';
 import type { UISettings } from 'dashboard/composables/useUISettings';
 import type { DashboardPageProps } from '../../../types';
 import type { Inbox } from '../types';
@@ -54,7 +55,10 @@ export default function WeeklyAvailability({ inbox, timeZoneOptions, uiSettings,
         setTimeZone(inbox.timezone);
     }, [inbox]);
 
-    const timeZoneChoice = useMemo(() => timeZoneSelection(timeZone, timeZoneOptions), [timeZone, timeZoneOptions]);
+    const timeZoneChoice = useMemo(
+        () => timeZoneSelection(timeZone, localizeTimeZoneOptions(timeZoneOptions)),
+        [timeZone, timeZoneOptions],
+    );
 
     const hasError = isBusinessHoursEnabled && timeSlots.some(slot => slot.from && !slot.valid);
 
@@ -91,11 +95,14 @@ export default function WeeklyAvailability({ inbox, timeZoneOptions, uiSettings,
                 description={t('INBOX_MGMT.BUSINESS_HOURS.TOGGLE_HELP')}
                 editor={
                     isBusinessHoursEnabled ? (
-                        <div className="mb-4">
+                        <div className="mb-4 editor-static-menubar">
+                            <span className="block mb-2 text-heading-3 text-n-slate-12">
+                                {t('INBOX_MGMT.BUSINESS_HOURS.UNAVAILABLE_MESSAGE_LABEL')}
+                            </span>
                             <WootMessageEditor
                                 editorId={`out-of-office-message-${inbox.id}`}
                                 value={unavailableMessage}
-                                placeholder={t('INBOX_MGMT.BUSINESS_HOURS.UNAVAILABLE_MESSAGE_LABEL')}
+                                placeholder={t('INBOX_MGMT.BUSINESS_HOURS.UNAVAILABLE_MESSAGE_PLACEHOLDER')}
                                 uiSettings={uiSettings}
                                 onChange={setUnavailableMessage}
                             />

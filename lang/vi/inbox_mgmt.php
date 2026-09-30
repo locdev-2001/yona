@@ -1290,6 +1290,7 @@ return [
         'UPDATE' => 'Lưu giờ làm việc',
         'TOGGLE_AVAILABILITY' => 'Bật giờ làm việc cho hộp thư này',
         'UNAVAILABLE_MESSAGE_LABEL' => 'Tin nhắn tự động khi khách nhắn ngoài giờ làm việc',
+        'UNAVAILABLE_MESSAGE_PLACEHOLDER' => 'Nhập nội dung tin nhắn tự động...',
         'TOGGLE_HELP' => 'Khách nhắn tới ngoài khung giờ làm việc sẽ nhận tin nhắn ngoài giờ bên dưới. Widget trên website cũng báo cho khách biết đang ngoài giờ.',
         'DAY' => [
             'DAY' => 'Ngày',
