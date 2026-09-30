@@ -95,15 +95,15 @@ test('parseCustomSticker: URL ngoài allowlist (tĩnh hay động) bị chặn',
     );
 });
 
-test('customStickerParams: chat 1-1 mang toId, ảnh tĩnh cho mọi cỡ, ảnh động nằm trong webp', () => {
+test('customStickerParams: chat 1-1 mang toId, mọi cỡ trỏ ảnh WebP như sticker tự tạo thật của Zalo', () => {
     const params = customStickerParams({ sticker, threadId: 987, isGroup: false, clientId: 1700 });
 
     assert.deepEqual(params, {
         clientId: 1700,
         title: '',
-        oriUrl: STATIC_URL,
-        thumbUrl: STATIC_URL,
-        hdUrl: STATIC_URL,
+        oriUrl: ANIMATION_URL,
+        thumbUrl: ANIMATION_URL,
+        hdUrl: ANIMATION_URL,
         width: 128,
         height: 128,
         thumb_width: 128,
@@ -111,6 +111,7 @@ test('customStickerParams: chat 1-1 mang toId, ảnh tĩnh cho mọi cỡ, ảnh
         properties: params.properties,
         contentId: 1700,
         webp: JSON.stringify({ width: 128, height: 128, url: ANIMATION_URL }),
+        pStickerType: 1,
         zsource: -1,
         ttl: 0,
         toId: '987',

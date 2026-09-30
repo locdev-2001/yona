@@ -57,12 +57,14 @@ export function parseCustomSticker(raw, allowedHosts) {
 export function customStickerParams({ sticker, threadId, isGroup, clientId }) {
     const target = isGroup ? { grid: String(threadId), visibility: 0 } : { toId: String(threadId) };
 
+    // Zalo desktop vẽ sticker từ href (oriUrl) và chỉ nhận WebP; sticker tự tạo thật của
+    // Zalo trỏ mọi cỡ vào tệp .webp và mang pStickerType 1.
     return {
         clientId,
         title: '',
-        oriUrl: sticker.staticUrl,
-        thumbUrl: sticker.staticUrl,
-        hdUrl: sticker.staticUrl,
+        oriUrl: sticker.animationUrl,
+        thumbUrl: sticker.animationUrl,
+        hdUrl: sticker.animationUrl,
         width: sticker.width,
         height: sticker.height,
         thumb_width: sticker.width,
@@ -70,6 +72,7 @@ export function customStickerParams({ sticker, threadId, isGroup, clientId }) {
         properties: STICKER_PROPERTIES,
         contentId: clientId,
         webp: JSON.stringify({ width: sticker.width, height: sticker.height, url: sticker.animationUrl }),
+        pStickerType: 1,
         zsource: -1,
         ttl: 0,
         ...target,
