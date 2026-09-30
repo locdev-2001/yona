@@ -1,13 +1,16 @@
 <?php
 
+use App\Http\Resources\NotificationResource;
 use App\Jobs\ActionCableBroadcastJob;
 use App\Jobs\Notification\DeleteNotificationJob;
 use App\Models\Account;
 use App\Models\AccountUser;
 use App\Models\Conversation;
+use App\Models\Message;
 use App\Models\Notification;
 use App\Models\User;
 use Illuminate\Support\Facades\Queue;
+use Tests\Support\InboxWorkload;
 
 // Port từ spec/controllers/api/v1/accounts/notifications_controller_spec.rb.
 
@@ -236,4 +239,29 @@ describe('POST /api/v1/accounts/{id}/notifications/destroy_all', function () {
 
         expect(Notification::query()->count())->toBe(0);
     });
+});
+
+// Trang thông báo nạp gộp hội thoại và tin một lượt: payload phải y hệt dựng từng
+// thông báo một trên bản ghi mới đọc (tạo hội thoại, tin mới kèm tin, hội thoại có
+// tệp, người được gán).
+it('builds the batched notification page exactly like one notification at a time', function () {
+    $load = InboxWorkload::build(4);
+    $message = $load->conversation->messages()->where('message_type', Message::TYPE_INCOMING)->latest('id')->first();
+    Notification::factory()->ofType('assigned_conversation_new_message')->create([
+        'account_id' => $load->account->id,
+        'user_id' => $load->admin->id,
+        'primary_actor_id' => $load->conversation->id,
+        'secondary_actor_type' => 'Message',
+        'secondary_actor_id' => $message->id,
+    ]);
+    $this->actingAs($load->admin);
+
+    $payload = $this->getJson("/api/v1/accounts/{$load->account->id}/notifications")->assertOk()->json('data.payload');
+
+    $expected = collect($payload)->map(fn (array $row) => json_decode(json_encode(
+        (new NotificationResource(Notification::query()->findOrFail($row['id'])))->toArray(request())
+    ), true))->all();
+    expect($payload)->toHaveCount(5)->toBe($expected)
+        ->and(collect($payload)->pluck('primary_actor')->filter())->toHaveCount(5)
+        ->and(collect($payload)->pluck('secondary_actor')->filter())->toHaveCount(1);
 });

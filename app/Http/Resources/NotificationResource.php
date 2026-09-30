@@ -2,8 +2,10 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\Notification;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -13,10 +15,49 @@ class NotificationResource extends JsonResource
     /** @param iterable<Notification> $notifications */
     public static function collectionFor(iterable $notifications): array
     {
-        return collect($notifications)
+        $notifications = new EloquentCollection(collect($notifications)->values()->all());
+        self::preload($notifications);
+
+        return $notifications
             ->map(fn (Notification $notification) => (new self($notification))->toArray(request()))
             ->values()
             ->all();
+    }
+
+    /**
+     * Một trang thông báo trỏ tới nhiều hội thoại và tin: nạp gộp qua đúng bộ nạp
+     * của thẻ hội thoại và payload tin, thay vì dựng từng hội thoại một.
+     *
+     * @param  EloquentCollection<int, Notification>  $notifications
+     */
+    private static function preload(EloquentCollection $notifications): void
+    {
+        $notifications->loadMissing(['account', 'user.accountUsers', 'user.avatar', 'primaryActor', 'secondaryActor']);
+
+        $conversations = new EloquentCollection(
+            $notifications->pluck('primaryActor')->filter(fn ($actor) => $actor instanceof Conversation)->unique(fn (Conversation $conversation) => $conversation->id)->values()->all()
+        );
+        ConversationResource::preload($conversations);
+        // Dòng nội dung thông báo đọc tin đầu tiên (tạo hội thoại) hoặc tin đến/đi cuối
+        // (gán, quá hạn): nạp sẵn cùng người gửi và tệp cho cả trang.
+        $conversations->loadMissing([
+            'firstMessage.sender', 'firstMessage.attachments',
+            'lastIncomingMessage.sender', 'lastIncomingMessage.attachments',
+            'lastOutgoingMessage.sender', 'lastOutgoingMessage.attachments',
+        ]);
+
+        foreach ($notifications as $notification) {
+            $primaryActor = $notification->primaryActor;
+            $secondaryActor = $notification->secondaryActor;
+
+            if ($primaryActor instanceof Conversation && $secondaryActor instanceof Message && $secondaryActor->conversation_id === $primaryActor->id) {
+                $secondaryActor->setRelation('conversation', $primaryActor);
+            }
+        }
+
+        MessageResource::preload(new EloquentCollection(
+            $notifications->pluck('secondaryActor')->filter(fn ($actor) => $actor instanceof Message)->unique(fn (Message $message) => $message->id)->values()->all()
+        ));
     }
 
     public function toArray(Request $request): array

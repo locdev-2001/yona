@@ -13,6 +13,7 @@ use App\Exceptions\MessageValidationException;
 use App\Finders\ConversationFinder;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ConversationResource;
+use App\Jobs\Conversations\RelayTypingJob;
 use App\Models\Account;
 use App\Models\AccountUser;
 use App\Models\AgentBot;
@@ -23,7 +24,6 @@ use App\Models\Conversation;
 use App\Models\Inbox;
 use App\Models\Message;
 use App\Models\User;
-use App\Services\Channels\ChannelActionRegistry;
 use App\Services\Conversations\FilterService;
 use App\Services\Conversations\TypingStatusManager;
 use App\Services\Conversations\UnreadCounts\Counter as UnreadCountsCounter;
@@ -315,7 +315,7 @@ class ConversationsController extends Controller
             return;
         }
 
-        ChannelActionRegistry::for($conversation->inbox)?->typing($conversation);
+        RelayTypingJob::dispatch($conversation->withoutRelations());
     }
 
     // ConversationCustomAttributesConcern#custom_attributes — ghi đè toàn bộ

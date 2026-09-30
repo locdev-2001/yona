@@ -1052,14 +1052,34 @@ stdout_logfile=/www/wwwroot/yona.vn/storage/logs/yona-horizon.log
 ```
 
 Supervisor chỉ nuôi **một** process: Horizon là master, nó tự đẻ worker con theo
-`config/horizon.php`. Số worker tối đa đặt bằng `HORIZON_MAX_PROCESSES` trong
-`.env` (mặc định 4), không còn `DEPLOY_QUEUE_PROCESSES`.
+`config/horizon.php`, chia ba pool cố định (số process không co giãn):
+
+| Pool (supervisor Horizon) | Hàng đợi | Biến `.env` | Mặc định |
+|---|---|---|---|
+| `supervisor-realtime` | `critical` (phát realtime, tắt/bật "đang nhập…") | `HORIZON_REALTIME_PROCESSES` | 2 |
+| `supervisor-1` | mọi tier còn lại theo thứ tự, `critical` đứng đầu | `HORIZON_MAX_PROCESSES` | 4 |
+| `supervisor-media` | `media` (tin gửi kèm tệp, tới 120s mỗi lượt) | `HORIZON_MEDIA_PROCESSES` | 2 |
+| `supervisor-stickers` | `stickers` | — | 1 |
+
+Mỗi worker tốn khoảng 60–100 MB RAM; mặc định là 9 process. Máy ít RAM thì hạ
+`HORIZON_MAX_PROCESSES` trước, giữ realtime ≥ 1 và media ≥ 1.
+
+Pool phải **cố định** (`minProcesses = maxProcesses`): khi `balance` tắt, Horizon
+hạ pool về `minProcesses` lúc hàng đợi rỗng rồi chỉ thêm **một** process mỗi 3 giây
+khi có việc, và process mới chạy việc đầu tiên chậm vì nạp lại toàn bộ mã. Cấu
+hình cũ (`minProcesses` mặc định 1, tối đa 4) vì thế co về **một** worker cho mọi
+việc mỗi lần hàng đợi rỗng (`vendor/laravel/horizon/src/AutoScaler.php`).
 
 Danh sách tier queue nằm ở `config/queue_tiers.php` — Horizon (production) và
 `Makefile` (dev) đọc cùng file đó, sửa một chỗ là đủ. `balance` để `false` nên
 worker quét tuần tự từ `critical` xuống `purgable`, đúng như `queue:work
 --queue=...` trước đây; bật balance sẽ chia process theo hàng đợi và **mất ưu
-tiên tuyệt đối**.
+tiên tuyệt đối**. Tin nào đi `media` hay `high` chỉ do `SendReplyJob::queueFor`
+quyết định (có đính kèm = `media`). Thứ tự gửi ra kênh trong một hội thoại vẫn
+đúng thứ tự tạo tin dù tin đi hai hàng đợi: `App\Messaging\Delivery\OutboundOrder`
+chỉ đưa tin đầu hàng của hội thoại vào hàng đợi, tin sau chờ trên Redis (không
+giữ worker) và được đẩy khi tin trước gửi xong hoặc hỏng hẳn; job mất thì
+`SweepOutboundOrderJob` (mỗi phút) nhả hàng sau 10 phút. Cần Redis ≥ 6.0.6 (`LPOS`).
 
 > **Bất biến của hàng đợi, đừng phá:** `media_timeout` của kênh Zalo (120s,
 > `config/zalo.php`) < `timeout` của worker (150s, `config/horizon.php`) <
@@ -1113,6 +1133,21 @@ Lưu ý vận hành:
   Pulse tự dọn bản ghi quá `PULSE_STORAGE_KEEP` (7 ngày) khi ghi, không cần lệnh lịch. Thấy độ trễ request tăng thì hạ sample rate hoặc
   `PULSE_ENABLED=false`. Pulse ghi *pattern* route (`.../{website_token}`) chứ
   không ghi URL thật, nên token không rơi vào bảng.
+- Pulse ingest mặc định `storage`: ghi DB ở `terminate` của request (sau khi
+  response đã gửi, người dùng không chờ nhưng worker PHP-FPM bị giữ thêm vài ms)
+  và giữa hai job của worker. Chuyển `PULSE_INGEST_DRIVER=redis` chỉ khi đã có
+  daemon `php artisan pulse:work` chạy thường trực (deploy.sh chưa dựng program
+  này); thiếu daemon thì Pulse ngừng có số liệu mà không báo lỗi.
+- **Số đo Pulse ngay sau deploy không phải trạng thái thường.** `/up` chỉ được gọi
+  bởi health check của deploy, chạy ngay sau khi reload PHP-FPM (opcache nguội) và
+  `optimize:clear` (xoá cache Redis) nên thường 1,5–3,7 giây; các trang/API mở
+  trong vài phút đó cũng chậm theo. Lọc những mốc này trước khi kết luận.
+- Job chạy quá 1000 ms (cùng ngưỡng Pulse) ghi một dòng `queue.job.slow` vào log
+  ứng dụng: `total_ms`, `db_ms`/`db_queries`, `http_ms`/`http_calls` (bridge, CDN,
+  Web Push), `other_ms` (CPU, Redis, phát Reverb), `waited_since_push_ms` (gồm cả
+  delay hẹn trước), `job_number_in_process`. Tin gửi Zalo còn có dòng
+  `zalo.send.timing` (chờ hàng đợi + từng lượt gọi bridge). Xem ở `/logs` hoặc
+  `grep -h 'queue.job.slow' storage/logs/laravel*.log | tail -50`.
 - Thẻ **Servers** của Pulse tắt (`PULSE_SERVERS_ENABLED=false`) vì nó cần thêm
   một daemon `pulse:check`; CPU/RAM/đĩa xem ở aaPanel.
 - Log Viewer chỉ đọc `storage/logs`, **không** mở `/var/log/nginx` hay log hệ

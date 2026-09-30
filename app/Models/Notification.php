@@ -113,12 +113,12 @@ class Notification extends Model
 
     public function primaryActor(): MorphTo
     {
-        return $this->morphTo('primary_actor');
+        return $this->morphTo(__FUNCTION__, 'primary_actor_type', 'primary_actor_id');
     }
 
     public function secondaryActor(): MorphTo
     {
-        return $this->morphTo('secondary_actor');
+        return $this->morphTo(__FUNCTION__, 'secondary_actor_type', 'secondary_actor_id');
     }
 
     public function scopeUnread(Builder $query): Builder
@@ -225,7 +225,7 @@ class Notification extends Model
 
         return match ($this->typeName()) {
             'conversation_creation',
-            'sla_missed_first_response' => $this->messageBody($conversation?->messages()->first()),
+            'sla_missed_first_response' => $this->messageBody($conversation?->firstMessage),
             'assigned_conversation_new_message',
             'participating_conversation_new_message',
             'conversation_mention' => $this->messageBody($this->secondaryActor),
@@ -242,8 +242,7 @@ class Notification extends Model
             return null;
         }
 
-        return $conversation->messages()->incoming()->reorder('id', 'desc')->first()
-            ?? $conversation->messages()->outgoing()->reorder('id', 'desc')->first();
+        return $conversation->lastIncomingMessage ?? $conversation->lastOutgoingMessage;
     }
 
     private function messageBody(mixed $actor): string
@@ -262,7 +261,7 @@ class Notification extends Model
             );
         }
 
-        return $message?->attachments()->exists()
+        return $message?->attachments->isNotEmpty()
             ? __('notifications.attachment')
             : __('notifications.no_content');
     }

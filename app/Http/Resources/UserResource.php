@@ -14,11 +14,11 @@ final class UserResource
     public static function pushEventData(User $user, ?Account $account = null): array
     {
         $account ??= request()->attributes->get('currentAccount');
-        $membership = match (true) {
-            $account === null => null,
-            $user->relationLoaded('accountUsers') => $user->accountUsers->firstWhere('account_id', $account->id),
-            default => $user->accountUsers()->where('account_id', $account->id)->first(),
-        };
+        // Nạp cả tư cách thành viên một lần trên instance: một request/job dựng payload
+        // của cùng người (người thao tác, người gửi, người được gán) nhiều lượt.
+        $membership = $account === null
+            ? null
+            : $user->loadMissing('accountUsers')->accountUsers->firstWhere('account_id', $account->id);
 
         return [
             'id' => $user->id,

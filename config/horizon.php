@@ -111,6 +111,7 @@ return [
     'waits' => [
         'redis:default' => 60,
         'redis:critical' => 30,
+        'redis:media' => 120,
     ],
 
     /*
@@ -209,16 +210,40 @@ return [
     |
     */
 
+    // Ba nhóm worker cố định, mỗi nhóm một supervisor, để việc dài không chiếm
+    // chỗ của việc người dùng đang nhìn:
+    // - realtime: chỉ tier critical (phát realtime, tắt "đang nhập…"), luôn có
+    //   process rảnh dù mọi worker khác đang gửi tệp hay tải ảnh.
+    // - supervisor-1: mọi tier còn lại theo đúng thứ tự, critical đứng đầu để
+    //   worker thường cũng đỡ phát realtime khi dồn. `balance => false` giữ ưu
+    //   tiên tuyệt đối từ trên xuống; bật balance là chia process theo hàng đợi.
+    // - media: tin có tệp (tới 120s mỗi lượt gửi Zalo) — không bao giờ giữ worker
+    //   của tin chữ, thông báo hay sự kiện Zalo đến.
+    // minProcesses = maxProcesses: với balance tắt, Horizon hạ pool về
+    // minProcesses (mặc định 1) khi hàng đợi rỗng rồi chỉ thêm MỘT process mỗi 3
+    // giây khi có việc, và process mới chạy việc đầu tiên chậm vì nạp lại toàn bộ
+    // mã. Pool cố định thì worker luôn ấm và đủ ngay từ việc đầu.
     'defaults' => [
-        // Một supervisor ôm cả 8 tier theo đúng thứ tự: `balance => false` cho
-        // worker quét tuần tự từ critical xuống purgable, giống hệt
-        // `queue:work --queue=critical,...` mà supervisor đang chạy. Bật
-        // balance sẽ chia process theo hàng đợi và làm mất ưu tiên tuyệt đối.
+        'supervisor-realtime' => [
+            'connection' => 'redis',
+            'queue' => ['critical'],
+            'balance' => false,
+            'minProcesses' => 1,
+            'maxProcesses' => 1,
+            'maxTime' => 3600,
+            'maxJobs' => 0,
+            'memory' => 256,
+            'tries' => 3,
+            'timeout' => 60,
+            'nice' => 0,
+        ],
+
         'supervisor-1' => [
             'connection' => 'redis',
-            'queue' => $tiers,
+            'queue' => array_values(array_diff($tiers, ['media'])),
             'balance' => false,
             'autoScalingStrategy' => 'time',
+            'minProcesses' => 1,
             'maxProcesses' => 1,
             'maxTime' => 3600,
             'maxJobs' => 0,
@@ -227,6 +252,20 @@ return [
             // Bất biến: media_timeout kênh (120s) < timeout worker (150s)
             // < retry_after của Redis (180s, config/queue.php). Sai thứ tự thì
             // Redis trả job về hàng đợi trong lúc worker vẫn đang chạy nó.
+            'timeout' => 150,
+            'nice' => 0,
+        ],
+
+        'supervisor-media' => [
+            'connection' => 'redis',
+            'queue' => ['media'],
+            'balance' => false,
+            'minProcesses' => 1,
+            'maxProcesses' => 1,
+            'maxTime' => 3600,
+            'maxJobs' => 0,
+            'memory' => 256,
+            'tries' => 3,
             'timeout' => 150,
             'nice' => 0,
         ],
@@ -248,16 +287,25 @@ return [
     ],
 
     'environments' => [
-        // Thay cho DEPLOY_QUEUE_PROCESSES=4 của program yona-queue cũ.
         'production' => [
+            'supervisor-realtime' => [
+                'minProcesses' => $realtimeProcesses = max(1, (int) env('HORIZON_REALTIME_PROCESSES', 2)),
+                'maxProcesses' => $realtimeProcesses,
+            ],
             'supervisor-1' => [
-                'maxProcesses' => (int) env('HORIZON_MAX_PROCESSES', 4),
+                'minProcesses' => $generalProcesses = max(1, (int) env('HORIZON_MAX_PROCESSES', 4)),
+                'maxProcesses' => $generalProcesses,
+            ],
+            'supervisor-media' => [
+                'minProcesses' => $mediaProcesses = max(1, (int) env('HORIZON_MEDIA_PROCESSES', 2)),
+                'maxProcesses' => $mediaProcesses,
             ],
         ],
 
         'local' => [
             'supervisor-1' => [
-                'maxProcesses' => 3,
+                'minProcesses' => 2,
+                'maxProcesses' => 2,
             ],
         ],
     ],

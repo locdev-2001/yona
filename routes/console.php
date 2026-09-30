@@ -3,6 +3,7 @@
 use App\Jobs\Account\ConversationsResolutionSchedulerJob;
 use App\Jobs\AutomationRules\TriggerPendingExecutionsJob;
 use App\Jobs\Conversations\ReopenSnoozedConversationsJob;
+use App\Jobs\Conversations\SweepOutboundOrderJob;
 use App\Jobs\Inboxes\FetchImapEmailInboxesJob;
 use App\Jobs\Notification\RemoveOldNotificationJob;
 use App\Jobs\Notification\ReopenSnoozedNotificationsJob;
@@ -31,6 +32,9 @@ Schedule::job(new FetchImapEmailInboxesJob)->cron('*/1 * * * *');
 // G1 Zalo: nhịp tim Laravel ↔ zalo-bridge. Không có nó, bridge chết là DB vẫn báo
 // "connected" và chủ shop không thấy gì (zalo-deep-audit 6.5).
 Schedule::job(new ZaloHealthSweepJob)->cron('*/1 * * * *')->withoutOverlapping();
+// Tin gửi ra kênh xếp hàng theo hội thoại (OutboundOrder): job đầu hàng mất thì
+// lượt quét này nhả hàng để tin sau không kẹt.
+Schedule::job(new SweepOutboundOrderJob)->everyMinute()->withoutOverlapping();
 // Outbox tìm kiếm đã xếp job ngay sau mỗi lần ghi; lịch này vét phần xếp hàng lỗi
 // hoặc job hết lượt thử. Engine không giữ chỉ mục riêng thì không chạy.
 Schedule::job(new ProcessSearchOutboxJob)->everyMinute()->when(fn () => app(SearchOutbox::class)->enabled());

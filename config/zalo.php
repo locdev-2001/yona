@@ -19,6 +19,8 @@ return [
         // Liệt kê thành viên nhóm lần đầu (chưa có cache) phải chờ Zalo trả danh
         // sách theo lô 50 người — nhóm đông cần hơn mức 10s mặc định.
         'members_timeout' => 30,
+        // "Đang soạn tin" tới muộn vài giây là vô nghĩa (tin thật có khi tới trước).
+        'typing_timeout' => 3,
     ],
 
     // Quyết định founder 07/09/2026: KHÔNG chặn tin chủ động nữa — cửa sổ giờ

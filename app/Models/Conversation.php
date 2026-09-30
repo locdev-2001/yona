@@ -374,6 +374,33 @@ class Conversation extends Model
         return $this->messages()->reorder('created_at', 'desc')->orderByDesc('id');
     }
 
+    // Tin đầu tiên theo thứ tự của messages(), nạp gộp được cho cả trang thông báo.
+    /** @return HasOne<Message, $this> */
+    public function firstMessage(): HasOne
+    {
+        return $this->hasOne(Message::class)->ofMany(['created_at' => 'min', 'id' => 'min'])->chaperone('conversation');
+    }
+
+    /** @return HasOne<Message, $this> */
+    public function lastIncomingMessage(): HasOne
+    {
+        return $this->lastMessageOfType(Message::TYPE_INCOMING);
+    }
+
+    /** @return HasOne<Message, $this> */
+    public function lastOutgoingMessage(): HasOne
+    {
+        return $this->lastMessageOfType(Message::TYPE_OUTGOING);
+    }
+
+    /** @return HasOne<Message, $this> */
+    private function lastMessageOfType(int $messageType): HasOne
+    {
+        return $this->hasOne(Message::class)
+            ->ofMany(['id' => 'max'], fn (Builder $query) => $query->where('messages.message_type', $messageType))
+            ->chaperone('conversation');
+    }
+
     // Cùng thứ tự với messagesNewestFirst, nạp sẵn được cho cả trang danh sách.
     /** @return HasOne<Message, $this> */
     public function latestMessage(): HasOne

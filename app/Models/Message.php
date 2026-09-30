@@ -6,7 +6,7 @@ use App\Events\DomainEvent;
 use App\Events\EventType;
 use App\Events\PreviousChanges;
 use App\Exceptions\MessageValidationException;
-use App\Jobs\SendReplyJob;
+use App\Messaging\Delivery\OutboundOrder;
 use App\Models\Concerns\IndexedForSearch;
 use App\Services\Messages\InReplyToMessageBuilder;
 use App\Services\Messages\OutboundMentionsBuilder;
@@ -416,7 +416,7 @@ class Message extends Model
     // trước khi tin được lưu — không còn gì phải chờ.
     private function sendReply(): void
     {
-        dispatch(new SendReplyJob($this));
+        app(OutboundOrder::class)->dispatch($this);
     }
 
     public function isConversationTranscriptable(): bool

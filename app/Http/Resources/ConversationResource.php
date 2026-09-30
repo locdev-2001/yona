@@ -3,7 +3,6 @@
 namespace App\Http\Resources;
 
 use App\Http\Resources\Concerns\SerializesAttributeMaps;
-use App\Models\Contact;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\User;
@@ -32,12 +31,6 @@ class ConversationResource extends JsonResource
         'latestNonActivityMessage.attachments',
     ];
 
-    // Người gửi tin cuối: agent cần vai trò trong account, khách cần ảnh đại diện.
-    private const MESSAGE_SENDER_RELATIONS = [
-        User::class => ['accountUsers', 'avatar'],
-        Contact::class => ['avatar'],
-    ];
-
     /** @var list<int>|null Nhóm người xem là thành viên, nạp sẵn khi dựng cả trang. */
     private ?array $viewerTeamIds = null;
 
@@ -45,7 +38,7 @@ class ConversationResource extends JsonResource
     public static function collectionFor(iterable $conversations): array
     {
         $conversations = new EloquentCollection(collect($conversations)->values()->all());
-        self::preloadCards($conversations);
+        self::preload($conversations);
         $viewerTeamIds = self::viewerTeamIds($conversations);
 
         return $conversations
@@ -59,10 +52,16 @@ class ConversationResource extends JsonResource
             ->all();
     }
 
-    /** @param EloquentCollection<int, Conversation> $conversations */
-    private static function preloadCards(EloquentCollection $conversations): void
+    /**
+     * Nạp một lần cho cả nhóm hội thoại mọi quan hệ thẻ cần, để dựng N thẻ không
+     * thành N lượt truy vấn cho từng quan hệ. Dùng chung cho danh sách hội thoại
+     * và mọi nơi dựng nhiều hội thoại một lượt (thông báo…).
+     *
+     * @param  EloquentCollection<int, Conversation>  $conversations
+     */
+    public static function preload(EloquentCollection $conversations): void
     {
-        $withSenderRelations = fn (MorphTo $sender) => $sender->morphWith(self::MESSAGE_SENDER_RELATIONS);
+        $withSenderRelations = fn (MorphTo $sender) => $sender->morphWith(MessageResource::SENDER_RELATIONS);
         $conversations->loadMissing([
             ...self::CARD_RELATIONS,
             'latestMessage.sender' => $withSenderRelations,
@@ -74,7 +73,7 @@ class ConversationResource extends JsonResource
             $conversation->contact?->setRelation('account', $conversation->account);
 
             foreach ([$conversation->latestMessage, $conversation->latestNonActivityMessage] as $message) {
-                $message?->setRelation('account', $conversation->account)->setRelation('inbox', $conversation->inbox);
+                self::shareParentRelations($message, $conversation);
             }
         }
     }
@@ -164,14 +163,42 @@ class ConversationResource extends JsonResource
     {
         // Ngoài danh sách (sự kiện realtime, chạy mỗi tin mới) đọc mới bằng index + LIMIT 1;
         // truy vấn gộp của quan hệ ofMany chỉ đáng khi nạp cho cả trang.
-        $lastMessage = $conversation->relationLoaded('latestMessage')
-            ? $conversation->latestMessage
-            : $conversation->messagesNewestFirst()->first();
-        $lastNonActivityMessage = $conversation->relationLoaded('latestNonActivityMessage')
-            ? $conversation->latestNonActivityMessage
-            : $conversation->lastNonActivityMessage();
+        if ($conversation->relationLoaded('latestMessage') && $conversation->relationLoaded('latestNonActivityMessage')) {
+            return [$conversation->latestMessage, $conversation->latestNonActivityMessage];
+        }
+
+        $lastMessage = $conversation->messagesNewestFirst()->first();
+        // Tin mới nhất đã không phải hoạt động thì chính nó là tin cuối không-hoạt-động.
+        $lastNonActivityMessage = $lastMessage !== null
+            && $lastMessage->message_type !== Message::TYPE_ACTIVITY
+            && $lastMessage->account_id === $conversation->account_id
+                ? $lastMessage
+                : $conversation->lastNonActivityMessage();
+
+        foreach ([$lastMessage, $lastNonActivityMessage] as $message) {
+            self::shareParentRelations($message, $conversation);
+        }
 
         return [$lastMessage, $lastNonActivityMessage];
+    }
+
+    // Tin đọc từ hội thoại mang sẵn cha của nó: dựng payload tin không tra lại hội thoại, account, inbox.
+    private static function shareParentRelations(?Message $message, Conversation $conversation): void
+    {
+        if ($message === null) {
+            return;
+        }
+
+        $message->setRelation('conversation', $conversation);
+
+        if ($message->account_id === $conversation->account_id) {
+            $message->setRelation('account', $conversation->account);
+            MessageResource::shareSenderAccount($message);
+        }
+
+        if ($message->inbox_id === $conversation->inbox_id) {
+            $message->setRelation('inbox', $conversation->inbox);
+        }
     }
 
     private function meta(Conversation $conversation): array

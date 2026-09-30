@@ -1,5 +1,6 @@
 <?php
 
+use App\Jobs\Conversations\RelayTypingJob;
 use App\Models\Account;
 use App\Models\AccountUser;
 use App\Models\Attachment;
@@ -12,6 +13,7 @@ use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 
 // Hành động agent làm TRÊN kênh: thả/gỡ biểu cảm (Q5), thu hồi hai chiều (Q4),
@@ -204,6 +206,19 @@ it('agent gõ trong ô soạn thì bridge nhận typing, và chỉ một lần t
 
     expect(collect(Http::recorded())->filter(fn (array $pair) => str_ends_with($pair[0]->url(), '/personal-messages/typing'))->count())
         ->toBe(1);
+});
+
+it('request báo gõ không chờ bridge: lời gọi ra kênh đi hàng đợi critical', function () {
+    Queue::fake();
+    zaloActionsBridgeOk();
+    [$account, , $conversation, $agent] = zaloActionsFixtures();
+
+    $this->actingAs($agent)
+        ->postJson("/api/v1/accounts/{$account->id}/conversations/{$conversation->display_id}/toggle_typing_status", ['typing_status' => 'on'])
+        ->assertOk();
+
+    Http::assertNothingSent();
+    Queue::assertPushedOn('critical', RelayTypingJob::class, fn (RelayTypingJob $job) => $job->conversation->is($conversation));
 });
 
 it('ghi chú riêng tư và lượt tắt gõ không đẩy ra kênh', function () {

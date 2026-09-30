@@ -32,11 +32,7 @@ class ActionCableBroadcastJob extends ApplicationJob
             return;
         }
 
-        $broadcastData = $this->prepareBroadcastData();
-
-        foreach ($this->members as $member) {
-            broadcast(new RealtimeBroadcast($member, $this->eventName, $broadcastData));
-        }
+        broadcast(new RealtimeBroadcast(array_values($this->members), $this->eventName, $this->prepareBroadcastData()));
     }
 
     // Với event cập nhật hội thoại, đọc lại bản mới nhất khi job chạy để

@@ -105,7 +105,7 @@ class ZaloBridgeClient
     /** @param array<string, mixed> $payload */
     public function sendTyping(array $payload): ?Response
     {
-        return $this->post('/personal-messages/typing', $payload, $this->sendSecretHeader());
+        return $this->post('/personal-messages/typing', $payload, $this->sendSecretHeader(), (int) config('zalo.bridge.typing_timeout'));
     }
 
     /**
