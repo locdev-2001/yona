@@ -449,6 +449,7 @@ export default function InboxSettingsPage({ inbox, senderEmailAddress, onInboxUp
                         websiteToken={inbox.website_token ?? ''}
                         websiteName={draft.name}
                         widgetColor={draft.widgetColor}
+                        welcomeTitle={draft.welcomeTitle}
                         welcomeTagline={draft.welcomeTagline}
                         widgetSettings={inbox.widget_settings ?? DEFAULT_WIDGET_SETTINGS}
                     />

@@ -42,10 +42,11 @@ describe('khung xem trước của màn cấu hình widget', () => {
         window.dispatchEvent(
             new MessageEvent('message', {
                 origin: window.location.origin,
-                data: { type: 'yona-preview:config', config: { widgetColor: '#c2410c', widgetSettings: settings } },
+                data: { type: 'yona-preview:config', config: { widgetColor: '#c2410c', welcomeTitle: 'Chào bạn!', widgetSettings: settings } },
             }),
         );
         expect(widgetStore.getState().channelConfig?.widgetColor).toBe('#c2410c');
+        expect(widgetStore.getState().channelConfig?.welcomeTitle).toBe('Chào bạn!');
         expect(widgetStore.getState().channelConfig?.widgetSettings.appearance.greeting).toBe('Shop giúp gì được?');
         expect(document.documentElement.style.getPropertyValue('--widget-color')).toBe('#c2410c');
         stop();

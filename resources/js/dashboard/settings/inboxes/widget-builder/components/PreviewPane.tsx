@@ -15,6 +15,7 @@ const SEND_DEBOUNCE_MS = 150;
 interface PreviewConfigPayload {
     widgetColor?: string;
     websiteName?: string;
+    welcomeTitle?: string;
     welcomeTagline?: string;
     widgetSettings?: WidgetSettingsShape;
 }
@@ -23,6 +24,7 @@ interface PreviewPaneProps {
     websiteToken: string;
     websiteName: string;
     widgetColor: string;
+    welcomeTitle?: string;
     welcomeTagline: string;
     widgetSettings: WidgetSettingsShape;
     className?: string;
@@ -39,6 +41,7 @@ export default function PreviewPane({
     websiteToken,
     websiteName,
     widgetColor,
+    welcomeTitle,
     welcomeTagline,
     widgetSettings,
     className = '',
@@ -48,8 +51,8 @@ export default function PreviewPane({
     const iframeRef = useRef<HTMLIFrameElement>(null);
 
     const config = useMemo<PreviewConfigPayload>(
-        () => ({ widgetColor, websiteName, welcomeTagline, widgetSettings }),
-        [widgetColor, websiteName, welcomeTagline, widgetSettings],
+        () => ({ widgetColor, websiteName, welcomeTitle, welcomeTagline, widgetSettings }),
+        [widgetColor, websiteName, welcomeTitle, welcomeTagline, widgetSettings],
     );
 
     const sendConfig = useCallback(() => {

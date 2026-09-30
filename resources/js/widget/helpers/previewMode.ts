@@ -9,6 +9,7 @@ export const PREVIEW_MESSAGE_PREFIX = 'yona-preview:';
 export interface PreviewConfig {
     widgetColor?: string;
     websiteName?: string;
+    welcomeTitle?: string;
     welcomeTagline?: string;
     widgetSettings?: WidgetSettingsConfig;
 }
@@ -26,6 +27,7 @@ export function applyPreviewConfig(config: PreviewConfig): void {
         ...state.channelConfig,
         ...(config.widgetColor ? { widgetColor: config.widgetColor } : {}),
         ...(config.websiteName !== undefined ? { websiteName: config.websiteName } : {}),
+        ...(config.welcomeTitle !== undefined ? { welcomeTitle: config.welcomeTitle } : {}),
         ...(config.welcomeTagline !== undefined ? { welcomeTagline: config.welcomeTagline } : {}),
         ...(config.widgetSettings ? { widgetSettings: config.widgetSettings } : {}),
     };
