@@ -7,6 +7,7 @@ import type { DialogHandle } from 'dashboard/components-next/dialog/Dialog';
 import { useAlert } from 'dashboard/composables/useAlert';
 import { FOCUS_MESSAGE_PARAM } from 'dashboard/conversation/messageFocus';
 import { copyTextToClipboard } from 'shared/helpers/clipboard';
+import { toCopyText } from 'shared/helpers/MessageFormatter';
 import { t } from '../../../i18n';
 import { useMessageContext } from './provider';
 import { ORIENTATION } from './constants';
@@ -194,7 +195,7 @@ export default function MessageActions({ className = '', children }: { className
         const handlers: Record<MessageActionId, () => void> = {
             reply: () => onReplyTo?.(),
             forward: () => onForward?.(),
-            copy: () => copyWithNotice(content ?? '', 'CONVERSATION.MESSAGE_ACTIONS.COPIED'),
+            copy: () => copyWithNotice(toCopyText(content), 'CONVERSATION.MESSAGE_ACTIONS.COPIED'),
             copyLink: () =>
                 copyWithNotice(
                     messagePermalink(window.location.href, id, FOCUS_MESSAGE_PARAM),
@@ -214,6 +215,8 @@ export default function MessageActions({ className = '', children }: { className
 
     const onContextMenu = (event: ReactMouseEvent<HTMLDivElement>) => {
         if (!hasActions || !areaRef.current || hasTextSelectionInside(areaRef.current)) return;
+        // Chuột phải trúng ảnh/video thì để menu gốc của trình duyệt (Sao chép/Lưu hình ảnh).
+        if ((event.target as Element).closest?.('img, video')) return;
         event.preventDefault();
         openMenuAt(isHoverlessPointer ? 'sheet' : 'popover', event.clientX, event.clientY);
     };

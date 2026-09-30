@@ -98,14 +98,14 @@ function imgResizeManager(md: MarkdownIt): void {
     });
 }
 
-function createMarkdownInstance(linkify = true): MarkdownIt {
+function createMarkdownInstance(linkify = true, typographer = true): MarkdownIt {
     return MarkdownIt({
         html: false,
         xhtmlOut: true,
         breaks: true,
         langPrefix: 'language-',
         linkify,
-        typographer: true,
+        typographer,
         quotes: '“”‘’',
         maxNesting: 20,
     } as Options)
@@ -152,4 +152,47 @@ export default class MessageFormatter {
 // Tương đương getPlainText của useMessageFormatter.
 export function getPlainText(message: string | null | undefined): string {
     return new MessageFormatter(message).plainText;
+}
+
+// Chữ để sao chép ra ngoài: đúng thứ người đọc thấy ở bong bóng, nhưng link có chữ giữ lại url
+// (`[chữ](url)` → `chữ url`) và không đổi nháy/ký tự như typographer của bản hiển thị.
+export function toCopyText(message: string | null | undefined): string {
+    const md = createMarkdownInstance(true, false);
+    const source = (message || '').replace(COLWIDTHS_MARKER_REGEX, '');
+    let out = '';
+    let linkHref: string | null = null;
+    let linkText = '';
+
+    const append = (text: string) => {
+        out += text;
+        if (linkHref !== null) linkText += text;
+    };
+
+    md.parse(source, {}).forEach((block) => {
+        if (block.type === 'inline') {
+            (block.children ?? []).forEach((token) => {
+                if (token.type === 'link_open') {
+                    linkHref = token.attrGet('href') ?? '';
+                    linkText = '';
+                } else if (token.type === 'link_close') {
+                    const href = linkHref ?? '';
+                    const sameAsText = linkText === href || `http://${linkText}` === href || `mailto:${linkText}` === href;
+                    if (href && !sameAsText && !href.startsWith('mention://')) out += ` ${href}`;
+                    linkHref = null;
+                } else if (token.type === 'softbreak' || token.type === 'hardbreak') {
+                    append('\n');
+                } else {
+                    append(token.content);
+                }
+            });
+        } else if (block.type === 'fence' || block.type === 'code_block') {
+            out += block.content;
+        } else if (block.type === 'paragraph_close') {
+            out += block.hidden ? '\n' : '\n\n';
+        } else if (block.type === 'heading_close') {
+            out += '\n';
+        }
+    });
+
+    return out.trim();
 }
