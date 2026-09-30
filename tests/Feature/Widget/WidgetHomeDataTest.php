@@ -11,7 +11,7 @@ use Tests\Support\WidgetSession;
 
 describe('widget_settings', function () {
     it('chưa cấu hình thì dùng mặc định', function () {
-        expect(WidgetSettings::resolve(null))->toBe(WidgetSettings::DEFAULTS);
+        expect(WidgetSettings::resolve(null))->toBe(WidgetSettings::defaults());
     });
 
     it('đọc cấu hình cũ thì bỏ mục sai, không vỡ widget', function () {
@@ -28,6 +28,17 @@ describe('widget_settings', function () {
         expect($settings['appearance']['launcher'])->toBe('round')
             ->and(array_column($settings['other_channels'], 'kind'))->toBe(['zalo', 'hotline'])
             ->and($settings['custom_links'])->toBe([['label' => 'Bảng giá sỉ', 'url' => 'https://gommoc.vn/gia-si']]);
+    });
+
+    it('widget nhận đúng âm báo hộp thư đã chọn; cấu hình cũ có âm lạ thì về âm mặc định', function () {
+        $session = WidgetSession::make();
+        $session->channel->forceFill(['widget_settings' => ['notification_sound' => ['enabled' => false, 'tone' => 'bell']]])->save();
+
+        expect($this->postJson($session->url('config'), [], $session->headers())->assertOk()->json('website_channel_config.widget_settings.notification_sound'))
+            ->toBe(['enabled' => false, 'tone' => 'bell']);
+
+        expect(WidgetSettings::resolve(['notification_sound' => ['tone' => 'coi-xe']])['notification_sound'])
+            ->toBe(['enabled' => true, 'tone' => 'ding']);
     });
 
     it('dashboard lưu sai thì báo lỗi đúng mục', function () {

@@ -504,3 +504,67 @@ describe('cấu hình launcher và phóng to từ dashboard', () => {
         expect(widgetHolder.classList.contains('woot-widget-holder--expanded')).toBe(false);
     });
 });
+
+describe('âm báo tin mới theo cấu hình hộp thư', () => {
+    const audioSources: string[] = [];
+    const play = vi.fn();
+
+    beforeEach(() => {
+        audioSources.length = 0;
+        play.mockReset().mockResolvedValue(undefined);
+        vi.stubGlobal('matchMedia', vi.fn().mockReturnValue({ matches: false }));
+        vi.stubGlobal(
+            'Audio',
+            vi.fn(function (this: { play: typeof play; currentTime: number }, source: string) {
+                audioSources.push(source);
+                this.play = play;
+                this.currentTime = 0;
+            }),
+        );
+        vi.spyOn(IFrameHelper, 'onLoad').mockImplementation(() => {});
+        IFrameHelper.initPostMessageCommunication();
+    });
+
+    const loadedWithSound = (notificationSound?: { enabled: boolean; tone: string }) => ({
+        event: 'loaded',
+        config: {
+            authToken: 'visitor-token',
+            channelConfig: {
+                widgetColor: '#1f93ff',
+                widgetSettings: notificationSound ? { notification_sound: notificationSound } : {},
+            },
+        },
+    });
+
+    const firstInteractionThenMessage = async () => {
+        document.dispatchEvent(new Event('click'));
+        await Promise.resolve();
+        postFromWidget({ event: 'playAudio' });
+    };
+
+    it('phát đúng âm hộp thư đã chọn sau tương tác đầu tiên của khách', async () => {
+        postFromWidget(loadedWithSound({ enabled: true, tone: 'chime' }));
+
+        await firstInteractionThenMessage();
+
+        expect(audioSources).toEqual(['https://app.yona.vn/audio/alerts/chime.mp3']);
+        expect(play).toHaveBeenCalledTimes(1);
+    });
+
+    it('hộp thư tắt âm báo thì widget không nạp và không phát âm nào', async () => {
+        postFromWidget(loadedWithSound({ enabled: false, tone: 'chime' }));
+
+        await firstInteractionThenMessage();
+
+        expect(audioSources).toEqual([]);
+        expect(play).not.toHaveBeenCalled();
+    });
+
+    it('máy chủ đời cũ chưa gửi cấu hình âm thì dùng âm mặc định', async () => {
+        postFromWidget(loadedWithSound());
+
+        await firstInteractionThenMessage();
+
+        expect(audioSources).toEqual(['https://app.yona.vn/audio/alerts/ding.mp3']);
+    });
+});

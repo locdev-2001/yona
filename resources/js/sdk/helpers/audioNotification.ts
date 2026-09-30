@@ -1,3 +1,5 @@
+import { alertToneUrl, type AlertTone } from '../../shared/alertSound/alertTones';
+
 export const initOnEvents = ['click', 'touchstart', 'keypress', 'keydown'];
 
 // KHÁC BIỆT CỐ Ý so với bản gốc: gốc `fetch` tệp mp3 rồi decodeAudioData qua
@@ -5,14 +7,10 @@ export const initOnEvents = ['click', 'touchstart', 'keypress', 'keydown'];
 // → trình duyệt chặn CORS và in lỗi đỏ vào console website của khách. Thẻ
 // <audio> tải tài nguyên chéo origin không cần CORS, nên đổi sang HTMLAudioElement.
 // Gọi sau tương tác đầu tiên của người dùng (initOnEvents) nên autoplay policy cho phát.
-export const getAlertAudio = async (
-    baseUrl = '',
-    requestContext?: { type?: string; alertTone?: string },
-): Promise<void> => {
+export const getAlertAudio = async (baseUrl: string, tone: AlertTone): Promise<void> => {
     if (typeof Audio === 'undefined') return;
 
-    const { type = 'dashboard', alertTone = 'ding' } = requestContext ?? {};
-    const audio = new Audio(`${baseUrl}/audio/${type}/${alertTone}.mp3`);
+    const audio = new Audio(alertToneUrl(tone, baseUrl));
     audio.preload = 'auto';
 
     window.playAudioAlert = () => {

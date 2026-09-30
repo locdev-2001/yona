@@ -1,3 +1,4 @@
+import type { WidgetNotificationSound } from 'shared/alertSound/alertTones';
 import type { WorkingHourPayload } from './helpers/businessHour';
 import type { ChannelPlatform } from 'shared/constants/channelPlatform';
 
@@ -34,6 +35,7 @@ export interface WidgetSettingsShape {
     custom_links: { label: string; url: string }[];
     capture: { phone: boolean; email: boolean };
     expanded_enabled: boolean;
+    notification_sound: WidgetNotificationSound;
 }
 
 // Shape trả về từ InboxResource (api/v1/models/_inbox.json.jbuilder).

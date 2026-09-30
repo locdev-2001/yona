@@ -4,6 +4,7 @@ namespace App\Support\Widget;
 
 use App\Messaging\Structured\Action;
 use App\Messaging\Structured\InvalidStructuredPayload;
+use App\Support\AlertSound\AlertTones;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -40,6 +41,12 @@ final class WidgetSettings
         'capture' => ['phone' => true, 'email' => true],
         'expanded_enabled' => true,
     ];
+
+    /** Mặc định đầy đủ: như DEFAULTS cộng âm báo tin mới (âm mặc định lấy từ danh sách âm dùng chung). */
+    public static function defaults(): array
+    {
+        return [...self::DEFAULTS, 'notification_sound' => ['enabled' => true, 'tone' => AlertTones::default()]];
+    }
 
     /**
      * Bản dashboard gửi lên trộn nông với bản đang lưu: gửi riêng `appearance` thì các
@@ -88,6 +95,22 @@ final class WidgetSettings
                 'email' => (bool) ($capture['email'] ?? true),
             ],
             'expanded_enabled' => (bool) ($input['expanded_enabled'] ?? true),
+            'notification_sound' => self::notificationSound((array) ($input['notification_sound'] ?? []), $strict),
+        ];
+    }
+
+    /** Âm widget kêu trên website khách khi shop trả lời; âm lạ thì báo lỗi (dashboard) hoặc về âm mặc định. */
+    private static function notificationSound(array $sound, bool $strict): array
+    {
+        $tone = $sound['tone'] ?? AlertTones::default();
+
+        if ($strict && ! in_array($tone, AlertTones::all(), true)) {
+            throw ValidationException::withMessages(['notification_sound.tone' => __('messaging.settings.invalid_alert_tone')]);
+        }
+
+        return [
+            'enabled' => (bool) ($sound['enabled'] ?? true),
+            'tone' => AlertTones::orDefault($tone),
         ];
     }
 

@@ -3,6 +3,8 @@ import type { Dispatch, SetStateAction } from 'react';
 import { t } from '../../../../../i18n';
 import Input from 'dashboard/components-next/input/Input';
 import Segmented from 'dashboard/components-next/segmented/Segmented';
+import Switch from 'dashboard/components-next/switch/Switch';
+import AlertTonePicker from 'dashboard/alertSound/AlertTonePicker';
 import AccentColorField from '../components/AccentColorField';
 import FieldRow from '../components/FieldRow';
 import SectionCard from '../components/SectionCard';
@@ -17,12 +19,21 @@ interface AppearanceSectionProps {
 }
 
 export default function AppearanceSection({ draft, setDraft }: AppearanceSectionProps) {
-    const { appearance } = draft.widgetSettings;
+    const { appearance, notification_sound: notificationSound } = draft.widgetSettings;
 
     const setAppearance = (patch: Partial<WidgetDraft['widgetSettings']['appearance']>) =>
         setDraft(current => ({
             ...current,
             widgetSettings: { ...current.widgetSettings, appearance: { ...current.widgetSettings.appearance, ...patch } },
+        }));
+
+    const setNotificationSound = (patch: Partial<WidgetDraft['widgetSettings']['notification_sound']>) =>
+        setDraft(current => ({
+            ...current,
+            widgetSettings: {
+                ...current.widgetSettings,
+                notification_sound: { ...current.widgetSettings.notification_sound, ...patch },
+            },
         }));
 
     return (
@@ -71,6 +82,23 @@ export default function AppearanceSection({ draft, setDraft }: AppearanceSection
                     placeholder={t('WIDGET_BUILDER.APPEARANCE.GREETING_PLACEHOLDER')}
                     onChange={event => setAppearance({ greeting: event.target.value })}
                 />
+            </FieldRow>
+
+            <FieldRow label={t('WIDGET_BUILDER.APPEARANCE.SOUND_LABEL')} hint={t('WIDGET_BUILDER.APPEARANCE.SOUND_HINT')} htmlFor="widget-alert-sound-tone">
+                <div className="flex flex-wrap items-center gap-3 sm:pt-1.5">
+                    <Switch
+                        value={notificationSound.enabled}
+                        ariaLabel={t('WIDGET_BUILDER.APPEARANCE.SOUND_LABEL')}
+                        onChange={enabled => setNotificationSound({ enabled })}
+                    />
+                    {notificationSound.enabled ? (
+                        <AlertTonePicker
+                            id="widget-alert-sound-tone"
+                            value={notificationSound.tone}
+                            onChange={tone => setNotificationSound({ tone })}
+                        />
+                    ) : null}
+                </div>
             </FieldRow>
         </SectionCard>
     );

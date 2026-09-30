@@ -856,6 +856,28 @@ describe('cấu hình widget (widget_settings)', function () {
             ->assertJsonPath('widget_settings.custom_links.0.label', 'Tra cứu đơn hàng');
     });
 
+    it('lưu âm báo tin mới của widget và từ chối âm không có trong danh sách', function () {
+        $account = Account::factory()->create();
+        $admin = inboxMemberOf($account, AccountUser::ROLE_ADMINISTRATOR);
+        $inbox = webWidgetInboxFor($account);
+        $url = "/api/v1/accounts/{$account->id}/inboxes/{$inbox->id}";
+
+        $this->actingAs($admin)->getJson($url)
+            ->assertJsonPath('widget_settings.notification_sound', ['enabled' => true, 'tone' => 'ding']);
+
+        $this->actingAs($admin)
+            ->patchJson($url, ['channel' => ['widget_settings' => ['notification_sound' => ['enabled' => false, 'tone' => 'magic']]]])
+            ->assertOk()
+            ->assertJsonPath('widget_settings.notification_sound', ['enabled' => false, 'tone' => 'magic']);
+
+        $this->actingAs($admin)
+            ->patchJson($url, ['channel' => ['widget_settings' => ['notification_sound' => ['enabled' => true, 'tone' => 'coi-xe']]]])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('notification_sound.tone');
+
+        expect($inbox->channel->fresh()->widget_settings['notification_sound'])->toEqual(['enabled' => false, 'tone' => 'magic']);
+    });
+
     it('từ chối link không phải http(s) và kênh khác sai định dạng', function () {
         $account = Account::factory()->create();
         $admin = inboxMemberOf($account, AccountUser::ROLE_ADMINISTRATOR);

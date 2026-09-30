@@ -34,6 +34,7 @@ import {
 import { getUserCookieName, removeCookieWithDomain, setCookieWithDomain } from './cookieHelpers';
 import { getCookie } from './helpers/cookies';
 import { getAlertAudio, initOnEvents } from './helpers/audioNotification';
+import { DEFAULT_WIDGET_NOTIFICATION_SOUND, type WidgetNotificationSound } from '../shared/alertSound/alertTones';
 import { isExpandedView, isFlatWidgetStyle } from './settingsHelper';
 import { BUBBLE_DESIGN } from './constants/design';
 import { popoutChatWindow } from './helpers/popoutHelper';
@@ -52,6 +53,9 @@ const updateCampaignReadStatus = (baseDomain?: string): void => {
 };
 
 type FrameMessageHandler = (message: never) => void;
+
+// Âm báo của hộp thư này (widget_settings.notification_sound), nhận trong sự kiện `loaded`.
+let widgetAlertSound: WidgetNotificationSound = DEFAULT_WIDGET_NOTIFICATION_SOUND;
 
 export const IFrameHelper = {
     // Ngôn ngữ trang nhúng chọn đi theo URL để máy chủ in đúng <html lang> ngay lần render đầu.
@@ -170,7 +174,7 @@ export const IFrameHelper = {
 
     setupAudioListeners: (): void => {
         const { baseUrl = '' } = window.$yona;
-        getAlertAudio(baseUrl, { type: 'widget', alertTone: 'ding' }).then(() =>
+        getAlertAudio(baseUrl, widgetAlertSound.tone).then(() =>
             initOnEvents.forEach(event => {
                 document.removeEventListener(event, IFrameHelper.setupAudioListeners, false);
             }),
@@ -181,7 +185,13 @@ export const IFrameHelper = {
         loaded: (message: {
             config: {
                 authToken: string;
-                channelConfig: { widgetColor: string; widgetSettings?: { appearance?: { launcher?: string; launcher_label?: string | null } } };
+                channelConfig: {
+                    widgetColor: string;
+                    widgetSettings?: {
+                        appearance?: { launcher?: string; launcher_label?: string | null };
+                        notification_sound?: WidgetNotificationSound;
+                    };
+                };
                 launcherLabels?: { label: string; openLabel?: string; closeLabel?: string };
             };
         }): void => {
@@ -221,9 +231,14 @@ export const IFrameHelper = {
             }
 
             window.playAudioAlert = () => {};
+            widgetAlertSound = message.config.channelConfig.widgetSettings?.notification_sound ?? DEFAULT_WIDGET_NOTIFICATION_SOUND;
 
             initOnEvents.forEach(e => {
-                document.addEventListener(e, IFrameHelper.setupAudioListeners, false);
+                if (widgetAlertSound.enabled) {
+                    document.addEventListener(e, IFrameHelper.setupAudioListeners, false);
+                } else {
+                    document.removeEventListener(e, IFrameHelper.setupAudioListeners, false);
+                }
             });
 
             if (!window.$yona.resetTriggered) {

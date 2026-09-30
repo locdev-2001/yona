@@ -1,3 +1,4 @@
+import type { WidgetNotificationSound } from 'shared/alertSound/alertTones';
 import type { MessageGroupPosition } from 'shared/helpers/messageGrouping';
 
 // Kiểu dữ liệu của widget — bám đúng phản hồi `/api/v1/widget/*`.
@@ -135,6 +136,7 @@ export interface WidgetSettingsConfig {
     custom_links: { label: string; url: string }[];
     capture: { phone: boolean; email: boolean };
     expanded_enabled: boolean;
+    notification_sound: WidgetNotificationSound;
 }
 
 export interface ChannelConfig {

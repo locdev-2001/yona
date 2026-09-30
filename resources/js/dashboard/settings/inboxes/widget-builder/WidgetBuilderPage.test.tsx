@@ -99,6 +99,23 @@ describe('WidgetBuilderPage — màn Widget chat', () => {
         });
     });
 
+    it('âm báo tin mới của widget đi cùng bản nháp: đổi âm rồi tắt, Lưu gửi đúng cấu hình âm', async () => {
+        patchJson.mockResolvedValue(webWidgetInbox);
+        await renderPage();
+
+        fireEvent.change(screen.getByLabelText(t('ALERT_SOUND.TONE_LABEL'), { selector: 'select' }), {
+            target: { value: 'chime' },
+        });
+        fireEvent.click(screen.getByRole('switch', { name: t('WIDGET_BUILDER.APPEARANCE.SOUND_LABEL') }));
+        expect(screen.queryByRole('button', { name: t('ALERT_SOUND.PREVIEW') })).not.toBeInTheDocument();
+
+        fireEvent.click(screen.getByRole('button', { name: t('WIDGET_BUILDER.HEADER.SAVE') }));
+
+        await waitFor(() => expect(patchJson).toHaveBeenCalledTimes(1));
+        const [, payload] = patchJson.mock.calls[0] as [string, { channel: { widget_settings: typeof DEFAULT_WIDGET_SETTINGS } }];
+        expect(payload.channel.widget_settings.notification_sound).toEqual({ enabled: false, tone: 'chime' });
+    });
+
     it('hiện "Có thay đổi chưa lưu" chỉ khi đang sửa dở, và Huỷ trả lại giá trị đã lưu', async () => {
         await renderPage();
 

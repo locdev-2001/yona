@@ -1,3 +1,4 @@
+import { DEFAULT_WIDGET_NOTIFICATION_SOUND } from 'shared/alertSound/alertTones';
 import { ApiError } from 'dashboard/helper/apiClient';
 import type { Inbox, WidgetSettingsShape } from '../types';
 import type { WidgetBuilderFieldErrors, WidgetBuilderSectionId, WidgetDraft } from './types';
@@ -17,6 +18,7 @@ export const DEFAULT_WIDGET_SETTINGS: WidgetSettingsShape = {
     custom_links: [],
     capture: { phone: true, email: true },
     expanded_enabled: true,
+    notification_sound: DEFAULT_WIDGET_NOTIFICATION_SOUND,
 };
 
 export function draftFromInbox(inbox: Inbox): WidgetDraft {

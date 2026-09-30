@@ -1,3 +1,4 @@
+import { DEFAULT_WIDGET_NOTIFICATION_SOUND } from 'shared/alertSound/alertTones';
 import type { WidgetSettingsConfig } from '../types';
 
 // Mặc định khi server đời cũ chưa gửi `widget_settings` — khớp
@@ -9,4 +10,5 @@ export const DEFAULT_WIDGET_SETTINGS: WidgetSettingsConfig = {
     custom_links: [],
     capture: { phone: true, email: true },
     expanded_enabled: true,
+    notification_sound: DEFAULT_WIDGET_NOTIFICATION_SOUND,
 };
