@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { setLocale } from '../../../../i18n';
+import { setLocale, t } from '../../../../i18n';
 import WeeklyAvailability from './WeeklyAvailability';
 import type { Inbox } from '../types';
 
@@ -9,6 +9,7 @@ const patchJson = vi.fn();
 
 vi.mock('@inertiajs/react', () => ({
     usePage: () => ({ props: { currentAccount: { id: 3 } } }),
+    router: { on: () => () => undefined },
 }));
 
 vi.mock('dashboard/helper/apiClient', () => ({
@@ -26,8 +27,8 @@ const TIME_ZONE_OPTIONS = [
 const renderWeeklyAvailability = (inbox: Inbox) =>
     render(<WeeklyAvailability inbox={inbox} timeZoneOptions={TIME_ZONE_OPTIONS} uiSettings={{}} onInboxUpdated={() => undefined} />);
 
-const submittedPayload = async (container: HTMLElement) => {
-    fireEvent.click(container.querySelector('form button[type=submit]') as HTMLButtonElement);
+const submittedPayload = async () => {
+    fireEvent.click(screen.getByRole('button', { name: t('SETTINGS_DRAFT.SAVE') }));
     await waitFor(() => expect(patchJson).toHaveBeenCalledTimes(1));
 
     return patchJson.mock.calls[0][1] as Record<string, unknown>;
@@ -45,30 +46,33 @@ const inboxWith = (overrides: Partial<Inbox>): Inbox =>
         ...overrides,
     }) as unknown as Inbox;
 
-const saveWithoutChanges = async (inbox: Inbox) => {
+// Chỉ bật giờ làm việc, không đụng tới múi giờ: múi giờ đang lưu phải đi nguyên vẹn.
+const saveWithoutTouchingTimeZone = async (inbox: Inbox) => {
     patchJson.mockResolvedValue(inbox);
+    renderWeeklyAvailability(inbox);
+    fireEvent.click(screen.getByRole('switch'));
 
-    return submittedPayload(renderWeeklyAvailability(inbox).container);
+    return submittedPayload();
 };
 
-describe('WeeklyAvailability — lưu mà không đổi gì', () => {
+describe('WeeklyAvailability — lưu mà không đổi múi giờ', () => {
     beforeEach(() => {
         setLocale('vi');
         patchJson.mockReset();
     });
 
     it('giữ nguyên múi giờ UTC của hộp thư cũ', async () => {
-        expect((await saveWithoutChanges(inboxWith({ timezone: 'UTC' }))).timezone).toBe('UTC');
+        expect((await saveWithoutTouchingTimeZone(inboxWith({ timezone: 'UTC' }))).timezone).toBe('UTC');
     });
 
     it('giữ nguyên múi giờ Việt Nam', async () => {
-        expect((await saveWithoutChanges(inboxWith({ timezone: 'Asia/Ho_Chi_Minh' }))).timezone).toBe(
+        expect((await saveWithoutTouchingTimeZone(inboxWith({ timezone: 'Asia/Ho_Chi_Minh' }))).timezone).toBe(
             'Asia/Ho_Chi_Minh',
         );
     });
 
     it('giữ nguyên múi giờ không có trong danh sách chọn', async () => {
-        expect((await saveWithoutChanges(inboxWith({ timezone: 'Pacific/Kiritimati' }))).timezone).toBe(
+        expect((await saveWithoutTouchingTimeZone(inboxWith({ timezone: 'Pacific/Kiritimati' }))).timezone).toBe(
             'Pacific/Kiritimati',
         );
     });
@@ -83,12 +87,34 @@ describe('WeeklyAvailability — đổi múi giờ', () => {
     it('chọn mục UTC thì gửi đúng giá trị của danh sách', async () => {
         const inbox = inboxWith({ working_hours_enabled: true, timezone: 'Asia/Bangkok' });
         patchJson.mockResolvedValue(inbox);
-        const { container } = renderWeeklyAvailability(inbox);
+        renderWeeklyAvailability(inbox);
 
         fireEvent.click(screen.getByRole('button', { name: /Bangkok.*\(GMT\+07:00\)/ }));
         fireEvent.click(screen.getByRole('option', { name: 'Giờ quốc tế (UTC) (GMT+00:00)' }));
 
-        expect((await submittedPayload(container)).timezone).toBe('UTC');
+        expect((await submittedPayload()).timezone).toBe('UTC');
+    });
+});
+
+describe('WeeklyAvailability — mô hình lưu chung', () => {
+    beforeEach(() => {
+        setLocale('vi');
+        patchJson.mockReset();
+    });
+
+    it('chưa sửa gì thì nút lưu tắt; bật giờ làm việc rồi Huỷ thì về như cũ, không gửi gì', () => {
+        renderWeeklyAvailability(inboxWith({}));
+        const saveButton = screen.getByRole('button', { name: t('SETTINGS_DRAFT.SAVE') });
+        expect(saveButton).toBeDisabled();
+
+        fireEvent.click(screen.getByRole('switch'));
+        expect(saveButton).not.toBeDisabled();
+        expect(screen.getByText(t('SETTINGS_DRAFT.UNSAVED'))).toBeInTheDocument();
+
+        fireEvent.click(screen.getByRole('button', { name: t('SETTINGS_DRAFT.CANCEL') }));
+        expect(screen.getByRole('switch')).toHaveAttribute('aria-checked', 'false');
+        expect(saveButton).toBeDisabled();
+        expect(patchJson).not.toHaveBeenCalled();
     });
 });
 

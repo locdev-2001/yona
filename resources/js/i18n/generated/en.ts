@@ -6145,7 +6145,6 @@ const messages: Record<string, unknown> = {
             "INBOX_AGENTS_SUB_TEXT": "Add or remove agents from this inbox",
             "AGENT_ASSIGNMENT": "Conversation Assignment",
             "AGENT_ASSIGNMENT_SUB_TEXT": "Update conversation assignment settings",
-            "UPDATE": "Update",
             "ENABLE_EMAIL_COLLECT_BOX": "Enable email collect box",
             "ENABLE_EMAIL_COLLECT_BOX_SUB_TEXT": "Enable or disable email collect box on new conversation",
             "AUTO_ASSIGNMENT": "Enable auto assignment",
@@ -6284,8 +6283,7 @@ const messages: Record<string, unknown> = {
             "WHATSAPP_CALLING_ENABLED": {
                 "LABEL": "Enable voice calling",
                 "DESCRIPTION": "Allow agents to start and receive WhatsApp voice calls on this inbox. Available only on embedded-signup WhatsApp Cloud channels with calling permission granted by Meta."
-            },
-            "UPDATE_PRE_CHAT_FORM_SETTINGS": "Update Pre Chat Form Settings"
+            }
         },
         "HELP_CENTER": {
             "LABEL": "Help Center",
@@ -6453,7 +6451,6 @@ const messages: Record<string, unknown> = {
             "SUBTITLE": "Set your availability on your livechat widget",
             "WEEKLY_TITLE": "Set your weekly hours",
             "TIMEZONE_LABEL": "Select timezone",
-            "UPDATE": "Update business hours settings",
             "TOGGLE_AVAILABILITY": "Enable business availability for this inbox",
             "UNAVAILABLE_MESSAGE_LABEL": "Unavailable message for visitors",
             "UNAVAILABLE_MESSAGE_PLACEHOLDER": "Write the automatic reply...",
@@ -6552,88 +6549,7 @@ const messages: Record<string, unknown> = {
                 "LABEL": "Widget chat",
                 "HELP_TEXT": "Launcher, colors, home screen, other channels, proactive invites, AI assistant, embed code — all in one place.",
                 "BUTTON": "Customize widget"
-            },
-            "WIDGET_OPTIONS": {
-                "AVATAR": {
-                    "LABEL": "Website Avatar",
-                    "DELETE": {
-                        "API": {
-                            "SUCCESS_MESSAGE": "Avatar deleted successfully",
-                            "ERROR_MESSAGE": "There was an error, please try again"
-                        }
-                    }
-                },
-                "WEBSITE_NAME": {
-                    "LABEL": "Website Name",
-                    "PLACE_HOLDER": "Enter your website name (eg: Acme Inc)",
-                    "ERROR": "Please enter a valid website name"
-                },
-                "WELCOME_HEADING": {
-                    "LABEL": "Welcome Heading",
-                    "PLACE_HOLDER": "Hi there!"
-                },
-                "WELCOME_TAGLINE": {
-                    "LABEL": "Welcome Tagline",
-                    "PLACE_HOLDER": "We make it simple to connect with us. Ask us anything, or share your feedback."
-                },
-                "REPLY_TIME": {
-                    "LABEL": "Reply Time",
-                    "IN_A_FEW_MINUTES": "In a few minutes",
-                    "IN_A_FEW_HOURS": "In a few hours",
-                    "IN_A_DAY": "In a day"
-                },
-                "WIDGET_COLOR_LABEL": "Widget Color",
-                "WIDGET_BUBBLE": "Bubble",
-                "WIDGET_BUBBLE_POSITION_LABEL": "Position:",
-                "WIDGET_BUBBLE_TYPE_LABEL": "Type:",
-                "WIDGET_BUBBLE_LAUNCHER_TITLE": {
-                    "DEFAULT": "Chat with us",
-                    "LABEL": "Launcher Title",
-                    "PLACE_HOLDER": "Chat with us"
-                },
-                "UPDATE": {
-                    "BUTTON_TEXT": "Update Widget Settings",
-                    "API": {
-                        "SUCCESS_MESSAGE": "Widget settings updated successfully",
-                        "ERROR_MESSAGE": "Unable to update widget settings"
-                    }
-                },
-                "WIDGET_VIEW_OPTION": {
-                    "PREVIEW": "Preview",
-                    "SCRIPT": "Script"
-                },
-                "WIDGET_BUBBLE_POSITION": {
-                    "LEFT": "Left",
-                    "RIGHT": "Right"
-                },
-                "WIDGET_BUBBLE_TYPE": {
-                    "STANDARD": "Standard",
-                    "EXPANDED_BUBBLE": "Expanded Bubble"
-                }
-            },
-            "WIDGET_SCREEN": {
-                "DEFAULT": "Default",
-                "CHAT": "Chat mode"
-            },
-            "REPLY_TIME": {
-                "IN_A_FEW_MINUTES": "Typically replies in a few minutes",
-                "IN_A_FEW_HOURS": "Typically replies in a few hours",
-                "IN_A_DAY": "Typically replies in a day"
-            },
-            "FOOTER": {
-                "START_CONVERSATION_BUTTON_TEXT": "Start Conversation",
-                "CHAT_INPUT_PLACEHOLDER": "Type your message"
-            },
-            "BODY": {
-                "TEAM_AVAILABILITY": {
-                    "ONLINE": "We are Online",
-                    "OFFLINE": "We are away at the moment"
-                },
-                "USER_MESSAGE": "Hi",
-                "AGENT_MESSAGE": "Hello"
-            },
-            "BRANDING_TEXT": "Powered by {installationName}",
-            "SCRIPT_SETTINGS": "\n      window.yonaSettings = {options};"
+            }
         },
         "EMAIL_PROVIDERS": {
             "MICROSOFT": {
@@ -9577,6 +9493,12 @@ const messages: Record<string, unknown> = {
             "NEW_INBOX": "Add Inbox"
         }
     },
+    "SETTINGS_DRAFT": {
+        "UNSAVED": "Unsaved changes",
+        "CANCEL": "Cancel",
+        "SAVE": "Save changes",
+        "CONFIRM_LEAVE": "Leaving will discard your unsaved changes. Leave anyway?"
+    },
     "SIDEBAR": {
         "NO_ITEMS": "No items",
         "GLOBAL_SEARCH": "Search",
@@ -10663,10 +10585,6 @@ const messages: Record<string, unknown> = {
             "BREADCRUMB_SETTINGS": "Settings",
             "BREADCRUMB_INBOXES": "Inboxes",
             "TITLE": "Widget chat",
-            "UNSAVED": "Unsaved changes",
-            "CANCEL": "Cancel",
-            "SAVE": "Save changes",
-            "CONFIRM_LEAVE": "Leaving now will discard your unsaved changes. Leave anyway?",
             "SAVE_SUCCESS": "Widget settings saved.",
             "SAVE_ERROR": "Could not save the widget settings, please try again."
         },
@@ -10776,8 +10694,7 @@ const messages: Record<string, unknown> = {
             "NO_LOADED_EVENT_YET": "Yona doesn't record when customers last opened the widget yet, so there's no \"running on…\" banner here.",
             "DOMAINS_LABEL": "Only show on these domains",
             "DOMAINS_HINT": "Stops others from copying your snippet onto their own site. Leave empty to allow any domain.",
-            "DOMAINS_PLACEHOLDER": "Enter a domain, press Enter to add",
-            "DOMAINS_ERROR": "Could not save the domain list."
+            "DOMAINS_PLACEHOLDER": "Enter a domain, press Enter to add"
         }
     },
     "WIDGET_UPDATES_MGMT": {

@@ -19,6 +19,7 @@ function baseDraft(): WidgetDraft {
                 { kind: 'messenger', label: 'Messenger', value: 'https://m.me/gommoc', enabled: true },
             ],
         },
+        allowedDomains: '',
     };
 }
 

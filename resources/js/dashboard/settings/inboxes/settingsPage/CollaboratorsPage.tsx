@@ -4,13 +4,14 @@ import { usePage } from '@inertiajs/react';
 import { t } from '../../../../i18n';
 import { useAlert } from 'dashboard/composables/useAlert';
 import { getJson, patchJson } from 'dashboard/helper/apiClient';
-import Button from 'dashboard/components-next/button/Button';
 import Icon from 'dashboard/components-next/icon/Icon';
 import SettingsAccordion from 'dashboard/components-next/Settings/SettingsAccordion';
 import SettingsFieldSection from 'dashboard/components-next/Settings/SettingsFieldSection';
 import SettingsToggleSection from 'dashboard/components-next/Settings/SettingsToggleSection';
 import TagInput from 'dashboard/components-next/taginput/TagInput';
 import type { DropdownMenuItem } from 'dashboard/components-next/dropdown-menu/DropdownMenu';
+import SettingsSaveBar from '../settingsDraft/SettingsSaveBar';
+import { useSettingsDraft } from '../settingsDraft/useSettingsDraft';
 import type { DashboardPageProps } from '../../../types';
 import type { Agent, Inbox } from '../types';
 
@@ -31,24 +32,24 @@ export default function CollaboratorsPage({ inbox, onInboxUpdated }: Collaborato
     const hasAssignmentV2 = Boolean(features.assignment_v2);
 
     const [agentList, setAgentList] = useState<Agent[]>([]);
-    const [selectedAgentIds, setSelectedAgentIds] = useState<number[]>([]);
-    const [isAgentListUpdating, setAgentListUpdating] = useState(false);
-    const [enableAutoAssignment, setEnableAutoAssignment] = useState(inbox.enable_auto_assignment);
+    const [memberIds, setMemberIds] = useState<number[]>([]);
+    const { draft, patchDraft, isDirty, isSaving, reset, save } = useSettingsDraft({
+        selectedAgentIds: memberIds,
+        enableAutoAssignment: inbox.enable_auto_assignment,
+    });
+    const { selectedAgentIds, enableAutoAssignment } = draft;
 
     useEffect(() => {
         void getJson<Agent[]>(`/api/v1/accounts/${accountId}/agents`).then(setAgentList);
     }, [accountId]);
 
     useEffect(() => {
-        setEnableAutoAssignment(inbox.enable_auto_assignment);
-        void getJson<{ payload: Agent[] }>(`/api/v1/accounts/${accountId}/inbox_members/${inbox.id}`).then(
-            response => setSelectedAgentIds(response.payload.map(member => member.id)),
+        void getJson<{ payload: Agent[] }>(`/api/v1/accounts/${accountId}/inbox_members/${inbox.id}`).then(response =>
+            setMemberIds(response.payload.map(member => member.id)),
         );
-    }, [accountId, inbox.id, inbox.enable_auto_assignment]);
+    }, [accountId, inbox.id]);
 
-    const selectedAgentNames = selectedAgentIds.map(
-        id => agentList.find(agent => agent.id === id)?.name ?? '',
-    );
+    const selectedAgentNames = selectedAgentIds.map(id => agentList.find(agent => agent.id === id)?.name ?? '');
 
     const agentMenuItems: DropdownMenuItem[] = agentList
         .filter(({ id }) => !selectedAgentIds.includes(id))
@@ -59,32 +60,30 @@ export default function CollaboratorsPage({ inbox, onInboxUpdated }: Collaborato
             thumbnail: { name, src: thumbnail || '' },
         }));
 
-    const updateAgents = async () => {
-        setAgentListUpdating(true);
-        try {
-            await patchJson(`/api/v1/accounts/${accountId}/inbox_members`, {
-                inbox_id: inbox.id,
-                user_ids: selectedAgentIds,
-            });
-            useAlert(t('AGENT_MGMT.EDIT.API.SUCCESS_MESSAGE'));
-        } catch {
-            useAlert(t('AGENT_MGMT.EDIT.API.ERROR_MESSAGE'));
-        }
-        setAgentListUpdating(false);
-    };
-
-    const handleToggleAutoAssignment = async (value: boolean) => {
-        setEnableAutoAssignment(value);
-        try {
-            const updated = await patchJson<Inbox>(`/api/v1/accounts/${accountId}/inboxes/${inbox.id}`, {
-                enable_auto_assignment: value,
-            });
-            onInboxUpdated(updated);
-            useAlert(t('INBOX_MGMT.EDIT.API.SUCCESS_MESSAGE'));
-        } catch {
-            useAlert(t('INBOX_MGMT.EDIT.API.ERROR_MESSAGE'));
-        }
-    };
+    // Thành viên và tự động giao nằm ở hai endpoint; chỉ gửi phần đã đổi.
+    const saveCollaborators = () =>
+        save(async submitted => {
+            try {
+                if (JSON.stringify(submitted.selectedAgentIds) !== JSON.stringify(memberIds)) {
+                    await patchJson(`/api/v1/accounts/${accountId}/inbox_members`, {
+                        inbox_id: inbox.id,
+                        user_ids: submitted.selectedAgentIds,
+                    });
+                    setMemberIds(submitted.selectedAgentIds);
+                }
+                if (submitted.enableAutoAssignment !== inbox.enable_auto_assignment) {
+                    const updated = await patchJson<Inbox>(`/api/v1/accounts/${accountId}/inboxes/${inbox.id}`, {
+                        enable_auto_assignment: submitted.enableAutoAssignment,
+                    });
+                    onInboxUpdated(updated);
+                }
+                useAlert(t('INBOX_MGMT.EDIT.API.SUCCESS_MESSAGE'));
+                return true;
+            } catch {
+                useAlert(t('INBOX_MGMT.EDIT.API.ERROR_MESSAGE'));
+                return false;
+            }
+        });
 
     return (
         <div>
@@ -92,18 +91,6 @@ export default function CollaboratorsPage({ inbox, onInboxUpdated }: Collaborato
                 label={t('INBOX_MGMT.SETTINGS_POPUP.INBOX_AGENTS')}
                 helpText={t('INBOX_MGMT.SETTINGS_POPUP.INBOX_AGENTS_SUB_TEXT')}
                 className="[&>div]:!items-start"
-                extra={
-                    <div className="grid grid-cols-1 lg:grid-cols-8">
-                        <div className="col-span-1 lg:col-span-2" />
-                        <div className="col-span-1 lg:col-span-6 mt-4 justify-self-end">
-                            <Button
-                                label={t('INBOX_MGMT.SETTINGS_POPUP.UPDATE')}
-                                isLoading={isAgentListUpdating}
-                                onClick={() => void updateAgents()}
-                            />
-                        </div>
-                    </div>
-                }
             >
                 <div className="rounded-xl outline outline-1 -outline-offset-1 outline-n-weak hover:outline-n-strong px-2 py-2">
                     <TagInput
@@ -113,10 +100,10 @@ export default function CollaboratorsPage({ inbox, onInboxUpdated }: Collaborato
                         autoOpenDropdown={false}
                         onAdd={item => {
                             const id = Number(item.value);
-                            setSelectedAgentIds(current => (current.includes(id) ? current : [...current, id]));
+                            if (!selectedAgentIds.includes(id)) patchDraft({ selectedAgentIds: [...selectedAgentIds, id] });
                         }}
                         onRemove={index =>
-                            setSelectedAgentIds(current => current.filter((_, itemIndex) => itemIndex !== index))
+                            patchDraft({ selectedAgentIds: selectedAgentIds.filter((_, itemIndex) => itemIndex !== index) })
                         }
                     />
                 </div>
@@ -135,7 +122,7 @@ export default function CollaboratorsPage({ inbox, onInboxUpdated }: Collaborato
                             : t('INBOX_MGMT.SETTINGS_POPUP.AUTO_ASSIGNMENT_SUB_TEXT')
                     }
                     value={enableAutoAssignment}
-                    onChange={value => void handleToggleAutoAssignment(value)}
+                    onChange={value => patchDraft({ enableAutoAssignment: value })}
                     editor={
                         enableAutoAssignment && hasAssignmentV2 ? (
                             <div className="ltr:pr-0 rtl:pl-0 ltr:pl-4 rtl:pr-4 py-4">
@@ -172,6 +159,7 @@ export default function CollaboratorsPage({ inbox, onInboxUpdated }: Collaborato
                     }
                 />
             </SettingsAccordion>
+            <SettingsSaveBar isDirty={isDirty} isSaving={isSaving} onCancel={reset} onSave={() => void saveCollaborators()} />
         </div>
     );
 }

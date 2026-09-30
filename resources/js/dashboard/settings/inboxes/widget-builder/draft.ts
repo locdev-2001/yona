@@ -1,5 +1,6 @@
 import { DEFAULT_WIDGET_NOTIFICATION_SOUND } from 'shared/alertSound/alertTones';
 import { ApiError } from 'dashboard/helper/apiClient';
+import { sanitizeAllowedDomains } from 'dashboard/helper/URLHelper';
 import type { Inbox, WidgetSettingsShape } from '../types';
 import type { WidgetBuilderFieldErrors, WidgetBuilderSectionId, WidgetDraft } from './types';
 
@@ -27,6 +28,7 @@ export function draftFromInbox(inbox: Inbox): WidgetDraft {
         widgetColor: inbox.widget_color || '#1f93ff',
         welcomeTagline: inbox.welcome_tagline ?? '',
         widgetSettings: inbox.widget_settings ?? DEFAULT_WIDGET_SETTINGS,
+        allowedDomains: sanitizeAllowedDomains(inbox.allowed_domains ?? ''),
     };
 }
 
@@ -42,6 +44,7 @@ export function buildSavePayload(draft: WidgetDraft): Record<string, unknown> {
             widget_color: draft.widgetColor,
             welcome_tagline: draft.welcomeTagline,
             widget_settings: draft.widgetSettings,
+            allowed_domains: draft.allowedDomains,
         },
     };
 }

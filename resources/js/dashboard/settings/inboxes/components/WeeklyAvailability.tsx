@@ -1,10 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { usePage } from '@inertiajs/react';
 
 import { t } from '../../../../i18n';
 import { useAlert } from 'dashboard/composables/useAlert';
 import { parseApiErrorMessage, patchJson } from 'dashboard/helper/apiClient';
-import Button from 'dashboard/components-next/button/Button';
 import ComboBox from 'dashboard/components-next/combobox/ComboBox';
 import SettingsFieldSection from 'dashboard/components-next/Settings/SettingsFieldSection';
 import SettingsToggleSection from 'dashboard/components-next/Settings/SettingsToggleSection';
@@ -19,6 +18,8 @@ import {
 } from '../helpers/businessHour';
 import type { TimeSlot, TimeZoneOption } from '../helpers/businessHour';
 import { localizeTimeZoneOptions } from '../helpers/timezone-label';
+import SettingsSaveBar from '../settingsDraft/SettingsSaveBar';
+import { useSettingsDraft } from '../settingsDraft/useSettingsDraft';
 import type { UISettings } from 'dashboard/composables/useUISettings';
 import type { DashboardPageProps } from '../../../types';
 import type { Inbox } from '../types';
@@ -27,6 +28,24 @@ import type { Inbox } from '../types';
 
 // Khóa của lang/{locale}/days_of_week.php theo day_of_week của API (0 = Chủ nhật).
 const DAY_NAME_KEYS = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
+
+interface BusinessHoursDraft {
+    isBusinessHoursEnabled: boolean;
+    unavailableMessage: string;
+    timeZone: string;
+    timeSlots: TimeSlot[];
+}
+
+function businessHoursDraftOf(inbox: Inbox): BusinessHoursDraft {
+    const parsed = timeSlotParse(inbox.working_hours ?? []);
+
+    return {
+        isBusinessHoursEnabled: inbox.working_hours_enabled,
+        unavailableMessage: inbox.out_of_office_message ?? '',
+        timeZone: inbox.timezone,
+        timeSlots: parsed.length ? parsed : defaultTimeSlot,
+    };
+}
 
 interface WeeklyAvailabilityProps {
     inbox: Inbox;
@@ -39,21 +58,8 @@ export default function WeeklyAvailability({ inbox, timeZoneOptions, uiSettings,
     const { currentAccount } = usePage<DashboardPageProps>().props;
     const accountId = currentAccount!.id;
 
-    const [isBusinessHoursEnabled, setBusinessHoursEnabled] = useState(false);
-    const [unavailableMessage, setUnavailableMessage] = useState('');
-    const [timeZone, setTimeZone] = useState(inbox.timezone);
-    const [timeSlots, setTimeSlots] = useState<TimeSlot[]>(defaultTimeSlot);
-    const [isUpdating, setUpdating] = useState(false);
-
-    // setDefaults() + watch(inbox) của bản gốc.
-    useEffect(() => {
-        const parsed = timeSlotParse(inbox.working_hours ?? []);
-
-        setBusinessHoursEnabled(inbox.working_hours_enabled);
-        setUnavailableMessage(inbox.out_of_office_message ?? '');
-        setTimeSlots(parsed.length ? parsed : defaultTimeSlot);
-        setTimeZone(inbox.timezone);
-    }, [inbox]);
+    const { draft, patchDraft, isDirty, isSaving, reset, save } = useSettingsDraft(businessHoursDraftOf(inbox));
+    const { isBusinessHoursEnabled, unavailableMessage, timeZone, timeSlots } = draft;
 
     const timeZoneChoice = useMemo(
         () => timeZoneSelection(timeZone, localizeTimeZoneOptions(timeZoneOptions)),
@@ -62,35 +68,30 @@ export default function WeeklyAvailability({ inbox, timeZoneOptions, uiSettings,
 
     const hasError = isBusinessHoursEnabled && timeSlots.some(slot => slot.from && !slot.valid);
 
-    const updateInbox = async (event: React.FormEvent) => {
-        event.preventDefault();
-        setUpdating(true);
-
-        try {
-            const updated = await patchJson<Inbox>(
-                `/api/v1/accounts/${accountId}/inboxes/${inbox.id}`,
-                {
+    const updateInbox = () =>
+        save(async () => {
+            try {
+                const updated = await patchJson<Inbox>(`/api/v1/accounts/${accountId}/inboxes/${inbox.id}`, {
                     working_hours_enabled: isBusinessHoursEnabled,
                     out_of_office_message: unavailableMessage,
                     working_hours: timeSlotTransform(timeSlots),
                     ...(timeZone ? { timezone: timeZone } : {}),
                     channel: {},
-                },
-            );
-            onInboxUpdated(updated);
-            useAlert(t('INBOX_MGMT.EDIT.API.SUCCESS_MESSAGE'));
-        } catch (error) {
-            useAlert(parseApiErrorMessage(error) || t('INBOX_MGMT.EDIT.API.ERROR_MESSAGE'));
-        } finally {
-            setUpdating(false);
-        }
-    };
+                });
+                onInboxUpdated(updated);
+                useAlert(t('INBOX_MGMT.EDIT.API.SUCCESS_MESSAGE'));
+                return true;
+            } catch (error) {
+                useAlert(parseApiErrorMessage(error) || t('INBOX_MGMT.EDIT.API.ERROR_MESSAGE'));
+                return false;
+            }
+        });
 
     return (
         <div className="mx-6">
             <SettingsToggleSection
                 value={isBusinessHoursEnabled}
-                onChange={setBusinessHoursEnabled}
+                onChange={enabled => patchDraft({ isBusinessHoursEnabled: enabled })}
                 header={t('INBOX_MGMT.BUSINESS_HOURS.TOGGLE_AVAILABILITY')}
                 description={t('INBOX_MGMT.BUSINESS_HOURS.TOGGLE_HELP')}
                 editor={
@@ -104,7 +105,7 @@ export default function WeeklyAvailability({ inbox, timeZoneOptions, uiSettings,
                                 value={unavailableMessage}
                                 placeholder={t('INBOX_MGMT.BUSINESS_HOURS.UNAVAILABLE_MESSAGE_PLACEHOLDER')}
                                 uiSettings={uiSettings}
-                                onChange={setUnavailableMessage}
+                                onChange={message => patchDraft({ unavailableMessage: message })}
                             />
                         </div>
                     ) : undefined
@@ -127,13 +128,13 @@ export default function WeeklyAvailability({ inbox, timeZoneOptions, uiSettings,
                             options={timeZoneChoice.options}
                             placeholder={t('INBOX_MGMT.BUSINESS_HOURS.DAY.CHOOSE')}
                             className="[&>div>button]:!bg-n-alpha-black2"
-                            onChange={setTimeZone}
+                            onChange={zone => patchDraft({ timeZone: zone })}
                         />
                     </SettingsFieldSection>
                 </>
             ) : null}
 
-            <form className="flex flex-col" onSubmit={updateInbox}>
+            <div className="flex flex-col">
                 {isBusinessHoursEnabled ? (
                     <div className="mt-2 outline outline-1 -outline-offset-1 outline-n-weak rounded-xl">
                         <div
@@ -151,24 +152,23 @@ export default function WeeklyAvailability({ inbox, timeZoneOptions, uiSettings,
                                     dayName={t(`DAYS_OF_WEEK.${DAY_NAME_KEYS[timeSlot.day]}`)}
                                     timeSlot={timeSlot}
                                     onUpdate={slot =>
-                                        setTimeSlots(slots =>
-                                            slots.map(item => (item.day === timeSlot.day ? slot : item)),
-                                        )
+                                        patchDraft({
+                                            timeSlots: timeSlots.map(item => (item.day === timeSlot.day ? slot : item)),
+                                        })
                                     }
                                 />
                             ))}
                         </ul>
                     </div>
                 ) : null}
-                <div className="w-full flex justify-end items-center py-4 mt-2">
-                    <Button
-                        type="submit"
-                        label={t('INBOX_MGMT.BUSINESS_HOURS.UPDATE')}
-                        isLoading={isUpdating}
-                        disabled={hasError}
-                    />
-                </div>
-            </form>
+            </div>
+            <SettingsSaveBar
+                isDirty={isDirty}
+                isSaving={isSaving}
+                isSaveBlocked={hasError}
+                onCancel={reset}
+                onSave={() => void updateInbox()}
+            />
         </div>
     );
 }

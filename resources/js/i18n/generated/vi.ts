@@ -6145,7 +6145,6 @@ const messages: Record<string, unknown> = {
             "INBOX_AGENTS_SUB_TEXT": "Thêm hoặc bớt nhân viên của hộp thư này",
             "AGENT_ASSIGNMENT": "Phân công hội thoại",
             "AGENT_ASSIGNMENT_SUB_TEXT": "Cập nhật phân công hội thoại",
-            "UPDATE": "Cập nhật",
             "ENABLE_EMAIL_COLLECT_BOX": "Hỏi email của khách",
             "ENABLE_EMAIL_COLLECT_BOX_SUB_TEXT": "Khi khách nhắn tin đầu tiên mà chưa có email, widget tự gửi một tin nhắn xin email kèm ô nhập.",
             "AUTO_ASSIGNMENT": "Bật tự động phân công",
@@ -6284,8 +6283,7 @@ const messages: Record<string, unknown> = {
             "WHATSAPP_CALLING_ENABLED": {
                 "LABEL": "Bật cuộc gọi thoại",
                 "DESCRIPTION": "Cho phép nhân viên gọi và nhận cuộc gọi thoại WhatsApp trên hộp thư này. Chỉ dùng được với kênh WhatsApp Cloud kết nối bằng embedded signup và đã được Meta cấp quyền gọi."
-            },
-            "UPDATE_PRE_CHAT_FORM_SETTINGS": "Cập nhật thiết lập biểu mẫu trước chat"
+            }
         },
         "HELP_CENTER": {
             "LABEL": "Trung tâm trợ giúp",
@@ -6453,7 +6451,6 @@ const messages: Record<string, unknown> = {
             "SUBTITLE": "Đặt khung giờ phục vụ khách của hộp thư này",
             "WEEKLY_TITLE": "Lịch làm việc trong tuần",
             "TIMEZONE_LABEL": "Múi giờ",
-            "UPDATE": "Lưu giờ làm việc",
             "TOGGLE_AVAILABILITY": "Bật giờ làm việc cho hộp thư này",
             "UNAVAILABLE_MESSAGE_LABEL": "Tin nhắn tự động khi khách nhắn ngoài giờ làm việc",
             "UNAVAILABLE_MESSAGE_PLACEHOLDER": "Nhập nội dung tin nhắn tự động...",
@@ -6552,88 +6549,7 @@ const messages: Record<string, unknown> = {
                 "LABEL": "Widget chat",
                 "HELP_TEXT": "Launcher, màu sắc, trang chủ, kênh khác, lời mời chủ động, trợ lý AI, mã nhúng — chỉnh hết ở một chỗ.",
                 "BUTTON": "Tùy chỉnh widget"
-            },
-            "WIDGET_OPTIONS": {
-                "AVATAR": {
-                    "LABEL": "Hình đại diện trang web",
-                    "DELETE": {
-                        "API": {
-                            "SUCCESS_MESSAGE": "Hình đại diện đã được xóa thành công",
-                            "ERROR_MESSAGE": "Đã có lỗi, vui lòng thử lại"
-                        }
-                    }
-                },
-                "WEBSITE_NAME": {
-                    "LABEL": "Tên trang web",
-                    "PLACE_HOLDER": "Nhập tên trang web của bạn (ví dụ: Acme Inc)",
-                    "ERROR": "Vui lòng nhập tên trang web hợp lệ"
-                },
-                "WELCOME_HEADING": {
-                    "LABEL": "Tiêu đề chào mừng",
-                    "PLACE_HOLDER": "Chào bạn!"
-                },
-                "WELCOME_TAGLINE": {
-                    "LABEL": "Dòng giới thiệu chào mừng",
-                    "PLACE_HOLDER": "Chúng tôi làm cho việc kết nối với chúng tôi trở nên đơn giản. Hỏi chúng tôi bất cứ điều gì hoặc chia sẻ phản hồi của bạn."
-                },
-                "REPLY_TIME": {
-                    "LABEL": "Thời gian trả lời",
-                    "IN_A_FEW_MINUTES": "Trong một vài phút",
-                    "IN_A_FEW_HOURS": "Trong một vài giờ",
-                    "IN_A_DAY": "Trong một ngày"
-                },
-                "WIDGET_COLOR_LABEL": "Màu widget",
-                "WIDGET_BUBBLE": "Bong bóng",
-                "WIDGET_BUBBLE_POSITION_LABEL": "Vị trí:",
-                "WIDGET_BUBBLE_TYPE_LABEL": "Kiểu:",
-                "WIDGET_BUBBLE_LAUNCHER_TITLE": {
-                    "DEFAULT": "Trò chuyện với chúng tôi",
-                    "LABEL": "Tiêu đề nút mở",
-                    "PLACE_HOLDER": "Trò chuyện với chúng tôi"
-                },
-                "UPDATE": {
-                    "BUTTON_TEXT": "Cập nhật cài đặt widget",
-                    "API": {
-                        "SUCCESS_MESSAGE": "Đã cập nhật cài đặt widget thành công",
-                        "ERROR_MESSAGE": "Không thể cập nhật cài đặt widget"
-                    }
-                },
-                "WIDGET_VIEW_OPTION": {
-                    "PREVIEW": "Xem trước",
-                    "SCRIPT": "Mã nhúng"
-                },
-                "WIDGET_BUBBLE_POSITION": {
-                    "LEFT": "Trái",
-                    "RIGHT": "Phải"
-                },
-                "WIDGET_BUBBLE_TYPE": {
-                    "STANDARD": "Chuẩn",
-                    "EXPANDED_BUBBLE": "Mở rộng bong bóng"
-                }
-            },
-            "WIDGET_SCREEN": {
-                "DEFAULT": "Mặc định",
-                "CHAT": "Chế độ chat"
-            },
-            "REPLY_TIME": {
-                "IN_A_FEW_MINUTES": "Thường trả lời sau vài phút",
-                "IN_A_FEW_HOURS": "Thường trả lời sau vài giờ",
-                "IN_A_DAY": "Thường trả lời trong một ngày"
-            },
-            "FOOTER": {
-                "START_CONVERSATION_BUTTON_TEXT": "Bắt đầu một hội thoại",
-                "CHAT_INPUT_PLACEHOLDER": "Gõ tin nhắn của bạn"
-            },
-            "BODY": {
-                "TEAM_AVAILABILITY": {
-                    "ONLINE": "Chúng tôi đang trực tuyến",
-                    "OFFLINE": "Hiện tại chúng tôi đang bận chút"
-                },
-                "USER_MESSAGE": "Xin chào",
-                "AGENT_MESSAGE": "Xin chào"
-            },
-            "BRANDING_TEXT": "Cung cấp bởi {installationName}",
-            "SCRIPT_SETTINGS": "\nwindow.yonaSettings = {options};"
+            }
         },
         "EMAIL_PROVIDERS": {
             "MICROSOFT": {
@@ -9577,6 +9493,12 @@ const messages: Record<string, unknown> = {
             "NEW_INBOX": "Thêm hộp thư"
         }
     },
+    "SETTINGS_DRAFT": {
+        "UNSAVED": "Có thay đổi chưa lưu",
+        "CANCEL": "Huỷ",
+        "SAVE": "Lưu thay đổi",
+        "CONFIRM_LEAVE": "Rời trang sẽ mất các thay đổi chưa lưu. Vẫn muốn rời trang?"
+    },
     "SIDEBAR": {
         "NO_ITEMS": "Không có mục nào",
         "GLOBAL_SEARCH": "Tìm kiếm",
@@ -10663,10 +10585,6 @@ const messages: Record<string, unknown> = {
             "BREADCRUMB_SETTINGS": "Cài đặt",
             "BREADCRUMB_INBOXES": "Hộp thư",
             "TITLE": "Widget chat",
-            "UNSAVED": "Có thay đổi chưa lưu",
-            "CANCEL": "Huỷ",
-            "SAVE": "Lưu thay đổi",
-            "CONFIRM_LEAVE": "Rời trang sẽ mất các thay đổi chưa lưu. Vẫn muốn rời trang?",
             "SAVE_SUCCESS": "Đã lưu cấu hình widget.",
             "SAVE_ERROR": "Lưu cấu hình widget không thành công, thử lại nhé."
         },
@@ -10776,8 +10694,7 @@ const messages: Record<string, unknown> = {
             "NO_LOADED_EVENT_YET": "Yona chưa ghi lại thời điểm khách mở widget lần gần nhất, nên chưa hiện được banner \"đang chạy trên…\" ở đây.",
             "DOMAINS_LABEL": "Chỉ hiện trên các tên miền",
             "DOMAINS_HINT": "Chặn người khác chép mã của bạn lên website của họ. Để trống là cho phép mọi tên miền.",
-            "DOMAINS_PLACEHOLDER": "Nhập tên miền, Enter để thêm",
-            "DOMAINS_ERROR": "Lưu danh sách tên miền không thành công."
+            "DOMAINS_PLACEHOLDER": "Nhập tên miền, Enter để thêm"
         }
     },
     "WIDGET_UPDATES_MGMT": {

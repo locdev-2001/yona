@@ -9,10 +9,6 @@ return [
         'BREADCRUMB_SETTINGS' => 'Cài đặt',
         'BREADCRUMB_INBOXES' => 'Hộp thư',
         'TITLE' => 'Widget chat',
-        'UNSAVED' => 'Có thay đổi chưa lưu',
-        'CANCEL' => 'Huỷ',
-        'SAVE' => 'Lưu thay đổi',
-        'CONFIRM_LEAVE' => 'Rời trang sẽ mất các thay đổi chưa lưu. Vẫn muốn rời trang?',
         'SAVE_SUCCESS' => 'Đã lưu cấu hình widget.',
         'SAVE_ERROR' => 'Lưu cấu hình widget không thành công, thử lại nhé.',
     ],
@@ -132,6 +128,5 @@ return [
         'DOMAINS_LABEL' => 'Chỉ hiện trên các tên miền',
         'DOMAINS_HINT' => 'Chặn người khác chép mã của bạn lên website của họ. Để trống là cho phép mọi tên miền.',
         'DOMAINS_PLACEHOLDER' => 'Nhập tên miền, Enter để thêm',
-        'DOMAINS_ERROR' => 'Lưu danh sách tên miền không thành công.',
     ],
 ];

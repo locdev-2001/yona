@@ -9,10 +9,6 @@ return [
         'BREADCRUMB_SETTINGS' => 'Settings',
         'BREADCRUMB_INBOXES' => 'Inboxes',
         'TITLE' => 'Widget chat',
-        'UNSAVED' => 'Unsaved changes',
-        'CANCEL' => 'Cancel',
-        'SAVE' => 'Save changes',
-        'CONFIRM_LEAVE' => 'Leaving now will discard your unsaved changes. Leave anyway?',
         'SAVE_SUCCESS' => 'Widget settings saved.',
         'SAVE_ERROR' => 'Could not save the widget settings, please try again.',
     ],
@@ -132,6 +128,5 @@ return [
         'DOMAINS_LABEL' => 'Only show on these domains',
         'DOMAINS_HINT' => 'Stops others from copying your snippet onto their own site. Leave empty to allow any domain.',
         'DOMAINS_PLACEHOLDER' => 'Enter a domain, press Enter to add',
-        'DOMAINS_ERROR' => 'Could not save the domain list.',
     ],
 ];

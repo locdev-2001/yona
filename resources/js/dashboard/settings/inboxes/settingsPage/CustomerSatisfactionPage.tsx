@@ -9,6 +9,8 @@ import Editor from 'dashboard/components-next/Editor/Editor';
 import FilterSelect from 'dashboard/components-next/filter/inputs/FilterSelect';
 import SettingsToggleSection from 'dashboard/components-next/Settings/SettingsToggleSection';
 import WithLabel from 'v3/components/Form/WithLabel';
+import SettingsSaveBar from '../settingsDraft/SettingsSaveBar';
+import { useSettingsDraft } from '../settingsDraft/useSettingsDraft';
 import type { UISettings } from 'dashboard/composables/useUISettings';
 import type { DashboardPageProps } from '../../../types';
 import type { Inbox } from '../types';
@@ -33,6 +35,24 @@ interface CsatConfig {
     survey_rules?: SurveyRules;
 }
 
+interface CsatDraft {
+    csatSurveyEnabled: boolean;
+    message: string;
+    surveyRuleOperator: string;
+    selectedLabelValues: string[];
+}
+
+function csatDraftOf(inbox: Inbox): CsatDraft {
+    const config = (inbox.csat_config ?? {}) as CsatConfig;
+
+    return {
+        csatSurveyEnabled: inbox.csat_survey_enabled || false,
+        message: config.message ?? '',
+        surveyRuleOperator: config.survey_rules?.operator ?? 'contains',
+        selectedLabelValues: Array.isArray(config.survey_rules?.values) ? [...config.survey_rules.values] : [],
+    };
+}
+
 export default function CustomerSatisfactionPage({
     inbox,
     uiSettings,
@@ -41,21 +61,9 @@ export default function CustomerSatisfactionPage({
     const { currentAccount } = usePage<DashboardPageProps>().props;
     const accountId = currentAccount!.id;
 
-    const [csatSurveyEnabled, setCsatSurveyEnabled] = useState(false);
-    const [message, setMessage] = useState('');
-    const [surveyRuleOperator, setSurveyRuleOperator] = useState('contains');
-    const [selectedLabelValues, setSelectedLabelValues] = useState<string[]>([]);
+    const { draft, patchDraft, isDirty, isSaving, reset, save } = useSettingsDraft(csatDraftOf(inbox));
+    const { csatSurveyEnabled, message, surveyRuleOperator, selectedLabelValues } = draft;
     const [labelTitles, setLabelTitles] = useState<string[]>([]);
-    const [isUpdating, setUpdating] = useState(false);
-
-    // initializeState() — chạy lúc mount và mỗi lần inbox đổi, y bản gốc.
-    useEffect(() => {
-        const config = (inbox.csat_config ?? {}) as CsatConfig;
-        setCsatSurveyEnabled(inbox.csat_survey_enabled || false);
-        setMessage(config.message ?? '');
-        setSurveyRuleOperator(config.survey_rules?.operator ?? 'contains');
-        setSelectedLabelValues(Array.isArray(config.survey_rules?.values) ? [...config.survey_rules.values] : []);
-    }, [inbox]);
 
     useEffect(() => {
         void getJson<{ payload: { title: string }[] }>(`/api/v1/accounts/${accountId}/labels`)
@@ -78,32 +86,32 @@ export default function CustomerSatisfactionPage({
 
     const handleLabelSelect = (value: string) => {
         if (!value || selectedLabelValues.includes(value)) return;
-        setSelectedLabelValues([...selectedLabelValues, value]);
+        patchDraft({ selectedLabelValues: [...selectedLabelValues, value] });
     };
 
     const removeLabel = (label: string) =>
-        setSelectedLabelValues(selectedLabelValues.filter(value => value !== label));
+        patchDraft({ selectedLabelValues: selectedLabelValues.filter(value => value !== label) });
 
-    const saveSettings = async () => {
-        setUpdating(true);
-        try {
-            const updated = await patchJson<Inbox>(`/api/v1/accounts/${accountId}/inboxes/${inbox.id}`, {
-                csat_survey_enabled: csatSurveyEnabled,
-                // Giữ nguyên các khóa khác đã lưu (vd. display_type cũ), chỉ ghi phần trang này sửa.
-                csat_config: {
-                    ...inbox.csat_config,
-                    message,
-                    survey_rules: { operator: surveyRuleOperator, values: selectedLabelValues },
-                },
-            });
-            onInboxUpdated(updated);
-            useAlert(t('INBOX_MGMT.CSAT.API.SUCCESS_MESSAGE'));
-        } catch {
-            useAlert(t('INBOX_MGMT.CSAT.API.ERROR_MESSAGE'));
-        } finally {
-            setUpdating(false);
-        }
-    };
+    const saveSettings = () =>
+        save(async () => {
+            try {
+                const updated = await patchJson<Inbox>(`/api/v1/accounts/${accountId}/inboxes/${inbox.id}`, {
+                    csat_survey_enabled: csatSurveyEnabled,
+                    // Giữ nguyên các khóa khác đã lưu (vd. display_type cũ), chỉ ghi phần trang này sửa.
+                    csat_config: {
+                        ...inbox.csat_config,
+                        message,
+                        survey_rules: { operator: surveyRuleOperator, values: selectedLabelValues },
+                    },
+                });
+                onInboxUpdated(updated);
+                useAlert(t('INBOX_MGMT.CSAT.API.SUCCESS_MESSAGE'));
+                return true;
+            } catch {
+                useAlert(t('INBOX_MGMT.CSAT.API.ERROR_MESSAGE'));
+                return false;
+            }
+        });
 
     return (
         <div className="mx-6">
@@ -115,14 +123,14 @@ export default function CustomerSatisfactionPage({
                     okay: t('WIDGET.CONVERSATION_END.OKAY'),
                     great: t('WIDGET.CONVERSATION_END.GREAT'),
                 })}
-                onChange={setCsatSurveyEnabled}
+                onChange={enabled => patchDraft({ csatSurveyEnabled: enabled })}
                 editor={
                     csatSurveyEnabled ? (
                         <div className="grid gap-5">
                             <WithLabel label={t('INBOX_MGMT.CSAT.MESSAGE.LABEL')} name="message">
                                 <Editor
                                     value={message}
-                                    onChange={setMessage}
+                                    onChange={nextMessage => patchDraft({ message: nextMessage })}
                                     uiSettings={uiSettings}
                                     placeholder={t('INBOX_MGMT.CSAT.MESSAGE.PLACEHOLDER')}
                                     maxLength={200}
@@ -139,7 +147,7 @@ export default function CustomerSatisfactionPage({
                                             variant="faded"
                                             options={filterTypes}
                                             className="inline-flex shrink-0"
-                                            onChange={setSurveyRuleOperator}
+                                            onChange={operator => patchDraft({ surveyRuleOperator: operator })}
                                         />
                                         {t('INBOX_MGMT.CSAT.SURVEY_RULE.DESCRIPTION_SUFFIX')}
                                         {selectedLabelValues.map(label => (
@@ -173,14 +181,7 @@ export default function CustomerSatisfactionPage({
                 }
             />
 
-            <div className="w-full flex justify-end items-center py-4 mt-2">
-                <Button
-                    type="submit"
-                    label={t('INBOX_MGMT.SETTINGS_POPUP.UPDATE')}
-                    isLoading={isUpdating}
-                    onClick={() => void saveSettings()}
-                />
-            </div>
+            <SettingsSaveBar isDirty={isDirty} isSaving={isSaving} onCancel={reset} onSave={() => void saveSettings()} />
         </div>
     );
 }

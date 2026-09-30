@@ -18,7 +18,7 @@ vi.mock('@inertiajs/react', () => ({
             globalConfig: { installationName: 'Yona' },
         },
     }),
-    router: { visit: vi.fn(), reload: vi.fn() },
+    router: { visit: vi.fn(), reload: vi.fn(), on: () => () => undefined },
     Link: ({ children }: { children: ReactNode }) => <a>{children}</a>,
 }));
 
@@ -98,6 +98,39 @@ describe('InboxShow — tab Cài đặt của hộp thư website', () => {
         await waitFor(() => expect(patchJson).toHaveBeenCalledTimes(1));
         expect(patchJson).toHaveBeenCalledWith('/api/v1/accounts/3/inboxes/140', { business_name: 'Tiệm Hoa Mai Anh' });
         await waitFor(() => expect(screen.getByDisplayValue('Tên sửa dở chưa lưu')).toBeInTheDocument());
+    });
+
+    it('xem trước bằng widget thật (preview=1) và không tự dựng đoạn mã nhúng thứ hai', async () => {
+        getJson.mockResolvedValue({ ...webWidgetInbox, website_token: 'shop_token', web_widget_script: '<script>yonaSDK</script>' });
+        await renderShow();
+
+        expect(screen.getByTitle(t('WIDGET_BUILDER.PREVIEW.IFRAME_TITLE'))).toHaveAttribute(
+            'src',
+            '/widget?website_token=shop_token&preview=1',
+        );
+        expect(document.querySelector('code')).toBeNull();
+        expect(document.body.textContent).not.toContain('yonaSettings');
+    });
+
+    it('cùng mô hình lưu: sửa tên thì hiện chưa lưu, đổi tab khi còn sửa dở phải xác nhận, Lưu gửi một PATCH', async () => {
+        patchJson.mockResolvedValue({ ...webWidgetInbox, name: 'Shop Mới Mai Anh' });
+        const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
+        await renderShow();
+
+        const saveButton = screen.getByRole('button', { name: t('SETTINGS_DRAFT.SAVE') });
+        expect(saveButton).toBeDisabled();
+        fireEvent.change(screen.getByDisplayValue('Shop Cũ Mai Anh'), { target: { value: 'Shop Mới Mai Anh' } });
+        expect(screen.getByText(t('SETTINGS_DRAFT.UNSAVED'))).toBeInTheDocument();
+
+        fireEvent.click(screen.getByText(t('INBOX_MGMT.TABS.CSAT')));
+        expect(confirm).toHaveBeenCalledWith(t('SETTINGS_DRAFT.CONFIRM_LEAVE'));
+        expect(screen.getByDisplayValue('Shop Mới Mai Anh')).toBeInTheDocument();
+
+        fireEvent.click(saveButton);
+        await waitFor(() => expect(patchJson).toHaveBeenCalledTimes(1));
+        expect(patchJson.mock.calls[0][1]).toMatchObject({ name: 'Shop Mới Mai Anh' });
+        await waitFor(() => expect(screen.queryByText(t('SETTINGS_DRAFT.UNSAVED'))).not.toBeInTheDocument());
+        confirm.mockRestore();
     });
 
     it('không còn ô Trung tâm trợ giúp và Domain trang web', async () => {

@@ -2,12 +2,13 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import * as apiClient from 'dashboard/helper/apiClient';
-import { setLocale } from '../../../../i18n';
+import { setLocale, t } from '../../../../i18n';
 import PreChatFormSettings from './Settings';
 import type { Inbox } from '../types';
 
 vi.mock('@inertiajs/react', () => ({
     usePage: () => ({ props: { currentAccount: { id: 3 } } }),
+    router: { on: () => () => undefined },
 }));
 
 // Dữ liệu mặc định mà hộp thư tạo trước đây đã lưu: nhãn tiếng Anh, mọi trường đều tắt.
@@ -76,7 +77,8 @@ describe('PreChatFormSettings', () => {
         expect(screen.getByDisplayValue('Full name')).toBeInTheDocument();
         expect(screen.queryByDisplayValue('Tên đầy đủ')).not.toBeInTheDocument();
 
-        fireEvent.click(screen.getByRole('button', { name: /cập nhật/i }));
+        fireEvent.click(screen.getAllByRole('checkbox')[0]);
+        fireEvent.click(screen.getByRole('button', { name: t('SETTINGS_DRAFT.SAVE') }));
 
         await waitFor(() => expect(patchJson).toHaveBeenCalledTimes(1));
         const body = patchJson.mock.calls[0][1] as {

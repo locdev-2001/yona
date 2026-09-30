@@ -1,7 +1,7 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { setLocale } from '../../../../i18n';
+import { setLocale, t } from '../../../../i18n';
 import ConfigurationPage from './ConfigurationPage';
 import type { Inbox } from '../types';
 
@@ -9,7 +9,11 @@ import type { Inbox } from '../types';
 vi.mock('@inertiajs/react', () => ({
     Link: ({ children, href }: { children: React.ReactNode; href: string }) => <a href={href}>{children}</a>,
     usePage: () => ({ props: { currentAccount: { id: 3 } } }),
+    router: { on: () => () => undefined },
 }));
+
+const patchJson = vi.fn();
+vi.mock('dashboard/helper/apiClient', () => ({ patchJson: (...args: unknown[]) => patchJson(...args) }));
 
 const WIDGET_SCRIPT = '<script>window.yonaSDK.run({websiteToken:"abc"})</script>';
 
@@ -37,7 +41,7 @@ describe('ConfigurationPage — khối đoạn mã nhúng', () => {
         expect(document.querySelector('code')?.textContent).toContain('yonaSDK');
         expect(screen.getByText('Tuỳ chỉnh giao diện widget')).toHaveAttribute(
             'href',
-            '/app/accounts/3/settings/inboxes/85',
+            '/app/accounts/3/settings/inboxes/85/widget',
         );
         setLocale('en');
     });
@@ -54,5 +58,24 @@ describe('ConfigurationPage — khối đoạn mã nhúng', () => {
         renderPage(['session_qr', 'settings_single_conversation']);
 
         expect(document.querySelector('code')).toBeNull();
+    });
+});
+
+describe('ConfigurationPage — cùng một mô hình lưu', () => {
+    it('công tắc không tự lưu; bấm Lưu thay đổi gửi một lần cả tên miền, webview và bắt buộc xác thực', async () => {
+        patchJson.mockReset().mockResolvedValue(inboxDeclaring(['settings_web_widget']));
+        renderPage(['settings_web_widget']);
+
+        const [mobileWebview, requireIdentity] = screen.getAllByRole('switch');
+        fireEvent.click(mobileWebview);
+        fireEvent.click(requireIdentity);
+        expect(patchJson).not.toHaveBeenCalled();
+
+        fireEvent.click(screen.getByRole('button', { name: t('SETTINGS_DRAFT.SAVE') }));
+
+        await waitFor(() => expect(patchJson).toHaveBeenCalledTimes(1));
+        expect(patchJson).toHaveBeenCalledWith('/api/v1/accounts/3/inboxes/85', {
+            channel: { allowed_domains: '', selected_feature_flags: ['allow_mobile_webview'], hmac_mandatory: true },
+        });
     });
 });

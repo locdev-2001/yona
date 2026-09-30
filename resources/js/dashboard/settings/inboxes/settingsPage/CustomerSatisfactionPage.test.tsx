@@ -9,6 +9,7 @@ const patchJson = vi.fn();
 
 vi.mock('@inertiajs/react', () => ({
     usePage: () => ({ props: { currentAccount: { id: 3 } } }),
+    router: { on: () => () => undefined },
 }));
 
 vi.mock('dashboard/helper/apiClient', () => ({
@@ -40,11 +41,13 @@ describe('CustomerSatisfactionPage', () => {
         patchJson.mockResolvedValue(inbox);
         render(<CustomerSatisfactionPage inbox={inbox} uiSettings={{}} onInboxUpdated={() => undefined} />);
 
-        fireEvent.click(screen.getByRole('button', { name: t('INBOX_MGMT.SETTINGS_POPUP.UPDATE') }));
+        expect(screen.getByRole('button', { name: t('SETTINGS_DRAFT.SAVE') })).toBeDisabled();
+        fireEvent.click(screen.getByRole('switch'));
+        fireEvent.click(screen.getByRole('button', { name: t('SETTINGS_DRAFT.SAVE') }));
 
         await waitFor(() => expect(patchJson).toHaveBeenCalledTimes(1));
         expect(patchJson).toHaveBeenCalledWith('/api/v1/accounts/3/inboxes/140', {
-            csat_survey_enabled: true,
+            csat_survey_enabled: false,
             csat_config: { display_type: 'star', message: 'Chị chấm giúp shop nhé', survey_rules: { operator: 'contains', values: [] } },
         });
     });

@@ -18,7 +18,7 @@ import ChannelsSection from './sections/ChannelsSection';
 import EmbedSection from './sections/EmbedSection';
 import HomeSection from './sections/HomeSection';
 import InviteSection from './sections/InviteSection';
-import { useUnsavedChangesGuard } from './useUnsavedChangesGuard';
+import { useUnsavedChangesGuard } from '../settingsDraft/useUnsavedChangesGuard';
 import type { WidgetBuilderFieldErrors, WidgetBuilderSectionId, WidgetDraft } from './types';
 import type { Inbox } from '../types';
 import type { DashboardPageProps } from '../../../types';
@@ -53,7 +53,7 @@ export default function WidgetBuilderPage({ inboxId }: WidgetBuilderPageProps) {
     }, [accountId, inboxId]);
 
     const isDirty = Boolean(draft && savedDraft && !draftsEqual(draft, savedDraft));
-    useUnsavedChangesGuard(isDirty, t('WIDGET_BUILDER.HEADER.CONFIRM_LEAVE'));
+    useUnsavedChangesGuard(isDirty, t('SETTINGS_DRAFT.CONFIRM_LEAVE'));
 
     // Dispatch không null-able cho các thẻ con: chỉ được render sau khi draft đã
     // nạp xong, nhưng kiểu của state vẫn `WidgetDraft | null` vì lúc đang tải
@@ -152,7 +152,7 @@ export default function WidgetBuilderPage({ inboxId }: WidgetBuilderPageProps) {
                                 <CaptureSection draft={draft} setDraft={patchDraft} />
                                 <InviteSection accountId={accountId} inboxId={inbox.id} />
                                 <AiSection />
-                                <EmbedSection accountId={accountId} inbox={inbox} onInboxUpdated={setInbox} />
+                                <EmbedSection embedScript={inbox.web_widget_script ?? ''} draft={draft} setDraft={patchDraft} />
                             </div>
                         </div>
 

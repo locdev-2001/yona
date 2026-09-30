@@ -1,8 +1,8 @@
 import { Link } from '@inertiajs/react';
 
 import { t } from '../../../../../i18n';
-import Button from 'dashboard/components-next/button/Button';
 import { accountScopedUrl } from 'dashboard/helper/URLHelper';
+import UnsavedChangesActions from '../../settingsDraft/UnsavedChangesActions';
 
 interface BuilderHeaderProps {
     accountId: number;
@@ -45,24 +45,7 @@ export default function BuilderHeader({
                     </nav>
                     <h1 className="mt-0.5 text-heading-1 text-n-slate-12">{t('WIDGET_BUILDER.HEADER.TITLE')}</h1>
                 </div>
-                <div className="flex items-center gap-3">
-                    {isDirty ? (
-                        <span className="text-label-small text-n-amber-11">{t('WIDGET_BUILDER.HEADER.UNSAVED')}</span>
-                    ) : null}
-                    <Button
-                        variant="ghost"
-                        color="slate"
-                        label={t('WIDGET_BUILDER.HEADER.CANCEL')}
-                        disabled={!isDirty || isSaving}
-                        onClick={onCancel}
-                    />
-                    <Button
-                        label={t('WIDGET_BUILDER.HEADER.SAVE')}
-                        isLoading={isSaving}
-                        disabled={!isDirty}
-                        onClick={onSave}
-                    />
-                </div>
+                <UnsavedChangesActions isDirty={isDirty} isSaving={isSaving} onCancel={onCancel} onSave={onSave} />
             </div>
         </header>
     );

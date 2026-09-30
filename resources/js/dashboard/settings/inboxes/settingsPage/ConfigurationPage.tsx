@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import type { ComponentType } from 'react';
 import { Link, usePage } from '@inertiajs/react';
 
@@ -7,7 +6,6 @@ import { useAlert } from 'dashboard/composables/useAlert';
 import { patchJson } from 'dashboard/helper/apiClient';
 import { accountScopedUrl, sanitizeAllowedDomains } from 'dashboard/helper/URLHelper';
 import Code from 'dashboard/components/Code';
-import Button from 'dashboard/components-next/button/Button';
 import TextArea from 'dashboard/components-next/textarea/TextArea';
 import SettingsAccordion from 'dashboard/components-next/Settings/SettingsAccordion';
 import SettingsFieldSection from 'dashboard/components-next/Settings/SettingsFieldSection';
@@ -16,6 +14,8 @@ import ImapSettings from './ImapSettings';
 import SmtpSettings from './SmtpSettings';
 import { ALLOW_MOBILE_WEBVIEW_FLAG } from '../webWidgetHelpers';
 import { declaredConfigurationSections } from '../inboxSettingsTabs';
+import SettingsSaveBar from '../settingsDraft/SettingsSaveBar';
+import { useSettingsDraft } from '../settingsDraft/useSettingsDraft';
 import type { ConfigurationSection } from '../inboxSettingsTabs';
 import type { DashboardPageProps } from '../../../types';
 import type { Inbox } from '../types';
@@ -27,42 +27,28 @@ interface ConfigurationPageProps {
     onInboxUpdated: (inbox: Inbox) => void;
 }
 
-function useChannelUpdater({ inbox, onInboxUpdated }: ConfigurationPageProps) {
+// Khối cấu hình của kênh sửa trên bản nháp và lưu một lần (cùng mô hình với mọi tab cài đặt hộp thư).
+function useChannelDraft<T>({ inbox, onInboxUpdated }: ConfigurationPageProps, source: T, toChannel: (draft: T) => Record<string, unknown>) {
     const { currentAccount } = usePage<DashboardPageProps>().props;
     const accountId = currentAccount!.id;
+    const settingsDraft = useSettingsDraft(source);
 
-    const updateChannel = async (channel: Record<string, unknown>) => {
-        try {
-            const updated = await patchJson<Inbox>(`/api/v1/accounts/${accountId}/inboxes/${inbox.id}`, {
-                channel,
-            });
-            onInboxUpdated(updated);
-            useAlert(t('INBOX_MGMT.EDIT.API.SUCCESS_MESSAGE'));
+    const saveDraft = () =>
+        settingsDraft.save(async submitted => {
+            try {
+                const updated = await patchJson<Inbox>(`/api/v1/accounts/${accountId}/inboxes/${inbox.id}`, {
+                    channel: toChannel(submitted),
+                });
+                onInboxUpdated(updated);
+                useAlert(t('INBOX_MGMT.EDIT.API.SUCCESS_MESSAGE'));
+                return true;
+            } catch {
+                useAlert(t('INBOX_MGMT.EDIT.API.ERROR_MESSAGE'));
+                return false;
+            }
+        });
 
-            return updated;
-        } catch {
-            useAlert(t('INBOX_MGMT.EDIT.API.ERROR_MESSAGE'));
-
-            return null;
-        }
-    };
-
-    return { accountId, updateChannel };
-}
-
-function useHmacMandatory(inbox: Inbox, updateChannel: (channel: Record<string, unknown>) => Promise<Inbox | null>) {
-    const [hmacMandatory, setHmacMandatory] = useState(Boolean(inbox.hmac_mandatory));
-
-    useEffect(() => {
-        setHmacMandatory(Boolean(inbox.hmac_mandatory));
-    }, [inbox.id, inbox.hmac_mandatory]);
-
-    const handleHmacFlag = async (value: boolean) => {
-        setHmacMandatory(value);
-        await updateChannel({ hmac_mandatory: value });
-    };
-
-    return { hmacMandatory, handleHmacFlag };
+    return { accountId, ...settingsDraft, saveDraft };
 }
 
 function MailServerSection({ inbox, onInboxUpdated }: ConfigurationPageProps) {
@@ -94,33 +80,22 @@ function MailServerSection({ inbox, onInboxUpdated }: ConfigurationPageProps) {
 
 function WebWidgetSection(props: ConfigurationPageProps) {
     const { inbox } = props;
-    const { accountId, updateChannel } = useChannelUpdater(props);
-    const { hmacMandatory, handleHmacFlag } = useHmacMandatory(inbox, updateChannel);
-    const [allowedDomains, setAllowedDomains] = useState(inbox.allowed_domains ?? '');
-    const [isUpdatingAllowedDomains, setUpdatingAllowedDomains] = useState(false);
-
-    useEffect(() => {
-        setAllowedDomains(inbox.allowed_domains ?? '');
-    }, [inbox.id, inbox.allowed_domains]);
-
-    const allowMobileWebview = (inbox.selected_feature_flags ?? []).includes(ALLOW_MOBILE_WEBVIEW_FLAG);
-
-    const handleMobileWebviewFlag = async (value: boolean) => {
-        const currentFlags = inbox.selected_feature_flags ?? [];
-        const selectedFlags = value
-            ? [...currentFlags, ALLOW_MOBILE_WEBVIEW_FLAG]
-            : currentFlags.filter(flag => flag !== ALLOW_MOBILE_WEBVIEW_FLAG);
-
-        await updateChannel({ selected_feature_flags: selectedFlags });
-    };
-
-    const updateAllowedDomains = async () => {
-        setUpdatingAllowedDomains(true);
-        const sanitized = sanitizeAllowedDomains(allowedDomains);
-        const updated = await updateChannel({ allowed_domains: sanitized });
-        if (updated) setAllowedDomains(sanitized);
-        setUpdatingAllowedDomains(false);
-    };
+    const featureFlags = inbox.selected_feature_flags ?? [];
+    const { accountId, draft, patchDraft, isDirty, isSaving, reset, saveDraft } = useChannelDraft(
+        props,
+        {
+            allowedDomains: inbox.allowed_domains ?? '',
+            allowMobileWebview: featureFlags.includes(ALLOW_MOBILE_WEBVIEW_FLAG),
+            hmacMandatory: Boolean(inbox.hmac_mandatory),
+        },
+        submitted => ({
+            allowed_domains: sanitizeAllowedDomains(submitted.allowedDomains),
+            selected_feature_flags: submitted.allowMobileWebview
+                ? [...featureFlags.filter(flag => flag !== ALLOW_MOBILE_WEBVIEW_FLAG), ALLOW_MOBILE_WEBVIEW_FLAG]
+                : featureFlags.filter(flag => flag !== ALLOW_MOBILE_WEBVIEW_FLAG),
+            hmac_mandatory: submitted.hmacMandatory,
+        }),
+    );
 
     return (
         <div>
@@ -139,7 +114,7 @@ function WebWidgetSection(props: ConfigurationPageProps) {
                                 />
                             </div>
                             <Link
-                                href={accountScopedUrl(accountId, `settings/inboxes/${inbox.id}`)}
+                                href={accountScopedUrl(accountId, `settings/inboxes/${inbox.id}/widget`)}
                                 className="inline-block mt-3 text-n-blue-11 hover:underline text-label-small"
                             >
                                 {t('INBOX_MGMT.SETTINGS_POPUP.EMBED_SCRIPT.CUSTOMIZE_LINK')}
@@ -154,26 +129,19 @@ function WebWidgetSection(props: ConfigurationPageProps) {
                     editor={
                         <>
                             <TextArea
-                                value={allowedDomains}
-                                onChange={setAllowedDomains}
+                                value={draft.allowedDomains}
+                                onChange={allowedDomains => patchDraft({ allowedDomains })}
                                 placeholder={t('INBOX_MGMT.SETTINGS_POPUP.ALLOWED_DOMAINS.PLACEHOLDER')}
                                 autoHeight
                                 resize
                                 className="w-full [&>div]:!bg-transparent [&>div]:!border-none [&>div]:!border-0 [&>div]:px-0 [&>div]:pb-0 [&>div]:pt-0"
                             />
-                            <div className="mt-3 flex justify-end">
-                                <Button
-                                    label={t('INBOX_MGMT.SETTINGS_POPUP.UPDATE')}
-                                    isLoading={isUpdatingAllowedDomains}
-                                    onClick={() => void updateAllowedDomains()}
-                                />
-                            </div>
                         </>
                     }
                 />
                 <SettingsToggleSection
-                    value={allowMobileWebview}
-                    onChange={value => void handleMobileWebviewFlag(value)}
+                    value={draft.allowMobileWebview}
+                    onChange={allowMobileWebview => patchDraft({ allowMobileWebview })}
                     header={t('INBOX_MGMT.SETTINGS_POPUP.ALLOW_MOBILE_WEBVIEW.LABEL')}
                     description={t('INBOX_MGMT.SETTINGS_POPUP.ALLOW_MOBILE_WEBVIEW.SUBTITLE')}
                 />
@@ -201,20 +169,24 @@ function WebWidgetSection(props: ConfigurationPageProps) {
                 />
 
                 <SettingsToggleSection
-                    value={hmacMandatory}
-                    onChange={value => void handleHmacFlag(value)}
+                    value={draft.hmacMandatory}
+                    onChange={hmacMandatory => patchDraft({ hmacMandatory })}
                     header={t('INBOX_MGMT.SETTINGS_POPUP.IDENTITY_VALIDATION.REQUIRE_LABEL')}
                     description={t('INBOX_MGMT.SETTINGS_POPUP.IDENTITY_VALIDATION.REQUIRE_DESCRIPTION')}
                 />
             </SettingsAccordion>
+            <SettingsSaveBar isDirty={isDirty} isSaving={isSaving} onCancel={reset} onSave={() => void saveDraft()} />
         </div>
     );
 }
 
 function ClientApiSection(props: ConfigurationPageProps) {
     const { inbox } = props;
-    const { updateChannel } = useChannelUpdater(props);
-    const { hmacMandatory, handleHmacFlag } = useHmacMandatory(inbox, updateChannel);
+    const { draft, patchDraft, isDirty, isSaving, reset, saveDraft } = useChannelDraft(
+        props,
+        { hmacMandatory: Boolean(inbox.hmac_mandatory) },
+        submitted => ({ hmac_mandatory: submitted.hmacMandatory }),
+    );
 
     return (
         <div>
@@ -240,14 +212,15 @@ function ClientApiSection(props: ConfigurationPageProps) {
                     <input
                         id="hmacMandatory"
                         type="checkbox"
-                        checked={hmacMandatory}
-                        onChange={event => void handleHmacFlag(event.target.checked)}
+                        checked={draft.hmacMandatory}
+                        onChange={event => patchDraft({ hmacMandatory: event.target.checked })}
                     />
                     <label htmlFor="hmacMandatory" className="text-body-main text-n-slate-12">
                         {t('INBOX_MGMT.EDIT.ENABLE_HMAC.LABEL')}
                     </label>
                 </div>
             </SettingsFieldSection>
+            <SettingsSaveBar isDirty={isDirty} isSaving={isSaving} onCancel={reset} onSave={() => void saveDraft()} />
         </div>
     );
 }

@@ -84,7 +84,7 @@ describe('WidgetBuilderPage — màn Widget chat', () => {
 
         fireEvent.click(screen.getByRole('radio', { name: 'Có chữ' }));
 
-        const saveButton = screen.getByRole('button', { name: t('WIDGET_BUILDER.HEADER.SAVE') });
+        const saveButton = screen.getByRole('button', { name: t('SETTINGS_DRAFT.SAVE') });
         expect(saveButton).not.toBeDisabled();
         fireEvent.click(saveButton);
 
@@ -95,6 +95,7 @@ describe('WidgetBuilderPage — màn Widget chat', () => {
                 widget_color: '#1B6FCC',
                 welcome_tagline: 'Gốm Mộc có thể giúp gì?',
                 widget_settings: { ...DEFAULT_WIDGET_SETTINGS, appearance: { ...DEFAULT_WIDGET_SETTINGS.appearance, launcher: 'pill' } },
+                allowed_domains: '',
             },
         });
     });
@@ -109,23 +110,41 @@ describe('WidgetBuilderPage — màn Widget chat', () => {
         fireEvent.click(screen.getByRole('switch', { name: t('WIDGET_BUILDER.APPEARANCE.SOUND_LABEL') }));
         expect(screen.queryByRole('button', { name: t('ALERT_SOUND.PREVIEW') })).not.toBeInTheDocument();
 
-        fireEvent.click(screen.getByRole('button', { name: t('WIDGET_BUILDER.HEADER.SAVE') }));
+        fireEvent.click(screen.getByRole('button', { name: t('SETTINGS_DRAFT.SAVE') }));
 
         await waitFor(() => expect(patchJson).toHaveBeenCalledTimes(1));
         const [, payload] = patchJson.mock.calls[0] as [string, { channel: { widget_settings: typeof DEFAULT_WIDGET_SETTINGS } }];
         expect(payload.channel.widget_settings.notification_sound).toEqual({ enabled: false, tone: 'chime' });
     });
 
+    it('tên miền được phép đi cùng bản nháp, không tự lưu khi vừa thêm', async () => {
+        patchJson.mockResolvedValue(webWidgetInbox);
+        await renderPage();
+
+        const domainInput = screen.getByPlaceholderText(t('WIDGET_BUILDER.EMBED.DOMAINS_PLACEHOLDER'));
+        fireEvent.change(domainInput, { target: { value: 'GomMoc.vn' } });
+        fireEvent.keyDown(domainInput, { key: 'Enter' });
+
+        expect(patchJson).not.toHaveBeenCalled();
+        expect(screen.getByText('gommoc.vn')).toBeInTheDocument();
+        expect(screen.getByText(t('SETTINGS_DRAFT.UNSAVED'))).toBeInTheDocument();
+
+        fireEvent.click(screen.getByRole('button', { name: t('SETTINGS_DRAFT.SAVE') }));
+        await waitFor(() => expect(patchJson).toHaveBeenCalledTimes(1));
+        const [, payload] = patchJson.mock.calls[0] as [string, { channel: { allowed_domains: string } }];
+        expect(payload.channel.allowed_domains).toBe('gommoc.vn');
+    });
+
     it('hiện "Có thay đổi chưa lưu" chỉ khi đang sửa dở, và Huỷ trả lại giá trị đã lưu', async () => {
         await renderPage();
 
-        expect(screen.queryByText(t('WIDGET_BUILDER.HEADER.UNSAVED'))).not.toBeInTheDocument();
+        expect(screen.queryByText(t('SETTINGS_DRAFT.UNSAVED'))).not.toBeInTheDocument();
 
         fireEvent.click(screen.getByRole('radio', { name: 'Trái' }));
-        expect(screen.getByText(t('WIDGET_BUILDER.HEADER.UNSAVED'))).toBeInTheDocument();
+        expect(screen.getByText(t('SETTINGS_DRAFT.UNSAVED'))).toBeInTheDocument();
 
-        fireEvent.click(screen.getByRole('button', { name: t('WIDGET_BUILDER.HEADER.CANCEL') }));
-        expect(screen.queryByText(t('WIDGET_BUILDER.HEADER.UNSAVED'))).not.toBeInTheDocument();
+        fireEvent.click(screen.getByRole('button', { name: t('SETTINGS_DRAFT.CANCEL') }));
+        expect(screen.queryByText(t('SETTINGS_DRAFT.UNSAVED'))).not.toBeInTheDocument();
         expect(screen.getByRole('radio', { name: 'Phải' })).toHaveAttribute('aria-checked', 'true');
     });
 
@@ -136,7 +155,7 @@ describe('WidgetBuilderPage — màn Widget chat', () => {
 
         // Thêm một dòng kênh để có ô ở vị trí 0 nhận lỗi (danh sách mặc định rỗng).
         fireEvent.click(screen.getByRole('button', { name: t('WIDGET_BUILDER.CHANNELS.ADD') }));
-        fireEvent.click(screen.getByRole('button', { name: t('WIDGET_BUILDER.HEADER.SAVE') }));
+        fireEvent.click(screen.getByRole('button', { name: t('SETTINGS_DRAFT.SAVE') }));
 
         await screen.findByText('Kênh này chưa đúng định dạng');
     });
