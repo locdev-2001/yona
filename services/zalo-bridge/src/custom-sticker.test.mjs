@@ -110,7 +110,7 @@ test('customStickerParams: chat 1-1 mang toId, mọi cỡ trỏ ảnh WebP như 
         thumb_height: 128,
         properties: params.properties,
         contentId: 1700,
-        webp: JSON.stringify({ width: 128, height: 128, url: ANIMATION_URL }),
+        webp: JSON.stringify({ url: ANIMATION_URL }),
         pStickerType: 1,
         zsource: -1,
         ttl: 0,
@@ -122,7 +122,7 @@ test('customStickerParams: chat 1-1 mang toId, mọi cỡ trỏ ảnh WebP như 
         color: -1,
         size: -1,
         type: 3,
-        ext: { sSrcStr: '@STICKER', sSrcType: 0 },
+        ext: { shouldParseLinkOrContact: 0 },
     });
 });
 

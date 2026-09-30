@@ -19,7 +19,7 @@ const STICKER_PROPERTIES = JSON.stringify({
     color: -1,
     size: -1,
     type: 3,
-    ext: JSON.stringify({ sSrcStr: '@STICKER', sSrcType: 0 }),
+    ext: JSON.stringify({ shouldParseLinkOrContact: 0 }),
 });
 
 function edge(value) {
@@ -58,7 +58,7 @@ export function customStickerParams({ sticker, threadId, isGroup, clientId }) {
     const target = isGroup ? { grid: String(threadId), visibility: 0 } : { toId: String(threadId) };
 
     // Zalo desktop vẽ sticker từ href (oriUrl) và chỉ nhận WebP; sticker tự tạo thật của
-    // Zalo trỏ mọi cỡ vào tệp .webp và mang pStickerType 1.
+    // Zalo trỏ mọi cỡ vào tệp .webp, mang pStickerType 1 và ext shouldParseLinkOrContact.
     return {
         clientId,
         title: '',
@@ -71,7 +71,7 @@ export function customStickerParams({ sticker, threadId, isGroup, clientId }) {
         thumb_height: sticker.height,
         properties: STICKER_PROPERTIES,
         contentId: clientId,
-        webp: JSON.stringify({ width: sticker.width, height: sticker.height, url: sticker.animationUrl }),
+        webp: JSON.stringify({ url: sticker.animationUrl }),
         pStickerType: 1,
         zsource: -1,
         ttl: 0,
