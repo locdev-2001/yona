@@ -537,6 +537,12 @@ HTTPS, và `BRIDGE_SESSION_KEY` phải có giá trị. Bridge không bao giờ e
 thẳng ra Internet. `BRIDGE_ELEVATED_SECRET`
 để trống = không bao giờ cho phép nhóm method destructive (fail-closed).
 
+`ZALO_CUSTOM_STICKER_LAYOUT` (tuỳ chọn, mặc định `ai`) chọn dạng tin khi gửi
+sticker tự tạo của Yona sang Zalo: `ai` gửi như sticker AI của Zalo
+(`pStickerType` trong `jcp`), `plain` là ảnh không viền không `contentId`/`webp`,
+`photo` là dạng PNG cũ. Đổi xong chạy
+`pm2 restart zalo-personal-bridge --update-env`.
+
 ### Mã hoá at-rest kho phiên (`BRIDGE_SESSION_KEY`)
 
 Cookie trong `.sessions/c{id}.json` là toàn quyền tài khoản Zalo cá nhân của
