@@ -1129,6 +1129,21 @@ Lưu ý vận hành:
   Pulse tự dọn bản ghi quá `PULSE_STORAGE_KEEP` (7 ngày) khi ghi, không cần lệnh lịch. Thấy độ trễ request tăng thì hạ sample rate hoặc
   `PULSE_ENABLED=false`. Pulse ghi *pattern* route (`.../{website_token}`) chứ
   không ghi URL thật, nên token không rơi vào bảng.
+- Pulse ingest mặc định `storage`: ghi DB ở `terminate` của request (sau khi
+  response đã gửi, người dùng không chờ nhưng worker PHP-FPM bị giữ thêm vài ms)
+  và giữa hai job của worker. Chuyển `PULSE_INGEST_DRIVER=redis` chỉ khi đã có
+  daemon `php artisan pulse:work` chạy thường trực (deploy.sh chưa dựng program
+  này); thiếu daemon thì Pulse ngừng có số liệu mà không báo lỗi.
+- **Số đo Pulse ngay sau deploy không phải trạng thái thường.** `/up` chỉ được gọi
+  bởi health check của deploy, chạy ngay sau khi reload PHP-FPM (opcache nguội) và
+  `optimize:clear` (xoá cache Redis) nên thường 1,5–3,7 giây; các trang/API mở
+  trong vài phút đó cũng chậm theo. Lọc những mốc này trước khi kết luận.
+- Job chạy quá 1000 ms (cùng ngưỡng Pulse) ghi một dòng `queue.job.slow` vào log
+  ứng dụng: `total_ms`, `db_ms`/`db_queries`, `http_ms`/`http_calls` (bridge, CDN,
+  Web Push), `other_ms` (CPU, Redis, phát Reverb), `waited_since_push_ms` (gồm cả
+  delay hẹn trước), `job_number_in_process`. Tin gửi Zalo còn có dòng
+  `zalo.send.timing` (chờ hàng đợi + từng lượt gọi bridge). Xem ở `/logs` hoặc
+  `grep -h 'queue.job.slow' storage/logs/laravel*.log | tail -50`.
 - Thẻ **Servers** của Pulse tắt (`PULSE_SERVERS_ENABLED=false`) vì nó cần thêm
   một daemon `pulse:check`; CPU/RAM/đĩa xem ở aaPanel.
 - Log Viewer chỉ đọc `storage/logs`, **không** mở `/var/log/nginx` hay log hệ
