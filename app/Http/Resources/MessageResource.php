@@ -14,6 +14,8 @@ use App\Models\Message;
 use App\Models\User;
 use App\Services\Channels\Stickers\StickerLibrary;
 use App\Services\Messages\WebhookContentNormalizer;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -23,13 +25,55 @@ class MessageResource extends JsonResource
 {
     use SerializesAttributeMaps;
 
+    /** Người gửi: agent cần vai trò trong account, khách và agent cần ảnh đại diện. */
+    public const SENDER_RELATIONS = [
+        User::class => ['accountUsers', 'avatar'],
+        Contact::class => ['avatar'],
+    ];
+
     /** @param iterable<Message> $messages */
     public static function collectionFor(iterable $messages): array
     {
-        return collect($messages)
+        $messages = new EloquentCollection(collect($messages)->values()->all());
+        self::preload($messages);
+
+        return $messages
             ->map(fn (Message $message) => (new self($message))->toArray(request()))
             ->values()
             ->all();
+    }
+
+    /**
+     * Nạp một lần cho cả nhóm tin mọi quan hệ payload tin cần (tệp, hội thoại,
+     * người gửi kèm ảnh và vai trò), để N tin không thành N lượt truy vấn mỗi quan hệ.
+     *
+     * @param  EloquentCollection<int, Message>  $messages
+     */
+    public static function preload(EloquentCollection $messages): void
+    {
+        $messages->loadMissing([
+            'attachments',
+            'account',
+            'inbox',
+            'conversation.contactInbox',
+            'sender' => fn (MorphTo $sender) => $sender->morphWith(self::SENDER_RELATIONS),
+        ]);
+
+        $messages->each(fn (Message $message) => self::shareSenderAccount($message));
+    }
+
+    // Khách gửi tin cùng account với tin: payload khách đọc cờ tính năng của account.
+    public static function shareSenderAccount(Message $message): void
+    {
+        if (! $message->relationLoaded('sender') || ! $message->relationLoaded('account')) {
+            return;
+        }
+
+        $sender = $message->sender;
+
+        if ($sender instanceof Contact && $sender->account_id === $message->account_id) {
+            $sender->setRelation('account', $message->account);
+        }
     }
 
     public function toArray(Request $request): array

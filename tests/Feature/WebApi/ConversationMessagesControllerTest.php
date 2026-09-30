@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Resources\MessageResource;
 use App\Models\Account;
 use App\Models\AccountUser;
 use App\Models\Contact;
@@ -10,6 +11,7 @@ use App\Models\Message;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
+use Tests\Support\InboxWorkload;
 
 // Port từ spec/controllers/api/v1/accounts/conversations/messages_controller_spec.rb.
 // Bỏ: sender AgentBot + agent bot auth (D4), input_select/
@@ -420,4 +422,18 @@ describe('POST messages with a forged forwarded_from', function () {
             ->and($response->json('content'))->toBe('Chào Chị Lan')
             ->and($conversation->messages()->firstOrFail()->isForwarded())->toBeFalse();
     });
+});
+
+// Danh sách tin nạp gộp người gửi, tệp, hội thoại: payload y hệt dựng từng tin một.
+it('builds the batched message page exactly like one message at a time', function () {
+    $load = InboxWorkload::build(1);
+    $this->actingAs($load->admin);
+
+    $payload = $this->getJson("/api/v1/accounts/{$load->account->id}/conversations/{$load->conversation->display_id}/messages")
+        ->assertOk()->json('payload');
+
+    $expected = collect($payload)->map(fn (array $row) => json_decode(json_encode(
+        (new MessageResource(Message::query()->findOrFail($row['id'])))->toArray(request())
+    ), true))->all();
+    expect($payload)->toHaveCount(InboxWorkload::MESSAGES_PER_CONVERSATION)->toBe($expected);
 });
