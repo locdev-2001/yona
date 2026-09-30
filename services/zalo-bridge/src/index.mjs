@@ -1876,8 +1876,8 @@ function startListenerForSlot(slotKey) {
             return;
         }
         noteSlotAlive(slot, cid, bid);
-        if (message?.data?.msgType === 'chat.photo') {
-            console.log('[zalo-bridge:raw-photo]', JSON.stringify({ isSelf: message.isSelf, msgType: message.data.msgType, content: message.data.content, propertyExt: message.data.propertyExt }));
+        if (message?.data?.msgType && message.data.msgType !== 'webchat') {
+            console.log('[zalo-bridge:raw-media]', JSON.stringify({ isSelf: message.isSelf, msgType: message.data.msgType, content: message.data.content, propertyExt: message.data.propertyExt }));
         }
         const desc = parseInboundDescriptor(message);
         if (!desc) {
