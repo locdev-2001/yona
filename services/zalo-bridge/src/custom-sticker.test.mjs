@@ -4,6 +4,7 @@ import test from 'node:test';
 import {
     CUSTOM_STICKER_METHOD,
     INVALID_CUSTOM_STICKER,
+    customStickerLayout,
     customStickerParams,
     parseCustomSticker,
     sendCustomSticker,
@@ -95,35 +96,81 @@ test('parseCustomSticker: URL ngoài allowlist (tĩnh hay động) bị chặn',
     );
 });
 
-test('customStickerParams: chat 1-1 mang toId, mọi cỡ trỏ ảnh WebP như sticker tự tạo thật của Zalo', () => {
-    const params = customStickerParams({ sticker, threadId: 987, isGroup: false, clientId: 1700 });
-
-    assert.deepEqual(params, {
-        clientId: 1700,
-        title: '',
-        oriUrl: ANIMATION_URL,
-        thumbUrl: ANIMATION_URL,
-        hdUrl: ANIMATION_URL,
-        width: 128,
-        height: 128,
-        thumb_width: 128,
-        thumb_height: 128,
-        properties: params.properties,
-        contentId: 1700,
-        webp: JSON.stringify({ url: ANIMATION_URL }),
-        pStickerType: 1,
-        zsource: -1,
-        ttl: 0,
-        toId: '987',
-    });
+function decodedProperties(params) {
     const properties = JSON.parse(params.properties);
-    assert.deepEqual({ ...properties, ext: JSON.parse(properties.ext) }, {
-        subType: 0,
-        color: -1,
-        size: -1,
-        type: 3,
+
+    return { ...properties, ext: JSON.parse(properties.ext) };
+}
+
+const ANIMATION_WEBP = JSON.stringify({ width: 128, height: 128, url: ANIMATION_URL });
+
+// Dạng `ai` khớp tin sticker tự tạo mà Zalo desktop hiện đúng: pStickerType chỉ tới được server
+// khi nằm trong jcp (đặt thẳng trong params thì bị bỏ, tin rơi sang bộ vẽ photo sticker cũ).
+const LAYOUT_CASES = [
+    {
+        layout: 'ai',
+        fields: {
+            oriUrl: ANIMATION_URL,
+            thumbUrl: ANIMATION_URL,
+            hdUrl: ANIMATION_URL,
+            contentId: 1700,
+            thumb_width: 128,
+            thumb_height: 128,
+            webp: ANIMATION_WEBP,
+            jcp: JSON.stringify({ pStickerType: 1 }),
+        },
         ext: { shouldParseLinkOrContact: 0 },
+    },
+    {
+        layout: 'photo',
+        fields: {
+            oriUrl: STATIC_URL,
+            thumbUrl: STATIC_URL,
+            hdUrl: STATIC_URL,
+            contentId: 1700,
+            thumb_width: 128,
+            thumb_height: 128,
+            webp: ANIMATION_WEBP,
+        },
+        ext: { sSrcStr: '@STICKER', sSrcType: 0 },
+    },
+    {
+        layout: 'plain',
+        fields: { oriUrl: ANIMATION_URL, thumbUrl: ANIMATION_URL, hdUrl: ANIMATION_URL },
+        ext: { shouldParseLinkOrContact: 0 },
+    },
+];
+
+for (const { layout, fields, ext } of LAYOUT_CASES) {
+    test(`customStickerParams: dạng ${layout} gửi đúng trường cho bộ vẽ tương ứng của Zalo`, () => {
+        const params = customStickerParams({ sticker, threadId: 987, isGroup: false, clientId: 1700, layout });
+
+        assert.deepEqual(params, {
+            clientId: 1700,
+            title: '',
+            width: 128,
+            height: 128,
+            properties: params.properties,
+            ...fields,
+            zsource: -1,
+            ttl: 0,
+            toId: '987',
+        });
+        assert.deepEqual(decodedProperties(params), { subType: 0, color: -1, size: -1, type: 3, ext });
+        assert.equal('pStickerType' in params, false);
     });
+}
+
+test('customStickerLayout: mặc định ai, giá trị lạ hay trống cũng về ai', () => {
+    assert.equal(customStickerLayout(undefined), 'ai');
+    assert.equal(customStickerLayout(''), 'ai');
+    assert.equal(customStickerLayout('gif'), 'ai');
+    assert.equal(customStickerLayout(' Plain '), 'plain');
+    assert.equal(customStickerLayout('photo'), 'photo');
+    assert.deepEqual(
+        customStickerParams({ sticker, threadId: 1, isGroup: false, clientId: 1 }),
+        customStickerParams({ sticker, threadId: 1, isGroup: false, clientId: 1, layout: 'ai' })
+    );
 });
 
 test('customStickerParams: nhóm mang grid + visibility 0, không có toId', () => {
@@ -146,6 +193,16 @@ test('sendCustomSticker: gọi photo_url của dịch vụ file theo loại lu�
     assert.equal(requests[0].options.method, 'POST');
     assert.equal(sentParams(requests[0]).toId, '987');
     assert.equal(sentParams(requests[1]).grid, '555');
+    assert.equal(sentParams(requests[0]).jcp, JSON.stringify({ pStickerType: 1 }));
+});
+
+test('sendCustomSticker: dạng chọn ở bridge đi tới tham số gửi Zalo', async () => {
+    const { api, requests } = fakeZcaApi();
+
+    await sendCustomSticker(api, { sticker, threadId: '987', isGroup: false, layout: 'plain' });
+
+    assert.equal('contentId' in sentParams(requests[0]), false);
+    assert.equal('jcp' in sentParams(requests[0]), false);
 });
 
 test('sendCustomSticker: phiên dùng lại không đăng ký lại (custom() không cho khai trùng)', async () => {

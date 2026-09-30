@@ -14,13 +14,36 @@ export const INVALID_CUSTOM_STICKER = 'invalid custom_sticker';
 
 const MAX_EDGE = 1024;
 
-const STICKER_PROPERTIES = JSON.stringify({
-    subType: 0,
-    color: -1,
-    size: -1,
-    type: 3,
-    ext: JSON.stringify({ shouldParseLinkOrContact: 0 }),
-});
+/**
+ * Cách Zalo vẽ tin sticker tự tạo, chọn bằng ZALO_CUSTOM_STICKER_LAYOUT của bridge.
+ * Client Zalo (web/desktop) xếp tin chat.photo khung không viền (properties.type 3) vào ba bộ vẽ:
+ * - `ai`: params mang pStickerType 1 → bộ vẽ sticker AI, tải thẳng oriUrl. Đây là dạng tin
+ *   sticker tự tạo thật mà Zalo desktop hiện đúng.
+ * - `photo`: có contentId + webp mà không có pStickerType → bộ vẽ "photo sticker" cũ, desktop
+ *   tải tệp về bộ nhớ đệm theo contentId; tệp ngoài CDN Zalo rơi vào ô mặt cười xám.
+ * - `plain`: không contentId/webp → bộ vẽ ảnh không viền, tải thẳng oriUrl, không có ảnh động riêng.
+ */
+export const CUSTOM_STICKER_LAYOUTS = Object.freeze(['ai', 'photo', 'plain']);
+
+export const DEFAULT_CUSTOM_STICKER_LAYOUT = 'ai';
+
+const BORDERLESS_BUBBLE_LAYOUT = 3;
+
+const AI_STICKER_TYPE = 1;
+
+const PLAIN_EXT = JSON.stringify({ shouldParseLinkOrContact: 0 });
+
+const PHOTO_STICKER_EXT = JSON.stringify({ sSrcStr: '@STICKER', sSrcType: 0 });
+
+export function customStickerLayout(value) {
+    const layout = typeof value === 'string' ? value.trim().toLowerCase() : '';
+
+    return CUSTOM_STICKER_LAYOUTS.includes(layout) ? layout : DEFAULT_CUSTOM_STICKER_LAYOUT;
+}
+
+function stickerProperties(ext) {
+    return JSON.stringify({ subType: 0, color: -1, size: -1, type: BORDERLESS_BUBBLE_LAYOUT, ext });
+}
 
 function edge(value) {
     const number = Number(value);
@@ -54,25 +77,54 @@ export function parseCustomSticker(raw, allowedHosts) {
     return { staticUrl, animationUrl, width, height };
 }
 
-export function customStickerParams({ sticker, threadId, isGroup, clientId }) {
+function layoutParams(layout, sticker, clientId) {
+    const { staticUrl, animationUrl, width, height } = sticker;
+    const animation = JSON.stringify({ width, height, url: animationUrl });
+
+    if (layout === 'photo') {
+        return {
+            oriUrl: staticUrl,
+            thumbUrl: staticUrl,
+            hdUrl: staticUrl,
+            properties: stickerProperties(PHOTO_STICKER_EXT),
+            contentId: clientId,
+            thumb_width: width,
+            thumb_height: height,
+            webp: animation,
+        };
+    }
+    if (layout === 'plain') {
+        return {
+            oriUrl: animationUrl,
+            thumbUrl: animationUrl,
+            hdUrl: animationUrl,
+            properties: stickerProperties(PLAIN_EXT),
+        };
+    }
+
+    // Server Zalo bỏ pStickerType đặt thẳng trong params; client Zalo gửi nó trong `jcp`.
+    return {
+        oriUrl: animationUrl,
+        thumbUrl: animationUrl,
+        hdUrl: animationUrl,
+        properties: stickerProperties(PLAIN_EXT),
+        contentId: clientId,
+        thumb_width: width,
+        thumb_height: height,
+        webp: animation,
+        jcp: JSON.stringify({ pStickerType: AI_STICKER_TYPE }),
+    };
+}
+
+export function customStickerParams({ sticker, threadId, isGroup, clientId, layout = DEFAULT_CUSTOM_STICKER_LAYOUT }) {
     const target = isGroup ? { grid: String(threadId), visibility: 0 } : { toId: String(threadId) };
 
-    // Zalo desktop vẽ sticker từ href (oriUrl) và chỉ nhận WebP; sticker tự tạo thật của
-    // Zalo trỏ mọi cỡ vào tệp .webp, mang pStickerType 1 và ext shouldParseLinkOrContact.
     return {
         clientId,
         title: '',
-        oriUrl: sticker.animationUrl,
-        thumbUrl: sticker.animationUrl,
-        hdUrl: sticker.animationUrl,
         width: sticker.width,
         height: sticker.height,
-        thumb_width: sticker.width,
-        thumb_height: sticker.height,
-        properties: STICKER_PROPERTIES,
-        contentId: clientId,
-        webp: JSON.stringify({ url: sticker.animationUrl }),
-        pStickerType: 1,
+        ...layoutParams(customStickerLayout(layout), sticker, clientId),
         zsource: -1,
         ttl: 0,
         ...target,
@@ -113,8 +165,8 @@ export function ensureCustomStickerApi(api) {
     });
 }
 
-export async function sendCustomSticker(api, { sticker, threadId, isGroup }) {
+export async function sendCustomSticker(api, { sticker, threadId, isGroup, layout }) {
     ensureCustomStickerApi(api);
 
-    return api[CUSTOM_STICKER_METHOD]({ sticker, threadId, isGroup, fileService: fileServiceOf(api) });
+    return api[CUSTOM_STICKER_METHOD]({ sticker, threadId, isGroup, layout, fileService: fileServiceOf(api) });
 }

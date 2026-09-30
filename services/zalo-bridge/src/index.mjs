@@ -15,7 +15,7 @@ import { zcaReactionCode } from './reaction-icons.mjs';
 import { buildSendMessageContent } from './send-content.mjs';
 import { sendForwardOrFallback } from './forward-content.mjs';
 import { stickerSendPayload } from './stickers.mjs';
-import { parseCustomSticker, sendCustomSticker } from './custom-sticker.mjs';
+import { customStickerLayout, parseCustomSticker, sendCustomSticker } from './custom-sticker.mjs';
 import { SEND_TIMING_LOG_TAG, startSendTiming } from './send-timing.mjs';
 import { SEND_VIDEO_LOG_TAG, sendVideoOrFile, videoToolsFromEnv } from './send-video.mjs';
 import { SEND_VOICE_LOG_TAG, sendVoiceOrFile, voiceToolsFromEnv } from './send-voice.mjs';
@@ -90,6 +90,7 @@ const BRIDGE_UI_SECRET = process.env.BRIDGE_UI_SECRET || '';
 const BRIDGE_ELEVATED_SECRET = process.env.BRIDGE_ELEVATED_SECRET || '';
 const LARAVEL_WEBHOOK_URL = process.env.LARAVEL_WEBHOOK_URL || '';
 const LARAVEL_WEBHOOK_SECRET = process.env.LARAVEL_WEBHOOK_SECRET || '';
+const CUSTOM_STICKER_LAYOUT = customStickerLayout(process.env.ZALO_CUSTOM_STICKER_LAYOUT);
 
 // Tier 1 outbox — khởi tạo sớm, start() gọi sau bootRestoreAllSessions()
 const outbox = createOutbox({
@@ -2281,6 +2282,7 @@ export async function sendTextOrMediaThroughZca(slot, body, timing) {
             sticker: customSticker,
             threadId: String(thread_id),
             isGroup: tt === ThreadType.Group,
+            layout: CUSTOM_STICKER_LAYOUT,
         });
         timing.lap('zalo_send');
         return registerAllOutboundSourceIds(slot, sendResult);
