@@ -7,16 +7,34 @@ use App\Models\User;
 // (nội dung tin nhắn khách, số điện thoại, payload webhook Zalo). Ba dashboard
 // này do gói ngoài đăng ký route nên không nằm trong routes/web.php — test này
 // là chỗ duy nhất chặn việc nâng cấp gói làm hở guard.
-$dashboards = ['/horizon', '/pulse', '/logs'];
+$dashboards = ['/horizon', '/pulse', '/logs', 'API log viewer' => '/logs/api/folders'];
+
+const SYSTEM_ADMIN_EMAIL = 'van-hanh@yona.vn';
+
+beforeEach(fn () => config(['yona.system_admin_emails' => SYSTEM_ADMIN_EMAIL]));
 
 it('bắt khách lạ đăng nhập console quản trị', function (string $path) {
     $this->get($path)->assertRedirect('/super_admin/sign_in');
 })->with($dashboards);
 
-it('không cho agent thường vào dù đã đăng nhập', function (string $path) {
+it('trả 401 cho khách lạ gọi API log viewer', function () {
+    $this->getJson('/logs/api/folders')->assertUnauthorized();
+});
+
+it('không cho agent thường không có email hệ thống vào', function (string $path) {
     $this->actingAs(User::factory()->create())
         ->get($path)
-        ->assertRedirect('/super_admin/sign_in');
+        ->assertForbidden();
+})->with($dashboards);
+
+it('cho user có email hệ thống vào dù chưa bật 2FA', function (string $path) {
+    $systemAdmin = User::factory()->create(['email' => SYSTEM_ADMIN_EMAIL]);
+
+    expect($systemAdmin->mfaEnabled())->toBeFalse();
+
+    $this->actingAs($systemAdmin)
+        ->get($path)
+        ->assertOk();
 })->with($dashboards);
 
 it('cho super admin đã bật 2FA vào', function (string $path) {

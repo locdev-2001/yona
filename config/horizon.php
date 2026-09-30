@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Middleware\EnsureSuperAdminMfaEnrolled;
+use App\Http\Middleware\EnsureOperationsDashboardAccess;
 use Illuminate\Support\Str;
 
 // Thứ tự tier là nguồn duy nhất ở config/queue_tiers.php — Makefile và
@@ -90,8 +90,9 @@ return [
 
     // Horizon mặc định chỉ chặn bằng gate `viewHorizon` ngoài môi trường
     // local. Dashboard này đọc được payload job (có số điện thoại, nội dung
-    // tin nhắn khách) nên chặn thẳng bằng guard super_admin + bắt buộc 2FA.
-    'middleware' => ['web', 'auth:super_admin', EnsureSuperAdminMfaEnrolled::class],
+    // tin nhắn khách) nên chặn thẳng bằng cửa chung của dashboard vận hành:
+    // super admin (bắt buộc 2FA) hoặc user có email trong YONA_SYSTEM_ADMIN_EMAILS.
+    'middleware' => ['web', EnsureOperationsDashboardAccess::class],
 
     /*
     |--------------------------------------------------------------------------

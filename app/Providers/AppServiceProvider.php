@@ -34,6 +34,7 @@ use App\Search\SearchEngine;
 use App\Services\Analytics\PlausibleProxy;
 use App\Services\Messaging\PublicFlowService;
 use App\Services\Stickers\StickerLibraryManager;
+use App\Support\SystemAccess;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Validation\Factory as ValidationFactory;
@@ -41,7 +42,6 @@ use Illuminate\Database\Connection;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\Request;
 use Illuminate\Queue\Events\JobFailed;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
@@ -50,7 +50,6 @@ use InvalidArgumentException;
 use Laravel\Horizon\Events\LongWaitDetected;
 use Laravel\Horizon\Horizon;
 use Livewire\Livewire;
-use Opcodes\LogViewer\Facades\LogViewer;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -110,9 +109,6 @@ class AppServiceProvider extends ServiceProvider
         $this->registerRateLimiters();
         $this->refreshConversationTabCountsOnChange();
         $this->registerOpsAlerts();
-        LogViewer::auth(function ($request) {
-            return true;
-        });
         // Polymorphic type lưu đúng tên lớp Ruby ('Channel::Api',
         // 'User', 'Contact'…) để DB + payload API khớp bản gốc.
         Relation::morphMap([
@@ -189,29 +185,29 @@ class AppServiceProvider extends ServiceProvider
     }
 
     /**
-     * Ba dashboard vận hành (/horizon, /pulse, /logs) đã nằm sau
-     * middleware `auth:super_admin` + `EnsureSuperAdminMfaEnrolled` (khai trong
-     * config của từng gói). Gate riêng của từng gói lại đọc user ở guard mặc
-     * định — guard đó luôn null với phiên super admin — nên phải khai lại cho
-     * khớp, nếu không super admin qua được middleware vẫn bị gate chặn.
+     * Ba dashboard vận hành (/horizon, /pulse, /logs) đã nằm sau middleware
+     * EnsureOperationsDashboardAccess (khai trong config của từng gói). Gate
+     * riêng của từng gói gọi đúng điều kiện của middleware đó —
+     * SystemAccess::canOpenOperationsDashboards() — không tự viết lại, nên
+     * đổi ai được vào chỉ cần sửa một chỗ.
      */
     private function registerObservabilityGates(): void
     {
-        $isSuperAdmin = fn (?Authenticatable $user = null): bool => Auth::guard('super_admin')->check();
+        $canOpen = fn (?Authenticatable $user = null): bool => SystemAccess::canOpenOperationsDashboards();
 
         foreach (['viewPulse', 'viewLogViewer'] as $ability) {
-            Gate::define($ability, $isSuperAdmin);
+            Gate::define($ability, $canOpen);
         }
 
         // Horizon không đi qua Gate mà qua callback riêng; mặc định của nó là
-        // `environment('local')`, tức production 403 cho cả super admin.
+        // `environment('local')`, tức production 403 cho mọi người.
         //
         // Phải kiểm tra lớp có thật: deploy chạy `artisan down` TRƯỚC
         // `composer install`, nên ở lần deploy đầu sau khi thêm gói (và ở mọi
         // lần rollback về commit chưa có nó) vendor chưa có Horizon. Gọi thẳng
         // là mọi lệnh artisan chết theo, kể cả lệnh đang dựng lại vendor.
         if (class_exists(Horizon::class)) {
-            Horizon::auth(fn () => $isSuperAdmin());
+            Horizon::auth(fn () => $canOpen());
         }
 
         // Xoá file log từ giao diện web: không. Log là thứ duy nhất dựng lại

@@ -366,7 +366,9 @@ hạ `SESSION_LIFETIME` xuống `20160` (14 ngày) và báo founder.
 - Super admin chưa bật 2FA bị chặn ở mọi trang của `/super_admin/*` (cùng
   `/horizon`, `/pulse`, `/logs`) trừ `/super_admin/mfa/setup` (QR + xác
   nhận mã + hiện mã dự phòng) và logout — không khoá lối ra, chỉ khoá lối vào
-  phần còn lại của console. Luôn bắt buộc, không có cờ tắt.
+  phần còn lại của console. Luôn bắt buộc, không có cờ tắt. Riêng ba dashboard
+  vận hành còn mở cho user có email hệ thống mà không bắt 2FA (mục 8, "Ba
+  dashboard vận hành").
 - **Việc phải làm ngay sau lần deploy đầu tiên có tính năng này**: đăng nhập
   `/super_admin/sign_in` bằng tài khoản founder hiện có, máy sẽ tự đưa vào màn
   cài đặt 2FA — quét QR bằng Google Authenticator/Authy, nhập mã xác nhận, lưu
@@ -1002,11 +1004,21 @@ cat /etc/cron.d/yona-scheduler
 |-----|--------|----------------|
 | `/horizon` | Hàng đợi theo tier, job đang chạy, job lỗi, throughput | Redis |
 | `/pulse` | Request chậm, truy vấn chậm, job chậm, exception, user hoạt động | Bảng `pulse_*` trong PostgreSQL |
-| `/log-viewer` | `storage/logs/*.log` qua giao diện | File log của chính app |
+| `/logs` | `storage/logs/*.log` qua giao diện | File log của chính app |
 
-Cả ba **chặn sau guard `super_admin`** (`auth:super_admin`), khách lạ bị đẩy về
-`/super_admin/sign_in`. Nghiệm thu: đăng nhập bằng tài khoản agent thường rồi mở
-`/log-viewer` — phải không vào được.
+Cả ba (và API nội bộ `/logs/api/*`) chặn sau cùng một middleware
+`EnsureOperationsDashboardAccess`; điều kiện vào khai một chỗ ở
+`SystemAccess::canOpenOperationsDashboards()` và gate `viewPulse`,
+`viewLogViewer`, `Horizon::auth` gọi lại đúng điều kiện đó. Được vào:
+
+- super admin đăng nhập `/super_admin/sign_in`, bắt buộc đã bật 2FA (chưa bật thì
+  bị đưa sang màn cài 2FA);
+- user đăng nhập dashboard thường (`/app/login`) có email trong
+  `YONA_SYSTEM_ADMIN_EMAILS` (mục 9, "Kho sticker"), **không** bắt 2FA.
+
+Khách lạ bị đẩy về `/super_admin/sign_in`; agent thường không có email hệ thống
+nhận 403. Nghiệm thu: đăng nhập bằng tài khoản agent thường rồi mở `/logs` — phải
+403; đăng nhập bằng user có email hệ thống — vào được cả ba.
 
 Lưu ý vận hành:
 
@@ -1334,7 +1346,8 @@ YONA_SYSTEM_ADMIN_EMAILS=founder@yona.vn,ops@yona.vn
 ```
 
 Đổi xong chạy `php artisan config:cache`. Gỡ một email khỏi danh sách là người đó
-mất quyền kho nền tảng ngay ở lượt gọi sau. Kho riêng của account
+mất quyền kho nền tảng ngay ở lượt gọi sau. Cùng danh sách này mở `/horizon`,
+`/pulse`, `/logs` (mục 8, "Ba dashboard vận hành"). Kho riêng của account
 dùng được khi account bật cờ `custom_stickers` (mặc định tắt ở `config/features.php`;
 Super Admin chưa có nút bật, bật theo account qua cột `accounts.feature_flags`, ví
 dụ Platform API cập nhật account với `features`) hoặc khi người dùng có quyền hệ

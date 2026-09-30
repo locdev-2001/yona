@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Middleware\EnsureLogViewerAccess;
+use App\Http\Middleware\EnsureOperationsDashboardAccess;
 use Opcodes\LogViewer\Enums\SortingMethod;
 use Opcodes\LogViewer\Enums\SortingOrder;
 use Opcodes\LogViewer\Enums\Theme;
@@ -108,7 +108,7 @@ return [
     // YONA_SYSTEM_ADMIN_EMAILS được xem.
     'middleware' => [
         'web',
-        EnsureLogViewerAccess::class,
+        EnsureOperationsDashboardAccess::class,
         AuthorizeLogViewer::class,
     ],
 
@@ -124,7 +124,7 @@ return [
     // API nội bộ của giao diện đọc đúng dữ liệu đó — chặn y hệt.
     'api_middleware' => [
         EnsureFrontendRequestsAreStateful::class,
-        EnsureLogViewerAccess::class,
+        EnsureOperationsDashboardAccess::class,
         AuthorizeLogViewer::class,
     ],
 

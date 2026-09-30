@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Middleware\EnsureSuperAdminMfaEnrolled;
+use App\Http\Middleware\EnsureOperationsDashboardAccess;
 use Laravel\Pulse\Http\Middleware\Authorize;
 use Laravel\Pulse\Pulse;
 use Laravel\Pulse\Recorders;
@@ -121,13 +121,12 @@ return [
     |
     */
 
-    // Authorize::class chỉ đọc gate `viewPulse`; chặn thẳng bằng guard
-    // super_admin để dashboard không hở khi gate chưa khai.
-    // EnsureSuperAdminMfaEnrolled bắt buộc 2FA giống mọi trang khác của console.
+    // Authorize::class chỉ đọc gate `viewPulse`; chặn thẳng bằng cửa chung của
+    // dashboard vận hành để dashboard không hở khi gate chưa khai: super admin
+    // (bắt buộc 2FA) hoặc user có email trong YONA_SYSTEM_ADMIN_EMAILS.
     'middleware' => [
         'web',
-        'auth:super_admin',
-        EnsureSuperAdminMfaEnrolled::class,
+        EnsureOperationsDashboardAccess::class,
         Authorize::class,
     ],
 
