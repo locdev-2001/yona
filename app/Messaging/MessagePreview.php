@@ -2,9 +2,11 @@
 
 namespace App\Messaging;
 
+use App\Channels\TextFormat;
 use App\Messaging\Structured\StructuredTypeRegistry;
 use App\Models\Attachment;
 use App\Models\Message;
+use App\Support\Messages\OutgoingText;
 
 /**
  * Một dòng xem trước cho tin: danh sách hội thoại của widget, thông báo, email.
@@ -30,7 +32,7 @@ final class MessagePreview
         $type = $this->registry->for($message->contentTypeName());
         $attributes = $type === null ? null : $this->registry->read($message);
         $text = $attributes === null
-            ? trim((string) $message->content)
+            ? trim((string) OutgoingText::render($message->content, TextFormat::Plain))
             : $type->previewText($message->content, $attributes);
 
         if ($text === '' && $message->attachments->isNotEmpty()) {

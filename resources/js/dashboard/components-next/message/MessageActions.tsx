@@ -6,11 +6,11 @@ import Dialog from 'dashboard/components-next/dialog/Dialog';
 import type { DialogHandle } from 'dashboard/components-next/dialog/Dialog';
 import { useAlert } from 'dashboard/composables/useAlert';
 import { FOCUS_MESSAGE_PARAM } from 'dashboard/conversation/messageFocus';
-import { copyTextToClipboard } from 'shared/helpers/clipboard';
-import { toCopyText } from 'shared/helpers/MessageFormatter';
+import { copyImageToClipboard, copyRichTextToClipboard, copyTextToClipboard } from 'shared/helpers/clipboard';
+import MessageFormatter, { toCopyText } from 'shared/helpers/MessageFormatter';
 import { t } from '../../../i18n';
 import { useMessageContext } from './provider';
-import { ORIENTATION } from './constants';
+import { ATTACHMENT_TYPES, ORIENTATION } from './constants';
 import MessageActionMenu from './MessageActionMenu';
 import type { MessageActionMenuVariant } from './MessageActionMenu';
 import {
@@ -106,6 +106,7 @@ export default function MessageActions({ className = '', children }: { className
     const {
         id,
         content,
+        attachments,
         messageType,
         status,
         isPrivate,
@@ -141,12 +142,15 @@ export default function MessageActions({ className = '', children }: { className
 
     useEffect(() => () => window.clearTimeout(longPressRef.current?.timer), []);
 
+    const images = (attachments ?? []).filter(attachment => attachment.file_type === ATTACHMENT_TYPES.IMAGE);
+    const copyableImageUrl = images.length === 1 ? images[0].data_url : null;
     const flags = resolveMessageActions({
         id,
         messageType,
         status,
         isPrivate,
         content,
+        hasCopyableImage: Boolean(copyableImageUrl),
         contentAttributes,
         inboxCapabilities,
         handlers: {
@@ -183,8 +187,8 @@ export default function MessageActions({ className = '', children }: { className
         });
     }, []);
 
-    const copyWithNotice = (text: string, successKey: string) => {
-        copyTextToClipboard(text)
+    const copyWithNotice = (payload: string | { text: string; html: string }, successKey: string) => {
+        (typeof payload === 'string' ? copyTextToClipboard(payload) : copyRichTextToClipboard(payload.text, payload.html))
             .then(() => useAlert(t(successKey)))
             .catch(() => useAlert(t('CONVERSATION.MESSAGE_ACTIONS.COPY_FAILED')));
     };
@@ -195,7 +199,17 @@ export default function MessageActions({ className = '', children }: { className
         const handlers: Record<MessageActionId, () => void> = {
             reply: () => onReplyTo?.(),
             forward: () => onForward?.(),
-            copy: () => copyWithNotice(toCopyText(content), 'CONVERSATION.MESSAGE_ACTIONS.COPIED'),
+            copy: () =>
+                copyWithNotice(
+                    { text: toCopyText(content), html: new MessageFormatter(content).formattedMessage },
+                    'CONVERSATION.MESSAGE_ACTIONS.COPIED',
+                ),
+            copyImage: () => {
+                if (!copyableImageUrl) return;
+                copyImageToClipboard(copyableImageUrl)
+                    .then(() => useAlert(t('CONVERSATION.CONTEXT_MENU.IMAGE_COPIED')))
+                    .catch(() => useAlert(t('CONVERSATION.MESSAGE_ACTIONS.COPY_FAILED')));
+            },
             copyLink: () =>
                 copyWithNotice(
                     messagePermalink(window.location.href, id, FOCUS_MESSAGE_PARAM),

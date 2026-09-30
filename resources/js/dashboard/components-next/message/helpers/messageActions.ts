@@ -23,6 +23,8 @@ export interface MessageActionInput {
     status: string | null;
     isPrivate: boolean;
     content?: string | null;
+    // Tin có đúng một ảnh sao chép được (lưới nhiều ảnh dùng menu gốc của từng ảnh).
+    hasCopyableImage?: boolean;
     contentAttributes: Record<string, unknown>;
     inboxCapabilities: readonly string[];
     // Nơi dựng bong bóng có truyền handler cho hành động đó hay không.
@@ -37,6 +39,7 @@ export interface MessageActionFlags {
     // quyết cho từng đích khi agent chọn.
     forward: boolean;
     copy: boolean;
+    copyImage: boolean;
     copyLink: boolean;
     createCannedResponse: boolean;
     translate: boolean;
@@ -44,7 +47,7 @@ export interface MessageActionFlags {
     recall: boolean;
 }
 
-export type MessageActionId = 'reply' | 'forward' | 'copy' | 'copyLink' | 'createCannedResponse' | 'translate' | 'delete';
+export type MessageActionId = 'reply' | 'forward' | 'copy' | 'copyImage' | 'copyLink' | 'createCannedResponse' | 'translate' | 'delete';
 
 export type MessageActionGroup = 'respond' | 'content' | 'danger';
 
@@ -61,6 +64,7 @@ export const MESSAGE_ACTIONS: readonly MessageActionDescriptor[] = [
     { id: 'reply', group: 'respond', icon: 'i-lucide-reply', labelKey: 'CONVERSATION.MESSAGE_ACTIONS.REPLY' },
     { id: 'forward', group: 'respond', icon: 'i-lucide-forward', labelKey: 'CONVERSATION.MESSAGE_ACTIONS.FORWARD' },
     { id: 'copy', group: 'content', icon: 'i-lucide-copy', labelKey: 'CONVERSATION.CONTEXT_MENU.COPY' },
+    { id: 'copyImage', group: 'content', icon: 'i-lucide-image', labelKey: 'CONVERSATION.CONTEXT_MENU.COPY_IMAGE' },
     { id: 'copyLink', group: 'content', icon: 'i-lucide-link', labelKey: 'CONVERSATION.CONTEXT_MENU.COPY_PERMALINK' },
     {
         id: 'createCannedResponse',
@@ -83,6 +87,7 @@ export function resolveMessageActions({
     status,
     isPrivate,
     content = null,
+    hasCopyableImage = false,
     contentAttributes,
     inboxCapabilities,
     handlers,
@@ -103,6 +108,7 @@ export function resolveMessageActions({
         delete: handlers.delete && !isDeleted && messageType === MESSAGE_TYPES.OUTGOING,
         forward: handlers.forward && isSettledChatMessage,
         copy: hasText,
+        copyImage: !isDeleted && hasCopyableImage,
         copyLink: !isDeleted && id > 0,
         createCannedResponse: Boolean(handlers.createCannedResponse) && hasText,
         translate: Boolean(handlers.translate) && hasText && id > 0 && messageType !== MESSAGE_TYPES.ACTIVITY,

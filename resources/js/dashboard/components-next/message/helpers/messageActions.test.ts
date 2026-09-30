@@ -156,3 +156,19 @@ describe('messagePermalink', () => {
         );
     });
 });
+
+describe('resolveMessageActions — sao chép hình ảnh', () => {
+    it('chỉ bật khi tin có đúng một ảnh sao chép được và chưa bị xoá', () => {
+        expect(resolveMessageActions(input({ hasCopyableImage: true })).copyImage).toBe(true);
+        expect(resolveMessageActions(input()).copyImage).toBe(false);
+        expect(resolveMessageActions(input({ hasCopyableImage: true, contentAttributes: { deleted: true } })).copyImage).toBe(false);
+    });
+
+    it('nằm cùng nhóm nội dung với sao chép chữ', () => {
+        const flags = resolveMessageActions(input({ hasCopyableImage: true, content: 'chữ' }));
+        const ids = groupMessageActions(flags).flat().map(action => action.id);
+
+        expect(ids).toEqual(expect.arrayContaining(['copy', 'copyImage']));
+        expect(ids.indexOf('copy')).toBeLessThan(ids.indexOf('copyImage'));
+    });
+});

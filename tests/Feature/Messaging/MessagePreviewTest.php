@@ -54,3 +54,9 @@ it('realtime gửi sẵn dòng xem trước cho sticker, tin chữ thì không',
     expect(MessageResource::pushEventData(stickerMessage())['preview_text'])->toBe('Sticker')
         ->and(MessageResource::pushEventData($text)['preview_text'])->toBeNull();
 });
+
+it('xem trước tin có link và chữ đậm ra chữ trơn, không lộ dấu markdown', function () {
+    $message = Message::factory()->create(['content' => 'Xem <https://a.vn/x?y_z=1> và [bảng giá](https://a.vn/gia) **gấp**']);
+
+    expect(app(MessagePreview::class)->for($message))->toBe('Xem https://a.vn/x?y_z=1 và bảng giá https://a.vn/gia gấp');
+});

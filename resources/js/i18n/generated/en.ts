@@ -2912,6 +2912,8 @@ const messages: Record<string, unknown> = {
             "CREATE_A_CANNED_RESPONSE": "Create canned response",
             "TRANSLATE": "Translate",
             "COPY_PERMALINK": "Copy link to message",
+            "COPY_IMAGE": "Copy image",
+            "IMAGE_COPIED": "Image copied",
             "LINK_COPIED": "Message link copied",
             "DELETE_CONFIRMATION": {
                 "TITLE": "Are you sure you want to delete this message?",

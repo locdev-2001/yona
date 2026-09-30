@@ -2912,6 +2912,8 @@ const messages: Record<string, unknown> = {
             "CREATE_A_CANNED_RESPONSE": "Tạo câu trả lời mẫu",
             "TRANSLATE": "Dịch",
             "COPY_PERMALINK": "Sao chép liên kết tới tin",
+            "COPY_IMAGE": "Sao chép hình ảnh",
+            "IMAGE_COPIED": "Đã sao chép hình ảnh",
             "LINK_COPIED": "Đã sao chép liên kết tới tin nhắn",
             "DELETE_CONFIRMATION": {
                 "TITLE": "Bạn chắc chắn muốn xóa tin nhắn này?",
