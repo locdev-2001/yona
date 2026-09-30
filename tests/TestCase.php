@@ -5,10 +5,13 @@ namespace Tests;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Redis;
+use Tests\Support\SignsProtectedRequests;
 use Throwable;
 
 abstract class TestCase extends BaseTestCase
 {
+    use SignsProtectedRequests;
+
     /**
      * Chỉ số redis dành riêng cho test — khai trong phpunit.xml (`REDIS_DB`).
      * Suite chỉ được xoá đúng chỉ số này; redis dev (`REDIS_DB=2`) không bao giờ

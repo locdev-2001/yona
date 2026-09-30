@@ -256,3 +256,52 @@ dùng.
   phía máy chủ: hằng tiền tố header trong `app/Services/Webhooks/Trigger.php`.
 - Lớp CSS `woot-*`, `#cw-widget-holder`, cookie `cw_*` cũng là contract với
   website khách — giữ nguyên.
+
+## 10. Ký + mã hoá request nhắn tin và giới hạn nhịp
+
+Mục tiêu là **chống lạm dụng API** (dựng request bằng tay, dán lại cURL, replay,
+script gọi hàng loạt), **không** phải E2EE: máy chủ vẫn đọc nội dung, khoá nằm
+trong JS nên chỉ làm khó; lớp chặn thật là giới hạn nhịp.
+
+- **Phạm vi ký + mã hoá** (route gắn `VerifySignedRequest:<bề mặt>` trong
+  `routes/web_api.php` và `routes/api.php`): dashboard — tải/gửi/xoá tin, gửi lại,
+  cảm xúc, chuyển tiếp + danh sách đích, đánh dấu chuyển khoản, dịch, tìm tin trong
+  hội thoại; widget — tải/gửi/sửa/thu hồi tin, tạo hội thoại, cảm xúc, link trang
+  công khai. Request Application API (header `api_access_token`) trên cùng route
+  được miễn ký, chỉ bị giới hạn nhịp. Platform API: chỉ giới hạn nhịp.
+- **Một middleware** `app/Http/Middleware/VerifySignedRequest.php` giải mã + kiểm
+  chữ ký + nonce rồi chạy lại TrimStrings/ConvertEmptyStringsToNull; lõi nhắn tin
+  nhận request thường. Hợp đồng ở `app/Http/RequestSigning/SignedRequestProtocol.php`
+  và bản TS `resources/js/shared/requestSigning/protocol.ts`, khớp nhau bằng
+  `vectors.json` dùng chung (test cả hai phía).
+- **Khoá phiên**: `POST /api/v1/request_signing_key` (dashboard) và
+  `POST /api/v1/widget/request_signing_key` (widget) cấp khoá AES + HMAC ngẫu
+  nhiên, lưu cache có hạn (`SigningKeyStore`), gắn với người gọi (user/bot, hoặc
+  inbox + source_id trong JWT khách). Đăng nhập/đăng xuất thu hồi mọi khoá cũ của
+  user. Phản hồi kèm giờ máy chủ và danh sách route phải ký lấy từ bảng route —
+  client không giữ danh sách riêng.
+- **Chữ ký**: HMAC-SHA256 trên `v1\nMETHOD\nURI(kèm query)\ntimestamp\nnonce\nsha256(thân)`,
+  header `X-Sig-Key-Id`, `X-Sig-Timestamp`, `X-Sig-Nonce`, `X-Sig`. Lệch giờ quá
+  `max_clock_skew_seconds`, khoá lạ/hết hạn → 428 (client xin khoá mới và gửi lại
+  một lần); sai chữ ký, thân sửa, thân chưa mã hoá → 400; nonce dùng lại → 409.
+- **Mã hoá**: thân JSON thành `{"_encrypted": base64(iv‖ciphertext‖tag)}` (AES-256-GCM).
+  Multipart: trường chữ gom thành một trường `_encrypted`, `_method` để trơn (router
+  đọc trước middleware), **tệp không mã hoá**, chỉ băm SHA-256 vào chữ ký.
+  **Phản hồi không mã hoá**: tin mới vẫn đến trình duyệt qua Reverb dạng trơn, mã
+  hoá phản hồi không che thêm được gì. Sự kiện Reverb chưa ký/mã hoá (đợt sau; lưu ý
+  giới hạn 10 KB/sự kiện).
+- **Client**: mỗi bề mặt một điểm — `RequestSigner` trong
+  `resources/js/dashboard/helper/apiClient.ts` và `resources/js/widget/api/client.ts`
+  (đường tải tệp XHR dùng chung signer). Chưa có khoá thì không chặn request: xin
+  khoá ở nền, route cần ký nhận 428 rồi tự gửi lại; widget xin khoá sẵn ngay khi
+  có phiên khách.
+- **Giới hạn nhịp** (`app/Http/RateLimiting/MessagingRateLimiters.php`): đọc/ghi
+  theo user/bot + account (dashboard, Application API), theo khách + trần chung
+  mỗi hộp thư (widget), theo token (Platform API); **không theo IP**. Vượt → 429 +
+  log `request_throttled`. Throttle bị framework xếp chạy trước middleware không
+  nằm trong danh sách ưu tiên, nên khoá của widget/Platform API đọc thẳng từ token.
+- **Cấu hình một chỗ**: `config/request_protection.php`. `REQUEST_SIGNING_ENABLED=false`
+  là rollback tức thì không cần deploy mã (chạy `php artisan config:cache` lại).
+- Test: request tới route được bảo vệ trong Pest tự ký qua `Tests\Support\SignsProtectedRequests`
+  (dùng trong `TestCase`); cần request trơn thì `withoutRequestSigning()`. Vitest mặc
+  định tắt ký (`import.meta.env.MODE === 'test'`).
