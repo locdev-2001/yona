@@ -16,6 +16,8 @@ final class CapabilitySet
     /** Null = kênh chưa khai, coi là chữ trơn (an toàn: khách không thấy cú pháp lạ). */
     private ?TextFormat $declaredTextFormat = null;
 
+    private ?int $declaredMaxAttachmentBytes = null;
+
     private function __construct(Capability ...$capabilities)
     {
         $unique = [];
@@ -61,8 +63,24 @@ final class CapabilitySet
     {
         $copy = new self(...$this->capabilities);
         $copy->declaredTextFormat = $format;
+        $copy->declaredMaxAttachmentBytes = $this->declaredMaxAttachmentBytes;
 
         return $copy;
+    }
+
+    /** Kích thước tối đa (byte) một tệp đính kèm gửi ra kênh; không khai = theo trần tải lên chung. */
+    public function withMaxAttachmentBytes(int $bytes): self
+    {
+        $copy = new self(...$this->capabilities);
+        $copy->declaredTextFormat = $this->declaredTextFormat;
+        $copy->declaredMaxAttachmentBytes = max(1, $bytes);
+
+        return $copy;
+    }
+
+    public function maxAttachmentBytes(): ?int
+    {
+        return $this->declaredMaxAttachmentBytes;
     }
 
     public function textFormat(): TextFormat
@@ -74,6 +92,7 @@ final class CapabilitySet
     {
         $merged = new self(...$this->capabilities, ...$other->capabilities);
         $merged->declaredTextFormat = $other->declaredTextFormat ?? $this->declaredTextFormat;
+        $merged->declaredMaxAttachmentBytes = $other->declaredMaxAttachmentBytes ?? $this->declaredMaxAttachmentBytes;
 
         return $merged;
     }

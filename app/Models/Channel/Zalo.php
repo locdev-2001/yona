@@ -25,6 +25,15 @@ use Illuminate\Database\Eloquent\Model;
  */
 class Zalo extends Model implements DeclaresCapabilities, DeclaresPlatform
 {
+    /**
+     * Trần một tệp gửi ra Zalo. Đây là NGUỒN DUY NHẤT: chặn lúc đính kèm
+     * (MessageBuilder) và gửi kèm payload cho bridge làm trần tải về. Mức 25 MB là
+     * mức đã gửi được thật; trần thật của Zalo do máy chủ Zalo trả về theo từng tài
+     * khoản (zca-js đọc `sharefile.max_size_share_file_v3`), chưa kiểm được khi không
+     * có tài khoản thật.
+     */
+    public const MAX_ATTACHMENT_BYTES = 25 * 1024 * 1024;
+
     /** @use HasFactory<ZaloFactory> */
     use Channelable, HasFactory;
 
@@ -249,6 +258,6 @@ class Zalo extends Model implements DeclaresCapabilities, DeclaresPlatform
             Capability::SessionDisconnect,
             Capability::Health,
             Capability::SettingsSingleConversation,
-        )->withTextFormat(TextFormat::Plain);
+        )->withTextFormat(TextFormat::Plain)->withMaxAttachmentBytes(self::MAX_ATTACHMENT_BYTES);
     }
 }

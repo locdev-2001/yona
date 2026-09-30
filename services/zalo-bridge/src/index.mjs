@@ -66,6 +66,7 @@ import {
     downloadUrlToTemp,
     extFromFilename,
     mimeToExt,
+    resolveMaxFetchBytes,
     safeAttachmentFilename,
     MEDIA_KIND_DEFAULT_EXT,
 } from './media-fetch.mjs';
@@ -2248,6 +2249,7 @@ export async function sendTextOrMediaThroughZca(slot, body, timing) {
         media_kind,
         filename,
         content_type,
+        max_bytes,
         quote,
         sticker,
         custom_sticker,
@@ -2308,6 +2310,7 @@ export async function sendTextOrMediaThroughZca(slot, body, timing) {
         if (hasFile) {
             tmpPath = await downloadUrlToTemp(fileUrl, {
                 allowedHosts: FETCH_ALLOWED_HOSTS,
+                maxBytes: resolveMaxFetchBytes(max_bytes),
                 userAgent: ZCA_USER_AGENT,
                 mediaKind,
                 filenameHint: typeof filename === 'string' ? filename : null,

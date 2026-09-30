@@ -282,6 +282,8 @@ class SendOnZaloService extends BaseSendOnChannelService
                 // Không gửi hai trường này thì khách nhận `zbr-<uuid>.bin` (bridge tự đặt tên tạm).
                 'filename' => $attachment->filename,
                 'content_type' => $attachment->content_type,
+                // Bridge dùng đúng trần Yona đã chặn lúc đính kèm, không tự giữ một con số riêng.
+                'max_bytes' => Zalo::MAX_ATTACHMENT_BYTES,
             ], $attachment);
         }
 

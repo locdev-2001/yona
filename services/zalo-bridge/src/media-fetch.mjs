@@ -10,7 +10,15 @@ import path from 'node:path';
  * VÀ host của LARAVEL_BASE_URL (hai biến có thể khác host: localhost vs 127.0.0.1).
  */
 
-export const DEFAULT_MAX_FETCH_BYTES = 25 * 1024 * 1024; // headroom trên cap portal 20MB
+// Trần dự phòng khi Yona không gửi `max_bytes`. Nguồn chuẩn là Yona
+// (App\Models\Channel\Zalo::MAX_ATTACHMENT_BYTES, gửi kèm mỗi lệnh gửi media).
+export const DEFAULT_MAX_FETCH_BYTES = 25 * 1024 * 1024;
+
+/** Trần do Yona gửi kèm: chỉ nhận số nguyên dương hữu hạn, còn lại rơi về mặc định. */
+export function resolveMaxFetchBytes(value) {
+    const n = Number(value);
+    return Number.isSafeInteger(n) && n > 0 ? n : DEFAULT_MAX_FETCH_BYTES;
+}
 
 export const MEDIA_KIND_DEFAULT_EXT = {
     image: 'jpg',

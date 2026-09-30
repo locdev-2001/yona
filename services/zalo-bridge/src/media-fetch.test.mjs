@@ -10,6 +10,8 @@ import {
     collectSourceIdsFromSendResult,
     downloadUrlToTemp,
     mimeToExt,
+    resolveMaxFetchBytes,
+    DEFAULT_MAX_FETCH_BYTES,
     safeAttachmentFilename,
 } from './media-fetch.mjs';
 
@@ -240,5 +242,13 @@ test('cleanupTempDownload: xoá cả thư mục tạm bọc ngoài, không để
         await assert.rejects(() => fs.stat(dir));
     } finally {
         server.close();
+    }
+});
+
+test('resolveMaxFetchBytes: nhận trần Yona gửi kèm, giá trị sai rơi về mặc định', () => {
+    assert.equal(resolveMaxFetchBytes(26214400), 26214400);
+    assert.equal(resolveMaxFetchBytes('26214400'), 26214400);
+    for (const bad of [undefined, null, 0, -5, 'abc', NaN, Infinity, 1.5]) {
+        assert.equal(resolveMaxFetchBytes(bad), DEFAULT_MAX_FETCH_BYTES);
     }
 });
