@@ -1,5 +1,9 @@
 <?php
 
+use Carbon\Carbon;
+use Carbon\CarbonImmutable;
+use Illuminate\Support\Carbon as SupportCarbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
 return [
@@ -129,8 +133,17 @@ return [
     | storage. By default, no PHP classes will be unserialized from your
     | cache to prevent gadget chain attacks if your APP_KEY is leaked.
     |
+    | Pulse caches its dashboard cards as collections of plain objects with
+    | Carbon dates, so only those classes are allowed.
+    |
     */
 
-    'serializable_classes' => false,
+    'serializable_classes' => [
+        stdClass::class,
+        Collection::class,
+        CarbonImmutable::class,
+        Carbon::class,
+        SupportCarbon::class,
+    ],
 
 ];
