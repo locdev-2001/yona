@@ -35,6 +35,7 @@ use App\Search\SearchEngine;
 use App\Services\Analytics\PlausibleProxy;
 use App\Services\Messaging\PublicFlowService;
 use App\Services\Stickers\StickerLibraryManager;
+use App\Support\Queue\SlowJobBreakdown;
 use App\Support\SystemAccess;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Contracts\Auth\Authenticatable;
@@ -141,6 +142,7 @@ class AppServiceProvider extends ServiceProvider
     {
         Event::listen(JobFailed::class, AlertOnJobFailure::class);
         Event::listen(LongWaitDetected::class, AlertOnLongWaitDetected::class);
+        SlowJobBreakdown::register($this->app['events']);
     }
 
     private function refreshConversationTabCountsOnChange(): void
