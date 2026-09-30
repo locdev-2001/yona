@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
 
 import Avatar from './Avatar';
 import type { ChannelPlatform } from 'shared/constants/channelPlatform';
@@ -86,6 +86,13 @@ describe('avatar kèm badge nền tảng', () => {
 
 describe('bấm avatar có ảnh để xem ảnh lớn', () => {
     const previewLabel = (name: string) => t('GALLERY_VIEW.VIEW_AVATAR', { name });
+
+    // Trình xem nạp lười: lần import đầu phải biên dịch cả cây module, máy tải
+    // nặng thì vượt thời gian chờ của findBy. Nạp sẵn ở đây (thời gian chờ của
+    // hook) để lazy() trong test chỉ còn lấy module đã có.
+    beforeAll(async () => {
+        await import('./AvatarPreview');
+    });
 
     it('avatar có ảnh là nút mở trình xem với đúng ảnh và tên', async () => {
         render(<Avatar name="Trang" src="/trang.png" previewable />);
