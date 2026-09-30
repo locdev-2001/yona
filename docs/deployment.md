@@ -1016,7 +1016,7 @@ Lưu ý vận hành:
   trống.
 - **Pulse ghi thẳng vào PostgreSQL dùng chung với dữ liệu khách.** Recorder bắn
   theo mỗi request/job/cache-hit đã lấy mẫu 10% (`PULSE_*_SAMPLE_RATE`).
-  `pulse:trim` chạy mỗi giờ. Thấy độ trễ request tăng thì hạ sample rate hoặc
+  Pulse tự dọn bản ghi quá `PULSE_STORAGE_KEEP` (7 ngày) khi ghi, không cần lệnh lịch. Thấy độ trễ request tăng thì hạ sample rate hoặc
   `PULSE_ENABLED=false`. Pulse ghi *pattern* route (`.../{website_token}`) chứ
   không ghi URL thật, nên token không rơi vào bảng.
 - Thẻ **Servers** của Pulse tắt (`PULSE_SERVERS_ENABLED=false`) vì nó cần thêm

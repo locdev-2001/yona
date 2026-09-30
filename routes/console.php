@@ -38,9 +38,6 @@ Schedule::job(new ProcessSearchOutboxJob)->everyMinute()->when(fn () => app(Sear
 // Horizon chỉ vẽ được biểu đồ thông lượng/thời gian chờ nếu có ai chụp ảnh
 // hàng đợi định kỳ; không có dòng này thì tab Metrics trống.
 Schedule::command('horizon:snapshot')->everyFiveMinutes();
-// Pulse ghi thẳng vào PostgreSQL dùng chung — dọn bản ghi quá hạn mỗi giờ để
-// bảng pulse_* không phình ra cạnh dữ liệu khách.
-Schedule::command('pulse:trim')->hourly();
 
 // Ảnh thẻ gửi qua kênh không có dạng gốc (Zalo): kênh đã tải về lúc gửi, bản cache chỉ còn tốn đĩa.
 Schedule::command('messaging:prune-card-images')->dailyAt('03:40');
