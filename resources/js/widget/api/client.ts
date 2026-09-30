@@ -1,3 +1,5 @@
+import { RequestSigner, type KeyGrant } from 'shared/requestSigning/signer';
+
 // Client HTTP của widget — thay `widget/helpers/axios.js`.
 // Khác apiClient của dashboard: không cookie, không CSRF; phiên khách đi bằng
 // header `X-Auth-Token` và query `website_token` (hợp đồng c2-notes-be).
@@ -43,7 +45,13 @@ export const setPreviewMode = (enabled: boolean): void => {
 };
 
 export const setAuthToken = (token: string): void => {
+    // Khoá phiên ký request gắn với khách trong token: đổi khách là xin khoá mới.
+    const visitorChanged = token !== authToken;
     authToken = token;
+    if (visitorChanged) {
+        widgetRequestSigner.invalidate();
+        widgetRequestSigner.warmUp();
+    }
     if (!previewMode) writeStoredSession({ ...readStoredSession(), authToken: token });
 };
 
@@ -53,6 +61,7 @@ export const setAuthToken = (token: string): void => {
 export const restoreAuthToken = ({ tokenFromUrl, resetId }: { tokenFromUrl: string; resetId: string }): void => {
     const storedSession = readStoredSession();
     authToken = '';
+    widgetRequestSigner.invalidate();
 
     if (resetId && storedSession.resetId !== resetId) {
         writeStoredSession({ resetId });
@@ -102,6 +111,26 @@ export const buildSearch = (extra: Record<string, string | number | undefined> =
     return query ? `?${query}` : '';
 };
 
+const REQUEST_SIGNING_KEY_PATH = '/api/v1/widget/request_signing_key';
+
+export const sessionHeaders = (): Record<string, string> => ({
+    Accept: 'application/json',
+    'X-Requested-With': 'XMLHttpRequest',
+    ...(authToken ? { 'X-Auth-Token': authToken } : {}),
+});
+
+async function requestSigningGrant(): Promise<KeyGrant | null> {
+    if (!authToken) return null;
+    const response = await fetch(`${REQUEST_SIGNING_KEY_PATH}${buildSearch()}`, {
+        method: 'POST',
+        headers: sessionHeaders(),
+        credentials: 'omit',
+    });
+    return response.ok ? ((await response.json()) as KeyGrant) : null;
+}
+
+export const widgetRequestSigner = new RequestSigner(requestSigningGrant);
+
 export class WidgetApiError extends Error {
     constructor(
         public status: number,
@@ -119,17 +148,18 @@ async function request<T>(url: string, method: string, body?: BodyInit, contentT
         throw new WidgetApiError(423, { code: 'preview_read_only' });
     }
 
-    const response = await fetch(url, {
-        method,
-        headers: {
-            ...(contentType ? { 'Content-Type': contentType } : {}),
-            Accept: 'application/json',
-            'X-Requested-With': 'XMLHttpRequest',
-            ...(authToken ? { 'X-Auth-Token': authToken } : {}),
-        },
-        credentials: 'omit',
-        body,
-    });
+    const response = await widgetRequestSigner.send({ method, url, body }, (prepared) =>
+        fetch(url, {
+            method,
+            headers: {
+                ...(contentType ? { 'Content-Type': contentType } : {}),
+                ...sessionHeaders(),
+                ...prepared.headers,
+            },
+            credentials: 'omit',
+            body: prepared.body,
+        }),
+    );
 
     if (!response.ok) {
         throw new WidgetApiError(response.status, await response.json().catch(() => null));
