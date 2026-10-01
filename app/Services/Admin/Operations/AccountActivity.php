@@ -6,6 +6,8 @@ use App\Models\Account;
 use App\Models\AccountUser;
 use App\Models\Inbox;
 use App\Models\Message;
+use App\Models\Sticker;
+use App\Models\StickerPack;
 use App\Models\SuperAdminAuditLog;
 use App\Models\SuperAdminImpersonation;
 use Carbon\CarbonInterface;
@@ -131,8 +133,8 @@ final class AccountActivity
             ->get();
         foreach ($impersonations as $impersonation) {
             $events[] = self::event('impersonated', $impersonation->created_at, [
-                'admin' => $impersonation->superAdmin?->email ?? '—',
-                'user' => $impersonation->targetUser?->email ?? '—',
+                'admin' => $impersonation->superAdmin?->email ?? '-',
+                'user' => $impersonation->targetUser?->email ?? '-',
             ], $impersonation->reason);
         }
 
@@ -142,12 +144,7 @@ final class AccountActivity
             ->latest('id')
             ->limit($limit)
             ->get();
-        foreach ($auditLogs as $log) {
-            $events[] = self::event('admin_action', $log->created_at, [
-                'admin' => $log->super_admin_email ?? '—',
-                'action' => $log->action,
-            ]);
-        }
+        array_push($events, ...self::auditEvents($account, $auditLogs->all()));
 
         $lastMessageAt = Message::query()->where('account_id', $account->id)->max('created_at');
         if ($lastMessageAt !== null) {
@@ -158,6 +155,118 @@ final class AccountActivity
         usort($events, fn (array $left, array $right) => strcmp($right['at'], $left['at']));
 
         return array_slice($events, 0, $limit);
+    }
+
+    // Mẫu route đã ghi trong nhật ký (bỏ tiền tố api/) → khoá câu mô tả. Khoá lặp
+    // liền nhau (cùng người, cùng bộ, cách nhau dưới AUDIT_GROUP_MINUTES) gộp thành một dòng có số đếm.
+    private const AUDIT_ACTIONS = [
+        'PUT accounts/{id}' => 'account_updated',
+        'PATCH accounts/{id}' => 'account_updated',
+        'DELETE accounts/{id}' => 'account_deleted',
+        'POST accounts/{id}/reset_cache' => 'cache_reset',
+        'POST accounts/{id}/unsuspend' => 'unsuspended',
+        'POST accounts/{accountId}/sticker_packs' => 'pack_created',
+        'PUT accounts/{accountId}/sticker_packs/{packId}' => 'pack_updated',
+        'PATCH accounts/{accountId}/sticker_packs/{packId}' => 'pack_updated',
+        'DELETE accounts/{accountId}/sticker_packs/{packId}' => 'pack_deleted',
+        'POST accounts/{accountId}/sticker_packs/{packId}/move' => 'pack_moved',
+        'POST accounts/{accountId}/sticker_packs/{packId}/publish' => 'pack_published',
+        'POST accounts/{accountId}/sticker_packs/{packId}/unpublish' => 'pack_unpublished',
+        'POST accounts/{accountId}/sticker_packs/{packId}/stickers' => 'stickers_added',
+        'PUT accounts/{accountId}/sticker_packs/{packId}/stickers/order' => 'stickers_reordered',
+        'PATCH accounts/{accountId}/sticker_packs/{packId}/stickers/{stickerId}' => 'stickers_updated',
+        'DELETE accounts/{accountId}/sticker_packs/{packId}/stickers/{stickerId}' => 'stickers_deleted',
+    ];
+
+    // Khoá có đếm số lần (thêm/sửa/xoá nhiều sticker liền tay).
+    private const COUNTED_AUDIT_ACTIONS = ['stickers_added', 'stickers_updated', 'stickers_deleted'];
+
+    private const AUDIT_GROUP_MINUTES = 10;
+
+    // Khoá account đã có trong lịch sử khoá (kèm lý do), không lặp lại từ nhật ký.
+    private const SKIPPED_AUDIT_ACTIONS = ['POST accounts/{id}/suspend'];
+
+    /**
+     * Thao tác của quản trị viên thành câu đọc được: "Thêm 3 sticker vào bộ “Mặt cười”".
+     *
+     * @param  list<SuperAdminAuditLog>  $logs  mới nhất trước
+     * @return list<array{type: string, at: string, title: string, detail: ?string}>
+     */
+    private static function auditEvents(Account $account, array $logs): array
+    {
+        $groups = [];
+        foreach ($logs as $log) {
+            $action = preg_replace('#^(\w+) api/#', '$1 ', (string) $log->action);
+            if (in_array($action, self::SKIPPED_AUDIT_ACTIONS, true)) {
+                continue;
+            }
+
+            $key = self::AUDIT_ACTIONS[$action] ?? (str_starts_with($action, 'DELETE ') ? 'other_delete' : 'other_change');
+            $failed = (int) $log->response_status >= 400;
+            $pack = str_contains($action, '{packId}') || $key === 'pack_created' ? self::auditPackName($account, $log) : null;
+            $previous = $groups === [] ? null : $groups[array_key_last($groups)];
+
+            if ($previous !== null
+                && in_array($key, self::COUNTED_AUDIT_ACTIONS, true)
+                && $previous['key'] === $key
+                && $previous['pack'] === $pack
+                && $previous['admin'] === $log->super_admin_email
+                && $previous['failed'] === $failed
+                && $previous['oldest']->diffInMinutes($log->created_at, true) <= self::AUDIT_GROUP_MINUTES) {
+                $groups[array_key_last($groups)]['count']++;
+                $groups[array_key_last($groups)]['oldest'] = $log->created_at;
+
+                continue;
+            }
+
+            $groups[] = [
+                'key' => $key,
+                'pack' => $pack,
+                'admin' => $log->super_admin_email,
+                'failed' => $failed,
+                'status' => (int) $log->response_status,
+                'count' => 1,
+                'at' => $log->created_at,
+                'oldest' => $log->created_at,
+            ];
+        }
+
+        return array_values(array_filter(array_map(function (array $group) {
+            $variant = $group['pack'] === null ? 'NO_PACK' : 'PACK';
+            $title = (string) __("admin_operations.ACCOUNT_OVERVIEW.AUDIT.{$group['key']}.{$variant}", [
+                'count' => (string) $group['count'],
+                'pack' => (string) $group['pack'],
+            ]);
+            $detail = $group['failed']
+                ? __('admin_operations.ACCOUNT_OVERVIEW.AUDIT.FAILED_BY', ['admin' => $group['admin'] ?? '-', 'status' => (string) $group['status']])
+                : __('admin_operations.ACCOUNT_OVERVIEW.AUDIT.BY', ['admin' => $group['admin'] ?? '-']);
+
+            $event = self::event('admin_action', $group['at'], []);
+
+            return $event === null ? null : [...$event, 'title' => $title, 'detail' => (string) $detail];
+        }, $groups)));
+    }
+
+    // Nhật ký chỉ lưu mẫu route, không lưu packId: lấy tên từ dữ liệu gửi kèm (tạo/sửa bộ),
+    // hoặc từ sticker của account được tạo cùng lúc với dòng nhật ký (tải sticker lên).
+    private static function auditPackName(Account $account, SuperAdminAuditLog $log): ?string
+    {
+        $name = $log->changes['name'] ?? null;
+        if (is_string($name) && $name !== '') {
+            return $name;
+        }
+
+        if (! str_ends_with((string) $log->action, '{packId}/stickers') || $log->created_at === null) {
+            return null;
+        }
+
+        $packId = Sticker::query()
+            ->whereIn('sticker_pack_id', StickerPack::query()->where('account_id', $account->id)->select('id'))
+            ->whereBetween('created_at', [$log->created_at->copy()->subSeconds(30), $log->created_at->copy()->addSeconds(2)])
+            ->orderByDesc('created_at')
+            ->value('sticker_pack_id');
+
+        return $packId === null ? null : StickerPack::query()->whereKey($packId)->value('name');
     }
 
     /**

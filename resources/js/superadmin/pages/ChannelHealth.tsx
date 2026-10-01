@@ -4,11 +4,12 @@ import { CircleCheckIcon, CircleXIcon, HeartPulseIcon, InboxIcon, SearchXIcon, T
 import { useId, useMemo, useState } from 'react';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@admin/components/ui/avatar';
+import { formatDateTime, initialsOf } from '@admin/lib/format';
 import { Button } from '@admin/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@admin/components/ui/tooltip';
 import DataTableEmpty from '@admin/views/datatables/datatable-empty';
 import ListCard from '@admin/views/datatables/list';
-import { FilterSelect, ListFilters } from '@admin/views/datatables/list/list-filters';
+import { FilterSelect } from '@admin/views/datatables/list/list-filters';
 import { ListTable } from '@admin/views/datatables/list/list-table';
 import { ListToolbar } from '@admin/views/datatables/list/list-toolbar';
 import StatisticsCard from '@admin/views/datatables/statistics-card';
@@ -16,7 +17,7 @@ import StatusBadge from '@admin/views/datatables/status-badge';
 import PageHeader from '@admin/views/pages/page-header';
 
 import { t } from '../../i18n';
-import { formatDateTime, formatNumber, formatRelative, visitWithParams } from './operationsFormat';
+import { formatNumber, formatRelative, visitWithParams } from './operationsFormat';
 
 export type ChannelHealthItem = {
     inboxId: number;
@@ -61,14 +62,6 @@ export function problemDetail(detail: string | null): string | null {
     return /^\d+$/.test(detail) ? t('ADMIN_OPERATIONS.CHANNEL_HEALTH.DETAIL_COUNT', { count: Number(detail) }) : detail;
 }
 
-const initials = (name: string) =>
-    name
-        .split(/\s+/)
-        .filter(Boolean)
-        .slice(0, 2)
-        .map(word => word[0]?.toUpperCase())
-        .join('');
-
 const columns: ColumnDef<ChannelHealthItem>[] = [
     {
         id: 'inbox',
@@ -77,7 +70,7 @@ const columns: ColumnDef<ChannelHealthItem>[] = [
             <div className="flex min-w-48 items-center gap-2">
                 <Avatar className="size-9 rounded-sm after:rounded-sm">
                     <AvatarImage src={row.original.platform.logo_url} alt="" className="rounded-sm" />
-                    <AvatarFallback className="rounded-sm text-xs">{initials(row.original.platform.name)}</AvatarFallback>
+                    <AvatarFallback className="rounded-sm text-xs">{initialsOf(row.original.platform.name)}</AvatarFallback>
                 </Avatar>
                 <div className="flex min-w-0 flex-col">
                     <span className="truncate font-medium">{row.original.inboxName}</span>
@@ -146,34 +139,6 @@ export default function ChannelHealth({ stats, items, filters, options }: Props)
             </div>
 
             <ListCard
-                filters={
-                    <ListFilters>
-                        <FilterSelect
-                            id={ids.problem}
-                            label={label('COLUMNS.PROBLEM')}
-                            allLabel={label('FILTERS.ALL_PROBLEMS')}
-                            options={optionItems(options.problems)}
-                            value={filters.problem ?? ''}
-                            onChange={value => apply({ problem: value })}
-                        />
-                        <FilterSelect
-                            id={ids.platform}
-                            label={label('FILTERS.PLATFORM')}
-                            allLabel={label('FILTERS.ALL_PLATFORMS')}
-                            options={optionItems(options.platforms)}
-                            value={filters.platform ?? ''}
-                            onChange={value => apply({ platform: value })}
-                        />
-                        <FilterSelect
-                            id={ids.severity}
-                            label={label('FILTERS.SEVERITY')}
-                            allLabel={label('FILTERS.ALL_SEVERITIES')}
-                            options={severityItems}
-                            value={filters.severity ?? ''}
-                            onChange={value => apply({ severity: value })}
-                        />
-                    </ListFilters>
-                }
                 toolbar={
                     <ListToolbar
                         search={{
@@ -184,6 +149,37 @@ export default function ChannelHealth({ stats, items, filters, options }: Props)
                             onChange: setSearch,
                             onSubmit: () => apply({ search }),
                         }}
+                        filters={
+                            <>
+                                <FilterSelect
+                                    inline
+                                    id={ids.problem}
+                                    label={label('COLUMNS.PROBLEM')}
+                                    allLabel={label('FILTERS.ALL_PROBLEMS')}
+                                    options={optionItems(options.problems)}
+                                    value={filters.problem ?? ''}
+                                    onChange={value => apply({ problem: value })}
+                                />
+                                <FilterSelect
+                                    inline
+                                    id={ids.platform}
+                                    label={label('FILTERS.PLATFORM')}
+                                    allLabel={label('FILTERS.ALL_PLATFORMS')}
+                                    options={optionItems(options.platforms)}
+                                    value={filters.platform ?? ''}
+                                    onChange={value => apply({ platform: value })}
+                                />
+                                <FilterSelect
+                                    inline
+                                    id={ids.severity}
+                                    label={label('FILTERS.SEVERITY')}
+                                    allLabel={label('FILTERS.ALL_SEVERITIES')}
+                                    options={severityItems}
+                                    value={filters.severity ?? ''}
+                                    onChange={value => apply({ severity: value })}
+                                />
+                            </>
+                        }
                     >
                         {hasFilters ? (
                             <Button

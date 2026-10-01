@@ -14,6 +14,8 @@ import { cn } from '@admin/lib/utils'
 
 import '@admin/views/datatables/column-meta'
 
+import { MobileRows } from './mobile-rows'
+
 export interface ListTableProps<TData> {
   data: TData[]
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -46,56 +48,62 @@ export function ListTable<TData>({
     enableRowSelection: false
   })
 
+  // Bảng rỗng không bị xén ngang nên giữ nguyên trên điện thoại; có dòng thì thành thẻ.
+  const hasRows = data.length > 0
+
   return (
-    <Table>
-      <TableHeader>
-        {table.getHeaderGroups().map(headerGroup => (
-          <TableRow key={headerGroup.id} className='h-14 border-t'>
-            {headerGroup.headers.map(header => (
-              <TableHead
-                key={header.id}
-                className={cn(
-                  'text-muted-foreground first:pl-4 last:px-4',
-                  header.column.columnDef.meta?.headerClassName
-                )}
-              >
-                {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
-              </TableHead>
-            ))}
-          </TableRow>
-        ))}
-      </TableHeader>
-      <TableBody>
-        {table.getRowModel().rows.length ? (
-          table.getRowModel().rows.map(row => (
-            <Fragment key={row.id}>
-              <TableRow data-state={row.id === expandedRowId ? 'selected' : undefined}>
-                {row.getVisibleCells().map(cell => (
-                  <TableCell
-                    key={cell.id}
-                    className={cn('h-14 first:pl-4 last:px-4', cell.column.columnDef.meta?.cellClassName)}
-                  >
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </TableCell>
-                ))}
-              </TableRow>
-              {renderExpanded && row.id === expandedRowId ? (
-                <TableRow className='hover:bg-transparent'>
-                  <TableCell colSpan={row.getVisibleCells().length} className='px-4 py-3 whitespace-normal'>
-                    {renderExpanded(row.original)}
-                  </TableCell>
+    <>
+      {hasRows ? <MobileRows table={table} expandedRowId={expandedRowId} renderExpanded={renderExpanded} /> : null}
+      <Table className={cn(hasRows && 'max-md:hidden')}>
+        <TableHeader>
+          {table.getHeaderGroups().map(headerGroup => (
+            <TableRow key={headerGroup.id} className='h-14 border-t'>
+              {headerGroup.headers.map(header => (
+                <TableHead
+                  key={header.id}
+                  className={cn(
+                    'text-muted-foreground first:pl-4 last:px-4',
+                    header.column.columnDef.meta?.headerClassName
+                  )}
+                >
+                  {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                </TableHead>
+              ))}
+            </TableRow>
+          ))}
+        </TableHeader>
+        <TableBody>
+          {table.getRowModel().rows.length ? (
+            table.getRowModel().rows.map(row => (
+              <Fragment key={row.id}>
+                <TableRow data-state={row.id === expandedRowId ? 'selected' : undefined}>
+                  {row.getVisibleCells().map(cell => (
+                    <TableCell
+                      key={cell.id}
+                      className={cn('h-14 first:pl-4 last:px-4', cell.column.columnDef.meta?.cellClassName)}
+                    >
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </TableCell>
+                  ))}
                 </TableRow>
-              ) : null}
-            </Fragment>
-          ))
-        ) : (
-          <TableRow className='hover:bg-transparent'>
-            <TableCell colSpan={columns.length} className='h-24 text-center whitespace-normal'>
-              {empty}
-            </TableCell>
-          </TableRow>
-        )}
-      </TableBody>
-    </Table>
+                {renderExpanded && row.id === expandedRowId ? (
+                  <TableRow className='hover:bg-transparent'>
+                    <TableCell colSpan={row.getVisibleCells().length} className='px-4 py-3 whitespace-normal'>
+                      {renderExpanded(row.original)}
+                    </TableCell>
+                  </TableRow>
+                ) : null}
+              </Fragment>
+            ))
+          ) : (
+            <TableRow className='hover:bg-transparent'>
+              <TableCell colSpan={columns.length} className='h-24 text-center whitespace-normal'>
+                {empty}
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
+    </>
   )
 }

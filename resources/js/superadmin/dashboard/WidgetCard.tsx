@@ -184,7 +184,7 @@ export function WidgetCard({ ref, meta, item, edit, onRefresh, onHide, busy = fa
                 <CardHeader>
                     <div className="flex min-w-0 items-center gap-1">
                         {edit ? <DragHandle meta={meta} edit={edit} /> : null}
-                        <CardTitle id={headingId} role="heading" aria-level={2} className="truncate text-lg font-semibold">
+                        <CardTitle id={headingId} role="heading" aria-level={2} className="min-w-0 text-lg font-semibold break-words">
                             {meta.title}
                         </CardTitle>
                     </div>

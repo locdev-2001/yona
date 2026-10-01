@@ -1,16 +1,18 @@
 import { Link } from '@inertiajs/react';
 import type { ColumnDef } from '@tanstack/react-table';
-import { ChevronDownIcon, ChevronUpIcon, ListFilterIcon, ScrollTextIcon, XIcon } from 'lucide-react';
+import { ChevronDownIcon, ChevronUpIcon, ScrollTextIcon, XIcon } from 'lucide-react';
 import { useId, useState } from 'react';
 import type { FormEvent } from 'react';
 
-import { Badge } from '@admin/components/ui/badge';
 import { Button } from '@admin/components/ui/button';
 import { Input } from '@admin/components/ui/input';
 import { Label } from '@admin/components/ui/label';
+import { EMPTY_VALUE, formatDateTime } from '@admin/lib/format';
 import DataTableEmpty from '@admin/views/datatables/datatable-empty';
+import DateInput from '@admin/views/datatables/filters/date-input';
+import type { DateInputLabels } from '@admin/views/datatables/filters/date-input';
 import ListCard from '@admin/views/datatables/list';
-import { FilterSelect, ListFilters } from '@admin/views/datatables/list/list-filters';
+import { FilterSelect } from '@admin/views/datatables/list/list-filters';
 import { ListPagination } from '@admin/views/datatables/list/list-pagination';
 import { ListTable } from '@admin/views/datatables/list/list-table';
 import { ListToolbar } from '@admin/views/datatables/list/list-toolbar';
@@ -19,18 +21,22 @@ import type { StatusTone } from '@admin/views/datatables/status-badge';
 import PageHeader from '@admin/views/pages/page-header';
 
 import { t } from '../../i18n';
-import { formatDateTime, formatNumber, visitWithParams } from './operationsFormat';
+import { formatNumber, visitWithParams } from './operationsFormat';
 
 type AuditLog = {
     id: number;
     superAdminId: number | null;
     superAdminEmail: string | null;
     action: string;
+    // Câu mô tả tiếng Việt do máy chủ dựng; route thô ở `action`.
+    actionLabel?: string;
     subjectType: string | null;
+    subjectLabel?: string | null;
     subjectId: number | null;
     subjectUrl: string | null;
     changes: Record<string, unknown> | null;
     responseStatus: number | null;
+    statusLabel?: string | null;
     ipAddress: string | null;
     userAgent: string | null;
     createdAt: string | null;
@@ -43,7 +49,7 @@ type Props = {
     logs: AuditLog[];
     pagination: { current: number; last: number; total: number };
     filters: Filters;
-    options: { superAdmins: { value: string; label: string }[]; subjectTypes: string[] };
+    options: { superAdmins: { value: string; label: string }[]; subjectTypes: string[]; subjectTypeLabels?: Record<string, string> };
 };
 
 const PAGE_URL = '/admin/audit_logs';
@@ -67,8 +73,8 @@ export function pageHref(filters: Filters, page: number): string {
 }
 
 function Subject({ log }: { log: AuditLog }) {
-    if (!log.subjectType) return <span className="text-muted-foreground">-</span>;
-    const text = `${log.subjectType}${log.subjectId ? ` #${log.subjectId}` : ''}`;
+    if (!log.subjectType) return <span className="text-muted-foreground">{EMPTY_VALUE}</span>;
+    const text = log.subjectLabel ?? `${log.subjectType}${log.subjectId ? ` #${log.subjectId}` : ''}`;
 
     return log.subjectUrl ? (
         <Link href={log.subjectUrl} className="font-medium hover:underline">
@@ -89,46 +95,70 @@ function Payload({ log }: { log: AuditLog }) {
             ) : (
                 <p className="text-muted-foreground">{label('NO_PAYLOAD')}</p>
             )}
-            {log.userAgent ? <p className="text-muted-foreground text-xs break-all">{log.userAgent}</p> : null}
+            <dl className="text-muted-foreground grid gap-x-4 gap-y-1 text-xs sm:grid-cols-[auto_1fr]">
+                <dt>{label('RAW_ACTION')}</dt>
+                <dd className="font-mono break-all">{log.action}</dd>
+                {log.responseStatus !== null ? (
+                    <>
+                        <dt>{label('HTTP_STATUS')}</dt>
+                        <dd className="font-num">{log.responseStatus}</dd>
+                    </>
+                ) : null}
+                {log.ipAddress ? (
+                    <>
+                        <dt>{label('IP_ADDRESS')}</dt>
+                        <dd className="font-num">{log.ipAddress}</dd>
+                    </>
+                ) : null}
+                {log.userAgent ? (
+                    <>
+                        <dt>{label('USER_AGENT')}</dt>
+                        <dd className="break-all">{log.userAgent}</dd>
+                    </>
+                ) : null}
+            </dl>
         </div>
     );
 }
 
+// Một dải lọc trên bảng: ô chọn và ô ngày lọc ngay khi đổi, ô chữ lọc khi nhấn Enter
+// (giống Sức khoẻ kênh và bảng tài nguyên, không có nút "Lọc" riêng).
 export default function AuditLogs({ logs, pagination, filters, options }: Props) {
     const [draft, setDraft] = useState<Filters>(filters);
     const [expanded, setExpanded] = useState<number | null>(null);
     const ids = { admin: useId(), action: useId(), subjectType: useId(), subjectId: useId(), from: useId(), to: useId() };
     const hasFilters = Object.values(filters).some(Boolean);
     const set = (key: FilterKey, value: string) => setDraft(current => ({ ...current, [key]: value }));
-
+    const apply = (next: Filters) => {
+        const merged = { ...draft, ...next };
+        setDraft(merged);
+        visitWithParams(PAGE_URL, merged);
+    };
     const submit = (event: FormEvent) => {
         event.preventDefault();
         visitWithParams(PAGE_URL, draft);
+    };
+    const dateLabels: DateInputLabels = {
+        openCalendar: t('ADMIN_OPERATIONS.COMMON.OPEN_CALENDAR'),
+        previousMonth: t('ADMIN_OPERATIONS.COMMON.PREVIOUS_MONTH'),
+        nextMonth: t('ADMIN_OPERATIONS.COMMON.NEXT_MONTH'),
+        weekdays: t('ADMIN_OPERATIONS.COMMON.WEEKDAYS').split(','),
+        month: date => t('ADMIN_OPERATIONS.COMMON.MONTH_YEAR', { month: date.getMonth() + 1, year: date.getFullYear() }),
     };
 
     const columns: ColumnDef<AuditLog>[] = [
         {
             id: 'time',
             header: () => label('COLUMNS.TIME'),
-            cell: ({ row }) => <span className="whitespace-nowrap">{formatDateTime(row.original.createdAt)}</span>,
-        },
-        {
-            id: 'admin',
-            header: () => label('COLUMNS.ADMIN'),
-            cell: ({ row }) => (
-                <div className="flex min-w-40 flex-col">
-                    <span className="font-medium break-all">{row.original.superAdminEmail ?? label('DELETED_ADMIN')}</span>
-                    {row.original.ipAddress ? <span className="text-muted-foreground">{row.original.ipAddress}</span> : null}
-                </div>
-            ),
+            cell: ({ row }) => <span className="font-num whitespace-nowrap">{formatDateTime(row.original.createdAt)}</span>,
         },
         {
             id: 'action',
             header: () => label('COLUMNS.ACTION'),
             cell: ({ row }) => (
-                <Badge variant="outline" className="h-auto rounded-sm font-mono break-all whitespace-normal">
-                    {row.original.action}
-                </Badge>
+                <span className="font-medium" title={row.original.action}>
+                    {row.original.actionLabel ?? row.original.action}
+                </span>
             ),
         },
         {
@@ -138,9 +168,20 @@ export default function AuditLogs({ logs, pagination, filters, options }: Props)
             meta: { cellClassName: 'whitespace-nowrap' },
         },
         {
+            id: 'admin',
+            header: () => label('COLUMNS.ADMIN'),
+            cell: ({ row }) => <span className="break-all">{row.original.superAdminEmail ?? label('DELETED_ADMIN')}</span>,
+        },
+        {
             id: 'status',
             header: () => label('COLUMNS.STATUS'),
-            cell: ({ row }) => <StatusBadge tone={statusTone(row.original.responseStatus)}>{row.original.responseStatus ?? '-'}</StatusBadge>,
+            cell: ({ row }) => (
+                <span title={row.original.responseStatus === null ? undefined : String(row.original.responseStatus)}>
+                    <StatusBadge tone={statusTone(row.original.responseStatus)}>
+                        {row.original.statusLabel ?? row.original.responseStatus ?? EMPTY_VALUE}
+                    </StatusBadge>
+                </span>
+            ),
         },
         {
             id: 'payload',
@@ -160,7 +201,7 @@ export default function AuditLogs({ logs, pagination, filters, options }: Props)
                     </Button>
                 );
             },
-            meta: { headerClassName: 'w-14', cellClassName: 'w-14' },
+            meta: { headerClassName: 'w-14', cellClassName: 'w-14', mobileRole: 'actions' },
         },
     ];
 
@@ -169,71 +210,83 @@ export default function AuditLogs({ logs, pagination, filters, options }: Props)
             <PageHeader title={label('TITLE')} description={label('DESCRIPTION')} className="mb-0 md:mb-0" />
 
             <ListCard
-                filters={
-                    <form onSubmit={submit}>
-                        <ListFilters className="lg:grid-cols-5">
-                            <FilterSelect
-                                id={ids.admin}
-                                label={label('FILTERS.ADMIN')}
-                                allLabel={label('FILTERS.ALL_ADMINS')}
-                                options={options.superAdmins}
-                                value={draft.super_admin_id ?? ''}
-                                onChange={value => set('super_admin_id', value)}
-                            />
-                            <FilterSelect
-                                id={ids.subjectType}
-                                label={label('FILTERS.SUBJECT_TYPE')}
-                                allLabel={label('FILTERS.ALL_SUBJECTS')}
-                                options={options.subjectTypes.map(type => ({ value: type, label: type }))}
-                                value={draft.subject_type ?? ''}
-                                onChange={value => set('subject_type', value)}
-                            />
-                            <div className="flex w-full flex-col gap-2">
-                                <Label htmlFor={ids.subjectId}>{label('FILTERS.SUBJECT_ID')}</Label>
-                                <Input
-                                    id={ids.subjectId}
-                                    inputMode="numeric"
-                                    value={draft.subject_id ?? ''}
-                                    onChange={event => set('subject_id', event.target.value)}
+                toolbar={
+                    <ListToolbar
+                        search={{
+                            id: ids.action,
+                            label: label('COLUMNS.ACTION'),
+                            placeholder: label('FILTERS.ACTION'),
+                            value: draft.action ?? '',
+                            onChange: value => set('action', value),
+                            onSubmit: () => visitWithParams(PAGE_URL, draft),
+                        }}
+                        filters={
+                            <>
+                                <FilterSelect
+                                    inline
+                                    id={ids.admin}
+                                    label={label('FILTERS.ADMIN')}
+                                    allLabel={label('FILTERS.ALL_ADMINS')}
+                                    options={options.superAdmins}
+                                    value={draft.super_admin_id ?? ''}
+                                    onChange={value => apply({ super_admin_id: value })}
                                 />
-                            </div>
-                            <div className="flex w-full flex-col gap-2">
-                                <Label htmlFor={ids.from}>{label('FILTERS.FROM')}</Label>
-                                <Input id={ids.from} type="date" value={draft.from ?? ''} onChange={event => set('from', event.target.value)} />
-                            </div>
-                            <div className="flex w-full flex-col gap-2">
-                                <Label htmlFor={ids.to}>{label('FILTERS.TO')}</Label>
-                                <Input id={ids.to} type="date" value={draft.to ?? ''} onChange={event => set('to', event.target.value)} />
-                            </div>
-                        </ListFilters>
-                        <ListToolbar
-                            search={{
-                                id: ids.action,
-                                label: label('COLUMNS.ACTION'),
-                                placeholder: label('FILTERS.ACTION'),
-                                value: draft.action ?? '',
-                                onChange: value => set('action', value),
-                            }}
-                        >
-                            {hasFilters ? (
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    onClick={() => {
-                                        setDraft({});
-                                        visitWithParams(PAGE_URL, {});
-                                    }}
-                                >
-                                    <XIcon />
-                                    {t('ADMIN_OPERATIONS.COMMON.CLEAR')}
-                                </Button>
-                            ) : null}
-                            <Button type="submit">
-                                <ListFilterIcon />
-                                {t('ADMIN_OPERATIONS.COMMON.APPLY')}
+                                <FilterSelect
+                                    inline
+                                    id={ids.subjectType}
+                                    label={label('FILTERS.SUBJECT_TYPE')}
+                                    allLabel={label('FILTERS.ALL_SUBJECTS')}
+                                    options={options.subjectTypes.map(type => ({ value: type, label: options.subjectTypeLabels?.[type] ?? type }))}
+                                    value={draft.subject_type ?? ''}
+                                    onChange={value => apply({ subject_type: value })}
+                                />
+                                <form onSubmit={submit} className="w-full sm:w-28">
+                                    <Label htmlFor={ids.subjectId} className="sr-only">
+                                        {label('FILTERS.SUBJECT_ID')}
+                                    </Label>
+                                    <Input
+                                        id={ids.subjectId}
+                                        inputMode="numeric"
+                                        placeholder={label('FILTERS.SUBJECT_ID')}
+                                        value={draft.subject_id ?? ''}
+                                        onChange={event => set('subject_id', event.target.value)}
+                                    />
+                                </form>
+                                <DateInput
+                                    id={ids.from}
+                                    label={label('FILTERS.FROM')}
+                                    value={draft.from ?? ''}
+                                    onChange={value => apply({ from: value })}
+                                    labels={dateLabels}
+                                    prefix={label('FILTERS.FROM_SHORT')}
+                                    className="w-full sm:w-40"
+                                />
+                                <DateInput
+                                    id={ids.to}
+                                    label={label('FILTERS.TO')}
+                                    value={draft.to ?? ''}
+                                    onChange={value => apply({ to: value })}
+                                    labels={dateLabels}
+                                    prefix={label('FILTERS.TO_SHORT')}
+                                    className="w-full sm:w-40"
+                                />
+                            </>
+                        }
+                    >
+                        {hasFilters ? (
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => {
+                                    setDraft({});
+                                    visitWithParams(PAGE_URL, {});
+                                }}
+                            >
+                                <XIcon />
+                                {t('ADMIN_OPERATIONS.COMMON.CLEAR')}
                             </Button>
-                        </ListToolbar>
-                    </form>
+                        ) : null}
+                    </ListToolbar>
                 }
                 table={
                     <ListTable

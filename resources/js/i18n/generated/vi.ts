@@ -10,7 +10,9 @@ const messages: Record<string, unknown> = {
                 "30D": "30 ngày",
                 "90D": "90 ngày"
             },
-            "COMPARED": "so với kỳ trước"
+            "COMPARED": "so với kỳ trước",
+            "SNAPSHOT": "Tính đến hiện tại",
+            "PREVIOUS": "Kỳ trước: {value}"
         },
         "ACTIONS": {
             "CUSTOMIZE": "Tuỳ chỉnh",
@@ -72,23 +74,23 @@ const messages: Record<string, unknown> = {
             },
             "ACTIVATION_FUNNEL": {
                 "TITLE": "Phễu kích hoạt",
-                "DESCRIPTION": "Account đăng ký trong khoảng đi được tới bước nào."
+                "DESCRIPTION": "Tài khoản đăng ký trong khoảng đi được tới bước nào."
             },
             "COHORT_RETENTION": {
                 "TITLE": "Giữ chân theo tuần đăng ký",
-                "DESCRIPTION": "Tỉ lệ account còn trả lời khách ở các tuần sau khi đăng ký (8 tuần gần nhất)."
+                "DESCRIPTION": "Tỉ lệ tài khoản còn trả lời khách ở các tuần sau khi đăng ký (8 tuần gần nhất)."
             },
             "SIGNUPS_TREND": {
                 "TITLE": "Đăng ký mới theo ngày",
-                "DESCRIPTION": "Số account tạo mỗi ngày."
+                "DESCRIPTION": "Số tài khoản tạo mỗi ngày."
             },
             "TOP_ACCOUNTS": {
-                "TITLE": "Account nhắn nhiều nhất",
-                "DESCRIPTION": "10 account có nhiều tin nhất trong khoảng."
+                "TITLE": "Tài khoản nhắn nhiều nhất",
+                "DESCRIPTION": "Tối đa 8 tài khoản có nhiều tin nhất trong khoảng."
             },
             "RECENT_SIGNUPS": {
-                "TITLE": "Account mới nhất",
-                "DESCRIPTION": "10 account vừa đăng ký."
+                "TITLE": "Tài khoản mới nhất",
+                "DESCRIPTION": "Tối đa 8 tài khoản đăng ký gần đây nhất."
             },
             "QUEUE_HEALTH": {
                 "TITLE": "Hàng đợi",
@@ -96,7 +98,7 @@ const messages: Record<string, unknown> = {
             },
             "STICKERS": {
                 "TITLE": "Kho sticker",
-                "DESCRIPTION": "Kho chung và kho riêng của các account."
+                "DESCRIPTION": "Kho chung và kho riêng của các tài khoản."
             },
             "SYSTEM": {
                 "TITLE": "Hệ thống",
@@ -104,9 +106,9 @@ const messages: Record<string, unknown> = {
             }
         },
         "METRICS": {
-            "ACCOUNTS_TOTAL": "Tổng account",
-            "ACCOUNTS_NEW": "Account mới",
-            "ACCOUNTS_ACTIVE": "Account hoạt động",
+            "ACCOUNTS_TOTAL": "Tổng tài khoản",
+            "ACCOUNTS_NEW": "Tài khoản mới",
+            "ACCOUNTS_ACTIVE": "Tài khoản hoạt động",
             "USERS_TOTAL": "Nhân viên",
             "CONVERSATIONS_NEW": "Hội thoại mới",
             "MESSAGES_INCOMING": "Tin vào",
@@ -122,7 +124,9 @@ const messages: Record<string, unknown> = {
         },
         "FUNNEL": {
             "FROM_START": "{rate}% so với đăng ký",
-            "FROM_PREVIOUS": "{rate}% so với bước trước"
+            "FROM_PREVIOUS": "{rate}% so với bước trước",
+            "PREVIOUS_EMPTY": "Bước trước chưa có tài khoản",
+            "BASELINE": "Mốc 100% để so các bước sau"
         },
         "TREND": {
             "TOTAL": "Tổng trong khoảng",
@@ -142,9 +146,10 @@ const messages: Record<string, unknown> = {
         },
         "COHORT": {
             "WEEK": "Tuần đăng ký",
-            "SIZE": "Account",
+            "SIZE": "Tài khoản",
             "OFFSET": "Tuần {n}",
-            "CELL": "Tuần {week}, tuần thứ {offset}: {active} trên {size} account ({rate}%)"
+            "SCROLL_HINT": "Vuốt ngang để xem các tuần sau.",
+            "CELL": "Tuần {week}, tuần thứ {offset}: {active} trên {size} tài khoản ({rate}%)"
         },
         "CHANNEL_HEALTH": {
             "RATE": "Tỉ lệ khoẻ",
@@ -152,6 +157,9 @@ const messages: Record<string, unknown> = {
             "FAILING": "Có vấn đề",
             "TOTAL": "{count} hộp thư",
             "ALL_HEALTHY": "Mọi hộp thư đang hoạt động bình thường."
+        },
+        "CHANNELS": {
+            "CENTER": "hội thoại"
         },
         "LISTS": {
             "MESSAGES": "{count} tin",
@@ -174,7 +182,7 @@ const messages: Record<string, unknown> = {
             "SHARED_PACKS": "Bộ kho chung",
             "SHARED_PUBLISHED": "Đã phát hành",
             "SHARED_STICKERS": "Sticker kho chung",
-            "PRIVATE_ACCOUNTS": "Account có kho riêng",
+            "PRIVATE_ACCOUNTS": "Tài khoản có kho riêng",
             "PRIVATE_STICKERS": "Sticker kho riêng",
             "OPEN": "Quản lý kho chung"
         },
@@ -303,7 +311,7 @@ const messages: Record<string, unknown> = {
             "login_submit": "Đăng nhập"
         },
         "groups": {
-            "overview": "Tổng quan",
+            "overview": "",
             "customers": "Khách hàng",
             "channels": "Kênh & hệ thống",
             "data": "Dữ liệu",
@@ -314,7 +322,7 @@ const messages: Record<string, unknown> = {
             "tools": "Công cụ"
         },
         "nav": {
-            "dashboard": "Bảng điều khiển",
+            "dashboard": "Tổng quan",
             "accounts": "Tài khoản",
             "users": "Người dùng",
             "channel_health": "Sức khoẻ kênh",
@@ -333,6 +341,217 @@ const messages: Record<string, unknown> = {
             "pulse": "Hiệu năng (Pulse)",
             "logs": "Log máy chủ",
             "dash": "dash.yona.vn"
+        },
+        "app_config": {
+            "page_title": "Cấu hình ứng dụng",
+            "page_description": "Khoá tích hợp và giới hạn của bản cài đặt, chia theo dịch vụ.",
+            "default_value": "Mặc định: {value}",
+            "unset_value": "Chưa đặt",
+            "sections": {
+                "general": "Chung",
+                "facebook": "Facebook",
+                "shopify": "Shopify",
+                "microsoft": "Microsoft",
+                "email": "Email",
+                "slack": "Slack",
+                "instagram": "Instagram",
+                "tiktok": "TikTok",
+                "whatsapp_embedded": "WhatsApp Embedded",
+                "google": "Google"
+            },
+            "section_titles": {
+                "general": "Cấu hình chung"
+            },
+            "fields": {
+                "WEBHOOK_TIMEOUT": {
+                    "title": "Thời gian chờ webhook (giây)",
+                    "description": "Thời gian tối đa Yona chờ phản hồi của webhook trước khi coi là lỗi."
+                },
+                "MAXIMUM_FILE_UPLOAD_SIZE": {
+                    "title": "Dung lượng tệp đính kèm tối đa (MB)",
+                    "description": "Tệp tải lên lớn hơn mức này bị từ chối."
+                },
+                "FIREBASE_PROJECT_ID": {
+                    "title": "Mã dự án Firebase",
+                    "description": "Project ID của dự án Firebase dùng để gửi thông báo đẩy."
+                },
+                "FIREBASE_CREDENTIALS": {
+                    "title": "Thông tin xác thực Firebase",
+                    "description": "Dán nguyên nội dung tệp JSON khoá dịch vụ của Firebase."
+                },
+                "WIDGET_TOKEN_EXPIRY": {
+                    "title": "Hạn token widget (ngày)",
+                    "description": "Số ngày phiên của khách trên widget còn hiệu lực."
+                },
+                "FB_APP_ID": {
+                    "title": "Facebook App ID",
+                    "description": ""
+                },
+                "FB_VERIFY_TOKEN": {
+                    "title": "Mã xác minh webhook Messenger",
+                    "description": "Verify token khai ở webhook Messenger của ứng dụng Meta."
+                },
+                "FB_APP_SECRET": {
+                    "title": "Facebook App Secret",
+                    "description": ""
+                },
+                "IG_VERIFY_TOKEN": {
+                    "title": "Mã xác minh webhook Instagram",
+                    "description": "Verify token khai ở webhook Instagram của ứng dụng Meta."
+                },
+                "FACEBOOK_API_VERSION": {
+                    "title": "Phiên bản Facebook API",
+                    "description": "Chỉ đổi khi cần dùng phiên bản khác, bắt đầu bằng chữ v (vd. v18.0)."
+                },
+                "SHOPIFY_CLIENT_ID": {
+                    "title": "Shopify Client ID",
+                    "description": "Client ID (API key) trong tài khoản Shopify Partner."
+                },
+                "SHOPIFY_CLIENT_SECRET": {
+                    "title": "Shopify Client Secret",
+                    "description": "Client Secret (API secret key) trong tài khoản Shopify Partner."
+                },
+                "AZURE_APP_ID": {
+                    "title": "Azure App ID",
+                    "description": "App ID dùng để xác thực với tài khoản Microsoft của khách."
+                },
+                "AZURE_APP_SECRET": {
+                    "title": "Azure App Secret",
+                    "description": ""
+                },
+                "MAILER_INBOUND_EMAIL_DOMAIN": {
+                    "title": "Tên miền nhận email",
+                    "description": "Tên miền dùng để tạo địa chỉ trả lời nối tiếp hội thoại (reply+id@tenmien)."
+                },
+                "ACCOUNT_EMAILS_LIMIT": {
+                    "title": "Giới hạn email mỗi ngày của tài khoản",
+                    "description": "Số email ngoài kênh tối đa một tài khoản được gửi mỗi ngày."
+                },
+                "ACCOUNT_EMAILS_PLAN_LIMITS": {
+                    "title": "Giới hạn email mỗi ngày theo gói",
+                    "description": "Giới hạn gửi email mỗi ngày cho từng gói, dạng JSON."
+                },
+                "SLACK_CLIENT_ID": {
+                    "title": "Slack Client ID",
+                    "description": ""
+                },
+                "SLACK_CLIENT_SECRET": {
+                    "title": "Slack Client Secret",
+                    "description": ""
+                },
+                "INSTAGRAM_APP_ID": {
+                    "title": "Instagram App ID",
+                    "description": ""
+                },
+                "INSTAGRAM_APP_SECRET": {
+                    "title": "Instagram App Secret",
+                    "description": "App Secret dùng để xác thực Instagram."
+                },
+                "INSTAGRAM_VERIFY_TOKEN": {
+                    "title": "Mã xác minh webhook Instagram",
+                    "description": "Verify token khai ở webhook Instagram."
+                },
+                "INSTAGRAM_API_VERSION": {
+                    "title": "Phiên bản Instagram API",
+                    "description": "Chỉ đổi khi cần dùng phiên bản khác, bắt đầu bằng chữ v (vd. v22.0)."
+                },
+                "TIKTOK_APP_ID": {
+                    "title": "TikTok App ID",
+                    "description": ""
+                },
+                "TIKTOK_APP_SECRET": {
+                    "title": "TikTok App Secret",
+                    "description": ""
+                },
+                "TIKTOK_API_VERSION": {
+                    "title": "Phiên bản TikTok API",
+                    "description": "Chỉ đổi khi cần dùng phiên bản khác, bắt đầu bằng chữ v (vd. v1.3)."
+                },
+                "WHATSAPP_APP_ID": {
+                    "title": "WhatsApp App ID",
+                    "description": "Facebook App ID dùng cho WhatsApp Business API."
+                },
+                "WHATSAPP_APP_SECRET": {
+                    "title": "WhatsApp App Secret",
+                    "description": "App Secret cho luồng đăng ký nhúng (Embedded Signup), bắt buộc khi dùng luồng này."
+                },
+                "WHATSAPP_CONFIGURATION_ID": {
+                    "title": "Mã cấu hình WhatsApp",
+                    "description": "Configuration ID cho luồng đăng ký nhúng (Embedded Signup), bắt buộc khi dùng luồng này."
+                },
+                "WHATSAPP_API_VERSION": {
+                    "title": "Phiên bản WhatsApp API",
+                    "description": "Chỉ đổi khi cần dùng phiên bản khác, bắt đầu bằng chữ v (vd. v22.0)."
+                },
+                "GOOGLE_OAUTH_CLIENT_ID": {
+                    "title": "Google OAuth Client ID",
+                    "description": "Client ID của ứng dụng Google OAuth để kết nối email."
+                },
+                "GOOGLE_OAUTH_CLIENT_SECRET": {
+                    "title": "Google OAuth Client Secret",
+                    "description": "Client Secret của ứng dụng Google OAuth để kết nối email."
+                },
+                "GOOGLE_OAUTH_REDIRECT_URI": {
+                    "title": "Google OAuth Redirect URI",
+                    "description": "Địa chỉ chuyển hướng đã khai trong ứng dụng Google OAuth."
+                }
+            }
+        },
+        "audit": {
+            "verbs": {
+                "POST": "Tạo {object}",
+                "PUT": "Sửa {object}",
+                "PATCH": "Sửa {object}",
+                "DELETE": "Xoá {object}"
+            },
+            "objects": {
+                "accounts": "tài khoản",
+                "account_users": "thành viên tài khoản",
+                "users": "người dùng",
+                "agent_bots": "agent bot",
+                "platform_apps": "ứng dụng nền tảng",
+                "access_tokens": "access token",
+                "installation_configs": "biến cấu hình hệ thống",
+                "sticker_packs": "bộ sticker",
+                "stickers": "sticker",
+                "avatar": "ảnh đại diện"
+            },
+            "actions": {
+                "POST stickers": "Tải sticker lên",
+                "POST suspend": "Khoá tài khoản",
+                "POST unsuspend": "Mở khoá tài khoản",
+                "POST reset_cache": "Xoá bộ nhớ đệm giao diện",
+                "POST impersonate": "Đăng nhập hộ",
+                "POST resend_confirmation": "Gửi lại email xác nhận",
+                "POST publish": "Xuất bản bộ sticker",
+                "POST unpublish": "Gỡ xuất bản bộ sticker",
+                "POST move": "Chuyển bộ sticker",
+                "PUT order": "Sắp xếp lại sticker",
+                "PUT layout": "Lưu bố cục trang Tổng quan",
+                "DELETE layout": "Đặt lại bố cục trang Tổng quan",
+                "POST app_config": "Lưu cấu hình ứng dụng",
+                "POST mfa": "Bật xác thực hai lớp",
+                "POST verify": "Xác nhận xác thực hai lớp"
+            },
+            "subjects": {
+                "accounts": "Tài khoản",
+                "account_users": "Thành viên",
+                "users": "Người dùng",
+                "agent_bots": "Agent bot",
+                "platform_apps": "Ứng dụng nền tảng",
+                "access_tokens": "Access token",
+                "installation_configs": "Biến cấu hình",
+                "sticker_packs": "Bộ sticker",
+                "dashboard": "Trang Tổng quan",
+                "app_config": "Cấu hình ứng dụng",
+                "impersonations": "Đăng nhập hộ",
+                "mfa": "Xác thực hai lớp"
+            },
+            "status": {
+                "success": "Thành công",
+                "rejected": "Bị từ chối",
+                "failed": "Lỗi máy chủ"
+            }
         },
         "flash": {
             "created": "Đã tạo bản ghi.",
@@ -411,6 +630,11 @@ const messages: Record<string, unknown> = {
             "DATA": "Dữ liệu hệ thống"
         },
         "COMMON": {
+            "OPEN_CALENDAR": "Mở lịch",
+            "PREVIOUS_MONTH": "Tháng trước",
+            "NEXT_MONTH": "Tháng sau",
+            "WEEKDAYS": "T2,T3,T4,T5,T6,T7,CN",
+            "MONTH_YEAR": "Tháng {month}, {year}",
             "NEVER": "Chưa có",
             "UNKNOWN": "Không rõ",
             "APPLY": "Lọc",
@@ -588,27 +812,101 @@ const messages: Record<string, unknown> = {
                     "first_reply": "Trả lời khách lần đầu"
                 }
             },
+            "AUDIT": {
+                "BY": "Bởi :admin",
+                "FAILED_BY": "Không thành công (mã :status), bởi :admin",
+                "account_updated": {
+                    "PACK": "Sửa thông tin tài khoản",
+                    "NO_PACK": "Sửa thông tin tài khoản"
+                },
+                "account_deleted": {
+                    "PACK": "Xoá tài khoản",
+                    "NO_PACK": "Xoá tài khoản"
+                },
+                "cache_reset": {
+                    "PACK": "Làm mới bộ nhớ đệm của tài khoản",
+                    "NO_PACK": "Làm mới bộ nhớ đệm của tài khoản"
+                },
+                "unsuspended": {
+                    "PACK": "Mở khoá tài khoản",
+                    "NO_PACK": "Mở khoá tài khoản"
+                },
+                "pack_created": {
+                    "PACK": "Tạo bộ sticker “:pack”",
+                    "NO_PACK": "Tạo một bộ sticker"
+                },
+                "pack_updated": {
+                    "PACK": "Sửa bộ sticker “:pack”",
+                    "NO_PACK": "Sửa một bộ sticker"
+                },
+                "pack_deleted": {
+                    "PACK": "Xoá bộ sticker “:pack”",
+                    "NO_PACK": "Xoá một bộ sticker"
+                },
+                "pack_moved": {
+                    "PACK": "Chuyển bộ sticker “:pack” sang kho chung",
+                    "NO_PACK": "Chuyển một bộ sticker sang kho chung"
+                },
+                "pack_published": {
+                    "PACK": "Xuất bản bộ sticker “:pack”",
+                    "NO_PACK": "Xuất bản một bộ sticker"
+                },
+                "pack_unpublished": {
+                    "PACK": "Ngừng xuất bản bộ sticker “:pack”",
+                    "NO_PACK": "Ngừng xuất bản một bộ sticker"
+                },
+                "stickers_added": {
+                    "PACK": "Thêm :count sticker vào bộ “:pack”",
+                    "NO_PACK": "Thêm :count sticker vào kho riêng"
+                },
+                "stickers_reordered": {
+                    "PACK": "Sắp xếp lại sticker trong bộ “:pack”",
+                    "NO_PACK": "Sắp xếp lại sticker trong một bộ"
+                },
+                "stickers_updated": {
+                    "PACK": "Sửa :count sticker trong bộ “:pack”",
+                    "NO_PACK": "Sửa :count sticker trong kho riêng"
+                },
+                "stickers_deleted": {
+                    "PACK": "Xoá :count sticker khỏi bộ “:pack”",
+                    "NO_PACK": "Xoá :count sticker khỏi kho riêng"
+                },
+                "other_change": {
+                    "PACK": "Cập nhật dữ liệu của tài khoản",
+                    "NO_PACK": "Cập nhật dữ liệu của tài khoản"
+                },
+                "other_delete": {
+                    "PACK": "Xoá dữ liệu của tài khoản",
+                    "NO_PACK": "Xoá dữ liệu của tài khoản"
+                }
+            },
             "TIMELINE": {
-                "account_created": "Tạo tài khoản \":name\"",
+                "account_created": "Tạo tài khoản “:name”",
                 "user_joined": ":name tham gia với vai trò :role",
-                "inbox_created": "Thêm hộp thư \":name\"",
+                "inbox_created": "Thêm hộp thư “:name”",
                 "suspended": "Bị khoá: :reason",
                 "impersonated": ":admin đăng nhập hộ :user",
-                "admin_action": ":admin: :action",
+                "admin_action": "Thao tác của quản trị viên",
                 "last_message": "Tin nhắn gần nhất"
             }
         },
         "AUDIT_LOGS": {
+            "RAW_ACTION": "Route",
+            "HTTP_STATUS": "Mã HTTP",
+            "IP_ADDRESS": "Địa chỉ IP",
+            "USER_AGENT": "Trình duyệt",
             "TITLE": "Nhật ký thao tác",
             "DESCRIPTION": "Mọi thao tác ghi của quản trị viên trong bảng quản trị. Mật khẩu, token và mã xác thực đã được che.",
             "FILTERS": {
                 "ADMIN": "Quản trị viên",
                 "ALL_ADMINS": "Mọi quản trị viên",
-                "ACTION": "Hành động chứa…",
+                "ACTION": "Tìm hành động…",
                 "SUBJECT_TYPE": "Đối tượng",
                 "ALL_SUBJECTS": "Mọi đối tượng",
                 "SUBJECT_ID": "ID đối tượng",
                 "FROM": "Từ ngày",
+                "FROM_SHORT": "Từ",
+                "TO_SHORT": "Đến",
                 "TO": "Đến ngày"
             },
             "COLUMNS": {
@@ -644,7 +942,9 @@ const messages: Record<string, unknown> = {
             "FILTER_HINT": "Cột số khớp đúng, cột chữ khớp một phần, gõ null để tìm ô trống. Cột đã che không lọc được.",
             "SORT": "Sắp xếp theo {column}",
             "EMPTY": "Không có dòng nào.",
-            "ROWS_ON_PAGE": "{count} dòng",
+            "ROWS_ON_PAGE": "{count} dòng trên trang này",
+            "TABLE_TITLE": "Bảng {table}",
+            "SCROLL_HINT": "{count} cột, kéo ngang để xem hết",
             "PIN": {
                 "LEFT": "Ghim sang trái",
                 "RIGHT": "Ghim sang phải",
@@ -658,6 +958,8 @@ const messages: Record<string, unknown> = {
             "ACCOUNT_TITLE": "Kho sticker của {name}",
             "ACCOUNT_DESCRIPTION": "Toàn quyền như quản trị viên của tài khoản: tạo bộ, tải lên, sửa, sắp xếp, xuất bản, xoá, chuyển bộ sang kho chung.",
             "PICK_ACCOUNT": "Tìm tài khoản theo tên hoặc ID…",
+            "PICK_ACCOUNT_TITLE": "Chọn một tài khoản",
+            "PICK_ACCOUNT_HINT": "Kho riêng của tài khoản chỉ tài khoản đó dùng được. Tìm theo tên hoặc ID để mở.",
             "NO_ACCOUNTS": "Không tìm thấy tài khoản.",
             "BACK_TO_ACCOUNT": "Về tài khoản"
         }

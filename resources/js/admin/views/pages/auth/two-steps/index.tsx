@@ -8,8 +8,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@admi
 // Util Imports
 import { cn } from '@admin/lib/utils'
 
-// SVG Imports
-import AuthBackgroundShape from '@admin/assets/svg/auth-background-shape'
 
 type Props = {
   title: string
@@ -20,11 +18,7 @@ type Props = {
 
 const TwoSteps = ({ title, description, children, className = 'sm:max-w-md' }: Props) => {
   return (
-    <div className='relative flex h-auto min-h-screen items-center justify-center overflow-x-hidden px-4 py-10 sm:px-6 lg:px-8'>
-      <div className='absolute'>
-        <AuthBackgroundShape />
-      </div>
-
+    <div className='bg-muted/50 relative flex h-auto min-h-screen items-center justify-center overflow-x-hidden px-4 py-10 sm:px-6 lg:px-8'>
       <Card className={cn('z-1 w-full gap-6 overflow-clip py-6', className)}>
         <CardHeader className='px-6'>
           <a href='/'>
@@ -34,7 +28,7 @@ const TwoSteps = ({ title, description, children, className = 'sm:max-w-md' }: P
 
         <CardContent className='space-y-6 px-6'>
           <div>
-            <CardTitle className='mb-2 text-2xl font-semibold'>{title}</CardTitle>
+            <CardTitle className='mb-2 text-2xl font-medium'>{title}</CardTitle>
             <CardDescription className='text-base'>{description}</CardDescription>
           </div>
 

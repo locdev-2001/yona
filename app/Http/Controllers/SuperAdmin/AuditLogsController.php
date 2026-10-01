@@ -5,6 +5,7 @@ namespace App\Http\Controllers\SuperAdmin;
 use App\Http\Controllers\Controller;
 use App\Models\SuperAdminAuditLog;
 use App\Services\Admin\Operations\DataBrowser;
+use App\Support\SuperAdmin\AuditActionLabel;
 use App\Support\SuperAdminArea;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -28,6 +29,7 @@ class AuditLogsController extends Controller
         ), fn (string $value) => $value !== '');
 
         $logs = $this->filtered($filters)->latest('id')->paginate(self::PER_PAGE)->withQueryString();
+        $subjectTypes = SuperAdminAuditLog::query()->whereNotNull('subject_type')->distinct()->orderBy('subject_type')->pluck('subject_type')->all();
 
         return Inertia::render('superadmin/AuditLogs', [
             'logs' => collect($logs->items())->map(fn (SuperAdminAuditLog $log) => [
@@ -35,11 +37,14 @@ class AuditLogsController extends Controller
                 'superAdminId' => $log->super_admin_id,
                 'superAdminEmail' => $log->super_admin_email,
                 'action' => $log->action,
+                'actionLabel' => AuditActionLabel::describe((string) $log->action),
                 'subjectType' => $log->subject_type,
+                'subjectLabel' => AuditActionLabel::subject($log->subject_type, $log->subject_id),
                 'subjectId' => $log->subject_id,
                 'subjectUrl' => $this->subjectUrl($log),
                 'changes' => $log->changes,
                 'responseStatus' => $log->response_status,
+                'statusLabel' => AuditActionLabel::status($log->response_status),
                 'ipAddress' => $log->ip_address,
                 'userAgent' => $log->user_agent,
                 'createdAt' => $log->created_at?->toIso8601String(),
@@ -55,7 +60,8 @@ class AuditLogsController extends Controller
                     ->get()
                     ->map(fn ($row) => ['value' => (string) $row->super_admin_id, 'label' => (string) ($row->email ?? "#{$row->super_admin_id}")])
                     ->all(),
-                'subjectTypes' => SuperAdminAuditLog::query()->whereNotNull('subject_type')->distinct()->orderBy('subject_type')->pluck('subject_type')->all(),
+                'subjectTypes' => $subjectTypes,
+                'subjectTypeLabels' => collect($subjectTypes)->mapWithKeys(fn (string $type) => [$type => AuditActionLabel::subjectTypeLabel($type)])->all(),
             ],
         ]);
     }
@@ -65,11 +71,27 @@ class AuditLogsController extends Controller
     {
         return SuperAdminAuditLog::query()
             ->when(ctype_digit($filters['super_admin_id'] ?? ''), fn (Builder $query) => $query->where('super_admin_id', (int) $filters['super_admin_id']))
-            ->when($filters['action'] ?? null, fn (Builder $query, string $action) => $query->where('action', 'ilike', '%'.DataBrowser::escapeLike($action).'%'))
+            ->when($filters['action'] ?? null, fn (Builder $query, string $action) => $query->where(fn (Builder $inner) => $inner
+                ->where('action', 'ilike', '%'.DataBrowser::escapeLike($action).'%')
+                ->orWhereIn('action', $this->actionsLabelled($action))))
             ->when($filters['subject_type'] ?? null, fn (Builder $query, string $type) => $query->where('subject_type', $type))
             ->when(ctype_digit($filters['subject_id'] ?? ''), fn (Builder $query) => $query->where('subject_id', (int) $filters['subject_id']))
             ->when($this->date($filters['from'] ?? null), fn (Builder $query, Carbon $from) => $query->where('created_at', '>=', $from->startOfDay()))
             ->when($this->date($filters['to'] ?? null), fn (Builder $query, Carbon $to) => $query->where('created_at', '<=', $to->endOfDay()));
+    }
+
+    /**
+     * Route có câu mô tả chứa từ khoá (gõ "khoá" tìm được `POST accounts/{id}/suspend`).
+     * Số route khác nhau trong nhật ký nhỏ (vài chục) nên lọc trong PHP.
+     *
+     * @return list<string>
+     */
+    private function actionsLabelled(string $keyword): array
+    {
+        return SuperAdminAuditLog::query()->distinct()->pluck('action')
+            ->filter(fn (string $action) => mb_stripos(AuditActionLabel::describe($action), $keyword) !== false)
+            ->values()
+            ->all();
     }
 
     private function date(?string $value): ?Carbon

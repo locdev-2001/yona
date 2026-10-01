@@ -44,11 +44,7 @@ export function activeFilter(search: string, filters: string[]): string {
     return filters.includes(name) ? name : '';
 }
 
-export function indexUrl(
-    resource: string,
-    singular: string,
-    params: { search?: string; order?: string; direction?: string; page?: number },
-): string {
+export function indexUrl(resource: string, singular: string, params: { search?: string; order?: string; direction?: string; page?: number }): string {
     const query = new URLSearchParams();
     if (params.search) query.set('search', params.search);
     if ((params.order && params.order !== DEFAULT_ORDER) || (params.direction && params.direction !== DEFAULT_DIRECTION)) {
@@ -113,34 +109,33 @@ export default function ResourceIndex({
         [columns, canEdit, canDestroy, resource],
     );
 
-    const sort = (column: string) =>
-        visit({ search, order: column, direction: order === column && direction === 'asc' ? 'desc' : 'asc' });
+    const sort = (column: string) => visit({ search, order: column, direction: order === column && direction === 'asc' ? 'desc' : 'asc' });
 
     return (
         <>
             <ResourceListApp
                 title={title}
                 description={label('records_total', { total: pagination.total.toLocaleString('vi-VN') })}
-                filters={
-                    filters.length > 0 ? (
-                        <ResourceTableFilters
-                            label={label('filter')}
-                            allLabel={label('filter_all')}
-                            value={filter}
-                            options={filters.map(name => ({ value: name, label: dictionary.filter(name) }))}
-                            onFilterChange={next => {
-                                setQuery('');
-                                visit({ search: next ? `${next}:` : '' });
-                            }}
-                        />
-                    ) : null
-                }
                 toolbar={
                     <ResourceTableToolbar
                         search={query}
                         searchLabel={searchLabel}
                         clearLabel={label('clear_search')}
                         canClear={keyword !== ''}
+                        filters={
+                            filters.length > 0 ? (
+                                <ResourceTableFilters
+                                    label={label('filter')}
+                                    allLabel={label('filter_all')}
+                                    value={filter}
+                                    options={filters.map(name => ({ value: name, label: dictionary.filter(name) }))}
+                                    onFilterChange={next => {
+                                        setQuery('');
+                                        visit({ search: next ? `${next}:` : '' });
+                                    }}
+                                />
+                            ) : null
+                        }
                         newRecord={actions.includes('new') ? { href: `/admin/${resource}/new`, label: label('new_record') } : null}
                         onSearchChange={setQuery}
                         onSubmit={() => visit({ search: query.trim() })}
@@ -152,14 +147,14 @@ export default function ResourceIndex({
                 }
                 table={
                     rows.length === 0 ? (
-                        <div className='flex flex-col items-center gap-2 border-t px-6 py-12 text-center'>
-                            <p className='text-base font-medium'>{label('no_records')}</p>
-                            {search ? <p className='text-muted-foreground text-sm'>{label('no_records_hint')}</p> : null}
+                        <div className="flex flex-col items-center gap-2 border-t px-6 py-12 text-center">
+                            <p className="text-base font-medium">{label('no_records')}</p>
+                            {search ? <p className="text-muted-foreground text-sm">{label('no_records_hint')}</p> : null}
                             {search ? (
                                 <Button
-                                    variant='outline'
-                                    size='sm'
-                                    className='mt-2'
+                                    variant="outline"
+                                    size="sm"
+                                    className="mt-2"
                                     render={<Link href={`/admin/${resource}`} />}
                                     nativeButton={false}
                                 >

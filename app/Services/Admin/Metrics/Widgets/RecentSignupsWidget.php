@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\DB;
 
 final class RecentSignupsWidget extends MetricWidget
 {
-    private const LIMIT = 10;
+    private const LIMIT = 8;
 
     public function key(): string
     {

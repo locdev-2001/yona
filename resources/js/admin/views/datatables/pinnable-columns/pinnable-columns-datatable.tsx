@@ -101,7 +101,7 @@ const DataTablePinnableColumns = <TData,>({
                     <TableHead
                       key={header.id}
                       className={cn(
-                        'data-pinned:bg-muted/90 relative h-10 truncate data-pinned:backdrop-blur-xs [&:not([data-pinned]):has(+[data-pinned])_div.cursor-col-resize:last-child]:opacity-0 [&[data-last-col=left]_div.cursor-col-resize:last-child]:opacity-0 [&[data-pinned=right]:last-child_div.cursor-col-resize:last-child]:opacity-0',
+                        'data-pinned:bg-background relative h-10 truncate [&:not([data-pinned]):has(+[data-pinned])_div.cursor-col-resize:last-child]:opacity-0 [&[data-last-col=left]_div.cursor-col-resize:last-child]:opacity-0 [&[data-pinned=right]:last-child_div.cursor-col-resize:last-child]:opacity-0',
                         column.columnDef.meta?.headerClassName
                       )}
                       colSpan={header.colSpan}
@@ -164,7 +164,9 @@ const DataTablePinnableColumns = <TData,>({
           <TableBody>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map(row => (
-                <TableRow key={row.id}>
+                // Hàng hover và ô ghim cùng một màu đặc (neutral-50): ô ghim nằm đè lên
+                // phần cuộn ngang nên không được trong suốt.
+                <TableRow key={row.id} className='group/row hover:bg-sidebar'>
                   {row.getVisibleCells().map(cell => {
                     const { column } = cell
                     const isPinned = column.getIsPinned()
@@ -175,7 +177,7 @@ const DataTablePinnableColumns = <TData,>({
                       <TableCell
                         key={cell.id}
                         className={cn(
-                          'data-pinned:bg-background/90 truncate data-pinned:backdrop-blur-xs',
+                          'data-pinned:bg-background group-hover/row:data-pinned:bg-sidebar truncate',
                           column.columnDef.meta?.cellClassName
                         )}
                         style={{ ...getPinningStyles(column) }}

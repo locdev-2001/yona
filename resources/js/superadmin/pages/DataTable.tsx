@@ -172,7 +172,7 @@ export default function DataTable({ table, columns, rows, page, hasMore, sort, d
                         {label('BACK')}
                     </Link>
                 }
-                title={<span className="font-mono">{table}</span>}
+                title={label('TABLE_TITLE', { table })}
                 description={
                     <span className="flex flex-wrap items-center gap-2">
                         <Badge variant="outline">
@@ -180,6 +180,8 @@ export default function DataTable({ table, columns, rows, page, hasMore, sort, d
                             {label('READ_ONLY')}
                         </Badge>
                         {label('ROWS_ON_PAGE', { count: rows.length })}
+                        {/* Bảng rộng hơn khung: nói trước là còn cột ở bên phải. */}
+                        {columns.length > 6 ? <span>· {label('SCROLL_HINT', { count: columns.length })}</span> : null}
                     </span>
                 }
                 actions={

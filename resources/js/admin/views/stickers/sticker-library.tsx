@@ -101,18 +101,13 @@ function PackItem({ pack, isSelected, onClick }: { pack: LibraryStickerPack; isS
       <PackCover pack={pack} />
       <span className='flex min-w-0 flex-1 flex-col gap-0.5'>
         <span className='text-foreground truncate font-medium'>{pack.name}</span>
+        {/* Trạng thái viết thành chữ: chấm tròn nhỏ ở mép phải không ai đoán được nghĩa. */}
         <span className='text-muted-foreground truncate text-xs'>
           {t('STICKER_LIBRARY.STICKERS_COUNT', { count: pack.stickers_count ?? 0 })}
+          {' · '}
+          <span className={cn(pack.published && 'text-green-700')}>{status}</span>
         </span>
       </span>
-      <span
-        className={cn(
-          'size-2 shrink-0 rounded-full',
-          pack.published ? 'bg-green-600 dark:bg-green-400' : 'border-muted-foreground/50 border'
-        )}
-        aria-hidden='true'
-      />
-      <span className='sr-only'>{status}</span>
     </button>
   )
 }

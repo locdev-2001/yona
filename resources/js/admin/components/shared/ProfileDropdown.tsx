@@ -14,16 +14,11 @@ import {
   DropdownMenuTrigger
 } from '@admin/components/ui/dropdown-menu'
 
+// Util Imports
+import { initialsOf } from '@admin/lib/format'
+
 // Config Imports
 import useThemeConfig from '@admin/configs/themeConfig'
-
-const initialsOf = (name: string) =>
-  name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(-2)
-    .map(namePart => namePart[0]?.toUpperCase())
-    .join('')
 
 // Hai mục đều rời khỏi console (trang làm việc, đăng xuất) nên là link thường.
 const ProfileDropdown = () => {

@@ -1,28 +1,8 @@
-import {
-    ActivityIcon,
-    BoxIcon,
-    CircleAlertIcon,
-    CodeIcon,
-    CpuIcon,
-    HardDriveIcon,
-    HourglassIcon,
-    KanbanIcon,
-    LayersIcon,
-    LinkIcon,
-    PackageCheckIcon,
-    PackageIcon,
-    ScrollTextIcon,
-    ServerIcon,
-    SmileIcon,
-    StickerIcon,
-    TableIcon,
-    TagIcon,
-} from 'lucide-react';
+import { ActivityIcon, KanbanIcon, LayersIcon, LinkIcon, ScrollTextIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 import { Badge } from '@admin/components/ui/badge';
 import { Button } from '@admin/components/ui/button';
-import { MetricBoxes } from '@admin/views/dashboards/charts/chart-sales-metrics';
 import ProductInsightsStats from '@admin/views/dashboards/widgets/widget-product-insights';
 import QuickLinks from '@admin/views/dashboards/widgets/widget-quick-links';
 
@@ -47,31 +27,21 @@ function OpenLink({ href, children }: { href: string; children: ReactNode }) {
     );
 }
 
+// Ba ô cuối cùng một khuôn: dòng nhãn trái, số phải, liên kết ở đáy.
 export function QueueHealth({ data }: { data: QueueHealthData }) {
     return (
         <div className="flex flex-1 flex-col gap-4">
             <Badge variant={QUEUE_BADGE[data.status]}>{t(`ADMIN_DASHBOARD.QUEUE.STATUS.${data.status.toUpperCase()}`)}</Badge>
             <ProductInsightsStats
                 stats={[
-                    {
-                        key: 'pending',
-                        label: t('ADMIN_DASHBOARD.QUEUE.PENDING'),
-                        value: numberOrDash(data.pendingJobs),
-                        aside: <HourglassIcon className="text-muted-foreground size-5" aria-hidden="true" />,
-                    },
+                    { key: 'pending', label: t('ADMIN_DASHBOARD.QUEUE.PENDING'), value: numberOrDash(data.pendingJobs) },
                     {
                         key: 'failed',
                         label: t('ADMIN_DASHBOARD.QUEUE.RECENT_FAILED'),
                         value: numberOrDash(data.recentFailedJobs),
                         className: (data.recentFailedJobs ?? 0) > 0 ? 'text-destructive' : undefined,
-                        aside: <CircleAlertIcon className="text-muted-foreground size-5" aria-hidden="true" />,
                     },
-                    {
-                        key: 'processes',
-                        label: t('ADMIN_DASHBOARD.QUEUE.PROCESSES'),
-                        value: numberOrDash(data.processes),
-                        aside: <CpuIcon className="text-muted-foreground size-5" aria-hidden="true" />,
-                    },
+                    { key: 'processes', label: t('ADMIN_DASHBOARD.QUEUE.PROCESSES'), value: numberOrDash(data.processes) },
                 ]}
             />
             <OpenLink href={data.url}>{t('ADMIN_DASHBOARD.QUEUE.OPEN')}</OpenLink>
@@ -82,24 +52,13 @@ export function QueueHealth({ data }: { data: QueueHealthData }) {
 export function Stickers({ data }: { data: StickersData }) {
     return (
         <div className="flex flex-1 flex-col gap-4">
-            <MetricBoxes
-                className="grid gap-3"
-                metrics={[
-                    { key: 'packs', icon: <PackageIcon className="size-5" />, title: t('ADMIN_DASHBOARD.STICKERS.SHARED_PACKS'), value: formatNumber(data.sharedPacks) },
-                    {
-                        key: 'published',
-                        icon: <PackageCheckIcon className="size-5" />,
-                        title: t('ADMIN_DASHBOARD.STICKERS.SHARED_PUBLISHED'),
-                        value: formatNumber(data.sharedPublishedPacks),
-                    },
-                    { key: 'shared', icon: <StickerIcon className="size-5" />, title: t('ADMIN_DASHBOARD.STICKERS.SHARED_STICKERS'), value: formatNumber(data.sharedStickers) },
-                    {
-                        key: 'accounts',
-                        icon: <BoxIcon className="size-5" />,
-                        title: t('ADMIN_DASHBOARD.STICKERS.PRIVATE_ACCOUNTS'),
-                        value: formatNumber(data.accountsWithPrivateLibrary),
-                    },
-                    { key: 'private', icon: <SmileIcon className="size-5" />, title: t('ADMIN_DASHBOARD.STICKERS.PRIVATE_STICKERS'), value: formatNumber(data.privateStickers) },
+            <ProductInsightsStats
+                stats={[
+                    { key: 'packs', label: t('ADMIN_DASHBOARD.STICKERS.SHARED_PACKS'), value: formatNumber(data.sharedPacks) },
+                    { key: 'published', label: t('ADMIN_DASHBOARD.STICKERS.SHARED_PUBLISHED'), value: formatNumber(data.sharedPublishedPacks) },
+                    { key: 'shared', label: t('ADMIN_DASHBOARD.STICKERS.SHARED_STICKERS'), value: formatNumber(data.sharedStickers) },
+                    { key: 'accounts', label: t('ADMIN_DASHBOARD.STICKERS.PRIVATE_ACCOUNTS'), value: formatNumber(data.accountsWithPrivateLibrary) },
+                    { key: 'private', label: t('ADMIN_DASHBOARD.STICKERS.PRIVATE_STICKERS'), value: formatNumber(data.privateStickers) },
                 ]}
             />
             <OpenLink href={data.url}>{t('ADMIN_DASHBOARD.STICKERS.OPEN')}</OpenLink>
@@ -109,15 +68,14 @@ export function Stickers({ data }: { data: StickersData }) {
 
 export function System({ data }: { data: SystemData }) {
     return (
-        <MetricBoxes
-            className="grid gap-3"
-            metrics={[
-                { key: 'version', icon: <TagIcon className="size-5" />, title: t('ADMIN_DASHBOARD.SYSTEM.VERSION'), value: data.version || '-' },
-                { key: 'environment', icon: <ServerIcon className="size-5" />, title: t('ADMIN_DASHBOARD.SYSTEM.ENVIRONMENT'), value: data.environment },
-                { key: 'php', icon: <CodeIcon className="size-5" />, title: t('ADMIN_DASHBOARD.SYSTEM.PHP'), value: data.php },
-                { key: 'laravel', icon: <LayersIcon className="size-5" />, title: t('ADMIN_DASHBOARD.SYSTEM.LARAVEL'), value: data.laravel },
-                { key: 'size', icon: <HardDriveIcon className="size-5" />, title: t('ADMIN_DASHBOARD.SYSTEM.DATABASE_SIZE'), value: formatBytes(data.databaseSizeBytes) },
-                { key: 'tables', icon: <TableIcon className="size-5" />, title: t('ADMIN_DASHBOARD.SYSTEM.TABLES'), value: formatNumber(data.tablesCount) },
+        <ProductInsightsStats
+            stats={[
+                { key: 'version', label: t('ADMIN_DASHBOARD.SYSTEM.VERSION'), value: data.version || '-' },
+                { key: 'environment', label: t('ADMIN_DASHBOARD.SYSTEM.ENVIRONMENT'), value: data.environment },
+                { key: 'php', label: t('ADMIN_DASHBOARD.SYSTEM.PHP'), value: data.php },
+                { key: 'laravel', label: t('ADMIN_DASHBOARD.SYSTEM.LARAVEL'), value: data.laravel },
+                { key: 'size', label: t('ADMIN_DASHBOARD.SYSTEM.DATABASE_SIZE'), value: formatBytes(data.databaseSizeBytes) },
+                { key: 'tables', label: t('ADMIN_DASHBOARD.SYSTEM.TABLES'), value: formatNumber(data.tablesCount) },
             ]}
         />
     );

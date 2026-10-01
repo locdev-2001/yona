@@ -42,7 +42,8 @@ const useBreadcrumbSegments = (pathname: string) => {
             : pathname === candidate.url || pathname.startsWith(`${candidate.url}/`)
       )
 
-      if (item) return [group.label, item.label]
+      // Nhóm chỉ có một mục cùng tên (Tổng quan) thì không lặp hai lần.
+      if (item) return [group.label, item.label].filter((label, index, all) => label !== '' && all.indexOf(label) === index)
     }
 
     return []
@@ -58,9 +59,15 @@ const Header = ({ onOpenSearch }: { onOpenSearch?: () => void }) => {
   return (
     <header className='bg-card sticky top-0 z-50 border-b'>
       <div className='mx-auto flex max-w-360 items-center justify-between gap-6 px-4 py-2 sm:px-6'>
-        <div className='flex min-w-0 items-center gap-4'>
+        <div className='flex min-w-0 items-center gap-2 sm:gap-4'>
           <SidebarTrigger className='[&_svg]:size-5!' aria-label={labels.open_menu ?? 'open_menu'} />
           <Separator orientation='vertical' className='hidden h-4! data-vertical:self-center sm:block' />
+          {/* Điện thoại không đủ chỗ cho vụn bánh mì: chỉ hiện tên trang đang mở. */}
+          {segments.length > 0 ? (
+            <p className='truncate text-sm font-medium sm:hidden' aria-current='page'>
+              {segments[segments.length - 1]}
+            </p>
+          ) : null}
           <Breadcrumb className='hidden sm:block'>
             <BreadcrumbList>
               {segments.map((label, index) => {
@@ -78,10 +85,10 @@ const Header = ({ onOpenSearch }: { onOpenSearch?: () => void }) => {
             </BreadcrumbList>
           </Breadcrumb>
         </div>
-        <div className='flex items-center gap-1.5'>
+        <div className='flex shrink-0 items-center gap-1.5'>
           <Button
             variant='outline'
-            className='text-muted-foreground w-9 justify-start px-0 font-normal max-sm:justify-center sm:w-64 sm:px-3'
+            className='text-muted-foreground w-9 justify-start px-0 font-normal max-sm:justify-center sm:w-72 sm:px-3'
             onClick={onOpenSearch}
             aria-label={labels.search ?? 'search'}
             aria-keyshortcuts='Control+K Meta+K'

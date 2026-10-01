@@ -20,10 +20,12 @@ export interface ListToolbarSearch {
 
 export interface ListToolbarProps {
   search?: ListToolbarSearch
+  // Ô lọc nằm cùng dải, ngay sau ô tìm: một dải lọc duy nhất trên bảng.
+  filters?: ReactNode
   children?: ReactNode
 }
 
-export function ListToolbar({ search, children }: ListToolbarProps) {
+export function ListToolbar({ search, filters, children }: ListToolbarProps) {
   const input = search ? (
     <>
       <Label htmlFor={search.id} className='sr-only'>
@@ -45,11 +47,12 @@ export function ListToolbar({ search, children }: ListToolbarProps) {
   ) : null
 
   return (
-    <div className='flex gap-4 p-6 max-sm:flex-col sm:items-center sm:justify-between'>
+    <div className='flex gap-3 p-4 max-sm:flex-col sm:items-start sm:justify-between md:px-6'>
+      <div className='flex min-w-0 flex-1 flex-wrap gap-3 max-sm:flex-col sm:items-center'>
       {search?.onSubmit ? (
         <form
           role='search'
-          className='w-full sm:max-w-2xs'
+          className='w-full sm:max-w-60'
           onSubmit={(event: FormEvent) => {
             event.preventDefault()
             search.onSubmit?.()
@@ -58,10 +61,12 @@ export function ListToolbar({ search, children }: ListToolbarProps) {
           {input}
         </form>
       ) : (
-        <div className='w-full sm:max-w-2xs'>{input}</div>
+        <div className='w-full sm:max-w-60'>{input}</div>
       )}
+      {filters}
+      </div>
 
-      {children ? <div className='flex flex-wrap items-center gap-2 sm:justify-between'>{children}</div> : null}
+      {children ? <div className='flex shrink-0 flex-wrap items-center gap-2'>{children}</div> : null}
     </div>
   )
 }

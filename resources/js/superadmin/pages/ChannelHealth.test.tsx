@@ -1,5 +1,5 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import type { ReactNode } from 'react';
 
 import { installDomStubs } from '../components/__fixtures__/dom';
@@ -46,10 +46,11 @@ describe('ChannelHealth', () => {
     it('hiện hộp thư hỏng kèm link tới account 360', () => {
         render(<ChannelHealth {...baseProps} />);
 
-        expect(screen.getByText('Zalo chính')).toBeInTheDocument();
-        expect(screen.getByRole('link', { name: 'Shop Hoa' })).toHaveAttribute('href', '/admin/accounts/7/overview');
-        expect(screen.getByText('Đăng nhập trên máy khác')).toBeInTheDocument();
-        expect(screen.getByText('Zalo session lost')).toBeInTheDocument();
+        const table = within(screen.getByRole('table'));
+        expect(table.getByText('Zalo chính')).toBeInTheDocument();
+        expect(table.getByRole('link', { name: 'Shop Hoa' })).toHaveAttribute('href', '/admin/accounts/7/overview');
+        expect(table.getByText('Đăng nhập trên máy khác')).toBeInTheDocument();
+        expect(table.getByText('Zalo session lost')).toBeInTheDocument();
     });
 
     it('chọn loại vấn đề thì lọc qua URL', async () => {

@@ -38,14 +38,18 @@ export interface FilterSelectProps {
   // Chuỗi rỗng = chưa lọc.
   value: string
   onChange: (value: string) => void
+  // Nằm chung dải với ô tìm: nhãn chỉ cho trình đọc màn hình ("Mọi kênh" đã tự nói nghĩa).
+  inline?: boolean
 }
 
-export function FilterSelect({ id, label, allLabel, options, value, onChange }: FilterSelectProps) {
+export function FilterSelect({ id, label, allLabel, options, value, onChange, inline = false }: FilterSelectProps) {
   const items = [{ label: allLabel, value: ALL_VALUE }, ...options]
 
   return (
-    <div className='flex w-full flex-col gap-2'>
-      <Label htmlFor={id}>{label}</Label>
+    <div className={cn('flex w-full flex-col gap-2', inline && 'sm:w-44')}>
+      <Label htmlFor={id} className={cn(inline && 'sr-only')}>
+        {label}
+      </Label>
       <Select
         items={items}
         value={value === '' ? ALL_VALUE : value}

@@ -10,6 +10,7 @@ export function CohortRetention({ data, title }: { data: CohortRetentionData; ti
     return (
         <CohortTable
             caption={title}
+            scrollHint={t('ADMIN_DASHBOARD.COHORT.SCROLL_HINT')}
             weekLabel={t('ADMIN_DASHBOARD.COHORT.WEEK')}
             sizeLabel={t('ADMIN_DASHBOARD.COHORT.SIZE')}
             offsetLabels={offsets.map(offset => t('ADMIN_DASHBOARD.COHORT.OFFSET', { n: offset }))}

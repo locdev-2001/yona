@@ -8,7 +8,7 @@ import PageHeader from '@admin/views/pages/page-header';
 import { useConsoleLabels } from '../labels';
 
 // Bản CE chỉ còn danh sách mục cấu hình (khối gói cước/billing là enterprise).
-export default function SuperAdminSettings({ sections }: { sections: { key: string; label: string; url: string }[] }) {
+export default function SuperAdminSettings({ sections }: { sections: { key: string; label: string; title?: string; url: string }[] }) {
     const label = useConsoleLabels();
 
     return (
@@ -19,7 +19,7 @@ export default function SuperAdminSettings({ sections }: { sections: { key: stri
                 <CardContent className="px-0">
                     <ul className="divide-y">
                         {sections.map(section => {
-                            const title = label('app_config_title', { section: section.label });
+                            const title = section.title ?? label('app_config_title', { section: section.label });
 
                             return (
                                 <li key={section.key} className="flex items-center justify-between gap-4 px-6 py-4">

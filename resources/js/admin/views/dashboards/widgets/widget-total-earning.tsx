@@ -5,6 +5,9 @@ import type { ReactNode } from 'react'
 import { Avatar, AvatarFallback } from '@admin/components/ui/avatar'
 import { Progress } from '@admin/components/ui/progress'
 
+// Util Imports
+import { cn } from '@admin/lib/utils'
+
 export type TotalEarningItem = {
   key: string
   // Tên đọc được của dòng, dùng làm nhãn cho thanh tiến độ.
@@ -18,48 +21,37 @@ export type TotalEarningItem = {
 }
 
 type Props = {
-  // Số tổng ở đầu ô kèm dòng chú thích; bỏ trống thì chỉ còn danh sách.
-  total?: { value: string; caption?: string }
   items: TotalEarningItem[]
   className?: string
 }
 
-// Danh sách xếp hạng: ô vuông biểu tượng, tên + dòng phụ, số và thanh tỉ lệ.
-const TotalEarningList = ({ total, items, className }: Props) => {
+// Danh sách xếp hạng: avatar, tên + số cùng một hàng, dòng phụ hoặc thanh tỉ lệ ngay dưới tên.
+// Mọi dòng cao bằng nhau ở mọi bề rộng, số không bao giờ rơi xuống dòng riêng.
+const TotalEarningList = ({ items, className }: Props) => {
   return (
-    <div className={className ?? 'flex flex-col gap-6'}>
-      {total ? (
-        <div className='flex flex-col gap-1'>
-          <span className='text-2xl font-semibold tabular-nums'>{total.value}</span>
-          {total.caption ? <span className='text-muted-foreground text-sm'>{total.caption}</span> : null}
-        </div>
-      ) : null}
-      <ul className='flex flex-1 flex-col justify-evenly gap-4'>
-        {items.map(item => (
-          <li key={item.key} className='flex flex-col gap-2 @sm:flex-row @sm:items-center @sm:justify-between @sm:gap-2.5'>
-            <div className='flex min-w-0 items-center gap-2.5'>
-              <Avatar className='size-9 rounded-sm after:rounded-[inherit] after:border-0'>
-                <AvatarFallback className='bg-(--tone)/15 text-(--tone) shrink-0 rounded-sm'>{item.icon}</AvatarFallback>
-              </Avatar>
-              <div className='flex min-w-0 flex-col gap-1'>
-                <span className='truncate text-base font-medium'>{item.title}</span>
-                {item.subtitle ? <span className='text-muted-foreground truncate text-sm'>{item.subtitle}</span> : null}
-              </div>
+    <ul className={cn('flex flex-col gap-4', className)}>
+      {items.map(item => (
+        <li key={item.key} className='flex items-center gap-3'>
+          <Avatar className='size-9 after:border-0'>
+            <AvatarFallback className='bg-(--tone)/15 text-(--tone) shrink-0'>{item.icon}</AvatarFallback>
+          </Avatar>
+          <div className='flex min-w-0 flex-1 flex-col gap-1'>
+            <div className='flex min-w-0 items-baseline justify-between gap-3'>
+              <span className='min-w-0 truncate text-sm font-medium'>{item.title}</span>
+              <span className='text-muted-foreground shrink-0 text-sm tabular-nums'>{item.value}</span>
             </div>
-            <div className='shrink-0 space-y-2 @sm:text-right'>
-              <p className='text-sm tabular-nums'>{item.value}</p>
-              {item.progressPercentage !== undefined ? (
-                <Progress
-                  value={item.progressPercentage}
-                  aria-label={item.label}
-                  className='w-full **:data-[slot=progress-track]:h-1.5 @sm:w-36'
-                />
-              ) : null}
-            </div>
-          </li>
-        ))}
-      </ul>
-    </div>
+            {item.progressPercentage !== undefined ? (
+              <Progress
+                value={item.progressPercentage}
+                aria-label={item.label}
+                className='w-full **:data-[slot=progress-track]:h-1.5'
+              />
+            ) : null}
+            {item.subtitle ? <span className='text-muted-foreground truncate text-sm'>{item.subtitle}</span> : null}
+          </div>
+        </li>
+      ))}
+    </ul>
   )
 }
 

@@ -212,8 +212,10 @@ const StickerGrid = ({
   }
 
   const ghostSticker = reorder.ghost ? stickerById.get(Number(reorder.ghost.key)) : undefined
+  const anyLacksKeywords = stickers.some(sticker => sticker.status === 'ready' && sticker.keywords.length === 0)
 
   return (
+    <>
     <div ref={listRef} className='relative grid grid-cols-3 gap-3 sm:grid-cols-[repeat(auto-fill,minmax(6.5rem,1fr))]'>
       <div role='listbox' aria-label={t('STICKER_LIBRARY.GRID_LABEL', { name: packName })} className='contents'>
         {orderedStickers.map((sticker, index) => {
@@ -252,12 +254,12 @@ const StickerGrid = ({
                 onKeyDown={event => onTileKeyDown(sticker, index, event)}
                 onFocus={() => setFocusedId(sticker.id)}
                 className={cn(
-                  'bg-card ring-foreground/10 focus-visible:ring-ring/50 flex size-full cursor-pointer items-center justify-center overflow-hidden rounded-xl shadow-xs ring-1 transition-shadow outline-none select-none focus-visible:ring-[3px]',
+                  'bg-card border-border focus-visible:ring-ring/50 flex size-full cursor-pointer items-center justify-center overflow-hidden rounded-xl border transition-shadow outline-none select-none focus-visible:ring-[3px]',
                   isFailed && 'bg-destructive/10 ring-destructive/30',
                   isProcessing && !isStuck && 'bg-muted animate-pulse',
-                  !isFailed && !isProcessing && 'hover:ring-primary/40',
+                  !isFailed && !isProcessing && 'hover:border-primary/40',
                   isSelected && 'ring-primary ring-2',
-                  lifted?.id === sticker.id && 'ring-primary shadow-lg ring-2',
+                  lifted?.id === sticker.id && 'ring-primary ring-2',
                   flashIds.has(sticker.id) && 'ring-primary/60 ring-2'
                 )}
               >
@@ -370,6 +372,14 @@ const StickerGrid = ({
           )
         : null}
     </div>
+    {anyLacksKeywords ? (
+      // Chú giải cho chấm cam ở góc ô sticker.
+      <p className='text-muted-foreground mt-3 flex items-center gap-2 text-xs'>
+        <span className='size-1.5 shrink-0 rounded-full bg-amber-500' aria-hidden='true' />
+        {t('STICKER_LIBRARY.NO_KEYWORDS_DOT')}
+      </p>
+    ) : null}
+    </>
   )
 }
 

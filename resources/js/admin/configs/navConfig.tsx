@@ -85,26 +85,20 @@ export const NAV_ICONS: Record<string, IconName> = {
 
 export const navIcon = (key: string): IconName => NAV_ICONS[key] ?? 'CircleIcon'
 
+// Mục có mục con (Cấu hình ứng dụng) hiện thành một link: các mục con đã là tab
+// trong trang và vẫn tìm được qua bảng lệnh, lặp lại ở thanh bên chỉ thêm nhiễu.
 export const toNavItems = (groups: ConsoleNavGroup[]): NavItem[] =>
   groups.map(group => ({
-    groupLabel: group.label,
-    items: group.items.map((item): MenuItem => {
-      if (item.children?.length) {
-        return {
-          icon: navIcon(item.key),
-          label: item.label,
-          childItems: item.children.map(child => ({ label: child.label, href: child.url }))
-        }
-      }
-
-      return {
+    groupLabel: group.label || undefined,
+    items: group.items.map(
+      (item): MenuItem => ({
         icon: navIcon(item.key),
         label: item.label,
         href: item.url,
         ...(item.external ? { target: '_blank' as const } : {}),
         ...(item.exact || item.external ? {} : { activePath: item.url })
-      }
-    })
+      })
+    )
   }))
 
 export const useConsoleNavGroups = (): ConsoleNavGroup[] =>

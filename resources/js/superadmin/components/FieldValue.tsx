@@ -7,37 +7,35 @@ import { Avatar, AvatarFallback, AvatarImage } from '@admin/components/ui/avatar
 import { Badge } from '@admin/components/ui/badge';
 import { Button } from '@admin/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@admin/components/ui/table';
+import { EMPTY_VALUE, formatDate as formatConsoleDate, formatDateTime as formatConsoleDateTime } from '@admin/lib/format';
 import { cn } from '@admin/lib/utils';
 import { ConfirmDialog } from '@admin/views/apps/resources/dialogs/confirm-dialog';
 
 import { useConsoleDictionary, useConsoleLabels } from '../labels';
 import type { AssociationValue, HasManyValue, HasOneValue, SuperAdminField } from '../types';
 
-const dateTimeFormatter = new Intl.DateTimeFormat('vi-VN', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-});
-
-const dateFormatter = new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+// Một định dạng ngày giờ cho cả console (lib/format); chuỗi lạ thì giữ nguyên.
+const parses = (value: unknown) => !Number.isNaN(new Date(String(value)).getTime());
 
 export function formatDate(value: unknown): string {
-    if (value === null || value === undefined || value === '') return '';
-    const date = new Date(String(value));
+    if (value === null || value === undefined || value === '') return EMPTY_VALUE;
 
-    return Number.isNaN(date.getTime()) ? String(value) : dateFormatter.format(date);
+    return parses(value) ? formatConsoleDate(String(value)) : String(value);
 }
 
 // Máy chủ gửi thời điểm dạng `Mon, 31 Aug 2026 06:58:21 +0000` (UTC); hiện theo
-// giờ máy người xem, chuỗi lạ thì giữ nguyên.
+// giờ máy người xem.
 export function formatDateTime(value: unknown): string {
-    if (value === null || value === undefined || value === '') return '';
-    const date = new Date(String(value));
+    if (value === null || value === undefined || value === '') return EMPTY_VALUE;
 
-    return Number.isNaN(date.getTime()) ? String(value) : dateTimeFormatter.format(date);
+    return parses(value) ? formatConsoleDateTime(String(value)) : String(value);
 }
+
+function Empty() {
+    return <span className="text-muted-foreground">{EMPTY_VALUE}</span>;
+}
+
+const isBlank = (value: unknown) => value === null || value === undefined || value === '';
 
 // Mỗi kiểu field vẽ đúng một kiểu; `nested` là ô trong bảng (gọn một dòng).
 export default function FieldValue({ field, nested = false }: { field: SuperAdminField; nested?: boolean }) {
@@ -51,16 +49,18 @@ export default function FieldValue({ field, nested = false }: { field: SuperAdmi
         case 'date_time':
         case 'confirmed_at_field':
             // Trong bảng chỉ hiện ngày (giờ đầy đủ ở tooltip), trang chi tiết hiện cả giờ.
+            if (isBlank(field.value)) return <Empty />;
+
             return nested ? (
-                <span className="whitespace-nowrap tabular-nums" title={formatDateTime(field.value)}>
+                <span className="font-num whitespace-nowrap" title={formatDateTime(field.value)}>
                     {formatDate(field.value)}
                 </span>
             ) : (
-                <span className="whitespace-nowrap tabular-nums">{formatDateTime(field.value)}</span>
+                <span className="font-num whitespace-nowrap">{formatDateTime(field.value)}</span>
             );
         case 'number':
         case 'count_field':
-            return <span className="tabular-nums">{field.value === null || field.value === undefined ? '' : String(field.value)}</span>;
+            return isBlank(field.value) ? <Empty /> : <span className="font-num">{String(field.value)}</span>;
         case 'account_status_field':
             return <AccountStatus value={String(field.value ?? '')} />;
         case 'avatar_field':
@@ -96,7 +96,8 @@ export default function FieldValue({ field, nested = false }: { field: SuperAdmi
 // Màu nhãn trạng thái như bảng người dùng mẫu: xanh = hoạt động, đỏ = tạm khoá.
 export const STATUS_BADGE_STYLES = {
     active: 'bg-green-600/10 text-green-600 focus-visible:ring-green-600/20 dark:bg-green-400/10 dark:text-green-400 dark:focus-visible:ring-green-400/40',
-    pending: 'bg-amber-600/10 text-amber-600 focus-visible:ring-amber-600/20 dark:bg-amber-400/10 dark:text-amber-400 dark:focus-visible:ring-amber-400/40',
+    pending:
+        'bg-amber-600/10 text-amber-600 focus-visible:ring-amber-600/20 dark:bg-amber-400/10 dark:text-amber-400 dark:focus-visible:ring-amber-400/40',
     suspended: 'bg-destructive/10 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 text-destructive',
 } as const;
 
@@ -130,9 +131,7 @@ function SuspensionHistory({ value }: { value: SuspensionEvent[] }) {
                 <li key={`${event.suspended_at}-${event.category}`} className="flex flex-wrap items-center gap-x-2">
                     <Badge variant="outline">{event.category}</Badge>
                     <span>{event.reason}</span>
-                    {event.suspended_at ? (
-                        <span className="text-muted-foreground text-xs">{formatDateTime(event.suspended_at)}</span>
-                    ) : null}
+                    {event.suspended_at ? <span className="text-muted-foreground text-xs">{formatDateTime(event.suspended_at)}</span> : null}
                 </li>
             ))}
         </ul>

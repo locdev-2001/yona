@@ -8,6 +8,8 @@ return [
     'RANGE' => [
         'LABEL' => 'Date range',
         'PRESETS' => ['7D' => '7 days', '30D' => '30 days', '90D' => '90 days'],
+        'SNAPSHOT' => 'As of now',
+        'PREVIOUS' => 'Previous period: {value}',
         'COMPARED' => 'vs previous period',
     ],
     'ACTIONS' => [
@@ -51,8 +53,8 @@ return [
         'ACTIVATION_FUNNEL' => ['TITLE' => 'Activation funnel', 'DESCRIPTION' => 'How far accounts that signed up in the range got.'],
         'COHORT_RETENTION' => ['TITLE' => 'Retention by signup week', 'DESCRIPTION' => 'Share of accounts still replying to customers in the weeks after signup (last 8 weeks).'],
         'SIGNUPS_TREND' => ['TITLE' => 'Signups by day', 'DESCRIPTION' => 'Accounts created per day.'],
-        'TOP_ACCOUNTS' => ['TITLE' => 'Most active accounts', 'DESCRIPTION' => 'Top 10 accounts by messages in the range.'],
-        'RECENT_SIGNUPS' => ['TITLE' => 'Latest accounts', 'DESCRIPTION' => 'The 10 most recent signups.'],
+        'TOP_ACCOUNTS' => ['TITLE' => 'Most active accounts', 'DESCRIPTION' => 'Up to 8 accounts with the most messages in the range.'],
+        'RECENT_SIGNUPS' => ['TITLE' => 'Latest accounts', 'DESCRIPTION' => 'Up to 8 of the most recent signups.'],
         'QUEUE_HEALTH' => ['TITLE' => 'Queues', 'DESCRIPTION' => 'Pending jobs, failed jobs and worker processes.'],
         'STICKERS' => ['TITLE' => 'Sticker library', 'DESCRIPTION' => 'Shared library and per-account libraries.'],
         'SYSTEM' => ['TITLE' => 'System', 'DESCRIPTION' => 'Versions and database size.'],
@@ -76,6 +78,8 @@ return [
     ],
     'FUNNEL' => [
         'FROM_START' => '{rate}% of signups',
+        'PREVIOUS_EMPTY' => 'No accounts at the previous step',
+        'BASELINE' => '100% baseline for the steps below',
         'FROM_PREVIOUS' => '{rate}% of previous step',
     ],
     'TREND' => ['TOTAL' => 'Total in range', 'PEAK' => 'Peak day', 'AVERAGE' => 'Daily average', 'REPLY_RATIO' => 'Outgoing per incoming'],
@@ -93,6 +97,7 @@ return [
         'WEEK' => 'Signup week',
         'SIZE' => 'Accounts',
         'OFFSET' => 'Week {n}',
+        'SCROLL_HINT' => 'Swipe sideways for later weeks.',
         'CELL' => 'Week of {week}, week {offset}: {active} of {size} accounts ({rate}%)',
     ],
     'CHANNEL_HEALTH' => [
@@ -102,6 +107,7 @@ return [
         'TOTAL' => '{count} inboxes',
         'ALL_HEALTHY' => 'All inboxes are working normally.',
     ],
+    'CHANNELS' => ['CENTER' => 'conversations'],
     'LISTS' => [
         'MESSAGES' => '{count} messages',
         'INBOXES' => '{count} inboxes',

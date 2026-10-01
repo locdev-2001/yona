@@ -10,6 +10,7 @@ use App\Models\SuperAdmin;
 use App\Models\User;
 use App\Notifications\ConfirmationInstructions;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
@@ -181,10 +182,26 @@ it('lưu app config vào installation_configs', function () {
     $this->post('/admin/app_config', [
         'config' => 'general',
         'app_config' => ['WEBHOOK_TIMEOUT' => '15', 'KHONG_DUOC_PHEP' => 'x'],
-    ])->assertRedirect('/admin/settings');
+    ])->assertRedirect('/admin/app_config?config=general');
 
     expect(InstallationConfig::valueOf('WEBHOOK_TIMEOUT'))->toBe('15')
         ->and(InstallationConfig::query()->where('name', 'KHONG_DUOC_PHEP')->exists())->toBeFalse();
+});
+
+it('trang cấu hình ứng dụng hiện nhãn tiếng Việt và giá trị mặc định làm gợi ý', function () {
+    App::setLocale('vi');
+
+    $this->get('/admin/app_config?config=general')
+        ->assertOk()
+        ->assertInertia(fn ($page) => $page->component('superadmin/AppConfig', false)
+            ->where('title', 'Cấu hình chung')
+            ->where('strings.title', 'Cấu hình ứng dụng')
+            ->where('definitions.WEBHOOK_TIMEOUT.display_title', 'Thời gian chờ webhook (giây)')
+            ->where('definitions.WEBHOOK_TIMEOUT.default', '5')
+            ->where('definitions.FIREBASE_PROJECT_ID.default', null));
+
+    $this->get('/admin/app_config?config=tiktok')
+        ->assertInertia(fn ($page) => $page->where('title', 'Cấu hình TikTok'));
 });
 
 it('liệt kê access token theo chủ sở hữu', function () {

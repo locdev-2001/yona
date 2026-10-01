@@ -2,7 +2,7 @@
 import type { ReactNode } from 'react'
 
 // Component Imports
-import { Card, CardContent, CardHeader } from '@admin/components/ui/card'
+import { Card, CardContent } from '@admin/components/ui/card'
 
 type StatisticsCardProps = {
   icon: ReactNode
@@ -12,18 +12,19 @@ type StatisticsCardProps = {
   className?: string
 }
 
+// Cùng khuôn thẻ chỉ số của trang Tổng quan: nhãn xám nhỏ trên, số lớn dưới.
 const StatisticsCard = ({ icon, value, title, description, className }: StatisticsCardProps) => {
   return (
-    <Card className={className}>
-      <CardHeader className='flex items-center gap-2'>
-        <div className='bg-(--tone)/15 text-(--tone) flex size-8 shrink-0 items-center justify-center rounded-sm'>
-          {icon}
-        </div>
-        <span className='text-2xl'>{value}</span>
-      </CardHeader>
+    <Card size='sm' className={className}>
       <CardContent className='flex flex-col gap-2'>
-        <span className='text-base font-semibold'>{title}</span>
-        {description ? <p className='text-muted-foreground'>{description}</p> : null}
+        <div className='flex items-center justify-between gap-2'>
+          <span className='text-muted-foreground min-w-0 text-sm'>{title}</span>
+          <span className='bg-(--tone)/15 text-(--tone) flex size-7 shrink-0 items-center justify-center rounded-sm'>
+            {icon}
+          </span>
+        </div>
+        <span className='text-2xl font-medium tabular-nums'>{value}</span>
+        {description ? <p className='text-muted-foreground text-xs'>{description}</p> : null}
       </CardContent>
     </Card>
   )

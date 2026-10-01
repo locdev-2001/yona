@@ -1,5 +1,5 @@
 // React Imports
-import type { FormEvent } from 'react'
+import type { FormEvent, ReactNode } from 'react'
 
 // Third-party Imports
 import { PlusIcon, SearchIcon, XIcon } from 'lucide-react'
@@ -16,6 +16,8 @@ export interface ResourceTableToolbarProps {
   clearLabel: string
   canClear: boolean
   newRecord: { href: string; label: string } | null
+  // Ô lọc nằm cùng dải với ô tìm.
+  filters?: ReactNode
   onSearchChange: (search: string) => void
   onSubmit: () => void
   onClear: () => void
@@ -28,6 +30,7 @@ export function ResourceTableToolbar({
   clearLabel,
   canClear,
   newRecord,
+  filters,
   onSearchChange,
   onSubmit,
   onClear
@@ -38,32 +41,35 @@ export function ResourceTableToolbar({
   }
 
   return (
-    <div className='flex gap-4 p-6 max-sm:flex-col sm:items-center sm:justify-between'>
-      <form role='search' onSubmit={submit} className='w-full sm:max-w-xs'>
-        <Label htmlFor='search-records' className='sr-only'>
-          {searchLabel}
-        </Label>
-        <InputGroup>
-          <InputGroupAddon>
-            <SearchIcon />
-          </InputGroupAddon>
-          <InputGroupInput
-            id='search-records'
-            name='search'
-            type='search'
-            value={search}
-            onChange={event => onSearchChange(event.target.value)}
-            placeholder={searchLabel}
-          />
-          {canClear ? (
-            <InputGroupAddon align='inline-end'>
-              <InputGroupButton size='icon-xs' aria-label={clearLabel} onClick={onClear}>
-                <XIcon />
-              </InputGroupButton>
+    <div className='flex gap-3 p-4 max-sm:flex-col sm:items-center sm:justify-between md:px-6'>
+      <div className='flex min-w-0 flex-1 gap-3 max-sm:flex-col sm:items-center'>
+        <form role='search' onSubmit={submit} className='w-full sm:max-w-xs'>
+          <Label htmlFor='search-records' className='sr-only'>
+            {searchLabel}
+          </Label>
+          <InputGroup>
+            <InputGroupAddon>
+              <SearchIcon />
             </InputGroupAddon>
-          ) : null}
-        </InputGroup>
-      </form>
+            <InputGroupInput
+              id='search-records'
+              name='search'
+              type='search'
+              value={search}
+              onChange={event => onSearchChange(event.target.value)}
+              placeholder={searchLabel}
+            />
+            {canClear ? (
+              <InputGroupAddon align='inline-end'>
+                <InputGroupButton size='icon-xs' aria-label={clearLabel} onClick={onClear}>
+                  <XIcon />
+                </InputGroupButton>
+              </InputGroupAddon>
+            ) : null}
+          </InputGroup>
+        </form>
+        {filters}
+      </div>
 
       {newRecord ? (
         <div className='flex flex-wrap items-center gap-2 sm:justify-between'>

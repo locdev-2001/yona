@@ -2,13 +2,11 @@
 
 namespace App\Http\Middleware;
 
-use App\Http\Controllers\SuperAdmin\AppConfigsController;
 use App\Support\SuperAdmin\ConsoleNavigation;
 use App\Support\SuperAdmin\DashboardRegistry;
 use App\Support\SuperAdminArea;
 use Closure;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -35,11 +33,7 @@ class SuperAdminInertia
                 'toolPages' => [
                     ['key' => 'sticker_packs', 'label' => __('sticker_library.MENU'), 'url' => SuperAdminArea::url('sticker_packs')],
                 ],
-                'settingsPages' => array_map(fn (string $section) => [
-                    'key' => $section,
-                    'label' => Str::headline($section),
-                    'url' => SuperAdminArea::url("app_config?config={$section}"),
-                ], AppConfigsController::sections()),
+                'settingsPages' => ConsoleNavigation::appConfigSections(),
                 'navGroups' => ConsoleNavigation::groups(),
                 'labels' => ConsoleNavigation::labels(),
                 'dictionary' => ConsoleNavigation::dictionary(),

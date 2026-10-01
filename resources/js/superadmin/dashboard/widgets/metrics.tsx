@@ -15,18 +15,18 @@ import type { ReactNode } from 'react';
 
 import { CardContent } from '@admin/components/ui/card';
 import { Separator } from '@admin/components/ui/separator';
-import TimeSeriesChart, { InsetCard, MetricBoxes } from '@admin/views/dashboards/charts/chart-sales-metrics';
+import TimeSeriesChart, { GoalDonut, InsetCard, MetricBoxes } from '@admin/views/dashboards/charts/chart-sales-metrics';
 import type { ChartSeries } from '@admin/views/dashboards/charts/chart-sales-metrics';
 import StatisticsCard from '@admin/views/dashboards/statistics/statistics-card-01';
 import FunnelProgress from '@admin/views/dashboards/widgets/widget-funnel';
 import ProductInsightsStats from '@admin/views/dashboards/widgets/widget-product-insights';
-import TotalEarningList from '@admin/views/dashboards/widgets/widget-total-earning';
 
 import { t } from '../../../i18n';
 import { formatDay, formatNumber, formatPercent } from '../format';
 import type {
     ActivationFunnelData,
     ConversationsByChannelData,
+    FunnelStep,
     KpisData,
     MessagesTrendData,
     SignupsTrendData,
@@ -47,7 +47,7 @@ const trendOf = (change: number) => (change > 0 ? 'up' : change < 0 ? 'down' : '
 
 export function Kpis({ data }: { data: KpisData }) {
     return (
-        <div className="grid grid-cols-2 gap-4 @lg:gap-6 @3xl:grid-cols-4">
+        <div className="grid grid-cols-2 gap-4 @3xl:grid-cols-4 @3xl:gap-6">
             {data.metrics.map(metric => (
                 <StatisticsCard
                     key={metric.key}
@@ -61,6 +61,11 @@ export function Kpis({ data }: { data: KpisData }) {
                     }
                     trend={metric.changePercent === null ? 'flat' : trendOf(metric.changePercent)}
                     comparisonText={t('ADMIN_DASHBOARD.RANGE.COMPARED')}
+                    note={
+                        metric.previous === null
+                            ? t('ADMIN_DASHBOARD.RANGE.SNAPSHOT')
+                            : t('ADMIN_DASHBOARD.RANGE.PREVIOUS', { value: formatNumber(metric.previous) })
+                    }
                 />
             ))}
         </div>
@@ -104,7 +109,7 @@ function peakDay(dates: string[], values: number[]): string {
     return index >= 0 && dates[index] ? `${formatNumber(max)} · ${formatDay(dates[index])}` : '-';
 }
 
-// Ô số nhỏ viền mảnh ở trên, biểu đồ đường trong thẻ lồng ở dưới.
+// Hai ô tỉ lệ và ngày cao điểm ở trên (tổng tin vào/ra đã có ở hàng chỉ số), biểu đồ đường dưới.
 export function MessagesTrend({ data, title }: { data: MessagesTrendData; title: string }) {
     const dates = data.days.map(day => day.date);
     const incoming = data.days.map(day => day.incoming);
@@ -113,22 +118,10 @@ export function MessagesTrend({ data, title }: { data: MessagesTrendData; title:
     const totalOut = sum(outgoing);
 
     return (
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-1 flex-col gap-6">
             <MetricBoxes
-                className="grid gap-4 @md:grid-cols-2 @4xl:grid-cols-4"
+                className="grid gap-4 @md:grid-cols-2"
                 metrics={[
-                    {
-                        key: 'incoming',
-                        icon: <ArrowDownLeftIcon className="size-5" />,
-                        title: t('ADMIN_DASHBOARD.SERIES.INCOMING'),
-                        value: formatNumber(totalIn),
-                    },
-                    {
-                        key: 'outgoing',
-                        icon: <ArrowUpRightIcon className="size-5" />,
-                        title: t('ADMIN_DASHBOARD.SERIES.OUTGOING'),
-                        value: formatNumber(totalOut),
-                    },
                     {
                         key: 'ratio',
                         icon: <RepeatIcon className="size-5" />,
@@ -143,7 +136,7 @@ export function MessagesTrend({ data, title }: { data: MessagesTrendData; title:
                     },
                 ]}
             />
-            <InsetCard>
+            <InsetCard className="ring-foreground/10 flex-1 shadow-none ring-1">
                 <CardContent>
                     <DailyChart
                         title={title}
@@ -191,22 +184,55 @@ export function SignupsTrend({ data, title }: { data: SignupsTrendData; title: s
     );
 }
 
-export function ConversationsByChannel({ data }: { data: ConversationsByChannelData }) {
-    const max = Math.max(1, ...data.items.map(item => item.count));
+const CHANNEL_COLORS = ['var(--chart-1)', 'var(--chart-2)', 'var(--chart-3)', 'var(--chart-4)', 'var(--chart-5)'];
 
+// Vành khuyên chia theo kênh, tổng ở giữa; chú giải là danh sách kênh với số và tỉ lệ.
+export function ConversationsByChannel({ data }: { data: ConversationsByChannelData }) {
+    const slices = data.items.map((item, index) => ({
+        key: `channel${index}`,
+        label: item.platform.name,
+        value: item.count,
+        color: CHANNEL_COLORS[index % CHANNEL_COLORS.length],
+    }));
+
+    // Ô thường cao theo ô biểu đồ bên cạnh: căn giữa dọc để khoảng trống chia đều trên dưới.
     return (
-        <TotalEarningList
-            total={{ value: formatNumber(data.total) }}
-            items={data.items.map(item => ({
-                key: item.channelType ?? item.platform.key,
-                label: item.platform.name,
-                title: item.platform.name,
-                icon: <MessagesSquareIcon className="size-5" />,
-                value: formatNumber(item.count),
-                progressPercentage: (item.count / max) * 100,
-            }))}
-        />
+        <div className="flex flex-1 flex-col justify-center">
+            <GoalDonut
+                title={t('ADMIN_DASHBOARD.WIDGETS.CONVERSATIONS_BY_CHANNEL.TITLE')}
+                slices={slices}
+                centerValue={formatNumber(data.total)}
+                centerLabel={t('ADMIN_DASHBOARD.CHANNELS.CENTER')}
+                legend={
+                    <ul className="flex flex-col gap-2">
+                        {slices.map(slice => (
+                            <li key={slice.key} className="flex items-center gap-2 text-sm">
+                                <span className="size-2.5 shrink-0 rounded-full" style={{ backgroundColor: slice.color }} aria-hidden="true" />
+                                <span className="min-w-0 flex-1 truncate">{slice.label}</span>
+                                <span className="text-muted-foreground shrink-0 tabular-nums">
+                                    {data.total > 0 ? `${formatPercent((slice.value / data.total) * 100)}%` : '-'}
+                                </span>
+                            </li>
+                        ))}
+                    </ul>
+                }
+            />
+        </div>
     );
+}
+
+// Mọi bước có một dòng chú thích để nhịp đều; bước trước bằng 0 thì nói rõ, không in "-%".
+function funnelCaption(step: FunnelStep, index: number): string {
+    if (index === 0) return t('ADMIN_DASHBOARD.FUNNEL.BASELINE');
+
+    const previous =
+        step.rateFromPrevious === null
+            ? t('ADMIN_DASHBOARD.FUNNEL.PREVIOUS_EMPTY')
+            : t('ADMIN_DASHBOARD.FUNNEL.FROM_PREVIOUS', { rate: formatPercent(step.rateFromPrevious) });
+
+    return step.rateFromStart === null
+        ? previous
+        : `${previous} · ${t('ADMIN_DASHBOARD.FUNNEL.FROM_START', { rate: formatPercent(step.rateFromStart) })}`;
 }
 
 // Phễu: mỗi bước một thanh tiến độ, độ dài theo tỉ lệ so với bước đăng ký.
@@ -221,13 +247,7 @@ export function ActivationFunnel({ data, title }: { data: ActivationFunnelData; 
                 label: t(`ADMIN_DASHBOARD.FUNNEL_STEPS.${step.key.toUpperCase()}`),
                 count: formatNumber(step.count),
                 percentage: (step.count / start) * 100,
-                caption:
-                    index > 0
-                        ? `${t('ADMIN_DASHBOARD.FUNNEL.FROM_PREVIOUS', { rate: formatPercent(step.rateFromPrevious) })} · ${t(
-                              'ADMIN_DASHBOARD.FUNNEL.FROM_START',
-                              { rate: formatPercent(step.rateFromStart) },
-                          )}`
-                        : undefined,
+                caption: funnelCaption(step, index),
             }))}
         />
     );

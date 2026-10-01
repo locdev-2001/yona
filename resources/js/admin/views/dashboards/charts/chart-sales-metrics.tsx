@@ -172,50 +172,65 @@ export const InsetCard = ({ children, className }: { children: ReactNode; classN
 
 type GoalSlice = { key: string; label: string; value: number; color: string }
 
-// Vành khuyên có số ở giữa và dòng tỉ lệ bên dưới.
+// Vành khuyên có số ở giữa, dòng tỉ lệ (tuỳ chọn) và chú giải từng phần bên dưới (tuỳ chọn).
+// Phần bằng 0 không vẽ: một phần duy nhất phủ kín vòng, không có khe nối.
 export const GoalDonut = ({
   title,
   slices,
   centerValue,
   centerLabel,
   footerLabel,
-  footerValue
+  footerValue,
+  legend
 }: {
   title: string
   slices: GoalSlice[]
   centerValue: string
   centerLabel: string
-  footerLabel: string
-  footerValue: string
+  footerLabel?: string
+  footerValue?: string
+  legend?: ReactNode
 }) => {
-  const config = Object.fromEntries(slices.map(slice => [slice.key, { label: slice.label, color: slice.color }])) satisfies ChartConfig
-  const data = slices.map(slice => ({ key: slice.key, value: slice.value, fill: `var(--color-${slice.key})` }))
+  const shown = slices.filter(slice => slice.value > 0)
+  const config = Object.fromEntries(
+    [...slices, { key: 'empty', label: '', color: 'var(--muted)' }].map(slice => [
+      slice.key,
+      { label: slice.label, color: slice.color }
+    ])
+  ) satisfies ChartConfig
+  const data =
+    shown.length > 0
+      ? shown.map(slice => ({ key: slice.key, value: slice.value, fill: `var(--color-${slice.key})` }))
+      : [{ key: 'empty', value: 1, fill: 'var(--color-empty)' }]
+  const summary = slices.map(slice => `${slice.label}: ${slice.value}`).join(', ')
 
   return (
     <figure aria-label={title} className='space-y-4'>
-      <figcaption className='sr-only'>{`${footerLabel}: ${footerValue}. ${slices.map(slice => `${slice.label}: ${slice.value}`).join(', ')}`}</figcaption>
+      <figcaption className='sr-only'>{footerLabel ? `${footerLabel}: ${footerValue}. ${summary}` : summary}</figcaption>
       <ChartContainer config={config} className='h-38.5 w-full' aria-hidden='true'>
         <PieChart margin={{ top: 0, bottom: 0, left: 0, right: 0 }}>
-          <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel nameKey='key' />} />
+          {shown.length > 0 ? <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel nameKey='key' />} /> : null}
           <Pie
             data={data}
             dataKey='value'
             nameKey='key'
-            startAngle={300}
-            endAngle={660}
+            startAngle={90}
+            endAngle={-270}
             innerRadius={58}
             outerRadius={75}
-            paddingAngle={2}
+            paddingAngle={shown.length > 1 ? 2 : 0}
+            stroke='none'
+            isAnimationActive={false}
           >
             <Label
               content={({ viewBox }) => {
                 if (viewBox && 'cx' in viewBox && 'cy' in viewBox) {
                   return (
                     <text x={viewBox.cx} y={viewBox.cy} textAnchor='middle' dominantBaseline='middle'>
-                      <tspan x={viewBox.cx} y={(viewBox.cy || 0) - 12} className='fill-card-foreground text-lg font-medium'>
+                      <tspan x={viewBox.cx} y={(viewBox.cy || 0) - 10} className='fill-card-foreground text-lg font-medium'>
                         {centerValue}
                       </tspan>
-                      <tspan x={viewBox.cx} y={(viewBox.cy || 0) + 19} className='fill-muted-foreground text-sm'>
+                      <tspan x={viewBox.cx} y={(viewBox.cy || 0) + 14} className='fill-muted-foreground text-sm'>
                         {centerLabel}
                       </tspan>
                     </text>
@@ -226,10 +241,13 @@ export const GoalDonut = ({
           </Pie>
         </PieChart>
       </ChartContainer>
-      <div className='flex items-center justify-between'>
-        <span className='text-xl'>{footerLabel}</span>
-        <span className='text-2xl font-medium tabular-nums'>{footerValue}</span>
-      </div>
+      {footerLabel ? (
+        <div className='flex items-baseline justify-between gap-3'>
+          <span className='text-muted-foreground text-sm'>{footerLabel}</span>
+          <span className='text-lg font-medium tabular-nums'>{footerValue}</span>
+        </div>
+      ) : null}
+      {legend}
     </figure>
   )
 }

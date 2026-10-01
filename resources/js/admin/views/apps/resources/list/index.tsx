@@ -3,11 +3,13 @@ import type { ReactNode } from 'react'
 
 // Component Imports
 import { Card } from '@admin/components/ui/card'
+import PageHeader from '@admin/views/pages/page-header'
 
 export interface ResourceListAppProps {
   title: string
   description: string
-  filters: ReactNode
+  // Ô lọc đã nằm trong thanh công cụ; giữ chỗ cho trang cần dải lọc riêng.
+  filters?: ReactNode
   toolbar: ReactNode
   table: ReactNode
   pagination: ReactNode
@@ -16,11 +18,8 @@ export interface ResourceListAppProps {
 // Khung trang danh sách: tiêu đề, rồi một thẻ gồm bộ lọc, thanh công cụ, bảng và phân trang.
 const ResourceListApp = ({ title, description, filters, toolbar, table, pagination }: ResourceListAppProps) => {
   return (
-    <div className='flex flex-col gap-3 lg:gap-6'>
-      <div className='sr-only'>
-        <h1>{title}</h1>
-        <p>{description}</p>
-      </div>
+    <div className='flex flex-col gap-4 lg:gap-6'>
+      <PageHeader title={title} description={description} className='mb-0 md:mb-0' />
 
       <Card className='py-0 shadow-none'>
         <div className='w-full'>

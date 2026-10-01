@@ -4,7 +4,10 @@ use App\Models\Account;
 use App\Models\AccountUser;
 use App\Models\Inbox;
 use App\Models\Message;
+use App\Models\Sticker;
+use App\Models\StickerPack;
 use App\Models\SuperAdmin;
+use App\Models\SuperAdminAuditLog;
 use App\Models\User;
 use App\Services\Admin\Operations\AccountActivity;
 
@@ -120,4 +123,39 @@ it('danh sách account có cột hoạt động, mở account 360 và lọc nguy
         );
 
     expect($quiet->exists)->toBeTrue();
+});
+
+it('dòng thời gian account 360 viết thao tác quản trị thành câu, gộp các lần tải sticker liền tay', function () {
+    app()->setLocale('vi');
+    $account = Account::factory()->create();
+    $pack = StickerPack::factory()->forAccount($account)->create(['name' => 'Mặt cười']);
+    $at = now()->subMinutes(5)->startOfSecond();
+    $log = fn (string $action, ?array $changes, $createdAt, int $status = 201) => SuperAdminAuditLog::query()->forceCreate([
+        'super_admin_email' => 'ops@yona.vn',
+        'action' => $action,
+        'subject_type' => 'accounts',
+        'subject_id' => $account->id,
+        'changes' => $changes,
+        'response_status' => $status,
+        'created_at' => $createdAt,
+    ]);
+
+    $log('POST api/accounts/{accountId}/sticker_packs', ['name' => 'Mặt cười'], $at);
+    foreach (range(1, 3) as $second) {
+        $createdAt = $at->copy()->addSeconds($second);
+        Sticker::factory()->create(['sticker_pack_id' => $pack->id, 'created_at' => $createdAt]);
+        $log('POST api/accounts/{accountId}/sticker_packs/{packId}/stickers', null, $createdAt);
+    }
+    $log('POST accounts/{id}/reset_cache', null, $at->copy()->addMinute(), 500);
+
+    $titles = collect(AccountActivity::timeline($account))->where('type', 'admin_action')->values();
+
+    expect($titles->pluck('title')->all())->toBe([
+        'Làm mới bộ nhớ đệm của tài khoản',
+        'Thêm 3 sticker vào bộ “Mặt cười”',
+        'Tạo bộ sticker “Mặt cười”',
+    ])
+        ->and($titles[0]['detail'])->toBe('Không thành công (mã 500), bởi ops@yona.vn')
+        ->and($titles[1]['detail'])->toBe('Bởi ops@yona.vn')
+        ->and($titles->pluck('title')->implode(' '))->not->toContain('api/');
 });

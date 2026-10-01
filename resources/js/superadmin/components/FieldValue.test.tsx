@@ -36,7 +36,7 @@ describe('FieldValue', () => {
     it('định dạng thời điểm máy chủ gửi, chuỗi lạ giữ nguyên', () => {
         expect(formatDateTime('Mon, 31 Aug 2026 06:58:21 +0000')).toMatch(/2026/);
         expect(formatDateTime('không phải ngày')).toBe('không phải ngày');
-        expect(formatDateTime(null)).toBe('');
+        expect(formatDateTime(null)).toBe('-');
     });
 
     it('che token và chỉ lộ khi bấm nút hiện', async () => {

@@ -38,7 +38,6 @@ final class ConsoleNavigation
             'config' => [
                 self::item('app_config', SuperAdminArea::url('app_config'), children: self::appConfigSections()),
                 self::item('installation_configs', SuperAdminArea::url('installation_configs')),
-                self::item('settings', SuperAdminArea::url('settings')),
             ],
             'security' => [
                 self::item('audit_logs', SuperAdminArea::url('audit_logs')),
@@ -74,14 +73,36 @@ final class ConsoleNavigation
         ];
     }
 
-    /** @return list<array{key: string, label: string, url: string}> */
-    private static function appConfigSections(): array
+    /**
+     * Các mục của trang Cấu hình ứng dụng, nhãn tiếng Việt (tên riêng viết đúng
+     * hoa thường: TikTok, WhatsApp).
+     *
+     * @return list<array{key: string, label: string, title: string, url: string}>
+     */
+    public static function appConfigSections(): array
     {
         return array_map(fn (string $section) => [
             'key' => $section,
-            'label' => Str::headline($section),
+            'label' => self::appConfigSectionLabel($section),
+            'title' => self::appConfigSectionTitle($section),
             'url' => SuperAdminArea::url("app_config?config={$section}"),
         ], AppConfigsController::sections());
+    }
+
+    public static function appConfigSectionLabel(string $section): string
+    {
+        $key = "admin_layout.app_config.sections.{$section}";
+
+        return __($key) === $key ? Str::headline($section) : __($key);
+    }
+
+    public static function appConfigSectionTitle(string $section): string
+    {
+        $key = "admin_layout.app_config.section_titles.{$section}";
+
+        return __($key) === $key
+            ? str_replace('{section}', self::appConfigSectionLabel($section), (string) __('admin_layout.labels.app_config_title'))
+            : __($key);
     }
 
     private static function externalTool(string $key, mixed $path): ?array

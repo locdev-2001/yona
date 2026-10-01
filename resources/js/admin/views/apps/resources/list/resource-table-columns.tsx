@@ -21,6 +21,7 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from '@admin/components/ui/tooltip'
 
 // Util Imports
+import { initialsOf } from '@admin/lib/format'
 import { cn } from '@admin/lib/utils'
 
 // Ô đầu tiên là liên kết tới bản ghi, trừ khi ô đó tự là liên kết (quan hệ, token).
@@ -64,10 +65,12 @@ function ResourceRowActions({
   }
 
   return (
-    <div className='flex items-center justify-center gap-1'>
+    <div className='flex items-center justify-end gap-1'>
       <Tooltip>
         <TooltipTrigger
-          render={<Link href={url} aria-label={labels.view} className={buttonVariants({ variant: 'ghost', size: 'icon' })} />}
+          render={
+            <Link href={url} aria-label={labels.view} className={buttonVariants({ variant: 'ghost', size: 'icon' })} />
+          }
         >
           <EyeIcon className='size-4.5' />
         </TooltipTrigger>
@@ -79,7 +82,15 @@ function ResourceRowActions({
       {canDestroy ? (
         <Tooltip>
           <TooltipTrigger
-            render={<Button variant='ghost' size='icon' aria-label={labels.delete} onClick={() => onDelete(url)} />}
+            render={
+              <Button
+                variant='ghost'
+                size='icon'
+                className='text-destructive hover:text-destructive'
+                aria-label={labels.delete}
+                onClick={() => onDelete(url)}
+              />
+            }
           >
             <Trash2Icon className='size-4.5' />
           </TooltipTrigger>
@@ -125,18 +136,13 @@ function ResourceRowActions({
   )
 }
 
-// Chữ cái đầu cho avatar dự phòng.
+// Chữ cái đầu cho avatar dự phòng: cùng một cách tính với mọi trang console.
 export function initialsFromName(name: string): string {
-  return (
-    name
-      .split(/\s+/)
-      .filter(word => /^\p{L}/u.test(word))
-      .slice(0, 2)
-      .map(word => word[0])
-      .join('')
-      .toUpperCase() || '#'
-  )
+  return initialsOf(name)
 }
+
+// Cột số căn phải (máy chủ gửi `number` hoặc `count-field`).
+export const NUMERIC_COLUMN_CLASSES = ['number', 'count-field']
 
 const cellOf = (row: ResourceRow, name: string) => row.cells.find(cell => cell.name === name)
 
@@ -192,9 +198,10 @@ export function buildResourceColumns(options: ResourceColumnsOptions): ColumnDef
       }
 
       const url = row.original.url
+      const numeric = NUMERIC_COLUMN_CLASSES.includes(column.html_class)
 
       return (
-        <div className={cn('max-w-xs', column.html_class === 'number' && 'text-right')}>
+        <div className={cn('max-w-xs', numeric && 'text-right')}>
           {columnIndex === 0 && url && !LINKED_CELL_TYPES.includes(cell.type) ? (
             <Link href={url} className='font-medium hover:underline'>
               {renderCell(cell)}
@@ -205,7 +212,7 @@ export function buildResourceColumns(options: ResourceColumnsOptions): ColumnDef
         </div>
       )
     },
-    meta: { numeric: column.html_class === 'number' },
+    meta: { numeric: NUMERIC_COLUMN_CLASSES.includes(column.html_class) },
     enableSorting: true
   })) as ColumnDef<ResourceRow>[]
 

@@ -6,6 +6,10 @@ declare module '@tanstack/react-table' {
   interface ColumnMeta<TData extends RowData, TValue> {
     headerClassName?: string
     cellClassName?: string
+    // Cột số: căn phải.
+    numeric?: boolean
+    // Trên thẻ di động: 'actions' nằm cạnh tiêu đề thay vì thành cặp nhãn - giá trị.
+    mobileRole?: 'actions'
   }
 }
 

@@ -7,14 +7,12 @@ import {
     CircleDashedIcon,
     ContactIcon,
     ExternalLinkIcon,
-    InboxIcon,
     LockIcon,
     LockOpenIcon,
     MessageSquareIcon,
     MessagesSquareIcon,
     PencilIcon,
     StickerIcon,
-    UsersIcon,
     VenetianMaskIcon,
 } from 'lucide-react';
 
@@ -23,7 +21,7 @@ import { Alert, AlertDescription, AlertTitle } from '@admin/components/ui/alert'
 import { Avatar, AvatarFallback, AvatarImage } from '@admin/components/ui/avatar';
 import { Badge } from '@admin/components/ui/badge';
 import { Button, buttonVariants } from '@admin/components/ui/button';
-import { Card, CardContent } from '@admin/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@admin/components/ui/card';
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@admin/components/ui/dialog';
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@admin/components/ui/field';
 import { Progress } from '@admin/components/ui/progress';
@@ -31,13 +29,13 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectVa
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@admin/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@admin/components/ui/tabs';
 import { Textarea } from '@admin/components/ui/textarea';
+import { formatDate, formatDateTime, initialsOf } from '@admin/lib/format';
 import { cn } from '@admin/lib/utils';
 import { ActivityTimeline } from '@admin/views/apps/accounts/view/activity-timeline';
 import StatisticsCard from '@admin/views/apps/accounts/view/statistics-card';
 import { UsageChart } from '@admin/views/apps/accounts/view/usage-chart';
 import { ConfirmDialog } from '@admin/views/apps/resources/dialogs/confirm-dialog';
-import { initialsFromName } from '@admin/views/apps/resources/list/resource-table-columns';
-import { formatCompactNumber, RecordViewLeftPanel } from '@admin/views/apps/resources/view/record-view-left-panel';
+import { RecordViewLeftPanel } from '@admin/views/apps/resources/view/record-view-left-panel';
 import { SectionCard, TableCard } from '@admin/views/apps/resources/view/section-card';
 import AccountStickerLibrary from '@admin/views/stickers/AccountStickerLibrary';
 
@@ -45,7 +43,7 @@ import { t } from '../../i18n';
 import { STATUS_BADGE_STYLES } from '../components/FieldValue';
 import { useConsoleDictionary, useConsoleLabels } from '../labels';
 import type { ChannelHealthItem } from './ChannelHealth';
-import { formatDate, formatDateTime, formatNumber, formatRelative } from './operationsFormat';
+import { formatNumber, formatRelative } from './operationsFormat';
 
 type Option = { value: string; label: string };
 
@@ -128,15 +126,18 @@ function problemDetail(detail: string | null): string | null {
     return /^\d+$/.test(detail) ? t('ADMIN_OPERATIONS.CHANNEL_HEALTH.DETAIL_COUNT', { count: Number(detail) }) : detail;
 }
 
-// Cột tin mỗi ngày trong 30 ngày qua.
-export function UsageBars({ usage }: { usage: AccountOverviewProps['usage'] }) {
-    const total = usage.reduce((sum, day) => sum + day.count, 0);
+const usageTotal = (usage: AccountOverviewProps['usage']) =>
+    label('SECTIONS.USAGE_TOTAL', { count: formatNumber(usage.reduce((sum, day) => sum + day.count, 0)) });
 
+// Cột tin mỗi ngày trong 30 ngày qua; tổng nằm ở mô tả thẻ, không chen giữa hai mốc ngày.
+export function UsageBars({ usage, className }: { usage: AccountOverviewProps['usage']; className?: string }) {
     return (
         <UsageChart
+            className={className}
             data={usage.map(day => ({ date: day.date, label: formatDate(day.date), count: day.count }))}
             seriesLabel={label('SECTIONS.USAGE')}
-            summary={label('SECTIONS.USAGE_TOTAL', { count: formatNumber(total) })}
+            summary={usageTotal(usage)}
+            dayLabel={day => `${day.label}: ${label('SECTIONS.USAGE_TOTAL', { count: formatNumber(day.count) })}`}
             startLabel={usage[0] ? formatDate(usage[0].date) : ''}
             endLabel={usage.length ? formatDate(usage[usage.length - 1].date) : ''}
         />
@@ -168,8 +169,10 @@ function Onboarding({ onboarding }: { onboarding: AccountOverviewProps['onboardi
                         ) : (
                             <CircleDashedIcon className="text-muted-foreground size-4 shrink-0" />
                         )}
-                        <span className={cn('flex-1', !milestone.done && 'text-muted-foreground')}>{milestone.label}</span>
-                        {milestone.at ? <span className="text-muted-foreground text-xs">{formatDate(milestone.at)}</span> : null}
+                        <span className={cn('min-w-0 flex-1', !milestone.done && 'text-muted-foreground')}>{milestone.label}</span>
+                        {milestone.at ? (
+                            <span className="text-muted-foreground shrink-0 text-xs whitespace-nowrap tabular-nums">{formatDate(milestone.at)}</span>
+                        ) : null}
                     </li>
                 ))}
             </ul>
@@ -403,7 +406,7 @@ function UsersTable({ users }: { users: AccountUserRow[] }) {
                             <TableCell className="h-14 pl-4">
                                 <div className="flex items-center gap-2">
                                     <Avatar className="size-9">
-                                        <AvatarFallback className="text-xs">{initialsFromName(user.name ?? user.email ?? '')}</AvatarFallback>
+                                        <AvatarFallback className="text-xs">{initialsOf(user.name ?? user.email ?? '')}</AvatarFallback>
                                     </Avatar>
                                     <div className="flex min-w-0 flex-col">
                                         <Link href={user.url} className="font-medium hover:underline">
@@ -454,7 +457,7 @@ function InboxesTable({ inboxes }: { inboxes: ChannelHealthItem[] }) {
                                 <div className="flex items-center gap-2">
                                     <Avatar className="size-9 rounded-sm after:rounded-sm">
                                         <AvatarImage src={inbox.platform.logo_url} alt="" className="rounded-sm" />
-                                        <AvatarFallback className="rounded-sm text-xs">{initialsFromName(inbox.platform.name)}</AvatarFallback>
+                                        <AvatarFallback className="rounded-sm text-xs">{initialsOf(inbox.platform.name)}</AvatarFallback>
                                     </Avatar>
                                     <div className="flex min-w-0 flex-col">
                                         <span className="truncate font-medium">{inbox.inboxName}</span>
@@ -534,10 +537,6 @@ export default function AccountOverview(props: AccountOverviewProps) {
                             {label(`STATUS.${account.status}`)}
                         </Badge>
                     }
-                    stats={[
-                        { key: 'users', icon: <UsersIcon />, value: formatCompactNumber(stats.users), label: label('STATS.USERS') },
-                        { key: 'inboxes', icon: <InboxIcon />, value: formatCompactNumber(stats.inboxes), label: label('STATS.INBOXES') },
-                    ]}
                     detailsTitle={consoleLabel('details')}
                     details={[
                         {
@@ -549,12 +548,6 @@ export default function AccountOverview(props: AccountOverviewProps) {
                                 </Link>
                             ),
                         },
-                        {
-                            key: 'status',
-                            label: attribute('status', 'Status'),
-                            value: label(`STATUS.${account.status}`),
-                            status: suspended ? 'suspended' : 'active',
-                        },
                         { key: 'locale', label: attribute('locale', 'Locale'), value: account.locale },
                         { key: 'created_at', label: attribute('created_at', 'Created at'), value: formatDate(account.createdAt) },
                         {
@@ -562,37 +555,35 @@ export default function AccountOverview(props: AccountOverviewProps) {
                             label: rowLabel('LAST_ACTIVITY'),
                             value: stats.lastActivityAt ? formatRelative(stats.lastActivityAt) : t('ADMIN_OPERATIONS.COMMON.NEVER'),
                         },
-                        { key: 'conversations', label: label('STATS.CONVERSATIONS'), value: formatNumber(stats.conversations) },
-                        { key: 'contacts', label: label('STATS.CONTACTS'), value: formatNumber(stats.contacts) },
+                        { key: 'users', label: label('STATS.USERS'), value: formatNumber(stats.users) },
+                        { key: 'inboxes', label: label('STATS.INBOXES'), value: formatNumber(stats.inboxes) },
                     ]}
                     actions={
-                        <>
-                            <Link href={urls.edit} className={cn(buttonVariants(), 'sm:flex-1')}>
+                        <div className="grid w-full grid-cols-1 gap-2 sm:grid-cols-2">
+                            <Link href={urls.edit} className={buttonVariants()}>
                                 <PencilIcon />
                                 {label('ACTIONS.EDIT')}
                             </Link>
                             {suspended ? (
-                                <Button variant="outline" className="sm:flex-1" onClick={() => setDialog('unlock')}>
+                                <Button variant="outline" onClick={() => setDialog('unlock')}>
                                     <LockOpenIcon />
                                     {label('ACTIONS.UNLOCK')}
                                 </Button>
                             ) : (
                                 <Button
                                     variant="outline"
-                                    className="text-destructive hover:bg-destructive/10 hover:text-destructive sm:flex-1"
+                                    className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                                     onClick={() => setDialog('lock')}
                                 >
                                     <LockIcon />
                                     {label('ACTIONS.LOCK')}
                                 </Button>
                             )}
-                        </>
-                    }
-                    footer={
-                        <Button variant="outline" className="w-full" onClick={() => setDialog('impersonate')}>
-                            <VenetianMaskIcon />
-                            {label('ACTIONS.IMPERSONATE')}
-                        </Button>
+                            <Button variant="outline" className="sm:col-span-2" onClick={() => setDialog('impersonate')}>
+                                <VenetianMaskIcon />
+                                {label('ACTIONS.IMPERSONATE')}
+                            </Button>
+                        </div>
                     }
                 />
 
@@ -608,10 +599,9 @@ export default function AccountOverview(props: AccountOverviewProps) {
                     ) : null}
 
                     <Tabs value={tab} onValueChange={value => selectTab(value as Tab)} className="flex-1 justify-between gap-6">
-                        <div className="overflow-x-auto">
-                            <TabsList className="w-max min-w-full **:group-data-[orientation=horizontal]/tabs:after:h-0">
+                        <TabsList className="grid w-full grid-cols-3 group-data-horizontal/tabs:h-auto sm:flex sm:group-data-horizontal/tabs:h-9 **:group-data-[orientation=horizontal]/tabs:after:h-0">
                                 {TABS.map(key => (
-                                    <TabsTrigger key={key} value={key}>
+                                    <TabsTrigger key={key} value={key} className="h-11 sm:h-full">
                                         {label(`TABS.${key.toUpperCase()}`)}
                                         {key === 'inboxes' && failingInboxes > 0 ? (
                                             <Badge variant="destructive" className="ml-1">
@@ -621,7 +611,6 @@ export default function AccountOverview(props: AccountOverviewProps) {
                                     </TabsTrigger>
                                 ))}
                             </TabsList>
-                        </div>
 
                         <TabsContent value="overview" className="space-y-6">
                             <div className="grid grid-cols-2 gap-4 lg:gap-6 xl:grid-cols-4">
@@ -642,22 +631,23 @@ export default function AccountOverview(props: AccountOverviewProps) {
                                     title={label('STATS.MESSAGES_30D')}
                                 />
                             </div>
-                            <div className="grid gap-6 xl:grid-cols-5">
-                                <SectionCard title={label('SECTIONS.USAGE')} className="xl:col-span-3">
-                                    <UsageBars usage={usage} />
-                                </SectionCard>
-                                <SectionCard title={label('SECTIONS.ONBOARDING')} className="xl:col-span-2">
+                            <div className="grid gap-6 xl:grid-cols-2">
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle className="text-base">{label('SECTIONS.USAGE')}</CardTitle>
+                                        <CardDescription>{usageTotal(usage)}</CardDescription>
+                                    </CardHeader>
+                                    <CardContent className="flex flex-1 flex-col">
+                                        <UsageBars usage={usage} className="flex-1" />
+                                    </CardContent>
+                                </Card>
+                                <SectionCard title={label('SECTIONS.ONBOARDING')}>
                                     <Onboarding onboarding={onboarding} />
                                 </SectionCard>
                             </div>
-                            <Card>
-                                <CardContent>
-                                    <div className="flex items-center">
-                                        <span className="text-lg font-medium">{label('SECTIONS.TIMELINE')}</span>
-                                    </div>
-                                    <Timeline events={timeline.slice(0, 5)} />
-                                </CardContent>
-                            </Card>
+                            <SectionCard title={label('SECTIONS.TIMELINE')}>
+                                <Timeline events={timeline.slice(0, 5)} />
+                            </SectionCard>
                         </TabsContent>
 
                         <TabsContent value="users" className="space-y-6">
@@ -718,22 +708,21 @@ export default function AccountOverview(props: AccountOverviewProps) {
                         </TabsContent>
 
                         <TabsContent value="activity" className="space-y-6">
-                            <Card>
-                                <CardContent>
-                                    <div className="flex flex-wrap items-center justify-between gap-3">
-                                        <span className="text-lg font-medium">{label('SECTIONS.TIMELINE')}</span>
-                                        <div className="flex gap-2">
-                                            <Link href={urls.auditLogs} className={buttonVariants({ variant: 'outline', size: 'sm' })}>
-                                                {label('ACTIONS.AUDIT')}
-                                            </Link>
-                                            <Link href={urls.data} className={buttonVariants({ variant: 'outline', size: 'sm' })}>
-                                                {label('ACTIONS.DATA')}
-                                            </Link>
-                                        </div>
+                            <SectionCard
+                                title={label('SECTIONS.TIMELINE')}
+                                action={
+                                    <div className="flex flex-wrap gap-2">
+                                        <Link href={urls.auditLogs} className={buttonVariants({ variant: 'outline', size: 'sm' })}>
+                                            {label('ACTIONS.AUDIT')}
+                                        </Link>
+                                        <Link href={urls.data} className={buttonVariants({ variant: 'outline', size: 'sm' })}>
+                                            {label('ACTIONS.DATA')}
+                                        </Link>
                                     </div>
-                                    <Timeline events={timeline} />
-                                </CardContent>
-                            </Card>
+                                }
+                            >
+                                <Timeline events={timeline} />
+                            </SectionCard>
                             <SectionCard title={label('SECTIONS.SUSPENSIONS')}>
                                 {suspension.history.length === 0 ? (
                                     <p className="text-muted-foreground text-sm">{label('EMPTY.SUSPENSIONS')}</p>

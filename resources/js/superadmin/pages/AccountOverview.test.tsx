@@ -134,11 +134,45 @@ describe('AccountOverview', () => {
         expect(window.location.hash).toBe('#users');
     });
 
-    it('biểu đồ lượng tin ghi tổng số tin và mốc ngày đầu/cuối', () => {
+    it('biểu đồ lượng tin ghi tổng số tin, mốc ngày đầu/cuối và số từng ngày (cả ngày 0 tin)', () => {
         render(<UsageBars usage={props().usage} />);
 
-        expect(screen.getByText('4 messages')).toBeInTheDocument();
         expect(screen.getByRole('img')).toHaveAccessibleName(/4 messages/);
+        expect(screen.getByText('29/09/2026')).toBeInTheDocument();
+        expect(screen.getByText('30/09/2026')).toBeInTheDocument();
+        expect(screen.getByTitle('29/09/2026: 0 messages')).toBeInTheDocument();
+        expect(screen.getByTitle('30/09/2026: 4 messages')).toBeInTheDocument();
+    });
+
+    it('tổng tin nằm ở mô tả thẻ; trạng thái, hội thoại, liên hệ không lặp ở cột trái', () => {
+        render(<AccountOverview {...props()} />);
+
+        expect(screen.getByText('4 messages')).toBeInTheDocument();
+        expect(screen.getAllByText('Active')).toHaveLength(1);
+        expect(screen.getAllByText('Conversations')).toHaveLength(1);
+        expect(screen.getAllByText('Contacts')).toHaveLength(1);
+        expect(screen.getByText('01/09/2026')).toBeInTheDocument();
+    });
+
+    it('dòng thời gian hiện câu mô tả và người làm, không có đường dẫn API', () => {
+        render(
+            <AccountOverview
+                {...props({
+                    timeline: [
+                        {
+                            type: 'admin_action',
+                            at: '2026-09-30T10:00:00Z',
+                            title: 'Added 3 stickers to “Mặt cười”',
+                            detail: 'By ops@yona.vn',
+                        },
+                    ],
+                })}
+            />,
+        );
+
+        expect(screen.getByText('Added 3 stickers to “Mặt cười”')).toBeInTheDocument();
+        expect(screen.getByText('By ops@yona.vn')).toBeInTheDocument();
+        expect(screen.queryByText(/api\//)).not.toBeInTheDocument();
     });
 
     it('cột trái hiện tên, trạng thái và số thành viên/hộp thư; sticker vẫn dẫn tới kho', () => {

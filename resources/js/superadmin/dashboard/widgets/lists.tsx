@@ -1,5 +1,7 @@
 import { Link } from '@inertiajs/react';
 
+import { formatDate, formatDateTime, initialsOf } from '@admin/lib/format';
+
 import { Badge } from '@admin/components/ui/badge';
 import { Button } from '@admin/components/ui/button';
 import { Separator } from '@admin/components/ui/separator';
@@ -7,22 +9,16 @@ import { GoalDonut } from '@admin/views/dashboards/charts/chart-sales-metrics';
 import TotalEarningList from '@admin/views/dashboards/widgets/widget-total-earning';
 
 import { t } from '../../../i18n';
-import { formatDateTime, formatNumber, formatPercent } from '../format';
+import { formatNumber, formatPercent } from '../format';
 import type { ChannelHealthData, RecentSignupsData, TopAccountsData } from '../types';
-
-// Hai chữ cái đầu của tên account cho ô vuông đầu dòng.
-function initials(name: string): string {
-    const words = name.trim().split(/\s+/).filter(Boolean);
-    const letters = words.length > 1 ? words[0][0] + words[words.length - 1][0] : (words[0] ?? '?').slice(0, 2);
-
-    return letters.toUpperCase();
-}
 
 const accountLink = (item: { name: string; url: string }) => (
     <Link href={item.url} className="hover:underline">
         {item.name}
     </Link>
 );
+
+const initialsIcon = (name: string) => <span className="text-xs font-medium">{initialsOf(name)}</span>;
 
 export function TopAccounts({ data }: { data: TopAccountsData }) {
     const max = Math.max(1, ...data.items.map(item => item.messages));
@@ -33,7 +29,7 @@ export function TopAccounts({ data }: { data: TopAccountsData }) {
                 key: String(item.id),
                 label: item.name,
                 title: accountLink(item),
-                icon: <span className="text-xs font-medium">{initials(item.name)}</span>,
+                icon: initialsIcon(item.name),
                 value: t('ADMIN_DASHBOARD.LISTS.MESSAGES', { count: formatNumber(item.messages) }),
                 progressPercentage: (item.messages / max) * 100,
             }))}
@@ -41,6 +37,7 @@ export function TopAccounts({ data }: { data: TopAccountsData }) {
     );
 }
 
+// Dòng phụ: số hộp thư, kèm email quản trị viên khi có (không lặp "chưa có" ở từng dòng).
 export function RecentSignups({ data }: { data: RecentSignupsData }) {
     return (
         <TotalEarningList
@@ -48,15 +45,14 @@ export function RecentSignups({ data }: { data: RecentSignupsData }) {
                 key: String(item.id),
                 label: item.name,
                 title: accountLink(item),
-                subtitle: item.ownerEmail ?? t('ADMIN_DASHBOARD.LISTS.NO_OWNER'),
-                icon: <span className="text-xs font-medium">{initials(item.name)}</span>,
+                subtitle: [t('ADMIN_DASHBOARD.LISTS.INBOXES', { count: formatNumber(item.inboxesCount) }), item.ownerEmail]
+                    .filter(Boolean)
+                    .join(' · '),
+                icon: initialsIcon(item.name),
                 value: (
-                    <span className="flex flex-col items-end gap-0.5">
-                        <time dateTime={item.createdAt}>{formatDateTime(item.createdAt)}</time>
-                        <span className="text-muted-foreground text-xs">
-                            {t('ADMIN_DASHBOARD.LISTS.INBOXES', { count: formatNumber(item.inboxesCount) })}
-                        </span>
-                    </span>
+                    <time dateTime={item.createdAt} title={formatDateTime(item.createdAt)}>
+                        {formatDate(item.createdAt)}
+                    </time>
                 ),
             }))}
         />

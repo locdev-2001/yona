@@ -10,6 +10,8 @@ const messages: Record<string, unknown> = {
                 "30D": "30 days",
                 "90D": "90 days"
             },
+            "SNAPSHOT": "As of now",
+            "PREVIOUS": "Previous period: {value}",
             "COMPARED": "vs previous period"
         },
         "ACTIONS": {
@@ -84,11 +86,11 @@ const messages: Record<string, unknown> = {
             },
             "TOP_ACCOUNTS": {
                 "TITLE": "Most active accounts",
-                "DESCRIPTION": "Top 10 accounts by messages in the range."
+                "DESCRIPTION": "Up to 8 accounts with the most messages in the range."
             },
             "RECENT_SIGNUPS": {
                 "TITLE": "Latest accounts",
-                "DESCRIPTION": "The 10 most recent signups."
+                "DESCRIPTION": "Up to 8 of the most recent signups."
             },
             "QUEUE_HEALTH": {
                 "TITLE": "Queues",
@@ -122,6 +124,8 @@ const messages: Record<string, unknown> = {
         },
         "FUNNEL": {
             "FROM_START": "{rate}% of signups",
+            "PREVIOUS_EMPTY": "No accounts at the previous step",
+            "BASELINE": "100% baseline for the steps below",
             "FROM_PREVIOUS": "{rate}% of previous step"
         },
         "TREND": {
@@ -144,6 +148,7 @@ const messages: Record<string, unknown> = {
             "WEEK": "Signup week",
             "SIZE": "Accounts",
             "OFFSET": "Week {n}",
+            "SCROLL_HINT": "Swipe sideways for later weeks.",
             "CELL": "Week of {week}, week {offset}: {active} of {size} accounts ({rate}%)"
         },
         "CHANNEL_HEALTH": {
@@ -152,6 +157,9 @@ const messages: Record<string, unknown> = {
             "FAILING": "Failing",
             "TOTAL": "{count} inboxes",
             "ALL_HEALTHY": "All inboxes are working normally."
+        },
+        "CHANNELS": {
+            "CENTER": "conversations"
         },
         "LISTS": {
             "MESSAGES": "{count} messages",
@@ -303,7 +311,7 @@ const messages: Record<string, unknown> = {
             "login_submit": "Sign in"
         },
         "groups": {
-            "overview": "Overview",
+            "overview": "",
             "customers": "Customers",
             "channels": "Channels & system",
             "data": "Data",
@@ -314,7 +322,7 @@ const messages: Record<string, unknown> = {
             "tools": "Tools"
         },
         "nav": {
-            "dashboard": "Dashboard",
+            "dashboard": "Overview",
             "accounts": "Accounts",
             "users": "Users",
             "channel_health": "Channel health",
@@ -333,6 +341,217 @@ const messages: Record<string, unknown> = {
             "pulse": "Performance (Pulse)",
             "logs": "Server logs",
             "dash": "dash.yona.vn"
+        },
+        "app_config": {
+            "page_title": "App config",
+            "page_description": "Integration keys and limits of this installation, grouped by service.",
+            "default_value": "Default: {value}",
+            "unset_value": "Not set",
+            "sections": {
+                "general": "General",
+                "facebook": "Facebook",
+                "shopify": "Shopify",
+                "microsoft": "Microsoft",
+                "email": "Email",
+                "slack": "Slack",
+                "instagram": "Instagram",
+                "tiktok": "TikTok",
+                "whatsapp_embedded": "WhatsApp Embedded",
+                "google": "Google"
+            },
+            "section_titles": {
+                "general": "General configuration"
+            },
+            "fields": {
+                "WEBHOOK_TIMEOUT": {
+                    "title": "Webhook request timeout (seconds)",
+                    "description": "Maximum time Yona waits for a webhook response before failing the request"
+                },
+                "MAXIMUM_FILE_UPLOAD_SIZE": {
+                    "title": "Attachment size limit (MB)",
+                    "description": "Maximum attachment size in MB allowed for uploads"
+                },
+                "FIREBASE_PROJECT_ID": {
+                    "title": "Firebase Project ID",
+                    "description": "Firebase project ID"
+                },
+                "FIREBASE_CREDENTIALS": {
+                    "title": "Firebase Credentials",
+                    "description": "Contents on your firebase credentials json file"
+                },
+                "WIDGET_TOKEN_EXPIRY": {
+                    "title": "Widget Token Expiry",
+                    "description": "Token expiry in days"
+                },
+                "FB_APP_ID": {
+                    "title": "Facebook App ID",
+                    "description": ""
+                },
+                "FB_VERIFY_TOKEN": {
+                    "title": "Facebook Verify Token",
+                    "description": "The verify token used for Facebook Messenger Webhook"
+                },
+                "FB_APP_SECRET": {
+                    "title": "Facebook App Secret",
+                    "description": ""
+                },
+                "IG_VERIFY_TOKEN": {
+                    "title": "Instagram Verify Token",
+                    "description": "The verify token used for Instagram Webhook"
+                },
+                "FACEBOOK_API_VERSION": {
+                    "title": "Facebook API Version",
+                    "description": "Configure this if you want to use a different Facebook API version. Make sure its prefixed with `v`"
+                },
+                "SHOPIFY_CLIENT_ID": {
+                    "title": "Shopify Client ID",
+                    "description": "The Client ID (API Key) from your Shopify Partner account"
+                },
+                "SHOPIFY_CLIENT_SECRET": {
+                    "title": "Shopify Client Secret",
+                    "description": "The Client Secret (API Secret Key) from your Shopify Partner account"
+                },
+                "AZURE_APP_ID": {
+                    "title": "Azure App ID",
+                    "description": "The App ID that will be used to authenticate with customer Microsoft accounts."
+                },
+                "AZURE_APP_SECRET": {
+                    "title": "Azure App Secret",
+                    "description": ""
+                },
+                "MAILER_INBOUND_EMAIL_DOMAIN": {
+                    "title": "Inbound Email Domain",
+                    "description": "The domain name to be used for generating conversation continuity emails (reply+id@domain.com)"
+                },
+                "ACCOUNT_EMAILS_LIMIT": {
+                    "title": "Account Email Sending Limit (Daily)",
+                    "description": "Maximum number of non-channel emails an account can send per day"
+                },
+                "ACCOUNT_EMAILS_PLAN_LIMITS": {
+                    "title": "Account Email Plan Limits (Daily)",
+                    "description": "Per-plan daily email sending limits as JSON"
+                },
+                "SLACK_CLIENT_ID": {
+                    "title": "Slack Client ID",
+                    "description": "Slack client ID"
+                },
+                "SLACK_CLIENT_SECRET": {
+                    "title": "Slack Client Secret",
+                    "description": "Slack client secret"
+                },
+                "INSTAGRAM_APP_ID": {
+                    "title": "Instagram App ID",
+                    "description": ""
+                },
+                "INSTAGRAM_APP_SECRET": {
+                    "title": "Instagram App Secret",
+                    "description": "The App Secret used for Instagram authentication"
+                },
+                "INSTAGRAM_VERIFY_TOKEN": {
+                    "title": "Instagram Verify Token",
+                    "description": "The verify token used for Instagram Webhook"
+                },
+                "INSTAGRAM_API_VERSION": {
+                    "title": "Instagram API Version",
+                    "description": "Configure this if you want to use a different Instagram API version. Make sure its prefixed with `v`"
+                },
+                "TIKTOK_APP_ID": {
+                    "title": "TikTok App ID",
+                    "description": ""
+                },
+                "TIKTOK_APP_SECRET": {
+                    "title": "TikTok App Secret",
+                    "description": ""
+                },
+                "TIKTOK_API_VERSION": {
+                    "title": "TikTok API Version",
+                    "description": "Configure this if you want to use a different TikTok API version. Make sure its prefixed with `v`"
+                },
+                "WHATSAPP_APP_ID": {
+                    "title": "WhatsApp App ID",
+                    "description": "The Facebook App ID for WhatsApp Business API integration"
+                },
+                "WHATSAPP_APP_SECRET": {
+                    "title": "WhatsApp App Secret",
+                    "description": "The App Secret for WhatsApp Embedded Signup flow (required for embedded signup)"
+                },
+                "WHATSAPP_CONFIGURATION_ID": {
+                    "title": "WhatsApp Configuration ID",
+                    "description": "The Configuration ID for WhatsApp Embedded Signup flow (required for embedded signup)"
+                },
+                "WHATSAPP_API_VERSION": {
+                    "title": "WhatsApp API Version",
+                    "description": "Configure this if you want to use a different WhatsApp API version. Make sure its prefixed with `v`"
+                },
+                "GOOGLE_OAUTH_CLIENT_ID": {
+                    "title": "Google OAuth Client ID",
+                    "description": "Google OAuth Client ID for email authentication"
+                },
+                "GOOGLE_OAUTH_CLIENT_SECRET": {
+                    "title": "Google OAuth Client Secret",
+                    "description": "Google OAuth Client Secret for email authentication"
+                },
+                "GOOGLE_OAUTH_REDIRECT_URI": {
+                    "title": "Google OAuth Redirect URI",
+                    "description": "The redirect URI configured in your Google OAuth app"
+                }
+            }
+        },
+        "audit": {
+            "verbs": {
+                "POST": "Create {object}",
+                "PUT": "Update {object}",
+                "PATCH": "Update {object}",
+                "DELETE": "Delete {object}"
+            },
+            "objects": {
+                "accounts": "account",
+                "account_users": "account member",
+                "users": "user",
+                "agent_bots": "agent bot",
+                "platform_apps": "platform app",
+                "access_tokens": "access token",
+                "installation_configs": "installation config",
+                "sticker_packs": "sticker pack",
+                "stickers": "sticker",
+                "avatar": "avatar"
+            },
+            "actions": {
+                "POST stickers": "Upload stickers",
+                "POST suspend": "Suspend account",
+                "POST unsuspend": "Unsuspend account",
+                "POST reset_cache": "Reset UI cache",
+                "POST impersonate": "Impersonate",
+                "POST resend_confirmation": "Resend confirmation email",
+                "POST publish": "Publish sticker pack",
+                "POST unpublish": "Unpublish sticker pack",
+                "POST move": "Move sticker pack",
+                "PUT order": "Reorder stickers",
+                "PUT layout": "Save overview layout",
+                "DELETE layout": "Reset overview layout",
+                "POST app_config": "Save app config",
+                "POST mfa": "Enable two-factor authentication",
+                "POST verify": "Confirm two-factor authentication"
+            },
+            "subjects": {
+                "accounts": "Account",
+                "account_users": "Member",
+                "users": "User",
+                "agent_bots": "Agent bot",
+                "platform_apps": "Platform app",
+                "access_tokens": "Access token",
+                "installation_configs": "Installation config",
+                "sticker_packs": "Sticker pack",
+                "dashboard": "Overview",
+                "app_config": "App config",
+                "impersonations": "Impersonation",
+                "mfa": "Two-factor authentication"
+            },
+            "status": {
+                "success": "Succeeded",
+                "rejected": "Rejected",
+                "failed": "Server error"
+            }
         },
         "flash": {
             "created": "Record created.",
@@ -411,6 +630,11 @@ const messages: Record<string, unknown> = {
             "DATA": "System data"
         },
         "COMMON": {
+            "OPEN_CALENDAR": "Open calendar",
+            "PREVIOUS_MONTH": "Previous month",
+            "NEXT_MONTH": "Next month",
+            "WEEKDAYS": "Mo,Tu,We,Th,Fr,Sa,Su",
+            "MONTH_YEAR": "{month}/{year}",
             "NEVER": "Never",
             "UNKNOWN": "Unknown",
             "APPLY": "Filter",
@@ -588,27 +812,101 @@ const messages: Record<string, unknown> = {
                     "first_reply": "First reply sent"
                 }
             },
+            "AUDIT": {
+                "BY": "By :admin",
+                "FAILED_BY": "Failed (status :status), by :admin",
+                "account_updated": {
+                    "PACK": "Edited account details",
+                    "NO_PACK": "Edited account details"
+                },
+                "account_deleted": {
+                    "PACK": "Deleted the account",
+                    "NO_PACK": "Deleted the account"
+                },
+                "cache_reset": {
+                    "PACK": "Reset the account cache",
+                    "NO_PACK": "Reset the account cache"
+                },
+                "unsuspended": {
+                    "PACK": "Reactivated the account",
+                    "NO_PACK": "Reactivated the account"
+                },
+                "pack_created": {
+                    "PACK": "Created sticker pack “:pack”",
+                    "NO_PACK": "Created a sticker pack"
+                },
+                "pack_updated": {
+                    "PACK": "Edited sticker pack “:pack”",
+                    "NO_PACK": "Edited a sticker pack"
+                },
+                "pack_deleted": {
+                    "PACK": "Deleted sticker pack “:pack”",
+                    "NO_PACK": "Deleted a sticker pack"
+                },
+                "pack_moved": {
+                    "PACK": "Moved sticker pack “:pack” to the shared library",
+                    "NO_PACK": "Moved a sticker pack to the shared library"
+                },
+                "pack_published": {
+                    "PACK": "Published sticker pack “:pack”",
+                    "NO_PACK": "Published a sticker pack"
+                },
+                "pack_unpublished": {
+                    "PACK": "Unpublished sticker pack “:pack”",
+                    "NO_PACK": "Unpublished a sticker pack"
+                },
+                "stickers_added": {
+                    "PACK": "Added :count stickers to “:pack”",
+                    "NO_PACK": "Added :count stickers to the account library"
+                },
+                "stickers_reordered": {
+                    "PACK": "Reordered stickers in “:pack”",
+                    "NO_PACK": "Reordered stickers in a pack"
+                },
+                "stickers_updated": {
+                    "PACK": "Edited :count stickers in “:pack”",
+                    "NO_PACK": "Edited :count stickers in the account library"
+                },
+                "stickers_deleted": {
+                    "PACK": "Deleted :count stickers from “:pack”",
+                    "NO_PACK": "Deleted :count stickers from the account library"
+                },
+                "other_change": {
+                    "PACK": "Changed account data",
+                    "NO_PACK": "Changed account data"
+                },
+                "other_delete": {
+                    "PACK": "Deleted account data",
+                    "NO_PACK": "Deleted account data"
+                }
+            },
             "TIMELINE": {
-                "account_created": "Account \":name\" created",
+                "account_created": "Account “:name” created",
                 "user_joined": ":name joined as :role",
-                "inbox_created": "Inbox \":name\" added",
+                "inbox_created": "Inbox “:name” added",
                 "suspended": "Suspended: :reason",
                 "impersonated": ":admin impersonated :user",
-                "admin_action": ":admin: :action",
+                "admin_action": "Admin action",
                 "last_message": "Latest message"
             }
         },
         "AUDIT_LOGS": {
+            "RAW_ACTION": "Route",
+            "HTTP_STATUS": "HTTP status",
+            "IP_ADDRESS": "IP address",
+            "USER_AGENT": "User agent",
             "TITLE": "Audit log",
             "DESCRIPTION": "Every write action by admins in the console. Passwords, tokens and verification codes are masked.",
             "FILTERS": {
                 "ADMIN": "Admin",
                 "ALL_ADMINS": "All admins",
-                "ACTION": "Action contains…",
+                "ACTION": "Search actions…",
                 "SUBJECT_TYPE": "Subject",
                 "ALL_SUBJECTS": "All subjects",
                 "SUBJECT_ID": "Subject ID",
                 "FROM": "From",
+                "FROM_SHORT": "From",
+                "TO_SHORT": "To",
                 "TO": "To"
             },
             "COLUMNS": {
@@ -644,7 +942,9 @@ const messages: Record<string, unknown> = {
             "FILTER_HINT": "Numeric columns match exactly, text columns match partially, type null to find empty cells. Masked columns cannot be filtered.",
             "SORT": "Sort by {column}",
             "EMPTY": "No rows.",
-            "ROWS_ON_PAGE": "{count} rows",
+            "ROWS_ON_PAGE": "{count} rows on this page",
+            "TABLE_TITLE": "Table {table}",
+            "SCROLL_HINT": "{count} columns, scroll sideways to see all",
             "PIN": {
                 "LEFT": "Stick to left",
                 "RIGHT": "Stick to right",
@@ -658,6 +958,8 @@ const messages: Record<string, unknown> = {
             "ACCOUNT_TITLE": "Sticker library of {name}",
             "ACCOUNT_DESCRIPTION": "Full control, same as the account administrator: create packs, upload, edit, reorder, publish, delete, move packs to the shared library.",
             "PICK_ACCOUNT": "Find an account by name or ID…",
+            "PICK_ACCOUNT_TITLE": "Pick an account",
+            "PICK_ACCOUNT_HINT": "An account library is only available to that account. Search by name or ID to open it.",
             "NO_ACCOUNTS": "No account found.",
             "BACK_TO_ACCOUNT": "Back to account"
         }

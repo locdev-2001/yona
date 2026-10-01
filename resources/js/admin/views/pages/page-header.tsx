@@ -20,7 +20,7 @@ const PageHeader = ({ title, description, actions, eyebrow, className }: PageHea
     <div className={cn('mb-4 flex flex-col gap-4 md:mb-6 sm:flex-row sm:items-end sm:justify-between', className)}>
       <div className='min-w-0'>
         {eyebrow}
-        <h1 className='text-xl font-bold break-words'>{title}</h1>
+        <h1 className='text-xl font-medium break-words'>{title}</h1>
         {description ? <p className='text-muted-foreground'>{description}</p> : null}
       </div>
       {actions ? <div className='flex shrink-0 flex-wrap items-center gap-2'>{actions}</div> : null}

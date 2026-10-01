@@ -1,7 +1,7 @@
 // React Imports
 import { type ComponentType } from 'react'
 
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 // Third-party Imports
 import * as Icon from 'lucide-react'
@@ -473,6 +473,24 @@ const SidebarLayout = () => {
   // sheet, so it keeps the normal tree.
   const isIconMode = state === 'collapsed' && !isMobile
 
+  // Mục đang mở nằm dưới mép màn hình (Bảo mật, Cấu hình) thì cuộn thanh bên tới
+  // nó, để luôn thấy mình đang ở trang nào.
+  const contentRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const content = contentRef.current
+    const active = content?.querySelector<HTMLElement>('[data-active]:not([data-active="false"])')
+
+    if (!content || !active) return
+
+    const box = content.getBoundingClientRect()
+    const item = active.getBoundingClientRect()
+
+    if (item.top < box.top || item.bottom > box.bottom) {
+      content.scrollTop += item.top - box.top - (box.height - item.height) / 2
+    }
+  }, [pathname, isMobile, state])
+
   return (
     <Sidebar collapsible='icon' variant='sidebar'>
       <SidebarHeader>
@@ -492,7 +510,7 @@ const SidebarLayout = () => {
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
-      <SidebarContent className='group-data-[collapsible=icon]:overflow-y-auto'>
+      <SidebarContent ref={contentRef} className='group-data-[collapsible=icon]:overflow-y-auto'>
         {navGroups.map((navItem, index) => {
           return (
             <SidebarGroupedMenuItems

@@ -1,5 +1,5 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import type { ReactNode } from 'react';
 
 import { installDomStubs } from '../components/__fixtures__/dom';
@@ -23,12 +23,15 @@ const log = {
     id: 3,
     superAdminId: 1,
     superAdminEmail: 'qa-admin@local.test',
-    action: 'accounts.suspend',
-    subjectType: 'Account',
+    action: 'POST accounts/{id}/suspend',
+    actionLabel: 'Khoá tài khoản',
+    subjectType: 'accounts',
+    subjectLabel: 'Tài khoản #7',
     subjectId: 7,
     subjectUrl: '/admin/accounts/7/overview',
     changes: { reason: 'spam' },
     responseStatus: 302,
+    statusLabel: 'Thành công',
     ipAddress: '127.0.0.1',
     userAgent: 'Playwright',
     createdAt: '2026-09-30T08:00:00Z',
@@ -48,12 +51,15 @@ describe('AuditLogs', () => {
     it('hiện thao tác, link đối tượng và mở dữ liệu gửi kèm', () => {
         render(<AuditLogs {...baseProps} />);
 
-        expect(screen.getByText('accounts.suspend')).toBeInTheDocument();
-        expect(screen.getByRole('link', { name: 'Account #7' })).toHaveAttribute('href', '/admin/accounts/7/overview');
+        const table = within(screen.getByRole('table'));
+        expect(table.getByText('Khoá tài khoản')).toHaveAttribute('title', 'POST accounts/{id}/suspend');
+        expect(table.getByRole('link', { name: 'Tài khoản #7' })).toHaveAttribute('href', '/admin/accounts/7/overview');
+        expect(table.getByText('Thành công')).toBeInTheDocument();
 
-        fireEvent.click(screen.getByRole('button', { name: 'Submitted data' }));
-        expect(screen.getByText(/"reason": "spam"/)).toBeInTheDocument();
-        expect(screen.getByText('Playwright')).toBeInTheDocument();
+        fireEvent.click(table.getByRole('button', { name: 'Submitted data' }));
+        expect(table.getByText(/"reason": "spam"/)).toBeInTheDocument();
+        expect(table.getByText('Playwright')).toBeInTheDocument();
+        expect(table.getByText('127.0.0.1')).toBeInTheDocument();
     });
 
     it('phân trang giữ bộ lọc', () => {
@@ -64,12 +70,23 @@ describe('AuditLogs', () => {
         expect(pageHref({}, 1)).toBe('/admin/audit_logs');
     });
 
-    it('bấm Lọc gửi bộ lọc nháp lên URL', () => {
+    it('ô chữ lọc khi nhấn Enter, ô ngày lọc ngay theo dd/mm/yyyy', () => {
         render(<AuditLogs {...baseProps} />);
 
-        fireEvent.change(screen.getByLabelText('Subject ID'), { target: { value: '7' } });
-        fireEvent.click(screen.getByRole('button', { name: 'Filter' }));
+        const subjectId = screen.getByLabelText('Subject ID');
+        fireEvent.change(subjectId, { target: { value: '7' } });
+        fireEvent.submit(subjectId.closest('form')!);
+        expect(routerGet).toHaveBeenLastCalledWith('/admin/audit_logs', { action: 'suspend', subject_id: '7' }, expect.any(Object));
 
-        expect(routerGet).toHaveBeenCalledWith('/admin/audit_logs', { action: 'suspend', subject_id: '7' }, expect.any(Object));
+        const from = screen.getByLabelText('From');
+        expect(from).toHaveAttribute('placeholder', 'dd/mm/yyyy');
+        fireEvent.change(from, { target: { value: '05092026' } });
+        expect(from).toHaveValue('05/09/2026');
+        expect(routerGet).toHaveBeenLastCalledWith(
+            '/admin/audit_logs',
+            { action: 'suspend', subject_id: '7', from: '2026-09-05' },
+            expect.any(Object),
+        );
+        expect(screen.queryByRole('button', { name: 'Filter' })).not.toBeInTheDocument();
     });
 });

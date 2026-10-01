@@ -73,14 +73,20 @@ describe('Layout Super Admin', () => {
         expect(horizon).toHaveAttribute('rel', 'noopener noreferrer');
     });
 
-    it('mục có trang con (cấu hình ứng dụng) mở sẵn và khớp cả query', () => {
+    it('mục có trang con (cấu hình ứng dụng) là một link, sáng ở mọi mục con', () => {
         visitPage('/admin/app_config?config=email');
 
         render(<Layout>x</Layout>);
 
         const nav = within(sidebar());
-        expect(nav.getByRole('link', { name: 'Email' })).toHaveAttribute('data-active');
-        expect(nav.getByRole('link', { name: 'General' })).not.toHaveAttribute('data-active');
+        expect(nav.getByRole('link', { name: 'Cấu hình ứng dụng' })).toHaveAttribute('data-active');
+        expect(nav.queryByRole('link', { name: 'Email' })).not.toBeInTheDocument();
+    });
+
+    it('điện thoại: thanh trên hiện tên trang đang mở', () => {
+        render(<Layout>x</Layout>);
+
+        expect(screen.getByText('Tài khoản', { selector: 'header p' })).toHaveAttribute('aria-current', 'page');
     });
 
     it('thu gọn thanh bên về dải icon và nhớ trạng thái', () => {

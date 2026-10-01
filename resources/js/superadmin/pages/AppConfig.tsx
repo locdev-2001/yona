@@ -17,19 +17,26 @@ type Definition = {
     description: string;
     type: string;
     options: Record<string, string> | null;
+    // Giá trị mặc định trong config/installation_config.php, hiện làm placeholder.
+    default?: string | null;
 };
+
+type Strings = { title: string; description: string; defaultValue: string; unsetValue: string };
 
 type Props = {
     config: string;
     title: string;
     values: Record<string, string | number | boolean | null>;
     definitions: Record<string, Definition>;
+    strings?: Strings;
 };
 
 const isTrue = (value: string) => value === 'true' || value === '1';
 
-export default function AppConfig({ config, title, values, definitions }: Props) {
+export default function AppConfig({ config, title, values, definitions, strings }: Props) {
     const label = useConsoleLabels();
+    const placeholderFor = (definition: Definition) =>
+        definition.default ? (strings?.defaultValue ?? '{value}').replace('{value}', definition.default) : (strings?.unsetValue ?? '');
     const sections = usePage<SuperAdminPageProps>().props.superAdmin?.settingsPages ?? [];
     const { data, setData, post, processing } = useForm<{
         config: string;
@@ -81,6 +88,7 @@ export default function AppConfig({ config, title, values, definitions }: Props)
                             <Textarea
                                 id={id}
                                 className="font-mono"
+                                placeholder={placeholderFor(definition)}
                                 value={data.app_config[name]}
                                 aria-describedby={hint ? hintId : undefined}
                                 onChange={event => update(name, event.target.value)}
@@ -90,6 +98,7 @@ export default function AppConfig({ config, title, values, definitions }: Props)
                                 id={id}
                                 type={definition.type === 'number' ? 'number' : 'text'}
                                 autoComplete="off"
+                                placeholder={placeholderFor(definition)}
                                 value={data.app_config[name]}
                                 aria-describedby={hint ? hintId : undefined}
                                 onChange={event => update(name, event.target.value)}
@@ -111,21 +120,21 @@ export default function AppConfig({ config, title, values, definitions }: Props)
         <div>
             <PageHeader
                 className="lg:mb-10"
-                title={label('settings_title')}
-                description={label('settings_description')}
+                title={strings?.title ?? label('settings_title')}
+                description={strings?.description ?? label('settings_description')}
             />
 
             <SettingsTabs
                 tabs={sections.map(section => ({ value: section.key, name: section.label }))}
                 value={config}
-                label={label('settings_title')}
+                label={strings?.title ?? label('settings_title')}
                 onValueChange={key => {
                     const section = sections.find(candidate => candidate.key === key);
                     if (section) router.visit(section.url);
                 }}
             >
                 <section className="py-3">
-                    <SettingsSection title={label('app_config_title', { section: title })} description={label('app_config_description')}>
+                    <SettingsSection title={title} description={label('app_config_description')}>
                         {fields}
                     </SettingsSection>
                 </section>

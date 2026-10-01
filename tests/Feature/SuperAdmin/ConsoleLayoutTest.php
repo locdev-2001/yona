@@ -28,15 +28,24 @@ it('chia sẻ thanh bên theo nhóm chức năng với công cụ ngoài mở ta
             expect($urls->all())->toContain(
                 '/admin', '/admin/accounts', '/admin/users', '/admin/channel_health', '/admin/instance_status',
                 '/admin/data', '/admin/sticker_packs', '/admin/agent_bots', '/admin/platform_apps', '/admin/access_tokens',
-                '/admin/app_config', '/admin/installation_configs', '/admin/settings', '/admin/audit_logs',
+                '/admin/app_config', '/admin/installation_configs', '/admin/audit_logs',
                 '/admin/impersonations', '/horizon', '/pulse', '/logs', 'https://dash.yona.vn',
             );
 
             $tools = $groups->firstWhere('key', 'tools')['items'];
             expect(collect($tools)->every(fn (array $item) => ($item['external'] ?? false) === true))->toBeTrue();
 
+            // "Cài đặt" chỉ là danh sách lặp lại các mục của Cấu hình ứng dụng: không còn ở thanh bên.
+            expect($urls->all())->not->toContain('/admin/settings');
+
+            // Mục con giữ cho bảng lệnh, nhãn tiếng Việt và tên riêng đúng hoa thường.
             $appConfig = collect($groups->firstWhere('key', 'config')['items'])->firstWhere('key', 'app_config');
-            expect($appConfig['children'][0]['url'])->toBe('/admin/app_config?config=general');
+            expect($appConfig['children'][0])->toMatchArray(['url' => '/admin/app_config?config=general', 'label' => 'Chung']);
+            expect(collect($appConfig['children'])->pluck('label')->all())->toContain('TikTok', 'WhatsApp Embedded');
+
+            // Nhóm một mục cùng tên với mục thì không in nhãn nhóm.
+            expect($groups->firstWhere('key', 'overview')['label'])->toBe('')
+                ->and($groups->firstWhere('key', 'overview')['items'][0]['label'])->toBe('Tổng quan');
         });
 });
 

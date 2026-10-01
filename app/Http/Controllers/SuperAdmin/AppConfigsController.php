@@ -4,10 +4,10 @@ namespace App\Http\Controllers\SuperAdmin;
 
 use App\Http\Controllers\Controller;
 use App\Models\InstallationConfig;
+use App\Support\SuperAdmin\ConsoleNavigation;
 use App\Support\SuperAdminArea;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -39,10 +39,16 @@ class AppConfigsController extends Controller
 
         return Inertia::render('superadmin/AppConfig', [
             'config' => $section,
-            'title' => Str::headline($section),
+            'title' => ConsoleNavigation::appConfigSectionTitle($section),
             'values' => InstallationConfig::query()->whereIn('name', $allowed)->get()
                 ->mapWithKeys(fn (InstallationConfig $item) => [$item->name => $item->value])->all(),
             'definitions' => $this->definitions($allowed),
+            'strings' => [
+                'title' => __('admin_layout.app_config.page_title'),
+                'description' => __('admin_layout.app_config.page_description'),
+                'defaultValue' => __('admin_layout.app_config.default_value'),
+                'unsetValue' => __('admin_layout.app_config.unset_value'),
+            ],
         ]);
     }
 
@@ -67,7 +73,8 @@ class AppConfigsController extends Controller
 
         $message = __('admin_layout.flash.settings_updated');
 
-        return redirect(SuperAdminArea::url('settings'))->with(
+        // Lưu xong ở lại đúng mục vừa sửa.
+        return redirect(SuperAdminArea::url('app_config?config='.(in_array($section, self::sections(), true) ? $section : 'general')))->with(
             'notice',
             $restartRequired ? $message.' '.__('admin_layout.flash.restart_required') : $message,
         );
@@ -85,17 +92,30 @@ class AppConfigsController extends Controller
         return self::CONFIG_SECTIONS[$section] ?? self::GENERAL_CONFIGS;
     }
 
-    /** Metadata (nhãn, mô tả, kiểu nhập) lấy từ config/installation_config.php. */
+    /**
+     * Metadata (kiểu nhập, giá trị mặc định) lấy từ config/installation_config.php;
+     * nhãn và mô tả lấy bản dịch admin_layout.app_config.fields theo khoá, thiếu
+     * thì dùng chữ gốc trong config.
+     */
     private function definitions(array $allowed): array
     {
         return collect(config('installation_config'))
             ->filter(fn (array $definition) => in_array($definition['name'], $allowed, true))
-            ->mapWithKeys(fn (array $definition) => [$definition['name'] => [
-                'display_title' => $definition['display_title'] ?? $definition['name'],
-                'description' => $definition['description'] ?? '',
-                'type' => $definition['type'] ?? 'text',
-                'options' => $definition['options'] ?? null,
-            ]])
+            ->mapWithKeys(function (array $definition) {
+                $name = $definition['name'];
+                $translated = (array) __("admin_layout.app_config.fields.{$name}");
+                $default = $definition['value'] ?? null;
+
+                return [$name => [
+                    'display_title' => ($translated['title'] ?? '') ?: ($definition['display_title'] ?? $name),
+                    'description' => array_key_exists('description', $translated)
+                        ? (string) $translated['description']
+                        : ($definition['description'] ?? ''),
+                    'type' => $definition['type'] ?? 'text',
+                    'options' => $definition['options'] ?? null,
+                    'default' => is_scalar($default) ? (string) $default : null,
+                ]];
+            })
             ->all();
     }
 }
