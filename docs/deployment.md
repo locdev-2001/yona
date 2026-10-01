@@ -146,6 +146,19 @@ sang R2 (mục 9, "Kho sticker") thì thư mục này không còn dùng: sao lư
 
 ### Thống kê truy vấn (`pg_stat_statements`)
 
+**Đã bật trên production ngày 01/10/2026.** Hai bẫy của PostgreSQL do aaPanel dựng, gặp đúng lần đó:
+
+- **Không có contrib.** Bản 18.0 do aaPanel biên dịch không kèm `pg_stat_statements.so`. Phải biên dịch từ mã
+  nguồn cùng phiên bản (máy còn `/tmp/postgresql-18.0`):
+  `cd /tmp/postgresql-18.0/contrib/pg_stat_statements && make USE_PGXS=1 PG_CONFIG=/www/server/pgsql/bin/pg_config install`.
+  Nâng cấp PostgreSQL thì phải biên dịch lại, nếu không lần khởi động sau sẽ hỏng.
+- **`RemoveIPC` của systemd-logind xoá shared memory của PostgreSQL.** `/etc/init.d/pgsql restart` chạy server
+  trong phiên của user `postgres`. Phiên cuối của user đó đóng (kể cả `sudo -u postgres psql`) là logind xoá
+  `/dev/shm/PostgreSQL.*`, mọi kết nối mới báo `could not open shared memory segment`. Production đã đặt
+  `RemoveIPC=no` trong `/etc/systemd/logind.conf`. Dựng máy mới thì đặt trước khi restart PostgreSQL.
+- `/up` không chạm DB nên trả 200 cả khi DB hỏng. Sau restart PostgreSQL, kiểm bằng
+  `php artisan migrate:status` hoặc một trang có truy vấn.
+
 Gom thời gian chạy của mọi câu SQL (đã chuẩn hoá tham số thành `$1`, `$2`) để
 tìm truy vấn tốn nhất. Người có quyền root chạy, **một lần**. Bước 3 khởi động
 lại PostgreSQL: vài giây mất kết nối DB, request đang chạy lúc đó trả 500, job
@@ -186,9 +199,8 @@ $PSQL -d postgres -c "LOAD 'pg_stat_statements';"
 $PSQL -d postgres -c "SELECT name, setting, pending_restart FROM pg_settings WHERE name IN ('shared_preload_libraries','track_io_timing');"
 
 # 3. Restart. Tìm đúng tên dịch vụ của aaPanel trước, rồi restart bằng cái có thật.
-systemctl list-units --type=service --all | grep -iE 'postgres|pgsql'
-ls /etc/init.d | grep -iE 'postgres|pgsql'
-#   systemctl restart <tên dịch vụ>     hoặc     /etc/init.d/<tên> restart
+grep -n '^RemoveIPC' /etc/systemd/logind.conf    # phải là RemoveIPC=no (xem bẫy ở trên)
+/etc/init.d/pgsql restart    # aaPanel không chạy PostgreSQL qua systemd, đừng dùng systemctl
 $PSQL -d postgres -Atc "SHOW shared_preload_libraries;"   # phải có pg_stat_statements
 cd /www/wwwroot/yona.vn && php artisan horizon:terminate   # worker mở lại kết nối DB sạch
 
