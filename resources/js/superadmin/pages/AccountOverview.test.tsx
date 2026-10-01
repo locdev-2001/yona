@@ -180,7 +180,7 @@ describe('AccountOverview', () => {
     it('cột trái hiện tên, trạng thái và số thành viên/hộp thư; sticker vẫn dẫn tới kho', () => {
         render(<AccountOverview {...props()} />);
 
-        expect(screen.getByRole('heading', { level: 1, name: 'Shop Hoa' })).toBeInTheDocument();
+        expect(screen.getByRole('heading', { level: 2, name: 'Shop Hoa' })).toBeInTheDocument();
         expect(screen.getByText('#7')).toBeInTheDocument();
 
         fireEvent.click(screen.getByRole('tab', { name: 'Stickers' }));

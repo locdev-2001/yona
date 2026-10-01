@@ -42,6 +42,7 @@ export interface RecordViewLeftPanelProps {
   details: RecordDetailRow[]
   actions?: ReactNode
   footer?: ReactNode
+  titleAs?: 'h1' | 'h2'
 }
 
 export const formatCompactNumber = (value: number | undefined): string => {
@@ -58,6 +59,7 @@ export const formatCompactNumber = (value: number | undefined): string => {
 
 // Cột trái của trang chi tiết: avatar, tên, nhãn, hai ô số liệu, danh sách chi tiết, nút thao tác.
 export function RecordViewLeftPanel({
+  titleAs: TitleTag = 'h1',
   title,
   avatarUrl,
   badge,
@@ -75,7 +77,7 @@ export function RecordViewLeftPanel({
             {avatarUrl ? <AvatarImage src={avatarUrl} alt={title} /> : null}
             <AvatarFallback className={cn('text-2xl', avatarClassOf(title))}>{initialsFromName(title)}</AvatarFallback>
           </Avatar>
-          <h1 className='mt-4 line-clamp-4 text-xl font-semibold break-words'>{title}</h1>
+          <TitleTag className='mt-4 line-clamp-4 text-xl font-semibold break-words'>{title}</TitleTag>
           {badge ? (
             typeof badge === 'string' ? (
               <Badge variant='secondary' className='mt-2'>

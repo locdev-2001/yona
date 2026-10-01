@@ -565,6 +565,7 @@ export default function AccountOverview(props: AccountOverviewProps) {
             <PageHeader title={label('PAGE.TITLE')} description={label('PAGE.DESCRIPTION', { name: account.name })} />
             <div className="relative grid grid-cols-1 gap-6 lg:grid-cols-[350px_minmax(0,1fr)]">
                 <RecordViewLeftPanel
+                    titleAs="h2"
                     title={account.name}
                     badge={
                         <Badge
