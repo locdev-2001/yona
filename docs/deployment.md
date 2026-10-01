@@ -154,8 +154,13 @@ lại PostgreSQL: vài giây mất kết nối DB, request đang chạy lúc đ�
 ```bash
 PSQL="sudo -u postgres /www/server/pgsql/bin/psql -v ON_ERROR_STOP=1"
 
-# 1. Kiểm tra: phiên bản, thư viện có sẵn (aaPanel dựng từ source có thể thiếu
-#    contrib — thiếu một trong hai tệp thì DỪNG, báo lại), giá trị hiện tại.
+# 1. Kiểm tra: phiên bản, thư viện có sẵn, giá trị hiện tại.
+#    aaPanel dựng PostgreSQL từ source KHÔNG kèm contrib (production 01/10/2026:
+#    PG 18.0 thiếu cả hai tệp dưới). Thiếu tệp thì KHÔNG chạy bước 2: ghi
+#    shared_preload_libraries trỏ tới thư viện không có làm PostgreSQL không lên
+#    sau lần restart kế tiếp. Phải biên dịch contrib/pg_stat_statements từ đúng
+#    mã nguồn cùng phiên bản trước. Lỡ ghi rồi thì gỡ bằng
+#    ALTER SYSTEM RESET <tên> cho cả bốn tham số ở bước 2.
 $PSQL -d postgres -Atc "SELECT version();"
 ls "$(/www/server/pgsql/bin/pg_config --pkglibdir)/pg_stat_statements.so" \
    "$(/www/server/pgsql/bin/pg_config --sharedir)/extension/pg_stat_statements.control"
