@@ -4,32 +4,63 @@ namespace App\Services\Channels;
 
 use App\Models\ContactInbox;
 use App\Models\Conversation;
+use Illuminate\Contracts\Cache\Lock;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Luật tìm/mở hội thoại cho mọi incoming message service (telegram/line/sms/twilio/tiktok…). Gom về một chỗ: đổi luật mở lại
  * hội thoại chỉ sửa ở đây.
+ *
+ * Nhiều worker nhận tin dồn của cùng một contact_inbox cùng lúc thì chỉ một worker được tìm-rồi-tạo; worker sau chờ khoá rồi
+ * thấy hội thoại worker trước vừa tạo. Khoá nhả khi hội thoại mới đã commit (gọi trong transaction thì đợi transaction ngoài
+ * commit hoặc rollback), để worker sau không đọc hụt dòng chưa commit.
  */
 class IncomingConversationResolver
 {
+    private const LOCK_SECONDS = 30;
+
+    private const LOCK_WAIT_SECONDS = 10;
+
     /** @param array<string, mixed> $additionalAttributes */
     public static function resolve(ContactInbox $contactInbox, array $additionalAttributes = []): Conversation
     {
-        $inbox = $contactInbox->inbox;
+        $lock = Cache::lock('incoming-conversation:contact-inbox:'.$contactInbox->id, self::LOCK_SECONDS);
+        $lock->block(self::LOCK_WAIT_SECONDS);
 
-        $conversation = $inbox->lock_to_single_conversation
+        try {
+            return self::findReusableConversation($contactInbox)
+                ?? self::createConversation($contactInbox, $additionalAttributes);
+        } finally {
+            self::releaseOnceCommitted($lock);
+        }
+    }
+
+    private static function findReusableConversation(ContactInbox $contactInbox): ?Conversation
+    {
+        return $contactInbox->inbox->lock_to_single_conversation
             ? $contactInbox->conversations()->latest('id')->first()
             : $contactInbox->conversations()->where('status', '!=', Conversation::STATUS_RESOLVED)->latest('id')->first();
+    }
 
-        if ($conversation !== null) {
-            return $conversation;
-        }
-
+    /** @param array<string, mixed> $additionalAttributes */
+    private static function createConversation(ContactInbox $contactInbox, array $additionalAttributes): Conversation
+    {
         return Conversation::query()->create([
-            'account_id' => $inbox->account_id,
-            'inbox_id' => $inbox->id,
+            'account_id' => $contactInbox->inbox->account_id,
+            'inbox_id' => $contactInbox->inbox->id,
             'contact_id' => $contactInbox->contact_id,
             'contact_inbox_id' => $contactInbox->id,
             'additional_attributes' => $additionalAttributes,
         ]);
+    }
+
+    private static function releaseOnceCommitted(Lock $lock): void
+    {
+        $connection = DB::connection((new Conversation)->getConnectionName());
+        $release = fn () => $lock->release();
+
+        $connection->afterRollBack($release);
+        $connection->afterCommit($release);
     }
 }

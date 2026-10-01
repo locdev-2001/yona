@@ -5,8 +5,8 @@ namespace App\Services\Tiktok;
 use App\Builders\ContactInboxWithContactBuilder;
 use App\Models\Attachment;
 use App\Models\Channel\Tiktok;
-use App\Models\Conversation;
 use App\Models\Message;
+use App\Services\Channels\IncomingConversationResolver;
 use App\Services\Channels\RemoteAttachmentDownloader;
 use Illuminate\Support\Carbon;
 
@@ -41,16 +41,8 @@ class MessageService
             return null;
         }
 
-        $conversation = $inbox->lock_to_single_conversation
-            ? $contactInbox->conversations()->latest('id')->first()
-            : $contactInbox->conversations()->where('status', '!=', Conversation::STATUS_RESOLVED)->latest('id')->first();
-
-        $conversation ??= Conversation::query()->create([
-            'account_id' => $inbox->account_id,
-            'inbox_id' => $inbox->id,
-            'contact_id' => $contactInbox->contact_id,
-            'contact_inbox_id' => $contactInbox->id,
-            'additional_attributes' => ['conversation_id' => $this->content['conversation_id']],
+        $conversation = IncomingConversationResolver::resolve($contactInbox, [
+            'conversation_id' => $this->content['conversation_id'],
         ]);
 
         $timestamp = Carbon::createFromTimestampMs((int) $this->content['timestamp']);
