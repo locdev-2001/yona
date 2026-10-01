@@ -3,16 +3,23 @@
 namespace App\Notifications;
 
 use App\Models\User;
+use App\Notifications\Concerns\QueuesAuthMail;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 // Tương đương Devise confirmation_instructions (template mail
 // đầy đủ port ở D5 — email templates). Giữ 4 nhánh nội dung như ERB gốc:
 // đổi email / đã xác nhận / được mời vào workspace / đăng ký mới.
-class ConfirmationInstructions extends Notification
+class ConfirmationInstructions extends Notification implements ShouldQueue
 {
-    use Queueable;
+    use Queueable, QueuesAuthMail;
+
+    public function __construct()
+    {
+        $this->queueForAuth();
+    }
 
     public function via(object $notifiable): array
     {
