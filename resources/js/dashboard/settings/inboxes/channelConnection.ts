@@ -12,3 +12,15 @@ export interface ChannelConnection {
     options: ChannelConnection[];
 }
 
+// Luồng OAuth thất bại thì máy chủ quay về kèm `?oauth_error=denied|token|mismatch`.
+const OAUTH_ERROR_KEYS: Record<string, string> = {
+    denied: 'INBOX_MGMT.CONNECT_GUIDE.EMAIL.OAUTH_DENIED',
+    token: 'INBOX_MGMT.CONNECT_GUIDE.EMAIL.OAUTH_TOKEN',
+    mismatch: 'INBOX_MGMT.CONNECT_GUIDE.EMAIL.OAUTH_MISMATCH',
+};
+
+export function oauthErrorKey(search: string): string | null {
+    const reason = new URLSearchParams(search).get('oauth_error');
+
+    return reason ? (OAUTH_ERROR_KEYS[reason] ?? OAUTH_ERROR_KEYS.token) : null;
+}

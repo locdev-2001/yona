@@ -9,6 +9,7 @@ import ChannelFormField from './ChannelFormField';
 import { ChannelFormError } from './ConnectGuide';
 import { useCreateChannel } from './useCreateChannel';
 import type { ChannelFormProps } from '../NewChannel';
+import { oauthErrorKey } from '../channelConnection';
 import type { ChannelConnection } from '../channelConnection';
 
 // Kênh Email: chọn nhà cung cấp trong các lối backend khai (`connection.options`).
@@ -306,6 +307,11 @@ export default function EmailChannelForm({ connection = null }: ChannelFormProps
     const options = connection?.options?.length ? connection.options : FALLBACK_OPTIONS;
     const [selectedKey, setSelectedKey] = useState<string | null>(options.length === 1 ? options[0].key : null);
     const selected = options.find(option => option.key === selectedKey) ?? null;
+    const [oauthError] = useState(() => {
+        const key = typeof window === 'undefined' ? null : oauthErrorKey(window.location.search ?? '');
+
+        return key ? t(key) : null;
+    });
 
     const choose = (option: ChannelConnection) => {
         if (option.method === 'oauth_redirect' && option.start_url) {
@@ -338,6 +344,7 @@ export default function EmailChannelForm({ connection = null }: ChannelFormProps
                     />
                 ))}
             </div>
+            <ChannelFormError message={oauthError} />
         </div>
     );
 }

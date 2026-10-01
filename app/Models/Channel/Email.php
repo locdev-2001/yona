@@ -2,6 +2,7 @@
 
 namespace App\Models\Channel;
 
+use App\Casts\EncryptedSecretsArray;
 use App\Channels\Capability;
 use App\Channels\CapabilitySet;
 use App\Channels\ChannelConnection;
@@ -15,6 +16,7 @@ use App\Models\Channel\Concerns\Channelable;
 use App\Models\Concerns\Reauthorizable;
 use App\Services\Email\EmailProviderPresets;
 use App\Services\Email\MailServerException;
+use App\Services\Email\OAuth\EmailOAuthProviders;
 use Database\Factories\Channel\EmailFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -85,7 +87,8 @@ class Email extends Model implements DeclaresCapabilities, DeclaresConnection, D
             'smtp_enable_starttls_auto' => 'boolean',
             'smtp_enable_ssl_tls' => 'boolean',
             'verified_for_sending' => 'boolean',
-            'provider_config' => 'array',
+            // Token OAuth (access/refresh) mã hoá ngay trong cột jsonb.
+            'provider_config' => EncryptedSecretsArray::class.':access_token,refresh_token',
         ];
     }
 
@@ -197,6 +200,8 @@ class Email extends Model implements DeclaresCapabilities, DeclaresConnection, D
         return ChannelConnection::of('email', ConnectionMethod::Form)
             ->ordered(30)
             ->withOptions(
+                self::oauthOption('google'),
+                self::oauthOption('microsoft'),
                 ChannelConnection::of('gmail', ConnectionMethod::Form)
                     ->withPreset(EmailProviderPresets::for('gmail'))
                     ->withGuideUrl(EmailProviderPresets::GMAIL_APP_PASSWORD_URL),
@@ -205,6 +210,19 @@ class Email extends Model implements DeclaresCapabilities, DeclaresConnection, D
                     ->withGuideUrl(EmailProviderPresets::MICROSOFT_APP_PASSWORD_URL),
                 ChannelConnection::of('other', ConnectionMethod::Form),
             );
+    }
+
+    // Đăng nhập nhà cung cấp (OAuth): đóng khi thiếu app hoặc cờ khoá (Gmail chờ Google duyệt).
+    private static function oauthOption(string $provider): ChannelConnection
+    {
+        return ChannelConnection::of($provider, ConnectionMethod::OauthRedirect)
+            ->available(EmailOAuthProviders::find($provider)?->available() ?? false)
+            ->startsAt('email_oauth.start', ['provider' => $provider]);
+    }
+
+    public function usesOAuth(): bool
+    {
+        return $this->isGoogle() || $this->isMicrosoft();
     }
 
     /** Thư đến qua IMAP/mailbox: thân HTML thành markdown, tệp đính kèm giữ nguyên tên. */
@@ -229,12 +247,13 @@ class Email extends Model implements DeclaresCapabilities, DeclaresConnection, D
             Capability::ProfileEmail,
             Capability::IdentityStableId,
             Capability::ThreadingContinuous,
-            Capability::SessionToken,
             Capability::SessionReauth,
             Capability::SettingsSenderName,
         )->withTextFormat(TextFormat::Html);
 
-        // Hộp thư đăng nhập qua OAuth (Google, Microsoft) do nhà cung cấp giữ máy chủ thư.
-        return blank($this->provider) ? $shared->merge(CapabilitySet::of(Capability::SettingsMailServer)) : $shared;
+        // Hộp thư đăng nhập qua OAuth do nhà cung cấp giữ máy chủ thư; còn lại khách tự cấu hình.
+        return $this->usesOAuth()
+            ? $shared->merge(CapabilitySet::of(Capability::SessionOauth))
+            : $shared->merge(CapabilitySet::of(Capability::SessionToken, Capability::SettingsMailServer));
     }
 }

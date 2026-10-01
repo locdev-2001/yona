@@ -375,11 +375,17 @@ it('builds smtp settings from the channel when the inbox has its own server', fu
 
 it('uses the provider smtp server for oauth channels', function () {
     $conversation = emailConversation(['imap_enabled' => true, 'smtp_enabled' => false, 'provider' => 'google', 'imap_login' => 'me@gmail.com']);
-    $conversation->inbox->channel->update(['provider_config' => ['access_token' => 'token-123']]);
+    $conversation->inbox->channel->update(['provider_config' => [
+        'access_token' => 'token-123',
+        'refresh_token' => 'refresh-123',
+        'expires_at' => now()->addHour()->toIso8601String(),
+    ]]);
 
     $settings = ChannelMailer::smtpSettingsFor($conversation->inbox->fresh());
 
-    expect($settings)->toMatchArray(['host' => 'smtp.gmail.com', 'port' => 587, 'password' => 'token-123']);
+    expect($settings)->toMatchArray([
+        'host' => 'smtp.gmail.com', 'port' => 587, 'username' => 'me@gmail.com', 'password' => 'token-123', 'auth_mode' => 'xoauth2',
+    ]);
 });
 
 it('has no smtp override for non email inboxes', function () {

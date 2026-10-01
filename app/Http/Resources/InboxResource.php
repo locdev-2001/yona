@@ -240,6 +240,10 @@ class InboxResource extends JsonResource
                 ? blank($channel->provider_config) || $channel->reauthorizationRequired()
                 : $channel->reauthorizationRequired(),
             'connection_error' => $channel->connectionError(),
+            // Kênh OAuth kết nối lại bằng chính luồng OAuth của nhà cung cấp.
+            'reconnect_url' => $this->administrator && $channel->usesOAuth()
+                ? route('email_oauth.start', ['account' => $inbox->account_id, 'provider' => $channel->provider, 'inbox_id' => $inbox->id], false)
+                : null,
         ];
     }
 

@@ -75,6 +75,25 @@ return [
         'redirect' => env('GOOGLE_REDIRECT_URI') ?: '/app/auth/oauth/google/callback',
     ],
 
+    // Kết nối hộp thư Gmail bằng OAuth (scope https://mail.google.com/) — tách khỏi
+    // đăng nhập Yona ở trên. KHOÁ mặc định tới khi Google duyệt scope nhạy cảm:
+    // `enabled` false thì thẻ "Đăng nhập Google" ở màn Thêm kênh tự ẩn.
+    // Redirect URI cần khai ở Google Cloud: {APP_URL}/app/email/oauth/google/callback.
+    'google_mail' => [
+        'enabled' => (bool) env('GOOGLE_MAIL_OAUTH_ENABLED', false),
+        'client_id' => env('GOOGLE_MAIL_CLIENT_ID') ?: env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_MAIL_CLIENT_SECRET') ?: env('GOOGLE_CLIENT_SECRET'),
+    ],
+
+    // Kết nối hộp thư Outlook/Microsoft 365 bằng OAuth (app đăng ký ở Azure / Entra ID).
+    // Thiếu client id/secret thì thẻ "Đăng nhập Microsoft" tự ẩn.
+    // Redirect URI cần khai ở Azure: {APP_URL}/app/email/oauth/microsoft/callback.
+    'microsoft_mail' => [
+        'client_id' => env('MICROSOFT_MAIL_CLIENT_ID'),
+        'client_secret' => env('MICROSOFT_MAIL_CLIENT_SECRET'),
+        'tenant' => env('MICROSOFT_MAIL_TENANT', 'common'),
+    ],
+
     // Analytics không cookie của chính Yona. Script và sự kiện đi qua đường dẫn
     // first-party `proxy_path` trên domain app (routes/api.php) để trình chặn quảng
     // cáo không chặn theo domain/mẫu URL của nhà cung cấp. `host` hoặc `script_path`

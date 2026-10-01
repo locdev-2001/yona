@@ -1,4 +1,5 @@
 import { t } from '../../../../i18n';
+import { oauthErrorKey } from '../channelConnection';
 import type { Inbox } from '../types';
 
 // Cảnh báo dùng chung cho mọi kênh khai `reauthorization_required`: lời nhắn cụ thể
@@ -11,14 +12,18 @@ interface InboxConnectionAlertProps {
 }
 
 export default function InboxConnectionAlert({ inbox, onFixSettings, className = '' }: InboxConnectionAlertProps) {
-    if (!inbox.reauthorization_required) return null;
+    const oauthError = typeof window === 'undefined' ? null : oauthErrorKey(window.location.search ?? '');
+
+    if (!inbox.reauthorization_required && !oauthError) return null;
 
     return (
         <div
             role="alert"
             className={`flex flex-col gap-2 rounded-xl border border-n-ruby-6 bg-n-ruby-2 px-4 py-3 text-body-main text-n-ruby-12 sm:flex-row sm:items-center sm:justify-between ${className}`}
         >
-            <p className="min-w-0 break-words">{inbox.connection_error || t('INBOX_MGMT.CONNECTION_CHECK.BANNER_DEFAULT')}</p>
+            <p className="min-w-0 break-words">
+                {oauthError ? t(oauthError) : inbox.connection_error || t('INBOX_MGMT.CONNECTION_CHECK.BANNER_DEFAULT')}
+            </p>
             {inbox.reconnect_url ? (
                 <a
                     href={inbox.reconnect_url}

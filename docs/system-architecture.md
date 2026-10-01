@@ -61,6 +61,16 @@ PostgreSQL (`pg_trgm`) · Redis (cache, queue, session) · Laravel Reverb
   (`VerifiesChannelCredentials`): Email thử IMAP/SMTP qua `MailServerProbe`
   (test thay bằng `tests/Support/FakeMailServerProbe.php`), Telegram gọi `getMe`,
   LINE gọi `v2/oauth/verify` (lấy luôn ID kênh). Sai thì 422 gắn ô `channel.*`.
+- **Email nối bằng OAuth** (Google/Microsoft): lối con `oauth_redirect` của lối
+  vào Email trỏ `EmailOAuthController` (`/app/accounts/{id}/email/oauth/{provider}`
+  → nhà cung cấp → `/app/email/oauth/{provider}/callback`), tách khỏi đăng nhập
+  Yona; `state` một lần dùng trong session mang account/hộp thư cần kết nối lại.
+  Nhà cung cấp ở `app/Services/Email/OAuth` (thêm một lớp + một dòng sổ đăng ký);
+  Gmail khoá bằng `services.google_mail.enabled`. Token trong `provider_config`
+  (cast `EncryptedSecretsArray`: chỉ khoá bí mật bị mã hoá, cột vẫn là jsonb);
+  `EmailOAuthTokenManager` làm mới trước khi dùng cho IMAP (webklex
+  `authentication: oauth`) và SMTP (XOAUTH2). Refresh token hỏng →
+  `promptReauthorization()`, API trả `reconnect_url`.
 - **Kênh mất kết nối**: kênh dùng `Reauthorizable` (đếm lỗi trong Redis, quá
   ngưỡng hoặc lỗi xác thực thì `promptReauthorization()`); lõi đọc qua
   `Inbox::reauthorizationRequired()` (cần năng lực `session_reauth`). Email ghi
