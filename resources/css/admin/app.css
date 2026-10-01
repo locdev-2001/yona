@@ -1,7 +1,13 @@
-@import 'tailwindcss-v4';
-@source '../../js/admin';
+@import 'tailwindcss-v4' source(none);
 @import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
+@import './legacy-console.css';
+
+/* Chỉ quét đúng file mà entry console nạp; `npm run check:css` đối chiếu danh sách này với module graph thật. */
+@source '../../js/admin';
+@source '../../js/superadmin';
+@source '../../views/superadmin.blade.php';
+@source '../../views/superadmin_auth.blade.php';
 
 @custom-variant dark (&:is(.dark *));
 
@@ -193,6 +199,11 @@ select[data-slot='native-select']:not(:disabled) {
 input[type='number']::-webkit-inner-spin-button,
 input[type='number']::-webkit-outer-spin-button {
   cursor: pointer;
+}
+
+:root {
+  --font-geist-sans: 'Geist', ui-sans-serif, system-ui, sans-serif;
+  --font-geist-mono: 'Geist Mono', ui-monospace, monospace;
 }
 
 @layer base {

@@ -7,7 +7,7 @@
 //
 // Script dựng lại module graph thật bằng Rollup rồi đối chiếu với glob. Lệch =
 // fail, kèm đúng file cần thêm.
-import { globSync } from 'node:fs';
+import { globSync, readFileSync, statSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import { build } from 'vite';
@@ -71,10 +71,28 @@ function scannedFiles(content) {
     return files;
 }
 
+/**
+ * Bề mặt Tailwind 4 khai phạm vi quét bằng `@source` ngay trong file CSS (đường dẫn
+ * tương đối file CSS); đổi thành glob tương đối repo như `content` của Tailwind 3.
+ */
+function cssSourceGlobs(cssFile) {
+    const directory = path.dirname(path.join(root, cssFile));
+    const css = readFileSync(path.join(root, cssFile), 'utf8');
+
+    return [...css.matchAll(/^@source\s+['"]([^'"]+)['"]/gm)].map(([, source]) => {
+        const absolute = path.resolve(directory, source);
+        const relative = path.relative(root, absolute);
+        const isDirectory = !/[*{]/.test(source) && statSync(absolute, { throwIfNoEntry: false })?.isDirectory();
+
+        return isDirectory ? `${relative}/**/*` : relative;
+    });
+}
+
 let failed = false;
 
 for (const [name, surface] of Object.entries(surfaces)) {
-    const [modules, scanned] = [await moduleGraph(surface.entries), scannedFiles(surface.content)];
+    const content = surface.css ? cssSourceGlobs(surface.css) : surface.content;
+    const [modules, scanned] = [await moduleGraph(surface.entries), scannedFiles(content)];
     const missing = [...modules].filter(file => !scanned.has(file)).sort();
 
     if (missing.length === 0) {
@@ -85,7 +103,11 @@ for (const [name, surface] of Object.entries(surfaces)) {
     failed = true;
     console.error(`✗ ${name}: ${missing.length} module bị Tailwind bỏ qua — class của chúng sẽ không được sinh ra:`);
     for (const file of missing) console.error(`    ./${file}`);
-    console.error(`  Thêm vào \`content\` của '${name}' trong tailwind/surfaces.cjs.`);
+    console.error(
+        surface.css
+            ? `  Thêm \`@source\` vào ${surface.css}.`
+            : `  Thêm vào \`content\` của '${name}' trong tailwind/surfaces.cjs.`,
+    );
 }
 
 process.exit(failed ? 1 : 0);

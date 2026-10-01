@@ -1,14 +1,14 @@
 import { useState } from 'react';
-import type { ReactNode } from 'react';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
 
-import MfaVerification from 'dashboard/components/auth/MfaVerification';
+import Login from '@admin/views/pages/auth/login';
+import LoginForm from '@admin/views/pages/auth/login/login-form';
+import TwoSteps from '@admin/views/pages/auth/two-steps';
+import TwoStepsForm from '@admin/views/pages/auth/two-steps/two-steps-form';
+
+import { t } from '../../i18n';
+import { useConsoleLabels } from '../labels';
 import type { SuperAdminPageProps } from '../types';
-import { Alert } from '../ui/Alert';
-import { Button } from '../ui/Button';
-import { Card } from '../ui/Card';
-import { Field, Input } from '../ui/Input';
-import { useConsoleLabels } from '../ui/labels';
 
 interface SuperAdminLoginPageProps extends SuperAdminPageProps {
     otpRequired?: boolean;
@@ -16,10 +16,10 @@ interface SuperAdminLoginPageProps extends SuperAdminPageProps {
     otpError?: string | null;
 }
 
-// Bước OTP sau mật khẩu khi tài khoản đã bật 2FA — cùng component
-// MfaVerification với màn đăng nhập agent (v3/views/login/Index.tsx).
+// Đăng nhập console: email + mật khẩu, rồi bước OTP (hoặc mã dự phòng) khi tài
+// khoản đã bật 2FA — máy chủ trả lại trang này kèm otpRequired + otpToken.
 export default function SuperAdminLogin() {
-    const { flash, superAdmin, otpRequired, otpToken, otpError } = usePage<SuperAdminLoginPageProps>().props;
+    const { flash, otpRequired, otpToken, otpError } = usePage<SuperAdminLoginPageProps>().props;
     const { data, setData, post, processing } = useForm({
         super_admin: { email: '', password: '' },
     });
@@ -44,73 +44,53 @@ export default function SuperAdminLogin() {
 
     if (showOtp) {
         return (
-            <AuthShell title={label('login_title')}>
-                <MfaVerification
-                    isVerifying={verifying}
-                    errorMessage={otpError ?? ''}
-                    onVerify={submitOtp}
-                    onCancel={() => setDismissedOtp(true)}
-                />
-            </AuthShell>
+            <>
+                <Head title={label('login_title')} />
+                <TwoSteps title={t('MFA_VERIFICATION.TITLE')} description={t('MFA_VERIFICATION.DESCRIPTION')}>
+                    <TwoStepsForm
+                        isVerifying={verifying}
+                        errorMessage={otpError}
+                        labels={{
+                            otpCode: t('MFA_VERIFICATION.ENTER_OTP_CODE'),
+                            backupCode: t('MFA_VERIFICATION.ENTER_BACKUP_CODE'),
+                            backupCodePlaceholder: t('MFA_VERIFICATION.BACKUP_CODE_PLACEHOLDER'),
+                            useBackupCode: t('MFA_VERIFICATION.BACKUP_CODE'),
+                            useAuthenticator: t('MFA_VERIFICATION.AUTHENTICATOR_APP'),
+                            submit: t('MFA_VERIFICATION.VERIFY_BUTTON'),
+                            cancel: t('MFA_VERIFICATION.CANCEL_LOGIN'),
+                        }}
+                        onVerify={submitOtp}
+                        onCancel={() => setDismissedOtp(true)}
+                    />
+                </TwoSteps>
+            </>
         );
     }
 
     return (
-        <AuthShell title={label('login_title')}>
-            <div className="flex flex-col items-center gap-3 text-center">
-                <img src={superAdmin.logo} alt={superAdmin.installationName} className="h-8 w-auto" />
-                <div>
-                    <h1 className="text-xl font-semibold tracking-tight text-console-foreground">{label('login_title')}</h1>
-                    <p className="mt-1 text-sm text-console-muted-foreground">{label('login_description')}</p>
-                </div>
-            </div>
-            <Card className="mt-6 px-6 py-6 sm:px-8">
-                {flash?.error ? <Alert tone="destructive">{flash.error}</Alert> : null}
-                <form
+        <>
+            <Head title={label('login_title')} />
+            <Login title={label('login_title')} description={label('login_description')}>
+                <LoginForm
                     id="new_super_admin"
-                    className="flex flex-col gap-4"
-                    onSubmit={event => {
-                        event.preventDefault();
-                        post('/admin/sign_in');
+                    email={data.super_admin.email}
+                    password={data.super_admin.password}
+                    error={flash?.error}
+                    processing={processing}
+                    labels={{
+                        email: label('login_email'),
+                        emailPlaceholder: label('login_email_placeholder'),
+                        password: label('login_password'),
+                        submit: label('login_submit'),
+                        showPassword: label('show_secret'),
+                        hidePassword: label('hide_secret'),
                     }}
-                >
-                    <Field label={label('login_email')} htmlFor="super_admin_email">
-                        <Input
-                            autoFocus
-                            autoComplete="email"
-                            placeholder={label('login_email_placeholder')}
-                            type="email"
-                            id="super_admin_email"
-                            className="h-10"
-                            value={data.super_admin.email}
-                            onChange={event => setData('super_admin', { ...data.super_admin, email: event.target.value })}
-                        />
-                    </Field>
-                    <Field label={label('login_password')} htmlFor="super_admin_password">
-                        <Input
-                            autoComplete="current-password"
-                            type="password"
-                            id="super_admin_password"
-                            className="h-10"
-                            value={data.super_admin.password}
-                            onChange={event => setData('super_admin', { ...data.super_admin, password: event.target.value })}
-                        />
-                    </Field>
-                    <Button type="submit" size="lg" disabled={processing} className="mt-2 w-full">
-                        {label('login_submit')}
-                    </Button>
-                </form>
-            </Card>
-        </AuthShell>
-    );
-}
-
-function AuthShell({ title, children }: { title: string; children: ReactNode }) {
-    return (
-        <main className="flex min-h-dvh w-full flex-col items-center justify-center bg-console-background px-4 py-12">
-            <Head title={title} />
-            <div className="w-full max-w-sm">{children}</div>
-        </main>
+                    onEmailChange={email => setData('super_admin', { ...data.super_admin, email })}
+                    onPasswordChange={password => setData('super_admin', { ...data.super_admin, password })}
+                    onSubmit={() => post('/admin/sign_in')}
+                />
+            </Login>
+        </>
     );
 }
 

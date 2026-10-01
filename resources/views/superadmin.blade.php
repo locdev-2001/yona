@@ -1,18 +1,21 @@
-{{-- Layout của console quản trị: CSS + entry riêng, không dùng chung bundle
-     dashboard (khu này không có chế độ tối). --}}
+{{-- Layout của console quản trị: CSS + entry riêng (Tailwind 4, bộ component
+     shadcn ở resources/js/admin), không dùng chung bundle dashboard; chỉ chủ đề sáng. --}}
 <!DOCTYPE html>
-<html data-installation-name="{{ config('yona.branding.installation_name') }}" lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="w-full h-full">
+<html data-installation-name="{{ config('yona.branding.installation_name') }}" lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="flex min-h-full w-full antialiased">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title inertia>{{ config('app.name', 'Yona') }}</title>
         @include('partials.favicon')
         @include('partials.analytics')
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Geist:wght@100..900&family=Geist+Mono:wght@100..900&display=swap" rel="stylesheet">
         @viteReactRefresh
-        @vite(['resources/scss/superadmin.scss', 'resources/js/superadmin/main.tsx'])
+        @vite(['resources/css/admin/app.css', 'resources/js/superadmin/main.tsx'])
         @inertiaHead
     </head>
-    <body class="antialiased w-full h-full">
+    <body class="flex min-h-full w-full flex-auto flex-col">
         @inertia
     </body>
 </html>

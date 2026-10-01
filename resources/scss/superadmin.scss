@@ -1,9 +1,0 @@
-@config "../../tailwind/superadmin.config.cjs";
-@import 'superadmin-auth-base';
-
-// Inertia gắn trang vào một div bọc; khung console tối thiểu cao bằng màn hình,
-// trang dài thì cả cửa sổ cuộn (thanh bên dính trên cùng).
-#app {
-  min-height: 100%;
-  width: 100%;
-}

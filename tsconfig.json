@@ -15,6 +15,7 @@
         "types": ["vite/client"],
         "baseUrl": ".",
         "paths": {
+            "@admin/*": ["resources/js/admin/*"],
             "dashboard/*": ["resources/js/dashboard/*"],
             "shared/*": ["resources/js/shared/*"],
             "v3/*": ["resources/js/v3/*"],

@@ -1,0 +1,30 @@
+/*
+ * Cầu nối tạm: các trang console chưa dựng lại bằng bộ component mới vẫn dùng
+ * màu `console-*` và icon `i-lucide-*` của bản cũ. Xoá file này (và dòng import
+ * trong app.css) khi không còn trang nào import resources/js/superadmin/ui.
+ */
+@plugin '../../../tailwind/admin-legacy-icons.cjs';
+
+@theme inline {
+  --color-console-background: var(--background);
+  --color-console-foreground: var(--foreground);
+  --color-console-card: var(--card);
+  --color-console-muted: var(--muted);
+  --color-console-muted-foreground: var(--muted-foreground);
+  --color-console-accent: var(--accent);
+  --color-console-accent-foreground: var(--accent-foreground);
+  --color-console-border: var(--border);
+  --color-console-input: var(--input);
+  --color-console-ring: var(--ring);
+  --color-console-primary: var(--primary);
+  --color-console-primary-foreground: var(--primary-foreground);
+  --color-console-brand: var(--color-blue-600);
+  --color-console-destructive: var(--destructive);
+  --color-console-destructive-foreground: var(--destructive);
+  --color-console-success: var(--color-emerald-600);
+  --color-console-success-foreground: var(--color-emerald-700);
+  --color-console-warning: var(--color-amber-500);
+  --color-console-warning-foreground: var(--color-amber-700);
+  --color-console-sidebar: var(--sidebar);
+  --color-console-overlay: var(--color-slate-900);
+}

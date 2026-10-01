@@ -34,22 +34,11 @@ module.exports = {
         entries: ['resources/js/portal/main.ts'],
         content: [sourcesIn('portal'), sourcesIn('shared'), './resources/views/public/**/*.blade.php'],
     },
+    // Console /admin chạy Tailwind 4: không có `content`, phạm vi quét là các dòng
+    // `@source` trong file CSS dưới đây (check-css-surfaces.mjs đọc thẳng từ đó).
     superadmin: {
         entries: ['resources/js/superadmin/main.tsx'],
-        content: [
-            sourcesIn('superadmin'),
-            ...SHARED,
-            ...DASHBOARD_PRIMITIVES,
-            // Đăng nhập + xác thực hai lớp mượn của dashboard.
-            sourcesIn('v3/components/Form'),
-            sourcesIn('dashboard/components/auth'),
-            sourcesIn('dashboard/settings/profile/mfa'),
-            './resources/js/dashboard/helper/{apiClient,sessionRecovery}.ts',
-            sourcesIn('dashboard/settings/customStickers'),
-            sourcesIn('dashboard/reports/helpers'),
-            './resources/views/superadmin.blade.php',
-            './resources/views/superadmin_auth.blade.php',
-        ],
+        css: 'resources/css/admin/app.css',
     },
     // v3.scss chỉ phục vụ trang auth (`app.blade.php` khi component bắt đầu bằng
     // `v3/`), nên nó không cần utility của cả dashboard dù dùng chung app.tsx. Trang

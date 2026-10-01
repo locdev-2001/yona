@@ -4,6 +4,8 @@ import path from 'node:path';
 // khai ở một chỗ thì build, test và gate CSS cùng giải được import.
 export function viteAliases(projectRoot) {
     return {
+        // Khối giao diện của console /admin (component shadcn, Tailwind 4).
+        '@admin': path.resolve(projectRoot, 'resources/js/admin'),
         dashboard: path.resolve(projectRoot, 'resources/js/dashboard'),
         shared: path.resolve(projectRoot, 'resources/js/shared'),
         v3: path.resolve(projectRoot, 'resources/js/v3'),

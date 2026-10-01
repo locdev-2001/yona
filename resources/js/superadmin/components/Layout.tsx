@@ -1,100 +1,74 @@
 import { usePage } from '@inertiajs/react';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
+import { toast } from 'sonner';
 
+import Providers from '@admin/components/Providers';
+import Footer from '@admin/components/layout/Footer';
+import Header from '@admin/components/layout/Header';
+import ScrollToTop from '@admin/components/layout/ScrollToTop';
+import Sidebar from '@admin/components/layout/Sidebar';
+import { SidebarInset } from '@admin/components/ui/sidebar';
+import { Toaster } from '@admin/components/ui/sonner';
+
+import { useConsoleLabels } from '../labels';
 import type { SuperAdminPageProps } from '../types';
-import { Alert } from '../ui/Alert';
-import { cn } from '../ui/cn';
-import { useConsoleLabels } from '../ui/labels';
-import { Sheet } from '../ui/Sheet';
 import CommandPalette, { useCommandPaletteShortcut } from './CommandPalette';
-import { SidebarContent } from './Sidebar';
-import Topbar from './Topbar';
 
-const COLLAPSED_STORAGE_KEY = 'yona.admin.sidebarCollapsed';
-
-function readCollapsed(): boolean {
+// Thanh bên tự ghi cookie `sidebar_state` khi thu gọn/mở; đọc lại để giữ trạng thái giữa các lần tải.
+function readSidebarOpen(): boolean {
     try {
-        return window.localStorage.getItem(COLLAPSED_STORAGE_KEY) === '1';
+        return !/(?:^|;\s*)sidebar_state=false(?:;|$)/.test(document.cookie);
     } catch {
-        return false;
+        return true;
     }
 }
 
-function writeCollapsed(collapsed: boolean): void {
-    try {
-        window.localStorage.setItem(COLLAPSED_STORAGE_KEY, collapsed ? '1' : '0');
-    } catch {
-        // Trình duyệt chặn lưu trữ: thanh bên vẫn chạy, chỉ không nhớ trạng thái.
-    }
-}
-
-function FlashMessages() {
+// Thông báo flash từ máy chủ hiện thành toast, mỗi phản hồi một lần.
+function useFlashToasts(): void {
     const { flash } = usePage<SuperAdminPageProps>().props;
     const label = useConsoleLabels();
 
-    if (!flash?.notice && !flash?.error && !flash?.alert) return null;
-
-    return (
-        <div className="flex flex-col gap-2">
-            {flash.notice ? <Alert tone="success">{flash.notice}</Alert> : null}
-            {flash.alert ? <Alert tone="warning">{flash.alert}</Alert> : null}
-            {flash.error ? (
-                <Alert tone="destructive" title={label('flash_error')}>
-                    {flash.error}
-                </Alert>
-            ) : null}
-        </div>
-    );
+    useEffect(() => {
+        if (flash?.notice) toast.success(flash.notice);
+        if (flash?.alert) toast.warning(flash.alert);
+        if (flash?.error) toast.error(label('flash_error'), { description: flash.error });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [flash]);
 }
 
-// Khung console: thanh bên theo vùng chức năng (thu gọn được trên máy tính, thành
-// ngăn trượt trên điện thoại), thanh trên có ô tìm kiếm Ctrl/Cmd+K và menu người dùng.
-export default function Layout({ children }: { children: ReactNode }) {
-    const label = useConsoleLabels();
-    const [collapsed, setCollapsed] = useState(readCollapsed);
-    const [mobileNavOpen, setMobileNavOpen] = useState(false);
+function ConsoleShell({ children }: { children: ReactNode }) {
     const [paletteOpen, setPaletteOpen] = useState(false);
-
-    const toggleCollapsed = () => {
-        setCollapsed(!collapsed);
-        writeCollapsed(!collapsed);
-    };
     const togglePalette = useCallback(() => setPaletteOpen(value => !value), []);
 
     useCommandPaletteShortcut(togglePalette);
+    useFlashToasts();
 
     return (
-        <div className="flex min-h-dvh w-full bg-console-background text-console-foreground">
-            <aside
-                className={cn(
-                    'sticky top-0 hidden h-dvh shrink-0 border-r border-console-border bg-console-sidebar transition-[width] duration-200 md:block',
-                    collapsed ? 'w-14' : 'w-64',
-                )}
-            >
-                <SidebarContent collapsed={collapsed} />
-            </aside>
-
-            <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen} label={label('navigation')}>
-                <SidebarContent onNavigate={() => setMobileNavOpen(false)} onClose={() => setMobileNavOpen(false)} />
-            </Sheet>
-
-            <div className="flex min-w-0 flex-1 flex-col">
-                <Topbar
-                    collapsed={collapsed}
-                    onToggleCollapsed={toggleCollapsed}
-                    onOpenMobileNav={() => setMobileNavOpen(true)}
-                    onOpenSearch={() => setPaletteOpen(true)}
-                />
-                <main className="flex-1 px-4 py-6 md:px-6 lg:px-8">
-                    <div className="mx-auto flex w-full max-w-screen-2xl flex-col gap-6">
-                        <FlashMessages />
-                        {children}
-                    </div>
-                </main>
+        <>
+            <div className="flex h-full w-full min-w-0">
+                <Sidebar />
+                <SidebarInset className="flex flex-1 flex-col">
+                    <Header onOpenSearch={() => setPaletteOpen(true)} />
+                    <main className="mx-auto size-full max-w-360 flex-1 px-4 py-6 sm:px-6">{children}</main>
+                    <Toaster />
+                    <Footer />
+                </SidebarInset>
             </div>
-
+            <ScrollToTop />
             <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
-        </div>
+        </>
+    );
+}
+
+// Khung console: thanh bên theo vùng chức năng (thu về dải icon trên máy tính, ngăn
+// trượt trên điện thoại), thanh trên có ô tìm kiếm Ctrl/Cmd+K và menu người dùng.
+export default function Layout({ children }: { children: ReactNode }) {
+    const [sidebarDefaultOpen] = useState(readSidebarOpen);
+
+    return (
+        <Providers sidebarDefaultOpen={sidebarDefaultOpen}>
+            <ConsoleShell>{children}</ConsoleShell>
+        </Providers>
     );
 }
