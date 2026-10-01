@@ -2,7 +2,17 @@
   "mcpServers": {
     "shadcn": {
       "command": "npx",
-      "args": ["shadcn@latest", "mcp"]
+      "args": [
+        "shadcn@latest",
+        "mcp"
+      ]
+    },
+    "yona-dash": {
+      "type": "http",
+      "url": "https://dash.yona.vn/mcp_server/mcp",
+      "headers": {
+        "Authorization": "Bearer ${YONA_DASH_MCP_TOKEN:-}"
+      }
     }
   }
 }

@@ -8,17 +8,17 @@ PROD_ENV_FILE=$(git rev-parse --show-toplevel)/.env
 
 prod_env_die() { echo "LỖI: $*" >&2; exit 1; }
 
-[[ -f $PROD_ENV_FILE ]] || prod_env_die "không thấy $PROD_ENV_FILE"
-
-while IFS= read -r line; do
-  name=${line%%=*} value=${line#*=}
-  value=${value%\"}; value=${value#\"}; value=${value%\'}; value=${value#\'}
-  [[ -z ${!name:-} ]] && export "$name=$value"
-done < <(grep -E '^PROD_[A-Z_]+=' "$PROD_ENV_FILE")
+if [[ -f $PROD_ENV_FILE ]]; then
+  while IFS= read -r line; do
+    name=${line%%=*} value=${line#*=}
+    value=${value%\"}; value=${value#\"}; value=${value%\'}; value=${value#\'}
+    [[ -z ${!name:-} ]] && export "$name=$value"
+  done < <(grep -E '^PROD_[A-Z_]+=' "$PROD_ENV_FILE")
+fi
 
 require_prod_env() {
   local name
   for name in "$@"; do
-    [[ -n ${!name:-} ]] || prod_env_die "thiếu $name trong $PROD_ENV_FILE"
+    [[ -n ${!name:-} ]] || prod_env_die "thiếu $name (đặt trong $PROD_ENV_FILE hoặc biến môi trường)"
   done
 }
