@@ -135,6 +135,16 @@ return [
         'dash' => 'dash.yona.vn',
     ],
 
+    'flash' => [
+        'created' => 'Record created.',
+        'updated' => 'Changes saved.',
+        'destroyed' => 'Record deleted.',
+        'account_user_created' => 'User added to the account.',
+        'account_user_destroyed' => 'User removed from the account.',
+        'settings_updated' => 'Settings saved.',
+        'restart_required' => 'Restart web and worker processes to apply this change everywhere.',
+    ],
+
     'filters' => [
         'active' => 'Active',
         'suspended' => 'Suspended',
@@ -146,6 +156,7 @@ return [
         'user' => 'Owned by users',
         'agent_bot' => 'Owned by agent bots',
         'platform_app' => 'Owned by platform apps',
+        'churn_risk' => 'Churn risk (inactive 14 days)',
     ],
 
     'attributes' => [

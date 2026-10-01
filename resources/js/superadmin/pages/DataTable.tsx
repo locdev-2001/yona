@@ -87,7 +87,11 @@ export function CellValue({ table, column, value }: { table: string; column: Dat
         );
     }
 
-    return <span className="break-words">{String(value)}</span>;
+    return (
+        <span className="block max-w-60 truncate" title={String(value)}>
+            {String(value)}
+        </span>
+    );
 }
 
 export default function DataTable({ table, columns, rows, page, hasMore, sort, direction, filters }: Props) {
@@ -205,7 +209,7 @@ export default function DataTable({ table, columns, rows, page, hasMore, sort, d
                             {rows.map((row, index) => (
                                 <TableRow key={String(row.id ?? index)}>
                                     {columns.map(column => (
-                                        <TableCell key={column.name} className="max-w-xs align-top">
+                                        <TableCell key={column.name} className="max-w-60 whitespace-nowrap py-2">
                                             <CellValue table={table} column={column} value={row[column.name]} />
                                         </TableCell>
                                     ))}

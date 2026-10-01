@@ -326,6 +326,15 @@ const messages: Record<string, unknown> = {
             "logs": "Log máy chủ",
             "dash": "dash.yona.vn"
         },
+        "flash": {
+            "created": "Đã tạo bản ghi.",
+            "updated": "Đã lưu thay đổi.",
+            "destroyed": "Đã xoá bản ghi.",
+            "account_user_created": "Đã thêm người dùng vào tài khoản.",
+            "account_user_destroyed": "Đã gỡ người dùng khỏi tài khoản.",
+            "settings_updated": "Đã lưu cấu hình.",
+            "restart_required": "Cần khởi động lại web và worker để thay đổi áp dụng khắp nơi."
+        },
         "filters": {
             "active": "Đang hoạt động",
             "suspended": "Tạm khoá",
@@ -336,7 +345,8 @@ const messages: Record<string, unknown> = {
             "super_admin": "Quản trị nền tảng",
             "user": "Của người dùng",
             "agent_bot": "Của agent bot",
-            "platform_app": "Của ứng dụng nền tảng"
+            "platform_app": "Của ứng dụng nền tảng",
+            "churn_risk": "Nguy cơ rời (14 ngày không hoạt động)"
         },
         "attributes": {
             "id": "ID",
@@ -409,6 +419,10 @@ const messages: Record<string, unknown> = {
             "SUSPENDED": "Đã khoá tài khoản :name.",
             "UNSUSPENDED": "Đã mở khoá tài khoản :name.",
             "BLOCKED": "Tài khoản này đang bị khoá. Hãy liên hệ bộ phận hỗ trợ."
+        },
+        "ACCOUNT_COLUMNS": {
+            "messages_7d": "Tin 7 ngày",
+            "last_activity_at": "Hoạt động cuối"
         },
         "SEARCH": {
             "SUSPENDED": "đang khoá"

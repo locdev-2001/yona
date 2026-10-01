@@ -51,7 +51,7 @@ export const WidgetCard = forwardRef<HTMLDivElement, Props>(function WidgetCard(
                     dragging && 'shadow-lg ring-2 ring-console-ring/60',
                 )}
             >
-                <CardHeader>
+                <CardHeader className={cn(edit && 'flex-wrap')}>
                     {edit ? (
                         <button
                             type="button"
@@ -63,13 +63,13 @@ export const WidgetCard = forwardRef<HTMLDivElement, Props>(function WidgetCard(
                             <Icon name="i-lucide-grip-vertical" />
                         </button>
                     ) : null}
-                    <div className="min-w-0 flex-1">
+                    <div className={cn('min-w-0 flex-1', edit && 'min-w-36')}>
                         <CardTitle id={headingId} className="truncate">
                             {meta.title}
                         </CardTitle>
                         <CardDescription className="line-clamp-2 text-xs">{meta.description}</CardDescription>
                     </div>
-                    <div className="flex shrink-0 items-center gap-1">
+                    <div className={cn('flex shrink-0 items-center gap-1', edit && 'ml-auto')}>
                         {edit ? (
                             <>
                                 <select

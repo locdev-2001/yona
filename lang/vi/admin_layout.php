@@ -136,6 +136,16 @@ return [
         'dash' => 'dash.yona.vn',
     ],
 
+    'flash' => [
+        'created' => 'Đã tạo bản ghi.',
+        'updated' => 'Đã lưu thay đổi.',
+        'destroyed' => 'Đã xoá bản ghi.',
+        'account_user_created' => 'Đã thêm người dùng vào tài khoản.',
+        'account_user_destroyed' => 'Đã gỡ người dùng khỏi tài khoản.',
+        'settings_updated' => 'Đã lưu cấu hình.',
+        'restart_required' => 'Cần khởi động lại web và worker để thay đổi áp dụng khắp nơi.',
+    ],
+
     'filters' => [
         'active' => 'Đang hoạt động',
         'suspended' => 'Tạm khoá',
@@ -147,6 +157,7 @@ return [
         'user' => 'Của người dùng',
         'agent_bot' => 'Của agent bot',
         'platform_app' => 'Của ứng dụng nền tảng',
+        'churn_risk' => 'Nguy cơ rời (14 ngày không hoạt động)',
     ],
 
     'attributes' => [

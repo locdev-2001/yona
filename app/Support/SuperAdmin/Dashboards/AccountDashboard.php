@@ -67,6 +67,7 @@ class AccountDashboard extends Dashboard
         return match ($attribute) {
             'suspension_category' => __('super_admin.account_suspension.form.category'),
             'suspension_reason' => __('super_admin.account_suspension.form.reason'),
+            AccountActivity::RECENT_MESSAGES_COUNT, AccountActivity::LAST_ACTIVITY_AT => __("admin_operations.ACCOUNT_COLUMNS.{$attribute}"),
             default => null,
         };
     }

@@ -242,7 +242,11 @@ export default function ResourceIndex({
                                     {row.cells.map((cell, cellIndex) => (
                                         <TableCell
                                             key={cell.name}
-                                            className={cn('max-w-xs', cell.html_class === 'number' && 'text-right')}
+                                            className={cn(
+                                                'max-w-xs',
+                                                cell.name === 'name' && 'min-w-44',
+                                                cell.html_class === 'number' && 'text-right',
+                                            )}
                                         >
                                             {cellIndex === 0 && row.url && !LINKED_CELL_TYPES.includes(cell.type) ? (
                                                 <Link href={row.url} className="font-medium text-console-foreground hover:underline">

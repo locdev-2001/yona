@@ -102,7 +102,7 @@ abstract class ResourceController extends Controller
         $record->save();
 
         return redirect(SuperAdminArea::url("{$this->dashboard()->resourceName()}/{$record->getKey()}"))
-            ->with('notice', Str::headline(class_basename($record)).' was successfully created.');
+            ->with('notice', __('admin_layout.flash.created'));
     }
 
     public function update(Request $request, int $id): RedirectResponse
@@ -112,7 +112,7 @@ abstract class ResourceController extends Controller
         $record->save();
 
         return redirect(SuperAdminArea::url("{$this->dashboard()->resourceName()}/{$record->getKey()}"))
-            ->with('notice', Str::headline(class_basename($record)).' was successfully updated.');
+            ->with('notice', __('admin_layout.flash.updated'));
     }
 
     public function destroy(int $id): RedirectResponse
@@ -120,7 +120,7 @@ abstract class ResourceController extends Controller
         $this->findRecord($id)->delete();
 
         return redirect(SuperAdminArea::url($this->dashboard()->resourceName()))
-            ->with('notice', Str::headline(class_basename($this->dashboard()->modelClass())).' was successfully destroyed.');
+            ->with('notice', __('admin_layout.flash.destroyed'));
     }
 
     /** Dòng trong danh sách dẫn tới đâu; mặc định là trang show. */
@@ -214,7 +214,7 @@ abstract class ResourceController extends Controller
     {
         return array_map(fn (string $attribute) => [
             'name' => $attribute,
-            'label' => Str::ucfirst(str_replace('_', ' ', $attribute)),
+            'label' => $dashboard->formFieldLabel($attribute) ?? Str::ucfirst(str_replace('_', ' ', $attribute)),
             'html_class' => str_replace('_', '-', $dashboard->attributeTypes()[$attribute] ?? 'string'),
         ], $dashboard->collectionAttributes());
     }

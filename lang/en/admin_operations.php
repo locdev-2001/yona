@@ -27,6 +27,10 @@ return [
         'UNSUSPENDED' => 'Account :name reactivated.',
         'BLOCKED' => 'This account is suspended. Please contact support.',
     ],
+    'ACCOUNT_COLUMNS' => [
+        'messages_7d' => 'Messages 7d',
+        'last_activity_at' => 'Last activity',
+    ],
     'SEARCH' => [
         'SUSPENDED' => 'suspended',
     ],

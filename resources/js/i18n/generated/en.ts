@@ -326,6 +326,15 @@ const messages: Record<string, unknown> = {
             "logs": "Server logs",
             "dash": "dash.yona.vn"
         },
+        "flash": {
+            "created": "Record created.",
+            "updated": "Changes saved.",
+            "destroyed": "Record deleted.",
+            "account_user_created": "User added to the account.",
+            "account_user_destroyed": "User removed from the account.",
+            "settings_updated": "Settings saved.",
+            "restart_required": "Restart web and worker processes to apply this change everywhere."
+        },
         "filters": {
             "active": "Active",
             "suspended": "Suspended",
@@ -336,7 +345,8 @@ const messages: Record<string, unknown> = {
             "super_admin": "Super admins",
             "user": "Owned by users",
             "agent_bot": "Owned by agent bots",
-            "platform_app": "Owned by platform apps"
+            "platform_app": "Owned by platform apps",
+            "churn_risk": "Churn risk (inactive 14 days)"
         },
         "attributes": {
             "id": "ID",
@@ -409,6 +419,10 @@ const messages: Record<string, unknown> = {
             "SUSPENDED": "Account :name suspended.",
             "UNSUSPENDED": "Account :name reactivated.",
             "BLOCKED": "This account is suspended. Please contact support."
+        },
+        "ACCOUNT_COLUMNS": {
+            "messages_7d": "Messages 7d",
+            "last_activity_at": "Last activity"
         },
         "SEARCH": {
             "SUSPENDED": "suspended"

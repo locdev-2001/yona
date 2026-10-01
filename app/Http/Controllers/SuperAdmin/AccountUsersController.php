@@ -33,13 +33,13 @@ class AccountUsersController extends Controller
             'role' => AccountUser::roleFromName($payload['role'] ?? 'agent'),
         ]);
 
-        return back()->with('notice', 'Account user was successfully created.');
+        return back()->with('notice', __('admin_layout.flash.account_user_created'));
     }
 
     public function destroy(int $id): RedirectResponse
     {
         AccountUser::query()->findOrFail($id)->delete();
 
-        return back()->with('notice', 'Account user was successfully destroyed.');
+        return back()->with('notice', __('admin_layout.flash.account_user_destroyed'));
     }
 }

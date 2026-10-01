@@ -65,11 +65,11 @@ class AppConfigsController extends Controller
             $restartRequired = $restartRequired || in_array($name, InstallationConfig::RESTART_REQUIRED_CONFIG_KEYS, true);
         }
 
-        $message = Str::headline($section).' settings updated successfully';
+        $message = __('admin_layout.flash.settings_updated');
 
         return redirect(SuperAdminArea::url('settings'))->with(
             'notice',
-            $restartRequired ? "{$message}. Restart web and worker processes to apply this change everywhere." : $message,
+            $restartRequired ? $message.' '.__('admin_layout.flash.restart_required') : $message,
         );
     }
 

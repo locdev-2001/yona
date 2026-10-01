@@ -27,6 +27,10 @@ return [
         'UNSUSPENDED' => 'Đã mở khoá tài khoản :name.',
         'BLOCKED' => 'Tài khoản này đang bị khoá. Hãy liên hệ bộ phận hỗ trợ.',
     ],
+    'ACCOUNT_COLUMNS' => [
+        'messages_7d' => 'Tin 7 ngày',
+        'last_activity_at' => 'Hoạt động cuối',
+    ],
     'SEARCH' => [
         'SUSPENDED' => 'đang khoá',
     ],
