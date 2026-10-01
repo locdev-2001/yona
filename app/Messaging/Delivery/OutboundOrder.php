@@ -37,7 +37,9 @@ final class OutboundOrder
 
     // KEYS: lane, head-since, lanes · ARGV: message id, now, conversation id, ttl. Trả 1 khi tin vừa thành đầu hàng.
     private const ENQUEUE_SCRIPT = <<<'LUA'
-        if redis.call('lpos', KEYS[1], ARGV[1]) then return 0 end
+        for _, queuedId in ipairs(redis.call('lrange', KEYS[1], 0, -1)) do
+            if queuedId == ARGV[1] then return 0 end
+        end
         redis.call('rpush', KEYS[1], ARGV[1])
         redis.call('expire', KEYS[1], ARGV[4])
         redis.call('sadd', KEYS[3], ARGV[3])
