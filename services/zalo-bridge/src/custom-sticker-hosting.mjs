@@ -75,6 +75,6 @@ export function createZaloStickerHost({
             remember(cache, sticker.staticUrl, hostedUrl);
         }
 
-        return { ...sticker, staticUrl: hostedUrl, animationUrl: hostedUrl };
+        return { ...sticker, zaloHostedUrl: hostedUrl };
     };
 }

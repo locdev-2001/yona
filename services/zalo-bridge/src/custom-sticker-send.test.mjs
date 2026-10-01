@@ -55,7 +55,7 @@ test('custom_sticker đưa ảnh lên CDN Zalo rồi đi đường sticker tự 
         {
             name: CUSTOM_STICKER_METHOD,
             props: {
-                sticker: { staticUrl: HOSTED_URL, animationUrl: HOSTED_URL, width: 128, height: 128 },
+                sticker: { staticUrl: STATIC_URL, animationUrl: STATIC_URL, zaloHostedUrl: HOSTED_URL, width: 128, height: 128 },
                 threadId: '555',
                 isGroup: true,
                 layout: 'ai',

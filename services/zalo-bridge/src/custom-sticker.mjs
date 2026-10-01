@@ -18,9 +18,10 @@ const MAX_EDGE = 1024;
 /**
  * Cách Zalo vẽ tin sticker tự tạo, chọn bằng ZALO_CUSTOM_STICKER_LAYOUT của bridge.
  * Client Zalo (web/desktop) xếp tin chat.photo khung không viền (properties.type 3) vào ba bộ vẽ:
- * - `ai`: params mang pStickerType 1 → bộ vẽ sticker AI. Ảnh được đưa lên CDN Zalo trước khi gửi
- *   (custom-sticker-hosting.mjs): Zalo Web tải ảnh sticker AI bằng fetch() bị CSP chặn mọi miền
- *   ngoài Zalo; desktop tải thẳng oriUrl. Đưa lên hỏng thì gửi như `ai_direct`.
+ * - `ai`: params mang pStickerType 1 → bộ vẽ sticker AI. Desktop và Web vẽ từ oriUrl, nên oriUrl
+ *   trỏ bản đã đưa lên CDN Zalo (custom-sticker-hosting.mjs): Zalo Web tải ảnh sticker AI bằng
+ *   fetch() bị CSP chặn mọi miền ngoài Zalo. App điện thoại vẽ từ webp.url bằng bộ giải mã WebP,
+ *   nên webp.url giữ tệp WebP gốc của Yona (bản CDN Zalo là JPEG). Đưa lên hỏng thì gửi như `ai_direct`.
  * - `ai_direct`: như `ai` nhưng trỏ thẳng URL của Yona: desktop hiện đúng, Web để trống.
  * - `photo`: có contentId + webp mà không có pStickerType → bộ vẽ "photo sticker" cũ, desktop
  *   tải tệp về bộ nhớ đệm theo contentId; tệp ngoài CDN Zalo rơi vào ô mặt cười xám.
@@ -111,10 +112,12 @@ function layoutParams(layout, sticker, clientId) {
     }
 
     // Server Zalo bỏ pStickerType đặt thẳng trong params; client Zalo gửi nó trong `jcp`.
+    const imageUrl = sticker.zaloHostedUrl ?? animationUrl;
+
     return {
-        oriUrl: animationUrl,
-        thumbUrl: animationUrl,
-        hdUrl: animationUrl,
+        oriUrl: imageUrl,
+        thumbUrl: imageUrl,
+        hdUrl: imageUrl,
         properties: stickerProperties(PLAIN_EXT),
         contentId: clientId,
         thumb_width: width,

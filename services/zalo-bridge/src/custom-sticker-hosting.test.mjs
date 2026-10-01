@@ -58,18 +58,13 @@ test('flattenStickerToJpeg: vùng trong suốt thành nền trắng, không đ�
     }
 });
 
-test('hostStickerOnZalo: tải ảnh tĩnh theo allowlist, đưa JPEG lên đúng luồng, mọi URL trỏ CDN Zalo', async () => {
+test('hostStickerOnZalo: tải ảnh tĩnh theo allowlist, đưa JPEG lên đúng luồng, giữ URL gốc của Yona', async () => {
     const { deps, api, downloads, uploads, cleaned } = fakeDeps();
     const host = createZaloStickerHost(deps);
 
     const hosted = await host(api, sticker, { threadId: 555, isGroup: true });
 
-    assert.deepEqual(hosted, {
-        staticUrl: 'https://b-f9-zpc.zdn.vn/1/sticker.jpg',
-        animationUrl: 'https://b-f9-zpc.zdn.vn/1/sticker.jpg',
-        width: 130,
-        height: 130,
-    });
+    assert.deepEqual(hosted, { ...sticker, zaloHostedUrl: 'https://b-f9-zpc.zdn.vn/1/sticker.jpg' });
     assert.equal(downloads[0].url, STATIC_URL);
     assert.equal(downloads[0].options.allowedHosts, ALLOWED);
     assert.deepEqual(uploads, [{ name: 'sticker.jpg', format: 'jpeg', threadId: '555', threadType: 1 }]);

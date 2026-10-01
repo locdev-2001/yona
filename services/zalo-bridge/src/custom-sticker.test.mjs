@@ -233,7 +233,7 @@ test('sendCustomSticker: phiên chưa có bản đồ dịch vụ tệp thì bá
 
 const HOSTED_URL = 'https://b-f9-zpc.zdn.vn/1/sticker.jpg';
 
-function fakeHost(result = (sent) => ({ ...sent, staticUrl: HOSTED_URL, animationUrl: HOSTED_URL })) {
+function fakeHost(result = (sent) => ({ ...sent, zaloHostedUrl: HOSTED_URL })) {
     const calls = [];
     const hostSticker = async (api, sent, target) => {
         calls.push({ api, sent, target });
@@ -243,7 +243,7 @@ function fakeHost(result = (sent) => ({ ...sent, staticUrl: HOSTED_URL, animatio
     return { hostSticker, calls };
 }
 
-test('sendCustomSticker: dạng ai gửi URL ảnh đã đưa lên CDN Zalo cho mọi trường ảnh', async () => {
+test('sendCustomSticker: dạng ai trỏ ảnh CDN Zalo cho Desktop/Web, giữ WebP gốc ở webp.url cho app điện thoại', async () => {
     const { api, requests } = fakeZcaApi();
     const { hostSticker, calls } = fakeHost();
 
@@ -253,7 +253,7 @@ test('sendCustomSticker: dạng ai gửi URL ảnh đã đưa lên CDN Zalo cho 
     const params = sentParams(requests[0]);
     assert.deepEqual(
         [params.oriUrl, params.thumbUrl, params.hdUrl, JSON.parse(params.webp).url],
-        [HOSTED_URL, HOSTED_URL, HOSTED_URL, HOSTED_URL]
+        [HOSTED_URL, HOSTED_URL, HOSTED_URL, sticker.animationUrl]
     );
     assert.equal(params.jcp, JSON.stringify({ pStickerType: 1 }));
 });
