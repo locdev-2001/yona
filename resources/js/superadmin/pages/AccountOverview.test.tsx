@@ -50,6 +50,7 @@ function props(overrides: Partial<AccountOverviewProps> = {}): AccountOverviewPr
         ],
         onboarding: { step: null, stepLabel: null, milestones: [] },
         timeline: [],
+        features: [],
         stickers: { packs: 1, stickers: 3 },
         impersonations: [],
         urls: {
@@ -61,6 +62,7 @@ function props(overrides: Partial<AccountOverviewProps> = {}): AccountOverviewPr
             suspend: '/admin/accounts/7/suspend',
             unsuspend: '/admin/accounts/7/unsuspend',
             impersonations: '/admin/impersonations',
+            featureUsage: '/admin/feature_usage',
         },
         csrf: 'token',
         ...overrides,
@@ -183,5 +185,31 @@ describe('AccountOverview', () => {
 
         fireEvent.click(screen.getByRole('tab', { name: 'Stickers' }));
         expect(screen.getByRole('link', { name: /Manage sticker library|sticker/i })).toHaveAttribute('href', '/admin/accounts/7/sticker_packs');
+    });
+
+    it('tab hoạt động liệt kê tính năng đã dùng, mỗi dòng dẫn tới danh sách account cùng dùng', () => {
+        render(
+            <AccountOverview
+                {...props({
+                    features: [
+                        { key: 'sticker_sent', label: 'Sticker sent', group: 'feature', events: 12, lastAt: '2026-09-30T10:00:00Z' },
+                        { key: 'macro_run', label: 'Macro run', group: 'feature', events: 1, lastAt: '2026-09-20T10:00:00Z' },
+                    ],
+                })}
+            />,
+        );
+
+        fireEvent.click(screen.getByRole('tab', { name: 'Activity' }));
+
+        expect(screen.getByText('Features used')).toBeInTheDocument();
+        expect(screen.getByRole('link', { name: 'Sticker sent' })).toHaveAttribute('href', '/admin/feature_usage/sticker_sent');
+        expect(screen.getByText('12 uses')).toBeInTheDocument();
+    });
+
+    it('chưa dùng tính năng nào thì nói rõ', () => {
+        render(<AccountOverview {...props()} />);
+        fireEvent.click(screen.getByRole('tab', { name: 'Activity' }));
+
+        expect(screen.getByText('No feature used yet.')).toBeInTheDocument();
     });
 });

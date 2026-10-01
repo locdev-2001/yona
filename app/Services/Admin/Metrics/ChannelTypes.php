@@ -26,6 +26,19 @@ final class ChannelTypes
         return $channel instanceof DeclaresPlatform ? $channel->platform() : ChannelPlatform::unknown();
     }
 
+    // Nền tảng theo khoá đã lưu (vd. thuộc tính `platform` của sự kiện sản phẩm).
+    public function platformByKey(string $key): ChannelPlatform
+    {
+        foreach (array_keys(Relation::morphMap()) as $type) {
+            $platform = $this->platform($type);
+            if ($platform->key === $key) {
+                return $platform;
+            }
+        }
+
+        return ChannelPlatform::unknown();
+    }
+
     /** @return list<string> */
     public function externallyConnectedTypes(): array
     {

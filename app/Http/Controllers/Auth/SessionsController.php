@@ -11,6 +11,7 @@ use App\Models\UserSession;
 use App\Services\Mfa\AuthenticationService;
 use App\Services\Mfa\TokenService;
 use App\Services\OAuth\OAuthProviders;
+use App\Services\ProductEvents\ProductEventRecorder;
 use App\Services\UserSessionRevoker;
 use App\Support\CurrentUserSession;
 use Illuminate\Http\Request;
@@ -113,7 +114,14 @@ class SessionsController extends Controller
             }
         }
 
-        return $this->completeLogin($request, $user);
+        $response = $this->completeLogin($request, $user);
+
+        // Phiên đăng nhập hộ: việc làm trong phiên không tính là tenant dùng tính năng.
+        if ($tokenType === 'impersonation') {
+            $request->session()->put(ProductEventRecorder::IMPERSONATION_SESSION_KEY, true);
+        }
+
+        return $response;
     }
 
     private function authenticateCredentials(Request $request): User

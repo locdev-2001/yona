@@ -12,10 +12,12 @@ import {
 } from '@admin/components/ui/dropdown-menu';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@admin/components/ui/select';
 import { cn } from '@admin/lib/utils';
+import { TONE_CHIP } from '@admin/views/dashboards/tones';
 
 import { t } from '../../i18n';
 import { SIZE_CLASS } from './layout';
 import type { LayoutItem, WidgetMeta, WidgetSize } from './types';
+import { WIDGET_BADGE } from './widgetTones';
 
 export type EditControls = {
     sizes: WidgetSize[];
@@ -127,6 +129,7 @@ function WidgetMenu({ meta, busy, onRefresh, onHide }: { meta: WidgetMeta; busy:
 // góc bằng tay nắm kéo, chọn độ rộng và nút ẩn.
 export function WidgetCard({ ref, meta, item, edit, onRefresh, onHide, busy = false, bare = false, children, style, dragging = false }: Props) {
     const headingId = `dashboard-widget-${meta.key}`;
+    const badge = WIDGET_BADGE[meta.key];
     const sectionProps = {
         ref,
         style,
@@ -184,6 +187,14 @@ export function WidgetCard({ ref, meta, item, edit, onRefresh, onHide, busy = fa
                 <CardHeader>
                     <div className="flex min-w-0 items-center gap-1">
                         {edit ? <DragHandle meta={meta} edit={edit} /> : null}
+                        {badge ? (
+                            <span
+                                aria-hidden="true"
+                                className={cn('mr-2 flex size-7 shrink-0 items-center justify-center rounded-sm', TONE_CHIP[badge.tone])}
+                            >
+                                {badge.icon}
+                            </span>
+                        ) : null}
                         <CardTitle id={headingId} role="heading" aria-level={2} className="min-w-0 text-lg font-semibold break-words">
                             {meta.title}
                         </CardTitle>

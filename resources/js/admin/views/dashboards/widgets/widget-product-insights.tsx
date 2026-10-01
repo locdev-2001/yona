@@ -1,11 +1,14 @@
 // Util Imports
 import { cn } from '@admin/lib/utils'
+import { TONE_BORDER, type Tone } from '@admin/views/dashboards/tones'
 
 export type InsightStat = {
   key: string
   label: string
   value: string
   className?: string
+  // Vạch màu mép trái (kiểu cột); dòng không có tone giữ viền trung tính.
+  tone?: Tone
 }
 
 type Props = {
@@ -22,9 +25,12 @@ const ProductInsightsStats = ({ stats, columns = false, className }: Props) => {
     return (
       <dl className={cn('grid grid-cols-2 gap-4 @md:grid-cols-3', className)}>
         {stats.map(stat => (
-          <div key={stat.key} className='flex min-w-0 flex-col gap-1'>
-            <dt className='text-muted-foreground text-sm'>{stat.label}</dt>
-            <dd className={cn('text-2xl font-medium tabular-nums', stat.className)}>{stat.value}</dd>
+          <div
+            key={stat.key}
+            className={cn('flex min-w-0 flex-col gap-1 border-l-4 pl-3', TONE_BORDER[stat.tone ?? 'neutral'])}
+          >
+            <dt className='text-sm text-neutral-500'>{stat.label}</dt>
+            <dd className={cn('text-2xl font-medium text-neutral-900', stat.className)}>{stat.value}</dd>
           </div>
         ))}
       </dl>
@@ -35,8 +41,8 @@ const ProductInsightsStats = ({ stats, columns = false, className }: Props) => {
     <dl className={cn('divide-border flex flex-col divide-y', className)}>
       {stats.map(stat => (
         <div key={stat.key} className='flex items-baseline justify-between gap-3 py-2 first:pt-0 last:pb-0'>
-          <dt className='text-muted-foreground min-w-0 text-sm'>{stat.label}</dt>
-          <dd className={cn('shrink-0 text-sm font-medium tabular-nums', stat.className)}>{stat.value}</dd>
+          <dt className='min-w-0 text-sm text-neutral-500'>{stat.label}</dt>
+          <dd className={cn('font-num shrink-0 text-sm font-medium text-neutral-900', stat.className)}>{stat.value}</dd>
         </div>
       ))}
     </dl>

@@ -6,10 +6,14 @@ use App\Models\Account;
 use App\Models\AccountUser;
 use App\Models\Inbox;
 use App\Models\Message;
+use App\Models\ProductEvent;
 use App\Models\Sticker;
 use App\Models\StickerPack;
 use App\Models\SuperAdminAuditLog;
 use App\Models\SuperAdminImpersonation;
+use App\Services\Admin\Metrics\ChannelTypes;
+use App\Services\Admin\Metrics\DateRange;
+use App\Services\ProductEvents\ProductEventName;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
@@ -146,6 +150,8 @@ final class AccountActivity
             ->get();
         array_push($events, ...self::auditEvents($account, $auditLogs->all()));
 
+        array_push($events, ...self::productEvents($account, $limit));
+
         $lastMessageAt = Message::query()->where('account_id', $account->id)->max('created_at');
         if ($lastMessageAt !== null) {
             $events[] = self::event('last_message', $lastMessageAt, []);
@@ -155,6 +161,96 @@ final class AccountActivity
         usort($events, fn (array $left, array $right) => strcmp($right['at'], $left['at']));
 
         return array_slice($events, 0, $limit);
+    }
+
+    // Sự kiện sản phẩm đã có dòng riêng từ bảng gốc (tạo tài khoản, thêm hộp thư).
+    private const TIMELINE_SKIPPED_PRODUCT_EVENTS = [ProductEventName::AccountSignedUp, ProductEventName::InboxCreated];
+
+    /**
+     * Sự kiện sản phẩm thành câu: mốc kích hoạt từng dòng (kèm nền tảng, bước),
+     * lượt dùng tính năng gộp theo tính năng và ngày ("Gửi sticker", 5 lần).
+     *
+     * @return list<array{type: string, at: string, title: string, detail: ?string}>
+     */
+    private static function productEvents(Account $account, int $limit): array
+    {
+        $activation = array_values(array_diff(
+            array_map(fn (ProductEventName $name) => $name->value, array_filter(ProductEventName::cases(), fn (ProductEventName $name) => ! $name->isFeature())),
+            array_map(fn (ProductEventName $name) => $name->value, self::TIMELINE_SKIPPED_PRODUCT_EVENTS),
+        ));
+        $features = array_map(fn (ProductEventName $name) => $name->value, array_filter(ProductEventName::cases(), fn (ProductEventName $name) => $name->isFeature()));
+
+        $events = [];
+        $milestones = ProductEvent::query()
+            ->where('account_id', $account->id)
+            ->whereIn('name', $activation)
+            ->latest('occurred_at')
+            ->limit($limit)
+            ->get(['name', 'properties', 'occurred_at']);
+        foreach ($milestones as $milestone) {
+            $events[] = self::productEvent($milestone->name, $milestone->occurred_at, self::productReplacements((array) $milestone->properties), null);
+        }
+
+        $usage = ProductEvent::query()
+            ->toBase()
+            ->where('account_id', $account->id)
+            ->whereIn('name', $features)
+            ->selectRaw('name, '.DateRange::localDateSql('occurred_at').' as local_day, count(*) as total, max(occurred_at) as last_at')
+            ->groupBy('name', 'local_day')
+            ->orderByDesc('last_at')
+            ->limit($limit)
+            ->get();
+        foreach ($usage as $row) {
+            $count = (int) $row->total;
+            $detail = $count > 1 ? (string) __('admin_operations.ACCOUNT_OVERVIEW.FEATURES.TIMES', ['count' => (string) $count]) : null;
+            $events[] = self::productEvent($row->name, $row->last_at, [], $detail);
+        }
+
+        return array_values(array_filter($events));
+    }
+
+    /**
+     * @param  array<string, mixed>  $properties
+     * @return array<string, string>
+     */
+    private static function productReplacements(array $properties): array
+    {
+        $replace = [];
+        if (is_string($properties['platform'] ?? null)) {
+            $platform = app(ChannelTypes::class)->platformByKey($properties['platform']);
+            $replace['platform'] = $platform->name !== '' ? $platform->name : (string) __('admin_operations.COMMON.UNKNOWN');
+        }
+        if (is_string($properties['method'] ?? null)) {
+            $key = "admin_operations.PRODUCT_EVENTS.METHODS.{$properties['method']}";
+            $replace['method'] = __($key) === $key ? $properties['method'] : (string) __($key);
+        }
+        if (is_string($properties['step'] ?? null)) {
+            $key = "admin_operations.ACCOUNT_OVERVIEW.ONBOARDING.STEPS.{$properties['step']}";
+            $replace['step'] = __($key) === $key ? $properties['step'] : (string) __($key);
+        }
+
+        return $replace;
+    }
+
+    /**
+     * @param  array<string, string>  $replace
+     * @return array{type: string, at: string, title: string, detail: ?string}|null
+     */
+    private static function productEvent(string $name, mixed $at, array $replace, ?string $detail): ?array
+    {
+        $event = self::event('product_event', $at, []);
+        if ($event === null) {
+            return null;
+        }
+
+        $replace += ['platform' => (string) __('admin_operations.COMMON.UNKNOWN'), 'method' => '', 'step' => ''];
+
+        return [
+            ...$event,
+            'type' => "product.{$name}",
+            'title' => (string) __("admin_operations.ACCOUNT_OVERVIEW.TIMELINE.PRODUCT.{$name}", $replace),
+            'detail' => $detail,
+        ];
     }
 
     // Mẫu route → khoá câu mô tả nằm ở AuditActionDescriber (dùng chung với trang Nhật ký

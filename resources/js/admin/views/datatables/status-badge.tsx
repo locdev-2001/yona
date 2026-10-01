@@ -9,14 +9,20 @@ import { cn } from '@admin/lib/utils'
 
 export type StatusTone = 'success' | 'warning' | 'danger' | 'neutral'
 
+// Nền tint + chữ đậm màu cùng họ trạng thái (tokens.md): mọi cặp ≥4.5:1, chữ trong nhãn nói rõ trạng thái.
 const STATUS_STYLES: Record<StatusTone, string> = {
-  success:
-    'bg-green-600/10 text-green-600 focus-visible:ring-green-600/20 dark:bg-green-400/10 dark:text-green-400 dark:focus-visible:ring-green-400/40 [a&]:hover:bg-green-600/5 dark:[a&]:hover:bg-green-400/5',
-  warning:
-    'bg-amber-600/10 text-amber-600 focus-visible:ring-amber-600/20 dark:bg-amber-400/10 dark:text-amber-400 dark:focus-visible:ring-amber-400/40 [a&]:hover:bg-amber-600/5 dark:[a&]:hover:bg-amber-400/5',
-  danger:
-    'bg-destructive/10 [a&]:hover:bg-destructive/5 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 text-destructive',
-  neutral: 'bg-muted text-muted-foreground'
+  success: 'bg-success-tint text-success [a&]:hover:bg-success-tint/70',
+  warning: 'bg-warning-tint text-warning [a&]:hover:bg-warning-tint/70',
+  danger: 'bg-danger-tint text-danger [a&]:hover:bg-danger-tint/70',
+  neutral: 'bg-neutral-100 text-neutral-700'
+}
+
+// Chấm cùng màu trước chữ: thêm một dấu hình cho trạng thái, chữ vẫn là nguồn nghĩa chính.
+const STATUS_DOT: Record<StatusTone, string> = {
+  success: 'bg-success',
+  warning: 'bg-warning',
+  danger: 'bg-danger',
+  neutral: 'bg-neutral-500'
 }
 
 type StatusBadgeProps = {
@@ -29,8 +35,9 @@ type StatusBadgeProps = {
 const StatusBadge = ({ tone, children, className }: StatusBadgeProps) => {
   return (
     <Badge
-      className={cn('h-auto rounded-sm border-none focus-visible:outline-none', STATUS_STYLES[tone], className)}
+      className={cn('h-auto gap-1.5 rounded-sm border-none focus-visible:outline-none', STATUS_STYLES[tone], className)}
     >
+      <span aria-hidden='true' className={cn('size-1.5 shrink-0 rounded-full', STATUS_DOT[tone])} />
       {children}
     </Badge>
   )

@@ -7,6 +7,7 @@ use App\Mailboxes\ImapMailbox;
 use App\Models\Channel\Email;
 use App\Services\Email\MailPresenter;
 use App\Services\Imap\FetchEmailService;
+use App\Services\ProductEvents\ProductEventHooks;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Throwable;
@@ -60,12 +61,15 @@ class FetchImapEmailsJob extends ApplicationJob
     private function processEmailsForChannel(): void
     {
         try {
-            $emails = (new FetchEmailService($this->channel, $this->interval))->perform();
+            $emails = app(FetchEmailService::class, ['channel' => $this->channel, 'interval' => $this->interval])->perform();
         } catch (Throwable $exception) {
             Log::error('[IMAP] Error for email channel - '.$this->channel->inbox->id.' : '.$exception->getMessage());
 
             return;
         }
+
+        // Lấy thư thành công lần đầu = IMAP đã nối được (chống trùng theo hộp thư).
+        app(ProductEventHooks::class)->channelConnected($this->channel->inbox, 'imap');
 
         foreach ($emails as $email) {
             $this->processMail($email);

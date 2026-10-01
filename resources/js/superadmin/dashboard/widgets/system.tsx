@@ -3,6 +3,8 @@ import type { ReactNode } from 'react';
 
 import { Badge } from '@admin/components/ui/badge';
 import { Button } from '@admin/components/ui/button';
+import { cn } from '@admin/lib/utils';
+import type { Tone } from '@admin/views/dashboards/tones';
 import ProductInsightsStats from '@admin/views/dashboards/widgets/widget-product-insights';
 import QuickLinks from '@admin/views/dashboards/widgets/widget-quick-links';
 
@@ -10,12 +12,15 @@ import { t } from '../../../i18n';
 import { formatBytes, formatNumber } from '../format';
 import type { OperationLink, QueueHealthData, StickersData, SystemData } from '../types';
 
-const QUEUE_BADGE: Record<QueueHealthData['status'], 'default' | 'outline' | 'destructive' | 'secondary'> = {
-    running: 'default',
-    paused: 'outline',
-    inactive: 'destructive',
-    unavailable: 'secondary',
+// Trạng thái hàng đợi theo màu trạng thái chuẩn; chữ trong nhãn nói rõ nên không chỉ dựa vào màu.
+const QUEUE_BADGE: Record<QueueHealthData['status'], string> = {
+    running: 'bg-success-tint text-success',
+    paused: 'bg-warning-tint text-warning',
+    inactive: 'bg-danger-tint text-danger',
+    unavailable: 'bg-neutral-100 text-neutral-700',
 };
+
+const LINK_TONE: Record<string, Tone> = { horizon: 'primary', pulse: 'success', logs: 'warning', tasks: 'navy' };
 
 const numberOrDash = (value: number | null) => (value === null ? '-' : formatNumber(value));
 
@@ -31,7 +36,7 @@ function OpenLink({ href, children }: { href: string; children: ReactNode }) {
 export function QueueHealth({ data }: { data: QueueHealthData }) {
     return (
         <div className="flex flex-1 flex-col gap-4">
-            <Badge variant={QUEUE_BADGE[data.status]}>{t(`ADMIN_DASHBOARD.QUEUE.STATUS.${data.status.toUpperCase()}`)}</Badge>
+            <Badge className={cn('rounded-sm border-none', QUEUE_BADGE[data.status])}>{t(`ADMIN_DASHBOARD.QUEUE.STATUS.${data.status.toUpperCase()}`)}</Badge>
             <ProductInsightsStats
                 stats={[
                     { key: 'pending', label: t('ADMIN_DASHBOARD.QUEUE.PENDING'), value: numberOrDash(data.pendingJobs) },
@@ -39,7 +44,7 @@ export function QueueHealth({ data }: { data: QueueHealthData }) {
                         key: 'failed',
                         label: t('ADMIN_DASHBOARD.QUEUE.RECENT_FAILED'),
                         value: numberOrDash(data.recentFailedJobs),
-                        className: (data.recentFailedJobs ?? 0) > 0 ? 'text-destructive' : undefined,
+                        className: (data.recentFailedJobs ?? 0) > 0 ? 'text-danger' : undefined,
                     },
                     { key: 'processes', label: t('ADMIN_DASHBOARD.QUEUE.PROCESSES'), value: numberOrDash(data.processes) },
                 ]}
@@ -96,6 +101,7 @@ export function OperationLinks({ links }: { links: OperationLink[] }) {
                 href: link.url,
                 external: link.external,
                 icon: LINK_ICON[link.key] ?? <LinkIcon className="size-5" />,
+                tone: LINK_TONE[link.key] ?? 'neutral',
                 title: t(`ADMIN_DASHBOARD.LINKS.${link.key.toUpperCase()}.TITLE`),
                 description: t(`ADMIN_DASHBOARD.LINKS.${link.key.toUpperCase()}.DESCRIPTION`),
             }))}

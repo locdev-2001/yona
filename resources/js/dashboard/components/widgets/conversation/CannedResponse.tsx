@@ -6,7 +6,7 @@ import type { Schema } from 'prosemirror-model';
 
 import CaretAnchoredPicker from 'dashboard/components/widgets/WootWriter/CaretAnchoredPicker';
 import type { CaretPosition, PickerCloseReason } from 'dashboard/components/widgets/WootWriter/CaretAnchoredPicker';
-import { fetchCannedResponses, useCannedResponses } from 'dashboard/composables/useCannedResponses';
+import { fetchCannedResponses, markCannedResponseUsed, useCannedResponses } from 'dashboard/composables/useCannedResponses';
 import { stripUnsupportedFormatting } from 'dashboard/helper/editorHelper';
 import { accountScopedUrl } from 'dashboard/helper/URLHelper';
 import MessageFormatter, { getPlainText } from 'shared/helpers/MessageFormatter';
@@ -153,11 +153,14 @@ export default function CannedResponse({
                 searchTerm ? t('COMBOBOX.EMPTY_SEARCH_RESULTS', { searchTerm }) : t('COMBOBOX.EMPTY_STATE')
             }
             renderEmpty={records.length ? undefined : renderEmpty}
-            onSelect={item =>
-                item.contentType
-                    ? onSelectCard({ contentType: item.contentType, content: item.content || null, contentAttributes: item.contentAttributes ?? {} })
-                    : onReplace(item.content)
-            }
+            onSelect={item => {
+                markCannedResponseUsed(accountId, item.id);
+                if (item.contentType) {
+                    onSelectCard({ contentType: item.contentType, content: item.content || null, contentAttributes: item.contentAttributes ?? {} });
+                } else {
+                    onReplace(item.content);
+                }
+            }}
             onClose={onClose}
             onRemoveTrigger={onRemoveTrigger}
             renderPreview={item => (

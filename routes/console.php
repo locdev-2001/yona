@@ -56,3 +56,10 @@ Schedule::command('monitor:check')
     ->everyMinute()
     ->withoutOverlapping()
     ->onOneServer();
+
+// Cảnh báo cho super admin theo ngưỡng chỉnh ở /admin/alerts (kênh lỗi, job lỗi,
+// hàng đợi, zalo-bridge). Mỗi sự cố báo một lần, hồi phục báo một lần.
+Schedule::command('alerts:evaluate')
+    ->everyFiveMinutes()
+    ->withoutOverlapping()
+    ->onOneServer();

@@ -1,6 +1,10 @@
 // Component Imports
 import { Progress, ProgressLabel, ProgressValue } from '@admin/components/ui/progress'
 
+// Util Imports
+import { cn } from '@admin/lib/utils'
+import { TONE_BADGE, TONE_PROGRESS, type Tone } from '@admin/views/dashboards/tones'
+
 export type FunnelStepView = {
   key: string
   label: string
@@ -8,19 +12,38 @@ export type FunnelStepView = {
   // Độ rộng thanh: tỉ lệ so với bước đầu, 0–100.
   percentage: number
   caption?: string
+  // Số thứ tự bước, in trong ô màu trước nhãn: bước đọc được không qua màu.
+  index?: number
+  tone?: Tone
 }
 
-// Phễu: mỗi bước một thanh tiến độ, độ dài theo tỉ lệ so với bước đầu.
+// Phễu: mỗi bước một thanh tiến độ, độ dài theo tỉ lệ so với bước đầu; mỗi bước một màu.
 const FunnelProgress = ({ title, steps }: { title: string; steps: FunnelStepView[] }) => {
   return (
     <ol aria-label={title} className='flex flex-col gap-4'>
       {steps.map(step => (
-        <li key={step.key} className='flex flex-col gap-1.5'>
-          <Progress value={step.percentage} className='**:data-[slot=progress-track]:h-2'>
-            <ProgressLabel>{step.label}</ProgressLabel>
-            <ProgressValue className='text-foreground font-medium'>{() => step.count}</ProgressValue>
-          </Progress>
-          {step.caption ? <p className='text-muted-foreground text-xs tabular-nums'>{step.caption}</p> : null}
+        <li key={step.key} className='flex gap-3'>
+          {step.index !== undefined ? (
+            <span
+              aria-hidden='true'
+              className={cn(
+                'font-num flex size-6 shrink-0 items-center justify-center rounded-sm text-xs font-medium',
+                TONE_BADGE[step.tone ?? 'primary']
+              )}
+            >
+              {step.index}
+            </span>
+          ) : null}
+          <div className='flex min-w-0 flex-1 flex-col gap-1.5'>
+            <Progress
+              value={step.percentage}
+              className={cn('**:data-[slot=progress-track]:h-2', TONE_PROGRESS[step.tone ?? 'primary'])}
+            >
+              <ProgressLabel>{step.label}</ProgressLabel>
+              <ProgressValue className='font-num font-medium text-neutral-900'>{() => step.count}</ProgressValue>
+            </Progress>
+            {step.caption ? <p className='font-num text-xs text-neutral-500'>{step.caption}</p> : null}
+          </div>
         </li>
       ))}
     </ol>

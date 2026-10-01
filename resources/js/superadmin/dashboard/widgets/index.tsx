@@ -14,6 +14,8 @@ import type {
     SystemData,
     TopAccountsData,
 } from '../types';
+import { Alerts } from './alerts';
+import type { AlertsData } from './alerts';
 import { CohortRetention } from './cohort';
 import { ChannelHealth, RecentSignups, TopAccounts } from './lists';
 import { ActivationFunnel, ConversationsByChannel, Kpis, MessagesTrend, SignupsTrend } from './metrics';
@@ -70,6 +72,7 @@ export const SERVER_WIDGETS: Record<string, AnyRenderer> = {
         isEmpty: data => data.total === 0,
         skeleton: 'list',
     }),
+    alerts: define<AlertsData>({ render: data => <Alerts data={data} />, skeleton: 'list' }),
     top_accounts: define<TopAccountsData>({
         render: data => <TopAccounts data={data} />,
         isEmpty: data => data.items.length === 0,

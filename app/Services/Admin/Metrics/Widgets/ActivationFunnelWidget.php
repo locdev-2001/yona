@@ -4,19 +4,21 @@ namespace App\Services\Admin\Metrics\Widgets;
 
 use App\Models\Message;
 use App\Models\User;
-use App\Services\Admin\Metrics\ChannelTypes;
 use App\Services\Admin\Metrics\DateRange;
 use App\Services\Admin\Metrics\MetricWidget;
 use App\Services\Admin\Metrics\WidgetSize;
+use App\Services\ProductEvents\ProductEventName;
 use Illuminate\Support\Facades\DB;
 
-// Phễu kích hoạt của các account đăng ký trong khoảng, suy ra từ dữ liệu sẵn
-// có. Mỗi bước chỉ đếm account đã qua mọi bước trước để phễu luôn thu hẹp.
+// Phễu kích hoạt của các account đăng ký trong khoảng. Mỗi bước chỉ đếm account
+// đã qua mọi bước trước để phễu luôn thu hẹp. Xác nhận email và kết nối kênh đọc
+// từ sự kiện sản phẩm (product_events): kết nối là lúc kênh thật sự nối được (quét
+// QR xong, IMAP lấy được thư, widget chạy trên website, token/OAuth được nhận),
+// không phải chỉ vừa tạo hộp thư. Dữ liệu trước khi có bảng này đến từ lệnh
+// product-events:backfill.
 final class ActivationFunnelWidget extends MetricWidget
 {
-    private const STEPS = ['signed_up', 'created_inbox', 'connected_channel', 'received_message', 'replied'];
-
-    public function __construct(private readonly ChannelTypes $channelTypes) {}
+    private const STEPS = ['signed_up', 'confirmed_email', 'created_inbox', 'connected_channel', 'received_message', 'replied'];
 
     public function key(): string
     {
@@ -52,19 +54,14 @@ final class ActivationFunnelWidget extends MetricWidget
     /** @return array<string, int> */
     private function stepCounts(DateRange $range): array
     {
-        $connectedTypes = $this->channelTypes->externallyConnectedTypes();
-        $connectedCondition = $connectedTypes === []
-            ? 'false'
-            : 'inboxes.channel_type in ('.implode(', ', array_fill(0, count($connectedTypes), '?')).')';
+        $eventExists = 'exists (select 1 from product_events where product_events.account_id = accounts.id and product_events.name = ?)';
 
         $cohort = DB::table('accounts')
             ->where('accounts.created_at', '>=', $range->startsAtUtc())
             ->where('accounts.created_at', '<', $range->endsBeforeUtc())
+            ->selectRaw("{$eventExists} as confirmed_email", [ProductEventName::EmailConfirmed->value])
             ->selectRaw('exists (select 1 from inboxes where inboxes.account_id = accounts.id) as created_inbox')
-            ->selectRaw(
-                "exists (select 1 from inboxes where inboxes.account_id = accounts.id and {$connectedCondition}) as connected_channel",
-                $connectedTypes,
-            )
+            ->selectRaw("{$eventExists} as connected_channel", [ProductEventName::ChannelConnected->value])
             ->selectRaw(
                 'exists (select 1 from messages where messages.account_id = accounts.id and messages.message_type = ?) as received_message',
                 [Message::TYPE_INCOMING],
@@ -75,13 +72,14 @@ final class ActivationFunnelWidget extends MetricWidget
                 [Message::TYPE_OUTGOING, (new User)->getMorphClass()],
             );
 
-        $row = DB::query()->fromSub($cohort, 'cohort')->selectRaw(
-            'count(*) as signed_up,'
-            .' count(*) filter (where created_inbox) as created_inbox,'
-            .' count(*) filter (where created_inbox and connected_channel) as connected_channel,'
-            .' count(*) filter (where created_inbox and connected_channel and received_message) as received_message,'
-            .' count(*) filter (where created_inbox and connected_channel and received_message and replied) as replied',
-        )->first();
+        $passed = [];
+        $selects = ['count(*) as signed_up'];
+        foreach (array_slice(self::STEPS, 1) as $step) {
+            $passed[] = $step;
+            $selects[] = 'count(*) filter (where '.implode(' and ', $passed).") as {$step}";
+        }
+
+        $row = DB::query()->fromSub($cohort, 'cohort')->selectRaw(implode(', ', $selects))->first();
 
         return array_map('intval', (array) $row);
     }

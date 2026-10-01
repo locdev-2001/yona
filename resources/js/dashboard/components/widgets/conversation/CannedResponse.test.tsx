@@ -17,11 +17,12 @@ vi.mock('@inertiajs/react', () => ({
     Link: ({ children }: { children: React.ReactNode }) => <a>{children}</a>,
 }));
 
-const { fetchCannedResponses, useCannedResponses } = vi.hoisted(() => ({
+const { fetchCannedResponses, markCannedResponseUsed, useCannedResponses } = vi.hoisted(() => ({
     fetchCannedResponses: vi.fn(),
+    markCannedResponseUsed: vi.fn(),
     useCannedResponses: vi.fn(),
 }));
-vi.mock('dashboard/composables/useCannedResponses', () => ({ fetchCannedResponses, useCannedResponses }));
+vi.mock('dashboard/composables/useCannedResponses', () => ({ fetchCannedResponses, markCannedResponseUsed, useCannedResponses }));
 
 import CannedResponse from './CannedResponse';
 
@@ -67,6 +68,8 @@ describe('CannedResponse — chọn mục trong bảng `/`', () => {
 
         expect(onReplace).toHaveBeenCalledWith('Chào bạn, mình có thể giúp gì?');
         expect(onSelectCard).not.toHaveBeenCalled();
+        // Ghi một lượt dùng (thống kê sản phẩm), không chờ kết quả.
+        expect(markCannedResponseUsed).toHaveBeenCalledWith(expect.any(Number), RECORDS[0].id);
     });
 
     it('chọn một câu trả lời mẫu mang thẻ thì gửi thẻ, không chèn chữ', () => {

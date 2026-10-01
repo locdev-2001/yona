@@ -27,15 +27,15 @@ export function UsageChart({ data, seriesLabel, summary, dayLabel, startLabel, e
           <div
             key={day.date}
             title={dayLabel(day)}
-            className='bg-primary/10 relative flex min-w-0 flex-1 flex-col justify-end overflow-hidden rounded-sm'
+            className='bg-primary-50 relative flex min-w-0 flex-1 flex-col justify-end overflow-hidden rounded-sm'
           >
             {day.count > 0 ? (
-              <div className='bg-primary w-full rounded-sm' style={{ height: `${(day.count / max) * 100}%` }} />
+              <div className='bg-primary-600 w-full rounded-sm' style={{ height: `${(day.count / max) * 100}%` }} />
             ) : null}
           </div>
         ))}
       </div>
-      <figcaption className='text-muted-foreground flex justify-between text-xs tabular-nums'>
+      <figcaption className='font-num flex justify-between text-xs text-neutral-500'>
         <span>{startLabel}</span>
         <span>{endLabel}</span>
       </figcaption>

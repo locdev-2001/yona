@@ -49,6 +49,7 @@ return [
         'MESSAGES_TREND' => ['TITLE' => 'Tin nhắn theo ngày', 'DESCRIPTION' => 'Tin khách gửi vào và tin trả lời ra mỗi ngày.'],
         'CONVERSATIONS_BY_CHANNEL' => ['TITLE' => 'Hội thoại mới theo kênh', 'DESCRIPTION' => 'Hội thoại tạo trong khoảng, chia theo loại kênh.'],
         'CHANNEL_HEALTH' => ['TITLE' => 'Sức khoẻ kênh', 'DESCRIPTION' => 'Hộp thư mất phiên hoặc cần cấp quyền lại.'],
+        'ALERTS' => ['TITLE' => 'Cảnh báo', 'DESCRIPTION' => 'Sự cố cảnh báo đang mở và sự cố gần nhất.'],
         'OPERATION_LINKS' => ['TITLE' => 'Lối tắt vận hành', 'DESCRIPTION' => 'Mở nhanh các bảng theo dõi hệ thống.'],
         'ACTIVATION_FUNNEL' => ['TITLE' => 'Phễu kích hoạt', 'DESCRIPTION' => 'Tài khoản đăng ký trong khoảng đi được tới bước nào.'],
         'COHORT_RETENTION' => ['TITLE' => 'Giữ chân theo tuần đăng ký', 'DESCRIPTION' => 'Tỉ lệ tài khoản còn trả lời khách ở các tuần sau khi đăng ký (8 tuần gần nhất).'],
@@ -71,8 +72,9 @@ return [
     ],
     'FUNNEL_STEPS' => [
         'SIGNED_UP' => 'Đăng ký',
+        'CONFIRMED_EMAIL' => 'Xác nhận email',
         'CREATED_INBOX' => 'Tạo hộp thư',
-        'CONNECTED_CHANNEL' => 'Kết nối kênh ngoài',
+        'CONNECTED_CHANNEL' => 'Kết nối kênh',
         'RECEIVED_MESSAGE' => 'Nhận tin đầu tiên',
         'REPLIED' => 'Trả lời tin đầu tiên',
     ],

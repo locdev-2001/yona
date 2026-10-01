@@ -8,6 +8,8 @@ use App\Models\Conversation;
 use App\Models\Team;
 use App\Notifications\TeamAutomationNotification;
 use App\Services\ConversationActions\ActionExecutor;
+use App\Services\ProductEvents\ProductEventName;
+use App\Services\ProductEvents\ProductEventRecorder;
 use App\Support\CurrentExecutedBy;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Notification;
@@ -40,6 +42,12 @@ final class ActionService
                 }
             }
         });
+
+        app(ProductEventRecorder::class)->record(
+            ProductEventName::AutomationRuleFired,
+            $this->account,
+            ['automation_rule_id' => $this->rule->id, 'event' => $this->rule->event_name],
+        );
     }
 
     private function run(string $actionName, mixed $params): void

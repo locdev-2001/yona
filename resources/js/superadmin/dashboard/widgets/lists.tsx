@@ -1,4 +1,5 @@
 import { Link } from '@inertiajs/react';
+import { CircleCheckIcon } from 'lucide-react';
 
 import { formatDate, formatDateTime, initialsOf } from '@admin/lib/format';
 
@@ -7,6 +8,7 @@ import { Button } from '@admin/components/ui/button';
 import { Separator } from '@admin/components/ui/separator';
 import { GoalDonut } from '@admin/views/dashboards/charts/chart-sales-metrics';
 import TotalEarningList from '@admin/views/dashboards/widgets/widget-total-earning';
+import { TONE_FILL, toneOf } from '@admin/views/dashboards/tones';
 
 import { t } from '../../../i18n';
 import { formatNumber, formatPercent } from '../format';
@@ -30,8 +32,10 @@ export function TopAccounts({ data }: { data: TopAccountsData }) {
                 label: item.name,
                 title: accountLink(item),
                 icon: initialsIcon(item.name),
+                tone: toneOf(item.name),
                 value: t('ADMIN_DASHBOARD.LISTS.MESSAGES', { count: formatNumber(item.messages) }),
                 progressPercentage: (item.messages / max) * 100,
+                progressTone: 'primary',
             }))}
         />
     );
@@ -49,6 +53,7 @@ export function RecentSignups({ data }: { data: RecentSignupsData }) {
                     .filter(Boolean)
                     .join(' · '),
                 icon: initialsIcon(item.name),
+                tone: toneOf(item.name),
                 value: (
                     <time dateTime={item.createdAt} title={formatDateTime(item.createdAt)}>
                         {formatDate(item.createdAt)}
@@ -68,17 +73,35 @@ export function ChannelHealth({ data }: { data: ChannelHealthData }) {
             <GoalDonut
                 title={t('ADMIN_DASHBOARD.WIDGETS.CHANNEL_HEALTH.TITLE')}
                 slices={[
-                    { key: 'healthy', label: t('ADMIN_DASHBOARD.CHANNEL_HEALTH.HEALTHY'), value: data.healthy, color: 'var(--primary)' },
-                    { key: 'failing', label: t('ADMIN_DASHBOARD.CHANNEL_HEALTH.FAILING'), value: data.failing, color: 'var(--destructive)' },
+                    { key: 'healthy', label: t('ADMIN_DASHBOARD.CHANNEL_HEALTH.HEALTHY'), value: data.healthy, color: TONE_FILL.success },
+                    { key: 'failing', label: t('ADMIN_DASHBOARD.CHANNEL_HEALTH.FAILING'), value: data.failing, color: TONE_FILL.danger },
                 ]}
                 centerValue={`${formatNumber(data.healthy)}/${formatNumber(data.total)}`}
                 centerLabel={t('ADMIN_DASHBOARD.CHANNEL_HEALTH.HEALTHY')}
                 footerLabel={t('ADMIN_DASHBOARD.CHANNEL_HEALTH.RATE')}
                 footerValue={rate === null ? '-' : `${formatPercent(rate)}%`}
+                footerClassName={rate === null ? undefined : data.failing === 0 ? 'text-success' : 'text-danger'}
+                legend={
+                    <ul className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-neutral-700">
+                        <li className="flex items-center gap-2">
+                            <span className="bg-success size-2.5 shrink-0" aria-hidden="true" />
+                            {t('ADMIN_DASHBOARD.CHANNEL_HEALTH.HEALTHY')}
+                            <span className="font-num text-neutral-900">{formatNumber(data.healthy)}</span>
+                        </li>
+                        <li className="flex items-center gap-2">
+                            <span className="bg-danger size-2.5 shrink-0" aria-hidden="true" />
+                            {t('ADMIN_DASHBOARD.CHANNEL_HEALTH.FAILING')}
+                            <span className="font-num text-neutral-900">{formatNumber(data.failing)}</span>
+                        </li>
+                    </ul>
+                }
             />
             <Separator />
             {data.failing === 0 ? (
-                <p className="text-muted-foreground text-sm">{t('ADMIN_DASHBOARD.CHANNEL_HEALTH.ALL_HEALTHY')}</p>
+                <p className="bg-success-tint text-success flex items-center gap-2 px-3 py-2 text-sm">
+                    <CircleCheckIcon className="size-4 shrink-0" aria-hidden="true" />
+                    {t('ADMIN_DASHBOARD.CHANNEL_HEALTH.ALL_HEALTHY')}
+                </p>
             ) : (
                 <ul className="flex flex-col gap-3">
                     {data.items.map(item => (
@@ -87,7 +110,7 @@ export function ChannelHealth({ data }: { data: ChannelHealthData }) {
                                 {item.inboxName}
                             </a>
                             <div className="text-muted-foreground flex flex-wrap items-center gap-1.5 text-sm">
-                                <Badge variant="destructive">{item.problemLabel}</Badge>
+                                <Badge className="bg-danger-tint text-danger rounded-sm border-none">{item.problemLabel}</Badge>
                                 <span className="truncate">
                                     {item.platform.name}
                                     {item.accountName ? ` · ${item.accountName}` : ''}

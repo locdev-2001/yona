@@ -13,6 +13,8 @@ use App\Models\CannedResponse;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\PaymentAccount;
+use App\Services\ProductEvents\ProductEventName;
+use App\Services\ProductEvents\ProductEventRecorder;
 use App\Support\RecordInvalidResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -51,6 +53,21 @@ class CannedResponsesController extends Controller
         $cannedResponse->update($this->validatedPayload($request, $account, $cannedResponse));
 
         return response()->json((new CannedResponseResource($cannedResponse))->toArray($request));
+    }
+
+    // Nhân viên chèn câu trả lời mẫu vào ô soạn: chỉ ghi lượt dùng (sự kiện sản phẩm).
+    public function markUsed(Request $request, Account $account, int $cannedResponseId): Response
+    {
+        $cannedResponse = $this->fetchCannedResponse($account, $cannedResponseId);
+
+        app(ProductEventRecorder::class)->record(
+            ProductEventName::CannedResponseUsed,
+            $account,
+            ['canned_response_id' => $cannedResponse->id, 'via' => 'composer'],
+            $request->user(),
+        );
+
+        return response()->noContent();
     }
 
     public function destroy(Request $request, Account $account, int $cannedResponseId): Response

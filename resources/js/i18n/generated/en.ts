@@ -1,5 +1,149 @@
 // Sinh bởi `php artisan i18n:generate` từ lang/{locale}/*.php — KHÔNG SỬA TAY.
 const messages: Record<string, unknown> = {
+    "ADMIN_ALERTS": {
+        "NAV": "Alerts",
+        "TITLE": "Alerts",
+        "DESCRIPTION": "When a threshold is crossed every super admin gets an email and a push notification, once per incident, plus once on recovery. Checked every 5 minutes.",
+        "RULES": {
+            "failing_channels": {
+                "TITLE": "Failing channels",
+                "DESCRIPTION": "Inboxes that lost their session or need reauthorization."
+            },
+            "failed_jobs": {
+                "TITLE": "Failed jobs",
+                "DESCRIPTION": "Jobs that failed within the window."
+            },
+            "queue_backlog": {
+                "TITLE": "Pending jobs",
+                "DESCRIPTION": "Jobs waiting across all queues."
+            },
+            "queue_wait": {
+                "TITLE": "Queue wait",
+                "DESCRIPTION": "Oldest pending job across all queues."
+            },
+            "zalo_bridge_down": {
+                "TITLE": "zalo-bridge unreachable",
+                "DESCRIPTION": "Without the bridge Zalo messages are neither sent nor received."
+            }
+        },
+        "STATUS": {
+            "ok": "Normal",
+            "firing": "Firing",
+            "pending": "Over threshold, waiting for window",
+            "disabled": "Disabled",
+            "unknown": "Not measured"
+        },
+        "STATS": {
+            "FIRING": "Firing",
+            "ENABLED": "Enabled rules",
+            "INCIDENTS_7D": "Incidents (7 days)",
+            "RECIPIENTS": "Super admins emailed"
+        },
+        "COLUMNS": {
+            "RULE": "Rule",
+            "CURRENT": "Current",
+            "THRESHOLD": "Threshold",
+            "WINDOW": "Window",
+            "COOLDOWN": "Cooldown",
+            "STATUS": "Status",
+            "ENABLED": "Enabled"
+        },
+        "WINDOW_MODE": {
+            "lookback": "Counted over the last {minutes} min",
+            "sustain": "Over threshold for {minutes} min",
+            "sustain_now": "Alerts immediately"
+        },
+        "FIELDS": {
+            "THRESHOLD": "Threshold",
+            "THRESHOLD_STATE": "Alerts when the bridge does not respond",
+            "WINDOW_MINUTES": "Window (minutes)",
+            "COOLDOWN_MINUTES": "Cooldown (minutes)",
+            "ENABLED": "Enable rule {rule}",
+            "EDIT": "Edit",
+            "EDIT_RULE": "Edit rule {rule}",
+            "SAVE": "Save",
+            "CANCEL": "Cancel",
+            "MINUTES": "{count} min",
+            "INVALID": "Enter whole numbers: threshold 1 or more, window and cooldown 0 to {max} minutes."
+        },
+        "MEASURED": "Measured {time}",
+        "OPEN_PAGE": "Open related page",
+        "DISPLAY": {
+            "SECONDS": "{count} s",
+            "DOWN": "Unreachable",
+            "UP": "Reachable",
+            "NONE": "Not measured"
+        },
+        "INCIDENTS": {
+            "TITLE": "Incident history",
+            "TOTAL": "{total} incidents",
+            "COLUMNS": {
+                "RULE": "Rule",
+                "OPENED": "Opened",
+                "RESOLVED": "Recovered",
+                "PEAK": "Peak / threshold",
+                "NOTIFIED": "Notification"
+            },
+            "OPEN": "Open",
+            "NOTIFIED": "Notified",
+            "NOT_NOTIFIED": "Not notified, in cooldown",
+            "RECOVERY_NOTIFIED": "Notified and recovered",
+            "EMPTY_TITLE": "No incidents yet",
+            "EMPTY_DESCRIPTION": "When a metric crosses its threshold the incident shows up here."
+        },
+        "TEST": {
+            "BUTTON": "Send test",
+            "HINT": "Send a test email and push notification to yourself."
+        },
+        "PUSH": {
+            "TITLE": "Push notifications on this browser",
+            "ON": "This browser receives alerts.",
+            "OFF": "Enable to get alerts on this device before you open your email.",
+            "ENABLE": "Enable push",
+            "DISABLE": "Disable on this browser",
+            "UNSUPPORTED": "This browser or the server does not support push notifications.",
+            "DENIED": "Notifications are blocked for this site. Allow them in the site settings and try again.",
+            "FAILED": "Could not enable push notifications. Try again later.",
+            "SUBSCRIPTIONS": "{count} of your browsers receive alerts"
+        },
+        "WIDGET": {
+            "OPEN": "Open incidents",
+            "LATEST": "Latest",
+            "NONE": "No incidents yet.",
+            "RESOLVED": "Recovered",
+            "VIEW": "Open Alerts"
+        },
+        "FLASH": {
+            "SAVED": "Saved rule :rule.",
+            "TEST_SENT": "Sent a test notification to :email.",
+            "TEST_FAILED": "Could not send the test notification. Check the application log."
+        },
+        "VALUES": {
+            "UNKNOWN": "not measured",
+            "SECONDS": ":count s",
+            "DOWN": "unreachable",
+            "UP": "reachable"
+        },
+        "MAIL": {
+            "OPENED_SUBJECT": "[Alert] :rule over threshold",
+            "OPENED_TITLE": "An alert threshold was crossed",
+            "OPENED_VALUE": ":rule: :value (threshold :threshold).",
+            "OPENED_STATE": ":rule. :description",
+            "OPENED_AT": "Started at :time (Vietnam time).",
+            "ACTION": "View details",
+            "RESOLVED_SUBJECT": "[Recovered] :rule",
+            "RESOLVED_TITLE": "Metric recovered",
+            "RESOLVED_VALUE": ":rule is back under threshold: now :value (threshold :threshold).",
+            "RESOLVED_STATE": "No longer \":rule\".",
+            "RESOLVED_DURATION": "Incident lasted from :from to :to (Vietnam time).",
+            "TEST_SUBJECT": "[Test] Operations alerts",
+            "TEST_TITLE": "Test notification",
+            "TEST_BODY": "This is a test from the Alerts page. Receiving it means this channel works.",
+            "TEST_ACTION": "Open Alerts",
+            "FOOTER": "Change thresholds or disable rules at :url",
+            "SALUTATION": "Operations alerts"
+        }
+    },
     "ADMIN_DASHBOARD": {
         "TITLE": "Overview",
         "DESCRIPTION": "System-wide numbers. Each widget loads and refreshes on its own.",
@@ -68,6 +212,10 @@ const messages: Record<string, unknown> = {
                 "TITLE": "Channel health",
                 "DESCRIPTION": "Inboxes that lost their session or need reauthorization."
             },
+            "ALERTS": {
+                "TITLE": "Alerts",
+                "DESCRIPTION": "Open alert incidents and the latest one."
+            },
             "OPERATION_LINKS": {
                 "TITLE": "Operations shortcuts",
                 "DESCRIPTION": "Jump to the system monitoring dashboards."
@@ -117,8 +265,9 @@ const messages: Record<string, unknown> = {
         },
         "FUNNEL_STEPS": {
             "SIGNED_UP": "Signed up",
+            "CONFIRMED_EMAIL": "Confirmed email",
             "CREATED_INBOX": "Created inbox",
-            "CONNECTED_CHANNEL": "Connected external channel",
+            "CONNECTED_CHANNEL": "Connected a channel",
             "RECEIVED_MESSAGE": "Received first message",
             "REPLIED": "Replied to first message"
         },
@@ -570,6 +719,7 @@ const messages: Record<string, unknown> = {
     "ADMIN_OPERATIONS": {
         "NAV": {
             "CHANNEL_HEALTH": "Channel health",
+            "FEATURE_USAGE": "Feature usage",
             "AUDIT_LOGS": "Audit log",
             "DATA": "System data"
         },
@@ -710,7 +860,8 @@ const messages: Record<string, unknown> = {
                 "TIMELINE": "Recent activity",
                 "SUSPENSIONS": "Suspension history",
                 "IMPERSONATIONS": "Recent impersonations",
-                "STICKERS": "Account sticker library"
+                "STICKERS": "Account sticker library",
+                "FEATURES": "Features used"
             },
             "COLUMNS": {
                 "NAME": "Name",
@@ -733,7 +884,13 @@ const messages: Record<string, unknown> = {
                 "INBOXES": "No inbox connected yet.",
                 "TIMELINE": "No activity yet.",
                 "SUSPENSIONS": "Never suspended.",
-                "IMPERSONATIONS": "No impersonation yet."
+                "IMPERSONATIONS": "No impersonation yet.",
+                "FEATURES": "No feature used yet."
+            },
+            "FEATURES": {
+                "COUNT": "{count} uses",
+                "DESCRIPTION": "Counted from product events, admin actions on behalf of the account excluded.",
+                "TIMES": ":count times"
             },
             "STICKERS": {
                 "SUMMARY": "{packs} packs · {stickers} stickers",
@@ -831,7 +988,97 @@ const messages: Record<string, unknown> = {
                 "suspended": "Suspended: :reason",
                 "impersonated": ":admin impersonated :user",
                 "admin_action": "Admin action",
-                "last_message": "Latest message"
+                "last_message": "Latest message",
+                "PRODUCT": {
+                    "email_confirmed": "Email confirmed",
+                    "onboarding_step_completed": "Onboarding step “:step” done",
+                    "channel_connected": "Connected :platform: :method",
+                    "first_inbound_message": "First customer message received via :platform",
+                    "first_outbound_reply": "First reply sent via :platform",
+                    "macro_run": "Ran a macro",
+                    "automation_rule_created": "Created an automation rule",
+                    "automation_rule_fired": "Automation rule ran",
+                    "canned_response_used": "Used a canned response",
+                    "campaign_created": "Created a campaign",
+                    "help_center_article_published": "Published a Help Center article",
+                    "sticker_sent": "Sent a sticker",
+                    "sticker_uploaded": "Uploaded a sticker to the account library",
+                    "structured_message_sent": "Sent a structured message",
+                    "contacts_imported": "Imported contacts from CSV",
+                    "contacts_exported": "Exported contacts to CSV",
+                    "label_created": "Created a label",
+                    "webhook_created": "Created a webhook",
+                    "agent_bot_connected": "Connected an agent bot to an inbox"
+                }
+            }
+        },
+        "PRODUCT_EVENTS": {
+            "NAMES": {
+                "account_signed_up": "Account signed up",
+                "email_confirmed": "Email confirmed",
+                "onboarding_step_completed": "Onboarding step done",
+                "inbox_created": "Inbox created",
+                "channel_connected": "Channel connected",
+                "first_inbound_message": "First customer message",
+                "first_outbound_reply": "First reply",
+                "macro_run": "Macro run",
+                "automation_rule_created": "Automation rule created",
+                "automation_rule_fired": "Automation rule ran",
+                "canned_response_used": "Canned response used",
+                "campaign_created": "Campaign created",
+                "help_center_article_published": "Help Center article published",
+                "sticker_sent": "Sticker sent",
+                "sticker_uploaded": "Sticker uploaded",
+                "structured_message_sent": "Structured message sent",
+                "contacts_imported": "Contacts CSV import",
+                "contacts_exported": "Contacts CSV export",
+                "label_created": "Label created",
+                "webhook_created": "Webhook created",
+                "agent_bot_connected": "Agent bot connected"
+            },
+            "METHODS": {
+                "token": "access token",
+                "oauth": "platform sign-in",
+                "qr": "QR scan",
+                "imap": "IMAP fetch succeeded",
+                "widget_embed": "widget running on the website"
+            }
+        },
+        "FEATURE_USAGE": {
+            "TITLE": "Feature usage",
+            "DESCRIPTION": "How many accounts used each feature, counted from product events. Admin actions on behalf of an account are excluded.",
+            "GROUPS": {
+                "activation": "Activation milestones",
+                "feature": "Features"
+            },
+            "COLUMNS": {
+                "FEATURE": "Feature",
+                "ACCOUNTS_7D": "Accts 7d",
+                "ACCOUNTS_30D": "Accts 30d",
+                "ACCOUNTS_90D": "Accts 90d",
+                "ACCOUNTS_ALL": "Accts all",
+                "EVENTS": "Total uses",
+                "LAST": "Last used",
+                "TREND": "30-day trend"
+            },
+            "ACCOUNTS_HINT": "Accts = accounts that used it in the window",
+            "TREND_SUMMARY": "{count} uses in 30 days",
+            "OPEN": "See accounts using {feature}",
+            "EMPTY_TITLE": "No events yet",
+            "EMPTY_DESCRIPTION": "Run product-events:backfill to derive events from existing data.",
+            "ACCOUNTS": {
+                "TITLE": "Accounts using “{feature}”",
+                "DESCRIPTION": "Most recent first, up to {limit} accounts.",
+                "BACK": "Feature usage",
+                "COLUMNS": {
+                    "ACCOUNT": "Account",
+                    "EVENTS": "Total uses",
+                    "EVENTS_30D": "Uses 30d",
+                    "FIRST": "First used",
+                    "LAST": "Last used"
+                },
+                "EMPTY_TITLE": "No account uses it yet",
+                "EMPTY_DESCRIPTION": "Accounts show up here once they use this feature."
             }
         },
         "AUDIT_LOGS": {

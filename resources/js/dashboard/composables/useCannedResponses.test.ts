@@ -1,6 +1,9 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
-import { searchCannedResponses, sortCannedResponses } from './useCannedResponses';
+const { postJson } = vi.hoisted(() => ({ postJson: vi.fn() }));
+vi.mock('dashboard/helper/apiClient', () => ({ deleteJson: vi.fn(), getJson: vi.fn(), patchJson: vi.fn(), postJson }));
+
+import { markCannedResponseUsed, searchCannedResponses, sortCannedResponses } from './useCannedResponses';
 import type { CannedResponse } from './useCannedResponses';
 
 const RECORDS: CannedResponse[] = [
@@ -52,5 +55,21 @@ describe('searchCannedResponses', () => {
 
     it('trả rỗng khi không khớp gì', () => {
         expect(searchCannedResponses(RECORDS, 'zzzz-khong-co')).toEqual([]);
+    });
+});
+
+describe('markCannedResponseUsed', () => {
+    it('ghi một lượt dùng, lỗi mạng không lọt ra ngoài', async () => {
+        postJson.mockRejectedValueOnce(new Error('offline'));
+
+        expect(() => markCannedResponseUsed(4, 9)).not.toThrow();
+        expect(postJson).toHaveBeenCalledWith('/api/v1/accounts/4/canned_responses/9/usages', {});
+        await Promise.resolve();
+    });
+
+    it('thiếu account hay id thì không gọi', () => {
+        postJson.mockClear();
+        markCannedResponseUsed(0, 9);
+        expect(postJson).not.toHaveBeenCalled();
     });
 });

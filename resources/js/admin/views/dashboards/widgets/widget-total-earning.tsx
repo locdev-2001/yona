@@ -7,6 +7,7 @@ import { Progress } from '@admin/components/ui/progress'
 
 // Util Imports
 import { cn } from '@admin/lib/utils'
+import { TONE_BADGE, TONE_PROGRESS, type Tone } from '@admin/views/dashboards/tones'
 
 export type TotalEarningItem = {
   key: string
@@ -18,6 +19,9 @@ export type TotalEarningItem = {
   value: ReactNode
   // 0–100; bỏ trống thì dòng không có thanh tiến độ.
   progressPercentage?: number
+  // Màu ô chữ cái đầu (ổn định theo tài khoản) và màu thanh tỉ lệ.
+  tone?: Tone
+  progressTone?: Tone
 }
 
 type Props = {
@@ -33,21 +37,21 @@ const TotalEarningList = ({ items, className }: Props) => {
       {items.map(item => (
         <li key={item.key} className='flex items-center gap-3'>
           <Avatar className='size-9 after:border-0'>
-            <AvatarFallback className='bg-(--tone)/15 text-(--tone) shrink-0'>{item.icon}</AvatarFallback>
+            <AvatarFallback className={cn('shrink-0', TONE_BADGE[item.tone ?? 'primary'])}>{item.icon}</AvatarFallback>
           </Avatar>
           <div className='flex min-w-0 flex-1 flex-col gap-1'>
             <div className='flex min-w-0 items-baseline justify-between gap-3'>
               <span className='min-w-0 truncate text-sm font-medium'>{item.title}</span>
-              <span className='text-muted-foreground shrink-0 text-sm tabular-nums'>{item.value}</span>
+              <span className='font-num shrink-0 text-sm text-neutral-700'>{item.value}</span>
             </div>
             {item.progressPercentage !== undefined ? (
               <Progress
                 value={item.progressPercentage}
                 aria-label={item.label}
-                className='w-full **:data-[slot=progress-track]:h-1.5'
+                className={cn('w-full **:data-[slot=progress-track]:h-1.5', TONE_PROGRESS[item.progressTone ?? 'primary'])}
               />
             ) : null}
-            {item.subtitle ? <span className='text-muted-foreground truncate text-sm'>{item.subtitle}</span> : null}
+            {item.subtitle ? <span className='truncate text-sm text-neutral-500'>{item.subtitle}</span> : null}
           </div>
         </li>
       ))}

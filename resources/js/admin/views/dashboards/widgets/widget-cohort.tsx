@@ -18,12 +18,17 @@ type Props = {
   rows: CohortRowView[]
 }
 
-// Bản đồ nhiệt: độ đậm của màu chính theo tỉ lệ (0–100%), số vẫn in trong ô. Ô không có
-// tài khoản nào để tính (tuần không ai đăng ký) để trống nền, chỉ in gạch xám: khác hẳn ô 0%.
-const cellStyle = (rate: number | null) =>
-  rate === null
-    ? undefined
-    : { backgroundColor: `color-mix(in oklab, var(--primary) ${Math.round(8 + (Math.min(rate, 100) / 100) * 82)}%, transparent)` }
+// Bản đồ nhiệt bốn bậc token của màu chính theo tỉ lệ, số vẫn in trong ô: primary-50 / 100 mang chữ
+// primary-700, primary-600 / 700 mang chữ trắng (mọi cặp ≥5.3:1). Ô không có tài khoản nào để tính
+// (tuần không ai đăng ký) để trống nền, chỉ in gạch xám: khác hẳn ô 0%.
+const cellClass = (rate: number | null) => {
+  if (rate === null) return 'text-neutral-500'
+  if (rate < 25) return 'bg-primary-50 text-primary-700'
+  if (rate < 50) return 'bg-primary-100 text-primary-700'
+  if (rate < 75) return 'bg-primary-600 text-neutral-0'
+
+  return 'bg-primary-700 text-neutral-0'
+}
 
 const CohortTable = ({ caption, scrollHint, weekLabel, sizeLabel, offsetLabels, rows }: Props) => {
   return (
@@ -56,12 +61,7 @@ const CohortTable = ({ caption, scrollHint, weekLabel, sizeLabel, offsetLabels, 
                   <TableCell key={label} className='p-0.5'>
                     <span
                       title={cell.title}
-                      style={cellStyle(cell.rate)}
-                      className={cn(
-                        'block rounded-sm px-1 py-1.5 text-center',
-                        cell.rate === null && 'text-muted-foreground',
-                        (cell.rate ?? 0) >= 55 && 'text-primary-foreground'
-                      )}
+                      className={cn('font-num block rounded-sm px-1 py-1.5 text-center', cellClass(cell.rate))}
                     >
                       {cell.label}
                     </span>

@@ -49,6 +49,7 @@ return [
         'MESSAGES_TREND' => ['TITLE' => 'Messages by day', 'DESCRIPTION' => 'Incoming and outgoing messages per day.'],
         'CONVERSATIONS_BY_CHANNEL' => ['TITLE' => 'New conversations by channel', 'DESCRIPTION' => 'Conversations created in the range, by channel type.'],
         'CHANNEL_HEALTH' => ['TITLE' => 'Channel health', 'DESCRIPTION' => 'Inboxes that lost their session or need reauthorization.'],
+        'ALERTS' => ['TITLE' => 'Alerts', 'DESCRIPTION' => 'Open alert incidents and the latest one.'],
         'OPERATION_LINKS' => ['TITLE' => 'Operations shortcuts', 'DESCRIPTION' => 'Jump to the system monitoring dashboards.'],
         'ACTIVATION_FUNNEL' => ['TITLE' => 'Activation funnel', 'DESCRIPTION' => 'How far accounts that signed up in the range got.'],
         'COHORT_RETENTION' => ['TITLE' => 'Retention by signup week', 'DESCRIPTION' => 'Share of accounts still replying to customers in the weeks after signup (last 8 weeks).'],
@@ -71,8 +72,9 @@ return [
     ],
     'FUNNEL_STEPS' => [
         'SIGNED_UP' => 'Signed up',
+        'CONFIRMED_EMAIL' => 'Confirmed email',
         'CREATED_INBOX' => 'Created inbox',
-        'CONNECTED_CHANNEL' => 'Connected external channel',
+        'CONNECTED_CHANNEL' => 'Connected a channel',
         'RECEIVED_MESSAGE' => 'Received first message',
         'REPLIED' => 'Replied to first message',
     ],

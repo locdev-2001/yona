@@ -1,5 +1,149 @@
 // Sinh bởi `php artisan i18n:generate` từ lang/{locale}/*.php — KHÔNG SỬA TAY.
 const messages: Record<string, unknown> = {
+    "ADMIN_ALERTS": {
+        "NAV": "Cảnh báo",
+        "TITLE": "Cảnh báo",
+        "DESCRIPTION": "Vượt ngưỡng thì mọi super admin nhận email và thông báo đẩy, mỗi sự cố một lần, hồi phục báo thêm một lần. Hệ thống đo lại mỗi 5 phút.",
+        "RULES": {
+            "failing_channels": {
+                "TITLE": "Kênh đang lỗi",
+                "DESCRIPTION": "Hộp thư mất phiên hoặc cần cấp quyền lại trên toàn hệ thống."
+            },
+            "failed_jobs": {
+                "TITLE": "Job lỗi",
+                "DESCRIPTION": "Số job lỗi trong cửa sổ đánh giá."
+            },
+            "queue_backlog": {
+                "TITLE": "Job đang chờ",
+                "DESCRIPTION": "Tổng job chưa được xử lý trên mọi hàng đợi."
+            },
+            "queue_wait": {
+                "TITLE": "Thời gian chờ hàng đợi",
+                "DESCRIPTION": "Job chờ lâu nhất trên mọi hàng đợi."
+            },
+            "zalo_bridge_down": {
+                "TITLE": "zalo-bridge không phản hồi",
+                "DESCRIPTION": "Bridge không trả lời thì tin Zalo không gửi, không nhận được."
+            }
+        },
+        "STATUS": {
+            "ok": "Bình thường",
+            "firing": "Đang báo",
+            "pending": "Vượt ngưỡng, chờ đủ cửa sổ",
+            "disabled": "Đã tắt",
+            "unknown": "Chưa đo"
+        },
+        "STATS": {
+            "FIRING": "Đang báo",
+            "ENABLED": "Luật đang bật",
+            "INCIDENTS_7D": "Sự cố 7 ngày",
+            "RECIPIENTS": "Super admin nhận email"
+        },
+        "COLUMNS": {
+            "RULE": "Luật",
+            "CURRENT": "Hiện tại",
+            "THRESHOLD": "Ngưỡng",
+            "WINDOW": "Cửa sổ",
+            "COOLDOWN": "Chờ báo lại",
+            "STATUS": "Trạng thái",
+            "ENABLED": "Bật"
+        },
+        "WINDOW_MODE": {
+            "lookback": "Đếm trong {minutes} phút gần nhất",
+            "sustain": "Vượt liên tục {minutes} phút",
+            "sustain_now": "Vượt là báo ngay"
+        },
+        "FIELDS": {
+            "THRESHOLD": "Ngưỡng",
+            "THRESHOLD_STATE": "Báo khi bridge không phản hồi",
+            "WINDOW_MINUTES": "Cửa sổ (phút)",
+            "COOLDOWN_MINUTES": "Chờ giữa hai lần báo (phút)",
+            "ENABLED": "Bật luật {rule}",
+            "EDIT": "Sửa",
+            "EDIT_RULE": "Sửa luật {rule}",
+            "SAVE": "Lưu",
+            "CANCEL": "Huỷ",
+            "MINUTES": "{count} phút",
+            "INVALID": "Nhập số nguyên: ngưỡng từ 1 trở lên, cửa sổ và thời gian chờ từ 0 đến {max} phút."
+        },
+        "MEASURED": "Đo {time}",
+        "OPEN_PAGE": "Mở trang liên quan",
+        "DISPLAY": {
+            "SECONDS": "{count} giây",
+            "DOWN": "Không phản hồi",
+            "UP": "Đang phản hồi",
+            "NONE": "Chưa đo"
+        },
+        "INCIDENTS": {
+            "TITLE": "Lịch sử sự cố",
+            "TOTAL": "{total} sự cố",
+            "COLUMNS": {
+                "RULE": "Luật",
+                "OPENED": "Mở lúc",
+                "RESOLVED": "Hồi phục",
+                "PEAK": "Cao nhất / ngưỡng",
+                "NOTIFIED": "Thông báo"
+            },
+            "OPEN": "Đang mở",
+            "NOTIFIED": "Đã báo",
+            "NOT_NOTIFIED": "Chưa báo, đang trong thời gian chờ",
+            "RECOVERY_NOTIFIED": "Đã báo sự cố và hồi phục",
+            "EMPTY_TITLE": "Chưa có sự cố nào",
+            "EMPTY_DESCRIPTION": "Khi một chỉ số vượt ngưỡng, sự cố hiện ở đây kèm lúc mở và lúc hồi phục."
+        },
+        "TEST": {
+            "BUTTON": "Gửi thử",
+            "HINT": "Gửi email và thông báo đẩy thử tới chính bạn."
+        },
+        "PUSH": {
+            "TITLE": "Thông báo đẩy trên trình duyệt này",
+            "ON": "Trình duyệt này đang nhận cảnh báo.",
+            "OFF": "Bật để nhận cảnh báo ngay trên máy, kể cả khi chưa mở email.",
+            "ENABLE": "Bật thông báo đẩy",
+            "DISABLE": "Tắt trên trình duyệt này",
+            "UNSUPPORTED": "Trình duyệt này hoặc máy chủ chưa hỗ trợ thông báo đẩy.",
+            "DENIED": "Trình duyệt đã chặn quyền thông báo. Mở cài đặt trang để cho phép rồi thử lại.",
+            "FAILED": "Không bật được thông báo đẩy. Thử lại sau.",
+            "SUBSCRIPTIONS": "{count} trình duyệt của bạn đang nhận"
+        },
+        "WIDGET": {
+            "OPEN": "Sự cố đang mở",
+            "LATEST": "Gần nhất",
+            "NONE": "Chưa có sự cố nào.",
+            "RESOLVED": "Đã hồi phục",
+            "VIEW": "Mở trang Cảnh báo"
+        },
+        "FLASH": {
+            "SAVED": "Đã lưu luật :rule.",
+            "TEST_SENT": "Đã gửi thông báo thử tới :email.",
+            "TEST_FAILED": "Không gửi được thông báo thử. Xem log ứng dụng."
+        },
+        "VALUES": {
+            "UNKNOWN": "chưa đo",
+            "SECONDS": ":count giây",
+            "DOWN": "không phản hồi",
+            "UP": "đang phản hồi"
+        },
+        "MAIL": {
+            "OPENED_SUBJECT": "[Cảnh báo] :rule vượt ngưỡng",
+            "OPENED_TITLE": "Hệ thống vừa vượt ngưỡng cảnh báo",
+            "OPENED_VALUE": ":rule: :value (ngưỡng :threshold).",
+            "OPENED_STATE": ":rule. :description",
+            "OPENED_AT": "Bắt đầu lúc :time (giờ Việt Nam).",
+            "ACTION": "Xem chi tiết",
+            "RESOLVED_SUBJECT": "[Đã hồi phục] :rule",
+            "RESOLVED_TITLE": "Chỉ số đã hồi phục",
+            "RESOLVED_VALUE": ":rule đã về dưới ngưỡng: hiện :value (ngưỡng :threshold).",
+            "RESOLVED_STATE": "Đã hết tình trạng \":rule\".",
+            "RESOLVED_DURATION": "Sự cố kéo dài từ :from đến :to (giờ Việt Nam).",
+            "TEST_SUBJECT": "[Thử] Cảnh báo vận hành",
+            "TEST_TITLE": "Thông báo thử",
+            "TEST_BODY": "Đây là thông báo thử từ trang Cảnh báo. Bạn nhận được nghĩa là kênh này đang chạy.",
+            "TEST_ACTION": "Mở trang Cảnh báo",
+            "FOOTER": "Chỉnh ngưỡng hoặc tắt luật tại :url",
+            "SALUTATION": "Cảnh báo vận hành"
+        }
+    },
     "ADMIN_DASHBOARD": {
         "TITLE": "Tổng quan",
         "DESCRIPTION": "Số liệu toàn hệ thống. Mỗi ô tự tải và làm mới riêng.",
@@ -68,6 +212,10 @@ const messages: Record<string, unknown> = {
                 "TITLE": "Sức khoẻ kênh",
                 "DESCRIPTION": "Hộp thư mất phiên hoặc cần cấp quyền lại."
             },
+            "ALERTS": {
+                "TITLE": "Cảnh báo",
+                "DESCRIPTION": "Sự cố cảnh báo đang mở và sự cố gần nhất."
+            },
             "OPERATION_LINKS": {
                 "TITLE": "Lối tắt vận hành",
                 "DESCRIPTION": "Mở nhanh các bảng theo dõi hệ thống."
@@ -117,8 +265,9 @@ const messages: Record<string, unknown> = {
         },
         "FUNNEL_STEPS": {
             "SIGNED_UP": "Đăng ký",
+            "CONFIRMED_EMAIL": "Xác nhận email",
             "CREATED_INBOX": "Tạo hộp thư",
-            "CONNECTED_CHANNEL": "Kết nối kênh ngoài",
+            "CONNECTED_CHANNEL": "Kết nối kênh",
             "RECEIVED_MESSAGE": "Nhận tin đầu tiên",
             "REPLIED": "Trả lời tin đầu tiên"
         },
@@ -570,6 +719,7 @@ const messages: Record<string, unknown> = {
     "ADMIN_OPERATIONS": {
         "NAV": {
             "CHANNEL_HEALTH": "Sức khoẻ kênh",
+            "FEATURE_USAGE": "Mức dùng tính năng",
             "AUDIT_LOGS": "Nhật ký thao tác",
             "DATA": "Dữ liệu hệ thống"
         },
@@ -710,7 +860,8 @@ const messages: Record<string, unknown> = {
                 "TIMELINE": "Hoạt động gần đây",
                 "SUSPENSIONS": "Lịch sử khoá",
                 "IMPERSONATIONS": "Lần đăng nhập hộ gần đây",
-                "STICKERS": "Kho sticker riêng"
+                "STICKERS": "Kho sticker riêng",
+                "FEATURES": "Tính năng đã dùng"
             },
             "COLUMNS": {
                 "NAME": "Tên",
@@ -733,7 +884,13 @@ const messages: Record<string, unknown> = {
                 "INBOXES": "Chưa kết nối hộp thư nào.",
                 "TIMELINE": "Chưa có hoạt động.",
                 "SUSPENSIONS": "Chưa từng bị khoá.",
-                "IMPERSONATIONS": "Chưa có lần đăng nhập hộ nào."
+                "IMPERSONATIONS": "Chưa có lần đăng nhập hộ nào.",
+                "FEATURES": "Chưa dùng tính năng nào."
+            },
+            "FEATURES": {
+                "COUNT": "{count} lượt",
+                "DESCRIPTION": "Đếm từ sự kiện sản phẩm, không tính lượt quản trị viên làm hộ.",
+                "TIMES": ":count lần"
             },
             "STICKERS": {
                 "SUMMARY": "{packs} bộ · {stickers} sticker",
@@ -831,7 +988,97 @@ const messages: Record<string, unknown> = {
                 "suspended": "Bị khoá: :reason",
                 "impersonated": ":admin đăng nhập hộ :user",
                 "admin_action": "Thao tác của quản trị viên",
-                "last_message": "Tin nhắn gần nhất"
+                "last_message": "Tin nhắn gần nhất",
+                "PRODUCT": {
+                    "email_confirmed": "Xác nhận email",
+                    "onboarding_step_completed": "Xong bước onboarding “:step”",
+                    "channel_connected": "Kết nối kênh :platform: :method",
+                    "first_inbound_message": "Nhận tin khách đầu tiên qua :platform",
+                    "first_outbound_reply": "Trả lời khách lần đầu qua :platform",
+                    "macro_run": "Chạy macro",
+                    "automation_rule_created": "Tạo luật tự động",
+                    "automation_rule_fired": "Luật tự động chạy",
+                    "canned_response_used": "Dùng câu trả lời mẫu",
+                    "campaign_created": "Tạo chiến dịch",
+                    "help_center_article_published": "Xuất bản bài viết Help Center",
+                    "sticker_sent": "Gửi sticker",
+                    "sticker_uploaded": "Tải sticker lên kho riêng",
+                    "structured_message_sent": "Gửi tin có cấu trúc",
+                    "contacts_imported": "Nhập liên hệ từ CSV",
+                    "contacts_exported": "Xuất liên hệ ra CSV",
+                    "label_created": "Tạo nhãn",
+                    "webhook_created": "Tạo webhook",
+                    "agent_bot_connected": "Gắn agent bot vào hộp thư"
+                }
+            }
+        },
+        "PRODUCT_EVENTS": {
+            "NAMES": {
+                "account_signed_up": "Đăng ký tài khoản",
+                "email_confirmed": "Xác nhận email",
+                "onboarding_step_completed": "Xong bước onboarding",
+                "inbox_created": "Tạo hộp thư",
+                "channel_connected": "Kết nối kênh",
+                "first_inbound_message": "Nhận tin khách đầu tiên",
+                "first_outbound_reply": "Trả lời khách lần đầu",
+                "macro_run": "Chạy macro",
+                "automation_rule_created": "Tạo luật tự động",
+                "automation_rule_fired": "Luật tự động chạy",
+                "canned_response_used": "Dùng câu trả lời mẫu",
+                "campaign_created": "Tạo chiến dịch",
+                "help_center_article_published": "Xuất bản bài Help Center",
+                "sticker_sent": "Gửi sticker",
+                "sticker_uploaded": "Tải sticker lên kho riêng",
+                "structured_message_sent": "Gửi tin có cấu trúc",
+                "contacts_imported": "Nhập liên hệ CSV",
+                "contacts_exported": "Xuất liên hệ CSV",
+                "label_created": "Tạo nhãn",
+                "webhook_created": "Tạo webhook",
+                "agent_bot_connected": "Gắn agent bot"
+            },
+            "METHODS": {
+                "token": "khoá truy cập",
+                "oauth": "đăng nhập nền tảng",
+                "qr": "quét mã QR",
+                "imap": "IMAP lấy thư được",
+                "widget_embed": "widget chạy trên website"
+            }
+        },
+        "FEATURE_USAGE": {
+            "TITLE": "Mức dùng tính năng",
+            "DESCRIPTION": "Bao nhiêu tài khoản đã dùng từng tính năng, đếm từ sự kiện sản phẩm. Lượt quản trị viên làm hộ không tính.",
+            "GROUPS": {
+                "activation": "Mốc kích hoạt",
+                "feature": "Tính năng"
+            },
+            "COLUMNS": {
+                "FEATURE": "Tính năng",
+                "ACCOUNTS_7D": "TK 7 ngày",
+                "ACCOUNTS_30D": "TK 30 ngày",
+                "ACCOUNTS_90D": "TK 90 ngày",
+                "ACCOUNTS_ALL": "TK tất cả",
+                "EVENTS": "Tổng lượt",
+                "LAST": "Lần gần nhất",
+                "TREND": "Xu hướng 30 ngày"
+            },
+            "ACCOUNTS_HINT": "TK = số tài khoản đã dùng trong khoảng",
+            "TREND_SUMMARY": "{count} lượt trong 30 ngày",
+            "OPEN": "Xem tài khoản dùng {feature}",
+            "EMPTY_TITLE": "Chưa có sự kiện nào",
+            "EMPTY_DESCRIPTION": "Chạy lệnh product-events:backfill để dựng sự kiện từ dữ liệu cũ.",
+            "ACCOUNTS": {
+                "TITLE": "Tài khoản dùng “{feature}”",
+                "DESCRIPTION": "Dùng gần nhất trước, tối đa {limit} tài khoản.",
+                "BACK": "Mức dùng tính năng",
+                "COLUMNS": {
+                    "ACCOUNT": "Tài khoản",
+                    "EVENTS": "Tổng lượt",
+                    "EVENTS_30D": "Lượt 30 ngày",
+                    "FIRST": "Lần đầu",
+                    "LAST": "Lần gần nhất"
+                },
+                "EMPTY_TITLE": "Chưa tài khoản nào dùng",
+                "EMPTY_DESCRIPTION": "Khi một tài khoản dùng tính năng này, nó sẽ hiện ở đây."
             }
         },
         "AUDIT_LOGS": {

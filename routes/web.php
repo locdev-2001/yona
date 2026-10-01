@@ -41,6 +41,7 @@ use App\Http\Middleware\EnsureSuperAdminMfaEnrolled;
 use App\Http\Middleware\ExpireIdleSuperAdminSession;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\RecordSuperAdminAudit;
+use App\Http\Middleware\RecordWidgetInstall;
 use App\Http\Middleware\RestrictWidgetEmbedding;
 use App\Http\Middleware\StartSession;
 use App\Http\Middleware\SuperAdminInertia;
@@ -116,7 +117,7 @@ Route::get('/site.webmanifest', fn () => response()->json([
 
 // Trang widget chạy trong iframe của SDK (`/widget?website_token=...`) — không
 // dùng layout dashboard, không cần đăng nhập; phiên khách dựng qua API widget.
-Route::get('/widget', fn () => view('widget'))->middleware(RestrictWidgetEmbedding::class)->name('widget');
+Route::get('/widget', fn () => view('widget'))->middleware([RestrictWidgetEmbedding::class, RecordWidgetInstall::class])->name('widget');
 
 // Trang khảo sát CSAT công khai (`/survey/responses/{uuid}`) — khách chấm điểm
 // ngoài widget; dữ liệu đi qua mặt tiền public API, trang chỉ nhúng cấu hình
@@ -573,6 +574,8 @@ Route::prefix(SuperAdminArea::PREFIX)->middleware(SuperAdminInertia::class)->gro
 
             require __DIR__.'/admin/dashboard.php';
             require __DIR__.'/admin/operations.php';
+            require __DIR__.'/admin/events.php';
+            require __DIR__.'/admin/alerts.php';
 
             // Nhật ký đăng nhập hộ — chỉ đọc, không CRUD như các resource khác.
             Route::get('/impersonations', [SuperAdminImpersonationsController::class, 'index']);

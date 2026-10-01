@@ -105,6 +105,13 @@ export async function deleteCannedResponse(accountId: number, id: number): Promi
     notify();
 }
 
+// Ghi một lượt dùng câu trả lời mẫu (thống kê sản phẩm). Không chờ, lỗi bỏ qua:
+// không bao giờ được chặn việc chèn nội dung vào ô soạn.
+export function markCannedResponseUsed(accountId: number, id: number): void {
+    if (!accountId || !id) return;
+    postJson(`${endpoint(accountId, id)}/usages`, {}).catch(() => undefined);
+}
+
 // getSortedCannedResponses của store gốc.
 export function sortCannedResponses(items: CannedResponse[], sortOrder: CannedSortOrder): CannedResponse[] {
     return [...items].sort((a, b) =>

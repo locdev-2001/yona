@@ -10,6 +10,8 @@ use App\Models\AccountUser;
 use App\Models\Macro;
 use App\Policies\MacroPolicy;
 use App\Services\Macros\AttachmentActionPreparer;
+use App\Services\ProductEvents\ProductEventName;
+use App\Services\ProductEvents\ProductEventRecorder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -18,7 +20,10 @@ use Illuminate\Http\Response;
 // Không giới hạn vai trò: phạm vi do visibility + MacroPolicy quyết định.
 class MacrosController extends Controller
 {
-    public function __construct(private readonly AttachmentActionPreparer $attachments) {}
+    public function __construct(
+        private readonly AttachmentActionPreparer $attachments,
+        private readonly ProductEventRecorder $productEvents,
+    ) {}
 
     public function index(Request $request, Account $account): JsonResponse
     {
@@ -107,10 +112,14 @@ class MacrosController extends Controller
     {
         $macro = $this->authorizedMacro($request, $account, $macroId, 'execute');
 
-        MacrosExecutionJob::dispatch(
-            $macro,
-            array_values((array) $request->input('conversation_ids', [])),
-            $request->user(),
+        $conversationIds = array_values((array) $request->input('conversation_ids', []));
+
+        MacrosExecutionJob::dispatch($macro, $conversationIds, $request->user());
+
+        $this->productEvents->record(
+            ProductEventName::MacroRun,
+            $account,
+            ['macro_id' => $macro->id, 'conversations' => count($conversationIds)],
         );
 
         return response()->noContent(200);

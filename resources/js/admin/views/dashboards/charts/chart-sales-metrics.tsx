@@ -3,28 +3,45 @@ import { useId } from 'react'
 import type { ReactNode } from 'react'
 
 // Third-party Imports
-import { Bar, BarChart, CartesianGrid, Label, Line, LineChart, Pie, PieChart, XAxis, YAxis } from 'recharts'
+import { Area, AreaChart, Bar, BarChart, CartesianGrid, Label, LabelList, Pie, PieChart, XAxis, YAxis } from 'recharts'
 
 // Component Imports
 import { Avatar, AvatarFallback } from '@admin/components/ui/avatar'
 import { Card, CardContent } from '@admin/components/ui/card'
-import {
-  type ChartConfig,
-  ChartContainer,
-  ChartLegend,
-  ChartLegendContent,
-  ChartTooltip,
-  ChartTooltipContent
-} from '@admin/components/ui/chart'
+import { type ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from '@admin/components/ui/chart'
 
-export type ChartSeries = { key: string; label: string; values: number[] }
+// Util Imports
+import { cn } from '@admin/lib/utils'
+import { CHART_SERIES, TONE_CHIP, TONE_RULE, type Tone } from '@admin/views/dashboards/tones'
 
-// Màu chuỗi theo sắc độ của màu chính, như các biểu đồ khác trong console.
-const SERIES_COLORS = [
-  'var(--chart-1)',
-  'var(--chart-2)',
-  'var(--chart-3)'
-]
+export type ChartSeries = {
+  key: string
+  label: string
+  values: number[]
+  // Màu nét; bỏ trống thì lấy theo thứ tự chuỗi app.md §5.
+  color?: string
+  // Nét đứt: chuỗi thứ hai đọc được kể cả khi không phân biệt màu.
+  dashed?: boolean
+}
+
+// Mảng dưới đường: một màu phẳng, độ mờ thấp. Không gradient.
+const AREA_FILL_OPACITY = 0.12
+
+// Chú giải có hình: mẫu nét liền / nét đứt cùng màu với đường, nhãn chữ trung tính.
+const SeriesLegend = ({ series, colorOf }: { series: ChartSeries[]; colorOf: (index: number) => string }) => (
+  <ul className='flex flex-wrap items-center justify-center gap-x-5 gap-y-1 text-sm text-neutral-700'>
+    {series.map((item, index) => (
+      <li key={item.key} className='flex items-center gap-2'>
+        <span
+          aria-hidden='true'
+          className={cn('w-5 border-t-2', item.dashed ? 'border-dashed' : 'border-solid')}
+          style={{ borderColor: colorOf(index) }}
+        />
+        {item.label}
+      </li>
+    ))}
+  </ul>
+)
 
 type Props = {
   title: string
@@ -51,8 +68,10 @@ const TimeSeriesChart = ({
 }: Props) => {
   const summaryId = useId()
 
+  const colorOf = (index: number) => series[index]?.color ?? CHART_SERIES[index % CHART_SERIES.length]
+
   const chartConfig = Object.fromEntries(
-    series.map((item, index) => [item.key, { label: item.label, color: SERIES_COLORS[index % SERIES_COLORS.length] }])
+    series.map((item, index) => [item.key, { label: item.label, color: colorOf(index) }])
   ) satisfies ChartConfig
 
   const chartData = dates.map((date, index) => ({
@@ -62,7 +81,7 @@ const TimeSeriesChart = ({
 
   const axes = (
     <>
-      <CartesianGrid vertical={false} />
+      <CartesianGrid vertical={false} stroke='var(--color-neutral-200)' />
       <XAxis
         dataKey='date'
         tickLine={false}
@@ -82,7 +101,6 @@ const TimeSeriesChart = ({
         content={<ChartTooltipContent labelFormatter={value => formatDate(String(value))} />}
         cursor={variant === 'bar' ? undefined : false}
       />
-      {series.length > 1 ? <ChartLegend content={<ChartLegendContent />} /> : null}
     </>
   )
 
@@ -96,32 +114,55 @@ const TimeSeriesChart = ({
           <BarChart accessibilityLayer data={chartData} margin={{ left: -8, right: 8 }}>
             {axes}
             {series.map(item => (
-              <Bar key={item.key} dataKey={item.key} fill={`var(--color-${item.key})`} radius={4} />
+              <Bar
+                key={item.key}
+                dataKey={item.key}
+                fill={`var(--color-${item.key})`}
+                radius={[4, 4, 0, 0]}
+                animationDuration={300}
+              >
+                {/* Nhãn số trực tiếp trên cột có giá trị: đọc được không qua màu. */}
+                <LabelList
+                  dataKey={item.key}
+                  position='top'
+                  offset={6}
+                  className='fill-neutral-700 font-num text-xs'
+                  formatter={(value: unknown) => (typeof value === 'number' && value > 0 ? formatValue(value) : '')}
+                />
+              </Bar>
             ))}
           </BarChart>
         ) : (
-          <LineChart accessibilityLayer data={chartData} margin={{ left: -8, right: 8 }}>
+          <AreaChart accessibilityLayer data={chartData} margin={{ left: -8, right: 8 }}>
             {axes}
             {series.map(item => (
-              <Line
+              <Area
                 key={item.key}
                 dataKey={item.key}
                 type='monotone'
                 stroke={`var(--color-${item.key})`}
                 strokeWidth={2}
+                strokeDasharray={item.dashed ? '6 4' : undefined}
+                fill={`var(--color-${item.key})`}
+                fillOpacity={AREA_FILL_OPACITY}
                 dot={false}
+                activeDot={{ r: 4, strokeWidth: 0 }}
+                animationDuration={300}
               />
             ))}
-          </LineChart>
+          </AreaChart>
         )}
       </ChartContainer>
+      {series.length > 1 ? <SeriesLegend series={series} colorOf={colorOf} /> : null}
       <table className='sr-only'>
         <caption>{title}</caption>
         <thead>
           <tr>
-            <th scope='col'>{dateLabel}</th>
+            <th scope='col' className='font-normal'>
+              {dateLabel}
+            </th>
             {series.map(item => (
-              <th scope='col' key={item.key}>
+              <th scope='col' key={item.key} className='font-normal'>
                 {item.label}
               </th>
             ))}
@@ -130,7 +171,9 @@ const TimeSeriesChart = ({
         <tbody>
           {dates.map((date, index) => (
             <tr key={date}>
-              <th scope='row'>{formatDate(date)}</th>
+              <th scope='row' className='font-normal'>
+                {formatDate(date)}
+              </th>
               {series.map(item => (
                 <td key={item.key}>{item.values[index] ?? 0}</td>
               ))}
@@ -142,21 +185,22 @@ const TimeSeriesChart = ({
   )
 }
 
-export type MetricBox = { key: string; icon: ReactNode; title: string; value: string }
+export type MetricBox = { key: string; icon: ReactNode; title: string; value: string; tone?: Tone }
 
-// Các ô số nhỏ viền mảnh: biểu tượng trong ô vuông, nhãn và số.
+// Các ô số nhỏ viền mảnh: vạch màu mép trái, biểu tượng trong ô vuông cùng màu, nhãn và số.
 export const MetricBoxes = ({ metrics, className }: { metrics: MetricBox[]; className?: string }) => {
   return (
     <div className={className ?? 'grid gap-4 @md:grid-cols-2'}>
       {metrics.map(metric => (
-        <Card key={metric.key} className='ring-foreground/10 py-2 shadow-none ring-1'>
+        <Card key={metric.key} className='relative bg-neutral-50 py-2 shadow-none'>
+          <span aria-hidden='true' className={cn('absolute inset-y-0 left-0 w-1', TONE_RULE[metric.tone ?? 'primary'])} />
           <CardContent className='flex items-center gap-3 px-4'>
             <Avatar className='rounded-sm after:border-0'>
-              <AvatarFallback className='bg-(--tone)/15 text-(--tone) shrink-0 rounded-sm'>{metric.icon}</AvatarFallback>
+              <AvatarFallback className={cn('shrink-0 rounded-sm', TONE_CHIP[metric.tone ?? 'primary'])}>{metric.icon}</AvatarFallback>
             </Avatar>
             <div className='flex min-w-0 flex-col gap-0.5'>
-              <span className='text-muted-foreground truncate text-sm font-medium'>{metric.title}</span>
-              <span className='truncate text-lg font-medium tabular-nums'>{metric.value}</span>
+              <span className='truncate text-sm font-medium text-neutral-500'>{metric.title}</span>
+              <span className='truncate text-lg font-medium text-neutral-900'>{metric.value}</span>
             </div>
           </CardContent>
         </Card>
@@ -181,6 +225,7 @@ export const GoalDonut = ({
   centerLabel,
   footerLabel,
   footerValue,
+  footerClassName,
   legend
 }: {
   title: string
@@ -189,6 +234,7 @@ export const GoalDonut = ({
   centerLabel: string
   footerLabel?: string
   footerValue?: string
+  footerClassName?: string
   legend?: ReactNode
 }) => {
   const shown = slices.filter(slice => slice.value > 0)
@@ -244,7 +290,7 @@ export const GoalDonut = ({
       {footerLabel ? (
         <div className='flex items-baseline justify-between gap-3'>
           <span className='text-muted-foreground text-sm'>{footerLabel}</span>
-          <span className='text-lg font-medium tabular-nums'>{footerValue}</span>
+          <span className={cn('text-lg font-medium', footerClassName ?? 'text-neutral-900')}>{footerValue}</span>
         </div>
       ) : null}
       {legend}

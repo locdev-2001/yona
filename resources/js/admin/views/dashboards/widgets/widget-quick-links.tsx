@@ -7,6 +7,10 @@ import { ExternalLinkIcon } from 'lucide-react'
 // Component Imports
 import { Avatar, AvatarFallback } from '@admin/components/ui/avatar'
 
+// Util Imports
+import { cn } from '@admin/lib/utils'
+import { TONE_CHIP, type Tone } from '@admin/views/dashboards/tones'
+
 export type QuickLinkView = {
   key: string
   href: string
@@ -14,6 +18,7 @@ export type QuickLinkView = {
   icon: ReactNode
   title: string
   description: string
+  tone?: Tone
 }
 
 // Lối tắt: mỗi dòng một liên kết, cùng kiểu dòng của danh sách xếp hạng.
@@ -28,11 +33,11 @@ const QuickLinks = ({ links }: { links: QuickLinkView[] }) => {
             className='hover:bg-muted focus-visible:ring-ring/50 flex items-center gap-2.5 rounded-md p-2 outline-none focus-visible:ring-3'
           >
             <Avatar className='size-9 rounded-sm after:rounded-[inherit] after:border-0'>
-              <AvatarFallback className='bg-(--tone)/15 text-(--tone) shrink-0 rounded-sm'>{link.icon}</AvatarFallback>
+              <AvatarFallback className={cn('shrink-0 rounded-sm', TONE_CHIP[link.tone ?? 'primary'])}>{link.icon}</AvatarFallback>
             </Avatar>
             <span className='flex min-w-0 flex-1 flex-col gap-0.5'>
               <span className='truncate text-base font-medium'>{link.title}</span>
-              <span className='text-muted-foreground truncate text-sm'>{link.description}</span>
+              <span className='truncate text-sm text-neutral-500'>{link.description}</span>
             </span>
             {link.external ? <ExternalLinkIcon className='text-muted-foreground size-4' aria-hidden='true' /> : null}
           </a>

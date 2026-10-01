@@ -9,6 +9,8 @@ use App\Models\Conversation;
 use App\Models\Macro;
 use App\Models\User;
 use App\Services\ConversationActions\ActionExecutor;
+use App\Services\ProductEvents\ProductEventName;
+use App\Services\ProductEvents\ProductEventRecorder;
 use App\Support\CurrentUser;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
@@ -129,6 +131,13 @@ final class ExecutionService
             'content_attributes' => $cannedResponse->content_attributes,
             'private' => false,
         ]))->perform();
+
+        app(ProductEventRecorder::class)->record(
+            ProductEventName::CannedResponseUsed,
+            $this->macro->account_id,
+            ['canned_response_id' => $cannedResponse->id, 'via' => 'macro'],
+            $this->user,
+        );
     }
 
     private function conversationIsTweet(): bool

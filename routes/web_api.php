@@ -303,6 +303,7 @@ Route::middleware(['auth.api_token', 'auth', 'account.scope'])
         Route::post('/canned_responses', [CannedResponsesController::class, 'store']);
         Route::match(['put', 'patch'], '/canned_responses/{cannedResponseId}', [CannedResponsesController::class, 'update'])->whereNumber('cannedResponseId');
         Route::delete('/canned_responses/{cannedResponseId}', [CannedResponsesController::class, 'destroy'])->whereNumber('cannedResponseId');
+        Route::post('/canned_responses/{cannedResponseId}/usages', [CannedResponsesController::class, 'markUsed'])->whereNumber('cannedResponseId');
 
         Route::get('/automation_rules', [AutomationRulesController::class, 'index']);
         Route::post('/automation_rules', [AutomationRulesController::class, 'store']);

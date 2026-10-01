@@ -16,6 +16,8 @@ use App\Models\Conversation;
 use App\Models\Message;
 use App\Services\Contacts\FilterService;
 use App\Services\DataImports\ContactsImportService;
+use App\Services\ProductEvents\ProductEventName;
+use App\Services\ProductEvents\ProductEventRecorder;
 use App\Support\OnlineStatusTracker;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -116,6 +118,12 @@ class ContactsController extends Controller
             $request->user()->id,
             $request->input('column_names'),
             ['payload' => $request->input('payload'), 'label' => $request->input('label')],
+        );
+
+        app(ProductEventRecorder::class)->record(
+            ProductEventName::ContactsExported,
+            $account,
+            ['filtered' => filled($request->input('payload')) || filled($request->input('label'))],
         );
 
         return response()->json(null, 200);

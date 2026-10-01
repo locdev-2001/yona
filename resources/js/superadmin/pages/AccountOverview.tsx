@@ -33,6 +33,7 @@ import { formatDate, formatDateTime, initialsOf } from '@admin/lib/format';
 import { cn } from '@admin/lib/utils';
 import { ActivityTimeline } from '@admin/views/apps/accounts/view/activity-timeline';
 import StatisticsCard from '@admin/views/apps/accounts/view/statistics-card';
+import { TONE_PROGRESS } from '@admin/views/dashboards/tones';
 import { UsageChart } from '@admin/views/apps/accounts/view/usage-chart';
 import { ConfirmDialog } from '@admin/views/apps/resources/dialogs/confirm-dialog';
 import { RecordViewLeftPanel } from '@admin/views/apps/resources/view/record-view-left-panel';
@@ -60,6 +61,8 @@ type AccountUserRow = {
 };
 
 type TimelineEvent = { type: string; at: string; title: string; detail: string | null };
+
+type FeatureUsed = { key: string; label: string; group: string; events: number; lastAt: string | null };
 
 type Impersonation = {
     id: number;
@@ -96,9 +99,10 @@ export type AccountOverviewProps = {
         milestones: { key: string; label: string; done: boolean; at: string | null }[];
     };
     timeline: TimelineEvent[];
+    features: FeatureUsed[];
     stickers: { packs: number; stickers: number };
     impersonations: Impersonation[];
-    urls: Record<'show' | 'edit' | 'stickers' | 'auditLogs' | 'data' | 'suspend' | 'unsuspend' | 'impersonations', string>;
+    urls: Record<'show' | 'edit' | 'stickers' | 'auditLogs' | 'data' | 'suspend' | 'unsuspend' | 'impersonations' | 'featureUsage', string>;
     csrf: string;
 };
 
@@ -157,15 +161,15 @@ function Onboarding({ onboarding }: { onboarding: AccountOverviewProps['onboardi
                             ? label('ONBOARDING.CURRENT_STEP', { step: onboarding.stepLabel ?? onboarding.step })
                             : label('ONBOARDING.FINISHED')}
                     </span>
-                    <span className="font-medium tabular-nums">{percent}%</span>
+                    <span className="font-num text-success font-medium">{percent}%</span>
                 </div>
-                <Progress value={percent} aria-label={label('SECTIONS.ONBOARDING')} />
+                <Progress value={percent} aria-label={label('SECTIONS.ONBOARDING')} className={TONE_PROGRESS.success} />
             </div>
             <ul className="flex flex-col gap-3">
                 {onboarding.milestones.map(milestone => (
                     <li key={milestone.key} className="flex items-center gap-2 text-sm">
                         {milestone.done ? (
-                            <CircleCheckIcon className="size-4 shrink-0 text-green-600 dark:text-green-400" />
+                            <CircleCheckIcon className="text-success size-4 shrink-0" />
                         ) : (
                             <CircleDashedIcon className="text-muted-foreground size-4 shrink-0" />
                         )}
@@ -193,6 +197,27 @@ function Timeline({ events }: { events: TimelineEvent[] }) {
                 timestampTitle: formatDateTime(event.at),
             }))}
         />
+    );
+}
+
+// Tính năng account đã dùng: mỗi dòng mở danh sách account cùng dùng tính năng đó.
+function FeaturesUsed({ features, baseUrl }: { features: FeatureUsed[]; baseUrl: string }) {
+    if (features.length === 0) return <p className="text-muted-foreground py-4 text-sm">{label('EMPTY.FEATURES')}</p>;
+
+    return (
+        <ul className="divide-y">
+            {features.map(feature => (
+                <li key={feature.key} className="flex min-h-11 items-center gap-3 py-2 text-sm">
+                    <Link href={`${baseUrl}/${feature.key}`} className="min-w-0 flex-1 truncate font-medium hover:underline">
+                        {feature.label}
+                    </Link>
+                    <span className="text-muted-foreground shrink-0 tabular-nums">{label('FEATURES.COUNT', { count: formatNumber(feature.events) })}</span>
+                    <span className="text-muted-foreground w-28 shrink-0 text-right whitespace-nowrap" title={formatDateTime(feature.lastAt)}>
+                        {feature.lastAt ? formatRelative(feature.lastAt) : '-'}
+                    </span>
+                </li>
+            ))}
+        </ul>
     );
 }
 
@@ -498,7 +523,7 @@ function InboxesTable({ inboxes }: { inboxes: ChannelHealthItem[] }) {
 }
 
 export default function AccountOverview(props: AccountOverviewProps) {
-    const { account, suspension, users, inboxes, stats, usage, onboarding, timeline, stickers, impersonations, urls, csrf } = props;
+    const { account, suspension, users, inboxes, stats, usage, onboarding, timeline, features, stickers, impersonations, urls, csrf } = props;
     const { attribute } = useConsoleDictionary();
     const consoleLabel = useConsoleLabels();
     const [tab, setTab] = useState<Tab>(initialTab);
@@ -618,17 +643,25 @@ export default function AccountOverview(props: AccountOverviewProps) {
                                     icon={<MessagesSquareIcon className="size-4" />}
                                     value={formatNumber(stats.conversations)}
                                     title={label('STATS.CONVERSATIONS')}
+                                    tone="primary"
                                 />
-                                <StatisticsCard icon={<ContactIcon className="size-4" />} value={formatNumber(stats.contacts)} title={label('STATS.CONTACTS')} />
+                                <StatisticsCard
+                                    icon={<ContactIcon className="size-4" />}
+                                    value={formatNumber(stats.contacts)}
+                                    title={label('STATS.CONTACTS')}
+                                    tone="navy"
+                                />
                                 <StatisticsCard
                                     icon={<MessageSquareIcon className="size-4" />}
                                     value={formatNumber(stats.messages7d)}
                                     title={label('STATS.MESSAGES_7D')}
+                                    tone="cyan"
                                 />
                                 <StatisticsCard
                                     icon={<CalendarIcon className="size-4" />}
                                     value={formatNumber(stats.messages30d)}
                                     title={label('STATS.MESSAGES_30D')}
+                                    tone="success"
                                 />
                             </div>
                             <div className="grid gap-6 xl:grid-cols-2">
@@ -722,6 +755,9 @@ export default function AccountOverview(props: AccountOverviewProps) {
                                 }
                             >
                                 <Timeline events={timeline} />
+                            </SectionCard>
+                            <SectionCard title={label('SECTIONS.FEATURES')} description={label('FEATURES.DESCRIPTION')}>
+                                <FeaturesUsed features={features ?? []} baseUrl={urls.featureUsage} />
                             </SectionCard>
                             <SectionCard title={label('SECTIONS.SUSPENSIONS')}>
                                 {suspension.history.length === 0 ? (

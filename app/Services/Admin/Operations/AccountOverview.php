@@ -19,7 +19,10 @@ final class AccountOverview
 {
     public const RECENT_IMPERSONATIONS = 10;
 
-    public function __construct(private readonly ChannelHealthInspector $channelHealth) {}
+    public function __construct(
+        private readonly ChannelHealthInspector $channelHealth,
+        private readonly FeatureUsage $featureUsage,
+    ) {}
 
     public function find(int $accountId): Account
     {
@@ -57,6 +60,7 @@ final class AccountOverview
             'usage' => AccountActivity::dailyMessages($account),
             'onboarding' => $this->onboarding($account, $accountUsers->count()),
             'timeline' => AccountActivity::timeline($account),
+            'features' => $this->featureUsage->forAccount($account),
             'stickers' => $this->stickerStats($account),
             'impersonations' => $this->recentImpersonations($accountUsers->pluck('user_id')->all()),
             'urls' => [
@@ -68,6 +72,7 @@ final class AccountOverview
                 'suspend' => SuperAdminArea::url("accounts/{$account->id}/suspend"),
                 'unsuspend' => SuperAdminArea::url("accounts/{$account->id}/unsuspend"),
                 'impersonations' => SuperAdminArea::url('impersonations'),
+                'featureUsage' => SuperAdminArea::url('feature_usage'),
             ],
         ];
     }

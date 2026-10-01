@@ -15,7 +15,7 @@
 /* Khối mượn của dashboard mà các trang console chưa chuyển vẫn dùng. */
 @source '../../js/dashboard/components-next/inline-input';
 @source '../../js/dashboard/components-next/spinner';
-@source '../../js/dashboard/helper/{apiClient,sessionRecovery}.ts';
+@source '../../js/dashboard/helper/{apiClient,sessionRecovery,pushHelper}.ts';
 @source '../../js/dashboard/reports/helpers';
 @source '../../js/dashboard/settings/customStickers';
 @source '../../js/dashboard/settings/profile/mfa';
@@ -131,6 +131,31 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  /* Bảng màu chuẩn yona-ui (tokens.md · landing.css), mở thành lớp Tailwind cho console:
+     bg-success-tint, text-warning, bg-navy, bg-primary-50… Không thêm giá trị nào ngoài chuẩn. */
+  --color-primary-50: rgb(var(--c-primary-50));
+  --color-primary-100: rgb(var(--c-primary-100));
+  --color-primary-600: rgb(var(--c-primary-600));
+  --color-primary-700: rgb(var(--c-primary-700));
+  --color-neutral-0: rgb(var(--c-neutral-0));
+  --color-neutral-50: rgb(var(--c-neutral-50));
+  --color-neutral-100: rgb(var(--c-neutral-100));
+  --color-neutral-200: rgb(var(--c-neutral-200));
+  --color-neutral-300: rgb(var(--c-neutral-300));
+  --color-neutral-400: rgb(var(--c-neutral-400));
+  --color-neutral-500: rgb(var(--c-neutral-500));
+  --color-neutral-600: rgb(var(--c-neutral-600));
+  --color-neutral-700: rgb(var(--c-neutral-700));
+  --color-neutral-800: rgb(var(--c-neutral-800));
+  --color-neutral-900: rgb(var(--c-neutral-900));
+  --color-navy: rgb(var(--c-navy));
+  --color-cyan: rgb(var(--c-cyan));
+  --color-success: rgb(var(--c-success));
+  --color-success-tint: rgb(var(--c-success-tint));
+  --color-warning: rgb(var(--c-warning));
+  --color-warning-tint: rgb(var(--c-warning-tint));
+  --color-danger: rgb(var(--c-danger));
+  --color-danger-tint: rgb(var(--c-danger-tint));
   --radius-sm: var(--radius);
   --radius-md: var(--radius);
   --radius-lg: var(--radius);
@@ -150,13 +175,20 @@
   --c-neutral-100: 241 238 233;
   --c-neutral-200: 232 229 223;
   --c-neutral-300: 222 219 214;
+  --c-neutral-400: 168 163 153;
   --c-neutral-500: 112 107 99;
+  --c-neutral-600: 92 88 81;
   --c-neutral-700: 61 58 53;
+  --c-neutral-800: 38 36 33;
   --c-neutral-900: 17 17 17;
+  --c-navy: 1 23 64;
   --c-cyan: 0 186 253;
   --c-success: 11 122 68;
+  --c-success-tint: 231 247 238;
   --c-warning: 154 91 0;
+  --c-warning-tint: 254 243 226;
   --c-danger: 196 43 43;
+  --c-danger-tint: 253 236 236;
 
   --background: rgb(var(--c-neutral-0));
   --foreground: rgb(var(--c-neutral-900));

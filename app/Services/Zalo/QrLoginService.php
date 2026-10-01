@@ -3,6 +3,7 @@
 namespace App\Services\Zalo;
 
 use App\Models\Channel\Zalo;
+use App\Services\ProductEvents\ProductEventHooks;
 use Illuminate\Support\Str;
 
 /**
@@ -136,6 +137,10 @@ class QrLoginService
         $channel->markState(Zalo::STATE_CONNECTED);
         // Vừa quét xong là nguồn chuẩn: tên/SĐT/ảnh mới được phép ghi đè bản cũ.
         $this->profileSync->apply($channel, $data, authoritative: true);
+
+        if ($channel->inbox !== null) {
+            app(ProductEventHooks::class)->channelConnected($channel->inbox, 'qr');
+        }
 
         return [
             'ok' => true,

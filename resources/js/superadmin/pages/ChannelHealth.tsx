@@ -132,10 +132,10 @@ export default function ChannelHealth({ stats, items, filters, options }: Props)
             <PageHeader title={label('TITLE')} description={label('DESCRIPTION')} className="mb-0 md:mb-0" />
 
             <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
-                <StatisticsCard icon={<InboxIcon className="size-4" />} value={formatNumber(stats.total)} title={label('STATS.TOTAL')} />
-                <StatisticsCard icon={<CircleCheckIcon className="size-4" />} value={formatNumber(stats.healthy)} title={label('STATS.HEALTHY')} />
-                <StatisticsCard icon={<TriangleAlertIcon className="size-4" />} value={formatNumber(stats.failing)} title={label('STATS.FAILING')} />
-                <StatisticsCard icon={<CircleXIcon className="size-4" />} value={formatNumber(stats.errors)} title={label('STATS.ERRORS')} />
+                <StatisticsCard icon={<InboxIcon className="size-4" />} value={formatNumber(stats.total)} title={label('STATS.TOTAL')} tone="primary" />
+                <StatisticsCard icon={<CircleCheckIcon className="size-4" />} value={formatNumber(stats.healthy)} title={label('STATS.HEALTHY')} tone="success" />
+                <StatisticsCard icon={<TriangleAlertIcon className="size-4" />} value={formatNumber(stats.failing)} title={label('STATS.FAILING')} tone="warning" />
+                <StatisticsCard icon={<CircleXIcon className="size-4" />} value={formatNumber(stats.errors)} title={label('STATS.ERRORS')} tone="danger" />
             </div>
 
             <ListCard

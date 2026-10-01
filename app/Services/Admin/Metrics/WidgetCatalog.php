@@ -3,6 +3,7 @@
 namespace App\Services\Admin\Metrics;
 
 use App\Services\Admin\Metrics\Widgets\ActivationFunnelWidget;
+use App\Services\Admin\Metrics\Widgets\AlertsWidget;
 use App\Services\Admin\Metrics\Widgets\ChannelHealthWidget;
 use App\Services\Admin\Metrics\Widgets\CohortRetentionWidget;
 use App\Services\Admin\Metrics\Widgets\ConversationsByChannelWidget;
@@ -32,6 +33,7 @@ final class WidgetCatalog
             app(SignupsTrendWidget::class),
             app(CohortRetentionWidget::class),
             app(ChannelHealthWidget::class),
+            app(AlertsWidget::class),
             app(TopAccountsWidget::class),
             app(RecentSignupsWidget::class),
             app(QueueHealthWidget::class),
