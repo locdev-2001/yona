@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\ReferencesPartitionedMessage;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -9,8 +10,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 // Không có tài khoản đứng sau — token trên URL LÀ danh tính duy nhất.
 class MessageAccessToken extends Model
 {
+    use ReferencesPartitionedMessage;
+
     protected $fillable = [
         'message_id',
+        'message_created_at',
         'purpose',
         'item_id',
         'token_hash',

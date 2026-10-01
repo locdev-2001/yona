@@ -47,6 +47,8 @@ Schedule::command('horizon:snapshot')->everyFiveMinutes();
 Schedule::command('messaging:prune-card-images')->dailyAt('03:40');
 // Xoá sticker trước rồi mới xoá tin đã gửi thì tệp sticker bị bỏ lại trên đĩa.
 Schedule::command('stickers:prune-orphan-files')->weeklyOn(0, '03:50');
+// messages chia partition theo tháng: tạo sẵn 3 tháng tới, chạy hằng ngày để một lần lỡ lịch không sao.
+Schedule::command('messages:create-partitions', ['--months' => 3])->dailyAt('03:20')->onOneServer();
 // Dòng user_sessions của phiên đã hết hạn tự nhiên không ai xoá; để lại thì
 // chạm trần số phiên dù người dùng không còn phiên nào sống.
 Schedule::command('model:prune', ['--model' => [UserSession::class]])->dailyAt('03:10');
