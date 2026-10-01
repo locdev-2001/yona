@@ -1,4 +1,5 @@
 import { Link } from '@inertiajs/react';
+import { ICONS } from 'dashboard/icons';
 
 import Avatar from 'dashboard/components-next/avatar/Avatar';
 import Button from 'dashboard/components-next/button/Button';
@@ -60,12 +61,12 @@ export default function MacrosTableRow({ macro, accountId, canManagePublicMacros
             <BaseTableCell align="end" className="w-24">
                 <div className="flex gap-3 justify-end flex-shrink-0">
                     <Link href={accountScopedUrl(accountId, `settings/macros/${macro.id}/edit`)}>
-                        <Button title={editTooltip} icon="i-woot-edit-pen" slate sm />
+                        <Button title={editTooltip} icon={ICONS.edit} slate sm />
                     </Link>
                     {canManageMacro ? (
                         <Button
                             title={t('MACROS.DELETE.TOOLTIP')}
-                            icon="i-woot-bin"
+                            icon={ICONS.delete}
                             slate
                             sm
                             className="hover:enabled:text-n-ruby-11 hover:enabled:bg-n-ruby-2"

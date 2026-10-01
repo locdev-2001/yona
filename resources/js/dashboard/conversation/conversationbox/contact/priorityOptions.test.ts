@@ -9,11 +9,11 @@ describe('priorityOptions', () => {
         expect(options.map(option => option.id)).toEqual([null, 'urgent', 'high', 'medium', 'low']);
         expect(options.map(option => option.name)).toEqual(['None', 'Urgent', 'High', 'Medium', 'Low']);
         expect(options.map(option => option.icon)).toEqual([
-            'i-woot-priority-empty',
-            'i-woot-priority-urgent',
-            'i-woot-priority-high',
-            'i-woot-priority-medium',
-            'i-woot-priority-low',
+            'i-yona-priority-empty',
+            'i-yona-priority-urgent',
+            'i-yona-priority-high',
+            'i-yona-priority-medium',
+            'i-yona-priority-low',
         ]);
     });
 

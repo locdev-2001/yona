@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { usePage } from '@inertiajs/react';
+import { ICONS } from 'dashboard/icons';
 
 import Button from 'dashboard/components-next/button/Button';
 import { useAlert } from 'dashboard/composables/useAlert';
@@ -60,7 +61,7 @@ export default function CsatResponses() {
                 <ReportHeader headerTitle={t('CSAT_REPORTS.HEADER')}>
                     <Button
                         label={t('CSAT_REPORTS.DOWNLOAD')}
-                        icon="i-ph-download-simple"
+                        icon={ICONS.download}
                         size="sm"
                         onClick={downloadReports}
                     />

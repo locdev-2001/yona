@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { usePage } from '@inertiajs/react';
+import { ICONS } from 'dashboard/icons';
 
 import Button from 'dashboard/components-next/button/Button';
 import { useAlert } from 'dashboard/composables/useAlert';
@@ -63,7 +64,7 @@ export default function ConversationReports() {
                 <ReportHeader headerTitle={t('REPORT.HEADER')}>
                     <Button
                         label={t('REPORT.DOWNLOAD_CONVERSATION_REPORTS')}
-                        icon="i-ph-download-simple"
+                        icon={ICONS.download}
                         size="sm"
                         onClick={downloadConversationReports}
                     />

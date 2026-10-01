@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import { usePage } from '@inertiajs/react';
+import { ICONS } from 'dashboard/icons';
 
 import { t } from '../../../../i18n';
 import { useAlert } from 'dashboard/composables/useAlert';
@@ -94,13 +95,13 @@ export default function ContactDetails({
                     <div className="flex flex-col gap-1.5">
                         {selectedContact.identifier ? (
                             <span className="inline-flex items-center gap-1 text-sm text-n-slate-11">
-                                <span className="i-ph-user-gear text-n-slate-10 size-4" />
+                                <span className={`${ICONS.contactIdentifier} text-n-slate-10 size-4`} />
                                 {selectedContact.identifier}
                             </span>
                         ) : null}
                         <span className="inline-flex items-center gap-1 text-sm text-n-slate-11">
                             {selectedContact.identifier ? (
-                                <span className="i-ph-activity text-n-slate-10 size-4" />
+                                <span className={`${ICONS.activity} text-n-slate-10 size-4`} />
                             ) : null}
                             {t('CONTACTS_LAYOUT.DETAILS.CREATED_AT', { date: createdAt })}
                             {' • '}

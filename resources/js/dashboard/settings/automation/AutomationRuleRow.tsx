@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { ICONS } from 'dashboard/icons';
 
 import Button from 'dashboard/components-next/button/Button';
 import Switch from 'dashboard/components-next/switch/Switch';
@@ -34,9 +35,9 @@ export default function AutomationRuleRow({ rule, loading, onToggle, onEdit, onC
             <BaseTableCell><span className="text-body-main text-n-slate-12 whitespace-nowrap">{created}</span></BaseTableCell>
             <BaseTableCell align="end">
                 <div className="flex gap-3 justify-end flex-shrink-0">
-                    <Button title={t('AUTOMATION.FORM.EDIT')} icon="i-woot-edit-pen" slate sm isLoading={loading} onClick={onEdit} />
-                    <Button title={t('AUTOMATION.CLONE.TOOLTIP')} icon="i-woot-clone" slate sm isLoading={loading} onClick={onClone} />
-                    <Button title={t('AUTOMATION.FORM.DELETE')} icon="i-woot-bin" slate sm isLoading={loading} className="hover:enabled:text-n-ruby-11 hover:enabled:bg-n-ruby-2" onClick={onDelete} />
+                    <Button title={t('AUTOMATION.FORM.EDIT')} icon={ICONS.edit} slate sm isLoading={loading} onClick={onEdit} />
+                    <Button title={t('AUTOMATION.CLONE.TOOLTIP')} icon={ICONS.duplicate} slate sm isLoading={loading} onClick={onClone} />
+                    <Button title={t('AUTOMATION.FORM.DELETE')} icon={ICONS.delete} slate sm isLoading={loading} className="hover:enabled:text-n-ruby-11 hover:enabled:bg-n-ruby-2" onClick={onDelete} />
                 </div>
             </BaseTableCell>
         </BaseTableRow>

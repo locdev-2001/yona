@@ -5,6 +5,7 @@ import Button from 'dashboard/components-next/button/Button';
 import BaseTableRow from 'dashboard/components-next/table/BaseTableRow';
 import BaseTableCell from 'dashboard/components-next/table/BaseTableCell';
 import type { Webhook } from 'dashboard/composables/useWebhooks';
+import { ICONS } from 'dashboard/icons';
 
 // Port từ dashboard/routes/dashboard/settings/integrations/Webhooks/WebhookRow.vue.
 interface WebhookRowProps {
@@ -43,14 +44,14 @@ export default function WebhookRow({ webhook, onEdit, onDelete }: WebhookRowProp
                 <div className="flex justify-end gap-3 flex-shrink-0">
                     <Button
                         title={t('INTEGRATION_SETTINGS.WEBHOOK.EDIT.BUTTON_TEXT')}
-                        icon="i-woot-edit-pen"
+                        icon={ICONS.edit}
                         slate
                         sm
                         onClick={() => onEdit(webhook)}
                     />
                     <Button
                         title={t('INTEGRATION_SETTINGS.WEBHOOK.DELETE.BUTTON_TEXT')}
-                        icon="i-woot-bin"
+                        icon={ICONS.delete}
                         slate
                         sm
                         className="hover:enabled:text-n-ruby-11 hover:enabled:bg-n-ruby-2"

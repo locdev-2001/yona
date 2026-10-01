@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { ICONS } from 'dashboard/icons';
 
 import { t } from '../../../../i18n';
 import CardLayout from 'dashboard/components-next/CardLayout';
@@ -167,7 +168,7 @@ export default function ContactsCard({
                             <span className="text-base font-medium truncate text-n-slate-12">{name}</span>
                             <span className="inline-flex items-center gap-1">
                                 {additionalAttributes?.companyName ? (
-                                    <span className="i-ph-building-light size-4 text-n-slate-10 mb-0.5" />
+                                    <span className={`${ICONS.company} size-4 text-n-slate-10 mb-0.5`} />
                                 ) : null}
                                 {additionalAttributes?.companyName ? (
                                     <span className="text-sm truncate text-n-slate-11">

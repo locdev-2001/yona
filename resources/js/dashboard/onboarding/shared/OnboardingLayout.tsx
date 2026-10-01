@@ -39,7 +39,7 @@ export default function OnboardingLayout({
                     {/* Greeting */}
                     <div className="mb-6 -ms-12 flex items-start gap-4">
                         <div className="flex items-center justify-center w-8 h-8 z-10 flex-shrink-0">
-                            <span className="i-woot-onboarding-greeting size-4 text-n-slate-7" />
+                            <span className="i-yona-onboarding-greeting size-4 text-n-slate-7" />
                         </div>
                         <div>
                             <h1 className="text-heading-1 text-n-slate-12">{greeting}</h1>

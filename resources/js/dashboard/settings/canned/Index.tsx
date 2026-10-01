@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { usePage } from '@inertiajs/react';
+import { ICONS } from 'dashboard/icons';
 
 import { t } from '../../../i18n';
 import { useAlert } from 'dashboard/composables/useAlert';
@@ -121,8 +122,8 @@ export default function CannedIndex() {
                                         className="size-5 text-n-slate-11 flex-shrink-0"
                                         icon={
                                             sortOrder === 'desc'
-                                                ? 'i-woot-sort-descending'
-                                                : 'i-woot-sort-ascending'
+                                                ? ICONS.sortDescending
+                                                : ICONS.sortAscending
                                         }
                                     />
                                 </button>,
@@ -162,14 +163,14 @@ export default function CannedIndex() {
                                         <div className="flex gap-3 justify-end flex-shrink-0">
                                             <Button
                                                 title={t('CANNED_MGMT.EDIT.BUTTON_TEXT')}
-                                                icon="i-woot-edit-pen"
+                                                icon={ICONS.edit}
                                                 slate
                                                 sm
                                                 onClick={() => setEditingRecord(record)}
                                             />
                                             <Button
                                                 title={t('CANNED_MGMT.DELETE.BUTTON_TEXT')}
-                                                icon="i-woot-bin"
+                                                icon={ICONS.delete}
                                                 slate
                                                 sm
                                                 className="hover:enabled:text-n-ruby-11 hover:enabled:bg-n-ruby-2"

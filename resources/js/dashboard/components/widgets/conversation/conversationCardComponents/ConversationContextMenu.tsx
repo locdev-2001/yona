@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import ContextMenu from 'dashboard/components/ui/ContextMenu';
 import MenuItem from 'dashboard/components/widgets/conversation/contextMenu/MenuItem';
 import { t } from '../../../../../i18n';
+import { ICONS } from 'dashboard/icons';
 
 // Port từ widgets/conversation/contextMenu/Index.vue. Phạm vi B8: chỉ mục
 // Mark as read / Mark as unread. NỢ (B10): status/snooze, priority, label, agent,
@@ -31,13 +32,13 @@ export default function ConversationContextMenu({
                 {hasUnreadMessages ? (
                     <MenuItem
                         label={t('CONVERSATION.CARD_CONTEXT_MENU.MARK_AS_READ')}
-                        icon="mail"
+                        icon={ICONS.markRead}
                         onClick={onMarkAsRead}
                     />
                 ) : (
                     <MenuItem
                         label={t('CONVERSATION.CARD_CONTEXT_MENU.MARK_AS_UNREAD')}
-                        icon="mail-unread"
+                        icon={ICONS.markUnread}
                         onClick={onMarkAsUnread}
                     />
                 )}

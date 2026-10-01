@@ -1,4 +1,5 @@
 import { createElement } from 'react';
+import { ICONS } from 'dashboard/icons';
 
 import { getAttributeIcon } from 'dashboard/components-next/filter/helper/filterAttributeIcons';
 import type { FilterInputType, FilterOption, FilterType } from 'dashboard/components-next/filter/helper/filterHelper';
@@ -107,7 +108,7 @@ const fallbackOperator = (value: string, label: string) => ({
     label: t(`FILTER.OPERATOR_LABELS.${value}`) === `FILTER.OPERATOR_LABELS.${value}` ? label : t(`FILTER.OPERATOR_LABELS.${value}`),
     hasInput: true,
     inputOverride: null,
-    icon: createElement('span', { className: 'i-ph-equals-bold !text-n-blue-11' }),
+    icon: createElement('span', { className: `${ICONS.opEqual} !text-n-blue-11` }),
 });
 
 // filterTypes cho ConditionRow dùng chung: attribute đã dịch, icon, operator

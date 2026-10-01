@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { router, usePage } from '@inertiajs/react';
+import { ICONS } from 'dashboard/icons';
 
 import Button from 'dashboard/components-next/button/Button';
 import type { DropdownListItem } from 'dashboard/components/ui/Dropdown/DropdownList';
@@ -138,7 +139,7 @@ export default function WootReports({
                 <ReportHeader headerTitle={reportTitle} hasBackButton={hasBackButton}>
                     <Button
                         label={downloadButtonLabel}
-                        icon="i-ph-download-simple"
+                        icon={ICONS.download}
                         size="sm"
                         onClick={downloadReports}
                     />

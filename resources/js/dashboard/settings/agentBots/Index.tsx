@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
 import { usePage } from '@inertiajs/react';
 import { picoSearch } from '@ext/pico-search';
+import { ICONS } from 'dashboard/icons';
 
 import { t } from '../../../i18n';
 import { useAlert } from 'dashboard/composables/useAlert';
@@ -152,7 +153,7 @@ export default function AgentBotsIndex() {
                                                 <>
                                                     <Button
                                                         title={t('AGENT_BOTS.EDIT.BUTTON_TEXT')}
-                                                        icon="i-woot-edit-pen"
+                                                        icon={ICONS.edit}
                                                         slate
                                                         sm
                                                         isLoading={deletingIds.includes(bot.id)}
@@ -160,7 +161,7 @@ export default function AgentBotsIndex() {
                                                     />
                                                     <Button
                                                         title={t('AGENT_BOTS.DELETE.BUTTON_TEXT')}
-                                                        icon="i-woot-bin"
+                                                        icon={ICONS.delete}
                                                         slate
                                                         sm
                                                         className="hover:enabled:text-n-ruby-11 hover:enabled:bg-n-ruby-2"

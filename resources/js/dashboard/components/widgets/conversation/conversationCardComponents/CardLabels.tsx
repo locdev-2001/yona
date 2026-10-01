@@ -2,11 +2,11 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePage } from '@inertiajs/react';
 
 import Label from 'dashboard/components/ui/Label';
-import FluentIcon from 'shared/components/FluentIcon/FluentIcon';
 import { useLabelsList } from 'dashboard/composables/useLabelsList';
 import { activeLabels as resolveActiveLabels } from 'dashboard/conversation/labelHelpers';
 import { t } from '../../../../../i18n';
 import type { DashboardPageProps } from '../../../../types';
+import { ICONS } from 'dashboard/icons';
 
 // Port từ widgets/conversation/conversationCardComponents/CardLabels.vue.
 // Directive `v-resize` thay bằng ResizeObserver; slot `before` (SLACardLabel) là
@@ -99,7 +99,7 @@ export default function CardLabels({ conversationLabels, className = '' }: CardL
                                 setShowAllLabels(current => !current);
                             }}
                         >
-                            <FluentIcon icon={showAllLabels ? 'chevron-left' : 'chevron-right'} size={12} />
+                            <span className={`${showAllLabels ? ICONS.chevronLeft : ICONS.chevronRight} size-3`} aria-hidden="true" />
                         </button>
                     ) : null}
                 </div>

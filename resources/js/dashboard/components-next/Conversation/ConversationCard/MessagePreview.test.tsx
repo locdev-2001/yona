@@ -35,13 +35,13 @@ describe('ô xem trước tin sticker', () => {
 
         expect(container.textContent).toContain(label);
         expect(container.textContent).not.toContain(t('CHAT_LIST.ATTACHMENTS.image.CONTENT'));
-        expect(container.querySelector('.i-ph-sticker')).not.toBeNull();
+        expect(container.querySelector('.i-lucide-sticker')).not.toBeNull();
     });
 
     it('khối "Đang trả lời" cũng ghi "Sticker"', () => {
         const container = render(<LegacyMessagePreview message={sticker()} />).container;
 
         expect(container.textContent).toContain(label);
-        expect(container.querySelector('.i-ph-sticker')).not.toBeNull();
+        expect(container.querySelector('.i-lucide-sticker')).not.toBeNull();
     });
 });

@@ -1,19 +1,18 @@
 // Port từ dashboard/components-next/emoji-icon-picker/constants.js
-export const ICON_PREFIX = 'i-ri-';
+import { CURATED_ICONS } from './icons';
 
-export const ICON_STYLE = {
-    LINE: 'line',
-    FILL: 'fill',
-} as const;
+const ICON_BY_NAME = new Map(CURATED_ICONS.map(icon => [icon.name, icon.icon]));
 
-export type IconStyle = (typeof ICON_STYLE)[keyof typeof ICON_STYLE];
-
-// Giá trị icon là tên ascii (vd "rocket-line"); emoji là ký tự ngoài ascii.
+// Giá trị icon là tên ascii (vd "rocket"); emoji là ký tự ngoài ascii.
 export const isIconValue = (value: string): boolean =>
     typeof value === 'string' && /^[a-z][a-z0-9-]*$/.test(value);
 
-export const iconClassFor = (value: string): string =>
-    value.startsWith(ICON_PREFIX) ? value : `${ICON_PREFIX}${value}`;
+// Giá trị lưu trước khi chuyển sang Lucide mang hậu tố kiểu nét ("rocket-line",
+// "rocket-fill") và có khi cả tiền tố lớp của bộ Remix cũ.
+export const iconNameFor = (value: string): string =>
+    ICON_BY_NAME.has(value) ? value : value.replace(/^i-ri-/, '').replace(/-(line|fill)$/, '');
+
+export const iconClassFor = (value: string): string => ICON_BY_NAME.get(iconNameFor(value)) ?? '';
 
 export const ICON_COLORS = [
     { name: 'SLATE', value: '#64748B' },

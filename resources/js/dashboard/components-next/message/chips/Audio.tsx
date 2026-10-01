@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { downloadFile } from '@ext/utils';
+import { ICONS } from 'dashboard/icons';
 
 import Icon from 'dashboard/components-next/icon/Icon';
 import { emitter } from 'shared/helpers/emitter';
@@ -142,7 +143,7 @@ export default function AudioChip({ attachment, className = '' }: { attachment: 
                     <button className="p-0 border-0 size-8" onClick={playOrPause}>
                         <Icon
                             className="size-8"
-                            icon={isPlaying ? 'i-teenyicons-pause-small-solid' : 'i-teenyicons-play-small-solid'}
+                            icon={isPlaying ? ICONS.audioPause : ICONS.audioPlay}
                         />
                     </button>
                     <div className="tabular-nums text-xs">

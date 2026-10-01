@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { usePage } from '@inertiajs/react';
 import { picoSearch } from '@ext/pico-search';
+import { ICONS } from 'dashboard/icons';
 
 import { t } from '../../../i18n';
 import { useAlert } from 'dashboard/composables/useAlert';
@@ -231,7 +232,7 @@ export default function WidgetUpdatesIndex() {
                                             />
                                             <Button
                                                 title={t('WIDGET_UPDATES_MGMT.FORM.EDIT')}
-                                                icon="i-woot-edit-pen"
+                                                icon={ICONS.edit}
                                                 slate
                                                 sm
                                                 isLoading={pendingIds.includes(update.id)}
@@ -239,7 +240,7 @@ export default function WidgetUpdatesIndex() {
                                             />
                                             <Button
                                                 title={t('WIDGET_UPDATES_MGMT.FORM.DELETE')}
-                                                icon="i-woot-bin"
+                                                icon={ICONS.delete}
                                                 slate
                                                 sm
                                                 className="hover:enabled:text-n-ruby-11 hover:enabled:bg-n-ruby-2"

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { usePage } from '@inertiajs/react';
 import { picoSearch } from '@ext/pico-search';
+import { ICONS } from 'dashboard/icons';
 
 import { t } from '../../../i18n';
 import { useAlert } from 'dashboard/composables/useAlert';
@@ -182,7 +183,7 @@ export default function AgentsIndex() {
                                             {showEditAction(agent) ? (
                                                 <Button
                                                     title={t('AGENT_MGMT.EDIT.BUTTON_TEXT')}
-                                                    icon="i-woot-edit-pen"
+                                                    icon={ICONS.edit}
                                                     slate
                                                     sm
                                                     onClick={() => setEditingAgent(agent)}
@@ -191,7 +192,7 @@ export default function AgentsIndex() {
                                             {showDeleteAction(agent) ? (
                                                 <Button
                                                     title={t('AGENT_MGMT.DELETE.BUTTON_TEXT')}
-                                                    icon="i-woot-bin"
+                                                    icon={ICONS.delete}
                                                     slate
                                                     sm
                                                     className="hover:enabled:text-n-ruby-11 hover:enabled:bg-n-ruby-2"

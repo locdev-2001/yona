@@ -1,4 +1,4 @@
-import FluentIcon from 'shared/components/FluentIcon/FluentIcon';
+import { ICONS } from 'dashboard/icons';
 
 // Port từ reports/components/ReportMetricCard.vue
 interface ReportMetricCardProps {
@@ -18,7 +18,7 @@ export default function ReportMetricCard({ label, value, infoText, disabled = fa
             <h3 className="flex items-center m-0 text-sm font-medium text-n-slate-11">
                 <span data-test-id="reportMetricLabel">{label}</span>
                 <span title={infoText} data-test-id="reportMetricInfo" className="text-n-slate-11 my-0 mx-1 mt-0.5">
-                    <FluentIcon icon="info" size="14" />
+                    <span className={`${ICONS.info} size-3.5`} aria-hidden="true" />
                 </span>
             </h3>
             <h4 data-test-id="reportMetricValue" className="mt-1 mb-0 text-2xl text-n-slate-12">

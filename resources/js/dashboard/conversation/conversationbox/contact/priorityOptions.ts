@@ -11,11 +11,11 @@ export interface PriorityOption extends MultiselectOption {
 // Port từ ConversationAction.vue `priorityOptions` — thứ tự None/Urgent/High/Medium/Low.
 export function buildPriorityOptions(): PriorityOption[] {
     return [
-        { id: null, name: t('CONVERSATION.PRIORITY.OPTIONS.NONE'), icon: 'i-woot-priority-empty' },
-        { id: 'urgent', name: t('CONVERSATION.PRIORITY.OPTIONS.URGENT'), icon: 'i-woot-priority-urgent' },
-        { id: 'high', name: t('CONVERSATION.PRIORITY.OPTIONS.HIGH'), icon: 'i-woot-priority-high' },
-        { id: 'medium', name: t('CONVERSATION.PRIORITY.OPTIONS.MEDIUM'), icon: 'i-woot-priority-medium' },
-        { id: 'low', name: t('CONVERSATION.PRIORITY.OPTIONS.LOW'), icon: 'i-woot-priority-low' },
+        { id: null, name: t('CONVERSATION.PRIORITY.OPTIONS.NONE'), icon: 'i-yona-priority-empty' },
+        { id: 'urgent', name: t('CONVERSATION.PRIORITY.OPTIONS.URGENT'), icon: 'i-yona-priority-urgent' },
+        { id: 'high', name: t('CONVERSATION.PRIORITY.OPTIONS.HIGH'), icon: 'i-yona-priority-high' },
+        { id: 'medium', name: t('CONVERSATION.PRIORITY.OPTIONS.MEDIUM'), icon: 'i-yona-priority-medium' },
+        { id: 'low', name: t('CONVERSATION.PRIORITY.OPTIONS.LOW'), icon: 'i-yona-priority-low' },
     ];
 }
 

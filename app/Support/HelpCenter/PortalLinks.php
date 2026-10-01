@@ -162,8 +162,10 @@ final class PortalLinks
         return blank($name) ? $colors[0] : $colors[mb_strlen((string) $name) % count($colors)];
     }
 
-    // render_emoji_or_icon: tên icon `ri` thuần ascii thành <span class="i-ri-...">,
-    // còn lại coi là emoji và chỉ escape.
+    // render_emoji_or_icon: tên icon thuần ascii thành SVG nhúng (bảng ở
+    // resources/icons/help-center-icons.json, sinh từ bảng chọn icon của dashboard),
+    // còn lại coi là emoji và chỉ escape. Giá trị lưu kiểu cũ "rocket-line",
+    // "i-ri-rocket-fill" vẫn ra đúng icon.
     public static function emojiOrIcon(?string $value, ?string $color = null): string
     {
         if (blank($value)) {
@@ -176,11 +178,26 @@ final class PortalLinks
             return e($value);
         }
 
-        $class = str_starts_with($value, 'i-') ? $value : 'i-ri-'.$value;
+        $icons = self::helpCenterIcons();
+        $name = isset($icons[$value]) ? $value : (string) preg_replace(['/\Ai-ri-/', '/-(line|fill)\z/'], '', $value);
+        $body = $icons[$name] ?? null;
+
+        if ($body === null) {
+            return '';
+        }
+
         $style = preg_match('/\A#[0-9a-fA-F]{3,8}\z/', (string) $color) === 1
             ? ' style="color: '.e($color).';"'
             : '';
 
-        return '<span class="'.e($class).'"'.$style.' aria-hidden="true"></span>';
+        return '<svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"'.$style.' aria-hidden="true">'.$body.'</svg>';
+    }
+
+    /** @return array<string, string> */
+    private static function helpCenterIcons(): array
+    {
+        static $icons = null;
+
+        return $icons ??= json_decode((string) file_get_contents(dirname(__DIR__, 3).'/resources/icons/help-center-icons.json'), true) ?: [];
     }
 }

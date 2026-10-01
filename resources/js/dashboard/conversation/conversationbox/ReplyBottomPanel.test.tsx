@@ -67,8 +67,8 @@ describe('ReplyBottomPanel — nút sticker', () => {
 
         const emojiButton = screen.getByTitle(t('CONVERSATION.REPLYBOX.TIP_EMOJI_ICON'));
 
-        expect(emojiButton.querySelector('.i-ph-smiley')).not.toBeNull();
-        expect(stickerButton()?.querySelector('.i-ph-sticker')).not.toBeNull();
+        expect(emojiButton.querySelector('.i-lucide-smile')).not.toBeNull();
+        expect(stickerButton()?.querySelector('.i-lucide-sticker')).not.toBeNull();
     });
 
     it('bấm nút mở bảng chọn; chọn sticker thì đóng bảng và trả đúng sticker', async () => {

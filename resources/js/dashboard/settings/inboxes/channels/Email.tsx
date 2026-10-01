@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { usePage } from '@inertiajs/react';
+import { ICONS } from 'dashboard/icons';
 
 import { t } from '../../../../i18n';
 import { useAlert } from 'dashboard/composables/useAlert';
@@ -128,21 +129,21 @@ export default function EmailChannelForm() {
                 key: EMAIL_PROVIDERS.MICROSOFT,
                 title: t('INBOX_MGMT.EMAIL_PROVIDERS.MICROSOFT.TITLE'),
                 description: t('INBOX_MGMT.EMAIL_PROVIDERS.MICROSOFT.DESCRIPTION'),
-                icon: 'i-woot-outlook',
+                icon: 'i-yona-outlook',
                 isEnabled: false,
             },
             {
                 key: EMAIL_PROVIDERS.GOOGLE,
                 title: t('INBOX_MGMT.EMAIL_PROVIDERS.GOOGLE.TITLE'),
                 description: t('INBOX_MGMT.EMAIL_PROVIDERS.GOOGLE.DESCRIPTION'),
-                icon: 'i-woot-gmail',
+                icon: 'i-yona-gmail',
                 isEnabled: false,
             },
             {
                 key: EMAIL_PROVIDERS.OTHER,
                 title: t('INBOX_MGMT.EMAIL_PROVIDERS.OTHER_PROVIDERS.TITLE'),
                 description: t('INBOX_MGMT.EMAIL_PROVIDERS.OTHER_PROVIDERS.DESCRIPTION'),
-                icon: 'i-woot-mail',
+                icon: ICONS.channelEmail,
                 isEnabled: true,
             },
         ] as ProviderCard[]

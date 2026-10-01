@@ -1,4 +1,5 @@
 import { usePage } from '@inertiajs/react';
+import { BRAND_ICONS, ICONS } from 'dashboard/icons';
 
 import { t } from '../../../i18n';
 import { accountScopedUrl } from 'dashboard/helper/URLHelper';
@@ -29,18 +30,18 @@ const CHANNEL_KEYS = [
 ] as const;
 
 const CHANNEL_ICONS: Record<string, string> = {
-    website: 'i-woot-website',
-    facebook: 'i-woot-messenger',
-    whatsapp: 'i-woot-whatsapp',
-    sms: 'i-woot-sms',
-    email: 'i-woot-mail',
-    api: 'i-woot-api',
-    telegram: 'i-woot-telegram',
-    line: 'i-woot-line',
-    instagram: 'i-woot-instagram',
-    voice: 'i-woot-voice',
-    whatsapp_call: 'i-woot-whatsapp',
-    zalo: 'i-ri-chat-3-line',
+    website: ICONS.channelWebsite,
+    facebook: 'i-yona-messenger',
+    whatsapp: 'i-yona-whatsapp',
+    sms: ICONS.channelSms,
+    email: ICONS.channelEmail,
+    api: ICONS.channelApi,
+    telegram: 'i-yona-telegram',
+    line: 'i-yona-line',
+    instagram: 'i-yona-instagram',
+    voice: ICONS.channelVoice,
+    whatsapp_call: 'i-yona-whatsapp',
+    zalo: BRAND_ICONS.zalo,
 };
 
 export default function NewChannelList() {

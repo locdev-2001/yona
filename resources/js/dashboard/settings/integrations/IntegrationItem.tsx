@@ -1,4 +1,5 @@
 import { Link } from '@inertiajs/react';
+import { ICONS } from 'dashboard/icons';
 
 import { t } from '../../../i18n';
 import { frontendURL } from 'dashboard/helper/URLHelper';
@@ -39,7 +40,7 @@ export default function IntegrationItem({
                 <div className="font-medium mb-2 text-n-slate-12 flex justify-between items-center">
                     <span className="text-heading-3 text-n-slate-12">{name}</span>
                     <Link href={frontendURL(`accounts/${accountId}/settings/integrations/${id}`)}>
-                        <Button label={t('INTEGRATION_APPS.CONFIGURE')} icon="i-woot-settings" link xs />
+                        <Button label={t('INTEGRATION_APPS.CONFIGURE')} icon={ICONS.settings} link xs />
                     </Link>
                 </div>
                 <p className="text-n-slate-11 text-body-main">{replaceInstallationName(description)}</p>

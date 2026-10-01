@@ -1,4 +1,5 @@
 import { useRef } from 'react';
+import { ICONS } from 'dashboard/icons';
 
 import { t } from '../../../../i18n';
 import Icon from 'dashboard/components-next/icon/Icon';
@@ -62,7 +63,7 @@ export default function PreChatFields({ preChatFields, onToggle, onEdit, onReord
                             draggedIndex.current = null;
                         }}
                     >
-                        <Icon icon="i-woot-drag-indicator" className="size-4 text-n-slate-11 cursor-move" />
+                        <Icon icon={ICONS.dragHandle} className="size-4 text-n-slate-11 cursor-move" />
                         <Switch
                             value={item.enabled}
                             ariaLabel={item.label}

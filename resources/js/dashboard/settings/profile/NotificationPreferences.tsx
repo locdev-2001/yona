@@ -4,7 +4,6 @@ import { usePage } from '@inertiajs/react';
 
 import { useAlert } from 'dashboard/composables/useAlert';
 import ToggleSwitch from 'dashboard/components-next/switch/Switch';
-import FluentIcon from 'shared/components/FluentIcon/FluentIcon';
 import { fetchNotificationSettings, updateNotificationSettings } from 'dashboard/notifications/api';
 import {
     PushPermissionDeniedError,
@@ -17,6 +16,7 @@ import {
 } from 'dashboard/helper/pushHelper';
 import { t } from '../../../i18n';
 import type { DashboardPageProps } from '../../types';
+import { ICONS } from 'dashboard/icons';
 
 // Port từ routes/dashboard/settings/profile/NotificationPreferences.vue +
 // NotificationCheckBox.vue + constants.js (NOTIFICATION_TYPES).
@@ -232,7 +232,7 @@ export default function NotificationPreferences() {
             {isPushAvailable && (
                 <div className="flex items-center justify-between w-full gap-2 p-4 border border-solid border-n-weak rounded-xl">
                     <div className="flex flex-row items-center gap-2">
-                        <FluentIcon icon="alert" className="flex-shrink-0 text-n-slate-12" size={18} />
+                        <span className={`${ICONS.bell} size-[1.125rem] flex-shrink-0 text-n-slate-12`} aria-hidden="true" />
                         <span className="text-body-main text-n-slate-12">
                             {t('PROFILE_SETTINGS.FORM.NOTIFICATIONS.BROWSER_PERMISSION')}
                         </span>

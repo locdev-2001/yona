@@ -1,4 +1,5 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import { BRAND_ICONS } from 'dashboard/icons';
 
 import { t } from '../../../../i18n';
 import countries from 'shared/constants/countries';
@@ -24,13 +25,13 @@ const FORM_CONFIG: Record<string, { field: string }> = {
 };
 
 const SOCIAL_CONFIG: Record<string, string> = {
-    LINKEDIN: 'i-ri-linkedin-box-fill',
-    FACEBOOK: 'i-ri-facebook-circle-fill',
-    INSTAGRAM: 'i-ri-instagram-line',
-    TELEGRAM: 'i-ri-telegram-fill',
-    TIKTOK: 'i-ri-tiktok-fill',
-    TWITTER: 'i-ri-twitter-x-fill',
-    GITHUB: 'i-ri-github-fill',
+    LINKEDIN: BRAND_ICONS.linkedin,
+    FACEBOOK: BRAND_ICONS.facebook,
+    INSTAGRAM: BRAND_ICONS.instagram,
+    TELEGRAM: BRAND_ICONS.telegram,
+    TIKTOK: BRAND_ICONS.tiktok,
+    TWITTER: BRAND_ICONS.x,
+    GITHUB: BRAND_ICONS.github,
 };
 
 // Validator email của vuelidate (rút gọn): bỏ qua khi rỗng.

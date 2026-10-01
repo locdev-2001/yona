@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { usePage } from '@inertiajs/react';
+import { BRAND_ICONS } from 'dashboard/icons';
 
 import { t } from '../../../../i18n';
 import { useAlert } from 'dashboard/composables/useAlert';
@@ -70,7 +71,7 @@ export default function InstagramChannelForm() {
                             <Button
                                 className="text-white !rounded-full !px-6 bg-gradient-to-r from-[#833AB4] via-[#FD1D1D] to-[#FCAF45]"
                                 lg
-                                icon="i-ri-instagram-line"
+                                icon={BRAND_ICONS.instagram}
                                 disabled={isRequestingAuthorization}
                                 isLoading={isRequestingAuthorization}
                                 label={t('INBOX_MGMT.ADD.INSTAGRAM.CONTINUE_WITH_INSTAGRAM')}

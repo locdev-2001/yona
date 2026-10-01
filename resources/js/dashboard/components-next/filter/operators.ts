@@ -1,5 +1,6 @@
 import { createElement } from 'react';
 import type { ReactNode } from 'react';
+import { ICONS } from 'dashboard/icons';
 
 import { t } from '../../../i18n';
 
@@ -26,16 +27,16 @@ const OPS_INPUT_OVERRIDE: Partial<Record<FilterOp, string>> = {
 };
 
 const filterOperatorIcon: Record<FilterOp, string> = {
-    [FILTER_OPS.EQUAL_TO]: 'i-ph-equals-bold',
-    [FILTER_OPS.NOT_EQUAL_TO]: 'i-ph-not-equals-bold',
-    [FILTER_OPS.IS_PRESENT]: 'i-ph-member-of-bold',
-    [FILTER_OPS.IS_NOT_PRESENT]: 'i-ph-not-member-of-bold',
-    [FILTER_OPS.CONTAINS]: 'i-ph-superset-of-bold',
-    [FILTER_OPS.DOES_NOT_CONTAIN]: 'i-ph-not-superset-of-bold',
-    [FILTER_OPS.IS_GREATER_THAN]: 'i-ph-greater-than-bold',
-    [FILTER_OPS.IS_LESS_THAN]: 'i-ph-less-than-bold',
-    [FILTER_OPS.DAYS_BEFORE]: 'i-ph-calendar-minus-bold',
-    [FILTER_OPS.STARTS_WITH]: 'i-ph-caret-line-right-bold',
+    [FILTER_OPS.EQUAL_TO]: ICONS.opEqual,
+    [FILTER_OPS.NOT_EQUAL_TO]: ICONS.opNotEqual,
+    [FILTER_OPS.IS_PRESENT]: ICONS.opPresent,
+    [FILTER_OPS.IS_NOT_PRESENT]: ICONS.opNotPresent,
+    [FILTER_OPS.CONTAINS]: ICONS.opContains,
+    [FILTER_OPS.DOES_NOT_CONTAIN]: ICONS.opNotContains,
+    [FILTER_OPS.IS_GREATER_THAN]: ICONS.opGreaterThan,
+    [FILTER_OPS.IS_LESS_THAN]: ICONS.opLessThan,
+    [FILTER_OPS.DAYS_BEFORE]: ICONS.opDaysBefore,
+    [FILTER_OPS.STARTS_WITH]: ICONS.opStartsWith,
 };
 
 export interface FilterOperator {

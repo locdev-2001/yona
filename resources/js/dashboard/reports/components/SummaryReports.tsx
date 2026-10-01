@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, usePage } from '@inertiajs/react';
 import { formatTime } from '@ext/utils';
+import { ICONS } from 'dashboard/icons';
 
 import Button from 'dashboard/components-next/button/Button';
 import Spinner from 'dashboard/components-next/spinner/Spinner';
@@ -160,7 +161,7 @@ export default function SummaryReports({ type }: { type: EntityReportType }) {
                 <ReportHeader headerTitle={t(`${namespace}.HEADER`)} headerDescription={t(`${namespace}.DESCRIPTION`)}>
                     <Button
                         label={t(`${namespace}.DOWNLOAD_${type.toUpperCase()}_REPORTS`)}
-                        icon="i-ph-download-simple"
+                        icon={ICONS.download}
                         size="sm"
                         onClick={downloadReports}
                     />

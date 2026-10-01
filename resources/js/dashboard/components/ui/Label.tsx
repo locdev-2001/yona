@@ -1,4 +1,4 @@
-import FluentIcon from 'shared/components/FluentIcon/FluentIcon';
+import { ICONS } from 'dashboard/icons';
 
 // Port từ dashboard/components/ui/Label.vue (`woot-label`) — chip nhãn của khối
 // Conversation Labels và của thẻ danh sách hội thoại. KHÁC với
@@ -63,7 +63,7 @@ export default function Label({
                     className="label-close--button p-0 text-n-slate-11 -mb-0.5 rounded-sm cursor-pointer flex items-center justify-center hover:bg-n-slate-3"
                     onClick={() => onRemove?.(title)}
                 >
-                    <FluentIcon icon="dismiss" size={12} className="close--icon text-n-slate-11" />
+                    <span className={`${ICONS.close} size-3 close--icon text-n-slate-11`} aria-hidden="true" />
                 </button>
             ) : null}
         </div>
