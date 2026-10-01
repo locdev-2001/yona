@@ -4,6 +4,7 @@ use App\Livewire\Pulse\SearchOutboxCard;
 use App\Models\SuperAdmin;
 use App\Models\User;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Storage;
 use Laravel\Pulse\Facades\Pulse;
 use Laravel\Pulse\Livewire as PulseCards;
 use Livewire\Livewire;
@@ -135,3 +136,25 @@ it('render thẻ Pulse lần hai từ cache mà không vỡ', function (string $
     'servers' => [PulseCards\Servers::class, 'pulse-probe-server'],
     'search-outbox' => [SearchOutboxCard::class, 'Outbox tìm kiếm'],
 ]);
+
+// `avatar` của User là quan hệ tới tệp đính kèm, không phải URL ảnh mà thẻ người dùng của Pulse cần.
+it('thẻ Usage hiện nhân viên có ảnh đại diện bằng URL ảnh, cả khi đọc lại từ cache', function () {
+    Storage::fake();
+    $user = User::factory()->create(['name' => 'Nhân viên có ảnh']);
+    $user->replaceAvatarFromContents('png-bytes', 'anh.png', 'image/png');
+    $now = now()->getTimestamp();
+
+    Pulse::startRecording();
+    Pulse::record('user_request', (string) $user->id, null, $now)->count();
+    Pulse::ingest();
+    Pulse::stopRecording();
+
+    config(['cache.stores.array.serialize' => true]);
+    Cache::purge('array');
+    Livewire::withoutLazyLoading()->test(PulseCards\Usage::class)->assertOk();
+
+    Livewire::withoutLazyLoading()->test(PulseCards\Usage::class)
+        ->assertOk()
+        ->assertSee('Nhân viên có ảnh')
+        ->assertSee('src="'.$user->fresh()->avatarUrl().'"', escape: false);
+});

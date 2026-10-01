@@ -51,6 +51,7 @@ use Illuminate\Support\ServiceProvider;
 use InvalidArgumentException;
 use Laravel\Horizon\Events\LongWaitDetected;
 use Laravel\Horizon\Horizon;
+use Laravel\Pulse\Facades\Pulse;
 use Livewire\Livewire;
 
 class AppServiceProvider extends ServiceProvider
@@ -108,6 +109,7 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->registerObservabilityGates();
         Livewire::component('pulse.search-outbox', SearchOutboxCard::class);
+        $this->describePulseUsers();
         $this->registerRateLimiters();
         $this->refreshConversationTabCountsOnChange();
         $this->registerOpsAlerts();
@@ -219,5 +221,23 @@ class AppServiceProvider extends ServiceProvider
         // được chuyện gì đã xảy ra với tin nhắn khách khi có sự cố.
         Gate::define('deleteLogFile', fn (?Authenticatable $user = null) => false);
         Gate::define('deleteLogFolder', fn (?Authenticatable $user = null) => false);
+    }
+
+    /**
+     * Thẻ người dùng của Pulse đọc `$user->avatar` như URL ảnh, còn ở Yona đó là
+     * quan hệ tới tệp đính kèm: model lọt vào HTML và vào cache của thẻ, lần đọc
+     * lại từ Redis thành đối tượng hỏng và /pulse trả 500.
+     */
+    private function describePulseUsers(): void
+    {
+        if (! class_exists(Pulse::class)) {
+            return;
+        }
+
+        Pulse::user(fn (User $user): array => [
+            'name' => $user->name,
+            'extra' => $user->email,
+            'avatar' => $user->avatarUrl() ?: null,
+        ]);
     }
 }
