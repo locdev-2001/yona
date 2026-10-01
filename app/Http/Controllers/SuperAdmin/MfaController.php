@@ -5,6 +5,7 @@ namespace App\Http\Controllers\SuperAdmin;
 use App\Http\Controllers\Concerns\MfaEnrollmentActions;
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Support\SuperAdminArea;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -21,7 +22,7 @@ class MfaController extends Controller
     public function setupPage(Request $request): RedirectResponse|Response
     {
         if ($this->currentUser($request)->mfaEnabled()) {
-            return redirect('/super_admin');
+            return redirect(SuperAdminArea::url());
         }
 
         return Inertia::render('superadmin/MfaSetup');

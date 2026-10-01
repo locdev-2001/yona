@@ -31,11 +31,11 @@ describe('FieldValue', () => {
     });
 
     it('vẽ liên kết cho quan hệ belongs_to', () => {
-        render(<FieldValue field={field('belongs_to', { label: '#1 Acme Inc', url: '/super_admin/accounts/1' })} />);
+        render(<FieldValue field={field('belongs_to', { label: '#1 Acme Inc', url: '/admin/accounts/1' })} />);
 
         expect(screen.getByRole('link', { name: '#1 Acme Inc' })).toHaveAttribute(
             'href',
-            '/super_admin/accounts/1',
+            '/admin/accounts/1',
         );
     });
 

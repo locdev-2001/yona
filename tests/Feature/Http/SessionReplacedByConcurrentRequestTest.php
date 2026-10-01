@@ -141,9 +141,9 @@ it('đăng nhập console xoay id phiên, huỷ id cũ và giữ nguyên đăng 
     $agentSessionId = signedInAgentSessionId($agent);
 
     $signIn = browserWithSessionCookie($this, $agentSessionId)
-        ->post('/super_admin/sign_in', ['super_admin' => ['email' => $superAdmin->email, 'password' => 'Password1!']]);
+        ->post('/admin/sign_in', ['super_admin' => ['email' => $superAdmin->email, 'password' => 'Password1!']]);
 
-    $signIn->assertRedirect('/super_admin');
+    $signIn->assertRedirect('/admin');
     $consoleSessionId = $signIn->getCookie(config('session.cookie'))->getValue();
 
     expect($consoleSessionId)->not->toBe('')->not->toBe($agentSessionId)

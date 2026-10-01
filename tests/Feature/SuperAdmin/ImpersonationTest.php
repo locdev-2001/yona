@@ -13,7 +13,7 @@ it('từ chối khi thiếu lý do', function () {
     $target = User::factory()->create();
 
     $this->actingAs($this->superAdmin, 'super_admin')
-        ->post("/super_admin/users/{$target->id}/impersonate", [])
+        ->post("/admin/users/{$target->id}/impersonate", [])
         ->assertSessionHasErrors('reason');
 
     expect(SuperAdminImpersonation::query()->count())->toBe(0);
@@ -23,7 +23,7 @@ it('từ chối lý do quá ngắn', function () {
     $target = User::factory()->create();
 
     $this->actingAs($this->superAdmin, 'super_admin')
-        ->post("/super_admin/users/{$target->id}/impersonate", ['reason' => 'ngan qua'])
+        ->post("/admin/users/{$target->id}/impersonate", ['reason' => 'ngan qua'])
         ->assertSessionHasErrors('reason');
 });
 
@@ -31,7 +31,7 @@ it('GET không còn hoạt động (405)', function () {
     $target = User::factory()->create();
 
     $this->actingAs($this->superAdmin, 'super_admin')
-        ->get("/super_admin/users/{$target->id}/impersonate")
+        ->get("/admin/users/{$target->id}/impersonate")
         ->assertStatus(405);
 });
 
@@ -39,7 +39,7 @@ it('ghi nhật ký kèm token khi có lý do hợp lệ và trỏ tới /app/log
     $target = User::factory()->create();
 
     $response = $this->actingAs($this->superAdmin, 'super_admin')
-        ->post("/super_admin/users/{$target->id}/impersonate", ['reason' => 'điều tra sự cố khách báo lỗi']);
+        ->post("/admin/users/{$target->id}/impersonate", ['reason' => 'điều tra sự cố khách báo lỗi']);
 
     $response->assertRedirect();
     expect($response->headers->get('Location'))->toContain('/app/login')
@@ -80,7 +80,7 @@ it('đánh dấu used_at và mở đúng phiên guard web khi tiêu thụ token 
 it('liệt kê nhật ký đăng nhập hộ trong console, lọc theo super admin', function () {
     $target = User::factory()->create();
     $this->actingAs($this->superAdmin, 'super_admin')
-        ->post("/super_admin/users/{$target->id}/impersonate", ['reason' => 'điều tra sự cố khách báo lỗi']);
+        ->post("/admin/users/{$target->id}/impersonate", ['reason' => 'điều tra sự cố khách báo lỗi']);
 
     $otherAdmin = SuperAdmin::factory()->create();
     $otherTarget = User::factory()->create();
@@ -92,7 +92,7 @@ it('liệt kê nhật ký đăng nhập hộ trong console, lọc theo super adm
     ]);
 
     $response = $this->actingAs($this->superAdmin, 'super_admin')
-        ->get("/super_admin/impersonations?super_admin_id={$this->superAdmin->id}")
+        ->get("/admin/impersonations?super_admin_id={$this->superAdmin->id}")
         ->assertOk();
 
     $response->assertInertia(fn ($page) => $page

@@ -7,11 +7,11 @@ import { createMfaApi } from 'dashboard/settings/profile/mfa/mfaApi';
 import { parseApiErrorMessage } from 'dashboard/helper/apiClient';
 import type { SuperAdminPageProps } from '../types';
 
-const superAdminMfaApi = createMfaApi('/super_admin/mfa');
+const superAdminMfaApi = createMfaApi('/admin/mfa');
 
 // Super admin chưa bật 2FA bị EnsureSuperAdminMfaEnrolled đưa thẳng vào đây —
 // bắt buộc quét QR + xác nhận mã trước khi dùng phần còn lại của console.
-// Backend (MfaController::setupPage) đã tự điều hướng về /super_admin nếu 2FA
+// Backend (MfaController::setupPage) đã tự điều hướng về /admin nếu 2FA
 // đã bật, nên trang này chỉ còn nhánh "chưa bật". Component wizard dùng chung
 // với settings 2FA của agent.
 export default function SuperAdminMfaSetup() {
@@ -46,7 +46,7 @@ export default function SuperAdminMfaSetup() {
     };
 
     const completeMfaSetup = () => {
-        router.visit('/super_admin');
+        router.visit('/admin');
     };
 
     return (
@@ -68,7 +68,7 @@ export default function SuperAdminMfaSetup() {
                 installationName={superAdmin.installationName}
                 verificationError={verificationError}
                 onCancel={() => {
-                    window.location.href = '/super_admin/logout';
+                    window.location.href = '/admin/logout';
                 }}
                 onVerify={verifyCode}
                 onComplete={completeMfaSetup}

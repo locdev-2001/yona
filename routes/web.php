@@ -47,6 +47,8 @@ use App\Http\Middleware\SuperAdminInertia;
 use App\Http\Middleware\TrackUserSessionActivity;
 use App\Http\Middleware\ValidateCsrfToken;
 use App\Models\Account;
+use App\Support\SuperAdminArea;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Inertia\Inertia;
@@ -510,24 +512,29 @@ Route::prefix('/hc')->group(function () {
     Route::get('/{slug}', [PublicPortalsController::class, 'show']);
 });
 
-// F7 Super Admin (/super_admin/*) — BEGIN (agent f7 sở hữu khối này)
-// Port từ `devise_for :super_admins` + `namespace :super_admin` trong
-// Guard riêng `super_admin`, layout riêng.
-Route::prefix('super_admin')->middleware(SuperAdminInertia::class)->group(function () {
+// Console quản trị (/admin/*): guard riêng `super_admin`, layout riêng.
+// Bookmark đường dẫn cũ /super_admin/* chuyển hẳn sang prefix mới.
+Route::get(SuperAdminArea::LEGACY_PREFIX.'/{path?}', function (Request $request, ?string $path = null) {
+    $query = $request->getQueryString();
+
+    return redirect(SuperAdminArea::url($path ?? '').($query === null ? '' : '?'.$query), 301);
+})->where('path', '.*');
+
+Route::prefix(SuperAdminArea::PREFIX)->middleware(SuperAdminInertia::class)->group(function () {
     Route::middleware('guest:super_admin')->group(function () {
-        Route::get('/sign_in', [SuperAdminSessionsController::class, 'create'])->name('super_admin.login');
+        Route::get('/sign_in', [SuperAdminSessionsController::class, 'create'])->name('admin.login');
         Route::post('/sign_in', [SuperAdminSessionsController::class, 'store']);
     });
 
     Route::middleware('auth:super_admin')->group(function () {
         Route::match(['get', 'delete'], '/logout', [SuperAdminSessionsController::class, 'destroy']);
 
-        Route::get('/mfa/setup', [SuperAdminMfaController::class, 'setupPage'])->name('super_admin.mfa.setup');
+        Route::get('/mfa/setup', [SuperAdminMfaController::class, 'setupPage'])->name('admin.mfa.setup');
         Route::post('/mfa', [SuperAdminMfaController::class, 'store']);
         Route::post('/mfa/verify', [SuperAdminMfaController::class, 'verify']);
 
         Route::middleware(EnsureSuperAdminMfaEnrolled::class)->group(function () {
-            Route::get('/', [SuperAdminDashboardController::class, 'index'])->name('super_admin.root');
+            Route::get('/', [SuperAdminDashboardController::class, 'index'])->name('admin.root');
 
             Route::get('/app_config', [SuperAdminAppConfigsController::class, 'show']);
             Route::post('/app_config', [SuperAdminAppConfigsController::class, 'store']);

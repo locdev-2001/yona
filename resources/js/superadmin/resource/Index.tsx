@@ -43,7 +43,7 @@ export default function ResourceIndex({
     const sortUrl = (column: string) => {
         const nextDirection = order === column && direction === 'asc' ? 'desc' : 'asc';
 
-        return `/super_admin/${resource}?${singular}[direction]=${nextDirection}&${singular}[order]=${column}`;
+        return `/admin/${resource}?${singular}[direction]=${nextDirection}&${singular}[order]=${column}`;
     };
 
     return (
@@ -85,7 +85,7 @@ export default function ResourceIndex({
                                                 value={search.endsWith(':') ? search.slice(0, -1) : ''}
                                                 onChange={event =>
                                                     router.get(
-                                                        `/super_admin/${resource}`,
+                                                        `/admin/${resource}`,
                                                         event.target.value
                                                             ? { search: `${event.target.value}:` }
                                                             : {},
@@ -120,7 +120,7 @@ export default function ResourceIndex({
                                         placeholder={`Search ${resourceLabel}`}
                                         defaultValue={search}
                                     />
-                                    <a className="search__clear-link" href={`/super_admin/${resource}`}>
+                                    <a className="search__clear-link" href={`/admin/${resource}`}>
                                         <svg className="search__clear-icon" role="img">
                                             <title>Clear search</title>
                                             <use xlinkHref="#icon-cancel" />
@@ -132,7 +132,7 @@ export default function ResourceIndex({
 
                         {actions.includes('new') ? (
                             <div className="whitespace-nowrap ml-4">
-                                <a className="button" href={`/super_admin/${resource}/new`}>
+                                <a className="button" href={`/admin/${resource}/new`}>
                                     New {singularLabel.toLowerCase()}
                                 </a>
                             </div>
@@ -218,7 +218,7 @@ export default function ResourceIndex({
                             <a
                                 key={page}
                                 className={page === pagination.current ? 'current' : ''}
-                                href={`/super_admin/${resource}?page=${page}`}
+                                href={`/admin/${resource}?page=${page}`}
                             >
                                 {page}
                             </a>

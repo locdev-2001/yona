@@ -82,10 +82,10 @@ return Application::configure(basePath: dirname(__DIR__))
         // Dashboard vận hành của gói ngoài (/horizon, /pulse, /logs) cũng
         // chạy trên guard super_admin, nên guest phải về đúng màn đăng nhập đó.
         $middleware->redirectGuestsTo(
-            fn (Request $request) => SuperAdminArea::matches($request) ? '/super_admin/sign_in' : '/app/login',
+            fn (Request $request) => SuperAdminArea::matches($request) ? SuperAdminArea::url('sign_in') : '/app/login',
         );
         $middleware->redirectUsersTo(
-            fn (Request $request) => $request->is('super_admin', 'super_admin/*') ? '/super_admin' : '/app',
+            fn (Request $request) => SuperAdminArea::isConsole($request) ? SuperAdminArea::url() : '/app',
         );
     })
     ->withExceptions(function (Exceptions $exceptions): void {

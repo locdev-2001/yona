@@ -17,6 +17,6 @@ class EnsureSuperAdminMfaEnrolled
             return $next($request);
         }
 
-        return redirect()->route('super_admin.mfa.setup');
+        return redirect()->route('admin.mfa.setup');
     }
 }

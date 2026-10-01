@@ -4,6 +4,7 @@ namespace App\Http\Controllers\SuperAdmin;
 
 use App\Http\Controllers\Controller;
 use App\Models\InstallationConfig;
+use App\Support\SuperAdminArea;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -66,7 +67,7 @@ class AppConfigsController extends Controller
 
         $message = Str::headline($section).' settings updated successfully';
 
-        return redirect('/super_admin/settings')->with(
+        return redirect(SuperAdminArea::url('settings'))->with(
             'notice',
             $restartRequired ? "{$message}. Restart web and worker processes to apply this change everywhere." : $message,
         );

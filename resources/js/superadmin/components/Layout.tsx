@@ -48,8 +48,8 @@ function NavItem({
 export default function Layout({ children }: { children: ReactNode }) {
     const { superAdmin, flash } = usePage<SuperAdminPageProps>().props;
     const currentPath = superAdmin.currentPath;
-    const settingsOpen = currentPath.startsWith('/super_admin/settings') ||
-        currentPath.startsWith('/super_admin/app_config');
+    const settingsOpen = currentPath.startsWith('/admin/settings') ||
+        currentPath.startsWith('/admin/app_config');
 
     return (
         <div className="flex w-full h-full">
@@ -60,7 +60,7 @@ export default function Layout({ children }: { children: ReactNode }) {
             >
                 <div>
                     <div className="flex mx-4 mb-4 border-slate-100 border-b py-6">
-                        <Link href="/super_admin">
+                        <Link href="/admin">
                             <img
                                 alt={superAdmin.installationName}
                                 className="h-10"
@@ -80,9 +80,9 @@ export default function Layout({ children }: { children: ReactNode }) {
                     <ul className="my-4">
                         <NavItem
                             icon="icon-grid-line"
-                            url="/super_admin"
+                            url="/admin"
                             label="Dashboard"
-                            active={currentPath === '/super_admin'}
+                            active={currentPath === '/admin'}
                         />
                         {superAdmin.navigation.map(item => (
                             <NavItem
@@ -107,7 +107,7 @@ export default function Layout({ children }: { children: ReactNode }) {
                                 <summary className="-ml-1 flex items-center px-2 py-1.5 cursor-pointer rounded-lg text-slate-800 hover:text-woot-500 hover:bg-slate-25 list-none">
                                     <a
                                         className="flex items-center flex-1"
-                                        href="/super_admin/settings"
+                                        href="/admin/settings"
                                     >
                                         <svg width="16" height="16">
                                             <use xlinkHref="#icon-settings-2-line" />
@@ -148,14 +148,14 @@ export default function Layout({ children }: { children: ReactNode }) {
                     <ul className="my-4">
                         <NavItem
                             icon="icon-health-book-line"
-                            url="/super_admin/instance_status"
+                            url="/admin/instance_status"
                             label="Instance Health"
-                            active={currentPath === '/super_admin/instance_status'}
+                            active={currentPath === '/admin/instance_status'}
                         />
                         <NavItem icon="icon-dashboard-line" url="/" label="Agent Dashboard" />
                         <NavItem
                             icon="icon-logout-circle-r-line"
-                            url="/super_admin/logout"
+                            url="/admin/logout"
                             label="Logout"
                         />
                     </ul>

@@ -2,11 +2,12 @@
 
 namespace App\Support\SuperAdmin;
 
+use App\Support\SuperAdminArea;
 use Illuminate\Database\Eloquent\Model;
 use InvalidArgumentException;
 
 // Danh bạ dashboard của console quản trị — nguồn duy nhất quyết định khu
-// /super_admin có những tài nguyên nào và theo thứ tự nào (bản gốc lấy thứ tự
+// /admin có những tài nguyên nào và theo thứ tự nào (bản gốc lấy thứ tự
 // này từ thứ tự khai báo resources trong config/routes.rb).
 class DashboardRegistry
 {
@@ -56,7 +57,7 @@ class DashboardRegistry
         return array_map(fn (string $resourceName) => [
             'resource' => $resourceName,
             'label' => $this->get($resourceName)->displayName(),
-            'url' => "/super_admin/{$resourceName}",
+            'url' => SuperAdminArea::url($resourceName),
         ], self::NAVIGATION_RESOURCES);
     }
 }

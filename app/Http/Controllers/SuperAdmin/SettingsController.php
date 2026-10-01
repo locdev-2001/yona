@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\SuperAdmin;
 
 use App\Http\Controllers\Controller;
+use App\Support\SuperAdminArea;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -16,7 +17,7 @@ class SettingsController extends Controller
             'sections' => array_map(fn (string $section) => [
                 'key' => $section,
                 'label' => Str::headline($section),
-                'url' => "/super_admin/app_config?config={$section}",
+                'url' => SuperAdminArea::url("app_config?config={$section}"),
             ], AppConfigsController::sections()),
         ]);
     }

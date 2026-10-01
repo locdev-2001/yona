@@ -27,7 +27,7 @@ use Tests\Support\YonaStickers;
 
 // Super Admin dựng kho sticker chung từ đầu tới xuất bản mà không đụng DB.
 
-const SUPER_ADMIN_STICKER_API = '/super_admin/api/sticker_packs';
+const SUPER_ADMIN_STICKER_API = '/admin/api/sticker_packs';
 
 function stickerListingIds(Inbox $inbox): array
 {
@@ -42,17 +42,17 @@ beforeEach(function () {
 });
 
 it('mở trang kho sticker trong console quản trị', function () {
-    $this->get('/super_admin/sticker_packs')
+    $this->get('/admin/sticker_packs')
         ->assertOk()
-        ->assertInertia(fn ($page) => $page->component('superadmin/StickerPacks', false)->where('apiBaseUrl', '/super_admin/api'));
+        ->assertInertia(fn ($page) => $page->component('superadmin/StickerPacks', false)->where('apiBaseUrl', '/admin/api'));
 });
 
 it('mục menu kho sticker của console dịch sẵn ở máy chủ', function () {
-    $this->get('/super_admin/sticker_packs')
+    $this->get('/admin/sticker_packs')
         ->assertOk()
         ->assertInertia(fn ($page) => $page
             ->where('superAdmin.toolPages.0.label', __('sticker_library.MENU'))
-            ->where('superAdmin.toolPages.0.url', '/super_admin/sticker_packs'));
+            ->where('superAdmin.toolPages.0.url', '/admin/sticker_packs'));
 });
 
 it('chặn người chưa đăng nhập Super Admin', function () {

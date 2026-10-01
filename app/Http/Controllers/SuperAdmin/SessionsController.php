@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\SuperAdmin;
 use App\Services\Mfa\AuthenticationService;
 use App\Services\Mfa\TokenService;
+use App\Support\SuperAdminArea;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -44,7 +45,7 @@ class SessionsController extends Controller
         $throttleKey = $this->throttleKey($credentials['email'], $request);
 
         if (RateLimiter::tooManyAttempts($throttleKey, self::MAX_ATTEMPTS)) {
-            return redirect('/super_admin/sign_in')->with(
+            return redirect(SuperAdminArea::url('sign_in'))->with(
                 'error',
                 __('auth.throttle', ['seconds' => RateLimiter::availableIn($throttleKey)]),
             );
@@ -55,7 +56,7 @@ class SessionsController extends Controller
         if ($superAdmin === null || ! Hash::check($credentials['password'], $superAdmin->password)) {
             RateLimiter::hit($throttleKey);
 
-            return redirect('/super_admin/sign_in')->with('error', 'Invalid credentials. Please try again.');
+            return redirect(SuperAdminArea::url('sign_in'))->with('error', 'Invalid credentials. Please try again.');
         }
 
         RateLimiter::clear($throttleKey);
@@ -66,7 +67,7 @@ class SessionsController extends Controller
 
         $this->login($request, $superAdmin);
 
-        return redirect('/super_admin');
+        return redirect(SuperAdminArea::url());
     }
 
     public function destroy(Request $request): RedirectResponse
@@ -89,7 +90,7 @@ class SessionsController extends Controller
         $superAdmin = $user ? SuperAdmin::query()->find($user->getKey()) : null;
 
         if (! $superAdmin) {
-            return redirect('/super_admin/sign_in')->with('error', __('errors.mfa.invalid_token'));
+            return redirect(SuperAdminArea::url('sign_in'))->with('error', __('errors.mfa.invalid_token'));
         }
 
         // Khoá theo tài khoản, không theo IP: kẻ tấn công đã có mật khẩu chỉ cần
@@ -116,7 +117,7 @@ class SessionsController extends Controller
 
         $this->login($request, $superAdmin);
 
-        return redirect('/super_admin');
+        return redirect(SuperAdminArea::url());
     }
 
     private function login(Request $request, SuperAdmin $superAdmin): void

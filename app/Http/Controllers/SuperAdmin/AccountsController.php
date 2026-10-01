@@ -8,6 +8,7 @@ use App\Models\AccountUser;
 use App\Models\User;
 use App\Support\SuperAdmin\Dashboard;
 use App\Support\SuperAdmin\Dashboards\AccountDashboard;
+use App\Support\SuperAdminArea;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -49,7 +50,7 @@ class AccountsController extends ResourceController
     {
         DeleteObjectJob::dispatch($this->findRecord($id));
 
-        return redirect('/super_admin/accounts')->with('notice', 'Account deletion is in progress.');
+        return redirect(SuperAdminArea::url('accounts'))->with('notice', 'Account deletion is in progress.');
     }
 
     public function resetCache(int $id): RedirectResponse

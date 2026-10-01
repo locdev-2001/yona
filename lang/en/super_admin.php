@@ -1,6 +1,6 @@
 <?php
 
-// Nguồn duy nhất cho các chuỗi phía máy chủ của khu /super_admin.
+// Nguồn duy nhất cho các chuỗi phía máy chủ của khu /admin.
 return [
     'account_suspension' => [
         'categories' => [

@@ -17,7 +17,7 @@ import ResourceShow from './Show';
 const baseProps = {
     resource: 'users',
     singularLabel: 'User',
-    record: { id: 5, title: 'User #5', url: '/super_admin/users/5' },
+    record: { id: 5, title: 'User #5', url: '/admin/users/5' },
     fields: [],
     actions: ['index', 'show'],
 };
@@ -32,7 +32,7 @@ describe('ResourceShow — mục đăng nhập hộ', () => {
     });
 
     it('mở form lý do khi bấm nút, khoá nút gửi tới khi đủ độ dài', () => {
-        render(<ResourceShow {...baseProps} impersonateUrl="/super_admin/users/5/impersonate" />);
+        render(<ResourceShow {...baseProps} impersonateUrl="/admin/users/5/impersonate" />);
 
         fireEvent.click(screen.getByRole('button', { name: 'Impersonate user' }));
 
@@ -49,7 +49,7 @@ describe('ResourceShow — mục đăng nhập hộ', () => {
         render(
             <ResourceShow
                 {...baseProps}
-                impersonateUrl="/super_admin/users/5/impersonate"
+                impersonateUrl="/admin/users/5/impersonate"
                 csrf="real-csrf-token"
             />,
         );
@@ -57,7 +57,7 @@ describe('ResourceShow — mục đăng nhập hộ', () => {
 
         const form = document.querySelector('form') as HTMLFormElement;
         expect(form.method.toLowerCase()).toBe('post');
-        expect(form.getAttribute('action')).toBe('/super_admin/users/5/impersonate');
+        expect(form.getAttribute('action')).toBe('/admin/users/5/impersonate');
         expect(form.target).toBe('_blank');
         expect((form.querySelector('input[name="_token"]') as HTMLInputElement).value).toBe('real-csrf-token');
     });

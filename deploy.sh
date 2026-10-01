@@ -1226,7 +1226,7 @@ report_post_deploy_steps() {
 
     log 'Database vừa dựng lại từ đầu — tài khoản cũ không còn. Bước tiếp theo:'
     log "  $PHP_BIN artisan super-admin:create <email> --name=\"Tên\" --password=<mật khẩu>"
-    log '  Đăng nhập /superadmin, tạo workspace đầu tiên, rồi kết nối lại Zalo bằng QR.'
+    log '  Đăng nhập /admin, tạo workspace đầu tiên, rồi kết nối lại Zalo bằng QR.'
 }
 
 on_exit() {

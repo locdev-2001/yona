@@ -4,6 +4,7 @@ namespace App\Http\Controllers\SuperAdmin;
 
 use App\Http\Controllers\Controller;
 use App\Models\AccountUser;
+use App\Support\SuperAdminArea;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
@@ -15,7 +16,7 @@ class AccountUsersController extends Controller
     {
         $accountUser = AccountUser::query()->findOrFail($id);
 
-        return redirect("/super_admin/users/{$accountUser->user_id}");
+        return redirect(SuperAdminArea::url("users/{$accountUser->user_id}"));
     }
 
     public function store(Request $request): RedirectResponse

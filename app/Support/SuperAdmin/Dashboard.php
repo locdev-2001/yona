@@ -38,7 +38,7 @@ abstract class Dashboard
         return [];
     }
 
-    /** Tên số nhiều dùng cho URL: /super_admin/<resourceName>. */
+    /** Tên số nhiều dùng cho URL: /admin/<resourceName>. */
     public function resourceName(): string
     {
         return Str::snake(Str::pluralStudly(class_basename($this->modelClass())));

@@ -1,7 +1,7 @@
 import { deleteJson, getJson, postJson } from 'dashboard/helper/apiClient';
 
 // Port từ dashboard/api/mfa.js. createMfaApi nhận baseUrl để dùng chung cho cả
-// MFA của agent (/api/v1/profile/mfa) và của super admin (/super_admin/mfa) —
+// MFA của agent (/api/v1/profile/mfa) và của super admin (/admin/mfa) —
 // cùng ManagementService/AuthenticationService phía backend
 // (App\Http\Controllers\Concerns\MfaEnrollmentActions), khác đường dẫn.
 export interface MfaStatus {

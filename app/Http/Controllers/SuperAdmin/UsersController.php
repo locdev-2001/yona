@@ -8,6 +8,7 @@ use App\Models\SuperAdminImpersonation;
 use App\Models\User;
 use App\Support\SuperAdmin\Dashboard;
 use App\Support\SuperAdmin\Dashboards\UserDashboard;
+use App\Support\SuperAdminArea;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -31,7 +32,7 @@ class UsersController extends ResourceController
             ],
             'mfaEnabled' => $record->mfaEnabled(),
             'confirmed' => $record->isConfirmed(),
-            'impersonateUrl' => "/super_admin/users/{$record->getKey()}/impersonate",
+            'impersonateUrl' => SuperAdminArea::url("users/{$record->getKey()}/impersonate"),
             'csrf' => csrf_token(),
         ];
     }

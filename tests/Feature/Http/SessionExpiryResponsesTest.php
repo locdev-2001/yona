@@ -29,9 +29,9 @@ describe('expired CSRF token (419)', function () {
     });
 
     it('sends a plain HTML form back the same way', function () {
-        $this->from('/super_admin/sign_in')
+        $this->from('/admin/sign_in')
             ->post('/__test/token-mismatch')
-            ->assertRedirect('/super_admin/sign_in')
+            ->assertRedirect('/admin/sign_in')
             ->assertSessionHasErrors(SessionExpiryResponses::PAGE_EXPIRED_ERROR);
     });
 
@@ -54,9 +54,9 @@ describe('Inertia visit after the session is gone', function () {
     });
 
     it('sends the super admin console to its own sign-in page', function () {
-        $this->get('/super_admin', inertiaHeaders())
+        $this->get('/admin', inertiaHeaders())
             ->assertStatus(409)
-            ->assertHeader('X-Inertia-Location', url('/super_admin/sign_in'));
+            ->assertHeader('X-Inertia-Location', url('/admin/sign_in'));
     });
 
     it('still answers JSON clients with 401', function () {

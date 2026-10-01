@@ -162,7 +162,7 @@ ra kênh ngoài là sticker gốc của nền tảng hoặc một ảnh, không 
   `App\Support\SystemAccess`. Trang Cài đặt → Kho sticker mở cho mọi quản trị
   viên; phần chưa đủ quyền hiện khoá, API trả 403 (`EnsureStickerLibraryAccess`).
   Kho nền tảng trong dashboard ở `/api/v1/platform_sticker_library/sticker_packs…`;
-  console Super Admin giữ nguyên `/super_admin/api/sticker_packs…`. Hai mặt tiền
+  console Super Admin giữ nguyên `/admin/api/sticker_packs…`. Hai mặt tiền
   này dùng chung action `ServesStickerLibrary` (chỉ khác `libraryOwner()`), kho
   riêng dùng `CustomStickerPacksController`. Không có MCP hay REST bằng token cho
   kho sticker (đã gỡ 28/09/2026).
