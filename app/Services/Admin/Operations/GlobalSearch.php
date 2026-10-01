@@ -64,7 +64,7 @@ final class GlobalSearch
             ->limit($limit)
             ->get(['id', 'name', 'account_id', 'channel_type'])
             ->map(fn (Inbox $inbox) => $this->result('inbox', $inbox->id, (string) $inbox->name,
-                trim(($inbox->account?->name ?? '').' · '.str_replace('Channel::', '', (string) $inbox->channel_type), ' ·'),
+                implode(' · ', array_filter([$inbox->account?->name, str_replace('Channel::', '', (string) $inbox->channel_type)])),
                 SuperAdminArea::url("accounts/{$inbox->account_id}/overview")))
             ->all();
     }
