@@ -8,6 +8,18 @@
 @source '../../js/superadmin';
 @source '../../views/superadmin.blade.php';
 @source '../../views/superadmin_auth.blade.php';
+@source '../../js/i18n';
+@source '../../js/shared/helpers';
+@source '../../js/shared/reorder';
+@source '../../js/shared/requestSigning';
+@source '../../js/shared/sticker';
+/* Khối mượn của dashboard mà các trang console chưa chuyển vẫn dùng. */
+@source '../../js/dashboard/components-next/inline-input';
+@source '../../js/dashboard/components-next/spinner';
+@source '../../js/dashboard/helper/{apiClient,sessionRecovery}.ts';
+@source '../../js/dashboard/reports/helpers';
+@source '../../js/dashboard/settings/customStickers';
+@source '../../js/dashboard/settings/profile/mfa';
 
 @custom-variant dark (&:is(.dark *));
 

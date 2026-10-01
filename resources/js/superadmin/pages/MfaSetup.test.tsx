@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 
 const routerVisit = vi.fn();
 let pageProps: Record<string, unknown> = {};
@@ -19,6 +19,7 @@ vi.mock('dashboard/settings/profile/mfa/mfaApi', () => ({
     }),
 }));
 
+import { installDomStubs } from '../components/__fixtures__/dom';
 import SuperAdminMfaSetup from './MfaSetup';
 
 const superAdmin = {
@@ -37,6 +38,7 @@ const superAdmin = {
 // tới đây khi chưa bật 2FA, nên trang tự gọi enable() lấy QR ngay khi mở.
 describe('SuperAdminMfaSetup', () => {
     beforeEach(() => {
+        installDomStubs();
         routerVisit.mockReset();
         enable.mockReset();
         verify.mockReset();
@@ -58,5 +60,42 @@ describe('SuperAdminMfaSetup', () => {
         render(<SuperAdminMfaSetup />);
 
         expect(await screen.findByText('MFA not enabled. Please contact administrator.')).toBeInTheDocument();
+    });
+
+    it('nhập đủ 6 số thì xác minh, rồi bắt xác nhận đã lưu mã dự phòng trước khi vào console', async () => {
+        enable.mockResolvedValue({ provisioning_url: 'otpauth://totp/x', secret: 'ABCDEF' });
+        verify.mockResolvedValue({ enabled: true, backup_codes: ['aaaa1111', 'bbbb2222'] });
+
+        render(<SuperAdminMfaSetup />);
+        await screen.findByDisplayValue('ABCDEF');
+
+        await act(async () => {
+            fireEvent.change(document.querySelector('input[data-input-otp]')!, { target: { value: '123456' } });
+        });
+
+        expect(verify).toHaveBeenCalledWith('123456');
+        expect(await screen.findByText('aaaa1111')).toBeInTheDocument();
+
+        const complete = screen.getByRole('button', { name: 'Complete Setup' });
+        expect(complete).toBeDisabled();
+        fireEvent.click(screen.getByRole('checkbox'));
+        fireEvent.click(complete);
+
+        expect(routerVisit).toHaveBeenCalledWith('/admin');
+    });
+
+    it('mã sai thì báo lỗi và ở lại bước quét QR', async () => {
+        enable.mockResolvedValue({ provisioning_url: 'otpauth://totp/x', secret: 'ABCDEF' });
+        verify.mockRejectedValue(new Error('invalid'));
+
+        render(<SuperAdminMfaSetup />);
+        await screen.findByDisplayValue('ABCDEF');
+
+        await act(async () => {
+            fireEvent.change(document.querySelector('input[data-input-otp]')!, { target: { value: '000000' } });
+        });
+
+        expect(await screen.findByText('Invalid verification code')).toBeInTheDocument();
+        expect(screen.queryByText('Complete Setup')).not.toBeInTheDocument();
     });
 });

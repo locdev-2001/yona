@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 
+import { installDomStubs } from './__fixtures__/dom';
 import { superAdminProps } from './__fixtures__/superAdmin';
 
 const visit = vi.fn();
@@ -8,7 +9,7 @@ let pageProps: Record<string, unknown> = {};
 
 vi.mock('@inertiajs/react', () => ({
     router: { visit: (...args: unknown[]) => visit(...args) },
-    usePage: () => ({ props: pageProps }),
+    usePage: () => ({ props: pageProps, url: '/admin' }),
 }));
 
 import CommandPalette, { SEARCH_DEBOUNCE_MS } from './CommandPalette';
@@ -29,6 +30,7 @@ describe('CommandPalette', () => {
     const onOpenChange = vi.fn();
 
     beforeEach(() => {
+        installDomStubs();
         vi.useFakeTimers();
         visit.mockReset();
         onOpenChange.mockReset();

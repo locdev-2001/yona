@@ -38,6 +38,11 @@ const tailwindConfig = {
   content: [
     './resources/js/**/*.{ts,tsx,js,jsx}',
     './resources/views/**/*.blade.php',
+    // Console /admin dựng bằng Tailwind 4 (resources/css/admin/app.css): cú pháp
+    // class của nó (vd. `gap-[--spacing(...)]`) làm hỏng CSS Tailwind 3 nếu bị quét.
+    '!./resources/js/admin/**',
+    '!./resources/js/superadmin/**',
+    '!./resources/views/superadmin*.blade.php',
   ],
   theme: {
     extend: {

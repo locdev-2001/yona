@@ -54,6 +54,7 @@ module.exports = {
             './resources/js/dashboard/components-next/spinner/Spinner.tsx',
             sourcesIn('dashboard/components/auth'),
             './resources/js/dashboard/composables/useAlert.ts',
+            './resources/js/dashboard/helper/apiClient.ts',
             './resources/views/app.blade.php',
         ],
     },

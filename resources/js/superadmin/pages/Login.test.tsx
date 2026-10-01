@@ -17,6 +17,7 @@ vi.mock('@inertiajs/react', () => ({
     }),
 }));
 
+import { installDomStubs } from '../components/__fixtures__/dom';
 import SuperAdminLogin from './Login';
 
 const baseSuperAdmin = {
@@ -33,6 +34,7 @@ const baseSuperAdmin = {
 
 describe('SuperAdminLogin', () => {
     beforeEach(() => {
+        installDomStubs();
         post.mockReset();
         routerPost.mockReset();
         pageProps = { superAdmin: baseSuperAdmin };
@@ -50,21 +52,46 @@ describe('SuperAdminLogin', () => {
         render(<SuperAdminLogin />);
 
         expect(screen.queryByLabelText('Mật khẩu')).not.toBeInTheDocument();
-        expect(document.querySelectorAll('input[inputmode="numeric"]').length).toBe(6);
+        expect(document.querySelector('input[data-input-otp]')).toHaveAttribute('maxlength', '6');
     });
 
     it('gửi otp_token và mã đã nhập tới /admin/sign_in', () => {
         pageProps = { superAdmin: baseSuperAdmin, otpRequired: true, otpToken: 'tok-123' };
 
         render(<SuperAdminLogin />);
-        const inputs = document.querySelectorAll<HTMLInputElement>('input[inputmode="numeric"]');
-        '123456'.split('').forEach((digit, index) => fireEvent.change(inputs[index], { target: { value: digit } }));
+        const input = document.querySelector<HTMLInputElement>('input[data-input-otp]')!;
+        fireEvent.change(input, { target: { value: '123456' } });
 
         expect(routerPost).toHaveBeenCalledWith(
             '/admin/sign_in',
             { otp_token: 'tok-123', otp_code: '123456', backup_code: '' },
             expect.objectContaining({ onFinish: expect.any(Function) }),
         );
+    });
+
+    it('đổi sang mã dự phòng và gửi backup_code', () => {
+        pageProps = { superAdmin: baseSuperAdmin, otpRequired: true, otpToken: 'tok-123' };
+
+        render(<SuperAdminLogin />);
+        fireEvent.click(screen.getByRole('button', { name: 'Backup Code' }));
+        fireEvent.change(screen.getByLabelText('Enter one of your backup codes'), { target: { value: 'abcd1234' } });
+        fireEvent.click(screen.getByRole('button', { name: 'Verify' }));
+
+        expect(routerPost).toHaveBeenCalledWith(
+            '/admin/sign_in',
+            { otp_token: 'tok-123', otp_code: '', backup_code: 'abcd1234' },
+            expect.objectContaining({ onFinish: expect.any(Function) }),
+        );
+    });
+
+    it('hiện lỗi đăng nhập từ máy chủ và gửi form tới /admin/sign_in', () => {
+        pageProps = { superAdmin: baseSuperAdmin, flash: { error: 'Invalid credentials. Please try again.' } };
+
+        render(<SuperAdminLogin />);
+        expect(screen.getByRole('alert')).toHaveTextContent('Invalid credentials. Please try again.');
+        fireEvent.submit(document.getElementById('new_super_admin')!);
+
+        expect(post).toHaveBeenCalledWith('/admin/sign_in');
     });
 
     it('không hiện lại màn OTP nữa sau khi bấm huỷ', () => {
