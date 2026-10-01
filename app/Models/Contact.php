@@ -10,6 +10,7 @@ use App\Models\Concerns\Avatarable;
 use App\Models\Concerns\IndexedForSearch;
 use App\Models\Concerns\Labelable;
 use App\Models\Concerns\SelfValidating;
+use App\Models\Concerns\SharesRequestModels;
 use App\Support\OnlineStatusTracker;
 use App\Support\PhoneNumber;
 use Database\Factories\ContactFactory;
@@ -27,7 +28,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Contact extends Model
 {
     /** @use HasFactory<ContactFactory> */
-    use Avatarable, HasFactory, IndexedForSearch, Labelable, SelfValidating;
+    use Avatarable, HasFactory, IndexedForSearch, Labelable, SelfValidating, SharesRequestModels;
 
     public const TYPE_VISITOR = 'visitor';
 

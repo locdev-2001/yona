@@ -20,8 +20,11 @@ use Tests\Support\QueryCounter;
 
 // Trần số truy vấn của các luồng hộp thư trên một account cỡ production. Đo
 // 01/10/2026 trước khi sửa: thông báo 610, sự kiện Zalo đến 226, gửi ảnh 119,
-// SendReplyJob 94, danh sách tin 58, agent gõ phím 50, tắt đang nhập 47. Trần = số sau khi sửa cộng
-// chút dư; vượt trần là N+1 hoặc truy vấn lặp vừa quay lại — đọc report() để biết câu nào.
+// SendReplyJob 94, danh sách tin 58, agent gõ phím 50, tắt đang nhập 47. Sau khi
+// dùng chung Account/Contact/User trong một request/job (#155): Zalo đến 81 → 61,
+// gửi ảnh 70 → 55, SendReplyJob 21 → 16, broadcast hội thoại 19 → 9. Trần = số
+// sau khi sửa cộng chút dư; vượt trần là N+1 hoặc truy vấn lặp vừa quay lại —
+// đọc report() để biết câu nào.
 
 function inboxFlowQueries(InboxWorkload $load, string $flow): QueryCounter
 {
@@ -113,17 +116,17 @@ beforeEach(function () {
 const INBOX_FLOW_CEILINGS = [
     'inbox page' => 15,
     'conversation page' => 12,
-    'conversation list' => 28,
-    'conversation detail' => 24,
-    'message list' => 24,
-    'notification list' => 50,
-    'agent typing' => 15,
-    'send image' => 78,
-    'send reply job' => 25,
-    'zalo inbound text' => 92,
-    'zalo inbound typing' => 19,
-    'stop typing job' => 14,
-    'conversation broadcast job' => 22,
+    'conversation list' => 25,
+    'conversation detail' => 17,
+    'message list' => 21,
+    'notification list' => 46,
+    'agent typing' => 12,
+    'send image' => 60,
+    'send reply job' => 18,
+    'zalo inbound text' => 66,
+    'zalo inbound typing' => 14,
+    'stop typing job' => 8,
+    'conversation broadcast job' => 11,
 ];
 
 // Một workload cho mọi luồng (dựng workload là phần đắt nhất của test); luồng
@@ -140,6 +143,26 @@ it('giữ số truy vấn của mọi luồng hộp thư dưới trần', functi
     }
 
     expect($overBudget)->toBe([], implode(PHP_EOL, $overBudget));
+});
+
+// pg_stat_statements production 01/10: `accounts`/`users` theo id từng dòng đứng
+// đầu bảng số lần gọi. Một luồng chỉ được nạp mỗi account/contact/user một lần.
+it('mỗi luồng chỉ nạp mỗi account, contact, user một lần', function () {
+    $repeatedLookups = [];
+
+    foreach (array_keys(INBOX_FLOW_CEILINGS) as $flow) {
+        $queries = inboxFlowQueries($this->load, $flow);
+        $lookups = array_count_values(array_filter(array_map(
+            fn (string $sql) => preg_match('/^select \* from "(accounts|contacts|users)" where "(?:\1"\.")?id" = \? limit 1$/', $sql, $m) ? $m[1] : null,
+            $queries->statements(),
+        )));
+
+        foreach (array_filter($lookups, fn (int $times) => $times > 1) as $table => $times) {
+            $repeatedLookups[] = "{$flow}: {$table} {$times}x".PHP_EOL.$queries->report();
+        }
+    }
+
+    expect($repeatedLookups)->toBe([], implode(PHP_EOL, $repeatedLookups));
 });
 
 // Trang thông báo dài gấp đôi không được thêm truy vấn: mọi quan hệ nạp gộp.

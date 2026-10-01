@@ -13,6 +13,7 @@ use App\Models\Concerns\AutoAssignmentHandler;
 use App\Models\Concerns\IndexedForSearch;
 use App\Models\Concerns\Labelable;
 use App\Models\Concerns\Reportable;
+use App\Models\Concerns\SharesRequestModels;
 use App\Support\CurrentContact;
 use App\Support\CurrentExecutedBy;
 use Database\Factories\ConversationFactory;
@@ -33,7 +34,7 @@ use Illuminate\Support\Traits\Localizable;
 class Conversation extends Model
 {
     /** @use HasFactory<ConversationFactory> */
-    use AssignmentHandler, AutoAssignmentHandler, HasFactory, IndexedForSearch, Labelable, Localizable, Reportable;
+    use AssignmentHandler, AutoAssignmentHandler, HasFactory, IndexedForSearch, Labelable, Localizable, Reportable, SharesRequestModels;
 
     public const STATUS_OPEN = 0;
 

@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use App\Models\Account;
 use App\Models\AccountUser;
 use App\Models\AgentBot;
+use App\Support\SharedModels;
 use Closure;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -21,6 +22,8 @@ class SetCurrentAccount
         if (! $account instanceof Account) {
             $account = Account::query()->findOrFail($account);
         }
+
+        app(SharedModels::class)->remember($account);
 
         // validate_token_api_access: account tắt API thì token không vào được.
         if ($request->attributes->get(AuthenticateApiAccessToken::AUTHENTICATED_BY_TOKEN)

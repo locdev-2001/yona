@@ -4,7 +4,9 @@ namespace App\Finders;
 
 use App\Models\Conversation;
 use App\Models\Message;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Support\Collection;
 
 class MessageFinder
@@ -45,7 +47,10 @@ class MessageFinder
     /** @return Builder<Message> */
     private function messages(): Builder
     {
-        $query = $this->conversation->messages()->getQuery()->with(['sender.avatar']);
+        $query = $this->conversation->messages()->getQuery()->with([
+            'sender' => fn (MorphTo $sender) => $sender->morphWith([User::class => ['accountUsers']]),
+            'sender.avatar',
+        ]);
 
         // present? của Ruby coi boolean false là blank — blank() của Laravel thì không.
         $filterInternalMessages = $this->params['filter_internal_messages'] ?? null;
