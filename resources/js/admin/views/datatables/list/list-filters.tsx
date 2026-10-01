@@ -21,11 +21,7 @@ export interface ListFiltersProps {
 export function ListFilters({ children, className }: ListFiltersProps) {
   return (
     <div className='flex flex-col gap-4 border-b p-6'>
-      <div
-        className={cn('grid grid-cols-1 gap-6 max-md:*:last:col-span-full sm:grid-cols-2 md:grid-cols-3', className)}
-      >
-        {children}
-      </div>
+      <div className={cn('grid grid-cols-1 gap-6 max-md:*:last:col-span-full sm:grid-cols-2 md:grid-cols-3', className)}>{children}</div>
     </div>
   )
 }
@@ -46,7 +42,7 @@ export function FilterSelect({ id, label, allLabel, options, value, onChange, in
   const items = [{ label: allLabel, value: ALL_VALUE }, ...options]
 
   return (
-    <div className={cn('flex w-full flex-col gap-2', inline && 'sm:w-44')}>
+    <div className={cn('flex w-full flex-col gap-2', inline && 'sm:w-40')}>
       <Label htmlFor={id} className={cn(inline && 'sr-only')}>
         {label}
       </Label>

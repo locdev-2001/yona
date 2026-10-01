@@ -147,9 +147,7 @@ describe('ResourceIndex', () => {
 
         fireEvent.click(screen.getByTitle('Sắp xếp theo Tên'));
 
-        expect(routerGet.mock.calls[0][0]).toBe(
-            '/admin/accounts?search=hoa&account%5Border%5D=name&account%5Bdirection%5D=desc',
-        );
+        expect(routerGet.mock.calls[0][0]).toBe('/admin/accounts?search=hoa&account%5Border%5D=name&account%5Bdirection%5D=desc');
     });
 
     it('tài khoản có lối tắt Tổng quan 360 trong menu thao tác', async () => {

@@ -40,31 +40,13 @@ import { isAnimatedSticker, stickerTitle } from './use-sticker-library'
 import type { StickerMoveTarget } from './use-sticker-library'
 
 // Ảnh của sticker: ảnh động chỉ chạy khi rê chuột hoặc đang chọn.
-export function StickerThumb({
-  sticker,
-  animate,
-  className
-}: {
-  sticker: LibrarySticker
-  animate: boolean
-  className?: string
-}) {
+export function StickerThumb({ sticker, animate, className }: { sticker: LibrarySticker; animate: boolean; className?: string }) {
   const source =
-    animate || !isAnimatedSticker(sticker)
-      ? (sticker.image_url ?? sticker.static_url)
-      : (sticker.static_url ?? sticker.image_url)
+    animate || !isAnimatedSticker(sticker) ? (sticker.image_url ?? sticker.static_url) : (sticker.static_url ?? sticker.image_url)
 
   if (!source) return null
 
-  return (
-    <img
-      src={source}
-      alt=''
-      loading='lazy'
-      draggable={false}
-      className={cn('size-[72%] object-contain', className)}
-    />
-  )
+  return <img src={source} alt='' loading='lazy' draggable={false} className={cn('size-[72%] object-contain', className)} />
 }
 
 type StickerGridProps = {
@@ -108,9 +90,7 @@ const StickerGrid = ({
   const stickerById = useMemo(() => new Map(stickers.map(sticker => [sticker.id, sticker])), [stickers])
 
   const orderedStickers = lifted
-    ? lifted.previewIds
-        .map(id => stickerById.get(id))
-        .filter((sticker): sticker is LibrarySticker => sticker !== undefined)
+    ? lifted.previewIds.map(id => stickerById.get(id)).filter((sticker): sticker is LibrarySticker => sticker !== undefined)
     : stickers
 
   const reorder = useReorderGrid({
@@ -123,10 +103,7 @@ const StickerGrid = ({
   const listRef = reorder.containerRef
   const pendingFocusId = useRef<number | null>(null)
 
-  const focusTargetId =
-    focusedId !== null && stickerById.has(focusedId)
-      ? focusedId
-      : (selectedStickerId ?? orderedStickers[0]?.id ?? null)
+  const focusTargetId = focusedId !== null && stickerById.has(focusedId) ? focusedId : (selectedStickerId ?? orderedStickers[0]?.id ?? null)
 
   useEffect(() => {
     if (pendingFocusId.current === null) return
@@ -216,169 +193,166 @@ const StickerGrid = ({
 
   return (
     <>
-    <div ref={listRef} className='relative grid grid-cols-3 gap-3 sm:grid-cols-[repeat(auto-fill,minmax(6.5rem,1fr))]'>
-      <div role='listbox' aria-label={t('STICKER_LIBRARY.GRID_LABEL', { name: packName })} className='contents'>
-        {orderedStickers.map((sticker, index) => {
-          const isProcessing = sticker.status === 'processing'
-          const isFailed = sticker.status === 'failed'
-          const isStuck = isProcessing && pollExhausted
-          const isSelected = sticker.id === selectedStickerId
-          const isDeleting = deletingIds.has(sticker.id)
-          const lacksKeywords = sticker.status === 'ready' && sticker.keywords.length === 0
-          const title = stickerTitle(sticker, index)
+      <div ref={listRef} className='relative grid grid-cols-3 gap-3 sm:grid-cols-[repeat(auto-fill,minmax(6.5rem,1fr))]'>
+        <div role='listbox' aria-label={t('STICKER_LIBRARY.GRID_LABEL', { name: packName })} className='contents'>
+          {orderedStickers.map((sticker, index) => {
+            const isProcessing = sticker.status === 'processing'
+            const isFailed = sticker.status === 'failed'
+            const isStuck = isProcessing && pollExhausted
+            const isSelected = sticker.id === selectedStickerId
+            const isDeleting = deletingIds.has(sticker.id)
+            const lacksKeywords = sticker.status === 'ready' && sticker.keywords.length === 0
+            const title = stickerTitle(sticker, index)
 
-          return (
-            <div
-              key={sticker.id}
-              className={cn(
-                'group relative aspect-square',
-                reorder.draggingKey === String(sticker.id) && 'opacity-40',
-                isDeleting && 'pointer-events-none opacity-50'
-              )}
-              onMouseEnter={() => setHoveredId(sticker.id)}
-              onMouseLeave={() => setHoveredId(current => (current === sticker.id ? null : current))}
-              {...reorder.itemProps(String(sticker.id))}
-            >
+            return (
               <div
-                role='option'
-                data-sticker-id={sticker.id}
-                aria-selected={isSelected}
-                aria-busy={isProcessing || isDeleting || undefined}
-                aria-label={title}
-                title={title}
-                tabIndex={sticker.id === focusTargetId ? 0 : -1}
-                onClick={() => {
-                  if (isStuck) onRetryPoll()
-                  else onOpen(sticker.id)
-                }}
-                onKeyDown={event => onTileKeyDown(sticker, index, event)}
-                onFocus={() => setFocusedId(sticker.id)}
+                key={sticker.id}
                 className={cn(
-                  'bg-card border-border focus-visible:ring-ring/50 flex size-full cursor-pointer items-center justify-center overflow-hidden rounded-xl border transition-shadow outline-none select-none focus-visible:ring-[3px]',
-                  isFailed && 'bg-destructive/10 ring-destructive/30',
-                  isProcessing && !isStuck && 'bg-muted animate-pulse',
-                  !isFailed && !isProcessing && 'hover:border-primary/40',
-                  isSelected && 'ring-primary ring-2',
-                  lifted?.id === sticker.id && 'ring-primary ring-2',
-                  flashIds.has(sticker.id) && 'ring-primary/60 ring-2'
+                  'group relative aspect-square',
+                  reorder.draggingKey === String(sticker.id) && 'opacity-40',
+                  isDeleting && 'pointer-events-none opacity-50'
                 )}
+                onMouseEnter={() => setHoveredId(sticker.id)}
+                onMouseLeave={() => setHoveredId(current => (current === sticker.id ? null : current))}
+                {...reorder.itemProps(String(sticker.id))}
               >
-                {isFailed ? (
-                  <TriangleAlertIcon className='text-destructive size-6' aria-hidden='true' />
-                ) : isStuck ? (
-                  <span className='text-muted-foreground flex flex-col items-center gap-1 px-1 text-center text-[11px] leading-tight'>
-                    <RefreshCwIcon className='size-4' aria-hidden='true' />
-                    {t('STICKER_LIBRARY.POLL_EXHAUSTED')}
-                  </span>
-                ) : isProcessing ? (
-                  <Loader2Icon className='text-muted-foreground size-5 animate-spin' aria-hidden='true' />
-                ) : (
-                  <StickerThumb sticker={sticker} animate={hoveredId === sticker.id || isSelected} />
-                )}
+                <div
+                  role='option'
+                  data-sticker-id={sticker.id}
+                  aria-selected={isSelected}
+                  aria-busy={isProcessing || isDeleting || undefined}
+                  aria-label={title}
+                  title={title}
+                  tabIndex={sticker.id === focusTargetId ? 0 : -1}
+                  onClick={() => {
+                    if (isStuck) onRetryPoll()
+                    else onOpen(sticker.id)
+                  }}
+                  onKeyDown={event => onTileKeyDown(sticker, index, event)}
+                  onFocus={() => setFocusedId(sticker.id)}
+                  className={cn(
+                    'bg-card border-border focus-visible:ring-ring/50 flex size-full cursor-pointer items-center justify-center overflow-hidden rounded-xl border transition-shadow outline-none select-none focus-visible:ring-[3px]',
+                    isFailed && 'bg-destructive/10 ring-destructive/30',
+                    isProcessing && !isStuck && 'bg-muted animate-pulse',
+                    !isFailed && !isProcessing && 'hover:border-primary/40',
+                    isSelected && 'ring-primary ring-2',
+                    lifted?.id === sticker.id && 'ring-primary ring-2',
+                    flashIds.has(sticker.id) && 'ring-primary/60 ring-2'
+                  )}
+                >
+                  {isFailed ? (
+                    <TriangleAlertIcon className='text-destructive size-6' aria-hidden='true' />
+                  ) : isStuck ? (
+                    <span className='text-muted-foreground flex flex-col items-center gap-1 px-1 text-center text-[11px] leading-tight'>
+                      <RefreshCwIcon className='size-4' aria-hidden='true' />
+                      {t('STICKER_LIBRARY.POLL_EXHAUSTED')}
+                    </span>
+                  ) : isProcessing ? (
+                    <Loader2Icon className='text-muted-foreground size-5 animate-spin' aria-hidden='true' />
+                  ) : (
+                    <StickerThumb sticker={sticker} animate={hoveredId === sticker.id || isSelected} />
+                  )}
+                </div>
+                {lacksKeywords ? (
+                  <span
+                    className='pointer-events-none absolute top-2 left-2 size-1.5 rounded-full bg-amber-500'
+                    title={t('STICKER_LIBRARY.NO_KEYWORDS_DOT')}
+                    aria-hidden='true'
+                  />
+                ) : null}
+                {isAnimatedSticker(sticker) && !isProcessing ? (
+                  <Badge variant='secondary' className='pointer-events-none absolute right-1.5 bottom-1.5 h-4 rounded-sm px-1 text-[10px]'>
+                    {t('STICKER_LIBRARY.ANIMATED_BADGE')}
+                  </Badge>
+                ) : null}
+                <div
+                  data-no-drag=''
+                  className='absolute top-1 right-1 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100 has-aria-expanded:opacity-100 max-md:opacity-100'
+                >
+                  <DropdownMenu>
+                    <DropdownMenuTrigger
+                      render={
+                        <Button
+                          size='icon-xs'
+                          variant='outline'
+                          className='bg-background/95'
+                          aria-label={t('STICKER_LIBRARY.STICKER_MENU')}
+                        />
+                      }
+                    >
+                      <EllipsisVerticalIcon aria-hidden='true' />
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align='end' className='w-auto'>
+                      <DropdownMenuGroup>
+                        <DropdownMenuItem onClick={() => onOpen(sticker.id)}>
+                          <PencilIcon className='size-4' />
+                          {t('STICKER_LIBRARY.EDIT_STICKER')}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem disabled={index === 0} onClick={() => onMove(sticker.id, 'first')}>
+                          <ArrowUpToLineIcon className='size-4' />
+                          {t('STICKER_LIBRARY.MOVE_FIRST')}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem disabled={index === orderedStickers.length - 1} onClick={() => onMove(sticker.id, 'last')}>
+                          <ArrowDownToLineIcon className='size-4' />
+                          {t('STICKER_LIBRARY.MOVE_LAST')}
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem variant='destructive' onClick={() => onDelete(sticker.id)}>
+                          <Trash2Icon className='size-4' />
+                          {t('STICKER_LIBRARY.DELETE_STICKER')}
+                        </DropdownMenuItem>
+                      </DropdownMenuGroup>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               </div>
-              {lacksKeywords ? (
-                <span
-                  className='pointer-events-none absolute top-2 left-2 size-1.5 rounded-full bg-amber-500'
-                  title={t('STICKER_LIBRARY.NO_KEYWORDS_DOT')}
-                  aria-hidden='true'
-                />
-              ) : null}
-              {isAnimatedSticker(sticker) && !isProcessing ? (
-                <Badge variant='secondary' className='pointer-events-none absolute right-1.5 bottom-1.5 h-4 rounded-sm px-1 text-[10px]'>
-                  {t('STICKER_LIBRARY.ANIMATED_BADGE')}
-                </Badge>
-              ) : null}
+            )
+          })}
+        </div>
+        {canAdd ? (
+          <button
+            type='button'
+            onClick={onAdd}
+            className='text-muted-foreground hover:border-primary hover:text-primary focus-visible:ring-ring/50 flex aspect-square flex-col items-center justify-center gap-1 rounded-xl border border-dashed text-xs font-medium transition-colors outline-none focus-visible:ring-[3px]'
+          >
+            <PlusIcon className='size-5' aria-hidden='true' />
+            {t('STICKER_LIBRARY.ADD_SHORT')}
+          </button>
+        ) : null}
+        {reorder.indicator ? (
+          <span
+            aria-hidden='true'
+            className='bg-primary pointer-events-none absolute w-[3px] rounded-full'
+            style={{ left: reorder.indicator.left, top: reorder.indicator.top, height: reorder.indicator.height }}
+          />
+        ) : null}
+        <span className='sr-only' aria-live='assertive'>
+          {announcement}
+        </span>
+        {reorder.ghost && ghostSticker
+          ? createPortal(
               <div
-                data-no-drag=''
-                className='absolute top-1 right-1 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100 has-aria-expanded:opacity-100 max-md:opacity-100'
+                aria-hidden='true'
+                className='bg-card ring-primary pointer-events-none fixed top-0 left-0 z-[70] flex items-center justify-center rounded-xl shadow-xl ring-2'
+                style={{
+                  width: reorder.ghost.width,
+                  height: reorder.ghost.height,
+                  transform: `translate(${reorder.ghost.x}px, ${reorder.ghost.y}px)`
+                }}
               >
-                <DropdownMenu>
-                  <DropdownMenuTrigger
-                    render={
-                      <Button
-                        size='icon-xs'
-                        variant='outline'
-                        className='bg-background/95'
-                        aria-label={t('STICKER_LIBRARY.STICKER_MENU')}
-                      />
-                    }
-                  >
-                    <EllipsisVerticalIcon aria-hidden='true' />
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align='end' className='w-auto'>
-                    <DropdownMenuGroup>
-                      <DropdownMenuItem onClick={() => onOpen(sticker.id)}>
-                        <PencilIcon className='size-4' />
-                        {t('STICKER_LIBRARY.EDIT_STICKER')}
-                      </DropdownMenuItem>
-                      <DropdownMenuItem disabled={index === 0} onClick={() => onMove(sticker.id, 'first')}>
-                        <ArrowUpToLineIcon className='size-4' />
-                        {t('STICKER_LIBRARY.MOVE_FIRST')}
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        disabled={index === orderedStickers.length - 1}
-                        onClick={() => onMove(sticker.id, 'last')}
-                      >
-                        <ArrowDownToLineIcon className='size-4' />
-                        {t('STICKER_LIBRARY.MOVE_LAST')}
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem variant='destructive' onClick={() => onDelete(sticker.id)}>
-                        <Trash2Icon className='size-4' />
-                        {t('STICKER_LIBRARY.DELETE_STICKER')}
-                      </DropdownMenuItem>
-                    </DropdownMenuGroup>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            </div>
-          )
-        })}
+                <StickerThumb sticker={ghostSticker} animate={false} />
+              </div>,
+              document.body
+            )
+          : null}
       </div>
-      {canAdd ? (
-        <button
-          type='button'
-          onClick={onAdd}
-          className='text-muted-foreground hover:border-primary hover:text-primary focus-visible:ring-ring/50 flex aspect-square flex-col items-center justify-center gap-1 rounded-xl border border-dashed text-xs font-medium transition-colors outline-none focus-visible:ring-[3px]'
-        >
-          <PlusIcon className='size-5' aria-hidden='true' />
-          {t('STICKER_LIBRARY.ADD_SHORT')}
-        </button>
+      {anyLacksKeywords ? (
+        // Chú giải cho chấm cam ở góc ô sticker.
+        <p className='text-muted-foreground mt-3 flex items-center gap-2 text-xs'>
+          <span className='size-1.5 shrink-0 rounded-full bg-amber-500' aria-hidden='true' />
+          {t('STICKER_LIBRARY.NO_KEYWORDS_DOT')}
+        </p>
       ) : null}
-      {reorder.indicator ? (
-        <span
-          aria-hidden='true'
-          className='bg-primary pointer-events-none absolute w-[3px] rounded-full'
-          style={{ left: reorder.indicator.left, top: reorder.indicator.top, height: reorder.indicator.height }}
-        />
-      ) : null}
-      <span className='sr-only' aria-live='assertive'>
-        {announcement}
-      </span>
-      {reorder.ghost && ghostSticker
-        ? createPortal(
-            <div
-              aria-hidden='true'
-              className='bg-card ring-primary pointer-events-none fixed top-0 left-0 z-[70] flex items-center justify-center rounded-xl shadow-xl ring-2'
-              style={{
-                width: reorder.ghost.width,
-                height: reorder.ghost.height,
-                transform: `translate(${reorder.ghost.x}px, ${reorder.ghost.y}px)`
-              }}
-            >
-              <StickerThumb sticker={ghostSticker} animate={false} />
-            </div>,
-            document.body
-          )
-        : null}
-    </div>
-    {anyLacksKeywords ? (
-      // Chú giải cho chấm cam ở góc ô sticker.
-      <p className='text-muted-foreground mt-3 flex items-center gap-2 text-xs'>
-        <span className='size-1.5 shrink-0 rounded-full bg-amber-500' aria-hidden='true' />
-        {t('STICKER_LIBRARY.NO_KEYWORDS_DOT')}
-      </p>
-    ) : null}
     </>
   )
 }

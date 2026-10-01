@@ -49,21 +49,21 @@ export function ListToolbar({ search, filters, children }: ListToolbarProps) {
   return (
     <div className='flex gap-3 p-4 max-sm:flex-col sm:items-start sm:justify-between md:px-6'>
       <div className='flex min-w-0 flex-1 flex-wrap gap-3 max-sm:flex-col sm:items-center'>
-      {search?.onSubmit ? (
-        <form
-          role='search'
-          className='w-full sm:max-w-60'
-          onSubmit={(event: FormEvent) => {
-            event.preventDefault()
-            search.onSubmit?.()
-          }}
-        >
-          {input}
-        </form>
-      ) : (
-        <div className='w-full sm:max-w-60'>{input}</div>
-      )}
-      {filters}
+        {search?.onSubmit ? (
+          <form
+            role='search'
+            className='w-full sm:max-w-60'
+            onSubmit={(event: FormEvent) => {
+              event.preventDefault()
+              search.onSubmit?.()
+            }}
+          >
+            {input}
+          </form>
+        ) : (
+          <div className='w-full sm:max-w-60'>{input}</div>
+        )}
+        {filters}
       </div>
 
       {children ? <div className='flex shrink-0 flex-wrap items-center gap-2'>{children}</div> : null}

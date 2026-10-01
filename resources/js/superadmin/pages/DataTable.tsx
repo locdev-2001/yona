@@ -45,9 +45,7 @@ const label = (key: string, params?: Record<string, string | number>) => t(`ADMI
 const maskedLabel = (masked: DataColumn['masked']) => label(masked === 'personal' ? 'MASKED_PERSONAL' : 'MASKED_SECRET');
 
 // Tham số truy vấn của trang bảng: filter[cột]=giá trị, sort, direction, page.
-export function tableQuery(
-    state: { filters: Record<string, string>; sort: string; direction: string; page?: number },
-): Record<string, string> {
+export function tableQuery(state: { filters: Record<string, string>; sort: string; direction: string; page?: number }): Record<string, string> {
     const query: Record<string, string> = { sort: state.sort, direction: state.direction };
     Object.entries(state.filters).forEach(([column, value]) => {
         if (value.trim() !== '') query[`filter[${column}]`] = value.trim();

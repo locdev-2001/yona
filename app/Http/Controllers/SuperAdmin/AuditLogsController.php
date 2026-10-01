@@ -4,8 +4,8 @@ namespace App\Http\Controllers\SuperAdmin;
 
 use App\Http\Controllers\Controller;
 use App\Models\SuperAdminAuditLog;
+use App\Services\Admin\Operations\AuditActionDescriber;
 use App\Services\Admin\Operations\DataBrowser;
-use App\Support\SuperAdmin\AuditActionLabel;
 use App\Support\SuperAdminArea;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -37,14 +37,14 @@ class AuditLogsController extends Controller
                 'superAdminId' => $log->super_admin_id,
                 'superAdminEmail' => $log->super_admin_email,
                 'action' => $log->action,
-                'actionLabel' => AuditActionLabel::describe((string) $log->action),
+                'actionLabel' => AuditActionDescriber::describe($log),
                 'subjectType' => $log->subject_type,
-                'subjectLabel' => AuditActionLabel::subject($log->subject_type, $log->subject_id),
+                'subjectLabel' => AuditActionDescriber::subject($log->subject_type, $log->subject_id),
                 'subjectId' => $log->subject_id,
                 'subjectUrl' => $this->subjectUrl($log),
                 'changes' => $log->changes,
                 'responseStatus' => $log->response_status,
-                'statusLabel' => AuditActionLabel::status($log->response_status),
+                'statusLabel' => AuditActionDescriber::status($log->response_status),
                 'ipAddress' => $log->ip_address,
                 'userAgent' => $log->user_agent,
                 'createdAt' => $log->created_at?->toIso8601String(),
@@ -61,7 +61,7 @@ class AuditLogsController extends Controller
                     ->map(fn ($row) => ['value' => (string) $row->super_admin_id, 'label' => (string) ($row->email ?? "#{$row->super_admin_id}")])
                     ->all(),
                 'subjectTypes' => $subjectTypes,
-                'subjectTypeLabels' => collect($subjectTypes)->mapWithKeys(fn (string $type) => [$type => AuditActionLabel::subjectTypeLabel($type)])->all(),
+                'subjectTypeLabels' => collect($subjectTypes)->mapWithKeys(fn (string $type) => [$type => AuditActionDescriber::subjectTypeLabel($type)])->all(),
             ],
         ]);
     }
@@ -89,7 +89,7 @@ class AuditLogsController extends Controller
     private function actionsLabelled(string $keyword): array
     {
         return SuperAdminAuditLog::query()->distinct()->pluck('action')
-            ->filter(fn (string $action) => mb_stripos(AuditActionLabel::describe($action), $keyword) !== false)
+            ->filter(fn (string $action) => mb_stripos(AuditActionDescriber::describe($action), $keyword) !== false)
             ->values()
             ->all();
     }

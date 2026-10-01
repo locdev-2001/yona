@@ -28,14 +28,7 @@ export interface ListTableProps<TData> {
 }
 
 // Bảng của trang danh sách: lọc, sắp xếp và phân trang đều chạy ở máy chủ.
-export function ListTable<TData>({
-  data,
-  columns,
-  getRowId,
-  empty,
-  expandedRowId = null,
-  renderExpanded
-}: ListTableProps<TData>) {
+export function ListTable<TData>({ data, columns, getRowId, empty, expandedRowId = null, renderExpanded }: ListTableProps<TData>) {
   // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
     data,
@@ -61,10 +54,7 @@ export function ListTable<TData>({
               {headerGroup.headers.map(header => (
                 <TableHead
                   key={header.id}
-                  className={cn(
-                    'text-muted-foreground first:pl-4 last:px-4',
-                    header.column.columnDef.meta?.headerClassName
-                  )}
+                  className={cn('text-muted-foreground first:pl-4 last:px-4', header.column.columnDef.meta?.headerClassName)}
                 >
                   {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
                 </TableHead>
@@ -78,10 +68,7 @@ export function ListTable<TData>({
               <Fragment key={row.id}>
                 <TableRow data-state={row.id === expandedRowId ? 'selected' : undefined}>
                   {row.getVisibleCells().map(cell => (
-                    <TableCell
-                      key={cell.id}
-                      className={cn('h-14 first:pl-4 last:px-4', cell.column.columnDef.meta?.cellClassName)}
-                    >
+                    <TableCell key={cell.id} className={cn('h-14 first:pl-4 last:px-4', cell.column.columnDef.meta?.cellClassName)}>
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}

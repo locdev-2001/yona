@@ -31,7 +31,12 @@ export default function SuperAdminSettings({ sections }: { sections: { key: stri
                                             {title}
                                         </Link>
                                     </div>
-                                    <Link href={section.url} tabIndex={-1} aria-hidden="true" className={buttonVariants({ variant: 'ghost', size: 'icon' })}>
+                                    <Link
+                                        href={section.url}
+                                        tabIndex={-1}
+                                        aria-hidden="true"
+                                        className={buttonVariants({ variant: 'ghost', size: 'icon' })}
+                                    >
                                         <ChevronRightIcon className="size-4.5" />
                                     </Link>
                                 </li>

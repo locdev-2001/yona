@@ -4,8 +4,8 @@ use App\Models\Account;
 use App\Models\SuperAdmin;
 use App\Models\SuperAdminAuditLog;
 use App\Models\User;
+use App\Services\Admin\Operations\AuditActionDescriber;
 use App\Services\Admin\Operations\SensitiveFields;
-use App\Support\SuperAdmin\AuditActionLabel;
 use Illuminate\Support\Facades\App;
 
 // Nhật ký thao tác: mọi request ghi của console để lại một dòng, bí mật đã che.
@@ -81,13 +81,14 @@ it('tìm hành động theo câu mô tả tiếng Việt, không chỉ theo rout
         ->assertInertia(fn ($page) => $page->has('logs', 1)->where('logs.0.action', 'POST accounts/{id}/suspend'));
 });
 
-it('route chưa có bản dịch giữ nguyên chuỗi gốc', function () {
+it('mô tả hành động dùng chung bảng với account 360; route lạ giữ nguyên chuỗi gốc', function () {
     App::setLocale('vi');
 
-    expect(AuditActionLabel::describe('POST foo/{id}/bar'))->toBe('POST foo/{id}/bar')
-        ->and(AuditActionLabel::describe('POST api/sticker_packs/{packId}/stickers'))->toBe('Tải sticker lên')
-        ->and(AuditActionLabel::describe('DELETE api/sticker_packs/{packId}'))->toBe('Xoá bộ sticker')
-        ->and(AuditActionLabel::status(422))->toBe('Bị từ chối');
+    expect(AuditActionDescriber::describe('POST foo/{id}/bar'))->toBe('POST foo/{id}/bar')
+        ->and(AuditActionDescriber::describe('POST api/sticker_packs/{packId}/stickers'))->toBe('Thêm 1 sticker vào kho chung')
+        ->and(AuditActionDescriber::describe('POST api/accounts/{accountId}/sticker_packs/{packId}/stickers'))->toBe('Thêm 1 sticker vào kho riêng')
+        ->and(AuditActionDescriber::describe('DELETE api/sticker_packs/{packId}'))->toBe('Xoá một bộ sticker chung')
+        ->and(AuditActionDescriber::status(422))->toBe('Bị từ chối');
 });
 
 it('account 360 hiện thao tác của quản trị viên trên dòng thời gian', function () {

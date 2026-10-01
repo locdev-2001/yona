@@ -21,7 +21,7 @@ const TwoSteps = ({ title, description, children, className = 'sm:max-w-md' }: P
     <div className='bg-muted/50 relative flex h-auto min-h-screen items-center justify-center overflow-x-hidden px-4 py-10 sm:px-6 lg:px-8'>
       <Card className={cn('z-1 w-full gap-6 overflow-clip py-6', className)}>
         <CardHeader className='px-6'>
-          <a href='/'>
+          <a href='/' className='inline-flex min-h-11 items-center self-start md:min-h-0'>
             <Logo className='gap-3' />
           </a>
         </CardHeader>

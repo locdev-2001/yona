@@ -157,26 +157,9 @@ final class AccountActivity
         return array_slice($events, 0, $limit);
     }
 
-    // Mẫu route đã ghi trong nhật ký (bỏ tiền tố api/) → khoá câu mô tả. Khoá lặp
-    // liền nhau (cùng người, cùng bộ, cách nhau dưới AUDIT_GROUP_MINUTES) gộp thành một dòng có số đếm.
-    private const AUDIT_ACTIONS = [
-        'PUT accounts/{id}' => 'account_updated',
-        'PATCH accounts/{id}' => 'account_updated',
-        'DELETE accounts/{id}' => 'account_deleted',
-        'POST accounts/{id}/reset_cache' => 'cache_reset',
-        'POST accounts/{id}/unsuspend' => 'unsuspended',
-        'POST accounts/{accountId}/sticker_packs' => 'pack_created',
-        'PUT accounts/{accountId}/sticker_packs/{packId}' => 'pack_updated',
-        'PATCH accounts/{accountId}/sticker_packs/{packId}' => 'pack_updated',
-        'DELETE accounts/{accountId}/sticker_packs/{packId}' => 'pack_deleted',
-        'POST accounts/{accountId}/sticker_packs/{packId}/move' => 'pack_moved',
-        'POST accounts/{accountId}/sticker_packs/{packId}/publish' => 'pack_published',
-        'POST accounts/{accountId}/sticker_packs/{packId}/unpublish' => 'pack_unpublished',
-        'POST accounts/{accountId}/sticker_packs/{packId}/stickers' => 'stickers_added',
-        'PUT accounts/{accountId}/sticker_packs/{packId}/stickers/order' => 'stickers_reordered',
-        'PATCH accounts/{accountId}/sticker_packs/{packId}/stickers/{stickerId}' => 'stickers_updated',
-        'DELETE accounts/{accountId}/sticker_packs/{packId}/stickers/{stickerId}' => 'stickers_deleted',
-    ];
+    // Mẫu route → khoá câu mô tả nằm ở AuditActionDescriber (dùng chung với trang Nhật ký
+    // thao tác). Khoá lặp liền nhau (cùng người, cùng bộ, cách nhau dưới
+    // AUDIT_GROUP_MINUTES) gộp thành một dòng có số đếm.
 
     // Khoá có đếm số lần (thêm/sửa/xoá nhiều sticker liền tay).
     private const COUNTED_AUDIT_ACTIONS = ['stickers_added', 'stickers_updated', 'stickers_deleted'];
@@ -196,12 +179,12 @@ final class AccountActivity
     {
         $groups = [];
         foreach ($logs as $log) {
-            $action = preg_replace('#^(\w+) api/#', '$1 ', (string) $log->action);
+            $action = AuditActionDescriber::normalize((string) $log->action);
             if (in_array($action, self::SKIPPED_AUDIT_ACTIONS, true)) {
                 continue;
             }
 
-            $key = self::AUDIT_ACTIONS[$action] ?? (str_starts_with($action, 'DELETE ') ? 'other_delete' : 'other_change');
+            $key = AuditActionDescriber::key($action) ?? (str_starts_with($action, 'DELETE ') ? 'other_delete' : 'other_change');
             $failed = (int) $log->response_status >= 400;
             $pack = str_contains($action, '{packId}') || $key === 'pack_created' ? self::auditPackName($account, $log) : null;
             $previous = $groups === [] ? null : $groups[array_key_last($groups)];
@@ -232,11 +215,7 @@ final class AccountActivity
         }
 
         return array_values(array_filter(array_map(function (array $group) {
-            $variant = $group['pack'] === null ? 'NO_PACK' : 'PACK';
-            $title = (string) __("admin_operations.ACCOUNT_OVERVIEW.AUDIT.{$group['key']}.{$variant}", [
-                'count' => (string) $group['count'],
-                'pack' => (string) $group['pack'],
-            ]);
+            $title = (string) AuditActionDescriber::sentence($group['key'], $group['pack'], $group['count']);
             $detail = $group['failed']
                 ? __('admin_operations.ACCOUNT_OVERVIEW.AUDIT.FAILED_BY', ['admin' => $group['admin'] ?? '-', 'status' => (string) $group['status']])
                 : __('admin_operations.ACCOUNT_OVERVIEW.AUDIT.BY', ['admin' => $group['admin'] ?? '-']);

@@ -21,14 +21,7 @@ type MobileRowsProps<TData> = {
 
 // Dưới 768px bảng nhiều cột bị xén ngang; mỗi dòng thành một thẻ: ô đầu là tiêu
 // đề, các ô còn lại là cặp nhãn - giá trị, cột thao tác ở cuối thẻ.
-export function MobileRows<TData>({
-  table,
-  label,
-  onOpenRow,
-  urlOf,
-  expandedRowId = null,
-  renderExpanded
-}: MobileRowsProps<TData>) {
+export function MobileRows<TData>({ table, label, onOpenRow, urlOf, expandedRowId = null, renderExpanded }: MobileRowsProps<TData>) {
   const rows = table.getRowModel().rows
   const headerOf = (columnId: string) => {
     const header = table.getFlatHeaders().find(candidate => candidate.column.id === columnId)
@@ -42,9 +35,7 @@ export function MobileRows<TData>({
     <ul aria-label={label} className='divide-y border-t md:hidden'>
       {rows.map(row => {
         const [first, ...rest] = row.getVisibleCells()
-        const actions = rest.filter(
-          cell => cell.column.columnDef.meta?.mobileRole === 'actions' || cell.column.id === 'actions'
-        )
+        const actions = rest.filter(cell => cell.column.columnDef.meta?.mobileRole === 'actions' || cell.column.id === 'actions')
         const fields = rest.filter(cell => !actions.includes(cell))
         const url = urlOf ? urlOf(row.original) : null
 

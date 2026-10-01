@@ -259,7 +259,7 @@ export default function AuditLogs({ logs, pagination, filters, options }: Props)
                                     onChange={value => apply({ from: value })}
                                     labels={dateLabels}
                                     prefix={label('FILTERS.FROM_SHORT')}
-                                    className="w-full sm:w-40"
+                                    className="w-full sm:w-44"
                                 />
                                 <DateInput
                                     id={ids.to}
@@ -268,7 +268,7 @@ export default function AuditLogs({ logs, pagination, filters, options }: Props)
                                     onChange={value => apply({ to: value })}
                                     labels={dateLabels}
                                     prefix={label('FILTERS.TO_SHORT')}
-                                    className="w-full sm:w-40"
+                                    className="w-full sm:w-44"
                                 />
                             </>
                         }

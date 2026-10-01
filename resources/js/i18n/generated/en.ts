@@ -497,62 +497,6 @@ const messages: Record<string, unknown> = {
                 }
             }
         },
-        "audit": {
-            "verbs": {
-                "POST": "Create {object}",
-                "PUT": "Update {object}",
-                "PATCH": "Update {object}",
-                "DELETE": "Delete {object}"
-            },
-            "objects": {
-                "accounts": "account",
-                "account_users": "account member",
-                "users": "user",
-                "agent_bots": "agent bot",
-                "platform_apps": "platform app",
-                "access_tokens": "access token",
-                "installation_configs": "installation config",
-                "sticker_packs": "sticker pack",
-                "stickers": "sticker",
-                "avatar": "avatar"
-            },
-            "actions": {
-                "POST stickers": "Upload stickers",
-                "POST suspend": "Suspend account",
-                "POST unsuspend": "Unsuspend account",
-                "POST reset_cache": "Reset UI cache",
-                "POST impersonate": "Impersonate",
-                "POST resend_confirmation": "Resend confirmation email",
-                "POST publish": "Publish sticker pack",
-                "POST unpublish": "Unpublish sticker pack",
-                "POST move": "Move sticker pack",
-                "PUT order": "Reorder stickers",
-                "PUT layout": "Save overview layout",
-                "DELETE layout": "Reset overview layout",
-                "POST app_config": "Save app config",
-                "POST mfa": "Enable two-factor authentication",
-                "POST verify": "Confirm two-factor authentication"
-            },
-            "subjects": {
-                "accounts": "Account",
-                "account_users": "Member",
-                "users": "User",
-                "agent_bots": "Agent bot",
-                "platform_apps": "Platform app",
-                "access_tokens": "Access token",
-                "installation_configs": "Installation config",
-                "sticker_packs": "Sticker pack",
-                "dashboard": "Overview",
-                "app_config": "App config",
-                "impersonations": "Impersonation",
-                "mfa": "Two-factor authentication"
-            },
-            "status": {
-                "success": "Succeeded",
-                "rejected": "Rejected",
-                "failed": "Server error"
-            }
-        },
         "flash": {
             "created": "Record created.",
             "updated": "Changes saved.",
@@ -891,6 +835,90 @@ const messages: Record<string, unknown> = {
             }
         },
         "AUDIT_LOGS": {
+            "ACTIONS": {
+                "suspended": "Suspend account",
+                "account_created": "Create account",
+                "member_added": "Add member to account",
+                "member_removed": "Remove member from account",
+                "user_created": "Create user",
+                "user_updated": "Update user",
+                "user_deleted": "Delete user",
+                "avatar_deleted": "Delete avatar",
+                "impersonated": "Impersonate user",
+                "confirmation_resent": "Resend confirmation email",
+                "agent_bot_created": "Create agent bot",
+                "agent_bot_updated": "Update agent bot",
+                "agent_bot_deleted": "Delete agent bot",
+                "platform_app_created": "Create platform app",
+                "platform_app_updated": "Update platform app",
+                "platform_app_deleted": "Delete platform app",
+                "access_token_created": "Create access token",
+                "access_token_updated": "Update access token",
+                "access_token_deleted": "Delete access token",
+                "installation_config_created": "Create installation config",
+                "installation_config_updated": "Update installation config",
+                "installation_config_deleted": "Delete installation config",
+                "app_config_saved": "Save app config",
+                "layout_saved": "Save overview layout",
+                "layout_reset": "Reset overview layout",
+                "mfa_enabled": "Enable two-factor authentication",
+                "mfa_verified": "Confirm two-factor authentication",
+                "platform_pack_created": {
+                    "PACK": "Create shared sticker pack “:pack”",
+                    "NO_PACK": "Create a shared sticker pack"
+                },
+                "platform_pack_updated": {
+                    "PACK": "Update shared sticker pack “:pack”",
+                    "NO_PACK": "Update a shared sticker pack"
+                },
+                "platform_pack_deleted": {
+                    "PACK": "Delete shared sticker pack “:pack”",
+                    "NO_PACK": "Delete a shared sticker pack"
+                },
+                "platform_pack_published": {
+                    "PACK": "Publish shared sticker pack “:pack”",
+                    "NO_PACK": "Publish a shared sticker pack"
+                },
+                "platform_pack_unpublished": {
+                    "PACK": "Unpublish shared sticker pack “:pack”",
+                    "NO_PACK": "Unpublish a shared sticker pack"
+                },
+                "platform_stickers_added": {
+                    "PACK": "Add :count stickers to “:pack”",
+                    "NO_PACK": "Add :count stickers to the shared library"
+                },
+                "platform_stickers_reordered": {
+                    "PACK": "Reorder stickers in “:pack”",
+                    "NO_PACK": "Reorder stickers in the shared library"
+                },
+                "platform_stickers_updated": {
+                    "PACK": "Update :count stickers in “:pack”",
+                    "NO_PACK": "Update :count stickers in the shared library"
+                },
+                "platform_stickers_deleted": {
+                    "PACK": "Delete :count stickers from “:pack”",
+                    "NO_PACK": "Delete :count stickers from the shared library"
+                }
+            },
+            "SUBJECTS": {
+                "accounts": "Account",
+                "account_users": "Member",
+                "users": "User",
+                "agent_bots": "Agent bot",
+                "platform_apps": "Platform app",
+                "access_tokens": "Access token",
+                "installation_configs": "Installation config",
+                "sticker_packs": "Shared sticker pack",
+                "dashboard": "Overview",
+                "app_config": "App config",
+                "impersonations": "Impersonation",
+                "mfa": "Two-factor authentication"
+            },
+            "RESULT": {
+                "success": "Succeeded",
+                "rejected": "Rejected",
+                "failed": "Server error"
+            },
             "RAW_ACTION": "Route",
             "HTTP_STATUS": "HTTP status",
             "IP_ADDRESS": "IP address",

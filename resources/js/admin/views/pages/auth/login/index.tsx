@@ -19,7 +19,7 @@ const Login = ({ title, description, children }: Props) => {
     <div className='bg-muted/50 relative flex h-auto min-h-screen items-center justify-center overflow-x-hidden px-4 py-10 sm:px-6 lg:px-8'>
       <Card className='z-1 w-full gap-6 py-6 sm:max-w-lg'>
         <CardHeader className='gap-6 px-6'>
-          <a href='/'>
+          <a href='/' className='inline-flex min-h-11 items-center self-start md:min-h-0'>
             <Logo className='gap-3' />
           </a>
 

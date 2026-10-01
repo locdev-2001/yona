@@ -67,6 +67,7 @@ const LoginForm = ({
             autoComplete='email'
             type='email'
             id='super_admin_email'
+            className='h-11 md:h-9'
             placeholder={labels.emailPlaceholder}
             value={email}
             onChange={event => onEmailChange(event.target.value)}
@@ -77,9 +78,10 @@ const LoginForm = ({
           <FieldLabel htmlFor='super_admin_password' className='leading-5'>
             {labels.password}
           </FieldLabel>
-          <InputGroup>
+          <InputGroup className='h-11 md:h-9'>
             <InputGroupInput
               id='super_admin_password'
+              className='h-11 md:h-9'
               autoComplete='current-password'
               type={isVisible ? 'text' : 'password'}
               placeholder='••••••••••••••••'
@@ -92,7 +94,7 @@ const LoginForm = ({
                 variant='ghost'
                 size='icon'
                 onClick={() => setIsVisible(prevState => !prevState)}
-                className='text-muted-foreground rounded-l-none hover:bg-transparent'
+                className='text-muted-foreground size-11 rounded-l-none hover:bg-transparent md:size-9'
               >
                 {isVisible ? <EyeOffIcon /> : <EyeIcon />}
                 <span className='sr-only'>{isVisible ? labels.hidePassword : labels.showPassword}</span>
@@ -101,7 +103,7 @@ const LoginForm = ({
           </InputGroup>
         </Field>
         <Field>
-          <Button className='w-full' type='submit' disabled={processing}>
+          <Button className='h-11 w-full md:h-9' type='submit' disabled={processing}>
             {labels.submit}
           </Button>
         </Field>

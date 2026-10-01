@@ -31,16 +31,7 @@ export interface ResourceTableProps {
 }
 
 // Sắp xếp, lọc, phân trang đều do máy chủ làm; bảng chỉ vẽ trang hiện tại.
-export function ResourceTable({
-  label,
-  rows,
-  columns,
-  totalPages,
-  sorting,
-  sortTitle,
-  onSort,
-  onOpenRow
-}: ResourceTableProps) {
+export function ResourceTable({ label, rows, columns, totalPages, sorting, sortTitle, onSort, onOpenRow }: ResourceTableProps) {
   // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
     data: rows,
@@ -76,21 +67,14 @@ export function ResourceTable({
               {headerGroup.headers.map(header => {
                 const sorted = header.column.getIsSorted()
                 const numeric = header.column.columnDef.meta?.numeric
-                const headerLabel =
-                  typeof header.column.columnDef.header === 'string' ? header.column.columnDef.header : ''
+                const headerLabel = typeof header.column.columnDef.header === 'string' ? header.column.columnDef.header : ''
 
                 return (
                   <TableHead
                     key={header.id}
                     scope='col'
                     aria-sort={
-                      header.column.getCanSort()
-                        ? sorted === 'asc'
-                          ? 'ascending'
-                          : sorted === 'desc'
-                            ? 'descending'
-                            : 'none'
-                        : undefined
+                      header.column.getCanSort() ? (sorted === 'asc' ? 'ascending' : sorted === 'desc' ? 'descending' : 'none') : undefined
                     }
                     className={cn(
                       'text-muted-foreground first:pl-4 last:px-4',
@@ -131,11 +115,7 @@ export function ResourceTable({
         </TableHeader>
         <TableBody>
           {table.getRowModel().rows.map(row => (
-            <TableRow
-              key={row.id}
-              className={cn(row.original.url && 'cursor-pointer')}
-              onClick={event => openRow(event, row.original.url)}
-            >
+            <TableRow key={row.id} className={cn(row.original.url && 'cursor-pointer')} onClick={event => openRow(event, row.original.url)}>
               {row.getVisibleCells().map(cell => (
                 <TableCell key={cell.id} className='h-14 first:pl-4 last:px-4'>
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}

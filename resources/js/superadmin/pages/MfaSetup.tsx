@@ -210,7 +210,7 @@ export default function SuperAdminMfaSetup() {
                             <FieldLabel htmlFor="mfaCode" className="text-base">
                                 {t('MFA_SETTINGS.SETUP.ENTER_CODE')}
                             </FieldLabel>
-                            <InputOTP
+                            <InputOTP pushPasswordManagerStrategy="none"
                                 id="mfaCode"
                                 maxLength={OTP_LENGTH}
                                 pattern="^[0-9]+$"

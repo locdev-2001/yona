@@ -70,7 +70,7 @@ const TwoStepsV1Form = ({ isVerifying, errorMessage, labels, onVerify, onCancel 
             <FieldLabel htmlFor={useBackupCode ? 'backupCode' : 'recoveryCode'} className='text-base'>
               {useBackupCode ? labels.backupCode : labels.otpCode}
             </FieldLabel>
-            <Button type='button' variant='link' className='h-auto p-0 text-base font-medium' onClick={toggleMethod}>
+            <Button type='button' variant='link' className='h-auto min-h-11 p-0 text-base font-medium md:min-h-0' onClick={toggleMethod}>
               {useBackupCode ? labels.useAuthenticator : labels.useBackupCode}
             </Button>
           </div>
@@ -86,7 +86,7 @@ const TwoStepsV1Form = ({ isVerifying, errorMessage, labels, onVerify, onCancel 
               onChange={event => setBackupCode(event.target.value.trim())}
             />
           ) : (
-            <InputOTP
+            <InputOTP pushPasswordManagerStrategy="none"
               id='recoveryCode'
               autoFocus
               maxLength={OTP_LENGTH}
@@ -116,10 +116,10 @@ const TwoStepsV1Form = ({ isVerifying, errorMessage, labels, onVerify, onCancel 
         ) : null}
 
         <Field>
-          <Button size='lg' className='w-full' type='submit' disabled={!canSubmit || isVerifying}>
+          <Button size='lg' className='h-11 w-full md:h-10' type='submit' disabled={!canSubmit || isVerifying}>
             {labels.submit}
           </Button>
-          <Button type='button' variant='ghost' className='w-full' onClick={onCancel}>
+          <Button type='button' variant='ghost' className='h-11 w-full md:h-9' onClick={onCancel}>
             {labels.cancel}
           </Button>
         </Field>

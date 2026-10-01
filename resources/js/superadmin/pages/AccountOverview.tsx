@@ -599,7 +599,7 @@ export default function AccountOverview(props: AccountOverviewProps) {
                     ) : null}
 
                     <Tabs value={tab} onValueChange={value => selectTab(value as Tab)} className="flex-1 justify-between gap-6">
-                        <TabsList className="grid w-full grid-cols-3 group-data-horizontal/tabs:h-auto sm:flex sm:group-data-horizontal/tabs:h-9 **:group-data-[orientation=horizontal]/tabs:after:h-0">
+                        <TabsList variant="line" className="grid w-full grid-cols-3 group-data-horizontal/tabs:h-auto sm:flex sm:group-data-horizontal/tabs:h-9">
                                 {TABS.map(key => (
                                     <TabsTrigger key={key} value={key} className="h-11 sm:h-full">
                                         {label(`TABS.${key.toUpperCase()}`)}

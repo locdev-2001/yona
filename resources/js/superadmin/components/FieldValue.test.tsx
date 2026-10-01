@@ -52,10 +52,7 @@ describe('FieldValue', () => {
     it('vẽ liên kết cho quan hệ belongs_to', () => {
         render(<FieldValue field={field('belongs_to', { label: '#1 Acme Inc', url: '/admin/accounts/1' })} />);
 
-        expect(screen.getByRole('link', { name: '#1 Acme Inc' })).toHaveAttribute(
-            'href',
-            '/admin/accounts/1',
-        );
+        expect(screen.getByRole('link', { name: '#1 Acme Inc' })).toHaveAttribute('href', '/admin/accounts/1');
     });
 
     it('báo rỗng khi chưa có lịch sử đình chỉ', () => {
@@ -67,9 +64,7 @@ describe('FieldValue', () => {
     it('liệt kê lịch sử đình chỉ khi có', () => {
         render(
             <FieldValue
-                field={field('suspension_history_field', [
-                    { category: 'spam', reason: 'Gửi thư rác', suspended_at: '2026-09-06T00:00:00Z' },
-                ])}
+                field={field('suspension_history_field', [{ category: 'spam', reason: 'Gửi thư rác', suspended_at: '2026-09-06T00:00:00Z' }])}
             />,
         );
 
