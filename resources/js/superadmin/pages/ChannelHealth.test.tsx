@@ -80,9 +80,11 @@ describe('ChannelHealth', () => {
     });
 
     it('không có hộp thư hỏng thì báo mọi kênh khoẻ', () => {
-        render(<ChannelHealth {...baseProps} items={[]} />);
+        const { container } = render(<ChannelHealth {...baseProps} items={[]} />);
 
         expect(screen.getByText('All channels are healthy')).toBeInTheDocument();
+        // Bảng rỗng: đầu cột chỉ còn cho trình đọc màn hình.
+        expect(container.querySelector('thead')).toHaveClass('sr-only');
     });
 
     it('chi tiết dạng số đổi thành số lần lỗi', () => {

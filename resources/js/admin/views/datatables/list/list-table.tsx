@@ -48,7 +48,8 @@ export function ListTable<TData>({ data, columns, getRowId, empty, expandedRowId
     <>
       {hasRows ? <MobileRows table={table} expandedRowId={expandedRowId} renderExpanded={renderExpanded} /> : null}
       <Table className={cn(hasRows && 'max-md:hidden')}>
-        <TableHeader>
+        {/* Bảng rỗng chỉ còn ô trạng thái: đầu cột không có gì để đặt tên. */}
+        <TableHeader className={cn(!hasRows && 'sr-only')}>
           {table.getHeaderGroups().map(headerGroup => (
             <TableRow key={headerGroup.id} className='h-14 border-t'>
               {headerGroup.headers.map(header => (
@@ -83,8 +84,8 @@ export function ListTable<TData>({ data, columns, getRowId, empty, expandedRowId
               </Fragment>
             ))
           ) : (
-            <TableRow className='hover:bg-transparent'>
-              <TableCell colSpan={columns.length} className='h-24 text-center whitespace-normal'>
+            <TableRow className='border-b-0 hover:bg-transparent'>
+              <TableCell colSpan={columns.length} className='h-24 border-t text-center whitespace-normal'>
                 {empty}
               </TableCell>
             </TableRow>

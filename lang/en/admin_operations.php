@@ -84,6 +84,10 @@ return [
         'NO_MATCH' => 'No inbox matches these filters.',
     ],
     'ACCOUNT_OVERVIEW' => [
+        'PAGE' => [
+            'TITLE' => 'Account profile',
+            'DESCRIPTION' => 'Numbers, members, inboxes and activity of {name}.',
+        ],
         'BACK' => 'Accounts',
         'STATUS' => [
             'active' => 'Active',
@@ -130,6 +134,7 @@ return [
             'CONTACTS' => 'Contacts',
             'MESSAGES_7D' => 'Messages 7 days',
             'MESSAGES_30D' => 'Messages 30 days',
+            'DAILY_AVERAGE' => 'Average {value} messages/day',
         ],
         'TABS' => [
             'OVERVIEW' => 'Overview',
@@ -186,18 +191,13 @@ return [
         ],
         'ONBOARDING' => [
             'CURRENT_STEP' => 'Current step: {step}',
+            'DESCRIPTION' => 'The same six steps as the activation funnel on the Overview. Dates are when each step was first recorded, so they may not follow step order.',
+            'DONE_COUNT' => '{done}/{total} steps',
             'FINISHED' => 'Onboarding finished',
             'STEPS' => [
                 'account_details' => 'Fill in account details',
                 'account_update' => 'Update account',
                 'invite_team' => 'Invite teammates',
-            ],
-            'MILESTONES' => [
-                'account_details' => 'Business details filled in',
-                'first_inbox' => 'First inbox connected',
-                'team_invited' => 'Teammates invited',
-                'first_incoming' => 'First customer message received',
-                'first_reply' => 'First reply sent',
             ],
         ],
         'AUDIT' => [

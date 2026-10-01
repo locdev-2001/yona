@@ -31,7 +31,7 @@ it('account 360 gom số liệu, thành viên, hộp thư, dòng thời gian và
     $owner = operationsAccountMember($account);
     Inbox::factory()->zalo()->create(['account_id' => $account->id, 'name' => 'Zalo chính']);
     Message::factory()->count(2)->create(['account_id' => $account->id]);
-    Message::factory()->outgoing()->create(['account_id' => $account->id]);
+    Message::factory()->outgoing()->create(['account_id' => $account->id, 'sender_type' => $owner->getMorphClass(), 'sender_id' => $owner->id]);
     Message::factory()->create(['account_id' => $account->id, 'created_at' => now()->subDays(20)]);
 
     ($this->asSuperAdmin)()->get("/admin/accounts/{$account->id}/overview")
@@ -49,8 +49,13 @@ it('account 360 gom số liệu, thành viên, hộp thư, dòng thời gian và
             ->has('usage', AccountActivity::MONTH_MESSAGE_DAYS)
             ->where('usage', fn ($usage) => collect($usage)->sum('count') === 4)
             ->where('onboarding.step', 'invite_team')
-            ->where('onboarding.milestones', fn ($milestones) => collect($milestones)->firstWhere('key', 'first_reply')['done'] === true
-                && collect($milestones)->firstWhere('key', 'team_invited')['done'] === false)
+            // Cùng sáu bước, cùng thứ tự với phễu kích hoạt của trang Tổng quan.
+            ->where('onboarding.milestones', fn ($milestones) => collect($milestones)->pluck('key')->all()
+                === ['signed_up', 'confirmed_email', 'created_inbox', 'connected_channel', 'received_message', 'replied']
+                && collect($milestones)->firstWhere('key', 'replied')['done'] === true
+                && collect($milestones)->firstWhere('key', 'created_inbox')['done'] === true
+                && collect($milestones)->firstWhere('key', 'connected_channel')['done'] === false
+                && collect($milestones)->firstWhere('key', 'signed_up')['label'] === __('admin_dashboard.FUNNEL_STEPS.SIGNED_UP'))
             ->where('timeline', fn ($timeline) => collect($timeline)->pluck('type')->contains('inbox_created')
                 && collect($timeline)->pluck('type')->contains('account_created'))
             ->where('urls.suspend', "/admin/accounts/{$account->id}/suspend")

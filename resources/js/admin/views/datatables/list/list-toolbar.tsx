@@ -47,7 +47,7 @@ export function ListToolbar({ search, filters, children }: ListToolbarProps) {
   ) : null
 
   return (
-    <div className='flex gap-3 p-4 max-sm:flex-col sm:items-start sm:justify-between md:px-6'>
+    <div className='flex gap-3 px-6 py-4 max-sm:flex-col sm:items-start sm:justify-between'>
       <div className='flex min-w-0 flex-1 flex-wrap gap-3 max-sm:flex-col sm:items-center'>
         {search?.onSubmit ? (
           <form

@@ -10,6 +10,8 @@ declare module '@tanstack/react-table' {
     numeric?: boolean
     // Trên thẻ di động: 'actions' nằm cạnh tiêu đề thay vì thành cặp nhãn - giá trị.
     mobileRole?: 'actions'
+    // Trên thẻ di động bỏ cột này cho thẻ ngắn lại; bảng máy tính vẫn có.
+    mobileHidden?: boolean
   }
 }
 

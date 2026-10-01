@@ -5,10 +5,13 @@ namespace App\Services\Admin\Operations;
 use App\Models\Account;
 use App\Models\AccountUser;
 use App\Models\Message;
+use App\Models\ProductEvent;
 use App\Models\Sticker;
 use App\Models\StickerPack;
 use App\Models\SuperAdminImpersonation;
+use App\Models\User;
 use App\Services\Admin\Operations\ChannelHealth\ChannelHealthInspector;
+use App\Services\ProductEvents\ProductEventName;
 use App\Support\SuperAdminArea;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Carbon;
@@ -58,7 +61,7 @@ final class AccountOverview
             'inboxes' => $this->channelHealth->forAccount($account),
             'stats' => [...$this->stats($account), 'users' => $accountUsers->count()],
             'usage' => AccountActivity::dailyMessages($account),
-            'onboarding' => $this->onboarding($account, $accountUsers->count()),
+            'onboarding' => $this->onboarding($account),
             'timeline' => AccountActivity::timeline($account),
             'features' => $this->featureUsage->forAccount($account),
             'stickers' => $this->stickerStats($account),
@@ -102,29 +105,42 @@ final class AccountOverview
         ];
     }
 
-    // Mốc kích hoạt: bước onboarding đang đứng + các việc đầu tiên đã làm chưa (kèm lúc làm).
+    // Tiến độ kích hoạt: CÙNG sáu bước, cùng tên và cùng định nghĩa với phễu kích hoạt ở trang Tổng quan
+    // (ActivationFunnelWidget::STEPS) và mốc kích hoạt ở Mức dùng tính năng (tên sự kiện sản phẩm).
+    // Khác phễu ở một chỗ: đây là một tài khoản nên mỗi bước đứng riêng (không đòi đã qua bước trước),
+    // ngày là lần đầu ghi nhận. Bước onboarding đang đứng hiện thành dòng riêng ở đầu thẻ.
     /** @return array{step: ?string, stepLabel: ?string, milestones: list<array{key: string, label: string, done: bool, at: ?string}>} */
-    private function onboarding(Account $account, int $usersCount): array
+    private function onboarding(Account $account): array
     {
         $step = $account->onboardingStep();
-        $firstOf = fn (int $type) => Message::query()->where('account_id', $account->id)->where('message_type', $type)->min('created_at');
+        $firstEvent = fn (ProductEventName $name) => ProductEvent::query()
+            ->where('account_id', $account->id)
+            ->where('name', $name->value)
+            ->min('occurred_at');
+        $messages = Message::query()->where('account_id', $account->id);
         $milestones = [
-            'account_details' => [$step !== 'account_details', null],
-            'first_inbox' => [null, $account->inboxes()->min('created_at')],
-            'team_invited' => [$usersCount > 1, null],
-            'first_incoming' => [null, $firstOf(Message::TYPE_INCOMING)],
-            'first_reply' => [null, $firstOf(Message::TYPE_OUTGOING)],
+            'signed_up' => $account->created_at,
+            'confirmed_email' => $firstEvent(ProductEventName::EmailConfirmed),
+            'created_inbox' => $account->inboxes()->min('created_at'),
+            'connected_channel' => $firstEvent(ProductEventName::ChannelConnected),
+            'received_message' => (clone $messages)->where('message_type', Message::TYPE_INCOMING)->min('created_at'),
+            // Như phễu: tin ra công khai do nhân viên gửi (không tính bot, tự động hay ghi chú nội bộ).
+            'replied' => (clone $messages)
+                ->where('message_type', Message::TYPE_OUTGOING)
+                ->where('private', false)
+                ->where('sender_type', (new User)->getMorphClass())
+                ->min('created_at'),
         ];
 
         return [
             'step' => $step,
             'stepLabel' => $step === null ? null : $this->translated("admin_operations.ACCOUNT_OVERVIEW.ONBOARDING.STEPS.{$step}", $step),
             'milestones' => array_map(
-                fn (string $key, array $state) => [
+                fn (string $key, mixed $at) => [
                     'key' => $key,
-                    'label' => (string) __("admin_operations.ACCOUNT_OVERVIEW.ONBOARDING.MILESTONES.{$key}"),
-                    'done' => $state[0] ?? $state[1] !== null,
-                    'at' => $this->iso($state[1]),
+                    'label' => (string) __('admin_dashboard.FUNNEL_STEPS.'.strtoupper($key)),
+                    'done' => $at !== null,
+                    'at' => $this->iso($at),
                 ],
                 array_keys($milestones),
                 $milestones,

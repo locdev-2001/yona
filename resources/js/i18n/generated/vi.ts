@@ -3,7 +3,9 @@ const messages: Record<string, unknown> = {
     "ADMIN_ALERTS": {
         "NAV": "Cảnh báo",
         "TITLE": "Cảnh báo",
-        "DESCRIPTION": "Vượt ngưỡng thì mọi super admin nhận email và thông báo đẩy, mỗi sự cố một lần, hồi phục báo thêm một lần. Hệ thống đo lại mỗi 5 phút.",
+        "DESCRIPTION": "Vượt ngưỡng thì mọi super admin nhận email và thông báo đẩy khi sự cố mở và khi hồi phục. Đo lại mỗi 5 phút.",
+        "RULES_TITLE": "Luật cảnh báo",
+        "FIRING_SINCE": "Đang báo từ {time}",
         "RULES": {
             "failing_channels": {
                 "TITLE": "Kênh đang lỗi",
@@ -70,6 +72,10 @@ const messages: Record<string, unknown> = {
         "OPEN_PAGE": "Mở trang liên quan",
         "DISPLAY": {
             "SECONDS": "{count} giây",
+            "MINUTES": "{count} phút",
+            "MINUTES_SECONDS": "{minutes} phút {seconds} giây",
+            "HOURS": "{count} giờ",
+            "HOURS_MINUTES": "{hours} giờ {minutes} phút",
             "DOWN": "Không phản hồi",
             "UP": "Đang phản hồi",
             "NONE": "Chưa đo"
@@ -84,7 +90,7 @@ const messages: Record<string, unknown> = {
                 "PEAK": "Cao nhất / ngưỡng",
                 "NOTIFIED": "Thông báo"
             },
-            "OPEN": "Đang mở",
+            "OPEN": "Đang báo",
             "NOTIFIED": "Đã báo",
             "NOT_NOTIFIED": "Chưa báo, đang trong thời gian chờ",
             "RECOVERY_NOTIFIED": "Đã báo sự cố và hồi phục",
@@ -205,8 +211,8 @@ const messages: Record<string, unknown> = {
                 "DESCRIPTION": "Tin khách gửi vào và tin trả lời ra mỗi ngày."
             },
             "CONVERSATIONS_BY_CHANNEL": {
-                "TITLE": "Hội thoại mới theo kênh",
-                "DESCRIPTION": "Hội thoại tạo trong khoảng, chia theo loại kênh."
+                "TITLE": "Hội thoại theo kênh",
+                "DESCRIPTION": "Hội thoại mới tạo trong khoảng, chia theo loại kênh."
             },
             "CHANNEL_HEALTH": {
                 "TITLE": "Sức khoẻ kênh",
@@ -222,7 +228,7 @@ const messages: Record<string, unknown> = {
             },
             "ACTIVATION_FUNNEL": {
                 "TITLE": "Phễu kích hoạt",
-                "DESCRIPTION": "Tài khoản đăng ký trong khoảng đi được tới bước nào."
+                "DESCRIPTION": "Chỉ tính tài khoản đăng ký trong khoảng đang xem."
             },
             "COHORT_RETENTION": {
                 "TITLE": "Giữ chân theo tuần đăng ký",
@@ -264,12 +270,12 @@ const messages: Record<string, unknown> = {
             "INBOXES_TOTAL": "Hộp thư"
         },
         "FUNNEL_STEPS": {
-            "SIGNED_UP": "Đăng ký",
+            "SIGNED_UP": "Đăng ký tài khoản",
             "CONFIRMED_EMAIL": "Xác nhận email",
             "CREATED_INBOX": "Tạo hộp thư",
             "CONNECTED_CHANNEL": "Kết nối kênh",
-            "RECEIVED_MESSAGE": "Nhận tin đầu tiên",
-            "REPLIED": "Trả lời tin đầu tiên"
+            "RECEIVED_MESSAGE": "Nhận tin khách đầu tiên",
+            "REPLIED": "Trả lời khách lần đầu"
         },
         "FUNNEL": {
             "FROM_START": "{rate}% so với đăng ký",
@@ -280,6 +286,9 @@ const messages: Record<string, unknown> = {
         "TREND": {
             "TOTAL": "Tổng trong khoảng",
             "PEAK": "Ngày cao nhất",
+            "PEAK_INCOMING": "Ngày nhiều tin vào nhất",
+            "PEAK_MESSAGES": "{count} tin, ngày {date}",
+            "ON_DATE": "ngày {date}",
             "AVERAGE": "Trung bình mỗi ngày",
             "REPLY_RATIO": "Tin ra trên tin vào"
         },
@@ -296,8 +305,7 @@ const messages: Record<string, unknown> = {
         "COHORT": {
             "WEEK": "Tuần đăng ký",
             "SIZE": "Tài khoản",
-            "OFFSET": "Tuần {n}",
-            "SCROLL_HINT": "Vuốt ngang để xem các tuần sau.",
+            "OFFSET_GROUP": "% còn trả lời khách, theo tuần sau đăng ký",
             "CELL": "Tuần {week}, tuần thứ {offset}: {active} trên {size} tài khoản ({rate}%)"
         },
         "CHANNEL_HEALTH": {
@@ -405,6 +413,14 @@ const messages: Record<string, unknown> = {
             "logout": "Đăng xuất",
             "flash_notice": "Thông báo",
             "flash_error": "Có lỗi",
+            "resource_description_accounts": "Doanh nghiệp đang dùng Yona, kèm hộp thư, hội thoại, thành viên và lần hoạt động gần nhất.",
+            "resource_description_users": "Mọi người đăng nhập được vào Yona, kể cả super admin.",
+            "resource_description_access_tokens": "Token gọi API của người dùng, agent bot và ứng dụng nền tảng.",
+            "resource_description_installation_configs": "Biến cấu hình dùng chung cho toàn hệ thống.",
+            "resource_description_agent_bots": "Bot nhận và trả lời tin thay nhân viên qua webhook.",
+            "resource_description_platform_apps": "Ứng dụng gọi Platform API để quản lý tài khoản và người dùng.",
+            "resource_description_account_users": "Thành viên của từng tài khoản và vai trò của họ.",
+            "resource_description_impersonations": "Mỗi lần super admin đăng nhập hộ một người dùng, kèm lý do.",
             "records_total": "{total} bản ghi",
             "search_records": "Tìm trong {resource}…",
             "clear_search": "Xoá tìm kiếm",
@@ -691,7 +707,7 @@ const messages: Record<string, unknown> = {
             "accounts": "Tài khoản",
             "account_users": "Thành viên",
             "user": "Người dùng",
-            "users": "Người dùng",
+            "users": "Thành viên",
             "inviter": "Người mời",
             "inboxes": "Hộp thư",
             "conversations": "Hội thoại",
@@ -799,6 +815,10 @@ const messages: Record<string, unknown> = {
             "NO_MATCH": "Không có hộp thư nào khớp bộ lọc."
         },
         "ACCOUNT_OVERVIEW": {
+            "PAGE": {
+                "TITLE": "Hồ sơ tài khoản",
+                "DESCRIPTION": "Số liệu, thành viên, hộp thư và hoạt động của {name}."
+            },
             "BACK": "Danh sách tài khoản",
             "STATUS": {
                 "active": "Đang hoạt động",
@@ -844,7 +864,8 @@ const messages: Record<string, unknown> = {
                 "CONVERSATIONS": "Hội thoại",
                 "CONTACTS": "Liên hệ",
                 "MESSAGES_7D": "Tin 7 ngày",
-                "MESSAGES_30D": "Tin 30 ngày"
+                "MESSAGES_30D": "Tin 30 ngày",
+                "DAILY_AVERAGE": "Trung bình {value} tin/ngày"
             },
             "TABS": {
                 "OVERVIEW": "Tổng quan",
@@ -901,18 +922,13 @@ const messages: Record<string, unknown> = {
             },
             "ONBOARDING": {
                 "CURRENT_STEP": "Đang ở bước: {step}",
+                "DESCRIPTION": "Cùng sáu bước với phễu kích hoạt ở Tổng quan. Ngày là lần đầu ghi nhận nên có thể không theo thứ tự bước.",
+                "DONE_COUNT": "{done}/{total} bước",
                 "FINISHED": "Đã xong onboarding",
                 "STEPS": {
                     "account_details": "Điền thông tin tài khoản",
                     "account_update": "Cập nhật tài khoản",
                     "invite_team": "Mời đồng đội"
-                },
-                "MILESTONES": {
-                    "account_details": "Điền thông tin doanh nghiệp",
-                    "first_inbox": "Kết nối hộp thư đầu tiên",
-                    "team_invited": "Mời thêm thành viên",
-                    "first_incoming": "Nhận tin khách đầu tiên",
-                    "first_reply": "Trả lời khách lần đầu"
                 }
             },
             "AUDIT": {
@@ -1055,15 +1071,16 @@ const messages: Record<string, unknown> = {
             },
             "COLUMNS": {
                 "FEATURE": "Tính năng",
-                "ACCOUNTS_7D": "TK 7 ngày",
-                "ACCOUNTS_30D": "TK 30 ngày",
-                "ACCOUNTS_90D": "TK 90 ngày",
-                "ACCOUNTS_ALL": "TK tất cả",
+                "ACCOUNTS_7D": "Tài khoản 7 ngày",
+                "ACCOUNTS_30D": "Tài khoản 30 ngày",
+                "ACCOUNTS_90D": "Tài khoản 90 ngày",
+                "ACCOUNTS_ALL": "Tài khoản từ đầu",
                 "EVENTS": "Tổng lượt",
                 "LAST": "Lần gần nhất",
                 "TREND": "Xu hướng 30 ngày"
             },
-            "ACCOUNTS_HINT": "TK = số tài khoản đã dùng trong khoảng",
+            "ACCOUNTS_HINT": "Cột tài khoản đếm số tài khoản đã dùng trong khoảng đó.",
+            "UNUSED_TITLE": "Chưa tài khoản nào dùng ({count})",
             "TREND_SUMMARY": "{count} lượt trong 30 ngày",
             "OPEN": "Xem tài khoản dùng {feature}",
             "EMPTY_TITLE": "Chưa có sự kiện nào",

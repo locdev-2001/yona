@@ -10,10 +10,10 @@ export type CohortRowView = { key: string; week: string; size: string; cells: Co
 
 type Props = {
   caption: string
-  // Dòng nhắc vuốt ngang, chỉ hiện khi ô hẹp hơn bảng.
-  scrollHint: string
   weekLabel: string
   sizeLabel: string
+  // Tiêu đề nhóm trên các cột tuần ("Tuần sau khi đăng ký"); từng cột chỉ in số tuần 0, 1, 2…
+  offsetGroupLabel: string
   offsetLabels: string[]
   rows: CohortRowView[]
 }
@@ -30,50 +30,58 @@ const cellClass = (rate: number | null) => {
   return 'bg-primary-700 text-neutral-0'
 }
 
-const CohortTable = ({ caption, scrollHint, weekLabel, sizeLabel, offsetLabels, rows }: Props) => {
+// Bảng vừa khít bề ngang cả trên điện thoại (không cắt cột ở mép): cột tuần chỉ in số, tiêu đề nhóm
+// nằm trên; ô hẹp ẩn cột số tài khoản (vẫn có trong chú thích từng ô).
+const CohortTable = ({ caption, weekLabel, sizeLabel, offsetGroupLabel, offsetLabels, rows }: Props) => {
   return (
-    <div className='flex flex-col gap-2'>
-      <Table className='min-w-[34rem] text-xs tabular-nums'>
-        <TableCaption className='sr-only'>{caption}</TableCaption>
-        <TableHeader>
-          <TableRow className='hover:bg-transparent'>
-            <TableHead className='text-muted-foreground bg-card sticky left-0 z-10 w-24'>{weekLabel}</TableHead>
-            <TableHead className='text-muted-foreground w-20 pr-4 text-right'>{sizeLabel}</TableHead>
-            {offsetLabels.map(label => (
-              <TableHead key={label} className='text-muted-foreground text-center'>
-                {label}
-              </TableHead>
-            ))}
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {rows.map(row => (
-            <TableRow key={row.key} className='border-0 hover:bg-transparent'>
-              <TableHead scope='row' className='bg-card sticky left-0 z-10'>
-                {row.week}
-              </TableHead>
-              <TableCell className='pr-4 text-right'>{row.size}</TableCell>
-              {offsetLabels.map((label, index) => {
-                const cell = row.cells[index]
-                if (!cell) return <TableCell key={label} />
-
-                return (
-                  <TableCell key={label} className='p-0.5'>
-                    <span
-                      title={cell.title}
-                      className={cn('font-num block rounded-sm px-1 py-1.5 text-center', cellClass(cell.rate))}
-                    >
-                      {cell.label}
-                    </span>
-                  </TableCell>
-                )
-              })}
-            </TableRow>
+    <Table className='font-num table-fixed text-xs'>
+      <TableCaption className='sr-only'>{caption}</TableCaption>
+      <TableHeader>
+        <TableRow className='hover:bg-transparent'>
+          <TableHead rowSpan={2} className='text-muted-foreground w-12 px-1 align-bottom whitespace-normal @lg:w-24 @lg:px-2'>
+            {weekLabel}
+          </TableHead>
+          <TableHead rowSpan={2} className='text-muted-foreground hidden w-20 pr-4 text-right align-bottom @lg:table-cell'>
+            {sizeLabel}
+          </TableHead>
+          <TableHead colSpan={offsetLabels.length} className='text-muted-foreground h-7 px-1 text-center'>
+            {offsetGroupLabel}
+          </TableHead>
+        </TableRow>
+        <TableRow className='hover:bg-transparent'>
+          {offsetLabels.map(label => (
+            <TableHead key={label} className='text-muted-foreground h-7 px-0 text-center'>
+              {label}
+            </TableHead>
           ))}
-        </TableBody>
-      </Table>
-      <p className='text-muted-foreground text-xs @xl:hidden'>{scrollHint}</p>
-    </div>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {rows.map(row => (
+          <TableRow key={row.key} className='border-0 hover:bg-transparent'>
+            <TableHead scope='row' className='px-1 @lg:px-2'>
+              {row.week}
+            </TableHead>
+            <TableCell className='hidden pr-4 text-right @lg:table-cell'>{row.size}</TableCell>
+            {offsetLabels.map((label, index) => {
+              const cell = row.cells[index]
+              if (!cell) return <TableCell key={label} className='p-0.5' />
+
+              return (
+                <TableCell key={label} className='p-0.5'>
+                  <span
+                    title={cell.title}
+                    className={cn('block rounded-sm px-0 py-1.5 text-center', cellClass(cell.rate))}
+                  >
+                    {cell.label}
+                  </span>
+                </TableCell>
+              )
+            })}
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
   )
 }
 

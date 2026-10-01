@@ -13,7 +13,7 @@ vi.mock('@inertiajs/react', () => ({
     usePage: () => ({ props: { errors: {} } }),
 }));
 
-import FeatureUsage, { TrendBars } from './FeatureUsage';
+import FeatureUsage, { TrendBars, rankFeatures } from './FeatureUsage';
 import type { FeatureRow } from './FeatureUsage';
 import FeatureUsageAccounts from './FeatureUsageAccounts';
 
@@ -52,8 +52,20 @@ describe('FeatureUsage', () => {
         expect(within(activation).getAllByText('11').length).toBeGreaterThan(0);
         expect(within(activation).getAllByRole('img', { name: '3 uses in 30 days' }).length).toBeGreaterThan(0);
 
+        // Tính năng chưa ai dùng không chiếm một dòng bảng, chỉ còn một nút dưới bảng.
         const features = screen.getByRole('region', { name: 'Features' });
-        expect(within(features).getAllByText('Never').length).toBeGreaterThan(0);
+        expect(within(features).getByText('Not used by any account yet (1)')).toBeInTheDocument();
+        expect(within(features).getByRole('link', { name: 'See accounts using Macro run' })).toHaveAttribute('href', '/admin/feature_usage/macro_run');
+    });
+
+    it('tính năng có người dùng xếp theo số tài khoản 30 ngày', () => {
+        expect(
+            rankFeatures([
+                row({ key: 'a', accounts: { '7d': 0, '30d': 1, '90d': 1, all: 1 }, events: 1 }),
+                row({ key: 'b' }),
+                row({ key: 'c', accounts: { '7d': 3, '30d': 4, '90d': 4, all: 4 }, events: 9 }),
+            ]).map(feature => feature.key),
+        ).toEqual(['c', 'a']);
     });
 
     it('chưa có sự kiện nào thì chỉ lối dựng lại từ dữ liệu cũ', () => {
@@ -62,7 +74,7 @@ describe('FeatureUsage', () => {
         expect(screen.getAllByText('Run product-events:backfill to derive events from existing data.').length).toBe(2);
     });
 
-    it('cột xu hướng cao theo ngày nhiều lượt nhất, ngày 0 lượt chỉ còn rãnh', () => {
+    it('cột xu hướng cao theo ngày nhiều lượt nhất, ngày 0 lượt để trống', () => {
         const { container } = render(<TrendBars trend={[0, 2, 4]} />);
         const bars = container.querySelectorAll('[role="img"] > span');
 

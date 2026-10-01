@@ -6,6 +6,7 @@ import { Alert, AlertTitle } from '@admin/components/ui/alert';
 import { Button } from '@admin/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@admin/components/ui/card';
 import { ToggleGroup, ToggleGroupItem } from '@admin/components/ui/toggle-group';
+import PageHeader from '@admin/views/pages/page-header';
 
 import { t } from '../../i18n';
 import { resetLayout, saveLayout } from '../dashboard/api';
@@ -108,25 +109,27 @@ export default function SuperAdminDashboard(props: DashboardProps) {
     return (
         <div className="flex flex-col gap-6">
             <Head title={t('ADMIN_DASHBOARD.TITLE')} />
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-                <div className="min-w-0 space-y-1">
-                    <h1 className="text-xl font-bold">{t('ADMIN_DASHBOARD.TITLE')}</h1>
-                    <p className="text-muted-foreground text-sm">{t('ADMIN_DASHBOARD.DESCRIPTION')}</p>
-                </div>
-                <div className="flex flex-wrap items-center gap-2">
-                    <RangePicker ranges={ranges} value={range} onChange={setRange} />
-                    {editing ? (
-                        <Button variant="outline" onClick={reset}>
-                            <RotateCcwIcon />
-                            {t('ADMIN_DASHBOARD.ACTIONS.RESET')}
+            {/* Cùng khuôn đầu trang với mọi trang console (cỡ tiêu đề, cỡ dòng mô tả). */}
+            <PageHeader
+                title={t('ADMIN_DASHBOARD.TITLE')}
+                description={t('ADMIN_DASHBOARD.DESCRIPTION')}
+                className="mb-0 md:mb-0"
+                actions={
+                    <>
+                        <RangePicker ranges={ranges} value={range} onChange={setRange} />
+                        {editing ? (
+                            <Button variant="outline" onClick={reset}>
+                                <RotateCcwIcon />
+                                {t('ADMIN_DASHBOARD.ACTIONS.RESET')}
+                            </Button>
+                        ) : null}
+                        <Button variant={editing ? 'default' : 'outline'} aria-pressed={editing} onClick={() => setEditing(value => !value)}>
+                            {editing ? <CheckIcon /> : <Settings2Icon />}
+                            {editing ? t('ADMIN_DASHBOARD.ACTIONS.DONE') : t('ADMIN_DASHBOARD.ACTIONS.CUSTOMIZE')}
                         </Button>
-                    ) : null}
-                    <Button variant={editing ? 'default' : 'outline'} aria-pressed={editing} onClick={() => setEditing(value => !value)}>
-                        {editing ? <CheckIcon /> : <Settings2Icon />}
-                        {editing ? t('ADMIN_DASHBOARD.ACTIONS.DONE') : t('ADMIN_DASHBOARD.ACTIONS.CUSTOMIZE')}
-                    </Button>
-                </div>
-            </div>
+                    </>
+                }
+            />
 
             {editing ? (
                 <Alert>

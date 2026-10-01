@@ -63,6 +63,7 @@ export type ChannelHealthData = {
         accountName: string | null;
         platform: { key: string; name: string; logo_url?: string };
         problemLabel: string | null;
+        severity?: 'warning' | 'error' | null;
         since: string | null;
         url: string;
     }[];

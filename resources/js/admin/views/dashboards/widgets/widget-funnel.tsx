@@ -9,6 +9,8 @@ export type FunnelStepView = {
   key: string
   label: string
   count: string
+  // Tỉ lệ so với bước đầu, in nhạt cạnh số đếm ("25%").
+  share?: string
   // Độ rộng thanh: tỉ lệ so với bước đầu, 0–100.
   percentage: number
   caption?: string
@@ -17,7 +19,7 @@ export type FunnelStepView = {
   tone?: Tone
 }
 
-// Phễu: mỗi bước một thanh tiến độ, độ dài theo tỉ lệ so với bước đầu; mỗi bước một màu.
+// Phễu: mỗi bước một thanh tiến độ, độ dài theo tỉ lệ so với bước đầu; màu bước do nơi gọi chọn theo nghĩa.
 const FunnelProgress = ({ title, steps }: { title: string; steps: FunnelStepView[] }) => {
   return (
     <ol aria-label={title} className='flex flex-col gap-4'>
@@ -40,7 +42,14 @@ const FunnelProgress = ({ title, steps }: { title: string; steps: FunnelStepView
               className={cn('**:data-[slot=progress-track]:h-2', TONE_PROGRESS[step.tone ?? 'primary'])}
             >
               <ProgressLabel>{step.label}</ProgressLabel>
-              <ProgressValue className='font-num font-medium text-neutral-900'>{() => step.count}</ProgressValue>
+              <ProgressValue className='font-num font-medium text-neutral-900'>
+                {() => (
+                  <>
+                    {step.count}
+                    {step.share ? <span className='ml-1.5 font-normal text-neutral-500'>{step.share}</span> : null}
+                  </>
+                )}
+              </ProgressValue>
             </Progress>
             {step.caption ? <p className='font-num text-xs text-neutral-500'>{step.caption}</p> : null}
           </div>

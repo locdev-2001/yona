@@ -109,7 +109,7 @@ const TimeSeriesChart = ({
       <p id={summaryId} className='sr-only'>
         {summary}
       </p>
-      <ChartContainer config={chartConfig} className='aspect-auto h-60 w-full'>
+      <ChartContainer config={chartConfig} className='aspect-auto h-48 w-full @md:h-60'>
         {variant === 'bar' ? (
           <BarChart accessibilityLayer data={chartData} margin={{ left: -8, right: 8 }}>
             {axes}

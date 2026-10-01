@@ -52,6 +52,7 @@ final class ChannelHealthWidget extends MetricWidget
                 'accountName' => $item['accountName'],
                 'platform' => $item['platform'],
                 'problemLabel' => $item['problemLabel'],
+                'severity' => $item['severity'] ?? null,
                 'since' => $item['since'],
                 'url' => $item['url'],
             ], array_slice($summary['items'], 0, self::ITEMS_LIMIT)),

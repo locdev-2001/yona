@@ -3,7 +3,9 @@ const messages: Record<string, unknown> = {
     "ADMIN_ALERTS": {
         "NAV": "Alerts",
         "TITLE": "Alerts",
-        "DESCRIPTION": "When a threshold is crossed every super admin gets an email and a push notification, once per incident, plus once on recovery. Checked every 5 minutes.",
+        "DESCRIPTION": "When a threshold is crossed every super admin gets an email and a push notification when the incident opens and when it recovers. Checked every 5 minutes.",
+        "RULES_TITLE": "Alert rules",
+        "FIRING_SINCE": "Firing since {time}",
         "RULES": {
             "failing_channels": {
                 "TITLE": "Failing channels",
@@ -70,6 +72,10 @@ const messages: Record<string, unknown> = {
         "OPEN_PAGE": "Open related page",
         "DISPLAY": {
             "SECONDS": "{count} s",
+            "MINUTES": "{count} min",
+            "MINUTES_SECONDS": "{minutes} min {seconds} s",
+            "HOURS": "{count} h",
+            "HOURS_MINUTES": "{hours} h {minutes} min",
             "DOWN": "Unreachable",
             "UP": "Reachable",
             "NONE": "Not measured"
@@ -84,7 +90,7 @@ const messages: Record<string, unknown> = {
                 "PEAK": "Peak / threshold",
                 "NOTIFIED": "Notification"
             },
-            "OPEN": "Open",
+            "OPEN": "Firing",
             "NOTIFIED": "Notified",
             "NOT_NOTIFIED": "Not notified, in cooldown",
             "RECOVERY_NOTIFIED": "Notified and recovered",
@@ -205,8 +211,8 @@ const messages: Record<string, unknown> = {
                 "DESCRIPTION": "Incoming and outgoing messages per day."
             },
             "CONVERSATIONS_BY_CHANNEL": {
-                "TITLE": "New conversations by channel",
-                "DESCRIPTION": "Conversations created in the range, by channel type."
+                "TITLE": "Conversations by channel",
+                "DESCRIPTION": "New conversations created in the range, by channel type."
             },
             "CHANNEL_HEALTH": {
                 "TITLE": "Channel health",
@@ -222,7 +228,7 @@ const messages: Record<string, unknown> = {
             },
             "ACTIVATION_FUNNEL": {
                 "TITLE": "Activation funnel",
-                "DESCRIPTION": "How far accounts that signed up in the range got."
+                "DESCRIPTION": "Only accounts that signed up in the selected range."
             },
             "COHORT_RETENTION": {
                 "TITLE": "Retention by signup week",
@@ -264,12 +270,12 @@ const messages: Record<string, unknown> = {
             "INBOXES_TOTAL": "Inboxes"
         },
         "FUNNEL_STEPS": {
-            "SIGNED_UP": "Signed up",
-            "CONFIRMED_EMAIL": "Confirmed email",
-            "CREATED_INBOX": "Created inbox",
-            "CONNECTED_CHANNEL": "Connected a channel",
-            "RECEIVED_MESSAGE": "Received first message",
-            "REPLIED": "Replied to first message"
+            "SIGNED_UP": "Account signed up",
+            "CONFIRMED_EMAIL": "Email confirmed",
+            "CREATED_INBOX": "Inbox created",
+            "CONNECTED_CHANNEL": "Channel connected",
+            "RECEIVED_MESSAGE": "First customer message",
+            "REPLIED": "First reply"
         },
         "FUNNEL": {
             "FROM_START": "{rate}% of signups",
@@ -280,6 +286,9 @@ const messages: Record<string, unknown> = {
         "TREND": {
             "TOTAL": "Total in range",
             "PEAK": "Peak day",
+            "PEAK_INCOMING": "Busiest incoming day",
+            "PEAK_MESSAGES": "{count} messages on {date}",
+            "ON_DATE": "on {date}",
             "AVERAGE": "Daily average",
             "REPLY_RATIO": "Outgoing per incoming"
         },
@@ -296,8 +305,7 @@ const messages: Record<string, unknown> = {
         "COHORT": {
             "WEEK": "Signup week",
             "SIZE": "Accounts",
-            "OFFSET": "Week {n}",
-            "SCROLL_HINT": "Swipe sideways for later weeks.",
+            "OFFSET_GROUP": "% still replying, by week after signup",
             "CELL": "Week of {week}, week {offset}: {active} of {size} accounts ({rate}%)"
         },
         "CHANNEL_HEALTH": {
@@ -405,6 +413,14 @@ const messages: Record<string, unknown> = {
             "logout": "Log out",
             "flash_notice": "Notice",
             "flash_error": "Error",
+            "resource_description_accounts": "Businesses using Yona, with their inboxes, conversations, members and latest activity.",
+            "resource_description_users": "Everyone who can sign in to Yona, super admins included.",
+            "resource_description_access_tokens": "API tokens of users, agent bots and platform apps.",
+            "resource_description_installation_configs": "Configuration variables shared by the whole system.",
+            "resource_description_agent_bots": "Bots that receive and answer messages for agents through a webhook.",
+            "resource_description_platform_apps": "Apps that call the Platform API to manage accounts and users.",
+            "resource_description_account_users": "Members of each account and their roles.",
+            "resource_description_impersonations": "Each time a super admin signed in as a user, with the reason.",
             "records_total": "{total} records",
             "search_records": "Search {resource}…",
             "clear_search": "Clear search",
@@ -691,7 +707,7 @@ const messages: Record<string, unknown> = {
             "accounts": "Accounts",
             "account_users": "Account users",
             "user": "User",
-            "users": "Users",
+            "users": "Members",
             "inviter": "Inviter",
             "inboxes": "Inboxes",
             "conversations": "Conversations",
@@ -799,6 +815,10 @@ const messages: Record<string, unknown> = {
             "NO_MATCH": "No inbox matches these filters."
         },
         "ACCOUNT_OVERVIEW": {
+            "PAGE": {
+                "TITLE": "Account profile",
+                "DESCRIPTION": "Numbers, members, inboxes and activity of {name}."
+            },
             "BACK": "Accounts",
             "STATUS": {
                 "active": "Active",
@@ -844,7 +864,8 @@ const messages: Record<string, unknown> = {
                 "CONVERSATIONS": "Conversations",
                 "CONTACTS": "Contacts",
                 "MESSAGES_7D": "Messages 7 days",
-                "MESSAGES_30D": "Messages 30 days"
+                "MESSAGES_30D": "Messages 30 days",
+                "DAILY_AVERAGE": "Average {value} messages/day"
             },
             "TABS": {
                 "OVERVIEW": "Overview",
@@ -901,18 +922,13 @@ const messages: Record<string, unknown> = {
             },
             "ONBOARDING": {
                 "CURRENT_STEP": "Current step: {step}",
+                "DESCRIPTION": "The same six steps as the activation funnel on the Overview. Dates are when each step was first recorded, so they may not follow step order.",
+                "DONE_COUNT": "{done}/{total} steps",
                 "FINISHED": "Onboarding finished",
                 "STEPS": {
                     "account_details": "Fill in account details",
                     "account_update": "Update account",
                     "invite_team": "Invite teammates"
-                },
-                "MILESTONES": {
-                    "account_details": "Business details filled in",
-                    "first_inbox": "First inbox connected",
-                    "team_invited": "Teammates invited",
-                    "first_incoming": "First customer message received",
-                    "first_reply": "First reply sent"
                 }
             },
             "AUDIT": {
@@ -1055,15 +1071,16 @@ const messages: Record<string, unknown> = {
             },
             "COLUMNS": {
                 "FEATURE": "Feature",
-                "ACCOUNTS_7D": "Accts 7d",
-                "ACCOUNTS_30D": "Accts 30d",
-                "ACCOUNTS_90D": "Accts 90d",
-                "ACCOUNTS_ALL": "Accts all",
+                "ACCOUNTS_7D": "Accounts 7 days",
+                "ACCOUNTS_30D": "Accounts 30 days",
+                "ACCOUNTS_90D": "Accounts 90 days",
+                "ACCOUNTS_ALL": "Accounts all time",
                 "EVENTS": "Total uses",
                 "LAST": "Last used",
                 "TREND": "30-day trend"
             },
-            "ACCOUNTS_HINT": "Accts = accounts that used it in the window",
+            "ACCOUNTS_HINT": "Account columns count the accounts that used it in that window.",
+            "UNUSED_TITLE": "Not used by any account yet ({count})",
             "TREND_SUMMARY": "{count} uses in 30 days",
             "OPEN": "See accounts using {feature}",
             "EMPTY_TITLE": "No events yet",

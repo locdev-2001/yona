@@ -21,10 +21,10 @@ export type QuickLinkView = {
   tone?: Tone
 }
 
-// Lối tắt: mỗi dòng một liên kết, cùng kiểu dòng của danh sách xếp hạng.
+// Lối tắt: mỗi liên kết một ô; ô hẹp xếp thành cột, ô rộng (cả hàng) dàn thành 2 hoặc 4 cột.
 const QuickLinks = ({ links }: { links: QuickLinkView[] }) => {
   return (
-    <ul className='-mx-2 flex flex-col gap-1'>
+    <ul className='-mx-2 grid grid-cols-1 gap-1 @xl:grid-cols-2 @4xl:grid-cols-4'>
       {links.map(link => (
         <li key={link.key}>
           <a

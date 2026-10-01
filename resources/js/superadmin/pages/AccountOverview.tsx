@@ -29,15 +29,16 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectVa
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@admin/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@admin/components/ui/tabs';
 import { Textarea } from '@admin/components/ui/textarea';
-import { formatDate, formatDateTime, initialsOf } from '@admin/lib/format';
+import { avatarClassOf, formatDate, formatDateTime, initialsOf } from '@admin/lib/format';
 import { cn } from '@admin/lib/utils';
 import { ActivityTimeline } from '@admin/views/apps/accounts/view/activity-timeline';
 import StatisticsCard from '@admin/views/apps/accounts/view/statistics-card';
-import { TONE_PROGRESS } from '@admin/views/dashboards/tones';
+import { MEANING_TONE, TONE_PROGRESS, TONE_TEXT } from '@admin/views/dashboards/tones';
 import { UsageChart } from '@admin/views/apps/accounts/view/usage-chart';
 import { ConfirmDialog } from '@admin/views/apps/resources/dialogs/confirm-dialog';
 import { RecordViewLeftPanel } from '@admin/views/apps/resources/view/record-view-left-panel';
 import { SectionCard, TableCard } from '@admin/views/apps/resources/view/section-card';
+import PageHeader from '@admin/views/pages/page-header';
 import AccountStickerLibrary from '@admin/views/stickers/AccountStickerLibrary';
 
 import { t } from '../../i18n';
@@ -130,6 +131,10 @@ function problemDetail(detail: string | null): string | null {
     return /^\d+$/.test(detail) ? t('ADMIN_OPERATIONS.CHANNEL_HEALTH.DETAIL_COUNT', { count: Number(detail) }) : detail;
 }
 
+// "Trung bình 1,6 tin/ngày": dòng phụ cho thẻ tin 7 / 30 ngày.
+const dailyAverage = (count: number, days: number) =>
+    label('STATS.DAILY_AVERAGE', { value: formatNumber(Math.round((count / days) * 10) / 10) });
+
 const usageTotal = (usage: AccountOverviewProps['usage']) =>
     label('SECTIONS.USAGE_TOTAL', { count: formatNumber(usage.reduce((sum, day) => sum + day.count, 0)) });
 
@@ -144,13 +149,17 @@ export function UsageBars({ usage, className }: { usage: AccountOverviewProps['u
             dayLabel={day => `${day.label}: ${label('SECTIONS.USAGE_TOTAL', { count: formatNumber(day.count) })}`}
             startLabel={usage[0] ? formatDate(usage[0].date) : ''}
             endLabel={usage.length ? formatDate(usage[usage.length - 1].date) : ''}
+            formatValue={formatNumber}
         />
     );
 }
 
+// Tiến độ kích hoạt: sáu bước giống phễu kích hoạt của trang Tổng quan (máy chủ gửi cùng key, cùng tên).
+// Dòng đầu là bước onboarding đang đứng; thanh là số bước kích hoạt đã qua.
 function Onboarding({ onboarding }: { onboarding: AccountOverviewProps['onboarding'] }) {
     const done = onboarding.milestones.filter(milestone => milestone.done).length;
     const percent = onboarding.milestones.length ? Math.round((done / onboarding.milestones.length) * 100) : 100;
+    const tone = done === onboarding.milestones.length ? MEANING_TONE.healthy : MEANING_TONE.accounts;
 
     return (
         <div className="flex flex-col gap-4">
@@ -161,9 +170,11 @@ function Onboarding({ onboarding }: { onboarding: AccountOverviewProps['onboardi
                             ? label('ONBOARDING.CURRENT_STEP', { step: onboarding.stepLabel ?? onboarding.step })
                             : label('ONBOARDING.FINISHED')}
                     </span>
-                    <span className="font-num text-success font-medium">{percent}%</span>
+                    <span className={cn('font-num shrink-0 font-medium', TONE_TEXT[tone])}>
+                        {label('ONBOARDING.DONE_COUNT', { done, total: onboarding.milestones.length })}
+                    </span>
                 </div>
-                <Progress value={percent} aria-label={label('SECTIONS.ONBOARDING')} className={TONE_PROGRESS.success} />
+                <Progress value={percent} aria-label={label('SECTIONS.ONBOARDING')} className={TONE_PROGRESS[tone]} />
             </div>
             <ul className="flex flex-col gap-3">
                 {onboarding.milestones.map(milestone => (
@@ -175,7 +186,7 @@ function Onboarding({ onboarding }: { onboarding: AccountOverviewProps['onboardi
                         )}
                         <span className={cn('min-w-0 flex-1', !milestone.done && 'text-muted-foreground')}>{milestone.label}</span>
                         {milestone.at ? (
-                            <span className="text-muted-foreground shrink-0 text-xs whitespace-nowrap tabular-nums">{formatDate(milestone.at)}</span>
+                            <span className="text-muted-foreground shrink-0 text-xs whitespace-nowrap">{formatDate(milestone.at)}</span>
                         ) : null}
                     </li>
                 ))}
@@ -431,7 +442,9 @@ function UsersTable({ users }: { users: AccountUserRow[] }) {
                             <TableCell className="h-14 pl-4">
                                 <div className="flex items-center gap-2">
                                     <Avatar className="size-9">
-                                        <AvatarFallback className="text-xs">{initialsOf(user.name ?? user.email ?? '')}</AvatarFallback>
+                                        <AvatarFallback className={cn('text-xs', avatarClassOf(user.name ?? user.email))}>
+                                            {initialsOf(user.name ?? user.email ?? '')}
+                                        </AvatarFallback>
                                     </Avatar>
                                     <div className="flex min-w-0 flex-col">
                                         <Link href={user.url} className="font-medium hover:underline">
@@ -549,6 +562,7 @@ export default function AccountOverview(props: AccountOverviewProps) {
 
     return (
         <>
+            <PageHeader title={label('PAGE.TITLE')} description={label('PAGE.DESCRIPTION', { name: account.name })} />
             <div className="relative grid grid-cols-1 gap-6 lg:grid-cols-[350px_minmax(0,1fr)]">
                 <RecordViewLeftPanel
                     title={account.name}
@@ -624,9 +638,14 @@ export default function AccountOverview(props: AccountOverviewProps) {
                     ) : null}
 
                     <Tabs value={tab} onValueChange={value => selectTab(value as Tab)} className="flex-1 justify-between gap-6">
-                        <TabsList variant="line" className="grid w-full grid-cols-3 group-data-horizontal/tabs:h-auto sm:flex sm:group-data-horizontal/tabs:h-9">
+                        {/* Tab dồn trái theo bề rộng chữ (không dàn đều cả hàng); màn hẹp cuộn ngang trên một dòng
+                            thay vì rơi xuống dòng hai. */}
+                        <TabsList
+                            variant="line"
+                            className="w-full justify-start overflow-x-auto pb-1.5 group-data-horizontal/tabs:h-auto sm:group-data-horizontal/tabs:h-10"
+                        >
                                 {TABS.map(key => (
-                                    <TabsTrigger key={key} value={key} className="h-11 sm:h-full">
+                                    <TabsTrigger key={key} value={key} className="h-11 flex-none px-3 sm:h-full">
                                         {label(`TABS.${key.toUpperCase()}`)}
                                         {key === 'inboxes' && failingInboxes > 0 ? (
                                             <Badge variant="destructive" className="ml-1">
@@ -638,30 +657,35 @@ export default function AccountOverview(props: AccountOverviewProps) {
                             </TabsList>
 
                         <TabsContent value="overview" className="space-y-6">
+                            {/* Màu theo nghĩa, giống trang Tổng quan: hội thoại / tin nhắn primary, liên hệ (người) navy. */}
                             <div className="grid grid-cols-2 gap-4 lg:gap-6 xl:grid-cols-4">
                                 <StatisticsCard
                                     icon={<MessagesSquareIcon className="size-4" />}
                                     value={formatNumber(stats.conversations)}
                                     title={label('STATS.CONVERSATIONS')}
-                                    tone="primary"
+                                    description={t('ADMIN_DASHBOARD.RANGE.SNAPSHOT')}
+                                    tone={MEANING_TONE.conversations}
                                 />
                                 <StatisticsCard
                                     icon={<ContactIcon className="size-4" />}
                                     value={formatNumber(stats.contacts)}
                                     title={label('STATS.CONTACTS')}
-                                    tone="navy"
+                                    description={t('ADMIN_DASHBOARD.RANGE.SNAPSHOT')}
+                                    tone={MEANING_TONE.people}
                                 />
                                 <StatisticsCard
                                     icon={<MessageSquareIcon className="size-4" />}
                                     value={formatNumber(stats.messages7d)}
                                     title={label('STATS.MESSAGES_7D')}
-                                    tone="cyan"
+                                    description={dailyAverage(stats.messages7d, 7)}
+                                    tone={MEANING_TONE.messages}
                                 />
                                 <StatisticsCard
                                     icon={<CalendarIcon className="size-4" />}
                                     value={formatNumber(stats.messages30d)}
                                     title={label('STATS.MESSAGES_30D')}
-                                    tone="success"
+                                    description={dailyAverage(stats.messages30d, 30)}
+                                    tone={MEANING_TONE.messages}
                                 />
                             </div>
                             <div className="grid gap-6 xl:grid-cols-2">
@@ -674,7 +698,7 @@ export default function AccountOverview(props: AccountOverviewProps) {
                                         <UsageBars usage={usage} className="flex-1" />
                                     </CardContent>
                                 </Card>
-                                <SectionCard title={label('SECTIONS.ONBOARDING')}>
+                                <SectionCard title={label('SECTIONS.ONBOARDING')} description={label('ONBOARDING.DESCRIPTION')}>
                                     <Onboarding onboarding={onboarding} />
                                 </SectionCard>
                             </div>

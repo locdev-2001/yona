@@ -1,10 +1,9 @@
 import { ActivityIcon, KanbanIcon, LayersIcon, LinkIcon, ScrollTextIcon } from 'lucide-react';
 import type { ReactNode } from 'react';
 
-import { Badge } from '@admin/components/ui/badge';
 import { Button } from '@admin/components/ui/button';
-import { cn } from '@admin/lib/utils';
-import type { Tone } from '@admin/views/dashboards/tones';
+import StatusBadge, { type StatusTone } from '@admin/views/datatables/status-badge';
+import { MEANING_TONE } from '@admin/views/dashboards/tones';
 import ProductInsightsStats from '@admin/views/dashboards/widgets/widget-product-insights';
 import QuickLinks from '@admin/views/dashboards/widgets/widget-quick-links';
 
@@ -13,14 +12,12 @@ import { formatBytes, formatNumber } from '../format';
 import type { OperationLink, QueueHealthData, StickersData, SystemData } from '../types';
 
 // Trạng thái hàng đợi theo màu trạng thái chuẩn; chữ trong nhãn nói rõ nên không chỉ dựa vào màu.
-const QUEUE_BADGE: Record<QueueHealthData['status'], string> = {
-    running: 'bg-success-tint text-success',
-    paused: 'bg-warning-tint text-warning',
-    inactive: 'bg-danger-tint text-danger',
-    unavailable: 'bg-neutral-100 text-neutral-700',
+const QUEUE_TONE: Record<QueueHealthData['status'], StatusTone> = {
+    running: 'success',
+    paused: 'warning',
+    inactive: 'danger',
+    unavailable: 'neutral',
 };
-
-const LINK_TONE: Record<string, Tone> = { horizon: 'primary', pulse: 'success', logs: 'warning', tasks: 'navy' };
 
 const numberOrDash = (value: number | null) => (value === null ? '-' : formatNumber(value));
 
@@ -36,7 +33,9 @@ function OpenLink({ href, children }: { href: string; children: ReactNode }) {
 export function QueueHealth({ data }: { data: QueueHealthData }) {
     return (
         <div className="flex flex-1 flex-col gap-4">
-            <Badge className={cn('rounded-sm border-none', QUEUE_BADGE[data.status])}>{t(`ADMIN_DASHBOARD.QUEUE.STATUS.${data.status.toUpperCase()}`)}</Badge>
+            <StatusBadge tone={QUEUE_TONE[data.status]} className="self-start">
+                {t(`ADMIN_DASHBOARD.QUEUE.STATUS.${data.status.toUpperCase()}`)}
+            </StatusBadge>
             <ProductInsightsStats
                 stats={[
                     { key: 'pending', label: t('ADMIN_DASHBOARD.QUEUE.PENDING'), value: numberOrDash(data.pendingJobs) },
@@ -75,10 +74,10 @@ export function System({ data }: { data: SystemData }) {
     return (
         <ProductInsightsStats
             stats={[
-                { key: 'version', label: t('ADMIN_DASHBOARD.SYSTEM.VERSION'), value: data.version || '-' },
-                { key: 'environment', label: t('ADMIN_DASHBOARD.SYSTEM.ENVIRONMENT'), value: data.environment },
-                { key: 'php', label: t('ADMIN_DASHBOARD.SYSTEM.PHP'), value: data.php },
-                { key: 'laravel', label: t('ADMIN_DASHBOARD.SYSTEM.LARAVEL'), value: data.laravel },
+                { key: 'version', numeric: false, label: t('ADMIN_DASHBOARD.SYSTEM.VERSION'), value: data.version || '-' },
+                { key: 'environment', numeric: false, label: t('ADMIN_DASHBOARD.SYSTEM.ENVIRONMENT'), value: data.environment },
+                { key: 'php', numeric: false, label: t('ADMIN_DASHBOARD.SYSTEM.PHP'), value: data.php },
+                { key: 'laravel', numeric: false, label: t('ADMIN_DASHBOARD.SYSTEM.LARAVEL'), value: data.laravel },
                 { key: 'size', label: t('ADMIN_DASHBOARD.SYSTEM.DATABASE_SIZE'), value: formatBytes(data.databaseSizeBytes) },
                 { key: 'tables', label: t('ADMIN_DASHBOARD.SYSTEM.TABLES'), value: formatNumber(data.tablesCount) },
             ]}
@@ -101,7 +100,8 @@ export function OperationLinks({ links }: { links: OperationLink[] }) {
                 href: link.url,
                 external: link.external,
                 icon: LINK_ICON[link.key] ?? <LinkIcon className="size-5" />,
-                tone: LINK_TONE[link.key] ?? 'neutral',
+                // Lối tắt vận hành đều thuộc họ "hệ thống": cùng một màu trung tính, không tô theo thứ tự.
+                tone: MEANING_TONE.system,
                 title: t(`ADMIN_DASHBOARD.LINKS.${link.key.toUpperCase()}.TITLE`),
                 description: t(`ADMIN_DASHBOARD.LINKS.${link.key.toUpperCase()}.DESCRIPTION`),
             }))}

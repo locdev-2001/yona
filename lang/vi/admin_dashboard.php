@@ -47,11 +47,11 @@ return [
     'WIDGETS' => [
         'KPIS' => ['TITLE' => 'Chỉ số chính', 'DESCRIPTION' => 'Số tổng và chênh lệch so với kỳ trước cùng độ dài.'],
         'MESSAGES_TREND' => ['TITLE' => 'Tin nhắn theo ngày', 'DESCRIPTION' => 'Tin khách gửi vào và tin trả lời ra mỗi ngày.'],
-        'CONVERSATIONS_BY_CHANNEL' => ['TITLE' => 'Hội thoại mới theo kênh', 'DESCRIPTION' => 'Hội thoại tạo trong khoảng, chia theo loại kênh.'],
+        'CONVERSATIONS_BY_CHANNEL' => ['TITLE' => 'Hội thoại theo kênh', 'DESCRIPTION' => 'Hội thoại mới tạo trong khoảng, chia theo loại kênh.'],
         'CHANNEL_HEALTH' => ['TITLE' => 'Sức khoẻ kênh', 'DESCRIPTION' => 'Hộp thư mất phiên hoặc cần cấp quyền lại.'],
         'ALERTS' => ['TITLE' => 'Cảnh báo', 'DESCRIPTION' => 'Sự cố cảnh báo đang mở và sự cố gần nhất.'],
         'OPERATION_LINKS' => ['TITLE' => 'Lối tắt vận hành', 'DESCRIPTION' => 'Mở nhanh các bảng theo dõi hệ thống.'],
-        'ACTIVATION_FUNNEL' => ['TITLE' => 'Phễu kích hoạt', 'DESCRIPTION' => 'Tài khoản đăng ký trong khoảng đi được tới bước nào.'],
+        'ACTIVATION_FUNNEL' => ['TITLE' => 'Phễu kích hoạt', 'DESCRIPTION' => 'Chỉ tính tài khoản đăng ký trong khoảng đang xem.'],
         'COHORT_RETENTION' => ['TITLE' => 'Giữ chân theo tuần đăng ký', 'DESCRIPTION' => 'Tỉ lệ tài khoản còn trả lời khách ở các tuần sau khi đăng ký (8 tuần gần nhất).'],
         'SIGNUPS_TREND' => ['TITLE' => 'Đăng ký mới theo ngày', 'DESCRIPTION' => 'Số tài khoản tạo mỗi ngày.'],
         'TOP_ACCOUNTS' => ['TITLE' => 'Tài khoản nhắn nhiều nhất', 'DESCRIPTION' => 'Tối đa 8 tài khoản có nhiều tin nhất trong khoảng.'],
@@ -71,12 +71,12 @@ return [
         'INBOXES_TOTAL' => 'Hộp thư',
     ],
     'FUNNEL_STEPS' => [
-        'SIGNED_UP' => 'Đăng ký',
+        'SIGNED_UP' => 'Đăng ký tài khoản',
         'CONFIRMED_EMAIL' => 'Xác nhận email',
         'CREATED_INBOX' => 'Tạo hộp thư',
         'CONNECTED_CHANNEL' => 'Kết nối kênh',
-        'RECEIVED_MESSAGE' => 'Nhận tin đầu tiên',
-        'REPLIED' => 'Trả lời tin đầu tiên',
+        'RECEIVED_MESSAGE' => 'Nhận tin khách đầu tiên',
+        'REPLIED' => 'Trả lời khách lần đầu',
     ],
     'FUNNEL' => [
         'FROM_START' => '{rate}% so với đăng ký',
@@ -84,7 +84,15 @@ return [
         'PREVIOUS_EMPTY' => 'Bước trước chưa có tài khoản',
         'BASELINE' => 'Mốc 100% để so các bước sau',
     ],
-    'TREND' => ['TOTAL' => 'Tổng trong khoảng', 'PEAK' => 'Ngày cao nhất', 'AVERAGE' => 'Trung bình mỗi ngày', 'REPLY_RATIO' => 'Tin ra trên tin vào'],
+    'TREND' => [
+        'TOTAL' => 'Tổng trong khoảng',
+        'PEAK' => 'Ngày cao nhất',
+        'PEAK_INCOMING' => 'Ngày nhiều tin vào nhất',
+        'PEAK_MESSAGES' => '{count} tin, ngày {date}',
+        'ON_DATE' => 'ngày {date}',
+        'AVERAGE' => 'Trung bình mỗi ngày',
+        'REPLY_RATIO' => 'Tin ra trên tin vào',
+    ],
     'SERIES' => [
         'INCOMING' => 'Tin vào',
         'OUTGOING' => 'Tin ra',
@@ -98,8 +106,7 @@ return [
     'COHORT' => [
         'WEEK' => 'Tuần đăng ký',
         'SIZE' => 'Tài khoản',
-        'OFFSET' => 'Tuần {n}',
-        'SCROLL_HINT' => 'Vuốt ngang để xem các tuần sau.',
+        'OFFSET_GROUP' => '% còn trả lời khách, theo tuần sau đăng ký',
         'CELL' => 'Tuần {week}, tuần thứ {offset}: {active} trên {size} tài khoản ({rate}%)',
     ],
     'CHANNEL_HEALTH' => [

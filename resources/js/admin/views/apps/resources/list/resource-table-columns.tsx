@@ -21,7 +21,7 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from '@admin/components/ui/tooltip'
 
 // Util Imports
-import { initialsOf } from '@admin/lib/format'
+import { avatarClassOf, initialsOf } from '@admin/lib/format'
 import { cn } from '@admin/lib/utils'
 
 // Ô đầu tiên là liên kết tới bản ghi, trừ khi ô đó tự là liên kết (quan hệ, token).
@@ -79,28 +79,8 @@ function ResourceRowActions({
         </TooltipContent>
       </Tooltip>
 
-      {canDestroy ? (
-        <Tooltip>
-          <TooltipTrigger
-            render={
-              <Button
-                variant='ghost'
-                size='icon'
-                className='text-destructive hover:text-destructive'
-                aria-label={labels.delete}
-                onClick={() => onDelete(url)}
-              />
-            }
-          >
-            <Trash2Icon className='size-4.5' />
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>{labels.delete}</p>
-          </TooltipContent>
-        </Tooltip>
-      ) : null}
-
-      {canEdit || withOverview ? (
+      {/* Xoá nằm trong menu, không đứng ngang nút xem trên từng dòng. */}
+      {canEdit || withOverview || canDestroy ? (
         <DropdownMenu>
           <DropdownMenuTrigger render={<Button size='icon' variant='ghost' aria-label={labels.actions} />}>
             <EllipsisVerticalIcon className='size-4.5' aria-hidden='true' />
@@ -121,7 +101,7 @@ function ResourceRowActions({
               ) : null}
               {canDestroy ? (
                 <>
-                  <DropdownMenuSeparator />
+                  {canEdit || withOverview ? <DropdownMenuSeparator /> : null}
                   <DropdownMenuItem variant='destructive' onClick={() => onDelete(url)}>
                     <Trash2Icon className='size-4' />
                     {labels.delete}
@@ -161,7 +141,7 @@ function IdentityCell({ row, renderCell }: { row: ResourceRow; renderCell: Resou
     <div className='flex min-w-44 items-center gap-2'>
       <Avatar className='size-9'>
         {avatar ? <AvatarImage src={String(avatar)} alt={name} /> : null}
-        <AvatarFallback className='bg-(--tone)/15 text-(--tone) text-xs'>{initialsFromName(name)}</AvatarFallback>
+        <AvatarFallback className={cn('text-xs', avatarClassOf(name))}>{initialsFromName(name)}</AvatarFallback>
       </Avatar>
       <div className='flex min-w-0 flex-col'>
         {row.url ? (

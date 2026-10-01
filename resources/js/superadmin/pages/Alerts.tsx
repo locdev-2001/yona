@@ -5,10 +5,11 @@ import { useEffect, useId, useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
 
 import { Button } from '@admin/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@admin/components/ui/card';
+import { Card, CardAction, CardDescription, CardHeader, CardTitle } from '@admin/components/ui/card';
 import { Input } from '@admin/components/ui/input';
 import { Label } from '@admin/components/ui/label';
 import { Switch } from '@admin/components/ui/switch';
+import { formatDateTime } from '@admin/lib/format';
 import DataTableEmpty from '@admin/views/datatables/datatable-empty';
 import ListCard from '@admin/views/datatables/list';
 import { ListPagination } from '@admin/views/datatables/list/list-pagination';
@@ -20,7 +21,7 @@ import PageHeader from '@admin/views/pages/page-header';
 
 import { t } from '../../i18n';
 import { PushPermissionDeniedError, currentPushSubscription, disableAdminPush, enableAdminPush, isPushSupported } from '../alertsPush';
-import { formatDateTime, formatNumber, formatRelative } from './operationsFormat';
+import { formatNumber, formatRelative } from './operationsFormat';
 
 export type RuleStatus = 'ok' | 'firing' | 'pending' | 'disabled' | 'unknown';
 export type MetricUnit = 'count' | 'seconds' | 'state';
@@ -76,10 +77,32 @@ const STATUS_TONE: Record<RuleStatus, StatusTone> = {
 
 export const ruleTitle = (key: string) => label(`RULES.${key}.TITLE`);
 
+// Giây đổi ra phút, giờ cho dễ đọc: 300 → "5 phút", 9362 → "2 giờ 36 phút".
+export function formatDuration(totalSeconds: number): string {
+    const seconds = Math.max(0, Math.round(totalSeconds));
+    if (seconds < 60) return label('DISPLAY.SECONDS', { count: seconds });
+    if (seconds < 3600) {
+        const minutes = Math.floor(seconds / 60);
+        const rest = seconds % 60;
+
+        return rest > 0 && minutes < 10
+            ? label('DISPLAY.MINUTES_SECONDS', { minutes, seconds: rest })
+            : label('DISPLAY.MINUTES', { count: Math.round(seconds / 60) });
+    }
+    let hours = Math.floor(seconds / 3600);
+    let minutes = Math.round((seconds % 3600) / 60);
+    if (minutes === 60) {
+        hours += 1;
+        minutes = 0;
+    }
+
+    return minutes > 0 ? label('DISPLAY.HOURS_MINUTES', { hours: formatNumber(hours), minutes }) : label('DISPLAY.HOURS', { count: formatNumber(hours) });
+}
+
 export function formatAlertValue(unit: MetricUnit, value: number | null): string {
     if (value === null) return label('DISPLAY.NONE');
     if (unit === 'state') return label(value > 0 ? 'DISPLAY.DOWN' : 'DISPLAY.UP');
-    if (unit === 'seconds') return label('DISPLAY.SECONDS', { count: formatNumber(value) });
+    if (unit === 'seconds') return formatDuration(value);
 
     return formatNumber(value);
 }
@@ -87,7 +110,8 @@ export function formatAlertValue(unit: MetricUnit, value: number | null): string
 function windowText(rule: Pick<AlertRuleItem, 'windowMode' | 'windowMinutes'>): string {
     if (rule.windowMode === 'sustain' && rule.windowMinutes === 0) return label('WINDOW_MODE.sustain_now');
 
-    return label(`WINDOW_MODE.${rule.windowMode}`, { minutes: rule.windowMinutes });
+    // Số và đơn vị không tách dòng: "10 phút" không rơi thành "10 / phút".
+    return label(`WINDOW_MODE.${rule.windowMode}`, { minutes: rule.windowMinutes }).replace(/(\d) /g, '$1\u00a0');
 }
 
 const patchRule = (key: string, data: Record<string, number | boolean>, onFinish?: () => void) =>
@@ -177,7 +201,7 @@ function ruleColumns(onEdit: (key: string) => void): ColumnDef<AlertRuleItem>[] 
             id: 'rule',
             header: () => label('COLUMNS.RULE'),
             cell: ({ row }) => (
-                <div className="flex min-w-56 flex-col gap-0.5 py-2 whitespace-normal">
+                <div className="flex min-w-48 flex-col gap-0.5 py-2 whitespace-normal">
                     <span className="font-medium">{ruleTitle(row.original.key)}</span>
                     <span className="text-muted-foreground">{label(`RULES.${row.original.key}.DESCRIPTION`)}</span>
                 </div>
@@ -187,20 +211,22 @@ function ruleColumns(onEdit: (key: string) => void): ColumnDef<AlertRuleItem>[] 
             id: 'status',
             header: () => label('COLUMNS.STATUS'),
             cell: ({ row }) => (
-                <div className="flex flex-col items-start gap-1">
-                    <StatusBadge tone={STATUS_TONE[row.original.status]}>{label(`STATUS.${row.original.status}`)}</StatusBadge>
-                    {row.original.status === 'firing' && row.original.openedAt ? (
-                        <span className="text-muted-foreground whitespace-nowrap">{formatRelative(row.original.openedAt)}</span>
-                    ) : null}
-                </div>
+                <span
+                    className="inline-flex max-w-full"
+                    title={row.original.status === 'firing' && row.original.openedAt ? label('FIRING_SINCE', { time: formatDateTime(row.original.openedAt) }) : undefined}
+                >
+                    <StatusBadge tone={STATUS_TONE[row.original.status]} className="max-w-full text-left max-md:whitespace-normal">
+                        {label(`STATUS.${row.original.status}`)}
+                    </StatusBadge>
+                </span>
             ),
         },
         {
             id: 'current',
             header: () => label('COLUMNS.CURRENT'),
-            meta: { numeric: true, headerClassName: 'text-right', cellClassName: 'text-right' },
+            meta: { cellClassName: 'pr-6', headerClassName: 'pr-6' },
             cell: ({ row }) => (
-                <div className="flex flex-col items-start gap-0.5 md:items-end">
+                <div className="flex flex-col items-start gap-0.5">
                     <span className={row.original.status === 'firing' ? 'font-num text-destructive' : 'font-num'}>
                         {formatAlertValue(row.original.unit, row.original.lastValue)}
                     </span>
@@ -213,7 +239,6 @@ function ruleColumns(onEdit: (key: string) => void): ColumnDef<AlertRuleItem>[] 
         {
             id: 'threshold',
             header: () => label('COLUMNS.THRESHOLD'),
-            meta: { numeric: true, headerClassName: 'text-right', cellClassName: 'text-right' },
             cell: ({ row }) => (
                 <span className="font-num whitespace-nowrap">
                     {row.original.unit === 'state' ? label('DISPLAY.DOWN') : formatAlertValue(row.original.unit, row.original.threshold)}
@@ -223,7 +248,8 @@ function ruleColumns(onEdit: (key: string) => void): ColumnDef<AlertRuleItem>[] 
         {
             id: 'window',
             header: () => label('COLUMNS.WINDOW'),
-            cell: ({ row }) => <span className="block min-w-28 whitespace-normal">{windowText(row.original)}</span>,
+            meta: { cellClassName: 'pr-6', headerClassName: 'pr-6' },
+            cell: ({ row }) => <span className="block min-w-32 whitespace-normal">{windowText(row.original)}</span>,
         },
         {
             id: 'cooldown',
@@ -233,6 +259,7 @@ function ruleColumns(onEdit: (key: string) => void): ColumnDef<AlertRuleItem>[] 
         {
             id: 'enabled',
             header: () => label('COLUMNS.ENABLED'),
+            meta: { headerClassName: 'pl-6', cellClassName: 'pl-6' },
             cell: ({ row }) => (
                 <label className="inline-flex min-h-11 items-center md:min-h-0">
                     <Switch
@@ -250,7 +277,7 @@ function ruleColumns(onEdit: (key: string) => void): ColumnDef<AlertRuleItem>[] 
             cell: ({ row }) => (
                 <div className="flex items-center justify-end gap-1">
                     <Button
-                        variant="ghost"
+                        variant="outline"
                         size="icon"
                         className="max-md:size-11"
                         render={<Link href={row.original.url} />}
@@ -307,12 +334,11 @@ const incidentColumns: ColumnDef<AlertIncidentItem>[] = [
     {
         id: 'peak',
         header: () => label('INCIDENTS.COLUMNS.PEAK'),
-        meta: { numeric: true, headerClassName: 'text-right', cellClassName: 'text-right' },
         cell: ({ row }) => (
-            <span className="font-num whitespace-nowrap">
+            <span className="font-num md:whitespace-nowrap">
                 {formatAlertValue(row.original.unit, row.original.peakValue)}
                 {row.original.unit === 'state' ? null : (
-                    <span className="text-muted-foreground"> / {formatAlertValue(row.original.unit, row.original.threshold)}</span>
+                    <span className="text-muted-foreground whitespace-nowrap"> / {formatAlertValue(row.original.unit, row.original.threshold)}</span>
                 )}
             </span>
         ),
@@ -366,31 +392,31 @@ function PushPanel({ push }: { push: Props['push'] }) {
 
     return (
         <Card>
-            <CardHeader>
+            <CardHeader className="max-sm:flex max-sm:flex-col max-sm:gap-3">
                 <CardTitle>{label('PUSH.TITLE')}</CardTitle>
-                <CardDescription>{description}</CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col items-start gap-3">
-                {push.subscriptions > 0 ? (
-                    <p className="text-muted-foreground text-sm">{label('PUSH.SUBSCRIPTIONS', { count: push.subscriptions })}</p>
-                ) : null}
+                <CardDescription>
+                    {description}
+                    {push.subscriptions > 0 ? ` ${label('PUSH.SUBSCRIPTIONS', { count: push.subscriptions })}.` : null}
+                </CardDescription>
                 {state !== 'unsupported' ? (
-                    <Button
-                        variant={state === 'on' ? 'outline' : 'default'}
-                        className="max-md:h-11"
-                        disabled={state === 'busy' || state === 'checking'}
-                        onClick={toggle}
-                    >
-                        {state === 'on' ? <BellOffIcon /> : <BellIcon />}
-                        {state === 'on' ? label('PUSH.DISABLE') : label('PUSH.ENABLE')}
-                    </Button>
+                    <CardAction className="sm:self-center">
+                        <Button
+                            variant={state === 'on' ? 'outline' : 'default'}
+                            className="max-md:h-11"
+                            disabled={state === 'busy' || state === 'checking'}
+                            onClick={toggle}
+                        >
+                            {state === 'on' ? <BellOffIcon /> : <BellIcon />}
+                            {state === 'on' ? label('PUSH.DISABLE') : label('PUSH.ENABLE')}
+                        </Button>
+                    </CardAction>
                 ) : null}
                 {error ? (
                     <p role="alert" className="text-destructive text-sm">
                         {error}
                     </p>
                 ) : null}
-            </CardContent>
+            </CardHeader>
         </Card>
     );
 }
@@ -409,7 +435,7 @@ export default function Alerts({ rules, incidents, pagination, push, stats, limi
         <div className="grid grid-cols-1 gap-6">
             <PageHeader
                 title={label('TITLE')}
-                description={label('DESCRIPTION')}
+                description={<span className="text-pretty">{label('DESCRIPTION')}</span>}
                 className="mb-0 md:mb-0"
                 actions={
                     <Button variant="outline" className="max-md:h-11" disabled={sending} onClick={sendTest} title={label('TEST.HINT')}>
@@ -419,30 +445,35 @@ export default function Alerts({ rules, incidents, pagination, push, stats, limi
                 }
             />
 
-            <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="grid grid-cols-2 gap-4 lg:gap-6 xl:grid-cols-4">
                 <StatisticsCard
                     icon={<BellRingIcon className="size-4" />}
                     value={formatNumber(stats.firing)}
                     title={label('STATS.FIRING')}
-                    tone={stats.firing > 0 ? 'danger' : 'success'}
+                    tone={stats.firing > 0 ? 'danger' : 'neutral'}
                 />
-                <StatisticsCard icon={<ListChecksIcon className="size-4" />} value={formatNumber(stats.enabled)} title={label('STATS.ENABLED')} tone="navy" />
-                <StatisticsCard icon={<HistoryIcon className="size-4" />} value={formatNumber(stats.incidents7d)} title={label('STATS.INCIDENTS_7D')} tone="neutral" />
-                <StatisticsCard icon={<UsersIcon className="size-4" />} value={formatNumber(stats.recipients)} title={label('STATS.RECIPIENTS')} tone="primary" />
+                <StatisticsCard icon={<ListChecksIcon className="size-4" />} value={formatNumber(stats.enabled)} title={label('STATS.ENABLED')} tone="neutral" />
+                <StatisticsCard icon={<HistoryIcon className="size-4" />} value={formatNumber(stats.incidents7d)} title={label('STATS.INCIDENTS_7D')} tone={stats.incidents7d > 0 ? 'warning' : 'neutral'} />
+                <StatisticsCard icon={<UsersIcon className="size-4" />} value={formatNumber(stats.recipients)} title={label('STATS.RECIPIENTS')} tone="navy" />
             </div>
 
-            <ListCard
-                table={
-                    <ListTable
-                        data={rules}
-                        columns={columns}
-                        getRowId={rule => rule.key}
-                        expandedRowId={editing}
-                        renderExpanded={rule => <RuleEditor key={rule.key} rule={rule} limits={limits} onClose={() => setEditing(null)} />}
-                        empty={<DataTableEmpty title={label('STATUS.unknown')} />}
-                    />
-                }
-            />
+            <section className="flex flex-col gap-3" aria-labelledby="alert-rules-title">
+                <h2 id="alert-rules-title" className="text-base font-medium">
+                    {label('RULES_TITLE')}
+                </h2>
+                <ListCard
+                    table={
+                        <ListTable
+                            data={rules}
+                            columns={columns}
+                            getRowId={rule => rule.key}
+                            expandedRowId={editing}
+                            renderExpanded={rule => <RuleEditor key={rule.key} rule={rule} limits={limits} onClose={() => setEditing(null)} />}
+                            empty={<DataTableEmpty title={label('STATUS.unknown')} />}
+                        />
+                    }
+                />
+            </section>
 
             <PushPanel push={push} />
 

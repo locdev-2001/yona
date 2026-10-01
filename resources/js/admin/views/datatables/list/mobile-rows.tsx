@@ -36,13 +36,13 @@ export function MobileRows<TData>({ table, label, onOpenRow, urlOf, expandedRowI
       {rows.map(row => {
         const [first, ...rest] = row.getVisibleCells()
         const actions = rest.filter(cell => cell.column.columnDef.meta?.mobileRole === 'actions' || cell.column.id === 'actions')
-        const fields = rest.filter(cell => !actions.includes(cell))
+        const fields = rest.filter(cell => !actions.includes(cell) && !cell.column.columnDef.meta?.mobileHidden)
         const url = urlOf ? urlOf(row.original) : null
 
         return (
           <li
             key={row.id}
-            className={cn('flex flex-col gap-3 px-4 py-4', url && 'cursor-pointer')}
+            className={cn('flex flex-col gap-3 px-6 py-4', url && 'cursor-pointer')}
             onClick={onOpenRow ? event => onOpenRow(event, url) : undefined}
           >
             <div className='flex min-w-0 items-start justify-between gap-2'>

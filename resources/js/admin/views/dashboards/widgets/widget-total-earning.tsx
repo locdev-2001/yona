@@ -7,7 +7,7 @@ import { Progress } from '@admin/components/ui/progress'
 
 // Util Imports
 import { cn } from '@admin/lib/utils'
-import { TONE_BADGE, TONE_PROGRESS, type Tone } from '@admin/views/dashboards/tones'
+import { TONE_CHIP, TONE_PROGRESS, type Tone } from '@admin/views/dashboards/tones'
 
 export type TotalEarningItem = {
   key: string
@@ -19,8 +19,9 @@ export type TotalEarningItem = {
   value: ReactNode
   // 0–100; bỏ trống thì dòng không có thanh tiến độ.
   progressPercentage?: number
-  // Màu ô chữ cái đầu (ổn định theo tài khoản) và màu thanh tỉ lệ.
-  tone?: Tone
+  // Lớp màu ô avatar: avatarClassOf(tên) để cùng một tài khoản cùng màu ở mọi trang.
+  avatarClassName?: string
+  // Màu thanh tỉ lệ theo nghĩa của số (MEANING_TONE).
   progressTone?: Tone
 }
 
@@ -37,7 +38,7 @@ const TotalEarningList = ({ items, className }: Props) => {
       {items.map(item => (
         <li key={item.key} className='flex items-center gap-3'>
           <Avatar className='size-9 after:border-0'>
-            <AvatarFallback className={cn('shrink-0', TONE_BADGE[item.tone ?? 'primary'])}>{item.icon}</AvatarFallback>
+            <AvatarFallback className={cn('shrink-0', item.avatarClassName ?? TONE_CHIP.neutral)}>{item.icon}</AvatarFallback>
           </Avatar>
           <div className='flex min-w-0 flex-1 flex-col gap-1'>
             <div className='flex min-w-0 items-baseline justify-between gap-3'>

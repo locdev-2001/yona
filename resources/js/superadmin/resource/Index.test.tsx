@@ -69,6 +69,23 @@ describe('ResourceIndex', () => {
         };
     });
 
+    it('đầu trang có câu mô tả và nút thêm mới như các trang khác; chưa có câu thì dùng số bản ghi', () => {
+        const withLabels = (extra: Record<string, string>) => {
+            const current = pageProps.superAdmin as ReturnType<typeof superAdminProps>;
+            pageProps = { superAdmin: { ...current, labels: { ...current.labels, ...extra } } };
+        };
+        const heading = () => screen.getByRole('heading', { level: 1 }).parentElement as HTMLElement;
+
+        const { unmount } = render(<ResourceIndex {...baseProps} />);
+        expect(within(heading()).getByText(/bản ghi$/)).toBeInTheDocument();
+        expect(screen.getByRole('link', { name: 'Thêm mới' })).toHaveAttribute('href', '/admin/accounts/new');
+        unmount();
+
+        withLabels({ resource_description_accounts: 'Doanh nghiệp đang dùng Yona.' });
+        render(<ResourceIndex {...baseProps} />);
+        expect(within(heading()).getByText('Doanh nghiệp đang dùng Yona.')).toBeInTheDocument();
+    });
+
     it('lấy tiêu đề tiếng Việt từ thanh bên, nhãn cột từ từ điển', () => {
         render(<ResourceIndex {...baseProps} />);
 
@@ -117,10 +134,15 @@ describe('ResourceIndex', () => {
         );
     });
 
-    it('xoá phải xác nhận qua hộp thoại', () => {
+    it('xoá nằm trong menu thao tác, không đứng ngang nút xem; phải xác nhận qua hộp thoại', async () => {
         render(<ResourceIndex {...baseProps} />);
 
-        fireEvent.click(screen.getAllByRole('button', { name: 'Xoá' })[0]);
+        expect(screen.queryByRole('button', { name: 'Xoá' })).toBeNull();
+        const trigger = screen.getAllByRole('button', { name: 'Thao tác' })[0];
+        fireEvent.keyDown(trigger, { key: 'Enter' });
+        fireEvent.click(trigger);
+        const item = await screen.findByRole('menuitem', { name: 'Xoá' });
+        fireEvent.click(item);
         expect(routerDelete).not.toHaveBeenCalled();
 
         const dialog = screen.getByRole('dialog', { name: 'Xoá bản ghi này?' });

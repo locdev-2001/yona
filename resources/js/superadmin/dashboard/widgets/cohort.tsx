@@ -10,10 +10,10 @@ export function CohortRetention({ data, title }: { data: CohortRetentionData; ti
     return (
         <CohortTable
             caption={title}
-            scrollHint={t('ADMIN_DASHBOARD.COHORT.SCROLL_HINT')}
+            offsetGroupLabel={t('ADMIN_DASHBOARD.COHORT.OFFSET_GROUP')}
             weekLabel={t('ADMIN_DASHBOARD.COHORT.WEEK')}
             sizeLabel={t('ADMIN_DASHBOARD.COHORT.SIZE')}
-            offsetLabels={offsets.map(offset => t('ADMIN_DASHBOARD.COHORT.OFFSET', { n: offset }))}
+            offsetLabels={offsets.map(offset => String(offset))}
             rows={data.cohorts.map(cohort => ({
                 key: cohort.week,
                 week: formatDay(cohort.week),
@@ -25,7 +25,8 @@ export function CohortRetention({ data, title }: { data: CohortRetentionData; ti
                     return {
                         key: String(offset),
                         rate: cell.rate,
-                        label: cell.rate === null ? '-' : `${formatPercent(cell.rate)}%`,
+                        // Đơn vị % nằm ở tiêu đề nhóm cột để ô vừa bề ngang điện thoại.
+                        label: cell.rate === null ? '-' : formatPercent(cell.rate),
                         title: t('ADMIN_DASHBOARD.COHORT.CELL', {
                             week: formatDay(cohort.week),
                             offset,

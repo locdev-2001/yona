@@ -20,6 +20,7 @@ export type SuperAdminRow = {
 
 // Khoá chữ của khung console, khớp lang/{locale}/admin_layout.php nhóm `labels`.
 export type ConsoleLabelKey =
+    | `resource_description_${string}`
     | 'console_name'
     | 'close'
     | 'cancel'

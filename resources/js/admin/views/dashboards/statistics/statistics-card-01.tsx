@@ -11,19 +11,18 @@ import { Card, CardContent } from '@admin/components/ui/card'
 import { cn } from '@admin/lib/utils'
 import { TONE_CHIP, TONE_RULE, type Tone } from '@admin/views/dashboards/tones'
 
-// Statistics card data type
-type StatisticsCardProps = {
+export type StatisticsCardProps = {
   icon: ReactNode
   value: string
   title: string
-  // Chênh lệch đã định dạng ("+12,5%"); null thì dòng cuối là `note`.
-  changePercentage: string | null
-  trend?: 'up' | 'down' | 'flat'
-  comparisonText: string
-  // Dòng cuối khi không có chênh lệch để so: luôn có một dòng để mọi thẻ cao bằng nhau.
-  note: string
-  // Màu theo nhóm chỉ số: vạch đỉnh thẻ và ô biểu tượng.
+  // Màu theo nghĩa của chỉ số (MEANING_TONE): vạch đỉnh thẻ và ô biểu tượng nền nhạt. Số luôn màu mực.
   tone?: Tone
+  // Chênh lệch đã định dạng ("+12,5%"); có thì dòng cuối là chip chênh lệch + `comparisonText`.
+  changePercentage?: string | null
+  trend?: 'up' | 'down' | 'flat'
+  comparisonText?: string
+  // Dòng cuối khi không có chênh lệch (kỳ trước, phạm vi tính…).
+  note?: ReactNode
   className?: string
 }
 
@@ -34,45 +33,47 @@ const TREND_CHIP = {
   flat: 'bg-neutral-100 text-neutral-700'
 } as const
 
-// Thẻ chỉ số: nhãn xám nhỏ trên cùng, số lớn, rồi một dòng so sánh. Cùng thứ bậc với
-// các ô số khác của trang (nhãn trước, số sau).
+// Thẻ chỉ số DUY NHẤT của console (Tổng quan, hồ sơ tài khoản, Sức khoẻ kênh, Cảnh báo):
+// nhãn xám nhỏ trên cùng + ô biểu tượng góc phải, số lớn màu mực, rồi một dòng phụ.
 const StatisticsCard = ({
   icon,
   value,
   title,
-  changePercentage,
+  tone = 'neutral',
+  changePercentage = null,
   trend = 'flat',
   comparisonText,
   note,
-  tone = 'primary',
   className
 }: StatisticsCardProps) => {
   return (
     <Card size='sm' className={cn('relative', className)}>
       <span aria-hidden='true' className={cn('absolute inset-x-0 top-0 h-1', TONE_RULE[tone])} />
       <CardContent className='flex flex-col gap-2'>
-        {/* Lưới hai cột (điện thoại) giữ chỗ hai dòng nhãn để nhãn dài xuống dòng không làm lệch chiều cao các hàng thẻ. */}
-        <div className='flex min-h-10 items-start justify-between gap-2 @3xl:min-h-0 @3xl:items-center'>
-          <span className='text-muted-foreground min-w-0 text-sm'>{title}</span>
-          <span className={cn('flex size-8 shrink-0 items-center justify-center rounded-sm', TONE_CHIP[tone])}>
+        {/* Nhãn chiếm trọn bề ngang (ô biểu tượng xuống hàng số) để nhãn không bị ép xuống dòng ở lưới hai cột. */}
+        <span className='min-w-0 text-sm text-neutral-500'>{title}</span>
+        <div className='flex items-center justify-between gap-2'>
+          <span className='font-num min-w-0 truncate text-2xl font-medium text-neutral-900'>{value}</span>
+          <span
+            aria-hidden='true'
+            className={cn('flex size-8 shrink-0 items-center justify-center rounded-sm', TONE_CHIP[tone])}
+          >
             {icon}
           </span>
         </div>
-        <span className='text-2xl font-medium text-neutral-900'>{value}</span>
-        <p className='text-muted-foreground flex min-w-0 items-center gap-1 text-xs'>
-          {changePercentage !== null ? (
-            <>
-              <span className={cn('font-num flex items-center gap-0.5 rounded-sm px-1 py-0.5', TREND_CHIP[trend])}>
-                {trend === 'up' ? <ChevronUpIcon className='size-3.5' aria-hidden='true' /> : null}
-                {trend === 'down' ? <ChevronDownIcon className='size-3.5' aria-hidden='true' /> : null}
-                {changePercentage}
-              </span>
-              <span className='truncate'>{comparisonText}</span>
-            </>
-          ) : (
-            <span className='truncate'>{note}</span>
-          )}
-        </p>
+        {changePercentage !== null ? (
+          // Ô hẹp: "Kỳ trước: N" xuống dòng dưới chip thay vì bị cắt.
+          <p className='flex min-w-0 flex-wrap items-center gap-x-1 gap-y-1 text-xs text-neutral-500'>
+            <span className={cn('font-num flex items-center gap-0.5 rounded-sm px-1 py-0.5', TREND_CHIP[trend])}>
+              {trend === 'up' ? <ChevronUpIcon className='size-3.5' aria-hidden='true' /> : null}
+              {trend === 'down' ? <ChevronDownIcon className='size-3.5' aria-hidden='true' /> : null}
+              {changePercentage}
+            </span>
+            {comparisonText ? <span className='whitespace-nowrap'>{comparisonText}</span> : null}
+          </p>
+        ) : note ? (
+          <p className='min-w-0 truncate text-xs text-neutral-500'>{note}</p>
+        ) : null}
       </CardContent>
     </Card>
   )

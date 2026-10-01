@@ -141,7 +141,7 @@ describe('Alerts', () => {
         render(<Alerts {...baseProps} />);
 
         const incidentsTable = screen.getAllByRole('table')[1];
-        expect(within(incidentsTable).getByText('Open')).toBeInTheDocument();
+        expect(within(incidentsTable).getByText('Firing')).toBeInTheDocument();
         expect(within(incidentsTable).getByText('/ 5')).toBeInTheDocument();
         expect(within(incidentsTable).getByText('Notified')).toBeInTheDocument();
         expect(screen.getByText('This browser or the server does not support push notifications.')).toBeInTheDocument();
@@ -154,7 +154,11 @@ describe('Alerts', () => {
     });
 
     it('định dạng giá trị theo đơn vị', () => {
-        expect(formatAlertValue('seconds', 300)).toBe('300 s');
+        expect(formatAlertValue('seconds', 45)).toBe('45 s');
+        expect(formatAlertValue('seconds', 300)).toBe('5 min');
+        expect(formatAlertValue('seconds', 150)).toBe('2 min 30 s');
+        expect(formatAlertValue('seconds', 9362)).toBe('2 h 36 min');
+        expect(formatAlertValue('seconds', 7200)).toBe('2 h');
         expect(formatAlertValue('state', 1)).toBe('Unreachable');
         expect(formatAlertValue('count', null)).toBe('Not measured');
     });

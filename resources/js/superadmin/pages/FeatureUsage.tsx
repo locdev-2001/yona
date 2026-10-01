@@ -2,7 +2,7 @@ import { Link } from '@inertiajs/react';
 import type { ColumnDef } from '@tanstack/react-table';
 import { ActivityIcon } from 'lucide-react';
 
-import { formatDateTime } from '@admin/lib/format';
+import { EMPTY_VALUE, formatDateTime } from '@admin/lib/format';
 import { cn } from '@admin/lib/utils';
 import DataTableEmpty from '@admin/views/datatables/datatable-empty';
 import ListCard from '@admin/views/datatables/list';
@@ -35,20 +35,34 @@ const label = (key: string, params?: Record<string, string | number>) => t(`ADMI
 
 const NUMERIC = { numeric: true, headerClassName: 'text-right', cellClassName: 'text-right font-num' };
 
-// Số lượt mỗi ngày trong 30 ngày: cột nhỏ trên rãnh nền, ngày 0 lượt vẫn có rãnh để nhịp đều.
+// Số lượt mỗi ngày trong 30 ngày: cột cho ngày có lượt, đứng trên một đường nền.
+// Ngày 0 lượt để trống, nên hàng toàn 0 chỉ còn đường nền, không trông như có dữ liệu.
 export function TrendBars({ trend }: { trend: number[] }) {
     const max = Math.max(1, ...trend);
     const total = trend.reduce((sum, count) => sum + count, 0);
 
     return (
-        <div role="img" aria-label={label('TREND_SUMMARY', { count: formatNumber(total) })} className="flex h-8 w-32 items-stretch gap-px">
+        <div
+            role="img"
+            aria-label={label('TREND_SUMMARY', { count: formatNumber(total) })}
+            className="flex h-8 w-32 items-stretch gap-px border-b border-neutral-300"
+        >
             {trend.map((count, index) => (
-                <span key={index} className="bg-primary-50 flex min-w-0 flex-1 flex-col justify-end">
+                <span key={index} className="flex min-w-0 flex-1 flex-col justify-end">
                     {count > 0 ? <span className="bg-primary-600 w-full" style={{ height: `${Math.max(12, (count / max) * 100)}%` }} /> : null}
                 </span>
             ))}
         </div>
     );
+}
+
+const isUsed = (row: FeatureRow) => row.accounts.all > 0 || row.events > 0;
+
+// Tính năng có người dùng lên đầu, nhiều tài khoản dùng gần đây trước.
+export function rankFeatures(rows: FeatureRow[]): FeatureRow[] {
+    return rows
+        .filter(isUsed)
+        .sort((a, b) => b.accounts['30d'] - a.accounts['30d'] || b.accounts.all - a.accounts.all || b.events - a.events);
 }
 
 const accountsColumn = (window: '7d' | '30d' | '90d' | 'all'): ColumnDef<FeatureRow> => ({
@@ -57,7 +71,8 @@ const accountsColumn = (window: '7d' | '30d' | '90d' | 'all'): ColumnDef<Feature
     cell: ({ row }) => (
         <span className={cn(row.original.accounts[window] === 0 && 'text-muted-foreground')}>{formatNumber(row.original.accounts[window])}</span>
     ),
-    meta: NUMERIC,
+    // Điện thoại chỉ giữ 30 ngày và từ đầu, thẻ mỗi tính năng bớt hai cặp số.
+    meta: window === '7d' || window === '90d' ? { ...NUMERIC, mobileHidden: true } : NUMERIC,
 });
 
 const columns: ColumnDef<FeatureRow>[] = [
@@ -87,13 +102,14 @@ const columns: ColumnDef<FeatureRow>[] = [
     {
         id: 'last',
         header: () => label('COLUMNS.LAST'),
+        meta: { headerClassName: 'pl-8', cellClassName: 'pl-8' },
         cell: ({ row }) =>
             row.original.lastAt ? (
                 <span className="whitespace-nowrap" title={formatDateTime(row.original.lastAt)}>
                     {formatRelative(row.original.lastAt)}
                 </span>
             ) : (
-                <span className="text-muted-foreground">{t('ADMIN_OPERATIONS.COMMON.NEVER')}</span>
+                <span className="text-muted-foreground">{EMPTY_VALUE}</span>
             ),
     },
     {
@@ -111,7 +127,10 @@ export default function FeatureUsage({ features }: Props) {
             <PageHeader title={label('TITLE')} description={label('DESCRIPTION')} className="mb-0 md:mb-0" />
 
             {GROUPS.map(group => {
-                const rows = features.filter(feature => feature.group === group);
+                const all = features.filter(feature => feature.group === group);
+                // Mốc kích hoạt giữ thứ tự phễu; tính năng chưa ai dùng gom thành một dòng dưới bảng.
+                const rows = group === 'activation' ? all : rankFeatures(all);
+                const unused = group === 'activation' ? [] : all.filter(feature => !isUsed(feature));
 
                 return (
                     <section key={group} aria-labelledby={`feature-usage-${group}`} className="flex flex-col gap-3">
@@ -137,6 +156,24 @@ export default function FeatureUsage({ features }: Props) {
                                 />
                             }
                         />
+                        {hasEvents && unused.length > 0 ? (
+                            <div className="flex flex-col gap-2">
+                                <h3 className="text-muted-foreground text-sm">{label('UNUSED_TITLE', { count: unused.length })}</h3>
+                                <ul className="flex flex-wrap gap-2">
+                                    {unused.map(feature => (
+                                        <li key={feature.key}>
+                                            <Link
+                                                href={feature.url}
+                                                aria-label={label('OPEN', { feature: feature.label })}
+                                                className="inline-flex min-h-11 items-center rounded-sm border px-3 text-sm hover:bg-neutral-50 active:scale-[0.97] md:min-h-8"
+                                            >
+                                                {feature.label}
+                                            </Link>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        ) : null}
                     </section>
                 );
             })}

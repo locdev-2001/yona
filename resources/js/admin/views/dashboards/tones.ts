@@ -80,6 +80,10 @@ export const TONE_TEXT: Record<Tone, string> = {
 // Nét / mảng biểu đồ theo tone. Chuỗi phân loại không mang nghĩa (kênh A, kênh B…) dùng CHART_SERIES.
 export const CHART_SERIES = ['var(--chart-1)', 'var(--chart-2)', 'var(--chart-3)', 'var(--chart-4)', 'var(--chart-5)']
 
+// Chuỗi phân loại (kênh A, kênh B…): chỉ lấy màu họ thực thể và trung tính, KHÔNG lấy màu trạng thái
+// (warning / success / danger) để một kênh không trông như "có vấn đề" hay "khoẻ".
+export const CATEGORY_SERIES = ['var(--chart-1)', 'var(--chart-2)', 'var(--color-navy)', 'var(--chart-5)']
+
 export const TONE_FILL: Record<Tone, string> = {
   primary: 'var(--chart-1)',
   cyan: 'var(--chart-2)',

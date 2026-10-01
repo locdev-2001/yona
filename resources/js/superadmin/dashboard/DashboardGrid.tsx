@@ -11,9 +11,11 @@ import { SortableContext, rectSortingStrategy, sortableKeyboardCoordinates, useS
 import { CSS } from '@dnd-kit/utilities';
 import { useMemo } from 'react';
 
+import { cn } from '@admin/lib/utils';
+
 import { t } from '../../i18n';
 import { DashboardWidget } from './DashboardWidget';
-import { GRID_CLASS, moveItem } from './layout';
+import { GRID_CLASS, GRID_DENSE_CLASS, moveItem } from './layout';
 import type { LayoutItem, OperationLink, RangePreset, WidgetMeta, WidgetSize } from './types';
 
 type Props = {
@@ -65,7 +67,7 @@ export function DashboardGrid({ items, widgets, editing, sizes, range, endpoint,
             accessibility={{ announcements, screenReaderInstructions: { draggable: t('ADMIN_DASHBOARD.EDIT.HINT') } }}
         >
             <SortableContext items={items.map(item => item.key)} strategy={rectSortingStrategy} disabled={!editing}>
-                <div className={GRID_CLASS}>
+                <div className={cn(GRID_CLASS, !editing && GRID_DENSE_CLASS)}>
                     {items.map(item => (
                         <SortableWidget
                             key={item.key}

@@ -8,6 +8,8 @@ import PageHeader from '@admin/views/pages/page-header'
 export interface ResourceListAppProps {
   title: string
   description: string
+  // Nút tạo mới nằm ở đầu trang như mọi trang khác của console.
+  actions?: ReactNode
   // Ô lọc đã nằm trong thanh công cụ; giữ chỗ cho trang cần dải lọc riêng.
   filters?: ReactNode
   toolbar: ReactNode
@@ -16,10 +18,10 @@ export interface ResourceListAppProps {
 }
 
 // Khung trang danh sách: tiêu đề, rồi một thẻ gồm bộ lọc, thanh công cụ, bảng và phân trang.
-const ResourceListApp = ({ title, description, filters, toolbar, table, pagination }: ResourceListAppProps) => {
+const ResourceListApp = ({ title, description, actions, filters, toolbar, table, pagination }: ResourceListAppProps) => {
   return (
     <div className='flex flex-col gap-4 lg:gap-6'>
-      <PageHeader title={title} description={description} className='mb-0 md:mb-0' />
+      <PageHeader title={title} description={description} actions={actions} className='mb-0 md:mb-0' />
 
       <Card className='py-0 shadow-none'>
         <div className='w-full'>

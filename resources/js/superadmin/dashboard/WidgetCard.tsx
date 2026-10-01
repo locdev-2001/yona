@@ -150,7 +150,7 @@ export function WidgetCard({ ref, meta, item, edit, onRefresh, onHide, busy = fa
                     >
                         <div className="flex items-center gap-1">
                             <DragHandle meta={meta} edit={edit} />
-                            <h2 id={headingId} className="min-w-0 flex-1 truncate text-lg font-semibold">
+                            <h2 id={headingId} className="min-w-0 flex-1 truncate text-base font-medium">
                                 {meta.title}
                             </h2>
                             <EditActions meta={meta} item={item} edit={edit} />
@@ -195,7 +195,8 @@ export function WidgetCard({ ref, meta, item, edit, onRefresh, onHide, busy = fa
                                 {badge.icon}
                             </span>
                         ) : null}
-                        <CardTitle id={headingId} role="heading" aria-level={2} className="min-w-0 text-lg font-semibold break-words">
+                        {/* Tiêu đề ô 16px, tiêu đề trang 20px: hai cấp tách rõ. */}
+                        <CardTitle id={headingId} role="heading" aria-level={2} className="min-w-0 text-base font-medium break-words">
                             {meta.title}
                         </CardTitle>
                     </div>

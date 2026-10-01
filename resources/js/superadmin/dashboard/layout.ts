@@ -3,6 +3,10 @@ import type { LayoutItem, WidgetMeta, WidgetSize } from './types';
 // Lưới 4 cột từ xl (trừ thanh điều hướng), 2 cột từ md, 1 cột trên điện thoại.
 export const GRID_CLASS = 'grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4';
 
+// Ngoài chế độ tuỳ chỉnh, ô nhỏ phía sau được kéo lên lấp chỗ trống của hàng trên (bố cục đã lưu
+// có thể để thủng lưới). Lúc kéo thả thì giữ đúng thứ tự để vị trí thả khớp với điều người dùng thấy.
+export const GRID_DENSE_CLASS = 'grid-flow-row-dense';
+
 export const SIZE_CLASS: Record<WidgetSize, string> = {
     sm: 'col-span-1',
     md: 'col-span-1 md:col-span-2',

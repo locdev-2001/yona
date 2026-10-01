@@ -1,8 +1,9 @@
 import { router } from '@inertiajs/react';
+import { PlusIcon } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 import Link from '@admin/components/Link';
-import { Button } from '@admin/components/ui/button';
+import { Button, buttonVariants } from '@admin/components/ui/button';
 import { ConfirmDialog } from '@admin/views/apps/resources/dialogs/confirm-dialog';
 import ResourceListApp from '@admin/views/apps/resources/list';
 import { ResourcePagination } from '@admin/views/apps/resources/list/resource-pagination';
@@ -83,6 +84,10 @@ export default function ResourceIndex({
     const canDestroy = actions.includes('destroy');
     const showingFrom = (pagination.current - 1) * PER_PAGE + 1;
     const searchLabel = label('search_records', { resource: title.toLowerCase() });
+    // Câu mô tả như các trang khác; tài nguyên chưa có câu thì dùng số bản ghi.
+    const descriptionKey = `resource_description_${resource}` as const;
+    const resourceDescription = label(descriptionKey);
+    const description = resourceDescription !== descriptionKey ? resourceDescription : label('records_total', { total: pagination.total.toLocaleString('vi-VN') });
 
     const visit = (params: { search?: string; order?: string; direction?: string; page?: number }) =>
         router.get(indexUrl(resource, singular, { order, direction, ...params }), {}, { preserveState: true, preserveScroll: true });
@@ -115,7 +120,15 @@ export default function ResourceIndex({
         <>
             <ResourceListApp
                 title={title}
-                description={label('records_total', { total: pagination.total.toLocaleString('vi-VN') })}
+                description={description}
+                actions={
+                    actions.includes('new') ? (
+                        <Link href={`/admin/${resource}/new`} className={buttonVariants({ className: 'max-md:h-11' })}>
+                            <PlusIcon />
+                            <span>{label('new_record')}</span>
+                        </Link>
+                    ) : null
+                }
                 toolbar={
                     <ResourceTableToolbar
                         search={query}
@@ -136,7 +149,6 @@ export default function ResourceIndex({
                                 />
                             ) : null
                         }
-                        newRecord={actions.includes('new') ? { href: `/admin/${resource}/new`, label: label('new_record') } : null}
                         onSearchChange={setQuery}
                         onSubmit={() => visit({ search: query.trim() })}
                         onClear={() => {

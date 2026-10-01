@@ -84,6 +84,10 @@ return [
         'NO_MATCH' => 'Không có hộp thư nào khớp bộ lọc.',
     ],
     'ACCOUNT_OVERVIEW' => [
+        'PAGE' => [
+            'TITLE' => 'Hồ sơ tài khoản',
+            'DESCRIPTION' => 'Số liệu, thành viên, hộp thư và hoạt động của {name}.',
+        ],
         'BACK' => 'Danh sách tài khoản',
         'STATUS' => [
             'active' => 'Đang hoạt động',
@@ -130,6 +134,7 @@ return [
             'CONTACTS' => 'Liên hệ',
             'MESSAGES_7D' => 'Tin 7 ngày',
             'MESSAGES_30D' => 'Tin 30 ngày',
+            'DAILY_AVERAGE' => 'Trung bình {value} tin/ngày',
         ],
         'TABS' => [
             'OVERVIEW' => 'Tổng quan',
@@ -186,18 +191,13 @@ return [
         ],
         'ONBOARDING' => [
             'CURRENT_STEP' => 'Đang ở bước: {step}',
+            'DESCRIPTION' => 'Cùng sáu bước với phễu kích hoạt ở Tổng quan. Ngày là lần đầu ghi nhận nên có thể không theo thứ tự bước.',
+            'DONE_COUNT' => '{done}/{total} bước',
             'FINISHED' => 'Đã xong onboarding',
             'STEPS' => [
                 'account_details' => 'Điền thông tin tài khoản',
                 'account_update' => 'Cập nhật tài khoản',
                 'invite_team' => 'Mời đồng đội',
-            ],
-            'MILESTONES' => [
-                'account_details' => 'Điền thông tin doanh nghiệp',
-                'first_inbox' => 'Kết nối hộp thư đầu tiên',
-                'team_invited' => 'Mời thêm thành viên',
-                'first_incoming' => 'Nhận tin khách đầu tiên',
-                'first_reply' => 'Trả lời khách lần đầu',
             ],
         ],
         'AUDIT' => [

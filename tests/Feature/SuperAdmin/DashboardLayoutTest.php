@@ -67,3 +67,16 @@ it('bỏ qua ô đã gỡ khỏi danh mục trong bố cục đã lưu', functio
 
     $this->getJson('/admin/api/dashboard/layout')->assertJsonPath('layout', [['key' => 'system', 'size' => 'md']]);
 });
+
+it('bố cục mặc định lấp đủ từng hàng của lưới 4 cột, không thủng lưới', function () {
+    $span = ['sm' => 1, 'md' => 2, 'lg' => 3, 'full' => 4];
+    $row = 0;
+    foreach ($this->defaults as $item) {
+        $width = $span[$item['size']];
+        // Ô không vừa phần còn lại của hàng thì hàng đó bị bỏ trống một đoạn.
+        expect($row + $width)->toBeLessThanOrEqual(4, "ô {$item['key']} làm thủng hàng");
+        $row = ($row + $width) % 4;
+    }
+
+    expect($row)->toBe(0);
+});
