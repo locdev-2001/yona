@@ -242,7 +242,7 @@ return [
         'accounts' => 'Accounts',
         'account_users' => 'Account users',
         'user' => 'User',
-        'users' => 'Users',
+        'users' => 'Members',
         'inviter' => 'Inviter',
         'inboxes' => 'Inboxes',
         'conversations' => 'Conversations',

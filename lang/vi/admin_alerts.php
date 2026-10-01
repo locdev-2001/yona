@@ -7,7 +7,9 @@
 return [
     'NAV' => 'Cảnh báo',
     'TITLE' => 'Cảnh báo',
-    'DESCRIPTION' => 'Vượt ngưỡng thì mọi super admin nhận email và thông báo đẩy, mỗi sự cố một lần, hồi phục báo thêm một lần. Hệ thống đo lại mỗi 5 phút.',
+    'DESCRIPTION' => 'Vượt ngưỡng thì mọi super admin nhận email và thông báo đẩy khi sự cố mở và khi hồi phục. Đo lại mỗi 5 phút.',
+    'RULES_TITLE' => 'Luật cảnh báo',
+    'FIRING_SINCE' => 'Đang báo từ {time}',
     'RULES' => [
         'failing_channels' => ['TITLE' => 'Kênh đang lỗi', 'DESCRIPTION' => 'Hộp thư mất phiên hoặc cần cấp quyền lại trên toàn hệ thống.'],
         'failed_jobs' => ['TITLE' => 'Job lỗi', 'DESCRIPTION' => 'Số job lỗi trong cửa sổ đánh giá.'],
@@ -59,6 +61,10 @@ return [
     'OPEN_PAGE' => 'Mở trang liên quan',
     'DISPLAY' => [
         'SECONDS' => '{count} giây',
+        'MINUTES' => '{count} phút',
+        'MINUTES_SECONDS' => '{minutes} phút {seconds} giây',
+        'HOURS' => '{count} giờ',
+        'HOURS_MINUTES' => '{hours} giờ {minutes} phút',
         'DOWN' => 'Không phản hồi',
         'UP' => 'Đang phản hồi',
         'NONE' => 'Chưa đo',
@@ -73,7 +79,7 @@ return [
             'PEAK' => 'Cao nhất / ngưỡng',
             'NOTIFIED' => 'Thông báo',
         ],
-        'OPEN' => 'Đang mở',
+        'OPEN' => 'Đang báo',
         'NOTIFIED' => 'Đã báo',
         'NOT_NOTIFIED' => 'Chưa báo, đang trong thời gian chờ',
         'RECOVERY_NOTIFIED' => 'Đã báo sự cố và hồi phục',

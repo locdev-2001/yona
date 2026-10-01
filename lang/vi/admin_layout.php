@@ -244,7 +244,7 @@ return [
         'accounts' => 'Tài khoản',
         'account_users' => 'Thành viên',
         'user' => 'Người dùng',
-        'users' => 'Người dùng',
+        'users' => 'Thành viên',
         'inviter' => 'Người mời',
         'inboxes' => 'Hộp thư',
         'conversations' => 'Hội thoại',

@@ -3,7 +3,9 @@
 return [
     'NAV' => 'Alerts',
     'TITLE' => 'Alerts',
-    'DESCRIPTION' => 'When a threshold is crossed every super admin gets an email and a push notification, once per incident, plus once on recovery. Checked every 5 minutes.',
+    'DESCRIPTION' => 'When a threshold is crossed every super admin gets an email and a push notification when the incident opens and when it recovers. Checked every 5 minutes.',
+    'RULES_TITLE' => 'Alert rules',
+    'FIRING_SINCE' => 'Firing since {time}',
     'RULES' => [
         'failing_channels' => ['TITLE' => 'Failing channels', 'DESCRIPTION' => 'Inboxes that lost their session or need reauthorization.'],
         'failed_jobs' => ['TITLE' => 'Failed jobs', 'DESCRIPTION' => 'Jobs that failed within the window.'],
@@ -55,6 +57,10 @@ return [
     'OPEN_PAGE' => 'Open related page',
     'DISPLAY' => [
         'SECONDS' => '{count} s',
+        'MINUTES' => '{count} min',
+        'MINUTES_SECONDS' => '{minutes} min {seconds} s',
+        'HOURS' => '{count} h',
+        'HOURS_MINUTES' => '{hours} h {minutes} min',
         'DOWN' => 'Unreachable',
         'UP' => 'Reachable',
         'NONE' => 'Not measured',
@@ -69,7 +75,7 @@ return [
             'PEAK' => 'Peak / threshold',
             'NOTIFIED' => 'Notification',
         ],
-        'OPEN' => 'Open',
+        'OPEN' => 'Firing',
         'NOTIFIED' => 'Notified',
         'NOT_NOTIFIED' => 'Not notified, in cooldown',
         'RECOVERY_NOTIFIED' => 'Notified and recovered',
