@@ -1,16 +1,22 @@
-import { Link, router, useForm } from '@inertiajs/react';
+import { router, useForm } from '@inertiajs/react';
 import { useState } from 'react';
+import { HashIcon, LayoutDashboardIcon, MailIcon, PencilIcon, PlusIcon, RefreshCwIcon, VenetianMaskIcon } from 'lucide-react';
+
+import Link from '@admin/components/Link';
+import { Alert, AlertDescription } from '@admin/components/ui/alert';
+import { Button, buttonVariants } from '@admin/components/ui/button';
+import { Field, FieldGroup, FieldLabel } from '@admin/components/ui/field';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@admin/components/ui/select';
+import { Textarea } from '@admin/components/ui/textarea';
+import { cn } from '@admin/lib/utils';
+import type { RecordDetailRow, RecordStat } from '@admin/views/apps/resources/view/record-view-left-panel';
+import { formatCompactNumber, RecordViewLeftPanel } from '@admin/views/apps/resources/view/record-view-left-panel';
+import { SectionCard, TableCard } from '@admin/views/apps/resources/view/section-card';
 
 import FieldValue from '../components/FieldValue';
+import { useNavLabel } from '../components/navigation';
+import { useConsoleDictionary, useConsoleLabels } from '../labels';
 import type { SuperAdminField } from '../types';
-import { Alert } from '../ui/Alert';
-import { Badge } from '../ui/Badge';
-import { Button, buttonClassName } from '../ui/Button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/Card';
-import { Icon } from '../ui/Icon';
-import { Field, Select, Textarea } from '../ui/Input';
-import { useConsoleDictionary, useConsoleLabels } from '../ui/labels';
-import { PageHeader } from '../ui/PageHeader';
 
 type AccountUserForm = {
     accountId?: number;
@@ -22,6 +28,7 @@ type AccountUserForm = {
 
 type Props = {
     resource: string;
+    resourceLabel?: string;
     singularLabel: string;
     record: { id: number; title: string; url: string | null };
     fields: SuperAdminField[];
@@ -33,11 +40,14 @@ type Props = {
     actions: string[];
 };
 
-// Trường nhiều dòng (bảng con, khối lồng) chiếm cả hàng; trường ngắn xếp hai cột.
+// Trường nhiều dòng (bảng con, khối lồng) nằm ở cột phải; trường ngắn là danh sách chi tiết ở cột trái.
 const WIDE_FIELD_TYPES = ['has_many', 'has_one', 'suspension_history_field', 'serialized_field'];
+const STAT_FIELD_TYPES = ['count_field'];
 
 export default function ResourceShow({
     resource,
+    resourceLabel,
+    singularLabel,
     record,
     fields,
     accountUserForm,
@@ -49,99 +59,117 @@ export default function ResourceShow({
 }: Props) {
     const label = useConsoleLabels();
     const { attribute } = useConsoleDictionary();
-    const shortFields = fields.filter(field => !WIDE_FIELD_TYPES.includes(field.type));
+    const resourceTitle = useNavLabel(`/admin/${resource}`, resourceLabel ?? singularLabel);
+    const avatar = fields.find(field => field.type === 'avatar_field');
+    const statFields = fields.filter(field => STAT_FIELD_TYPES.includes(field.type)).slice(0, 2);
+    const shortFields = fields.filter(
+        field => !WIDE_FIELD_TYPES.includes(field.type) && field.type !== 'avatar_field' && !statFields.includes(field),
+    );
     const wideFields = fields.filter(field => WIDE_FIELD_TYPES.includes(field.type));
 
+    const stats: RecordStat[] = statFields.map(field => ({
+        key: field.name,
+        icon: <HashIcon />,
+        value: formatCompactNumber(typeof field.value === 'number' ? field.value : Number(field.value ?? 0)),
+        label: attribute(field.name, field.label),
+    }));
+
+    const details: RecordDetailRow[] = shortFields.map(field => ({
+        key: field.name,
+        label: attribute(field.name, field.label),
+        value: <FieldValue field={field} />,
+        stacked: field.type === 'string' && String(field.value ?? '').length > 32,
+    }));
+
+    if (mfaEnabled !== undefined) {
+        details.push({
+            key: 'mfa_enabled',
+            label: label('mfa'),
+            value: mfaEnabled ? label('enabled') : label('disabled'),
+            status: mfaEnabled ? 'active' : 'inactive',
+        });
+    }
+
+    const canEdit = actions.includes('edit') && record.url;
+    const panelActions =
+        canEdit || (resource === 'accounts' && record.url) ? (
+            <>
+                {canEdit ? (
+                    <Link href={`${record.url}/edit`} className={cn(buttonVariants(), 'sm:flex-1')}>
+                        <PencilIcon />
+                        {label('edit')}
+                    </Link>
+                ) : null}
+                {resource === 'accounts' && record.url ? (
+                    <Link href={`${record.url}/overview`} className={cn(buttonVariants({ variant: 'outline' }), 'sm:flex-1')}>
+                        <LayoutDashboardIcon />
+                        {label('account_overview')}
+                    </Link>
+                ) : null}
+            </>
+        ) : null;
+
+    const hasRightColumn =
+        wideFields.length > 0 || Boolean(accountUserForm) || Boolean(impersonateUrl) || resource === 'accounts';
+
     return (
-        <>
-            <PageHeader
+        <div
+            className={cn(
+                'relative grid grid-cols-1 gap-6',
+                hasRightColumn ? 'lg:grid-cols-[350px_minmax(0,1fr)]' : 'max-w-xl',
+            )}
+        >
+            <RecordViewLeftPanel
                 title={record.title}
-                actions={
-                    <>
-                        {resource === 'accounts' && record.url ? (
-                            <Link href={`${record.url}/overview`} className={buttonClassName({ variant: 'outline' })}>
-                                <Icon name="i-lucide-layout-dashboard" />
-                                {label('account_overview')}
-                            </Link>
-                        ) : null}
-                        {resource === 'users' && !confirmed ? (
-                            <Button variant="outline" onClick={() => router.post(`${record.url}/resend_confirmation`)}>
-                                <Icon name="i-lucide-mail" />
-                                {label('resend_confirmation')}
-                            </Button>
-                        ) : null}
-                        {actions.includes('edit') && record.url ? (
-                            <Link href={`${record.url}/edit`} className={buttonClassName()}>
-                                <Icon name="i-lucide-pencil" />
-                                {label('edit')}
-                            </Link>
-                        ) : null}
-                    </>
+                avatarUrl={avatar?.value ? String(avatar.value) : null}
+                badge={resourceTitle}
+                stats={stats}
+                detailsTitle={label('details')}
+                details={details}
+                actions={panelActions}
+                footer={
+                    resource === 'users' && !confirmed ? (
+                        <Button variant="outline" className="w-full" onClick={() => router.post(`${record.url}/resend_confirmation`)}>
+                            <MailIcon />
+                            {label('resend_confirmation')}
+                        </Button>
+                    ) : null
                 }
             />
 
-            <Card>
-                <CardHeader>
-                    <CardTitle>{label('details')}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    <dl className="grid gap-x-8 gap-y-4 sm:grid-cols-2">
-                        {shortFields.map(field => (
-                            <div key={field.name} className="min-w-0">
-                                <dt className="text-xs font-medium text-console-muted-foreground" id={field.name}>
-                                    {attribute(field.name, field.label)}
-                                </dt>
-                                <dd className="mt-1 min-w-0 break-words text-sm">
-                                    <FieldValue field={field} />
-                                </dd>
-                            </div>
-                        ))}
-                        {mfaEnabled === undefined ? null : (
-                            <div>
-                                <dt className="text-xs font-medium text-console-muted-foreground" id="mfa_enabled">
-                                    {label('mfa')}
-                                </dt>
-                                <dd className="mt-1">
-                                    <Badge variant={mfaEnabled ? 'success' : 'secondary'}>
-                                        {mfaEnabled ? label('enabled') : label('disabled')}
-                                    </Badge>
-                                </dd>
-                            </div>
-                        )}
-                    </dl>
-                </CardContent>
-            </Card>
+            {hasRightColumn ? (
+                <div className="flex min-w-0 flex-col gap-6">
+                    {wideFields.map(field =>
+                        field.type === 'has_many' ? (
+                            <TableCard key={field.name} id={field.name} title={attribute(field.name, field.label)}>
+                                <FieldValue field={field} />
+                            </TableCard>
+                        ) : (
+                            <SectionCard key={field.name} id={field.name} title={attribute(field.name, field.label)}>
+                                <FieldValue field={field} />
+                            </SectionCard>
+                        ),
+                    )}
 
-            {wideFields.map(field => (
-                <Card key={field.name}>
-                    <CardHeader>
-                        <CardTitle id={field.name}>{attribute(field.name, field.label)}</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <FieldValue field={field} />
-                    </CardContent>
-                </Card>
-            ))}
+                    {accountUserForm ? <AccountUserSection form={accountUserForm} /> : null}
 
-            {accountUserForm ? <AccountUserSection form={accountUserForm} /> : null}
+                    {impersonateUrl ? <ImpersonateSection url={impersonateUrl} title={record.title} csrf={csrf ?? ''} /> : null}
 
-            {impersonateUrl ? <ImpersonateSection url={impersonateUrl} title={record.title} csrf={csrf ?? ''} /> : null}
-
-            {resource === 'accounts' ? (
-                <Card>
-                    <CardHeader>
-                        <div>
-                            <CardTitle>{label('reset_cache_title')}</CardTitle>
-                            <CardDescription>{label('reset_cache_description')}</CardDescription>
-                        </div>
-                        <Button variant="outline" onClick={() => router.post(`${record.url}/reset_cache`)}>
-                            <Icon name="i-lucide-refresh-cw" />
-                            {label('reset_cache')}
-                        </Button>
-                    </CardHeader>
-                </Card>
+                    {resource === 'accounts' ? (
+                        <SectionCard
+                            title={label('reset_cache_title')}
+                            description={label('reset_cache_description')}
+                            action={
+                                <Button variant="outline" onClick={() => router.post(`${record.url}/reset_cache`)}>
+                                    <RefreshCwIcon />
+                                    {label('reset_cache')}
+                                </Button>
+                            }
+                        />
+                    ) : null}
+                </div>
             ) : null}
-        </>
+        </div>
     );
 }
 
@@ -158,47 +186,45 @@ function ImpersonateSection({ url, title, csrf }: { url: string; title: string; 
     const reasonTooShort = reason.trim().length < REASON_MIN_LENGTH;
 
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle>{label('impersonate_title')}</CardTitle>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-4">
-                <Alert tone="warning">{label('impersonate_warning', { title })}</Alert>
-                {expanded ? (
-                    <form method="post" action={url} target="_blank" className="flex flex-col gap-4">
-                        <input type="hidden" name="_token" value={csrf} />
-                        <Field
-                            label={label('impersonate_reason', { min: REASON_MIN_LENGTH })}
-                            htmlFor="impersonate_reason"
+        <SectionCard
+            title={label('impersonate_title')}
+            action={
+                expanded ? null : (
+                    <Button variant="outline" onClick={() => setExpanded(true)}>
+                        <VenetianMaskIcon />
+                        {label('impersonate')}
+                    </Button>
+                )
+            }
+        >
+            <Alert>
+                <AlertDescription>{label('impersonate_warning', { title })}</AlertDescription>
+            </Alert>
+            {expanded ? (
+                <form method="post" action={url} target="_blank" className="flex flex-col gap-4">
+                    <input type="hidden" name="_token" value={csrf} />
+                    <Field className="gap-2">
+                        <FieldLabel htmlFor="impersonate_reason">{label('impersonate_reason', { min: REASON_MIN_LENGTH })}</FieldLabel>
+                        <Textarea
+                            id="impersonate_reason"
+                            name="reason"
+                            rows={3}
                             required
-                        >
-                            <Textarea
-                                id="impersonate_reason"
-                                name="reason"
-                                rows={3}
-                                value={reason}
-                                onChange={event => setReason(event.target.value)}
-                            />
-                        </Field>
-                        <div className="flex flex-col-reverse gap-2 sm:flex-row">
-                            <Button variant="outline" onClick={() => setExpanded(false)}>
-                                {label('cancel')}
-                            </Button>
-                            <Button type="submit" disabled={reasonTooShort}>
-                                {label('impersonate_confirm')}
-                            </Button>
-                        </div>
-                    </form>
-                ) : (
-                    <div>
-                        <Button variant="outline" onClick={() => setExpanded(true)}>
-                            <Icon name="i-lucide-venetian-mask" />
-                            {label('impersonate')}
+                            value={reason}
+                            onChange={event => setReason(event.target.value)}
+                        />
+                    </Field>
+                    <div className="flex flex-col-reverse gap-4 sm:flex-row sm:justify-end">
+                        <Button variant="outline" onClick={() => setExpanded(false)}>
+                            {label('cancel')}
+                        </Button>
+                        <Button type="submit" disabled={reasonTooShort}>
+                            {label('impersonate_confirm')}
                         </Button>
                     </div>
-                )}
-            </CardContent>
-        </Card>
+                </form>
+            ) : null}
+        </SectionCard>
     );
 }
 
@@ -212,59 +238,73 @@ function AccountUserSection({ form }: { form: AccountUserForm }) {
         },
     });
 
-    const options = form.accounts ?? form.users ?? [];
+    const options = (form.accounts ?? form.users ?? []).map(option => ({ value: String(option.value), label: option.label }));
+    const roles = form.roles.map(role => ({ value: role, label: role }));
     const optionKey = form.accounts ? 'account_id' : 'user_id';
 
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle>{label('account_users_title')}</CardTitle>
-            </CardHeader>
-            <CardContent>
-                <form
-                    className="grid items-end gap-4 sm:grid-cols-[1fr_12rem_auto]"
-                    onSubmit={event => {
-                        event.preventDefault();
-                        post('/admin/account_users', { preserveScroll: true });
-                    }}
-                >
-                    <Field
-                        label={form.accounts ? label('account_users_account') : label('account_users_user')}
-                        htmlFor="account_user_related"
-                    >
+        <SectionCard title={label('account_users_title')}>
+            <form
+                onSubmit={event => {
+                    event.preventDefault();
+                    post('/admin/account_users', { preserveScroll: true });
+                }}
+            >
+                <FieldGroup className="grid grid-cols-1 items-end gap-6 sm:grid-cols-[1fr_12rem_auto]">
+                    <Field className="gap-2">
+                        <FieldLabel htmlFor="account_user_related">
+                            {form.accounts ? label('account_users_account') : label('account_users_user')}
+                        </FieldLabel>
                         <Select
-                            id="account_user_related"
-                            value={data.account_user[optionKey]}
-                            onChange={event =>
-                                setData('account_user', { ...data.account_user, [optionKey]: Number(event.target.value) })
-                            }
+                            items={options}
+                            value={String(data.account_user[optionKey])}
+                            onValueChange={(value: string | null) => {
+                                if (value) setData('account_user', { ...data.account_user, [optionKey]: Number(value) });
+                            }}
                         >
-                            {options.map(option => (
-                                <option value={option.value} key={option.value}>
-                                    {option.label}
-                                </option>
-                            ))}
+                            <SelectTrigger id="account_user_related" className="w-full">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent alignItemWithTrigger={false}>
+                                <SelectGroup>
+                                    {options.map(option => (
+                                        <SelectItem key={option.value} value={option.value}>
+                                            {option.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectGroup>
+                            </SelectContent>
                         </Select>
                     </Field>
-                    <Field label={label('account_users_role')} htmlFor="account_user_role">
+                    <Field className="gap-2">
+                        <FieldLabel htmlFor="account_user_role">{label('account_users_role')}</FieldLabel>
                         <Select
-                            id="account_user_role"
+                            items={roles}
                             value={data.account_user.role}
-                            onChange={event => setData('account_user', { ...data.account_user, role: event.target.value })}
+                            onValueChange={(value: string | null) => {
+                                if (value) setData('account_user', { ...data.account_user, role: value });
+                            }}
                         >
-                            {form.roles.map(role => (
-                                <option value={role} key={role}>
-                                    {role}
-                                </option>
-                            ))}
+                            <SelectTrigger id="account_user_role" className="w-full">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent alignItemWithTrigger={false}>
+                                <SelectGroup>
+                                    {roles.map(role => (
+                                        <SelectItem key={role.value} value={role.value}>
+                                            {role.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectGroup>
+                            </SelectContent>
                         </Select>
                     </Field>
                     <Button type="submit" disabled={processing}>
-                        <Icon name="i-lucide-plus" />
+                        <PlusIcon />
                         {label('account_users_submit')}
                     </Button>
-                </form>
-            </CardContent>
-        </Card>
+                </FieldGroup>
+            </form>
+        </SectionCard>
     );
 }

@@ -1,20 +1,52 @@
 import { Link } from '@inertiajs/react';
-import { useMemo, useState } from 'react';
+import type { ColumnDef } from '@tanstack/react-table';
+import { DatabaseIcon } from 'lucide-react';
+import { useId, useMemo, useState } from 'react';
+
+import { Card } from '@admin/components/ui/card';
+import DataTableBasic from '@admin/views/datatables/basic/basic-datatable';
+import DataTableEmpty from '@admin/views/datatables/datatable-empty';
+import { ListToolbar } from '@admin/views/datatables/list/list-toolbar';
+import PageHeader from '@admin/views/pages/page-header';
 
 import { t } from '../../i18n';
-import { Card } from '../ui/Card';
-import { EmptyState } from '../ui/EmptyState';
-import { Input } from '../ui/Input';
-import { PageHeader } from '../ui/PageHeader';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/Table';
 import { formatBytes, formatNumber } from './operationsFormat';
 
 export type DataTableSummary = { name: string; rows: number; approximate: boolean; bytes: number };
 
 const label = (key: string) => t(`ADMIN_OPERATIONS.DATA.${key}`);
 
+const columns: ColumnDef<DataTableSummary>[] = [
+    {
+        id: 'name',
+        header: () => label('COLUMNS.TABLE'),
+        cell: ({ row }) => (
+            <Link href={`/admin/data/${row.original.name}`} className="font-mono font-medium hover:underline">
+                {row.original.name}
+            </Link>
+        ),
+    },
+    {
+        id: 'rows',
+        header: () => <div className="text-right">{label('COLUMNS.ROWS')}</div>,
+        cell: ({ row }) => (
+            <div className="text-right font-medium tabular-nums">
+                {row.original.approximate ? '≈ ' : ''}
+                {formatNumber(row.original.rows)}
+                {row.original.approximate ? <span className="sr-only"> ({label('APPROXIMATE')})</span> : null}
+            </div>
+        ),
+    },
+    {
+        id: 'size',
+        header: () => <div className="text-right">{label('COLUMNS.SIZE')}</div>,
+        cell: ({ row }) => <div className="text-muted-foreground text-right tabular-nums">{formatBytes(row.original.bytes)}</div>,
+    },
+];
+
 export default function DataBrowser({ tables }: { tables: DataTableSummary[] }) {
     const [query, setQuery] = useState('');
+    const searchId = useId();
     const visible = useMemo(() => {
         const needle = query.trim().toLowerCase();
 
@@ -23,51 +55,26 @@ export default function DataBrowser({ tables }: { tables: DataTableSummary[] }) 
 
     return (
         <div className="flex flex-col gap-6">
-            <PageHeader title={label('TITLE')} description={label('DESCRIPTION')} />
+            <PageHeader title={label('TITLE')} description={label('DESCRIPTION')} className="mb-0 md:mb-0" />
 
             <Card className="gap-0 py-0">
-                <div className="border-b border-console-border p-4">
-                    <Input
-                        type="search"
-                        value={query}
-                        onChange={event => setQuery(event.target.value)}
-                        placeholder={label('SEARCH_TABLES')}
-                        aria-label={label('SEARCH_TABLES')}
-                        className="sm:max-w-sm"
+                <div className="border-b">
+                    <ListToolbar
+                        search={{
+                            id: searchId,
+                            label: label('SEARCH_TABLES'),
+                            placeholder: label('SEARCH_TABLES'),
+                            value: query,
+                            onChange: setQuery,
+                        }}
                     />
                 </div>
-                {visible.length === 0 ? (
-                    <EmptyState icon="i-lucide-database" title={label('NO_TABLES')} />
-                ) : (
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>{label('COLUMNS.TABLE')}</TableHead>
-                                <TableHead className="text-right">{label('COLUMNS.ROWS')}</TableHead>
-                                <TableHead className="text-right">{label('COLUMNS.SIZE')}</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {visible.map(table => (
-                                <TableRow key={table.name}>
-                                    <TableCell>
-                                        <Link href={`/admin/data/${table.name}`} className="font-mono text-console-brand hover:underline">
-                                            {table.name}
-                                        </Link>
-                                    </TableCell>
-                                    <TableCell className="whitespace-nowrap text-right tabular-nums">
-                                        {table.approximate ? '≈ ' : ''}
-                                        {formatNumber(table.rows)}
-                                        {table.approximate ? <span className="sr-only"> ({label('APPROXIMATE')})</span> : null}
-                                    </TableCell>
-                                    <TableCell className="whitespace-nowrap text-right tabular-nums text-console-muted-foreground">
-                                        {formatBytes(table.bytes)}
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                )}
+                <DataTableBasic
+                    data={visible}
+                    columns={columns}
+                    getRowId={table => table.name}
+                    empty={<DataTableEmpty icon={<DatabaseIcon className="size-4" />} title={label('NO_TABLES')} />}
+                />
             </Card>
         </div>
     );

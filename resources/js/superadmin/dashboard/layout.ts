@@ -1,7 +1,7 @@
 import type { LayoutItem, WidgetMeta, WidgetSize } from './types';
 
 // Lưới 4 cột từ xl (trừ thanh điều hướng), 2 cột từ md, 1 cột trên điện thoại.
-export const GRID_CLASS = 'grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4';
+export const GRID_CLASS = 'grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4';
 
 export const SIZE_CLASS: Record<WidgetSize, string> = {
     sm: 'col-span-1',

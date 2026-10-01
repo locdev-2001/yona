@@ -1,115 +1,146 @@
+import {
+    ActivityIcon,
+    BoxIcon,
+    CircleAlertIcon,
+    CodeIcon,
+    CpuIcon,
+    HardDriveIcon,
+    HourglassIcon,
+    KanbanIcon,
+    LayersIcon,
+    LinkIcon,
+    PackageCheckIcon,
+    PackageIcon,
+    ScrollTextIcon,
+    ServerIcon,
+    SmileIcon,
+    StickerIcon,
+    TableIcon,
+    TagIcon,
+} from 'lucide-react';
+import type { ReactNode } from 'react';
+
+import { Badge } from '@admin/components/ui/badge';
+import { Button } from '@admin/components/ui/button';
+import { MetricBoxes } from '@admin/views/dashboards/charts/chart-sales-metrics';
+import ProductInsightsStats from '@admin/views/dashboards/widgets/widget-product-insights';
+import QuickLinks from '@admin/views/dashboards/widgets/widget-quick-links';
+
 import { t } from '../../../i18n';
-import { Badge } from '../../ui/Badge';
-import type { BadgeVariant } from '../../ui/Badge';
-import { buttonClassName } from '../../ui/Button';
-import { Icon } from '../../ui/Icon';
 import { formatBytes, formatNumber } from '../format';
 import type { OperationLink, QueueHealthData, StickersData, SystemData } from '../types';
 
-function Facts({ rows }: { rows: { label: string; value: string }[] }) {
-    return (
-        <dl className="-my-1.5 divide-y divide-console-border">
-            {rows.map(row => (
-                <div key={row.label} className="flex items-baseline justify-between gap-3 py-1.5">
-                    <dt className="text-console-muted-foreground">{row.label}</dt>
-                    <dd className="truncate text-right font-medium tabular-nums">{row.value}</dd>
-                </div>
-            ))}
-        </dl>
-    );
-}
-
-const QUEUE_BADGE: Record<QueueHealthData['status'], BadgeVariant> = {
-    running: 'success',
-    paused: 'warning',
+const QUEUE_BADGE: Record<QueueHealthData['status'], 'default' | 'outline' | 'destructive' | 'secondary'> = {
+    running: 'default',
+    paused: 'outline',
     inactive: 'destructive',
     unavailable: 'secondary',
 };
 
 const numberOrDash = (value: number | null) => (value === null ? '—' : formatNumber(value));
 
+function OpenLink({ href, children }: { href: string; children: ReactNode }) {
+    return (
+        <Button variant="link" size="sm" className="mt-auto self-start px-0" render={<a href={href} />} nativeButton={false}>
+            {children}
+        </Button>
+    );
+}
+
 export function QueueHealth({ data }: { data: QueueHealthData }) {
     return (
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-1 flex-col gap-4">
             <Badge variant={QUEUE_BADGE[data.status]}>{t(`ADMIN_DASHBOARD.QUEUE.STATUS.${data.status.toUpperCase()}`)}</Badge>
-            <Facts
-                rows={[
-                    { label: t('ADMIN_DASHBOARD.QUEUE.PENDING'), value: numberOrDash(data.pendingJobs) },
-                    { label: t('ADMIN_DASHBOARD.QUEUE.RECENT_FAILED'), value: numberOrDash(data.recentFailedJobs) },
-                    { label: t('ADMIN_DASHBOARD.QUEUE.PROCESSES'), value: numberOrDash(data.processes) },
+            <ProductInsightsStats
+                stats={[
+                    {
+                        key: 'pending',
+                        label: t('ADMIN_DASHBOARD.QUEUE.PENDING'),
+                        value: numberOrDash(data.pendingJobs),
+                        aside: <HourglassIcon className="text-muted-foreground size-5" aria-hidden="true" />,
+                    },
+                    {
+                        key: 'failed',
+                        label: t('ADMIN_DASHBOARD.QUEUE.RECENT_FAILED'),
+                        value: numberOrDash(data.recentFailedJobs),
+                        className: (data.recentFailedJobs ?? 0) > 0 ? 'text-destructive' : undefined,
+                        aside: <CircleAlertIcon className="text-muted-foreground size-5" aria-hidden="true" />,
+                    },
+                    {
+                        key: 'processes',
+                        label: t('ADMIN_DASHBOARD.QUEUE.PROCESSES'),
+                        value: numberOrDash(data.processes),
+                        aside: <CpuIcon className="text-muted-foreground size-5" aria-hidden="true" />,
+                    },
                 ]}
             />
-            <a href={data.url} className={buttonClassName({ variant: 'link', size: 'sm', className: 'self-start px-0' })}>
-                {t('ADMIN_DASHBOARD.QUEUE.OPEN')}
-            </a>
+            <OpenLink href={data.url}>{t('ADMIN_DASHBOARD.QUEUE.OPEN')}</OpenLink>
         </div>
     );
 }
 
 export function Stickers({ data }: { data: StickersData }) {
     return (
-        <div className="flex flex-col gap-3">
-            <Facts
-                rows={[
-                    { label: t('ADMIN_DASHBOARD.STICKERS.SHARED_PACKS'), value: formatNumber(data.sharedPacks) },
-                    { label: t('ADMIN_DASHBOARD.STICKERS.SHARED_PUBLISHED'), value: formatNumber(data.sharedPublishedPacks) },
-                    { label: t('ADMIN_DASHBOARD.STICKERS.SHARED_STICKERS'), value: formatNumber(data.sharedStickers) },
-                    { label: t('ADMIN_DASHBOARD.STICKERS.PRIVATE_ACCOUNTS'), value: formatNumber(data.accountsWithPrivateLibrary) },
-                    { label: t('ADMIN_DASHBOARD.STICKERS.PRIVATE_STICKERS'), value: formatNumber(data.privateStickers) },
+        <div className="flex flex-1 flex-col gap-4">
+            <MetricBoxes
+                className="grid gap-3"
+                metrics={[
+                    { key: 'packs', icon: <PackageIcon className="size-5" />, title: t('ADMIN_DASHBOARD.STICKERS.SHARED_PACKS'), value: formatNumber(data.sharedPacks) },
+                    {
+                        key: 'published',
+                        icon: <PackageCheckIcon className="size-5" />,
+                        title: t('ADMIN_DASHBOARD.STICKERS.SHARED_PUBLISHED'),
+                        value: formatNumber(data.sharedPublishedPacks),
+                    },
+                    { key: 'shared', icon: <StickerIcon className="size-5" />, title: t('ADMIN_DASHBOARD.STICKERS.SHARED_STICKERS'), value: formatNumber(data.sharedStickers) },
+                    {
+                        key: 'accounts',
+                        icon: <BoxIcon className="size-5" />,
+                        title: t('ADMIN_DASHBOARD.STICKERS.PRIVATE_ACCOUNTS'),
+                        value: formatNumber(data.accountsWithPrivateLibrary),
+                    },
+                    { key: 'private', icon: <SmileIcon className="size-5" />, title: t('ADMIN_DASHBOARD.STICKERS.PRIVATE_STICKERS'), value: formatNumber(data.privateStickers) },
                 ]}
             />
-            <a href={data.url} className={buttonClassName({ variant: 'link', size: 'sm', className: 'self-start px-0' })}>
-                {t('ADMIN_DASHBOARD.STICKERS.OPEN')}
-            </a>
+            <OpenLink href={data.url}>{t('ADMIN_DASHBOARD.STICKERS.OPEN')}</OpenLink>
         </div>
     );
 }
 
 export function System({ data }: { data: SystemData }) {
     return (
-        <Facts
-            rows={[
-                { label: t('ADMIN_DASHBOARD.SYSTEM.VERSION'), value: data.version || '—' },
-                { label: t('ADMIN_DASHBOARD.SYSTEM.ENVIRONMENT'), value: data.environment },
-                { label: t('ADMIN_DASHBOARD.SYSTEM.PHP'), value: data.php },
-                { label: t('ADMIN_DASHBOARD.SYSTEM.LARAVEL'), value: data.laravel },
-                { label: t('ADMIN_DASHBOARD.SYSTEM.DATABASE_SIZE'), value: formatBytes(data.databaseSizeBytes) },
-                { label: t('ADMIN_DASHBOARD.SYSTEM.TABLES'), value: formatNumber(data.tablesCount) },
+        <MetricBoxes
+            className="grid gap-3"
+            metrics={[
+                { key: 'version', icon: <TagIcon className="size-5" />, title: t('ADMIN_DASHBOARD.SYSTEM.VERSION'), value: data.version || '—' },
+                { key: 'environment', icon: <ServerIcon className="size-5" />, title: t('ADMIN_DASHBOARD.SYSTEM.ENVIRONMENT'), value: data.environment },
+                { key: 'php', icon: <CodeIcon className="size-5" />, title: t('ADMIN_DASHBOARD.SYSTEM.PHP'), value: data.php },
+                { key: 'laravel', icon: <LayersIcon className="size-5" />, title: t('ADMIN_DASHBOARD.SYSTEM.LARAVEL'), value: data.laravel },
+                { key: 'size', icon: <HardDriveIcon className="size-5" />, title: t('ADMIN_DASHBOARD.SYSTEM.DATABASE_SIZE'), value: formatBytes(data.databaseSizeBytes) },
+                { key: 'tables', icon: <TableIcon className="size-5" />, title: t('ADMIN_DASHBOARD.SYSTEM.TABLES'), value: formatNumber(data.tablesCount) },
             ]}
         />
     );
 }
 
-const LINK_ICON: Record<string, string> = {
-    horizon: 'i-lucide-layers',
-    pulse: 'i-lucide-activity',
-    logs: 'i-lucide-scroll-text',
-    tasks: 'i-lucide-kanban',
+const LINK_ICON: Record<string, ReactNode> = {
+    horizon: <LayersIcon className="size-5" />,
+    pulse: <ActivityIcon className="size-5" />,
+    logs: <ScrollTextIcon className="size-5" />,
+    tasks: <KanbanIcon className="size-5" />,
 };
 
 export function OperationLinks({ links }: { links: OperationLink[] }) {
     return (
-        <ul className="-mx-2 flex flex-col">
-            {links.map(link => (
-                <li key={link.key}>
-                    <a
-                        href={link.url}
-                        {...(link.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}
-                        className="flex items-center gap-3 rounded-md px-2 py-2 outline-none hover:bg-console-accent focus-visible:ring-2 focus-visible:ring-console-ring/50"
-                    >
-                        <span className="flex size-8 items-center justify-center rounded-md bg-console-accent text-console-muted-foreground">
-                            <Icon name={LINK_ICON[link.key] ?? 'i-lucide-link'} />
-                        </span>
-                        <span className="min-w-0 flex-1">
-                            <span className="block truncate font-medium">{t(`ADMIN_DASHBOARD.LINKS.${link.key.toUpperCase()}.TITLE`)}</span>
-                            <span className="block truncate text-xs text-console-muted-foreground">
-                                {t(`ADMIN_DASHBOARD.LINKS.${link.key.toUpperCase()}.DESCRIPTION`)}
-                            </span>
-                        </span>
-                        {link.external ? <Icon name="i-lucide-external-link" className="text-console-muted-foreground" /> : null}
-                    </a>
-                </li>
-            ))}
-        </ul>
+        <QuickLinks
+            links={links.map(link => ({
+                key: link.key,
+                href: link.url,
+                external: link.external,
+                icon: LINK_ICON[link.key] ?? <LinkIcon className="size-5" />,
+                title: t(`ADMIN_DASHBOARD.LINKS.${link.key.toUpperCase()}.TITLE`),
+                description: t(`ADMIN_DASHBOARD.LINKS.${link.key.toUpperCase()}.DESCRIPTION`),
+            }))}
+        />
     );
 }

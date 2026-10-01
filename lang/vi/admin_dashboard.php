@@ -19,6 +19,7 @@ return [
         'SHOW' => 'Hiện lại',
         'DRAG' => 'Kéo để đổi chỗ {title}',
         'SIZE' => 'Độ rộng của {title}',
+        'MENU' => 'Tuỳ chọn cho {title}',
         'RETRY' => 'Thử lại',
         'VIEW_ALL' => 'Xem tất cả',
     ],
@@ -77,6 +78,7 @@ return [
         'FROM_START' => '{rate}% so với đăng ký',
         'FROM_PREVIOUS' => '{rate}% so với bước trước',
     ],
+    'TREND' => ['TOTAL' => 'Tổng trong khoảng', 'PEAK' => 'Ngày cao nhất', 'AVERAGE' => 'Trung bình mỗi ngày', 'REPLY_RATIO' => 'Tin ra trên tin vào'],
     'SERIES' => [
         'INCOMING' => 'Tin vào',
         'OUTGOING' => 'Tin ra',
@@ -94,6 +96,7 @@ return [
         'CELL' => 'Tuần {week}, tuần thứ {offset}: {active} trên {size} account ({rate}%)',
     ],
     'CHANNEL_HEALTH' => [
+        'RATE' => 'Tỉ lệ khoẻ',
         'HEALTHY' => 'Khoẻ',
         'FAILING' => 'Có vấn đề',
         'TOTAL' => '{count} hộp thư',

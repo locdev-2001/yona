@@ -1,14 +1,15 @@
+// React Imports
+import type { ReactNode } from 'react'
+
 // Third-party Imports
 import type { ColumnDef } from '@tanstack/react-table'
 import { EllipsisVerticalIcon, EyeIcon, LayoutDashboardIcon, PencilIcon, Trash2Icon } from 'lucide-react'
 import { router } from '@inertiajs/react'
 
-// React Imports
-import type { ReactNode } from 'react'
-
 // Component Imports
 import Link from '@admin/components/Link'
-import { Button } from '@admin/components/ui/button'
+import { Avatar, AvatarFallback, AvatarImage } from '@admin/components/ui/avatar'
+import { Button, buttonVariants } from '@admin/components/ui/button'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -66,9 +67,7 @@ function ResourceRowActions({
     <div className='flex items-center justify-end gap-1'>
       <Tooltip>
         <TooltipTrigger
-          render={
-            <Button variant='ghost' size='icon' aria-label={labels.view} render={<Link href={url} />} nativeButton={false} />
-          }
+          render={<Link href={url} aria-label={labels.view} className={buttonVariants({ variant: 'ghost', size: 'icon' })} />}
         >
           <EyeIcon className='size-4.5' />
         </TooltipTrigger>
@@ -126,15 +125,67 @@ function ResourceRowActions({
   )
 }
 
+// Chữ cái đầu cho avatar dự phòng.
+export function initialsFromName(name: string): string {
+  return (
+    name
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map(word => word[0])
+      .join('')
+      .toUpperCase() || '#'
+  )
+}
+
+const cellOf = (row: ResourceRow, name: string) => row.cells.find(cell => cell.name === name)
+
+// Cột danh tính gộp avatar + tên + dòng phụ (email, hoặc mã bản ghi) thành một ô.
+const IDENTITY_MERGED = ['avatar_url', 'email', 'id']
+
+function IdentityCell({ row, renderCell }: { row: ResourceRow; renderCell: ResourceColumnsOptions['renderCell'] }) {
+  const name = String(cellOf(row, 'name')?.value ?? '')
+  const avatar = cellOf(row, 'avatar_url')?.value
+  const email = cellOf(row, 'email')
+  const id = cellOf(row, 'id')?.value
+  const subtitle = email ? renderCell(email) : id !== undefined && id !== null ? `#${String(id)}` : null
+  const title = <span className='font-medium'>{name}</span>
+
+  return (
+    <div className='flex min-w-44 items-center gap-2'>
+      <Avatar className='size-9'>
+        {avatar ? <AvatarImage src={String(avatar)} alt={name} /> : null}
+        <AvatarFallback className='text-xs'>{initialsFromName(name)}</AvatarFallback>
+      </Avatar>
+      <div className='flex min-w-0 flex-col'>
+        {row.url ? (
+          <Link href={row.url} className='hover:underline'>
+            {title}
+          </Link>
+        ) : (
+          title
+        )}
+        {subtitle ? <span className='text-muted-foreground truncate'>{subtitle}</span> : null}
+      </div>
+    </div>
+  )
+}
+
 export function buildResourceColumns(options: ResourceColumnsOptions): ColumnDef<ResourceRow>[] {
   const { columns, columnLabel, canEdit, canDestroy, withOverview, renderCell } = options
+  const hasIdentity = columns.some(column => column.name === 'name')
+  const visibleColumns = hasIdentity ? columns.filter(column => !IDENTITY_MERGED.includes(column.name)) : columns
 
-  const dataColumns: ColumnDef<ResourceRow>[] = columns.map((column, columnIndex) => ({
+  const dataColumns = visibleColumns.map((column, columnIndex) => ({
     id: column.name,
     header: columnLabel(column),
-    accessorFn: row => row.cells.find(cell => cell.name === column.name)?.value,
-    cell: ({ row }) => {
-      const cell = row.original.cells.find(item => item.name === column.name)
+    accessorFn: (row: ResourceRow) => cellOf(row, column.name)?.value,
+    cell: ({ row }: { row: { original: ResourceRow } }) => {
+      if (hasIdentity && column.name === 'name') {
+        return <IdentityCell row={row.original} renderCell={renderCell} />
+      }
+
+      const cell = cellOf(row.original, column.name)
 
       if (!cell) {
         return null
@@ -143,7 +194,7 @@ export function buildResourceColumns(options: ResourceColumnsOptions): ColumnDef
       const url = row.original.url
 
       return (
-        <div className={cn('max-w-xs', cell.name === 'name' && 'min-w-44', column.html_class === 'number' && 'text-right')}>
+        <div className={cn('max-w-xs', column.html_class === 'number' && 'text-right')}>
           {columnIndex === 0 && url && !LINKED_CELL_TYPES.includes(cell.type) ? (
             <Link href={url} className='font-medium hover:underline'>
               {renderCell(cell)}
@@ -156,7 +207,7 @@ export function buildResourceColumns(options: ResourceColumnsOptions): ColumnDef
     },
     meta: { numeric: column.html_class === 'number' },
     enableSorting: true
-  }))
+  })) as ColumnDef<ResourceRow>[]
 
   if (!canEdit && !canDestroy && !withOverview) {
     return dataColumns
@@ -166,7 +217,7 @@ export function buildResourceColumns(options: ResourceColumnsOptions): ColumnDef
     ...dataColumns,
     {
       id: 'actions',
-      header: () => <span className='sr-only'>{options.labels.actions}</span>,
+      header: options.labels.actions,
       cell: ({ row }) => <ResourceRowActions row={row.original} {...options} />,
       enableHiding: false,
       enableSorting: false

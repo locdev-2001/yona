@@ -17,9 +17,9 @@ export interface ResourceListAppProps {
 const ResourceListApp = ({ title, description, filters, toolbar, table, pagination }: ResourceListAppProps) => {
   return (
     <div className='flex flex-col gap-3 lg:gap-6'>
-      <div>
-        <h1 className='text-xl font-bold'>{title}</h1>
-        <p className='text-muted-foreground'>{description}</p>
+      <div className='sr-only'>
+        <h1>{title}</h1>
+        <p>{description}</p>
       </div>
 
       <Card className='py-0 shadow-none'>

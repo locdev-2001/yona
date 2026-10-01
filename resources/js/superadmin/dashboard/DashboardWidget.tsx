@@ -1,7 +1,5 @@
-import { RefreshCwIcon } from 'lucide-react';
 import type { CSSProperties, Ref } from 'react';
 
-import { Button } from '@admin/components/ui/button';
 import { cn } from '@admin/lib/utils';
 import { WidgetEmpty, WidgetError, WidgetSkeleton } from '@admin/views/dashboards/widgets/widget-state';
 
@@ -24,6 +22,7 @@ type Props = {
     range: RangePreset;
     endpoint: string;
     links: OperationLink[];
+    onHide: () => void;
     style?: CSSProperties;
     dragging?: boolean;
 };
@@ -38,28 +37,23 @@ export function DashboardWidget(props: Props) {
     }
 
     return (
-        <WidgetCard ref={props.ref} meta={props.meta} item={props.item} edit={props.edit} style={props.style} dragging={props.dragging}>
+        <WidgetCard
+            ref={props.ref}
+            meta={props.meta}
+            item={props.item}
+            edit={props.edit}
+            onHide={props.onHide}
+            style={props.style}
+            dragging={props.dragging}
+        >
             <OperationLinks links={props.links} />
         </WidgetCard>
     );
 }
 
-function ServerWidget({ ref, meta, item, edit, range, endpoint, renderer, style, dragging }: Props & { renderer: AnyRenderer }) {
+function ServerWidget({ ref, meta, item, edit, range, endpoint, renderer, onHide, style, dragging }: Props & { renderer: AnyRenderer }) {
     const { state, refresh } = useWidgetData<unknown>(endpoint, meta.key, range);
     const loading = state.status === 'loading';
-
-    const refreshButton = (
-        <Button
-            variant="ghost"
-            size="icon-sm"
-            onClick={refresh}
-            disabled={loading}
-            aria-label={t('ADMIN_DASHBOARD.ACTIONS.REFRESH', { title: meta.title })}
-            className="text-muted-foreground"
-        >
-            <RefreshCwIcon className={cn(loading && 'animate-spin')} />
-        </Button>
-    );
 
     let body;
     if (state.data === null) {
@@ -86,8 +80,10 @@ function ServerWidget({ ref, meta, item, edit, range, endpoint, renderer, style,
             meta={meta}
             item={item}
             edit={edit}
-            actions={refreshButton}
+            onRefresh={refresh}
+            onHide={onHide}
             busy={loading}
+            bare={renderer.bare}
             style={style}
             dragging={dragging}
         >

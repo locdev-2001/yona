@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 
+import { installDomStubs } from '../components/__fixtures__/dom';
 import { superAdminProps } from '../components/__fixtures__/superAdmin';
 
 const routerGet = vi.fn();
@@ -50,10 +51,22 @@ const baseProps = {
 
 describe('ResourceIndex', () => {
     beforeEach(() => {
+        installDomStubs();
         routerGet.mockReset();
         routerDelete.mockReset();
         routerVisit.mockReset();
-        pageProps = { superAdmin: superAdminProps({ currentPath: '/admin/accounts' }) };
+        pageProps = {
+            superAdmin: superAdminProps({
+                currentPath: '/admin/accounts',
+                labels: {
+                    ...superAdminProps().labels,
+                    sort_by: 'Sắp xếp theo {column}',
+                    actions: 'Thao tác',
+                    view: 'Xem',
+                    account_overview: 'Tổng quan 360',
+                },
+            }),
+        };
     });
 
     it('lấy tiêu đề tiếng Việt từ thanh bên, nhãn cột từ từ điển', () => {
@@ -80,13 +93,18 @@ describe('ResourceIndex', () => {
         );
     });
 
-    it('chọn bộ lọc gửi dạng `<tên>:`', () => {
+    it('chọn bộ lọc gửi dạng `<tên>:`', async () => {
         render(<ResourceIndex {...baseProps} />);
 
-        fireEvent.change(screen.getByRole('combobox', { name: 'Bộ lọc' }), { target: { value: 'suspended' } });
+        fireEvent.click(screen.getByRole('combobox', { name: 'Bộ lọc' }));
+        const option = await screen.findByRole('option', { name: 'Tạm khoá' });
+        fireEvent.pointerDown(option, { pointerType: 'mouse' });
+        fireEvent.mouseDown(option);
+        fireEvent.pointerUp(option, { pointerType: 'mouse' });
+        fireEvent.mouseUp(option);
+        fireEvent.click(option);
 
         expect(routerGet.mock.calls[0][0]).toContain('search=suspended%3A');
-        expect(screen.getByRole('option', { name: 'Tạm khoá' })).toBeInTheDocument();
     });
 
     it('liên kết phân trang giữ từ khoá và sắp xếp', () => {
@@ -111,12 +129,34 @@ describe('ResourceIndex', () => {
         expect(routerDelete).toHaveBeenCalledWith('/admin/accounts/2', expect.anything());
     });
 
-    it('bấm vào dòng mở trang chi tiết', () => {
+    it('bấm vào dòng mở trang chi tiết; tên là liên kết, kèm avatar chữ cái đầu', () => {
         render(<ResourceIndex {...baseProps} />);
 
-        fireEvent.click(screen.getByText('Shop Cây'));
+        expect(screen.getByRole('link', { name: 'Shop Cây' })).toHaveAttribute('href', '/admin/accounts/1');
+        expect(screen.getByText('SC')).toBeInTheDocument();
+
+        fireEvent.click(screen.getByText('#1'));
 
         expect(routerVisit).toHaveBeenCalledWith('/admin/accounts/1');
+    });
+
+    it('sắp xếp bằng tiêu đề cột: bấm cột đang tăng thì chuyển giảm', () => {
+        render(<ResourceIndex {...baseProps} />);
+
+        fireEvent.click(screen.getByTitle('Sắp xếp theo Tên'));
+
+        expect(routerGet.mock.calls[0][0]).toBe(
+            '/admin/accounts?search=hoa&account%5Border%5D=name&account%5Bdirection%5D=desc',
+        );
+    });
+
+    it('tài khoản có lối tắt Tổng quan 360 trong menu thao tác', async () => {
+        render(<ResourceIndex {...baseProps} />);
+
+        fireEvent.click(screen.getAllByRole('button', { name: 'Thao tác' })[0]);
+        fireEvent.click(await screen.findByRole('menuitem', { name: /Tổng quan 360/ }));
+
+        expect(routerVisit).toHaveBeenCalledWith('/admin/accounts/2/overview');
     });
 
     it('không có bản ghi thì hiện trạng thái rỗng', () => {

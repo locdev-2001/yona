@@ -121,6 +121,7 @@ function SortableWidget({
             endpoint={endpoint}
             links={links}
             dragging={isDragging}
+            onHide={onHide}
             style={{ transform: CSS.Translate.toString(transform), transition }}
             edit={
                 editing

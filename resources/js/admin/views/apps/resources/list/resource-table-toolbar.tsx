@@ -6,7 +6,7 @@ import { PlusIcon, SearchIcon, XIcon } from 'lucide-react'
 
 // Component Imports
 import Link from '@admin/components/Link'
-import { Button } from '@admin/components/ui/button'
+import { buttonVariants } from '@admin/components/ui/button'
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from '@admin/components/ui/input-group'
 import { Label } from '@admin/components/ui/label'
 
@@ -67,10 +67,10 @@ export function ResourceTableToolbar({
 
       {newRecord ? (
         <div className='flex flex-wrap items-center gap-2 sm:justify-between'>
-          <Button render={<Link href={newRecord.href} />} nativeButton={false}>
+          <Link href={newRecord.href} className={buttonVariants()}>
             <PlusIcon />
             <span>{newRecord.label}</span>
-          </Button>
+          </Link>
         </div>
       ) : null}
     </div>

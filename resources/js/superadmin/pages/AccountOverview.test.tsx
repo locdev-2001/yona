@@ -134,10 +134,20 @@ describe('AccountOverview', () => {
         expect(window.location.hash).toBe('#users');
     });
 
-    it('biểu đồ lượng tin có một cột mỗi ngày và tổng số tin', () => {
-        const { container } = render(<UsageBars usage={props().usage} />);
+    it('biểu đồ lượng tin ghi tổng số tin và mốc ngày đầu/cuối', () => {
+        render(<UsageBars usage={props().usage} />);
 
-        expect(container.querySelectorAll('rect')).toHaveLength(2);
         expect(screen.getByText('4 messages')).toBeInTheDocument();
+        expect(screen.getByRole('img')).toHaveAccessibleName(/4 messages/);
+    });
+
+    it('cột trái hiện tên, trạng thái và số thành viên/hộp thư; sticker vẫn dẫn tới kho', () => {
+        render(<AccountOverview {...props()} />);
+
+        expect(screen.getByRole('heading', { level: 1, name: 'Shop Hoa' })).toBeInTheDocument();
+        expect(screen.getByText('#7')).toBeInTheDocument();
+
+        fireEvent.click(screen.getByRole('tab', { name: 'Stickers' }));
+        expect(screen.getByRole('link', { name: /Manage sticker library|sticker/i })).toHaveAttribute('href', '/admin/accounts/7/sticker_packs');
     });
 });

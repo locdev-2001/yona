@@ -12,7 +12,7 @@ export type WidgetSkeletonKind = 'stats' | 'chart' | 'list'
 export const WidgetSkeleton = ({ kind }: { kind: WidgetSkeletonKind }) => {
   if (kind === 'stats') {
     return (
-      <div className='grid gap-4 @lg:grid-cols-2 @3xl:grid-cols-4'>
+      <div className='grid grid-cols-2 gap-4 @lg:gap-6 @3xl:grid-cols-4'>
         {Array.from({ length: 8 }, (_, index) => (
           <Skeleton key={index} className='h-32 rounded-xl' />
         ))}

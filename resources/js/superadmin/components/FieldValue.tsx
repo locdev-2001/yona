@@ -1,13 +1,17 @@
 import { Link, router } from '@inertiajs/react';
 import { useState } from 'react';
 
+import { CheckIcon, CopyIcon, EyeIcon, EyeOffIcon, Trash2Icon } from 'lucide-react';
+
+import { Avatar, AvatarFallback, AvatarImage } from '@admin/components/ui/avatar';
+import { Badge } from '@admin/components/ui/badge';
+import { Button } from '@admin/components/ui/button';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@admin/components/ui/table';
+import { cn } from '@admin/lib/utils';
+import { ConfirmDialog } from '@admin/views/apps/resources/dialogs/confirm-dialog';
+
+import { useConsoleDictionary, useConsoleLabels } from '../labels';
 import type { AssociationValue, HasManyValue, HasOneValue, SuperAdminField } from '../types';
-import { Badge } from '../ui/Badge';
-import { Button } from '../ui/Button';
-import { ConfirmDialog } from '../ui/Dialog';
-import { Icon } from '../ui/Icon';
-import { useConsoleDictionary, useConsoleLabels } from '../ui/labels';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/Table';
 
 const dateTimeFormatter = new Intl.DateTimeFormat('vi-VN', {
     day: '2-digit',
@@ -44,12 +48,17 @@ export default function FieldValue({ field, nested = false }: { field: SuperAdmi
         case 'account_status_field':
             return <AccountStatus value={String(field.value ?? '')} />;
         case 'avatar_field':
-            return field.value ? <img src={String(field.value)} alt="" className="size-8 rounded-full object-cover" /> : null;
+            return field.value ? (
+                <Avatar className="size-8">
+                    <AvatarImage src={String(field.value)} alt="" />
+                    <AvatarFallback />
+                </Avatar>
+            ) : null;
         case 'secret_field':
             return <SecretField token={String(field.value ?? '')} />;
         case 'serialized_field':
             return (
-                <code className="break-all rounded bg-console-muted px-1.5 py-0.5 font-mono text-xs">
+                <code className="bg-muted break-all rounded px-1.5 py-0.5 font-mono text-xs">
                     {typeof field.value === 'string' ? field.value : JSON.stringify(field.value)}
                 </code>
             );
@@ -68,10 +77,26 @@ export default function FieldValue({ field, nested = false }: { field: SuperAdmi
     }
 }
 
+// Màu nhãn trạng thái như bảng người dùng mẫu: xanh = hoạt động, đỏ = tạm khoá.
+export const STATUS_BADGE_STYLES = {
+    active: 'bg-green-600/10 text-green-600 focus-visible:ring-green-600/20 dark:bg-green-400/10 dark:text-green-400 dark:focus-visible:ring-green-400/40',
+    pending: 'bg-amber-600/10 text-amber-600 focus-visible:ring-amber-600/20 dark:bg-amber-400/10 dark:text-amber-400 dark:focus-visible:ring-amber-400/40',
+    suspended: 'bg-destructive/10 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 text-destructive',
+} as const;
+
 function AccountStatus({ value }: { value: string }) {
     const { filter } = useConsoleDictionary();
 
-    return <Badge variant={value === 'suspended' ? 'destructive' : 'success'}>{filter(value)}</Badge>;
+    return (
+        <Badge
+            className={cn(
+                'h-auto rounded-sm border-none focus-visible:outline-none',
+                value === 'suspended' ? STATUS_BADGE_STYLES.suspended : STATUS_BADGE_STYLES.active,
+            )}
+        >
+            {filter(value)}
+        </Badge>
+    );
 }
 
 type SuspensionEvent = { category?: string; reason?: string; suspended_at?: string };
@@ -80,7 +105,7 @@ function SuspensionHistory({ value }: { value: SuspensionEvent[] }) {
     const label = useConsoleLabels();
 
     if (!value || value.length === 0) {
-        return <p className="text-sm text-console-muted-foreground">{label('no_suspension_history')}</p>;
+        return <p className="text-muted-foreground text-sm">{label('no_suspension_history')}</p>;
     }
 
     return (
@@ -90,7 +115,7 @@ function SuspensionHistory({ value }: { value: SuspensionEvent[] }) {
                     <Badge variant="outline">{event.category}</Badge>
                     <span>{event.reason}</span>
                     {event.suspended_at ? (
-                        <span className="text-xs text-console-muted-foreground">{formatDateTime(event.suspended_at)}</span>
+                        <span className="text-muted-foreground text-xs">{formatDateTime(event.suspended_at)}</span>
                     ) : null}
                 </li>
             ))}
@@ -102,7 +127,7 @@ function Association({ value }: { value: AssociationValue }) {
     if (!value) return null;
 
     return value.url ? (
-        <Link href={value.url} className="font-medium text-console-brand hover:underline">
+        <Link href={value.url} className="text-primary font-medium hover:underline">
             {value.label}
         </Link>
     ) : (
@@ -116,10 +141,10 @@ function HasOne({ value }: { value: HasOneValue }) {
     if (!value) return null;
 
     return (
-        <div className="rounded-lg border border-console-border p-3">
+        <div className="bg-muted/40 rounded-lg border p-4">
             <p className="mb-2 text-sm font-medium">
                 {value.url ? (
-                    <Link href={value.url} className="text-console-brand hover:underline">
+                    <Link href={value.url} className="text-primary hover:underline">
                         {value.label}
                     </Link>
                 ) : (
@@ -129,7 +154,7 @@ function HasOne({ value }: { value: HasOneValue }) {
             <dl className="grid gap-x-4 gap-y-2 sm:grid-cols-[minmax(8rem,auto)_1fr]">
                 {value.fields.map(field => (
                     <div key={field.name} className="contents">
-                        <dt className="text-xs text-console-muted-foreground sm:pt-0.5">{attribute(field.name, field.label)}</dt>
+                        <dt className="text-muted-foreground text-sm">{attribute(field.name, field.label)}</dt>
                         <dd className="min-w-0 text-sm">
                             <FieldValue field={field} nested />
                         </dd>
@@ -148,12 +173,12 @@ function HasMany({ value }: { value: HasManyValue }) {
     if (!value || value.rows.length === 0) return null;
 
     return (
-        <div className="overflow-hidden rounded-lg border border-console-border">
+        <div className="w-full">
             <Table>
                 <TableHeader>
-                    <TableRow>
+                    <TableRow className="h-14 border-t">
                         {value.columns.map(column => (
-                            <TableHead key={column.name} scope="col">
+                            <TableHead key={column.name} scope="col" className="text-muted-foreground first:pl-4">
                                 {attribute(column.name, column.label)}
                             </TableHead>
                         ))}
@@ -166,7 +191,7 @@ function HasMany({ value }: { value: HasManyValue }) {
                     {value.rows.map(row => (
                         <TableRow key={row.url ?? row.cells.map(cell => String(cell.value)).join('-')}>
                             {row.cells.map(cell => (
-                                <TableCell key={cell.name}>
+                                <TableCell key={cell.name} className="h-14 first:pl-4">
                                     {row.url && !['belongs_to', 'belongs_to_search', 'polymorphic'].includes(cell.type) ? (
                                         <Link href={row.url} className="hover:underline">
                                             <FieldValue field={cell} nested />
@@ -176,7 +201,7 @@ function HasMany({ value }: { value: HasManyValue }) {
                                     )}
                                 </TableCell>
                             ))}
-                            <TableCell className="text-right">
+                            <TableCell className="h-14 px-4 text-right">
                                 {row.destroy_url ? (
                                     <Button
                                         variant="ghost"
@@ -184,7 +209,7 @@ function HasMany({ value }: { value: HasManyValue }) {
                                         aria-label={label('delete')}
                                         onClick={() => setPendingDelete(row.destroy_url ?? null)}
                                     >
-                                        <Icon name="i-lucide-trash-2" className="text-console-destructive-foreground" />
+                                        <Trash2Icon className="text-destructive" />
                                     </Button>
                                 ) : null}
                             </TableCell>
@@ -199,6 +224,7 @@ function HasMany({ value }: { value: HasManyValue }) {
                 }}
                 title={label('delete_confirm_title')}
                 description={label('delete_confirm_description')}
+                cancelLabel={label('cancel')}
                 confirmLabel={label('delete')}
                 onConfirm={() => {
                     if (pendingDelete) router.delete(pendingDelete, { preserveScroll: true });
@@ -229,7 +255,7 @@ function SecretField({ token }: { token: string }) {
                     setRevealed(current => !current);
                 }}
             >
-                <Icon name={revealed ? 'i-lucide-eye-off' : 'i-lucide-eye'} />
+                {revealed ? <EyeOffIcon /> : <EyeIcon />}
             </Button>
             <Button
                 variant="ghost"
@@ -241,7 +267,7 @@ function SecretField({ token }: { token: string }) {
                     void navigator.clipboard?.writeText(token).then(() => setCopied(true));
                 }}
             >
-                <Icon name={copied ? 'i-lucide-check' : 'i-lucide-copy'} />
+                {copied ? <CheckIcon /> : <CopyIcon />}
             </Button>
         </div>
     );

@@ -36,7 +36,7 @@ const TotalEarningList = ({ total, items, className }: Props) => {
       ) : null}
       <ul className='flex flex-1 flex-col justify-evenly gap-4'>
         {items.map(item => (
-          <li key={item.key} className='flex items-center justify-between gap-2.5'>
+          <li key={item.key} className='flex flex-col gap-2 @sm:flex-row @sm:items-center @sm:justify-between @sm:gap-2.5'>
             <div className='flex min-w-0 items-center gap-2.5'>
               <Avatar className='size-9 rounded-sm after:rounded-[inherit] after:border-0'>
                 <AvatarFallback className='bg-primary/10 text-primary shrink-0 rounded-sm'>{item.icon}</AvatarFallback>
@@ -46,13 +46,13 @@ const TotalEarningList = ({ total, items, className }: Props) => {
                 {item.subtitle ? <span className='text-muted-foreground truncate text-sm'>{item.subtitle}</span> : null}
               </div>
             </div>
-            <div className='shrink-0 space-y-2 text-right'>
+            <div className='shrink-0 space-y-2 @sm:text-right'>
               <p className='text-sm tabular-nums'>{item.value}</p>
               {item.progressPercentage !== undefined ? (
                 <Progress
                   value={item.progressPercentage}
                   aria-label={item.label}
-                  className='w-24 **:data-[slot=progress-track]:h-1.5 sm:w-36'
+                  className='w-full **:data-[slot=progress-track]:h-1.5 @sm:w-36'
                 />
               ) : null}
             </div>

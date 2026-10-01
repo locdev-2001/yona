@@ -1,17 +1,21 @@
 import { Link } from '@inertiajs/react';
-import { useState } from 'react';
+import type { ColumnDef } from '@tanstack/react-table';
+import { ArrowDownIcon, ArrowLeftIcon, ArrowUpIcon, EyeOffIcon, ListFilterIcon, LockIcon, TableIcon, XIcon } from 'lucide-react';
+import { useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
 
+import { Badge } from '@admin/components/ui/badge';
+import { Button } from '@admin/components/ui/button';
+import { Card } from '@admin/components/ui/card';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@admin/components/ui/tooltip';
+import DataTableEmpty from '@admin/views/datatables/datatable-empty';
+import FilterInput from '@admin/views/datatables/filters/filter-input';
+import { ListPagination } from '@admin/views/datatables/list/list-pagination';
+import DataTablePinnableColumns from '@admin/views/datatables/pinnable-columns/pinnable-columns-datatable';
+import StatusBadge from '@admin/views/datatables/status-badge';
+import PageHeader from '@admin/views/pages/page-header';
+
 import { t } from '../../i18n';
-import { Badge } from '../ui/Badge';
-import { Button, buttonClassName } from '../ui/Button';
-import { Card } from '../ui/Card';
-import { cn } from '../ui/cn';
-import { EmptyState } from '../ui/EmptyState';
-import { Icon } from '../ui/Icon';
-import { Input, Label } from '../ui/Input';
-import { PageHeader } from '../ui/PageHeader';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/Table';
 import { visitWithParams } from './operationsFormat';
 
 export type DataColumn = {
@@ -34,7 +38,11 @@ type Props = {
     perPage: number;
 };
 
+type Row = Record<string, unknown>;
+
 const label = (key: string, params?: Record<string, string | number>) => t(`ADMIN_OPERATIONS.DATA.${key}`, params);
+
+const maskedLabel = (masked: DataColumn['masked']) => label(masked === 'personal' ? 'MASKED_PERSONAL' : 'MASKED_SECRET');
 
 // Tham số truy vấn của trang bảng: filter[cột]=giá trị, sort, direction, page.
 export function tableQuery(
@@ -61,36 +69,42 @@ function accountLink(table: string, column: string, value: unknown): string | nu
     return null;
 }
 
+// Ô giữ một dòng; nội dung đầy đủ (hoặc lý do bị che) hiện ở tooltip.
 export function CellValue({ table, column, value }: { table: string; column: DataColumn; value: unknown }) {
-    if (value === null || value === undefined) return <span className="text-console-muted-foreground">∅</span>;
+    if (value === null || value === undefined) return <span className="text-muted-foreground">∅</span>;
 
     if (column.masked) {
         return (
-            <span
-                className="inline-flex items-center gap-1 text-console-muted-foreground"
-                title={label(column.masked === 'personal' ? 'MASKED_PERSONAL' : 'MASKED_SECRET')}
-            >
-                <Icon name="i-lucide-eye-off" className="size-3.5" />
-                {String(value)}
-            </span>
+            <Tooltip>
+                <TooltipTrigger
+                    render={<span className="text-muted-foreground inline-flex items-center gap-1" aria-label={maskedLabel(column.masked)} />}
+                >
+                    <EyeOffIcon className="size-3.5" />
+                    {String(value)}
+                </TooltipTrigger>
+                <TooltipContent>{maskedLabel(column.masked)}</TooltipContent>
+            </Tooltip>
         );
     }
 
-    if (typeof value === 'boolean') return <Badge variant={value ? 'success' : 'secondary'}>{String(value)}</Badge>;
+    if (typeof value === 'boolean') return <StatusBadge tone={value ? 'success' : 'neutral'}>{String(value)}</StatusBadge>;
 
     const link = accountLink(table, column.name, value);
     if (link) {
         return (
-            <Link href={link} className="text-console-brand hover:underline">
+            <Link href={link} className="font-medium hover:underline">
                 {String(value)}
             </Link>
         );
     }
 
+    const text = typeof value === 'object' ? JSON.stringify(value) : String(value);
+
     return (
-        <span className="block max-w-60 truncate" title={String(value)}>
-            {String(value)}
-        </span>
+        <Tooltip>
+            <TooltipTrigger render={<span className="block max-w-60 truncate" />}>{text}</TooltipTrigger>
+            <TooltipContent className="max-h-60 overflow-hidden break-all">{text}</TooltipContent>
+        </Tooltip>
     );
 }
 
@@ -98,7 +112,7 @@ export default function DataTable({ table, columns, rows, page, hasMore, sort, d
     const [draft, setDraft] = useState<Record<string, string>>(filters);
     const [showFilters, setShowFilters] = useState(Object.keys(filters).length > 0);
     const filterable = columns.filter(column => column.filterable);
-    const hasFilters = Object.keys(filters).length > 0;
+    const filterCount = Object.keys(filters).length;
     const pageUrl = `/admin/data/${table}`;
 
     const submit = (event: FormEvent) => {
@@ -106,65 +120,108 @@ export default function DataTable({ table, columns, rows, page, hasMore, sort, d
         visitWithParams(pageUrl, tableQuery({ filters: draft, sort, direction }));
     };
 
-    const sortHref = (column: string) =>
-        hrefWith(table, tableQuery({ filters, sort: column, direction: sort === column && direction === 'desc' ? 'asc' : 'desc' }));
+    const tableColumns = useMemo<ColumnDef<Row>[]>(() => {
+        const sortHref = (column: string) =>
+            hrefWith(table, tableQuery({ filters, sort: column, direction: sort === column && direction === 'desc' ? 'asc' : 'desc' }));
+
+        return columns.map(column => ({
+            id: column.name,
+            accessorFn: row => row[column.name],
+            header: () =>
+                column.sortable ? (
+                    <Link
+                        href={sortHref(column.name)}
+                        preserveScroll
+                        aria-label={label('SORT', { column: column.name })}
+                        className="hover:text-foreground inline-flex items-center gap-1"
+                    >
+                        {column.name}
+                        {sort === column.name ? (
+                            direction === 'asc' ? (
+                                <ArrowUpIcon className="size-3.5 opacity-60" aria-hidden="true" />
+                            ) : (
+                                <ArrowDownIcon className="size-3.5 opacity-60" aria-hidden="true" />
+                            )
+                        ) : null}
+                    </Link>
+                ) : (
+                    <span className="inline-flex items-center gap-1">
+                        {column.name}
+                        {column.masked ? <EyeOffIcon className="size-3.5 opacity-60" aria-label={maskedLabel(column.masked)} /> : null}
+                    </span>
+                ),
+            cell: ({ row }) => <CellValue table={table} column={column} value={row.original[column.name]} />,
+            meta: { cellClassName: 'max-w-60' },
+        }));
+    }, [columns, table, filters, sort, direction]);
+
+    const pinLabels = {
+        stickLeft: label('PIN.LEFT'),
+        stickRight: label('PIN.RIGHT'),
+        unpin: (column: string) => label('PIN.UNPIN', { column }),
+        options: (column: string) => label('PIN.OPTIONS', { column }),
+    };
 
     return (
         <div className="flex flex-col gap-6">
-            <div className="flex flex-col gap-2">
-                <Link href="/admin/data" className="inline-flex w-fit items-center gap-1 text-sm text-console-muted-foreground hover:text-console-foreground">
-                    <Icon name="i-lucide-arrow-left" className="size-3.5" />
-                    {label('BACK')}
-                </Link>
-                <PageHeader
-                    title={table}
-                    description={
-                        <span className="flex items-center gap-2">
-                            <Badge variant="outline">
-                                <Icon name="i-lucide-lock" className="size-3" />
-                                {label('READ_ONLY')}
-                            </Badge>
-                            {label('ROWS_ON_PAGE', { count: rows.length })}
-                        </span>
-                    }
-                    actions={
-                        <Button variant="outline" aria-expanded={showFilters} onClick={() => setShowFilters(open => !open)}>
-                            <Icon name="i-lucide-list-filter" />
-                            {label('FILTERS')}
-                            {hasFilters ? <Badge variant="default">{Object.keys(filters).length}</Badge> : null}
-                        </Button>
-                    }
-                />
-            </div>
+            <PageHeader
+                className="mb-0 md:mb-0"
+                eyebrow={
+                    <Link href="/admin/data" className="text-muted-foreground hover:text-foreground mb-1 inline-flex items-center gap-1 text-sm">
+                        <ArrowLeftIcon className="size-3.5" />
+                        {label('BACK')}
+                    </Link>
+                }
+                title={<span className="font-mono">{table}</span>}
+                description={
+                    <span className="flex flex-wrap items-center gap-2">
+                        <Badge variant="outline">
+                            <LockIcon />
+                            {label('READ_ONLY')}
+                        </Badge>
+                        {label('ROWS_ON_PAGE', { count: rows.length })}
+                    </span>
+                }
+                actions={
+                    <Button variant="outline" aria-expanded={showFilters} onClick={() => setShowFilters(open => !open)}>
+                        <ListFilterIcon />
+                        {label('FILTERS')}
+                        {filterCount > 0 ? <Badge>{filterCount}</Badge> : null}
+                    </Button>
+                }
+            />
 
             <Card className="gap-0 py-0">
                 {showFilters ? (
-                    <form onSubmit={submit} className="flex flex-col gap-3 border-b border-console-border p-4">
-                        <p className="text-xs text-console-muted-foreground">{label('FILTER_HINT')}</p>
-                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                    <form onSubmit={submit} className="flex flex-col gap-4 border-b p-6">
+                        <p className="text-muted-foreground text-sm">{label('FILTER_HINT')}</p>
+                        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4">
                             {filterable.map(column => (
-                                <div key={column.name} className="flex flex-col gap-1.5">
-                                    <Label htmlFor={`filter-${column.name}`} className="font-mono text-xs">
-                                        {column.name}
-                                    </Label>
-                                    <Input
-                                        id={`filter-${column.name}`}
-                                        value={draft[column.name] ?? ''}
-                                        onChange={event => setDraft(current => ({ ...current, [column.name]: event.target.value }))}
-                                    />
-                                </div>
+                                <FilterInput
+                                    key={column.name}
+                                    id={`filter-${column.name}`}
+                                    label={column.name}
+                                    labelClassName="font-mono"
+                                    value={draft[column.name] ?? ''}
+                                    onChange={value => setDraft(current => ({ ...current, [column.name]: value }))}
+                                />
                             ))}
                         </div>
-                        <div className="flex gap-2">
-                            <Button type="submit">{t('ADMIN_OPERATIONS.COMMON.APPLY')}</Button>
-                            {hasFilters ? (
+                        <div className="flex flex-wrap gap-2">
+                            <Button type="submit">
+                                <ListFilterIcon />
+                                {t('ADMIN_OPERATIONS.COMMON.APPLY')}
+                            </Button>
+                            {filterCount > 0 ? (
                                 <Button
-                                    variant="ghost"
+                                    type="button"
+                                    variant="outline"
                                     onClick={() => {
                                         setDraft({});
                                         visitWithParams(pageUrl, tableQuery({ filters: {}, sort, direction }));
                                     }}
                                 >
+                                    <XIcon />
                                     {t('ADMIN_OPERATIONS.COMMON.CLEAR')}
                                 </Button>
                             ) : null}
@@ -172,77 +229,30 @@ export default function DataTable({ table, columns, rows, page, hasMore, sort, d
                     </form>
                 ) : null}
 
-                {rows.length === 0 ? (
-                    <EmptyState icon="i-lucide-table" title={label('EMPTY')} />
-                ) : (
-                    <Table className="font-mono text-xs">
-                        <TableHeader>
-                            <TableRow>
-                                {columns.map(column => (
-                                    <TableHead key={column.name} className="normal-case tracking-normal">
-                                        {column.sortable ? (
-                                            <Link
-                                                href={sortHref(column.name)}
-                                                preserveScroll
-                                                aria-label={label('SORT', { column: column.name })}
-                                                className="inline-flex items-center gap-1 hover:text-console-foreground"
-                                            >
-                                                {column.name}
-                                                {sort === column.name ? (
-                                                    <Icon name={direction === 'asc' ? 'i-lucide-arrow-up' : 'i-lucide-arrow-down'} className="size-3" />
-                                                ) : null}
-                                            </Link>
-                                        ) : (
-                                            <span
-                                                className="inline-flex items-center gap-1"
-                                                title={column.masked ? label(column.masked === 'personal' ? 'MASKED_PERSONAL' : 'MASKED_SECRET') : undefined}
-                                            >
-                                                {column.name}
-                                                {column.masked ? <Icon name="i-lucide-eye-off" className="size-3" /> : null}
-                                            </span>
-                                        )}
-                                    </TableHead>
-                                ))}
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {rows.map((row, index) => (
-                                <TableRow key={String(row.id ?? index)}>
-                                    {columns.map(column => (
-                                        <TableCell key={column.name} className="max-w-60 whitespace-nowrap py-2">
-                                            <CellValue table={table} column={column} value={row[column.name]} />
-                                        </TableCell>
-                                    ))}
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                )}
-            </Card>
-
-            <nav aria-label={t('ADMIN_OPERATIONS.COMMON.PAGE', { page })} className="flex items-center justify-between gap-3">
-                <span className="text-sm text-console-muted-foreground">{t('ADMIN_OPERATIONS.COMMON.PAGE', { page })}</span>
-                <div className="flex gap-2">
-                    <Link
-                        href={hrefWith(table, tableQuery({ filters, sort, direction, page: page - 1 }))}
-                        className={cn(buttonClassName({ variant: 'outline', size: 'sm' }), page <= 1 && 'pointer-events-none opacity-50')}
-                        aria-disabled={page <= 1}
-                        preserveScroll
-                    >
-                        <Icon name="i-lucide-chevron-left" />
-                        {t('ADMIN_OPERATIONS.COMMON.PREVIOUS')}
-                    </Link>
-                    <Link
-                        href={hrefWith(table, tableQuery({ filters, sort, direction, page: page + 1 }))}
-                        className={cn(buttonClassName({ variant: 'outline', size: 'sm' }), !hasMore && 'pointer-events-none opacity-50')}
-                        aria-disabled={!hasMore}
-                        preserveScroll
-                    >
-                        {t('ADMIN_OPERATIONS.COMMON.NEXT')}
-                        <Icon name="i-lucide-chevron-right" />
-                    </Link>
+                <div className="border-b">
+                    <DataTablePinnableColumns
+                        data={rows}
+                        columns={tableColumns}
+                        getRowId={(row, index) => String(row.id ?? index)}
+                        initialPinning={columns.some(column => column.name === 'id') ? { left: ['id'] } : {}}
+                        labels={pinLabels}
+                        className="font-mono text-xs"
+                        empty={<DataTableEmpty icon={<TableIcon className="size-4" />} title={label('EMPTY')} />}
+                    />
                 </div>
-            </nav>
+
+                <ListPagination
+                    summary={t('ADMIN_OPERATIONS.COMMON.PAGE', { page })}
+                    current={page}
+                    hasMore={hasMore}
+                    hrefFor={target => hrefWith(table, tableQuery({ filters, sort, direction, page: target }))}
+                    labels={{
+                        previous: t('ADMIN_OPERATIONS.COMMON.PREVIOUS'),
+                        next: t('ADMIN_OPERATIONS.COMMON.NEXT'),
+                        navigation: t('ADMIN_OPERATIONS.COMMON.PAGE', { page }),
+                    }}
+                />
+            </Card>
         </div>
     );
 }

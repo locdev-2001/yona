@@ -1,21 +1,48 @@
-import { Link, router, usePage } from '@inertiajs/react';
+import { router, usePage } from '@inertiajs/react';
 import { useId, useState } from 'react';
-import type { ReactNode } from 'react';
+import {
+    ArrowUpRightIcon,
+    CalendarIcon,
+    CircleCheckIcon,
+    CircleDashedIcon,
+    ContactIcon,
+    ExternalLinkIcon,
+    InboxIcon,
+    LockIcon,
+    LockOpenIcon,
+    MessageSquareIcon,
+    MessagesSquareIcon,
+    PencilIcon,
+    StickerIcon,
+    UsersIcon,
+    VenetianMaskIcon,
+} from 'lucide-react';
+
+import Link from '@admin/components/Link';
+import { Alert, AlertDescription, AlertTitle } from '@admin/components/ui/alert';
+import { Avatar, AvatarFallback, AvatarImage } from '@admin/components/ui/avatar';
+import { Badge } from '@admin/components/ui/badge';
+import { Button, buttonVariants } from '@admin/components/ui/button';
+import { Card, CardContent } from '@admin/components/ui/card';
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@admin/components/ui/dialog';
+import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from '@admin/components/ui/field';
+import { Progress } from '@admin/components/ui/progress';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@admin/components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@admin/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@admin/components/ui/tabs';
+import { Textarea } from '@admin/components/ui/textarea';
+import { cn } from '@admin/lib/utils';
+import { ActivityTimeline } from '@admin/views/apps/accounts/view/activity-timeline';
+import StatisticsCard from '@admin/views/apps/accounts/view/statistics-card';
+import { UsageChart } from '@admin/views/apps/accounts/view/usage-chart';
+import { ConfirmDialog } from '@admin/views/apps/resources/dialogs/confirm-dialog';
+import { initialsFromName } from '@admin/views/apps/resources/list/resource-table-columns';
+import { formatCompactNumber, RecordViewLeftPanel } from '@admin/views/apps/resources/view/record-view-left-panel';
+import { SectionCard, TableCard } from '@admin/views/apps/resources/view/section-card';
 
 import { t } from '../../i18n';
-import { Alert } from '../ui/Alert';
-import { Badge } from '../ui/Badge';
-import { Button, buttonClassName } from '../ui/Button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/Card';
-import { cn } from '../ui/cn';
-import { ConfirmDialog, Dialog } from '../ui/Dialog';
-import { EmptyState } from '../ui/EmptyState';
-import { Icon } from '../ui/Icon';
-import { Field, Select, Textarea } from '../ui/Input';
-import { PageHeader } from '../ui/PageHeader';
-import { StatCard } from '../ui/StatCard';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/Table';
-import { problemDetail, SeverityBadge } from './ChannelHealth';
+import { STATUS_BADGE_STYLES } from '../components/FieldValue';
+import { useConsoleDictionary, useConsoleLabels } from '../labels';
 import type { ChannelHealthItem } from './ChannelHealth';
 import { formatDate, formatDateTime, formatNumber, formatRelative } from './operationsFormat';
 
@@ -81,17 +108,10 @@ type Tab = (typeof TABS)[number];
 
 const IMPERSONATE_REASON_MIN = 10;
 
-const TIMELINE_ICON: Record<string, string> = {
-    account_created: 'i-lucide-sparkles',
-    user_joined: 'i-lucide-user-plus',
-    inbox_created: 'i-lucide-inbox',
-    suspended: 'i-lucide-lock',
-    impersonated: 'i-lucide-venetian-mask',
-    admin_action: 'i-lucide-shield',
-    last_message: 'i-lucide-message-square',
-};
-
 const label = (key: string, params?: Record<string, string | number>) => t(`ADMIN_OPERATIONS.ACCOUNT_OVERVIEW.${key}`, params);
+
+// "Hoạt động gần nhất: {date}" → "Hoạt động gần nhất" làm nhãn dòng chi tiết.
+const rowLabel = (key: string) => label(key, { date: '' }).replace(/[:\s]+$/, '');
 
 function initialTab(): Tab {
     if (typeof window === 'undefined') return 'overview';
@@ -100,86 +120,55 @@ function initialTab(): Tab {
     return (TABS as readonly string[]).includes(hash) ? (hash as Tab) : 'overview';
 }
 
-// Cột tin mỗi ngày; SVG tự co theo khung, không kéo thư viện biểu đồ vào trang.
-export function UsageBars({ usage }: { usage: AccountOverviewProps['usage'] }) {
-    const max = Math.max(1, ...usage.map(day => day.count));
-    const total = usage.reduce((sum, day) => sum + day.count, 0);
-    const barWidth = 100 / Math.max(1, usage.length);
+// Chi tiết của driver: số lần lỗi (chuỗi số) hiện thành câu, lý do dạng chữ giữ nguyên.
+function problemDetail(detail: string | null): string | null {
+    if (!detail) return null;
 
-    return (
-        <figure className="flex flex-col gap-2">
-            <svg
-                viewBox="0 0 100 32"
-                preserveAspectRatio="none"
-                role="img"
-                aria-label={`${label('SECTIONS.USAGE')}: ${label('SECTIONS.USAGE_TOTAL', { count: formatNumber(total) })}`}
-                className="h-24 w-full text-console-brand"
-            >
-                {usage.map((day, index) => {
-                    const height = day.count === 0 ? 0.6 : Math.max(1.5, (day.count / max) * 32);
-
-                    return (
-                        <rect
-                            key={day.date}
-                            x={index * barWidth + barWidth * 0.15}
-                            y={32 - height}
-                            width={barWidth * 0.7}
-                            height={height}
-                            rx={0.4}
-                            className={day.count === 0 ? 'fill-console-border' : 'fill-current'}
-                        >
-                            <title>{`${formatDate(day.date)}: ${formatNumber(day.count)}`}</title>
-                        </rect>
-                    );
-                })}
-            </svg>
-            <figcaption className="flex justify-between text-xs text-console-muted-foreground">
-                <span>{usage[0] ? formatDate(usage[0].date) : ''}</span>
-                <span className="font-medium text-console-foreground">{label('SECTIONS.USAGE_TOTAL', { count: formatNumber(total) })}</span>
-                <span>{usage.length ? formatDate(usage[usage.length - 1].date) : ''}</span>
-            </figcaption>
-        </figure>
-    );
+    return /^\d+$/.test(detail) ? t('ADMIN_OPERATIONS.CHANNEL_HEALTH.DETAIL_COUNT', { count: Number(detail) }) : detail;
 }
 
-function Timeline({ events }: { events: TimelineEvent[] }) {
-    if (events.length === 0) return <p className="text-console-muted-foreground">{label('EMPTY.TIMELINE')}</p>;
+// Cột tin mỗi ngày trong 30 ngày qua.
+export function UsageBars({ usage }: { usage: AccountOverviewProps['usage'] }) {
+    const total = usage.reduce((sum, day) => sum + day.count, 0);
 
     return (
-        <ol className="flex flex-col">
-            {events.map((event, index) => (
-                <li key={`${event.type}-${event.at}-${index}`} className="flex gap-3 pb-4 last:pb-0">
-                    <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-console-accent text-console-muted-foreground">
-                        <Icon name={TIMELINE_ICON[event.type] ?? 'i-lucide-dot'} className="size-3.5" />
-                    </span>
-                    <div className="min-w-0 flex-1">
-                        <p className="break-words">{event.title}</p>
-                        {event.detail ? <p className="break-words text-xs text-console-muted-foreground">{event.detail}</p> : null}
-                        <p className="text-xs text-console-muted-foreground" title={formatDateTime(event.at)}>
-                            {formatRelative(event.at)}
-                        </p>
-                    </div>
-                </li>
-            ))}
-        </ol>
+        <UsageChart
+            data={usage.map(day => ({ date: day.date, label: formatDate(day.date), count: day.count }))}
+            seriesLabel={label('SECTIONS.USAGE')}
+            summary={label('SECTIONS.USAGE_TOTAL', { count: formatNumber(total) })}
+            startLabel={usage[0] ? formatDate(usage[0].date) : ''}
+            endLabel={usage.length ? formatDate(usage[usage.length - 1].date) : ''}
+        />
     );
 }
 
 function Onboarding({ onboarding }: { onboarding: AccountOverviewProps['onboarding'] }) {
+    const done = onboarding.milestones.filter(milestone => milestone.done).length;
+    const percent = onboarding.milestones.length ? Math.round((done / onboarding.milestones.length) * 100) : 100;
+
     return (
-        <div className="flex flex-col gap-3">
-            <p className="text-console-muted-foreground">
-                {onboarding.step ? label('ONBOARDING.CURRENT_STEP', { step: onboarding.stepLabel ?? onboarding.step }) : label('ONBOARDING.FINISHED')}
-            </p>
-            <ul className="flex flex-col gap-2">
+        <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between gap-3 text-sm">
+                    <span className="text-muted-foreground">
+                        {onboarding.step
+                            ? label('ONBOARDING.CURRENT_STEP', { step: onboarding.stepLabel ?? onboarding.step })
+                            : label('ONBOARDING.FINISHED')}
+                    </span>
+                    <span className="font-medium tabular-nums">{percent}%</span>
+                </div>
+                <Progress value={percent} aria-label={label('SECTIONS.ONBOARDING')} />
+            </div>
+            <ul className="flex flex-col gap-3">
                 {onboarding.milestones.map(milestone => (
-                    <li key={milestone.key} className="flex items-center gap-2">
-                        <Icon
-                            name={milestone.done ? 'i-lucide-circle-check' : 'i-lucide-circle-dashed'}
-                            className={milestone.done ? 'text-console-success-foreground' : 'text-console-muted-foreground'}
-                        />
-                        <span className={cn('flex-1', !milestone.done && 'text-console-muted-foreground')}>{milestone.label}</span>
-                        {milestone.at ? <span className="text-xs text-console-muted-foreground">{formatDate(milestone.at)}</span> : null}
+                    <li key={milestone.key} className="flex items-center gap-2 text-sm">
+                        {milestone.done ? (
+                            <CircleCheckIcon className="size-4 shrink-0 text-green-600 dark:text-green-400" />
+                        ) : (
+                            <CircleDashedIcon className="text-muted-foreground size-4 shrink-0" />
+                        )}
+                        <span className={cn('flex-1', !milestone.done && 'text-muted-foreground')}>{milestone.label}</span>
+                        {milestone.at ? <span className="text-muted-foreground text-xs">{formatDate(milestone.at)}</span> : null}
                     </li>
                 ))}
             </ul>
@@ -187,6 +176,23 @@ function Onboarding({ onboarding }: { onboarding: AccountOverviewProps['onboardi
     );
 }
 
+function Timeline({ events }: { events: TimelineEvent[] }) {
+    if (events.length === 0) return <p className="text-muted-foreground py-4 text-sm">{label('EMPTY.TIMELINE')}</p>;
+
+    return (
+        <ActivityTimeline
+            activityLog={events.map((event, index) => ({
+                id: `${event.type}-${event.at}-${index}`,
+                description: event.title,
+                detail: event.detail,
+                timestamp: formatRelative(event.at),
+                timestampTitle: formatDateTime(event.at),
+            }))}
+        />
+    );
+}
+
+// Khoá hai bước trong cùng một hộp thoại: điền nhóm + lý do, rồi xác nhận lần nữa.
 function LockDialog({ account, suspension, url, open, onOpenChange }: {
     account: AccountOverviewProps['account'];
     suspension: AccountOverviewProps['suspension'];
@@ -215,65 +221,81 @@ function LockDialog({ account, suspension, url, open, onOpenChange }: {
             onError: () => setStep('form'),
         });
 
-    if (step === 'confirm') {
-        return (
-            <ConfirmDialog
-                open={open}
-                onOpenChange={close}
-                title={label('LOCK.CONFIRM_TITLE', { name: account.name })}
-                description={label('LOCK.CONFIRM_DESCRIPTION')}
-                confirmLabel={label('LOCK.CONFIRM')}
-                cancelLabel={t('ADMIN_OPERATIONS.COMMON.BACK')}
-                pending={pending}
-                onConfirm={submit}
-            >
-                <p className="rounded-md bg-console-muted px-3 py-2 break-words">
-                    {suspension.categories.find(option => option.value === category)?.label}: {reason}
-                </p>
-            </ConfirmDialog>
-        );
-    }
-
     return (
-        <Dialog
-            open={open}
-            onOpenChange={close}
-            title={label('LOCK.TITLE')}
-            description={label('LOCK.DESCRIPTION')}
-            footer={
-                <>
-                    <Button variant="outline" onClick={() => close(false)}>
-                        {t('ADMIN_OPERATIONS.COMMON.CANCEL')}
-                    </Button>
-                    <Button variant="destructive" disabled={!category || reason.trim() === ''} onClick={() => setStep('confirm')}>
-                        {t('ADMIN_OPERATIONS.COMMON.CONTINUE')}
-                    </Button>
-                </>
-            }
-        >
-            <Field label={label('LOCK.CATEGORY')} htmlFor={categoryId} required error={errors.category}>
-                <Select id={categoryId} value={category} onChange={event => setCategory(event.target.value)}>
-                    {suspension.categories.map(option => (
-                        <option key={option.value} value={option.value}>
-                            {option.label}
-                        </option>
-                    ))}
-                </Select>
-            </Field>
-            <Field
-                label={label('LOCK.REASON')}
-                htmlFor={reasonId}
-                required
-                hint={label('LOCK.REASON_HINT', { max: suspension.maxReasonLength })}
-                error={errors.reason}
-            >
-                <Textarea
-                    id={reasonId}
-                    value={reason}
-                    maxLength={suspension.maxReasonLength}
-                    onChange={event => setReason(event.target.value)}
-                />
-            </Field>
+        <Dialog open={open} onOpenChange={next => close(next)}>
+            <DialogContent className="sm:max-w-md">
+                {step === 'confirm' ? (
+                    <>
+                        <DialogHeader className="space-y-2">
+                            <DialogTitle>{label('LOCK.CONFIRM_TITLE', { name: account.name })}</DialogTitle>
+                            <DialogDescription>{label('LOCK.CONFIRM_DESCRIPTION')}</DialogDescription>
+                        </DialogHeader>
+                        <p className="bg-muted rounded-md px-3 py-2 break-words">
+                            {suspension.categories.find(option => option.value === category)?.label}: {reason}
+                        </p>
+                        <div className="flex flex-col-reverse gap-4 sm:flex-row sm:justify-end">
+                            <Button variant="outline" onClick={() => setStep('form')}>
+                                {t('ADMIN_OPERATIONS.COMMON.BACK')}
+                            </Button>
+                            <Button variant="destructive" disabled={pending} onClick={submit}>
+                                {label('LOCK.CONFIRM')}
+                            </Button>
+                        </div>
+                    </>
+                ) : (
+                    <>
+                        <DialogHeader className="space-y-2">
+                            <DialogTitle>{label('LOCK.TITLE')}</DialogTitle>
+                            <DialogDescription>{label('LOCK.DESCRIPTION')}</DialogDescription>
+                        </DialogHeader>
+                        <FieldGroup className="gap-4">
+                            <Field data-invalid={errors.category ? true : undefined} className="gap-2">
+                                <FieldLabel htmlFor={categoryId}>{label('LOCK.CATEGORY')}</FieldLabel>
+                                <Select
+                                    items={suspension.categories}
+                                    value={category}
+                                    onValueChange={(value: string | null) => {
+                                        if (value) setCategory(value);
+                                    }}
+                                >
+                                    <SelectTrigger id={categoryId} className="w-full">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent alignItemWithTrigger={false}>
+                                        <SelectGroup>
+                                            {suspension.categories.map(option => (
+                                                <SelectItem key={option.value} value={option.value}>
+                                                    {option.label}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectGroup>
+                                    </SelectContent>
+                                </Select>
+                                {errors.category ? <FieldError>{errors.category}</FieldError> : null}
+                            </Field>
+                            <Field data-invalid={errors.reason ? true : undefined} className="gap-2">
+                                <FieldLabel htmlFor={reasonId}>{label('LOCK.REASON')}</FieldLabel>
+                                <Textarea
+                                    id={reasonId}
+                                    value={reason}
+                                    required
+                                    maxLength={suspension.maxReasonLength}
+                                    aria-invalid={errors.reason ? true : undefined}
+                                    onChange={event => setReason(event.target.value)}
+                                />
+                                <FieldDescription>{label('LOCK.REASON_HINT', { max: suspension.maxReasonLength })}</FieldDescription>
+                                {errors.reason ? <FieldError>{errors.reason}</FieldError> : null}
+                            </Field>
+                        </FieldGroup>
+                        <div className="flex flex-col-reverse gap-4 sm:flex-row sm:justify-end">
+                            <DialogClose render={<Button variant="outline" />}>{t('ADMIN_OPERATIONS.COMMON.CANCEL')}</DialogClose>
+                            <Button variant="destructive" disabled={!category || reason.trim() === ''} onClick={() => setStep('confirm')}>
+                                {t('ADMIN_OPERATIONS.COMMON.CONTINUE')}
+                            </Button>
+                        </div>
+                    </>
+                )}
+            </DialogContent>
         </Dialog>
     );
 }
@@ -292,163 +314,196 @@ function ImpersonateDialog({ users, csrf, open, onOpenChange }: {
     const reasonId = useId();
     const formId = useId();
     const target = users.find(user => user.id === userId);
+    const userItems = users.map(user => ({
+        value: String(user.id),
+        label: `${user.name ?? `#${user.id}`} · ${user.email} · ${user.role}`,
+    }));
 
     return (
-        <Dialog
-            open={open}
-            onOpenChange={onOpenChange}
-            title={label('IMPERSONATE.TITLE')}
-            description={label('IMPERSONATE.DESCRIPTION')}
-            footer={
-                <>
-                    <Button variant="outline" onClick={() => onOpenChange(false)}>
-                        {t('ADMIN_OPERATIONS.COMMON.CANCEL')}
-                    </Button>
+        <Dialog open={open} onOpenChange={next => onOpenChange(next)}>
+            <DialogContent className="sm:max-w-lg">
+                <DialogHeader className="space-y-2">
+                    <DialogTitle>{label('IMPERSONATE.TITLE')}</DialogTitle>
+                    <DialogDescription>{label('IMPERSONATE.DESCRIPTION')}</DialogDescription>
+                </DialogHeader>
+                {users.length === 0 ? (
+                    <p className="text-muted-foreground">{label('IMPERSONATE.NO_USERS')}</p>
+                ) : (
+                    <form id={formId} method="post" action={target?.impersonateUrl} target="_blank">
+                        <input type="hidden" name="_token" value={csrf} />
+                        <FieldGroup className="gap-4">
+                            <Field className="gap-2">
+                                <FieldLabel htmlFor={userFieldId}>{label('IMPERSONATE.USER')}</FieldLabel>
+                                <Select
+                                    items={userItems}
+                                    value={String(userId)}
+                                    onValueChange={(value: string | null) => {
+                                        if (value) setUserId(Number(value));
+                                    }}
+                                >
+                                    <SelectTrigger id={userFieldId} className="w-full">
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent alignItemWithTrigger={false}>
+                                        <SelectGroup>
+                                            {userItems.map(item => (
+                                                <SelectItem key={item.value} value={item.value}>
+                                                    {item.label}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectGroup>
+                                    </SelectContent>
+                                </Select>
+                            </Field>
+                            <Field className="gap-2">
+                                <FieldLabel htmlFor={reasonId}>{label('IMPERSONATE.REASON', { min: IMPERSONATE_REASON_MIN })}</FieldLabel>
+                                <Textarea id={reasonId} name="reason" required value={reason} onChange={event => setReason(event.target.value)} />
+                            </Field>
+                        </FieldGroup>
+                    </form>
+                )}
+                <div className="flex flex-col-reverse gap-4 sm:flex-row sm:justify-end">
+                    <DialogClose render={<Button variant="outline" />}>{t('ADMIN_OPERATIONS.COMMON.CANCEL')}</DialogClose>
                     <Button
                         type="submit"
                         form={formId}
                         disabled={!target || reason.trim().length < IMPERSONATE_REASON_MIN}
                         onClick={() => setTimeout(() => onOpenChange(false))}
                     >
-                        <Icon name="i-lucide-external-link" />
+                        <ExternalLinkIcon />
                         {label('IMPERSONATE.SUBMIT')}
                     </Button>
-                </>
-            }
-        >
-            {users.length === 0 ? (
-                <p className="text-console-muted-foreground">{label('IMPERSONATE.NO_USERS')}</p>
-            ) : (
-                <form id={formId} method="post" action={target?.impersonateUrl} target="_blank" className="flex flex-col gap-4">
-                    <input type="hidden" name="_token" value={csrf} />
-                    <Field label={label('IMPERSONATE.USER')} htmlFor={userFieldId}>
-                        <Select id={userFieldId} value={userId} onChange={event => setUserId(Number(event.target.value))}>
-                            {users.map(user => (
-                                <option key={user.id} value={user.id}>
-                                    {user.name ?? `#${user.id}`} · {user.email} · {user.role}
-                                </option>
-                            ))}
-                        </Select>
-                    </Field>
-                    <Field label={label('IMPERSONATE.REASON', { min: IMPERSONATE_REASON_MIN })} htmlFor={reasonId} required>
-                        <Textarea id={reasonId} name="reason" value={reason} onChange={event => setReason(event.target.value)} />
-                    </Field>
-                </form>
-            )}
+                </div>
+            </DialogContent>
         </Dialog>
     );
 }
 
 function UsersTable({ users }: { users: AccountUserRow[] }) {
-    if (users.length === 0) return <EmptyState icon="i-lucide-users" title={label('EMPTY.USERS')} />;
-
     return (
         <Table>
             <TableHeader>
-                <TableRow>
-                    <TableHead>{label('COLUMNS.NAME')}</TableHead>
-                    <TableHead>{label('COLUMNS.ROLE')}</TableHead>
-                    <TableHead>{label('COLUMNS.LAST_SIGN_IN')}</TableHead>
+                <TableRow className="h-14 border-t">
+                    <TableHead className="text-muted-foreground pl-4">{label('COLUMNS.NAME')}</TableHead>
+                    <TableHead className="text-muted-foreground">{label('COLUMNS.ROLE')}</TableHead>
+                    <TableHead className="text-muted-foreground pr-4">{label('COLUMNS.LAST_SIGN_IN')}</TableHead>
                 </TableRow>
             </TableHeader>
             <TableBody>
-                {users.map(user => (
-                    <TableRow key={user.id}>
-                        <TableCell>
-                            <Link href={user.url} className="font-medium text-console-brand hover:underline">
-                                {user.name ?? `#${user.id}`}
-                            </Link>
-                            <p className="break-all text-xs text-console-muted-foreground">{user.email}</p>
-                            {user.confirmed ? null : <Badge variant="warning" className="mt-1">{label('UNCONFIRMED')}</Badge>}
-                        </TableCell>
-                        <TableCell>{user.role}</TableCell>
-                        <TableCell className="whitespace-nowrap" title={formatDateTime(user.lastSignInAt)}>
-                            {user.lastSignInAt ? formatRelative(user.lastSignInAt) : t('ADMIN_OPERATIONS.COMMON.NEVER')}
+                {users.length === 0 ? (
+                    <TableRow>
+                        <TableCell colSpan={3} className="text-muted-foreground h-24 text-center">
+                            {label('EMPTY.USERS')}
                         </TableCell>
                     </TableRow>
-                ))}
+                ) : (
+                    users.map(user => (
+                        <TableRow key={user.id}>
+                            <TableCell className="h-14 pl-4">
+                                <div className="flex items-center gap-2">
+                                    <Avatar className="size-9">
+                                        <AvatarFallback className="text-xs">{initialsFromName(user.name ?? user.email ?? '')}</AvatarFallback>
+                                    </Avatar>
+                                    <div className="flex min-w-0 flex-col">
+                                        <Link href={user.url} className="font-medium hover:underline">
+                                            {user.name ?? `#${user.id}`}
+                                        </Link>
+                                        <span className="text-muted-foreground break-all">{user.email}</span>
+                                    </div>
+                                    {user.confirmed ? null : (
+                                        <Badge className={cn('h-auto rounded-sm border-none', STATUS_BADGE_STYLES.pending)}>
+                                            {label('UNCONFIRMED')}
+                                        </Badge>
+                                    )}
+                                </div>
+                            </TableCell>
+                            <TableCell className="capitalize">{user.role}</TableCell>
+                            <TableCell className="pr-4 whitespace-nowrap" title={formatDateTime(user.lastSignInAt)}>
+                                {user.lastSignInAt ? formatRelative(user.lastSignInAt) : t('ADMIN_OPERATIONS.COMMON.NEVER')}
+                            </TableCell>
+                        </TableRow>
+                    ))
+                )}
             </TableBody>
         </Table>
     );
 }
 
 function InboxesTable({ inboxes }: { inboxes: ChannelHealthItem[] }) {
-    if (inboxes.length === 0) return <EmptyState icon="i-lucide-inbox" title={label('EMPTY.INBOXES')} />;
-
     return (
         <Table>
             <TableHeader>
-                <TableRow>
-                    <TableHead>{label('COLUMNS.INBOX')}</TableHead>
-                    <TableHead>{label('COLUMNS.HEALTH')}</TableHead>
-                    <TableHead>{label('COLUMNS.SINCE')}</TableHead>
+                <TableRow className="h-14 border-t">
+                    <TableHead className="text-muted-foreground pl-4">{label('COLUMNS.INBOX')}</TableHead>
+                    <TableHead className="text-muted-foreground">{label('COLUMNS.HEALTH')}</TableHead>
+                    <TableHead className="text-muted-foreground pr-4">{label('COLUMNS.SINCE')}</TableHead>
                 </TableRow>
             </TableHeader>
             <TableBody>
-                {inboxes.map(inbox => (
-                    <TableRow key={inbox.inboxId}>
-                        <TableCell>
-                            <div className="flex items-center gap-2">
-                                <img src={inbox.platform.logo_url} alt="" className="size-5 shrink-0 rounded" />
-                                <div className="min-w-0">
-                                    <p className="truncate font-medium">{inbox.inboxName}</p>
-                                    <p className="text-xs text-console-muted-foreground">
-                                        {inbox.platform.name} · #{inbox.inboxId}
-                                    </p>
-                                </div>
-                            </div>
-                        </TableCell>
-                        <TableCell>
-                            {inbox.healthy ? (
-                                <Badge variant="success">{label('HEALTHY')}</Badge>
-                            ) : (
-                                <div className="flex flex-col gap-1">
-                                    <SeverityBadge severity={inbox.severity} label={inbox.problemLabel} />
-                                    {problemDetail(inbox.detail) ? (
-                                        <span className="break-words text-xs text-console-muted-foreground">{problemDetail(inbox.detail)}</span>
-                                    ) : null}
-                                </div>
-                            )}
-                        </TableCell>
-                        <TableCell className="whitespace-nowrap" title={formatDateTime(inbox.since)}>
-                            {inbox.since ? formatRelative(inbox.since) : '—'}
+                {inboxes.length === 0 ? (
+                    <TableRow>
+                        <TableCell colSpan={3} className="text-muted-foreground h-24 text-center">
+                            {label('EMPTY.INBOXES')}
                         </TableCell>
                     </TableRow>
-                ))}
+                ) : (
+                    inboxes.map(inbox => (
+                        <TableRow key={inbox.inboxId}>
+                            <TableCell className="h-14 pl-4">
+                                <div className="flex items-center gap-2">
+                                    <Avatar className="size-9 rounded-sm after:rounded-sm">
+                                        <AvatarImage src={inbox.platform.logo_url} alt="" className="rounded-sm" />
+                                        <AvatarFallback className="rounded-sm text-xs">{initialsFromName(inbox.platform.name)}</AvatarFallback>
+                                    </Avatar>
+                                    <div className="flex min-w-0 flex-col">
+                                        <span className="truncate font-medium">{inbox.inboxName}</span>
+                                        <span className="text-muted-foreground">
+                                            {inbox.platform.name} · #{inbox.inboxId}
+                                        </span>
+                                    </div>
+                                </div>
+                            </TableCell>
+                            <TableCell>
+                                {inbox.healthy ? (
+                                    <Badge className={cn('h-auto rounded-sm border-none', STATUS_BADGE_STYLES.active)}>{label('HEALTHY')}</Badge>
+                                ) : (
+                                    <div className="flex flex-col gap-1">
+                                        <Badge
+                                            className={cn(
+                                                'h-auto rounded-sm border-none',
+                                                inbox.severity === 'warning' ? STATUS_BADGE_STYLES.pending : STATUS_BADGE_STYLES.suspended,
+                                            )}
+                                        >
+                                            {inbox.problemLabel}
+                                        </Badge>
+                                        {problemDetail(inbox.detail) ? (
+                                            <span className="text-muted-foreground text-xs break-words">{problemDetail(inbox.detail)}</span>
+                                        ) : null}
+                                    </div>
+                                )}
+                            </TableCell>
+                            <TableCell className="pr-4 whitespace-nowrap" title={formatDateTime(inbox.since)}>
+                                {inbox.since ? formatRelative(inbox.since) : '—'}
+                            </TableCell>
+                        </TableRow>
+                    ))
+                )}
             </TableBody>
         </Table>
     );
 }
 
-function Section({ title, description, action, children, className }: {
-    title: string;
-    description?: string;
-    action?: ReactNode;
-    children: ReactNode;
-    className?: string;
-}) {
-    return (
-        <Card className={className}>
-            <CardHeader>
-                <div className="min-w-0">
-                    <CardTitle>{title}</CardTitle>
-                    {description ? <CardDescription>{description}</CardDescription> : null}
-                </div>
-                {action}
-            </CardHeader>
-            <CardContent>{children}</CardContent>
-        </Card>
-    );
-}
-
 export default function AccountOverview(props: AccountOverviewProps) {
     const { account, suspension, users, inboxes, stats, usage, onboarding, timeline, stickers, impersonations, urls, csrf } = props;
+    const { attribute } = useConsoleDictionary();
+    const consoleLabel = useConsoleLabels();
     const [tab, setTab] = useState<Tab>(initialTab);
     const [dialog, setDialog] = useState<'lock' | 'unlock' | 'impersonate' | null>(null);
     const [pending, setPending] = useState(false);
     const suspended = account.status === 'suspended';
     const failingInboxes = inboxes.filter(inbox => !inbox.healthy).length;
     const categoryLabel = (value?: string) => suspension.categories.find(option => option.value === value)?.label ?? value ?? '—';
+    const lastSuspension = suspension.history[suspension.history.length - 1];
 
     const selectTab = (next: Tab) => {
         setTab(next);
@@ -464,235 +519,290 @@ export default function AccountOverview(props: AccountOverviewProps) {
         });
 
     return (
-        <div className="flex flex-col gap-6">
-            <div className="flex flex-col gap-2">
-                <Link href="/admin/accounts" className="inline-flex w-fit items-center gap-1 text-sm text-console-muted-foreground hover:text-console-foreground">
-                    <Icon name="i-lucide-arrow-left" className="size-3.5" />
-                    {label('BACK')}
-                </Link>
-                <PageHeader
+        <>
+            <div className="relative grid grid-cols-1 gap-6 lg:grid-cols-[350px_minmax(0,1fr)]">
+                <RecordViewLeftPanel
                     title={account.name}
-                    description={
-                        <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                            <Badge variant={suspended ? 'destructive' : 'success'}>{label(`STATUS.${account.status}`)}</Badge>
-                            <span>#{account.id}</span>
-                            <span>{label('CREATED_AT', { date: formatDate(account.createdAt) })}</span>
-                            <span>
-                                {label('LAST_ACTIVITY', {
-                                    date: stats.lastActivityAt ? formatRelative(stats.lastActivityAt) : t('ADMIN_OPERATIONS.COMMON.NEVER'),
-                                })}
-                            </span>
-                        </span>
+                    badge={
+                        <Badge
+                            className={cn(
+                                'h-auto rounded-sm border-none',
+                                suspended ? STATUS_BADGE_STYLES.suspended : STATUS_BADGE_STYLES.active,
+                            )}
+                        >
+                            {label(`STATUS.${account.status}`)}
+                        </Badge>
                     }
+                    stats={[
+                        { key: 'users', icon: <UsersIcon />, value: formatCompactNumber(stats.users), label: label('STATS.USERS') },
+                        { key: 'inboxes', icon: <InboxIcon />, value: formatCompactNumber(stats.inboxes), label: label('STATS.INBOXES') },
+                    ]}
+                    detailsTitle={consoleLabel('details')}
+                    details={[
+                        { key: 'id', label: attribute('id', 'ID'), value: `#${account.id}` },
+                        {
+                            key: 'status',
+                            label: attribute('status', 'Status'),
+                            value: label(`STATUS.${account.status}`),
+                            status: suspended ? 'suspended' : 'active',
+                        },
+                        { key: 'locale', label: attribute('locale', 'Locale'), value: account.locale },
+                        { key: 'created_at', label: attribute('created_at', 'Created at'), value: formatDate(account.createdAt) },
+                        {
+                            key: 'last_activity',
+                            label: rowLabel('LAST_ACTIVITY'),
+                            value: stats.lastActivityAt ? formatRelative(stats.lastActivityAt) : t('ADMIN_OPERATIONS.COMMON.NEVER'),
+                        },
+                        { key: 'conversations', label: label('STATS.CONVERSATIONS'), value: formatNumber(stats.conversations) },
+                        { key: 'contacts', label: label('STATS.CONTACTS'), value: formatNumber(stats.contacts) },
+                    ]}
                     actions={
                         <>
-                            <Button variant="outline" onClick={() => setDialog('impersonate')}>
-                                <Icon name="i-lucide-venetian-mask" />
-                                {label('ACTIONS.IMPERSONATE')}
-                            </Button>
-                            <Link href={urls.edit} className={buttonClassName({ variant: 'outline' })}>
-                                <Icon name="i-lucide-pencil" />
+                            <Link href={urls.edit} className={cn(buttonVariants(), 'sm:flex-1')}>
+                                <PencilIcon />
                                 {label('ACTIONS.EDIT')}
                             </Link>
                             {suspended ? (
-                                <Button onClick={() => setDialog('unlock')}>
-                                    <Icon name="i-lucide-lock-open" />
+                                <Button variant="outline" className="sm:flex-1" onClick={() => setDialog('unlock')}>
+                                    <LockOpenIcon />
                                     {label('ACTIONS.UNLOCK')}
                                 </Button>
                             ) : (
-                                <Button variant="destructive" onClick={() => setDialog('lock')}>
-                                    <Icon name="i-lucide-lock" />
+                                <Button
+                                    variant="outline"
+                                    className="text-destructive hover:bg-destructive/10 hover:text-destructive sm:flex-1"
+                                    onClick={() => setDialog('lock')}
+                                >
+                                    <LockIcon />
                                     {label('ACTIONS.LOCK')}
                                 </Button>
                             )}
                         </>
                     }
+                    footer={
+                        <div className="flex flex-col gap-2">
+                            <Button variant="outline" className="w-full" onClick={() => setDialog('impersonate')}>
+                                <VenetianMaskIcon />
+                                {label('ACTIONS.IMPERSONATE')}
+                            </Button>
+                            <Link href={urls.show} className={cn(buttonVariants({ variant: 'link' }), 'w-full')}>
+                                {label('ACTIONS.RECORD')}
+                            </Link>
+                        </div>
+                    }
                 />
-            </div>
 
-            {suspended && suspension.history.length > 0 ? (
-                <Alert tone="destructive" title={label('STATUS.suspended')}>
-                    {categoryLabel(suspension.history[suspension.history.length - 1].category)}:{' '}
-                    {suspension.history[suspension.history.length - 1].reason}
-                </Alert>
-            ) : null}
+                <div className="flex min-w-0 flex-col gap-6">
+                    {suspended && lastSuspension ? (
+                        <Alert variant="destructive">
+                            <LockIcon />
+                            <AlertTitle>{label('STATUS.suspended')}</AlertTitle>
+                            <AlertDescription>
+                                {categoryLabel(lastSuspension.category)}: {lastSuspension.reason}
+                            </AlertDescription>
+                        </Alert>
+                    ) : null}
 
-            <div role="tablist" aria-label={account.name} className="-mx-1 flex gap-1 overflow-x-auto border-b border-console-border px-1">
-                {TABS.map(key => (
-                    <button
-                        key={key}
-                        type="button"
-                        role="tab"
-                        id={`tab-${key}`}
-                        aria-selected={tab === key}
-                        aria-controls={`panel-${key}`}
-                        onClick={() => selectTab(key)}
-                        className={cn(
-                            '-mb-px whitespace-nowrap border-b-2 px-3 py-2 text-sm font-medium outline-none focus-visible:ring-2 focus-visible:ring-console-ring/50',
-                            tab === key
-                                ? 'border-console-primary text-console-foreground'
-                                : 'border-transparent text-console-muted-foreground hover:text-console-foreground',
-                        )}
-                    >
-                        {label(`TABS.${key.toUpperCase()}`)}
-                        {key === 'inboxes' && failingInboxes > 0 ? (
-                            <Badge variant="destructive" className="ml-1.5">{failingInboxes}</Badge>
-                        ) : null}
-                    </button>
-                ))}
-            </div>
-
-            <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`} className="flex flex-col gap-6">
-                {tab === 'overview' ? (
-                    <>
-                        <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
-                            <StatCard label={label('STATS.USERS')} value={stats.users} icon="i-lucide-users" />
-                            <StatCard label={label('STATS.INBOXES')} value={stats.inboxes} icon="i-lucide-inbox" />
-                            <StatCard label={label('STATS.CONVERSATIONS')} value={stats.conversations} icon="i-lucide-messages-square" />
-                            <StatCard label={label('STATS.CONTACTS')} value={stats.contacts} icon="i-lucide-contact" />
-                            <StatCard label={label('STATS.MESSAGES_7D')} value={stats.messages7d} icon="i-lucide-message-square" />
-                            <StatCard label={label('STATS.MESSAGES_30D')} value={stats.messages30d} icon="i-lucide-calendar" />
+                    <Tabs value={tab} onValueChange={value => selectTab(value as Tab)} className="flex-1 justify-between gap-6">
+                        <div className="overflow-x-auto">
+                            <TabsList className="w-max min-w-full **:group-data-[orientation=horizontal]/tabs:after:h-0">
+                                {TABS.map(key => (
+                                    <TabsTrigger key={key} value={key}>
+                                        {label(`TABS.${key.toUpperCase()}`)}
+                                        {key === 'inboxes' && failingInboxes > 0 ? (
+                                            <Badge variant="destructive" className="ml-1">
+                                                {failingInboxes}
+                                            </Badge>
+                                        ) : null}
+                                    </TabsTrigger>
+                                ))}
+                            </TabsList>
                         </div>
-                        <div className="grid gap-6 lg:grid-cols-3">
-                            <Section title={label('SECTIONS.USAGE')} className="lg:col-span-2">
-                                <UsageBars usage={usage} />
-                            </Section>
-                            <Section title={label('SECTIONS.ONBOARDING')}>
-                                <Onboarding onboarding={onboarding} />
-                            </Section>
-                        </div>
-                        <div className="grid gap-6 lg:grid-cols-2">
-                            <Section title={label('SECTIONS.INBOXES')} className="gap-3 [&>div:last-child]:px-0">
-                                <InboxesTable inboxes={inboxes} />
-                            </Section>
-                            <Section title={label('SECTIONS.TIMELINE')}>
-                                <Timeline events={timeline.slice(0, 8)} />
-                            </Section>
-                        </div>
-                    </>
-                ) : null}
 
-                {tab === 'users' ? (
-                    <>
-                        <Section title={label('SECTIONS.USERS')} className="gap-3 [&>div:last-child]:px-0">
-                            <UsersTable users={users} />
-                        </Section>
-                        <Section
-                            title={label('SECTIONS.IMPERSONATIONS')}
-                            className="gap-3 [&>div:last-child]:px-0"
-                            action={
-                                <Link href={urls.impersonations} className={buttonClassName({ variant: 'ghost', size: 'sm' })}>
-                                    <Icon name="i-lucide-arrow-up-right" />
-                                </Link>
-                            }
-                        >
-                            {impersonations.length === 0 ? (
-                                <p className="px-5 text-console-muted-foreground">{label('EMPTY.IMPERSONATIONS')}</p>
-                            ) : (
+                        <TabsContent value="overview" className="space-y-6">
+                            <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
+                                <StatisticsCard
+                                    icon={<MessagesSquareIcon className="size-4" />}
+                                    value={formatNumber(stats.conversations)}
+                                    title={label('STATS.CONVERSATIONS')}
+                                />
+                                <StatisticsCard icon={<ContactIcon className="size-4" />} value={formatNumber(stats.contacts)} title={label('STATS.CONTACTS')} />
+                                <StatisticsCard
+                                    icon={<MessageSquareIcon className="size-4" />}
+                                    value={formatNumber(stats.messages7d)}
+                                    title={label('STATS.MESSAGES_7D')}
+                                />
+                                <StatisticsCard
+                                    icon={<CalendarIcon className="size-4" />}
+                                    value={formatNumber(stats.messages30d)}
+                                    title={label('STATS.MESSAGES_30D')}
+                                />
+                            </div>
+                            <div className="grid gap-6 xl:grid-cols-5">
+                                <SectionCard title={label('SECTIONS.USAGE')} className="xl:col-span-3">
+                                    <UsageBars usage={usage} />
+                                </SectionCard>
+                                <SectionCard title={label('SECTIONS.ONBOARDING')} className="xl:col-span-2">
+                                    <Onboarding onboarding={onboarding} />
+                                </SectionCard>
+                            </div>
+                            <Card>
+                                <CardContent>
+                                    <div className="flex items-center">
+                                        <span className="text-lg font-medium">{label('SECTIONS.TIMELINE')}</span>
+                                    </div>
+                                    <Timeline events={timeline.slice(0, 5)} />
+                                </CardContent>
+                            </Card>
+                        </TabsContent>
+
+                        <TabsContent value="users" className="space-y-6">
+                            <TableCard title={label('SECTIONS.USERS')}>
+                                <UsersTable users={users} />
+                            </TableCard>
+                            <TableCard
+                                title={label('SECTIONS.IMPERSONATIONS')}
+                                action={
+                                    <Link
+                                        href={urls.impersonations}
+                                        aria-label={label('SECTIONS.IMPERSONATIONS')}
+                                        className={buttonVariants({ variant: 'ghost', size: 'icon' })}
+                                    >
+                                        <ArrowUpRightIcon />
+                                    </Link>
+                                }
+                            >
                                 <Table>
                                     <TableHeader>
-                                        <TableRow>
-                                            <TableHead>{label('COLUMNS.AT')}</TableHead>
-                                            <TableHead>{label('COLUMNS.ADMIN')}</TableHead>
-                                            <TableHead>{label('COLUMNS.TARGET')}</TableHead>
-                                            <TableHead>{label('COLUMNS.REASON')}</TableHead>
+                                        <TableRow className="h-14 border-t">
+                                            <TableHead className="text-muted-foreground pl-4">{label('COLUMNS.AT')}</TableHead>
+                                            <TableHead className="text-muted-foreground">{label('COLUMNS.ADMIN')}</TableHead>
+                                            <TableHead className="text-muted-foreground">{label('COLUMNS.TARGET')}</TableHead>
+                                            <TableHead className="text-muted-foreground pr-4">{label('COLUMNS.REASON')}</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {impersonations.map(row => (
-                                            <TableRow key={row.id}>
-                                                <TableCell className="whitespace-nowrap">
-                                                    <Link href={row.url} className="text-console-brand hover:underline">
-                                                        {formatDateTime(row.createdAt)}
-                                                    </Link>
+                                        {impersonations.length === 0 ? (
+                                            <TableRow>
+                                                <TableCell colSpan={4} className="text-muted-foreground h-24 text-center">
+                                                    {label('EMPTY.IMPERSONATIONS')}
                                                 </TableCell>
-                                                <TableCell className="break-all">{row.superAdmin?.email ?? '—'}</TableCell>
-                                                <TableCell className="break-all">{row.targetUser?.email ?? '—'}</TableCell>
-                                                <TableCell className="min-w-48 break-words">{row.reason}</TableCell>
                                             </TableRow>
-                                        ))}
+                                        ) : (
+                                            impersonations.map(row => (
+                                                <TableRow key={row.id}>
+                                                    <TableCell className="h-14 pl-4 whitespace-nowrap">
+                                                        <Link href={row.url} className="font-medium hover:underline">
+                                                            {formatDateTime(row.createdAt)}
+                                                        </Link>
+                                                    </TableCell>
+                                                    <TableCell className="break-all">{row.superAdmin?.email ?? '—'}</TableCell>
+                                                    <TableCell className="break-all">{row.targetUser?.email ?? '—'}</TableCell>
+                                                    <TableCell className="min-w-48 pr-4 break-words whitespace-normal">{row.reason}</TableCell>
+                                                </TableRow>
+                                            ))
+                                        )}
                                     </TableBody>
                                 </Table>
-                            )}
-                        </Section>
-                    </>
-                ) : null}
+                            </TableCard>
+                        </TabsContent>
 
-                {tab === 'inboxes' ? (
-                    <Section title={label('SECTIONS.INBOXES')} className="gap-3 [&>div:last-child]:px-0">
-                        <InboxesTable inboxes={inboxes} />
-                    </Section>
-                ) : null}
+                        <TabsContent value="inboxes">
+                            <TableCard title={label('SECTIONS.INBOXES')}>
+                                <InboxesTable inboxes={inboxes} />
+                            </TableCard>
+                        </TabsContent>
 
-                {tab === 'activity' ? (
-                    <div className="grid gap-6 lg:grid-cols-3">
-                        <Section
-                            title={label('SECTIONS.TIMELINE')}
-                            className="lg:col-span-2"
-                            action={
-                                <div className="flex gap-2">
-                                    <Link href={urls.auditLogs} className={buttonClassName({ variant: 'outline', size: 'sm' })}>
-                                        {label('ACTIONS.AUDIT')}
+                        <TabsContent value="activity" className="space-y-6">
+                            <Card>
+                                <CardContent>
+                                    <div className="flex flex-wrap items-center justify-between gap-3">
+                                        <span className="text-lg font-medium">{label('SECTIONS.TIMELINE')}</span>
+                                        <div className="flex gap-2">
+                                            <Link href={urls.auditLogs} className={buttonVariants({ variant: 'outline', size: 'sm' })}>
+                                                {label('ACTIONS.AUDIT')}
+                                            </Link>
+                                            <Link href={urls.data} className={buttonVariants({ variant: 'outline', size: 'sm' })}>
+                                                {label('ACTIONS.DATA')}
+                                            </Link>
+                                        </div>
+                                    </div>
+                                    <Timeline events={timeline} />
+                                </CardContent>
+                            </Card>
+                            <SectionCard title={label('SECTIONS.SUSPENSIONS')}>
+                                {suspension.history.length === 0 ? (
+                                    <p className="text-muted-foreground text-sm">{label('EMPTY.SUSPENSIONS')}</p>
+                                ) : (
+                                    <ActivityTimelineFromSuspensions history={suspension.history} categoryLabel={categoryLabel} />
+                                )}
+                            </SectionCard>
+                        </TabsContent>
+
+                        <TabsContent value="stickers">
+                            <SectionCard
+                                title={label('SECTIONS.STICKERS')}
+                                description={label('STICKERS.DESCRIPTION')}
+                                action={
+                                    <Link href={urls.stickers} className={buttonVariants()}>
+                                        <StickerIcon />
+                                        {label('STICKERS.MANAGE')}
                                     </Link>
-                                    <Link href={urls.data} className={buttonClassName({ variant: 'outline', size: 'sm' })}>
-                                        {label('ACTIONS.DATA')}
-                                    </Link>
-                                </div>
-                            }
-                        >
-                            <Timeline events={timeline} />
-                        </Section>
-                        <Section title={label('SECTIONS.SUSPENSIONS')}>
-                            {suspension.history.length === 0 ? (
-                                <p className="text-console-muted-foreground">{label('EMPTY.SUSPENSIONS')}</p>
-                            ) : (
-                                <ul className="flex flex-col gap-3">
-                                    {[...suspension.history].reverse().map((entry, index) => (
-                                        <li key={`${entry.suspended_at}-${index}`} className="flex flex-col gap-0.5">
-                                            <span className="text-xs text-console-muted-foreground">{formatDateTime(entry.suspended_at)}</span>
-                                            <span className="font-medium">{categoryLabel(entry.category)}</span>
-                                            <span className="break-words">{entry.reason}</span>
-                                        </li>
-                                    ))}
-                                </ul>
-                            )}
-                        </Section>
-                    </div>
-                ) : null}
-
-                {tab === 'stickers' ? (
-                    <Section title={label('SECTIONS.STICKERS')} description={label('STICKERS.DESCRIPTION')}>
-                        <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
-                            <p className="text-lg font-semibold">
-                                {label('STICKERS.SUMMARY', { packs: formatNumber(stickers.packs), stickers: formatNumber(stickers.stickers) })}
-                            </p>
-                            <Link href={urls.stickers} className={buttonClassName()}>
-                                <Icon name="i-lucide-sticker" />
-                                {label('STICKERS.MANAGE')}
-                            </Link>
-                        </div>
-                    </Section>
-                ) : null}
+                                }
+                            >
+                                <p className="text-lg font-semibold">
+                                    {label('STICKERS.SUMMARY', { packs: formatNumber(stickers.packs), stickers: formatNumber(stickers.stickers) })}
+                                </p>
+                            </SectionCard>
+                        </TabsContent>
+                    </Tabs>
+                </div>
             </div>
 
-            <div className="flex flex-wrap gap-2 text-sm">
-                <Link href={urls.show} className={buttonClassName({ variant: 'link', className: 'px-0' })}>
-                    {label('ACTIONS.RECORD')}
-                </Link>
-            </div>
-
-            <LockDialog account={account} suspension={suspension} url={urls.suspend} open={dialog === 'lock'} onOpenChange={open => setDialog(open ? 'lock' : null)} />
+            <LockDialog
+                account={account}
+                suspension={suspension}
+                url={urls.suspend}
+                open={dialog === 'lock'}
+                onOpenChange={open => setDialog(open ? 'lock' : null)}
+            />
             <ConfirmDialog
                 open={dialog === 'unlock'}
                 onOpenChange={open => setDialog(open ? 'unlock' : null)}
                 title={label('UNLOCK.TITLE', { name: account.name })}
                 description={label('UNLOCK.DESCRIPTION')}
+                cancelLabel={t('ADMIN_OPERATIONS.COMMON.CANCEL')}
                 confirmLabel={label('UNLOCK.CONFIRM')}
                 confirmVariant="default"
                 pending={pending}
                 onConfirm={unlock}
             />
-            <ImpersonateDialog users={users} csrf={csrf} open={dialog === 'impersonate'} onOpenChange={open => setDialog(open ? 'impersonate' : null)} />
-        </div>
+            <ImpersonateDialog
+                users={users}
+                csrf={csrf}
+                open={dialog === 'impersonate'}
+                onOpenChange={open => setDialog(open ? 'impersonate' : null)}
+            />
+        </>
+    );
+}
+
+function ActivityTimelineFromSuspensions({
+    history,
+    categoryLabel,
+}: {
+    history: AccountOverviewProps['suspension']['history'];
+    categoryLabel: (value?: string) => string;
+}) {
+    return (
+        <ActivityTimeline
+            activityLog={[...history].reverse().map((entry, index) => ({
+                id: `${entry.suspended_at}-${index}`,
+                description: categoryLabel(entry.category),
+                detail: entry.reason,
+                timestamp: formatDate(entry.suspended_at ?? null),
+                timestampTitle: formatDateTime(entry.suspended_at ?? null),
+            }))}
+        />
     );
 }

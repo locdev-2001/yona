@@ -4,7 +4,11 @@ import type { ReactNode } from 'react';
 
 vi.mock('@inertiajs/react', () => ({
     Head: () => null,
-    Link: ({ href, children }: { href: string; children: ReactNode }) => <a href={href}>{children}</a>,
+    Link: ({ href, children, preserveScroll: _preserveScroll, ...rest }: { href: string; children: ReactNode; preserveScroll?: boolean }) => (
+        <a href={href} {...rest}>
+            {children}
+        </a>
+    ),
     router: { get: vi.fn() },
     usePage: () => ({ props: {} }),
 }));
@@ -42,8 +46,36 @@ describe('DataTable', () => {
         );
 
         expect(screen.getByRole('link', { name: '7' })).toHaveAttribute('href', '/admin/accounts/7/overview');
-        expect(screen.getAllByTitle('Masked: secret data').some(element => element.textContent === '••••')).toBe(true);
+        expect(screen.getAllByLabelText('Masked: secret data').some(element => element.textContent === '••••')).toBe(true);
         expect(screen.queryByRole('link', { name: /hmac_token/ })).toBeNull();
+        // Cột id ghim trái sẵn; cột sắp xếp được là link giữ bộ lọc.
+        expect(screen.getByRole('columnheader', { name: /Sort by id/ })).toHaveAttribute('data-pinned', 'left');
+        expect(screen.getByRole('link', { name: 'Sort by account_id' })).toHaveAttribute(
+            'href',
+            '/admin/data/inboxes?sort=account_id&direction=desc',
+        );
+    });
+
+    it('trang sau là link khi còn dòng, trang trước tắt ở trang 1', () => {
+        render(
+            <DataTable
+                table="inboxes"
+                columns={[column('id', { type: 'bigint' })]}
+                rows={[{ id: 1 }]}
+                page={1}
+                hasMore
+                sort="id"
+                direction="desc"
+                filters={{ name: 'Hoa' }}
+                perPage={50}
+            />,
+        );
+
+        expect(screen.getByRole('link', { name: 'Next page' })).toHaveAttribute(
+            'href',
+            '/admin/data/inboxes?sort=id&direction=desc&filter%5Bname%5D=Hoa&page=2',
+        );
+        expect(screen.getByRole('button', { name: 'Previous page' })).toBeDisabled();
     });
 
     it('tham số truy vấn bỏ ô lọc rỗng và trang 1', () => {

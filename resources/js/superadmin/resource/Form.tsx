@@ -1,11 +1,16 @@
-import { Link, useForm } from '@inertiajs/react';
+import { useForm } from '@inertiajs/react';
+
+import Link from '@admin/components/Link';
+import { Button, buttonVariants } from '@admin/components/ui/button';
+import { Field, FieldError, FieldLabel } from '@admin/components/ui/field';
+import { Input } from '@admin/components/ui/input';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@admin/components/ui/select';
+import { Textarea } from '@admin/components/ui/textarea';
+import { cn } from '@admin/lib/utils';
+import { RecordForm } from '@admin/views/apps/resources/form/record-form';
 
 import { useNavLabel } from '../components/navigation';
-import { Button, buttonClassName } from '../ui/Button';
-import { Card, CardContent, CardFooter } from '../ui/Card';
-import { Field, Input, Select } from '../ui/Input';
-import { useConsoleDictionary, useConsoleLabels } from '../ui/labels';
-import { PageHeader } from '../ui/PageHeader';
+import { useConsoleDictionary, useConsoleLabels } from '../labels';
 
 type FormField = {
     name: string;
@@ -26,6 +31,9 @@ type Props = {
     action: string;
     method: 'post' | 'put';
 };
+
+// Trường chữ dài (mô tả, lý do, giá trị cấu hình) chiếm cả hàng và nhiều dòng.
+const LONG_TEXT_FIELDS = ['description', 'suspension_reason', 'value'];
 
 // Nhãn máy chủ tự suy từ tên thuộc tính thì thay bằng bản tiếng Việt; nhãn riêng
 // do dashboard đặt thì giữ.
@@ -64,59 +72,77 @@ export default function ResourceForm({ resource, resourceLabel, singular, singul
     const errorFor = (name: string) => (errors as Record<string, string | undefined>)[`${singular}.${name}`];
 
     return (
-        <>
-            <PageHeader title={title} />
-            <Card className="max-w-3xl">
-                <form
-                    noValidate
-                    onSubmit={event => {
-                        event.preventDefault();
-                        (method === 'put' ? put : post)(action);
-                    }}
-                >
-                    <CardContent className="flex flex-col gap-5">
-                        {visibleFields.map(field => {
-                            const id = `${singular}_${field.name}`;
-                            const error = errorFor(field.name);
-                            const fieldLabel = isDerivedLabel(field.name, field.label)
-                                ? attribute(field.name, field.label)
-                                : field.label;
-                            const update = (value: string) => setData(singular, { ...values, [field.name]: value });
+        <RecordForm
+            title={title}
+            onSubmit={event => {
+                event.preventDefault();
+                (method === 'put' ? put : post)(action);
+            }}
+            actions={
+                <>
+                    <Button type="submit" disabled={processing}>
+                        {processing ? label('saving') : record ? label('save') : label('create')}
+                    </Button>
+                    <Link href={cancelUrl} className={buttonVariants({ variant: 'outline' })}>
+                        {label('cancel')}
+                    </Link>
+                </>
+            }
+        >
+            {visibleFields.map(field => {
+                const id = `${singular}_${field.name}`;
+                const error = errorFor(field.name);
+                const fieldLabel = isDerivedLabel(field.name, field.label) ? attribute(field.name, field.label) : field.label;
+                const update = (value: string) => setData(singular, { ...values, [field.name]: value });
+                const longText = LONG_TEXT_FIELDS.includes(field.name);
+                const options = field.options.map(option => ({ value: option, label: option }));
 
-                            return (
-                                <Field key={field.name} label={fieldLabel} htmlFor={id} error={error}>
-                                    {field.options.length > 0 ? (
-                                        <Select id={id} value={values[field.name] ?? ''} onChange={event => update(event.target.value)}>
-                                            {field.options.map(option => (
-                                                <option value={option} key={option}>
-                                                    {option}
-                                                </option>
-                                            ))}
-                                        </Select>
-                                    ) : (
-                                        <Input
-                                            id={id}
-                                            type={inputType(field.type)}
-                                            aria-invalid={error ? true : undefined}
-                                            autoComplete={field.type === 'password' ? 'new-password' : undefined}
-                                            value={values[field.name] ?? ''}
-                                            onChange={event => update(event.target.value)}
-                                        />
-                                    )}
-                                </Field>
-                            );
-                        })}
-                    </CardContent>
-                    <CardFooter className="mt-6 justify-end border-t border-console-border pt-5">
-                        <Link href={cancelUrl} className={buttonClassName({ variant: 'outline' })}>
-                            {label('cancel')}
-                        </Link>
-                        <Button type="submit" disabled={processing}>
-                            {processing ? label('saving') : record ? label('save') : label('create')}
-                        </Button>
-                    </CardFooter>
-                </form>
-            </Card>
-        </>
+                return (
+                    <Field key={field.name} data-invalid={error ? true : undefined} className={cn('gap-2', longText && 'sm:col-span-2')}>
+                        <FieldLabel htmlFor={id}>{fieldLabel}</FieldLabel>
+                        {field.options.length > 0 ? (
+                            <Select
+                                items={options}
+                                value={values[field.name] ?? ''}
+                                onValueChange={(value: string | null) => {
+                                    if (value !== null) update(value);
+                                }}
+                            >
+                                <SelectTrigger id={id} className="w-full" aria-invalid={error ? true : undefined}>
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent alignItemWithTrigger={false}>
+                                    <SelectGroup>
+                                        {options.map(option => (
+                                            <SelectItem key={option.value} value={option.value}>
+                                                {option.label}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectGroup>
+                                </SelectContent>
+                            </Select>
+                        ) : longText ? (
+                            <Textarea
+                                id={id}
+                                rows={4}
+                                aria-invalid={error ? true : undefined}
+                                value={values[field.name] ?? ''}
+                                onChange={event => update(event.target.value)}
+                            />
+                        ) : (
+                            <Input
+                                id={id}
+                                type={inputType(field.type)}
+                                aria-invalid={error ? true : undefined}
+                                autoComplete={field.type === 'password' ? 'new-password' : undefined}
+                                value={values[field.name] ?? ''}
+                                onChange={event => update(event.target.value)}
+                            />
+                        )}
+                        {error ? <FieldError>{error}</FieldError> : null}
+                    </Field>
+                );
+            })}
+        </RecordForm>
     );
 }

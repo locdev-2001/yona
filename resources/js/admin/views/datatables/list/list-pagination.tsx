@@ -6,13 +6,13 @@ import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react'
 
 // Component Imports
 import { Link } from '@inertiajs/react'
-import { Button } from '@admin/components/ui/button'
+import { Button, buttonVariants } from '@admin/components/ui/button'
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem } from '@admin/components/ui/pagination'
 
 // Hook Imports
 import { usePagination } from '@admin/hooks/use-pagination'
 
-type DataTablePaginationProps = {
+type ListPaginationProps = {
   summary: ReactNode
   current: number
   // Biết tổng số trang thì hiện dãy số trang; không biết thì chỉ trang trước/sau theo `hasMore`.
@@ -23,7 +23,7 @@ type DataTablePaginationProps = {
 }
 
 // Chân bảng phân trang phía máy chủ: mỗi nút là một link Inertia giữ nguyên bộ lọc.
-const DataTablePagination = ({ summary, current, last, hasMore, hrefFor, labels }: DataTablePaginationProps) => {
+export function ListPagination({ summary, current, last, hasMore, hrefFor, labels }: ListPaginationProps) {
   const totalPages = last ?? current + (hasMore ? 1 : 0)
   const canPrevious = current > 1
   const canNext = last === undefined ? Boolean(hasMore) : current < last
@@ -45,15 +45,15 @@ const DataTablePagination = ({ summary, current, last, hasMore, hrefFor, labels 
           <PaginationContent>
             <PaginationItem>
               {canPrevious ? (
-                <Button
-                  variant='ghost'
-                  nativeButton={false}
-                  render={<Link href={hrefFor(current - 1)} preserveScroll />}
+                <Link
+                  href={hrefFor(current - 1)}
+                  preserveScroll
+                  className={buttonVariants({ variant: 'ghost' })}
                   aria-label={labels.previous}
                 >
                   <ChevronLeftIcon aria-hidden='true' />
-                  {labels.previous}
-                </Button>
+                  <span className='max-sm:hidden'>{labels.previous}</span>
+                </Link>
               ) : (
                 <Button
                   className='disabled:pointer-events-none disabled:opacity-50'
@@ -62,7 +62,7 @@ const DataTablePagination = ({ summary, current, last, hasMore, hrefFor, labels 
                   aria-label={labels.previous}
                 >
                   <ChevronLeftIcon aria-hidden='true' />
-                  {labels.previous}
+                  <span className='max-sm:hidden'>{labels.previous}</span>
                 </Button>
               )}
             </PaginationItem>
@@ -79,15 +79,17 @@ const DataTablePagination = ({ summary, current, last, hasMore, hrefFor, labels 
 
                 return (
                   <PaginationItem key={page}>
-                    <Button
-                      size='icon'
-                      className={`${!isActive && 'bg-primary/10 text-primary hover:bg-primary/20 focus-visible:ring-primary/20 dark:focus-visible:ring-primary/40'}`}
-                      nativeButton={false}
-                      render={<Link href={hrefFor(page)} preserveScroll />}
+                    <Link
+                      href={hrefFor(page)}
+                      preserveScroll
+                      className={buttonVariants({
+                        size: 'icon',
+                        className: `${!isActive && 'bg-primary/10 text-primary hover:bg-primary/20 focus-visible:ring-primary/20 dark:focus-visible:ring-primary/40'}`
+                      })}
                       aria-current={isActive ? 'page' : undefined}
                     >
                       {page}
-                    </Button>
+                    </Link>
                   </PaginationItem>
                 )
               })}
@@ -100,15 +102,15 @@ const DataTablePagination = ({ summary, current, last, hasMore, hrefFor, labels 
 
             <PaginationItem>
               {canNext ? (
-                <Button
-                  variant='ghost'
-                  nativeButton={false}
-                  render={<Link href={hrefFor(current + 1)} preserveScroll />}
+                <Link
+                  href={hrefFor(current + 1)}
+                  preserveScroll
+                  className={buttonVariants({ variant: 'ghost' })}
                   aria-label={labels.next}
                 >
-                  {labels.next}
+                  <span className='max-sm:hidden'>{labels.next}</span>
                   <ChevronRightIcon aria-hidden='true' />
-                </Button>
+                </Link>
               ) : (
                 <Button
                   className='disabled:pointer-events-none disabled:opacity-50'
@@ -116,7 +118,7 @@ const DataTablePagination = ({ summary, current, last, hasMore, hrefFor, labels 
                   disabled
                   aria-label={labels.next}
                 >
-                  {labels.next}
+                  <span className='max-sm:hidden'>{labels.next}</span>
                   <ChevronRightIcon aria-hidden='true' />
                 </Button>
               )}
@@ -128,4 +130,3 @@ const DataTablePagination = ({ summary, current, last, hasMore, hrefFor, labels 
   )
 }
 
-export default DataTablePagination

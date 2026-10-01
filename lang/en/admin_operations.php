@@ -47,6 +47,8 @@ return [
             'SEARCH' => 'Search inbox or account…',
             'ALL_PROBLEMS' => 'All problems',
             'ALL_PLATFORMS' => 'All channels',
+            'PLATFORM' => 'Channel',
+            'SEVERITY' => 'Severity',
             'ALL_SEVERITIES' => 'All severities',
         ],
         'COLUMNS' => [
@@ -242,6 +244,12 @@ return [
         'SORT' => 'Sort by {column}',
         'EMPTY' => 'No rows.',
         'ROWS_ON_PAGE' => '{count} rows',
+        'PIN' => [
+            'LEFT' => 'Stick to left',
+            'RIGHT' => 'Stick to right',
+            'UNPIN' => 'Unpin {column} column',
+            'OPTIONS' => 'Pin options for {column} column',
+        ],
     ],
     'STICKERS' => [
         'PLATFORM_TAB' => 'Shared library',

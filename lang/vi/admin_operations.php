@@ -47,6 +47,8 @@ return [
             'SEARCH' => 'Tìm hộp thư hoặc tài khoản…',
             'ALL_PROBLEMS' => 'Mọi vấn đề',
             'ALL_PLATFORMS' => 'Mọi kênh',
+            'PLATFORM' => 'Kênh',
+            'SEVERITY' => 'Mức độ',
             'ALL_SEVERITIES' => 'Mọi mức độ',
         ],
         'COLUMNS' => [
@@ -242,6 +244,12 @@ return [
         'SORT' => 'Sắp xếp theo {column}',
         'EMPTY' => 'Không có dòng nào.',
         'ROWS_ON_PAGE' => '{count} dòng',
+        'PIN' => [
+            'LEFT' => 'Ghim sang trái',
+            'RIGHT' => 'Ghim sang phải',
+            'UNPIN' => 'Bỏ ghim cột {column}',
+            'OPTIONS' => 'Tuỳ chọn ghim cột {column}',
+        ],
     ],
     'STICKERS' => [
         'PLATFORM_TAB' => 'Kho chung',

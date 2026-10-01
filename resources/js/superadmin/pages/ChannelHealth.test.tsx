@@ -1,6 +1,8 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
+
+import { installDomStubs } from '../components/__fixtures__/dom';
 
 const routerGet = vi.fn();
 
@@ -38,6 +40,7 @@ const baseProps = {
 };
 
 describe('ChannelHealth', () => {
+    beforeAll(() => installDomStubs());
     beforeEach(() => routerGet.mockReset());
 
     it('hiện hộp thư hỏng kèm link tới account 360', () => {
@@ -46,14 +49,33 @@ describe('ChannelHealth', () => {
         expect(screen.getByText('Zalo chính')).toBeInTheDocument();
         expect(screen.getByRole('link', { name: 'Shop Hoa' })).toHaveAttribute('href', '/admin/accounts/7/overview');
         expect(screen.getByText('Đăng nhập trên máy khác')).toBeInTheDocument();
+        expect(screen.getByText('Zalo session lost')).toBeInTheDocument();
     });
 
-    it('chọn loại vấn đề thì lọc qua URL', () => {
+    it('chọn loại vấn đề thì lọc qua URL', async () => {
         render(<ChannelHealth {...baseProps} />);
 
-        fireEvent.change(screen.getByLabelText('All problems'), { target: { value: 'session_lost' } });
+        fireEvent.click(screen.getByRole('combobox', { name: 'Problem' }));
+        const option = await screen.findByRole('option', { name: 'Zalo session lost (1)' });
+        fireEvent.pointerDown(option, { pointerType: 'mouse' });
+        fireEvent.mouseDown(option);
+        fireEvent.pointerUp(option, { pointerType: 'mouse' });
+        fireEvent.mouseUp(option);
+        fireEvent.click(option);
 
         expect(routerGet).toHaveBeenCalledWith('/admin/channel_health', { problem: 'session_lost' }, expect.any(Object));
+    });
+
+    it('tìm kiếm gửi khi bấm Enter, bỏ lọc về URL gốc', () => {
+        render(<ChannelHealth {...baseProps} filters={{ severity: 'error' }} />);
+
+        const search = screen.getByRole('searchbox');
+        fireEvent.change(search, { target: { value: 'Hoa' } });
+        fireEvent.submit(search.closest('form')!);
+        expect(routerGet).toHaveBeenLastCalledWith('/admin/channel_health', { severity: 'error', search: 'Hoa' }, expect.any(Object));
+
+        fireEvent.click(screen.getByRole('button', { name: 'Clear filters' }));
+        expect(routerGet).toHaveBeenLastCalledWith('/admin/channel_health', {}, expect.any(Object));
     });
 
     it('không có hộp thư hỏng thì báo mọi kênh khoẻ', () => {

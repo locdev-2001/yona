@@ -3,7 +3,8 @@ import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react'
 
 // Component Imports
 import Link from '@admin/components/Link'
-import { Button } from '@admin/components/ui/button'
+import { Button, buttonVariants } from '@admin/components/ui/button'
+import { cn } from '@admin/lib/utils'
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem } from '@admin/components/ui/pagination'
 
 // Hook Imports
@@ -49,15 +50,10 @@ export function ResourcePagination({
                   <span className='max-sm:hidden'>{previousLabel}</span>
                 </Button>
               ) : (
-                <Button
-                  variant='ghost'
-                  aria-label={previousLabel}
-                  render={<Link href={hrefFor(currentPage - 1)} />}
-                  nativeButton={false}
-                >
+                <Link href={hrefFor(currentPage - 1)} aria-label={previousLabel} className={buttonVariants({ variant: 'ghost' })}>
                   <ChevronLeftIcon aria-hidden='true' />
                   <span className='max-sm:hidden'>{previousLabel}</span>
-                </Button>
+                </Link>
               )}
             </PaginationItem>
 
@@ -72,15 +68,17 @@ export function ResourcePagination({
 
               return (
                 <PaginationItem key={page}>
-                  <Button
-                    size='icon'
-                    className={`${!isActive && 'bg-primary/10 text-primary hover:bg-primary/20 focus-visible:ring-primary/20 dark:focus-visible:ring-primary/40'}`}
-                    render={<Link href={hrefFor(page)} />}
-                    nativeButton={false}
+                  <Link
+                    href={hrefFor(page)}
+                    className={cn(
+                      buttonVariants({ size: 'icon' }),
+                      !isActive &&
+                        'bg-primary/10 text-primary hover:bg-primary/20 focus-visible:ring-primary/20 dark:focus-visible:ring-primary/40'
+                    )}
                     aria-current={isActive ? 'page' : undefined}
                   >
                     {page}
-                  </Button>
+                  </Link>
                 </PaginationItem>
               )
             })}
@@ -98,15 +96,10 @@ export function ResourcePagination({
                   <ChevronRightIcon aria-hidden='true' />
                 </Button>
               ) : (
-                <Button
-                  variant='ghost'
-                  aria-label={nextLabel}
-                  render={<Link href={hrefFor(currentPage + 1)} />}
-                  nativeButton={false}
-                >
+                <Link href={hrefFor(currentPage + 1)} aria-label={nextLabel} className={buttonVariants({ variant: 'ghost' })}>
                   <span className='max-sm:hidden'>{nextLabel}</span>
                   <ChevronRightIcon aria-hidden='true' />
-                </Button>
+                </Link>
               )}
             </PaginationItem>
           </PaginationContent>

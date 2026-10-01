@@ -21,6 +21,7 @@ const messages: Record<string, unknown> = {
             "SHOW": "Hiện lại",
             "DRAG": "Kéo để đổi chỗ {title}",
             "SIZE": "Độ rộng của {title}",
+            "MENU": "Tuỳ chọn cho {title}",
             "RETRY": "Thử lại",
             "VIEW_ALL": "Xem tất cả"
         },
@@ -123,6 +124,12 @@ const messages: Record<string, unknown> = {
             "FROM_START": "{rate}% so với đăng ký",
             "FROM_PREVIOUS": "{rate}% so với bước trước"
         },
+        "TREND": {
+            "TOTAL": "Tổng trong khoảng",
+            "PEAK": "Ngày cao nhất",
+            "AVERAGE": "Trung bình mỗi ngày",
+            "REPLY_RATIO": "Tin ra trên tin vào"
+        },
         "SERIES": {
             "INCOMING": "Tin vào",
             "OUTGOING": "Tin ra",
@@ -140,6 +147,7 @@ const messages: Record<string, unknown> = {
             "CELL": "Tuần {week}, tuần thứ {offset}: {active} trên {size} account ({rate}%)"
         },
         "CHANNEL_HEALTH": {
+            "RATE": "Tỉ lệ khoẻ",
             "HEALTHY": "Khoẻ",
             "FAILING": "Có vấn đề",
             "TOTAL": "{count} hộp thư",
@@ -440,6 +448,8 @@ const messages: Record<string, unknown> = {
                 "SEARCH": "Tìm hộp thư hoặc tài khoản…",
                 "ALL_PROBLEMS": "Mọi vấn đề",
                 "ALL_PLATFORMS": "Mọi kênh",
+                "PLATFORM": "Kênh",
+                "SEVERITY": "Mức độ",
                 "ALL_SEVERITIES": "Mọi mức độ"
             },
             "COLUMNS": {
@@ -634,7 +644,13 @@ const messages: Record<string, unknown> = {
             "FILTER_HINT": "Cột số khớp đúng, cột chữ khớp một phần, gõ null để tìm ô trống. Cột đã che không lọc được.",
             "SORT": "Sắp xếp theo {column}",
             "EMPTY": "Không có dòng nào.",
-            "ROWS_ON_PAGE": "{count} dòng"
+            "ROWS_ON_PAGE": "{count} dòng",
+            "PIN": {
+                "LEFT": "Ghim sang trái",
+                "RIGHT": "Ghim sang phải",
+                "UNPIN": "Bỏ ghim cột {column}",
+                "OPTIONS": "Tuỳ chọn ghim cột {column}"
+            }
         },
         "STICKERS": {
             "PLATFORM_TAB": "Kho chung",

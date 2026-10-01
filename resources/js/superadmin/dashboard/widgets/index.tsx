@@ -19,12 +19,16 @@ import { ChannelHealth, RecentSignups, TopAccounts } from './lists';
 import { ActivationFunnel, ConversationsByChannel, Kpis, MessagesTrend, SignupsTrend } from './metrics';
 import { QueueHealth, Stickers, System } from './system';
 
-export type SkeletonKind = 'stats' | 'chart' | 'list';
+import type { WidgetSkeletonKind } from '@admin/views/dashboards/widgets/widget-state';
+
+export type SkeletonKind = WidgetSkeletonKind;
 
 type Renderer<T> = {
     render: (data: T, title: string) => ReactNode;
     isEmpty?: (data: T) => boolean;
     skeleton: SkeletonKind;
+    // Ô tự vẽ thẻ (hàng thẻ chỉ số), không bọc trong thẻ chung.
+    bare?: boolean;
 };
 
 export type AnyRenderer = Renderer<unknown>;
@@ -35,7 +39,7 @@ const allZero = (values: number[]) => values.every(value => value === 0);
 
 // Ô do máy chủ tính số: key → cách vẽ. Key lạ (máy chủ có, bản build chưa có) bị bỏ qua.
 export const SERVER_WIDGETS: Record<string, AnyRenderer> = {
-    kpis: define<KpisData>({ render: data => <Kpis data={data} />, skeleton: 'stats' }),
+    kpis: define<KpisData>({ render: data => <Kpis data={data} />, skeleton: 'stats', bare: true }),
     messages_trend: define<MessagesTrendData>({
         render: (data, title) => <MessagesTrend data={data} title={title} />,
         isEmpty: data => allZero(data.days.flatMap(day => [day.incoming, day.outgoing])),

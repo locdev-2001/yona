@@ -33,6 +33,8 @@ type Props = {
 
 const DEFAULT_ORDER = 'id';
 const DEFAULT_DIRECTION = 'desc';
+// Khớp ResourceController::PER_PAGE.
+const PER_PAGE = 20;
 
 // Bộ lọc và ô tìm kiếm dùng chung tham số `search`: `<tên bộ lọc>:` là lọc, còn
 // lại là từ khoá.
@@ -83,6 +85,7 @@ export default function ResourceIndex({
     const [pendingDelete, setPendingDelete] = useState<string | null>(null);
     const canEdit = actions.includes('edit');
     const canDestroy = actions.includes('destroy');
+    const showingFrom = (pagination.current - 1) * PER_PAGE + 1;
     const searchLabel = label('search_records', { resource: title.toLowerCase() });
 
     const visit = (params: { search?: string; order?: string; direction?: string; page?: number }) =>
@@ -178,9 +181,9 @@ export default function ResourceIndex({
                     )
                 }
                 pagination={
-                    pagination.last > 1 ? (
+                    rows.length > 0 ? (
                         <ResourcePagination
-                            summary={label('page_of', { current: pagination.current, last: pagination.last })}
+                            summary={`${showingFrom.toLocaleString('vi-VN')}–${(showingFrom + rows.length - 1).toLocaleString('vi-VN')} / ${label('records_total', { total: pagination.total.toLocaleString('vi-VN') })}`}
                             currentPage={pagination.current}
                             totalPages={pagination.last}
                             hrefFor={page => indexUrl(resource, singular, { search, order, direction, page })}

@@ -1,17 +1,24 @@
 import { Link } from '@inertiajs/react';
-import { Fragment, useId, useState } from 'react';
+import type { ColumnDef } from '@tanstack/react-table';
+import { ChevronDownIcon, ChevronUpIcon, ListFilterIcon, ScrollTextIcon, XIcon } from 'lucide-react';
+import { useId, useState } from 'react';
 import type { FormEvent } from 'react';
 
+import { Badge } from '@admin/components/ui/badge';
+import { Button } from '@admin/components/ui/button';
+import { Input } from '@admin/components/ui/input';
+import { Label } from '@admin/components/ui/label';
+import DataTableEmpty from '@admin/views/datatables/datatable-empty';
+import ListCard from '@admin/views/datatables/list';
+import { FilterSelect, ListFilters } from '@admin/views/datatables/list/list-filters';
+import { ListPagination } from '@admin/views/datatables/list/list-pagination';
+import { ListTable } from '@admin/views/datatables/list/list-table';
+import { ListToolbar } from '@admin/views/datatables/list/list-toolbar';
+import StatusBadge from '@admin/views/datatables/status-badge';
+import type { StatusTone } from '@admin/views/datatables/status-badge';
+import PageHeader from '@admin/views/pages/page-header';
+
 import { t } from '../../i18n';
-import { Badge } from '../ui/Badge';
-import { Button } from '../ui/Button';
-import { Card } from '../ui/Card';
-import { EmptyState } from '../ui/EmptyState';
-import { Icon } from '../ui/Icon';
-import { Input, Label, Select } from '../ui/Input';
-import { PageHeader } from '../ui/PageHeader';
-import { Pagination } from '../ui/Pagination';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/Table';
 import { formatDateTime, formatNumber, visitWithParams } from './operationsFormat';
 
 type AuditLog = {
@@ -43,9 +50,9 @@ const PAGE_URL = '/admin/audit_logs';
 
 const label = (key: string, params?: Record<string, string | number>) => t(`ADMIN_OPERATIONS.AUDIT_LOGS.${key}`, params);
 
-function statusVariant(status: number | null): 'success' | 'warning' | 'destructive' | 'secondary' {
-    if (status === null) return 'secondary';
-    if (status >= 500) return 'destructive';
+function statusTone(status: number | null): StatusTone {
+    if (status === null) return 'neutral';
+    if (status >= 500) return 'danger';
     if (status >= 400) return 'warning';
 
     return 'success';
@@ -57,6 +64,34 @@ export function pageHref(filters: Filters, page: number): string {
     const search = query.toString();
 
     return search ? `${PAGE_URL}?${search}` : PAGE_URL;
+}
+
+function Subject({ log }: { log: AuditLog }) {
+    if (!log.subjectType) return <span className="text-muted-foreground">—</span>;
+    const text = `${log.subjectType}${log.subjectId ? ` #${log.subjectId}` : ''}`;
+
+    return log.subjectUrl ? (
+        <Link href={log.subjectUrl} className="font-medium hover:underline">
+            {text}
+        </Link>
+    ) : (
+        <span>{text}</span>
+    );
+}
+
+function Payload({ log }: { log: AuditLog }) {
+    return (
+        <div className="flex flex-col gap-2">
+            {log.changes ? (
+                <pre className="bg-muted max-h-80 overflow-auto rounded-md p-3 font-mono text-xs break-all whitespace-pre-wrap">
+                    {JSON.stringify(log.changes, null, 2)}
+                </pre>
+            ) : (
+                <p className="text-muted-foreground">{label('NO_PAYLOAD')}</p>
+            )}
+            {log.userAgent ? <p className="text-muted-foreground text-xs break-all">{log.userAgent}</p> : null}
+        </div>
+    );
 }
 
 export default function AuditLogs({ logs, pagination, filters, options }: Props) {
@@ -71,151 +106,164 @@ export default function AuditLogs({ logs, pagination, filters, options }: Props)
         visitWithParams(PAGE_URL, draft);
     };
 
+    const columns: ColumnDef<AuditLog>[] = [
+        {
+            id: 'time',
+            header: () => label('COLUMNS.TIME'),
+            cell: ({ row }) => <span className="whitespace-nowrap">{formatDateTime(row.original.createdAt)}</span>,
+        },
+        {
+            id: 'admin',
+            header: () => label('COLUMNS.ADMIN'),
+            cell: ({ row }) => (
+                <div className="flex min-w-40 flex-col">
+                    <span className="font-medium break-all">{row.original.superAdminEmail ?? label('DELETED_ADMIN')}</span>
+                    {row.original.ipAddress ? <span className="text-muted-foreground">{row.original.ipAddress}</span> : null}
+                </div>
+            ),
+        },
+        {
+            id: 'action',
+            header: () => label('COLUMNS.ACTION'),
+            cell: ({ row }) => (
+                <Badge variant="outline" className="h-auto rounded-sm font-mono break-all whitespace-normal">
+                    {row.original.action}
+                </Badge>
+            ),
+        },
+        {
+            id: 'subject',
+            header: () => label('COLUMNS.SUBJECT'),
+            cell: ({ row }) => <Subject log={row.original} />,
+            meta: { cellClassName: 'whitespace-nowrap' },
+        },
+        {
+            id: 'status',
+            header: () => label('COLUMNS.STATUS'),
+            cell: ({ row }) => <StatusBadge tone={statusTone(row.original.responseStatus)}>{row.original.responseStatus ?? '—'}</StatusBadge>,
+        },
+        {
+            id: 'payload',
+            header: () => <span className="sr-only">{label('PAYLOAD')}</span>,
+            cell: ({ row }) => {
+                const isOpen = expanded === row.original.id;
+
+                return (
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-expanded={isOpen}
+                        aria-label={label('PAYLOAD')}
+                        onClick={() => setExpanded(current => (current === row.original.id ? null : row.original.id))}
+                    >
+                        {isOpen ? <ChevronUpIcon className="size-4.5" /> : <ChevronDownIcon className="size-4.5" />}
+                    </Button>
+                );
+            },
+            meta: { headerClassName: 'w-14', cellClassName: 'w-14' },
+        },
+    ];
+
     return (
         <div className="flex flex-col gap-6">
-            <PageHeader title={label('TITLE')} description={label('DESCRIPTION')} />
+            <PageHeader title={label('TITLE')} description={label('DESCRIPTION')} className="mb-0 md:mb-0" />
 
-            <Card className="gap-0 py-0">
-                <form onSubmit={submit} className="grid grid-cols-1 gap-3 border-b border-console-border p-4 sm:grid-cols-2 lg:grid-cols-6">
-                    <div className="flex flex-col gap-1.5">
-                        <Label htmlFor={ids.admin}>{label('FILTERS.ADMIN')}</Label>
-                        <Select id={ids.admin} value={draft.super_admin_id ?? ''} onChange={event => set('super_admin_id', event.target.value)}>
-                            <option value="">{label('FILTERS.ALL_ADMINS')}</option>
-                            {options.superAdmins.map(option => (
-                                <option key={option.value} value={option.value}>
-                                    {option.label}
-                                </option>
-                            ))}
-                        </Select>
-                    </div>
-                    <div className="flex flex-col gap-1.5">
-                        <Label htmlFor={ids.action}>{label('COLUMNS.ACTION')}</Label>
-                        <Input id={ids.action} value={draft.action ?? ''} placeholder={label('FILTERS.ACTION')} onChange={event => set('action', event.target.value)} />
-                    </div>
-                    <div className="flex flex-col gap-1.5">
-                        <Label htmlFor={ids.subjectType}>{label('FILTERS.SUBJECT_TYPE')}</Label>
-                        <Select id={ids.subjectType} value={draft.subject_type ?? ''} onChange={event => set('subject_type', event.target.value)}>
-                            <option value="">{label('FILTERS.ALL_SUBJECTS')}</option>
-                            {options.subjectTypes.map(type => (
-                                <option key={type} value={type}>
-                                    {type}
-                                </option>
-                            ))}
-                        </Select>
-                    </div>
-                    <div className="flex flex-col gap-1.5">
-                        <Label htmlFor={ids.subjectId}>{label('FILTERS.SUBJECT_ID')}</Label>
-                        <Input id={ids.subjectId} inputMode="numeric" value={draft.subject_id ?? ''} onChange={event => set('subject_id', event.target.value)} />
-                    </div>
-                    <div className="flex flex-col gap-1.5">
-                        <Label htmlFor={ids.from}>{label('FILTERS.FROM')}</Label>
-                        <Input id={ids.from} type="date" value={draft.from ?? ''} onChange={event => set('from', event.target.value)} />
-                    </div>
-                    <div className="flex flex-col gap-1.5">
-                        <Label htmlFor={ids.to}>{label('FILTERS.TO')}</Label>
-                        <Input id={ids.to} type="date" value={draft.to ?? ''} onChange={event => set('to', event.target.value)} />
-                    </div>
-                    <div className="flex gap-2 sm:col-span-2 lg:col-span-6">
-                        <Button type="submit">{t('ADMIN_OPERATIONS.COMMON.APPLY')}</Button>
-                        {hasFilters ? (
-                            <Button
-                                variant="ghost"
-                                onClick={() => {
-                                    setDraft({});
-                                    visitWithParams(PAGE_URL, {});
-                                }}
-                            >
-                                {t('ADMIN_OPERATIONS.COMMON.CLEAR')}
+            <ListCard
+                filters={
+                    <form onSubmit={submit}>
+                        <ListFilters className="lg:grid-cols-5">
+                            <FilterSelect
+                                id={ids.admin}
+                                label={label('FILTERS.ADMIN')}
+                                allLabel={label('FILTERS.ALL_ADMINS')}
+                                options={options.superAdmins}
+                                value={draft.super_admin_id ?? ''}
+                                onChange={value => set('super_admin_id', value)}
+                            />
+                            <FilterSelect
+                                id={ids.subjectType}
+                                label={label('FILTERS.SUBJECT_TYPE')}
+                                allLabel={label('FILTERS.ALL_SUBJECTS')}
+                                options={options.subjectTypes.map(type => ({ value: type, label: type }))}
+                                value={draft.subject_type ?? ''}
+                                onChange={value => set('subject_type', value)}
+                            />
+                            <div className="flex w-full flex-col gap-2">
+                                <Label htmlFor={ids.subjectId}>{label('FILTERS.SUBJECT_ID')}</Label>
+                                <Input
+                                    id={ids.subjectId}
+                                    inputMode="numeric"
+                                    value={draft.subject_id ?? ''}
+                                    onChange={event => set('subject_id', event.target.value)}
+                                />
+                            </div>
+                            <div className="flex w-full flex-col gap-2">
+                                <Label htmlFor={ids.from}>{label('FILTERS.FROM')}</Label>
+                                <Input id={ids.from} type="date" value={draft.from ?? ''} onChange={event => set('from', event.target.value)} />
+                            </div>
+                            <div className="flex w-full flex-col gap-2">
+                                <Label htmlFor={ids.to}>{label('FILTERS.TO')}</Label>
+                                <Input id={ids.to} type="date" value={draft.to ?? ''} onChange={event => set('to', event.target.value)} />
+                            </div>
+                        </ListFilters>
+                        <ListToolbar
+                            search={{
+                                id: ids.action,
+                                label: label('COLUMNS.ACTION'),
+                                placeholder: label('FILTERS.ACTION'),
+                                value: draft.action ?? '',
+                                onChange: value => set('action', value),
+                            }}
+                        >
+                            {hasFilters ? (
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={() => {
+                                        setDraft({});
+                                        visitWithParams(PAGE_URL, {});
+                                    }}
+                                >
+                                    <XIcon />
+                                    {t('ADMIN_OPERATIONS.COMMON.CLEAR')}
+                                </Button>
+                            ) : null}
+                            <Button type="submit">
+                                <ListFilterIcon />
+                                {t('ADMIN_OPERATIONS.COMMON.APPLY')}
                             </Button>
-                        ) : null}
-                    </div>
-                </form>
-
-                {logs.length === 0 ? (
-                    <EmptyState icon="i-lucide-scroll-text" title={label('EMPTY_TITLE')} description={label('EMPTY_DESCRIPTION')} />
-                ) : (
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>{label('COLUMNS.TIME')}</TableHead>
-                                <TableHead>{label('COLUMNS.ADMIN')}</TableHead>
-                                <TableHead>{label('COLUMNS.ACTION')}</TableHead>
-                                <TableHead>{label('COLUMNS.SUBJECT')}</TableHead>
-                                <TableHead>{label('COLUMNS.STATUS')}</TableHead>
-                                <TableHead>
-                                    <span className="sr-only">{label('PAYLOAD')}</span>
-                                </TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {logs.map(log => (
-                                <Fragment key={log.id}>
-                                    <TableRow>
-                                        <TableCell className="whitespace-nowrap">{formatDateTime(log.createdAt)}</TableCell>
-                                        <TableCell className="break-all">
-                                            {log.superAdminEmail ?? label('DELETED_ADMIN')}
-                                            {log.ipAddress ? <p className="text-xs text-console-muted-foreground">{log.ipAddress}</p> : null}
-                                        </TableCell>
-                                        <TableCell>
-                                            <code className="break-all rounded bg-console-muted px-1.5 py-0.5 text-xs">{log.action}</code>
-                                        </TableCell>
-                                        <TableCell className="whitespace-nowrap">
-                                            {log.subjectType ? (
-                                                log.subjectUrl ? (
-                                                    <Link href={log.subjectUrl} className="text-console-brand hover:underline">
-                                                        {log.subjectType} #{log.subjectId}
-                                                    </Link>
-                                                ) : (
-                                                    <span>
-                                                        {log.subjectType}
-                                                        {log.subjectId ? ` #${log.subjectId}` : ''}
-                                                    </span>
-                                                )
-                                            ) : (
-                                                '—'
-                                            )}
-                                        </TableCell>
-                                        <TableCell>
-                                            <Badge variant={statusVariant(log.responseStatus)}>{log.responseStatus ?? '—'}</Badge>
-                                        </TableCell>
-                                        <TableCell>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon-sm"
-                                                aria-expanded={expanded === log.id}
-                                                aria-label={label('PAYLOAD')}
-                                                onClick={() => setExpanded(current => (current === log.id ? null : log.id))}
-                                            >
-                                                <Icon name={expanded === log.id ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'} />
-                                            </Button>
-                                        </TableCell>
-                                    </TableRow>
-                                    {expanded === log.id ? (
-                                        <TableRow className="hover:bg-transparent">
-                                            <TableCell colSpan={6}>
-                                                {log.changes ? (
-                                                    <pre className="max-h-80 overflow-auto whitespace-pre-wrap break-all rounded-md bg-console-muted p-3 text-xs">
-                                                        {JSON.stringify(log.changes, null, 2)}
-                                                    </pre>
-                                                ) : (
-                                                    <p className="text-console-muted-foreground">{label('NO_PAYLOAD')}</p>
-                                                )}
-                                                {log.userAgent ? <p className="mt-2 break-all text-xs text-console-muted-foreground">{log.userAgent}</p> : null}
-                                            </TableCell>
-                                        </TableRow>
-                                    ) : null}
-                                </Fragment>
-                            ))}
-                        </TableBody>
-                    </Table>
-                )}
-            </Card>
-
-            <Pagination
-                current={pagination.current}
-                last={pagination.last}
-                summary={label('TOTAL', { total: formatNumber(pagination.total) })}
-                hrefFor={page => pageHref(filters, page)}
+                        </ListToolbar>
+                    </form>
+                }
+                table={
+                    <ListTable
+                        data={logs}
+                        columns={columns}
+                        getRowId={log => String(log.id)}
+                        expandedRowId={expanded === null ? null : String(expanded)}
+                        renderExpanded={log => <Payload log={log} />}
+                        empty={
+                            <DataTableEmpty
+                                icon={<ScrollTextIcon className="size-4" />}
+                                title={label('EMPTY_TITLE')}
+                                description={label('EMPTY_DESCRIPTION')}
+                            />
+                        }
+                    />
+                }
+                pagination={
+                    <ListPagination
+                        summary={label('TOTAL', { total: formatNumber(pagination.total) })}
+                        current={pagination.current}
+                        last={Math.max(1, pagination.last)}
+                        hrefFor={page => pageHref(filters, page)}
+                        labels={{
+                            previous: t('ADMIN_OPERATIONS.COMMON.PREVIOUS'),
+                            next: t('ADMIN_OPERATIONS.COMMON.NEXT'),
+                            navigation: t('ADMIN_OPERATIONS.COMMON.PAGE', { page: pagination.current }),
+                        }}
+                    />
+                }
             />
         </div>
     );

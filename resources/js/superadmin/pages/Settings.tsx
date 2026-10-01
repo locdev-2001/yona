@@ -1,38 +1,45 @@
 import { Link } from '@inertiajs/react';
+import { ChevronRightIcon, SlidersHorizontalIcon } from 'lucide-react';
 
-import { Card } from '../ui/Card';
-import { Icon } from '../ui/Icon';
-import { useConsoleLabels } from '../ui/labels';
-import { PageHeader } from '../ui/PageHeader';
+import { buttonVariants } from '@admin/components/ui/button';
+import { Card, CardContent } from '@admin/components/ui/card';
+import PageHeader from '@admin/views/pages/page-header';
+
+import { useConsoleLabels } from '../labels';
 
 // Bản CE chỉ còn danh sách mục cấu hình (khối gói cước/billing là enterprise).
 export default function SuperAdminSettings({ sections }: { sections: { key: string; label: string; url: string }[] }) {
     const label = useConsoleLabels();
 
     return (
-        <>
-            <PageHeader title={label('settings_title')} description={label('settings_description')} />
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                {sections.map(section => (
-                    <Link
-                        key={section.key}
-                        href={section.url}
-                        className="group rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-console-ring/50"
-                    >
-                        <Card className="flex-row items-center gap-3 px-5 py-4 transition-colors group-hover:bg-console-muted">
-                            <span className="flex size-9 items-center justify-center rounded-md bg-console-accent text-console-muted-foreground">
-                                <Icon name="i-lucide-sliders-horizontal" />
-                            </span>
-                            <span className="min-w-0 flex-1">
-                                <span className="block truncate font-medium">
-                                    {label('app_config_title', { section: section.label })}
-                                </span>
-                            </span>
-                            <Icon name="i-lucide-chevron-right" className="text-console-muted-foreground" />
-                        </Card>
-                    </Link>
-                ))}
-            </div>
-        </>
+        <div>
+            <PageHeader className="lg:mb-10" title={label('settings_title')} description={label('settings_description')} />
+
+            <Card className="gap-0 py-0">
+                <CardContent className="px-0">
+                    <ul className="divide-y">
+                        {sections.map(section => {
+                            const title = label('app_config_title', { section: section.label });
+
+                            return (
+                                <li key={section.key} className="flex items-center justify-between gap-4 px-6 py-4">
+                                    <div className="flex min-w-0 flex-1 items-center gap-4">
+                                        <div className="bg-primary/10 text-primary flex size-8 shrink-0 items-center justify-center rounded-sm">
+                                            <SlidersHorizontalIcon className="size-4" />
+                                        </div>
+                                        <Link href={section.url} className="truncate font-medium hover:underline">
+                                            {title}
+                                        </Link>
+                                    </div>
+                                    <Link href={section.url} tabIndex={-1} aria-hidden="true" className={buttonVariants({ variant: 'ghost', size: 'icon' })}>
+                                        <ChevronRightIcon className="size-4.5" />
+                                    </Link>
+                                </li>
+                            );
+                        })}
+                    </ul>
+                </CardContent>
+            </Card>
+        </div>
     );
 }

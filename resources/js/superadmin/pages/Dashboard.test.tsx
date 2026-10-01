@@ -128,6 +128,28 @@ describe('trang Tổng quan', () => {
         expect(widgetCalls().at(-1)?.url).toBe('/admin/api/dashboard/widgets/top_accounts?range=30d&fresh=1');
     });
 
+    it('menu ba chấm của ô: làm mới bỏ qua cache máy chủ, ẩn ô thì lưu bố cục', async () => {
+        render(<SuperAdminDashboard {...props()} />);
+        await screen.findByText('Shop Hoa');
+
+        fireEvent.click(screen.getByRole('button', { name: t('ADMIN_DASHBOARD.ACTIONS.MENU', { title: 'Ô top_accounts' }) }));
+        fireEvent.click(await screen.findByRole('menuitem', { name: t('ADMIN_DASHBOARD.ACTIONS.REFRESH', { title: 'Ô top_accounts' }) }));
+        await waitFor(() =>
+            expect(widgetCalls().at(-1)?.url).toBe('/admin/api/dashboard/widgets/top_accounts?range=30d&fresh=1'),
+        );
+
+        fireEvent.click(screen.getByRole('button', { name: t('ADMIN_DASHBOARD.ACTIONS.MENU', { title: 'Ô top_accounts' }) }));
+        await act(async () => {
+            fireEvent.click(await screen.findByRole('menuitem', { name: t('ADMIN_DASHBOARD.ACTIONS.HIDE', { title: 'Ô top_accounts' }) }));
+        });
+        expect(layoutCalls().at(-1)?.body).toEqual({
+            layout: [
+                { key: 'kpis', size: 'full' },
+                { key: 'operation_links', size: 'sm' },
+            ],
+        });
+    });
+
     it('tuỳ chỉnh: ẩn, hiện lại, đổi cỡ, về mặc định và lưu qua API bố cục', async () => {
         render(<SuperAdminDashboard {...props()} />);
         await screen.findByText('Shop Hoa');
@@ -157,10 +179,14 @@ describe('trang Tổng quan', () => {
             ],
         });
 
+        fireEvent.click(screen.getByRole('combobox', { name: t('ADMIN_DASHBOARD.ACTIONS.SIZE', { title: 'Ô kpis' }) }));
+        const option = await screen.findByRole('option', { name: t('ADMIN_DASHBOARD.SIZES.MD') });
         await act(async () => {
-            fireEvent.change(screen.getByRole('combobox', { name: t('ADMIN_DASHBOARD.ACTIONS.SIZE', { title: 'Ô kpis' }) }), {
-                target: { value: 'md' },
-            });
+            fireEvent.pointerDown(option, { pointerType: 'mouse' });
+            fireEvent.mouseDown(option);
+            fireEvent.pointerUp(option, { pointerType: 'mouse' });
+            fireEvent.mouseUp(option);
+            fireEvent.click(option);
         });
         expect((layoutCalls().at(-1)?.body as { layout: unknown[] }).layout[0]).toEqual({ key: 'kpis', size: 'md' });
 
@@ -168,9 +194,10 @@ describe('trang Tổng quan', () => {
             fireEvent.click(screen.getByRole('button', { name: t('ADMIN_DASHBOARD.ACTIONS.RESET') }));
         });
         expect(layoutCalls().at(-1)?.method).toBe('DELETE');
-        expect(screen.getByRole('combobox', { name: t('ADMIN_DASHBOARD.ACTIONS.SIZE', { title: 'Ô top_accounts' }) })).toHaveProperty(
-            'value',
-            'md',
+        await waitFor(() =>
+            expect(
+                screen.getByRole('combobox', { name: t('ADMIN_DASHBOARD.ACTIONS.SIZE', { title: 'Ô top_accounts' }) }).textContent,
+            ).toContain(t('ADMIN_DASHBOARD.SIZES.MD')),
         );
 
         fireEvent.click(screen.getByRole('button', { name: t('ADMIN_DASHBOARD.ACTIONS.DONE') }));

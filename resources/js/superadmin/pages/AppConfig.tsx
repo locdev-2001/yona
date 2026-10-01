@@ -1,12 +1,16 @@
-import { Link, useForm, usePage } from '@inertiajs/react';
+import { router, useForm, usePage } from '@inertiajs/react';
 
+import { Button } from '@admin/components/ui/button';
+import { Input } from '@admin/components/ui/input';
+import { Label } from '@admin/components/ui/label';
+import { Switch } from '@admin/components/ui/switch';
+import { Textarea } from '@admin/components/ui/textarea';
+import PageHeader from '@admin/views/pages/page-header';
+import SettingsSection from '@admin/views/pages/user-settings/settings-section';
+import SettingsTabs from '@admin/views/pages/user-settings/settings-tabs';
+
+import { useConsoleLabels } from '../labels';
 import type { SuperAdminPageProps } from '../types';
-import { Button } from '../ui/Button';
-import { Card, CardContent, CardFooter } from '../ui/Card';
-import { cn } from '../ui/cn';
-import { Field, Input, Select } from '../ui/Input';
-import { useConsoleLabels } from '../ui/labels';
-import { PageHeader } from '../ui/PageHeader';
 
 type Definition = {
     display_title: string;
@@ -22,6 +26,8 @@ type Props = {
     definitions: Record<string, Definition>;
 };
 
+const isTrue = (value: string) => value === 'true' || value === '1';
+
 export default function AppConfig({ config, title, values, definitions }: Props) {
     const label = useConsoleLabels();
     const sections = usePage<SuperAdminPageProps>().props.superAdmin?.settingsPages ?? [];
@@ -34,71 +40,96 @@ export default function AppConfig({ config, title, values, definitions }: Props)
     });
     const update = (name: string, value: string) => setData('app_config', { ...data.app_config, [name]: value });
 
+    const fields = (
+        <form
+            className="space-y-6"
+            onSubmit={event => {
+                event.preventDefault();
+                post('/admin/app_config');
+            }}
+        >
+            {Object.entries(definitions).map(([name, definition]) => {
+                const id = `app_config_${name}`;
+                const hintId = `${id}_hint`;
+                const hint = definition.description ? (
+                    <p id={hintId} className="text-muted-foreground text-xs">
+                        {definition.description}
+                    </p>
+                ) : null;
+
+                if (definition.type === 'boolean') {
+                    return (
+                        <div key={name} className="flex items-center justify-between gap-4 rounded-lg border px-4 py-3">
+                            <div className="min-w-0 space-y-1">
+                                <Label htmlFor={id}>{definition.display_title}</Label>
+                                {hint}
+                            </div>
+                            <Switch
+                                id={id}
+                                checked={isTrue(data.app_config[name])}
+                                onCheckedChange={checked => update(name, checked ? 'true' : 'false')}
+                                aria-describedby={hint ? hintId : undefined}
+                            />
+                        </div>
+                    );
+                }
+
+                return (
+                    <div key={name} className="w-full space-y-2">
+                        <Label htmlFor={id}>{definition.display_title}</Label>
+                        {definition.type === 'code' ? (
+                            <Textarea
+                                id={id}
+                                className="font-mono"
+                                value={data.app_config[name]}
+                                aria-describedby={hint ? hintId : undefined}
+                                onChange={event => update(name, event.target.value)}
+                            />
+                        ) : (
+                            <Input
+                                id={id}
+                                type={definition.type === 'number' ? 'number' : 'text'}
+                                autoComplete="off"
+                                value={data.app_config[name]}
+                                aria-describedby={hint ? hintId : undefined}
+                                onChange={event => update(name, event.target.value)}
+                            />
+                        )}
+                        {hint}
+                    </div>
+                );
+            })}
+            <div className="flex justify-end">
+                <Button type="submit" className="max-sm:w-full" disabled={processing}>
+                    {processing ? label('saving') : label('save')}
+                </Button>
+            </div>
+        </form>
+    );
+
     return (
-        <>
-            <PageHeader title={label('app_config_title', { section: title })} description={label('app_config_description')} />
+        <div>
+            <PageHeader
+                className="lg:mb-10"
+                title={label('settings_title')}
+                description={label('settings_description')}
+            />
 
-            {sections.length > 0 ? (
-                <nav aria-label={label('settings_title')} className="-mx-4 overflow-x-auto px-4 md:mx-0 md:px-0">
-                    <ul className="flex w-max gap-1 rounded-lg bg-console-accent p-1">
-                        {sections.map(section => (
-                            <li key={section.key}>
-                                <Link
-                                    href={section.url}
-                                    aria-current={section.key === config ? 'page' : undefined}
-                                    className={cn(
-                                        'block whitespace-nowrap rounded-md px-3 py-1 text-sm transition-colors',
-                                        section.key === config
-                                            ? 'bg-console-card font-medium text-console-foreground shadow-sm'
-                                            : 'text-console-muted-foreground hover:text-console-foreground',
-                                    )}
-                                >
-                                    {section.label}
-                                </Link>
-                            </li>
-                        ))}
-                    </ul>
-                </nav>
-            ) : null}
-
-            <Card className="max-w-3xl">
-                <form
-                    onSubmit={event => {
-                        event.preventDefault();
-                        post('/admin/app_config');
-                    }}
-                >
-                    <CardContent className="flex flex-col gap-5">
-                        {Object.entries(definitions).map(([name, definition]) => {
-                            const id = `app_config_${name}`;
-
-                            return (
-                                <Field key={name} label={definition.display_title} htmlFor={id} hint={definition.description}>
-                                    {definition.type === 'boolean' ? (
-                                        <Select id={id} value={data.app_config[name]} onChange={event => update(name, event.target.value)}>
-                                            <option value="true">{label('yes')}</option>
-                                            <option value="false">{label('no')}</option>
-                                        </Select>
-                                    ) : (
-                                        <Input
-                                            id={id}
-                                            type="text"
-                                            autoComplete="off"
-                                            value={data.app_config[name]}
-                                            onChange={event => update(name, event.target.value)}
-                                        />
-                                    )}
-                                </Field>
-                            );
-                        })}
-                    </CardContent>
-                    <CardFooter className="mt-6 justify-end border-t border-console-border pt-5">
-                        <Button type="submit" disabled={processing}>
-                            {processing ? label('saving') : label('save')}
-                        </Button>
-                    </CardFooter>
-                </form>
-            </Card>
-        </>
+            <SettingsTabs
+                tabs={sections.map(section => ({ value: section.key, name: section.label }))}
+                value={config}
+                label={label('settings_title')}
+                onValueChange={key => {
+                    const section = sections.find(candidate => candidate.key === key);
+                    if (section) router.visit(section.url);
+                }}
+            >
+                <section className="py-3">
+                    <SettingsSection title={label('app_config_title', { section: title })} description={label('app_config_description')}>
+                        {fields}
+                    </SettingsSection>
+                </section>
+            </SettingsTabs>
+        </div>
     );
 }

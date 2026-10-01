@@ -19,6 +19,7 @@ return [
         'SHOW' => 'Show',
         'DRAG' => 'Drag to move {title}',
         'SIZE' => 'Width of {title}',
+        'MENU' => 'Options for {title}',
         'RETRY' => 'Retry',
         'VIEW_ALL' => 'View all',
     ],
@@ -77,6 +78,7 @@ return [
         'FROM_START' => '{rate}% of signups',
         'FROM_PREVIOUS' => '{rate}% of previous step',
     ],
+    'TREND' => ['TOTAL' => 'Total in range', 'PEAK' => 'Peak day', 'AVERAGE' => 'Daily average', 'REPLY_RATIO' => 'Outgoing per incoming'],
     'SERIES' => [
         'INCOMING' => 'Incoming',
         'OUTGOING' => 'Outgoing',
@@ -94,6 +96,7 @@ return [
         'CELL' => 'Week of {week}, week {offset}: {active} of {size} accounts ({rate}%)',
     ],
     'CHANNEL_HEALTH' => [
+        'RATE' => 'Healthy share',
         'HEALTHY' => 'Healthy',
         'FAILING' => 'Failing',
         'TOTAL' => '{count} inboxes',

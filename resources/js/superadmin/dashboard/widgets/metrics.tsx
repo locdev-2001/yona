@@ -1,8 +1,29 @@
+import {
+    ActivityIcon,
+    ArrowDownLeftIcon,
+    ArrowUpRightIcon,
+    Building2Icon,
+    CalendarArrowUpIcon,
+    InboxIcon,
+    MessagesSquareIcon,
+    RepeatIcon,
+    SigmaIcon,
+    UserPlusIcon,
+    UsersIcon,
+} from 'lucide-react';
+import type { ReactNode } from 'react';
+
+import { CardContent } from '@admin/components/ui/card';
+import { Separator } from '@admin/components/ui/separator';
+import TimeSeriesChart, { InsetCard, MetricBoxes } from '@admin/views/dashboards/charts/chart-sales-metrics';
+import type { ChartSeries } from '@admin/views/dashboards/charts/chart-sales-metrics';
+import StatisticsCard from '@admin/views/dashboards/statistics/statistics-card-01';
+import FunnelProgress from '@admin/views/dashboards/widgets/widget-funnel';
+import ProductInsightsStats from '@admin/views/dashboards/widgets/widget-product-insights';
+import TotalEarningList from '@admin/views/dashboards/widgets/widget-total-earning';
+
 import { t } from '../../../i18n';
-import { cn } from '../../ui/cn';
-import { Icon } from '../../ui/Icon';
-import { HorizontalBars, TimeSeriesChart } from '../charts';
-import { formatNumber, formatPercent } from '../format';
+import { formatDay, formatNumber, formatPercent } from '../format';
 import type {
     ActivationFunnelData,
     ConversationsByChannelData,
@@ -11,128 +32,203 @@ import type {
     SignupsTrendData,
 } from '../types';
 
-function deltaTone(delta: number): string {
-    if (delta > 0) return 'text-console-success-foreground';
-    if (delta < 0) return 'text-console-destructive-foreground';
+const KPI_ICON: Record<string, ReactNode> = {
+    accounts_total: <Building2Icon className="size-4" />,
+    accounts_new: <UserPlusIcon className="size-4" />,
+    accounts_active: <ActivityIcon className="size-4" />,
+    users_total: <UsersIcon className="size-4" />,
+    conversations_new: <MessagesSquareIcon className="size-4" />,
+    messages_incoming: <ArrowDownLeftIcon className="size-4" />,
+    messages_outgoing: <ArrowUpRightIcon className="size-4" />,
+    inboxes_total: <InboxIcon className="size-4" />,
+};
 
-    return 'text-console-muted-foreground';
-}
+const trendOf = (change: number) => (change > 0 ? 'up' : change < 0 ? 'down' : 'flat');
 
 export function Kpis({ data }: { data: KpisData }) {
     return (
-        <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-lg border border-console-border bg-console-border sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-4 @lg:gap-6 @3xl:grid-cols-4">
             {data.metrics.map(metric => (
-                <div key={metric.key} className="flex flex-col gap-1 bg-console-card p-3">
-                    <dt className="text-xs font-medium text-console-muted-foreground">
-                        {t(`ADMIN_DASHBOARD.METRICS.${metric.key.toUpperCase()}`)}
-                    </dt>
-                    <dd className="text-xl font-semibold tabular-nums tracking-tight">{formatNumber(metric.value)}</dd>
-                    {metric.changePercent !== null ? (
-                        <dd className="flex items-center gap-1 text-xs">
-                            <span className={cn('inline-flex items-center gap-0.5 font-medium tabular-nums', deltaTone(metric.changePercent))}>
-                                {metric.changePercent > 0 ? <Icon name="i-lucide-trending-up" className="size-3.5" /> : null}
-                                {metric.changePercent < 0 ? <Icon name="i-lucide-trending-down" className="size-3.5" /> : null}
-                                {metric.changePercent > 0 ? '+' : ''}
-                                {formatPercent(metric.changePercent)}%
-                            </span>
-                            <span className="text-console-muted-foreground">{t('ADMIN_DASHBOARD.RANGE.COMPARED')}</span>
-                        </dd>
-                    ) : null}
-                </div>
+                <StatisticsCard
+                    key={metric.key}
+                    icon={KPI_ICON[metric.key] ?? <SigmaIcon className="size-4" />}
+                    value={formatNumber(metric.value)}
+                    title={t(`ADMIN_DASHBOARD.METRICS.${metric.key.toUpperCase()}`)}
+                    changePercentage={
+                        metric.changePercent === null
+                            ? null
+                            : `${metric.changePercent > 0 ? '+' : ''}${formatPercent(metric.changePercent)}%`
+                    }
+                    trend={metric.changePercent === null ? 'flat' : trendOf(metric.changePercent)}
+                    comparisonText={t('ADMIN_DASHBOARD.RANGE.COMPARED')}
+                />
             ))}
-        </dl>
+        </div>
     );
 }
 
+export function seriesSummary(series: ChartSeries, dates: string[]): string {
+    const total = series.values.reduce((sum, value) => sum + value, 0);
+    const max = Math.max(0, ...series.values);
+    const peakIndex = series.values.indexOf(max);
+
+    return t('ADMIN_DASHBOARD.CHART.SUMMARY', {
+        label: series.label,
+        total: formatNumber(total),
+        max: formatNumber(max),
+        date: peakIndex >= 0 && dates[peakIndex] ? formatDay(dates[peakIndex]) : '—',
+    });
+}
+
+function DailyChart({ title, dates, series, variant }: { title: string; dates: string[]; series: ChartSeries[]; variant: 'line' | 'bar' }) {
+    return (
+        <TimeSeriesChart
+            title={title}
+            dates={dates}
+            series={series}
+            variant={variant}
+            summary={series.map(item => seriesSummary(item, dates)).join(' ')}
+            dateLabel={t('ADMIN_DASHBOARD.CHART.DATE')}
+            formatDate={formatDay}
+            formatValue={formatNumber}
+        />
+    );
+}
+
+const sum = (values: number[]) => values.reduce((total, value) => total + value, 0);
+
+function peakDay(dates: string[], values: number[]): string {
+    const max = Math.max(0, ...values);
+    const index = values.indexOf(max);
+
+    return index >= 0 && dates[index] ? `${formatNumber(max)} · ${formatDay(dates[index])}` : '—';
+}
+
+// Ô số nhỏ viền mảnh ở trên, biểu đồ đường trong thẻ lồng ở dưới.
 export function MessagesTrend({ data, title }: { data: MessagesTrendData; title: string }) {
+    const dates = data.days.map(day => day.date);
+    const incoming = data.days.map(day => day.incoming);
+    const outgoing = data.days.map(day => day.outgoing);
+    const totalIn = sum(incoming);
+    const totalOut = sum(outgoing);
+
     return (
-        <TimeSeriesChart
-            title={title}
-            dates={data.days.map(day => day.date)}
-            series={[
-                {
-                    key: 'incoming',
-                    label: t('ADMIN_DASHBOARD.SERIES.INCOMING'),
-                    colorClass: 'text-console-brand',
-                    values: data.days.map(day => day.incoming),
-                },
-                {
-                    key: 'outgoing',
-                    label: t('ADMIN_DASHBOARD.SERIES.OUTGOING'),
-                    colorClass: 'text-console-success',
-                    values: data.days.map(day => day.outgoing),
-                },
-            ]}
-        />
+        <div className="flex flex-col gap-6">
+            <MetricBoxes
+                className="grid gap-4 @md:grid-cols-2 @4xl:grid-cols-4"
+                metrics={[
+                    {
+                        key: 'incoming',
+                        icon: <ArrowDownLeftIcon className="size-5" />,
+                        title: t('ADMIN_DASHBOARD.SERIES.INCOMING'),
+                        value: formatNumber(totalIn),
+                    },
+                    {
+                        key: 'outgoing',
+                        icon: <ArrowUpRightIcon className="size-5" />,
+                        title: t('ADMIN_DASHBOARD.SERIES.OUTGOING'),
+                        value: formatNumber(totalOut),
+                    },
+                    {
+                        key: 'ratio',
+                        icon: <RepeatIcon className="size-5" />,
+                        title: t('ADMIN_DASHBOARD.TREND.REPLY_RATIO'),
+                        value: totalIn === 0 ? '—' : `${formatPercent((totalOut / totalIn) * 100)}%`,
+                    },
+                    {
+                        key: 'peak',
+                        icon: <CalendarArrowUpIcon className="size-5" />,
+                        title: t('ADMIN_DASHBOARD.TREND.PEAK'),
+                        value: peakDay(dates, incoming),
+                    },
+                ]}
+            />
+            <InsetCard>
+                <CardContent>
+                    <DailyChart
+                        title={title}
+                        dates={dates}
+                        variant="line"
+                        series={[
+                            { key: 'incoming', label: t('ADMIN_DASHBOARD.SERIES.INCOMING'), values: incoming },
+                            { key: 'outgoing', label: t('ADMIN_DASHBOARD.SERIES.OUTGOING'), values: outgoing },
+                        ]}
+                    />
+                </CardContent>
+            </InsetCard>
+        </div>
     );
 }
 
+// Kiểu thẻ "insight": số nổi bật trên, đường kẻ, biểu đồ cột dưới.
 export function SignupsTrend({ data, title }: { data: SignupsTrendData; title: string }) {
-    return (
-        <TimeSeriesChart
-            title={title}
-            variant="bar"
-            dates={data.days.map(day => day.date)}
-            series={[
-                {
-                    key: 'signups',
-                    label: t('ADMIN_DASHBOARD.SERIES.SIGNUPS'),
-                    colorClass: 'text-console-brand',
-                    values: data.days.map(day => day.count),
-                },
-            ]}
-        />
-    );
-}
+    const dates = data.days.map(day => day.date);
+    const counts = data.days.map(day => day.count);
+    const total = sum(counts);
 
-export function ConversationsByChannel({ data }: { data: ConversationsByChannelData }) {
     return (
-        <div className="flex flex-col gap-4">
-            <p className="text-2xl font-semibold tabular-nums tracking-tight">{formatNumber(data.total)}</p>
-            <HorizontalBars
-                items={data.items.map(item => ({
-                    key: item.channelType ?? item.platform.key,
-                    label: item.platform.name,
-                    value: item.count,
-                }))}
+        <div className="flex flex-col gap-5">
+            <ProductInsightsStats
+                columns
+                stats={[
+                    { key: 'total', label: t('ADMIN_DASHBOARD.TREND.TOTAL'), value: formatNumber(total) },
+                    {
+                        key: 'average',
+                        label: t('ADMIN_DASHBOARD.TREND.AVERAGE'),
+                        value: formatNumber(counts.length ? Math.round((total / counts.length) * 10) / 10 : 0),
+                    },
+                    { key: 'peak', label: t('ADMIN_DASHBOARD.TREND.PEAK'), value: peakDay(dates, counts) },
+                ]}
+            />
+            <Separator />
+            <DailyChart
+                title={title}
+                dates={dates}
+                variant="bar"
+                series={[{ key: 'signups', label: t('ADMIN_DASHBOARD.SERIES.SIGNUPS'), values: counts }]}
             />
         </div>
     );
 }
 
-// Phễu: mỗi bước một thanh, độ rộng theo tỉ lệ so với bước đăng ký.
+export function ConversationsByChannel({ data }: { data: ConversationsByChannelData }) {
+    const max = Math.max(1, ...data.items.map(item => item.count));
+
+    return (
+        <TotalEarningList
+            total={{ value: formatNumber(data.total) }}
+            items={data.items.map(item => ({
+                key: item.channelType ?? item.platform.key,
+                label: item.platform.name,
+                title: item.platform.name,
+                icon: <MessagesSquareIcon className="size-5" />,
+                value: formatNumber(item.count),
+                progressPercentage: (item.count / max) * 100,
+            }))}
+        />
+    );
+}
+
+// Phễu: mỗi bước một thanh tiến độ, độ dài theo tỉ lệ so với bước đăng ký.
 export function ActivationFunnel({ data, title }: { data: ActivationFunnelData; title: string }) {
     const start = Math.max(1, data.steps[0]?.count ?? 0);
 
     return (
-        <ol aria-label={title} className="flex flex-col gap-2.5">
-            {data.steps.map((step, index) => (
-                <li key={step.key} className="flex flex-col gap-1">
-                    <div className="flex items-baseline justify-between gap-3 text-sm">
-                        <span className="min-w-0 truncate">{t(`ADMIN_DASHBOARD.FUNNEL_STEPS.${step.key.toUpperCase()}`)}</span>
-                        <span className="shrink-0 font-medium tabular-nums">{formatNumber(step.count)}</span>
-                    </div>
-                    <svg aria-hidden="true" viewBox="0 0 100 8" preserveAspectRatio="none" className="h-2 w-full">
-                        <rect x={0} y={0} width={100} height={8} rx={2} className="fill-console-accent" />
-                        <rect
-                            x={0}
-                            y={0}
-                            width={(step.count / start) * 100}
-                            height={8}
-                            rx={2}
-                            className="fill-console-brand"
-                            opacity={1 - index * 0.12}
-                        />
-                    </svg>
-                    {index > 0 ? (
-                        <p className="text-xs tabular-nums text-console-muted-foreground">
-                            {t('ADMIN_DASHBOARD.FUNNEL.FROM_PREVIOUS', { rate: formatPercent(step.rateFromPrevious) })}
-                            {' · '}
-                            {t('ADMIN_DASHBOARD.FUNNEL.FROM_START', { rate: formatPercent(step.rateFromStart) })}
-                        </p>
-                    ) : null}
-                </li>
-            ))}
-        </ol>
+        <FunnelProgress
+            title={title}
+            steps={data.steps.map((step, index) => ({
+                key: step.key,
+                label: t(`ADMIN_DASHBOARD.FUNNEL_STEPS.${step.key.toUpperCase()}`),
+                count: formatNumber(step.count),
+                percentage: (step.count / start) * 100,
+                caption:
+                    index > 0
+                        ? `${t('ADMIN_DASHBOARD.FUNNEL.FROM_PREVIOUS', { rate: formatPercent(step.rateFromPrevious) })} · ${t(
+                              'ADMIN_DASHBOARD.FUNNEL.FROM_START',
+                              { rate: formatPercent(step.rateFromStart) },
+                          )}`
+                        : undefined,
+            }))}
+        />
     );
 }

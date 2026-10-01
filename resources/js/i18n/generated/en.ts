@@ -21,6 +21,7 @@ const messages: Record<string, unknown> = {
             "SHOW": "Show",
             "DRAG": "Drag to move {title}",
             "SIZE": "Width of {title}",
+            "MENU": "Options for {title}",
             "RETRY": "Retry",
             "VIEW_ALL": "View all"
         },
@@ -123,6 +124,12 @@ const messages: Record<string, unknown> = {
             "FROM_START": "{rate}% of signups",
             "FROM_PREVIOUS": "{rate}% of previous step"
         },
+        "TREND": {
+            "TOTAL": "Total in range",
+            "PEAK": "Peak day",
+            "AVERAGE": "Daily average",
+            "REPLY_RATIO": "Outgoing per incoming"
+        },
         "SERIES": {
             "INCOMING": "Incoming",
             "OUTGOING": "Outgoing",
@@ -140,6 +147,7 @@ const messages: Record<string, unknown> = {
             "CELL": "Week of {week}, week {offset}: {active} of {size} accounts ({rate}%)"
         },
         "CHANNEL_HEALTH": {
+            "RATE": "Healthy share",
             "HEALTHY": "Healthy",
             "FAILING": "Failing",
             "TOTAL": "{count} inboxes",
@@ -440,6 +448,8 @@ const messages: Record<string, unknown> = {
                 "SEARCH": "Search inbox or account…",
                 "ALL_PROBLEMS": "All problems",
                 "ALL_PLATFORMS": "All channels",
+                "PLATFORM": "Channel",
+                "SEVERITY": "Severity",
                 "ALL_SEVERITIES": "All severities"
             },
             "COLUMNS": {
@@ -634,7 +644,13 @@ const messages: Record<string, unknown> = {
             "FILTER_HINT": "Numeric columns match exactly, text columns match partially, type null to find empty cells. Masked columns cannot be filtered.",
             "SORT": "Sort by {column}",
             "EMPTY": "No rows.",
-            "ROWS_ON_PAGE": "{count} rows"
+            "ROWS_ON_PAGE": "{count} rows",
+            "PIN": {
+                "LEFT": "Stick to left",
+                "RIGHT": "Stick to right",
+                "UNPIN": "Unpin {column} column",
+                "OPTIONS": "Pin options for {column} column"
+            }
         },
         "STICKERS": {
             "PLATFORM_TAB": "Shared library",

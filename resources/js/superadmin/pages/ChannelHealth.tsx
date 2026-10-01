@@ -1,17 +1,22 @@
 import { Link } from '@inertiajs/react';
-import { useState } from 'react';
-import type { FormEvent } from 'react';
+import type { ColumnDef } from '@tanstack/react-table';
+import { CircleCheckIcon, CircleXIcon, HeartPulseIcon, InboxIcon, SearchXIcon, TriangleAlertIcon, XIcon } from 'lucide-react';
+import { useId, useMemo, useState } from 'react';
+
+import { Avatar, AvatarFallback, AvatarImage } from '@admin/components/ui/avatar';
+import { Button } from '@admin/components/ui/button';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@admin/components/ui/tooltip';
+import DataTableEmpty from '@admin/views/datatables/datatable-empty';
+import ListCard from '@admin/views/datatables/list';
+import { FilterSelect, ListFilters } from '@admin/views/datatables/list/list-filters';
+import { ListTable } from '@admin/views/datatables/list/list-table';
+import { ListToolbar } from '@admin/views/datatables/list/list-toolbar';
+import StatisticsCard from '@admin/views/datatables/statistics-card';
+import StatusBadge from '@admin/views/datatables/status-badge';
+import PageHeader from '@admin/views/pages/page-header';
 
 import { t } from '../../i18n';
-import { Badge } from '../ui/Badge';
-import { Button } from '../ui/Button';
-import { Card } from '../ui/Card';
-import { EmptyState } from '../ui/EmptyState';
-import { Input, Select } from '../ui/Input';
-import { PageHeader } from '../ui/PageHeader';
-import { StatCard } from '../ui/StatCard';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/Table';
-import { formatDateTime, formatRelative, visitWithParams } from './operationsFormat';
+import { formatDateTime, formatNumber, formatRelative, visitWithParams } from './operationsFormat';
 
 export type ChannelHealthItem = {
     inboxId: number;
@@ -43,8 +48,10 @@ type Props = {
 const PAGE_URL = '/admin/channel_health';
 const SEVERITIES = ['error', 'warning'] as const;
 
-export function SeverityBadge({ severity, label }: { severity: ChannelHealthItem['severity']; label: string | null }) {
-    return <Badge variant={severity === 'warning' ? 'warning' : 'destructive'}>{label}</Badge>;
+const label = (key: string, params?: Record<string, string | number>) => t(`ADMIN_OPERATIONS.CHANNEL_HEALTH.${key}`, params);
+
+export function SeverityBadge({ severity, label: text }: { severity: ChannelHealthItem['severity']; label: string | null }) {
+    return <StatusBadge tone={severity === 'warning' ? 'warning' : 'danger'}>{text}</StatusBadge>;
 }
 
 // Chi tiết của driver: số lần lỗi (chuỗi số) hiện thành câu, lý do dạng chữ giữ nguyên.
@@ -54,143 +61,163 @@ export function problemDetail(detail: string | null): string | null {
     return /^\d+$/.test(detail) ? t('ADMIN_OPERATIONS.CHANNEL_HEALTH.DETAIL_COUNT', { count: Number(detail) }) : detail;
 }
 
+const initials = (name: string) =>
+    name
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 2)
+        .map(word => word[0]?.toUpperCase())
+        .join('');
+
+const columns: ColumnDef<ChannelHealthItem>[] = [
+    {
+        id: 'inbox',
+        header: () => label('COLUMNS.INBOX'),
+        cell: ({ row }) => (
+            <div className="flex min-w-48 items-center gap-2">
+                <Avatar className="size-9 rounded-sm after:rounded-sm">
+                    <AvatarImage src={row.original.platform.logo_url} alt="" className="rounded-sm" />
+                    <AvatarFallback className="rounded-sm text-xs">{initials(row.original.platform.name)}</AvatarFallback>
+                </Avatar>
+                <div className="flex min-w-0 flex-col">
+                    <span className="truncate font-medium">{row.original.inboxName}</span>
+                    <span className="text-muted-foreground">
+                        {row.original.platform.name} · #{row.original.inboxId}
+                    </span>
+                </div>
+            </div>
+        ),
+    },
+    {
+        id: 'account',
+        header: () => label('COLUMNS.ACCOUNT'),
+        cell: ({ row }) => (
+            <Link href={row.original.url} className="font-medium hover:underline">
+                {row.original.accountName ?? `#${row.original.accountId}`}
+            </Link>
+        ),
+    },
+    {
+        id: 'problem',
+        header: () => label('COLUMNS.PROBLEM'),
+        cell: ({ row }) => {
+            const detail = problemDetail(row.original.detail);
+
+            return (
+                <div className="flex min-w-48 flex-col items-start gap-1 py-2 whitespace-normal">
+                    <SeverityBadge severity={row.original.severity} label={row.original.problemLabel} />
+                    {detail ? <span className="text-muted-foreground break-words">{detail}</span> : null}
+                </div>
+            );
+        },
+    },
+    {
+        id: 'since',
+        header: () => label('COLUMNS.SINCE'),
+        cell: ({ row }) =>
+            row.original.since ? (
+                <Tooltip>
+                    <TooltipTrigger render={<span className="whitespace-nowrap" />}>{formatRelative(row.original.since)}</TooltipTrigger>
+                    <TooltipContent>{formatDateTime(row.original.since)}</TooltipContent>
+                </Tooltip>
+            ) : (
+                <span className="text-muted-foreground">{t('ADMIN_OPERATIONS.COMMON.UNKNOWN')}</span>
+            ),
+    },
+];
+
 export default function ChannelHealth({ stats, items, filters, options }: Props) {
     const [search, setSearch] = useState(filters.search ?? '');
+    const ids = { problem: useId(), platform: useId(), severity: useId(), search: useId() };
     const hasFilters = Object.values(filters).some(Boolean);
     const apply = (next: Filters) => visitWithParams(PAGE_URL, { ...filters, ...next });
-
-    const submitSearch = (event: FormEvent) => {
-        event.preventDefault();
-        apply({ search });
-    };
+    const optionItems = (list: Option[]) => list.map(option => ({ value: option.value, label: `${option.label} (${option.count})` }));
+    const severityItems = useMemo(() => SEVERITIES.map(severity => ({ value: severity, label: label(`SEVERITY.${severity}`) })), []);
 
     return (
         <div className="flex flex-col gap-6">
-            <PageHeader
-                title={t('ADMIN_OPERATIONS.CHANNEL_HEALTH.TITLE')}
-                description={t('ADMIN_OPERATIONS.CHANNEL_HEALTH.DESCRIPTION')}
-            />
+            <PageHeader title={label('TITLE')} description={label('DESCRIPTION')} className="mb-0 md:mb-0" />
 
-            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-                <StatCard label={t('ADMIN_OPERATIONS.CHANNEL_HEALTH.STATS.TOTAL')} value={stats.total} icon="i-lucide-inbox" />
-                <StatCard label={t('ADMIN_OPERATIONS.CHANNEL_HEALTH.STATS.HEALTHY')} value={stats.healthy} icon="i-lucide-circle-check" />
-                <StatCard label={t('ADMIN_OPERATIONS.CHANNEL_HEALTH.STATS.FAILING')} value={stats.failing} icon="i-lucide-triangle-alert" />
-                <StatCard label={t('ADMIN_OPERATIONS.CHANNEL_HEALTH.STATS.ERRORS')} value={stats.errors} icon="i-lucide-circle-x" />
+            <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
+                <StatisticsCard icon={<InboxIcon className="size-4" />} value={formatNumber(stats.total)} title={label('STATS.TOTAL')} />
+                <StatisticsCard icon={<CircleCheckIcon className="size-4" />} value={formatNumber(stats.healthy)} title={label('STATS.HEALTHY')} />
+                <StatisticsCard icon={<TriangleAlertIcon className="size-4" />} value={formatNumber(stats.failing)} title={label('STATS.FAILING')} />
+                <StatisticsCard icon={<CircleXIcon className="size-4" />} value={formatNumber(stats.errors)} title={label('STATS.ERRORS')} />
             </div>
 
-            <Card className="gap-0 py-0">
-                <div className="flex flex-col gap-3 border-b border-console-border p-4 lg:flex-row lg:items-center">
-                    <form onSubmit={submitSearch} className="flex flex-1 gap-2" role="search">
-                        <Input
-                            type="search"
-                            value={search}
-                            onChange={event => setSearch(event.target.value)}
-                            placeholder={t('ADMIN_OPERATIONS.CHANNEL_HEALTH.FILTERS.SEARCH')}
-                            aria-label={t('ADMIN_OPERATIONS.CHANNEL_HEALTH.FILTERS.SEARCH')}
-                        />
-                        <Button type="submit" variant="outline">
-                            {t('ADMIN_OPERATIONS.COMMON.APPLY')}
-                        </Button>
-                    </form>
-                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 lg:w-[36rem]">
-                        <Select
-                            aria-label={t('ADMIN_OPERATIONS.CHANNEL_HEALTH.FILTERS.ALL_PROBLEMS')}
+            <ListCard
+                filters={
+                    <ListFilters>
+                        <FilterSelect
+                            id={ids.problem}
+                            label={label('COLUMNS.PROBLEM')}
+                            allLabel={label('FILTERS.ALL_PROBLEMS')}
+                            options={optionItems(options.problems)}
                             value={filters.problem ?? ''}
-                            onChange={event => apply({ problem: event.target.value })}
-                        >
-                            <option value="">{t('ADMIN_OPERATIONS.CHANNEL_HEALTH.FILTERS.ALL_PROBLEMS')}</option>
-                            {options.problems.map(option => (
-                                <option key={option.value} value={option.value}>
-                                    {option.label} ({option.count})
-                                </option>
-                            ))}
-                        </Select>
-                        <Select
-                            aria-label={t('ADMIN_OPERATIONS.CHANNEL_HEALTH.FILTERS.ALL_PLATFORMS')}
+                            onChange={value => apply({ problem: value })}
+                        />
+                        <FilterSelect
+                            id={ids.platform}
+                            label={label('FILTERS.PLATFORM')}
+                            allLabel={label('FILTERS.ALL_PLATFORMS')}
+                            options={optionItems(options.platforms)}
                             value={filters.platform ?? ''}
-                            onChange={event => apply({ platform: event.target.value })}
-                        >
-                            <option value="">{t('ADMIN_OPERATIONS.CHANNEL_HEALTH.FILTERS.ALL_PLATFORMS')}</option>
-                            {options.platforms.map(option => (
-                                <option key={option.value} value={option.value}>
-                                    {option.label} ({option.count})
-                                </option>
-                            ))}
-                        </Select>
-                        <Select
-                            aria-label={t('ADMIN_OPERATIONS.CHANNEL_HEALTH.FILTERS.ALL_SEVERITIES')}
+                            onChange={value => apply({ platform: value })}
+                        />
+                        <FilterSelect
+                            id={ids.severity}
+                            label={label('FILTERS.SEVERITY')}
+                            allLabel={label('FILTERS.ALL_SEVERITIES')}
+                            options={severityItems}
                             value={filters.severity ?? ''}
-                            onChange={event => apply({ severity: event.target.value })}
-                        >
-                            <option value="">{t('ADMIN_OPERATIONS.CHANNEL_HEALTH.FILTERS.ALL_SEVERITIES')}</option>
-                            {SEVERITIES.map(severity => (
-                                <option key={severity} value={severity}>
-                                    {t(`ADMIN_OPERATIONS.CHANNEL_HEALTH.SEVERITY.${severity}`)}
-                                </option>
-                            ))}
-                        </Select>
-                    </div>
-                    {hasFilters ? (
-                        <Button variant="ghost" onClick={() => visitWithParams(PAGE_URL, {})}>
-                            {t('ADMIN_OPERATIONS.COMMON.CLEAR')}
-                        </Button>
-                    ) : null}
-                </div>
-
-                {items.length === 0 ? (
-                    <EmptyState
-                        icon={hasFilters ? 'i-lucide-search-x' : 'i-lucide-heart-pulse'}
-                        title={hasFilters ? t('ADMIN_OPERATIONS.CHANNEL_HEALTH.NO_MATCH') : t('ADMIN_OPERATIONS.CHANNEL_HEALTH.EMPTY_TITLE')}
-                        description={hasFilters ? undefined : t('ADMIN_OPERATIONS.CHANNEL_HEALTH.EMPTY_DESCRIPTION')}
+                            onChange={value => apply({ severity: value })}
+                        />
+                    </ListFilters>
+                }
+                toolbar={
+                    <ListToolbar
+                        search={{
+                            id: ids.search,
+                            label: label('FILTERS.SEARCH'),
+                            placeholder: label('FILTERS.SEARCH'),
+                            value: search,
+                            onChange: setSearch,
+                            onSubmit: () => apply({ search }),
+                        }}
+                    >
+                        {hasFilters ? (
+                            <Button
+                                variant="outline"
+                                onClick={() => {
+                                    setSearch('');
+                                    visitWithParams(PAGE_URL, {});
+                                }}
+                            >
+                                <XIcon />
+                                {t('ADMIN_OPERATIONS.COMMON.CLEAR')}
+                            </Button>
+                        ) : null}
+                    </ListToolbar>
+                }
+                table={
+                    <ListTable
+                        data={items}
+                        columns={columns}
+                        getRowId={item => String(item.inboxId)}
+                        empty={
+                            hasFilters ? (
+                                <DataTableEmpty icon={<SearchXIcon className="size-4" />} title={label('NO_MATCH')} />
+                            ) : (
+                                <DataTableEmpty
+                                    icon={<HeartPulseIcon className="size-4" />}
+                                    title={label('EMPTY_TITLE')}
+                                    description={label('EMPTY_DESCRIPTION')}
+                                />
+                            )
+                        }
                     />
-                ) : (
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>{t('ADMIN_OPERATIONS.CHANNEL_HEALTH.COLUMNS.INBOX')}</TableHead>
-                                <TableHead>{t('ADMIN_OPERATIONS.CHANNEL_HEALTH.COLUMNS.ACCOUNT')}</TableHead>
-                                <TableHead>{t('ADMIN_OPERATIONS.CHANNEL_HEALTH.COLUMNS.PROBLEM')}</TableHead>
-                                <TableHead>{t('ADMIN_OPERATIONS.CHANNEL_HEALTH.COLUMNS.SINCE')}</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {items.map(item => (
-                                <TableRow key={item.inboxId}>
-                                    <TableCell>
-                                        <div className="flex min-w-40 items-center gap-2">
-                                            <img src={item.platform.logo_url} alt="" className="size-5 shrink-0 rounded" />
-                                            <div className="min-w-0">
-                                                <p className="truncate font-medium">{item.inboxName}</p>
-                                                <p className="text-xs text-console-muted-foreground">
-                                                    {item.platform.name} · #{item.inboxId}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Link href={item.url} className="font-medium text-console-brand hover:underline">
-                                            {item.accountName ?? `#${item.accountId}`}
-                                        </Link>
-                                    </TableCell>
-                                    <TableCell>
-                                        <div className="flex min-w-48 flex-col gap-1">
-                                            <SeverityBadge severity={item.severity} label={item.problemLabel} />
-                                            {problemDetail(item.detail) ? (
-                                                <span className="break-words text-xs text-console-muted-foreground">
-                                                    {problemDetail(item.detail)}
-                                                </span>
-                                            ) : null}
-                                        </div>
-                                    </TableCell>
-                                    <TableCell className="whitespace-nowrap" title={formatDateTime(item.since)}>
-                                        {item.since ? formatRelative(item.since) : t('ADMIN_OPERATIONS.COMMON.UNKNOWN')}
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                )}
-            </Card>
+                }
+            />
         </div>
     );
 }

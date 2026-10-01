@@ -1,21 +1,41 @@
 import { Link } from '@inertiajs/react';
 
+import { Badge } from '@admin/components/ui/badge';
+import { Button } from '@admin/components/ui/button';
+import { Separator } from '@admin/components/ui/separator';
+import { GoalDonut } from '@admin/views/dashboards/charts/chart-sales-metrics';
+import TotalEarningList from '@admin/views/dashboards/widgets/widget-total-earning';
+
 import { t } from '../../../i18n';
-import { Badge } from '../../ui/Badge';
-import { buttonClassName } from '../../ui/Button';
-import { HorizontalBars } from '../charts';
-import { formatDateTime, formatNumber } from '../format';
+import { formatDateTime, formatNumber, formatPercent } from '../format';
 import type { ChannelHealthData, RecentSignupsData, TopAccountsData } from '../types';
 
+// Hai chữ cái đầu của tên account cho ô vuông đầu dòng.
+function initials(name: string): string {
+    const words = name.trim().split(/\s+/).filter(Boolean);
+    const letters = words.length > 1 ? words[0][0] + words[words.length - 1][0] : (words[0] ?? '?').slice(0, 2);
+
+    return letters.toUpperCase();
+}
+
+const accountLink = (item: { name: string; url: string }) => (
+    <Link href={item.url} className="hover:underline">
+        {item.name}
+    </Link>
+);
+
 export function TopAccounts({ data }: { data: TopAccountsData }) {
+    const max = Math.max(1, ...data.items.map(item => item.messages));
+
     return (
-        <HorizontalBars
+        <TotalEarningList
             items={data.items.map(item => ({
                 key: String(item.id),
                 label: item.name,
-                href: item.url,
-                value: item.messages,
-                valueLabel: t('ADMIN_DASHBOARD.LISTS.MESSAGES', { count: formatNumber(item.messages) }),
+                title: accountLink(item),
+                icon: <span className="text-xs font-medium">{initials(item.name)}</span>,
+                value: t('ADMIN_DASHBOARD.LISTS.MESSAGES', { count: formatNumber(item.messages) }),
+                progressPercentage: (item.messages / max) * 100,
             }))}
         />
     );
@@ -23,59 +43,54 @@ export function TopAccounts({ data }: { data: TopAccountsData }) {
 
 export function RecentSignups({ data }: { data: RecentSignupsData }) {
     return (
-        <ul className="-my-2 divide-y divide-console-border">
-            {data.items.map(item => (
-                <li key={item.id} className="flex items-center justify-between gap-3 py-2">
-                    <div className="min-w-0">
-                        <Link href={item.url} className="block truncate font-medium hover:underline">
-                            {item.name}
-                        </Link>
-                        <p className="truncate text-xs text-console-muted-foreground">
-                            {item.ownerEmail ?? t('ADMIN_DASHBOARD.LISTS.NO_OWNER')}
-                        </p>
-                    </div>
-                    <div className="flex shrink-0 flex-col items-end gap-0.5 text-xs text-console-muted-foreground">
+        <TotalEarningList
+            items={data.items.map(item => ({
+                key: String(item.id),
+                label: item.name,
+                title: accountLink(item),
+                subtitle: item.ownerEmail ?? t('ADMIN_DASHBOARD.LISTS.NO_OWNER'),
+                icon: <span className="text-xs font-medium">{initials(item.name)}</span>,
+                value: (
+                    <span className="flex flex-col items-end gap-0.5">
                         <time dateTime={item.createdAt}>{formatDateTime(item.createdAt)}</time>
-                        <span className="tabular-nums">
+                        <span className="text-muted-foreground text-xs">
                             {t('ADMIN_DASHBOARD.LISTS.INBOXES', { count: formatNumber(item.inboxesCount) })}
                         </span>
-                    </div>
-                </li>
-            ))}
-        </ul>
+                    </span>
+                ),
+            }))}
+        />
     );
 }
 
+// Kiểu thẻ "mục tiêu": vành khuyên khoẻ/có vấn đề, dòng tỉ lệ, rồi danh sách hộp thư lỗi.
 export function ChannelHealth({ data }: { data: ChannelHealthData }) {
+    const rate = data.total === 0 ? null : (data.healthy / data.total) * 100;
+
     return (
-        <div className="flex flex-col gap-4">
-            <div className="flex items-end gap-4">
-                <div>
-                    <p className="text-2xl font-semibold tabular-nums tracking-tight text-console-destructive-foreground">
-                        {formatNumber(data.failing)}
-                    </p>
-                    <p className="text-xs text-console-muted-foreground">{t('ADMIN_DASHBOARD.CHANNEL_HEALTH.FAILING')}</p>
-                </div>
-                <div>
-                    <p className="text-2xl font-semibold tabular-nums tracking-tight text-console-success-foreground">
-                        {formatNumber(data.healthy)}
-                    </p>
-                    <p className="text-xs text-console-muted-foreground">{t('ADMIN_DASHBOARD.CHANNEL_HEALTH.HEALTHY')}</p>
-                </div>
-                <p className="ml-auto text-xs tabular-nums text-console-muted-foreground">
-                    {t('ADMIN_DASHBOARD.CHANNEL_HEALTH.TOTAL', { count: formatNumber(data.total) })}
-                </p>
-            </div>
+        <div className="flex flex-1 flex-col gap-4">
+            <GoalDonut
+                title={t('ADMIN_DASHBOARD.WIDGETS.CHANNEL_HEALTH.TITLE')}
+                slices={[
+                    { key: 'healthy', label: t('ADMIN_DASHBOARD.CHANNEL_HEALTH.HEALTHY'), value: data.healthy, color: 'var(--primary)' },
+                    { key: 'failing', label: t('ADMIN_DASHBOARD.CHANNEL_HEALTH.FAILING'), value: data.failing, color: 'var(--destructive)' },
+                ]}
+                centerValue={`${formatNumber(data.healthy)}/${formatNumber(data.total)}`}
+                centerLabel={t('ADMIN_DASHBOARD.CHANNEL_HEALTH.HEALTHY')}
+                footerLabel={t('ADMIN_DASHBOARD.CHANNEL_HEALTH.RATE')}
+                footerValue={rate === null ? '—' : `${formatPercent(rate)}%`}
+            />
+            <Separator />
             {data.failing === 0 ? (
-                <p className="text-sm text-console-muted-foreground">{t('ADMIN_DASHBOARD.CHANNEL_HEALTH.ALL_HEALTHY')}</p>
+                <p className="text-muted-foreground text-sm">{t('ADMIN_DASHBOARD.CHANNEL_HEALTH.ALL_HEALTHY')}</p>
             ) : (
-                <ul className="-my-2 divide-y divide-console-border">
+                <ul className="flex flex-col gap-3">
                     {data.items.map(item => (
-                        <li key={item.inboxId} className="flex flex-col gap-1 py-2">
-                            <a href={item.url} className="truncate font-medium hover:underline">
+                        <li key={item.inboxId} className="flex flex-col gap-1">
+                            <a href={item.url} className="truncate text-base font-medium hover:underline">
                                 {item.inboxName}
                             </a>
-                            <div className="flex flex-wrap items-center gap-1.5 text-xs text-console-muted-foreground">
+                            <div className="text-muted-foreground flex flex-wrap items-center gap-1.5 text-sm">
                                 <Badge variant="destructive">{item.problemLabel}</Badge>
                                 <span className="truncate">
                                     {item.platform.name}
@@ -86,9 +101,9 @@ export function ChannelHealth({ data }: { data: ChannelHealthData }) {
                     ))}
                 </ul>
             )}
-            <a href={data.url} className={buttonClassName({ variant: 'link', size: 'sm', className: 'self-start px-0' })}>
+            <Button variant="link" size="sm" className="mt-auto self-start px-0" render={<a href={data.url} />} nativeButton={false}>
                 {t('ADMIN_DASHBOARD.ACTIONS.VIEW_ALL')}
-            </a>
+            </Button>
         </div>
     );
 }
