@@ -27,8 +27,12 @@ final class ConsoleNavigation
             'channels' => [
                 self::item('channel_health', SuperAdminArea::url('channel_health')),
                 self::item('instance_status', SuperAdminArea::url('instance_status')),
+                self::item('alerts', SuperAdminArea::url('alerts')),
             ],
-            'data' => [self::item('data', SuperAdminArea::url('data'))],
+            'data' => [
+                self::item('feature_usage', SuperAdminArea::url('feature_usage')),
+                self::item('data', SuperAdminArea::url('data')),
+            ],
             'content' => [self::item('sticker_packs', SuperAdminArea::url('sticker_packs'))],
             'integrations' => [
                 self::item('agent_bots', SuperAdminArea::url('agent_bots')),

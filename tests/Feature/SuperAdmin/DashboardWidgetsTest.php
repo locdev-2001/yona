@@ -5,6 +5,8 @@ use App\Models\Message;
 use App\Models\SuperAdmin;
 use App\Services\Admin\Metrics\DateRange;
 use App\Services\Admin\Metrics\WidgetRegistry;
+use App\Services\ProductEvents\ProductEventName;
+use App\Services\ProductEvents\ProductEventRecorder;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -95,12 +97,17 @@ it('chỉ số chính so với kỳ trước cùng độ dài', function () {
 
 it('phễu kích hoạt thu hẹp dần theo bước', function () {
     $account = Account::factory()->create(['created_at' => now()->subDay()]);
-    Account::factory()->create(['created_at' => now()->subDay()]);
+    $other = Account::factory()->create(['created_at' => now()->subDay()]);
+    // Bước xác nhận email đọc từ sự kiện sản phẩm.
+    foreach ([$account, $other] as $confirmed) {
+        app(ProductEventRecorder::class)->record(ProductEventName::EmailConfirmed, $confirmed);
+    }
     Message::factory()->create(['account_id' => $account->id]);
 
     $steps = collect($this->getJson('/admin/api/dashboard/widgets/activation_funnel?range=7d')->json('data.steps'))->keyBy('key');
 
     expect($steps['signed_up']['count'])->toBe(2)
+        ->and($steps['confirmed_email']['count'])->toBe(2)
         ->and($steps['created_inbox']['count'])->toBe(1)
         ->and($steps['created_inbox']['rateFromStart'])->toEqual(50)
         ->and($steps['replied']['count'])->toBe(0);

@@ -271,7 +271,7 @@ function funnelCaption(step: FunnelStep, index: number): string {
 }
 
 // Mỗi bước một màu theo thứ tự chuỗi biểu đồ (app.md §5); số thứ tự bước in trong ô màu.
-const FUNNEL_TONES: Tone[] = ['primary', 'cyan', 'warning', 'success', 'navy'];
+const FUNNEL_TONES: Tone[] = ['primary', 'cyan', 'warning', 'success', 'navy', 'neutral'];
 
 // Phễu: mỗi bước một thanh tiến độ, độ dài theo tỉ lệ so với bước đăng ký.
 export function ActivationFunnel({ data, title }: { data: ActivationFunnelData; title: string }) {

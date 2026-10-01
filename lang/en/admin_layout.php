@@ -120,6 +120,8 @@ return [
         'users' => 'Users',
         'channel_health' => 'Channel health',
         'instance_status' => 'Instance status',
+        'alerts' => 'Alerts',
+        'feature_usage' => 'Feature usage',
         'data' => 'Data browser',
         'sticker_packs' => 'Sticker library',
         'agent_bots' => 'Agent bots',

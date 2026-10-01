@@ -73,6 +73,10 @@ final class AuditActionDescriber
         'DELETE dashboard/layout' => 'layout_reset',
         'POST mfa' => 'mfa_enabled',
         'POST mfa/verify' => 'mfa_verified',
+        'PATCH alerts/rules/{key}' => 'alert_rule_updated',
+        'POST alerts/test' => 'alert_test_sent',
+        'POST api/push_subscriptions' => 'push_subscribed',
+        'DELETE api/push_subscriptions' => 'push_unsubscribed',
     ];
 
     // Nơi tìm câu theo thứ tự: câu theo ngữ cảnh account trước, rồi câu chung của nhật ký.

@@ -121,6 +121,8 @@ return [
         'users' => 'Người dùng',
         'channel_health' => 'Sức khoẻ kênh',
         'instance_status' => 'Trạng thái hệ thống',
+        'alerts' => 'Cảnh báo',
+        'feature_usage' => 'Mức dùng tính năng',
         'data' => 'Trình duyệt dữ liệu',
         'sticker_packs' => 'Kho sticker',
         'agent_bots' => 'Agent bot',
