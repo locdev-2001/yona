@@ -1,4 +1,6 @@
 @import 'tailwindcss-v4' source(none);
+@import '@fontsource-variable/geist';
+@import '@fontsource-variable/geist-mono';
 @import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
 @import './legacy-console.css';
@@ -214,8 +216,8 @@ input[type='number']::-webkit-outer-spin-button {
 }
 
 :root {
-  --font-geist-sans: 'Geist', ui-sans-serif, system-ui, sans-serif;
-  --font-geist-mono: 'Geist Mono', ui-monospace, monospace;
+  --font-geist-sans: 'Geist Variable', ui-sans-serif, system-ui, sans-serif;
+  --font-geist-mono: 'Geist Mono Variable', ui-monospace, monospace;
 }
 
 @layer base {

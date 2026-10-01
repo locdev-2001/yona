@@ -1,12 +1,12 @@
-import { forwardRef } from 'react';
-import type { CSSProperties } from 'react';
+import { RefreshCwIcon } from 'lucide-react';
+import type { CSSProperties, Ref } from 'react';
+
+import { Button } from '@admin/components/ui/button';
+import { cn } from '@admin/lib/utils';
+import { WidgetEmpty, WidgetError, WidgetSkeleton } from '@admin/views/dashboards/widgets/widget-state';
 
 import { t } from '../../i18n';
-import { Button } from '../ui/Button';
-import { cn } from '../ui/cn';
-import { EmptyState } from '../ui/EmptyState';
-import { Icon } from '../ui/Icon';
-import { WidgetCard, WidgetSkeleton } from './WidgetCard';
+import { WidgetCard } from './WidgetCard';
 import type { EditControls } from './WidgetCard';
 import type { LayoutItem, OperationLink, RangePreset, WidgetMeta } from './types';
 import { useWidgetData } from './useWidgetData';
@@ -17,6 +17,7 @@ import type { AnyRenderer } from './widgets';
 export const OPERATION_LINKS_KEY = 'operation_links';
 
 type Props = {
+    ref?: Ref<HTMLElement>;
     meta: WidgetMeta;
     item: LayoutItem;
     edit: EditControls | null;
@@ -31,22 +32,19 @@ export function canRender(meta: WidgetMeta): boolean {
     return meta.source === 'server' ? meta.key in SERVER_WIDGETS : meta.key === OPERATION_LINKS_KEY;
 }
 
-export const DashboardWidget = forwardRef<HTMLDivElement, Props>(function DashboardWidget(props, ref) {
+export function DashboardWidget(props: Props) {
     if (props.meta.source === 'server') {
-        return <ServerWidget ref={ref} renderer={SERVER_WIDGETS[props.meta.key]} {...props} />;
+        return <ServerWidget renderer={SERVER_WIDGETS[props.meta.key]} {...props} />;
     }
 
     return (
-        <WidgetCard ref={ref} meta={props.meta} item={props.item} edit={props.edit} style={props.style} dragging={props.dragging}>
+        <WidgetCard ref={props.ref} meta={props.meta} item={props.item} edit={props.edit} style={props.style} dragging={props.dragging}>
             <OperationLinks links={props.links} />
         </WidgetCard>
     );
-});
+}
 
-const ServerWidget = forwardRef<HTMLDivElement, Props & { renderer: AnyRenderer }>(function ServerWidget(
-    { meta, item, edit, range, endpoint, renderer, style, dragging },
-    ref,
-) {
+function ServerWidget({ ref, meta, item, edit, range, endpoint, renderer, style, dragging }: Props & { renderer: AnyRenderer }) {
     const { state, refresh } = useWidgetData<unknown>(endpoint, meta.key, range);
     const loading = state.status === 'loading';
 
@@ -57,8 +55,9 @@ const ServerWidget = forwardRef<HTMLDivElement, Props & { renderer: AnyRenderer 
             onClick={refresh}
             disabled={loading}
             aria-label={t('ADMIN_DASHBOARD.ACTIONS.REFRESH', { title: meta.title })}
+            className="text-muted-foreground"
         >
-            <Icon name="i-lucide-refresh-cw" className={cn(loading && 'animate-spin')} />
+            <RefreshCwIcon className={cn(loading && 'animate-spin')} />
         </Button>
     );
 
@@ -66,29 +65,16 @@ const ServerWidget = forwardRef<HTMLDivElement, Props & { renderer: AnyRenderer 
     if (state.data === null) {
         body =
             state.status === 'error' ? (
-                <EmptyState
-                    icon="i-lucide-circle-alert"
-                    title={t('ADMIN_DASHBOARD.STATE.ERROR')}
-                    className="py-6"
-                    action={
-                        <Button variant="outline" size="sm" onClick={refresh}>
-                            {t('ADMIN_DASHBOARD.ACTIONS.RETRY')}
-                        </Button>
-                    }
-                />
+                <WidgetError title={t('ADMIN_DASHBOARD.STATE.ERROR')} retryLabel={t('ADMIN_DASHBOARD.ACTIONS.RETRY')} onRetry={refresh} />
             ) : (
                 <WidgetSkeleton kind={renderer.skeleton} />
             );
     } else if (renderer.isEmpty?.(state.data)) {
-        body = <EmptyState icon="i-lucide-chart-no-axes-column" title={t('ADMIN_DASHBOARD.STATE.EMPTY')} className="py-6" />;
+        body = <WidgetEmpty title={t('ADMIN_DASHBOARD.STATE.EMPTY')} />;
     } else {
         body = (
-            <div className={cn('transition-opacity', loading && 'opacity-60')}>
-                {state.status === 'error' ? (
-                    <p role="alert" className="mb-3 text-xs text-console-destructive-foreground">
-                        {t('ADMIN_DASHBOARD.STATE.ERROR')}
-                    </p>
-                ) : null}
+            <div className={cn('flex flex-1 flex-col gap-4 transition-opacity', loading && 'opacity-60')}>
+                {state.status === 'error' ? <WidgetError title={t('ADMIN_DASHBOARD.STATE.ERROR')} /> : null}
                 {renderer.render(state.data, meta.title)}
             </div>
         );
@@ -108,4 +94,4 @@ const ServerWidget = forwardRef<HTMLDivElement, Props & { renderer: AnyRenderer 
             {body}
         </WidgetCard>
     );
-});
+}

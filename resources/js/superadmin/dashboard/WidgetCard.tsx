@@ -1,15 +1,14 @@
-import { forwardRef } from 'react';
-import type { CSSProperties, HTMLAttributes, ReactNode } from 'react';
+import { EyeOffIcon, GripVerticalIcon } from 'lucide-react';
+import type { CSSProperties, HTMLAttributes, ReactNode, Ref } from 'react';
+
+import { Button } from '@admin/components/ui/button';
+import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from '@admin/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@admin/components/ui/select';
+import { cn } from '@admin/lib/utils';
 
 import { t } from '../../i18n';
-import { Button } from '../ui/Button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/Card';
-import { cn } from '../ui/cn';
-import { Icon } from '../ui/Icon';
-import { Skeleton } from '../ui/Skeleton';
 import { SIZE_CLASS } from './layout';
 import type { LayoutItem, WidgetMeta, WidgetSize } from './types';
-import type { SkeletonKind } from './widgets';
 
 export type EditControls = {
     sizes: WidgetSize[];
@@ -20,6 +19,7 @@ export type EditControls = {
 };
 
 type Props = {
+    ref?: Ref<HTMLElement>;
     meta: WidgetMeta;
     item: LayoutItem;
     edit: EditControls | null;
@@ -30,10 +30,28 @@ type Props = {
     dragging?: boolean;
 };
 
-export const WidgetCard = forwardRef<HTMLDivElement, Props>(function WidgetCard(
-    { meta, item, edit, actions, busy = false, children, style, dragging = false },
-    ref,
-) {
+function SizeSelect({ meta, item, edit }: { meta: WidgetMeta; item: LayoutItem; edit: EditControls }) {
+    const items = edit.sizes.map(size => ({ value: size, label: t(`ADMIN_DASHBOARD.SIZES.${size.toUpperCase()}`) }));
+
+    return (
+        <Select items={items} value={item.size} onValueChange={value => value && edit.onResize(value as WidgetSize)}>
+            <SelectTrigger size="sm" className="w-28" aria-label={t('ADMIN_DASHBOARD.ACTIONS.SIZE', { title: meta.title })}>
+                <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+                {items.map(size => (
+                    <SelectItem key={size.value} value={size.value}>
+                        {size.label}
+                    </SelectItem>
+                ))}
+            </SelectContent>
+        </Select>
+    );
+}
+
+// Khung một ô: thẻ có tiêu đề, mô tả và nút ở góc; chế độ tuỳ chỉnh thêm tay nắm kéo,
+// chọn độ rộng và nút ẩn.
+export function WidgetCard({ ref, meta, item, edit, actions, busy = false, children, style, dragging = false }: Props) {
     const headingId = `dashboard-widget-${meta.key}`;
 
     return (
@@ -44,86 +62,47 @@ export const WidgetCard = forwardRef<HTMLDivElement, Props>(function WidgetCard(
             aria-busy={busy || undefined}
             className={cn(SIZE_CLASS[item.size], 'min-w-0', dragging && 'relative z-20')}
         >
-            <Card
-                className={cn(
-                    'h-full gap-4',
-                    edit && 'border-dashed',
-                    dragging && 'shadow-lg ring-2 ring-console-ring/60',
-                )}
-            >
-                <CardHeader className={cn(edit && 'flex-wrap')}>
-                    {edit ? (
-                        <button
-                            type="button"
-                            ref={edit.handleRef}
-                            {...edit.handleProps}
-                            aria-label={t('ADMIN_DASHBOARD.ACTIONS.DRAG', { title: meta.title })}
-                            className="-ml-2 mt-0.5 flex size-7 shrink-0 cursor-grab touch-none items-center justify-center rounded-md text-console-muted-foreground outline-none hover:bg-console-accent focus-visible:ring-2 focus-visible:ring-console-ring/50 active:cursor-grabbing"
-                        >
-                            <Icon name="i-lucide-grip-vertical" />
-                        </button>
-                    ) : null}
-                    <div className={cn('min-w-0 flex-1', edit && 'min-w-36')}>
-                        <CardTitle id={headingId} className="truncate">
+            <Card className={cn('h-full', edit && 'border-foreground/20 border border-dashed ring-0', dragging && 'ring-ring shadow-lg ring-2')}>
+                <CardHeader>
+                    <div className="flex min-w-0 items-center gap-1">
+                        {edit ? (
+                            <Button
+                                ref={edit.handleRef}
+                                variant="ghost"
+                                size="icon-sm"
+                                {...edit.handleProps}
+                                aria-label={t('ADMIN_DASHBOARD.ACTIONS.DRAG', { title: meta.title })}
+                                className="text-muted-foreground -ml-2 cursor-grab touch-none active:cursor-grabbing"
+                            >
+                                <GripVerticalIcon />
+                            </Button>
+                        ) : null}
+                        <CardTitle id={headingId} className="truncate text-lg font-semibold">
                             {meta.title}
                         </CardTitle>
-                        <CardDescription className="line-clamp-2 text-xs">{meta.description}</CardDescription>
                     </div>
-                    <div className={cn('flex shrink-0 items-center gap-1', edit && 'ml-auto')}>
+                    <CardDescription className="line-clamp-2">{meta.description}</CardDescription>
+                    <CardAction className="flex items-center gap-1">
                         {edit ? (
                             <>
-                                <select
-                                    value={item.size}
-                                    onChange={event => edit.onResize(event.target.value as WidgetSize)}
-                                    aria-label={t('ADMIN_DASHBOARD.ACTIONS.SIZE', { title: meta.title })}
-                                    className="h-8 rounded-md border border-console-border bg-console-card px-2 text-xs outline-none focus-visible:ring-2 focus-visible:ring-console-ring/50"
-                                >
-                                    {edit.sizes.map(size => (
-                                        <option key={size} value={size}>
-                                            {t(`ADMIN_DASHBOARD.SIZES.${size.toUpperCase()}`)}
-                                        </option>
-                                    ))}
-                                </select>
+                                <SizeSelect meta={meta} item={item} edit={edit} />
                                 <Button
                                     variant="ghost"
                                     size="icon-sm"
                                     onClick={edit.onHide}
                                     aria-label={t('ADMIN_DASHBOARD.ACTIONS.HIDE', { title: meta.title })}
+                                    className="text-muted-foreground"
                                 >
-                                    <Icon name="i-lucide-eye-off" />
+                                    <EyeOffIcon />
                                 </Button>
                             </>
                         ) : (
                             actions
                         )}
-                    </div>
+                    </CardAction>
                 </CardHeader>
-                <CardContent className="flex-1">{children}</CardContent>
+                <CardContent className="@container flex flex-1 flex-col">{children}</CardContent>
             </Card>
         </section>
-    );
-});
-
-export function WidgetSkeleton({ kind }: { kind: SkeletonKind }) {
-    if (kind === 'stats') {
-        return (
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                {Array.from({ length: 8 }, (_, index) => (
-                    <Skeleton key={index} className="h-16" />
-                ))}
-            </div>
-        );
-    }
-
-    if (kind === 'chart') {
-        return <Skeleton className="h-48 w-full" />;
-    }
-
-    return (
-        <div className="flex flex-col gap-3">
-            {Array.from({ length: 4 }, (_, index) => (
-                <Skeleton key={index} className="h-5" style={{ width: `${90 - index * 12}%` }} />
-            ))}
-        </div>
     );
 }
