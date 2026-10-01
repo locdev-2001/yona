@@ -24,6 +24,7 @@ use App\Models\Channel\WebWidget;
 use App\Models\Channel\Whatsapp;
 use App\Models\Channel\Zalo;
 use App\Models\Inbox;
+use App\Services\Channels\ChannelCredentialsCheck;
 use App\Services\Channels\ChannelSetupService;
 use App\Support\Timezones;
 use App\Support\Widget\WidgetSettings;
@@ -111,8 +112,12 @@ class InboxesController extends Controller
 
         $data = $request->validate($this->storeRules($request->input('channel.type')));
 
-        $inbox = DB::transaction(function () use ($account, $data) {
-            $channel = $this->createChannel($account, $data['channel']);
+        // Kiểm thông tin đăng nhập trước khi mở transaction: gọi mạng không giữ khoá DB.
+        $channel = $this->buildChannel($account, $data['channel']);
+        app(ChannelCredentialsCheck::class)->verify($channel);
+
+        $inbox = DB::transaction(function () use ($account, $data, $channel) {
+            $channel->save();
 
             return $account->inboxes()->create([
                 'name' => '',
@@ -143,6 +148,9 @@ class InboxesController extends Controller
             'channel' => ['sometimes', 'array'],
         ]);
 
+        $this->fillChannel($inbox, $data['channel'] ?? []);
+        app(ChannelCredentialsCheck::class)->verify($inbox->channel);
+
         DB::transaction(function () use ($request, $inbox, $data) {
             $inbox->update($this->inboxAttributesFrom($data));
 
@@ -155,7 +163,7 @@ class InboxesController extends Controller
                 $inbox->updateWorkingHours($data['working_hours']);
             }
 
-            $this->updateChannel($inbox, $data['channel'] ?? []);
+            $inbox->channel?->save();
         });
 
         return response()->json($this->inboxPayload($request, $inbox->refresh()));
@@ -297,11 +305,11 @@ class InboxesController extends Controller
         return $attributes;
     }
 
-    private function createChannel(Account $account, array $channelParams): Model
+    private function buildChannel(Account $account, array $channelParams): Model
     {
         $channelClass = self::CHANNEL_TYPES[$channelParams['type']];
 
-        return $channelClass::create([
+        return new $channelClass([
             'account_id' => $account->id,
             ...collect($channelParams)->only($this->creatableAttributes($channelClass))->all(),
         ]);
@@ -322,20 +330,24 @@ class InboxesController extends Controller
         return array_values(array_unique([...array_keys($channelClass::channelRules()), ...$editable]));
     }
 
-    private function updateChannel(Inbox $inbox, array $channelParams): void
+    private function fillChannel(Inbox $inbox, array $channelParams): void
     {
-        $editable = collect($channelParams)->only($inbox->channel::EDITABLE_ATTRS)->all();
+        $channel = $inbox->channel;
+
+        if ($channel === null || $channelParams === [] || ! defined($channel::class.'::EDITABLE_ATTRS')) {
+            return;
+        }
+
+        $editable = collect($channelParams)->only($channel::EDITABLE_ATTRS)->all();
 
         // Cấu hình widget đi qua luật chuẩn hoá của chính nó (khoá lạ, URL không phải http(s) → 422).
         if (is_array($editable['widget_settings'] ?? null)) {
-            $editable['widget_settings'] = WidgetSettings::merge($inbox->channel->widget_settings, $editable['widget_settings']);
+            $editable['widget_settings'] = WidgetSettings::merge($channel->widget_settings, $editable['widget_settings']);
         } else {
             unset($editable['widget_settings']);
         }
 
-        if ($editable !== []) {
-            $inbox->channel->update($editable);
-        }
+        $channel->fill($editable);
     }
 
     // InboxPolicy::Scope#resolve = user.assigned_inboxes (admin thấy hết, agent chỉ inbox mình).

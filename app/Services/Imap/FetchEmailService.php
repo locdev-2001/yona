@@ -4,7 +4,9 @@ namespace App\Services\Imap;
 
 use App\Models\Channel\Email;
 use App\Services\Email\MailPresenter;
+use App\Services\Email\MailServerException;
 use Illuminate\Support\Facades\Log;
+use Throwable;
 use Webklex\PHPIMAP\Client;
 use Webklex\PHPIMAP\ClientManager;
 use Webklex\PHPIMAP\Message;
@@ -82,7 +84,19 @@ class FetchEmailService
 
     private function client(): Client
     {
-        return $this->client ??= (new ClientManager)->make($this->connectionConfig());
+        if ($this->client !== null) {
+            return $this->client;
+        }
+
+        $this->client = (new ClientManager)->make($this->connectionConfig());
+
+        try {
+            $this->client->connect();
+        } catch (Throwable $exception) {
+            throw MailServerException::fromImap($exception, (string) $this->channel->imap_address, (int) $this->channel->imap_port);
+        }
+
+        return $this->client;
     }
 
     /** @return array<string, mixed> */
@@ -122,7 +136,7 @@ class FetchEmailService
     {
         try {
             $this->client?->disconnect();
-        } catch (\Throwable $exception) {
+        } catch (Throwable $exception) {
             Log::info('[IMAP] Logout failed for '.$this->channel->email.' - '.$exception->getMessage());
         }
     }

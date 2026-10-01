@@ -37,6 +37,8 @@ export default function ImapSettings({ inbox, onInboxUpdated }: ImapSettingsProp
     const [authMechanism, setAuthMechanism] = useState(inbox.imap_authentication || 'plain');
     const [touched, setTouched] = useState<Record<string, boolean>>({});
     const [isUpdating, setUpdating] = useState(false);
+    // Máy chủ thư từ chối (sai mật khẩu, sai cổng…) thì báo ngay dưới form, không chỉ thoáng qua ở toast.
+    const [serverError, setServerError] = useState<string | null>(null);
 
     // watch(inbox) + mounted() → setDefaults() của bản gốc.
     useEffect(() => {
@@ -59,6 +61,7 @@ export default function ImapSettings({ inbox, onInboxUpdated }: ImapSettingsProp
 
     const updateInbox = async () => {
         setUpdating(true);
+        setServerError(null);
         const channel: Record<string, unknown> = {
             imap_enabled: isImapEnabled,
             imap_address: address,
@@ -78,7 +81,9 @@ export default function ImapSettings({ inbox, onInboxUpdated }: ImapSettingsProp
             onInboxUpdated(updated);
             useAlert(t('INBOX_MGMT.IMAP.EDIT.SUCCESS_MESSAGE'));
         } catch (error) {
-            useAlert(parseApiErrorMessage(error) || t('INBOX_MGMT.IMAP.EDIT.ERROR_MESSAGE'));
+            const message = parseApiErrorMessage(error);
+            setServerError(message);
+            useAlert(message || t('INBOX_MGMT.IMAP.EDIT.ERROR_MESSAGE'));
         } finally {
             setUpdating(false);
         }
@@ -164,6 +169,11 @@ export default function ImapSettings({ inbox, onInboxUpdated }: ImapSettingsProp
                             onAction={setAuthMechanism}
                         />
                     </div>
+                ) : null}
+                {serverError ? (
+                    <p role="alert" className="mb-3 text-body-main text-n-ruby-11 break-words">
+                        {serverError}
+                    </p>
                 ) : null}
                 <Button
                     type="submit"

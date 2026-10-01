@@ -1413,4 +1413,14 @@ return [
         'ZALO' => 'Zalo',
         'VOICE' => 'Voice',
     ],
+    'CONNECTION_CHECK' => [
+        'AUTH_FAILED' => 'The {protocol} server {host} rejected the login. Check the username and password.',
+        'CONNECTION_FAILED' => 'Could not connect to the {protocol} server {host}:{port}. Check the server address, port and SSL option.',
+        'GMAIL_APP_PASSWORD' => 'Gmail does not accept your Google account password here: turn on 2-Step Verification, create an App Password at {url} and paste it into the password field.',
+        'OUTLOOK_APP_PASSWORD' => 'Outlook/Microsoft 365 may have turned off password sign-in: use an App Password or connect with your Microsoft account.',
+        'BANNER_DEFAULT' => 'This inbox has lost its connection to the provider. You will not receive new messages until you reconnect.',
+        'FIX_SETTINGS' => 'Fix connection settings',
+        'RECONNECT' => 'Reconnect',
+        'BADGE' => 'Disconnected',
+    ],
 ];

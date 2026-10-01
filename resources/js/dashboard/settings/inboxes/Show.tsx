@@ -15,6 +15,7 @@ import InboxSettingsPage from './settingsPage/InboxSettingsPage';
 import CollaboratorsPage from './settingsPage/CollaboratorsPage';
 import CustomerSatisfactionPage from './settingsPage/CustomerSatisfactionPage';
 import ConfigurationPage from './settingsPage/ConfigurationPage';
+import InboxConnectionAlert from './components/InboxConnectionAlert';
 import BotConfigurationPage from './settingsPage/BotConfigurationPage';
 import { confirmDiscardUnsavedChanges } from './settingsDraft/useUnsavedChangesGuard';
 import { DEFAULT_INBOX_SETTINGS_TAB, inboxSettingsTabKeys } from './inboxSettingsTabs';
@@ -73,6 +74,7 @@ export default function InboxShow({ inboxId, tab = null, senderEmailAddress, tim
     );
 
     const onTabChange = (index: number) => {
+        if (index < 0) return;
         const tabKey = tabKeys[index];
         if (tabKey === selectedTabKey || !confirmDiscardUnsavedChanges(t('SETTINGS_DRAFT.CONFIRM_LEAVE'))) return;
         setSelectedTabKey(tabKey);
@@ -108,6 +110,15 @@ export default function InboxShow({ inboxId, tab = null, senderEmailAddress, tim
                     </SettingIntroBanner>
                     <section className="w-full overflow-auto py-8">
                         <div className="max-w-7xl mx-auto w-full">
+                            <InboxConnectionAlert
+                                inbox={inbox}
+                                className="mx-6 mb-6"
+                                onFixSettings={
+                                    tabKeys.includes('configuration') && selectedTabKey !== 'configuration'
+                                        ? () => onTabChange(tabKeys.indexOf('configuration'))
+                                        : undefined
+                                }
+                            />
                             {selectedTabKey === DEFAULT_INBOX_SETTINGS_TAB ? (
                                 <InboxSettingsPage inbox={inbox} senderEmailAddress={senderEmailAddress} onInboxUpdated={setInbox} />
                             ) : null}

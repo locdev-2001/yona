@@ -33,6 +33,8 @@ use App\Models\PlatformApp;
 use App\Models\User;
 use App\Search\SearchEngine;
 use App\Services\Analytics\PlausibleProxy;
+use App\Services\Email\MailServerProbe;
+use App\Services\Email\SocketMailServerProbe;
 use App\Services\Messaging\PublicFlowService;
 use App\Services\Stickers\StickerLibraryManager;
 use App\Support\Queue\SlowJobBreakdown;
@@ -92,6 +94,8 @@ class AppServiceProvider extends ServiceProvider
             collect(config('messaging.delivery_renderers'))->map(fn (string $renderer) => $app->make($renderer))->all(),
             $app->make(PublicFlowService::class),
         ));
+
+        $this->app->bind(MailServerProbe::class, SocketMailServerProbe::class);
 
         $this->app->bind(SearchEngine::class, function ($app): SearchEngine {
             $driver = (string) config('search.driver');

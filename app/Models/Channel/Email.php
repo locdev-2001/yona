@@ -10,14 +10,18 @@ use App\Channels\DeclaresPlatform;
 use App\Channels\TextFormat;
 use App\Models\Channel\Concerns\Channelable;
 use App\Models\Concerns\Reauthorizable;
+use App\Services\Email\MailServerException;
 use Database\Factories\Channel\EmailFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
 
 class Email extends Model implements DeclaresCapabilities, DeclaresPlatform
 {
     /** @use HasFactory<EmailFactory> */
-    use Channelable, HasFactory, Reauthorizable;
+    use Channelable, HasFactory, Reauthorizable {
+        Reauthorizable::reauthorized as clearReauthorizationFlags;
+    }
 
     public const AUTHORIZATION_ERROR_THRESHOLD = 10;
 
@@ -106,7 +110,57 @@ class Email extends Model implements DeclaresCapabilities, DeclaresPlatform
 
     public static function channelRules(): array
     {
-        return ['email' => ['required', 'email', 'max:255']];
+        // Form "Thêm kênh" (Gmail/Outlook/Khác) gửi luôn máy chủ thư lúc tạo.
+        return [
+            'email' => ['required', 'email', 'max:255'],
+            'imap_enabled' => ['sometimes', 'boolean'],
+            'imap_address' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'imap_port' => ['sometimes', 'nullable', 'integer', 'between:1,65535'],
+            'imap_login' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'imap_password' => ['sometimes', 'nullable', 'string', 'max:1024'],
+            'imap_enable_ssl' => ['sometimes', 'boolean'],
+            'smtp_enabled' => ['sometimes', 'boolean'],
+            'smtp_address' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'smtp_port' => ['sometimes', 'nullable', 'integer', 'between:1,65535'],
+            'smtp_login' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'smtp_password' => ['sometimes', 'nullable', 'string', 'max:1024'],
+            'smtp_enable_starttls_auto' => ['sometimes', 'boolean'],
+            'smtp_enable_ssl_tls' => ['sometimes', 'boolean'],
+        ];
+    }
+
+    /**
+     * Máy chủ thư từ chối: sai mật khẩu thì đòi kết nối lại ngay (tự hết không được),
+     * không tới được máy chủ thì đếm tới ngưỡng rồi mới đòi (mạng chập chờn).
+     */
+    public function recordConnectionFailure(MailServerException $exception): void
+    {
+        Cache::forever($this->connectionFailureKey(), $exception->toArray());
+
+        $exception->isAuthentication() ? $this->promptReauthorization() : $this->authorizationError();
+    }
+
+    /** Lời nhắn cho người dùng về lần hỏng gần nhất, chỉ khi hộp thư đang bị đánh dấu lỗi. */
+    public function connectionError(): ?string
+    {
+        if (! $this->reauthorizationRequired()) {
+            return null;
+        }
+
+        $failure = Cache::get($this->connectionFailureKey());
+
+        return is_array($failure) ? MailServerException::messageFor($failure) : null;
+    }
+
+    public function reauthorized(): void
+    {
+        $this->clearReauthorizationFlags();
+        Cache::forget($this->connectionFailureKey());
+    }
+
+    private function connectionFailureKey(): string
+    {
+        return 'EMAIL_CONNECTION_FAILURE::'.$this->getKey();
     }
 
     public function isMicrosoft(): bool

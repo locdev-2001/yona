@@ -6582,6 +6582,16 @@ const messages: Record<string, unknown> = {
             "TIKTOK": "TikTok",
             "ZALO": "Zalo",
             "VOICE": "Thoại"
+        },
+        "CONNECTION_CHECK": {
+            "AUTH_FAILED": "Máy chủ {protocol} {host} từ chối đăng nhập. Kiểm tra lại tài khoản và mật khẩu.",
+            "CONNECTION_FAILED": "Không kết nối được tới máy chủ {protocol} {host}:{port}. Kiểm tra địa chỉ máy chủ, cổng và tuỳ chọn SSL.",
+            "GMAIL_APP_PASSWORD": "Gmail không nhận mật khẩu đăng nhập Google: hãy bật Xác minh 2 bước rồi tạo Mật khẩu ứng dụng (App Password) tại {url} và dán vào ô mật khẩu.",
+            "OUTLOOK_APP_PASSWORD": "Outlook/Microsoft 365 có thể đã tắt đăng nhập bằng mật khẩu: hãy dùng Mật khẩu ứng dụng (App Password) hoặc kết nối bằng tài khoản Microsoft.",
+            "BANNER_DEFAULT": "Hộp thư này đã mất kết nối với nhà cung cấp. Bạn sẽ không nhận tin mới cho tới khi kết nối lại.",
+            "FIX_SETTINGS": "Sửa cấu hình kết nối",
+            "RECONNECT": "Kết nối lại",
+            "BADGE": "Mất kết nối"
         }
     },
     "INBOX_REPORTS": {

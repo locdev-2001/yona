@@ -89,7 +89,14 @@ export default function InboxesIndex() {
                     </div>
                 )}
                 <div className="flex flex-col items-start gap-1">
-                    <span className="block text-heading-3 text-n-slate-12 capitalize">{inbox.name}</span>
+                    <span className="flex flex-wrap items-center gap-2">
+                        <span className="block text-heading-3 text-n-slate-12 capitalize">{inbox.name}</span>
+                        {inbox.reauthorization_required ? (
+                            <span className="rounded-md bg-n-ruby-3 px-1.5 py-0.5 text-label-small text-n-ruby-11">
+                                {t('INBOX_MGMT.CONNECTION_CHECK.BADGE')}
+                            </span>
+                        ) : null}
+                    </span>
                     <ChannelName
                         channelType={inbox.channel_type}
                         medium={inbox.medium}
