@@ -50,7 +50,7 @@ export default function InstanceStatus({ metrics }: { metrics: Record<string, st
                                 <div key={name} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-6 py-4">
                                     <dt className="text-muted-foreground text-sm">{METRIC_LABELS[name] ?? name}</dt>
                                     <dd className="text-sm font-medium tabular-nums">
-                                        {status ? <StatusBadge tone={status.tone}>{status.text}</StatusBadge> : (value ?? '—')}
+                                        {status ? <StatusBadge tone={status.tone}>{status.text}</StatusBadge> : (value ?? '-')}
                                     </dd>
                                 </div>
                             );

@@ -24,7 +24,7 @@ export function CohortRetention({ data, title }: { data: CohortRetentionData; ti
                     return {
                         key: String(offset),
                         rate: cell.rate,
-                        label: cell.rate === null ? '—' : `${formatPercent(cell.rate)}%`,
+                        label: cell.rate === null ? '-' : `${formatPercent(cell.rate)}%`,
                         title: t('ADMIN_DASHBOARD.COHORT.CELL', {
                             week: formatDay(cohort.week),
                             offset,

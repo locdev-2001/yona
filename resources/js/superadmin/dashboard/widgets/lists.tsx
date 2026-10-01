@@ -78,7 +78,7 @@ export function ChannelHealth({ data }: { data: ChannelHealthData }) {
                 centerValue={`${formatNumber(data.healthy)}/${formatNumber(data.total)}`}
                 centerLabel={t('ADMIN_DASHBOARD.CHANNEL_HEALTH.HEALTHY')}
                 footerLabel={t('ADMIN_DASHBOARD.CHANNEL_HEALTH.RATE')}
-                footerValue={rate === null ? '—' : `${formatPercent(rate)}%`}
+                footerValue={rate === null ? '-' : `${formatPercent(rate)}%`}
             />
             <Separator />
             {data.failing === 0 ? (

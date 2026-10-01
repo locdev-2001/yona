@@ -484,7 +484,7 @@ function InboxesTable({ inboxes }: { inboxes: ChannelHealthItem[] }) {
                                 )}
                             </TableCell>
                             <TableCell className="pr-4 whitespace-nowrap" title={formatDateTime(inbox.since)}>
-                                {inbox.since ? formatRelative(inbox.since) : '—'}
+                                {inbox.since ? formatRelative(inbox.since) : '-'}
                             </TableCell>
                         </TableRow>
                     ))
@@ -503,7 +503,7 @@ export default function AccountOverview(props: AccountOverviewProps) {
     const [pending, setPending] = useState(false);
     const suspended = account.status === 'suspended';
     const failingInboxes = inboxes.filter(inbox => !inbox.healthy).length;
-    const categoryLabel = (value?: string) => suspension.categories.find(option => option.value === value)?.label ?? value ?? '—';
+    const categoryLabel = (value?: string) => suspension.categories.find(option => option.value === value)?.label ?? value ?? '-';
     const lastSuspension = suspension.history[suspension.history.length - 1];
 
     const selectTab = (next: Tab) => {
@@ -700,8 +700,8 @@ export default function AccountOverview(props: AccountOverviewProps) {
                                                             {formatDateTime(row.createdAt)}
                                                         </Link>
                                                     </TableCell>
-                                                    <TableCell className="break-all">{row.superAdmin?.email ?? '—'}</TableCell>
-                                                    <TableCell className="break-all">{row.targetUser?.email ?? '—'}</TableCell>
+                                                    <TableCell className="break-all">{row.superAdmin?.email ?? '-'}</TableCell>
+                                                    <TableCell className="break-all">{row.targetUser?.email ?? '-'}</TableCell>
                                                     <TableCell className="min-w-48 pr-4 break-words whitespace-normal">{row.reason}</TableCell>
                                                 </TableRow>
                                             ))

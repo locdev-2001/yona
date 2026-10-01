@@ -9,7 +9,7 @@ export function formatNumber(value: number): string {
 }
 
 export function formatPercent(value: number | null): string {
-    return value === null ? '—' : new Intl.NumberFormat(intlLocale(), { maximumFractionDigits: 1 }).format(value);
+    return value === null ? '-' : new Intl.NumberFormat(intlLocale(), { maximumFractionDigits: 1 }).format(value);
 }
 
 // Ngày dạng Y-m-d từ máy chủ, hiển thị ngày/tháng; không đi qua Date để khỏi lệch múi giờ.

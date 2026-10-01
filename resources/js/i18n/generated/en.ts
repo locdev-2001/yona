@@ -272,7 +272,7 @@ const messages: Record<string, unknown> = {
             "hide_secret": "Hide",
             "copy": "Copy",
             "copied": "Copied",
-            "empty_value": "—",
+            "empty_value": "-",
             "no_suspension_history": "No suspension history recorded.",
             "resend_confirmation": "Resend confirmation email",
             "reset_cache_title": "Reset frontend cache",

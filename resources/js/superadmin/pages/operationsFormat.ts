@@ -11,7 +11,7 @@ function intlLocale(): string {
 }
 
 export function formatDateTime(iso: string | null | undefined): string {
-    if (!iso) return '—';
+    if (!iso) return '-';
     const date = new Date(iso);
     if (Number.isNaN(date.getTime())) return iso;
 
@@ -19,7 +19,7 @@ export function formatDateTime(iso: string | null | undefined): string {
 }
 
 export function formatDate(iso: string | null | undefined): string {
-    if (!iso) return '—';
+    if (!iso) return '-';
     const date = new Date(iso);
     if (Number.isNaN(date.getTime())) return iso;
 
@@ -36,7 +36,7 @@ const RELATIVE_STEPS: [Intl.RelativeTimeFormatUnit, number][] = [
 ];
 
 export function formatRelative(iso: string | null | undefined, now: number = Date.now()): string {
-    if (!iso) return '—';
+    if (!iso) return '-';
     const time = new Date(iso).getTime();
     if (Number.isNaN(time)) return iso;
     const seconds = Math.round((time - now) / 1000);

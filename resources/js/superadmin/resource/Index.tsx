@@ -183,7 +183,7 @@ export default function ResourceIndex({
                 pagination={
                     rows.length > 0 ? (
                         <ResourcePagination
-                            summary={`${showingFrom.toLocaleString('vi-VN')}–${(showingFrom + rows.length - 1).toLocaleString('vi-VN')} / ${label('records_total', { total: pagination.total.toLocaleString('vi-VN') })}`}
+                            summary={`${showingFrom.toLocaleString('vi-VN')}-${(showingFrom + rows.length - 1).toLocaleString('vi-VN')} / ${label('records_total', { total: pagination.total.toLocaleString('vi-VN') })}`}
                             currentPage={pagination.current}
                             totalPages={pagination.last}
                             hrefFor={page => indexUrl(resource, singular, { search, order, direction, page })}

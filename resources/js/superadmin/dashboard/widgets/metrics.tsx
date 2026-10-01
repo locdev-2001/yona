@@ -76,7 +76,7 @@ export function seriesSummary(series: ChartSeries, dates: string[]): string {
         label: series.label,
         total: formatNumber(total),
         max: formatNumber(max),
-        date: peakIndex >= 0 && dates[peakIndex] ? formatDay(dates[peakIndex]) : '—',
+        date: peakIndex >= 0 && dates[peakIndex] ? formatDay(dates[peakIndex]) : '-',
     });
 }
 
@@ -101,7 +101,7 @@ function peakDay(dates: string[], values: number[]): string {
     const max = Math.max(0, ...values);
     const index = values.indexOf(max);
 
-    return index >= 0 && dates[index] ? `${formatNumber(max)} · ${formatDay(dates[index])}` : '—';
+    return index >= 0 && dates[index] ? `${formatNumber(max)} · ${formatDay(dates[index])}` : '-';
 }
 
 // Ô số nhỏ viền mảnh ở trên, biểu đồ đường trong thẻ lồng ở dưới.
@@ -133,7 +133,7 @@ export function MessagesTrend({ data, title }: { data: MessagesTrendData; title:
                         key: 'ratio',
                         icon: <RepeatIcon className="size-5" />,
                         title: t('ADMIN_DASHBOARD.TREND.REPLY_RATIO'),
-                        value: totalIn === 0 ? '—' : `${formatPercent((totalOut / totalIn) * 100)}%`,
+                        value: totalIn === 0 ? '-' : `${formatPercent((totalOut / totalIn) * 100)}%`,
                     },
                     {
                         key: 'peak',

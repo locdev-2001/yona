@@ -272,7 +272,7 @@ const messages: Record<string, unknown> = {
             "hide_secret": "Ẩn",
             "copy": "Sao chép",
             "copied": "Đã chép",
-            "empty_value": "—",
+            "empty_value": "-",
             "no_suspension_history": "Chưa có lịch sử tạm khoá nào.",
             "resend_confirmation": "Gửi lại email xác nhận",
             "reset_cache_title": "Xoá bộ nhớ đệm giao diện",

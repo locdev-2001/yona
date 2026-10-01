@@ -67,7 +67,7 @@ export function pageHref(filters: Filters, page: number): string {
 }
 
 function Subject({ log }: { log: AuditLog }) {
-    if (!log.subjectType) return <span className="text-muted-foreground">—</span>;
+    if (!log.subjectType) return <span className="text-muted-foreground">-</span>;
     const text = `${log.subjectType}${log.subjectId ? ` #${log.subjectId}` : ''}`;
 
     return log.subjectUrl ? (
@@ -140,7 +140,7 @@ export default function AuditLogs({ logs, pagination, filters, options }: Props)
         {
             id: 'status',
             header: () => label('COLUMNS.STATUS'),
-            cell: ({ row }) => <StatusBadge tone={statusTone(row.original.responseStatus)}>{row.original.responseStatus ?? '—'}</StatusBadge>,
+            cell: ({ row }) => <StatusBadge tone={statusTone(row.original.responseStatus)}>{row.original.responseStatus ?? '-'}</StatusBadge>,
         },
         {
             id: 'payload',

@@ -37,7 +37,7 @@ const QUEUE_BADGE: Record<QueueHealthData['status'], 'default' | 'outline' | 'de
     unavailable: 'secondary',
 };
 
-const numberOrDash = (value: number | null) => (value === null ? '—' : formatNumber(value));
+const numberOrDash = (value: number | null) => (value === null ? '-' : formatNumber(value));
 
 function OpenLink({ href, children }: { href: string; children: ReactNode }) {
     return (
@@ -112,7 +112,7 @@ export function System({ data }: { data: SystemData }) {
         <MetricBoxes
             className="grid gap-3"
             metrics={[
-                { key: 'version', icon: <TagIcon className="size-5" />, title: t('ADMIN_DASHBOARD.SYSTEM.VERSION'), value: data.version || '—' },
+                { key: 'version', icon: <TagIcon className="size-5" />, title: t('ADMIN_DASHBOARD.SYSTEM.VERSION'), value: data.version || '-' },
                 { key: 'environment', icon: <ServerIcon className="size-5" />, title: t('ADMIN_DASHBOARD.SYSTEM.ENVIRONMENT'), value: data.environment },
                 { key: 'php', icon: <CodeIcon className="size-5" />, title: t('ADMIN_DASHBOARD.SYSTEM.PHP'), value: data.php },
                 { key: 'laravel', icon: <LayersIcon className="size-5" />, title: t('ADMIN_DASHBOARD.SYSTEM.LARAVEL'), value: data.laravel },

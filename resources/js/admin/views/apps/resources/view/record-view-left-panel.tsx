@@ -45,7 +45,7 @@ export interface RecordViewLeftPanelProps {
 
 export const formatCompactNumber = (value: number | undefined): string => {
   if (value === undefined) {
-    return '—'
+    return '-'
   }
 
   if (value >= 1000) {

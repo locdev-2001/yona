@@ -13,7 +13,7 @@ type Props = {
 
 const Providers = ({ children, sidebarDefaultOpen }: Props) => {
   return (
-    <ThemeProvider attribute='class' defaultTheme='dark'>
+    <ThemeProvider attribute='class' defaultTheme='light'>
       <TooltipProvider>
         <SidebarProvider defaultOpen={sidebarDefaultOpen}>{children}</SidebarProvider>
       </TooltipProvider>
