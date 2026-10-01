@@ -24,6 +24,8 @@
       "Bash(make pint-test *)",
       "Bash(make stan *)",
       "Bash(pnpm run *)",
+      "Bash(.claude/skills/yona-issues/scripts/prod-db.sh *)",
+      "Bash(bash .claude/skills/yona-issues/scripts/prod-db.sh *)",
       "Bash(.claude/skills/yona-issues/scripts/prod-db.sh *)"
     ]
   },
