@@ -80,7 +80,7 @@ Hoặc gọi skill `ck:worktree` — nó dùng đúng gốc `/Users/beru/Documen
 
 ## Theo dõi việc
 
-Công việc (kanban) của dash.yona.vn qua MCP `yona-dash` (skill `yona-issues`) là nơi DUY NHẤT; không dùng GitHub Issues. Nhãn: mức độ `P0`/`P1`/`P2` · loại `type:fix|feat|docs|chore`, `ops` hạ tầng, `legal` pháp lý, `gtm` bán hàng · vùng `module:*`. Việc ngoài code nằm cùng chỗ với việc code, vì phần lớn thứ đang chặn bán hàng không nằm trong repo.
+Công việc (kanban) của dash.yona.vn qua MCP `yona-dash` (skill `yona-issues`) là nơi DUY NHẤT; không dùng GitHub Issues. Nhãn: mức độ `P0`/`P1`/`P2` · loại `type:fix|feat|docs|chore`, `ops` hạ tầng, `legal` pháp lý, `gtm` bán hàng · vùng `module:*`. Việc ngoài code nằm cùng chỗ với việc code, vì phần lớn thứ đang chặn bán hàng không nằm trong repo. **Từ 01/10/2026 phiên AI chỉ làm issue về code:** việc có thẻ `vận hành` (thủ tục nền tảng, pháp lý, giá, hợp đồng, nội dung) do founder tự lo, AI bỏ qua khi lấy việc; tạo việc thủ tục mới thì gắn thẻ này ngay.
 
 ## Ghi chú công cụ
 
