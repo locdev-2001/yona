@@ -37,7 +37,7 @@ export default function AppConfig({ config, title, values, definitions }: Props)
                     className="form"
                     onSubmit={event => {
                         event.preventDefault();
-                        post('/super_admin/app_config');
+                        post('/admin/app_config');
                     }}
                 >
                     {Object.entries(definitions).map(([name, definition]) => (

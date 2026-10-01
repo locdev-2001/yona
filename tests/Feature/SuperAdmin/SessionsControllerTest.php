@@ -12,20 +12,20 @@ function superAdminOtpFor(SuperAdmin $superAdmin): string
 }
 
 it('chặn khu quản trị khi chưa đăng nhập', function () {
-    $this->get('/super_admin')->assertRedirect('/super_admin/sign_in');
+    $this->get('/admin')->assertRedirect('/admin/sign_in');
 });
 
 it('user thường không vào được console dù đã đăng nhập dashboard', function () {
     $user = User::factory()->create();
 
-    $this->actingAs($user)->get('/super_admin')->assertRedirect('/super_admin/sign_in');
+    $this->actingAs($user)->get('/admin')->assertRedirect('/admin/sign_in');
 });
 
 it('từ chối mật khẩu sai', function () {
     $superAdmin = SuperAdmin::factory()->create(['password' => 'Password1!']);
 
-    $this->post('/super_admin/sign_in', ['super_admin' => ['email' => $superAdmin->email, 'password' => 'sai']])
-        ->assertRedirect('/super_admin/sign_in');
+    $this->post('/admin/sign_in', ['super_admin' => ['email' => $superAdmin->email, 'password' => 'sai']])
+        ->assertRedirect('/admin/sign_in');
 
     expect(auth()->guard('super_admin')->check())->toBeFalse();
 });
@@ -33,13 +33,13 @@ it('từ chối mật khẩu sai', function () {
 it('đăng nhập bằng guard riêng và đăng xuất', function () {
     $superAdmin = SuperAdmin::factory()->create(['password' => 'Password1!']);
 
-    $this->post('/super_admin/sign_in', ['super_admin' => ['email' => $superAdmin->email, 'password' => 'Password1!']])
-        ->assertRedirect('/super_admin');
+    $this->post('/admin/sign_in', ['super_admin' => ['email' => $superAdmin->email, 'password' => 'Password1!']])
+        ->assertRedirect('/admin');
 
     expect(auth()->guard('super_admin')->id())->toBe($superAdmin->id)
         ->and(auth()->guard('web')->check())->toBeFalse();
 
-    $this->get('/super_admin/logout')->assertRedirect('/');
+    $this->get('/admin/logout')->assertRedirect('/');
     expect(auth()->guard('super_admin')->check())->toBeFalse();
 });
 
@@ -49,24 +49,24 @@ describe('throttle bước mật khẩu', function () {
         $payload = ['super_admin' => ['email' => $superAdmin->email, 'password' => 'sai']];
 
         for ($i = 0; $i < 5; $i++) {
-            $this->post('/super_admin/sign_in', $payload)->assertRedirect('/super_admin/sign_in');
+            $this->post('/admin/sign_in', $payload)->assertRedirect('/admin/sign_in');
         }
 
-        $response = $this->post('/super_admin/sign_in', [
+        $response = $this->post('/admin/sign_in', [
             'super_admin' => ['email' => $superAdmin->email, 'password' => 'Password1!'],
         ]);
 
-        $response->assertRedirect('/super_admin/sign_in')->assertSessionHas('error');
+        $response->assertRedirect('/admin/sign_in')->assertSessionHas('error');
         expect(auth()->guard('super_admin')->check())->toBeFalse();
     });
 
     it('mật khẩu đúng xoá bộ đếm throttle', function () {
         $superAdmin = SuperAdmin::factory()->create(['password' => 'Password1!']);
-        $this->post('/super_admin/sign_in', ['super_admin' => ['email' => $superAdmin->email, 'password' => 'sai']]);
+        $this->post('/admin/sign_in', ['super_admin' => ['email' => $superAdmin->email, 'password' => 'sai']]);
 
-        $this->post('/super_admin/sign_in', [
+        $this->post('/admin/sign_in', [
             'super_admin' => ['email' => $superAdmin->email, 'password' => 'Password1!'],
-        ])->assertRedirect('/super_admin');
+        ])->assertRedirect('/admin');
     });
 });
 
@@ -74,7 +74,7 @@ describe('đăng nhập hai bước với 2FA', function () {
     it('dừng ở bước OTP sau mật khẩu đúng khi đã bật 2FA', function () {
         $superAdmin = SuperAdmin::factory()->withMfa()->create(['password' => 'Password1!']);
 
-        $response = $this->post('/super_admin/sign_in', [
+        $response = $this->post('/admin/sign_in', [
             'super_admin' => ['email' => $superAdmin->email, 'password' => 'Password1!'],
         ], ['X-Inertia' => 'true'])->assertOk();
 
@@ -87,10 +87,10 @@ describe('đăng nhập hai bước với 2FA', function () {
         $superAdmin = SuperAdmin::factory()->withMfa()->create();
         $token = (new TokenService)->generateToken($superAdmin);
 
-        $this->post('/super_admin/sign_in', [
+        $this->post('/admin/sign_in', [
             'otp_token' => $token,
             'otp_code' => superAdminOtpFor($superAdmin),
-        ])->assertRedirect('/super_admin');
+        ])->assertRedirect('/admin');
 
         expect(auth()->guard('super_admin')->id())->toBe($superAdmin->id);
     });
@@ -100,10 +100,10 @@ describe('đăng nhập hai bước với 2FA', function () {
         $codes = (new ManagementService($superAdmin))->generateBackupCodes();
         $token = (new TokenService)->generateToken($superAdmin);
 
-        $this->post('/super_admin/sign_in', [
+        $this->post('/admin/sign_in', [
             'otp_token' => $token,
             'backup_code' => $codes[0],
-        ])->assertRedirect('/super_admin');
+        ])->assertRedirect('/admin');
 
         expect(auth()->guard('super_admin')->id())->toBe($superAdmin->id);
     });
@@ -112,7 +112,7 @@ describe('đăng nhập hai bước với 2FA', function () {
         $superAdmin = SuperAdmin::factory()->withMfa()->create();
         $token = (new TokenService)->generateToken($superAdmin);
 
-        $response = $this->post('/super_admin/sign_in', [
+        $response = $this->post('/admin/sign_in', [
             'otp_token' => $token,
             'otp_code' => '000000',
         ], ['X-Inertia' => 'true'])->assertOk();
@@ -124,20 +124,20 @@ describe('đăng nhập hai bước với 2FA', function () {
     });
 
     it('từ chối token OTP hết hạn/không hợp lệ', function () {
-        $this->post('/super_admin/sign_in', [
+        $this->post('/admin/sign_in', [
             'otp_token' => 'khong-hop-le',
             'otp_code' => '000000',
-        ])->assertRedirect('/super_admin/sign_in')->assertSessionHas('error', __('errors.mfa.invalid_token'));
+        ])->assertRedirect('/admin/sign_in')->assertSessionHas('error', __('errors.mfa.invalid_token'));
     });
 
     it('từ chối mfa_token của agent thường, không tiêu mất timestep của agent đó', function () {
         $agent = User::factory()->withMfa()->create();
         $token = (new TokenService)->generateToken($agent);
 
-        $this->post('/super_admin/sign_in', [
+        $this->post('/admin/sign_in', [
             'otp_token' => $token,
             'otp_code' => TOTP::createFromSecret($agent->otp_secret)->now(),
-        ])->assertRedirect('/super_admin/sign_in')->assertSessionHas('error', __('errors.mfa.invalid_token'));
+        ])->assertRedirect('/admin/sign_in')->assertSessionHas('error', __('errors.mfa.invalid_token'));
 
         expect($agent->refresh()->consumed_timestep)->toBeNull();
     });
@@ -147,10 +147,10 @@ describe('đăng nhập hai bước với 2FA', function () {
         $token = (new TokenService)->generateToken($superAdmin);
 
         for ($i = 0; $i < 5; $i++) {
-            $this->post('/super_admin/sign_in', ['otp_token' => $token, 'otp_code' => '000000']);
+            $this->post('/admin/sign_in', ['otp_token' => $token, 'otp_code' => '000000']);
         }
 
-        $response = $this->post('/super_admin/sign_in', [
+        $response = $this->post('/admin/sign_in', [
             'otp_token' => $token,
             'otp_code' => superAdminOtpFor($superAdmin),
         ], ['X-Inertia' => 'true'])->assertOk();
@@ -166,11 +166,11 @@ describe('đăng nhập hai bước với 2FA', function () {
 
         for ($i = 0; $i < 5; $i++) {
             $this->withServerVariables(['REMOTE_ADDR' => "203.0.113.{$i}"])
-                ->post('/super_admin/sign_in', ['otp_token' => $token, 'otp_code' => '000000']);
+                ->post('/admin/sign_in', ['otp_token' => $token, 'otp_code' => '000000']);
         }
 
         $response = $this->withServerVariables(['REMOTE_ADDR' => '198.51.100.1'])
-            ->post('/super_admin/sign_in', [
+            ->post('/admin/sign_in', [
                 'otp_token' => $token,
                 'otp_code' => superAdminOtpFor($superAdmin),
             ], ['X-Inertia' => 'true'])->assertOk();
@@ -179,4 +179,9 @@ describe('đăng nhập hai bước với 2FA', function () {
             ->and($response->json('props.otpError'))->not->toBe(__('errors.mfa.invalid_code'));
         expect(auth()->guard('super_admin')->check())->toBeFalse();
     });
+});
+
+it('chuyển hướng vĩnh viễn đường dẫn console cũ sang prefix mới', function () {
+    $this->get('/super_admin')->assertRedirect('/admin')->assertStatus(301);
+    $this->get('/super_admin/accounts/5?page=2')->assertRedirect('/admin/accounts/5?page=2')->assertStatus(301);
 });

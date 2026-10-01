@@ -2,6 +2,7 @@
 
 namespace App\Support\SuperAdmin;
 
+use App\Support\SuperAdminArea;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
@@ -31,7 +32,7 @@ class FieldPresenter
     {
         $dashboard = $this->registry->forModel($record);
 
-        return $dashboard === null ? null : "/super_admin/{$dashboard->resourceName()}/{$record->getKey()}";
+        return $dashboard === null ? null : SuperAdminArea::url("{$dashboard->resourceName()}/{$record->getKey()}");
     }
 
     public function label(Model $record): string

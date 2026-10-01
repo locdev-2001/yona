@@ -198,7 +198,7 @@ function AccountUserSection({ form }: { form: AccountUserForm }) {
                 className="form"
                 onSubmit={event => {
                     event.preventDefault();
-                    post('/super_admin/account_users');
+                    post('/admin/account_users');
                 }}
             >
                 <div className="field-unit field-unit--belongs-to-search field-unit--required">

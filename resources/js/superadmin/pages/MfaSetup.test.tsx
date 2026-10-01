@@ -28,7 +28,7 @@ const superAdmin = {
     version: '1.0',
     navigation: [],
     settingsPages: [],
-    currentPath: '/super_admin/mfa/setup',
+    currentPath: '/admin/mfa/setup',
 };
 
 // Màn bắt buộc cài đặt 2FA — server (MfaController::setupPage) chỉ điều hướng

@@ -25,16 +25,16 @@ describe('Layout Super Admin', () => {
                 logoThumbnail: '/logo-thumb.svg',
                 version: '1.0',
                 navigation: [],
-                toolPages: [{ key: 'sticker_packs', label: 'Kho sticker', url: '/super_admin/sticker_packs' }],
+                toolPages: [{ key: 'sticker_packs', label: 'Kho sticker', url: '/admin/sticker_packs' }],
                 settingsPages: [],
-                currentPath: '/super_admin/sticker_packs',
+                currentPath: '/admin/sticker_packs',
             },
         };
 
         render(<Layout>nội dung</Layout>);
 
         const link = screen.getByRole('link', { name: 'Kho sticker' });
-        expect(link.getAttribute('href')).toBe('/super_admin/sticker_packs');
+        expect(link.getAttribute('href')).toBe('/admin/sticker_packs');
         expect(link.className).toContain('text-woot-500');
     });
 });

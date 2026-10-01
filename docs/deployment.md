@@ -416,7 +416,7 @@ php artisan tinker --execute="dump(DB::table('failed_jobs')->where('payload', 'l
 - Nhân viên giữ đăng nhập **30 ngày tính từ lần thao tác cuối**
   (`SESSION_LIFETIME=43200` phút, trượt: mỗi request gia hạn phiên và cookie).
   Còn `120` là ai không thao tác quá 2 giờ (gập máy qua đêm) sẽ bị đăng xuất.
-- Console `/super_admin` (cùng `/horizon`, `/pulse`, `/logs`) dùng chung
+- Console `/admin` (cùng `/horizon`, `/pulse`, `/logs`) dùng chung
   cookie phiên nhưng tự đăng xuất sau `SUPER_ADMIN_IDLE_MINUTES` không thao tác
   trong vùng quản trị. Phiên nhân viên trên cùng trình duyệt không bị ảnh hưởng.
 - Phiên nằm ở Redis DB `REDIS_DB` (kết nối `default`), cache ở `REDIS_CACHE_DB`.
@@ -460,14 +460,14 @@ hạ `SESSION_LIFETIME` xuống `20160` (14 ngày) và báo founder.
 
 ### 2FA bắt buộc cho console quản trị
 
-- Super admin chưa bật 2FA bị chặn ở mọi trang của `/super_admin/*` (cùng
-  `/horizon`, `/pulse`, `/logs`) trừ `/super_admin/mfa/setup` (QR + xác
+- Super admin chưa bật 2FA bị chặn ở mọi trang của `/admin/*` (cùng
+  `/horizon`, `/pulse`, `/logs`) trừ `/admin/mfa/setup` (QR + xác
   nhận mã + hiện mã dự phòng) và logout — không khoá lối ra, chỉ khoá lối vào
   phần còn lại của console. Luôn bắt buộc, không có cờ tắt. Riêng ba dashboard
   vận hành còn mở cho user có email hệ thống mà không bắt 2FA (mục 8, "Ba
   dashboard vận hành").
 - **Việc phải làm ngay sau lần deploy đầu tiên có tính năng này**: đăng nhập
-  `/super_admin/sign_in` bằng tài khoản founder hiện có, máy sẽ tự đưa vào màn
+  `/admin/sign_in` bằng tài khoản founder hiện có, máy sẽ tự đưa vào màn
   cài đặt 2FA — quét QR bằng Google Authenticator/Authy, nhập mã xác nhận, lưu
   lại 10 mã dự phòng ở nơi an toàn (chỉ hiện một lần). Làm việc này cho MỌI tài
   khoản `SuperAdmin` đang có trước khi báo người khác đăng nhập, nếu không họ sẽ
@@ -1140,12 +1140,12 @@ Cả ba (và API nội bộ `/logs/api/*`) chặn sau cùng một middleware
 `SystemAccess::canOpenOperationsDashboards()` và gate `viewPulse`,
 `viewLogViewer`, `Horizon::auth` gọi lại đúng điều kiện đó. Được vào:
 
-- super admin đăng nhập `/super_admin/sign_in`, bắt buộc đã bật 2FA (chưa bật thì
+- super admin đăng nhập `/admin/sign_in`, bắt buộc đã bật 2FA (chưa bật thì
   bị đưa sang màn cài 2FA);
 - user đăng nhập dashboard thường (`/app/login`) có email trong
   `YONA_SYSTEM_ADMIN_EMAILS` (mục 9, "Kho sticker"), **không** bắt 2FA.
 
-Khách lạ bị đẩy về `/super_admin/sign_in`; agent thường không có email hệ thống
+Khách lạ bị đẩy về `/admin/sign_in`; agent thường không có email hệ thống
 nhận 403. Nghiệm thu: đăng nhập bằng tài khoản agent thường rồi mở `/logs` — phải
 403; đăng nhập bằng user có email hệ thống — vào được cả ba.
 
@@ -1261,7 +1261,7 @@ hội thoại.
 Nút "Tiếp tục với Google" ở `/app/login` và `/app/auth/signup` chỉ hiện khi `.env`
 có **cả hai** `GOOGLE_CLIENT_ID` và `GOOGLE_CLIENT_SECRET`; thiếu một trong hai thì
 nút ẩn và `/app/auth/oauth/google*` trả 404. Chỉ dành cho người dùng dashboard,
-console `/super_admin` vẫn đăng nhập bằng mật khẩu.
+console `/admin` vẫn đăng nhập bằng mật khẩu.
 
 Hành vi đã chốt: email Google phải được Google xác minh; email trùng tài khoản có
 sẵn thì vào đúng tài khoản đó; email mới thì tạo tài khoản qua đúng đường đăng ký
@@ -1480,7 +1480,7 @@ job outbox tự bỏ các dòng còn tồn.
 ### Kho sticker
 
 Kho nền tảng (kho chung, mọi account thấy bộ đã xuất bản) do console Super Admin
-(`/super_admin/sticker_packs`) và **tài khoản có quyền hệ thống** quản, ngay trong
+(`/admin/sticker_packs`) và **tài khoản có quyền hệ thống** quản, ngay trong
 Cài đặt → Kho sticker của dashboard. Quyền hệ thống = email user nằm trong
 `YONA_SYSTEM_ADMIN_EMAILS` (nhiều email cách nhau dấu phẩy, không phân biệt hoa
 thường; để trống = không ai có quyền):
@@ -1565,7 +1565,7 @@ sticker vẫn dùng được trong lúc hàng đợi `stickers` chạy.
 
 **Không có MCP hay REST bằng token cho kho sticker.** Migration
 `drop_sticker_mcp_tokens_table` xoá bảng token, token đã cấp mất hiệu lực. Xoá
-Platform App "MCP sticker" ở `/super_admin/platform_apps` nếu nó không dùng cho việc
+Platform App "MCP sticker" ở `/admin/platform_apps` nếu nó không dùng cho việc
 khác.
 
 **Chuyển disk sang R2/S3** (tuỳ chọn, chỉ bằng env; mặc định là đĩa local
@@ -1679,7 +1679,7 @@ Sau khi xong, database trắng — không còn tài khoản nào:
 php artisan super-admin:create ban@yona.vn --name="Tên" --password='<mật khẩu mạnh>'
 ```
 
-Rồi đăng nhập `/superadmin`, tạo workspace đầu tiên, và **quét lại QR Zalo** cho
+Rồi đăng nhập `/admin`, tạo workspace đầu tiên, và **quét lại QR Zalo** cho
 mọi inbox (session bridge cũ trỏ tới connection_id không còn tồn tại).
 
 ---
@@ -1800,7 +1800,7 @@ php artisan super-admin:create ban@yona.vn --name="Tên" --password='<mật kh�
 rm -f services/zalo-bridge/.sessions/*.json
 ```
 
-Đăng nhập `/superadmin` → tạo workspace → mời người dùng → vào phần inbox quét QR
+Đăng nhập `/admin` → tạo workspace → mời người dùng → vào phần inbox quét QR
 Zalo lại. Session cũ trỏ `connection_id` của database cũ nên không dùng lại được.
 
 ### B8. Nghiệm thu

@@ -78,7 +78,7 @@ Tài khoản seed: `john@acme.inc` / `Password1!`.
 > php artisan tinker --execute="(new App\\Builders\\AccountBuilder(accountName:'Shop thử', email:'thu@shop.test', userFullName:'Chị Hà', userPassword:'Password1!', confirmed:true))->perform();"
 > ```
 
-Super admin console (`/superadmin`):
+Super admin console (`/admin`):
 
 ```bash
 php artisan super-admin:create ban@yona.vn --name="Tên" --password='<mật khẩu>'

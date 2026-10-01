@@ -57,7 +57,7 @@ describe('uploadSticker khi máy chủ giới hạn lượt tải', () => {
         const rejection = new ApiError(422, { errors: { file: ['Tệp hỏng'] } });
         postForm.mockRejectedValueOnce(rejection);
 
-        await expect(createStickerLibraryApi('/super_admin/api').uploadSticker(3, stickerFile(), upload())).rejects.toBe(rejection);
+        await expect(createStickerLibraryApi('/admin/api').uploadSticker(3, stickerFile(), upload())).rejects.toBe(rejection);
         expect(postForm).toHaveBeenCalledTimes(1);
     });
 
@@ -66,7 +66,7 @@ describe('uploadSticker khi máy chủ giới hạn lượt tải', () => {
         const controller = new AbortController();
         const onThrottleWait = vi.fn();
 
-        const sending = createStickerLibraryApi('/super_admin/api').uploadSticker(3, stickerFile(), upload(), { signal: controller.signal, onThrottleWait });
+        const sending = createStickerLibraryApi('/admin/api').uploadSticker(3, stickerFile(), upload(), { signal: controller.signal, onThrottleWait });
         const outcome = expect(sending).rejects.toMatchObject({ name: 'AbortError' });
         await vi.advanceTimersByTimeAsync(10);
         expect(onThrottleWait).toHaveBeenCalledWith(3000);
@@ -81,7 +81,7 @@ describe('uploadSticker khi máy chủ giới hạn lượt tải', () => {
     it('bị giới hạn mãi thì dừng sau số lần thử có hạn', async () => {
         postForm.mockRejectedValue(throttled(1));
 
-        const sending = createStickerLibraryApi('/super_admin/api').uploadSticker(3, stickerFile(), upload());
+        const sending = createStickerLibraryApi('/admin/api').uploadSticker(3, stickerFile(), upload());
         const outcome = expect(sending).rejects.toMatchObject({ status: 429 });
         await vi.advanceTimersByTimeAsync(10_000);
 
@@ -99,9 +99,9 @@ describe('từ khoá sticker', () => {
     it('sửa nhãn và từ khoá đi PATCH vào đúng sticker của bộ', async () => {
         patchJson.mockResolvedValue({ id: 5, keywords: ['haha'] });
 
-        await createStickerLibraryApi('/super_admin/api').updateSticker(3, 5, { label: 'Cười', keywords: ['haha'] });
+        await createStickerLibraryApi('/admin/api').updateSticker(3, 5, { label: 'Cười', keywords: ['haha'] });
 
-        expect(patchJson).toHaveBeenCalledWith('/super_admin/api/sticker_packs/3/stickers/5', {
+        expect(patchJson).toHaveBeenCalledWith('/admin/api/sticker_packs/3/stickers/5', {
             label: 'Cười',
             keywords: ['haha'],
         });

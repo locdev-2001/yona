@@ -52,7 +52,7 @@ export default function SidebarProfileMenu({ isCollapsed = false }: { isCollapse
                 <DropdownItem
                     label={t('SIDEBAR_ITEMS.SUPER_ADMIN_CONSOLE')}
                     icon="i-lucide-castle"
-                    link="/super_admin"
+                    link="/admin"
                     nativeLink
                     target="_blank"
                 />

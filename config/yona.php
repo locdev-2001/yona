@@ -9,7 +9,7 @@ return [
     | Phiên bản + console quản trị
     |--------------------------------------------------------------------------
     |
-    | `version` hiện ở thanh điều hướng /super_admin và trang Instance Health.
+    | `version` hiện ở thanh điều hướng /admin và trang Instance Health.
     |
     */
 
@@ -62,7 +62,7 @@ return [
     |
     | Guard `super_admin` dùng chung cookie phiên với nhân viên (SESSION_LIFETIME
     | dài 30 ngày) nhưng tự hết hạn sau ngần ấy phút không thao tác trong vùng
-    | /super_admin, /horizon, /pulse, /log-viewer.
+    | /admin, /horizon, /pulse, /log-viewer.
     |
     */
 

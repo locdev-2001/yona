@@ -20,7 +20,7 @@ use Tests\Support\YonaStickers;
 // `edit`) và upload kèm từ khoá, ở cả kho chung của Super Admin lẫn kho riêng của
 // tenant — cùng một action qua concern chung.
 
-const EDITING_SUPER_ADMIN_API = '/super_admin/api/sticker_packs';
+const EDITING_SUPER_ADMIN_API = '/admin/api/sticker_packs';
 
 function editingTenantUser(Account $account, int $role): User
 {

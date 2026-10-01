@@ -20,7 +20,7 @@ const SYSTEM_ADMIN_EMAIL = 'van-hanh@yona.vn';
 beforeEach(fn () => config(['yona.system_admin_emails' => SYSTEM_ADMIN_EMAIL]));
 
 it('bắt khách lạ đăng nhập console quản trị', function (string $path) {
-    $this->get($path)->assertRedirect('/super_admin/sign_in');
+    $this->get($path)->assertRedirect('/admin/sign_in');
 })->with($dashboards);
 
 it('trả 401 cho khách lạ gọi API log viewer', function () {
@@ -52,7 +52,7 @@ it('cho super admin đã bật 2FA vào', function (string $path) {
 it('đưa super admin chưa bật 2FA vào màn cài đặt thay vì cho vào dashboard', function (string $path) {
     $this->actingAs(SuperAdmin::factory()->create(), 'super_admin')
         ->get($path)
-        ->assertRedirect('/super_admin/mfa/setup');
+        ->assertRedirect('/admin/mfa/setup');
 })->with($dashboards);
 
 it('không cho xoá file log qua giao diện', function () {

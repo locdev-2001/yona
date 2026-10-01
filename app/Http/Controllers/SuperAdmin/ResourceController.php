@@ -5,6 +5,7 @@ namespace App\Http\Controllers\SuperAdmin;
 use App\Http\Controllers\Controller;
 use App\Support\SuperAdmin\Dashboard;
 use App\Support\SuperAdmin\FieldPresenter;
+use App\Support\SuperAdminArea;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
@@ -77,7 +78,7 @@ abstract class ResourceController extends Controller
         return $this->render('Form', [
             'record' => null,
             'fields' => $this->formFields($this->dashboard()->newRecord()),
-            'action' => "/super_admin/{$this->dashboard()->resourceName()}",
+            'action' => SuperAdminArea::url($this->dashboard()->resourceName()),
             'method' => 'post',
         ]);
     }
@@ -89,7 +90,7 @@ abstract class ResourceController extends Controller
         return $this->render('Form', [
             'record' => $this->recordSummary($record),
             'fields' => $this->formFields($record),
-            'action' => "/super_admin/{$this->dashboard()->resourceName()}/{$record->getKey()}",
+            'action' => SuperAdminArea::url("{$this->dashboard()->resourceName()}/{$record->getKey()}"),
             'method' => 'put',
         ]);
     }
@@ -100,7 +101,7 @@ abstract class ResourceController extends Controller
         $this->assign($record, $request);
         $record->save();
 
-        return redirect("/super_admin/{$this->dashboard()->resourceName()}/{$record->getKey()}")
+        return redirect(SuperAdminArea::url("{$this->dashboard()->resourceName()}/{$record->getKey()}"))
             ->with('notice', Str::headline(class_basename($record)).' was successfully created.');
     }
 
@@ -110,7 +111,7 @@ abstract class ResourceController extends Controller
         $this->assign($record, $request);
         $record->save();
 
-        return redirect("/super_admin/{$this->dashboard()->resourceName()}/{$record->getKey()}")
+        return redirect(SuperAdminArea::url("{$this->dashboard()->resourceName()}/{$record->getKey()}"))
             ->with('notice', Str::headline(class_basename($record)).' was successfully updated.');
     }
 
@@ -118,7 +119,7 @@ abstract class ResourceController extends Controller
     {
         $this->findRecord($id)->delete();
 
-        return redirect("/super_admin/{$this->dashboard()->resourceName()}")
+        return redirect(SuperAdminArea::url($this->dashboard()->resourceName()))
             ->with('notice', Str::headline(class_basename($this->dashboard()->modelClass())).' was successfully destroyed.');
     }
 

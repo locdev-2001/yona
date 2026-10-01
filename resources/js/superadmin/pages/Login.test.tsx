@@ -26,7 +26,7 @@ const baseSuperAdmin = {
     version: '1.0',
     navigation: [],
     settingsPages: [],
-    currentPath: '/super_admin/sign_in',
+    currentPath: '/admin/sign_in',
 };
 
 describe('SuperAdminLogin', () => {
@@ -51,7 +51,7 @@ describe('SuperAdminLogin', () => {
         expect(document.querySelectorAll('input[inputmode="numeric"]').length).toBe(6);
     });
 
-    it('gửi otp_token và mã đã nhập tới /super_admin/sign_in', () => {
+    it('gửi otp_token và mã đã nhập tới /admin/sign_in', () => {
         pageProps = { superAdmin: baseSuperAdmin, otpRequired: true, otpToken: 'tok-123' };
 
         render(<SuperAdminLogin />);
@@ -59,7 +59,7 @@ describe('SuperAdminLogin', () => {
         '123456'.split('').forEach((digit, index) => fireEvent.change(inputs[index], { target: { value: digit } }));
 
         expect(routerPost).toHaveBeenCalledWith(
-            '/super_admin/sign_in',
+            '/admin/sign_in',
             { otp_token: 'tok-123', otp_code: '123456', backup_code: '' },
             expect.objectContaining({ onFinish: expect.any(Function) }),
         );

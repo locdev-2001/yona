@@ -29,7 +29,7 @@ export default function SuperAdminLogin() {
     const submitOtp = (payload: { otpCode?: string; backupCode?: string }) => {
         setVerifying(true);
         router.post(
-            '/super_admin/sign_in',
+            '/admin/sign_in',
             {
                 otp_token: otpToken,
                 otp_code: payload.otpCode ?? '',
@@ -78,7 +78,7 @@ export default function SuperAdminLogin() {
                             id="new_super_admin"
                             onSubmit={event => {
                                 event.preventDefault();
-                                post('/super_admin/sign_in');
+                                post('/admin/sign_in');
                             }}
                         >
                             <div className="mb-5">

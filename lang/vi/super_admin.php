@@ -1,6 +1,6 @@
 <?php
 
-// Bản dịch tiếng Việt của lang/en/super_admin.php.
+// Bản dịch tiếng Việt của lang/en/admin.php.
 
 return [
     'account_suspension' => [

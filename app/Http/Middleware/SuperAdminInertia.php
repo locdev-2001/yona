@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Http\Controllers\SuperAdmin\AppConfigsController;
 use App\Support\SuperAdmin\DashboardRegistry;
+use App\Support\SuperAdminArea;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -31,12 +32,12 @@ class SuperAdminInertia
                 // Nhãn dịch sẵn ở máy chủ: layout nằm trong entry của console,
                 // gọi t() ở đó kéo cả bộ i18n vào mọi trang, kể cả trang đăng nhập.
                 'toolPages' => [
-                    ['key' => 'sticker_packs', 'label' => __('sticker_library.MENU'), 'url' => '/super_admin/sticker_packs'],
+                    ['key' => 'sticker_packs', 'label' => __('sticker_library.MENU'), 'url' => SuperAdminArea::url('sticker_packs')],
                 ],
                 'settingsPages' => array_map(fn (string $section) => [
                     'key' => $section,
                     'label' => Str::headline($section),
-                    'url' => "/super_admin/app_config?config={$section}",
+                    'url' => SuperAdminArea::url("app_config?config={$section}"),
                 ], AppConfigsController::sections()),
                 'currentPath' => $request->getPathInfo(),
             ],

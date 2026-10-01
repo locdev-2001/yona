@@ -10,15 +10,15 @@ it('đưa super admin chưa bật 2FA vào màn cài đặt thay vì trang conso
     $superAdmin = SuperAdmin::factory()->create();
 
     $this->actingAs($superAdmin, 'super_admin')
-        ->get('/super_admin')
-        ->assertRedirect('/super_admin/mfa/setup');
+        ->get('/admin')
+        ->assertRedirect('/admin/mfa/setup');
 });
 
 it('vẫn cho super admin chưa bật 2FA đăng xuất', function () {
     $superAdmin = SuperAdmin::factory()->create();
 
     $this->actingAs($superAdmin, 'super_admin')
-        ->get('/super_admin/logout')
+        ->get('/admin/logout')
         ->assertRedirect('/');
 });
 
@@ -26,7 +26,7 @@ it('cho super admin đã bật 2FA dùng console bình thường', function () {
     $superAdmin = SuperAdmin::factory()->withMfa()->create();
 
     $this->actingAs($superAdmin, 'super_admin')
-        ->get('/super_admin')
+        ->get('/admin')
         ->assertOk();
 });
 
@@ -34,8 +34,8 @@ it('đưa super admin đã bật 2FA ra khỏi màn cài đặt thay vì hiện 
     $superAdmin = SuperAdmin::factory()->withMfa()->create();
 
     $this->actingAs($superAdmin, 'super_admin')
-        ->get('/super_admin/mfa/setup')
-        ->assertRedirect('/super_admin');
+        ->get('/admin/mfa/setup')
+        ->assertRedirect('/admin');
 });
 
 describe('luồng cài đặt 2FA trong console', function () {
@@ -43,7 +43,7 @@ describe('luồng cài đặt 2FA trong console', function () {
         $superAdmin = SuperAdmin::factory()->create();
 
         $response = $this->actingAs($superAdmin, 'super_admin')
-            ->postJson('/super_admin/mfa')
+            ->postJson('/admin/mfa')
             ->assertOk();
 
         expect($response->json('provisioning_url'))->toContain('otpauth://totp')
@@ -56,12 +56,12 @@ describe('luồng cài đặt 2FA trong console', function () {
         $code = TOTP::createFromSecret($superAdmin->refresh()->otp_secret)->now();
 
         $response = $this->actingAs($superAdmin, 'super_admin')
-            ->postJson('/super_admin/mfa/verify', ['otp_code' => $code])
+            ->postJson('/admin/mfa/verify', ['otp_code' => $code])
             ->assertOk();
 
         expect($response->json('backup_codes'))->toHaveCount(10);
 
-        $this->actingAs($superAdmin, 'super_admin')->get('/super_admin')->assertOk();
+        $this->actingAs($superAdmin, 'super_admin')->get('/admin')->assertOk();
     });
 
     it('từ chối mã sai khi kích hoạt', function () {
@@ -69,12 +69,12 @@ describe('luồng cài đặt 2FA trong console', function () {
         (new ManagementService($superAdmin))->enableTwoFactor();
 
         $this->actingAs($superAdmin, 'super_admin')
-            ->postJson('/super_admin/mfa/verify', ['otp_code' => '000000'])
+            ->postJson('/admin/mfa/verify', ['otp_code' => '000000'])
             ->assertStatus(422);
 
         $this->actingAs($superAdmin, 'super_admin')
-            ->get('/super_admin')
-            ->assertRedirect('/super_admin/mfa/setup');
+            ->get('/admin')
+            ->assertRedirect('/admin/mfa/setup');
     });
 
 });
