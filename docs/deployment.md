@@ -178,8 +178,12 @@ ALTER SYSTEM SET pg_stat_statements.max = 10000;
 ALTER SYSTEM SET pg_stat_statements.track = 'all';
 ALTER SYSTEM SET track_io_timing = on;
 SQL
-# Không được có dòng nào ở đây trước khi restart:
-$PSQL -d postgres -c "SELECT sourcefile, name, error FROM pg_file_settings WHERE error IS NOT NULL;"
+# Thư viện phải nạp được (ra `LOAD`) — lỗi ở đây thì RESET bốn tham số trên, không restart:
+$PSQL -d postgres -c "LOAD 'pg_stat_statements';"
+# shared_preload_libraries phải có pending_restart = t. pg_file_settings sẽ ghi
+# "setting could not be applied" cho tham số này cho tới khi restart — đó là
+# bình thường, không phải lỗi.
+$PSQL -d postgres -c "SELECT name, setting, pending_restart FROM pg_settings WHERE name IN ('shared_preload_libraries','track_io_timing');"
 
 # 3. Restart. Tìm đúng tên dịch vụ của aaPanel trước, rồi restart bằng cái có thật.
 systemctl list-units --type=service --all | grep -iE 'postgres|pgsql'
