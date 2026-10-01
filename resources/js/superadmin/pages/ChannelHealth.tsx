@@ -135,7 +135,7 @@ export default function ChannelHealth({ stats, items, filters, options }: Props)
     const severityItems = useMemo(() => SEVERITIES.map(severity => ({ value: severity, label: label(`SEVERITY.${severity}`) })), []);
 
     return (
-        <div className="flex flex-col gap-6">
+        <div className="grid grid-cols-1 gap-6">
             <PageHeader title={label('TITLE')} description={label('DESCRIPTION')} className="mb-0 md:mb-0" />
 
             <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">

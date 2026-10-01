@@ -120,8 +120,14 @@ function PreviewCanvas({ canvas, size }: { canvas: HTMLCanvasElement | null; siz
     const context = target?.getContext('2d')
 
     if (!target || !context) return
-    context.clearRect(0, 0, target.width, target.height)
-    if (canvas) context.drawImage(canvas, 0, 0, target.width, target.height)
+
+    if (canvas) {
+      target.width = canvas.width
+      target.height = canvas.height
+      context.drawImage(canvas, 0, 0)
+    } else {
+      context.clearRect(0, 0, target.width, target.height)
+    }
   }, [canvas])
 
   return <canvas ref={ref} width={size} height={size} className='size-full object-contain' />
@@ -365,7 +371,7 @@ function EditorWorkspace({
           </Alert>
         ) : null}
 
-        <div className='mt-auto flex flex-col-reverse gap-2 sm:flex-row sm:flex-wrap sm:justify-end'>
+        <div className='mt-auto flex flex-col-reverse gap-2 sm:flex-row sm:flex-wrap sm:justify-end [&>button]:max-sm:w-full'>
           <Button variant='outline' disabled={isSaving} onClick={isFirstOfMany ? onSkip : onCancel}>
             {isFirstOfMany ? editorText('SKIP') : editorText('CANCEL')}
           </Button>

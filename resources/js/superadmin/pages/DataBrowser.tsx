@@ -54,7 +54,7 @@ export default function DataBrowser({ tables }: { tables: DataTableSummary[] }) 
     }, [tables, query]);
 
     return (
-        <div className="flex flex-col gap-6">
+        <div className="grid grid-cols-1 gap-6">
             <PageHeader title={label('TITLE')} description={label('DESCRIPTION')} className="mb-0 md:mb-0" />
 
             <Card className="gap-0 py-0">

@@ -34,7 +34,7 @@ export default function StickerPacks({
     const tab = account ? 'account' : 'platform';
 
     return (
-        <div className="flex flex-col gap-6">
+        <div className="grid grid-cols-1 gap-6">
             <PageHeader
                 className="mb-0 md:mb-0"
                 title={account ? label('ACCOUNT_TITLE', { name: account.name }) : t('STICKER_LIBRARY.SUPER_ADMIN_HEADER')}

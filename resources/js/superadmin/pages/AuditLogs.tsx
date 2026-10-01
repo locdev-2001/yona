@@ -165,7 +165,7 @@ export default function AuditLogs({ logs, pagination, filters, options }: Props)
     ];
 
     return (
-        <div className="flex flex-col gap-6">
+        <div className="grid grid-cols-1 gap-6">
             <PageHeader title={label('TITLE')} description={label('DESCRIPTION')} className="mb-0 md:mb-0" />
 
             <ListCard
