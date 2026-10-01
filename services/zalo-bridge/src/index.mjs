@@ -16,6 +16,7 @@ import { buildSendMessageContent } from './send-content.mjs';
 import { sendForwardOrFallback } from './forward-content.mjs';
 import { stickerSendPayload } from './stickers.mjs';
 import { customStickerLayout, parseCustomSticker, sendCustomSticker } from './custom-sticker.mjs';
+import { createZaloStickerHost } from './custom-sticker-hosting.mjs';
 import { SEND_TIMING_LOG_TAG, startSendTiming } from './send-timing.mjs';
 import { SEND_VIDEO_LOG_TAG, sendVideoOrFile, videoToolsFromEnv } from './send-video.mjs';
 import { SEND_VOICE_LOG_TAG, sendVoiceOrFile, voiceToolsFromEnv } from './send-voice.mjs';
@@ -2194,6 +2195,8 @@ const FETCH_ALLOWED_HOSTS = buildAllowedHosts({
     extraCsv: process.env.BRIDGE_FETCH_HOST_ALLOWLIST,
 });
 
+const hostStickerOnZalo = createZaloStickerHost({ allowedHosts: FETCH_ALLOWED_HOSTS });
+
 /**
  * Đăng ký TẤT CẢ msgId của 1 lần send vào echo-dedup (file+caption = 2 msgId,
  * Codex MED-7) và trả {source_id: primary, source_ids: all} cho Laravel ghi alias.
@@ -2283,6 +2286,7 @@ export async function sendTextOrMediaThroughZca(slot, body, timing) {
             threadId: String(thread_id),
             isGroup: tt === ThreadType.Group,
             layout: CUSTOM_STICKER_LAYOUT,
+            hostSticker: hostStickerOnZalo,
         });
         timing.lap('zalo_send');
         return registerAllOutboundSourceIds(slot, sendResult);

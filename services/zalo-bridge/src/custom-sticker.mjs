@@ -1,4 +1,5 @@
 import { assertUrlAllowed } from './media-fetch.mjs';
+import { loggableError } from './media-tools.mjs';
 
 /**
  * Sticker tự tạo của Zalo: người nhận thấy một sticker cỡ gọn (như sticker gốc)
@@ -17,13 +18,16 @@ const MAX_EDGE = 1024;
 /**
  * Cách Zalo vẽ tin sticker tự tạo, chọn bằng ZALO_CUSTOM_STICKER_LAYOUT của bridge.
  * Client Zalo (web/desktop) xếp tin chat.photo khung không viền (properties.type 3) vào ba bộ vẽ:
- * - `ai`: params mang pStickerType 1 → bộ vẽ sticker AI, tải thẳng oriUrl. Đây là dạng tin
- *   sticker tự tạo thật mà Zalo desktop hiện đúng.
+ * - `ai`: params mang pStickerType 1 → bộ vẽ sticker AI. Ảnh được đưa lên CDN Zalo trước khi gửi
+ *   (custom-sticker-hosting.mjs): Zalo Web tải ảnh sticker AI bằng fetch() bị CSP chặn mọi miền
+ *   ngoài Zalo; desktop tải thẳng oriUrl. Đưa lên hỏng thì gửi như `ai_direct`.
+ * - `ai_direct`: như `ai` nhưng trỏ thẳng URL của Yona: desktop hiện đúng, Web để trống.
  * - `photo`: có contentId + webp mà không có pStickerType → bộ vẽ "photo sticker" cũ, desktop
  *   tải tệp về bộ nhớ đệm theo contentId; tệp ngoài CDN Zalo rơi vào ô mặt cười xám.
- * - `plain`: không contentId/webp → bộ vẽ ảnh không viền, tải thẳng oriUrl, không có ảnh động riêng.
+ * - `plain`: không contentId/webp → bộ vẽ ảnh không viền: desktop tải thẳng oriUrl, Web tải qua
+ *   fetch nên cũng vướng CSP như `ai_direct`.
  */
-export const CUSTOM_STICKER_LAYOUTS = Object.freeze(['ai', 'photo', 'plain']);
+export const CUSTOM_STICKER_LAYOUTS = Object.freeze(['ai', 'ai_direct', 'photo', 'plain']);
 
 export const DEFAULT_CUSTOM_STICKER_LAYOUT = 'ai';
 
@@ -34,6 +38,10 @@ const AI_STICKER_TYPE = 1;
 const PLAIN_EXT = JSON.stringify({ shouldParseLinkOrContact: 0 });
 
 const PHOTO_STICKER_EXT = JSON.stringify({ sSrcStr: '@STICKER', sSrcType: 0 });
+
+const ZALO_HOSTED_LAYOUT = 'ai';
+
+export const CUSTOM_STICKER_LOG_TAG = '[zalo-bridge:custom-sticker]';
 
 export function customStickerLayout(value) {
     const layout = typeof value === 'string' ? value.trim().toLowerCase() : '';
@@ -165,8 +173,27 @@ export function ensureCustomStickerApi(api) {
     });
 }
 
-export async function sendCustomSticker(api, { sticker, threadId, isGroup, layout }) {
-    ensureCustomStickerApi(api);
+async function stickerForLayout(api, { sticker, threadId, isGroup, layout, hostSticker, warn }) {
+    if (customStickerLayout(layout) !== ZALO_HOSTED_LAYOUT || typeof hostSticker !== 'function') {
+        return sticker;
+    }
+    try {
+        return await hostSticker(api, sticker, { threadId, isGroup });
+    } catch (error) {
+        warn(CUSTOM_STICKER_LOG_TAG, 'host_on_zalo_failed', loggableError(error));
 
-    return api[CUSTOM_STICKER_METHOD]({ sticker, threadId, isGroup, layout, fileService: fileServiceOf(api) });
+        return sticker;
+    }
+}
+
+/**
+ * `hostSticker` (custom-sticker-hosting.mjs) đưa ảnh lên CDN Zalo cho dạng `ai`; vắng hoặc hỏng
+ * thì gửi URL của Yona, tin vẫn tới khách.
+ */
+export async function sendCustomSticker(api, { sticker, threadId, isGroup, layout, hostSticker = null, warn = console.warn }) {
+    const fileService = fileServiceOf(api);
+    ensureCustomStickerApi(api);
+    const sentSticker = await stickerForLayout(api, { sticker, threadId, isGroup, layout, hostSticker, warn });
+
+    return api[CUSTOM_STICKER_METHOD]({ sticker: sentSticker, threadId, isGroup, layout, fileService });
 }

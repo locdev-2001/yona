@@ -560,8 +560,12 @@ thẳng ra Internet. `BRIDGE_ELEVATED_SECRET`
 
 `ZALO_CUSTOM_STICKER_LAYOUT` (tuỳ chọn, mặc định `ai`) chọn dạng tin khi gửi
 sticker tự tạo của Yona sang Zalo: `ai` gửi như sticker AI của Zalo
-(`pStickerType` trong `jcp`), `plain` là ảnh không viền không `contentId`/`webp`,
-`photo` là dạng PNG cũ. Đổi xong chạy
+(`pStickerType` trong `jcp`) với ảnh đã đưa lên CDN Zalo (JPEG nền trắng; Zalo
+Web tải ảnh sticker AI bằng `fetch()` và CSP `connect-src` của chat.zalo.me chặn
+mọi miền ngoài Zalo, nên URL của yona.vn hiện trống trên Web), đưa lên hỏng thì
+tự gửi như `ai_direct`; `ai_direct` là sticker AI trỏ thẳng URL của yona.vn
+(desktop hiện, Web trống); `plain` là ảnh không viền không `contentId`/`webp`;
+`photo` là dạng PNG cũ (Web hiện, desktop mặt cười xám). Đổi xong chạy
 `pm2 restart zalo-personal-bridge --update-env`.
 
 ### Mã hoá at-rest kho phiên (`BRIDGE_SESSION_KEY`)

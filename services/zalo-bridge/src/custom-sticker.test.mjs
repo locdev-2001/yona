@@ -106,21 +106,20 @@ const ANIMATION_WEBP = JSON.stringify({ width: 128, height: 128, url: ANIMATION_
 
 // Dạng `ai` khớp tin sticker tự tạo mà Zalo desktop hiện đúng: pStickerType chỉ tới được server
 // khi nằm trong jcp (đặt thẳng trong params thì bị bỏ, tin rơi sang bộ vẽ photo sticker cũ).
+const AI_FIELDS = {
+    oriUrl: ANIMATION_URL,
+    thumbUrl: ANIMATION_URL,
+    hdUrl: ANIMATION_URL,
+    contentId: 1700,
+    thumb_width: 128,
+    thumb_height: 128,
+    webp: ANIMATION_WEBP,
+    jcp: JSON.stringify({ pStickerType: 1 }),
+};
+
 const LAYOUT_CASES = [
-    {
-        layout: 'ai',
-        fields: {
-            oriUrl: ANIMATION_URL,
-            thumbUrl: ANIMATION_URL,
-            hdUrl: ANIMATION_URL,
-            contentId: 1700,
-            thumb_width: 128,
-            thumb_height: 128,
-            webp: ANIMATION_WEBP,
-            jcp: JSON.stringify({ pStickerType: 1 }),
-        },
-        ext: { shouldParseLinkOrContact: 0 },
-    },
+    { layout: 'ai', fields: AI_FIELDS, ext: { shouldParseLinkOrContact: 0 } },
+    { layout: 'ai_direct', fields: AI_FIELDS, ext: { shouldParseLinkOrContact: 0 } },
     {
         layout: 'photo',
         fields: {
@@ -167,6 +166,7 @@ test('customStickerLayout: mặc định ai, giá trị lạ hay trống cũng v
     assert.equal(customStickerLayout('gif'), 'ai');
     assert.equal(customStickerLayout(' Plain '), 'plain');
     assert.equal(customStickerLayout('photo'), 'photo');
+    assert.equal(customStickerLayout('AI_DIRECT'), 'ai_direct');
     assert.deepEqual(
         customStickerParams({ sticker, threadId: 1, isGroup: false, clientId: 1 }),
         customStickerParams({ sticker, threadId: 1, isGroup: false, clientId: 1, layout: 'ai' })
@@ -230,3 +230,57 @@ test('sendCustomSticker: phiên chưa có bản đồ dịch vụ tệp thì bá
     await assert.rejects(() => sendCustomSticker(api, { sticker, threadId: '42', isGroup: false }), /custom_sticker_file_service_missing/);
     assert.equal(requests.length, 0);
 });
+
+const HOSTED_URL = 'https://b-f9-zpc.zdn.vn/1/sticker.jpg';
+
+function fakeHost(result = (sent) => ({ ...sent, staticUrl: HOSTED_URL, animationUrl: HOSTED_URL })) {
+    const calls = [];
+    const hostSticker = async (api, sent, target) => {
+        calls.push({ api, sent, target });
+        return result(sent);
+    };
+
+    return { hostSticker, calls };
+}
+
+test('sendCustomSticker: dạng ai gửi URL ảnh đã đưa lên CDN Zalo cho mọi trường ảnh', async () => {
+    const { api, requests } = fakeZcaApi();
+    const { hostSticker, calls } = fakeHost();
+
+    await sendCustomSticker(api, { sticker, threadId: '555', isGroup: true, layout: 'ai', hostSticker });
+
+    assert.deepEqual(calls, [{ api, sent: sticker, target: { threadId: '555', isGroup: true } }]);
+    const params = sentParams(requests[0]);
+    assert.deepEqual(
+        [params.oriUrl, params.thumbUrl, params.hdUrl, JSON.parse(params.webp).url],
+        [HOSTED_URL, HOSTED_URL, HOSTED_URL, HOSTED_URL]
+    );
+    assert.equal(params.jcp, JSON.stringify({ pStickerType: 1 }));
+});
+
+test('sendCustomSticker: đưa lên CDN Zalo hỏng thì vẫn gửi URL của Yona và ghi cảnh báo không lộ URL', async () => {
+    const { api, requests } = fakeZcaApi();
+    const { hostSticker } = fakeHost(() => {
+        throw new Error('upload_failed https://b-f9-zpc.zdn.vn/token');
+    });
+    const warnings = [];
+
+    const result = await sendCustomSticker(api, { sticker, threadId: '987', isGroup: false, hostSticker, warn: (...args) => warnings.push(args) });
+
+    assert.deepEqual(result, { msgId: 5501 });
+    assert.equal(sentParams(requests[0]).oriUrl, ANIMATION_URL);
+    assert.equal(warnings.length, 1);
+    assert.equal(String(warnings[0]).includes('zdn.vn'), false);
+});
+
+for (const layout of ['ai_direct', 'photo', 'plain']) {
+    test(`sendCustomSticker: dạng ${layout} không đưa ảnh lên Zalo`, async () => {
+        const { api, requests } = fakeZcaApi();
+        const { hostSticker, calls } = fakeHost();
+
+        await sendCustomSticker(api, { sticker, threadId: '987', isGroup: false, layout, hostSticker });
+
+        assert.equal(calls.length, 0);
+        assert.equal(sentParams(requests[0]).hdUrl.startsWith('https://yona.test/'), true);
+    });
+}

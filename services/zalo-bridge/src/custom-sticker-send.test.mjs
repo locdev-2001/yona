@@ -1,12 +1,22 @@
 import assert from 'node:assert/strict';
+import http from 'node:http';
 import test from 'node:test';
+import sharp from 'sharp';
 
 /** Nối dây của `index.mjs`: body có `custom_sticker` → đường sticker tự tạo, msgId vào bộ chống echo. */
-process.env.BRIDGE_FETCH_HOST_ALLOWLIST = 'yona.test';
+process.env.BRIDGE_FETCH_HOST_ALLOWLIST = 'yona.test,127.0.0.1';
 const { sendTextOrMediaThroughZca } = await import('./index.mjs');
 const { CUSTOM_STICKER_METHOD } = await import('./custom-sticker.mjs');
 
-const STATIC_URL = 'https://yona.test/storage/stickers/1/7/static-128.png';
+const HOSTED_URL = 'https://b-f9-zpc.zdn.vn/1/sticker.jpg';
+const stickerPng = await sharp({ create: { width: 8, height: 8, channels: 4, background: { r: 200, g: 0, b: 0, alpha: 1 } } }).png().toBuffer();
+const stickerServer = http.createServer((request, response) => {
+    response.writeHead(200, { 'Content-Type': 'image/png' });
+    response.end(stickerPng);
+});
+await new Promise((resolve) => stickerServer.listen(0, '127.0.0.1', resolve));
+test.after(() => stickerServer.close());
+const STATIC_URL = `http://127.0.0.1:${stickerServer.address().port}/storage/stickers/1/7/static-128.png`;
 const timing = { lap() {}, recordBytes() {} };
 
 function fakeSlot() {
@@ -15,6 +25,10 @@ function fakeSlot() {
         zpwServiceMap: { file: ['https://files.zalo.test'] },
         custom(name, callback) {
             Object.defineProperty(api, name, { value: (props) => callback({ props }) });
+        },
+        uploadAttachment: async (file, threadId, threadType) => {
+            calls.push({ name: 'uploadAttachment', args: [threadId, threadType] });
+            return [{ fileType: 'image', hdUrl: HOSTED_URL }];
         },
         sendSticker: async (...args) => calls.push({ name: 'sendSticker', args }),
         sendMessage: async (...args) => calls.push({ name: 'sendMessage', args }),
@@ -27,7 +41,7 @@ function fakeSlot() {
     return { slot: { api, outboundEchoIds: new Map() }, calls };
 }
 
-test('custom_sticker đi đường sticker tự tạo, không gửi tệp, không gửi sticker gốc', async () => {
+test('custom_sticker đưa ảnh lên CDN Zalo rồi đi đường sticker tự tạo, không gửi tệp, không gửi sticker gốc', async () => {
     const { slot, calls } = fakeSlot();
 
     const result = await sendTextOrMediaThroughZca(
@@ -37,10 +51,11 @@ test('custom_sticker đi đường sticker tự tạo, không gửi tệp, khôn
     );
 
     assert.deepEqual(calls, [
+        { name: 'uploadAttachment', args: ['555', 1] },
         {
             name: CUSTOM_STICKER_METHOD,
             props: {
-                sticker: { staticUrl: STATIC_URL, animationUrl: STATIC_URL, width: 128, height: 128 },
+                sticker: { staticUrl: HOSTED_URL, animationUrl: HOSTED_URL, width: 128, height: 128 },
                 threadId: '555',
                 isGroup: true,
                 layout: 'ai',
