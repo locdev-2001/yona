@@ -1,171 +1,100 @@
-import { Link, usePage } from '@inertiajs/react';
+import { usePage } from '@inertiajs/react';
+import { useCallback, useState } from 'react';
 import type { ReactNode } from 'react';
 
-import IconSprite from './IconSprite';
 import type { SuperAdminPageProps } from '../types';
+import { Alert } from '../ui/Alert';
+import { cn } from '../ui/cn';
+import { useConsoleLabels } from '../ui/labels';
+import { Sheet } from '../ui/Sheet';
+import CommandPalette, { useCommandPaletteShortcut } from './CommandPalette';
+import { SidebarContent } from './Sidebar';
+import Topbar from './Topbar';
 
-const RESOURCE_ICONS: Record<string, string> = {
-    accounts: 'icon-building-4-line',
-    users: 'icon-user-follow-line',
-    agent_bots: 'icon-robot-line',
-    platform_apps: 'icon-apps-2-line',
-    impersonations: 'icon-mist-fill',
-};
+const COLLAPSED_STORAGE_KEY = 'yona.admin.sidebarCollapsed';
 
-const TOOL_PAGE_ICONS: Record<string, string> = {
-    sticker_packs: 'icon-emotion-line',
-};
+function readCollapsed(): boolean {
+    try {
+        return window.localStorage.getItem(COLLAPSED_STORAGE_KEY) === '1';
+    } catch {
+        return false;
+    }
+}
 
-const NAV_ITEM_CLASS =
-    '-ml-1 focus:outline-none cursor-pointer flex items-center px-2 py-1.5 text-slate-800 cursor-pointer hover:text-woot-500 hover:bg-slate-25 rounded-lg';
+function writeCollapsed(collapsed: boolean): void {
+    try {
+        window.localStorage.setItem(COLLAPSED_STORAGE_KEY, collapsed ? '1' : '0');
+    } catch {
+        // Trình duyệt chặn lưu trữ: thanh bên vẫn chạy, chỉ không nhớ trạng thái.
+    }
+}
 
-function NavItem({
-    icon,
-    url,
-    label,
-    active = false,
-}: {
-    icon: string;
-    url: string;
-    label: string;
-    active?: boolean;
-}) {
+function FlashMessages() {
+    const { flash } = usePage<SuperAdminPageProps>().props;
+    const label = useConsoleLabels();
+
+    if (!flash?.notice && !flash?.error && !flash?.alert) return null;
+
     return (
-        <li className="px-4 mb-1">
-            <a
-                className={`${active ? 'text-woot-500 bg-slate-25' : 'text-slate-800'} ${NAV_ITEM_CLASS}`}
-                href={url}
-            >
-                <svg width="16" height="16">
-                    <use xlinkHref={`#${icon}`} />
-                </svg>
-                <span className="ml-2 text-sm">{label}</span>
-            </a>
-        </li>
+        <div className="flex flex-col gap-2">
+            {flash.notice ? <Alert tone="success">{flash.notice}</Alert> : null}
+            {flash.alert ? <Alert tone="warning">{flash.alert}</Alert> : null}
+            {flash.error ? (
+                <Alert tone="destructive" title={label('flash_error')}>
+                    {flash.error}
+                </Alert>
+            ) : null}
+        </div>
     );
 }
 
+// Khung console: thanh bên theo vùng chức năng (thu gọn được trên máy tính, thành
+// ngăn trượt trên điện thoại), thanh trên có ô tìm kiếm Ctrl/Cmd+K và menu người dùng.
 export default function Layout({ children }: { children: ReactNode }) {
-    const { superAdmin, flash } = usePage<SuperAdminPageProps>().props;
-    const currentPath = superAdmin.currentPath;
-    const settingsOpen = currentPath.startsWith('/admin/settings') ||
-        currentPath.startsWith('/admin/app_config');
+    const label = useConsoleLabels();
+    const [collapsed, setCollapsed] = useState(readCollapsed);
+    const [mobileNavOpen, setMobileNavOpen] = useState(false);
+    const [paletteOpen, setPaletteOpen] = useState(false);
+
+    const toggleCollapsed = () => {
+        setCollapsed(!collapsed);
+        writeCollapsed(!collapsed);
+    };
+    const togglePalette = useCallback(() => setPaletteOpen(value => !value), []);
+
+    useCommandPaletteShortcut(togglePalette);
 
     return (
-        <div className="flex w-full h-full">
-            <IconSprite />
-            <div
-                className="border-slate-100 border-r w-56 flex-shrink-0 justify-between h-full flex flex-col"
-                role="navigation"
+        <div className="flex min-h-dvh w-full bg-console-background text-console-foreground">
+            <aside
+                className={cn(
+                    'sticky top-0 hidden h-dvh shrink-0 border-r border-console-border bg-console-sidebar transition-[width] duration-200 md:block',
+                    collapsed ? 'w-14' : 'w-64',
+                )}
             >
-                <div>
-                    <div className="flex mx-4 mb-4 border-slate-100 border-b py-6">
-                        <Link href="/admin">
-                            <img
-                                alt={superAdmin.installationName}
-                                className="h-10"
-                                src={superAdmin.logoThumbnail}
-                            />
-                        </Link>
-                        <div className="flex flex-col ml-3">
-                            <div className="text-sm">
-                                {superAdmin.installationName} {superAdmin.version}
-                            </div>
-                            <div className="text-xs text-slate-700 mt-0.5">
-                                Super Admin Console
-                            </div>
-                        </div>
-                    </div>
+                <SidebarContent collapsed={collapsed} />
+            </aside>
 
-                    <ul className="my-4">
-                        <NavItem
-                            icon="icon-grid-line"
-                            url="/admin"
-                            label="Dashboard"
-                            active={currentPath === '/admin'}
-                        />
-                        {superAdmin.navigation.map(item => (
-                            <NavItem
-                                key={item.resource}
-                                icon={RESOURCE_ICONS[item.resource]}
-                                url={item.url}
-                                label={item.label}
-                                active={currentPath.startsWith(item.url)}
-                            />
-                        ))}
-                        {superAdmin.toolPages.map(page => (
-                            <NavItem
-                                key={page.key}
-                                icon={TOOL_PAGE_ICONS[page.key]}
-                                url={page.url}
-                                label={page.label}
-                                active={currentPath.startsWith(page.url)}
-                            />
-                        ))}
-                        <li className="px-4 mb-1">
-                            <details className="group" open={settingsOpen}>
-                                <summary className="-ml-1 flex items-center px-2 py-1.5 cursor-pointer rounded-lg text-slate-800 hover:text-woot-500 hover:bg-slate-25 list-none">
-                                    <a
-                                        className="flex items-center flex-1"
-                                        href="/admin/settings"
-                                    >
-                                        <svg width="16" height="16">
-                                            <use xlinkHref="#icon-settings-2-line" />
-                                        </svg>
-                                        <span className="ml-2 text-sm">Settings</span>
-                                    </a>
-                                    <svg
-                                        className="ml-auto w-4 h-4 transition-transform duration-200 group-open:rotate-180"
-                                        viewBox="0 0 20 20"
-                                        fill="currentColor"
-                                    >
-                                        <path
-                                            fillRule="evenodd"
-                                            d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                                            clipRule="evenodd"
-                                        />
-                                    </svg>
-                                </summary>
-                                <ul className="ml-4 mt-1">
-                                    {superAdmin.settingsPages.map(page => (
-                                        <li className="px-4 mb-1" key={page.key}>
-                                            <a
-                                                className="text-slate-800 -ml-1 flex items-center px-2 py-1.5 hover:text-woot-500 hover:bg-slate-25 rounded-lg"
-                                                href={page.url}
-                                            >
-                                                <span className="ml-2 text-sm">
-                                                    {page.label}
-                                                </span>
-                                            </a>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </details>
-                        </li>
-                    </ul>
-                </div>
-                <div>
-                    <ul className="my-4">
-                        <NavItem
-                            icon="icon-health-book-line"
-                            url="/admin/instance_status"
-                            label="Instance Health"
-                            active={currentPath === '/admin/instance_status'}
-                        />
-                        <NavItem icon="icon-dashboard-line" url="/" label="Agent Dashboard" />
-                        <NavItem
-                            icon="icon-logout-circle-r-line"
-                            url="/admin/logout"
-                            label="Logout"
-                        />
-                    </ul>
-                </div>
+            <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen} label={label('navigation')}>
+                <SidebarContent onNavigate={() => setMobileNavOpen(false)} onClose={() => setMobileNavOpen(false)} />
+            </Sheet>
+
+            <div className="flex min-w-0 flex-1 flex-col">
+                <Topbar
+                    collapsed={collapsed}
+                    onToggleCollapsed={toggleCollapsed}
+                    onOpenMobileNav={() => setMobileNavOpen(true)}
+                    onOpenSearch={() => setPaletteOpen(true)}
+                />
+                <main className="flex-1 px-4 py-6 md:px-6 lg:px-8">
+                    <div className="mx-auto flex w-full max-w-screen-2xl flex-col gap-6">
+                        <FlashMessages />
+                        {children}
+                    </div>
+                </main>
             </div>
-            <main className="w-full overflow-auto" role="main">
-                {flash?.notice ? <div className="flash-notice">{flash.notice}</div> : null}
-                {flash?.error ? <div className="flash-error">{flash.error}</div> : null}
-                {children}
-            </main>
+
+            <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
         </div>
     );
 }

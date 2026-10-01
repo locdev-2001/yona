@@ -1,41 +1,38 @@
-import { Head } from '@inertiajs/react';
+import { Link } from '@inertiajs/react';
 
-// Port từ app/views/super_admin/settings/show.html.erb — bản CE chỉ còn danh
-// sách mục cấu hình (khối gói cước/billing là enterprise, không port).
-export default function SuperAdminSettings({
-    sections,
-}: {
-    sections: { key: string; label: string; url: string }[];
-}) {
+import { Card } from '../ui/Card';
+import { Icon } from '../ui/Icon';
+import { useConsoleLabels } from '../ui/labels';
+import { PageHeader } from '../ui/PageHeader';
+
+// Bản CE chỉ còn danh sách mục cấu hình (khối gói cước/billing là enterprise).
+export default function SuperAdminSettings({ sections }: { sections: { key: string; label: string; url: string }[] }) {
+    const label = useConsoleLabels();
+
     return (
         <>
-            <Head title="Settings" />
-            <header className="flex px-8 py-4 items-center border-b border-n-weak" role="banner">
-                <div className="border border-n-weak mr-4 p-2 rounded-full">
-                    <svg width="24" height="24">
-                        <use xlinkHref="#icon-settings-2-line" />
-                    </svg>
-                </div>
-                <div className="flex flex-col h-14 justify-center">
-                    <h1 className="text-base font-medium leading-6 text-n-slate-12" id="page-title">
-                        Settings
-                    </h1>
-                    <p className="text-sm font-normal leading-5 text-slate-500 m-0">
-                        Update your instance settings
-                    </p>
-                </div>
-            </header>
-            <section className="main-content__body px-8">
-                <ul className="list-none p-0 m-0">
-                    {sections.map(section => (
-                        <li className="py-2" key={section.key}>
-                            <a className="text-woot-500 text-sm" href={section.url}>
-                                {section.label}
-                            </a>
-                        </li>
-                    ))}
-                </ul>
-            </section>
+            <PageHeader title={label('settings_title')} description={label('settings_description')} />
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                {sections.map(section => (
+                    <Link
+                        key={section.key}
+                        href={section.url}
+                        className="group rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-console-ring/50"
+                    >
+                        <Card className="flex-row items-center gap-3 px-5 py-4 transition-colors group-hover:bg-console-muted">
+                            <span className="flex size-9 items-center justify-center rounded-md bg-console-accent text-console-muted-foreground">
+                                <Icon name="i-lucide-sliders-horizontal" />
+                            </span>
+                            <span className="min-w-0 flex-1">
+                                <span className="block truncate font-medium">
+                                    {label('app_config_title', { section: section.label })}
+                                </span>
+                            </span>
+                            <Icon name="i-lucide-chevron-right" className="text-console-muted-foreground" />
+                        </Card>
+                    </Link>
+                ))}
+            </div>
         </>
     );
 }

@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Http\Controllers\SuperAdmin\AppConfigsController;
+use App\Support\SuperAdmin\ConsoleNavigation;
 use App\Support\SuperAdmin\DashboardRegistry;
 use App\Support\SuperAdminArea;
 use Closure;
@@ -11,9 +12,9 @@ use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Symfony\Component\HttpFoundation\Response;
 
-// Console quản trị dùng layout riêng (CSS Administrate) và thanh điều hướng
-// dựng từ danh bạ dashboard — chia sẻ một lần ở đây thay vì lặp trong từng
-// controller.
+// Console quản trị dùng layout riêng: thanh bên theo vùng chức năng, chữ của
+// khung dịch sẵn và người đang đăng nhập — chia sẻ một lần ở đây thay vì lặp
+// trong từng controller.
 class SuperAdminInertia
 {
     public function __construct(private readonly DashboardRegistry $registry) {}
@@ -39,7 +40,13 @@ class SuperAdminInertia
                     'label' => Str::headline($section),
                     'url' => SuperAdminArea::url("app_config?config={$section}"),
                 ], AppConfigsController::sections()),
+                'navGroups' => ConsoleNavigation::groups(),
+                'labels' => ConsoleNavigation::labels(),
+                'dictionary' => ConsoleNavigation::dictionary(),
+                'searchUrl' => SuperAdminArea::url('api/search'),
+                'currentUser' => $this->currentUser($request),
                 'currentPath' => $request->getPathInfo(),
+                'currentUrl' => $request->getRequestUri(),
             ],
             'flash' => fn () => [
                 'notice' => $request->session()->get('notice'),
@@ -49,5 +56,16 @@ class SuperAdminInertia
         ]);
 
         return $next($request);
+    }
+
+    /** @return array{name: string, email: string}|null */
+    private function currentUser(Request $request): ?array
+    {
+        $admin = $request->user('super_admin');
+
+        return $admin === null ? null : [
+            'name' => (string) ($admin->name ?: $admin->email),
+            'email' => (string) $admin->email,
+        ];
     }
 }

@@ -39,6 +39,7 @@ use App\Http\Controllers\SuperAdmin\StickerPacksController as SuperAdminStickerP
 use App\Http\Controllers\SuperAdmin\UsersController as SuperAdminUsersController;
 use App\Http\Middleware\EnsureSuperAdminMfaEnrolled;
 use App\Http\Middleware\ExpireIdleSuperAdminSession;
+use App\Http\Middleware\RecordSuperAdminAudit;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\RestrictWidgetEmbedding;
 use App\Http\Middleware\StartSession;
@@ -520,7 +521,7 @@ Route::prefix(SuperAdminArea::PREFIX)->middleware(SuperAdminInertia::class)->gro
         Route::post('/sign_in', [SuperAdminSessionsController::class, 'store']);
     });
 
-    Route::middleware('auth:super_admin')->group(function () {
+    Route::middleware(['auth:super_admin', RecordSuperAdminAudit::class])->group(function () {
         Route::match(['get', 'delete'], '/logout', [SuperAdminSessionsController::class, 'destroy']);
 
         Route::get('/mfa/setup', [SuperAdminMfaController::class, 'setupPage'])->name('admin.mfa.setup');
@@ -569,6 +570,9 @@ Route::prefix(SuperAdminArea::PREFIX)->middleware(SuperAdminInertia::class)->gro
             Route::get('/account_users/{id}', [SuperAdminAccountUsersController::class, 'show'])->whereNumber('id');
             Route::post('/account_users', [SuperAdminAccountUsersController::class, 'store']);
             Route::delete('/account_users/{id}', [SuperAdminAccountUsersController::class, 'destroy'])->whereNumber('id');
+
+            require __DIR__.'/admin/dashboard.php';
+            require __DIR__.'/admin/operations.php';
 
             // Nhật ký đăng nhập hộ — chỉ đọc, không CRUD như các resource khác.
             Route::get('/impersonations', [SuperAdminImpersonationsController::class, 'index']);

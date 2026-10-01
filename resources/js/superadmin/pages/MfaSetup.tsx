@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
-import { Head, router, usePage } from '@inertiajs/react';
+import { router, usePage } from '@inertiajs/react';
 
 import { t } from '../../i18n';
 import MfaSetupWizard from 'dashboard/settings/profile/mfa/MfaSetupWizard';
 import { createMfaApi } from 'dashboard/settings/profile/mfa/mfaApi';
 import { parseApiErrorMessage } from 'dashboard/helper/apiClient';
 import type { SuperAdminPageProps } from '../types';
+import { Alert } from '../ui/Alert';
+import { PageHeader } from '../ui/PageHeader';
 
 const superAdminMfaApi = createMfaApi('/admin/mfa');
 
@@ -50,14 +52,13 @@ export default function SuperAdminMfaSetup() {
     };
 
     return (
-        <div className="max-w-2xl mx-auto py-10 px-6">
-            <Head title="Set up 2FA" />
-            <h1 className="text-2xl font-medium text-slate-900 mb-2">{t('SUPER_ADMIN_MFA.REQUIRED_TITLE')}</h1>
-            <p className="text-sm text-slate-700 mb-6">
-                {t('SUPER_ADMIN_MFA.REQUIRED_DESCRIPTION', { installationName: superAdmin.installationName })}
-            </p>
+        <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
+            <PageHeader
+                title={t('SUPER_ADMIN_MFA.REQUIRED_TITLE')}
+                description={t('SUPER_ADMIN_MFA.REQUIRED_DESCRIPTION', { installationName: superAdmin.installationName })}
+            />
 
-            {startError ? <p className="mb-5 text-sm text-ruby-600">{startError}</p> : null}
+            {startError ? <Alert tone="destructive">{startError}</Alert> : null}
 
             <MfaSetupWizard
                 showSetup

@@ -27,7 +27,9 @@ const superAdmin = {
     logoThumbnail: '/logo-thumb.svg',
     version: '1.0',
     navigation: [],
+    toolPages: [],
     settingsPages: [],
+    labels: { login_password: 'Mật khẩu' },
     currentPath: '/admin/mfa/setup',
 };
 

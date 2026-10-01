@@ -1,5 +1,5 @@
-{{-- Layout màn đăng nhập console quản trị — không nạp CSS Administrate, đúng
-     như layout devise riêng của bản gốc. --}}
+{{-- Layout màn đăng nhập console quản trị: chỉ phần nền chung (Tailwind + token
+     console), không có khung điều hướng. --}}
 <!DOCTYPE html>
 <html data-installation-name="{{ config('yona.branding.installation_name') }}" lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     <head>

@@ -40,7 +40,7 @@ abstract class ResourceController extends Controller
         return $this->render('Index', [
             'columns' => $this->columns($dashboard),
             'rows' => collect($records->items())->map(fn (Model $record) => [
-                'url' => $this->presenter->url($record),
+                'url' => $this->indexRowUrl($record),
                 'cells' => array_map(
                     fn (string $attribute) => $this->presenter->present($dashboard, $record, $attribute, false),
                     $dashboard->collectionAttributes(),
@@ -121,6 +121,12 @@ abstract class ResourceController extends Controller
 
         return redirect(SuperAdminArea::url($this->dashboard()->resourceName()))
             ->with('notice', Str::headline(class_basename($this->dashboard()->modelClass())).' was successfully destroyed.');
+    }
+
+    /** Dòng trong danh sách dẫn tới đâu; mặc định là trang show. */
+    protected function indexRowUrl(Model $record): ?string
+    {
+        return $this->presenter->url($record);
     }
 
     /** Khối bổ sung riêng của từng trang show (biểu mẫu, nút hành động). */

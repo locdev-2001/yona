@@ -1,8 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 
+import { superAdminProps } from '../components/__fixtures__/superAdmin';
+
 vi.mock('@inertiajs/react', () => ({
     Head: () => null,
+    Link: ({ href, children }: { href: string; children: unknown }) => <a href={href}>{children as never}</a>,
+    usePage: () => ({ props: { superAdmin: superAdminProps() } }),
     router: { post: vi.fn(), delete: vi.fn() },
     useForm: (initial: Record<string, unknown>) => ({
         data: initial,
@@ -22,21 +26,21 @@ const baseProps = {
     actions: ['index', 'show'],
 };
 
-// Đăng nhập hộ đòi lý do trước khi mở form thật (POST, không còn là <a> GET
-// như bản cũ) — form chỉ hiện sau khi bấm "Impersonate user".
+// Đăng nhập hộ đòi lý do trước khi mở form thật (POST, không phải <a> GET) —
+// form chỉ hiện sau khi bấm nút "Đăng nhập hộ".
 describe('ResourceShow — mục đăng nhập hộ', () => {
     it('không hiện nút đăng nhập hộ khi không có impersonateUrl', () => {
         render(<ResourceShow {...baseProps} />);
 
-        expect(screen.queryByText('Impersonate user')).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Đăng nhập hộ' })).not.toBeInTheDocument();
     });
 
     it('mở form lý do khi bấm nút, khoá nút gửi tới khi đủ độ dài', () => {
         render(<ResourceShow {...baseProps} impersonateUrl="/admin/users/5/impersonate" />);
 
-        fireEvent.click(screen.getByRole('button', { name: 'Impersonate user' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Đăng nhập hộ' }));
 
-        const submit = screen.getByRole('button', { name: 'Confirm & impersonate' }) as HTMLButtonElement;
+        const submit = screen.getByRole('button', { name: 'Xác nhận và đăng nhập hộ' }) as HTMLButtonElement;
         expect(submit.disabled).toBe(true);
 
         const textarea = screen.getByRole('textbox') as HTMLTextAreaElement;
@@ -53,9 +57,9 @@ describe('ResourceShow — mục đăng nhập hộ', () => {
                 csrf="real-csrf-token"
             />,
         );
-        fireEvent.click(screen.getByRole('button', { name: 'Impersonate user' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Đăng nhập hộ' }));
 
-        const form = document.querySelector('form') as HTMLFormElement;
+        const form = document.querySelector('form[target="_blank"]') as HTMLFormElement;
         expect(form.method.toLowerCase()).toBe('post');
         expect(form.getAttribute('action')).toBe('/admin/users/5/impersonate');
         expect(form.target).toBe('_blank');

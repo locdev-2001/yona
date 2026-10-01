@@ -25,7 +25,9 @@ const baseSuperAdmin = {
     logoThumbnail: '/logo-thumb.svg',
     version: '1.0',
     navigation: [],
+    toolPages: [],
     settingsPages: [],
+    labels: { login_password: 'Mật khẩu' },
     currentPath: '/admin/sign_in',
 };
 
@@ -39,7 +41,7 @@ describe('SuperAdminLogin', () => {
     it('hiện form mật khẩu khi chưa cần OTP', () => {
         render(<SuperAdminLogin />);
 
-        expect(screen.getByLabelText('Password')).toBeInTheDocument();
+        expect(screen.getByLabelText('Mật khẩu')).toBeInTheDocument();
     });
 
     it('chuyển sang màn OTP khi server báo otpRequired kèm token', () => {
@@ -47,7 +49,7 @@ describe('SuperAdminLogin', () => {
 
         render(<SuperAdminLogin />);
 
-        expect(screen.queryByLabelText('Password')).not.toBeInTheDocument();
+        expect(screen.queryByLabelText('Mật khẩu')).not.toBeInTheDocument();
         expect(document.querySelectorAll('input[inputmode="numeric"]').length).toBe(6);
     });
 
@@ -71,6 +73,6 @@ describe('SuperAdminLogin', () => {
         render(<SuperAdminLogin />);
         fireEvent.click(screen.getByRole('button', { name: 'Cancel and return to login' }));
 
-        expect(screen.getByLabelText('Password')).toBeInTheDocument();
+        expect(screen.getByLabelText('Mật khẩu')).toBeInTheDocument();
     });
 });

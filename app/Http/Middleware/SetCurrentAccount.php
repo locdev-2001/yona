@@ -22,6 +22,12 @@ class SetCurrentAccount
             $account = Account::query()->findOrFail($account);
         }
 
+        // Account bị khoá từ console: không ai (agent, bot, token API) vào được nữa.
+        if (! $account->isActive()) {
+            abort_if($request->expectsJson() || $request->is('api/*'), response()->json(['error' => 'Account is suspended'], 403));
+            abort(403, __('admin_operations.SUSPENSION.BLOCKED'));
+        }
+
         // validate_token_api_access: account tắt API thì token không vào được.
         if ($request->attributes->get(AuthenticateApiAccessToken::AUTHENTICATED_BY_TOKEN)
             && ! $account->apiAndWebhooksEnabled()) {

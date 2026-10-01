@@ -1,6 +1,6 @@
-// Nền chung của khu /super_admin: Tailwind + font Inter + biến màu.
-// Màn đăng nhập chỉ dùng đúng phần này (bản gốc cũng không nạp CSS Administrate
-// ở layout devise); console dùng thêm CSS Administrate trong superadmin.scss.
+// Nền chung của khu /admin (đăng nhập + console): Tailwind, font Inter, biến màu
+// Yona và bộ token `console-*` (chỉ chủ đề sáng, như phần còn lại của sản phẩm). Utility `bg-console-card`,
+// `text-console-muted-foreground`… đọc các biến dưới đây qua tailwind/superadmin.config.cjs.
 @import 'tailwindcss/base';
 @import 'tailwindcss/components';
 @import 'tailwindcss/utilities';
@@ -8,7 +8,40 @@
 @import 'fonts';
 @import 'next-colors';
 
+@layer base {
+  :root {
+    --console-background: 250 250 251;
+    --console-foreground: var(--slate-12);
+    --console-card: 255 255 255;
+    --console-muted: var(--slate-2);
+    --console-muted-foreground: var(--slate-11);
+    --console-accent: var(--slate-3);
+    --console-accent-foreground: var(--slate-12);
+    --console-border: var(--slate-5);
+    --console-input: var(--slate-6);
+    --console-ring: var(--blue-9);
+    --console-primary: var(--slate-12);
+    --console-primary-foreground: 255 255 255;
+    --console-brand: var(--blue-9);
+    --console-destructive: var(--ruby-9);
+    --console-destructive-foreground: var(--ruby-11);
+    --console-success: var(--teal-9);
+    --console-success-foreground: var(--teal-11);
+    --console-warning: var(--amber-9);
+    --console-warning-foreground: var(--amber-11);
+    --console-sidebar: 255 255 255;
+  }
+}
+
+html,
 body {
+  min-height: 100%;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  background-color: rgb(var(--console-background));
+  color: rgb(var(--console-foreground));
   font-family:
     Inter,
     -apple-system,

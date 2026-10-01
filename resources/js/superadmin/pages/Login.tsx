@@ -1,11 +1,14 @@
 import { useState } from 'react';
+import type { ReactNode } from 'react';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
 
 import MfaVerification from 'dashboard/components/auth/MfaVerification';
 import type { SuperAdminPageProps } from '../types';
-
-const INPUT_CLASS =
-    'block w-full rounded-md border-0 px-3 py-3 appearance-none shadow-sm ring-1 ring-inset text-slate-900 placeholder:text-slate-400 focus:ring-2 focus:ring-inset focus:ring-woot-500 sm:text-sm sm:leading-6 outline-none ring-slate-200';
+import { Alert } from '../ui/Alert';
+import { Button } from '../ui/Button';
+import { Card } from '../ui/Card';
+import { Field, Input } from '../ui/Input';
+import { useConsoleLabels } from '../ui/labels';
 
 interface SuperAdminLoginPageProps extends SuperAdminPageProps {
     otpRequired?: boolean;
@@ -13,14 +16,14 @@ interface SuperAdminLoginPageProps extends SuperAdminPageProps {
     otpError?: string | null;
 }
 
-// Port từ app/views/super_admin/devise/sessions/new.html.erb. Thêm bước OTP
-// sau mật khẩu khi tài khoản đã bật 2FA — cùng component MfaVerification với
-// màn đăng nhập agent (v3/views/login/Index.tsx).
+// Bước OTP sau mật khẩu khi tài khoản đã bật 2FA — cùng component
+// MfaVerification với màn đăng nhập agent (v3/views/login/Index.tsx).
 export default function SuperAdminLogin() {
     const { flash, superAdmin, otpRequired, otpToken, otpError } = usePage<SuperAdminLoginPageProps>().props;
     const { data, setData, post, processing } = useForm({
         super_admin: { email: '', password: '' },
     });
+    const label = useConsoleLabels();
     const [verifying, setVerifying] = useState(false);
     const [dismissedOtp, setDismissedOtp] = useState(false);
 
@@ -41,107 +44,73 @@ export default function SuperAdminLogin() {
 
     if (showOtp) {
         return (
-            <div className="h-full w-full antialiased">
-                <Head title="SuperAdmin" />
-                <main className="flex flex-col bg-woot-25 min-h-screen w-full py-20 sm:px-6 lg:px-8">
-                    <MfaVerification
-                        isVerifying={verifying}
-                        errorMessage={otpError ?? ''}
-                        onVerify={submitOtp}
-                        onCancel={() => setDismissedOtp(true)}
-                    />
-                </main>
-            </div>
+            <AuthShell title={label('login_title')}>
+                <MfaVerification
+                    isVerifying={verifying}
+                    errorMessage={otpError ?? ''}
+                    onVerify={submitOtp}
+                    onCancel={() => setDismissedOtp(true)}
+                />
+            </AuthShell>
         );
     }
 
     return (
-        <div className="h-full w-full antialiased">
-            <Head title="SuperAdmin" />
-            <main className="flex flex-col bg-woot-25 min-h-screen w-full py-20 sm:px-6 lg:px-8">
-                <section className="max-w-5xl mx-auto">
-                    <img
-                        src={superAdmin.logo}
-                        alt={superAdmin.installationName}
-                        className="mx-auto h-8 w-auto block"
-                    />
-                    <h2 className="mt-6 text-center text-3xl font-medium text-slate-900">
-                        Howdy, admin 👋
-                    </h2>
-                </section>
-                <section className="bg-white shadow sm:mx-auto mt-11 sm:w-full sm:max-w-lg p-11 sm:shadow-lg sm:rounded-lg mb-8 mt-15">
-                    <div>
-                        {flash?.error ? (
-                            <p className="mb-5 text-sm text-ruby-600">{flash.error}</p>
-                        ) : null}
-                        <form
-                            id="new_super_admin"
-                            onSubmit={event => {
-                                event.preventDefault();
-                                post('/admin/sign_in');
-                            }}
-                        >
-                            <div className="mb-5">
-                                <label
-                                    htmlFor="super_admin_email"
-                                    className="flex justify-between text-sm font-medium leading-6 text-slate-900"
-                                >
-                                    Email Address
-                                </label>
-                                <div className="mt-1">
-                                    <input
-                                        autoFocus
-                                        autoComplete="email"
-                                        placeholder="Email eg: someone@example.com"
-                                        className={INPUT_CLASS}
-                                        type="email"
-                                        id="super_admin_email"
-                                        value={data.super_admin.email}
-                                        onChange={event =>
-                                            setData('super_admin', {
-                                                ...data.super_admin,
-                                                email: event.target.value,
-                                            })
-                                        }
-                                    />
-                                </div>
-                            </div>
-                            <div className="mb-5">
-                                <label
-                                    htmlFor="super_admin_password"
-                                    className="flex justify-between text-sm font-medium leading-6 text-slate-900"
-                                >
-                                    Password
-                                </label>
-                                <div className="mt-1">
-                                    <input
-                                        autoComplete="current-password"
-                                        placeholder="Password"
-                                        className={INPUT_CLASS}
-                                        type="password"
-                                        id="super_admin_password"
-                                        value={data.super_admin.password}
-                                        onChange={event =>
-                                            setData('super_admin', {
-                                                ...data.super_admin,
-                                                password: event.target.value,
-                                            })
-                                        }
-                                    />
-                                </div>
-                            </div>
-                            <button
-                                type="submit"
-                                disabled={processing}
-                                className="flex items-center w-full justify-center rounded-md bg-woot-500 py-3 px-3 text-base font-medium text-white shadow-sm hover:bg-woot-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-woot-500 cursor-pointer"
-                            >
-                                <span>Login</span>
-                            </button>
-                        </form>
-                    </div>
-                </section>
-            </main>
-        </div>
+        <AuthShell title={label('login_title')}>
+            <div className="flex flex-col items-center gap-3 text-center">
+                <img src={superAdmin.logo} alt={superAdmin.installationName} className="h-8 w-auto" />
+                <div>
+                    <h1 className="text-xl font-semibold tracking-tight text-console-foreground">{label('login_title')}</h1>
+                    <p className="mt-1 text-sm text-console-muted-foreground">{label('login_description')}</p>
+                </div>
+            </div>
+            <Card className="mt-6 px-6 py-6 sm:px-8">
+                {flash?.error ? <Alert tone="destructive">{flash.error}</Alert> : null}
+                <form
+                    id="new_super_admin"
+                    className="flex flex-col gap-4"
+                    onSubmit={event => {
+                        event.preventDefault();
+                        post('/admin/sign_in');
+                    }}
+                >
+                    <Field label={label('login_email')} htmlFor="super_admin_email">
+                        <Input
+                            autoFocus
+                            autoComplete="email"
+                            placeholder={label('login_email_placeholder')}
+                            type="email"
+                            id="super_admin_email"
+                            className="h-10"
+                            value={data.super_admin.email}
+                            onChange={event => setData('super_admin', { ...data.super_admin, email: event.target.value })}
+                        />
+                    </Field>
+                    <Field label={label('login_password')} htmlFor="super_admin_password">
+                        <Input
+                            autoComplete="current-password"
+                            type="password"
+                            id="super_admin_password"
+                            className="h-10"
+                            value={data.super_admin.password}
+                            onChange={event => setData('super_admin', { ...data.super_admin, password: event.target.value })}
+                        />
+                    </Field>
+                    <Button type="submit" size="lg" disabled={processing} className="mt-2 w-full">
+                        {label('login_submit')}
+                    </Button>
+                </form>
+            </Card>
+        </AuthShell>
+    );
+}
+
+function AuthShell({ title, children }: { title: string; children: ReactNode }) {
+    return (
+        <main className="flex min-h-dvh w-full flex-col items-center justify-center bg-console-background px-4 py-12">
+            <Head title={title} />
+            <div className="w-full max-w-sm">{children}</div>
+        </main>
     );
 }
 

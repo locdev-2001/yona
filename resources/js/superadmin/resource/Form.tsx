@@ -1,4 +1,11 @@
-import { Head, useForm } from '@inertiajs/react';
+import { Link, useForm } from '@inertiajs/react';
+
+import { useNavLabel } from '../components/navigation';
+import { Button, buttonClassName } from '../ui/Button';
+import { Card, CardContent, CardFooter } from '../ui/Card';
+import { Field, Input, Select } from '../ui/Input';
+import { useConsoleDictionary, useConsoleLabels } from '../ui/labels';
+import { PageHeader } from '../ui/PageHeader';
 
 type FormField = {
     name: string;
@@ -11,6 +18,7 @@ type FormField = {
 
 type Props = {
     resource: string;
+    resourceLabel?: string;
     singular: string;
     singularLabel: string;
     record: { id: number; title: string; url: string | null } | null;
@@ -19,108 +27,96 @@ type Props = {
     method: 'post' | 'put';
 };
 
-// Port từ app/views/administrate/application/{new,edit,_form}.html.erb.
-export default function ResourceForm({
-    singular,
-    singularLabel,
-    record,
-    fields,
-    action,
-    method,
-}: Props) {
-    const initial = Object.fromEntries(
-        fields.map(field => [field.name, String(field.value ?? '')]),
-    );
-    const { data, setData, post, put, processing, errors } = useForm<
-        Record<string, Record<string, string>>
-    >({ [singular]: initial });
+// Nhãn máy chủ tự suy từ tên thuộc tính thì thay bằng bản tiếng Việt; nhãn riêng
+// do dashboard đặt thì giữ.
+function isDerivedLabel(name: string, label: string): boolean {
+    const derived = name.replaceAll('_', ' ');
+
+    return label === derived.charAt(0).toUpperCase() + derived.slice(1);
+}
+
+function inputType(type: string): string {
+    if (type === 'password') return 'password';
+    if (type === 'date_time' || type === 'confirmed_at_field') return 'datetime-local';
+    if (type === 'number') return 'number';
+
+    return 'text';
+}
+
+export default function ResourceForm({ resource, resourceLabel, singular, singularLabel, record, fields, action, method }: Props) {
+    const label = useConsoleLabels();
+    const { attribute } = useConsoleDictionary();
+    const resourceTitle = useNavLabel(`/admin/${resource}`, resourceLabel ?? singularLabel);
+    const initial = Object.fromEntries(fields.map(field => [field.name, String(field.value ?? '')]));
+    const { data, setData, post, put, processing, errors } = useForm<Record<string, Record<string, string>>>({
+        [singular]: initial,
+    });
 
     const values = data[singular];
     // Trường phụ thuộc (lý do đình chỉ) chỉ hiện khi trường điều kiện đúng giá trị.
     const visibleFields = fields.filter(
         field => !field.depends_on || values[field.depends_on.field] === field.depends_on.value,
     );
-    const title = record ? `Edit ${record.title}` : `New ${singularLabel.toLowerCase()}`;
+    const title = record
+        ? label('edit_title', { title: record.title })
+        : label('new_title', { resource: resourceTitle.toLowerCase() });
+    const cancelUrl = record?.url ?? `/admin/${resource}`;
+    const errorFor = (name: string) => (errors as Record<string, string | undefined>)[`${singular}.${name}`];
 
     return (
         <>
-            <Head title={title} />
-            <header className="main-content__header" role="banner">
-                <h1 className="main-content__page-title">{title}</h1>
-            </header>
-
-            <section className="main-content__body">
+            <PageHeader title={title} />
+            <Card className="max-w-3xl">
                 <form
-                    className="form"
+                    noValidate
                     onSubmit={event => {
                         event.preventDefault();
                         (method === 'put' ? put : post)(action);
                     }}
                 >
-                    {visibleFields.map(field => (
-                        <div
-                            className={`field-unit field-unit--${field.type.replace(/_/g, '-')}`}
-                            key={field.name}
-                        >
-                            <div className="field-unit__label">
-                                <label htmlFor={`${singular}_${field.name}`}>{field.label}</label>
-                            </div>
-                            <div className="field-unit__field">
-                                {field.options.length > 0 ? (
-                                    <select
-                                        id={`${singular}_${field.name}`}
-                                        value={values[field.name] ?? ''}
-                                        onChange={event =>
-                                            setData(singular, {
-                                                ...values,
-                                                [field.name]: event.target.value,
-                                            })
-                                        }
-                                    >
-                                        {field.options.map(option => (
-                                            <option value={option} key={option}>
-                                                {option}
-                                            </option>
-                                        ))}
-                                    </select>
-                                ) : (
-                                    <input
-                                        id={`${singular}_${field.name}`}
-                                        type={
-                                            field.type === 'password'
-                                                ? 'password'
-                                                : field.type === 'date_time' ||
-                                                    field.type === 'confirmed_at_field'
-                                                  ? 'datetime-local'
-                                                  : 'text'
-                                        }
-                                        value={values[field.name] ?? ''}
-                                        onChange={event =>
-                                            setData(singular, {
-                                                ...values,
-                                                [field.name]: event.target.value,
-                                            })
-                                        }
-                                    />
-                                )}
-                                {errors[`${singular}.${field.name}`] ? (
-                                    <div className="text-color-red">
-                                        {errors[`${singular}.${field.name}`]}
-                                    </div>
-                                ) : null}
-                            </div>
-                        </div>
-                    ))}
+                    <CardContent className="flex flex-col gap-5">
+                        {visibleFields.map(field => {
+                            const id = `${singular}_${field.name}`;
+                            const error = errorFor(field.name);
+                            const fieldLabel = isDerivedLabel(field.name, field.label)
+                                ? attribute(field.name, field.label)
+                                : field.label;
+                            const update = (value: string) => setData(singular, { ...values, [field.name]: value });
 
-                    <div className="form-actions">
-                        <input
-                            type="submit"
-                            value={`${record ? 'Update' : 'Create'} ${singularLabel}`}
-                            disabled={processing}
-                        />
-                    </div>
+                            return (
+                                <Field key={field.name} label={fieldLabel} htmlFor={id} error={error}>
+                                    {field.options.length > 0 ? (
+                                        <Select id={id} value={values[field.name] ?? ''} onChange={event => update(event.target.value)}>
+                                            {field.options.map(option => (
+                                                <option value={option} key={option}>
+                                                    {option}
+                                                </option>
+                                            ))}
+                                        </Select>
+                                    ) : (
+                                        <Input
+                                            id={id}
+                                            type={inputType(field.type)}
+                                            aria-invalid={error ? true : undefined}
+                                            autoComplete={field.type === 'password' ? 'new-password' : undefined}
+                                            value={values[field.name] ?? ''}
+                                            onChange={event => update(event.target.value)}
+                                        />
+                                    )}
+                                </Field>
+                            );
+                        })}
+                    </CardContent>
+                    <CardFooter className="mt-6 justify-end border-t border-console-border pt-5">
+                        <Link href={cancelUrl} className={buttonClassName({ variant: 'outline' })}>
+                            {label('cancel')}
+                        </Link>
+                        <Button type="submit" disabled={processing}>
+                            {processing ? label('saving') : record ? label('save') : label('create')}
+                        </Button>
+                    </CardFooter>
                 </form>
-            </section>
+            </Card>
         </>
     );
 }

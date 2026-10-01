@@ -195,12 +195,16 @@ it('liệt kê access token theo chủ sở hữu', function () {
         ->assertInertia(fn ($page) => $page->where('rows', fn ($rows) => count($rows) === 1));
 });
 
-it('trang dashboard trả số liệu qua JSON', function () {
+it('trang dashboard giao danh mục ô, số liệu lấy riêng qua API từng ô', function () {
     Account::factory()->create();
 
-    $this->getJson('/admin')
+    $this->get('/admin')
         ->assertOk()
-        ->assertJsonStructure(['chartData', 'accountsCount', 'usersCount', 'inboxesCount', 'conversationsCount']);
+        ->assertInertia(fn ($page) => $page->component('superadmin/Dashboard', false)->has('widgets')->has('layout'));
+
+    $this->getJson('/admin/api/dashboard/widgets/kpis')
+        ->assertOk()
+        ->assertJsonPath('data.metrics.0', ['key' => 'accounts_total', 'value' => 1, 'previous' => null, 'changePercent' => null]);
 });
 
 it('impersonate chuyển sang link sso', function () {
