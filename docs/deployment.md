@@ -1314,6 +1314,39 @@ Google" → chọn một tài khoản Google đã có tài khoản Yona → vào
 Hồ sơ → Phiên đăng nhập có thêm một dòng. **Không thử bằng email chưa có tài
 khoản trên production**: lượt đó tạo account thật.
 
+### Kết nối hộp thư email bằng OAuth (Outlook, Gmail)
+
+Màn Thêm kênh → Email hiện thẻ "Đăng nhập Microsoft" khi `.env` có
+`MICROSOFT_MAIL_CLIENT_ID` + `MICROSOFT_MAIL_CLIENT_SECRET`; thẻ "Đăng nhập Google"
+chỉ hiện khi thêm `GOOGLE_MAIL_OAUTH_ENABLED=true` (để `false` tới khi Google duyệt
+scope nhạy cảm `https://mail.google.com/`). Thiếu cấu hình thì thẻ tự ẩn và route
+`/app/accounts/{id}/email/oauth/{provider}` trả 404; khách vẫn nối bằng App Password.
+
+Outlook (Azure / Microsoft Entra ID, **đứng tên Yona**):
+
+1. `https://entra.microsoft.com` → App registrations → New registration, tên `Yona
+   mail`, Supported account types: *Accounts in any organizational directory and
+   personal Microsoft accounts*.
+2. Redirect URI (Web): `https://yona.vn/app/email/oauth/microsoft/callback`.
+3. API permissions → Add → *APIs my organization uses* → **Office 365 Exchange
+   Online** → Delegated: `IMAP.AccessAsUser.All`, `SMTP.Send`; thêm Microsoft Graph
+   `offline_access`, `email`, `openid`.
+4. Certificates & secrets → New client secret; chép Application (client) ID và secret
+   vào `MICROSOFT_MAIL_CLIENT_ID` / `MICROSOFT_MAIL_CLIENT_SECRET`, giữ
+   `MICROSOFT_MAIL_TENANT=common`, rồi `php artisan config:clear`. Secret có hạn:
+   ghi ngày hết hạn vào lịch để thay trước.
+
+Gmail: dùng project Google Cloud của Yona, thêm scope `https://mail.google.com/`,
+redirect URI `https://yona.vn/app/email/oauth/google/callback`, nộp thẩm định
+(restricted scope cần kiểm tra bảo mật). Duyệt xong mới đặt
+`GOOGLE_MAIL_OAUTH_ENABLED=true`. `GOOGLE_MAIL_CLIENT_ID/SECRET` trống thì dùng lại
+client đăng nhập Google.
+
+Redirect URI được ghép từ `APP_URL`, nên `APP_URL` phải là `https://yona.vn`.
+Token (access + refresh) lưu mã hoá trong `channel_email.provider_config`, làm mới
+trước mỗi lần quét thư/gửi thư; refresh token bị thu hồi thì hộp thư hiện cảnh báo
+"Kết nối lại".
+
 ### Timezone của PHP phải là `Asia/Ho_Chi_Minh`
 
 aaPanel để mặc định `date.timezone = PRC` (UTC+8). Laravel tự đặt lại timezone
@@ -1942,6 +1975,56 @@ php artisan attachments:reclassify-media --dry-run
 ```
 
 Lệnh không đổi nội dung tệp. Chạy lại bao nhiêu lần cũng được.
+
+### Bảng `messages` chia partition theo tháng
+
+Migration `2026_10_01_100000_partition_messages_by_month` đổi `messages` thành
+bảng chia theo tháng (`created_at`), khoá chính `(id, created_at)`, một partition
+`messages_pYYYY_MM` mỗi tháng từ tháng cũ nhất có dữ liệu tới 3 tháng sau, cộng
+`messages_default` hứng tin ngoài mọi tháng. Ba bảng trỏ vào tin
+(`csat_survey_responses`, `message_access_tokens`,
+`automation_rule_pending_executions`) có thêm cột `message_created_at` và khoá
+ngoại ghép. Chạy trong một transaction, khoá ghi `messages` tới khi xong (vài
+trăm tin: dưới một giây). `deploy.sh` chạy nó ở bước migration như mọi lần.
+
+Trước deploy:
+
+```bash
+pg_dump -Fc -d yona -f /root/yona-truoc-partition-$(date +%F).dump
+```
+
+Sau deploy:
+
+```bash
+cd /www/wwwroot/yona.vn
+# Phải ra một dòng messages | r
+psql -d yona -c "SELECT partrelid::regclass, partstrat FROM pg_partitioned_table"
+# Số tin trước và sau phải bằng nhau; tin chia vào các tháng
+psql -d yona -c "SELECT tableoid::regclass, count(*) FROM messages GROUP BY 1 ORDER BY 1"
+# Lệnh tạo tháng tới chạy lại được, lần hai phải báo "Không cần tạo partition mới"
+php artisan messages:create-partitions --months=3
+```
+
+Scheduler chạy `messages:create-partitions --months=3` hằng ngày lúc 03:20.
+Lệnh báo lỗi "Bỏ qua vì messages_default đang giữ tin của tháng đó" nghĩa là đã
+có tin của tháng ấy rơi vào DEFAULT (lịch không chạy suốt nhiều tháng, hoặc tin
+mang ngày ở tương lai xa). Tin vẫn ghi và đọc bình thường; chỉ tháng đó không có
+partition riêng. Xem các tin đó bằng
+`SELECT id, created_at FROM messages_default ORDER BY created_at DESC LIMIT 20`.
+
+Rollback (phải chạy khi code mới **còn** trên server, vì file migration nằm ở đó;
+giữ maintenance suốt quá trình vì code mới ghi `message_created_at`):
+
+```bash
+cd /www/wwwroot/yona.vn
+php artisan down
+php artisan migrate:status | tail -3                # migration partition phải là dòng cuối, không thì tăng --step
+php artisan migrate:rollback --step=1 --force   # messages về bảng thường, dữ liệu giữ nguyên
+# rồi về commit cũ theo mục Rollback ngay dưới, cuối cùng:
+php artisan up
+```
+
+Rollback lỗi thì khôi phục từ bản `pg_dump` ở trên.
 
 ### Rollback
 

@@ -4,8 +4,11 @@ namespace App\Models\Channel;
 
 use App\Channels\Capability;
 use App\Channels\CapabilitySet;
+use App\Channels\ChannelConnection;
 use App\Channels\ChannelPlatform;
+use App\Channels\ConnectionMethod;
 use App\Channels\DeclaresCapabilities;
+use App\Channels\DeclaresConnection;
 use App\Channels\DeclaresPlatform;
 use App\Channels\TextFormat;
 use App\Models\Channel\Concerns\Channelable;
@@ -16,7 +19,7 @@ use Illuminate\Database\Eloquent\Model;
 
 // Phần gọi Bot API nằm ở
 // App\Services\Telegram\TelegramClient (lõi model không nói chuyện HTTP).
-class Telegram extends Model implements DeclaresCapabilities, DeclaresPlatform
+class Telegram extends Model implements DeclaresCapabilities, DeclaresConnection, DeclaresPlatform
 {
     /** @use HasFactory<TelegramFactory> */
     use Channelable, HasFactory;
@@ -96,6 +99,14 @@ class Telegram extends Model implements DeclaresCapabilities, DeclaresPlatform
     public function businessConnectionId(Message $message): mixed
     {
         return $message->conversation->additional_attributes['business_connection_id'] ?? null;
+    }
+
+    /** Khách tạo bot ở BotFather rồi dán token; token được kiểm bằng getMe khi lưu. */
+    public static function connection(): ChannelConnection
+    {
+        return ChannelConnection::of('telegram', ConnectionMethod::Token)
+            ->ordered(40)
+            ->withGuideUrl('https://t.me/BotFather');
     }
 
     /**

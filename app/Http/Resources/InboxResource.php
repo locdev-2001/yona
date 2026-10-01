@@ -235,9 +235,15 @@ class InboxResource extends JsonResource
                 'smtp_openssl_verify_mode' => $channel->smtp_openssl_verify_mode,
                 'smtp_authentication' => $channel->smtp_authentication,
             ] : []),
-            ...($this->administrator && ($channel->isMicrosoft() || $channel->isGoogle() || $channel->isLegacyGoogle())
-                ? ['reauthorization_required' => blank($channel->provider_config) || $channel->reauthorizationRequired()]
-                : []),
+            // Cùng khoá với mọi kênh khác: FE dựng cảnh báo "kết nối lại" bằng một đường.
+            'reauthorization_required' => ($channel->isMicrosoft() || $channel->isGoogle())
+                ? blank($channel->provider_config) || $channel->reauthorizationRequired()
+                : $channel->reauthorizationRequired(),
+            'connection_error' => $channel->connectionError(),
+            // Kênh OAuth kết nối lại bằng chính luồng OAuth của nhà cung cấp.
+            'reconnect_url' => $this->administrator && $channel->usesOAuth()
+                ? route('email_oauth.start', ['account' => $inbox->account_id, 'provider' => $channel->provider, 'inbox_id' => $inbox->id], false)
+                : null,
         ];
     }
 

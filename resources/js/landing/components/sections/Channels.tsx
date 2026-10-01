@@ -1,10 +1,10 @@
 import { fillPlaceholders, type LandingStrings } from '../../config';
 import { Eyebrow, Section } from '../Section';
 
-// Khoá kênh trùng khoá của bước chọn kênh khi tạo hộp thư (`ChannelItem.tsx`):
+// Khoá kênh trùng khoá lối vào của màn "Thêm kênh" (`ChannelConnectionCatalog`):
 // trang công khai chỉ được bày kênh mà người dùng bấm vào là tạo được ngay,
-// kênh còn "Sắp có" ở đó thì ở đây cũng chỉ là "sắp có". Test của section so
-// thẳng hai bên để không lệch lại.
+// kênh còn đóng ở đó thì ở đây chỉ là "sắp có". `LandingChannelsMatchCatalogTest`
+// so thẳng hai bên để không lệch lại.
 //
 // Icon để ĐƠN SẮC, không giữ màu thương hiệu: mỗi logo một màu biến dải này
 // thành một dãy đốm màu rời rạc, trong khi vai trò của nó là một mảng đặc
@@ -16,7 +16,6 @@ export const LIVE_CHANNELS = [
     { key: 'telegram', icon: 'i-simple-icons-telegram', label: 'Telegram' },
     { key: 'whatsapp', icon: 'i-simple-icons-whatsapp', label: 'WhatsApp' },
     { key: 'line', icon: 'i-simple-icons-line', label: 'LINE' },
-    { key: 'sms', icon: 'i-lucide-message-square', label: 'SMS' },
     { key: 'api', icon: 'i-lucide-code-xml', label: 'API' },
 ] as const;
 
@@ -37,8 +36,9 @@ export function Channels({ strings }: { strings: LandingStrings['channels'] }) {
                 nhãn nổi ở giữa trang. */}
             <Eyebrow>{strings.eyebrow}</Eyebrow>
 
-            {/* Tám kênh chia đều 4×2 từ `sm`: ba cột sẽ để hàng cuối lẻ hai ô. */}
-            <ul className="mt-10 grid grid-cols-2 gap-x-6 gap-y-9 sm:grid-cols-4">
+            {/* Số kênh đổi theo driver nên không ép lưới chia đều: dàn hàng và căn giữa
+                để hàng cuối lẻ ô vẫn cân. */}
+            <ul className="mt-10 flex flex-wrap justify-center gap-x-10 gap-y-9">
                 {LIVE_CHANNELS.map(({ key, icon, label }) => (
                     <li key={key} className="flex items-center justify-center gap-2.5 text-neutral-500">
                         <span className={`${icon} size-5 shrink-0`} aria-hidden="true" />

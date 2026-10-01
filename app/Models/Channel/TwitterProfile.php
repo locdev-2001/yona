@@ -3,8 +3,11 @@
 namespace App\Models\Channel;
 
 use App\Channels\CapabilitySet;
+use App\Channels\ChannelConnection;
 use App\Channels\ChannelPlatform;
+use App\Channels\ConnectionMethod;
 use App\Channels\DeclaresCapabilities;
+use App\Channels\DeclaresConnection;
 use App\Channels\DeclaresPlatform;
 use App\Channels\TextFormat;
 use App\Models\Channel\Concerns\Channelable;
@@ -14,7 +17,7 @@ use Illuminate\Database\Eloquent\Model;
 
 // CHỈ khung (đăng ký
 // kênh + CRC webhook). Gem Twitty và luồng gửi/nhận DM chưa port, xem note F2-F5.
-class TwitterProfile extends Model implements DeclaresCapabilities, DeclaresPlatform
+class TwitterProfile extends Model implements DeclaresCapabilities, DeclaresConnection, DeclaresPlatform
 {
     /** @use HasFactory<TwitterProfileFactory> */
     use Channelable, HasFactory;
@@ -56,6 +59,12 @@ class TwitterProfile extends Model implements DeclaresCapabilities, DeclaresPlat
             'twitter_access_token' => ['required', 'string'],
             'twitter_access_token_secret' => ['required', 'string'],
         ];
+    }
+
+    /** Chưa có luồng ủy quyền Twitter/X nên chưa mở cho khách. */
+    public static function connection(): ChannelConnection
+    {
+        return ChannelConnection::of('twitter', ConnectionMethod::OauthRedirect)->ordered(90)->available(false);
     }
 
     /**

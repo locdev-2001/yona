@@ -4,6 +4,7 @@ import type { CSSProperties, KeyboardEvent as ReactKeyboardEvent } from 'react';
 import './ColorPicker.scss';
 import { colorChange, isValidHex } from 'dashboard/helper/colorHelper';
 import type { ColorInput, PickerColor } from 'dashboard/helper/colorHelper';
+import { ICONS } from 'dashboard/icons';
 
 // Port từ dashboard/components/widgets/ColorPicker.vue + component `Chrome`
 // (disable-alpha) của @lk77/vue3-color 3.0.6 — thư viện chỉ có bản Vue nên
@@ -327,18 +328,13 @@ export function Chrome({ colors, wrapperClass = 'colorpicker--chrome', onColorCh
                         onClick={() => setFieldsIndex(current => (current >= 2 ? 0 : current + 1))}
                     >
                         <div className="vc-chrome-toggle-icon">
-                            <svg
-                                style={{ width: '24px', height: '24px' }}
-                                viewBox="0 0 24 24"
+                            <span
+                                className={`${ICONS.chevronsUpDown} block size-6 text-n-slate-12`}
+                                aria-hidden="true"
                                 onMouseOver={() => setHighlight(true)}
                                 onMouseEnter={() => setHighlight(true)}
                                 onMouseOut={() => setHighlight(false)}
-                            >
-                                <path
-                                    fill="#333"
-                                    d="M12,18.17L8.83,15L7.42,16.41L12,21L16.59,16.41L15.17,15M12,5.83L15.17,9L16.58,7.59L12,3L7.41,7.59L8.83,9L12,5.83Z"
-                                />
-                            </svg>
+                            />
                         </div>
                         {highlight ? <div className="vc-chrome-toggle-icon-highlight" /> : null}
                     </div>

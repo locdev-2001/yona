@@ -7520,6 +7520,9 @@ const messages: Record<string, unknown> = {
                     "NOT_ENTERED": "Not entered",
                     "VERIFY_NOTICE": "{installationName} will verify these credentials with Meta before applying any changes. If verification fails, the current configuration is left untouched.",
                     "BACK": "Back",
+                    "OAUTH_DENIED": "Not connected: you cancelled or the provider refused access. Please try again.",
+                    "OAUTH_TOKEN": "The provider did not grant access to the mailbox. Please try again and accept every permission asked.",
+                    "OAUTH_MISMATCH": "You signed in to a different mailbox. Reconnect with the email address of this inbox.",
                     "CANCEL": "Cancel",
                     "CONTINUE": "Continue",
                     "REVIEW_MIGRATION": "Review migration",
@@ -7844,6 +7847,102 @@ const messages: Record<string, unknown> = {
             "TIKTOK": "TikTok",
             "ZALO": "Zalo",
             "VOICE": "Voice"
+        },
+        "CONNECTION_CHECK": {
+            "AUTH_FAILED": "The {protocol} server {host} rejected the login. Check the username and password.",
+            "CONNECTION_FAILED": "Could not connect to the {protocol} server {host}:{port}. Check the server address, port and SSL option.",
+            "GMAIL_APP_PASSWORD": "Gmail does not accept your Google account password here: turn on 2-Step Verification, create an App Password at {url} and paste it into the password field.",
+            "OUTLOOK_APP_PASSWORD": "Outlook/Microsoft 365 may have turned off password sign-in: use an App Password or connect with your Microsoft account.",
+            "BANNER_DEFAULT": "This inbox has lost its connection to the provider. You will not receive new messages until you reconnect.",
+            "FIX_SETTINGS": "Fix connection settings",
+            "RECONNECT": "Reconnect",
+            "BADGE": "Disconnected",
+            "TELEGRAM_INVALID_TOKEN": "Telegram did not accept this token. Copy the whole token BotFather sent you again (it looks like 123456789:AA…).",
+            "TELEGRAM_UNREACHABLE": "Could not reach Telegram to check the token. Please try again in a few minutes.",
+            "LINE_INVALID_TOKEN": "LINE did not accept this channel access token. Issue the token again in the Messaging API tab and paste it again.",
+            "LINE_UNREACHABLE": "Could not reach LINE to check the token. Please try again in a few minutes.",
+            "LINE_CHANNEL_MISMATCH": "This token belongs to a different LINE channel than the channel ID you entered."
+        },
+        "CONNECT_GUIDE": {
+            "STEP": "Step {n}",
+            "CHECKING": "Checking the connection…",
+            "REQUIRED": "This field is required",
+            "TELEGRAM": {
+                "TITLE": "Connect a Telegram bot",
+                "DESC": "Two steps, about a minute. Messages sent to the bot land in this inbox.",
+                "STEP_1_TITLE": "Create a bot with BotFather",
+                "STEP_1_DESC": "Open @BotFather in Telegram, send /newbot, choose a display name and then a username for the bot (it must end in \"bot\").",
+                "OPEN_BOTFATHER": "Open BotFather",
+                "STEP_2_TITLE": "Paste the bot token",
+                "STEP_2_DESC": "BotFather replies with a token like 123456789:AA… Copy it and paste it below. Yona checks the token as soon as you connect.",
+                "TOKEN_LABEL": "Bot token",
+                "TOKEN_PLACEHOLDER": "123456789:AA…",
+                "SUBMIT": "Connect Telegram"
+            },
+            "LINE": {
+                "TITLE": "Connect a LINE Official Account",
+                "DESC": "Follow these steps in the LINE Developers Console. You only need to copy two codes.",
+                "STEP_1_TITLE": "Open the Messaging API channel",
+                "STEP_1_DESC": "Sign in to the LINE Developers Console, pick your Provider and open the Messaging API channel of your LINE Official Account (none yet? Click Create a new channel and choose Messaging API).",
+                "OPEN_CONSOLE": "Open LINE Developers Console",
+                "STEP_2_TITLE": "Copy the Channel secret",
+                "STEP_2_DESC": "In the Basic settings tab, scroll to Channel secret, click Copy and paste it below.",
+                "STEP_3_TITLE": "Copy the Channel access token",
+                "STEP_3_DESC": "In the Messaging API tab, scroll to the bottom, Channel access token (long-lived): click Issue if there is none, then Copy and paste it below.",
+                "STEP_4_TITLE": "Turn on the webhook",
+                "STEP_4_DESC": "After connecting, Yona shows a webhook URL. Paste it into Webhook URL in the Messaging API tab, click Verify and turn on Use webhook. Turn off Auto-reply messages in LINE Official Account Manager so customers do not get duplicate automatic replies.",
+                "SECRET_LABEL": "Channel secret",
+                "TOKEN_LABEL": "Channel access token",
+                "SUBMIT": "Connect LINE"
+            },
+            "EMAIL": {
+                "CHOOSE_TITLE": "Which mailbox do you use?",
+                "CHOOSE_DESC": "Pick your provider and Yona fills in the mail servers. Not listed? Choose Other.",
+                "GOOGLE": {
+                    "TITLE": "Sign in with Google",
+                    "DESCRIPTION": "Connect Gmail/Google Workspace with your Google account, no password needed"
+                },
+                "MICROSOFT": {
+                    "TITLE": "Sign in with Microsoft",
+                    "DESCRIPTION": "Connect Outlook/Microsoft 365 with your Microsoft account, no password needed"
+                },
+                "GMAIL": {
+                    "TITLE": "Gmail",
+                    "DESCRIPTION": "Gmail or Google Workspace, using an App Password"
+                },
+                "OUTLOOK": {
+                    "TITLE": "Outlook",
+                    "DESCRIPTION": "Outlook, Hotmail or Microsoft 365, using an App Password"
+                },
+                "OTHER": {
+                    "TITLE": "Other",
+                    "DESCRIPTION": "Another provider: enter the IMAP/SMTP servers yourself"
+                },
+                "FORM_TITLE": "Connect your {provider} mailbox",
+                "FORM_DESC_PRESET": "Yona has filled in the {provider} mail servers. Just enter your email address and an App Password.",
+                "FORM_DESC_OTHER": "Enter the mail server settings your email provider gives you.",
+                "CHANNEL_NAME": "Inbox name",
+                "CHANNEL_NAME_PLACEHOLDER": "For example: Customer support",
+                "EMAIL": "Email address",
+                "EMAIL_PLACEHOLDER": "you@company.com",
+                "EMAIL_INVALID": "This email address is not valid",
+                "APP_PASSWORD": "App Password",
+                "APP_PASSWORD_HELP_GMAIL": "Google does not allow your normal sign-in password here. Turn on 2-Step Verification, create a 16-character App Password and paste it here.",
+                "APP_PASSWORD_HELP_OUTLOOK": "Turn on two-step verification for your Microsoft account, create an App Password and paste it here. Work accounts may need an administrator to allow it.",
+                "CREATE_APP_PASSWORD": "Create an App Password",
+                "USE_MAIL_SERVER": "Receive and send mail through my mail server (IMAP/SMTP)",
+                "USE_MAIL_SERVER_HELP": "Untick if you only want to forward mail to Yona.",
+                "IMAP_TITLE": "Incoming mail (IMAP)",
+                "SMTP_TITLE": "Outgoing mail (SMTP)",
+                "HOST": "Server",
+                "PORT": "Port",
+                "LOGIN": "Username",
+                "PASSWORD": "Password",
+                "IMAP_SSL": "Use SSL",
+                "SMTP_SSL": "Use SSL/TLS (port 465)",
+                "SUBMIT": "Connect mailbox",
+                "BACK": "Choose another provider"
+            }
         }
     },
     "INBOX_REPORTS": {

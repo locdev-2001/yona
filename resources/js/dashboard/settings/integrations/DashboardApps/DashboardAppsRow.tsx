@@ -3,6 +3,7 @@ import Button from 'dashboard/components-next/button/Button';
 import BaseTableRow from 'dashboard/components-next/table/BaseTableRow';
 import BaseTableCell from 'dashboard/components-next/table/BaseTableCell';
 import type { DashboardApp } from './types';
+import { ICONS } from 'dashboard/icons';
 
 // Port từ dashboard/routes/dashboard/settings/integrations/DashboardApps/DashboardAppsRow.vue.
 interface DashboardAppsRowProps {
@@ -32,14 +33,14 @@ export default function DashboardAppsRow({ app, onEdit, onDelete }: DashboardApp
                 <div className="flex justify-end gap-3 flex-shrink-0">
                     <Button
                         title={t('INTEGRATION_SETTINGS.DASHBOARD_APPS.LIST.EDIT_TOOLTIP')}
-                        icon="i-woot-edit-pen"
+                        icon={ICONS.edit}
                         slate
                         sm
                         onClick={() => onEdit(app)}
                     />
                     <Button
                         title={t('INTEGRATION_SETTINGS.DASHBOARD_APPS.LIST.DELETE_TOOLTIP')}
-                        icon="i-woot-bin"
+                        icon={ICONS.delete}
                         slate
                         sm
                         className="hover:enabled:text-n-ruby-11 hover:enabled:bg-n-ruby-2"

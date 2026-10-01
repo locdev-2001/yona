@@ -8,10 +8,10 @@ const CONVERSATION_PRIORITY = {
 } as const;
 
 const PRIORITY_ICONS: Record<string, string> = {
-    [CONVERSATION_PRIORITY.URGENT]: 'i-woot-priority-urgent',
-    [CONVERSATION_PRIORITY.HIGH]: 'i-woot-priority-high',
-    [CONVERSATION_PRIORITY.MEDIUM]: 'i-woot-priority-medium',
-    [CONVERSATION_PRIORITY.LOW]: 'i-woot-priority-low',
+    [CONVERSATION_PRIORITY.URGENT]: 'i-yona-priority-urgent',
+    [CONVERSATION_PRIORITY.HIGH]: 'i-yona-priority-high',
+    [CONVERSATION_PRIORITY.MEDIUM]: 'i-yona-priority-medium',
+    [CONVERSATION_PRIORITY.LOW]: 'i-yona-priority-low',
 };
 
 const PRIORITY_LABELS: Record<string, string> = {
@@ -30,7 +30,7 @@ interface CardPriorityIconProps {
 }
 
 export default function CardPriorityIcon({ priority = '', showEmpty = false, className = '' }: CardPriorityIconProps) {
-    const iconName = priority && PRIORITY_ICONS[priority] ? PRIORITY_ICONS[priority] : showEmpty ? 'i-woot-priority-empty' : '';
+    const iconName = priority && PRIORITY_ICONS[priority] ? PRIORITY_ICONS[priority] : showEmpty ? 'i-yona-priority-empty' : '';
 
     if (!iconName) return null;
 

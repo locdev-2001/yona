@@ -3,9 +3,9 @@ import type { MouseEvent, ReactNode } from 'react';
 import { picoSearch } from '@ext/pico-search';
 
 import Button from 'dashboard/components-next/button/Button';
-import FluentIcon from 'shared/components/FluentIcon/FluentIcon';
 import { useClickAway } from 'dashboard/composables/useClickAway';
 import { t } from '../../../../i18n';
+import { ICONS } from 'dashboard/icons';
 
 // Port từ dashboard/components/ui/Dropdown/{DropdownList,DropdownListItemButton,
 // DropdownSearch,DropdownEmptyState}.vue — gộp một file vì chỉ dùng cùng nhau.
@@ -52,9 +52,9 @@ export function DropdownListItemButton({
             onFocus={onFocus}
         >
             <div className="inline-flex items-center gap-3 overflow-hidden">
-                {icon && <FluentIcon icon={icon} size="18" style={iconColor ? { color: iconColor } : undefined} />}
+                {icon && <span className={`${icon} size-[1.125rem]`} style={iconColor ? { color: iconColor } : undefined} aria-hidden="true" />}
                 <span className="text-sm font-medium truncate text-n-slate-12">{buttonText}</span>
-                {isActive && <FluentIcon icon="checkmark" size="18" className="flex-shrink-0 text-n-slate-12" />}
+                {isActive && <span className={`${ICONS.check} size-[1.125rem] flex-shrink-0 text-n-slate-12`} aria-hidden="true" />}
             </div>
             {dropdown}
         </button>
@@ -103,7 +103,7 @@ export default function DropdownList({
             {enableSearch && (
                 <div className="flex items-center justify-between h-10 min-h-[40px] sticky top-0 bg-n-solid-2 z-10 gap-2 px-3 border-b rounded-t-xl border-n-weak">
                     <div className="flex items-center w-full gap-2">
-                        <FluentIcon icon="search" size="16" className="text-n-slate-11 flex-shrink-0" />
+                        <span className={`${ICONS.search} size-4 text-n-slate-11 flex-shrink-0`} aria-hidden="true" />
                         <input
                             value={searchTerm}
                             placeholder={inputPlaceholder}

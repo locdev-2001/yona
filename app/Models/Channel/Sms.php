@@ -4,8 +4,11 @@ namespace App\Models\Channel;
 
 use App\Channels\Capability;
 use App\Channels\CapabilitySet;
+use App\Channels\ChannelConnection;
 use App\Channels\ChannelPlatform;
+use App\Channels\ConnectionMethod;
 use App\Channels\DeclaresCapabilities;
+use App\Channels\DeclaresConnection;
 use App\Channels\DeclaresPlatform;
 use App\Channels\TextFormat;
 use App\Models\Channel\Concerns\Channelable;
@@ -15,7 +18,7 @@ use Illuminate\Database\Eloquent\Model;
 
 // Kênh SMS qua nhà cung cấp Bandwidth.
 // Phần gọi API nằm ở App\Services\Sms\BandwidthClient.
-class Sms extends Model implements DeclaresCapabilities, DeclaresPlatform
+class Sms extends Model implements DeclaresCapabilities, DeclaresConnection, DeclaresPlatform
 {
     /** @use HasFactory<SmsFactory> */
     use Channelable, HasFactory;
@@ -55,6 +58,12 @@ class Sms extends Model implements DeclaresCapabilities, DeclaresPlatform
     public function apiBasePath(): string
     {
         return 'https://messaging.bandwidth.com/api/v2';
+    }
+
+    /** SMS (Bandwidth) ẩn khỏi màn "Thêm kênh" có chủ đích (#160); hộp thư SMS cũ vẫn chạy. */
+    public static function connection(): ChannelConnection
+    {
+        return ChannelConnection::of('sms', ConnectionMethod::Form)->ordered(95)->available(false);
     }
 
     /** SMS qua Bandwidth: chỉ chữ, MMS chưa làm (nợ có tên). */

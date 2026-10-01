@@ -2,6 +2,7 @@
 
 namespace App\Services\Channels;
 
+use App\Models\Channel\Email;
 use App\Models\Channel\FacebookPage;
 use App\Models\Channel\Instagram;
 use App\Models\Channel\Line;
@@ -11,6 +12,7 @@ use App\Models\Channel\TwilioSms;
 use App\Models\Channel\Whatsapp;
 use App\Models\Inbox;
 use App\Services\Facebook\FacebookGraphClient;
+use App\Services\Line\LineClient;
 use App\Services\Telegram\TelegramClient;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -37,6 +39,8 @@ class ChannelSetupService
         Whatsapp::class => 'setUpWhatsapp',
         FacebookPage::class => 'subscribeFacebookPage',
         Instagram::class => 'subscribeInstagram',
+        Line::class => 'nameLineInbox',
+        Email::class => 'nameEmailInbox',
     ];
 
     /**
@@ -68,14 +72,17 @@ class ChannelSetupService
 
         $step = self::SETUP_STEPS[$channel::class] ?? null;
 
-        if ($step === null) {
-            return;
+        if ($step !== null) {
+            try {
+                $this->{$step}($inbox);
+            } catch (Throwable $exception) {
+                Log::error('[CHANNEL SETUP] '.$inbox->channel_type.' inbox '.$inbox->id.': '.$exception->getMessage());
+            }
         }
 
-        try {
-            $this->{$step}($inbox);
-        } catch (Throwable $exception) {
-            Log::error('[CHANNEL SETUP] '.$inbox->channel_type.' inbox '.$inbox->id.': '.$exception->getMessage());
+        // Kênh tự đặt tên (namesInboxItself) mà nhà cung cấp không trả tên thì dùng tên kênh.
+        if (blank($inbox->name) && method_exists($channel, 'name')) {
+            $inbox->forceFill(['name' => $channel->name()])->save();
         }
     }
 
@@ -198,6 +205,29 @@ class ChannelSetupService
     }
 
     // Channel::Instagram#subscribe.
+    // Hộp thư LINE mang tên hiển thị của bot khi người dùng không tự đặt.
+    private function nameLineInbox(Inbox $inbox): void
+    {
+        if (filled($inbox->name)) {
+            return;
+        }
+
+        /** @var Line $channel */
+        $channel = $inbox->channel;
+        $displayName = (new LineClient($channel))->botInfo()->json('displayName');
+
+        if (filled($displayName)) {
+            $inbox->forceFill(['name' => (string) $displayName])->save();
+        }
+    }
+
+    private function nameEmailInbox(Inbox $inbox): void
+    {
+        if (blank($inbox->name)) {
+            $inbox->forceFill(['name' => (string) $inbox->channel->email])->save();
+        }
+    }
+
     private function subscribeInstagram(Inbox $inbox): void
     {
         /** @var Instagram $channel */

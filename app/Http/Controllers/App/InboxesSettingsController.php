@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\App;
 
 use App\Builders\Email\FromBuilder;
+use App\Channels\ChannelConnectionCatalog;
 use App\Http\Controllers\Controller;
 use App\Models\Account;
 use App\Support\Timezones;
+use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -18,15 +20,25 @@ class InboxesSettingsController extends Controller
         return Inertia::render('dashboard/settings/inboxes/Index');
     }
 
-    public function newChannelList(): Response
+    // Lối vào lấy từ driver kênh (DeclaresConnection): kênh đóng hay thiếu app nền tảng tự ẩn.
+    public function newChannelList(Account $account): Response
     {
-        return Inertia::render('dashboard/settings/inboxes/NewChannelList');
+        return Inertia::render('dashboard/settings/inboxes/NewChannelList', [
+            'channels' => ChannelConnectionCatalog::availableFor($account),
+        ]);
     }
 
-    public function newChannel(Account $account, string $subPage): Response
+    public function newChannel(Account $account, string $subPage): Response|RedirectResponse
     {
+        $connection = ChannelConnectionCatalog::find($subPage);
+
+        if ($connection === null || ! $connection->available) {
+            return redirect()->route('settings_inbox_new', ['account' => $account->id]);
+        }
+
         return Inertia::render('dashboard/settings/inboxes/NewChannel', [
             'channelName' => $subPage,
+            'connection' => $connection->toArray($account),
         ]);
     }
 

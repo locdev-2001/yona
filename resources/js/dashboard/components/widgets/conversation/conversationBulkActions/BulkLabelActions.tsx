@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 import { usePage } from '@inertiajs/react';
+import { ICONS } from 'dashboard/icons';
 
 import Icon from 'dashboard/components-next/icon/Icon';
 import NextButton from 'dashboard/components-next/button/Button';
@@ -61,7 +62,7 @@ export default function BulkLabelActions({
 
     return (
         <BulkActionDropdown
-            icon={isRemoveAction ? 'i-woot-tag-remove' : 'i-lucide-tag'}
+            icon={isRemoveAction ? ICONS.labelRemove : 'i-lucide-tag'}
             tooltip={
                 isRemoveAction
                     ? t('BULK_ACTION.LABELS.REMOVE_LABELS')

@@ -7520,6 +7520,9 @@ const messages: Record<string, unknown> = {
                     "NOT_ENTERED": "Chưa nhập",
                     "VERIFY_NOTICE": "{installationName} sẽ xác minh những thông tin này với Meta trước khi áp dụng thay đổi. Nếu xác minh thất bại, cấu hình hiện tại giữ nguyên.",
                     "BACK": "Trở về",
+                    "OAUTH_DENIED": "Chưa kết nối được: bạn đã huỷ hoặc nhà cung cấp từ chối cấp quyền. Hãy thử lại.",
+                    "OAUTH_TOKEN": "Nhà cung cấp chưa trả quyền truy cập hộp thư. Hãy thử lại và đồng ý mọi quyền được hỏi.",
+                    "OAUTH_MISMATCH": "Bạn vừa đăng nhập một hộp thư khác. Hãy kết nối lại bằng đúng địa chỉ email của hộp thư này.",
                     "CANCEL": "Huỷ",
                     "CONTINUE": "Tiếp tục",
                     "REVIEW_MIGRATION": "Xem lại phần chuyển đổi",
@@ -7844,6 +7847,102 @@ const messages: Record<string, unknown> = {
             "TIKTOK": "TikTok",
             "ZALO": "Zalo",
             "VOICE": "Thoại"
+        },
+        "CONNECTION_CHECK": {
+            "AUTH_FAILED": "Máy chủ {protocol} {host} từ chối đăng nhập. Kiểm tra lại tài khoản và mật khẩu.",
+            "CONNECTION_FAILED": "Không kết nối được tới máy chủ {protocol} {host}:{port}. Kiểm tra địa chỉ máy chủ, cổng và tuỳ chọn SSL.",
+            "GMAIL_APP_PASSWORD": "Gmail không nhận mật khẩu đăng nhập Google: hãy bật Xác minh 2 bước rồi tạo Mật khẩu ứng dụng (App Password) tại {url} và dán vào ô mật khẩu.",
+            "OUTLOOK_APP_PASSWORD": "Outlook/Microsoft 365 có thể đã tắt đăng nhập bằng mật khẩu: hãy dùng Mật khẩu ứng dụng (App Password) hoặc kết nối bằng tài khoản Microsoft.",
+            "BANNER_DEFAULT": "Hộp thư này đã mất kết nối với nhà cung cấp. Bạn sẽ không nhận tin mới cho tới khi kết nối lại.",
+            "FIX_SETTINGS": "Sửa cấu hình kết nối",
+            "RECONNECT": "Kết nối lại",
+            "BADGE": "Mất kết nối",
+            "TELEGRAM_INVALID_TOKEN": "Telegram không nhận token này. Hãy sao chép lại đúng toàn bộ token BotFather gửi (dạng 123456789:AA…).",
+            "TELEGRAM_UNREACHABLE": "Chưa kết nối được tới Telegram để kiểm token. Vui lòng thử lại sau ít phút.",
+            "LINE_INVALID_TOKEN": "LINE không nhận Channel access token này. Hãy phát hành (Issue) lại token ở tab Messaging API rồi dán lại.",
+            "LINE_UNREACHABLE": "Chưa kết nối được tới LINE để kiểm token. Vui lòng thử lại sau ít phút.",
+            "LINE_CHANNEL_MISMATCH": "Token này thuộc một kênh LINE khác với ID kênh đã nhập."
+        },
+        "CONNECT_GUIDE": {
+            "STEP": "Bước {n}",
+            "CHECKING": "Đang kiểm tra kết nối…",
+            "REQUIRED": "Trường này là bắt buộc",
+            "TELEGRAM": {
+                "TITLE": "Kết nối bot Telegram",
+                "DESC": "Hai bước, mất khoảng một phút. Khách nhắn cho bot sẽ vào hộp thư này.",
+                "STEP_1_TITLE": "Tạo bot với BotFather",
+                "STEP_1_DESC": "Mở @BotFather trên Telegram, gửi lệnh /newbot, đặt tên hiển thị rồi đặt username cho bot (phải kết thúc bằng \"bot\").",
+                "OPEN_BOTFATHER": "Mở BotFather",
+                "STEP_2_TITLE": "Dán token của bot",
+                "STEP_2_DESC": "BotFather gửi lại một token dạng 123456789:AA… Sao chép và dán vào ô bên dưới. Yona kiểm token ngay khi bạn bấm kết nối.",
+                "TOKEN_LABEL": "Token của bot",
+                "TOKEN_PLACEHOLDER": "123456789:AA…",
+                "SUBMIT": "Kết nối Telegram"
+            },
+            "LINE": {
+                "TITLE": "Kết nối LINE Official Account",
+                "DESC": "Làm theo các bước dưới đây trong LINE Developers Console. Bạn chỉ cần chép hai mã.",
+                "STEP_1_TITLE": "Mở kênh Messaging API",
+                "STEP_1_DESC": "Đăng nhập LINE Developers Console, chọn Provider rồi chọn kênh Messaging API của LINE Official Account (chưa có thì bấm Create a new channel, chọn Messaging API).",
+                "OPEN_CONSOLE": "Mở LINE Developers Console",
+                "STEP_2_TITLE": "Chép Channel secret",
+                "STEP_2_DESC": "Ở tab Basic settings, kéo xuống mục Channel secret, bấm Copy rồi dán vào ô bên dưới.",
+                "STEP_3_TITLE": "Chép Channel access token",
+                "STEP_3_DESC": "Ở tab Messaging API, kéo xuống cuối trang, mục Channel access token (long-lived): bấm Issue nếu chưa có, rồi Copy và dán vào ô bên dưới.",
+                "STEP_4_TITLE": "Bật webhook",
+                "STEP_4_DESC": "Sau khi kết nối, Yona hiện URL webhook. Dán URL đó vào ô Webhook URL ở tab Messaging API, bấm Verify và bật Use webhook. Nên tắt Auto-reply messages trong LINE Official Account Manager để khách không nhận trả lời tự động trùng.",
+                "SECRET_LABEL": "Channel secret",
+                "TOKEN_LABEL": "Channel access token",
+                "SUBMIT": "Kết nối LINE"
+            },
+            "EMAIL": {
+                "CHOOSE_TITLE": "Bạn dùng hộp thư nào?",
+                "CHOOSE_DESC": "Chọn nhà cung cấp để Yona tự điền máy chủ thư. Không thấy nhà cung cấp của bạn thì chọn Khác.",
+                "GOOGLE": {
+                    "TITLE": "Đăng nhập Google",
+                    "DESCRIPTION": "Kết nối Gmail/Google Workspace bằng tài khoản Google, không cần mật khẩu"
+                },
+                "MICROSOFT": {
+                    "TITLE": "Đăng nhập Microsoft",
+                    "DESCRIPTION": "Kết nối Outlook/Microsoft 365 bằng tài khoản Microsoft, không cần mật khẩu"
+                },
+                "GMAIL": {
+                    "TITLE": "Gmail",
+                    "DESCRIPTION": "Gmail hoặc Google Workspace, dùng Mật khẩu ứng dụng"
+                },
+                "OUTLOOK": {
+                    "TITLE": "Outlook",
+                    "DESCRIPTION": "Outlook, Hotmail hoặc Microsoft 365, dùng Mật khẩu ứng dụng"
+                },
+                "OTHER": {
+                    "TITLE": "Khác",
+                    "DESCRIPTION": "Nhà cung cấp khác: tự điền máy chủ IMAP/SMTP"
+                },
+                "FORM_TITLE": "Kết nối hộp thư {provider}",
+                "FORM_DESC_PRESET": "Yona đã điền sẵn máy chủ thư của {provider}. Bạn chỉ cần nhập địa chỉ email và Mật khẩu ứng dụng.",
+                "FORM_DESC_OTHER": "Điền thông số máy chủ thư do nhà cung cấp email của bạn cung cấp.",
+                "CHANNEL_NAME": "Tên hộp thư",
+                "CHANNEL_NAME_PLACEHOLDER": "Ví dụ: Hỗ trợ khách hàng",
+                "EMAIL": "Địa chỉ email",
+                "EMAIL_PLACEHOLDER": "ban@congty.vn",
+                "EMAIL_INVALID": "Địa chỉ email chưa đúng",
+                "APP_PASSWORD": "Mật khẩu ứng dụng (App Password)",
+                "APP_PASSWORD_HELP_GMAIL": "Google không cho dùng mật khẩu đăng nhập thường. Bật Xác minh 2 bước cho tài khoản rồi tạo một Mật khẩu ứng dụng 16 ký tự và dán vào đây.",
+                "APP_PASSWORD_HELP_OUTLOOK": "Bật Xác minh 2 bước cho tài khoản Microsoft rồi tạo một Mật khẩu ứng dụng và dán vào đây. Tài khoản công ty có thể cần quản trị viên cho phép.",
+                "CREATE_APP_PASSWORD": "Tạo Mật khẩu ứng dụng",
+                "USE_MAIL_SERVER": "Nhận và gửi thư qua máy chủ thư của tôi (IMAP/SMTP)",
+                "USE_MAIL_SERVER_HELP": "Bỏ chọn nếu bạn chỉ muốn chuyển tiếp thư về Yona.",
+                "IMAP_TITLE": "Nhận thư (IMAP)",
+                "SMTP_TITLE": "Gửi thư (SMTP)",
+                "HOST": "Máy chủ",
+                "PORT": "Cổng",
+                "LOGIN": "Tên đăng nhập",
+                "PASSWORD": "Mật khẩu",
+                "IMAP_SSL": "Dùng SSL",
+                "SMTP_SSL": "Dùng SSL/TLS (cổng 465)",
+                "SUBMIT": "Kết nối hộp thư",
+                "BACK": "Chọn nhà cung cấp khác"
+            }
         }
     },
     "INBOX_REPORTS": {

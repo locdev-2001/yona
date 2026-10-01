@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { usePage } from '@inertiajs/react';
 import { picoSearch } from '@ext/pico-search';
+import { ICONS } from 'dashboard/icons';
 
 import { t } from '../../../i18n';
 import { useAlert } from 'dashboard/composables/useAlert';
@@ -153,7 +154,7 @@ export default function LabelsIndex() {
                                         <div className="flex gap-3 justify-end flex-shrink-0">
                                             <Button
                                                 title={t('LABEL_MGMT.FORM.EDIT')}
-                                                icon="i-woot-edit-pen"
+                                                icon={ICONS.edit}
                                                 slate
                                                 sm
                                                 isLoading={deletingIds.includes(label.id)}
@@ -161,7 +162,7 @@ export default function LabelsIndex() {
                                             />
                                             <Button
                                                 title={t('LABEL_MGMT.FORM.DELETE')}
-                                                icon="i-woot-bin"
+                                                icon={ICONS.delete}
                                                 slate
                                                 sm
                                                 className="hover:enabled:text-n-ruby-11 hover:enabled:bg-n-ruby-2"

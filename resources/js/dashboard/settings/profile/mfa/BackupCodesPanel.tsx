@@ -14,7 +14,7 @@ interface BackupCodesPanelProps {
 export function BackupCodesWarning() {
     return (
         <div className="flex items-start gap-2 p-4 bg-n-solid-1 outline outline-n-weak rounded-xl outline-1">
-            <Icon icon="i-lucide-alert-circle" className="size-4 text-n-slate-10 flex-shrink-0 mt-0.5" />
+            <Icon icon="i-lucide-circle-alert" className="size-4 text-n-slate-10 flex-shrink-0 mt-0.5" />
             <p className="text-sm text-n-slate-11">
                 <strong>{t('MFA_SETTINGS.BACKUP.IMPORTANT')}</strong>
                 {t('MFA_SETTINGS.BACKUP.IMPORTANT_NOTE')}

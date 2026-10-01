@@ -10,6 +10,7 @@ use App\Channels\DeclaresPlatform;
 use App\Models\Concerns\Avatarable;
 use App\Models\Concerns\OutOfOffisable;
 use App\Models\Concerns\Reportable;
+use App\Models\Concerns\SharesRequestModels;
 use App\Services\AutoAssignment\InboxRoundRobinService;
 use App\Support\OnlineStatusTracker;
 use Database\Factories\InboxFactory;
@@ -32,7 +33,7 @@ use Illuminate\Support\Str;
 class Inbox extends Model
 {
     /** @use HasFactory<InboxFactory> */
-    use Avatarable, HasFactory, OutOfOffisable, Reportable;
+    use Avatarable, HasFactory, OutOfOffisable, Reportable, SharesRequestModels;
 
     public const SENDER_NAME_TYPE_FRIENDLY = 0;
 

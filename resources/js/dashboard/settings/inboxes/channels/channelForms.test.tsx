@@ -34,17 +34,27 @@ const submit = (view: ReturnType<typeof render>, label: RegExp) =>
     fireEvent.click(view.getByRole('button', { name: label }));
 
 describe('form Telegram', () => {
+    it('hướng dẫn hai bước, có nút mở BotFather', () => {
+        const view = render(<TelegramChannelForm />);
+
+        const link = view.getByRole('link', { name: /Open BotFather/ });
+        expect(link.getAttribute('href')).toBe('https://t.me/BotFather');
+        expect(link.getAttribute('target')).toBe('_blank');
+        expect(view.getByText('Create a bot with BotFather')).toBeTruthy();
+        expect(view.getByText('Paste the bot token')).toBeTruthy();
+    });
+
     it('không gọi API khi chưa nhập bot token', () => {
         const view = render(<TelegramChannelForm />);
-        submit(view, /Create Telegram Channel/);
+        submit(view, /Connect Telegram/);
 
         expect(postJson).not.toHaveBeenCalled();
     });
 
     it('gửi bot_token lên endpoint tạo inbox, không có tên inbox', async () => {
         const view = render(<TelegramChannelForm />);
-        fireEvent.change(view.container.querySelector('input')!, { target: { value: '123:ABC' } });
-        submit(view, /Create Telegram Channel/);
+        fireEvent.change(view.container.querySelector('input')!, { target: { value: ' 123:ABC ' } });
+        submit(view, /Connect Telegram/);
 
         await waitFor(() => expect(postJson).toHaveBeenCalledTimes(1));
         expect(postJson.mock.calls[0][0]).toBe('/api/v1/accounts/2/inboxes');
@@ -52,27 +62,38 @@ describe('form Telegram', () => {
             channel: { type: 'telegram', bot_token: '123:ABC' },
         });
     });
+
+    it('token bị Telegram từ chối thì hiện lỗi máy chủ ngay dưới form', async () => {
+        postJson.mockRejectedValueOnce(new Error('422'));
+        parseApiErrorMessage.mockReturnValueOnce('Telegram did not accept this token.' as never);
+        const view = render(<TelegramChannelForm />);
+        fireEvent.change(view.container.querySelector('input')!, { target: { value: 'sai' } });
+        submit(view, /Connect Telegram/);
+
+        await waitFor(() => expect(view.getByRole('alert').textContent).toContain('Telegram did not accept this token.'));
+    });
 });
 
 describe('form LINE', () => {
-    it('đòi đủ bốn trường trước khi gọi API', async () => {
+    it('chỉ hỏi Channel secret + access token, ID kênh và tên do máy chủ tự lấy', async () => {
         const view = render(<LineChannelForm />);
         const inputs = [...view.container.querySelectorAll('input')];
-        fireEvent.change(inputs[0], { target: { value: '  LINE OA  ' } });
-        submit(view, /Create LINE Channel/);
+        expect(inputs).toHaveLength(2);
+        expect(view.getByRole('link', { name: /Open LINE Developers Console/ }).getAttribute('href')).toBe(
+            'https://developers.line.biz/console/',
+        );
+
+        fireEvent.change(inputs[0], { target: { value: 'secret' } });
+        submit(view, /Connect LINE/);
         expect(postJson).not.toHaveBeenCalled();
 
-        fireEvent.change(inputs[1], { target: { value: '1657' } });
-        fireEvent.change(inputs[2], { target: { value: 'secret' } });
-        fireEvent.change(inputs[3], { target: { value: 'token' } });
-        submit(view, /Create LINE Channel/);
+        fireEvent.change(inputs[1], { target: { value: 'token' } });
+        submit(view, /Connect LINE/);
 
         await waitFor(() => expect(postJson).toHaveBeenCalledTimes(1));
         expect(postJson.mock.calls[0][1]).toStrictEqual({
-            name: 'LINE OA',
             channel: {
                 type: 'line',
-                line_channel_id: '1657',
                 line_channel_secret: 'secret',
                 line_channel_token: 'token',
             },

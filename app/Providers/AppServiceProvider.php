@@ -33,17 +33,24 @@ use App\Models\PlatformApp;
 use App\Models\User;
 use App\Search\SearchEngine;
 use App\Services\Analytics\PlausibleProxy;
+use App\Services\Email\MailServerProbe;
+use App\Services\Email\SocketMailServerProbe;
 use App\Services\Messaging\PublicFlowService;
 use App\Services\Stickers\StickerLibraryManager;
 use App\Support\Queue\SlowJobBreakdown;
+use App\Support\SharedModels;
 use App\Support\SystemAccess;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Validation\Factory as ValidationFactory;
 use Illuminate\Database\Connection;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Foundation\Http\Events\RequestHandled;
 use Illuminate\Http\Request;
 use Illuminate\Queue\Events\JobFailed;
+use Illuminate\Queue\Events\JobProcessed;
+use Illuminate\Queue\Events\JobProcessing;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
@@ -93,6 +100,9 @@ class AppServiceProvider extends ServiceProvider
             $app->make(PublicFlowService::class),
         ));
 
+        $this->app->bind(MailServerProbe::class, SocketMailServerProbe::class);
+        $this->app->scoped(SharedModels::class);
+
         $this->app->bind(SearchEngine::class, function ($app): SearchEngine {
             $driver = (string) config('search.driver');
             $engineClass = config("search.drivers.{$driver}")
@@ -112,6 +122,7 @@ class AppServiceProvider extends ServiceProvider
         $this->describePulseUsers();
         $this->registerRateLimiters();
         $this->refreshConversationTabCountsOnChange();
+        $this->scopeSharedModels();
         $this->registerOpsAlerts();
         // Polymorphic type lưu đúng tên lớp Ruby ('Channel::Api',
         // 'User', 'Contact'…) để DB + payload API khớp bản gốc.
@@ -145,6 +156,28 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(JobFailed::class, AlertOnJobFailure::class);
         Event::listen(LongWaitDetected::class, AlertOnLongWaitDetected::class);
         SlowJobBreakdown::register($this->app['events']);
+    }
+
+    private function scopeSharedModels(): void
+    {
+        $flush = function (): void {
+            if ($this->app->resolved(SharedModels::class)) {
+                $this->app->make(SharedModels::class)->flush();
+            }
+        };
+
+        Event::listen([RequestHandled::class, JobProcessing::class, JobProcessed::class], $flush);
+
+        $forget = function (Model $model): void {
+            if ($this->app->resolved(SharedModels::class)) {
+                $this->app->make(SharedModels::class)->forgetUnless($model);
+            }
+        };
+
+        foreach ([Account::class, Contact::class, User::class] as $model) {
+            $model::saved($forget);
+            $model::deleted($forget);
+        }
     }
 
     private function refreshConversationTabCountsOnChange(): void

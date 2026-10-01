@@ -3,6 +3,7 @@
 use App\Http\Controllers\App\ContactsController;
 use App\Http\Controllers\App\CustomStickersSettingsController;
 use App\Http\Controllers\App\DashboardController;
+use App\Http\Controllers\App\EmailOAuthController;
 use App\Http\Controllers\App\InboxesSettingsController;
 use App\Http\Controllers\App\OnboardingsController;
 use App\Http\Controllers\App\TeamsSettingsController;
@@ -181,6 +182,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/app/logout', [SessionsController::class, 'destroy'])->name('logout');
 
     Route::get('/app', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/app/email/oauth/{provider}/callback', [EmailOAuthController::class, 'callback'])
+        ->where('provider', '[a-z]+')->name('email_oauth.callback');
 
     Route::middleware('account.scope')->prefix('/app/accounts/{account}')->whereNumber('account')->group(function () {
         Route::get('', fn (Account $account) => redirect("/app/accounts/{$account->id}/dashboard"));
@@ -245,6 +248,9 @@ Route::middleware('auth')->group(function () {
                 Route::get('/agents', [InboxesSettingsController::class, 'addAgents'])->name('settings_inboxes_add_agents');
                 Route::get('/finish', [InboxesSettingsController::class, 'finish'])->name('settings_inbox_finish');
             });
+            // Kết nối hộp thư email bằng OAuth (Google/Microsoft); callback nằm ngoài account.
+            Route::get('/email/oauth/{provider}', [EmailOAuthController::class, 'start'])
+                ->where('provider', '[a-z]+')->name('email_oauth.start');
             Route::get('/settings/inboxes/new/{subPage}', [InboxesSettingsController::class, 'newChannel'])
                 ->where('subPage', '[a-z_]+')->name('settings_inboxes_page_channel');
             // Màn "Widget chat" (nhóm D) — trang riêng, không phải tab của Show.tsx.

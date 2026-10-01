@@ -46,6 +46,19 @@ class LineClient
         ]);
     }
 
+    /** POST /v2/oauth/verify: token còn hiệu lực thì trả `client_id` = ID kênh LINE. */
+    public function verifyAccessToken(): Response
+    {
+        return Http::asForm()->timeout(30)->post('https://api.line.me/v2/oauth/verify', [
+            'access_token' => $this->channel->line_channel_token,
+        ]);
+    }
+
+    public function botInfo(): Response
+    {
+        return $this->request()->get(self::API_BASE.'/info');
+    }
+
     private function request(): PendingRequest
     {
         return Http::withToken($this->channel->line_channel_token)->timeout(30);

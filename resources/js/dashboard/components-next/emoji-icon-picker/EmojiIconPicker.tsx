@@ -10,12 +10,11 @@ import { CURATED_ICONS } from './icons';
 import type { CuratedIcon } from './icons';
 import {
     DEFAULT_ICON_COLOR,
-    ICON_STYLE,
     PICKER_MODE,
     PICKER_TAB,
     isIconValue,
 } from './constants';
-import type { IconStyle, PickerTab } from './constants';
+import type { PickerTab } from './constants';
 import {
     addRecentEmoji,
     buildEmojiSections,
@@ -72,9 +71,6 @@ export default function EmojiIconPicker({
     );
     const [iconSearch, setIconSearch] = useState('');
     const [selectedColor, setSelectedColor] = useState(color || DEFAULT_ICON_COLOR);
-    const [iconStyle, setIconStyle] = useState<IconStyle>(
-        value.endsWith(`-${ICON_STYLE.FILL}`) ? ICON_STYLE.FILL : ICON_STYLE.LINE,
-    );
     const [emojiSearch, setEmojiSearch] = useState('');
     const [recentEmojis, setRecentEmojis] = useState<PickerEmoji[]>([]);
     const [position, setPosition] = useState<{ top: number; left: number } | null>(null);
@@ -155,8 +151,7 @@ export default function EmojiIconPicker({
     };
 
     const selectIcon = (icon: CuratedIcon) => {
-        // Lưu tên kèm hậu tố kiểu, vd "rocket-fill".
-        onSelect({ type: 'icon', value: `${icon.name}-${iconStyle}`, color: selectedColor });
+        onSelect({ type: 'icon', value: icon.name, color: selectedColor });
     };
 
     const selectEmoji = (emoji: PickerEmoji) => {
@@ -239,29 +234,6 @@ export default function EmojiIconPicker({
                                 <span className="absolute z-10 -translate-y-1/2 i-lucide-search size-4 text-n-slate-10 top-1/2 start-3" />
                             }
                         />
-                        <button
-                            type="button"
-                            title={
-                                iconStyle === ICON_STYLE.FILL
-                                    ? t('EMOJI_ICON_PICKER.STYLE.FILLED')
-                                    : t('EMOJI_ICON_PICKER.STYLE.OUTLINE')
-                            }
-                            className="flex items-center justify-center flex-shrink-0 transition-all rounded-lg !p-2 size-9 text-n-slate-11 hover:bg-[var(--ep-tint)] active:scale-[0.92]"
-                            onClick={() =>
-                                setIconStyle(current =>
-                                    current === ICON_STYLE.LINE ? ICON_STYLE.FILL : ICON_STYLE.LINE,
-                                )
-                            }
-                        >
-                            <span
-                                className={`${
-                                    iconStyle === ICON_STYLE.FILL
-                                        ? 'i-ri-contrast-2-fill'
-                                        : 'i-ri-contrast-2-line'
-                                } size-[1.2rem]`}
-                                style={{ color: selectedColor }}
-                            />
-                        </button>
                     </div>
                     {filteredIcons.length ? (
                         <div className="grid grid-cols-10 h-52 gap-0.5 overflow-y-auto no-scrollbar content-start px-2 pb-2">
@@ -274,7 +246,7 @@ export default function EmojiIconPicker({
                                     onClick={() => selectIcon(icon)}
                                 >
                                     <span
-                                        className={`${icon[iconStyle]} size-[1.125rem]`}
+                                        className={`${icon.icon} size-[1.125rem]`}
                                         style={{ color: selectedColor }}
                                     />
                                 </button>

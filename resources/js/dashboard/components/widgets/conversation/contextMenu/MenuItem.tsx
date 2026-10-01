@@ -1,4 +1,3 @@
-import FluentIcon from 'shared/components/FluentIcon/FluentIcon';
 
 // Port từ widgets/conversation/contextMenu/menuItem.vue (variant="icon") —
 // class scoped `.menu` / `.menu-label` viết thẳng ra utility.
@@ -19,7 +18,7 @@ export default function MenuItem({ label, icon, className = 'w-[12.5rem]', onCli
                 onClick();
             }}
         >
-            <FluentIcon icon={icon} size={14} className="flex-shrink-0" />
+            <span className={`${icon} size-3.5 flex-shrink-0`} aria-hidden="true" />
             <p className="menu-label my-0 mx-2 text-xs flex-shrink-0 truncate min-w-0 flex-1">{label}</p>
         </div>
     );

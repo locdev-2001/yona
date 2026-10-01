@@ -2,22 +2,32 @@
 
 namespace App\Models\Channel;
 
+use App\Casts\EncryptedSecretsArray;
 use App\Channels\Capability;
 use App\Channels\CapabilitySet;
+use App\Channels\ChannelConnection;
 use App\Channels\ChannelPlatform;
+use App\Channels\ConnectionMethod;
 use App\Channels\DeclaresCapabilities;
+use App\Channels\DeclaresConnection;
 use App\Channels\DeclaresPlatform;
 use App\Channels\TextFormat;
 use App\Models\Channel\Concerns\Channelable;
 use App\Models\Concerns\Reauthorizable;
+use App\Services\Email\EmailProviderPresets;
+use App\Services\Email\MailServerException;
+use App\Services\Email\OAuth\EmailOAuthProviders;
 use Database\Factories\Channel\EmailFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Cache;
 
-class Email extends Model implements DeclaresCapabilities, DeclaresPlatform
+class Email extends Model implements DeclaresCapabilities, DeclaresConnection, DeclaresPlatform
 {
     /** @use HasFactory<EmailFactory> */
-    use Channelable, HasFactory, Reauthorizable;
+    use Channelable, HasFactory, Reauthorizable {
+        Reauthorizable::reauthorized as clearReauthorizationFlags;
+    }
 
     public const AUTHORIZATION_ERROR_THRESHOLD = 10;
 
@@ -77,7 +87,8 @@ class Email extends Model implements DeclaresCapabilities, DeclaresPlatform
             'smtp_enable_starttls_auto' => 'boolean',
             'smtp_enable_ssl_tls' => 'boolean',
             'verified_for_sending' => 'boolean',
-            'provider_config' => 'array',
+            // Token OAuth (access/refresh) mã hoá ngay trong cột jsonb.
+            'provider_config' => EncryptedSecretsArray::class.':access_token,refresh_token',
         ];
     }
 
@@ -106,7 +117,63 @@ class Email extends Model implements DeclaresCapabilities, DeclaresPlatform
 
     public static function channelRules(): array
     {
-        return ['email' => ['required', 'email', 'max:255']];
+        // Form "Thêm kênh" (Gmail/Outlook/Khác) gửi luôn máy chủ thư lúc tạo.
+        return [
+            'email' => ['required', 'email', 'max:255'],
+            'imap_enabled' => ['sometimes', 'boolean'],
+            'imap_address' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'imap_port' => ['sometimes', 'nullable', 'integer', 'between:1,65535'],
+            'imap_login' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'imap_password' => ['sometimes', 'nullable', 'string', 'max:1024'],
+            'imap_enable_ssl' => ['sometimes', 'boolean'],
+            'smtp_enabled' => ['sometimes', 'boolean'],
+            'smtp_address' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'smtp_port' => ['sometimes', 'nullable', 'integer', 'between:1,65535'],
+            'smtp_login' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'smtp_password' => ['sometimes', 'nullable', 'string', 'max:1024'],
+            'smtp_enable_starttls_auto' => ['sometimes', 'boolean'],
+            'smtp_enable_ssl_tls' => ['sometimes', 'boolean'],
+        ];
+    }
+
+    /**
+     * Máy chủ thư từ chối: sai mật khẩu thì đòi kết nối lại ngay (tự hết không được),
+     * không tới được máy chủ thì đếm tới ngưỡng rồi mới đòi (mạng chập chờn).
+     */
+    public function recordConnectionFailure(MailServerException $exception): void
+    {
+        Cache::forever($this->connectionFailureKey(), $exception->toArray());
+
+        $exception->isAuthentication() ? $this->promptReauthorization() : $this->authorizationError();
+    }
+
+    /** Lời nhắn cho người dùng về lần hỏng gần nhất, chỉ khi hộp thư đang bị đánh dấu lỗi. */
+    public function connectionError(): ?string
+    {
+        if (! $this->reauthorizationRequired()) {
+            return null;
+        }
+
+        $failure = Cache::get($this->connectionFailureKey());
+
+        return is_array($failure) ? MailServerException::messageFor($failure) : null;
+    }
+
+    public function reauthorized(): void
+    {
+        $this->clearReauthorizationFlags();
+        Cache::forget($this->connectionFailureKey());
+    }
+
+    private function connectionFailureKey(): string
+    {
+        return 'EMAIL_CONNECTION_FAILURE::'.$this->getKey();
+    }
+
+    // Form Gmail/Outlook không hỏi tên: hộp thư mang luôn địa chỉ thư (ChannelSetupService).
+    public static function namesInboxItself(): bool
+    {
+        return true;
     }
 
     public function isMicrosoft(): bool
@@ -122,6 +189,40 @@ class Email extends Model implements DeclaresCapabilities, DeclaresPlatform
     public function isLegacyGoogle(): bool
     {
         return $this->imap_enabled && $this->imap_address === 'imap.gmail.com';
+    }
+
+    /**
+     * Một lối vào "Email", bên trong chọn nhà cung cấp: Gmail/Outlook tự điền máy chủ thư,
+     * khách chỉ nhập địa chỉ + App Password; "Khác" điền đủ thông số.
+     */
+    public static function connection(): ChannelConnection
+    {
+        return ChannelConnection::of('email', ConnectionMethod::Form)
+            ->ordered(30)
+            ->withOptions(
+                self::oauthOption('google'),
+                self::oauthOption('microsoft'),
+                ChannelConnection::of('gmail', ConnectionMethod::Form)
+                    ->withPreset(EmailProviderPresets::for('gmail'))
+                    ->withGuideUrl(EmailProviderPresets::GMAIL_APP_PASSWORD_URL),
+                ChannelConnection::of('outlook', ConnectionMethod::Form)
+                    ->withPreset(EmailProviderPresets::for('outlook'))
+                    ->withGuideUrl(EmailProviderPresets::MICROSOFT_APP_PASSWORD_URL),
+                ChannelConnection::of('other', ConnectionMethod::Form),
+            );
+    }
+
+    // Đăng nhập nhà cung cấp (OAuth): đóng khi thiếu app hoặc cờ khoá (Gmail chờ Google duyệt).
+    private static function oauthOption(string $provider): ChannelConnection
+    {
+        return ChannelConnection::of($provider, ConnectionMethod::OauthRedirect)
+            ->available(EmailOAuthProviders::find($provider)?->available() ?? false)
+            ->startsAt('email_oauth.start', ['provider' => $provider]);
+    }
+
+    public function usesOAuth(): bool
+    {
+        return $this->isGoogle() || $this->isMicrosoft();
     }
 
     /** Thư đến qua IMAP/mailbox: thân HTML thành markdown, tệp đính kèm giữ nguyên tên. */
@@ -146,12 +247,13 @@ class Email extends Model implements DeclaresCapabilities, DeclaresPlatform
             Capability::ProfileEmail,
             Capability::IdentityStableId,
             Capability::ThreadingContinuous,
-            Capability::SessionToken,
             Capability::SessionReauth,
             Capability::SettingsSenderName,
         )->withTextFormat(TextFormat::Html);
 
-        // Hộp thư đăng nhập qua OAuth (Google, Microsoft) do nhà cung cấp giữ máy chủ thư.
-        return blank($this->provider) ? $shared->merge(CapabilitySet::of(Capability::SettingsMailServer)) : $shared;
+        // Hộp thư đăng nhập qua OAuth do nhà cung cấp giữ máy chủ thư; còn lại khách tự cấu hình.
+        return $this->usesOAuth()
+            ? $shared->merge(CapabilitySet::of(Capability::SessionOauth))
+            : $shared->merge(CapabilitySet::of(Capability::SessionToken, Capability::SettingsMailServer));
     }
 }

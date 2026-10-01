@@ -8,6 +8,7 @@ use App\Events\PreviousChanges;
 use App\Exceptions\MessageValidationException;
 use App\Messaging\Delivery\OutboundOrder;
 use App\Models\Concerns\IndexedForSearch;
+use App\Models\Concerns\SharesRequestModels;
 use App\Services\Messages\InReplyToMessageBuilder;
 use App\Services\Messages\OutboundMentionsBuilder;
 use App\Services\MessageTemplates\HookExecutionService;
@@ -29,7 +30,7 @@ use Illuminate\Support\Facades\DB;
 class Message extends Model
 {
     /** @use HasFactory<MessageFactory> */
-    use HasFactory, IndexedForSearch;
+    use HasFactory, IndexedForSearch, SharesRequestModels;
 
     public const TYPE_INCOMING = 0;
 

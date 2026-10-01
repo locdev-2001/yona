@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { usePage } from '@inertiajs/react';
 import { picoSearch } from '@ext/pico-search';
+import { ICONS } from 'dashboard/icons';
 
 import { t } from '../../../i18n';
 import { useAlert } from 'dashboard/composables/useAlert';
@@ -89,13 +90,13 @@ export default function TeamsIndex() {
             <div className="flex justify-end gap-3">
                 {isAdmin ? (
                     <a href={accountScopedUrl(accountId, `settings/teams/${team.id}/edit`)}>
-                        <Button title={t('TEAMS_SETTINGS.LIST.EDIT_TEAM')} icon="i-woot-settings" slate sm />
+                        <Button title={t('TEAMS_SETTINGS.LIST.EDIT_TEAM')} icon={ICONS.settings} slate sm />
                     </a>
                 ) : null}
                 {isAdmin ? (
                     <Button
                         title={t('TEAMS_SETTINGS.DELETE.BUTTON_TEXT')}
-                        icon="i-woot-bin"
+                        icon={ICONS.delete}
                         slate
                         sm
                         className="hover:enabled:text-n-ruby-11 hover:enabled:bg-n-ruby-2"

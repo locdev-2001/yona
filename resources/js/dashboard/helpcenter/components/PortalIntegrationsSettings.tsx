@@ -18,9 +18,9 @@ const ANALYTICS_PROVIDERS = [
     { key: 'gtm_container_id', i18nKey: 'GTM', icon: 'i-logos-google-tag-manager', format: /^GTM-[A-Z0-9]+$/ },
     { key: 'ga4_measurement_id', i18nKey: 'GA4', icon: 'i-logos-google-analytics', format: /^G-[A-Z0-9]+$/ },
     { key: 'hotjar_site_id', i18nKey: 'HOTJAR', icon: 'i-logos-hotjar-icon', format: /^\d+$/ },
-    { key: 'plausible_domain', i18nKey: 'PLAUSIBLE', icon: 'i-woot-plausible', format: /^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$/i },
+    { key: 'plausible_domain', i18nKey: 'PLAUSIBLE', icon: 'i-yona-plausible', format: /^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$/i },
     { key: 'amplitude_api_key', i18nKey: 'AMPLITUDE', icon: 'i-logos-amplitude-icon', format: /^[a-z0-9]+$/i },
-    { key: 'clarity_project_id', i18nKey: 'CLARITY', icon: 'i-woot-microsoft-clarity', format: /^[a-z0-9]+$/i },
+    { key: 'clarity_project_id', i18nKey: 'CLARITY', icon: 'i-yona-microsoft-clarity', format: /^[a-z0-9]+$/i },
     { key: 'meta_pixel_id', i18nKey: 'META_PIXEL', icon: 'i-logos-meta-icon', format: /^\d+$/ },
 ];
 

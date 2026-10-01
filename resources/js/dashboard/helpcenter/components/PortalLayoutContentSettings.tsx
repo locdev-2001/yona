@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { BRAND_ICONS } from 'dashboard/icons';
 
 import { t } from '../../../i18n';
 import Button from 'dashboard/components-next/button/Button';
@@ -15,14 +16,14 @@ const PORTAL_LAYOUTS = { CLASSIC: 'classic', DOCUMENTATION: 'documentation' } as
 
 // `prefix` là phần link help center tự điền; CSDL chỉ lưu phần định danh.
 const SOCIAL_PLATFORMS = [
-    { key: 'facebook', label: 'Facebook', icon: 'i-ri-facebook-circle-fill', prefix: 'facebook.com/' },
-    { key: 'x', label: 'X', icon: 'i-ri-twitter-x-fill', prefix: 'x.com/' },
-    { key: 'instagram', label: 'Instagram', icon: 'i-ri-instagram-fill', prefix: 'instagram.com/' },
-    { key: 'linkedin', label: 'LinkedIn', icon: 'i-ri-linkedin-box-fill', prefix: 'linkedin.com/' },
-    { key: 'youtube', label: 'YouTube', icon: 'i-ri-youtube-fill', prefix: 'youtube.com/' },
-    { key: 'tiktok', label: 'TikTok', icon: 'i-ri-tiktok-fill', prefix: 'tiktok.com/' },
-    { key: 'github', label: 'GitHub', icon: 'i-ri-github-fill', prefix: 'github.com/' },
-    { key: 'whatsapp', label: 'WhatsApp', icon: 'i-ri-whatsapp-fill', prefix: 'wa.me/' },
+    { key: 'facebook', label: 'Facebook', icon: BRAND_ICONS.facebook, prefix: 'facebook.com/' },
+    { key: 'x', label: 'X', icon: BRAND_ICONS.x, prefix: 'x.com/' },
+    { key: 'instagram', label: 'Instagram', icon: BRAND_ICONS.instagram, prefix: 'instagram.com/' },
+    { key: 'linkedin', label: 'LinkedIn', icon: BRAND_ICONS.linkedin, prefix: 'linkedin.com/' },
+    { key: 'youtube', label: 'YouTube', icon: BRAND_ICONS.youtube, prefix: 'youtube.com/' },
+    { key: 'tiktok', label: 'TikTok', icon: BRAND_ICONS.tiktok, prefix: 'tiktok.com/' },
+    { key: 'github', label: 'GitHub', icon: BRAND_ICONS.github, prefix: 'github.com/' },
+    { key: 'whatsapp', label: 'WhatsApp', icon: BRAND_ICONS.whatsapp, prefix: 'wa.me/' },
 ];
 
 interface PortalLayoutContentSettingsProps {

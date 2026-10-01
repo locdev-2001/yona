@@ -67,38 +67,60 @@ describe('Telegram', function () {
         expect($response->json('name'))->toBe('shop_bot');
     });
 
-    it('vẫn tạo được inbox khi Telegram trả lỗi', function () {
+    // #160: token sai bị chặn ngay khi lưu (getMe), không tạo hộp thư hỏng.
+    it('từ chối token Telegram không gọi được getMe, không tạo inbox', function () {
         Http::fake(['api.telegram.org/*' => Http::response(['ok' => false, 'description' => 'Unauthorized'], 401)]);
 
-        $response = createInboxAs($this->admin, $this->account, [
+        createInboxAs($this->admin, $this->account, [
             'name' => 'Bot hỏng',
             'channel' => ['type' => 'telegram', 'bot_token' => 'token-sai'],
-        ])->assertOk();
+        ])->assertStatus(422)->assertJsonValidationErrors(['channel.bot_token']);
 
-        expect(Telegram::findByBotToken('token-sai'))->not->toBeNull()
-            ->and($response->json('bot_name'))->toBeNull()
-            ->and($response->json('name'))->toBe('Bot hỏng');
+        expect(Telegram::findByBotToken('token-sai'))->toBeNull();
+        Http::assertNotSent(fn ($request) => str_contains($request->url(), '/setWebhook'));
     });
 });
 
 describe('LINE', function () {
-    it('không gọi nhà cung cấp nhưng vẫn trả URL webhook để khai báo', function () {
-        Http::fake();
+    it('kiểm token với LINE, lấy ID kênh + tên bot, trả URL webhook để khai báo', function () {
+        Http::fake([
+            'api.line.me/v2/oauth/verify' => Http::response(['client_id' => '1657000', 'expires_in' => 3138007490, 'scope' => 'P']),
+            'api.line.me/v2/bot/info' => Http::response(['userId' => 'U1', 'basicId' => '@shop', 'displayName' => 'Shop LINE']),
+        ]);
 
         $response = createInboxAs($this->admin, $this->account, [
-            'name' => 'LINE OA',
             'channel' => [
                 'type' => 'line',
-                'line_channel_id' => '1657000',
                 'line_channel_secret' => 'secret',
                 'line_channel_token' => 'token',
             ],
         ])->assertOk();
 
         expect($response->json('callback_webhook_url'))->toBe('https://yona.test/webhooks/line/1657000')
+            ->and($response->json('name'))->toBe('Shop LINE')
             ->and(Line::query()->where('line_channel_id', '1657000')->exists())->toBeTrue();
 
-        Http::assertNothingSent();
+        Http::assertSent(fn ($request) => $request->url() === 'https://api.line.me/v2/oauth/verify'
+            && $request['access_token'] === 'token');
+    });
+
+    it('từ chối channel access token LINE không còn hiệu lực', function () {
+        Http::fake(['api.line.me/*' => Http::response(['error' => 'invalid_request', 'error_description' => 'access token expired'], 400)]);
+
+        createInboxAs($this->admin, $this->account, [
+            'channel' => ['type' => 'line', 'line_channel_secret' => 'secret', 'line_channel_token' => 'het-han'],
+        ])->assertStatus(422)->assertJsonValidationErrors(['channel.line_channel_token']);
+
+        expect(Line::query()->count())->toBe(0);
+    });
+
+    it('từ chối khi ID kênh nhập vào không khớp kênh của token', function () {
+        Http::fake(['api.line.me/v2/oauth/verify' => Http::response(['client_id' => '999', 'expires_in' => 1, 'scope' => 'P'])]);
+
+        createInboxAs($this->admin, $this->account, [
+            'name' => 'LINE OA',
+            'channel' => ['type' => 'line', 'line_channel_id' => '1657000', 'line_channel_secret' => 'secret', 'line_channel_token' => 'token'],
+        ])->assertStatus(422)->assertJsonValidationErrors(['channel.line_channel_id']);
     });
 });
 

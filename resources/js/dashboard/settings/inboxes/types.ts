@@ -116,6 +116,10 @@ export interface Inbox {
     smtp_authentication?: string;
     provider?: string | null;
     reauthorization_required?: boolean;
+    // Lời nhắn cụ thể khi kênh mất kết nối (vd máy chủ thư từ chối đăng nhập).
+    connection_error?: string | null;
+    // Kênh nối qua OAuth: đường kết nối lại với nhà cung cấp.
+    reconnect_url?: string | null;
     // Kênh API (hmac_token/secret chỉ có với administrator).
     hmac_token?: string;
     secret?: string;

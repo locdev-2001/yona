@@ -5,8 +5,11 @@ namespace App\Models\Channel;
 use App\Builders\ContactInboxWithContactBuilder;
 use App\Channels\Capability;
 use App\Channels\CapabilitySet;
+use App\Channels\ChannelConnection;
 use App\Channels\ChannelPlatform;
+use App\Channels\ConnectionMethod;
 use App\Channels\DeclaresCapabilities;
+use App\Channels\DeclaresConnection;
 use App\Channels\DeclaresPlatform;
 use App\Channels\TextFormat;
 use App\Models\Channel\Concerns\Channelable;
@@ -17,7 +20,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 // Subscribe/unsubscribe (gem facebook-messenger) nằm ở App\Services\Facebook\PageSubscriptionService.
-class FacebookPage extends Model implements DeclaresCapabilities, DeclaresPlatform
+class FacebookPage extends Model implements DeclaresCapabilities, DeclaresConnection, DeclaresPlatform
 {
     /** @use HasFactory<FacebookPageFactory> */
     use Channelable, HasFactory, Reauthorizable;
@@ -64,6 +67,14 @@ class FacebookPage extends Model implements DeclaresCapabilities, DeclaresPlatfo
             contactAttributes: ['name' => $name],
             sourceId: $sourceId,
         ))->perform();
+    }
+
+    /** Đăng nhập Meta bằng SDK (cửa sổ bật lên) — cần app Meta của bản cài đặt. */
+    public static function connection(): ChannelConnection
+    {
+        return ChannelConnection::of('facebook', ConnectionMethod::OauthPopup)
+            ->ordered(70)
+            ->available(filled(config('services.facebook.app_id')) && filled(config('services.facebook.app_secret')));
     }
 
     /** Messenger: biên nhận delivered/seen của Meta chưa được xử lý (nợ có tên). */

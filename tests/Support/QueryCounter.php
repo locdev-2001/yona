@@ -18,7 +18,8 @@ final class QueryCounter
 
     private static ?self $active = null;
 
-    private static bool $listening = false;
+    /** Mỗi test dựng app mới, nên phải gắn lại listener khi đổi app. */
+    private static ?object $listeningOn = null;
 
     public static function measure(callable $work): self
     {
@@ -39,11 +40,13 @@ final class QueryCounter
         self::$active = $this;
         $this->recording = true;
 
-        if (self::$listening) {
+        $app = app();
+
+        if (self::$listeningOn === $app) {
             return;
         }
 
-        self::$listening = true;
+        self::$listeningOn = $app;
         DB::listen(static function (QueryExecuted $query): void {
             self::$active?->record($query);
         });
@@ -121,7 +124,8 @@ final class QueryCounter
         foreach (debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS) as $frame) {
             $file = $frame['file'] ?? '';
 
-            if (str_contains($file, '/app/') && ! str_contains($file, '/vendor/')) {
+            if (str_contains($file, '/app/') && ! str_contains($file, '/vendor/')
+                && ! str_ends_with($file, 'SharesRequestModels.php') && ! str_ends_with($file, 'SharedModels.php')) {
                 return substr($file, strpos($file, '/app/') + 1).':'.($frame['line'] ?? 0);
             }
         }

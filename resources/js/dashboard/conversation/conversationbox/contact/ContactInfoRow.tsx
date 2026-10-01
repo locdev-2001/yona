@@ -3,7 +3,6 @@ import type { MouseEvent, ReactNode } from 'react';
 
 import NextButton from 'dashboard/components-next/button/Button';
 import { useAlert } from 'dashboard/composables/useAlert';
-import FluentIcon from 'shared/components/FluentIcon/FluentIcon';
 import { copyTextToClipboard } from 'shared/helpers/clipboard';
 import { t } from '../../../../i18n';
 
@@ -31,7 +30,7 @@ interface ContactInfoRowProps {
 function RowIcon({ icon, emoji }: { icon: string; emoji: string }) {
     return (
         <span className="flex-shrink-0 ltr:ml-1 rtl:mr-1 inline-flex items-center" title={emoji}>
-            <FluentIcon icon={icon} size="14" />
+            <span className={`${icon} size-3.5`} aria-hidden="true" />
         </span>
     );
 }

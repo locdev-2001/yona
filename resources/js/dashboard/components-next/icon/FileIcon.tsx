@@ -1,25 +1,26 @@
 import Icon from './Icon';
+import { ICONS } from 'dashboard/icons';
 
 // Port từ dashboard/components-next/icon/FileIcon.vue.
 const FILE_TYPE_ICONS: Record<string, string> = {
-    '7z': 'i-woot-file-zip',
-    csv: 'i-woot-file-csv',
-    doc: 'i-woot-file-doc',
-    docx: 'i-woot-file-doc',
-    json: 'i-woot-file-txt',
-    odt: 'i-woot-file-doc',
-    pdf: 'i-woot-file-pdf',
-    pfx: 'i-woot-file-pfx',
-    ppt: 'i-woot-file-ppt',
-    pptx: 'i-woot-file-ppt',
-    rar: 'i-woot-file-zip',
-    rtf: 'i-woot-file-doc',
-    tar: 'i-woot-file-zip',
-    txt: 'i-woot-file-txt',
-    xls: 'i-woot-file-xls',
-    xlsx: 'i-woot-file-xls',
-    xml: 'i-woot-file-txt',
-    zip: 'i-woot-file-zip',
+    '7z': ICONS.fileArchive,
+    csv: ICONS.fileSpreadsheet,
+    doc: ICONS.fileDocument,
+    docx: ICONS.fileDocument,
+    json: ICONS.fileCode,
+    odt: ICONS.fileDocument,
+    pdf: ICONS.fileDocument,
+    pfx: ICONS.fileCertificate,
+    ppt: ICONS.filePresentation,
+    pptx: ICONS.filePresentation,
+    rar: ICONS.fileArchive,
+    rtf: ICONS.fileDocument,
+    tar: ICONS.fileArchive,
+    txt: ICONS.fileText,
+    xls: ICONS.fileSpreadsheet,
+    xlsx: ICONS.fileSpreadsheet,
+    xml: ICONS.fileCode,
+    zip: ICONS.fileArchive,
 };
 
 interface FileIconProps {
@@ -28,5 +29,5 @@ interface FileIconProps {
 }
 
 export default function FileIcon({ fileType, className }: FileIconProps) {
-    return <Icon icon={FILE_TYPE_ICONS[fileType] || 'i-teenyicons-text-document-solid'} className={className} />;
+    return <Icon icon={FILE_TYPE_ICONS[fileType] || ICONS.file} className={className} />;
 }

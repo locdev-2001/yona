@@ -24,11 +24,17 @@ import WhatsappChannelForm from './channels/Whatsapp';
 import Button from 'dashboard/components-next/button/Button';
 import type { DashboardPageProps } from '../../types';
 import type { Inbox } from './types';
+import type { ChannelConnection } from './channelConnection';
 
-// Port từ settings/inbox/ChannelFactory.vue + channels/Api.vue + channels/Website.vue
-// — bước 2. Kênh khác vào map CHANNEL_VIEWS khi port (như ChannelFactory).
+// Bước 2: form của lối vào đã chọn. Backend chỉ mở trang này cho lối vào đang khả
+// dụng và gửi kèm giao kèo kết nối (`connection`) để form biết cách nối, mẫu điền sẵn.
 interface NewChannelProps {
     channelName: string;
+    connection?: ChannelConnection | null;
+}
+
+export interface ChannelFormProps {
+    connection?: ChannelConnection | null;
 }
 
 function ApiChannelForm() {
@@ -112,7 +118,7 @@ function ApiChannelForm() {
     );
 }
 
-const CHANNEL_VIEWS: Record<string, () => ReactElement> = {
+const CHANNEL_VIEWS: Record<string, (props: ChannelFormProps) => ReactElement> = {
     api: ApiChannelForm,
     website: WebsiteChannelForm,
     email: EmailChannelForm,
@@ -127,14 +133,14 @@ const CHANNEL_VIEWS: Record<string, () => ReactElement> = {
     whatsapp: WhatsappChannelForm,
 };
 
-export default function NewChannel({ channelName }: NewChannelProps) {
+export default function NewChannel({ channelName, connection = null }: NewChannelProps) {
     const ChannelComponent = CHANNEL_VIEWS[channelName];
 
     return (
         <Dashboard>
             <SettingsContent headerTitle={t('INBOX_MGMT.HEADER')} showBackButton>
                 <WizardLayout activeRoute={INBOX_WIZARD_ROUTES.INBOX}>
-                    {ChannelComponent ? <ChannelComponent /> : <div />}
+                    {ChannelComponent ? <ChannelComponent connection={connection} /> : <div />}
                 </WizardLayout>
             </SettingsContent>
         </Dashboard>

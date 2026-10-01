@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { ICONS } from 'dashboard/icons';
 
 import NextButton from 'dashboard/components-next/button/Button';
 
@@ -27,7 +28,7 @@ export default function VoiceMessagePreview({ recording, isSending, onSend, onDi
             data-testid="voice-message-preview"
             className="flex flex-wrap items-center gap-2 px-3 py-2 mb-2 rounded-lg bg-n-alpha-2"
         >
-            <span className="i-ph-microphone size-4 shrink-0 text-n-slate-11" aria-hidden="true" />
+            <span className={`${ICONS.microphone} size-4 shrink-0 text-n-slate-11`} aria-hidden="true" />
             {playbackUrl ? (
                 <audio
                     controls
@@ -51,7 +52,7 @@ export default function VoiceMessagePreview({ recording, isSending, onSend, onDi
                 <NextButton
                     type="button"
                     label={t('CONVERSATION.REPLYBOX.VOICE_RECORDER.SEND')}
-                    icon="i-ph-paper-plane-tilt"
+                    icon={ICONS.send}
                     blue
                     sm
                     isLoading={isSending}

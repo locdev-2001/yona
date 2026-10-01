@@ -8,6 +8,7 @@ use App\Http\Resources\UserResource;
 use App\Jobs\Notification\EmailNotificationJob;
 use App\Jobs\Notification\PushNotificationJob;
 use App\Jobs\Notification\RemoveDuplicateNotificationJob;
+use App\Models\Concerns\SharesRequestModels;
 use App\Support\PlainTextContent;
 use App\Support\RealtimePayload;
 use Database\Factories\NotificationFactory;
@@ -20,7 +21,7 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 class Notification extends Model
 {
     /** @use HasFactory<NotificationFactory> */
-    use HasFactory;
+    use HasFactory, SharesRequestModels;
 
     // NOTIFICATION_TYPES — thứ tự cũng là vị trí bit trong NotificationSetting.
     public const TYPES = [

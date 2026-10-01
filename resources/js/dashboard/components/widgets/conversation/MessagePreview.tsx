@@ -1,19 +1,19 @@
 import { t } from '../../../../i18n';
 import { messagePreviewBody } from 'dashboard/components-next/message/helpers/messagePreview';
-import FluentIcon from 'shared/components/FluentIcon/FluentIcon';
 import Icon from 'dashboard/components-next/icon/Icon';
 import HighlightedText from 'dashboard/search/components/HighlightedText';
 import { MESSAGE_TYPES } from '../../../conversation/constants';
 import type { ConversationMessage } from '../../../conversation/types';
+import { ICONS } from 'dashboard/icons';
 
-// Trích ATTACHMENT_ICONS của shared/constants/messages.js (icon fluent).
+// Trích ATTACHMENT_ICONS của shared/constants/messages.js.
 const ATTACHMENT_ICONS: Record<string, string> = {
-    image: 'image',
-    audio: 'headphones-sound-wave',
-    video: 'video',
-    file: 'document',
-    location: 'location',
-    fallback: 'link',
+    image: ICONS.attachmentImage,
+    audio: ICONS.attachmentAudio,
+    video: ICONS.attachmentVideo,
+    file: ICONS.attachmentFile,
+    location: ICONS.attachmentLocation,
+    fallback: ICONS.attachmentLink,
 };
 
 // Port từ dashboard/components/widgets/conversation/MessagePreview.vue
@@ -43,16 +43,16 @@ export default function MessagePreview({
         <div className={`overflow-hidden text-ellipsis whitespace-nowrap ${className}`.trim()}>
             {showMessageType ? (
                 isMessagePrivate ? (
-                    <FluentIcon size={16} className={typeIconClass} icon="lock-closed" />
+                    <span className={`${ICONS.privateNote} size-4 ${typeIconClass}`} aria-hidden="true" />
                 ) : messageByAgent ? (
-                    <FluentIcon size={16} className={typeIconClass} icon="arrow-reply" />
+                    <span className={`${ICONS.reply} size-4 ${typeIconClass}`} aria-hidden="true" />
                 ) : isMessageAnActivity ? (
-                    <FluentIcon size={16} className={typeIconClass} icon="info" />
+                    <span className={`${ICONS.info} size-4 ${typeIconClass}`} aria-hidden="true" />
                 ) : null
             ) : null}
             {body.kind === 'sticker' ? (
                 <span>
-                    <Icon icon="i-ph-sticker" className="-mt-0.5 align-middle inline-block text-n-slate-11 size-4" />{' '}
+                    <Icon icon={ICONS.sticker} className="-mt-0.5 align-middle inline-block text-n-slate-11 size-4" />{' '}
                     {t('CHAT_LIST.ATTACHMENTS.sticker.CONTENT')}
                 </span>
             ) : body.kind === 'text' ? (
@@ -64,11 +64,7 @@ export default function MessagePreview({
             ) : body.kind === 'attachment' ? (
                 <span>
                     {ATTACHMENT_ICONS[body.fileType] && showMessageType ? (
-                        <FluentIcon
-                            size={16}
-                            className="-mt-0.5 align-middle inline-block text-n-slate-11"
-                            icon={ATTACHMENT_ICONS[body.fileType]}
-                        />
+                        <span className={`${ATTACHMENT_ICONS[body.fileType]} size-4 -mt-0.5 align-middle inline-block text-n-slate-11`} aria-hidden="true" />
                     ) : null}{' '}
                     {t(`CHAT_LIST.ATTACHMENTS.${body.fileType}.CONTENT`)}
                 </span>

@@ -1,4 +1,5 @@
 import NextButton from 'dashboard/components-next/button/Button';
+import { ICONS } from 'dashboard/icons';
 
 import { t } from '../../../../i18n';
 import type { VoiceRecorderStatus } from './useVoiceRecorder';
@@ -47,7 +48,7 @@ export default function VoiceRecorderBar({ status, elapsedSeconds, maxSeconds, o
                 <NextButton
                     type="button"
                     label={t('CONVERSATION.REPLYBOX.STOP_AUDIO_RECORDING')}
-                    icon="i-ph-stop-fill"
+                    icon={ICONS.stopRecording}
                     ruby
                     sm
                     disabled={!isRecording}

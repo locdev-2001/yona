@@ -28,6 +28,7 @@ final class ResponseBuilder
 
         $response = $this->message->csatSurveyResponse ?? new CsatSurveyResponse([
             'message_id' => $this->message->id,
+            'message_created_at' => CsatSurveyResponse::messageCreatedAtOf($this->message),
             'account_id' => $this->message->account_id,
             'conversation_id' => $this->message->conversation_id,
             'contact_id' => $conversation->contact_id,

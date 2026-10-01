@@ -1,7 +1,7 @@
 // `content` trỏ cây source React của Yona. Không tự "chuẩn hóa" scale màu/token.
 const { slateDark } = require('@radix-ui/colors');
 import { colors } from './theme/colors';
-import { icons } from './theme/icons';
+import { icons as yonaIcons } from './theme/yona-icons';
 const defaultTheme = require('tailwindcss/defaultTheme');
 const {
   iconsPlugin,
@@ -275,19 +275,10 @@ const tailwindConfig = {
     hiddenScrollbarPlugin,
     iconsPlugin({
       collections: {
-        woot: { icons },
-        ...getIconCollections([
-          'lucide',
-          'logos',
-          'ri',
-          'ph',
-          // Nút phát/dừng tin ghi âm, chip video, icon tệp và thẻ liên hệ dùng
-          // i-teenyicons-* như bản gốc; thiếu bộ này thì các nút đó hiện trống.
-          'teenyicons',
-          'fluent',
-          // Logo thương hiệu (nút "Tiếp tục với Google" ở trang auth).
-          'simple-icons',
-        ]),
+        yona: { icons: yonaIcons },
+        // lucide = icon giao diện · logos, simple-icons = logo thương hiệu.
+        // iconCollections.test.ts chặn lớp icon thuộc bộ ngoài danh sách này.
+        ...getIconCollections(['lucide', 'logos', 'simple-icons']),
       },
     }),
   ],

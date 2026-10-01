@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Events\DomainEvent;
 use App\Events\EventType;
+use App\Models\Concerns\SharesRequestModels;
 use Database\Factories\MentionFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -14,7 +15,7 @@ use Illuminate\Support\Facades\DB;
 class Mention extends Model
 {
     /** @use HasFactory<MentionFactory> */
-    use HasFactory;
+    use HasFactory, SharesRequestModels;
 
     protected $fillable = [
         'account_id',

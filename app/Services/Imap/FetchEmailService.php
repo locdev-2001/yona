@@ -4,14 +4,17 @@ namespace App\Services\Imap;
 
 use App\Models\Channel\Email;
 use App\Services\Email\MailPresenter;
+use App\Services\Email\MailServerException;
+use App\Services\Email\OAuth\EmailOAuthTokenManager;
 use Illuminate\Support\Facades\Log;
+use Throwable;
 use Webklex\PHPIMAP\Client;
 use Webklex\PHPIMAP\ClientManager;
 use Webklex\PHPIMAP\Message;
 
 /**
  * Lấy thư mới của một kênh email qua IMAP và trả về danh sách đã parse.
- * Nhánh OAuth google/microsoft giữ nợ cho F6 (chỉ khác cách lấy mật khẩu).
+ * Hộp thư nối OAuth (Google/Microsoft) đăng nhập XOAUTH2 bằng access token còn hạn.
  */
 class FetchEmailService
 {
@@ -82,7 +85,20 @@ class FetchEmailService
 
     private function client(): Client
     {
-        return $this->client ??= (new ClientManager)->make($this->connectionConfig());
+        if ($this->client !== null) {
+            return $this->client;
+        }
+
+        $config = $this->connectionConfig();
+        $this->client = (new ClientManager)->make($config);
+
+        try {
+            $this->client->connect();
+        } catch (Throwable $exception) {
+            throw MailServerException::fromImap($exception, (string) $this->channel->imap_address, (int) $this->channel->imap_port);
+        }
+
+        return $this->client;
     }
 
     /** @return array<string, mixed> */
@@ -96,20 +112,22 @@ class FetchEmailService
             'username' => $this->channel->imap_login,
             'password' => $this->imapPassword(),
             'protocol' => 'imap',
-            'authentication' => $this->authenticationType() === 'oauth' ? 'oauth' : null,
+            'authentication' => $this->usesOAuth() ? 'oauth' : null,
             'timeout' => config('mail.smtp_read_timeout'),
         ];
     }
 
-    // Imap::Authentication — 'plain' là mặc định của bản gốc.
-    private function authenticationType(): string
+    // Hộp thư nối bằng OAuth (Google/Microsoft) đăng nhập XOAUTH2 bằng access token.
+    private function usesOAuth(): bool
     {
-        return strtolower((string) ($this->channel->imap_authentication ?: 'plain'));
+        return $this->channel->usesOAuth() || strtolower((string) $this->channel->imap_authentication) === 'oauth';
     }
 
     private function imapPassword(): ?string
     {
-        return $this->channel->imap_password;
+        return $this->channel->usesOAuth()
+            ? app(EmailOAuthTokenManager::class)->accessToken($this->channel)
+            : $this->channel->imap_password;
     }
 
     // SINCE <hôm nay - interval ngày>, định dạng d-M-Y của IMAP.
@@ -122,7 +140,7 @@ class FetchEmailService
     {
         try {
             $this->client?->disconnect();
-        } catch (\Throwable $exception) {
+        } catch (Throwable $exception) {
             Log::info('[IMAP] Logout failed for '.$this->channel->email.' - '.$exception->getMessage());
         }
     }

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { usePage } from '@inertiajs/react';
 import { formatTime } from '@ext/utils';
+import { ICONS } from 'dashboard/icons';
 
 import Button from 'dashboard/components-next/button/Button';
 import SidePanel from 'dashboard/components-next/side-panel/SidePanel';
@@ -136,7 +137,7 @@ export default function ReportDrilldownDrawer({
                         ghost
                         slate
                         size="sm"
-                        icon="i-ph-caret-left"
+                        icon={ICONS.chevronLeft}
                         className="rtl:rotate-180"
                         disabled={!canPrev}
                         aria-label={t('REPORT.DRILLDOWN.PREVIOUS_BUCKET')}
@@ -146,7 +147,7 @@ export default function ReportDrilldownDrawer({
                         ghost
                         slate
                         size="sm"
-                        icon="i-ph-caret-right"
+                        icon={ICONS.chevronRight}
                         className="rtl:rotate-180"
                         disabled={!canNext}
                         aria-label={t('REPORT.DRILLDOWN.NEXT_BUCKET')}

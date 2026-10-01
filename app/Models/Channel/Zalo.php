@@ -4,8 +4,11 @@ namespace App\Models\Channel;
 
 use App\Channels\Capability;
 use App\Channels\CapabilitySet;
+use App\Channels\ChannelConnection;
 use App\Channels\ChannelPlatform;
+use App\Channels\ConnectionMethod;
 use App\Channels\DeclaresCapabilities;
+use App\Channels\DeclaresConnection;
 use App\Channels\DeclaresPlatform;
 use App\Channels\TextFormat;
 use App\Models\Channel\Concerns\Channelable;
@@ -23,7 +26,7 @@ use Illuminate\Database\Eloquent\Model;
  *
  * `id` của bản ghi này chính là `connection_id` mà bridge dùng làm khóa slot.
  */
-class Zalo extends Model implements DeclaresCapabilities, DeclaresPlatform
+class Zalo extends Model implements DeclaresCapabilities, DeclaresConnection, DeclaresPlatform
 {
     /**
      * Trần một tệp gửi ra Zalo. Đây là NGUỒN DUY NHẤT: chặn lúc đính kèm
@@ -196,6 +199,11 @@ class Zalo extends Model implements DeclaresCapabilities, DeclaresPlatform
         }
 
         $this->update($attributes);
+    }
+
+    public static function connection(): ChannelConnection
+    {
+        return ChannelConnection::of('zalo', ConnectionMethod::Qr)->ordered(10);
     }
 
     /**

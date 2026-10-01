@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import type { ChangeEvent } from 'react';
+import { ICONS } from 'dashboard/icons';
 
 import NextButton from 'dashboard/components-next/button/Button';
 import EmojiIconPicker from 'dashboard/components-next/emoji-icon-picker/EmojiIconPicker';
@@ -104,7 +105,7 @@ export default function ReplyBottomPanel({
                     <div ref={emojiButtonRef} className="flex">
                         <NextButton
                             title={t('CONVERSATION.REPLYBOX.TIP_EMOJI_ICON')}
-                            icon="i-ph-smiley"
+                            icon={ICONS.emoji}
                             slate
                             faded
                             sm
@@ -119,7 +120,7 @@ export default function ReplyBottomPanel({
                             <NextButton
                                 type="button"
                                 title={t('CONVERSATION.REPLYBOX.TIP_STICKER_ICON')}
-                                icon="i-ph-sticker"
+                                icon={ICONS.sticker}
                                 slate
                                 faded
                                 sm
@@ -149,7 +150,7 @@ export default function ReplyBottomPanel({
                         />
                         <NextButton
                             title={t('CONVERSATION.REPLYBOX.TIP_ATTACH_ICON')}
-                            icon="i-ph-paperclip"
+                            icon={ICONS.attach}
                             slate
                             faded
                             sm
@@ -161,7 +162,7 @@ export default function ReplyBottomPanel({
                     <NextButton
                         type="button"
                         title={t('CONVERSATION.REPLYBOX.TIP_AUDIORECORDER_ICON')}
-                        icon="i-ph-microphone"
+                        icon={ICONS.microphone}
                         slate
                         faded
                         sm
@@ -173,7 +174,7 @@ export default function ReplyBottomPanel({
                 {showMessageSignatureButton ? (
                     <NextButton
                         title={signatureToggleTooltip}
-                        icon="i-ph-signature"
+                        icon={ICONS.signature}
                         slate
                         faded
                         sm
@@ -183,7 +184,7 @@ export default function ReplyBottomPanel({
                 {showQuotedReplyToggle ? (
                     <NextButton
                         title={quotedReplyToggleTooltip}
-                        icon="i-ph-quotes"
+                        icon={ICONS.quote}
                         variant={quotedReplyEnabled ? 'solid' : 'faded'}
                         color="slate"
                         sm

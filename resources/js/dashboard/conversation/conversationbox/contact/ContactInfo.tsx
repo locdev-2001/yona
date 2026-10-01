@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 import { router, usePage } from '@inertiajs/react';
+import { ICONS } from 'dashboard/icons';
 
 import Avatar from 'dashboard/components-next/avatar/Avatar';
 import NextButton from 'dashboard/components-next/button/Button';
@@ -114,7 +115,7 @@ export default function ContactInfo({
             key: 'email',
             href: contact.email ? `mailto:${contact.email}` : '',
             value: contact.email,
-            icon: 'mail',
+            icon: ICONS.mail,
             emoji: '✉️',
             title: t('CONTACT_PANEL.EMAIL_ADDRESS'),
             addLabel: t('CONTACT_PANEL.ADD_EMAIL_ADDRESS'),
@@ -126,7 +127,7 @@ export default function ContactInfo({
             key: 'phone_number',
             href: contact.phone_number ? `tel:${contact.phone_number}` : '',
             value: contact.phone_number,
-            icon: 'call',
+            icon: ICONS.phone,
             emoji: '📞',
             title: t('CONTACT_PANEL.PHONE_NUMBER'),
             addLabel: t('CONTACT_PANEL.ADD_PHONE_NUMBER'),
@@ -137,7 +138,7 @@ export default function ContactInfo({
         {
             key: 'company_name',
             value: additionalAttributes.company_name,
-            icon: 'building-bank',
+            icon: ICONS.company,
             emoji: '🏢',
             title: t('CONTACT_PANEL.COMPANY'),
             addLabel: t('CONTACT_PANEL.ADD_COMPANY'),
@@ -215,12 +216,12 @@ export default function ContactInfo({
                             .filter(row => row.value)
                             .map(({ key, ...row }) => <ContactInfoRow key={key} {...row} />)}
                         {contact.identifier ? (
-                            <ContactInfoRow value={contact.identifier} icon="contact-identify" emoji="🪪" title={t('CONTACT_PANEL.IDENTIFIER')} />
+                            <ContactInfoRow value={contact.identifier} icon={ICONS.contactId} emoji="🪪" title={t('CONTACT_PANEL.IDENTIFIER')} />
                         ) : null}
                         {cityAndCountry || additionalAttributes.location ? (
                             <ContactInfoRow
                                 value={cityAndCountry || additionalAttributes.location}
-                                icon="map"
+                                icon={ICONS.location}
                                 emoji="🌍"
                                 title={t('CONTACT_PANEL.LOCATION')}
                                 trailing={
@@ -249,12 +250,12 @@ export default function ContactInfo({
                         uiSettings={uiSettings}
                         onToggleSignature={onToggleSignature}
                         trigger={() => (
-                            <NextButton title={t('CONTACT_PANEL.NEW_MESSAGE')} icon="i-ph-chat-circle-dots" slate faded sm />
+                            <NextButton title={t('CONTACT_PANEL.NEW_MESSAGE')} icon={ICONS.message} slate faded sm />
                         )}
                     />
                     <NextButton
                         title={t('EDIT_CONTACT.BUTTON_LABEL')}
-                        icon="i-ph-pencil-simple"
+                        icon={ICONS.edit}
                         slate
                         faded
                         sm
@@ -263,12 +264,12 @@ export default function ContactInfo({
                     <ContactMergeModal
                         primaryContact={contact}
                         onMerged={mergedContact => setContact(mergedContact as FullContact)}
-                        trigger={() => <NextButton title={t('CONTACT_PANEL.MERGE_CONTACT')} icon="i-ph-arrows-merge" slate faded sm />}
+                        trigger={() => <NextButton title={t('CONTACT_PANEL.MERGE_CONTACT')} icon={ICONS.merge} slate faded sm />}
                     />
                     {isAdmin ? (
                         <NextButton
                             title={t('DELETE_CONTACT.BUTTON_LABEL')}
-                            icon="i-ph-trash"
+                            icon={ICONS.delete}
                             slate
                             faded
                             sm

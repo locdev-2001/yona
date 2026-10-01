@@ -4,8 +4,11 @@ namespace App\Models\Channel;
 
 use App\Channels\Capability;
 use App\Channels\CapabilitySet;
+use App\Channels\ChannelConnection;
 use App\Channels\ChannelPlatform;
+use App\Channels\ConnectionMethod;
 use App\Channels\DeclaresCapabilities;
+use App\Channels\DeclaresConnection;
 use App\Channels\DeclaresPlatform;
 use App\Channels\TextFormat;
 use App\Models\Channel\Concerns\Channelable;
@@ -13,7 +16,7 @@ use Database\Factories\Channel\ApiFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Api extends Model implements DeclaresCapabilities, DeclaresPlatform
+class Api extends Model implements DeclaresCapabilities, DeclaresConnection, DeclaresPlatform
 {
     /** @use HasFactory<ApiFactory> */
     use Channelable, HasFactory;
@@ -66,6 +69,12 @@ class Api extends Model implements DeclaresCapabilities, DeclaresPlatform
     public function resetSecret(): void
     {
         $this->forceFill(['secret' => self::generateToken()])->save();
+    }
+
+    /** Kênh API: điền URL webhook, không cần app nền tảng. */
+    public static function connection(): ChannelConnection
+    {
+        return ChannelConnection::of('api', ConnectionMethod::Form)->ordered(100);
     }
 
     /** Kênh API: hệ ngoài tự bơm tin vào và đọc tin ra, nội dung do bên tích hợp quyết. */

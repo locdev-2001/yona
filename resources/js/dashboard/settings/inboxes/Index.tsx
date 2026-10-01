@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { usePage } from '@inertiajs/react';
 import { picoSearch } from '@ext/pico-search';
+import { ICONS } from 'dashboard/icons';
 
 import { t } from '../../../i18n';
 import { useAlert } from 'dashboard/composables/useAlert';
@@ -89,7 +90,14 @@ export default function InboxesIndex() {
                     </div>
                 )}
                 <div className="flex flex-col items-start gap-1">
-                    <span className="block text-heading-3 text-n-slate-12 capitalize">{inbox.name}</span>
+                    <span className="flex flex-wrap items-center gap-2">
+                        <span className="block text-heading-3 text-n-slate-12 capitalize">{inbox.name}</span>
+                        {inbox.reauthorization_required ? (
+                            <span className="rounded-md bg-n-ruby-3 px-1.5 py-0.5 text-label-small text-n-ruby-11">
+                                {t('INBOX_MGMT.CONNECTION_CHECK.BADGE')}
+                            </span>
+                        ) : null}
+                    </span>
                     <ChannelName
                         channelType={inbox.channel_type}
                         medium={inbox.medium}
@@ -100,13 +108,13 @@ export default function InboxesIndex() {
             <div className="flex gap-3 justify-end">
                 {isAdmin ? (
                     <a href={accountScopedUrl(accountId, `settings/inboxes/${inbox.id}`)}>
-                        <Button title={t('INBOX_MGMT.SETTINGS')} icon="i-woot-settings" slate sm />
+                        <Button title={t('INBOX_MGMT.SETTINGS')} icon={ICONS.settings} slate sm />
                     </a>
                 ) : null}
                 {isAdmin ? (
                     <Button
                         title={t('INBOX_MGMT.DELETE.BUTTON_TEXT')}
-                        icon="i-woot-bin"
+                        icon={ICONS.delete}
                         slate
                         sm
                         className="hover:enabled:text-n-ruby-11 hover:enabled:bg-n-ruby-2"

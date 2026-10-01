@@ -29,6 +29,7 @@ final class PublicFlowService
 
         MessageAccessToken::query()->create([
             'message_id' => $message->id,
+            'message_created_at' => MessageAccessToken::messageCreatedAtOf($message),
             'purpose' => $purpose,
             'item_id' => $itemId,
             'token_hash' => self::hash($token),

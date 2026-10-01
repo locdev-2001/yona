@@ -4,8 +4,11 @@ namespace App\Models\Channel;
 
 use App\Channels\Capability;
 use App\Channels\CapabilitySet;
+use App\Channels\ChannelConnection;
 use App\Channels\ChannelPlatform;
+use App\Channels\ConnectionMethod;
 use App\Channels\DeclaresCapabilities;
+use App\Channels\DeclaresConnection;
 use App\Channels\DeclaresPlatform;
 use App\Channels\TextFormat;
 use App\Models\Channel\Concerns\Channelable;
@@ -14,7 +17,7 @@ use Database\Factories\Channel\TiktokFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Tiktok extends Model implements DeclaresCapabilities, DeclaresPlatform
+class Tiktok extends Model implements DeclaresCapabilities, DeclaresConnection, DeclaresPlatform
 {
     /** @use HasFactory<TiktokFactory> */
     use Channelable, HasFactory, Reauthorizable;
@@ -57,6 +60,12 @@ class Tiktok extends Model implements DeclaresCapabilities, DeclaresPlatform
             'expires_at' => ['required', 'date'],
             'refresh_token_expires_at' => ['required', 'date'],
         ];
+    }
+
+    /** Luồng ủy quyền TikTok chưa có ở backend nên chưa mở cho khách. */
+    public static function connection(): ChannelConnection
+    {
+        return ChannelConnection::of('tiktok', ConnectionMethod::OauthRedirect)->ordered(85)->available(false);
     }
 
     /** TikTok DM: driver hiện chỉ dựng tin chữ, chưa kéo đính kèm về (nợ có tên). */

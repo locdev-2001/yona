@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Http\Resources\ContactResource;
 use App\Http\Resources\ConversationResource;
+use App\Models\Concerns\SharesRequestModels;
 use Database\Factories\ContactInboxFactory;
 use Illuminate\Auth\Authenticatable as AuthenticatableTrait;
 use Illuminate\Contracts\Auth\Authenticatable;
@@ -23,7 +24,7 @@ use Illuminate\Support\Str;
 class ContactInbox extends Model implements Authenticatable
 {
     /** @use HasFactory<ContactInboxFactory> */
-    use AuthenticatableTrait, HasFactory;
+    use AuthenticatableTrait, HasFactory, SharesRequestModels;
 
     protected $fillable = [
         'contact_id',

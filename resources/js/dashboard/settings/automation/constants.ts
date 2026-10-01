@@ -1,4 +1,5 @@
 import type { AutomationCondition, AutomationAction } from './types';
+import { ICONS } from 'dashboard/icons';
 
 // Port từ routes/dashboard/settings/automation/constants.js + operators.js +
 // dashboard/constants/automation.js. inputType giữ nguyên chuỗi của gốc để
@@ -106,7 +107,7 @@ const ACTION_ICONS: Record<string, string> = {
     remove_assigned_agent: 'i-lucide-user-round-x',
     remove_assigned_team: 'i-lucide-users',
     add_label: 'i-lucide-tag',
-    remove_label: 'i-woot-tag-remove',
+    remove_label: ICONS.labelRemove,
     send_email_to_team: 'i-lucide-send',
     send_email_transcript: 'i-lucide-mail',
     send_message: 'i-lucide-message-square',

@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 
-import FluentIcon from 'shared/components/FluentIcon/FluentIcon';
 import countriesList from 'shared/constants/countries';
 import type { Country } from 'shared/constants/countries';
 import { getActiveCountryCode, getActiveDialCode } from 'shared/components/PhoneInput/helper';
 
 import { t } from '../../i18n';
+import { SHARED_ICONS } from 'shared/icons';
 
 // Port từ widget/components/Form/PhoneInput.vue — ô nhập điện thoại của form
 // tiền chat. Giá trị đẩy lên là `${dialCode}${số}` như `setContextValue` gốc.
@@ -109,9 +109,9 @@ export default function PhoneInput({ placeholder = '', hasError, onChange, onBlu
                     {activeCountry?.emoji ? (
                         <h5 className="mb-0 text-xl">{activeCountry.emoji}</h5>
                     ) : (
-                        <FluentIcon icon="globe" className="fluent-icon" size="20" />
+                        <span className={`${SHARED_ICONS.globe} size-5`} aria-hidden="true" />
                     )}
-                    <FluentIcon icon="chevron-down" className="fluent-icon" size="12" />
+                    <span className={`${SHARED_ICONS.chevronDown} size-3`} aria-hidden="true" />
                 </div>
                 {activeDialCode ? (
                     <span className="py-2 ltr:pl-2 rtl:pr-2 text-base text-n-slate-11">{activeDialCode}</span>

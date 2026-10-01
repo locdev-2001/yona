@@ -2,8 +2,8 @@ import { useEffect, useImperativeHandle, useRef, useState } from 'react';
 import type { ReactNode, Ref } from 'react';
 
 import { t } from '../../../i18n';
-import FluentIcon from 'shared/components/FluentIcon/FluentIcon';
 import RecentSearches, { type RecentSearchesHandle } from './RecentSearches';
+import { ICONS } from 'dashboard/icons';
 
 // Port từ dashboard/modules/search/components/SearchInput.vue.
 const DEBOUNCE_DELAY = 500;
@@ -89,10 +89,7 @@ export default function SearchInput({
         >
             <div className="flex items-center w-full h-[3.25rem] px-4 gap-2">
                 <div className="flex items-center">
-                    <FluentIcon
-                        icon="search"
-                        className={`icon ${isInputFocused ? 'text-n-blue-11' : 'text-n-slate-10'}`}
-                    />
+                    <span className={`${ICONS.search} size-5 icon ${isInputFocused ? 'text-n-blue-11' : 'text-n-slate-10'}`} aria-hidden="true" />
                 </div>
                 <input
                     ref={searchInput}

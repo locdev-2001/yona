@@ -1,7 +1,7 @@
 import Spinner from 'dashboard/components-next/spinner/Spinner';
-import FluentIcon from 'shared/components/FluentIcon/FluentIcon';
 import { t } from '../../i18n';
 import { useNotifications } from './NotificationsContext';
+import { ICONS } from 'dashboard/icons';
 
 // Port từ routes/dashboard/inbox/InboxEmptyState.vue.
 export default function InboxEmptyState({ emptyStateMessage = '' }: { emptyStateMessage?: string }) {
@@ -15,7 +15,7 @@ export default function InboxEmptyState({ emptyStateMessage = '' }: { emptyState
                 </div>
             ) : (
                 <div className="flex flex-col items-center gap-2">
-                    <FluentIcon icon="mail-inbox" size={40} className="text-n-slate-11" />
+                    <span className={`${ICONS.inbox} size-10 text-n-slate-11`} aria-hidden="true" />
                     <span className="text-sm font-medium text-n-slate-11">
                         {emptyStateMessage || t('INBOX.LIST.NOTE')}
                     </span>
