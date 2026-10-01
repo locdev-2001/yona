@@ -178,8 +178,9 @@ class AppServiceProvider extends ServiceProvider
         ]);
 
         // Khoá theo kho: kho riêng theo account, kho nền tảng theo người quản trị:
-        // một bên không làm nghẽn hàng đợi render của cả hệ thống.
-        RateLimiter::for('sticker-uploads', fn (Request $request) => Limit::perMinute(StickerLibraryManager::UPLOADS_PER_MINUTE)
+        // một bên không làm nghẽn hàng đợi render của cả hệ thống. Chỉ lượt đẩy
+        // job render tính hạn mức: sửa sticker không kèm `edit` thì không tính.
+        RateLimiter::for('sticker-uploads', fn (Request $request) => $request->isMethod('PATCH') && ! $request->has('edit') ? Limit::none() : Limit::perMinute(StickerLibraryManager::UPLOADS_PER_MINUTE)
             ->by(match (true) {
                 $request->route('account') !== null => 'account:'.$request->route('account'),
                 $request->user('super_admin') !== null => 'super-admin:'.$request->user('super_admin')->getAuthIdentifier(),

@@ -8,41 +8,43 @@ import { parseApiErrorMessage } from 'dashboard/helper/apiClient';
 import StickerEditStage from './StickerEditStage';
 import type { EditorTool } from './StickerEditStage';
 import { SegmentedControl, StickerPreviewPair, StickerSlider } from './StickerEditorControls';
-import StickerMetaFields, { changesFromDraft } from './StickerMetaFields';
+import StickerMetaFields, { changesFromDraft, draftFromSticker, isDraftChanged } from './StickerMetaFields';
 import type { StickerMetaDraft } from './StickerMetaFields';
 import { canAddStickerEdit, fitCrop, FRAMINGS, subjectCrop, toStickerEdit } from './stickerEdit';
-import type { BrushOperation, ImageSize, StickerDraft, StickerFraming, WandOperation } from './stickerEdit';
+import type { BrushOperation, StickerDraft, StickerFraming, WandOperation } from './stickerEdit';
 import { useFramePlayback, useStickerPreview } from './stickerEditorHooks';
 import { createEditorState, stickerEditorReducer } from './stickerEditorState';
 import { hasMetaErrors, stickerMetaErrorsFromApi, validateStickerMeta } from './stickerLimits';
 import type { StickerLimits, StickerMetaErrors } from './stickerLimits';
 import type { StickerUpload } from './stickerLibraryApi';
 import { IconButton, MOBILE_QUERY, Spinner, StickerButton, Switch, useMediaQuery } from './stickerLibraryUi';
-import type { LoadedStickerSource } from './stickerMaskRender';
+import type { EditableSource } from './stickerEditableSource';
 import type { StickerMaskRunner } from './stickerMaskRunner';
 import { StickerFileTooLargeError } from './stickerUploadFile';
-import type { UploadedSticker } from './types';
+import type { LibrarySticker, UploadedSticker } from './types';
 
-export interface EditableSource {
-    size: ImageSize;
-    sourceCanvas: HTMLCanvasElement | null;
-    loaded: LoadedStickerSource;
-}
+// Thông số của ảnh đang chỉnh áp cho các ảnh còn lại khi Lưu tất cả.
+export type BulkSaveSettings = Pick<StickerDraft, 'removeBackground' | 'tolerance'>;
 
 interface StickerEditorWorkspaceProps {
     source: EditableSource;
     runner: StickerMaskRunner;
     initialDraft: StickerDraft;
+    // Nhãn và từ khoá đang có khi chỉnh lại sticker đã lưu.
+    initialMeta?: Pick<LibrarySticker, 'label' | 'keywords'>;
     imageSize: number;
     limits: StickerLimits;
     position: number;
     total: number;
     hasLaterImages: boolean;
+    // Ảnh chưa lưu tính từ ảnh đang chỉnh; từ 2 ảnh trở lên thì có nút Lưu tất cả.
+    remainingImages: number;
     isSaving: boolean;
     existing: UploadedSticker | null;
     // Có hộp xác nhận chồng lên: phím tắt của trình chỉnh tạm nghỉ.
     shortcutsPaused: boolean;
     onSave: (upload: StickerUpload, onThrottleWait: (delayMs: number) => void) => Promise<void>;
+    onSaveAll: (upload: StickerUpload, settings: BulkSaveSettings, onThrottleWait: (delayMs: number) => void) => Promise<void>;
     onUpdateExisting: (upload: StickerUpload) => Promise<void>;
     onSkip: () => void;
     onCancel: () => void;
@@ -56,7 +58,7 @@ const BRUSH_PREVIEW_MS = 800;
 // Dải chip chế độ đè trên vùng ảnh ở điện thoại: cao 44px cộng lề.
 const MOBILE_MODES_OVERLAY_PX = 52;
 const THROTTLE_TICK_MS = 250;
-const EMPTY_META: StickerMetaDraft = { label: '', keywords: [], keywordInput: '' };
+const NO_META: Pick<LibrarySticker, 'label' | 'keywords'> = { label: null, keywords: [] };
 const TOOL_SHORTCUT: Record<EditorTool, string> = { crop: 'V', wand: 'W', brush: 'B' };
 const TOOL_BY_KEY: Record<string, EditorTool> = { v: 'crop', w: 'wand', b: 'brush' };
 const TOOL_LABEL: Record<EditorTool, string> = { crop: 'TOOL_FRAMING', wand: 'TOOL_WAND', brush: 'TOOL_BRUSH' };
@@ -106,15 +108,18 @@ export default function StickerEditorWorkspace({
     source,
     runner,
     initialDraft,
+    initialMeta = NO_META,
     imageSize,
     limits,
     position,
     total,
     hasLaterImages,
+    remainingImages,
     isSaving,
     existing,
     shortcutsPaused,
     onSave,
+    onSaveAll,
     onUpdateExisting,
     onSkip,
     onCancel,
@@ -134,7 +139,7 @@ export default function StickerEditorWorkspace({
     const [brushMode, setBrushMode] = useState<BrushOperation>('brush-remove');
     const [brushPercent, setBrushPercent] = useState(DEFAULT_BRUSH_PERCENT);
     const [showBrushPreview, setShowBrushPreview] = useState(false);
-    const [meta, setMeta] = useState<StickerMetaDraft>(EMPTY_META);
+    const [meta, setMeta] = useState<StickerMetaDraft>(() => draftFromSticker(initialMeta));
     const [apiErrors, setApiErrors] = useState<StickerMetaErrors>({});
     const [saveError, setSaveError] = useState<string | null>(null);
     const [isUpdatingExisting, setUpdatingExisting] = useState(false);
@@ -150,7 +155,8 @@ export default function StickerEditorWorkspace({
     const canSave = !isSaving && !hasFailed && isPreviewCurrent && !preview.isEmpty && isMetaValid && existing === null;
     const brushRadius = brushPercent / 100;
     const isAnimated = loaded.delays.length > 1;
-    const isDirty = state.undoStack.length > 0 || changes.label !== null || changes.keywords.length > 0;
+    const isDirty = state.undoStack.length > 0 || isDraftChanged(meta, initialMeta);
+    const canSaveAll = canSave && remainingImages > 1;
 
     useEffect(() => onDirtyChange(isDirty), [isDirty, onDirtyChange]);
 
@@ -191,6 +197,12 @@ export default function StickerEditorWorkspace({
                 error instanceof StickerFileTooLargeError ? editorText('IMAGE_TOO_LARGE') : parseApiErrorMessage(error) || t('STICKER_LIBRARY.UPLOAD_FAILED'),
             );
         }
+    };
+
+    const saveAll = async () => {
+        if (!canSaveAll) return;
+        setSaveError(null);
+        await onSaveAll(upload(), { removeBackground: draft.removeBackground, tolerance: draft.tolerance }, throttle.startWaiting);
     };
 
     const updateExisting = async () => {
@@ -517,13 +529,18 @@ export default function StickerEditorWorkspace({
                 )}
             </div>
 
-            <footer className="flex min-h-16 items-center gap-2 border-0 border-t border-solid border-n-weak px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] md:pb-3">
+            <footer className="flex min-h-16 flex-wrap items-center gap-2 border-0 border-t border-solid border-n-weak px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] md:flex-nowrap md:pb-3">
                 <StickerButton tone="secondary" disabled={isSaving} onClick={total > 1 ? onSkip : onCancel}>
                     {total > 1 ? editorText('SKIP') : editorText('CANCEL')}
                 </StickerButton>
                 <p role={saveError ? 'alert' : undefined} className="m-0 min-w-0 flex-1 truncate text-sm text-n-ruby-11" title={saveError ?? undefined}>
                     {saveError}
                 </p>
+                {existing || remainingImages < 2 ? null : (
+                    <StickerButton tone="secondary" className="max-md:order-first max-md:w-full" disabled={!canSaveAll} onClick={() => void saveAll()}>
+                        {editorText('SAVE_ALL', { count: remainingImages })}
+                    </StickerButton>
+                )}
                 {existing ? null : (
                     <StickerButton type="submit" tone="primary" disabled={!canSave} aria-keyshortcuts="Control+Enter">
                         {isRendering || isSaving ? (

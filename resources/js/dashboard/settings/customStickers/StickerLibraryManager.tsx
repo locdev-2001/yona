@@ -12,6 +12,7 @@ import type { StickerSaveResult } from './StickerDetailPanel';
 import StickerGrid from './StickerGrid';
 import type { StickerMoveTarget } from './StickerGrid';
 import StickerImageEditor from './StickerImageEditor';
+import type { StickerReedit } from './StickerImageEditor';
 import StickerPackHeader from './StickerPackHeader';
 import StickerPackList from './StickerPackList';
 import { StickerThumb } from './StickerTile';
@@ -77,9 +78,10 @@ interface EditorSession {
     packId: number;
     files: File[];
     rejected: RejectedUpload[];
+    reedit?: StickerReedit & { stickerId: number };
 }
 
-const POLLED_FIELDS = ['status', 'image_url', 'static_url', 'frames', 'failure_message', 'width', 'height'] as const;
+const POLLED_FIELDS = ['status', 'image_url', 'static_url', 'frames', 'failure_message', 'width', 'height', 'edit', 'has_original'] as const;
 
 const queryPackId = () => {
     const value = Number(currentQuery()[PACK_QUERY_KEY]);
@@ -123,6 +125,8 @@ function StickerLibrary({ api, packTransfer }: StickerLibraryManagerProps) {
     const [isCreateOpen, setCreateOpen] = useState(false);
     const [sortBaseline, setSortBaseline] = useState<number[] | null>(null);
     const [editorSession, setEditorSession] = useState<EditorSession | null>(null);
+    const [openingReeditId, setOpeningReeditId] = useState<number | null>(null);
+    const [detailRevision, setDetailRevision] = useState(0);
     const [confirmation, setConfirmation] = useState<ConfirmActionRequest | null>(null);
     const [flashIds, setFlashIds] = useState<ReadonlySet<number>>(new Set());
     const [isDraggingFiles, setDraggingFiles] = useState(false);
@@ -554,6 +558,39 @@ function StickerLibrary({ api, packTransfer }: StickerLibraryManagerProps) {
         void loadDetail(packId);
     };
 
+    const openReedit = (sticker: LibrarySticker, index: number) => {
+        if (!currentDetail || editorSession || openingReeditId !== null) return;
+        const packId = currentDetail.id;
+        const open = async () => {
+            setOpeningReeditId(sticker.id);
+            try {
+                const name = sticker.label ?? t('STICKER_LIBRARY.STICKER_UNNAMED', { index: index + 1 });
+                const original = await api.getStickerOriginal(packId, sticker.id, name);
+                setEditorSession({ packId, files: [original], rejected: [], reedit: { stickerId: sticker.id, sticker, edit: sticker.edit } });
+            } catch (error) {
+                errorToast(error);
+            } finally {
+                setOpeningReeditId(null);
+            }
+        };
+        confirmDiscardThen(() => void open());
+    };
+
+    const saveReedit = async (packId: number, stickerId: number, upload: StickerUpload, options: UploadOptions) => {
+        const updated = await api.reeditSticker(packId, stickerId, upload, options);
+        updateDetail(packId, current => ({ ...current, stickers: current.stickers.map(sticker => (sticker.id === updated.id ? updated : sticker)) }));
+
+        return { ...updated, existing: false };
+    };
+
+    const closeReedit = (packId: number, summary: EditorQueueSummary) => {
+        setEditorSession(null);
+        void loadDetail(packId);
+        if (summary.addedIds.length === 0) return;
+        setDetailRevision(revision => revision + 1);
+        toast({ message: t('STICKER_LIBRARY.REEDIT_SAVED') });
+    };
+
     const closeEditor = (packId: number, summary: EditorQueueSummary) => {
         setEditorSession(null);
         void loadDetail(packId);
@@ -562,6 +599,7 @@ function StickerLibrary({ api, packTransfer }: StickerLibraryManagerProps) {
         const parts = summary.addedIds.length > 0 ? [t('STICKER_LIBRARY.STICKERS_ADDED', { count: summary.addedIds.length })] : [];
         if (summary.skipped > 0) parts.push(t('STICKER_LIBRARY.STICKERS_SKIPPED', { count: summary.skipped }));
         if (summary.existingIds.length > 0) parts.push(t('STICKER_LIBRARY.STICKERS_EXISTING', { count: summary.existingIds.length }));
+        if (summary.failed.length > 0) parts.push(t('STICKER_LIBRARY.STICKERS_FAILED', { count: summary.failed.length }));
         toast({ message: parts.join(' · ') });
         setFlashIds(new Set(touchedIds));
         window.setTimeout(() => setFlashIds(new Set()), FLASH_MS);
@@ -657,7 +695,7 @@ function StickerLibrary({ api, packTransfer }: StickerLibraryManagerProps) {
 
     const detailPanel = selectedSticker && currentDetail ? (
         <StickerDetailPanel
-            key={selectedSticker.id}
+            key={`${selectedSticker.id}:${detailRevision}`}
             sticker={selectedSticker}
             index={selectedIndex}
             total={stickers.length}
@@ -671,6 +709,8 @@ function StickerLibrary({ api, packTransfer }: StickerLibraryManagerProps) {
             onRequestClose={closeDetail}
             onMove={target => moveSticker(selectedSticker.id, target)}
             onDelete={() => deleteSticker(selectedSticker.id)}
+            reediting={openingReeditId === selectedSticker.id}
+            onReedit={() => openReedit(selectedSticker, selectedIndex)}
         />
     ) : null;
 
@@ -826,12 +866,17 @@ function StickerLibrary({ api, packTransfer }: StickerLibraryManagerProps) {
             {editorSession ? (
                 <StickerImageEditor
                     files={editorSession.files}
+                    reedit={editorSession.reedit}
                     rejected={editorSession.rejected}
                     imageSize={meta?.image_size ?? 0}
                     limits={limits}
-                    onUpload={(file, upload, options) => uploadEditedSticker(editorSession.packId, file, upload, options)}
+                    onUpload={(file, upload, options) =>
+                        editorSession.reedit
+                            ? saveReedit(editorSession.packId, editorSession.reedit.stickerId, upload, options)
+                            : uploadEditedSticker(editorSession.packId, file, upload, options)
+                    }
                     onUpdateExisting={(stickerId, changes) => updateExistingSticker(editorSession.packId, stickerId, changes)}
-                    onClose={summary => closeEditor(editorSession.packId, summary)}
+                    onClose={summary => (editorSession.reedit ? closeReedit : closeEditor)(editorSession.packId, summary)}
                 />
             ) : null}
         </div>

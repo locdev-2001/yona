@@ -100,6 +100,8 @@ return [
         'too_many_frames' => 'This animation has too many frames. Trim it and upload again.',
         'image_empty' => 'Nothing is left after removing the background. Lower the removal sensitivity or turn background removal off.',
         'original_missing' => 'The original image of this sticker is gone, please upload it again.',
+        'sticker_busy' => 'This sticker is still being rendered, please wait a few seconds and edit it again.',
+        'duplicate_in_pack' => 'This pack already has an identical sticker with these edits.',
         'render_failed' => 'A sticker could not be made from this image.',
         'render_timeout' => 'This image took too long to process. Try a smaller image or one with fewer frames.',
         'renderer_unavailable' => 'Stickers cannot be made right now, please try again later.',

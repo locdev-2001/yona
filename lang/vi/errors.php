@@ -98,6 +98,8 @@ return [
         'too_many_frames' => 'Ảnh động có quá nhiều khung hình, bạn cắt bớt rồi tải lại nhé.',
         'image_empty' => 'Xoá nền xong ảnh không còn gì, bạn giảm độ nhạy xoá nền hoặc tắt xoá nền nhé.',
         'original_missing' => 'Không còn ảnh gốc của sticker này, bạn tải ảnh lên lại nhé.',
+        'sticker_busy' => 'Sticker này đang được dựng, bạn chờ vài giây rồi chỉnh lại nhé.',
+        'duplicate_in_pack' => 'Bộ đã có một sticker giống hệt với cách chỉnh này.',
         'render_failed' => 'Không dựng được sticker từ ảnh này.',
         'render_timeout' => 'Ảnh này xử lý quá lâu, bạn thử ảnh nhỏ hơn hoặc ít khung hình hơn nhé.',
         'renderer_unavailable' => 'Máy chủ chưa dựng được sticker lúc này, bạn thử lại sau nhé.',

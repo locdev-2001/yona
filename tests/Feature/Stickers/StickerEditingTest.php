@@ -2,17 +2,23 @@
 
 use App\Models\Account;
 use App\Models\AccountUser;
+use App\Models\Attachment;
+use App\Models\Message;
 use App\Models\Sticker;
 use App\Models\StickerPack;
 use App\Models\SuperAdmin;
 use App\Models\User;
+use App\Services\Stickers\StickerFileLayout;
+use App\Services\Stickers\StickerLibraryManager;
+use App\Services\Stickers\StickerRenderer;
 use App\Services\Stickers\StickerTags;
 use Illuminate\Support\Facades\Storage;
 use Tests\Support\FakeStickerRenderer;
 use Tests\Support\YonaStickers;
 
-// Sửa nhãn + từ khoá sticker (PATCH) và upload kèm từ khoá, ở cả kho chung của
-// Super Admin lẫn kho riêng của tenant — cùng một action qua concern chung.
+// Sửa nhãn + từ khoá sticker (PATCH), chỉnh lại ảnh từ ảnh gốc đã lưu (PATCH kèm
+// `edit`) và upload kèm từ khoá, ở cả kho chung của Super Admin lẫn kho riêng của
+// tenant — cùng một action qua concern chung.
 
 const EDITING_SUPER_ADMIN_API = '/super_admin/api/sticker_packs';
 
@@ -24,9 +30,22 @@ function editingTenantUser(Account $account, int $role): User
     return $user;
 }
 
+function editingBorrowedByMessage(Sticker $sticker): void
+{
+    $message = Message::factory()->create();
+    $message->attachments()->create([
+        'account_id' => $message->account_id,
+        'file_type' => Attachment::FILE_TYPE_IMAGE,
+        'disk' => Sticker::DISK,
+        'path' => (string) $sticker->static_path,
+        'filename' => basename((string) $sticker->static_path),
+        'content_type' => 'image/png',
+    ]);
+}
+
 beforeEach(function () {
-    Storage::fake(Sticker::DISK);
-    FakeStickerRenderer::install();
+    $this->disk = Storage::fake(Sticker::DISK);
+    $this->renderer = FakeStickerRenderer::install();
 });
 
 describe('kho chung (Super Admin)', function () {
@@ -146,6 +165,139 @@ describe('kho riêng (tenant)', function () {
             $this->patchJson("/api/v1/accounts/{$this->account->id}/sticker_packs/{$sticker->sticker_pack_id}/stickers/{$sticker->id}", ['label' => 'Lén'])
                 ->assertNotFound();
             expect($sticker->fresh()->label)->not->toBe('Lén');
+        }
+    });
+});
+
+describe('chỉnh lại ảnh sticker đã lưu', function () {
+    beforeEach(function () {
+        $this->account = Account::factory()->create();
+        YonaStickers::enableCustomStickers($this->account);
+        $this->actingAs(editingTenantUser($this->account, AccountUser::ROLE_ADMINISTRATOR));
+        $this->pack = YonaStickers::tenantPack($this->account);
+        $this->pack->update(['published_at' => now()]);
+        YonaStickers::ready($this->pack, ['position' => 0]);
+        $this->sticker = YonaStickers::ready($this->pack, ['label' => 'Mèo', 'keywords' => ['mèo'], 'position' => 1]);
+        $this->previous = $this->sticker->only(['content_hash', 'image_path', 'static_path', 'gif_path', 'original_path']);
+        $this->url = "/api/v1/accounts/{$this->account->id}/sticker_packs/{$this->pack->id}/stickers/{$this->sticker->id}";
+        $this->edit = ['crop' => ['x' => 0.1, 'y' => 0.1, 'w' => 0.8, 'h' => 0.8], 'removeBackground' => false, 'tolerance' => 20, 'feather' => 0, 'edits' => []];
+    });
+
+    it('bộ đã xuất bản: dựng lại từ ảnh gốc, giữ id, vị trí, nhãn, từ khoá; tệp mới, tệp cũ còn vì tin đã gửi trỏ tới', function () {
+        editingBorrowedByMessage($this->sticker);
+        $originalBytes = $this->disk->get($this->previous['original_path']);
+
+        $this->patchJson($this->url, ['edit' => json_encode($this->edit)])
+            ->assertOk()
+            ->assertJsonPath('id', $this->sticker->id)
+            ->assertJsonPath('position', 1)
+            ->assertJsonPath('label', 'Mèo')
+            ->assertJsonPath('keywords', ['mèo'])
+            ->assertJsonPath('status', Sticker::STATUS_READY)
+            ->assertJsonPath('failure_message', null)
+            ->assertJsonPath('edit', fn (array $edit) => $edit == $this->edit);
+
+        $sticker = $this->sticker->fresh();
+        expect($sticker->content_hash)->not->toBe($this->previous['content_hash'])
+            ->and($sticker->edit_params)->toEqual($this->edit)
+            ->and($sticker->image_path)->toBe(StickerFileLayout::renderedPaths($sticker->content_hash)['image_path'])
+            ->and(dirname($sticker->original_path))->toBe(StickerFileLayout::directory($sticker->content_hash))
+            ->and($this->renderer->calls[0]['edit'])->toEqual($this->edit)
+            ->and($this->renderer->calls[0]['image_bytes'])->toBe($originalBytes);
+        $this->disk->assertExists([$sticker->image_path, $sticker->static_path, $sticker->original_path]);
+        $this->disk->assertExists(array_values(array_diff_key($this->previous, ['content_hash' => true])));
+    });
+
+    it('không tin nào trỏ tới bản cũ thì dọn thư mục tệp cũ', function () {
+        $this->patchJson($this->url, ['edit' => json_encode($this->edit)])->assertOk();
+
+        $this->disk->assertMissing([$this->previous['static_path'], $this->previous['original_path']]);
+        $this->disk->assertExists($this->sticker->fresh()->static_path);
+    });
+
+    it('nhãn, từ khoá và ảnh sửa cùng một lượt', function () {
+        $this->patchJson($this->url, ['edit' => json_encode($this->edit), 'label' => 'Mèo mới', 'keywords' => ['mới']])
+            ->assertOk()
+            ->assertJsonPath('label', 'Mèo mới')
+            ->assertJsonPath('keywords', ['mới'])
+            ->assertJsonPath('edit', fn (array $edit) => $edit == $this->edit);
+    });
+
+    it('dựng hỏng thì sticker giữ bản cũ, báo lỗi, không bỏ lại tệp dở', function () {
+        $this->renderer->scenario = fn () => ['failure' => StickerRenderer::IMAGE_EMPTY];
+
+        $this->patchJson($this->url, ['edit' => json_encode($this->edit)])
+            ->assertOk()
+            ->assertJsonPath('status', Sticker::STATUS_READY)
+            ->assertJsonPath('failure_message', __('errors.sticker_uploads.image_empty'))
+            ->assertJsonPath('edit', null);
+
+        $sticker = $this->sticker->fresh();
+        expect($sticker->only(array_keys($this->previous)))->toBe($this->previous)
+            ->and(Sticker::query()->visibleTo($this->account)->whereKey($sticker->id)->exists())->toBeTrue()
+            ->and(collect($this->disk->allFiles())->map(StickerFileLayout::contentHashOf(...))->unique()->sort()->values()->all())
+            ->toBe(Sticker::query()->pluck('content_hash')->sort()->values()->all());
+        $this->disk->assertExists(array_values(array_diff_key($this->previous, ['content_hash' => true])));
+    });
+
+    it('thông số chỉnh sai hợp đồng bị từ chối như lúc tải lên, không đổi gì', function (string $edit) {
+        $this->patchJson($this->url, ['edit' => $edit, 'label' => 'Lén'])
+            ->assertUnprocessable()
+            ->assertJsonPath('errors.edit.0', __('errors.sticker_uploads.invalid_edit'));
+
+        expect($this->sticker->fresh()->only(['content_hash', 'label']))->toBe(['content_hash' => $this->previous['content_hash'], 'label' => 'Mèo'])
+            ->and($this->renderer->calls)->toBe([]);
+    })->with([
+        'JSON hỏng' => ['{'],
+        'crop ngoài ảnh' => [json_encode(['crop' => ['x' => 2, 'y' => 0, 'w' => 0.5, 'h' => 0.5]])],
+        'removeBackground không phải boolean' => [json_encode(['removeBackground' => 'có'])],
+    ]);
+
+    it('cùng thông số với sticker khác trong bộ thì báo trùng', function () {
+        $this->patchJson($this->url, ['edit' => json_encode($this->edit)])->assertOk();
+        $other = YonaStickers::ready($this->pack, ['position' => 2]);
+        $this->disk->put($other->original_path, $this->disk->get($this->sticker->fresh()->original_path));
+
+        $this->patchJson("/api/v1/accounts/{$this->account->id}/sticker_packs/{$this->pack->id}/stickers/{$other->id}", ['edit' => json_encode($this->edit)])
+            ->assertUnprocessable()
+            ->assertJsonPath('errors.edit.0', __('errors.sticker_uploads.duplicate_in_pack'));
+    });
+
+    it('sticker đang dựng hay mất ảnh gốc thì không chỉnh lại được', function () {
+        $processing = Sticker::factory()->processing()->for($this->pack, 'stickerPack')->create(['position' => 3]);
+        $withoutOriginal = YonaStickers::legacyLottie($this->pack, ['position' => 4]);
+        $urlOf = fn (Sticker $sticker) => "/api/v1/accounts/{$this->account->id}/sticker_packs/{$this->pack->id}/stickers/{$sticker->id}";
+
+        $this->patchJson($urlOf($processing), ['edit' => json_encode($this->edit)])
+            ->assertUnprocessable()
+            ->assertJsonPath('errors.edit.0', __('errors.sticker_uploads.sticker_busy'));
+        $this->patchJson($urlOf($withoutOriginal), ['edit' => json_encode($this->edit)])
+            ->assertUnprocessable()
+            ->assertJsonPath('errors.edit.0', __('errors.sticker_uploads.original_missing'));
+    });
+
+    it('ảnh gốc tải qua API của đúng kho, sticker kho khác thì 404', function () {
+        $foreign = YonaStickers::ready(YonaStickers::tenantPack(Account::factory()->create()));
+
+        $response = $this->get("{$this->url}/original")->assertOk();
+        expect($response->streamedContent())->toBe($this->disk->get($this->previous['original_path']));
+        $this->get("/api/v1/accounts/{$this->account->id}/sticker_packs/{$foreign->sticker_pack_id}/stickers/{$foreign->id}/original")->assertNotFound();
+    });
+
+    it('kho chung của Super Admin cũng chỉnh lại được', function () {
+        $this->actingAs(SuperAdmin::factory()->withMfa()->create(), 'super_admin');
+        $globalPack = StickerPack::factory()->create();
+        $global = YonaStickers::ready($globalPack);
+
+        $this->patchJson(EDITING_SUPER_ADMIN_API."/{$globalPack->id}/stickers/{$global->id}", ['edit' => json_encode($this->edit)])
+            ->assertOk()
+            ->assertJsonPath('edit', fn (array $edit) => $edit == $this->edit);
+        $this->get(EDITING_SUPER_ADMIN_API."/{$globalPack->id}/stickers/{$global->id}/original")->assertOk();
+    });
+
+    it('sửa nhãn không kèm edit không tính vào hạn mức dựng sticker', function () {
+        foreach (range(1, StickerLibraryManager::UPLOADS_PER_MINUTE + 1) as $attempt) {
+            $this->patchJson($this->url, ['label' => "Mèo {$attempt}"])->assertOk();
         }
     });
 });

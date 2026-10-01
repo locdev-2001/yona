@@ -5,6 +5,7 @@ import type { Mock } from 'vitest';
 import { ApiError } from 'dashboard/helper/apiClient';
 import { setLocale } from '../../../i18n';
 import StickerImageEditor from './StickerImageEditor';
+import type { StickerReedit } from './StickerImageEditor';
 import type { RejectedUpload } from './prepareUploadQueue';
 import type { StickerEdit } from './stickerEdit';
 import type { StickerUpload, UploadOptions } from './stickerLibraryApi';
@@ -73,6 +74,8 @@ const uploaded = (overrides: Partial<UploadedSticker> = {}): UploadedSticker => 
     frames: null,
     image_url: null,
     static_url: null,
+    edit: null,
+    has_original: true,
     existing: false,
     ...overrides,
 });
@@ -97,11 +100,13 @@ interface EditorSetup {
     names?: string[];
     rejected?: RejectedUpload[];
     onUpload?: UploadMock;
+    reedit?: StickerReedit;
 }
 
-function renderEditor({ names = ['meo.png'], rejected = [], onUpload = vi.fn().mockResolvedValue(uploaded()) as UploadMock }: EditorSetup = {}) {
+function renderEditor({ names = ['meo.png'], rejected = [], onUpload = vi.fn().mockResolvedValue(uploaded()) as UploadMock, reedit }: EditorSetup = {}) {
     const props = {
         files: names.map(name => new File(['png'], name, { type: 'image/png' })),
+        reedit,
         rejected,
         imageSize: 64,
         limits: DEFAULT_STICKER_LIMITS,
@@ -144,7 +149,7 @@ const tool = (name: string) => within(screen.getByRole('group', { name: 'Công c
 const toolbarUndo = () => screen.getAllByRole('button', { name: 'Hoàn tác' })[0];
 
 describe('StickerImageEditor · vùng lấy', () => {
-    it('mặc định Ôm chủ thể; Lưu gửi edit đúng hợp đồng (fit cover) kèm nhãn và từ khoá', async () => {
+    it('mặc định Ôm chủ thể, không xoá nền; Lưu gửi edit đúng hợp đồng (fit cover) kèm nhãn và từ khoá', async () => {
         const props = renderEditor();
         await openStage();
         expect(screen.getByRole('heading', { level: 3, name: 'Thêm sticker · Ảnh 1/1' })).toBeInTheDocument();
@@ -155,7 +160,7 @@ describe('StickerImageEditor · vùng lấy', () => {
         const upload = await savedUpload(props);
 
         expect(upload).toEqual({
-            edit: { crop: { x: 0.27, y: 0.27, w: 0.47, h: 0.47 }, fit: 'cover', removeBackground: true, tolerance: 20, feather: 0, edits: [] },
+            edit: { crop: { x: 0.27, y: 0.27, w: 0.47, h: 0.47 }, fit: 'cover', removeBackground: false, tolerance: 20, feather: 0, edits: [] },
             label: 'Mèo vẫy',
             keywords: ['haha', 'hihi'],
         });
@@ -216,6 +221,7 @@ describe('StickerImageEditor · xoá nền, đũa thần, cọ', () => {
         renderEditor();
         await openStage();
 
+        fireEvent.click(screen.getByRole('switch', { name: 'Xoá nền' }));
         fireEvent.keyDown(screen.getByRole('slider', { name: 'Dung sai' }), { key: 'End' });
 
         await waitFor(() => expect(renderedEdits.at(-1)?.tolerance).toBe(100));
@@ -226,11 +232,14 @@ describe('StickerImageEditor · xoá nền, đũa thần, cọ', () => {
         await waitFor(() => expect(saveButton()).toBeEnabled());
     });
 
-    it('tắt Xoá nền thì Dung sai bị khoá; Dùng ảnh gốc đưa dung sai về 20', async () => {
+    it('Xoá nền tắt sẵn nên Dung sai bị khoá; bật mới chỉnh được; Dùng ảnh gốc đưa dung sai về 20', async () => {
         const props = renderEditor();
         await openStage();
-        fireEvent.click(screen.getByRole('button', { name: 'Tăng Dung sai' }));
+        expect(screen.getByRole('switch', { name: 'Xoá nền' })).toHaveAttribute('aria-checked', 'false');
+        expect(screen.getByRole('slider', { name: 'Dung sai' })).toHaveAttribute('aria-disabled', 'true');
 
+        fireEvent.click(screen.getByRole('switch', { name: 'Xoá nền' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Tăng Dung sai' }));
         fireEvent.click(screen.getByRole('switch', { name: 'Xoá nền' }));
         expect(screen.getByRole('slider', { name: 'Dung sai' })).toHaveAttribute('aria-disabled', 'true');
         expect(screen.getByRole('button', { name: 'Tăng Dung sai' })).toBeDisabled();
@@ -242,6 +251,7 @@ describe('StickerImageEditor · xoá nền, đũa thần, cọ', () => {
     it('thanh trượt không đổi giá trị khi chạm lên track, chỉ đổi khi kéo núm', async () => {
         renderEditor();
         await openStage();
+        fireEvent.click(screen.getByRole('switch', { name: 'Xoá nền' }));
         const slider = screen.getByRole('slider', { name: 'Dung sai' });
         const track = slider.parentElement!;
         track.getBoundingClientRect = () => ({ left: 0, top: 0, width: 100, height: 40, right: 100, bottom: 40, x: 0, y: 0, toJSON: () => ({}) });
@@ -339,7 +349,7 @@ describe('StickerImageEditor · xoá nền, đũa thần, cọ', () => {
             release = resolve;
         });
 
-        fireEvent.click(screen.getByRole('button', { name: 'Tăng Dung sai' }));
+        fireEvent.click(screen.getByRole('switch', { name: 'Xoá nền' }));
         expect(saveButton()).toBeDisabled();
 
         renderGate.wait = null;
@@ -373,7 +383,7 @@ describe('StickerImageEditor · lưu và hàng chờ', () => {
         expect(await screen.findByText('Đã thêm 1 · Bỏ qua 1 · 1 tệp không hợp lệ')).toBeInTheDocument();
         fireEvent.click(screen.getByRole('button', { name: 'Xong' }));
 
-        expect(props.onClose).toHaveBeenCalledWith({ addedIds: [21], existingIds: [], skipped: 1 });
+        expect(props.onClose).toHaveBeenCalledWith({ addedIds: [21], existingIds: [], skipped: 1, failed: [] });
     });
 
     it('một ảnh lưu xong thì đóng luôn, nút trái ghi Huỷ', async () => {
@@ -383,7 +393,7 @@ describe('StickerImageEditor · lưu và hàng chờ', () => {
 
         await savedUpload(props);
 
-        await waitFor(() => expect(props.onClose).toHaveBeenCalledWith({ addedIds: [21], existingIds: [], skipped: 0 }));
+        await waitFor(() => expect(props.onClose).toHaveBeenCalledWith({ addedIds: [21], existingIds: [], skipped: 0, failed: [] }));
     });
 
     it('ảnh đã có trong bộ: báo ô và nhãn cũ, cập nhật nhãn và từ khoá cho sticker cũ', async () => {
@@ -397,7 +407,7 @@ describe('StickerImageEditor · lưu và hàng chờ', () => {
         fireEvent.click(screen.getByRole('button', { name: 'Cập nhật nhãn và từ khoá cho sticker cũ' }));
 
         await waitFor(() => expect(props.onUpdateExisting).toHaveBeenCalledWith(5, { label: 'Sao vàng', keywords: [] }));
-        await waitFor(() => expect(props.onClose).toHaveBeenCalledWith({ addedIds: [], existingIds: [5], skipped: 0 }));
+        await waitFor(() => expect(props.onClose).toHaveBeenCalledWith({ addedIds: [], existingIds: [5], skipped: 0, failed: [] }));
     });
 
     it('máy chủ báo nhãn quá dài: lỗi đặt dưới ô Nhãn, giữ trình chỉnh', async () => {
@@ -423,6 +433,110 @@ describe('StickerImageEditor · lưu và hàng chờ', () => {
     });
 });
 
+describe('StickerImageEditor · lưu tất cả', () => {
+    const saveAllButton = () => screen.getByRole('button', { name: /^Lưu tất cả/ });
+
+    it('ảnh đang chỉnh lưu theo bản nháp, ảnh còn lại lưu khung mặc định với công tắc xoá nền hiện hành; trùng và lỗi không dừng lượt lưu', async () => {
+        const onUpload = vi
+            .fn()
+            .mockResolvedValueOnce(uploaded({ id: 1 }))
+            .mockResolvedValueOnce(uploaded({ id: 5, existing: true }))
+            .mockRejectedValueOnce(new ApiError(422, { errors: { file: ['Ảnh hỏng'] } }))
+            .mockResolvedValueOnce(uploaded({ id: 4 })) as UploadMock;
+        const props = renderEditor({ names: ['a.png', 'b.png', 'c.png', 'd.png'], onUpload });
+        await openStage();
+        expect(saveAllButton()).toHaveTextContent('Lưu tất cả (4 ảnh còn lại)');
+
+        fireEvent.click(screen.getByRole('switch', { name: 'Xoá nền' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Vừa khung' }));
+        fireEvent.change(screen.getByLabelText('Nhãn'), { target: { value: 'Mèo' } });
+        await waitFor(() => expect(saveAllButton()).toBeEnabled());
+        fireEvent.click(saveAllButton());
+
+        expect(await screen.findByText('Đã thêm 2 · 1 ảnh đã có · 1 ảnh lỗi')).toBeInTheDocument();
+        expect(screen.getByText('c.png: Ảnh hỏng')).toBeInTheDocument();
+        expect(onUpload.mock.calls.map(([file]) => file.name)).toEqual(['a.png', 'b.png', 'c.png', 'd.png']);
+        expect(onUpload.mock.calls[0][1]).toMatchObject({ edit: { fit: 'contain', removeBackground: true }, label: 'Mèo' });
+        expect(onUpload.mock.calls[1][1]).toEqual({
+            edit: { crop: { x: 0.27, y: 0.27, w: 0.47, h: 0.47 }, fit: 'cover', removeBackground: true, tolerance: 20, feather: 0, edits: [] },
+            label: null,
+            keywords: [],
+        });
+
+        fireEvent.click(screen.getByRole('button', { name: 'Xong' }));
+        expect(props.onClose).toHaveBeenCalledWith({ addedIds: [1, 4], existingIds: [5], skipped: 0, failed: [{ name: 'c.png', error: 'Ảnh hỏng' }] });
+    });
+
+    it('chỉ lưu các ảnh từ ảnh đang chỉnh trở đi, hiện tiến độ; đóng giữa chừng thì huỷ phần còn lại', async () => {
+        let signal: AbortSignal | undefined;
+        const onUpload = vi
+            .fn()
+            .mockResolvedValueOnce(uploaded({ id: 1 }))
+            .mockImplementationOnce((_file: File, _upload: StickerUpload, options: UploadOptions) => {
+                signal = options.signal;
+                return new Promise<UploadedSticker>(() => undefined);
+            }) as UploadMock;
+        const props = renderEditor({ names: ['a.png', 'b.png', 'c.png', 'd.png'], onUpload });
+        await openStage();
+        fireEvent.click(screen.getByRole('button', { name: 'Bỏ qua ảnh này' }));
+        await waitFor(() => expect(saveAllButton()).toHaveTextContent('Lưu tất cả (3 ảnh còn lại)'));
+        await waitFor(() => expect(saveAllButton()).toBeEnabled());
+
+        fireEvent.click(saveAllButton());
+
+        expect(await screen.findByText('Đang lưu 1/3 ảnh…')).toBeInTheDocument();
+        expect(onUpload.mock.calls.map(([file]) => file.name)).toEqual(['b.png', 'c.png']);
+        expect(screen.getByRole('button', { name: 'Đóng trình chỉnh' })).toBeDisabled();
+
+        fireEvent.keyDown(document, { key: 'Escape' });
+        fireEvent.click(within(await screen.findByRole('alertdialog', { name: 'Bỏ 2 ảnh chưa lưu?' })).getByRole('button', { name: 'Bỏ' }));
+
+        expect(signal?.aborted).toBe(true);
+        expect(props.onClose).toHaveBeenCalledWith({ addedIds: [1], existingIds: [], skipped: 3, failed: [] });
+        expect(onUpload).toHaveBeenCalledTimes(2);
+    });
+
+    it('một ảnh thì không có nút Lưu tất cả', async () => {
+        renderEditor();
+        await openStage();
+
+        expect(screen.queryByRole('button', { name: /^Lưu tất cả/ })).toBeNull();
+    });
+});
+
+describe('StickerImageEditor · chỉnh lại sticker đã lưu', () => {
+    it('mở với edit, nhãn và từ khoá đã lưu; chưa đổi gì thì đóng không hỏi', async () => {
+        const reedit: StickerReedit = {
+            sticker: { label: 'Sao', keywords: ['sao'] },
+            edit: { crop: { x: 0, y: 0, w: 1, h: 1 }, fit: 'contain', removeBackground: true, tolerance: 30, feather: 0, edits: [] },
+        };
+        const props = renderEditor({ reedit });
+        await openStage();
+
+        expect(screen.getByRole('heading', { level: 3, name: 'Chỉnh lại ảnh sticker' })).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Vừa khung' })).toHaveAttribute('aria-pressed', 'true');
+        expect(screen.getByRole('switch', { name: 'Xoá nền' })).toHaveAttribute('aria-checked', 'true');
+        expect(screen.getByLabelText('Nhãn')).toHaveValue('Sao');
+
+        fireEvent.click(screen.getByRole('button', { name: 'Đóng trình chỉnh' }));
+        expect(screen.queryByRole('alertdialog')).toBeNull();
+        expect(props.onClose).toHaveBeenCalledTimes(1);
+    });
+
+    it('lưu gửi lại nguyên edit đã lưu kèm nhãn và từ khoá cũ', async () => {
+        const reedit: StickerReedit = { sticker: { label: 'Sao', keywords: ['sao'] }, edit: { crop: { x: 0.27, y: 0.27, w: 0.47, h: 0.47 }, removeBackground: false } };
+        const props = renderEditor({ reedit });
+        await openStage();
+
+        expect(screen.getByRole('button', { name: 'Ôm chủ thể' })).toHaveAttribute('aria-pressed', 'true');
+        expect(await savedUpload(props)).toEqual({
+            edit: { crop: { x: 0.27, y: 0.27, w: 0.47, h: 0.47 }, fit: 'cover', removeBackground: false, tolerance: 20, feather: 0, edits: [] },
+            label: 'Sao',
+            keywords: ['sao'],
+        });
+    });
+});
+
 describe('StickerImageEditor · đóng', () => {
     it('chưa chỉnh gì thì X đóng ngay, không hỏi', async () => {
         const props = renderEditor();
@@ -430,7 +544,7 @@ describe('StickerImageEditor · đóng', () => {
 
         fireEvent.click(screen.getByRole('button', { name: 'Đóng trình chỉnh' }));
 
-        expect(props.onClose).toHaveBeenCalledWith({ addedIds: [], existingIds: [], skipped: 1 });
+        expect(props.onClose).toHaveBeenCalledWith({ addedIds: [], existingIds: [], skipped: 1, failed: [] });
         expect(screen.queryByRole('alertdialog')).toBeNull();
     });
 
@@ -445,7 +559,7 @@ describe('StickerImageEditor · đóng', () => {
 
         fireEvent.click(screen.getByRole('button', { name: 'Đóng trình chỉnh' }));
         fireEvent.click(within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Bỏ' }));
-        expect(props.onClose).toHaveBeenCalledWith({ addedIds: [], existingIds: [], skipped: 3 });
+        expect(props.onClose).toHaveBeenCalledWith({ addedIds: [], existingIds: [], skipped: 3, failed: [] });
     });
 
     it('đang gửi thì X bị khoá; Esc hỏi rồi huỷ lượt gửi', async () => {
@@ -464,7 +578,7 @@ describe('StickerImageEditor · đóng', () => {
         fireEvent.click(within(await screen.findByRole('alertdialog', { name: 'Bỏ 1 ảnh chưa lưu?' })).getByRole('button', { name: 'Bỏ' }));
 
         expect(signal?.aborted).toBe(true);
-        expect(props.onClose).toHaveBeenCalledWith({ addedIds: [], existingIds: [], skipped: 1 });
+        expect(props.onClose).toHaveBeenCalledWith({ addedIds: [], existingIds: [], skipped: 1, failed: [] });
     });
 
     it('mở thì thêm một mục lịch sử; Back đóng hộp thay vì rời trang', async () => {

@@ -22,13 +22,14 @@ vi.mock('./stickerSourceImage', async importOriginal => ({
 
 // Trình chỉnh ảnh có bộ test riêng; ở đây chỉ cần hợp đồng files/rejected/onUpload/onClose.
 vi.mock('./StickerImageEditor', () => ({
-    default: ({ files, rejected, onUpload, onClose }: {
+    default: ({ files, reedit, rejected, onUpload, onClose }: {
         files: File[];
+        reedit?: { edit: unknown; sticker: { label: string | null } };
         rejected: { name: string }[];
         onUpload: (file: File, upload: unknown, options: object) => Promise<{ id: number; existing: boolean }>;
-        onClose: (summary: { addedIds: number[]; existingIds: number[]; skipped: number }) => void;
+        onClose: (summary: { addedIds: number[]; existingIds: number[]; skipped: number; failed: { name: string; error: string }[] }) => void;
     }) => (
-        <div role="dialog" aria-label="Thêm sticker">
+        <div role="dialog" aria-label={reedit ? `Chỉnh lại ${JSON.stringify(reedit.edit)}` : 'Thêm sticker'}>
             <span>{`${files.map(file => file.name).join(', ')} · bỏ qua ${rejected.map(file => file.name).join(', ')}`}</span>
             <button
                 type="button"
@@ -38,12 +39,13 @@ vi.mock('./StickerImageEditor', () => ({
                         addedIds: created.existing ? [] : [created.id],
                         existingIds: created.existing ? [created.id] : [],
                         skipped: files.length - 1,
+                        failed: [],
                     });
                 }}
             >
                 Lưu sticker
             </button>
-            <button type="button" onClick={() => onClose({ addedIds: [], existingIds: [], skipped: files.length })}>
+            <button type="button" onClick={() => onClose({ addedIds: [], existingIds: [], skipped: files.length, failed: [] })}>
                 Đóng trình chỉnh
             </button>
         </div>
@@ -83,6 +85,8 @@ const sticker = (overrides: Partial<LibrarySticker> = {}): LibrarySticker => ({
     frames: 1,
     image_url: '/stickers/sticker.webp',
     static_url: '/stickers/static.png',
+    edit: null,
+    has_original: true,
     ...overrides,
 });
 
@@ -110,6 +114,8 @@ function fakeApi(overrides: Partial<StickerLibraryApi> = {}, packs: LibraryStick
         uploadSticker: vi.fn(),
         reorderStickers: vi.fn().mockResolvedValue(packDetail()),
         updateSticker: vi.fn(),
+        reeditSticker: vi.fn(),
+        getStickerOriginal: vi.fn(),
         deleteSticker: vi.fn().mockResolvedValue(undefined),
         ...overrides,
     };
@@ -444,6 +450,36 @@ describe('StickerLibraryManager · desktop', () => {
 
         expect(packTransfer.movePack).not.toHaveBeenCalled();
         expect(screen.getByRole('listbox', { name: 'Sticker trong bộ «Chó vui»' })).toBeInTheDocument();
+    });
+
+    it('Chỉnh lại ảnh: tải ảnh gốc, mở trình chỉnh với edit đã lưu, lưu gửi PATCH edit rồi ô chuyển sang đang dựng', async () => {
+        const savedEdit = { crop: { x: 0, y: 0, w: 1, h: 1 }, fit: 'contain' as const, removeBackground: false };
+        const original = new File(['png'], 'Chó vẫy', { type: 'image/png' });
+        const getStickerOriginal = vi.fn().mockResolvedValue(original);
+        const reeditSticker = vi.fn().mockResolvedValue(sticker({ status: 'processing', edit: { crop: null } }));
+        const published = packDetail({ published: true, stickers: [sticker({ edit: savedEdit })] });
+        const api = fakeApi({ getPack: vi.fn().mockResolvedValue(published), getStickerOriginal, reeditSticker }, [published]);
+        render(<StickerLibraryManager api={api} />);
+
+        fireEvent.click(within(await grid()).getByRole('option'));
+        fireEvent.click(await screen.findByRole('button', { name: 'Chỉnh lại ảnh' }));
+
+        expect(await screen.findByRole('dialog', { name: `Chỉnh lại ${JSON.stringify(savedEdit)}` })).toBeInTheDocument();
+        expect(getStickerOriginal).toHaveBeenCalledWith(3, 11, 'Chó vẫy');
+        fireEvent.click(screen.getByRole('button', { name: 'Lưu sticker' }));
+
+        expect(await screen.findByText('Đã lưu, sticker đang được dựng lại')).toBeInTheDocument();
+        expect(reeditSticker).toHaveBeenCalledWith(3, 11, { edit: { crop: null }, label: 'Mèo', keywords: [] }, {});
+        expect(api.uploadSticker).not.toHaveBeenCalled();
+    });
+
+    it('sticker không còn ảnh gốc thì nút Chỉnh lại ảnh bị khoá; lượt chỉnh hỏng gần nhất hiện lý do', async () => {
+        const legacy = sticker({ has_original: false, failure_message: 'Xoá nền xong ảnh không còn gì.' });
+        render(<StickerLibraryManager api={fakeApi({ getPack: vi.fn().mockResolvedValue(packDetail({ stickers: [legacy] })) })} />);
+
+        fireEvent.click(within(await grid()).getByRole('option'));
+        expect(await screen.findByRole('button', { name: 'Chỉnh lại ảnh' })).toBeDisabled();
+        expect(screen.getByText(/Lần chỉnh ảnh gần nhất chưa thành, sticker vẫn dùng ảnh cũ: Xoá nền xong/)).toBeInTheDocument();
     });
 
     it('sticker lỗi hiện failure_message trong ngăn chi tiết', async () => {

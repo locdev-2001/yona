@@ -526,8 +526,11 @@ Route::prefix('super_admin')->middleware(SuperAdminInertia::class)->group(functi
                     ->whereNumber('packId')
                     ->middleware('throttle:sticker-uploads');
                 Route::put('/{packId}/stickers/order', [SuperAdminStickerPacksController::class, 'reorder'])->whereNumber('packId');
-                Route::patch('/{packId}/stickers/{stickerId}', [SuperAdminStickerPacksController::class, 'updateSticker'])
+                Route::get('/{packId}/stickers/{stickerId}/original', [SuperAdminStickerPacksController::class, 'stickerOriginal'])
                     ->whereNumber(['packId', 'stickerId']);
+                Route::patch('/{packId}/stickers/{stickerId}', [SuperAdminStickerPacksController::class, 'updateSticker'])
+                    ->whereNumber(['packId', 'stickerId'])
+                    ->middleware('throttle:sticker-uploads');
                 Route::delete('/{packId}/stickers/{stickerId}', [SuperAdminStickerPacksController::class, 'destroySticker'])
                     ->whereNumber(['packId', 'stickerId']);
             });

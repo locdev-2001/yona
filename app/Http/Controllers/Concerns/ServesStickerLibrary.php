@@ -9,6 +9,7 @@ use App\Http\Requests\Stickers\UploadStickerRequest;
 use App\Models\Account;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 // Các action quản trị kho sticker cho mặt tiền không có {account} trên URL.
 // Mặt tiền chỉ nói kho nào (libraryOwner: null = kho nền tảng); quyền do
@@ -67,6 +68,11 @@ trait ServesStickerLibrary
     public function updateSticker(UpdateStickerRequest $request, int $packId, int $stickerId): JsonResponse
     {
         return $this->updateLibrarySticker($request, $this->libraryOwner($request), $packId, $stickerId);
+    }
+
+    public function stickerOriginal(Request $request, int $packId, int $stickerId): StreamedResponse
+    {
+        return $this->libraryStickerOriginal($this->libraryOwner($request), $packId, $stickerId);
     }
 
     public function destroySticker(Request $request, int $packId, int $stickerId): JsonResponse

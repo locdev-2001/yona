@@ -7,13 +7,17 @@ use App\Models\Sticker;
 use App\Models\StickerPack;
 use Closure;
 use finfo;
+use HashContext;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
 
-// Lối vào duy nhất cho mọi lượt tải sticker (Super Admin lẫn tenant): kiểm ảnh
-// và thông số chỉnh ngay trong request, lưu ảnh gốc, phần dựng chạy trong queue.
+// Lối vào duy nhất cho mọi lượt dựng sticker từ ảnh gốc (Super Admin lẫn tenant):
+// tải ảnh mới hoặc chỉnh lại ảnh của sticker đã có. Kiểm ảnh và thông số chỉnh
+// ngay trong request, lưu ảnh gốc, phần dựng chạy trong queue.
 final class StickerUploadService
 {
     public const ACCEPTED_EXTENSIONS = ['png', 'jpg', 'jpeg', 'webp', 'gif'];
@@ -25,6 +29,10 @@ final class StickerUploadService
     public const FILE_TOO_LARGE = 'file_too_large';
 
     public const INVALID_EDIT = 'invalid_edit';
+
+    public const STICKER_BUSY = 'sticker_busy';
+
+    public const DUPLICATE_IN_PACK = 'duplicate_in_pack';
 
     // Lâu hơn hẳn mọi lượt dựng (RenderStickerJob tối đa 90 giây, hàng đợi
     // retry_after 180 giây): quá mốc này mà còn `processing` là job đã mất.
@@ -45,6 +53,8 @@ final class StickerUploadService
     ];
 
     private const OVERSIZED_UPLOAD_ERRORS = [UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE];
+
+    public function __construct(private readonly StickerFileJanitor $janitor) {}
 
     public static function maxUploadBytes(): int
     {
@@ -104,6 +114,68 @@ final class StickerUploadService
         return $sticker;
     }
 
+    /**
+     * Dựng lại sticker từ chính ảnh gốc đã lưu với thông số chỉnh mới: giữ id, vị
+     * trí, nhãn, từ khoá. Hash nội dung đổi nên tệp mới nằm thư mục mới (URL mới,
+     * CDN không giữ ảnh cũ); bản đang dùng giữ tới khi bản mới dựng xong, tệp cũ
+     * chỉ bị dọn khi không còn tin hay sticker nào trỏ tới (StickerFileJanitor).
+     *
+     * @throws ValidationException khi thông số chỉnh bị từ chối, sticker đang dựng, mất ảnh gốc hoặc trùng sticker khác trong bộ
+     */
+    public function reedit(Sticker $sticker, ?string $editJson): Sticker
+    {
+        $edit = $this->parsedEdit($editJson);
+        if ($this->isRendering($sticker)) {
+            throw $this->rejection(self::STICKER_BUSY, self::EDIT_FIELD);
+        }
+
+        $original = $sticker->original_path === null ? null : Storage::disk(Sticker::DISK)->get($sticker->original_path);
+        if ($original === null) {
+            throw $this->rejection(RenderStickerJob::ORIGINAL_MISSING, self::EDIT_FIELD);
+        }
+
+        $contentHash = $this->storedContentHash($original, $edit);
+        if ($contentHash === $sticker->content_hash) {
+            return $sticker;
+        }
+        if ($sticker->stickerPack->stickers()->where('content_hash', $contentHash)->exists()) {
+            throw $this->rejection(self::DUPLICATE_IN_PACK, self::EDIT_FIELD);
+        }
+
+        $originalPath = StickerFileLayout::originalPath($contentHash, pathinfo($sticker->original_path, PATHINFO_EXTENSION));
+        $disk = Storage::disk(Sticker::DISK);
+        if (! $disk->exists($originalPath) && ! $disk->put($originalPath, $original)) {
+            throw $this->rejection(RenderStickerJob::STORAGE_WRITE_FAILED, self::EDIT_FIELD);
+        }
+
+        // Sticker hỏng không có bản nào để giữ: dọn luôn tệp cũ như khi xoá sticker.
+        $current = $sticker->status === Sticker::STATUS_READY ? StickerVersion::of($sticker) : null;
+        $releasedHash = $sticker->content_hash;
+        try {
+            DB::transaction(fn () => $sticker->fill([
+                'content_hash' => $contentHash,
+                'original_path' => $originalPath,
+                'edit_params' => $edit->isEmpty() ? null : $edit->params,
+                'status' => Sticker::STATUS_PROCESSING,
+                'failure_code' => null,
+            ])->touch());
+        } catch (UniqueConstraintViolationException) {
+            throw $this->rejection(self::DUPLICATE_IN_PACK, self::EDIT_FIELD);
+        }
+
+        RenderStickerJob::dispatch($sticker, superseded: $current)->afterCommit();
+        if ($current === null) {
+            $this->janitor->releaseIfUnreferenced($releasedHash);
+        }
+
+        return $sticker;
+    }
+
+    private function isRendering(Sticker $sticker): bool
+    {
+        return $sticker->status === Sticker::STATUS_PROCESSING && ! $this->needsRender($sticker);
+    }
+
     private function needsRender(Sticker $sticker): bool
     {
         return $sticker->status === Sticker::STATUS_FAILED
@@ -143,6 +215,20 @@ final class StickerUploadService
         if (! hash_update_file($context, (string) $file->getRealPath())) {
             throw $this->rejection(self::FILE_UNREADABLE);
         }
+
+        return $this->finalContentHash($context, $edit);
+    }
+
+    private function storedContentHash(string $original, StickerEdit $edit): string
+    {
+        $context = hash_init(self::CONTENT_HASH_ALGORITHM);
+        hash_update($context, $original);
+
+        return $this->finalContentHash($context, $edit);
+    }
+
+    private function finalContentHash(HashContext $context, StickerEdit $edit): string
+    {
         hash_update($context, "\n".$edit->json());
 
         return hash_final($context);

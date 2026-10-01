@@ -109,8 +109,11 @@ Route::middleware(['auth', EnsureStickerLibraryAccess::class.':'.EnsureStickerLi
             ->whereNumber('packId')
             ->middleware('throttle:sticker-uploads');
         Route::put('/{packId}/stickers/order', [PlatformStickerPacksController::class, 'reorder'])->whereNumber('packId');
-        Route::patch('/{packId}/stickers/{stickerId}', [PlatformStickerPacksController::class, 'updateSticker'])
+        Route::get('/{packId}/stickers/{stickerId}/original', [PlatformStickerPacksController::class, 'stickerOriginal'])
             ->whereNumber(['packId', 'stickerId']);
+        Route::patch('/{packId}/stickers/{stickerId}', [PlatformStickerPacksController::class, 'updateSticker'])
+            ->whereNumber(['packId', 'stickerId'])
+            ->middleware('throttle:sticker-uploads');
         Route::delete('/{packId}/stickers/{stickerId}', [PlatformStickerPacksController::class, 'destroySticker'])
             ->whereNumber(['packId', 'stickerId']);
     });
@@ -490,8 +493,11 @@ Route::middleware(['auth.api_token', 'auth', 'account.scope'])
                     ->whereNumber('packId')
                     ->middleware('throttle:sticker-uploads');
                 Route::put('/{packId}/stickers/order', [CustomStickerPacksController::class, 'reorder'])->whereNumber('packId');
-                Route::patch('/{packId}/stickers/{stickerId}', [CustomStickerPacksController::class, 'updateSticker'])
+                Route::get('/{packId}/stickers/{stickerId}/original', [CustomStickerPacksController::class, 'stickerOriginal'])
                     ->whereNumber(['packId', 'stickerId']);
+                Route::patch('/{packId}/stickers/{stickerId}', [CustomStickerPacksController::class, 'updateSticker'])
+                    ->whereNumber(['packId', 'stickerId'])
+                    ->middleware('throttle:sticker-uploads');
                 Route::delete('/{packId}/stickers/{stickerId}', [CustomStickerPacksController::class, 'destroySticker'])
                     ->whereNumber(['packId', 'stickerId']);
             });

@@ -111,6 +111,11 @@ final class StickerLibraryManager
         return $sticker;
     }
 
+    public function reeditSticker(Sticker $sticker, ?string $editJson): Sticker
+    {
+        return $this->uploads->reedit($sticker, $editJson);
+    }
+
     /** @param  list<int>  $orderedStickerIds */
     public function reorder(StickerPack $pack, array $orderedStickerIds): void
     {

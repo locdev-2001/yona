@@ -16,6 +16,8 @@ use App\Services\Stickers\StickerTags;
 use App\Services\Stickers\StickerUploadService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 // Thân chung của mọi mặt tiền quản trị kho sticker. Mặt tiền chỉ quyết chủ kho
 // (null = kho chung) và quyền, rồi gọi các hàm dưới đây.
@@ -89,9 +91,24 @@ trait ManagesStickerLibrary
     {
         $library = $this->stickerLibrary();
         $sticker = $library->findSticker($library->findPack($owner, $packId), $stickerId);
+        if ($request->wantsReedit()) {
+            $library->reeditSticker($sticker, $request->stickerEdit());
+        }
         $library->updateSticker($sticker, $request->stickerLabel($sticker), $request->stickerKeywords($sticker));
 
-        return response()->json((new LibraryStickerResource($sticker))->toArray($request));
+        return response()->json((new LibraryStickerResource($sticker->refresh()))->toArray($request));
+    }
+
+    // Ảnh gốc đi qua API (không qua URL disk) để trình chỉnh trên trình duyệt đọc
+    // được điểm ảnh dù disk nằm ở tên miền khác.
+    protected function libraryStickerOriginal(?Account $owner, int $packId, int $stickerId): StreamedResponse
+    {
+        $library = $this->stickerLibrary();
+        $originalPath = $library->findSticker($library->findPack($owner, $packId), $stickerId)->original_path;
+        $disk = Storage::disk(Sticker::DISK);
+        abort_if($originalPath === null || ! $disk->exists($originalPath), 404);
+
+        return $disk->response($originalPath);
     }
 
     protected function reorderStickers(ReorderStickersRequest $request, ?Account $owner, int $packId): JsonResponse

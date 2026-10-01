@@ -10,6 +10,7 @@ import type { StickerLimits, StickerMetaErrors } from './stickerLimits';
 import { CHECKERBOARD_STYLE, IconButton, StickerButton } from './stickerLibraryUi';
 import type { StickerMoveTarget } from './StickerGrid';
 import { isAnimatedSticker } from './StickerTile';
+import { hasFailedReedit } from './types';
 import type { LibrarySticker, LibraryStickerChanges } from './types';
 
 // Ngăn chi tiết rộng 320px: ảnh xem trước không vượt cỡ này.
@@ -31,6 +32,9 @@ interface StickerDetailPanelProps {
     onRequestClose: () => void;
     onMove: (target: StickerMoveTarget) => void;
     onDelete: () => void;
+    // Đang tải ảnh gốc để mở trình chỉnh.
+    reediting: boolean;
+    onReedit: () => void;
 }
 
 // Một component cho cả cột 320px, ngăn phủ và bottom sheet. Bản nháp giữ riêng theo sticker,
@@ -49,6 +53,8 @@ export default function StickerDetailPanel({
     onRequestClose,
     onMove,
     onDelete,
+    reediting,
+    onReedit,
 }: StickerDetailPanelProps) {
     const previewSize = Math.min(useStickerDisplaySize(), PREVIEW_MAX_PX);
     const [draft, setDraft] = useState<StickerMetaDraft>(() => draftFromSticker(sticker));
@@ -136,6 +142,11 @@ export default function StickerDetailPanel({
                         {sticker.failure_message}
                     </p>
                 ) : null}
+                {hasFailedReedit(sticker) ? (
+                    <p role="status" className="m-0 rounded-lg bg-n-amber-3 p-3 text-sm text-n-amber-11">
+                        {t('STICKER_LIBRARY.REEDIT_FAILED', { reason: sticker.failure_message ?? '' })}
+                    </p>
+                ) : null}
                 <StickerMetaFields
                     draft={draft}
                     limits={limits}
@@ -148,6 +159,18 @@ export default function StickerDetailPanel({
                     }}
                 />
                 <div className="flex flex-col gap-1 border-0 border-t border-solid border-n-weak pt-4">
+                    <StickerButton
+                        tone="ghost"
+                        size="sheet"
+                        icon="i-lucide-crop"
+                        className="!justify-start"
+                        disabled={!sticker.has_original || sticker.status === 'processing'}
+                        busy={reediting}
+                        title={sticker.has_original ? undefined : t('STICKER_LIBRARY.REEDIT_NO_ORIGINAL')}
+                        onClick={onReedit}
+                    >
+                        {t('STICKER_LIBRARY.REEDIT')}
+                    </StickerButton>
                     <StickerButton tone="ghost" size="sheet" icon="i-lucide-arrow-up-to-line" className="!justify-start" disabled={!reorderEnabled || index === 0} onClick={() => onMove('first')}>
                         {t('STICKER_LIBRARY.MOVE_FIRST')}
                     </StickerButton>

@@ -1,4 +1,4 @@
-import { ApiError, deleteJson, getJson, patchJson, postForm, postJson, putJson } from 'dashboard/helper/apiClient';
+import { ApiError, deleteJson, getBlob, getJson, patchJson, postForm, postJson, putJson } from 'dashboard/helper/apiClient';
 import type { LibrarySticker, LibraryStickerChanges, LibraryStickerPackDetail, StickerLibraryListing, UploadedSticker } from './types';
 import type { StickerEdit } from './stickerEdit';
 
@@ -93,6 +93,14 @@ export function createStickerLibraryApi(baseUrl: string) {
             putJson<LibraryStickerPackDetail>(`${packUrl(packId)}/stickers/order`, { sticker_ids: stickerIds }),
         updateSticker: (packId: number, stickerId: number, changes: LibraryStickerChanges) =>
             patchJson<LibrarySticker>(stickerUrl(packId, stickerId), { ...changes }),
+        // Máy chủ dựng lại sticker từ ảnh gốc đã lưu bằng `edit` mới; id, vị trí giữ nguyên.
+        reeditSticker: (packId: number, stickerId: number, { edit, label, keywords }: StickerUpload, options: UploadOptions = {}) =>
+            withThrottleRetry(() => patchJson<LibrarySticker>(stickerUrl(packId, stickerId), { edit: JSON.stringify(edit), label, keywords }), options),
+        getStickerOriginal: async (packId: number, stickerId: number, filename: string) => {
+            const blob = await getBlob(`${stickerUrl(packId, stickerId)}/original`);
+
+            return new File([blob], filename, { type: blob.type });
+        },
         deleteSticker: (packId: number, stickerId: number) => deleteJson(stickerUrl(packId, stickerId)),
     };
 }

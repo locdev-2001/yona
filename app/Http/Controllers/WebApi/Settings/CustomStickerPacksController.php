@@ -12,6 +12,7 @@ use App\Http\Requests\Stickers\UploadStickerRequest;
 use App\Models\Account;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 // Kho sticker riêng của account. Quyền do EnsureStickerLibraryAccess:account ở
 // route quyết (StickerLibraryAccess); riêng chuyển bộ qua lại kho nền tảng do
@@ -63,6 +64,11 @@ class CustomStickerPacksController extends Controller
     public function updateSticker(UpdateStickerRequest $request, Account $account, int $packId, int $stickerId): JsonResponse
     {
         return $this->updateLibrarySticker($request, $account, $packId, $stickerId);
+    }
+
+    public function stickerOriginal(Account $account, int $packId, int $stickerId): StreamedResponse
+    {
+        return $this->libraryStickerOriginal($account, $packId, $stickerId);
     }
 
     public function reorder(ReorderStickersRequest $request, Account $account, int $packId): JsonResponse

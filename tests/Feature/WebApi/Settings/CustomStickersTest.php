@@ -239,6 +239,8 @@ describe('cờ custom_stickers bật', function () {
             'frames' => 1,
             'image_url' => $sticker->image_url,
             'static_url' => $sticker->static_url,
+            'edit' => $sticker->edit_params,
+            'has_original' => true,
             'existing' => false,
         ])
             ->and($sticker->edit_params)->toEqual($edit)

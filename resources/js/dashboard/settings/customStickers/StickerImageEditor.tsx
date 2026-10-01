@@ -1,30 +1,39 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 
 import { t } from '../../../i18n';
+import { parseApiErrorMessage } from 'dashboard/helper/apiClient';
 import ConfirmActionDialog from './ConfirmActionDialog';
 import type { ConfirmActionRequest } from './ConfirmActionDialog';
 import StickerEditorWorkspace from './StickerEditorWorkspace';
-import type { EditableSource } from './StickerEditorWorkspace';
+import type { BulkSaveSettings } from './StickerEditorWorkspace';
 import { describeRejected } from './prepareUploadQueue';
 import type { RejectedUpload } from './prepareUploadQueue';
-import { pixelsToCanvas } from './stickerCanvas';
-import { fitCrop, subjectCrop } from './stickerEdit';
-import type { StickerDraft, StickerFraming } from './stickerEdit';
-import { createQueue, currentItem, editorQueueReducer, hasLaterItems, summarizeQueue, unsavedCount } from './stickerEditorQueue';
+import { toStickerEdit } from './stickerEdit';
+import type { StickerDraft } from './stickerEdit';
+import { openStickerSource } from './stickerEditableSource';
+import type { EditableSource, SavedStickerEdit } from './stickerEditableSource';
+import {
+    bulkProgress,
+    createQueue,
+    currentItem,
+    editorQueueReducer,
+    hasLaterItems,
+    remainingCount,
+    summarizeQueue,
+    unsavedCount,
+} from './stickerEditorQueue';
 import type { EditorQueueSummary, QueueItem } from './stickerEditorQueue';
 import type { StickerUpload, UploadOptions } from './stickerLibraryApi';
 import { IconButton, Modal, Spinner, StickerButton } from './stickerLibraryUi';
 import type { ModalCloseReason } from './stickerLibraryUi';
 import type { StickerLimits } from './stickerLimits';
-import type { LoadedStickerSource } from './stickerMaskRender';
 import { createStickerMaskRunner } from './stickerMaskRunner';
 import type { StickerMaskRunner } from './stickerMaskRunner';
-import { decodeStickerSource } from './stickerSourceImage';
-import type { LibraryStickerChanges, UploadedSticker } from './types';
-import { DEFAULT_TOLERANCE } from 'sticker-renderer/image/background-mask.mjs';
+import type { LibrarySticker, LibraryStickerChanges, UploadedSticker } from './types';
 
 // Trình chỉnh ảnh thành sticker cho cả hàng chờ ảnh: chọn vùng lấy, xoá nền (loang màu từ mép,
 // đũa thần, cọ), xem trước ở cỡ thật rồi gửi ảnh gốc kèm `edit` cho máy chủ dựng bản cuối.
+// Chỉnh lại sticker đã lưu cũng dùng trình chỉnh này với ảnh gốc và `edit` đã lưu.
 // Hộp có kích thước cố định; đóng giữa chừng thì hỏi, Back trên điện thoại chỉ đóng hộp.
 
 export const EDITOR_HISTORY_STATE = 'stickerImageEditor';
@@ -34,8 +43,15 @@ const MODAL_SIZE_CLASS =
 
 type CloseReason = ModalCloseReason | 'history';
 
+// Mở lại sticker đã lưu: `files` chỉ gồm ảnh gốc của nó.
+export interface StickerReedit {
+    sticker: Pick<LibrarySticker, 'label' | 'keywords'>;
+    edit: SavedStickerEdit | null;
+}
+
 interface StickerImageEditorProps {
     files: File[];
+    reedit?: StickerReedit;
     rejected: RejectedUpload[];
     imageSize: number;
     limits: StickerLimits;
@@ -51,41 +67,20 @@ type LoadState =
 
 const editorText = (key: string, params?: Record<string, string | number>) => t(`STICKER_LIBRARY.EDITOR.${key}`, params);
 
-/** Ảnh động không giải mã được từng khung, hoặc các vật chính không cùng lọt một ô vuông trong ảnh: lấy cả ảnh. */
-function defaultFraming(loaded: LoadedStickerSource): StickerFraming {
-    if (loaded.animationUnavailable) return 'fit';
-    const large = loaded.subject.largeSubject;
-
-    return large && Math.max(large.width, large.height) > Math.min(loaded.width, loaded.height) ? 'fit' : 'subject';
-}
-
-function useEditableSource(file: File): LoadState {
+// Null = không mở ảnh nào (đang Lưu tất cả).
+function useEditableSource(file: File | null, reedit: StickerReedit | undefined): LoadState {
     const [state, setState] = useState<LoadState>({ status: 'loading' });
+    const restore = useMemo(() => (reedit ? { edit: reedit.edit } : undefined), [reedit]);
 
     useEffect(() => {
+        if (!file) return undefined;
         let isCurrent = true;
         const runner = createStickerMaskRunner();
         setState({ status: 'loading' });
 
-        decodeStickerSource(file)
-            .then(async decoded => {
-                const loaded = await runner.load(
-                    decoded.animated
-                        ? { kind: 'animation', bytes: decoded.bytes, type: file.type || 'image/gif', firstFrame: decoded.pixels }
-                        : { kind: 'still', pixels: decoded.pixels },
-                );
-                if (!isCurrent) return;
-                const size = { width: loaded.width, height: loaded.height };
-                const framing = defaultFraming(loaded);
-                const initialDraft: StickerDraft = {
-                    framing,
-                    crop: framing === 'fit' ? fitCrop(size) : subjectCrop(loaded.subject.subject, size),
-                    removeBackground: true,
-                    tolerance: DEFAULT_TOLERANCE,
-                    edits: [],
-                };
-                const sourceCanvas = pixelsToCanvas({ ...size, rgba: loaded.firstFrame });
-                setState({ status: 'ready', file, source: { size, sourceCanvas, loaded }, runner, initialDraft });
+        openStickerSource(file, runner, restore)
+            .then(({ source, initialDraft }) => {
+                if (isCurrent) setState({ status: 'ready', file, source, runner, initialDraft });
             })
             .catch(() => {
                 if (isCurrent) setState({ status: 'failed' });
@@ -95,9 +90,21 @@ function useEditableSource(file: File): LoadState {
             isCurrent = false;
             runner.dispose();
         };
-    }, [file]);
+    }, [file, restore]);
 
     return state;
+}
+
+// Ảnh chưa mở trong lượt Lưu tất cả: khung mặc định như khi mở ảnh, xoá nền theo ảnh đang chỉnh.
+async function defaultUpload(file: File, settings: BulkSaveSettings): Promise<StickerUpload> {
+    const runner = createStickerMaskRunner();
+    try {
+        const { source, initialDraft } = await openStickerSource(file, runner);
+
+        return { edit: toStickerEdit({ ...initialDraft, ...settings }, source.size), label: null, keywords: [] };
+    } finally {
+        runner.dispose();
+    }
 }
 
 // Mở trình chỉnh thêm một mục lịch sử cùng URL: Back (cử chỉ trên điện thoại) đóng hộp thay vì rời
@@ -149,6 +156,7 @@ const THUMB_STATUS_CLASS: Record<QueueItem['status'], string> = {
     saved: 'border-n-teal-8',
     existing: 'border-n-amber-8',
     skipped: 'border-n-weak opacity-40',
+    failed: 'border-n-ruby-8',
 };
 
 function QueueStrip({ items, index, urls }: { items: QueueItem[]; index: number; urls: string[] }) {
@@ -167,6 +175,14 @@ function QueueStrip({ items, index, urls }: { items: QueueItem[]; index: number;
                         {item.status === 'saving' ? (
                             <span className="absolute inset-0 flex items-center justify-center bg-n-solid-1/70">
                                 <Spinner size={14} />
+                            </span>
+                        ) : null}
+                        {item.status === 'failed' ? (
+                            <span
+                                aria-hidden="true"
+                                className="absolute bottom-0 right-0 flex size-4 items-center justify-center rounded-tl-md bg-n-ruby-9 text-white"
+                            >
+                                <span className="i-lucide-x size-3" />
                             </span>
                         ) : null}
                         {item.status === 'saved' || item.status === 'existing' ? (
@@ -190,17 +206,39 @@ function QueueSummary({ summary, rejectedCount }: { summary: EditorQueueSummary;
         ...(summary.skipped > 0 ? [editorText('SUMMARY_SKIPPED', { count: summary.skipped })] : []),
         ...(rejectedCount > 0 ? [editorText('SUMMARY_REJECTED', { count: rejectedCount })] : []),
         ...(summary.existingIds.length > 0 ? [editorText('SUMMARY_EXISTING', { count: summary.existingIds.length })] : []),
+        ...(summary.failed.length > 0 ? [editorText('SUMMARY_FAILED', { count: summary.failed.length })] : []),
     ];
 
     return (
-        <div role="status" className="flex min-h-0 flex-col items-center justify-center gap-3 p-8 text-center">
-            <span className="i-lucide-circle-check size-10 text-n-teal-9" aria-hidden="true" />
+        <div role="status" className="flex min-h-0 flex-col items-center justify-center gap-3 overflow-y-auto p-8 text-center">
+            <span
+                className={`size-10 ${summary.failed.length > 0 ? 'i-lucide-circle-alert text-n-amber-9' : 'i-lucide-circle-check text-n-teal-9'}`}
+                aria-hidden="true"
+            />
             <p className="m-0 text-base font-medium text-n-slate-12">{parts.join(' · ')}</p>
+            {summary.failed.length > 0 ? (
+                <ul aria-label={editorText('SUMMARY_FAILED_LIST')} className="m-0 flex max-w-md list-none flex-col gap-1 p-0 text-left text-sm text-n-ruby-11">
+                    {summary.failed.map(({ name, error }, index) => (
+                        <li key={`${name}-${index}`} className="break-words">
+                            {editorText('SUMMARY_FAILED_ITEM', { name, error })}
+                        </li>
+                    ))}
+                </ul>
+            ) : null}
         </div>
     );
 }
 
-export default function StickerImageEditor({ files, rejected, imageSize, limits, onUpload, onUpdateExisting, onClose }: StickerImageEditorProps) {
+function BulkProgress({ done, total }: { done: number; total: number }) {
+    return (
+        <div role="status" aria-live="polite" className="flex min-h-0 flex-col items-center justify-center gap-3 p-8 text-center">
+            <Spinner size={24} />
+            <p className="m-0 text-sm font-medium text-n-slate-12">{editorText('BULK_PROGRESS', { done, total })}</p>
+        </div>
+    );
+}
+
+export default function StickerImageEditor({ files, reedit, rejected, imageSize, limits, onUpload, onUpdateExisting, onClose }: StickerImageEditorProps) {
     const [queue, dispatchQueue] = useReducer(editorQueueReducer, files, createQueue);
     const [existing, setExisting] = useState<{ index: number; sticker: UploadedSticker } | null>(null);
     const [confirmation, setConfirmation] = useState<ConfirmActionRequest | null>(null);
@@ -212,8 +250,9 @@ export default function StickerImageEditor({ files, rejected, imageSize, limits,
     const urls = useObjectUrls(files);
 
     const item = currentItem(queue);
-    const loadState = useEditableSource(item?.file ?? files[0]);
-    const isSaving = item?.status === 'saving';
+    const bulk = bulkProgress(queue);
+    const loadState = useEditableSource(bulk ? null : (item?.file ?? files[0]), reedit);
+    const isSaving = item?.status === 'saving' || bulk !== null;
     const existingSticker = existing?.index === queue.index ? existing.sticker : null;
     const summary = summarizeQueue(queue);
     const showsSummary = queue.finished && (files.length > 1 || rejected.length > 0);
@@ -237,7 +276,7 @@ export default function StickerImageEditor({ files, rejected, imageSize, limits,
             finishRef.current(fromHistory);
             return;
         }
-        // Đang gửi thì nút X khoá; Esc và Back vẫn hỏi rồi huỷ lượt gửi.
+        // Đang gửi thì nút X khoá; Esc và Back vẫn hỏi rồi huỷ lượt gửi (cả lượt Lưu tất cả).
         if (isSaving && (reason === 'button' || reason === 'backdrop')) return;
         const unsaved = unsavedCount(queue);
         if (unsaved === 0 || (!dirtyRef.current && !isSaving && !hasLaterItems(queue))) {
@@ -281,6 +320,33 @@ export default function StickerImageEditor({ files, rejected, imageSize, limits,
         }
     };
 
+    const saveAll = async (upload: StickerUpload, settings: BulkSaveSettings, onThrottleWait: (delayMs: number) => void) => {
+        if (!item || bulk) return;
+        const controller = new AbortController();
+        abortRef.current = controller;
+        const indexes = queue.items.flatMap((queued, index) => (index >= queue.index && queued.status === 'pending' ? [index] : []));
+        dispatchQueue({ type: 'bulk-start' });
+        try {
+            for (const index of indexes) {
+                if (controller.signal.aborted) return;
+                const file = queue.items[index].file;
+                dispatchQueue({ type: 'bulk-saving', index });
+                try {
+                    const itemUpload = index === queue.index ? upload : await defaultUpload(file, settings);
+                    const result = await onUpload(file, itemUpload, { signal: controller.signal, onThrottleWait });
+                    if (controller.signal.aborted) return;
+                    dispatchQueue({ type: 'bulk-saved', index, stickerId: result.id, existing: result.existing });
+                } catch (error) {
+                    if (controller.signal.aborted) return;
+                    dispatchQueue({ type: 'bulk-failed', index, error: parseApiErrorMessage(error) || t('STICKER_LIBRARY.UPLOAD_FAILED') });
+                }
+            }
+            dispatchQueue({ type: 'bulk-finish' });
+        } finally {
+            if (abortRef.current === controller) abortRef.current = null;
+        }
+    };
+
     const updateExisting = async ({ label, keywords }: StickerUpload) => {
         if (!existingSticker) return;
         await onUpdateExisting(existingSticker.id, { label, keywords });
@@ -293,7 +359,11 @@ export default function StickerImageEditor({ files, rejected, imageSize, limits,
     };
 
     const position = queue.index + 1;
-    const title = queue.finished ? editorText('TITLE') : editorText('TITLE_WITH_POSITION', { index: position, total: files.length });
+    const title = reedit
+        ? editorText('REEDIT_TITLE')
+        : queue.finished
+          ? editorText('TITLE')
+          : editorText('TITLE_WITH_POSITION', { index: position, total: files.length });
 
     const loadingBody = (
         <>
@@ -366,21 +436,26 @@ export default function StickerImageEditor({ files, rejected, imageSize, limits,
                     </div>
                     {showsSummary ? (
                         summaryBody
+                    ) : bulk ? (
+                        <BulkProgress done={bulk.done} total={bulk.total} />
                     ) : item && loadState.status === 'ready' && loadState.file === item.file ? (
                         <StickerEditorWorkspace
                             key={queue.index}
                             source={loadState.source}
                             runner={loadState.runner}
                             initialDraft={loadState.initialDraft}
+                            initialMeta={reedit?.sticker}
                             imageSize={imageSize}
                             limits={limits}
                             position={position}
                             total={files.length}
                             hasLaterImages={hasLaterItems(queue)}
+                            remainingImages={remainingCount(queue)}
                             isSaving={isSaving}
                             existing={existingSticker}
                             shortcutsPaused={confirmation !== null}
                             onSave={save}
+                            onSaveAll={saveAll}
                             onUpdateExisting={updateExisting}
                             onSkip={skip}
                             onCancel={() => requestCloseRef.current('button')}

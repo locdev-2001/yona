@@ -1,3 +1,5 @@
+import type { SavedStickerEdit } from './stickerEditableSource';
+
 export type LibraryStickerStatus = 'processing' | 'ready' | 'failed';
 
 export interface LibrarySticker {
@@ -15,6 +17,10 @@ export interface LibrarySticker {
     image_url: string | null;
     // PNG tĩnh gửi kênh ngoài.
     static_url: string | null;
+    // Thông số cắt + xoá nền đã dựng sticker; null = mặc định của trình dựng.
+    edit: SavedStickerEdit | null;
+    // Còn ảnh gốc thì chỉnh lại được ảnh mà không phải tải lên lại.
+    has_original: boolean;
 }
 
 // Tải lên trả 201 kèm `existing: false`, hoặc 200 kèm `existing: true` và sticker đã có (ảnh trùng).
@@ -26,6 +32,9 @@ export interface LibraryStickerChanges {
     label: string | null;
     keywords: string[];
 }
+
+// Ready mà còn failure_message: lượt chỉnh lại ảnh gần nhất không thành, sticker vẫn dùng ảnh cũ.
+export const hasFailedReedit = (sticker: Pick<LibrarySticker, 'status' | 'failure_message'>) => sticker.status === 'ready' && sticker.failure_message !== null;
 
 export interface LibraryStickerPack {
     id: number;

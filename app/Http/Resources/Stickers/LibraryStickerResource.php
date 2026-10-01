@@ -10,7 +10,8 @@ use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Lang;
 
 // Sticker trong màn quản trị kho (Super Admin lẫn tenant). Sticker kẹt
-// `processing` quá hạn hiện là hỏng để người quản trị biết mà tải lại.
+// `processing` quá hạn hiện là hỏng để người quản trị biết mà tải lại. Sticker
+// `ready` còn mã lỗi là lượt chỉnh lại ảnh gần nhất không thành, ảnh cũ vẫn dùng.
 class LibraryStickerResource extends JsonResource
 {
     private const FAILURE_MESSAGE_KEY = 'errors.sticker_uploads.';
@@ -29,13 +30,15 @@ class LibraryStickerResource extends JsonResource
             'label' => $sticker->label,
             'keywords' => $sticker->keywords ?? [],
             'status' => $status,
-            'failure_message' => $status === Sticker::STATUS_FAILED && $failureCode !== null ? self::failureMessage($failureCode) : null,
+            'failure_message' => $status !== Sticker::STATUS_PROCESSING && $failureCode !== null ? self::failureMessage($failureCode) : null,
             'position' => $sticker->position,
             'width' => $sticker->width,
             'height' => $sticker->height,
             'frames' => $sticker->frame_count,
             'image_url' => $sticker->image_url,
             'static_url' => $sticker->static_url,
+            'edit' => $sticker->edit_params,
+            'has_original' => $sticker->original_path !== null,
         ];
     }
 

@@ -150,6 +150,23 @@ export function putForm<T = unknown>(url: string, form: FormData): Promise<T> {
     return request<T>(url, 'POST', form);
 }
 
+// Endpoint trả tệp nhị phân (ảnh) — giữ nguyên nội dung kèm loại tệp máy chủ báo.
+export async function getBlob(url: string): Promise<Blob> {
+    const response = await sendWithSessionRecovery(() =>
+        fetch(url, {
+            method: 'GET',
+            headers: { Accept: '*/*', 'X-Requested-With': 'XMLHttpRequest', 'X-XSRF-TOKEN': xsrfToken() },
+            credentials: 'same-origin',
+        }),
+    );
+
+    if (!response.ok) {
+        throw new ApiError(response.status, await response.json().catch(() => null));
+    }
+
+    return response.blob();
+}
+
 // Endpoint trả CSV (báo cáo tải về) — giữ nguyên văn bản, không parse JSON.
 export async function getText(url: string): Promise<string> {
     const response = await sendWithSessionRecovery(() =>
