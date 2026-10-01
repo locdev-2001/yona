@@ -4,8 +4,11 @@ namespace App\Models\Channel;
 
 use App\Channels\Capability;
 use App\Channels\CapabilitySet;
+use App\Channels\ChannelConnection;
 use App\Channels\ChannelPlatform;
+use App\Channels\ConnectionMethod;
 use App\Channels\DeclaresCapabilities;
+use App\Channels\DeclaresConnection;
 use App\Channels\DeclaresPlatform;
 use App\Channels\TextFormat;
 use App\Models\Channel\Concerns\Channelable;
@@ -19,7 +22,7 @@ use Illuminate\Database\Eloquent\Model;
 
 // Mỗi nhà cung cấp là một
 // driver riêng (providerService), lõi kênh không biết chi tiết Cloud/360Dialog.
-class Whatsapp extends Model implements DeclaresCapabilities, DeclaresPlatform
+class Whatsapp extends Model implements DeclaresCapabilities, DeclaresConnection, DeclaresPlatform
 {
     /** @use HasFactory<WhatsappFactory> */
     use Channelable, HasFactory, Reauthorizable;
@@ -109,6 +112,11 @@ class Whatsapp extends Model implements DeclaresCapabilities, DeclaresPlatform
     public function apiHeaders(): array
     {
         return $this->providerService()->apiHeaders();
+    }
+
+    public static function connection(): ChannelConnection
+    {
+        return ChannelConnection::of('whatsapp', ConnectionMethod::Form)->ordered(60);
     }
 
     /**

@@ -4,8 +4,11 @@ namespace App\Models\Channel;
 
 use App\Channels\Capability;
 use App\Channels\CapabilitySet;
+use App\Channels\ChannelConnection;
 use App\Channels\ChannelPlatform;
+use App\Channels\ConnectionMethod;
 use App\Channels\DeclaresCapabilities;
+use App\Channels\DeclaresConnection;
 use App\Channels\DeclaresPlatform;
 use App\Channels\TextFormat;
 use App\Models\Channel\Concerns\Channelable;
@@ -20,7 +23,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class WebWidget extends Model implements DeclaresCapabilities, DeclaresPlatform
+class WebWidget extends Model implements DeclaresCapabilities, DeclaresConnection, DeclaresPlatform
 {
     /** @use HasFactory<WebWidgetFactory> */
     use Channelable, HasFactory;
@@ -269,6 +272,11 @@ class WebWidget extends Model implements DeclaresCapabilities, DeclaresPlatform
     public function withinRecallWindow(DateTimeInterface $sentAt): bool
     {
         return CarbonImmutable::instance($sentAt)->add($this->recallWindow())->isFuture();
+    }
+
+    public static function connection(): ChannelConnection
+    {
+        return ChannelConnection::of('website', ConnectionMethod::Form)->ordered(20);
     }
 
     /** Widget web: danh tính là token khách, hồ sơ đến từ form trước chat. */

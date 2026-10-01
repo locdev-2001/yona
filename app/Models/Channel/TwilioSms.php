@@ -4,8 +4,11 @@ namespace App\Models\Channel;
 
 use App\Channels\Capability;
 use App\Channels\CapabilitySet;
+use App\Channels\ChannelConnection;
 use App\Channels\ChannelPlatform;
+use App\Channels\ConnectionMethod;
 use App\Channels\DeclaresCapabilities;
+use App\Channels\DeclaresConnection;
 use App\Channels\DeclaresPlatform;
 use App\Channels\TextFormat;
 use App\Models\Channel\Concerns\Channelable;
@@ -15,7 +18,7 @@ use Illuminate\Database\Eloquent\Model;
 
 // Một model phục vụ hai
 // medium (SMS và WhatsApp qua Twilio). Gem twilio-ruby thay bằng App\Services\Twilio\TwilioClient.
-class TwilioSms extends Model implements DeclaresCapabilities, DeclaresPlatform
+class TwilioSms extends Model implements DeclaresCapabilities, DeclaresConnection, DeclaresPlatform
 {
     /** @use HasFactory<TwilioSmsFactory> */
     use Channelable, HasFactory;
@@ -100,6 +103,12 @@ class TwilioSms extends Model implements DeclaresCapabilities, DeclaresPlatform
         return filled($this->messaging_service_sid)
             ? ['MessagingServiceSid' => $this->messaging_service_sid]
             : ['From' => $this->phone_number];
+    }
+
+    /** Twilio chỉ còn là nhà cung cấp WhatsApp ở màn "Thêm kênh"; SMS đã ẩn (#160), kênh cũ vẫn chạy. */
+    public static function connection(): ChannelConnection
+    {
+        return ChannelConnection::of('whatsapp', ConnectionMethod::Form)->ordered(60);
     }
 
     /**

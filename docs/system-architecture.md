@@ -44,6 +44,28 @@ PostgreSQL (`pg_trgm`) · Redis (cache, queue, session) · Laravel Reverb
   thành viên nhóm, sticker): `app/Services/Channels/ChannelActionRegistry.php`.
 - **Thêm kênh = thêm driver** (model + service + một dòng đăng ký), không sửa
   lõi.
+- **Giao kèo kết nối** (`app/Channels/DeclaresConnection.php`): mỗi driver khai
+  tĩnh `connection()` trả `ChannelConnection` — đúng MỘT `ConnectionMethod`
+  (`qr`, `oauth_redirect`, `oauth_popup`, `token`, `form`), có khả dụng không
+  (thiếu client id/secret của app nền tảng → đóng), thứ tự, mẫu điền sẵn
+  (`preset`), link hướng dẫn và các lối vào con (`options`, vd nhà cung cấp
+  email). `ChannelConnectionCatalog` gom từ morph map, nhiều driver chung một lối
+  vào (WhatsApp Cloud + Twilio) thì mở khi một driver mở. Màn "Thêm kênh" (prop
+  `channels`) và `GET /api/v1/accounts/{id}/channel_connections` đọc cùng nguồn;
+  bước 2 của lối vào đã đóng chuyển về màn chọn. Contract test
+  `tests/Contracts/Channels/ChannelConnectionDeclarationTest.php` bắt driver quên
+  khai hoặc khai lệch năng lực phiên (`session_qr`/`session_oauth`/`session_token`).
+  SMS (Bandwidth, Twilio SMS) đóng có chủ đích; dữ liệu và hộp thư cũ giữ nguyên.
+- **Kiểm thông tin đăng nhập khi lưu**: `InboxesController` dựng kênh (chưa lưu)
+  rồi gọi `ChannelCredentialsCheck` — bảng tra driver → verifier
+  (`VerifiesChannelCredentials`): Email thử IMAP/SMTP qua `MailServerProbe`
+  (test thay bằng `tests/Support/FakeMailServerProbe.php`), Telegram gọi `getMe`,
+  LINE gọi `v2/oauth/verify` (lấy luôn ID kênh). Sai thì 422 gắn ô `channel.*`.
+- **Kênh mất kết nối**: kênh dùng `Reauthorizable` (đếm lỗi trong Redis, quá
+  ngưỡng hoặc lỗi xác thực thì `promptReauthorization()`); lõi đọc qua
+  `Inbox::reauthorizationRequired()` (cần năng lực `session_reauth`). Email ghi
+  thêm lần hỏng gần nhất để API trả `connection_error`; job quét thư thành công
+  hoặc lưu lại cấu hình đúng thì `reauthorized()` gỡ cờ.
 - Zalo cá nhân là một driver như mọi kênh khác (`Channel::Zalo`), nói chuyện với
   bridge Node qua `app/Services/Zalo/ZaloBridgeClient.php`.
 - Ghi âm ở ô soạn: bản ghi là đính kèm âm thanh mang `meta.is_voice_message`

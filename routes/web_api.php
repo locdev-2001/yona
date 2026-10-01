@@ -156,6 +156,8 @@ Route::middleware(['auth.api_token', 'auth', 'account.scope'])
         Route::delete('/teams/{teamId}', [TeamsController::class, 'destroy'])->whereNumber('teamId');
 
         Route::get('/inboxes', [InboxesController::class, 'index']);
+        // Lối vào "Thêm kênh" đang mở và cách kết nối của từng lối (DeclaresConnection).
+        Route::get('/channel_connections', [InboxesController::class, 'channelConnections']);
         Route::post('/inboxes', [InboxesController::class, 'store']);
         Route::get('/inboxes/{inboxId}', [InboxesController::class, 'show'])->whereNumber('inboxId');
         Route::match(['put', 'patch'], '/inboxes/{inboxId}', [InboxesController::class, 'update'])->whereNumber('inboxId');

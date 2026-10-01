@@ -5,8 +5,11 @@ namespace App\Models\Channel;
 use App\Builders\ContactInboxWithContactBuilder;
 use App\Channels\Capability;
 use App\Channels\CapabilitySet;
+use App\Channels\ChannelConnection;
 use App\Channels\ChannelPlatform;
+use App\Channels\ConnectionMethod;
 use App\Channels\DeclaresCapabilities;
+use App\Channels\DeclaresConnection;
 use App\Channels\DeclaresPlatform;
 use App\Channels\TextFormat;
 use App\Models\Channel\Concerns\Channelable;
@@ -17,7 +20,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 // Kênh Instagram đăng nhập trực tiếp.
-class Instagram extends Model implements DeclaresCapabilities, DeclaresPlatform
+class Instagram extends Model implements DeclaresCapabilities, DeclaresConnection, DeclaresPlatform
 {
     /** @use HasFactory<InstagramFactory> */
     use Channelable, HasFactory, Reauthorizable;
@@ -72,6 +75,12 @@ class Instagram extends Model implements DeclaresCapabilities, DeclaresPlatform
             contactAttributes: ['name' => $name],
             sourceId: $sourceId,
         ))->perform();
+    }
+
+    /** Luồng ủy quyền Instagram chưa có ở backend nên chưa mở cho khách. */
+    public static function connection(): ChannelConnection
+    {
+        return ChannelConnection::of('instagram', ConnectionMethod::OauthRedirect)->ordered(80)->available(false);
     }
 
     /** Instagram DM: có xử lý khách thu hồi tin (message_unsend) nên khai event_recall. */

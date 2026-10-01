@@ -9,6 +9,8 @@ interface ChannelFormFieldProps {
     helpText?: string;
     errorMessage?: string;
     hasError?: boolean;
+    type?: 'text' | 'password' | 'email' | 'number';
+    autoComplete?: string;
     onChange: (value: string) => void;
     onBlur?: () => void;
 }
@@ -20,6 +22,8 @@ export default function ChannelFormField({
     helpText,
     errorMessage,
     hasError = false,
+    type = 'text',
+    autoComplete,
     onChange,
     onBlur,
 }: ChannelFormFieldProps) {
@@ -28,8 +32,9 @@ export default function ChannelFormField({
             <label className={hasError ? 'error' : ''}>
                 {label}
                 <input
-                    type="text"
+                    type={type}
                     value={value}
+                    autoComplete={autoComplete}
                     placeholder={placeholder}
                     onChange={event => onChange(event.target.value)}
                     onBlur={onBlur}

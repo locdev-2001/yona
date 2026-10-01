@@ -3,7 +3,11 @@
 namespace App\Services\Channels;
 
 use App\Models\Channel\Email;
+use App\Models\Channel\Line;
+use App\Models\Channel\Telegram;
 use App\Services\Email\EmailConnectionVerifier;
+use App\Services\Line\LineCredentialsVerifier;
+use App\Services\Telegram\TelegramTokenVerifier;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Validation\ValidationException;
 
@@ -16,6 +20,8 @@ class ChannelCredentialsCheck
     /** @var array<class-string<Model>, class-string<VerifiesChannelCredentials>> */
     private const VERIFIERS = [
         Email::class => EmailConnectionVerifier::class,
+        Telegram::class => TelegramTokenVerifier::class,
+        Line::class => LineCredentialsVerifier::class,
     ];
 
     /** @throws ValidationException */

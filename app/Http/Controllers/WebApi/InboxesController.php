@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\WebApi;
 
+use App\Channels\ChannelConnectionCatalog;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\AgentBotResource;
 use App\Http\Resources\AgentResource;
@@ -99,6 +100,13 @@ class InboxesController extends Controller
         return response()->json([
             'payload' => InboxResource::collectionFor($inboxes, $this->isAdministrator($request)),
         ]);
+    }
+
+    public function channelConnections(Request $request, Account $account): JsonResponse
+    {
+        $this->authorizeAdministrator($request);
+
+        return response()->json(['payload' => ChannelConnectionCatalog::availableFor($account)]);
     }
 
     public function show(Request $request, Account $account, int $inboxId): JsonResponse

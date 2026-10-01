@@ -4,19 +4,23 @@ namespace App\Models\Channel;
 
 use App\Channels\Capability;
 use App\Channels\CapabilitySet;
+use App\Channels\ChannelConnection;
 use App\Channels\ChannelPlatform;
+use App\Channels\ConnectionMethod;
 use App\Channels\DeclaresCapabilities;
+use App\Channels\DeclaresConnection;
 use App\Channels\DeclaresPlatform;
 use App\Channels\TextFormat;
 use App\Models\Channel\Concerns\Channelable;
 use App\Models\Concerns\Reauthorizable;
+use App\Services\Email\EmailProviderPresets;
 use App\Services\Email\MailServerException;
 use Database\Factories\Channel\EmailFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
 
-class Email extends Model implements DeclaresCapabilities, DeclaresPlatform
+class Email extends Model implements DeclaresCapabilities, DeclaresConnection, DeclaresPlatform
 {
     /** @use HasFactory<EmailFactory> */
     use Channelable, HasFactory, Reauthorizable {
@@ -163,6 +167,12 @@ class Email extends Model implements DeclaresCapabilities, DeclaresPlatform
         return 'EMAIL_CONNECTION_FAILURE::'.$this->getKey();
     }
 
+    // Form Gmail/Outlook không hỏi tên: hộp thư mang luôn địa chỉ thư (ChannelSetupService).
+    public static function namesInboxItself(): bool
+    {
+        return true;
+    }
+
     public function isMicrosoft(): bool
     {
         return $this->provider === 'microsoft';
@@ -176,6 +186,25 @@ class Email extends Model implements DeclaresCapabilities, DeclaresPlatform
     public function isLegacyGoogle(): bool
     {
         return $this->imap_enabled && $this->imap_address === 'imap.gmail.com';
+    }
+
+    /**
+     * Một lối vào "Email", bên trong chọn nhà cung cấp: Gmail/Outlook tự điền máy chủ thư,
+     * khách chỉ nhập địa chỉ + App Password; "Khác" điền đủ thông số.
+     */
+    public static function connection(): ChannelConnection
+    {
+        return ChannelConnection::of('email', ConnectionMethod::Form)
+            ->ordered(30)
+            ->withOptions(
+                ChannelConnection::of('gmail', ConnectionMethod::Form)
+                    ->withPreset(EmailProviderPresets::for('gmail'))
+                    ->withGuideUrl(EmailProviderPresets::GMAIL_APP_PASSWORD_URL),
+                ChannelConnection::of('outlook', ConnectionMethod::Form)
+                    ->withPreset(EmailProviderPresets::for('outlook'))
+                    ->withGuideUrl(EmailProviderPresets::MICROSOFT_APP_PASSWORD_URL),
+                ChannelConnection::of('other', ConnectionMethod::Form),
+            );
     }
 
     /** Thư đến qua IMAP/mailbox: thân HTML thành markdown, tệp đính kèm giữ nguyên tên. */
