@@ -39,6 +39,7 @@ import { ConfirmDialog } from '@admin/views/apps/resources/dialogs/confirm-dialo
 import { initialsFromName } from '@admin/views/apps/resources/list/resource-table-columns';
 import { formatCompactNumber, RecordViewLeftPanel } from '@admin/views/apps/resources/view/record-view-left-panel';
 import { SectionCard, TableCard } from '@admin/views/apps/resources/view/section-card';
+import AccountStickerLibrary from '@admin/views/stickers/AccountStickerLibrary';
 
 import { t } from '../../i18n';
 import { STATUS_BADGE_STYLES } from '../components/FieldValue';
@@ -757,6 +758,7 @@ export default function AccountOverview(props: AccountOverviewProps) {
                                     {label('STICKERS.SUMMARY', { packs: formatNumber(stickers.packs), stickers: formatNumber(stickers.stickers) })}
                                 </p>
                             </SectionCard>
+                            <AccountStickerLibrary accountId={account.id} className="mt-6" />
                         </TabsContent>
                     </Tabs>
                 </div>

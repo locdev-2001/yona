@@ -36,7 +36,7 @@ export default function InstanceStatus({ metrics }: { metrics: Record<string, st
 
             <Card className="max-w-3xl gap-0 py-0">
                 <CardHeader className="flex items-center gap-2 border-b px-6 py-4!">
-                    <div className="bg-primary/10 text-primary flex size-8 shrink-0 items-center justify-center rounded-sm">
+                    <div className="bg-(--tone)/15 text-(--tone) flex size-8 shrink-0 items-center justify-center rounded-sm">
                         <ActivityIcon className="size-4" />
                     </div>
                     <CardTitle className="text-base">{label('instance_status_title')}</CardTitle>

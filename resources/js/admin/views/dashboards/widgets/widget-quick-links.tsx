@@ -28,7 +28,7 @@ const QuickLinks = ({ links }: { links: QuickLinkView[] }) => {
             className='hover:bg-muted focus-visible:ring-ring/50 flex items-center gap-2.5 rounded-md p-2 outline-none focus-visible:ring-3'
           >
             <Avatar className='size-9 rounded-sm after:rounded-[inherit] after:border-0'>
-              <AvatarFallback className='bg-primary/10 text-primary shrink-0 rounded-sm'>{link.icon}</AvatarFallback>
+              <AvatarFallback className='bg-(--tone)/15 text-(--tone) shrink-0 rounded-sm'>{link.icon}</AvatarFallback>
             </Avatar>
             <span className='flex min-w-0 flex-1 flex-col gap-0.5'>
               <span className='truncate text-base font-medium'>{link.title}</span>

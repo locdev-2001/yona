@@ -3,7 +3,6 @@
 @import '@fontsource-variable/geist-mono';
 @import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
-@import './legacy-console.css';
 
 /* Chỉ quét đúng file mà entry console nạp; `npm run check:css` đối chiếu danh sách này với module graph thật. */
 @source '../../js/admin';
@@ -93,7 +92,7 @@
   --chart-3: oklch(0.398 0.07 227.392);
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
-  --radius: 0.625rem;
+  --radius: 0.5rem;
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
   --sidebar-primary: oklch(0.205 0 0);
@@ -105,37 +104,101 @@
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --background: oklch(0.13 0.008 270);
+  --foreground: oklch(0.97 0.003 270);
+  --card: oklch(0.185 0.012 270);
+  --card-foreground: oklch(0.97 0.003 270);
+  --popover: oklch(0.21 0.014 270);
+  --popover-foreground: oklch(0.97 0.003 270);
+  --primary: oklch(0.63 0.2 268);
+  --primary-foreground: oklch(0.99 0 0);
+  --secondary: oklch(0.25 0.016 270);
+  --secondary-foreground: oklch(0.97 0.003 270);
+  --muted: oklch(0.25 0.016 270);
+  --muted-foreground: oklch(0.68 0.015 270);
+  --accent: oklch(0.26 0.03 270);
+  --accent-foreground: oklch(0.97 0.003 270);
+  --destructive: oklch(0.68 0.2 22);
+  --border: oklch(1 0 0 / 6%);
+  --input: oklch(1 0 0 / 9%);
+  --ring: oklch(0.63 0.2 268 / 60%);
+  --chart-1: oklch(0.63 0.2 268);
+  --chart-2: oklch(0.62 0.22 300);
+  --chart-3: oklch(0.76 0.15 175);
+  --chart-4: oklch(0.8 0.15 75);
+  --chart-5: oklch(0.68 0.21 15);
+  --sidebar: oklch(0.13 0.008 270);
+  --sidebar-foreground: oklch(0.9 0.006 270);
+  --sidebar-primary: oklch(0.63 0.2 268);
+  --sidebar-primary-foreground: oklch(0.99 0 0);
+  --sidebar-accent: oklch(0.22 0.02 270);
+  --sidebar-accent-foreground: oklch(0.99 0 0);
+  --sidebar-border: oklch(1 0 0 / 0%);
+  --sidebar-ring: oklch(0.63 0.2 268 / 60%);
+}
+
+:root {
+  --tone: var(--chart-1);
+  --glass: oklch(1 0 0 / 4.5%);
+  --glass-strong: oklch(0.22 0.015 270 / 72%);
+  --glass-highlight: inset 0 1px 0 oklch(1 0 0 / 7%);
+}
+
+/* Ô icon/avatar trong danh sách, lưới, bảng lần lượt đổi màu theo bảng màu chart. */
+:is(ul, ol, tbody, .grid, [data-slot='card-content']) > :nth-child(5n + 1) {
+  --tone: var(--chart-1);
+}
+:is(ul, ol, tbody, .grid, [data-slot='card-content']) > :nth-child(5n + 2) {
+  --tone: var(--chart-2);
+}
+:is(ul, ol, tbody, .grid, [data-slot='card-content']) > :nth-child(5n + 3) {
+  --tone: var(--chart-3);
+}
+:is(ul, ol, tbody, .grid, [data-slot='card-content']) > :nth-child(5n + 4) {
+  --tone: var(--chart-4);
+}
+:is(ul, ol, tbody, .grid, [data-slot='card-content']) > :nth-child(5n + 5) {
+  --tone: var(--chart-5);
+}
+
+.dark body {
+  background-color: var(--background);
+  background-image:
+    radial-gradient(42rem 28rem at 85% -5%, oklch(0.55 0.2 268 / 30%), transparent 70%),
+    radial-gradient(36rem 26rem at 10% 30%, oklch(0.5 0.22 300 / 20%), transparent 70%),
+    radial-gradient(40rem 30rem at 60% 105%, oklch(0.6 0.13 180 / 16%), transparent 70%);
+  background-attachment: fixed;
+}
+
+/* Kính: nền trong mờ + nhoè phía sau, không viền, chỉ một vệt sáng mảnh ở mép trên. */
+.dark [data-slot='card'] {
+  background-color: var(--glass);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  box-shadow: var(--glass-highlight);
+}
+
+.dark :is([data-slot='popover-content'], [data-slot='dropdown-menu-content'], [data-slot='select-content'], [data-slot='dialog-content'], [data-slot='sheet-content'], [data-slot='command-dialog'] [data-slot='dialog-content']) {
+  background-color: var(--glass-strong);
+  backdrop-filter: blur(28px) saturate(170%);
+  -webkit-backdrop-filter: blur(28px) saturate(170%);
+  box-shadow: var(--glass-highlight), 0 24px 60px -20px oklch(0 0 0 / 60%);
+}
+
+.dark :is([data-slot='sidebar-inner'], [data-slot='sidebar-container']) {
+  background-color: oklch(0.13 0.008 270 / 55%);
+  backdrop-filter: blur(24px) saturate(150%);
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
+}
+
+.dark [data-slot='sidebar-inset'] {
+  background-color: transparent;
+}
+
+.dark header {
+  background-color: oklch(0.13 0.008 270 / 45%);
+  backdrop-filter: blur(20px) saturate(150%);
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
 }
 
 .input-default {

@@ -155,7 +155,7 @@ function IdentityCell({ row, renderCell }: { row: ResourceRow; renderCell: Resou
     <div className='flex min-w-44 items-center gap-2'>
       <Avatar className='size-9'>
         {avatar ? <AvatarImage src={String(avatar)} alt={name} /> : null}
-        <AvatarFallback className='text-xs'>{initialsFromName(name)}</AvatarFallback>
+        <AvatarFallback className='bg-(--tone)/15 text-(--tone) text-xs'>{initialsFromName(name)}</AvatarFallback>
       </Avatar>
       <div className='flex min-w-0 flex-col'>
         {row.url ? (

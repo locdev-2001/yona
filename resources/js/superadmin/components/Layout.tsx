@@ -48,7 +48,7 @@ function ConsoleShell({ children }: { children: ReactNode }) {
         <>
             <div className="flex h-full w-full min-w-0">
                 <Sidebar />
-                <SidebarInset className="flex flex-1 flex-col">
+                <SidebarInset className="flex min-w-0 flex-1 flex-col">
                     <Header onOpenSearch={() => setPaletteOpen(true)} />
                     <main className="mx-auto size-full max-w-360 flex-1 px-4 py-6 sm:px-6">{children}</main>
                     <Toaster />

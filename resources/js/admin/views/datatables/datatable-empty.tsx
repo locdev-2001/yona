@@ -12,7 +12,7 @@ const DataTableEmpty = ({ icon, title, description }: DataTableEmptyProps) => {
   return (
     <div className='flex flex-col items-center gap-1 py-6'>
       {icon ? (
-        <div className='bg-primary/10 text-primary mb-2 flex size-8 shrink-0 items-center justify-center rounded-sm'>
+        <div className='bg-(--tone)/15 text-(--tone) mb-2 flex size-8 shrink-0 items-center justify-center rounded-sm'>
           {icon}
         </div>
       ) : null}

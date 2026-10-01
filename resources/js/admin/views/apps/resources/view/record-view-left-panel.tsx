@@ -72,7 +72,7 @@ export function RecordViewLeftPanel({
         <div className='flex flex-col items-center text-center'>
           <Avatar className='size-24'>
             {avatarUrl ? <AvatarImage src={avatarUrl} alt={title} /> : null}
-            <AvatarFallback className='text-2xl'>{initialsFromName(title)}</AvatarFallback>
+            <AvatarFallback className='bg-(--tone)/15 text-(--tone) text-2xl'>{initialsFromName(title)}</AvatarFallback>
           </Avatar>
           <h1 className='mt-4 line-clamp-4 text-xl font-semibold break-words'>{title}</h1>
           {badge ? (

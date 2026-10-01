@@ -21,9 +21,9 @@ export type ChartSeries = { key: string; label: string; values: number[] }
 
 // Màu chuỗi theo sắc độ của màu chính, như các biểu đồ khác trong console.
 const SERIES_COLORS = [
-  'var(--primary)',
-  'color-mix(in oklab, var(--primary) 45%, transparent)',
-  'color-mix(in oklab, var(--primary) 20%, transparent)'
+  'var(--chart-1)',
+  'var(--chart-2)',
+  'var(--chart-3)'
 ]
 
 type Props = {
@@ -152,7 +152,7 @@ export const MetricBoxes = ({ metrics, className }: { metrics: MetricBox[]; clas
         <Card key={metric.key} className='ring-foreground/10 py-2 shadow-none ring-1'>
           <CardContent className='flex items-center gap-3 px-4'>
             <Avatar className='rounded-sm after:border-0'>
-              <AvatarFallback className='bg-primary/10 text-primary shrink-0 rounded-sm'>{metric.icon}</AvatarFallback>
+              <AvatarFallback className='bg-(--tone)/15 text-(--tone) shrink-0 rounded-sm'>{metric.icon}</AvatarFallback>
             </Avatar>
             <div className='flex min-w-0 flex-col gap-0.5'>
               <span className='text-muted-foreground truncate text-sm font-medium'>{metric.title}</span>

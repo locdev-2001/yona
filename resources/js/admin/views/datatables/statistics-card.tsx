@@ -17,7 +17,7 @@ const StatisticsCard = ({ icon, value, title, description, className }: Statisti
   return (
     <Card className={className}>
       <CardHeader className='flex items-center gap-2'>
-        <div className='bg-primary/10 text-primary flex size-8 shrink-0 items-center justify-center rounded-sm'>
+        <div className='bg-(--tone)/15 text-(--tone) flex size-8 shrink-0 items-center justify-center rounded-sm'>
           {icon}
         </div>
         <span className='text-2xl tabular-nums'>{value}</span>

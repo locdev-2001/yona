@@ -254,7 +254,7 @@ const StickerLibrary = ({ api, packTransfer, className }: StickerLibraryProps) =
 
   const emptyLibrary = (
     <div className='flex flex-1 flex-col items-center justify-center gap-4 py-16 text-center'>
-      <div className='bg-primary/10 text-primary flex size-10 items-center justify-center rounded-md'>
+      <div className='bg-(--tone)/15 text-(--tone) flex size-10 items-center justify-center rounded-md'>
         <StickerIcon className='size-5' />
       </div>
       <p className='font-medium'>{t('STICKER_LIBRARY.EMPTY_TITLE')}</p>

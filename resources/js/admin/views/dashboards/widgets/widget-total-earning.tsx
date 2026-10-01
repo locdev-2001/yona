@@ -39,7 +39,7 @@ const TotalEarningList = ({ total, items, className }: Props) => {
           <li key={item.key} className='flex flex-col gap-2 @sm:flex-row @sm:items-center @sm:justify-between @sm:gap-2.5'>
             <div className='flex min-w-0 items-center gap-2.5'>
               <Avatar className='size-9 rounded-sm after:rounded-[inherit] after:border-0'>
-                <AvatarFallback className='bg-primary/10 text-primary shrink-0 rounded-sm'>{item.icon}</AvatarFallback>
+                <AvatarFallback className='bg-(--tone)/15 text-(--tone) shrink-0 rounded-sm'>{item.icon}</AvatarFallback>
               </Avatar>
               <div className='flex min-w-0 flex-col gap-1'>
                 <span className='truncate text-base font-medium'>{item.title}</span>

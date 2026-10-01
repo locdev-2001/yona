@@ -24,7 +24,7 @@ export default function SuperAdminSettings({ sections }: { sections: { key: stri
                             return (
                                 <li key={section.key} className="flex items-center justify-between gap-4 px-6 py-4">
                                     <div className="flex min-w-0 flex-1 items-center gap-4">
-                                        <div className="bg-primary/10 text-primary flex size-8 shrink-0 items-center justify-center rounded-sm">
+                                        <div className="bg-(--tone)/15 text-(--tone) flex size-8 shrink-0 items-center justify-center rounded-sm">
                                             <SlidersHorizontalIcon className="size-4" />
                                         </div>
                                         <Link href={section.url} className="truncate font-medium hover:underline">
