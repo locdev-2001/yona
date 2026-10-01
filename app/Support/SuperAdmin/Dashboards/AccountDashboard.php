@@ -3,6 +3,7 @@
 namespace App\Support\SuperAdmin\Dashboards;
 
 use App\Models\Account;
+use App\Services\Admin\Operations\AccountActivity;
 use App\Support\SuperAdmin\Dashboard;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -31,12 +32,15 @@ class AccountDashboard extends Dashboard
             // Hai trường chỉ có trên biểu mẫu (bản gốc lấy từ params, không phải cột).
             'suspension_category' => 'select',
             'suspension_reason' => 'string',
+            'inboxes' => 'count_field',
+            AccountActivity::RECENT_MESSAGES_COUNT => 'count_field',
+            AccountActivity::LAST_ACTIVITY_AT => 'date_time',
         ];
     }
 
     public function collectionAttributes(): array
     {
-        return ['id', 'name', 'locale', 'users', 'conversations', 'status'];
+        return ['id', 'name', 'locale', 'users', 'conversations', 'status', 'inboxes', AccountActivity::RECENT_MESSAGES_COUNT, AccountActivity::LAST_ACTIVITY_AT];
     }
 
     public function showPageAttributes(): array
@@ -79,7 +83,14 @@ class AccountDashboard extends Dashboard
             'suspended' => fn (Builder $query) => $query->where('status', Account::STATUS_SUSPENDED),
             'recent' => fn (Builder $query) => $query->where('created_at', '>', now()->subDays(30)),
             'marked_for_deletion' => fn (Builder $query) => $query->whereRaw("custom_attributes->>'marked_for_deletion_at' IS NOT NULL"),
+            'churn_risk' => fn (Builder $query) => AccountActivity::whereChurnRisk($query),
         ];
+    }
+
+    // Cột đếm và hoạt động đi chung câu truy vấn trang, không đếm lại từng dòng.
+    public function baseQuery(): Builder
+    {
+        return AccountActivity::withActivityColumns(parent::baseQuery()->withCount(['accountUsers', 'conversations']));
     }
 
     public function selectOptions(string $attribute): array
@@ -100,8 +111,10 @@ class AccountDashboard extends Dashboard
     public function attributeValue(Model $record, string $attribute): mixed
     {
         return match ($attribute) {
-            'users' => $record->accountUsers()->count(),
-            'conversations' => $record->conversations()->count(),
+            'users' => $record->account_users_count ?? $record->accountUsers()->count(),
+            'conversations' => $record->conversations_count ?? $record->conversations()->count(),
+            'inboxes' => (int) $record->{AccountActivity::INBOXES_COUNT},
+            AccountActivity::RECENT_MESSAGES_COUNT => (int) $record->{AccountActivity::RECENT_MESSAGES_COUNT},
             'status' => $record->status === Account::STATUS_SUSPENDED ? 'suspended' : 'active',
             'suspension_history' => $record->internal_attributes['suspensions'] ?? [],
             'account_users' => $record->accountUsers()->with(['account', 'user', 'inviter'])->get(),

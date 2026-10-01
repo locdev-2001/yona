@@ -570,6 +570,9 @@ Route::prefix(SuperAdminArea::PREFIX)->middleware(SuperAdminInertia::class)->gro
             Route::post('/account_users', [SuperAdminAccountUsersController::class, 'store']);
             Route::delete('/account_users/{id}', [SuperAdminAccountUsersController::class, 'destroy'])->whereNumber('id');
 
+            require __DIR__.'/admin/dashboard.php';
+            require __DIR__.'/admin/operations.php';
+
             // Nhật ký đăng nhập hộ — chỉ đọc, không CRUD như các resource khác.
             Route::get('/impersonations', [SuperAdminImpersonationsController::class, 'index']);
             Route::get('/impersonations/{id}', [SuperAdminImpersonationsController::class, 'show'])->whereNumber('id');
