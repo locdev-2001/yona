@@ -1,5 +1,637 @@
 // Sinh bởi `php artisan i18n:generate` từ lang/{locale}/*.php — KHÔNG SỬA TAY.
 const messages: Record<string, unknown> = {
+    "ADMIN_DASHBOARD": {
+        "TITLE": "Overview",
+        "DESCRIPTION": "System-wide numbers. Each widget loads and refreshes on its own.",
+        "RANGE": {
+            "LABEL": "Date range",
+            "PRESETS": {
+                "7D": "7 days",
+                "30D": "30 days",
+                "90D": "90 days"
+            },
+            "COMPARED": "vs previous period"
+        },
+        "ACTIONS": {
+            "CUSTOMIZE": "Customize",
+            "DONE": "Done",
+            "RESET": "Reset to default",
+            "REFRESH": "Refresh {title}",
+            "HIDE": "Hide {title}",
+            "SHOW": "Show",
+            "DRAG": "Drag to move {title}",
+            "SIZE": "Width of {title}",
+            "RETRY": "Retry",
+            "VIEW_ALL": "View all"
+        },
+        "SIZES": {
+            "SM": "Narrow",
+            "MD": "Medium",
+            "LG": "Wide",
+            "FULL": "Full row"
+        },
+        "EDIT": {
+            "HINT": "Drag a handle to reorder (keyboard: Tab to a handle, Space to pick up, arrow keys to move, Space to drop). Changes save automatically.",
+            "HIDDEN_TITLE": "Hidden widgets",
+            "HIDDEN_EMPTY": "No hidden widgets.",
+            "SAVING": "Saving layout…",
+            "SAVED": "Layout saved.",
+            "SAVE_FAILED": "Could not save the layout. Changes only live in this browser.",
+            "ALL_HIDDEN": "All widgets are hidden. Click Customize to show them again.",
+            "PICKED_UP": "Picked up {title}.",
+            "MOVED_OVER": "{title} is at position {position}.",
+            "DROPPED": "Dropped {title} at position {position}.",
+            "CANCELLED": "Cancelled moving {title}."
+        },
+        "STATE": {
+            "ERROR": "Could not load the numbers.",
+            "EMPTY": "No data in this range yet.",
+            "UNAVAILABLE": "Unavailable"
+        },
+        "WIDGETS": {
+            "KPIS": {
+                "TITLE": "Key metrics",
+                "DESCRIPTION": "Totals and change versus the previous period of equal length."
+            },
+            "MESSAGES_TREND": {
+                "TITLE": "Messages by day",
+                "DESCRIPTION": "Incoming and outgoing messages per day."
+            },
+            "CONVERSATIONS_BY_CHANNEL": {
+                "TITLE": "New conversations by channel",
+                "DESCRIPTION": "Conversations created in the range, by channel type."
+            },
+            "CHANNEL_HEALTH": {
+                "TITLE": "Channel health",
+                "DESCRIPTION": "Inboxes that lost their session or need reauthorization."
+            },
+            "OPERATION_LINKS": {
+                "TITLE": "Operations shortcuts",
+                "DESCRIPTION": "Jump to the system monitoring dashboards."
+            },
+            "ACTIVATION_FUNNEL": {
+                "TITLE": "Activation funnel",
+                "DESCRIPTION": "How far accounts that signed up in the range got."
+            },
+            "COHORT_RETENTION": {
+                "TITLE": "Retention by signup week",
+                "DESCRIPTION": "Share of accounts still replying to customers in the weeks after signup (last 8 weeks)."
+            },
+            "SIGNUPS_TREND": {
+                "TITLE": "Signups by day",
+                "DESCRIPTION": "Accounts created per day."
+            },
+            "TOP_ACCOUNTS": {
+                "TITLE": "Most active accounts",
+                "DESCRIPTION": "Top 10 accounts by messages in the range."
+            },
+            "RECENT_SIGNUPS": {
+                "TITLE": "Latest accounts",
+                "DESCRIPTION": "The 10 most recent signups."
+            },
+            "QUEUE_HEALTH": {
+                "TITLE": "Queues",
+                "DESCRIPTION": "Pending jobs, failed jobs and worker processes."
+            },
+            "STICKERS": {
+                "TITLE": "Sticker library",
+                "DESCRIPTION": "Shared library and per-account libraries."
+            },
+            "SYSTEM": {
+                "TITLE": "System",
+                "DESCRIPTION": "Versions and database size."
+            }
+        },
+        "METRICS": {
+            "ACCOUNTS_TOTAL": "Total accounts",
+            "ACCOUNTS_NEW": "New accounts",
+            "ACCOUNTS_ACTIVE": "Active accounts",
+            "USERS_TOTAL": "Agents",
+            "CONVERSATIONS_NEW": "New conversations",
+            "MESSAGES_INCOMING": "Incoming messages",
+            "MESSAGES_OUTGOING": "Outgoing messages",
+            "INBOXES_TOTAL": "Inboxes"
+        },
+        "FUNNEL_STEPS": {
+            "SIGNED_UP": "Signed up",
+            "CREATED_INBOX": "Created inbox",
+            "CONNECTED_CHANNEL": "Connected external channel",
+            "RECEIVED_MESSAGE": "Received first message",
+            "REPLIED": "Replied to first message"
+        },
+        "FUNNEL": {
+            "FROM_START": "{rate}% of signups",
+            "FROM_PREVIOUS": "{rate}% of previous step"
+        },
+        "SERIES": {
+            "INCOMING": "Incoming",
+            "OUTGOING": "Outgoing",
+            "SIGNUPS": "Signups"
+        },
+        "CHART": {
+            "SUMMARY": "{label}: total {total}, peak {max} on {date}.",
+            "TABLE": "Data table",
+            "DATE": "Date"
+        },
+        "COHORT": {
+            "WEEK": "Signup week",
+            "SIZE": "Accounts",
+            "OFFSET": "Week {n}",
+            "CELL": "Week of {week}, week {offset}: {active} of {size} accounts ({rate}%)"
+        },
+        "CHANNEL_HEALTH": {
+            "HEALTHY": "Healthy",
+            "FAILING": "Failing",
+            "TOTAL": "{count} inboxes",
+            "ALL_HEALTHY": "All inboxes are working normally."
+        },
+        "LISTS": {
+            "MESSAGES": "{count} messages",
+            "INBOXES": "{count} inboxes",
+            "NO_OWNER": "No administrator yet"
+        },
+        "QUEUE": {
+            "STATUS": {
+                "RUNNING": "Running",
+                "PAUSED": "Paused",
+                "INACTIVE": "Inactive",
+                "UNAVAILABLE": "Unavailable"
+            },
+            "PENDING": "Pending",
+            "RECENT_FAILED": "Recently failed",
+            "PROCESSES": "Processes",
+            "OPEN": "Open Horizon"
+        },
+        "STICKERS": {
+            "SHARED_PACKS": "Shared packs",
+            "SHARED_PUBLISHED": "Published",
+            "SHARED_STICKERS": "Shared stickers",
+            "PRIVATE_ACCOUNTS": "Accounts with own library",
+            "PRIVATE_STICKERS": "Private stickers",
+            "OPEN": "Manage shared library"
+        },
+        "SYSTEM": {
+            "VERSION": "Version",
+            "PHP": "PHP",
+            "LARAVEL": "Laravel",
+            "ENVIRONMENT": "Environment",
+            "DATABASE_SIZE": "Database size",
+            "TABLES": "Tables"
+        },
+        "LINKS": {
+            "HORIZON": {
+                "TITLE": "Horizon",
+                "DESCRIPTION": "Queues and jobs"
+            },
+            "PULSE": {
+                "TITLE": "Pulse",
+                "DESCRIPTION": "Application performance"
+            },
+            "LOGS": {
+                "TITLE": "Logs",
+                "DESCRIPTION": "Application logs"
+            },
+            "TASKS": {
+                "TITLE": "dash.yona.vn",
+                "DESCRIPTION": "Team task board"
+            }
+        }
+    },
+    "ADMIN_LAYOUT": {
+        "labels": {
+            "console_name": "Admin console",
+            "close": "Close",
+            "cancel": "Cancel",
+            "confirm": "Confirm",
+            "save": "Save",
+            "saving": "Saving…",
+            "edit": "Edit",
+            "delete": "Delete",
+            "view": "View",
+            "actions": "Actions",
+            "pagination": "Pagination",
+            "page_of": "Page {current} of {last}",
+            "previous_page": "Previous page",
+            "next_page": "Next page",
+            "open_menu": "Open menu",
+            "navigation": "Navigation",
+            "collapse_sidebar": "Collapse sidebar",
+            "expand_sidebar": "Expand sidebar",
+            "opens_new_tab": "opens in a new tab",
+            "search": "Search",
+            "search_shortcut_hint": "Search or jump to…",
+            "command_title": "Command palette",
+            "command_placeholder": "Type a page, account, user, inbox, contact…",
+            "command_navigation": "Pages",
+            "command_results": "Search results",
+            "command_loading": "Searching…",
+            "command_error": "Search is unavailable right now. Try again later.",
+            "command_empty": "No results for “{query}”.",
+            "command_min_chars": "Type at least 2 characters to search data.",
+            "command_footer_navigate": "navigate",
+            "command_footer_select": "open",
+            "command_footer_close": "close",
+            "result_account": "Account",
+            "result_user": "User",
+            "result_inbox": "Inbox",
+            "result_contact": "Contact",
+            "user_menu": "Admin account",
+            "back_to_app": "Back to workspace",
+            "logout": "Log out",
+            "flash_notice": "Notice",
+            "flash_error": "Error",
+            "records_total": "{total} records",
+            "search_records": "Search {resource}…",
+            "clear_search": "Clear search",
+            "filter": "Filter",
+            "filter_all": "All",
+            "new_record": "New",
+            "no_records": "No records yet",
+            "no_records_hint": "Try another keyword or filter.",
+            "sort_by": "Sort by {column}",
+            "delete_confirm_title": "Delete this record?",
+            "delete_confirm_description": "This cannot be undone. Related data may be lost.",
+            "edit_title": "Edit {title}",
+            "new_title": "New {resource}",
+            "create": "Create",
+            "account_overview": "360° overview",
+            "details": "Details",
+            "enabled": "Enabled",
+            "disabled": "Disabled",
+            "yes": "Yes",
+            "no": "No",
+            "show_secret": "Show",
+            "hide_secret": "Hide",
+            "copy": "Copy",
+            "copied": "Copied",
+            "empty_value": "—",
+            "no_suspension_history": "No suspension history recorded.",
+            "resend_confirmation": "Resend confirmation email",
+            "reset_cache_title": "Reset frontend cache",
+            "reset_cache_description": "Clears the IndexedDB cache keys from Redis; the next load fetches data from the backend.",
+            "reset_cache": "Reset cache",
+            "impersonate_title": "Impersonate",
+            "impersonate_warning": "Any action taken after impersonating will appear as if performed by {title}.",
+            "impersonate": "Impersonate user",
+            "impersonate_reason": "Reason (min {min} characters, logged for audit)",
+            "impersonate_confirm": "Confirm & impersonate",
+            "account_users_title": "Add member",
+            "account_users_account": "Account",
+            "account_users_user": "User",
+            "account_users_role": "Role",
+            "account_users_submit": "Add to account",
+            "mfa": "Two-factor authentication",
+            "settings_title": "Settings",
+            "settings_description": "Instance-wide configuration.",
+            "app_config_title": "{section} configuration",
+            "app_config_description": "Changes apply to the whole instance right after saving.",
+            "instance_status_title": "Instance status",
+            "instance_status_description": "Version and backing service connectivity.",
+            "login_title": "Admin sign in",
+            "login_description": "Platform administrators only.",
+            "login_email": "Email",
+            "login_email_placeholder": "name@company.com",
+            "login_password": "Password",
+            "login_submit": "Sign in"
+        },
+        "groups": {
+            "overview": "Overview",
+            "customers": "Customers",
+            "channels": "Channels & system",
+            "data": "Data",
+            "content": "Content",
+            "integrations": "Integrations",
+            "config": "Configuration",
+            "security": "Security",
+            "tools": "Tools"
+        },
+        "nav": {
+            "dashboard": "Dashboard",
+            "accounts": "Accounts",
+            "users": "Users",
+            "channel_health": "Channel health",
+            "instance_status": "Instance status",
+            "data": "Data browser",
+            "sticker_packs": "Sticker library",
+            "agent_bots": "Agent bots",
+            "platform_apps": "Platform apps",
+            "access_tokens": "Access tokens",
+            "app_config": "App config",
+            "installation_configs": "Installation configs",
+            "settings": "Settings",
+            "audit_logs": "Audit log",
+            "impersonations": "Impersonations",
+            "horizon": "Queues (Horizon)",
+            "pulse": "Performance (Pulse)",
+            "logs": "Server logs",
+            "dash": "dash.yona.vn"
+        },
+        "filters": {
+            "active": "Active",
+            "suspended": "Suspended",
+            "confirmed": "Confirmed",
+            "unconfirmed": "Unconfirmed",
+            "recent": "Created in last 30 days",
+            "marked_for_deletion": "Marked for deletion",
+            "super_admin": "Super admins",
+            "user": "Owned by users",
+            "agent_bot": "Owned by agent bots",
+            "platform_app": "Owned by platform apps"
+        },
+        "attributes": {
+            "id": "ID",
+            "name": "Name",
+            "display_name": "Display name",
+            "email": "Email",
+            "unconfirmed_email": "Unconfirmed email",
+            "password": "Password",
+            "avatar_url": "Avatar",
+            "locale": "Locale",
+            "status": "Status",
+            "type": "Type",
+            "role": "Role",
+            "description": "Description",
+            "outgoing_url": "Webhook URL",
+            "access_token": "Access token",
+            "token": "Token",
+            "owner": "Owner",
+            "account": "Account",
+            "accounts": "Accounts",
+            "account_users": "Account users",
+            "user": "User",
+            "users": "Users",
+            "inviter": "Inviter",
+            "inboxes": "Inboxes",
+            "conversations": "Conversations",
+            "custom_attributes": "Custom attributes",
+            "value": "Value",
+            "reason": "Reason",
+            "ip_address": "IP address",
+            "provider": "Provider",
+            "uid": "UID",
+            "pubsub_token": "Pubsub token",
+            "confirmation_token": "Confirmation token",
+            "confirmation_sent_at": "Confirmation sent at",
+            "confirmed_at": "Confirmed at",
+            "current_sign_in_at": "Current sign in at",
+            "current_sign_in_ip": "Current sign-in IP",
+            "last_sign_in_at": "Last sign in at",
+            "last_sign_in_ip": "Last sign-in IP",
+            "sign_in_count": "Sign in count",
+            "suspension_category": "Suspension category",
+            "suspension_reason": "Suspension reason",
+            "suspension_history": "Suspension history",
+            "used_at": "Used at",
+            "created_at": "Created at",
+            "updated_at": "Updated at"
+        }
+    },
+    "ADMIN_OPERATIONS": {
+        "NAV": {
+            "CHANNEL_HEALTH": "Channel health",
+            "AUDIT_LOGS": "Audit log",
+            "DATA": "System data"
+        },
+        "COMMON": {
+            "NEVER": "Never",
+            "UNKNOWN": "Unknown",
+            "APPLY": "Filter",
+            "CLEAR": "Clear filters",
+            "CANCEL": "Cancel",
+            "BACK": "Back",
+            "CONTINUE": "Continue",
+            "PREVIOUS": "Previous page",
+            "NEXT": "Next page",
+            "PAGE": "Page {page}",
+            "OPEN_ACCOUNT": "Open account"
+        },
+        "SUSPENSION": {
+            "SUSPENDED": "Account :name suspended.",
+            "UNSUSPENDED": "Account :name reactivated.",
+            "BLOCKED": "This account is suspended. Please contact support."
+        },
+        "SEARCH": {
+            "SUSPENDED": "suspended"
+        },
+        "CHANNEL_HEALTH": {
+            "TITLE": "Channel health",
+            "DESCRIPTION": "Inboxes that lost their session, hit authentication errors or need to sign in again, across the whole system.",
+            "STATS": {
+                "TOTAL": "Total inboxes",
+                "HEALTHY": "Healthy",
+                "FAILING": "With problems",
+                "ERRORS": "Not receiving"
+            },
+            "FILTERS": {
+                "SEARCH": "Search inbox or account…",
+                "ALL_PROBLEMS": "All problems",
+                "ALL_PLATFORMS": "All channels",
+                "ALL_SEVERITIES": "All severities"
+            },
+            "COLUMNS": {
+                "INBOX": "Inbox",
+                "ACCOUNT": "Account",
+                "PROBLEM": "Problem",
+                "SINCE": "Since",
+                "DETAIL": "Detail"
+            },
+            "SEVERITY": {
+                "error": "Down",
+                "warning": "Warning"
+            },
+            "PROBLEMS": {
+                "channel_missing": "Channel record missing",
+                "session_lost": "Zalo session lost",
+                "disconnected": "Zalo logged out",
+                "awaiting_login": "Waiting for QR scan",
+                "bridge_unreachable": "Zalo bridge unreachable",
+                "circuit_open": "Repeated Zalo errors, paused",
+                "reauthorization_required": "Sign-in required",
+                "authorization_errors": "Authentication errors (IMAP/SMTP, token)"
+            },
+            "DETAIL_COUNT": "{count} errors",
+            "EMPTY_TITLE": "All channels are healthy",
+            "EMPTY_DESCRIPTION": "No inbox is having problems.",
+            "NO_MATCH": "No inbox matches these filters."
+        },
+        "ACCOUNT_OVERVIEW": {
+            "BACK": "Accounts",
+            "STATUS": {
+                "active": "Active",
+                "suspended": "Suspended"
+            },
+            "CREATED_AT": "Created {date}",
+            "LAST_ACTIVITY": "Last activity: {date}",
+            "ACTIONS": {
+                "LOCK": "Suspend account",
+                "UNLOCK": "Reactivate",
+                "IMPERSONATE": "Impersonate",
+                "EDIT": "Edit",
+                "RECORD": "View record",
+                "AUDIT": "Audit log",
+                "DATA": "Browse data"
+            },
+            "LOCK": {
+                "TITLE": "Suspend this account?",
+                "DESCRIPTION": "Agents, bots and the API of this account are blocked immediately; channels stop receiving new messages. Data is kept and you can reactivate at any time.",
+                "CATEGORY": "Reason category",
+                "REASON": "Reason",
+                "REASON_HINT": "Up to {max} characters, kept in the suspension history.",
+                "CONFIRM_TITLE": "Suspend \"{name}\" now?",
+                "CONFIRM_DESCRIPTION": "No member can access the account until it is reactivated.",
+                "CONFIRM": "Suspend now"
+            },
+            "UNLOCK": {
+                "TITLE": "Reactivate \"{name}\"?",
+                "DESCRIPTION": "Members can sign in again and channels resume receiving messages.",
+                "CONFIRM": "Reactivate"
+            },
+            "IMPERSONATE": {
+                "TITLE": "Impersonate",
+                "DESCRIPTION": "Anything done after impersonating appears as done by this user. The reason is logged.",
+                "USER": "User",
+                "REASON": "Reason (at least {min} characters)",
+                "SUBMIT": "Impersonate (new tab)",
+                "NO_USERS": "This account has no members to impersonate."
+            },
+            "STATS": {
+                "USERS": "Members",
+                "INBOXES": "Inboxes",
+                "CONVERSATIONS": "Conversations",
+                "CONTACTS": "Contacts",
+                "MESSAGES_7D": "Messages 7 days",
+                "MESSAGES_30D": "Messages 30 days"
+            },
+            "TABS": {
+                "OVERVIEW": "Overview",
+                "USERS": "Members",
+                "INBOXES": "Inboxes",
+                "ACTIVITY": "Activity",
+                "STICKERS": "Stickers"
+            },
+            "SECTIONS": {
+                "USAGE": "Messages, last 30 days",
+                "USAGE_TOTAL": "{count} messages",
+                "ONBOARDING": "Activation progress",
+                "INBOXES": "Inboxes and channel health",
+                "USERS": "Members",
+                "TIMELINE": "Recent activity",
+                "SUSPENSIONS": "Suspension history",
+                "IMPERSONATIONS": "Recent impersonations",
+                "STICKERS": "Account sticker library"
+            },
+            "COLUMNS": {
+                "NAME": "Name",
+                "EMAIL": "Email",
+                "ROLE": "Role",
+                "LAST_SIGN_IN": "Last sign-in",
+                "INBOX": "Inbox",
+                "HEALTH": "Health",
+                "SINCE": "Since",
+                "ADMIN": "Admin",
+                "TARGET": "Impersonated",
+                "REASON": "Reason",
+                "CATEGORY": "Category",
+                "AT": "At"
+            },
+            "HEALTHY": "Healthy",
+            "UNCONFIRMED": "Email not confirmed",
+            "EMPTY": {
+                "USERS": "No members yet.",
+                "INBOXES": "No inbox connected yet.",
+                "TIMELINE": "No activity yet.",
+                "SUSPENSIONS": "Never suspended.",
+                "IMPERSONATIONS": "No impersonation yet."
+            },
+            "STICKERS": {
+                "SUMMARY": "{packs} packs · {stickers} stickers",
+                "MANAGE": "Manage sticker library",
+                "DESCRIPTION": "Full control, same as the account administrator: create packs, upload, edit, reorder, publish, delete."
+            },
+            "ONBOARDING": {
+                "CURRENT_STEP": "Current step: {step}",
+                "FINISHED": "Onboarding finished",
+                "STEPS": {
+                    "account_details": "Fill in account details",
+                    "account_update": "Update account",
+                    "invite_team": "Invite teammates"
+                },
+                "MILESTONES": {
+                    "account_details": "Business details filled in",
+                    "first_inbox": "First inbox connected",
+                    "team_invited": "Teammates invited",
+                    "first_incoming": "First customer message received",
+                    "first_reply": "First reply sent"
+                }
+            },
+            "TIMELINE": {
+                "account_created": "Account \":name\" created",
+                "user_joined": ":name joined as :role",
+                "inbox_created": "Inbox \":name\" added",
+                "suspended": "Suspended: :reason",
+                "impersonated": ":admin impersonated :user",
+                "admin_action": ":admin: :action",
+                "last_message": "Latest message"
+            }
+        },
+        "AUDIT_LOGS": {
+            "TITLE": "Audit log",
+            "DESCRIPTION": "Every write action by admins in the console. Passwords, tokens and verification codes are masked.",
+            "FILTERS": {
+                "ADMIN": "Admin",
+                "ALL_ADMINS": "All admins",
+                "ACTION": "Action contains…",
+                "SUBJECT_TYPE": "Subject",
+                "ALL_SUBJECTS": "All subjects",
+                "SUBJECT_ID": "Subject ID",
+                "FROM": "From",
+                "TO": "To"
+            },
+            "COLUMNS": {
+                "TIME": "Time",
+                "ADMIN": "Admin",
+                "ACTION": "Action",
+                "SUBJECT": "Subject",
+                "STATUS": "Result"
+            },
+            "PAYLOAD": "Submitted data",
+            "NO_PAYLOAD": "No submitted data.",
+            "DELETED_ADMIN": "Deleted admin",
+            "TOTAL": "{total} actions",
+            "EMPTY_TITLE": "No actions yet",
+            "EMPTY_DESCRIPTION": "Write actions in the console will show up here."
+        },
+        "DATA": {
+            "TITLE": "System data",
+            "DESCRIPTION": "Browse every table read-only. Secret columns (passwords, tokens, keys, OTP codes, encrypted fields) and customer message content are always masked.",
+            "SEARCH_TABLES": "Filter tables…",
+            "COLUMNS": {
+                "TABLE": "Table",
+                "ROWS": "Rows",
+                "SIZE": "Size"
+            },
+            "APPROXIMATE": "estimate",
+            "NO_TABLES": "No table found.",
+            "BACK": "All tables",
+            "READ_ONLY": "Read-only",
+            "MASKED_SECRET": "Masked: secret data",
+            "MASKED_PERSONAL": "Masked: customer content (Decree 13)",
+            "FILTERS": "Filter by column",
+            "FILTER_HINT": "Numeric columns match exactly, text columns match partially, type null to find empty cells. Masked columns cannot be filtered.",
+            "SORT": "Sort by {column}",
+            "EMPTY": "No rows.",
+            "ROWS_ON_PAGE": "{count} rows"
+        },
+        "STICKERS": {
+            "PLATFORM_TAB": "Shared library",
+            "ACCOUNT_TAB": "Account library",
+            "ACCOUNT_TITLE": "Sticker library of {name}",
+            "ACCOUNT_DESCRIPTION": "Full control, same as the account administrator: create packs, upload, edit, reorder, publish, delete, move packs to the shared library.",
+            "PICK_ACCOUNT": "Find an account by name or ID…",
+            "NO_ACCOUNTS": "No account found.",
+            "BACK_TO_ACCOUNT": "Back to account"
+        }
+    },
     "AGENT_BOTS": {
         "HEADER": "Bots",
         "LOADING_EDITOR": "Loading editor...",

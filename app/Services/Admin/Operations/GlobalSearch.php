@@ -64,15 +64,15 @@ final class GlobalSearch
             ->limit($limit)
             ->get(['id', 'name', 'account_id', 'channel_type'])
             ->map(fn (Inbox $inbox) => $this->result('inbox', $inbox->id, (string) $inbox->name,
-                trim(($inbox->account?->name ?? '').' · '.class_basename($inbox->channel_type), ' ·'),
+                trim(($inbox->account?->name ?? '').' · '.str_replace('Channel::', '', (string) $inbox->channel_type), ' ·'),
                 SuperAdminArea::url("accounts/{$inbox->account_id}/overview")))
             ->all();
     }
 
     private function contacts(string $query, string $like, ?int $id, int $limit): array
     {
-        // Gõ số điện thoại có dấu cách/chấm vẫn khớp bản ghi lưu dạng liền.
-        $digits = (string) preg_replace('/\D+/', '', $query);
+        // Số gõ kiểu 090 123 4567 vẫn khớp bản ghi lưu +84901234567: bỏ dấu cách và số 0 đầu.
+        $digits = ltrim((string) preg_replace('/\D+/', '', $query), '0');
         $phoneLike = strlen($digits) >= 6 && $digits !== $query ? '%'.$digits.'%' : null;
 
         return $this->matching(Contact::query()->with('account:id,name'), ['name', 'email', 'phone_number'], $like, $id, $phoneLike)

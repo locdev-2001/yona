@@ -27,6 +27,10 @@ final class DataBrowser
 
     private const JSON_TYPES = ['json', 'jsonb'];
 
+    private const ENTRY_KEY_COLUMNS = ['name', 'key'];
+
+    private const ENTRY_VALUE_COLUMNS = ['value', 'serialized_value'];
+
     /** @var array<string, list<array<string, mixed>>> */
     private array $columnCache = [];
 
@@ -192,10 +196,12 @@ final class DataBrowser
     private function presentRow(array $record, array $byName): array
     {
         $row = [];
+        $secretEntry = $this->isSecretEntry($record);
 
         foreach ($record as $name => $value) {
             $column = $byName[$name] ?? ['masked' => null, 'type' => 'text'];
             $row[$name] = match (true) {
+                $secretEntry && in_array($name, self::ENTRY_VALUE_COLUMNS, true) => $value === null ? null : SensitiveFields::MASK,
                 $column['masked'] === 'personal' => $value ? self::PERSONAL_MASK : null,
                 $column['masked'] === 'secret' => $value ? SensitiveFields::MASK : null,
                 default => $this->presentValue($value, $column['type']),
@@ -203,6 +209,20 @@ final class DataBrowser
         }
 
         return $row;
+    }
+
+    // Bảng dạng khoá–giá trị (installation_configs: name = MAILER_SMTP_PASSWORD…):
+    // tên cột không lộ gì, tên khoá trong dòng mới cho biết giá trị là bí mật.
+    /** @param  array<string, mixed>  $record */
+    private function isSecretEntry(array $record): bool
+    {
+        foreach (self::ENTRY_KEY_COLUMNS as $column) {
+            if (is_string($record[$column] ?? null) && SensitiveFields::isSensitive($record[$column])) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private function presentValue(mixed $value, string $type): mixed

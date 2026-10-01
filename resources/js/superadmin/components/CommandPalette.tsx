@@ -252,7 +252,7 @@ function CommandPalettePanel({ onClose }: { onClose: () => void }) {
 
     return createPortal(
         <div className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-[12vh]">
-            <div aria-hidden="true" className="absolute inset-0 bg-black/40" />
+            <div aria-hidden="true" className="absolute inset-0 bg-console-overlay/40" />
             <div
                 ref={panelRef}
                 role="dialog"

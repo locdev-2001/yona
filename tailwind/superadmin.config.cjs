@@ -23,6 +23,7 @@ const CONSOLE_COLOR_TOKENS = [
     'warning',
     'warning-foreground',
     'sidebar',
+    'overlay',
 ];
 
 const consoleColors = Object.fromEntries(

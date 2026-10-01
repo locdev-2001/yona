@@ -63,7 +63,7 @@ export default function Topbar({
                     className="inline-flex size-8 items-center justify-center gap-2 rounded-md border border-console-border bg-console-card text-sm text-console-muted-foreground shadow-sm outline-none transition-colors hover:bg-console-accent focus-visible:ring-2 focus-visible:ring-console-ring/50 sm:w-64 sm:justify-start sm:px-2.5"
                 >
                     <Icon name="i-lucide-search" />
-                    <span className="hidden flex-1 text-left font-normal sm:inline">{label('search_shortcut_hint')}</span>
+                    <span className="hidden flex-1 truncate whitespace-nowrap text-left font-normal sm:inline">{label('search_shortcut_hint')}</span>
                     <Kbd className="hidden sm:inline-flex">{isMac() ? '⌘' : 'Ctrl'} K</Kbd>
                 </button>
 

@@ -1,5 +1,637 @@
 // Sinh bởi `php artisan i18n:generate` từ lang/{locale}/*.php — KHÔNG SỬA TAY.
 const messages: Record<string, unknown> = {
+    "ADMIN_DASHBOARD": {
+        "TITLE": "Tổng quan",
+        "DESCRIPTION": "Số liệu toàn hệ thống. Mỗi ô tự tải và làm mới riêng.",
+        "RANGE": {
+            "LABEL": "Khoảng thời gian",
+            "PRESETS": {
+                "7D": "7 ngày",
+                "30D": "30 ngày",
+                "90D": "90 ngày"
+            },
+            "COMPARED": "so với kỳ trước"
+        },
+        "ACTIONS": {
+            "CUSTOMIZE": "Tuỳ chỉnh",
+            "DONE": "Xong",
+            "RESET": "Về mặc định",
+            "REFRESH": "Làm mới {title}",
+            "HIDE": "Ẩn {title}",
+            "SHOW": "Hiện lại",
+            "DRAG": "Kéo để đổi chỗ {title}",
+            "SIZE": "Độ rộng của {title}",
+            "RETRY": "Thử lại",
+            "VIEW_ALL": "Xem tất cả"
+        },
+        "SIZES": {
+            "SM": "Hẹp",
+            "MD": "Vừa",
+            "LG": "Rộng",
+            "FULL": "Toàn dòng"
+        },
+        "EDIT": {
+            "HINT": "Kéo tay nắm để đổi chỗ (bàn phím: Tab tới tay nắm, Space để nhấc, mũi tên để di chuyển, Space để thả). Thay đổi tự lưu.",
+            "HIDDEN_TITLE": "Ô đang ẩn",
+            "HIDDEN_EMPTY": "Không có ô nào đang ẩn.",
+            "SAVING": "Đang lưu bố cục…",
+            "SAVED": "Đã lưu bố cục.",
+            "SAVE_FAILED": "Không lưu được bố cục. Thay đổi chỉ còn trên trình duyệt này.",
+            "ALL_HIDDEN": "Mọi ô đang ẩn. Bấm Tuỳ chỉnh để hiện lại.",
+            "PICKED_UP": "Đã nhấc {title}.",
+            "MOVED_OVER": "{title} đang ở vị trí {position}.",
+            "DROPPED": "Đã thả {title} ở vị trí {position}.",
+            "CANCELLED": "Đã huỷ kéo {title}."
+        },
+        "STATE": {
+            "ERROR": "Không tải được số liệu.",
+            "EMPTY": "Chưa có dữ liệu trong khoảng này.",
+            "UNAVAILABLE": "Không khả dụng"
+        },
+        "WIDGETS": {
+            "KPIS": {
+                "TITLE": "Chỉ số chính",
+                "DESCRIPTION": "Số tổng và chênh lệch so với kỳ trước cùng độ dài."
+            },
+            "MESSAGES_TREND": {
+                "TITLE": "Tin nhắn theo ngày",
+                "DESCRIPTION": "Tin khách gửi vào và tin trả lời ra mỗi ngày."
+            },
+            "CONVERSATIONS_BY_CHANNEL": {
+                "TITLE": "Hội thoại mới theo kênh",
+                "DESCRIPTION": "Hội thoại tạo trong khoảng, chia theo loại kênh."
+            },
+            "CHANNEL_HEALTH": {
+                "TITLE": "Sức khoẻ kênh",
+                "DESCRIPTION": "Hộp thư mất phiên hoặc cần cấp quyền lại."
+            },
+            "OPERATION_LINKS": {
+                "TITLE": "Lối tắt vận hành",
+                "DESCRIPTION": "Mở nhanh các bảng theo dõi hệ thống."
+            },
+            "ACTIVATION_FUNNEL": {
+                "TITLE": "Phễu kích hoạt",
+                "DESCRIPTION": "Account đăng ký trong khoảng đi được tới bước nào."
+            },
+            "COHORT_RETENTION": {
+                "TITLE": "Giữ chân theo tuần đăng ký",
+                "DESCRIPTION": "Tỉ lệ account còn trả lời khách ở các tuần sau khi đăng ký (8 tuần gần nhất)."
+            },
+            "SIGNUPS_TREND": {
+                "TITLE": "Đăng ký mới theo ngày",
+                "DESCRIPTION": "Số account tạo mỗi ngày."
+            },
+            "TOP_ACCOUNTS": {
+                "TITLE": "Account nhắn nhiều nhất",
+                "DESCRIPTION": "10 account có nhiều tin nhất trong khoảng."
+            },
+            "RECENT_SIGNUPS": {
+                "TITLE": "Account mới nhất",
+                "DESCRIPTION": "10 account vừa đăng ký."
+            },
+            "QUEUE_HEALTH": {
+                "TITLE": "Hàng đợi",
+                "DESCRIPTION": "Job đang chờ, job lỗi và tiến trình xử lý."
+            },
+            "STICKERS": {
+                "TITLE": "Kho sticker",
+                "DESCRIPTION": "Kho chung và kho riêng của các account."
+            },
+            "SYSTEM": {
+                "TITLE": "Hệ thống",
+                "DESCRIPTION": "Phiên bản và dung lượng cơ sở dữ liệu."
+            }
+        },
+        "METRICS": {
+            "ACCOUNTS_TOTAL": "Tổng account",
+            "ACCOUNTS_NEW": "Account mới",
+            "ACCOUNTS_ACTIVE": "Account hoạt động",
+            "USERS_TOTAL": "Nhân viên",
+            "CONVERSATIONS_NEW": "Hội thoại mới",
+            "MESSAGES_INCOMING": "Tin vào",
+            "MESSAGES_OUTGOING": "Tin ra",
+            "INBOXES_TOTAL": "Hộp thư"
+        },
+        "FUNNEL_STEPS": {
+            "SIGNED_UP": "Đăng ký",
+            "CREATED_INBOX": "Tạo hộp thư",
+            "CONNECTED_CHANNEL": "Kết nối kênh ngoài",
+            "RECEIVED_MESSAGE": "Nhận tin đầu tiên",
+            "REPLIED": "Trả lời tin đầu tiên"
+        },
+        "FUNNEL": {
+            "FROM_START": "{rate}% so với đăng ký",
+            "FROM_PREVIOUS": "{rate}% so với bước trước"
+        },
+        "SERIES": {
+            "INCOMING": "Tin vào",
+            "OUTGOING": "Tin ra",
+            "SIGNUPS": "Đăng ký"
+        },
+        "CHART": {
+            "SUMMARY": "{label}: tổng {total}, cao nhất {max} vào {date}.",
+            "TABLE": "Bảng số liệu",
+            "DATE": "Ngày"
+        },
+        "COHORT": {
+            "WEEK": "Tuần đăng ký",
+            "SIZE": "Account",
+            "OFFSET": "Tuần {n}",
+            "CELL": "Tuần {week}, tuần thứ {offset}: {active} trên {size} account ({rate}%)"
+        },
+        "CHANNEL_HEALTH": {
+            "HEALTHY": "Khoẻ",
+            "FAILING": "Có vấn đề",
+            "TOTAL": "{count} hộp thư",
+            "ALL_HEALTHY": "Mọi hộp thư đang hoạt động bình thường."
+        },
+        "LISTS": {
+            "MESSAGES": "{count} tin",
+            "INBOXES": "{count} hộp thư",
+            "NO_OWNER": "Chưa có quản trị viên"
+        },
+        "QUEUE": {
+            "STATUS": {
+                "RUNNING": "Đang chạy",
+                "PAUSED": "Tạm dừng",
+                "INACTIVE": "Không chạy",
+                "UNAVAILABLE": "Không khả dụng"
+            },
+            "PENDING": "Đang chờ",
+            "RECENT_FAILED": "Lỗi gần đây",
+            "PROCESSES": "Tiến trình",
+            "OPEN": "Mở Horizon"
+        },
+        "STICKERS": {
+            "SHARED_PACKS": "Bộ kho chung",
+            "SHARED_PUBLISHED": "Đã phát hành",
+            "SHARED_STICKERS": "Sticker kho chung",
+            "PRIVATE_ACCOUNTS": "Account có kho riêng",
+            "PRIVATE_STICKERS": "Sticker kho riêng",
+            "OPEN": "Quản lý kho chung"
+        },
+        "SYSTEM": {
+            "VERSION": "Phiên bản",
+            "PHP": "PHP",
+            "LARAVEL": "Laravel",
+            "ENVIRONMENT": "Môi trường",
+            "DATABASE_SIZE": "Dung lượng CSDL",
+            "TABLES": "Số bảng"
+        },
+        "LINKS": {
+            "HORIZON": {
+                "TITLE": "Horizon",
+                "DESCRIPTION": "Hàng đợi và job"
+            },
+            "PULSE": {
+                "TITLE": "Pulse",
+                "DESCRIPTION": "Hiệu năng ứng dụng"
+            },
+            "LOGS": {
+                "TITLE": "Nhật ký",
+                "DESCRIPTION": "Log ứng dụng"
+            },
+            "TASKS": {
+                "TITLE": "dash.yona.vn",
+                "DESCRIPTION": "Công việc của đội"
+            }
+        }
+    },
+    "ADMIN_LAYOUT": {
+        "labels": {
+            "console_name": "Bảng quản trị",
+            "close": "Đóng",
+            "cancel": "Huỷ",
+            "confirm": "Xác nhận",
+            "save": "Lưu",
+            "saving": "Đang lưu…",
+            "edit": "Sửa",
+            "delete": "Xoá",
+            "view": "Xem",
+            "actions": "Thao tác",
+            "pagination": "Phân trang",
+            "page_of": "Trang {current}/{last}",
+            "previous_page": "Trang trước",
+            "next_page": "Trang sau",
+            "open_menu": "Mở menu",
+            "navigation": "Điều hướng",
+            "collapse_sidebar": "Thu gọn thanh bên",
+            "expand_sidebar": "Mở rộng thanh bên",
+            "opens_new_tab": "mở tab mới",
+            "search": "Tìm kiếm",
+            "search_shortcut_hint": "Tìm kiếm hoặc nhảy tới…",
+            "command_title": "Bảng lệnh",
+            "command_placeholder": "Nhập tên trang, tài khoản, người dùng, hộp thư, liên hệ…",
+            "command_navigation": "Trang",
+            "command_results": "Kết quả tìm kiếm",
+            "command_loading": "Đang tìm…",
+            "command_error": "Không tìm được lúc này. Thử lại sau.",
+            "command_empty": "Không có kết quả cho “{query}”.",
+            "command_min_chars": "Gõ ít nhất 2 ký tự để tìm trong dữ liệu.",
+            "command_footer_navigate": "di chuyển",
+            "command_footer_select": "mở",
+            "command_footer_close": "đóng",
+            "result_account": "Tài khoản",
+            "result_user": "Người dùng",
+            "result_inbox": "Hộp thư",
+            "result_contact": "Liên hệ",
+            "user_menu": "Tài khoản quản trị",
+            "back_to_app": "Về trang làm việc",
+            "logout": "Đăng xuất",
+            "flash_notice": "Thông báo",
+            "flash_error": "Có lỗi",
+            "records_total": "{total} bản ghi",
+            "search_records": "Tìm trong {resource}…",
+            "clear_search": "Xoá tìm kiếm",
+            "filter": "Bộ lọc",
+            "filter_all": "Tất cả",
+            "new_record": "Thêm mới",
+            "no_records": "Chưa có bản ghi nào",
+            "no_records_hint": "Thử đổi từ khoá hoặc bộ lọc.",
+            "sort_by": "Sắp xếp theo {column}",
+            "delete_confirm_title": "Xoá bản ghi này?",
+            "delete_confirm_description": "Không hoàn tác được. Dữ liệu liên quan có thể mất theo.",
+            "edit_title": "Sửa {title}",
+            "new_title": "Thêm {resource}",
+            "create": "Tạo",
+            "account_overview": "Tổng quan 360",
+            "details": "Chi tiết",
+            "enabled": "Đã bật",
+            "disabled": "Chưa bật",
+            "yes": "Có",
+            "no": "Không",
+            "show_secret": "Hiện",
+            "hide_secret": "Ẩn",
+            "copy": "Sao chép",
+            "copied": "Đã chép",
+            "empty_value": "—",
+            "no_suspension_history": "Chưa có lịch sử tạm khoá nào.",
+            "resend_confirmation": "Gửi lại email xác nhận",
+            "reset_cache_title": "Xoá bộ nhớ đệm giao diện",
+            "reset_cache_description": "Xoá khoá bộ nhớ đệm IndexedDB trong Redis; lần tải sau giao diện sẽ lấy lại dữ liệu từ máy chủ.",
+            "reset_cache": "Xoá bộ nhớ đệm",
+            "impersonate_title": "Đăng nhập hộ",
+            "impersonate_warning": "Mọi thao tác sau khi đăng nhập hộ sẽ hiện như do {title} thực hiện.",
+            "impersonate": "Đăng nhập hộ",
+            "impersonate_reason": "Lý do (tối thiểu {min} ký tự, ghi vào nhật ký)",
+            "impersonate_confirm": "Xác nhận và đăng nhập hộ",
+            "account_users_title": "Thêm thành viên",
+            "account_users_account": "Tài khoản",
+            "account_users_user": "Người dùng",
+            "account_users_role": "Vai trò",
+            "account_users_submit": "Thêm vào tài khoản",
+            "mfa": "Xác thực hai lớp",
+            "settings_title": "Cài đặt",
+            "settings_description": "Cấu hình chung của bản cài đặt Yona.",
+            "app_config_title": "Cấu hình {section}",
+            "app_config_description": "Thay đổi áp dụng cho toàn hệ thống ngay sau khi lưu.",
+            "instance_status_title": "Trạng thái hệ thống",
+            "instance_status_description": "Phiên bản và kết nối các dịch vụ nền.",
+            "login_title": "Đăng nhập quản trị",
+            "login_description": "Chỉ dành cho quản trị viên nền tảng.",
+            "login_email": "Email",
+            "login_email_placeholder": "ten@congty.vn",
+            "login_password": "Mật khẩu",
+            "login_submit": "Đăng nhập"
+        },
+        "groups": {
+            "overview": "Tổng quan",
+            "customers": "Khách hàng",
+            "channels": "Kênh & hệ thống",
+            "data": "Dữ liệu",
+            "content": "Nội dung",
+            "integrations": "Tích hợp",
+            "config": "Cấu hình",
+            "security": "Bảo mật",
+            "tools": "Công cụ"
+        },
+        "nav": {
+            "dashboard": "Bảng điều khiển",
+            "accounts": "Tài khoản",
+            "users": "Người dùng",
+            "channel_health": "Sức khoẻ kênh",
+            "instance_status": "Trạng thái hệ thống",
+            "data": "Trình duyệt dữ liệu",
+            "sticker_packs": "Kho sticker",
+            "agent_bots": "Agent bot",
+            "platform_apps": "Ứng dụng nền tảng",
+            "access_tokens": "Access token",
+            "app_config": "Cấu hình ứng dụng",
+            "installation_configs": "Biến cấu hình hệ thống",
+            "settings": "Cài đặt",
+            "audit_logs": "Nhật ký thao tác",
+            "impersonations": "Đăng nhập hộ",
+            "horizon": "Hàng đợi (Horizon)",
+            "pulse": "Hiệu năng (Pulse)",
+            "logs": "Log máy chủ",
+            "dash": "dash.yona.vn"
+        },
+        "filters": {
+            "active": "Đang hoạt động",
+            "suspended": "Tạm khoá",
+            "confirmed": "Đã xác nhận",
+            "unconfirmed": "Chưa xác nhận",
+            "recent": "Tạo trong 30 ngày",
+            "marked_for_deletion": "Chờ xoá",
+            "super_admin": "Quản trị nền tảng",
+            "user": "Của người dùng",
+            "agent_bot": "Của agent bot",
+            "platform_app": "Của ứng dụng nền tảng"
+        },
+        "attributes": {
+            "id": "ID",
+            "name": "Tên",
+            "display_name": "Tên hiển thị",
+            "email": "Email",
+            "unconfirmed_email": "Email chờ xác nhận",
+            "password": "Mật khẩu",
+            "avatar_url": "Ảnh đại diện",
+            "locale": "Ngôn ngữ",
+            "status": "Trạng thái",
+            "type": "Loại",
+            "role": "Vai trò",
+            "description": "Mô tả",
+            "outgoing_url": "URL webhook",
+            "access_token": "Access token",
+            "token": "Token",
+            "owner": "Chủ sở hữu",
+            "account": "Tài khoản",
+            "accounts": "Tài khoản",
+            "account_users": "Thành viên",
+            "user": "Người dùng",
+            "users": "Người dùng",
+            "inviter": "Người mời",
+            "inboxes": "Hộp thư",
+            "conversations": "Hội thoại",
+            "custom_attributes": "Thuộc tính tuỳ biến",
+            "value": "Giá trị",
+            "reason": "Lý do",
+            "ip_address": "Địa chỉ IP",
+            "provider": "Nhà cung cấp",
+            "uid": "UID",
+            "pubsub_token": "Pubsub token",
+            "confirmation_token": "Mã xác nhận",
+            "confirmation_sent_at": "Gửi xác nhận lúc",
+            "confirmed_at": "Xác nhận lúc",
+            "current_sign_in_at": "Đăng nhập gần nhất",
+            "current_sign_in_ip": "IP đăng nhập gần nhất",
+            "last_sign_in_at": "Đăng nhập trước đó",
+            "last_sign_in_ip": "IP đăng nhập trước đó",
+            "sign_in_count": "Số lần đăng nhập",
+            "suspension_category": "Nhóm lý do tạm khoá",
+            "suspension_reason": "Lý do tạm khoá",
+            "suspension_history": "Lịch sử tạm khoá",
+            "used_at": "Dùng lúc",
+            "created_at": "Tạo lúc",
+            "updated_at": "Cập nhật lúc"
+        }
+    },
+    "ADMIN_OPERATIONS": {
+        "NAV": {
+            "CHANNEL_HEALTH": "Sức khoẻ kênh",
+            "AUDIT_LOGS": "Nhật ký thao tác",
+            "DATA": "Dữ liệu hệ thống"
+        },
+        "COMMON": {
+            "NEVER": "Chưa có",
+            "UNKNOWN": "Không rõ",
+            "APPLY": "Lọc",
+            "CLEAR": "Bỏ lọc",
+            "CANCEL": "Huỷ",
+            "BACK": "Quay lại",
+            "CONTINUE": "Tiếp tục",
+            "PREVIOUS": "Trang trước",
+            "NEXT": "Trang sau",
+            "PAGE": "Trang {page}",
+            "OPEN_ACCOUNT": "Mở tài khoản"
+        },
+        "SUSPENSION": {
+            "SUSPENDED": "Đã khoá tài khoản :name.",
+            "UNSUSPENDED": "Đã mở khoá tài khoản :name.",
+            "BLOCKED": "Tài khoản này đang bị khoá. Hãy liên hệ bộ phận hỗ trợ."
+        },
+        "SEARCH": {
+            "SUSPENDED": "đang khoá"
+        },
+        "CHANNEL_HEALTH": {
+            "TITLE": "Sức khoẻ kênh",
+            "DESCRIPTION": "Hộp thư đang mất phiên, lỗi xác thực hoặc cần đăng nhập lại trên toàn hệ thống.",
+            "STATS": {
+                "TOTAL": "Tổng hộp thư",
+                "HEALTHY": "Đang khoẻ",
+                "FAILING": "Có vấn đề",
+                "ERRORS": "Đang ngừng nhận tin"
+            },
+            "FILTERS": {
+                "SEARCH": "Tìm hộp thư hoặc tài khoản…",
+                "ALL_PROBLEMS": "Mọi vấn đề",
+                "ALL_PLATFORMS": "Mọi kênh",
+                "ALL_SEVERITIES": "Mọi mức độ"
+            },
+            "COLUMNS": {
+                "INBOX": "Hộp thư",
+                "ACCOUNT": "Tài khoản",
+                "PROBLEM": "Vấn đề",
+                "SINCE": "Từ lúc",
+                "DETAIL": "Chi tiết"
+            },
+            "SEVERITY": {
+                "error": "Ngừng hoạt động",
+                "warning": "Cảnh báo"
+            },
+            "PROBLEMS": {
+                "channel_missing": "Mất bản ghi kênh",
+                "session_lost": "Mất phiên Zalo",
+                "disconnected": "Zalo đã đăng xuất",
+                "awaiting_login": "Chờ quét mã QR",
+                "bridge_unreachable": "Không gọi được cầu nối Zalo",
+                "circuit_open": "Zalo lỗi liên tiếp, tạm ngắt",
+                "reauthorization_required": "Cần đăng nhập lại",
+                "authorization_errors": "Lỗi xác thực (IMAP/SMTP, token)"
+            },
+            "DETAIL_COUNT": "{count} lần lỗi",
+            "EMPTY_TITLE": "Mọi kênh đều khoẻ",
+            "EMPTY_DESCRIPTION": "Không hộp thư nào đang gặp sự cố.",
+            "NO_MATCH": "Không có hộp thư nào khớp bộ lọc."
+        },
+        "ACCOUNT_OVERVIEW": {
+            "BACK": "Danh sách tài khoản",
+            "STATUS": {
+                "active": "Đang hoạt động",
+                "suspended": "Đang khoá"
+            },
+            "CREATED_AT": "Tạo {date}",
+            "LAST_ACTIVITY": "Hoạt động gần nhất: {date}",
+            "ACTIONS": {
+                "LOCK": "Khoá tài khoản",
+                "UNLOCK": "Mở khoá",
+                "IMPERSONATE": "Đăng nhập hộ",
+                "EDIT": "Sửa",
+                "RECORD": "Xem bản ghi",
+                "AUDIT": "Nhật ký thao tác",
+                "DATA": "Xem dữ liệu"
+            },
+            "LOCK": {
+                "TITLE": "Khoá tài khoản này?",
+                "DESCRIPTION": "Agent, bot và API của tài khoản bị chặn ngay; kênh ngừng nhận tin mới. Dữ liệu giữ nguyên, mở khoá lại được bất cứ lúc nào.",
+                "CATEGORY": "Nhóm lý do",
+                "REASON": "Lý do",
+                "REASON_HINT": "Tối đa {max} ký tự, lưu vào lịch sử khoá.",
+                "CONFIRM_TITLE": "Khoá ngay \"{name}\"?",
+                "CONFIRM_DESCRIPTION": "Mọi thành viên sẽ không vào được tài khoản cho tới khi mở khoá.",
+                "CONFIRM": "Khoá ngay"
+            },
+            "UNLOCK": {
+                "TITLE": "Mở khoá \"{name}\"?",
+                "DESCRIPTION": "Thành viên vào lại được và kênh nhận tin trở lại.",
+                "CONFIRM": "Mở khoá"
+            },
+            "IMPERSONATE": {
+                "TITLE": "Đăng nhập hộ",
+                "DESCRIPTION": "Mọi thao tác sau khi đăng nhập hộ hiện như do người dùng này làm. Lý do được lưu vào nhật ký.",
+                "USER": "Người dùng",
+                "REASON": "Lý do (ít nhất {min} ký tự)",
+                "SUBMIT": "Đăng nhập hộ (tab mới)",
+                "NO_USERS": "Tài khoản chưa có thành viên nào để đăng nhập hộ."
+            },
+            "STATS": {
+                "USERS": "Thành viên",
+                "INBOXES": "Hộp thư",
+                "CONVERSATIONS": "Hội thoại",
+                "CONTACTS": "Liên hệ",
+                "MESSAGES_7D": "Tin 7 ngày",
+                "MESSAGES_30D": "Tin 30 ngày"
+            },
+            "TABS": {
+                "OVERVIEW": "Tổng quan",
+                "USERS": "Thành viên",
+                "INBOXES": "Hộp thư",
+                "ACTIVITY": "Hoạt động",
+                "STICKERS": "Sticker"
+            },
+            "SECTIONS": {
+                "USAGE": "Lượng tin 30 ngày",
+                "USAGE_TOTAL": "{count} tin",
+                "ONBOARDING": "Tiến độ kích hoạt",
+                "INBOXES": "Hộp thư và sức khoẻ kênh",
+                "USERS": "Thành viên",
+                "TIMELINE": "Hoạt động gần đây",
+                "SUSPENSIONS": "Lịch sử khoá",
+                "IMPERSONATIONS": "Lần đăng nhập hộ gần đây",
+                "STICKERS": "Kho sticker riêng"
+            },
+            "COLUMNS": {
+                "NAME": "Tên",
+                "EMAIL": "Email",
+                "ROLE": "Vai trò",
+                "LAST_SIGN_IN": "Đăng nhập gần nhất",
+                "INBOX": "Hộp thư",
+                "HEALTH": "Sức khoẻ",
+                "SINCE": "Từ lúc",
+                "ADMIN": "Quản trị viên",
+                "TARGET": "Đăng nhập hộ",
+                "REASON": "Lý do",
+                "CATEGORY": "Nhóm",
+                "AT": "Lúc"
+            },
+            "HEALTHY": "Khoẻ",
+            "UNCONFIRMED": "Chưa xác nhận email",
+            "EMPTY": {
+                "USERS": "Chưa có thành viên.",
+                "INBOXES": "Chưa kết nối hộp thư nào.",
+                "TIMELINE": "Chưa có hoạt động.",
+                "SUSPENSIONS": "Chưa từng bị khoá.",
+                "IMPERSONATIONS": "Chưa có lần đăng nhập hộ nào."
+            },
+            "STICKERS": {
+                "SUMMARY": "{packs} bộ · {stickers} sticker",
+                "MANAGE": "Quản lý kho sticker",
+                "DESCRIPTION": "Toàn quyền như quản trị viên của tài khoản: tạo bộ, tải lên, sửa, sắp xếp, xuất bản, xoá."
+            },
+            "ONBOARDING": {
+                "CURRENT_STEP": "Đang ở bước: {step}",
+                "FINISHED": "Đã xong onboarding",
+                "STEPS": {
+                    "account_details": "Điền thông tin tài khoản",
+                    "account_update": "Cập nhật tài khoản",
+                    "invite_team": "Mời đồng đội"
+                },
+                "MILESTONES": {
+                    "account_details": "Điền thông tin doanh nghiệp",
+                    "first_inbox": "Kết nối hộp thư đầu tiên",
+                    "team_invited": "Mời thêm thành viên",
+                    "first_incoming": "Nhận tin khách đầu tiên",
+                    "first_reply": "Trả lời khách lần đầu"
+                }
+            },
+            "TIMELINE": {
+                "account_created": "Tạo tài khoản \":name\"",
+                "user_joined": ":name tham gia với vai trò :role",
+                "inbox_created": "Thêm hộp thư \":name\"",
+                "suspended": "Bị khoá: :reason",
+                "impersonated": ":admin đăng nhập hộ :user",
+                "admin_action": ":admin: :action",
+                "last_message": "Tin nhắn gần nhất"
+            }
+        },
+        "AUDIT_LOGS": {
+            "TITLE": "Nhật ký thao tác",
+            "DESCRIPTION": "Mọi thao tác ghi của quản trị viên trong bảng quản trị. Mật khẩu, token và mã xác thực đã được che.",
+            "FILTERS": {
+                "ADMIN": "Quản trị viên",
+                "ALL_ADMINS": "Mọi quản trị viên",
+                "ACTION": "Hành động chứa…",
+                "SUBJECT_TYPE": "Đối tượng",
+                "ALL_SUBJECTS": "Mọi đối tượng",
+                "SUBJECT_ID": "ID đối tượng",
+                "FROM": "Từ ngày",
+                "TO": "Đến ngày"
+            },
+            "COLUMNS": {
+                "TIME": "Thời gian",
+                "ADMIN": "Quản trị viên",
+                "ACTION": "Hành động",
+                "SUBJECT": "Đối tượng",
+                "STATUS": "Kết quả"
+            },
+            "PAYLOAD": "Dữ liệu gửi kèm",
+            "NO_PAYLOAD": "Không có dữ liệu gửi kèm.",
+            "DELETED_ADMIN": "Quản trị viên đã xoá",
+            "TOTAL": "{total} thao tác",
+            "EMPTY_TITLE": "Chưa có thao tác nào",
+            "EMPTY_DESCRIPTION": "Thao tác ghi trong bảng quản trị sẽ hiện ở đây."
+        },
+        "DATA": {
+            "TITLE": "Dữ liệu hệ thống",
+            "DESCRIPTION": "Xem mọi bảng ở chế độ chỉ đọc. Cột bí mật (mật khẩu, token, khoá, mã OTP, trường mã hoá) và nội dung tin nhắn của khách luôn được che.",
+            "SEARCH_TABLES": "Lọc bảng…",
+            "COLUMNS": {
+                "TABLE": "Bảng",
+                "ROWS": "Số dòng",
+                "SIZE": "Dung lượng"
+            },
+            "APPROXIMATE": "ước tính",
+            "NO_TABLES": "Không tìm thấy bảng.",
+            "BACK": "Mọi bảng",
+            "READ_ONLY": "Chỉ đọc",
+            "MASKED_SECRET": "Đã che: dữ liệu bí mật",
+            "MASKED_PERSONAL": "Đã che: nội dung khách (Nghị định 13)",
+            "FILTERS": "Lọc theo cột",
+            "FILTER_HINT": "Cột số khớp đúng, cột chữ khớp một phần, gõ null để tìm ô trống. Cột đã che không lọc được.",
+            "SORT": "Sắp xếp theo {column}",
+            "EMPTY": "Không có dòng nào.",
+            "ROWS_ON_PAGE": "{count} dòng"
+        },
+        "STICKERS": {
+            "PLATFORM_TAB": "Kho chung",
+            "ACCOUNT_TAB": "Kho của tài khoản",
+            "ACCOUNT_TITLE": "Kho sticker của {name}",
+            "ACCOUNT_DESCRIPTION": "Toàn quyền như quản trị viên của tài khoản: tạo bộ, tải lên, sửa, sắp xếp, xuất bản, xoá, chuyển bộ sang kho chung.",
+            "PICK_ACCOUNT": "Tìm tài khoản theo tên hoặc ID…",
+            "NO_ACCOUNTS": "Không tìm thấy tài khoản.",
+            "BACK_TO_ACCOUNT": "Về tài khoản"
+        }
+    },
     "AGENT_BOTS": {
         "HEADER": "Bot",
         "LOADING_EDITOR": "Đang tải trình soạn thảo...",

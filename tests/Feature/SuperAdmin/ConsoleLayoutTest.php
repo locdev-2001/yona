@@ -68,5 +68,7 @@ it('màn đăng nhập vẫn có chữ của khung nhưng chưa có người dù
 it('bản dịch tiếng Anh có đủ khoá chữ như tiếng Việt', function () {
     expect(array_keys(trans('admin_layout.labels', [], 'en')))->toBe(array_keys(trans('admin_layout.labels', [], 'vi')))
         ->and(array_keys(trans('admin_layout.nav', [], 'en')))->toBe(array_keys(trans('admin_layout.nav', [], 'vi')))
-        ->and(array_keys(trans('admin_layout.groups', [], 'en')))->toBe(array_keys(trans('admin_layout.groups', [], 'vi')));
+        ->and(array_keys(trans('admin_layout.groups', [], 'en')))->toBe(array_keys(trans('admin_layout.groups', [], 'vi')))
+        ->and(array_keys(trans('admin_layout.filters', [], 'en')))->toBe(array_keys(trans('admin_layout.filters', [], 'vi')))
+        ->and(array_keys(trans('admin_layout.attributes', [], 'en')))->toBe(array_keys(trans('admin_layout.attributes', [], 'vi')));
 });

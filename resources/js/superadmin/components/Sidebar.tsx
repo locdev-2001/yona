@@ -157,7 +157,7 @@ export function SidebarContent({
                 ) : null}
             </div>
 
-            <nav aria-label={label('navigation')} className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-2 py-3">
+            <nav aria-label={label('navigation')} className="relative min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-2 py-3">
                 {groups.map((group, index) => (
                     <div key={group.key} className="mb-3 last:mb-0">
                         {collapsed ? (

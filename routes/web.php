@@ -39,8 +39,8 @@ use App\Http\Controllers\SuperAdmin\StickerPacksController as SuperAdminStickerP
 use App\Http\Controllers\SuperAdmin\UsersController as SuperAdminUsersController;
 use App\Http\Middleware\EnsureSuperAdminMfaEnrolled;
 use App\Http\Middleware\ExpireIdleSuperAdminSession;
-use App\Http\Middleware\RecordSuperAdminAudit;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\RecordSuperAdminAudit;
 use App\Http\Middleware\RestrictWidgetEmbedding;
 use App\Http\Middleware\StartSession;
 use App\Http\Middleware\SuperAdminInertia;
