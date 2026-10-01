@@ -53,7 +53,8 @@ function inputType(type: string): string {
 
 export default function ResourceForm({ resource, resourceLabel, singular, singularLabel, record, fields, action, method }: Props) {
     const label = useConsoleLabels();
-    const { attribute } = useConsoleDictionary();
+    const dictionary = useConsoleDictionary();
+    const { attribute } = dictionary;
     const resourceTitle = useNavLabel(`/admin/${resource}`, resourceLabel ?? singularLabel);
     const initial = Object.fromEntries(fields.map(field => [field.name, String(field.value ?? '')]));
     const { data, setData, post, put, processing, errors } = useForm<Record<string, Record<string, string>>>({
@@ -95,7 +96,11 @@ export default function ResourceForm({ resource, resourceLabel, singular, singul
                 const fieldLabel = isDerivedLabel(field.name, field.label) ? attribute(field.name, field.label) : field.label;
                 const update = (value: string) => setData(singular, { ...values, [field.name]: value });
                 const longText = LONG_TEXT_FIELDS.includes(field.name);
-                const options = field.options.map(option => ({ value: option, label: option }));
+                // Trạng thái dùng nhãn tiếng Việt của bộ lọc (active → Đang hoạt động); lựa chọn khác giữ nguyên.
+                const options = field.options.map(option => ({
+                    value: option,
+                    label: field.name === 'status' ? dictionary.filter(option) : option,
+                }));
 
                 return (
                     <Field key={field.name} data-invalid={error ? true : undefined} className={cn('gap-2', longText && 'sm:col-span-2')}>

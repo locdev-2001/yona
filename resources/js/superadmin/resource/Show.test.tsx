@@ -66,3 +66,27 @@ describe('ResourceShow — mục đăng nhập hộ', () => {
         expect((form.querySelector('input[name="_token"]') as HTMLInputElement).value).toBe('real-csrf-token');
     });
 });
+
+describe('ResourceShow — bố cục chi tiết', () => {
+    it('cột trái có tên, chi tiết; tài khoản có nút Sửa và lối tắt Tổng quan 360', () => {
+        render(
+            <ResourceShow
+                {...baseProps}
+                resource="accounts"
+                singularLabel="Account"
+                record={{ id: 7, title: 'Shop Hoa', url: '/admin/accounts/7' }}
+                fields={[
+                    { name: 'name', label: 'Name', type: 'string', html_class: 'string', value: 'Shop Hoa' },
+                    { name: 'status', label: 'Status', type: 'account_status_field', html_class: 'account-status-field', value: 'suspended' },
+                ]}
+                actions={['index', 'show', 'edit']}
+            />,
+        );
+
+        expect(screen.getByRole('heading', { level: 1, name: 'Shop Hoa' })).toBeInTheDocument();
+        expect(screen.getByText('Tên')).toBeInTheDocument();
+        expect(screen.getByText('Tạm khoá')).toBeInTheDocument();
+        expect(screen.getByRole('link', { name: /Sửa/ })).toHaveAttribute('href', '/admin/accounts/7/edit');
+        expect(screen.getByRole('link', { name: /account_overview|Tổng quan 360/ })).toHaveAttribute('href', '/admin/accounts/7/overview');
+    });
+});

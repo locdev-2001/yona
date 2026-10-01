@@ -11,6 +11,9 @@ import {
   TimelineLine
 } from '@admin/components/ui/timeline'
 
+// Util Imports
+import { cn } from '@admin/lib/utils'
+
 export type ActivityItem = {
   id: string
   description: ReactNode
@@ -38,7 +41,7 @@ export function ActivityTimeline({ activityLog }: ActivityTimelineProps) {
               >
                 <span className='bg-primary size-3 rounded-full' />
               </TimelineDot>
-              {!isLast && <TimelineLine done className='bg-muted min-h-10' />}
+              {!isLast && <TimelineLine done className={cn('bg-muted', item.detail ? 'min-h-10' : 'min-h-5')} />}
               <TimelineHeading className='text-foreground flex w-full items-center justify-between gap-3 pt-2.5 pb-2 pl-4 text-sm font-medium text-wrap md:text-base'>
                 <span className='min-w-0 break-words'>{item.description}</span>
                 <span

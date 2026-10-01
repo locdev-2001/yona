@@ -539,7 +539,15 @@ export default function AccountOverview(props: AccountOverviewProps) {
                     ]}
                     detailsTitle={consoleLabel('details')}
                     details={[
-                        { key: 'id', label: attribute('id', 'ID'), value: `#${account.id}` },
+                        {
+                            key: 'id',
+                            label: attribute('id', 'ID'),
+                            value: (
+                                <Link href={urls.show} title={label('ACTIONS.RECORD')} className="text-primary hover:underline">
+                                    #{account.id}
+                                </Link>
+                            ),
+                        },
                         {
                             key: 'status',
                             label: attribute('status', 'Status'),
@@ -580,15 +588,10 @@ export default function AccountOverview(props: AccountOverviewProps) {
                         </>
                     }
                     footer={
-                        <div className="flex flex-col gap-2">
-                            <Button variant="outline" className="w-full" onClick={() => setDialog('impersonate')}>
-                                <VenetianMaskIcon />
-                                {label('ACTIONS.IMPERSONATE')}
-                            </Button>
-                            <Link href={urls.show} className={cn(buttonVariants({ variant: 'link' }), 'w-full')}>
-                                {label('ACTIONS.RECORD')}
-                            </Link>
-                        </div>
+                        <Button variant="outline" className="w-full" onClick={() => setDialog('impersonate')}>
+                            <VenetianMaskIcon />
+                            {label('ACTIONS.IMPERSONATE')}
+                        </Button>
                     }
                 />
 
@@ -620,7 +623,7 @@ export default function AccountOverview(props: AccountOverviewProps) {
                         </div>
 
                         <TabsContent value="overview" className="space-y-6">
-                            <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
+                            <div className="grid grid-cols-2 gap-4 lg:gap-6 xl:grid-cols-4">
                                 <StatisticsCard
                                     icon={<MessagesSquareIcon className="size-4" />}
                                     value={formatNumber(stats.conversations)}

@@ -64,7 +64,7 @@ function ResourceRowActions({
   }
 
   return (
-    <div className='flex items-center justify-end gap-1'>
+    <div className='flex items-center justify-center gap-1'>
       <Tooltip>
         <TooltipTrigger
           render={<Link href={url} aria-label={labels.view} className={buttonVariants({ variant: 'ghost', size: 'icon' })} />}
@@ -130,7 +130,7 @@ export function initialsFromName(name: string): string {
   return (
     name
       .split(/\s+/)
-      .filter(Boolean)
+      .filter(word => /^\p{L}/u.test(word))
       .slice(0, 2)
       .map(word => word[0])
       .join('')

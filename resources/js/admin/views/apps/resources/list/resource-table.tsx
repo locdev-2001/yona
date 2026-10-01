@@ -80,7 +80,7 @@ export function ResourceTable({
                   aria-sort={
                     header.column.getCanSort() ? (sorted === 'asc' ? 'ascending' : sorted === 'desc' ? 'descending' : 'none') : undefined
                   }
-                  className={cn('text-muted-foreground first:pl-4 last:px-4', numeric && 'text-right')}
+                  className={cn('text-muted-foreground first:pl-4 last:px-4', header.column.id === 'actions' && 'text-center', numeric && 'text-right')}
                 >
                   {header.isPlaceholder ? null : header.column.getCanSort() ? (
                     <div

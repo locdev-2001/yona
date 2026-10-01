@@ -21,6 +21,15 @@ const dateTimeFormatter = new Intl.DateTimeFormat('vi-VN', {
     minute: '2-digit',
 });
 
+const dateFormatter = new Intl.DateTimeFormat('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+export function formatDate(value: unknown): string {
+    if (value === null || value === undefined || value === '') return '';
+    const date = new Date(String(value));
+
+    return Number.isNaN(date.getTime()) ? String(value) : dateFormatter.format(date);
+}
+
 // Máy chủ gửi thời điểm dạng `Mon, 31 Aug 2026 06:58:21 +0000` (UTC); hiện theo
 // giờ máy người xem, chuỗi lạ thì giữ nguyên.
 export function formatDateTime(value: unknown): string {
@@ -41,7 +50,14 @@ export default function FieldValue({ field, nested = false }: { field: SuperAdmi
             );
         case 'date_time':
         case 'confirmed_at_field':
-            return <span className="whitespace-nowrap tabular-nums">{formatDateTime(field.value)}</span>;
+            // Trong bảng chỉ hiện ngày (giờ đầy đủ ở tooltip), trang chi tiết hiện cả giờ.
+            return nested ? (
+                <span className="whitespace-nowrap tabular-nums" title={formatDateTime(field.value)}>
+                    {formatDate(field.value)}
+                </span>
+            ) : (
+                <span className="whitespace-nowrap tabular-nums">{formatDateTime(field.value)}</span>
+            );
         case 'number':
         case 'count_field':
             return <span className="tabular-nums">{field.value === null || field.value === undefined ? '' : String(field.value)}</span>;

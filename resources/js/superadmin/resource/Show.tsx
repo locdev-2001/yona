@@ -16,7 +16,7 @@ import { SectionCard, TableCard } from '@admin/views/apps/resources/view/section
 import FieldValue from '../components/FieldValue';
 import { useNavLabel } from '../components/navigation';
 import { useConsoleDictionary, useConsoleLabels } from '../labels';
-import type { SuperAdminField } from '../types';
+import type { HasManyValue, SuperAdminField } from '../types';
 
 type AccountUserForm = {
     accountId?: number;
@@ -61,7 +61,9 @@ export default function ResourceShow({
     const { attribute } = useConsoleDictionary();
     const resourceTitle = useNavLabel(`/admin/${resource}`, resourceLabel ?? singularLabel);
     const avatar = fields.find(field => field.type === 'avatar_field');
-    const statFields = fields.filter(field => STAT_FIELD_TYPES.includes(field.type)).slice(0, 2);
+    // Hai ô số liệu chỉ hiện khi đủ cặp; lẻ một thì để trong danh sách chi tiết.
+    const countFields = fields.filter(field => STAT_FIELD_TYPES.includes(field.type));
+    const statFields = countFields.length >= 2 ? countFields.slice(0, 2) : [];
     const shortFields = fields.filter(
         field => !WIDE_FIELD_TYPES.includes(field.type) && field.type !== 'avatar_field' && !statFields.includes(field),
     );
@@ -140,7 +142,11 @@ export default function ResourceShow({
             {hasRightColumn ? (
                 <div className="flex min-w-0 flex-col gap-6">
                     {wideFields.map(field =>
-                        field.type === 'has_many' ? (
+                        field.type === 'has_many' && !(field.value as HasManyValue | null)?.rows?.length ? (
+                            <SectionCard key={field.name} id={field.name} title={attribute(field.name, field.label)}>
+                                <p className="text-muted-foreground text-sm">{label('no_records')}</p>
+                            </SectionCard>
+                        ) : field.type === 'has_many' ? (
                             <TableCard key={field.name} id={field.name} title={attribute(field.name, field.label)}>
                                 <FieldValue field={field} />
                             </TableCard>
