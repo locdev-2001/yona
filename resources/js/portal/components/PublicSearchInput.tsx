@@ -1,7 +1,7 @@
 import { forwardRef, useImperativeHandle, useRef, useState } from 'react';
 import type { ChangeEvent } from 'react';
+import { SHARED_ICONS } from 'shared/icons';
 
-import FluentIcon from 'shared/components/FluentIcon/FluentIcon';
 
 // Port từ portal/components/PublicSearchInput.vue.
 export interface SearchInputHandle {
@@ -43,7 +43,7 @@ const PublicSearchInput = forwardRef<SearchInputHandle, PublicSearchInputProps>(
                     : 'border-slate-50 shadow-sm ring-0 ring-transparent'
             }`}
         >
-            <FluentIcon icon="search" />
+            <span className={`${SHARED_ICONS.search} size-5`} aria-hidden="true" />
             <input
                 ref={inputRef}
                 value={searchTerm}

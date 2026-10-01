@@ -3,6 +3,7 @@ import Icon from 'dashboard/components-next/icon/Icon';
 import { messagePreviewBody } from 'dashboard/components-next/message/helpers/messagePreview';
 import { MESSAGE_TYPES } from 'dashboard/conversation/constants';
 import type { ConversationMessage } from 'dashboard/conversation/types';
+import { ICONS } from 'dashboard/icons';
 
 // Port từ components-next/Conversation/ConversationCard/MessagePreview.vue.
 const ATTACHMENT_ICONS: Record<string, string> = {
@@ -63,7 +64,7 @@ export default function MessagePreview({
                     </span>
                 ) : body.kind === 'sticker' ? (
                     <span className="inline-grid grid-flow-col auto-cols-max items-center gap-1">
-                        <Icon icon="i-ph-sticker" className="size-3.5" />
+                        <Icon icon={ICONS.sticker} className="size-3.5" />
                         {t('CHAT_LIST.ATTACHMENTS.sticker.CONTENT')}
                     </span>
                 ) : body.kind === 'text' ? (

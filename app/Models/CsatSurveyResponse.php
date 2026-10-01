@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Exceptions\RecordInvalidException;
+use App\Models\Concerns\ReferencesPartitionedMessage;
 use Database\Factories\CsatSurveyResponseFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -13,7 +14,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class CsatSurveyResponse extends Model
 {
     /** @use HasFactory<CsatSurveyResponseFactory> */
-    use HasFactory;
+    use HasFactory, ReferencesPartitionedMessage;
 
     public const RATINGS = [1, 2, 3, 4, 5];
 
@@ -21,6 +22,7 @@ class CsatSurveyResponse extends Model
         'account_id',
         'conversation_id',
         'message_id',
+        'message_created_at',
         'contact_id',
         'assigned_agent_id',
         'rating',

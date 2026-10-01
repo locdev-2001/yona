@@ -14,6 +14,7 @@ use App\Models\Message;
 use App\Models\User;
 use App\Services\Channels\Stickers\StickerLibrary;
 use App\Services\Messages\WebhookContentNormalizer;
+use App\Support\SharedModels;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Http\Request;
@@ -60,6 +61,8 @@ class MessageResource extends JsonResource
         ]);
 
         $messages->each(fn (Message $message) => self::shareSenderAccount($message));
+        $shared = app(SharedModels::class);
+        $messages->each(fn (Message $message) => $message->sender instanceof User && $shared->remember($message->sender));
     }
 
     // Khách gửi tin cùng account với tin: payload khách đọc cờ tính năng của account.

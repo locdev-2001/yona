@@ -28,7 +28,7 @@ function knownChannelKeys(): string[] {
 // mới là thứ trang công khai phải khớp.
 function wizardState(key: string): WizardState {
     const { unmount } = render(
-        <ChannelItem channel={{ key, title: key, description: '', icon: 'i-woot-api' }} onChannelItemClick={() => {}} />,
+        <ChannelItem channel={{ key, title: key, description: '', icon: 'i-lucide-braces' }} onChannelItemClick={() => {}} />,
     );
     const button = screen.getByRole('button');
     const state: WizardState = !button.hasAttribute('disabled')

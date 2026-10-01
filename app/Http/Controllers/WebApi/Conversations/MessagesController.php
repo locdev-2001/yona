@@ -29,6 +29,8 @@ class MessagesController extends Controller
     {
         $conversation = $this->fetchConversationForUser($request, $account, $conversationId);
         $messages = (new MessageFinder($conversation, $request->all()))->perform()->load('attachments');
+        // Dựng payload trước: người gửi đã nạp được dùng lại cho assignee ở meta.
+        $payload = MessageResource::collectionFor($messages);
 
         return response()->json([
             'meta' => [
@@ -41,7 +43,7 @@ class MessagesController extends Controller
                 'agent_last_seen_at' => $conversation->agent_last_seen_at?->toISOString(),
                 'assignee_last_seen_at' => $conversation->assignee_last_seen_at?->toISOString(),
             ],
-            'payload' => MessageResource::collectionFor($messages),
+            'payload' => $payload,
         ]);
     }
 

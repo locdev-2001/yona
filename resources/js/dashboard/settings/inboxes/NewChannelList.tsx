@@ -1,4 +1,5 @@
 import { usePage } from '@inertiajs/react';
+import { BRAND_ICONS, ICONS } from 'dashboard/icons';
 
 import { t } from '../../../i18n';
 import { accountScopedUrl } from 'dashboard/helper/URLHelper';
@@ -17,20 +18,20 @@ interface NewChannelListProps {
 }
 
 const CHANNEL_ICONS: Record<string, string> = {
-    website: 'i-woot-website',
-    facebook: 'i-woot-messenger',
-    whatsapp: 'i-woot-whatsapp',
-    sms: 'i-woot-sms',
-    email: 'i-woot-mail',
-    api: 'i-woot-api',
-    telegram: 'i-woot-telegram',
-    line: 'i-woot-line',
-    instagram: 'i-woot-instagram',
-    tiktok: 'i-ri-tiktok-line',
-    zalo: 'i-ri-chat-3-line',
+    website: ICONS.channelWebsite,
+    facebook: 'i-yona-messenger',
+    whatsapp: 'i-yona-whatsapp',
+    sms: ICONS.channelSms,
+    email: ICONS.channelEmail,
+    api: ICONS.channelApi,
+    telegram: 'i-yona-telegram',
+    line: 'i-yona-line',
+    instagram: 'i-yona-instagram',
+    tiktok: BRAND_ICONS.tiktok,
+    zalo: BRAND_ICONS.zalo,
 };
 
-const FALLBACK_ICON = 'i-ri-chat-3-line';
+const FALLBACK_ICON = ICONS.channelDefault;
 
 export default function NewChannelList({ channels = [] }: NewChannelListProps) {
     const { currentAccount } = usePage<DashboardPageProps>().props;

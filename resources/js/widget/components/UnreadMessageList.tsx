@@ -1,6 +1,5 @@
 
 import Avatar from 'dashboard/components-next/avatar/Avatar';
-import FluentIcon from 'shared/components/FluentIcon/FluentIcon';
 import { emitter } from 'shared/helpers/emitter';
 
 import { WIDGET_BUS_EVENTS } from '../helpers/constants';
@@ -9,6 +8,7 @@ import { t } from '../i18n';
 import type { MessageAttachment, MessageSender } from '../types';
 import { BOT_AVATAR_URL } from '../../shared/constants/avatars';
 import { messageHtml } from '../helpers/messageHelpers';
+import { SHARED_ICONS } from 'shared/icons';
 
 // Port từ widget/components/UnreadMessageList.vue + UnreadMessage.vue — khung
 // bong bóng nổi ngoài widget, dùng chung cho tin chưa đọc và cho campaign
@@ -110,7 +110,7 @@ export default function UnreadMessageList({
             <div className="close-unread-wrap">
                 <button type="button" className="button small close-unread-button" onClick={onClose}>
                     <span className="flex items-center">
-                        <FluentIcon className="mr-1" icon="dismiss" size="12" />
+                        <span className={`${SHARED_ICONS.close} size-3 mr-1`} aria-hidden="true" />
                         {t('UNREAD_VIEW.CLOSE_MESSAGES_BUTTON')}
                     </span>
                 </button>
@@ -153,7 +153,7 @@ export default function UnreadMessageList({
                         onClick={() => emitter.emit(WIDGET_BUS_EVENTS.ON_UNREAD_MESSAGE_CLICK)}
                     >
                         <span className="flex items-center text-[var(--yona-chat-accent-ink)]">
-                            <FluentIcon className="mr-2" size="16" icon="arrow-right" />
+                            <span className={`${SHARED_ICONS.arrowRight} size-4 mr-2`} aria-hidden="true" />
                             {t('UNREAD_VIEW.VIEW_MESSAGES_BUTTON')}
                         </span>
                     </button>

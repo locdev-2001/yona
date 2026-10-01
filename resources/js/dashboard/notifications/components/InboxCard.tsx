@@ -11,6 +11,7 @@ import { NOTIFICATION_TYPES_MAPPING } from '../helpers';
 import type { NotificationRecord } from '../types';
 import InboxContextMenu from './InboxContextMenu';
 import type { InboxMenuItem } from './InboxContextMenu';
+import { ICONS } from 'dashboard/icons';
 
 // Port từ components-next/Inbox/InboxCard.vue. SLACardLabel là EE nên bỏ.
 
@@ -75,10 +76,10 @@ export default function InboxCard({
     const menuItems: InboxMenuItem[] = [
         {
             key: isUnread ? 'mark_as_read' : 'mark_as_unread',
-            icon: isUnread ? 'mail' : 'mail-unread',
+            icon: isUnread ? ICONS.markRead : ICONS.markUnread,
             label: t(`INBOX.MENU_ITEM.MARK_AS_${isUnread ? 'READ' : 'UNREAD'}`),
         },
-        { key: 'delete', icon: 'delete', label: t('INBOX.MENU_ITEM.DELETE') },
+        { key: 'delete', icon: ICONS.delete, label: t('INBOX.MENU_ITEM.DELETE') },
     ];
 
     const messageContent = `<span class="${messageClasses.normal}">${formatPushMessage(

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { usePage } from '@inertiajs/react';
+import { BRAND_ICONS } from 'dashboard/icons';
 
 import { t } from '../../../../i18n';
 import { useAlert } from 'dashboard/composables/useAlert';
@@ -70,7 +71,7 @@ export default function TiktokChannelForm() {
                             <Button
                                 className="text-white !rounded-full !px-6 bg-gradient-to-r from-[#00f2ea] via-[#ff0050] to-[#000000]"
                                 lg
-                                icon="i-ri-tiktok-line"
+                                icon={BRAND_ICONS.tiktok}
                                 disabled={isRequestingAuthorization}
                                 isLoading={isRequestingAuthorization}
                                 label={t('INBOX_MGMT.ADD.TIKTOK.CONTINUE_WITH_TIKTOK')}

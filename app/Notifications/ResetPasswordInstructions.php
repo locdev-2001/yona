@@ -3,17 +3,22 @@
 namespace App\Notifications;
 
 use App\Models\User;
+use App\Notifications\Concerns\QueuesAuthMail;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 // Tương đương Devise reset_password_instructions
 // (template mail đầy đủ port ở D5 — email templates).
-class ResetPasswordInstructions extends Notification
+class ResetPasswordInstructions extends Notification implements ShouldQueue
 {
-    use Queueable;
+    use Queueable, QueuesAuthMail;
 
-    public function __construct(private readonly string $token) {}
+    public function __construct(private readonly string $token)
+    {
+        $this->queueForAuth();
+    }
 
     public function via(object $notifiable): array
     {

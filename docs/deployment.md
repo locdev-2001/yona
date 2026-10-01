@@ -1976,6 +1976,56 @@ php artisan attachments:reclassify-media --dry-run
 
 Lệnh không đổi nội dung tệp. Chạy lại bao nhiêu lần cũng được.
 
+### Bảng `messages` chia partition theo tháng
+
+Migration `2026_10_01_100000_partition_messages_by_month` đổi `messages` thành
+bảng chia theo tháng (`created_at`), khoá chính `(id, created_at)`, một partition
+`messages_pYYYY_MM` mỗi tháng từ tháng cũ nhất có dữ liệu tới 3 tháng sau, cộng
+`messages_default` hứng tin ngoài mọi tháng. Ba bảng trỏ vào tin
+(`csat_survey_responses`, `message_access_tokens`,
+`automation_rule_pending_executions`) có thêm cột `message_created_at` và khoá
+ngoại ghép. Chạy trong một transaction, khoá ghi `messages` tới khi xong (vài
+trăm tin: dưới một giây). `deploy.sh` chạy nó ở bước migration như mọi lần.
+
+Trước deploy:
+
+```bash
+pg_dump -Fc -d yona -f /root/yona-truoc-partition-$(date +%F).dump
+```
+
+Sau deploy:
+
+```bash
+cd /www/wwwroot/yona.vn
+# Phải ra một dòng messages | r
+psql -d yona -c "SELECT partrelid::regclass, partstrat FROM pg_partitioned_table"
+# Số tin trước và sau phải bằng nhau; tin chia vào các tháng
+psql -d yona -c "SELECT tableoid::regclass, count(*) FROM messages GROUP BY 1 ORDER BY 1"
+# Lệnh tạo tháng tới chạy lại được, lần hai phải báo "Không cần tạo partition mới"
+php artisan messages:create-partitions --months=3
+```
+
+Scheduler chạy `messages:create-partitions --months=3` hằng ngày lúc 03:20.
+Lệnh báo lỗi "Bỏ qua vì messages_default đang giữ tin của tháng đó" nghĩa là đã
+có tin của tháng ấy rơi vào DEFAULT (lịch không chạy suốt nhiều tháng, hoặc tin
+mang ngày ở tương lai xa). Tin vẫn ghi và đọc bình thường; chỉ tháng đó không có
+partition riêng. Xem các tin đó bằng
+`SELECT id, created_at FROM messages_default ORDER BY created_at DESC LIMIT 20`.
+
+Rollback (phải chạy khi code mới **còn** trên server, vì file migration nằm ở đó;
+giữ maintenance suốt quá trình vì code mới ghi `message_created_at`):
+
+```bash
+cd /www/wwwroot/yona.vn
+php artisan down
+php artisan migrate:status | tail -3                # migration partition phải là dòng cuối, không thì tăng --step
+php artisan migrate:rollback --step=1 --force   # messages về bảng thường, dữ liệu giữ nguyên
+# rồi về commit cũ theo mục Rollback ngay dưới, cuối cùng:
+php artisan up
+```
+
+Rollback lỗi thì khôi phục từ bản `pg_dump` ở trên.
+
 ### Rollback
 
 Không có release directory, nên rollback = deploy lại commit cũ:

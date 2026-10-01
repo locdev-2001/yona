@@ -27,13 +27,13 @@ export default function WhatsappChannelForm() {
             key: PROVIDER_TYPES.WHATSAPP,
             title: t('INBOX_MGMT.ADD.WHATSAPP.PROVIDERS.WHATSAPP_CLOUD'),
             description: t('INBOX_MGMT.ADD.WHATSAPP.PROVIDERS.WHATSAPP_CLOUD_DESC'),
-            icon: 'i-woot-whatsapp',
+            icon: 'i-yona-whatsapp',
         },
         {
             key: PROVIDER_TYPES.TWILIO,
             title: t('INBOX_MGMT.ADD.WHATSAPP.PROVIDERS.TWILIO'),
             description: t('INBOX_MGMT.ADD.WHATSAPP.PROVIDERS.TWILIO_DESC'),
-            icon: 'i-woot-twilio',
+            icon: 'i-yona-twilio',
         },
     ];
 

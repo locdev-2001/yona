@@ -58,6 +58,15 @@ function foldedSearchColumns(): array
     ];
 }
 
+// messages chia partition: plan đi qua index con của từng partition, mang tên tự sinh.
+function planUsesIndex(string $plan, string $index): bool
+{
+    $names = collect(DB::select('SELECT relid::regclass::text AS name FROM pg_partition_tree(?::regclass)', [$index]))
+        ->pluck('name')->push($index);
+
+    return $names->contains(fn (string $name) => str_contains($plan, $name));
+}
+
 function explainedPlan(string $sql, array $bindings): string
 {
     return collect(DB::select("EXPLAIN {$sql}", $bindings))->pluck('QUERY PLAN')->implode("\n");
@@ -110,7 +119,7 @@ it('lets the search expression use its folded trigram index', function (string $
     $table = (new $model)->getTable();
     [$condition, $bindings] = (new SearchTerm('bao gia'))->foldedMatch($columnSql);
 
-    expect(explainedPlan("SELECT {$table}.id FROM {$table} WHERE {$condition}", $bindings))->toContain($index);
+    expect(planUsesIndex(explainedPlan("SELECT {$table}.id FROM {$table} WHERE {$condition}", $bindings), $index))->toBeTrue();
 })->with(foldedSearchColumns());
 
 // Xếp hạng liên quan chỉ nằm ở ORDER BY: phần lọc vẫn phải đi qua index trigram.
@@ -122,7 +131,10 @@ it('keeps the folded trigram index usable when ordering by relevance', function 
         ->orderByDesc('id')
         ->limit(SearchService::RESULTS_PER_PAGE);
 
-    expect(explainedPlan($query->toSql(), $query->getBindings()))->toContain($index)->toContain('Sort');
+    $plan = explainedPlan($query->toSql(), $query->getBindings());
+
+    expect(planUsesIndex($plan, $index))->toBeTrue()
+        ->and($plan)->toContain('Sort');
 })->with(foldedSearchColumns());
 
 it('splits the folded query into distinct words', function (string $query, array $words) {

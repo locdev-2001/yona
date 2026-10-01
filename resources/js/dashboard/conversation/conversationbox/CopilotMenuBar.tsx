@@ -1,4 +1,5 @@
 import { useRef } from 'react';
+import { ICONS } from 'dashboard/icons';
 
 import Button from 'dashboard/components-next/button/Button';
 import Icon from 'dashboard/components-next/icon/Icon';
@@ -40,7 +41,7 @@ export default function CopilotMenuBar({
         menuItems.push({
             label: t('INTEGRATION_SETTINGS.OPEN_AI.REPLY_OPTIONS.IMPROVE_REPLY'),
             key: 'improve',
-            icon: 'i-fluent-pen-sparkle-24-regular',
+            icon: ICONS.aiImprove,
         });
     }
     if (hasContent) {
@@ -48,7 +49,7 @@ export default function CopilotMenuBar({
             {
                 label: t('INTEGRATION_SETTINGS.OPEN_AI.REPLY_OPTIONS.CHANGE_TONE.TITLE'),
                 key: 'change_tone',
-                icon: 'i-fluent-sound-wave-circle-sparkle-24-regular',
+                icon: ICONS.aiTone,
                 subMenuItems: ['PROFESSIONAL', 'CASUAL', 'STRAIGHTFORWARD', 'CONFIDENT', 'FRIENDLY'].map(tone => ({
                     label: t(`INTEGRATION_SETTINGS.OPEN_AI.REPLY_OPTIONS.CHANGE_TONE.OPTIONS.${tone}`),
                     key: tone.toLowerCase(),
@@ -57,7 +58,7 @@ export default function CopilotMenuBar({
             {
                 label: t('INTEGRATION_SETTINGS.OPEN_AI.REPLY_OPTIONS.GRAMMAR'),
                 key: 'fix_spelling_grammar',
-                icon: 'i-fluent-flow-sparkle-24-regular',
+                icon: ICONS.aiGrammar,
             },
         );
     }
@@ -67,20 +68,20 @@ export default function CopilotMenuBar({
         generalMenuItems.push({
             label: t('INTEGRATION_SETTINGS.OPEN_AI.REPLY_OPTIONS.SUGGESTION'),
             key: 'reply_suggestion',
-            icon: 'i-fluent-chat-sparkle-16-regular',
+            icon: ICONS.aiSuggestion,
         });
     }
     if (conversationId) {
         generalMenuItems.push({
             label: t('INTEGRATION_SETTINGS.OPEN_AI.REPLY_OPTIONS.SUMMARIZE'),
             key: 'summarize',
-            icon: 'i-fluent-text-bullet-list-square-sparkle-32-regular',
+            icon: ICONS.aiSummarize,
         });
     }
     generalMenuItems.push({
         label: t('INTEGRATION_SETTINGS.OPEN_AI.REPLY_OPTIONS.ASK_COPILOT'),
         key: 'ask_copilot',
-        icon: 'i-fluent-circle-sparkle-24-regular',
+        icon: ICONS.ai,
     });
 
     const handleMenuItemClick = (item: CopilotMenuItem) => {

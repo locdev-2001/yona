@@ -7,6 +7,7 @@ import './CustomSnoozeModal.scss';
 import Button from 'dashboard/components-next/button/Button';
 import ModalHeader from 'dashboard/components/ModalHeader';
 import { t } from '../../i18n';
+import { ICONS } from 'dashboard/icons';
 
 // Port từ dashboard/components/CustomSnoozeModal.vue. Gốc dùng vue-datepicker-next
 // 1.0.3 `type="datetime"` (prop `inline` không tồn tại ở bản đó → vẫn là ô nhập +
@@ -60,14 +61,6 @@ function ButtonIcon({ value, onClick }: { value: string; onClick: () => void }) 
         <button type="button" className={`mx-btn mx-btn-text mx-btn-icon-${value}`} onClick={onClick}>
             <i className={`mx-icon-${value}`} />
         </button>
-    );
-}
-
-function CalendarIcon() {
-    return (
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1em" height="1em">
-            <path d="M940.218 107.055H730.764v-60.51H665.6v60.51H363.055v-60.51H297.89v60.51H83.78c-18.617 0-32.581 13.963-32.581 32.581v805.237c0 18.618 13.964 32.582 32.582 32.582h861.09c18.619 0 32.583-13.964 32.583-32.582V139.636c-4.655-18.618-18.619-32.581-37.237-32.581zm-642.327 65.163v60.51h65.164v-60.51h307.2v60.51h65.163v-60.51h176.873v204.8H116.364v-204.8H297.89zM116.364 912.291V442.18H912.29v470.11H116.364z" />
-        </svg>
     );
 }
 
@@ -320,7 +313,7 @@ function DateTimePicker({ value, onChange }: DateTimePickerProps) {
                     onFocus={openPopup}
                 />
                 <i className="mx-icon-calendar">
-                    <CalendarIcon />
+                    <span className={`${ICONS.calendar} block`} aria-hidden="true" />
                 </i>
             </div>
             {popup ? createPortal(popup, document.body) : null}

@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react';
 
+import { ICONS } from 'dashboard/icons';
+
 import { t } from '../../../../i18n';
 
 // Khối hướng dẫn từng bước dùng chung cho form kênh kiểu "dán mã" (Telegram, LINE…).
@@ -42,7 +44,7 @@ export function GuideLinkButton({ href, label }: { href: string; label: string }
             className="inline-flex w-fit items-center gap-1.5 rounded-lg bg-n-brand px-3 py-1.5 text-body-main font-medium text-white hover:opacity-90"
         >
             {label}
-            <span aria-hidden="true" className="i-lucide-external-link size-3.5" />
+            <span aria-hidden="true" className={`${ICONS.externalLink} size-3.5`} />
         </a>
     );
 }

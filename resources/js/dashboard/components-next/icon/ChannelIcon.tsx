@@ -2,11 +2,12 @@ import Icon from 'dashboard/components-next/icon/Icon';
 import PlatformLogo from 'dashboard/components-next/icon/PlatformLogo';
 import { getInboxIconByType } from 'dashboard/helper/inbox';
 import type { ChannelPlatform } from 'shared/constants/channelPlatform';
+import { ICONS } from 'dashboard/icons';
 
 // Hộp thư mang `platform` (kênh tự khai) thì vẽ logo màu của nền tảng. Payload
 // chỉ có `channel_type` (danh mục chọn loại kênh, tìm kiếm, thông báo…) lùi về
 // bảng icon đơn sắc ở `helper/inbox.ts`.
-const UNKNOWN_CHANNEL_ICON = 'i-ri-global-fill';
+const UNKNOWN_CHANNEL_ICON = ICONS.channelWebsite;
 
 export interface ChannelIconInbox {
     channel_type: string;

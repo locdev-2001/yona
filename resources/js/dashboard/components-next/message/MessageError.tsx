@@ -53,7 +53,7 @@ export default function MessageError({
             <span>{t('CHAT_LIST.FAILED_TO_SEND')}</span>
             <div className="relative group">
                 <div className="bg-n-alpha-2 rounded-md size-5 grid place-content-center cursor-help" title={detail}>
-                    <Icon icon="i-lucide-alert-triangle" className="text-n-ruby-11 size-[14px]" />
+                    <Icon icon="i-lucide-triangle-alert" className="text-n-ruby-11 size-[14px]" />
                 </div>
                 {detail ? (
                     <div

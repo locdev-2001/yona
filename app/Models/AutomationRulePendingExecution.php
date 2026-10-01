@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\ReferencesPartitionedMessage;
 use Carbon\CarbonInterface;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -14,6 +15,8 @@ use Illuminate\Support\Facades\DB;
 // gửi lại message khách hàng đã nhận.
 class AutomationRulePendingExecution extends Model
 {
+    use ReferencesPartitionedMessage;
+
     public const STATUS_PENDING = 0;
 
     public const STATUS_PROCESSING = 1;
@@ -31,7 +34,7 @@ class AutomationRulePendingExecution extends Model
     public const RETENTION_WINDOW_DAYS = 30;
 
     protected $fillable = [
-        'account_id', 'automation_rule_id', 'conversation_id', 'message_id',
+        'account_id', 'automation_rule_id', 'conversation_id', 'message_id', 'message_created_at',
         'due_at', 'episode_key', 'skip_reason', 'status',
     ];
 
@@ -116,6 +119,7 @@ class AutomationRulePendingExecution extends Model
                 'account_id' => $conversation->account_id,
                 'conversation_id' => $conversation->id,
                 'message_id' => $message?->id,
+                'message_created_at' => $message === null ? null : self::messageCreatedAtOf($message),
                 'episode_key' => $episodeKey,
                 'due_at' => $anchor->copy()->addMinutes((int) $rule->execution_delay),
                 'status' => self::STATUS_PENDING,
@@ -163,6 +167,7 @@ class AutomationRulePendingExecution extends Model
                 'skip_reason' => null,
                 'due_at' => $anchor->copy()->addMinutes((int) $rule->execution_delay),
                 'message_id' => $message->id,
+                'message_created_at' => self::messageCreatedAtOf($message),
             ]);
         });
 

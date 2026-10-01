@@ -93,7 +93,7 @@ export default function MacroNodes({
                         className="shadow-sm"
                         solid
                         teal
-                        icon="i-lucide-plus-circle"
+                        icon="i-lucide-circle-plus"
                         onClick={onAddNewNode}
                     />
                 </div>

@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-import FluentIcon from 'shared/components/FluentIcon/FluentIcon';
+import { ICONS } from 'dashboard/icons';
 
 // Port từ dashboard/components/Accordion/AccordionItem.vue (EmojiOrIcon với
 // icon/emoji rỗng KHÔNG render gì → không chèn ô giữ chỗ; kéo thả sắp xếp =
@@ -43,7 +43,7 @@ export default function AccordionItem({
                 <div className="flex flex-row">
                     {button}
                     <div className="flex justify-end w-3 text-n-blue-11 cursor-pointer">
-                        <FluentIcon size="24" icon={isOpen ? 'subtract' : 'add'} type="solid" />
+                        <span className={`${isOpen ? ICONS.collapse : ICONS.expand} size-6`} aria-hidden="true" />
                     </div>
                 </div>
             </button>

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Concerns\AvailabilityStatusable;
+use App\Models\Concerns\SharesRequestModels;
 use App\Support\OnlineStatusTracker;
 use Database\Factories\AccountUserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -12,7 +13,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class AccountUser extends Model
 {
     /** @use HasFactory<AccountUserFactory> */
-    use AvailabilityStatusable, HasFactory;
+    use AvailabilityStatusable, HasFactory, SharesRequestModels;
 
     public const ROLE_AGENT = 0;
 

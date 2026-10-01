@@ -1,11 +1,11 @@
 import type { ReactNode } from 'react';
 
 import { t } from '../../../i18n';
-import FluentIcon from 'shared/components/FluentIcon/FluentIcon';
 import ToggleSwitch from 'dashboard/components-next/switch/Switch';
 import SelectInput from 'dashboard/components-next/select/Select';
 import AlertTonePicker from 'dashboard/alertSound/AlertTonePicker';
 import { ALERT_SCOPES, type AgentAlertPreference, type AlertScope } from 'dashboard/alertSound/preference';
+import { ICONS } from 'dashboard/icons';
 
 const SCOPE_LABEL_KEYS: Record<AlertScope, string> = {
     all: 'PROFILE_SETTINGS.FORM.NOTIFICATIONS.SOUND.SCOPE_ALL',
@@ -39,7 +39,7 @@ export default function AlertSoundPreferences({ value, onChange }: AlertSoundPre
         <div id="profile-settings-alert-sound" className="flex flex-col gap-4 p-4 border border-solid border-n-weak rounded-xl">
             <div className="flex items-center justify-between w-full gap-2">
                 <div className="flex flex-row items-start gap-2">
-                    <FluentIcon icon="speaker-1" className="flex-shrink-0 mt-0.5 text-n-slate-12" size={18} />
+                    <span className={`${ICONS.notificationSound} size-[1.125rem] flex-shrink-0 mt-0.5 text-n-slate-12`} aria-hidden="true" />
                     <div className="flex flex-col gap-0.5">
                         <span className="text-body-main text-n-slate-12">{t('PROFILE_SETTINGS.FORM.NOTIFICATIONS.SOUND.TITLE')}</span>
                         <span className="text-label-small text-n-slate-11">

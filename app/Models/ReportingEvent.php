@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\SharesRequestModels;
 use Database\Factories\ReportingEventFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -11,7 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class ReportingEvent extends Model
 {
     /** @use HasFactory<ReportingEventFactory> */
-    use HasFactory;
+    use HasFactory, SharesRequestModels;
 
     public const NAME_CONVERSATION_RESOLVED = 'conversation_resolved';
 

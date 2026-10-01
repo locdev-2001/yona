@@ -3,9 +3,9 @@ import { usePage } from '@inertiajs/react';
 
 import { t } from '../../i18n';
 import { BUS_EVENTS } from 'shared/helpers/emitter';
-import FluentIcon from 'shared/components/FluentIcon/FluentIcon';
 import Button from 'dashboard/components-next/button/Button';
 import { useRealtimeEvent } from 'dashboard/realtime/hooks';
+import { ICONS } from 'dashboard/icons';
 
 // Port từ dashboard/components/NetworkNotification.vue.
 const RECONNECTED_BANNER_TIMEOUT = 2000;
@@ -36,7 +36,7 @@ export default function NetworkNotification() {
         : isReconnected
           ? t('NETWORK.NOTIFICATION.RECONNECT_SUCCESS')
           : t('NETWORK.NOTIFICATION.OFFLINE');
-    const iconName = isReconnected ? 'wifi' : 'wifi-off';
+    const iconName = isReconnected ? ICONS.wifi : ICONS.offline;
     const canRefresh = !isReconnecting && !isReconnected;
 
     const refreshPage = () => window.location.reload();
@@ -103,7 +103,7 @@ export default function NetworkNotification() {
             hidden={!showNotification}
         >
             <div className="relative flex items-center justify-between w-full px-2 py-1 bg-n-amber-4 rounded-lg shadow-lg">
-                <FluentIcon icon={iconName} className="text-n-amber-12" size="18" />
+                <span className={`${iconName} size-[1.125rem] text-n-amber-12`} aria-hidden="true" />
                 <span className="px-2 text-xs font-medium tracking-wide text-n-amber-12">{bannerText}</span>
                 {canRefresh && (
                     <Button

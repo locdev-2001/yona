@@ -3,6 +3,7 @@
 namespace App\Models\Channel\Concerns;
 
 use App\Models\Account;
+use App\Models\Concerns\SharesRequestModels;
 use App\Models\Inbox;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphOne;
@@ -14,6 +15,8 @@ use Illuminate\Support\Str;
 // (base58 24 ký tự). Thêm kênh mới = dùng trait này, không chép lại.
 trait Channelable
 {
+    use SharesRequestModels;
+
     public function account(): BelongsTo
     {
         return $this->belongsTo(Account::class);

@@ -89,7 +89,7 @@ export default function MoreActions({ isCompact = false }: { isCompact?: boolean
                     sm
                     ghost
                     slate
-                    icon="i-lucide-more-vertical"
+                    icon="i-lucide-ellipsis-vertical"
                     className="rounded-md group-hover:bg-n-alpha-2"
                     onClick={() => setShowActionsDropdown(open => !open)}
                 />

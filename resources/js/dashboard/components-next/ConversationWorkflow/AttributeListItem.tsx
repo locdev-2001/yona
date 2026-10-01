@@ -3,6 +3,7 @@ import Icon from 'dashboard/components-next/icon/Icon';
 import Label from 'dashboard/components-next/label/Label';
 import AttributeBadge from 'dashboard/components-next/CustomAttributes/AttributeBadge';
 import type { AttributeBadgeType } from 'dashboard/components-next/CustomAttributes/AttributeBadge';
+import { ICONS } from 'dashboard/icons';
 
 // Port từ dashboard/components-next/ConversationWorkflow/AttributeListItem.vue
 export interface AttributeListEntry {
@@ -59,9 +60,9 @@ export default function AttributeListItem({ attribute, badges = [], onEdit, onDe
                     </div>
                 </div>
                 <div className="flex gap-3 justify-end flex-shrink-0">
-                    <Button icon="i-woot-edit-pen" slate sm onClick={() => onEdit(attribute)} />
+                    <Button icon={ICONS.edit} slate sm onClick={() => onEdit(attribute)} />
                     <Button
-                        icon="i-woot-bin"
+                        icon={ICONS.delete}
                         slate
                         sm
                         className="hover:enabled:text-n-ruby-11 hover:enabled:bg-n-ruby-2"

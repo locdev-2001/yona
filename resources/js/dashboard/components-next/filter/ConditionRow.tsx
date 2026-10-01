@@ -63,7 +63,7 @@ const queryOperatorOptions: FilterSelectOption[] = [
     {
         label: t('FILTER.QUERY_DROPDOWN_LABELS.OR'),
         value: 'or',
-        icon: <span className="i-woot-logic-or !text-n-blue-11" />,
+        icon: <span className="i-yona-logic-or !text-n-blue-11" />,
     },
 ];
 

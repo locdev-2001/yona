@@ -6,7 +6,7 @@ const ATTRIBUTE_ICONS: Record<string, string> = {
     name: 'i-lucide-user',
     email: 'i-lucide-mail',
     phone_number: 'i-lucide-phone',
-    identifier: 'i-lucide-fingerprint',
+    identifier: 'i-lucide-fingerprint-pattern',
     country_code: 'i-lucide-flag',
     city: 'i-lucide-map-pin',
     company_name: 'i-lucide-building-2',

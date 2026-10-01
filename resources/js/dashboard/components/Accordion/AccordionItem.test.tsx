@@ -15,7 +15,7 @@ describe('AccordionItem', () => {
 
         expect(queryByText('body')).toBeNull();
         expect(container.querySelector('button')).not.toHaveClass('rounded-bl-none');
-        expect(container.querySelector('svg')).not.toBeNull();
+        expect(container.querySelector('.i-lucide-plus')).not.toBeNull();
     });
 
     it('renders open with the subtract icon and the body', () => {
@@ -27,5 +27,6 @@ describe('AccordionItem', () => {
 
         expect(getByText('body')).toBeInTheDocument();
         expect(container.querySelector('button')).toHaveClass('rounded-bl-none');
+        expect(container.querySelector('.i-lucide-minus')).not.toBeNull();
     });
 });

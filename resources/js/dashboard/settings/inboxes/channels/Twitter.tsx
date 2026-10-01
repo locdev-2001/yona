@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { usePage } from '@inertiajs/react';
 import type { FormEvent } from 'react';
+import { BRAND_ICONS } from 'dashboard/icons';
 
 import { t } from '../../../../i18n';
 import { useAlert } from 'dashboard/composables/useAlert';
@@ -36,7 +37,7 @@ export default function TwitterChannelForm() {
                 <form onSubmit={event => void requestAuthorization(event)}>
                     <Button
                         type="submit"
-                        icon="i-ri-twitter-x-fill"
+                        icon={BRAND_ICONS.x}
                         label="Sign in with Twitter"
                         isLoading={isRequestingAuthorization}
                     />

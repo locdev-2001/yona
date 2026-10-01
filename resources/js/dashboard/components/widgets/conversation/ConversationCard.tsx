@@ -6,7 +6,6 @@ import Avatar from 'dashboard/components-next/avatar/Avatar';
 import Checkbox from 'dashboard/components-next/checkbox/Checkbox';
 import Icon from 'dashboard/components-next/icon/Icon';
 import type { ChannelIconInbox } from 'dashboard/components-next/icon/ChannelIcon';
-import FluentIcon from 'shared/components/FluentIcon/FluentIcon';
 import CardPriorityIcon from 'dashboard/components-next/Conversation/ConversationCard/CardPriorityIcon';
 import UnreadBadge from 'dashboard/components-next/Conversation/ConversationCard/UnreadBadge';
 import { getLastMessage } from '../../../helper/conversationHelper';
@@ -18,6 +17,7 @@ import CardLabels from './conversationCardComponents/CardLabels';
 import HighlightedText from 'dashboard/search/components/HighlightedText';
 import { useContactAvailabilityStatus } from 'dashboard/realtime/hooks';
 import type { AvailabilityStatus } from 'dashboard/constants/globals';
+import { ICONS } from 'dashboard/icons';
 
 const STATUS_DOT_COLOR: Record<string, string> = {
     open: 'bg-n-teal-10',
@@ -231,7 +231,7 @@ export default function ConversationCard({
                         key="no-messages"
                         className={`text-n-slate-11 text-sm my-0 mx-2 leading-6 h-6 flex-1 min-w-0 overflow-hidden text-ellipsis whitespace-nowrap ${messagePreviewClass}`.trim()}
                     >
-                        <FluentIcon size={16} className="-mt-0.5 align-middle inline-block text-n-slate-10" icon="info" />
+                        <span className={`${ICONS.info} size-4 -mt-0.5 align-middle inline-block text-n-slate-10`} aria-hidden="true" />
                         <span className="mx-0.5">{t('CHAT_LIST.NO_MESSAGES')}</span>
                     </p>
                 )}

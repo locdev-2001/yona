@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { usePage } from '@inertiajs/react';
+import { ICONS } from 'dashboard/icons';
 
 import { t } from '../../../i18n';
 import BaseSettingsHeader from '../BaseSettingsHeader';
@@ -111,7 +112,7 @@ export default function MultipleIntegrationHooks({
                                     <div className="flex justify-end gap-3 flex-shrink-0">
                                         <Button
                                             title={t('INTEGRATION_APPS.LIST.DELETE.BUTTON_TEXT')}
-                                            icon="i-woot-bin"
+                                            icon={ICONS.delete}
                                             slate
                                             sm
                                             className="hover:enabled:text-n-ruby-11 hover:enabled:bg-n-ruby-2"

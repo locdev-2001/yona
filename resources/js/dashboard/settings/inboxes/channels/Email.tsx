@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
+import { ICONS } from 'dashboard/icons';
 
 import { t } from '../../../../i18n';
 import ChannelSelector from 'dashboard/components/ChannelSelector';
@@ -16,11 +17,11 @@ import type { ChannelConnection } from '../channelConnection';
 // Lối OAuth chuyển sang nhà cung cấp; lối có `preset` (Gmail, Outlook) chỉ hỏi địa chỉ +
 // App Password; "Khác" điền đủ máy chủ. Máy chủ thử đăng nhập IMAP/SMTP khi lưu.
 const OPTION_ICONS: Record<string, string> = {
-    google: 'i-woot-gmail',
-    microsoft: 'i-woot-outlook',
-    gmail: 'i-woot-gmail',
-    outlook: 'i-woot-outlook',
-    other: 'i-woot-mail',
+    google: 'i-yona-gmail',
+    microsoft: 'i-yona-outlook',
+    gmail: 'i-yona-gmail',
+    outlook: 'i-yona-outlook',
+    other: ICONS.channelEmail,
 };
 
 const FALLBACK_OPTIONS: ChannelConnection[] = [
@@ -339,7 +340,7 @@ export default function EmailChannelForm({ connection = null }: ChannelFormProps
                         key={option.key}
                         title={optionText(option.key, 'TITLE')}
                         description={optionText(option.key, 'DESCRIPTION')}
-                        icon={OPTION_ICONS[option.key] ?? 'i-woot-mail'}
+                        icon={OPTION_ICONS[option.key] ?? ICONS.channelEmail}
                         onClick={() => choose(option)}
                     />
                 ))}

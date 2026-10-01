@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { ICONS } from 'dashboard/icons';
 
 import NextButton from 'dashboard/components-next/button/Button';
 import { CHAR_LENGTH_WARNING, REPLY_EDITOR_MODES } from 'dashboard/components/widgets/WootWriter/constants';
@@ -98,7 +99,7 @@ export default function ReplyTopPanel({
                                     : 'text-n-violet-9 hover:enabled:!bg-n-violet-3'
                             }
                             sm
-                            icon="i-ph-sparkle-fill"
+                            icon={ICONS.ai}
                             onClick={() => setShowCopilotMenu(open => !open)}
                         />
                         {showCopilotMenu ? (

@@ -4,7 +4,6 @@ import { router, usePage } from '@inertiajs/react';
 import { t } from '../../i18n';
 import Dashboard from '../Dashboard';
 import Button from 'dashboard/components-next/button/Button';
-import FluentIcon from 'shared/components/FluentIcon/FluentIcon';
 import SearchHeader from './components/SearchHeader';
 import SearchTabs, { type SearchTabConfig } from './components/SearchTabs';
 import SearchResultArticlesList from './components/SearchResultArticlesList';
@@ -25,6 +24,7 @@ import {
 } from './store';
 import type { SearchFilterState, SearchTab } from './types';
 import type { DashboardPageProps } from '../types';
+import { ICONS } from 'dashboard/icons';
 
 // Port từ dashboard/modules/search/components/SearchView.vue.
 // Khác biệt cố ý: Policy/permission vai trò tuỳ biến là EE — CE mọi vai trò
@@ -326,7 +326,7 @@ export default function SearchView({ tab }: { tab?: string | null }) {
                                 </div>
                             ) : showEmptySearchResults ? (
                                 <div className="flex flex-col items-center justify-center px-4 py-6 mt-8 rounded-md">
-                                    <FluentIcon icon="info" size="16" className="text-n-slate-11" />
+                                    <span className={`${ICONS.info} size-4 text-n-slate-11`} aria-hidden="true" />
                                     <p className="m-2 text-center text-n-slate-11">
                                         {t('SEARCH.EMPTY_STATE_FULL', { query })}
                                     </p>
@@ -334,7 +334,7 @@ export default function SearchView({ tab }: { tab?: string | null }) {
                             ) : !query ? (
                                 <div className="flex flex-col items-center justify-center px-4 py-6 mt-8 text-center rounded-md">
                                     <p className="text-center margin-bottom-0">
-                                        <FluentIcon icon="search" size="24" className="text-n-slate-11" />
+                                        <span className={`${ICONS.search} size-6 text-n-slate-11`} aria-hidden="true" />
                                     </p>
                                     <p className="m-2 text-center text-n-slate-11">
                                         {t('SEARCH.EMPTY_STATE_DEFAULT')}
