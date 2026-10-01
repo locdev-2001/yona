@@ -38,17 +38,33 @@ use App\Http\Controllers\SuperAdmin\SettingsController as SuperAdminSettingsCont
 use App\Http\Controllers\SuperAdmin\StickerPacksController as SuperAdminStickerPacksController;
 use App\Http\Controllers\SuperAdmin\UsersController as SuperAdminUsersController;
 use App\Http\Middleware\EnsureSuperAdminMfaEnrolled;
+use App\Http\Middleware\ExpireIdleSuperAdminSession;
+use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\RestrictWidgetEmbedding;
+use App\Http\Middleware\StartSession;
 use App\Http\Middleware\SuperAdminInertia;
+use App\Http\Middleware\TrackUserSessionActivity;
+use App\Http\Middleware\ValidateCsrfToken;
 use App\Models\Account;
 use Illuminate\Support\Facades\Route;
+use Illuminate\View\Middleware\ShareErrorsFromSession;
 use Inertia\Inertia;
 
 // Chuyển hướng tệp đính kèm: URL kết thúc bằng tên tệp gốc rồi 301 sang tệp
 // thật, đúng hành vi ActiveStorage của bản gốc. `{token}` là chữ ký HMAC của id
 // (kèm hạn dùng cho URL gửi ra ngoài) — chỗ ActiveStorage đặt `signed_id`.
+// Chữ ký trong URL là quyền xem, nên bỏ phiên và Inertia: hội thoại nhóm nhiều
+// ảnh bắn hàng chục request cùng lúc, mỗi request ghi đè cùng một dòng `sessions`.
 Route::get('/attachments/{attachment}/{token}/{filename}', [AttachmentsController::class, 'show'])
-    ->whereNumber('attachment')->where('filename', '.*')->name('attachments.show');
+    ->whereNumber('attachment')->where('filename', '.*')->name('attachments.show')
+    ->withoutMiddleware([
+        StartSession::class,
+        ShareErrorsFromSession::class,
+        ValidateCsrfToken::class,
+        HandleInertiaRequests::class,
+        TrackUserSessionActivity::class,
+        ExpireIdleSuperAdminSession::class,
+    ]);
 
 // Trang chủ công khai (nhánh `main` mang sang): gốc tên miền là trang giới thiệu
 // sản phẩm, không đẩy thẳng khách vào màn đăng nhập như bản gốc.

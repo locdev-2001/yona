@@ -384,6 +384,27 @@ describe('attachments', function () {
         expect(Attachment::query()->whereKey($attachment->id)->exists())->toBeFalse();
         Storage::disk('public')->assertMissing($attachment->path);
     });
+
+    it('broadcasts a recalled message without the attachments it no longer has', function () {
+        $conversation = messageConversation();
+        $message = Message::factory()->create(messageAttributesFor($conversation));
+        $message->attachments()->create(
+            Attachment::storeUpload(UploadedFile::fake()->image('thu-hoi.png'), $message->account_id)
+        );
+
+        $payloads = [];
+        Event::listen(DomainEvent::class, function (DomainEvent $event) use (&$payloads) {
+            if ($event->type === EventType::MESSAGE_UPDATED) {
+                $payloads[] = MessageResource::pushEventData($event->data['message']);
+            }
+        });
+
+        $message->fresh()->markDeleted('vi');
+
+        expect($payloads)->toHaveCount(1)
+            ->and($payloads[0]['content_attributes']['deleted'])->toBeTrue()
+            ->and($payloads[0])->not->toHaveKey('attachments');
+    });
 });
 
 describe('repliedMessage', function () {

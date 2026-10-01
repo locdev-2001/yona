@@ -11,6 +11,7 @@ import { ATTACHMENT_TYPES } from '../constants';
 import { resolveGalleryItems, singleMediaFrame } from '../helpers/attachments';
 import type { MessageAttachment } from '../helpers/attachments';
 import { useLoadWithRetry } from '../helpers/useLoadWithRetry';
+import { useRetryWhenBack } from '../helpers/useRetryWhenBack';
 import { useMessageContext } from '../provider';
 
 const VIDEO_TYPES: string[] = [ATTACHMENT_TYPES.VIDEO, ATTACHMENT_TYPES.IG_REEL];
@@ -40,11 +41,14 @@ function TileFailed() {
 
 function ImageTileContent({ attachment, onNaturalSize }: Pick<MediaTileProps, 'attachment' | 'onNaturalSize'>) {
     const { isLoaded, hasError, loadWithRetry } = useLoadWithRetry();
+    const [reloadKey, setReloadKey] = useState(0);
 
     useEffect(() => {
         if (attachment.data_url) void loadWithRetry(attachment.data_url);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [attachment.data_url]);
+    }, [attachment.data_url, reloadKey]);
+
+    useRetryWhenBack(hasError, () => setReloadKey((key) => key + 1));
 
     if (hasError || !attachment.data_url) return <TileFailed />;
     if (!isLoaded) return <div data-media-placeholder className="size-full bg-n-alpha-2 animate-pulse" />;

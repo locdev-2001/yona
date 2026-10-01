@@ -119,6 +119,15 @@ describe('file urls', function () {
         $this->get("/attachments/{$attachment->id}/{$attachment->filename}")->assertNotFound();
     });
 
+    it('serves the redirect without touching the session', function () {
+        $message = attachmentMessage();
+        $attachment = attachmentWithFile($message, UploadedFile::fake()->image('group.jpg'));
+
+        $response = $this->get($attachment->fileUrl())->assertStatus(301);
+
+        expect($response->headers->getCookies())->toBe([]);
+    });
+
     it('rejects a signature minted for another attachment', function () {
         $message = attachmentMessage();
         $attachment = attachmentWithFile($message, UploadedFile::fake()->image('mine.png'));

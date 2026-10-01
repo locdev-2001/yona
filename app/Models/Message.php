@@ -234,14 +234,17 @@ class Message extends Model
     public function markDeleted(?string $locale = null): void
     {
         DB::transaction(function () use ($locale) {
+            // Gỡ tệp trước update(): sự kiện message.updated dựng payload ngay trong
+            // hook `updated`, còn giữ tệp thì agent đang mở hội thoại nhận ô ảnh trỏ
+            // vào tệp sắp bị xoá.
+            $this->attachments()->get()->each->delete();
+            $this->setRelation('attachments', $this->attachments()->getRelated()->newCollection());
+
             $this->update([
                 'content' => __('conversations.messages.deleted', [], $locale),
                 'content_type' => self::CONTENT_TYPES['text'],
                 'content_attributes' => ['deleted' => true],
             ]);
-
-            $this->attachments()->get()->each->delete();
-            $this->setRelation('attachments', $this->attachments()->getRelated()->newCollection());
         });
     }
 
