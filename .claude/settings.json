@@ -23,7 +23,8 @@
       "Bash(make test *)",
       "Bash(make pint-test *)",
       "Bash(make stan *)",
-      "Bash(pnpm run *)"
+      "Bash(pnpm run *)",
+      "Bash(.claude/skills/yona-issues/scripts/prod-db.sh *)"
     ]
   },
   "hooks": {
