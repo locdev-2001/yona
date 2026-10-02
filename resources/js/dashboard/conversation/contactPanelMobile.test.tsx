@@ -1,4 +1,4 @@
-import { act, render, renderHook, screen } from '@testing-library/react';
+import { act, cleanup, render, renderHook, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const conversationState = vi.hoisted(() => ({ uiSettings: {} as Record<string, unknown>, updateUISettings: vi.fn() }));
@@ -11,7 +11,7 @@ vi.mock('./ConversationContext', () => ({
     useConversation: () => conversationState,
 }));
 
-import ConversationSidebar from './conversationbox/ConversationSidebar';
+import ConversationSidebar, { CONTACT_PANEL_SLIDE_MS } from './conversationbox/ConversationSidebar';
 import { setContactPanelOverlayOpen, useContactPanelControl } from './contactPanelVisibility';
 
 function setViewportWidth(width: number) {
@@ -26,6 +26,7 @@ const originalWidth = window.innerWidth;
 beforeEach(() => setContactPanelOverlayOpen(false));
 
 afterEach(() => {
+    cleanup();
     setContactPanelOverlayOpen(false);
     Object.defineProperty(window, 'innerWidth', { value: originalWidth, configurable: true, writable: true });
 });
@@ -84,29 +85,30 @@ describe('panel phải trên màn rộng vẫn ghi ui_settings', () => {
     });
 });
 
-describe('nút mở panel nằm trong cột phải, không nổi đè khung tin', () => {
-    it('màn rộng đã đóng panel: cột phải thu thành dải chỉ còn nút mở, bấm thì ghi lựa chọn mở', () => {
+describe('panel phải đóng thì trượt đi, không để lại dải nào', () => {
+    it('màn rộng đã đóng: cột co về bề rộng 0, không nhận focus, nội dung gỡ sau khi trượt xong', () => {
+        vi.useFakeTimers();
         Object.defineProperty(window, 'innerWidth', { value: 1440, configurable: true, writable: true });
         conversationState.uiSettings = { is_contact_sidebar_open: false };
-        conversationState.updateUISettings = vi.fn();
 
         render(<ConversationSidebar />);
 
-        expect(screen.queryByTestId('conversation-sidebar')).toBeNull();
-        const rail = screen.getByTestId('conversation-sidebar-rail');
-        act(() => rail.querySelector('button')!.click());
-        expect(conversationState.updateUISettings).toHaveBeenCalledWith({
-            is_contact_sidebar_open: true,
-            is_copilot_panel_open: false,
-        });
+        const sidebar = screen.getByTestId('conversation-sidebar');
+        expect(sidebar.dataset.open).toBe('false');
+        expect(sidebar.className).toContain('w-0');
+        expect(sidebar.hasAttribute('inert')).toBe(true);
+        act(() => vi.advanceTimersByTime(CONTACT_PANEL_SLIDE_MS));
+        expect(sidebar.textContent).toBe('');
+        vi.useRealTimers();
     });
 
-    it('màn hẹp đã đóng lớp phủ: không vẽ dải nào, nút mở nằm ở mũ khung chat', () => {
+    it('màn hẹp đã đóng lớp phủ: lớp phủ nằm ngoài mép phải và nền mờ không chặn bấm', () => {
         Object.defineProperty(window, 'innerWidth', { value: 390, configurable: true, writable: true });
         conversationState.uiSettings = {};
 
-        const { container } = render(<ConversationSidebar />);
+        render(<ConversationSidebar />);
 
-        expect(container.innerHTML).toBe('');
+        expect(screen.getByTestId('conversation-sidebar').className).toContain('ltr:translate-x-full');
+        expect(screen.getByRole('button', { hidden: true }).className).toContain('pointer-events-none');
     });
 });

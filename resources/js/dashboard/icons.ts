@@ -76,6 +76,8 @@ export const ICONS = {
 
     // Liên hệ
     contact: 'i-lucide-user',
+    contactPanelOpen: 'i-lucide-panel-right-open',
+    contactPanelClose: 'i-lucide-panel-right-close',
     contactIdentifier: 'i-lucide-user-cog',
     company: 'i-lucide-building-2',
     activity: 'i-lucide-activity',

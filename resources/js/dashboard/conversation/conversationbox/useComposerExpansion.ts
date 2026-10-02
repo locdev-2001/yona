@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { RefObject } from 'react';
+import type { PointerEvent as ReactPointerEvent, RefObject } from 'react';
 
 import { isActiveElementTypeable } from 'dashboard/composables/useKeyboardEvents';
 
@@ -9,14 +9,16 @@ import { isActiveElementTypeable } from 'dashboard/composables/useKeyboardEvents
 //
 // "Bên trong" được xét theo cây React, không theo DOM: popover/dialog của thanh
 // công cụ dựng qua portal ra `document.body`, nhưng sự kiện React vẫn nổi qua
-// portal về ô soạn. Ô soạn đánh dấu cú bấm của mình, listener ở `document` chạy
-// sau (React gắn listener ở gốc ứng dụng, nằm dưới `document`) và bỏ qua nó.
+// portal về ô soạn. Ô soạn ghi lại đúng sự kiện bấm của mình, listener ở
+// `document` chạy sau (React gắn listener ở gốc ứng dụng, nằm dưới `document`)
+// và bỏ qua đúng sự kiện đó. So theo sự kiện chứ không theo cờ: cú bấm làm ô
+// soạn bung ra xảy ra khi listener chưa gắn, cờ còn sót sẽ nuốt cú bấm ra ngoài kế tiếp.
 
 const DIALOG_SELECTOR = '[role="dialog"], dialog[open], ninja-keys[opened]';
 
 export function useComposerExpansion({ canCollapse, resetKey }: { canCollapse: boolean; resetKey: unknown }) {
     const [isExpandedByUser, setIsExpandedByUser] = useState(false);
-    const pointerInsideComposerRef = useRef(false);
+    const lastPointerInsideComposerRef = useRef<Event | null>(null);
     const canCollapseRef = useRef(canCollapse);
     canCollapseRef.current = canCollapse;
 
@@ -25,11 +27,8 @@ export function useComposerExpansion({ canCollapse, resetKey }: { canCollapse: b
     useEffect(() => {
         if (!isExpandedByUser) return undefined;
 
-        const onDocumentPointerDown = () => {
-            if (pointerInsideComposerRef.current) {
-                pointerInsideComposerRef.current = false;
-                return;
-            }
+        const onDocumentPointerDown = (event: PointerEvent) => {
+            if (event === lastPointerInsideComposerRef.current) return;
             if (canCollapseRef.current) setIsExpandedByUser(false);
         };
         document.addEventListener('pointerdown', onDocumentPointerDown);
@@ -37,8 +36,8 @@ export function useComposerExpansion({ canCollapse, resetKey }: { canCollapse: b
     }, [isExpandedByUser]);
 
     const expand = useCallback(() => setIsExpandedByUser(true), []);
-    const markPointerInsideComposer = useCallback(() => {
-        pointerInsideComposerRef.current = true;
+    const markPointerInsideComposer = useCallback((event: ReactPointerEvent) => {
+        lastPointerInsideComposerRef.current = event.nativeEvent;
     }, []);
 
     return { isExpanded: isExpandedByUser || !canCollapse, expand, markPointerInsideComposer };

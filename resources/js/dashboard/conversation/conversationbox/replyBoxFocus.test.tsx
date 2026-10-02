@@ -147,6 +147,17 @@ describe('ReplyBox · thu gọn khi chưa soạn', () => {
         expect(isExpanded()).toBe(false);
     });
 
+    it('bấm vào ô đang thu cho nó bung ra, thì một cú bấm ra ngoài là thu lại ngay', () => {
+        render(<ReplyBox />);
+
+        fireEvent.pointerDown(editor());
+        fireEvent.focus(editor());
+        expect(isExpanded()).toBe(true);
+
+        fireEvent.pointerDown(document.body);
+        expect(isExpanded()).toBe(false);
+    });
+
     it('bấm trong ô soạn (kể cả thanh công cụ) không làm thu lại', () => {
         render(<ReplyBox />);
         fireEvent.focus(editor());

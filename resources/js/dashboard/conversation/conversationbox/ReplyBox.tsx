@@ -58,6 +58,7 @@ import VoiceMessagePreview from './voiceRecorder/VoiceMessagePreview';
 import VoiceRecorderBar from './voiceRecorder/VoiceRecorderBar';
 import { useVoiceRecorder } from './voiceRecorder/useVoiceRecorder';
 import { useComposerExpansion, useTypeToFocusComposer } from './useComposerExpansion';
+import ComposerExpandableRegion from './ComposerExpandableRegion';
 import type { VoiceRecording } from './voiceRecorder/useVoiceRecorder';
 import {
     MAX_VOICE_RECORDING_SECONDS,
@@ -629,7 +630,6 @@ export default function ReplyBox({
         canCollapse: !hasContent && !hasAttachments && !replyTarget && !cannedCard && voiceRecorder.status === 'idle',
         resetKey: conversationId,
     });
-    const expandedOnlyClass = isExpanded ? 'contents' : 'hidden';
     useTypeToFocusComposer(editorRef, !isEditorDisabled);
 
     return (
@@ -641,9 +641,8 @@ export default function ReplyBox({
                 data-expanded={isExpanded}
                 onFocus={expand}
                 onPointerDown={markPointerInsideComposer}
-                onClick={isExpanded ? undefined : () => editorRef.current?.focusEditorInputField()}
             >
-            <div className={expandedOnlyClass}>
+            <ComposerExpandableRegion isExpanded={isExpanded}>
             <ReplyTopPanel
                 mode={replyType}
                 isReplyRestricted={isBotOwnedPendingConversation}
@@ -656,7 +655,7 @@ export default function ReplyBox({
                 onSetReplyMode={setReplyMode}
                 onToggleEditorSize={toggleEditorSize}
             />
-            </div>
+            </ComposerExpandableRegion>
             <div
                 className="reply-box__top"
                 onKeyDown={event => {
@@ -666,7 +665,8 @@ export default function ReplyBox({
                 {!isOnPrivateNote && replyTarget ? (
                     <ReplyToMessage message={replyTarget} onDismiss={() => onClearReplyTarget?.()} />
                 ) : null}
-                {isExpanded && !isOnPrivateNote && isAnEmailChannel ? (
+                {!isOnPrivateNote && isAnEmailChannel ? (
+                    <ComposerExpandableRegion isExpanded={isExpanded}>
                     <ReplyEmailHead
                         toEmails={toEmails}
                         ccEmails={ccEmails}
@@ -677,6 +677,7 @@ export default function ReplyBox({
                             if (value.bccEmails !== undefined) setBccEmails(value.bccEmails);
                         }}
                     />
+                    </ComposerExpandableRegion>
                 ) : null}
                 <StickerSuggestions
                     stickers={suggestedStickers}
@@ -711,12 +712,14 @@ export default function ReplyBox({
                     onSelectCannedCard={setCannedCard}
                     onAttachFiles={onAttachFiles}
                 />
-                {isExpanded && shouldShowQuotedPreview ? (
-                    <QuotedEmailPreview
-                        quotedEmailText={quotedEmailText}
-                        previewText={quotedEmailPreviewText}
-                        onToggle={toggleQuotedReply}
-                    />
+                {shouldShowQuotedPreview ? (
+                    <ComposerExpandableRegion isExpanded={isExpanded}>
+                        <QuotedEmailPreview
+                            quotedEmailText={quotedEmailText}
+                            previewText={quotedEmailPreviewText}
+                            onToggle={toggleQuotedReply}
+                        />
+                    </ComposerExpandableRegion>
                 ) : null}
                 {voiceRecorder.status !== 'idle' ? (
                     <VoiceRecorderBar
@@ -745,11 +748,12 @@ export default function ReplyBox({
                         />
                     </div>
                 ) : null}
-                {isExpanded && isSignatureEnabledForInbox && !isSignatureAvailable ? (
-                    <MessageSignatureMissingAlert accountId={accountId} className="mb-2" />
+                {isSignatureEnabledForInbox && !isSignatureAvailable ? (
+                    <ComposerExpandableRegion isExpanded={isExpanded}>
+                        <MessageSignatureMissingAlert accountId={accountId} className="mb-2" />
+                    </ComposerExpandableRegion>
                 ) : null}
             </div>
-            <div className={expandedOnlyClass}>
             <ReplyBottomPanel
                 isNote={isPrivate}
                 isOnPrivateNote={isOnPrivateNote}
@@ -780,7 +784,6 @@ export default function ReplyBox({
                           }
                 }
             />
-            </div>
         </div>
     </>
     );

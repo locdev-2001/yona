@@ -7,21 +7,14 @@ import type { DashboardPageProps } from '../../types';
 import { useConversation } from '../ConversationContext';
 import { useContactPanelControl } from '../contactPanelVisibility';
 
-// Port từ components-next/Conversation/SidepanelSwitch.vue — nút mở ContactPanel
-// (lưu ui_settings.is_contact_sidebar_open). Nút Copilot chỉ hiện khi cờ
-// captain_integration bật (tắt ở yona → không render). Phím tắt Alt+O bỏ (B10).
+// Port từ components-next/Conversation/SidepanelSwitch.vue — nút bật/tắt
+// ContactPanel (lưu ui_settings.is_contact_sidebar_open). Nút Copilot chỉ hiện
+// khi cờ captain_integration bật (tắt ở yona → không render). Phím tắt Alt+O bỏ (B10).
 //
-// Lệch có chủ đích (founder 02/10/2026): không còn cụm nút nổi đè lên khung tin.
-// Màn rộng: panel đóng thì thu thành dải hẹp ở mép phải (`rail`, trong
-// ConversationSidebar); panel mở thì đóng bằng dấu × ở đầu panel. Dưới ngưỡng
-// ba cột cụm nút nằm trong mũ khung chat (`inline`). Cùng một component, chỉ
-// khác lớp bao, nên hành vi bật/tắt chỉ có một chỗ.
-const CONTAINER_CLASS = {
-    rail: 'flex flex-col items-center gap-1',
-    inline: 'flex flex-row items-center gap-1',
-} as const;
-
-export default function SidepanelSwitch({ variant }: { variant: keyof typeof CONTAINER_CLASS }) {
+// Lệch có chủ đích (founder 02/10/2026): nút nằm ở cuối thanh tiêu đề hội thoại
+// trên mọi cỡ màn, không nổi đè lên khung tin và không chiếm dải riêng ở mép
+// phải. Icon panel-phải mở/đóng nói đúng việc nút làm.
+export default function SidepanelSwitch() {
     const { uiSettings, updateUISettings } = useConversation();
     const { currentAccount } = usePage<DashboardPageProps>().props;
     const showCopilotTab = Boolean(currentAccount.features.captain_integration);
@@ -38,16 +31,17 @@ export default function SidepanelSwitch({ variant }: { variant: keyof typeof CON
         updateUISettings({ is_contact_sidebar_open: false, is_copilot_panel_open: true });
 
     return (
-        <div data-testid={`sidepanel-switch-${variant}`} className={CONTAINER_CLASS[variant]}>
+        <div data-testid="sidepanel-switch" className="flex flex-row items-center gap-1">
             <Button
                 title={t('CONVERSATION.SIDEBAR.CONTACT')}
+                aria-pressed={isContactSidebarOpen}
                 ghost
                 slate
                 sm
                 className={`!rounded-full transition-all duration-[250ms] ease-out active:!scale-95 active:!brightness-105 active:duration-75 ${
                     isContactSidebarOpen ? 'bg-n-alpha-2 active:shadow-sm' : ''
                 }`}
-                icon={ICONS.contact}
+                icon={isContactSidebarOpen ? ICONS.contactPanelClose : ICONS.contactPanelOpen}
                 onClick={handleConversationSidebarToggle}
             />
             {showCopilotTab ? (

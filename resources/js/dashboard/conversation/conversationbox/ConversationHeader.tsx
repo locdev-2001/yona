@@ -121,7 +121,7 @@ export default function ConversationHeader({
                 </div>
                 <div className="flex flex-row items-center justify-end flex-shrink-0 gap-1 header-actions-wrap">
                     {searchButton}
-                    <SidepanelSwitch variant="inline" />
+                    <SidepanelSwitch />
                     <MoreActions isCompact />
                 </div>
             </div>
@@ -180,6 +180,7 @@ export default function ConversationHeader({
                 <div className="flex flex-row items-center justify-start xl:justify-end flex-shrink-0 gap-2 w-full xl:w-auto header-actions-wrap">
                     {searchButton}
                     <MoreActions />
+                    <SidepanelSwitch />
                 </div>
             )}
         </div>

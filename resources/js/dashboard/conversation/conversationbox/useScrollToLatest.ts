@@ -80,6 +80,19 @@ export function useScrollToLatest({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [lastMessage?.id, conversationId]);
 
+    // Khung tin co lại (ô soạn bung ra, banner xuất hiện) mà đang ở đáy thì giữ đáy,
+    // không để tin cuối bị ô soạn che mất.
+    useLayoutEffect(() => {
+        const panel = panelRef.current;
+        if (!panel) return undefined;
+
+        const observer = new ResizeObserver(() => {
+            if (!isAwayFromLatestRef.current) panel.scrollTop = panel.scrollHeight;
+        });
+        observer.observe(panel);
+        return () => observer.disconnect();
+    }, [panelRef]);
+
     const onScroll = useCallback(
         (panel: HTMLElement) => {
             const away = distanceFromLatest(panel) > LATEST_MESSAGE_DISTANCE_PX;

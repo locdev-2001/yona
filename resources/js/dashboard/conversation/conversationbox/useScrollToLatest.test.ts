@@ -1,10 +1,24 @@
 import { act, renderHook } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 
 import type { ConversationMessage } from '../types';
 import { LATEST_MESSAGE_DISTANCE_PX, countAppendedMessages, useScrollToLatest } from './useScrollToLatest';
 
 const CURRENT_USER_ID = 1;
+
+// jsdom không có ResizeObserver: giữ callback để test tự gọi như khi khung tin đổi cỡ.
+let resizePanel: () => void = () => undefined;
+class ResizeObserverStub {
+    constructor(callback: () => void) {
+        resizePanel = callback;
+    }
+    observe(): void {}
+    disconnect(): void {}
+}
+
+beforeEach(() => {
+    (globalThis as unknown as { ResizeObserver: unknown }).ResizeObserver = ResizeObserverStub;
+});
 const PANEL_HEIGHT = 500;
 
 function message(id: number, sender: ConversationMessage['sender'] = { id: 9, name: 'Khách', type: 'contact' }) {
@@ -102,5 +116,19 @@ describe('useScrollToLatest', () => {
 
         expect(result.current.isAwayFromLatest).toBe(false);
         expect(result.current.unseenCount).toBe(0);
+    });
+
+    it('khung tin co lại vì ô soạn bung ra: đang ở đáy thì vẫn giữ đáy, đang đọc tin cũ thì giữ chỗ đọc', () => {
+        const panel = fakePanel(2000, 2000 - PANEL_HEIGHT);
+        const { result } = setup(panel, [message(1)]);
+
+        Object.defineProperty(panel, 'scrollHeight', { value: 2044 });
+        resizePanel();
+        expect(panel.scrollTop).toBe(2044);
+
+        panel.scrollTop = 100;
+        act(() => result.current.onScroll(panel));
+        resizePanel();
+        expect(panel.scrollTop).toBe(100);
     });
 });
