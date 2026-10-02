@@ -18,9 +18,27 @@ final class UnreadConversations
 {
     public static function query(Account $account, User $user, AccountUser $accountUser): QueryBuilder
     {
+        return self::anyStatus($account, $user, $accountUser)
+            ->where('conversations.status', Conversation::STATUS_OPEN);
+    }
+
+    // "Đánh dấu tất cả đã đọc": như mở từng hội thoại có tin chưa đọc mà người này thấy,
+    // mọi trạng thái — chấm ở danh sách đã giải quyết cũng phải tắt.
+    public static function markAllSeen(Account $account, User $user, AccountUser $accountUser): void
+    {
+        $seenAt = now();
+
+        // Cột của người được giao trước: sau khi ghi agent_last_seen_at thì không còn hội thoại nào "chưa đọc" để lọc.
+        self::anyStatus($account, $user, $accountUser)
+            ->where('conversations.assignee_id', $user->id)
+            ->update(['assignee_last_seen_at' => $seenAt]);
+        self::anyStatus($account, $user, $accountUser)->update(['agent_last_seen_at' => $seenAt]);
+    }
+
+    private static function anyStatus(Account $account, User $user, AccountUser $accountUser): QueryBuilder
+    {
         return DB::table('conversations')
             ->where('conversations.account_id', $account->id)
-            ->where('conversations.status', Conversation::STATUS_OPEN)
             ->whereIn('conversations.inbox_id', $user->assignedInboxes($account, $accountUser)->select('inboxes.id'))
             ->whereRaw(Conversation::unreadMessagesCountSql().' > 0');
     }

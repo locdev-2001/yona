@@ -19,6 +19,7 @@ import {
 import { INBOX_FILTER_TYPE, INBOX_SORT_BY, mergeNotifications, sortNotifications } from './helpers';
 import type { NotificationFilters, NotificationRealtimePayload, NotificationRecord, NotificationsMeta } from './types';
 import { scheduleUnreadCountRefresh } from './useUnreadCount';
+import { BUS_EVENTS, emitter } from 'shared/helpers/emitter';
 
 // Danh sách + meta + cờ UI + hành động, cộng ba handler realtime. Trang
 // inbox-view và panel chuông cùng dùng. Số chưa đọc KHÔNG giữ ở đây: sau mỗi hành
@@ -211,6 +212,7 @@ export function NotificationsProvider({ children, fixedFilters }: NotificationsP
         await markNotificationsRead(accountId);
         const readAt = new Date().toISOString();
         setRecords(current => current.map(record => ({ ...record, read_at: record.read_at ?? readAt })));
+        emitter.emit(BUS_EVENTS.CONVERSATIONS_ALL_SEEN);
         scheduleUnreadCountRefresh();
         useAlert(t('INBOX.ALERTS.MARK_ALL_READ'));
     }, [accountId]);

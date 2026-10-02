@@ -10,6 +10,7 @@ use App\Models\Account;
 use App\Models\Conversation;
 use App\Models\Notification;
 use App\Services\Conversations\UnreadCounts\AttentionCounter;
+use App\Services\Conversations\UnreadCounts\UnreadConversations;
 use App\Support\DateRangeHelper;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -49,6 +50,9 @@ class NotificationsController extends Controller
         if ($primaryActor !== null) {
             $query->where('primary_actor_type', $primaryActor->getMorphClass())
                 ->where('primary_actor_id', $primaryActor->id);
+        } else {
+            // Chuông đếm cả hội thoại chưa đọc, nên "tất cả đã đọc" phải tắt cả chấm của chúng.
+            UnreadConversations::markAllSeen($account, $request->user(), $request->attributes->get('currentAccountUser'));
         }
 
         Notification::markAllRead($query);

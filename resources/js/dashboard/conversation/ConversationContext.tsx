@@ -14,6 +14,7 @@ import type { UISettings } from 'dashboard/composables/useUISettings';
 import { markConversationSeenInBell, scheduleUnreadCountRefresh, setViewedConversation } from 'dashboard/notifications/useUnreadCount';
 import { useContactUpdatedEvent } from 'dashboard/realtime/contactUpdated';
 import { useRealtimeEvent } from 'dashboard/realtime/hooks';
+import { BUS_EVENTS } from 'shared/helpers/emitter';
 import {
     DISCONNECT_DELAY_THRESHOLD,
     getSecondsSinceDisconnect,
@@ -861,6 +862,11 @@ export function ConversationProvider({
         }
     });
     useRealtimeEvent<MessageEventPayload>('message.updated', addMessage);
+
+    useRealtimeEvent(BUS_EVENTS.CONVERSATIONS_ALL_SEEN, () => {
+        const seenAt = Math.floor(Date.now() / 1000);
+        setAllConversations((current) => current.map((item) => (item.unread_count > 0 ? { ...item, agent_last_seen_at: seenAt, unread_count: 0 } : item)));
+    });
     // Counts: ActionCableConnector emit 'fetch_conversation_stats' sau các event
     // created/status_changed/assignee.changed/updated/contact.deleted như gốc.
     useRealtimeEvent<Conversation>('conversation.created', (conversation) => {

@@ -76,6 +76,26 @@ describe('POST /api/v1/accounts/{id}/notifications/read_all', function () {
             ->and($second->fresh()->read_at)->not->toBeNull();
     });
 
+    it('also marks every unread conversation the user sees as seen, so the bell drops to zero', function () {
+        notificationForAdminUser($this->account, $this->admin);
+        $unread = Conversation::factory()->create(['account_id' => $this->account->id, 'assignee_id' => $this->admin->id]);
+        Message::factory()->create(['account_id' => $this->account->id, 'inbox_id' => $unread->inbox_id, 'conversation_id' => $unread->id]);
+        $resolved = Conversation::factory()->create(['account_id' => $this->account->id]);
+        Message::factory()->create(['account_id' => $this->account->id, 'inbox_id' => $resolved->inbox_id, 'conversation_id' => $resolved->id]);
+        $resolved->forceFill(['status' => Conversation::STATUS_RESOLVED])->save();
+        $unreadCountUrl = "/api/v1/accounts/{$this->account->id}/notifications/unread_count";
+        expect($this->actingAs($this->admin)->getJson($unreadCountUrl)->json())->toBe(2);
+
+        $this->actingAs($this->admin)
+            ->postJson("/api/v1/accounts/{$this->account->id}/notifications/read_all")
+            ->assertOk();
+
+        expect($this->actingAs($this->admin)->getJson($unreadCountUrl)->json())->toBe(0)
+            ->and($unread->fresh()->agent_last_seen_at)->not->toBeNull()
+            ->and($unread->fresh()->assignee_last_seen_at)->not->toBeNull()
+            ->and($resolved->fresh()->agent_last_seen_at)->not->toBeNull();
+    });
+
     it('marks only the notifications of the given primary actor', function () {
         $first = notificationForAdminUser($this->account, $this->admin);
         $second = notificationForAdminUser($this->account, $this->admin);
