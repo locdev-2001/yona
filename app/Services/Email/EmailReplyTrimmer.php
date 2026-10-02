@@ -21,7 +21,7 @@ class EmailReplyTrimmer
             return '';
         }
 
-        $lines = preg_split('/\R/', (string) $body) ?: [];
+        $lines = preg_split('/\R/u', (string) $body) ?: [];
         $kept = [];
 
         foreach ($lines as $line) {
