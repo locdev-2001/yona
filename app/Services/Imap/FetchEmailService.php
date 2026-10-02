@@ -10,7 +10,8 @@ use Illuminate\Support\Facades\Log;
 use Throwable;
 use Webklex\PHPIMAP\Client;
 use Webklex\PHPIMAP\ClientManager;
-use Webklex\PHPIMAP\Message;
+use Webklex\PHPIMAP\Connection\Protocols\ProtocolInterface;
+use Webklex\PHPIMAP\IMAP;
 
 /**
  * Lấy thư mới của một kênh email qua IMAP và trả về danh sách đã parse.
@@ -48,54 +49,71 @@ class FetchEmailService
     }
 
     /**
-     * Hai pha: lấy header mọi thư trong cửa sổ, chỉ tải thân thư chưa có ở hộp thư.
-     * Tải thân cả cửa sổ mỗi phút làm một lượt quét Gmail mất cả phút.
+     * Mở INBOX chỉ đọc (EXAMINE: server không tự đánh dấu đã đọc), tìm thư trong cửa sổ,
+     * lấy header một lô, rồi tải một lô thân của thư hộp thư chưa có. Số vòng gọi máy chủ
+     * không phụ thuộc số thư: đi qua Message của thư viện thì mỗi thư chưa đọc tốn thêm
+     * NOOP + STORE để giữ trạng thái chưa đọc, ~1 giây mỗi thư với Gmail.
      *
      * @return list<MailPresenter>
      */
     private function fetchEmails(): array
     {
-        $tracker = new DeletedMessageTracker($this->channel->inbox);
-        $client = $this->timed('connect', fn () => $this->client());
-        $inbox = $this->timed('open_inbox', fn () => $client->getFolderByPath('INBOX'));
-        $inboxMessages = $this->timed('fetch_headers', fn () => $inbox->query()
-            ->whereSince($this->since())
-            ->setFetchBody(false)
-            ->leaveUnread()
-            ->limit(self::MAX_MESSAGES_PER_SYNC)
-            ->get());
-        $this->messageCounts['in_window'] = $inboxMessages->count();
+        $connection = $this->timed('connect', fn () => $this->client()->getConnection());
+        $this->timed('open_inbox', fn () => $connection->examineFolder('INBOX')->validatedData());
+        $uids = $this->timed('search', fn () => $this->recentUids($connection));
+        $this->messageCounts['in_window'] = count($uids);
+
+        if ($uids === []) {
+            return [];
+        }
+
+        /** @var array<int|string, string> $rawHeaders */
+        $rawHeaders = $this->timed('fetch_headers', fn () => $connection->headers($uids, 'RFC822', IMAP::ST_UID)->validatedData());
+        $newHeaders = $this->headersOfNewMails($rawHeaders);
+        $this->messageCounts['new'] = count($newHeaders);
+
+        if ($newHeaders === []) {
+            return [];
+        }
+
+        /** @var array<int|string, string> $rawBodies */
+        $rawBodies = $this->timed('fetch_bodies', fn () => $connection->content(array_keys($newHeaders), 'RFC822', IMAP::ST_UID)->validatedData());
 
         $emails = [];
 
-        foreach ($inboxMessages as $inboxMessage) {
-            $headers = MailPresenter::fromRaw($inboxMessage->getHeader()->raw, $this->channel->account);
-            $messageId = $headers->messageId();
-
-            if (blank($messageId) || $headers->isNotificationEmailFromSelf()) {
-                continue;
-            }
-
-            if ($this->emailAlreadyPresent((string) $messageId, $tracker)) {
-                continue;
-            }
-
-            $emails[] = $this->timed('fetch_bodies', fn () => $this->presenterWithBody($inboxMessage));
+        foreach ($newHeaders as $uid => $rawHeader) {
+            $emails[] = MailPresenter::fromRaw($rawHeader."\r\n".($rawBodies[$uid] ?? ''), $this->channel->account);
         }
-
-        $this->messageCounts['new'] = count($emails);
 
         Log::info('[IMAP] Fetched '.count($emails).' new emails for inbox '.$this->channel->inbox->id);
 
         return $emails;
     }
 
-    private function presenterWithBody(Message $inboxMessage): MailPresenter
+    /** @return list<int> UID thư từ mốc cửa sổ, mới nhất giữ lại khi vượt trần một lượt. */
+    private function recentUids(ProtocolInterface $connection): array
     {
-        $inboxMessage->parseBody();
-        $raw = $inboxMessage->getHeader()->raw."\r\n".$inboxMessage->getRawBody();
+        $uids = (array) $connection->search(['SINCE "'.$this->since().'"'], IMAP::ST_UID)->validatedData();
 
-        return MailPresenter::fromRaw($raw, $this->channel->account);
+        return array_slice(array_map('intval', $uids), -self::MAX_MESSAGES_PER_SYNC);
+    }
+
+    /**
+     * @param  array<int|string, string>  $rawHeaders
+     * @return array<int|string, string>
+     */
+    private function headersOfNewMails(array $rawHeaders): array
+    {
+        $tracker = new DeletedMessageTracker($this->channel->inbox);
+
+        return array_filter($rawHeaders, function (string $rawHeader) use ($tracker) {
+            $headers = MailPresenter::fromRaw($rawHeader, $this->channel->account);
+            $messageId = $headers->messageId();
+
+            return filled($messageId)
+                && ! $headers->isNotificationEmailFromSelf()
+                && ! $this->emailAlreadyPresent((string) $messageId, $tracker);
+        });
     }
 
     /**

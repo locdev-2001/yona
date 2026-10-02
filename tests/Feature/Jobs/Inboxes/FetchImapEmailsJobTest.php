@@ -17,11 +17,9 @@ use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Webklex\PHPIMAP\Client;
 use Webklex\PHPIMAP\ClientManager;
-use Webklex\PHPIMAP\Folder;
-use Webklex\PHPIMAP\Header;
-use Webklex\PHPIMAP\Message as ImapMessage;
-use Webklex\PHPIMAP\Query\WhereQuery;
-use Webklex\PHPIMAP\Support\MessageCollection;
+use Webklex\PHPIMAP\Connection\Protocols\ProtocolInterface;
+use Webklex\PHPIMAP\Connection\Protocols\Response;
+use Webklex\PHPIMAP\IMAP;
 
 // Port từ spec/jobs/inboxes/{fetch_imap_email_inboxes_job,fetch_imap_emails_job}_spec.rb
 // + spec/services/imap/deleted_message_tracker_spec.rb.
@@ -114,37 +112,36 @@ it('skips quietly while the previous fetch of the same inbox still holds the loc
     Log::shouldNotHaveReceived('error');
 });
 
-function imapMessageWithId(string $messageId, bool $expectsBodyFetch): ImapMessage
+function imapResponse(mixed $data): Response
 {
-    $header = Mockery::mock(Header::class);
-    $header->raw = "Message-ID: <{$messageId}>\r\nFrom: buyer@example.com\r\nSubject: Hi\r\n";
+    $response = Mockery::mock(Response::class);
+    $response->shouldReceive('validatedData')->andReturn($data);
 
-    $message = Mockery::mock(ImapMessage::class);
-    $message->shouldReceive('getHeader')->andReturn($header);
-    $message->shouldReceive('getRawBody')->andReturn('Hello');
-    $message->shouldReceive('parseBody')->times($expectsBodyFetch ? 1 : 0)->andReturnSelf();
-
-    return $message;
+    return $response;
 }
 
-it('downloads the body only of mails the inbox does not have yet', function () {
+function rawImapHeader(string $messageId): string
+{
+    return "Message-ID: <{$messageId}>\r\nFrom: buyer@example.com\r\nSubject: Hi\r\n";
+}
+
+it('reads the inbox read-only and downloads, in one batch, only the bodies of mails the inbox does not have yet', function () {
     $inbox = emailInboxWith($this->account, ['imap_enabled' => true]);
     $knownId = uniqid('known-', true).'@example.com';
     $newId = uniqid('new-', true).'@example.com';
     Message::factory()->create(['account_id' => $this->account->id, 'inbox_id' => $inbox->id, 'source_id' => $knownId]);
 
-    $query = Mockery::mock(WhereQuery::class);
-    $query->shouldReceive('whereSince', 'leaveUnread', 'limit')->andReturnSelf();
-    $query->shouldReceive('setFetchBody')->with(false)->once()->andReturnSelf();
-    $query->shouldReceive('get')->andReturn(new MessageCollection([
-        imapMessageWithId($knownId, expectsBodyFetch: false),
-        imapMessageWithId($newId, expectsBodyFetch: true),
-    ]));
-    $folder = Mockery::mock(Folder::class);
-    $folder->shouldReceive('query')->andReturn($query);
+    $connection = Mockery::mock(ProtocolInterface::class);
+    $connection->shouldReceive('examineFolder')->with('INBOX')->once()->andReturn(imapResponse([]));
+    $connection->shouldNotReceive('selectFolder', 'store');
+    $connection->shouldReceive('search')->once()->andReturn(imapResponse(['41', '42']));
+    $connection->shouldReceive('headers')->with([41, 42], 'RFC822', IMAP::ST_UID)->once()
+        ->andReturn(imapResponse([41 => rawImapHeader($knownId), 42 => rawImapHeader($newId)]));
+    $connection->shouldReceive('content')->with([42], 'RFC822', IMAP::ST_UID)->once()
+        ->andReturn(imapResponse([42 => 'Hello']));
     $client = Mockery::mock(Client::class);
     $client->shouldReceive('connect', 'disconnect')->andReturnSelf();
-    $client->shouldReceive('getFolderByPath')->with('INBOX')->andReturn($folder);
+    $client->shouldReceive('getConnection')->andReturn($connection);
     $manager = Mockery::mock(ClientManager::class);
     $manager->shouldReceive('make')->andReturn($client);
     app()->instance(ClientManager::class, $manager);
@@ -155,7 +152,7 @@ it('downloads the body only of mails the inbox does not have yet', function () {
 
     expect(array_map(fn (MailPresenter $mail) => $mail->messageId(), $mails))->toBe([$newId]);
     Log::shouldHaveReceived('warning')->once()->withArgs(fn (string $message, array $context = []) => str_starts_with($message, '[IMAP] Slow fetch')
-        && array_keys($context['phases_ms']) === ['connect', 'open_inbox', 'fetch_headers', 'fetch_bodies', 'disconnect']
+        && array_keys($context['phases_ms']) === ['connect', 'open_inbox', 'search', 'fetch_headers', 'fetch_bodies', 'disconnect']
         && $context['messages_in_window'] === 2
         && $context['new_messages'] === 1);
 });
