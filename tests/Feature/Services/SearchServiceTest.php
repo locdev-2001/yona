@@ -102,8 +102,8 @@ describe('contact search', function () {
     // Tên chứa trọn từ khoá đứng trước; khớp qua email, mã thì theo last_activity_at.
     it('searches name, email, phone_number and identifier ordered by relevance then last_activity_at', function () {
         Contact::factory()->create(['account_id' => $this->account->id]);
-        // Liên hệ chưa xác định danh tính (không email/phone/identifier) không lên kết quả.
-        Contact::factory()->create(['account_id' => $this->account->id, 'name' => 'Harry Potter']);
+        // Liên hệ chưa định danh (không email/phone/identifier) vẫn lên kết quả, khớp theo tên.
+        $unidentifiedHarry = Contact::factory()->create(['account_id' => $this->account->id, 'name' => 'Harry Potter']);
         $harry2 = Contact::factory()->create([
             'account_id' => $this->account->id,
             'email' => 'HarryPotter@test.com',
@@ -123,7 +123,7 @@ describe('contact search', function () {
 
         $ids = e2Search(['q' => 'Potter '], 'Contact')->perform()['contacts']->pluck('id')->all();
 
-        expect($ids)->toBe([$this->harry->id, $harry4->id, $harry3->id, $harry2->id]);
+        expect($ids)->toBe([$this->harry->id, $unidentifiedHarry->id, $harry4->id, $harry3->id, $harry2->id]);
     });
 });
 

@@ -40,7 +40,7 @@ beforeEach(function () {
 });
 
 it('dựng từ ảnh gốc + thông số chỉnh đã lưu, ghi tệp mang cạnh ảnh theo hash rồi chuyển ready', function () {
-    config(['yona.stickers.image_size' => 72]);
+    config(['yona.stickers.image_size' => 72, 'yona.stickers.outbound_image_size' => 128]);
     $this->renderedPaths = StickerFileLayout::renderedPaths($this->contentHash);
     $this->renderer->scenario = fn (string $image, string $output, array $edit, int $size) => FakeStickerRenderer::writeOutputs($output, $size, 'webp-bytes', 'png-bytes', frames: 4, gifBytes: 'gif-bytes');
 
