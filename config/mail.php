@@ -144,6 +144,9 @@ return [
 
     'smtp_read_timeout' => (int) env('SMTP_READ_TIMEOUT', 30),
 
+    // Lượt quét IMAP lâu hơn ngưỡng này (ms) thì ghi log thời gian từng pha.
+    'imap_slow_fetch_ms' => (int) env('IMAP_SLOW_FETCH_MS', 10000),
+
     'email_processing_timeout' => (int) env('EMAIL_PROCESSING_TIMEOUT_SECONDS', 60),
 
 ];

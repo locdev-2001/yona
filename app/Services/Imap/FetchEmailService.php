@@ -22,6 +22,12 @@ class FetchEmailService
 
     private ?Client $client = null;
 
+    /** @var array<string, int> Thời gian (ms) từng pha IMAP của lượt quét, để biết lượt chậm nằm ở đâu. */
+    private array $phaseMs = [];
+
+    /** @var array{in_window: int, new: int} */
+    private array $messageCounts = ['in_window' => 0, 'new' => 0];
+
     public function __construct(
         private readonly Email $channel,
         private readonly int $interval = 1,
@@ -31,10 +37,13 @@ class FetchEmailService
     /** @return list<MailPresenter> */
     public function perform(): array
     {
+        $startedAt = hrtime(true);
+
         try {
             return $this->fetchEmails();
         } finally {
-            $this->terminateConnection();
+            $this->timed('disconnect', fn () => $this->terminateConnection());
+            $this->reportSlowFetch(self::elapsedMs($startedAt));
         }
     }
 
@@ -47,12 +56,15 @@ class FetchEmailService
     private function fetchEmails(): array
     {
         $tracker = new DeletedMessageTracker($this->channel->inbox);
-        $inboxMessages = $this->client()->getFolderByPath('INBOX')->query()
+        $client = $this->timed('connect', fn () => $this->client());
+        $inbox = $this->timed('open_inbox', fn () => $client->getFolderByPath('INBOX'));
+        $inboxMessages = $this->timed('fetch_headers', fn () => $inbox->query()
             ->whereSince($this->since())
             ->setFetchBody(false)
             ->leaveUnread()
             ->limit(self::MAX_MESSAGES_PER_SYNC)
-            ->get();
+            ->get());
+        $this->messageCounts['in_window'] = $inboxMessages->count();
 
         $emails = [];
 
@@ -68,8 +80,10 @@ class FetchEmailService
                 continue;
             }
 
-            $emails[] = $this->presenterWithBody($inboxMessage);
+            $emails[] = $this->timed('fetch_bodies', fn () => $this->presenterWithBody($inboxMessage));
         }
+
+        $this->messageCounts['new'] = count($emails);
 
         Log::info('[IMAP] Fetched '.count($emails).' new emails for inbox '.$this->channel->inbox->id);
 
@@ -82,6 +96,42 @@ class FetchEmailService
         $raw = $inboxMessage->getHeader()->raw."\r\n".$inboxMessage->getRawBody();
 
         return MailPresenter::fromRaw($raw, $this->channel->account);
+    }
+
+    /**
+     * @template T
+     *
+     * @param  callable(): T  $phase
+     * @return T
+     */
+    private function timed(string $name, callable $phase): mixed
+    {
+        $startedAt = hrtime(true);
+
+        try {
+            return $phase();
+        } finally {
+            $this->phaseMs[$name] = ($this->phaseMs[$name] ?? 0) + self::elapsedMs($startedAt);
+        }
+    }
+
+    private static function elapsedMs(int $startedAt): int
+    {
+        return intdiv(hrtime(true) - $startedAt, 1_000_000);
+    }
+
+    private function reportSlowFetch(int $totalMs): void
+    {
+        if ($totalMs < config('mail.imap_slow_fetch_ms')) {
+            return;
+        }
+
+        Log::warning('[IMAP] Slow fetch for inbox '.$this->channel->inbox->id, [
+            'total_ms' => $totalMs,
+            'phases_ms' => $this->phaseMs,
+            'messages_in_window' => $this->messageCounts['in_window'],
+            'new_messages' => $this->messageCounts['new'],
+        ]);
     }
 
     private function emailAlreadyPresent(string $messageId, DeletedMessageTracker $tracker): bool

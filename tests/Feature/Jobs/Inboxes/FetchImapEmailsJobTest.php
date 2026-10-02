@@ -148,8 +148,14 @@ it('downloads the body only of mails the inbox does not have yet', function () {
     $manager = Mockery::mock(ClientManager::class);
     $manager->shouldReceive('make')->andReturn($client);
     app()->instance(ClientManager::class, $manager);
+    config(['mail.imap_slow_fetch_ms' => 0]);
+    Log::spy();
 
     $mails = app(FetchEmailService::class, ['channel' => $inbox->channel])->perform();
 
     expect(array_map(fn (MailPresenter $mail) => $mail->messageId(), $mails))->toBe([$newId]);
+    Log::shouldHaveReceived('warning')->once()->withArgs(fn (string $message, array $context = []) => str_starts_with($message, '[IMAP] Slow fetch')
+        && array_keys($context['phases_ms']) === ['connect', 'open_inbox', 'fetch_headers', 'fetch_bodies', 'disconnect']
+        && $context['messages_in_window'] === 2
+        && $context['new_messages'] === 1);
 });
