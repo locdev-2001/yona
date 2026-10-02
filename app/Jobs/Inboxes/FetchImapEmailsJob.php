@@ -41,8 +41,9 @@ class FetchImapEmailsJob extends ApplicationJob
 
         $lock = Cache::lock('EMAIL_MESSAGE_MUTEX::'.$this->channel->inbox->id, self::LOCK_SECONDS);
 
+        // Lượt quét trước của hộp thư này chưa xong: bỏ lượt này, không phải lỗi.
         if (! $lock->get()) {
-            Log::error('[IMAP] Lock failed for '.$this->channel->inbox->id);
+            Log::info('[IMAP] Previous fetch still running for inbox '.$this->channel->inbox->id.', skipping');
 
             return;
         }

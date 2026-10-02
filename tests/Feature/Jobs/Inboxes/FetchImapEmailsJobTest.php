@@ -9,6 +9,8 @@ use App\Models\Conversation;
 use App\Models\Inbox;
 use App\Services\Email\MailPresenter;
 use App\Services\Imap\DeletedMessageTracker;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 
@@ -91,4 +93,14 @@ it('remembers deleted message ids for the inbox', function () {
 
     expect($tracker->isDeleted($messageId))->toBeTrue()
         ->and($tracker->isDeleted(uniqid('other-', true).'@example.com'))->toBeFalse();
+});
+
+it('skips quietly while the previous fetch of the same inbox still holds the lock', function () {
+    $inbox = emailInboxWith($this->account, ['imap_enabled' => true]);
+    Cache::lock('EMAIL_MESSAGE_MUTEX::'.$inbox->id, 300)->get();
+    Log::spy();
+
+    (new FetchImapEmailsJob($inbox->channel))->handle();
+
+    Log::shouldNotHaveReceived('error');
 });
