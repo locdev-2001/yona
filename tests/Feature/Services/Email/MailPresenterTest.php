@@ -44,6 +44,8 @@ it('reads the text body and trims the quoted part', function () {
     $content = fixtureMail('mail_with_quote.eml')->textContent();
 
     expect($content['reply'])->toContain('Yes, I am providing you step how to reproduce this issue')
+        ->and($content['reply'])->toContain('Any update on this?')
+        ->and($content['quoted'])->toContain('Yes, I am providing you step how to reproduce this issue')
         ->and($content['quoted'])->not->toContain('Any update on this?');
 });
 

@@ -59,7 +59,15 @@ class MailPresenter
         return $this->mail->getChildCount() > 0;
     }
 
-    /** @return array{full?: string, reply?: string, quoted?: string} */
+    /**
+     * Khoá của text_content/html_content là hợp đồng đã lưu trong content_attributes
+     * và lộ ra API/webhook, nên giữ nguyên tên dù dễ hiểu nhầm:
+     * - full: thân thư nguyên bản (ảnh nhúng sẽ được thay vào đây);
+     * - reply: thân thư đầy đủ đã giải mã, dùng khi trích lại thư lúc trả lời;
+     * - quoted: phần khách vừa viết, ĐÃ BỎ khối trích dẫn — nội dung hiển thị của tin.
+     *
+     * @return array{full?: string, reply?: string, quoted?: string}
+     */
     public function textContent(): array
     {
         $decoded = (string) $this->mail->getTextContent();
