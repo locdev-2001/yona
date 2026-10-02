@@ -28,15 +28,8 @@ const BASE_OPTIONS: Omit<Options, 'data' | 'width' | 'height'> = {
         errorCorrectionLevel: 'Q',
     },
     dotsOptions: {
-        type: 'classy-rounded',
-        gradient: {
-            type: 'linear',
-            rotation: Math.PI / 4,
-            colorStops: [
-                { offset: 0, color: '#009dff' },
-                { offset: 1, color: '#0affef' },
-            ],
-        },
+        type: 'dots',
+        color: '#111827',
     },
     cornersSquareOptions: {
         type: 'extra-rounded',
