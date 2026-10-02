@@ -11,9 +11,11 @@ use App\Channels\ConnectionMethod;
 use App\Channels\DeclaresCapabilities;
 use App\Channels\DeclaresConnection;
 use App\Channels\DeclaresPlatform;
+use App\Channels\LinksMessagesToSource;
 use App\Channels\TextFormat;
 use App\Models\Channel\Concerns\Channelable;
 use App\Models\Concerns\Reauthorizable;
+use App\Models\Message;
 use App\Services\Email\EmailProviderPresets;
 use App\Services\Email\MailServerException;
 use App\Services\Email\OAuth\EmailOAuthProviders;
@@ -22,7 +24,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
 
-class Email extends Model implements DeclaresCapabilities, DeclaresConnection, DeclaresPlatform
+class Email extends Model implements DeclaresCapabilities, DeclaresConnection, DeclaresPlatform, LinksMessagesToSource
 {
     /** @use HasFactory<EmailFactory> */
     use Channelable, HasFactory, Reauthorizable {
@@ -30,6 +32,8 @@ class Email extends Model implements DeclaresCapabilities, DeclaresConnection, D
     }
 
     public const AUTHORIZATION_ERROR_THRESHOLD = 10;
+
+    private const GMAIL_WEB_URL = 'https://mail.google.com/mail/';
 
     protected $table = 'channel_email';
 
@@ -174,6 +178,17 @@ class Email extends Model implements DeclaresCapabilities, DeclaresConnection, D
     public static function namesInboxItself(): bool
     {
         return true;
+    }
+
+    // Gmail tìm đúng thư theo Message-ID; authuser chọn đúng tài khoản khi trình duyệt đăng nhập nhiều Gmail.
+    public function sourceMessageUrl(Message $message): ?string
+    {
+        if (! ($this->isGoogle() || $this->isLegacyGoogle()) || blank($message->source_id)) {
+            return null;
+        }
+
+        return self::GMAIL_WEB_URL.'?'.http_build_query(['authuser' => $this->email])
+            .'#search/'.rawurlencode('rfc822msgid:'.$message->source_id);
     }
 
     public function isMicrosoft(): bool

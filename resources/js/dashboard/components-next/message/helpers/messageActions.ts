@@ -25,6 +25,8 @@ export interface MessageActionInput {
     content?: string | null;
     // Tin có đúng một ảnh sao chép được (lưới nhiều ảnh dùng menu gốc của từng ảnh).
     hasCopyableImage?: boolean;
+    // Kênh khai được đường mở tin tại nền tảng gốc (thư trong Gmail…).
+    hasSourceLink?: boolean;
     contentAttributes: Record<string, unknown>;
     inboxCapabilities: readonly string[];
     // Nơi dựng bong bóng có truyền handler cho hành động đó hay không.
@@ -41,13 +43,14 @@ export interface MessageActionFlags {
     copy: boolean;
     copyImage: boolean;
     copyLink: boolean;
+    openSource: boolean;
     createCannedResponse: boolean;
     translate: boolean;
     // Kênh thu hồi được ở cả hai đầu → nút xoá mang nhãn "thu hồi".
     recall: boolean;
 }
 
-export type MessageActionId = 'reply' | 'forward' | 'copy' | 'copyImage' | 'copyLink' | 'createCannedResponse' | 'translate' | 'delete';
+export type MessageActionId = 'reply' | 'forward' | 'copy' | 'copyImage' | 'copyLink' | 'openSource' | 'createCannedResponse' | 'translate' | 'delete';
 
 export type MessageActionGroup = 'respond' | 'content' | 'danger';
 
@@ -66,6 +69,7 @@ export const MESSAGE_ACTIONS: readonly MessageActionDescriptor[] = [
     { id: 'copy', group: 'content', icon: 'i-lucide-copy', labelKey: 'CONVERSATION.CONTEXT_MENU.COPY' },
     { id: 'copyImage', group: 'content', icon: 'i-lucide-image', labelKey: 'CONVERSATION.CONTEXT_MENU.COPY_IMAGE' },
     { id: 'copyLink', group: 'content', icon: 'i-lucide-link', labelKey: 'CONVERSATION.CONTEXT_MENU.COPY_PERMALINK' },
+    { id: 'openSource', group: 'content', icon: 'i-lucide-external-link', labelKey: 'CONVERSATION.CONTEXT_MENU.OPEN_IN_SOURCE' },
     {
         id: 'createCannedResponse',
         group: 'content',
@@ -88,6 +92,7 @@ export function resolveMessageActions({
     isPrivate,
     content = null,
     hasCopyableImage = false,
+    hasSourceLink = false,
     contentAttributes,
     inboxCapabilities,
     handlers,
@@ -110,6 +115,7 @@ export function resolveMessageActions({
         copy: hasText,
         copyImage: !isDeleted && hasCopyableImage,
         copyLink: !isDeleted && id > 0,
+        openSource: !isDeleted && hasSourceLink,
         createCannedResponse: Boolean(handlers.createCannedResponse) && hasText,
         translate: Boolean(handlers.translate) && hasText && id > 0 && messageType !== MESSAGE_TYPES.ACTIVITY,
         recall: inboxSupports(inbox, 'outbound_recall'),

@@ -1,7 +1,7 @@
 import { createContext, useContext } from 'react';
 import type { ReactNode } from 'react';
 
-import type { MessageSender } from 'dashboard/conversation/types';
+import type { MessageSender, MessageSourceLink } from 'dashboard/conversation/types';
 import type { MessageGroupPosition } from 'shared/helpers/messageGrouping';
 import type { MessageOrientation, MessageVariant } from './constants';
 import type { MessageAttachment } from './helpers/attachments';
@@ -18,6 +18,7 @@ export interface MessageContextValue {
     status: string | null;
     isPrivate: boolean;
     sourceId: string | null;
+    sourceLink: MessageSourceLink | null;
     sender: MessageSender | null;
     senderType: string | null;
     contentAttributes: Record<string, unknown>;

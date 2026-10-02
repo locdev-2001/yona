@@ -47,6 +47,11 @@ export interface MessageSender {
     email?: string | null;
 }
 
+export interface MessageSourceLink {
+    url: string;
+    platform: string;
+}
+
 export interface ConversationMessage {
     id: number;
     content: string | null;
@@ -61,6 +66,8 @@ export interface ConversationMessage {
     created_at: number;
     private: boolean;
     source_id: string | null;
+    /** Đường mở tin tại nền tảng gốc (thư trong Gmail…); vắng khi kênh không khai. */
+    source_link?: MessageSourceLink | null;
     // additional_attributes.senderName/senderAvatarUrl: tin từ tích hợp ngoài
     // (Slack…) không có sender nhưng vẫn có tên người gửi.
     additional_attributes?: { senderName?: string; senderAvatarUrl?: string } & Record<string, unknown>;

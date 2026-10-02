@@ -1,8 +1,10 @@
 <?php
 
+use App\Http\Resources\MessageResource;
 use App\Models\Account;
 use App\Models\Channel\Email;
 use App\Models\Inbox;
+use App\Models\Message;
 
 // Port từ spec/models/channel/email_spec.rb (+ phần Reauthorizable dùng chung).
 
@@ -96,4 +98,40 @@ it('exposes the channel through its inbox', function () {
         ->and($inbox->inboxType())->toBe('Email')
         ->and($inbox->channel)->toBeInstanceOf(Email::class)
         ->and($inbox->channel->inbox->id)->toBe($inbox->id);
+});
+
+it('links a gmail message to the same mail in gmail web, signed in as the inbox address', function (array $attributes) {
+    $channel = Email::factory()->make(['email' => 'shop@gmail.com', ...$attributes]);
+
+    expect($channel->sourceMessageUrl(new Message(['source_id' => 'abc+1@mail.gmail.com'])))
+        ->toBe('https://mail.google.com/mail/?authuser=shop%40gmail.com#search/rfc822msgid%3Aabc%2B1%40mail.gmail.com');
+})->with([
+    'oauth' => [['provider' => 'google']],
+    'app password' => [['imap_enabled' => true, 'imap_address' => 'imap.gmail.com']],
+]);
+
+it('has no source link outside gmail or before the mail has a message id', function (array $attributes, ?string $sourceId) {
+    $channel = Email::factory()->make($attributes);
+
+    expect($channel->sourceMessageUrl(new Message(['source_id' => $sourceId])))->toBeNull();
+})->with([
+    'other mail server' => [['imap_enabled' => true, 'imap_address' => 'imap.zoho.com'], 'id@example.com'],
+    'outlook' => [['provider' => 'microsoft'], 'id@example.com'],
+    'no message id yet' => [['provider' => 'google'], null],
+]);
+
+it('serializes the gmail link of an email message for the dashboard', function () {
+    $account = Account::factory()->create();
+    $channel = Email::factory()->create(['account_id' => $account->id, 'email' => 'shop@gmail.com', 'provider' => 'google']);
+    $inbox = Inbox::factory()->create(['account_id' => $account->id, 'channel_id' => $channel->id, 'channel_type' => 'Channel::Email']);
+    $message = Message::factory()->create(['account_id' => $account->id, 'inbox_id' => $inbox->id, 'source_id' => 'id@mail.gmail.com']);
+    $plainMessage = Message::factory()->create(['account_id' => $account->id]);
+
+    [$payload, $plainPayload] = MessageResource::collectionFor([$message, $plainMessage]);
+
+    expect($payload['source_link'])->toBe([
+        'url' => $channel->sourceMessageUrl($message),
+        'platform' => 'Gmail',
+    ])->and($plainPayload)->not->toHaveKey('source_link')
+        ->and(MessageResource::pushEventData($message->fresh())['source_link']['platform'])->toBe('Gmail');
 });

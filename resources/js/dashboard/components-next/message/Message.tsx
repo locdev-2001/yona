@@ -246,6 +246,7 @@ export default function Message({
         status,
         isPrivate,
         sourceId: message.source_id,
+        sourceLink: message.source_link ?? null,
         sender,
         senderType,
         contentAttributes,

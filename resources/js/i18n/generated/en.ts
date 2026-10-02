@@ -4196,6 +4196,7 @@ const messages: Record<string, unknown> = {
             "CREATE_A_CANNED_RESPONSE": "Create canned response",
             "TRANSLATE": "Translate",
             "COPY_PERMALINK": "Copy link to message",
+            "OPEN_IN_SOURCE": "Open in {name}",
             "COPY_IMAGE": "Copy image",
             "IMAGE_COPIED": "Image copied",
             "LINK_COPIED": "Message link copied",

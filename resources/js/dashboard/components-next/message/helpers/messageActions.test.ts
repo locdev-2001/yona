@@ -172,3 +172,17 @@ describe('resolveMessageActions — sao chép hình ảnh', () => {
         expect(ids.indexOf('copy')).toBeLessThan(ids.indexOf('copyImage'));
     });
 });
+
+describe('resolveMessageActions — mở tại nền tảng gốc', () => {
+    it('chỉ bật khi kênh khai đường mở tin và tin chưa bị xoá', () => {
+        expect(resolveMessageActions(input({ hasSourceLink: true })).openSource).toBe(true);
+        expect(resolveMessageActions(input()).openSource).toBe(false);
+        expect(resolveMessageActions(input({ hasSourceLink: true, contentAttributes: { deleted: true } })).openSource).toBe(false);
+    });
+
+    it('đứng ngay sau sao chép liên kết trong nhóm nội dung', () => {
+        const ids = groupMessageActions(resolveMessageActions(input({ hasSourceLink: true }))).flat().map(action => action.id);
+
+        expect(ids.indexOf('openSource')).toBe(ids.indexOf('copyLink') + 1);
+    });
+});

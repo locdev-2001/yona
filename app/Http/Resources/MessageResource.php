@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Channels\LinksMessagesToSource;
 use App\Http\Resources\Concerns\SerializesAttributeMaps;
 use App\Messaging\MessagePreview;
 use App\Messaging\Structured\LegacyWebhookAliases;
@@ -55,7 +56,7 @@ class MessageResource extends JsonResource
         $messages->loadMissing([
             'attachments',
             'account',
-            'inbox',
+            'inbox.channel',
             'conversation.contactInbox',
             'sender' => fn (MorphTo $sender) => $sender->morphWith(self::SENDER_RELATIONS),
         ]);
@@ -98,6 +99,7 @@ class MessageResource extends JsonResource
             'created_at' => $message->created_at->getTimestamp(),
             'private' => $message->private,
             'source_id' => $message->source_id,
+            ...self::sourceLinkPayload($message),
             ...($message->sender !== null ? ['sender' => self::senderPushEventData($message->sender, $message->account, $message->inbox)] : []),
             ...self::attachmentsPayload($message),
         ];
@@ -130,6 +132,17 @@ class MessageResource extends JsonResource
             : ['attachments' => $attachments->map(fn (Attachment $attachment) => $attachment->pushEventData())->values()->all()];
     }
 
+    // Đường mở tin tại nền tảng gốc khi kênh khai được; vắng hẳn khóa khi không có.
+    private static function sourceLinkPayload(Message $message): array
+    {
+        $channel = $message->inbox?->channel;
+        $url = $channel instanceof LinksMessagesToSource ? $channel->sourceMessageUrl($message) : null;
+
+        return $url === null
+            ? []
+            : ['source_link' => ['url' => $url, 'platform' => $message->inbox->platform()->name]];
+    }
+
     // Dòng xem trước cho danh sách hội thoại; chỉ gửi khi content không tự nói lên tin.
     private static function previewText(Message $message): ?string
     {
@@ -153,6 +166,7 @@ class MessageResource extends JsonResource
             'private' => $message->private,
             'status' => $message->statusName(),
             'source_id' => $message->source_id,
+            ...self::sourceLinkPayload($message),
             'content_type' => $message->contentTypeName(),
             'content_attributes' => self::contentAttributes($message),
             'preview_text' => self::previewText($message),

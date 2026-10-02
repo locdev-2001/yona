@@ -122,6 +122,7 @@ export default function MessageActions({
         messageType,
         status,
         isPrivate,
+        sourceLink,
         contentAttributes,
         inboxCapabilities,
         orientation,
@@ -163,6 +164,7 @@ export default function MessageActions({
         isPrivate,
         content,
         hasCopyableImage: Boolean(copyableImageUrl),
+        hasSourceLink: Boolean(sourceLink),
         contentAttributes,
         inboxCapabilities,
         handlers: {
@@ -190,7 +192,12 @@ export default function MessageActions({
         ? t('CONVERSATION.MESSAGE_ACTIONS.RECALL_CONFIRMATION.MESSAGE')
         : t('CONVERSATION.CONTEXT_MENU.DELETE_CONFIRMATION.MESSAGE');
 
-    const labelOf = (action: MessageActionDescriptor) => (action.id === 'delete' ? deleteLabel : t(action.labelKey));
+    const labelOf = (action: MessageActionDescriptor) => {
+        if (action.id === 'delete') return deleteLabel;
+        if (action.id === 'openSource') return t(action.labelKey, { name: sourceLink?.platform ?? '' });
+
+        return t(action.labelKey);
+    };
 
     const closeMenu = useCallback(() => {
         setOpenMenu(current => {
@@ -227,6 +234,9 @@ export default function MessageActions({
                     messagePermalink(window.location.href, id, FOCUS_MESSAGE_PARAM),
                     'CONVERSATION.CONTEXT_MENU.LINK_COPIED',
                 ),
+            openSource: () => {
+                if (sourceLink) window.open(sourceLink.url, '_blank', 'noopener,noreferrer');
+            },
             createCannedResponse: () => onCreateCannedResponse?.(),
             translate: () => onTranslate?.(),
             delete: () => setConfirmingDelete(true),
