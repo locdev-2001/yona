@@ -7,12 +7,21 @@ use App\Models\Account;
 use App\Models\Channel\Email;
 use App\Models\Conversation;
 use App\Models\Inbox;
+use App\Models\Message;
 use App\Services\Email\MailPresenter;
 use App\Services\Imap\DeletedMessageTracker;
+use App\Services\Imap\FetchEmailService;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
+use Webklex\PHPIMAP\Client;
+use Webklex\PHPIMAP\ClientManager;
+use Webklex\PHPIMAP\Folder;
+use Webklex\PHPIMAP\Header;
+use Webklex\PHPIMAP\Message as ImapMessage;
+use Webklex\PHPIMAP\Query\WhereQuery;
+use Webklex\PHPIMAP\Support\MessageCollection;
 
 // Port từ spec/jobs/inboxes/{fetch_imap_email_inboxes_job,fetch_imap_emails_job}_spec.rb
 // + spec/services/imap/deleted_message_tracker_spec.rb.
@@ -103,4 +112,44 @@ it('skips quietly while the previous fetch of the same inbox still holds the loc
     (new FetchImapEmailsJob($inbox->channel))->handle();
 
     Log::shouldNotHaveReceived('error');
+});
+
+function imapMessageWithId(string $messageId, bool $expectsBodyFetch): ImapMessage
+{
+    $header = Mockery::mock(Header::class);
+    $header->raw = "Message-ID: <{$messageId}>\r\nFrom: buyer@example.com\r\nSubject: Hi\r\n";
+
+    $message = Mockery::mock(ImapMessage::class);
+    $message->shouldReceive('getHeader')->andReturn($header);
+    $message->shouldReceive('getRawBody')->andReturn('Hello');
+    $message->shouldReceive('parseBody')->times($expectsBodyFetch ? 1 : 0)->andReturnSelf();
+
+    return $message;
+}
+
+it('downloads the body only of mails the inbox does not have yet', function () {
+    $inbox = emailInboxWith($this->account, ['imap_enabled' => true]);
+    $knownId = uniqid('known-', true).'@example.com';
+    $newId = uniqid('new-', true).'@example.com';
+    Message::factory()->create(['account_id' => $this->account->id, 'inbox_id' => $inbox->id, 'source_id' => $knownId]);
+
+    $query = Mockery::mock(WhereQuery::class);
+    $query->shouldReceive('whereSince', 'leaveUnread', 'limit')->andReturnSelf();
+    $query->shouldReceive('setFetchBody')->with(false)->once()->andReturnSelf();
+    $query->shouldReceive('get')->andReturn(new MessageCollection([
+        imapMessageWithId($knownId, expectsBodyFetch: false),
+        imapMessageWithId($newId, expectsBodyFetch: true),
+    ]));
+    $folder = Mockery::mock(Folder::class);
+    $folder->shouldReceive('query')->andReturn($query);
+    $client = Mockery::mock(Client::class);
+    $client->shouldReceive('connect', 'disconnect')->andReturnSelf();
+    $client->shouldReceive('getFolderByPath')->with('INBOX')->andReturn($folder);
+    $manager = Mockery::mock(ClientManager::class);
+    $manager->shouldReceive('make')->andReturn($client);
+    app()->instance(ClientManager::class, $manager);
+
+    $mails = app(FetchEmailService::class, ['channel' => $inbox->channel])->perform();
+
+    expect(array_map(fn (MailPresenter $mail) => $mail->messageId(), $mails))->toBe([$newId]);
 });

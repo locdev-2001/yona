@@ -25,6 +25,7 @@ class FetchEmailService
     public function __construct(
         private readonly Email $channel,
         private readonly int $interval = 1,
+        private readonly ClientManager $clientManager = new ClientManager,
     ) {}
 
     /** @return list<MailPresenter> */
@@ -37,13 +38,18 @@ class FetchEmailService
         }
     }
 
-    /** @return list<MailPresenter> */
+    /**
+     * Hai pha: lấy header mọi thư trong cửa sổ, chỉ tải thân thư chưa có ở hộp thư.
+     * Tải thân cả cửa sổ mỗi phút làm một lượt quét Gmail mất cả phút.
+     *
+     * @return list<MailPresenter>
+     */
     private function fetchEmails(): array
     {
         $tracker = new DeletedMessageTracker($this->channel->inbox);
         $inboxMessages = $this->client()->getFolderByPath('INBOX')->query()
             ->whereSince($this->since())
-            ->setFetchBody(true)
+            ->setFetchBody(false)
             ->leaveUnread()
             ->limit(self::MAX_MESSAGES_PER_SYNC)
             ->get();
@@ -51,10 +57,10 @@ class FetchEmailService
         $emails = [];
 
         foreach ($inboxMessages as $inboxMessage) {
-            $mail = $this->presenterFor($inboxMessage);
-            $messageId = $mail->messageId();
+            $headers = MailPresenter::fromRaw($inboxMessage->getHeader()->raw, $this->channel->account);
+            $messageId = $headers->messageId();
 
-            if (blank($messageId) || $mail->isNotificationEmailFromSelf()) {
+            if (blank($messageId) || $headers->isNotificationEmailFromSelf()) {
                 continue;
             }
 
@@ -62,7 +68,7 @@ class FetchEmailService
                 continue;
             }
 
-            $emails[] = $mail;
+            $emails[] = $this->presenterWithBody($inboxMessage);
         }
 
         Log::info('[IMAP] Fetched '.count($emails).' new emails for inbox '.$this->channel->inbox->id);
@@ -70,8 +76,9 @@ class FetchEmailService
         return $emails;
     }
 
-    private function presenterFor(Message $inboxMessage): MailPresenter
+    private function presenterWithBody(Message $inboxMessage): MailPresenter
     {
+        $inboxMessage->parseBody();
         $raw = $inboxMessage->getHeader()->raw."\r\n".$inboxMessage->getRawBody();
 
         return MailPresenter::fromRaw($raw, $this->channel->account);
@@ -90,7 +97,7 @@ class FetchEmailService
         }
 
         $config = $this->connectionConfig();
-        $this->client = (new ClientManager)->make($config);
+        $this->client = $this->clientManager->make($config);
 
         try {
             $this->client->connect();
