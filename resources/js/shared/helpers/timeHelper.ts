@@ -46,6 +46,17 @@ export function formatInLocale(time: number | Date, pattern: string): string {
     return format(value, localizedPattern(pattern), { locale: activeDateFnsLocale() });
 }
 
+// Mốc giờ lưu dạng chuỗi trong thuộc tính hội thoại có hai kiểu: máy chủ ghi
+// "YYYY-MM-DD HH:mm:ss" theo UTC mà không kèm múi giờ, trình duyệt ghi chuỗi
+// tự mang múi giờ (ISO, Date#toString). Không đọc được thì trả null.
+const ZONELESS_UTC_STAMP = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/;
+
+export function parseStoredTimestamp(value: string): Date | null {
+    const parsed = new Date(ZONELESS_UTC_STAMP.test(value) ? `${value.replace(' ', 'T')}Z` : value);
+
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
 // Khác biệt CỐ Ý so với gốc: gốc không truyền locale nên luôn ra tiếng Anh
 // ("about 1 hour ago"). Sản phẩm chạy tiếng Việt nên chuỗi này phải dịch.
 export function dynamicTime(time: number): string {

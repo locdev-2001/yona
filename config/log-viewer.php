@@ -83,7 +83,8 @@ return [
     |
     */
 
-    'timezone' => null,
+    // Đội vận hành ở Việt Nam: đọc log theo giờ Việt Nam, ứng dụng vẫn ghi UTC.
+    'timezone' => env('LOG_VIEWER_TIMEZONE', 'Asia/Ho_Chi_Minh'),
 
     /*
     |--------------------------------------------------------------------------

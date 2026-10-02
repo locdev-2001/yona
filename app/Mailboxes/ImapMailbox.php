@@ -93,7 +93,7 @@ class ImapMailbox
                     'in_reply_to' => $this->inReplyTo(),
                     'auto_reply' => $this->processedMail->isAutoReply(),
                     'mail_subject' => $this->sanitize($this->processedMail->subject()),
-                    'initiated_at' => ['timestamp' => now()->utc()->toDateTimeString()],
+                    'initiated_at' => ['timestamp' => now()->toIso8601ZuluString()],
                 ],
             ]);
     }

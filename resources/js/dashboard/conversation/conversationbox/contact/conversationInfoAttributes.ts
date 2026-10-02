@@ -1,4 +1,5 @@
 import { getLanguageName } from 'dashboard/components-next/filter/helper/languages';
+import { formatInLocale, parseStoredTimestamp } from 'shared/helpers/timeHelper';
 
 // Phần thuần của ConversationInfo.vue: dựng danh sách thuộc tính tĩnh (đúng thứ
 // tự bản gốc) rồi bỏ mục rỗng. Bản gốc ghép chuỗi trước khi lọc nên browser rỗng
@@ -23,6 +24,13 @@ function joinNameAndVersion(browser: unknown, nameKey: string, versionKey: strin
     return `${readString(bag[nameKey])} ${readString(bag[versionKey])}`;
 }
 
+// Giờ hiện theo múi giờ của người xem; chuỗi không đọc được thì giữ nguyên.
+function formatInitiatedAt(stamp: string): string {
+    const parsed = stamp ? parseStoredTimestamp(stamp) : null;
+
+    return parsed ? formatInLocale(parsed, 'dd MMM yyyy, h:mm a') : stamp;
+}
+
 export function buildConversationInfoElements(
     conversationAttributes: AttributeBag = {},
     contactAttributes: AttributeBag = {},
@@ -35,7 +43,7 @@ export function buildConversationInfoElements(
             {
                 key: 'static-initiated-at',
                 title: 'CONTACT_PANEL.INITIATED_AT',
-                content: readString(initiatedAt?.timestamp),
+                content: formatInitiatedAt(readString(initiatedAt?.timestamp)),
             },
             {
                 key: 'static-browser-language',

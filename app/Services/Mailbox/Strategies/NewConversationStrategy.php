@@ -88,7 +88,7 @@ class NewConversationStrategy extends BaseStrategy
                 'source' => 'email',
                 'auto_reply' => $this->processedMail->isAutoReply(),
                 'mail_subject' => $this->sanitize($this->processedMail->subject()),
-                'initiated_at' => ['timestamp' => now()->utc()->toDateTimeString()],
+                'initiated_at' => ['timestamp' => now()->toIso8601ZuluString()],
             ],
         ]);
     }

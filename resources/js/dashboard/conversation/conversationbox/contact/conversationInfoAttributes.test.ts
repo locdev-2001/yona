@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { formatInLocale } from 'shared/helpers/timeHelper';
 import { buildConversationInfoElements } from './conversationInfoAttributes';
 
 describe('buildConversationInfoElements', () => {
@@ -34,6 +35,21 @@ describe('buildConversationInfoElements', () => {
         expect(elements[1].content).toBe('Vietnamese');
         expect(elements[3].content).toBe('Chrome 131');
         expect(elements[0].title).toBe('CONTACT_PANEL.INITIATED_AT');
+    });
+
+    it('hiện giờ bắt đầu theo múi giờ người xem, kể cả chuỗi UTC không ghi múi giờ', () => {
+        const [utcStamp] = buildConversationInfoElements({ initiated_at: { timestamp: '2026-10-02 03:04:59' } });
+        const [isoStamp] = buildConversationInfoElements({ initiated_at: { timestamp: '2026-10-02T03:04:59Z' } });
+        const expected = formatInLocale(new Date(Date.UTC(2026, 9, 2, 3, 4, 59)), 'dd MMM yyyy, h:mm a');
+
+        expect(utcStamp.content).toBe(expected);
+        expect(isoStamp.content).toBe(expected);
+    });
+
+    it('giữ nguyên chuỗi giờ không đọc được', () => {
+        const [element] = buildConversationInfoElements({ initiated_at: { timestamp: 'không rõ' } });
+
+        expect(element.content).toBe('không rõ');
     });
 
     it('ip lấy từ thuộc tính của contact, không phải của hội thoại', () => {
