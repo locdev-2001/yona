@@ -285,6 +285,8 @@ return [
     'FEEDBACK_TITLE' => 'Phản hồi',
     'REPLY_MESSAGE_NOT_FOUND' => 'Không tìm thấy tin nhắn',
     'JUMP_TO_MESSAGE_NOT_FOUND' => 'Tin nhắn này không còn trong hội thoại',
+    'SCROLL_TO_LATEST' => 'Xuống tin mới nhất',
+    'SCROLL_TO_LATEST_UNSEEN' => '{count} tin mới',
     'CAPTAIN_GENERATION' => [
         'TITLE' => 'Câu trả lời này được tạo ra thế nào?',
         'GENERATED_BY' => 'Do Captain tạo',

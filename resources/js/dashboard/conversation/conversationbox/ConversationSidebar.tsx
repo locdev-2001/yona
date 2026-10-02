@@ -4,12 +4,15 @@ import { t } from '../../../i18n';
 import { useConversation } from '../ConversationContext';
 import { useContactPanelControl, useIsContactPanelOverlay } from '../contactPanelVisibility';
 import ContactPanel from './ContactPanel';
+import SidepanelSwitch from './SidepanelSwitch';
 
 // Port từ widgets/conversation/ConversationSidebar.vue — cột phải 320/360px
 // (xl+) hoặc lớp phủ full-height khi chưa đủ chỗ; chạm/bấm ra ngoài lớp phủ thì
 // đóng. Lớp phủ phải nhận cả `touchstart` vì thiết bị cảm ứng không phát
 // `mousedown` trước khi cuộn. Ngưỡng cột tĩnh nâng từ `md` lên `xl` cùng lượt
 // với LARGE_SCREEN_BREAKPOINT: ở 1024–1279 ba cột làm khung chat còn ~1px.
+// Màn rộng mà panel đóng: cột thu thành dải hẹp chỉ còn nút mở lại, để nút bật
+// panel nằm trong chính cột phải chứ không nổi đè lên khung tin.
 export default function ConversationSidebar() {
     const { uiSettings, updateUISettings } = useConversation();
     const rootRef = useRef<HTMLDivElement>(null);
@@ -33,6 +36,17 @@ export default function ConversationSidebar() {
         };
     }, [isOverlay, isOpen, setOpen]);
 
+    if (!isOpen) {
+        return isOverlay ? null : (
+            <div
+                data-testid="conversation-sidebar-rail"
+                className="hidden xl:flex flex-col items-center w-12 min-w-12 pt-2 bg-n-surface-2 ltr:border-l rtl:border-r border-n-weak"
+            >
+                <SidepanelSwitch variant="rail" />
+            </div>
+        );
+    }
+
     return (
         <>
             {isOverlay && isOpen ? (
@@ -51,11 +65,11 @@ export default function ConversationSidebar() {
             <div
                 ref={rootRef}
                 data-testid="conversation-sidebar"
-                className={`bg-n-surface-2 h-full overflow-hidden flex flex-col fixed top-0 z-50 w-full max-w-sm transition-transform duration-300 ease-in-out ltr:right-0 rtl:left-0 xl:static xl:w-[320px] xl:min-w-[320px] ltr:border-l rtl:border-r border-n-weak 2xl:min-w-[360px] 2xl:w-[360px] shadow-lg xl:shadow-none ${
-                    isOpen ? 'xl:flex' : 'xl:hidden'
-                }`}
+                className={`bg-n-surface-2 h-full overflow-hidden flex flex-col fixed top-0 z-50 w-full max-w-sm transition-transform duration-300 ease-in-out ltr:right-0 rtl:left-0 xl:static xl:w-[320px] xl:min-w-[320px] ltr:border-l rtl:border-r border-n-weak 2xl:min-w-[360px] 2xl:w-[360px] shadow-lg xl:shadow-none xl:flex`}
             >
-                <div className="flex flex-1 overflow-auto">{isOpen ? <ContactPanel /> : null}</div>
+                <div className="flex flex-1 overflow-auto">
+                    <ContactPanel />
+                </div>
             </div>
         </>
     );

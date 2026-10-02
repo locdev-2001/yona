@@ -17,6 +17,8 @@ import type { DashboardPageProps } from '../../types';
 import { useConversation } from '../ConversationContext';
 import type { ConversationMessage } from '../types';
 import { useFocusMessageScroll } from './useFocusMessageScroll';
+import { useScrollToLatest } from './useScrollToLatest';
+import ScrollToLatestButton from './ScrollToLatestButton';
 import { firstUnreadMessageId, unreadMessageLabelParts } from '../unreadHelpers';
 import Banner from './Banner';
 import ForwardMessageDialog from './ForwardMessageDialog';
@@ -53,7 +55,7 @@ export default function MessagesView() {
         clearFocusedMessage,
         focusMessage,
     } = useConversation();
-    const { inboxes = [] } = usePage<DashboardPageProps>().props;
+    const { auth, inboxes = [] } = usePage<DashboardPageProps>().props;
 
     const conversationPanelRef = useRef<HTMLUListElement>(null);
     const messagesViewRef = useRef<HTMLDivElement>(null);
@@ -149,13 +151,13 @@ export default function MessagesView() {
         }
     }, [messages, messagesLoading, currentChat.id]);
 
-    // Tin mới nối vào cuối (realtime hoặc vừa gửi) → cuộn xuống đáy như onScrollToMessage.
-    const lastMessageId = messages.length ? messages[messages.length - 1].id : null;
-    useLayoutEffect(() => {
-        const panel = conversationPanelRef.current;
-        if (!panel || lastMessageId === null || scrolledConversationRef.current !== currentChat.id) return;
-        panel.scrollTop = panel.scrollHeight;
-    }, [lastMessageId, currentChat.id]);
+    const scrollToLatest = useScrollToLatest({
+        panelRef: conversationPanelRef,
+        messages,
+        conversationId: currentChat.id,
+        scrolledConversationRef,
+        currentUserId: auth.user?.id ?? null,
+    });
 
     // Hộp chuyển tiếp gắn với tin của hội thoại đang mở.
     useEffect(() => {
@@ -175,6 +177,7 @@ export default function MessagesView() {
 
     const handleScroll = (event: UIEvent<HTMLUListElement>) => {
         const panel = event.currentTarget;
+        scrollToLatest.onScroll(panel);
         if (panel.scrollTop >= 100 || isLoadingPrevious || messagesLoading || allMessagesLoaded) return;
 
         setIsLoadingPrevious(true);
@@ -237,6 +240,9 @@ export default function MessagesView() {
                 }
             />
             <div className="flex relative flex-col bg-n-surface-1">
+                {scrollToLatest.isAwayFromLatest ? (
+                    <ScrollToLatestButton unseenCount={scrollToLatest.unseenCount} onClick={scrollToLatest.jump} />
+                ) : null}
                 {isAnyoneTyping && (
                     <div className="absolute flex items-center w-full h-0 -top-7">
                         <div className="flex py-2 pr-4 pl-5 shadow-md rounded-full bg-white text-n-slate-11 text-xs font-semibold my-2.5 mx-auto">

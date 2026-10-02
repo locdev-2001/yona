@@ -231,7 +231,7 @@ const ResizableEditorWrapper = forwardRef<ResizableEditorWrapperHandle, Resizabl
                     aria-orientation="horizontal"
                     aria-label={t('CONVERSATION.FOOTER.RESIZE_COMPOSER')}
                     data-testid="composer-resize-grip"
-                    className="group absolute inset-x-0 -top-4 z-10 flex h-4 cursor-row-resize select-none items-center justify-center bg-gradient-to-b from-transparent from-10% to-n-surface-1/90 backdrop-blur-[0.01875rem]"
+                    className="composer-resize-grip group absolute inset-x-0 -top-4 z-10 flex h-4 cursor-row-resize select-none items-center justify-center bg-gradient-to-b from-transparent from-10% to-n-surface-1/90 backdrop-blur-[0.01875rem]"
                     onMouseDown={onResizeStart}
                     onTouchStart={event => {
                         event.preventDefault();

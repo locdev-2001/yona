@@ -89,6 +89,18 @@
   &[data-editor-overflow='auto'] .resizable-editor-body {
     @apply overflow-y-auto;
   }
+
+  // Ô soạn thu gọn (chưa focus, không có gì dở): một dòng, bỏ chiều cao đã kéo
+  // và thanh kéo — kéo giãn chỉ có nghĩa khi đang soạn.
+  &:has(.reply-box[data-expanded='false']) {
+    .resizable-editor-body {
+      height: var(--editor-min-allowed, 2rem);
+    }
+
+    .composer-resize-grip {
+      @apply hidden;
+    }
+  }
 }
 
 .ProseMirror-prompt-backdrop::backdrop {

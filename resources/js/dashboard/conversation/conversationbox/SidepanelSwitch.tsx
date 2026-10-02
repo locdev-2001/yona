@@ -7,22 +7,21 @@ import type { DashboardPageProps } from '../../types';
 import { useConversation } from '../ConversationContext';
 import { useContactPanelControl } from '../contactPanelVisibility';
 
-// Port từ components-next/Conversation/SidepanelSwitch.vue — nhóm nút nổi góc
-// phải vùng tin nhắn: mở ContactPanel (lưu ui_settings.is_contact_sidebar_open).
-// Nút Copilot chỉ hiện khi cờ captain_integration bật (tắt ở yona → không render).
-// Phím tắt Alt+O bỏ (B10).
+// Port từ components-next/Conversation/SidepanelSwitch.vue — nút mở ContactPanel
+// (lưu ui_settings.is_contact_sidebar_open). Nút Copilot chỉ hiện khi cờ
+// captain_integration bật (tắt ở yona → không render). Phím tắt Alt+O bỏ (B10).
 //
-// Lệch có chủ đích (founder 08/09/2026): cụm nổi neo `top-36` đè lên bong bóng
-// tin đầu tiên khi khung chat hẹp. Dưới ngưỡng ba cột cùng cụm nút này được
-// dựng dạng `inline` trong mũ khung chat (ConversationHeader) — cùng một
-// component, chỉ khác lớp bao, nên hành vi bật/tắt chỉ có một chỗ.
+// Lệch có chủ đích (founder 02/10/2026): không còn cụm nút nổi đè lên khung tin.
+// Màn rộng: panel đóng thì thu thành dải hẹp ở mép phải (`rail`, trong
+// ConversationSidebar); panel mở thì đóng bằng dấu × ở đầu panel. Dưới ngưỡng
+// ba cột cụm nút nằm trong mũ khung chat (`inline`). Cùng một component, chỉ
+// khác lớp bao, nên hành vi bật/tắt chỉ có một chỗ.
 const CONTAINER_CLASS = {
-    floating:
-        'flex flex-col justify-center items-center absolute top-36 xl:top-24 ltr:right-2 rtl:left-2 bg-n-solid-2/90 backdrop-blur-lg border border-n-weak/50 rounded-full gap-1.5 p-1.5 shadow-sm transition-shadow duration-200 hover:shadow !z-20 has-[button:not(:disabled):active]:scale-[0.98] transition-transform ease-out',
+    rail: 'flex flex-col items-center gap-1',
     inline: 'flex flex-row items-center gap-1',
 } as const;
 
-export default function SidepanelSwitch({ variant = 'floating' }: { variant?: 'floating' | 'inline' } = {}) {
+export default function SidepanelSwitch({ variant }: { variant: keyof typeof CONTAINER_CLASS }) {
     const { uiSettings, updateUISettings } = useConversation();
     const { currentAccount } = usePage<DashboardPageProps>().props;
     const showCopilotTab = Boolean(currentAccount.features.captain_integration);

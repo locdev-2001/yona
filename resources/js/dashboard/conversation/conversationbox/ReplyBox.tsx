@@ -57,6 +57,7 @@ import ReplyBottomPanel from './ReplyBottomPanel';
 import VoiceMessagePreview from './voiceRecorder/VoiceMessagePreview';
 import VoiceRecorderBar from './voiceRecorder/VoiceRecorderBar';
 import { useVoiceRecorder } from './voiceRecorder/useVoiceRecorder';
+import { useComposerExpansion, useTypeToFocusComposer } from './useComposerExpansion';
 import type { VoiceRecording } from './voiceRecorder/useVoiceRecorder';
 import {
     MAX_VOICE_RECORDING_SECONDS,
@@ -624,13 +625,25 @@ export default function ReplyBox({
         });
     };
 
+    const { isExpanded, expand, markPointerInsideComposer } = useComposerExpansion({
+        canCollapse: !hasContent && !hasAttachments && !replyTarget && !cannedCard && voiceRecorder.status === 'idle',
+        resetKey: conversationId,
+    });
+    const expandedOnlyClass = isExpanded ? 'contents' : 'hidden';
+    useTypeToFocusComposer(editorRef, !isEditorDisabled);
+
     return (
         <>
             <ReplyBoxBanner message={message} isOnPrivateNote={isOnPrivateNote} />
             <div
                 ref={replyBoxRef}
                 className={`reply-box ${isPrivate ? 'is-private' : ''} ${isFocused || hasAttachments ? 'is-focused' : ''}`}
+                data-expanded={isExpanded}
+                onFocus={expand}
+                onPointerDown={markPointerInsideComposer}
+                onClick={isExpanded ? undefined : () => editorRef.current?.focusEditorInputField()}
             >
+            <div className={expandedOnlyClass}>
             <ReplyTopPanel
                 mode={replyType}
                 isReplyRestricted={isBotOwnedPendingConversation}
@@ -643,6 +656,7 @@ export default function ReplyBox({
                 onSetReplyMode={setReplyMode}
                 onToggleEditorSize={toggleEditorSize}
             />
+            </div>
             <div
                 className="reply-box__top"
                 onKeyDown={event => {
@@ -652,7 +666,7 @@ export default function ReplyBox({
                 {!isOnPrivateNote && replyTarget ? (
                     <ReplyToMessage message={replyTarget} onDismiss={() => onClearReplyTarget?.()} />
                 ) : null}
-                {!isOnPrivateNote && isAnEmailChannel ? (
+                {isExpanded && !isOnPrivateNote && isAnEmailChannel ? (
                     <ReplyEmailHead
                         toEmails={toEmails}
                         ccEmails={ccEmails}
@@ -697,7 +711,7 @@ export default function ReplyBox({
                     onSelectCannedCard={setCannedCard}
                     onAttachFiles={onAttachFiles}
                 />
-                {shouldShowQuotedPreview ? (
+                {isExpanded && shouldShowQuotedPreview ? (
                     <QuotedEmailPreview
                         quotedEmailText={quotedEmailText}
                         previewText={quotedEmailPreviewText}
@@ -731,10 +745,11 @@ export default function ReplyBox({
                         />
                     </div>
                 ) : null}
-                {isSignatureEnabledForInbox && !isSignatureAvailable ? (
+                {isExpanded && isSignatureEnabledForInbox && !isSignatureAvailable ? (
                     <MessageSignatureMissingAlert accountId={accountId} className="mb-2" />
                 ) : null}
             </div>
+            <div className={expandedOnlyClass}>
             <ReplyBottomPanel
                 isNote={isPrivate}
                 isOnPrivateNote={isOnPrivateNote}
@@ -765,6 +780,7 @@ export default function ReplyBox({
                           }
                 }
             />
+            </div>
         </div>
     </>
     );

@@ -9,7 +9,6 @@ import ConversationBox from './conversationbox/ConversationBox';
 import ConversationSidebar from './conversationbox/ConversationSidebar';
 import OnboardingView from './conversationbox/OnboardingView';
 import { useShowAdminOnboarding } from './conversationbox/useShowAdminOnboarding';
-import { useContactPanelOpen } from './contactPanelVisibility';
 import { showConversationList as computeShowList, showMessageView as computeShowMessageView } from './layoutMode';
 
 // Port từ routes/dashboard/conversation/ConversationView.vue — trang 3 cột
@@ -28,13 +27,12 @@ interface Props {
 }
 
 function ConversationLayout({ conversationId, foldersId }: { conversationId: number; foldersId: number }) {
-    const { isOnExpandedLayout, selectedConversation, uiSettings } = useConversation();
+    const { isOnExpandedLayout, selectedConversation } = useConversation();
     const showConversationList = computeShowList(isOnExpandedLayout, conversationId);
     const showMessageView = computeShowMessageView(isOnExpandedLayout, conversationId);
-    // shouldShowSidebar gốc: có currentChat + ui_settings.is_contact_sidebar_open.
-    // Lệch có chủ đích: chưa từng chọn thì mở sẵn trên màn ≥1280px (ux-deviations.md).
-    const isContactPanelOpen = useContactPanelOpen(uiSettings);
-    const shouldShowSidebar = Boolean(selectedConversation && isContactPanelOpen);
+    // Cột phải luôn dựng khi có hội thoại: mở thì là panel Liên hệ, đóng thì
+    // ConversationSidebar tự thu thành dải nút mở (màn rộng) hoặc không vẽ gì.
+    const shouldShowSidebar = Boolean(selectedConversation);
     const showAdminOnboarding = useShowAdminOnboarding();
     useConversationHotKeys();
     useMacroHotKeys();

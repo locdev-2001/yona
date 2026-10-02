@@ -28,6 +28,7 @@ export const ICONS = {
     dragHandle: 'i-lucide-grip-vertical',
     sortAscending: 'i-lucide-arrow-down-narrow-wide',
     sortDescending: 'i-lucide-arrow-down-wide-narrow',
+    scrollToLatest: 'i-lucide-arrow-down',
     chevronLeft: 'i-lucide-chevron-left',
     chevronRight: 'i-lucide-chevron-right',
     merge: 'i-lucide-merge',

@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 
-import { useIsLargeScreen } from 'dashboard/composables/useViewportWidth';
 import { t } from '../../../i18n';
 import { useConversation } from '../ConversationContext';
 import { useDashboardApps } from 'dashboard/composables/useDashboardApps';
@@ -10,7 +9,6 @@ import ConversationHeader from './ConversationHeader';
 import EmptyState from './EmptyState';
 import MessagesView from './MessagesView';
 import SenderIdentityProvider from './SenderIdentityProvider';
-import SidepanelSwitch from './SidepanelSwitch';
 
 // Port từ widgets/conversation/ConversationBox.vue. Khi account có dashboard app,
 // header hội thoại mọc thêm hàng tab: tab đầu là Messages, mỗi app một tab.
@@ -23,8 +21,6 @@ export default function ConversationBox({
     className?: string;
 }) {
     const { accountId, selectedConversation, isOnExpandedLayout } = useConversation();
-    // Dưới ngưỡng ba cột cụm nút này sống trong mũ khung chat, không nổi đè lên tin.
-    const isWideLayout = useIsLargeScreen();
     const currentChat = selectedConversation;
     const { apps: dashboardApps } = useDashboardApps(accountId);
     const [activeIndex, setActiveIndex] = useState(0);
@@ -63,8 +59,6 @@ export default function ConversationBox({
                 ) : isInboxView ? null : (
                     <EmptyState />
                 )}
-                {/* slot của ConversationBox.vue: ConversationView đặt SidepanelSwitch khi có currentChat */}
-                {currentChat && isWideLayout ? <SidepanelSwitch /> : null}
             </div>
             {currentChat
                 ? dashboardApps.map((dashboardApp, index) => (
