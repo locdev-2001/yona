@@ -6,6 +6,7 @@ use App\Builders\NotificationBuilder;
 use App\Events\DomainEvent;
 use App\Models\Account;
 use App\Models\Conversation;
+use App\Models\Notification;
 use App\Models\User;
 use App\Services\Messages\MentionService;
 use App\Services\Messages\NewMessageNotificationService;
@@ -47,22 +48,33 @@ class NotificationListener extends BaseListener
             return;
         }
 
-        if ($conversation->status === Conversation::STATUS_PENDING || $this->isAutomaticAssignmentOfReadConversation($event, $conversation)) {
+        if ($conversation->status === Conversation::STATUS_PENDING || $this->isAutomaticAssignmentOfReadConversation($event, $conversation, $assignee)) {
             return;
         }
 
         $this->build('conversation_assignment', $assignee, $account, $conversation);
     }
 
-    // Chính sách phân công rải dần hàng tồn: hội thoại đã đọc hết thì giao lặng lẽ, không
-    // dựng lại chuông vừa "đánh dấu tất cả đã đọc". Người giao tay thì vẫn báo.
-    private function isAutomaticAssignmentOfReadConversation(DomainEvent $event, Conversation $conversation): bool
+    // Chính sách phân công rải dần hàng tồn: hội thoại người được giao đã đọc hết thì giao
+    // lặng lẽ, không dựng lại chuông vừa "đánh dấu tất cả đã đọc". Người giao tay thì vẫn báo.
+    // agent_last_seen_at dùng chung mọi nhân viên, nên phải thêm dấu vết của chính người được
+    // giao: đã có thông báo về hội thoại này và đã đọc hết.
+    private function isAutomaticAssignmentOfReadConversation(DomainEvent $event, Conversation $conversation, User $assignee): bool
     {
         if (($event->data['performed_by'] ?? null) instanceof User) {
             return false;
         }
 
-        return $conversation->agent_last_seen_at !== null && $conversation->unreadIncomingMessagesCount() === 0;
+        if ($conversation->agent_last_seen_at === null || $conversation->unreadIncomingMessagesCount() > 0) {
+            return false;
+        }
+
+        $assigneeNotifications = Notification::query()
+            ->where('user_id', $assignee->id)
+            ->where('primary_actor_type', $conversation->getMorphClass())
+            ->where('primary_actor_id', $conversation->id);
+
+        return $assigneeNotifications->exists() && ! $assigneeNotifications->clone()->whereNull('read_at')->exists();
     }
 
     public function messageCreated(DomainEvent $event): void

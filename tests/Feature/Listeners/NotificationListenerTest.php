@@ -86,10 +86,27 @@ describe('assignee.changed', function () {
         Message::factory()->create(['account_id' => $this->account->id, 'inbox_id' => $this->inbox->id, 'conversation_id' => $conversation->id]);
         $conversation->update(['agent_last_seen_at' => now()->addSecond()]);
         Notification::query()->delete();
+        Notification::factory()->create([
+            'account_id' => $this->account->id,
+            'user_id' => $this->assignee->id,
+            'primary_actor_id' => $conversation->id,
+            'read_at' => now(),
+        ]);
 
         $conversation->update(['assignee_id' => $this->assignee->id]);
 
-        expect($this->assignee->notifications()->count())->toBe(0);
+        expect($this->assignee->notifications()->count())->toBe(1);
+    });
+
+    it('still notifies an automatic assignee who never saw a conversation another agent read', function () {
+        $conversation = Conversation::factory()->create(['account_id' => $this->account->id, 'inbox_id' => $this->inbox->id]);
+        Message::factory()->create(['account_id' => $this->account->id, 'inbox_id' => $this->inbox->id, 'conversation_id' => $conversation->id]);
+        $conversation->update(['agent_last_seen_at' => now()->addSecond()]);
+        Notification::query()->delete();
+
+        $conversation->update(['assignee_id' => $this->assignee->id]);
+
+        expect($this->assignee->notifications()->count())->toBe(1);
     });
 
     it('still notifies when a teammate assigns a conversation already read', function () {
