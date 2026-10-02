@@ -8,7 +8,7 @@ use App\Support\SystemAccess;
 
 // Nguồn duy nhất của luật "ai được quản lý kho sticker nào", dùng ở trang cài
 // đặt và API dashboard:
-// - kho riêng của account: mọi quản trị viên account đó;
+// - kho riêng của account: mọi thành viên account đó;
 // - kho nền tảng (kho chung): chỉ người có quyền hệ thống;
 // - chuyển bộ giữa kho nền tảng và kho riêng: người có quyền hệ thống đồng thời
 //   là quản trị viên account đó.
@@ -16,7 +16,7 @@ class StickerLibraryAccess
 {
     public function canManageAccountLibrary(User $user, Account $account): bool
     {
-        return $this->isAdministratorOf($user, $account);
+        return $account->accountUsers()->where('user_id', $user->id)->exists();
     }
 
     public function canManagePlatformLibrary(User $user): bool

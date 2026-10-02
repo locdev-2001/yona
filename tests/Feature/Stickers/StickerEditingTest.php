@@ -139,11 +139,11 @@ describe('kho riêng (tenant)', function () {
             ->assertJsonPath('keywords', ['chào']);
     });
 
-    it('nhân viên thường thì bị chặn', function () {
+    it('nhân viên cũng sửa được', function () {
         $agent = editingTenantUser($this->account, AccountUser::ROLE_AGENT);
 
-        $this->actingAs($agent)->patchJson($this->url, ['label' => 'Lén'])->assertUnauthorized();
-        expect($this->sticker->fresh()->label)->toBe('Giữ');
+        $this->actingAs($agent)->patchJson($this->url, ['label' => 'Của nhân viên'])->assertOk();
+        expect($this->sticker->fresh()->label)->toBe('Của nhân viên');
     });
 
     it('không sửa được sticker kho chung hay của tenant khác', function () {

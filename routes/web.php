@@ -195,6 +195,10 @@ Route::middleware('auth')->group(function () {
         Route::get('/profile/settings', fn (Account $account) => Inertia::render('dashboard/settings/profile/Index'))
             ->name('profile_settings');
 
+        // Kho sticker: kho riêng cho mọi thành viên account, kho nền tảng chỉ người có quyền hệ thống.
+        Route::get('/settings/custom-stickers', [CustomStickersSettingsController::class, 'show'])
+            ->name('settings_custom_stickers');
+
         Route::middleware('account.role:administrator')->group(function () {
             Route::get('/settings/agents', fn (Account $account) => redirect("/app/accounts/{$account->id}/settings/agents/list"));
             Route::get('/settings/agents/list', fn (Account $account) => Inertia::render('dashboard/settings/agents/Index'))
@@ -212,9 +216,6 @@ Route::middleware('auth')->group(function () {
             // hình tài khoản nhận tiền + mã QR VietQR.
             Route::get('/settings/payment-accounts', fn (Account $account) => Inertia::render('dashboard/settings/paymentAccounts/Index'))
                 ->name('settings_payment_accounts');
-            // Kho sticker: kho riêng cho mọi quản trị viên, kho nền tảng chỉ người có quyền hệ thống.
-            Route::get('/settings/custom-stickers', [CustomStickersSettingsController::class, 'show'])
-                ->name('settings_custom_stickers');
 
             Route::get('/settings/teams', fn (Account $account) => redirect("/app/accounts/{$account->id}/settings/teams/list"));
             Route::get('/settings/teams/list', [TeamsSettingsController::class, 'index'])->name('settings_teams_list');

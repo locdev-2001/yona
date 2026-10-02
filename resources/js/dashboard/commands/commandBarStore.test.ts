@@ -78,7 +78,7 @@ describe('buildGoToActions', () => {
 
         expect(commandUrls).toContain('/app/accounts/2/settings/canned-response/list');
         expect(commandUrls).not.toContain('/app/accounts/2/settings/agents/list');
-        expect(commandUrls).not.toContain('/app/accounts/2/settings/custom-stickers');
+        expect(commandUrls).toContain('/app/accounts/2/settings/custom-stickers');
     });
 
     it('mục theo cờ tính năng chỉ có khi account bật cờ, giống sidebar', () => {

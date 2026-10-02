@@ -15,7 +15,7 @@ use Tests\Support\FakeStickerRenderer;
 use Tests\Support\YonaStickers;
 
 // Kho sticker riêng của tenant và kho nền tảng trong Cài đặt: cùng lõi với
-// console Super Admin. Kho riêng mở cho mọi quản trị viên account; kho nền tảng
+// console Super Admin. Kho riêng mở cho mọi thành viên account; kho nền tảng
 // chỉ người có quyền hệ thống.
 
 function customStickersUser(Account $account, int $role = AccountUser::ROLE_ADMINISTRATOR): User
@@ -92,7 +92,7 @@ describe('kho nền tảng trong Cài đặt', function () {
     });
 });
 
-describe('kho riêng của quản trị viên account', function () {
+describe('kho riêng của account', function () {
     it('trang cài đặt mở được cho quản trị viên, không có kho nền tảng', function () {
         $this->actingAs($this->admin)
             ->get("/app/accounts/{$this->account->id}/settings/custom-stickers")
@@ -102,11 +102,23 @@ describe('kho riêng của quản trị viên account', function () {
                 ->where('stickerLibraryAccess.platformLibrary', false));
     });
 
-    it('nhân viên không phải quản trị viên bị chặn', function () {
+    it('nhân viên mở được trang và dựng bộ trong kho riêng, không thấy kho nền tảng', function () {
         $agent = customStickersUser($this->account, AccountUser::ROLE_AGENT);
+        $this->actingAs($agent);
 
-        $this->actingAs($agent)->getJson($this->api)->assertUnauthorized();
-        $this->actingAs($agent)->postJson($this->api, ['name' => 'Không'])->assertUnauthorized();
+        $this->get("/app/accounts/{$this->account->id}/settings/custom-stickers")
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page->where('stickerLibraryAccess.platformLibrary', false));
+        $this->postJson($this->api, ['name' => 'Của nhân viên'])->assertCreated();
+        $this->getJson('/api/v1/platform_sticker_library/sticker_packs')->assertForbidden();
+
+        expect(StickerPack::query()->where('account_id', $this->account->id)->count())->toBe(1);
+    });
+
+    it('người ngoài account không vào được kho riêng', function () {
+        $outsider = customStickersUser(Account::factory()->create());
+
+        $this->actingAs($outsider)->getJson($this->api)->assertNotFound();
         expect(StickerPack::query()->count())->toBe(0);
     });
 

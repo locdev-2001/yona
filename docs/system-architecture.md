@@ -155,9 +155,10 @@ ra kênh ngoài là sticker gốc của nền tảng hoặc một ảnh, không 
   chính account.
 - **Ai được quản lý kho nào:** một nguồn là `StickerLibraryAccess`
   (`app/Services/Stickers/`), dùng ở trang cài đặt và API dashboard.
-  Kho riêng: mọi quản trị viên account. Kho nền tảng: chỉ người có quyền hệ thống. Quyền hệ thống
+  Kho riêng: mọi thành viên account (quản trị viên lẫn nhân viên). Kho nền tảng:
+  chỉ người có quyền hệ thống. Quyền hệ thống
   = email user trong `YONA_SYSTEM_ADMIN_EMAILS`, đọc DUY NHẤT ở
-  `App\Support\SystemAccess`. Trang Cài đặt → Kho sticker mở cho mọi quản trị
+  `App\Support\SystemAccess`. Trang Cài đặt → Kho sticker mở cho mọi thành
   viên; tab kho nền tảng chỉ hiện với người có quyền hệ thống, API kho nền tảng
   trả 403 cho người khác (`EnsureStickerLibraryAccess`).
   Kho nền tảng trong dashboard ở `/api/v1/platform_sticker_library/sticker_packs…`;

@@ -33,8 +33,8 @@ it('ma trận kho riêng và kho nền tảng', function (int $role, bool $syste
 })->with([
     'quản trị viên' => [AccountUser::ROLE_ADMINISTRATOR, false, true, false],
     'quản trị viên có quyền hệ thống' => [AccountUser::ROLE_ADMINISTRATOR, true, true, true],
-    'nhân viên' => [AccountUser::ROLE_AGENT, false, false, false],
-    'nhân viên có quyền hệ thống' => [AccountUser::ROLE_AGENT, true, false, true],
+    'nhân viên' => [AccountUser::ROLE_AGENT, false, true, false],
+    'nhân viên có quyền hệ thống' => [AccountUser::ROLE_AGENT, true, true, true],
 ]);
 
 it('kho nền tảng chỉ cho người có quyền hệ thống', function () {
