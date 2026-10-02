@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
     applyUnreadCount,
+    unreadCountToShow,
     unreadSnapshotOf,
     firstUnreadMessageId,
     getMetaDebounceKey,
@@ -102,9 +103,23 @@ describe('getMetaDebounceKey', () => {
 describe('unreadSnapshotOf', () => {
     it('giữ số chưa đọc và mốc đã xem lúc mở, không đổi theo bản ghi sau đó', () => {
         const conversation = { id: 7, unread_count: 4, agent_last_seen_at: 120 };
-        const snapshot = unreadSnapshotOf(conversation);
+        const snapshot = unreadSnapshotOf(conversation, 500);
         conversation.unread_count = 0;
 
-        expect(snapshot).toEqual({ conversationId: 7, count: 4, lastSeenAt: 120 });
+        expect(snapshot).toEqual({ conversationId: 7, count: 4, lastSeenAt: 120, openedAt: 500 });
+    });
+});
+
+describe('unreadCountToShow', () => {
+    const snapshot = { conversationId: 7, count: 1, lastSeenAt: 120, openedAt: 500 };
+    const message = (messageType: number, createdAt: number) =>
+        ({ id: createdAt, message_type: messageType, created_at: createdAt }) as ConversationMessage;
+
+    it('giữ dải chưa đọc khi chưa trả lời, kể cả có tin khách mới tới', () => {
+        expect(unreadCountToShow(snapshot, [message(0, 130), message(1, 400), message(0, 510)])).toBe(1);
+    });
+
+    it('ẩn dải khi đã gửi tin trả lời sau lúc mở hội thoại', () => {
+        expect(unreadCountToShow(snapshot, [message(0, 130), message(1, 520)])).toBe(0);
     });
 });

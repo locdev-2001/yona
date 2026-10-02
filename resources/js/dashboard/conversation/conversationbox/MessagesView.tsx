@@ -19,7 +19,7 @@ import type { ConversationMessage } from '../types';
 import { useFocusMessageScroll } from './useFocusMessageScroll';
 import { useScrollToLatest } from './useScrollToLatest';
 import ScrollToLatestButton from './ScrollToLatestButton';
-import { firstUnreadMessageId, unreadMessageLabelParts, unreadSnapshotOf } from '../unreadHelpers';
+import { firstUnreadMessageId, unreadCountToShow, unreadMessageLabelParts, unreadSnapshotOf } from '../unreadHelpers';
 import Banner from './Banner';
 import ForwardMessageDialog from './ForwardMessageDialog';
 import MessageTranslationDialog from './MessageTranslationDialog';
@@ -115,7 +115,9 @@ export default function MessagesView() {
     // "N tin chưa đọc" vẫn đánh dấu đúng chỗ bắt đầu đọc tới khi chuyển hội thoại.
     const [unreadAtOpen, setUnreadAtOpen] = useState(() => unreadSnapshotOf(currentChat));
     if (unreadAtOpen.conversationId !== currentChat.id) setUnreadAtOpen(unreadSnapshotOf(currentChat));
-    const unreadMessageCount = unreadAtOpen.count;
+    // Focus vào ô soạn là đã đọc tới đó: dải chưa đọc ẩn luôn.
+    const dismissUnreadDivider = () => setUnreadAtOpen((current) => (current.count > 0 ? { ...current, count: 0 } : current));
+    const unreadMessageCount = unreadCountToShow(unreadAtOpen, messages);
     const firstUnreadId = firstUnreadMessageId(messages, unreadAtOpen.lastSeenAt, unreadMessageCount);
     const unreadLabelParts = unreadMessageLabelParts(unreadMessageCount);
     const unreadMessageLabel = `${unreadLabelParts.count} ${t(unreadLabelParts.i18nKey)}`;
@@ -259,17 +261,19 @@ export default function MessagesView() {
                         </div>
                     </div>
                 )}
-                <ResizableEditorWrapper
-                    ref={resizableEditorWrapperRef}
-                    containerHeight={Math.max(0, containerHeight - topBannerHeight)}
-                >
-                    <ReplyBox
-                        onToggleEditorSize={() => resizableEditorWrapperRef.current?.toggleEditorExpand()}
-                        onMessageSent={() => resizableEditorWrapperRef.current?.scheduleResetAfterSend()}
-                        replyTarget={replyTarget}
-                        onClearReplyTarget={clearReply}
-                    />
-                </ResizableEditorWrapper>
+                <div className="contents" onFocusCapture={dismissUnreadDivider}>
+                    <ResizableEditorWrapper
+                        ref={resizableEditorWrapperRef}
+                        containerHeight={Math.max(0, containerHeight - topBannerHeight)}
+                    >
+                        <ReplyBox
+                            onToggleEditorSize={() => resizableEditorWrapperRef.current?.toggleEditorExpand()}
+                            onMessageSent={() => resizableEditorWrapperRef.current?.scheduleResetAfterSend()}
+                            replyTarget={replyTarget}
+                            onClearReplyTarget={clearReply}
+                        />
+                    </ResizableEditorWrapper>
+                </div>
             </div>
             <Modal show={cannedSourceMessage !== null} onClose={() => setCannedSourceMessage(null)}>
                 {cannedSourceMessage && (
