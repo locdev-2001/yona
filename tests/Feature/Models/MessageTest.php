@@ -141,6 +141,27 @@ describe('when message is created', function () {
         expect($conversation->fresh()->last_activity_at->getTimestamp())->toBe($message->created_at->getTimestamp());
     });
 
+    it('leaves conversation last_activity_at alone for an activity line, so an old conversation does not jump to the top', function () {
+        $conversation = messageConversation()->fresh();
+        $lastActivityAt = $conversation->last_activity_at->getTimestamp();
+
+        Message::factory()->activity()->create([
+            ...messageAttributesFor($conversation),
+            'created_at' => now()->addHour(),
+        ]);
+
+        expect($conversation->fresh()->last_activity_at->getTimestamp())->toBe($lastActivityAt);
+    });
+
+    it('restarts conversation last_activity_at when the conversation is reopened', function () {
+        $conversation = messageConversation();
+        $conversation->update(['status' => Conversation::STATUS_RESOLVED, 'last_activity_at' => now()->subDays(3)]);
+
+        $conversation->update(['status' => Conversation::STATUS_OPEN]);
+
+        expect($conversation->fresh()->last_activity_at->greaterThan(now()->subMinute()))->toBeTrue();
+    });
+
     it('updates contact last_activity_at when created', function () {
         $conversation = messageConversation();
         $contact = Contact::factory()->create(['account_id' => $conversation->account_id]);

@@ -596,8 +596,14 @@ class Message extends Model
         }
     }
 
+    // Dòng hệ thống (gán người, đổi nhãn, đổi trạng thái) không phải tin mới:
+    // để nó chạm last_activity_at là hội thoại cũ nổi lên đầu danh sách như vừa có thư.
     private function setConversationActivity(): void
     {
+        if ($this->message_type === self::TYPE_ACTIVITY) {
+            return;
+        }
+
         // update_columns: không chạy hook, updated_at đổi theo thời điểm hiện tại.
         $this->conversation->newModelQuery()->whereKey($this->conversation_id)->toBase()->update([
             'last_activity_at' => $this->created_at,

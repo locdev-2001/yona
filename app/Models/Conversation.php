@@ -176,6 +176,11 @@ class Conversation extends Model
             if (! $conversation->exists || $conversation->isDirty('status')) {
                 $conversation->status_changed_at = $conversation->freshTimestamp();
             }
+
+            // Mở lại là bắt đầu lại đồng hồ im lặng, không thì tự động giải quyết đóng ngay lượt sau.
+            if ($conversation->exists && $conversation->isDirty('status') && $conversation->status === self::STATUS_OPEN) {
+                $conversation->last_activity_at = $conversation->status_changed_at;
+            }
         });
 
         static::created(function (Conversation $conversation) {
