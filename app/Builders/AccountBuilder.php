@@ -48,7 +48,7 @@ class AccountBuilder
     private function createAccount(): Account
     {
         return Account::query()->create([
-            'name' => $this->accountName ?? '',
+            'name' => $this->accountName ?: ($this->userFullName ?? ''),
             'locale' => $this->locale ?? config('app.locale'),
             'custom_attributes' => [Account::ONBOARDING_STEP_KEY => 'account_details'],
         ]);

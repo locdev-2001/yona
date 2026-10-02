@@ -17,14 +17,10 @@ import PasswordRequirements from './PasswordRequirements';
 // thường (SME VN dùng gmail phổ biến).
 const capitalize = (value: string) => value.charAt(0).toUpperCase() + value.slice(1);
 
-// Port từ v3/helpers/AuthHelper.js getCredentialsFromEmail
-function getCredentialsFromEmail(email: string) {
-    const [localPart, domain] = email.split('@');
-    const namePart = localPart.split('+')[0];
-    return {
-        fullName: capitalize(namePart),
-        accountName: capitalize(domain.split('.')[0]),
-    };
+// Tên tài khoản không lấy từ tên miền email (mọi tài khoản gmail thành "Gmail"):
+// server mặc định theo tên người dùng, khách đổi ở bước onboarding.
+function fullNameFromEmail(email: string) {
+    return capitalize(email.split('@')[0].split('+')[0]);
 }
 
 interface SignupPageProps extends SharedPageProps {
@@ -52,13 +48,10 @@ export default function SignupForm() {
         if (isSignupInProgress || !isFormValid) return;
 
         setSignupInProgress(true);
-        const { fullName, accountName } = getCredentialsFromEmail(credentials.email);
-
         router.post(
             '/app/auth/signup',
             {
-                account_name: accountName,
-                user_full_name: fullName,
+                user_full_name: fullNameFromEmail(credentials.email),
                 email: credentials.email,
                 password: credentials.password,
             },

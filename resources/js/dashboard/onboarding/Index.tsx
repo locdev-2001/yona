@@ -46,6 +46,7 @@ export default function OnboardingIndex() {
         [languages],
     );
 
+    const [businessName, setBusinessName] = useState(account.name);
     const [userRole, setUserRole] = useState('');
     const [website, setWebsite] = useState('');
     // Ngôn ngữ của account không nằm trong danh sách thì để trống (server giữ nguyên), không gửi giá trị server sẽ từ chối.
@@ -75,7 +76,7 @@ export default function OnboardingIndex() {
         router.post(
             `/app/accounts/${account.id}/onboarding`,
             {
-                name: account.name,
+                name: businessName.trim(),
                 locale,
                 website: normalizeWebsiteUrl(website),
                 industry,
@@ -125,9 +126,18 @@ export default function OnboardingIndex() {
                 </OnboardingSection>
 
                 <OnboardingSection title={t('ONBOARDING_NEXT.COMPANY_DETAILS')} icon="i-lucide-briefcase-business">
-                    <div className="flex items-center gap-2 px-3 py-3">
-                        <span className="text-sm font-medium text-n-slate-12">{account.name}</span>
-                    </div>
+                    <OnboardingFormRow title={t('ONBOARDING_NEXT.FIELDS.BUSINESS_NAME')} icon="i-lucide-store">
+                        <Input
+                            type="text"
+                            autoComplete="organization"
+                            size="sm"
+                            value={businessName}
+                            onChange={event => setBusinessName(event.target.value)}
+                            placeholder={t('ONBOARDING_NEXT.PLACEHOLDERS.ENTER_BUSINESS_NAME')}
+                            aria-label={t('ONBOARDING_NEXT.FIELDS.BUSINESS_NAME')}
+                            customInputClass="text-end"
+                        />
+                    </OnboardingFormRow>
                     <OnboardingFormRow
                         title={t('ONBOARDING_NEXT.FIELDS.WEBSITE')}
                         hint={t('ONBOARDING_NEXT.OPTIONAL')}

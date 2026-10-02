@@ -7,6 +7,7 @@ return [
     'COMPANY_DETAILS' => 'Company details',
     'FIELDS' => [
         'EMAIL' => 'Email',
+        'BUSINESS_NAME' => 'Business name',
         'YOUR_ROLE' => 'Your Role',
         'WEBSITE' => 'Website',
         'LANGUAGE' => 'Language',
@@ -16,6 +17,7 @@ return [
         'REFERRAL_SOURCE' => 'Where did you find us?',
     ],
     'PLACEHOLDERS' => [
+        'ENTER_BUSINESS_NAME' => 'e.g. Hoa Linen Shop',
         'SELECT_ROLE' => 'Select your role',
         'ENTER_WEBSITE' => 'e.g. yourshop.com',
         'SELECT_LANGUAGE' => 'Select language',

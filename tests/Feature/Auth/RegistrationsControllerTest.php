@@ -41,6 +41,16 @@ describe('POST /app/auth/signup', function () {
         $this->assertGuest();
     });
 
+    it('names the account after the user when the form sends no account name', function () {
+        $this->post('/app/auth/signup', [
+            'user_full_name' => 'Lan',
+            'email' => 'lan@gmail.com',
+            'password' => 'Password1!',
+        ])->assertRedirect('/app/auth/verify-email');
+
+        expect(User::query()->where('email', 'lan@gmail.com')->first()->accounts()->first()->name)->toBe('Lan');
+    });
+
     it('rejects a duplicate email', function () {
         User::factory()->create(['email' => 'bruce@wayne.enterprises']);
 

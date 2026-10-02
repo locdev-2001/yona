@@ -9922,6 +9922,7 @@ const messages: Record<string, unknown> = {
         "COMPANY_DETAILS": "Thông tin công ty",
         "FIELDS": {
             "EMAIL": "Email",
+            "BUSINESS_NAME": "Tên doanh nghiệp",
             "YOUR_ROLE": "Vai trò của bạn",
             "WEBSITE": "Website",
             "LANGUAGE": "Ngôn ngữ",
@@ -9931,6 +9932,7 @@ const messages: Record<string, unknown> = {
             "REFERRAL_SOURCE": "Bạn biết chúng tôi từ đâu?"
         },
         "PLACEHOLDERS": {
+            "ENTER_BUSINESS_NAME": "vd: Shop Hoa Linen",
             "SELECT_ROLE": "Chọn vai trò của bạn",
             "ENTER_WEBSITE": "vd: shopcuaban.vn",
             "SELECT_LANGUAGE": "Chọn ngôn ngữ",

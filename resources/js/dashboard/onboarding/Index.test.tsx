@@ -85,6 +85,19 @@ describe('Onboarding account details', () => {
         expect(postedFields().website).toBe('https://shophoa.vn');
     });
 
+    it('prefills the business name from the account and sends the edited name', () => {
+        mockBrowserTimezones('Asia/Ho_Chi_Minh', ['Asia/Ho_Chi_Minh']);
+
+        render(<OnboardingIndex />);
+        const businessNameInput = screen.getByRole('textbox', { name: 'Business name' });
+        expect(businessNameInput).toHaveValue('Shop Hoa');
+
+        fireEvent.change(businessNameInput, { target: { value: '  Hoa Linen  ' } });
+        submit();
+
+        expect(postedFields().name).toBe('Hoa Linen');
+    });
+
     it('offers role, industry and source choices for Vietnamese online sellers and posts stable keys', () => {
         mockBrowserTimezones('Asia/Ho_Chi_Minh', ['Asia/Ho_Chi_Minh']);
 
