@@ -109,9 +109,12 @@ export default function StickerPicker({ loadStickers, onSelect }: StickerPickerP
         return t('CONVERSATION.STICKER_PICKER.EMPTY_RECENT');
     })();
 
+    // Vùng có overflow là scroll container nên min-height tự động bằng 0: không có
+    // shrink-0 thì một bộ nhiều sticker ép cả hàng gợi ý lẫn thanh bộ sticker bẹp
+    // theo lưới. Chỉ lưới được co và cuộn.
     return (
         <div data-testid="sticker-picker" className="flex flex-col w-full md:w-[22rem] max-h-[26rem] text-n-slate-12">
-            <div className="px-2 pt-2 pb-1.5">
+            <div className="shrink-0 px-2 pt-2 pb-1.5">
                 <Input
                     value={searchText}
                     size="sm"
@@ -130,7 +133,7 @@ export default function StickerPicker({ loadStickers, onSelect }: StickerPickerP
                     }
                 />
             </div>
-            <div className="flex gap-1.5 px-2 pb-2 overflow-x-auto no-scrollbar">
+            <div data-testid="sticker-picker-keywords" className="flex shrink-0 gap-1.5 px-2 pb-2 overflow-x-auto no-scrollbar">
                 {suggestedKeywords().map(keyword => (
                     <button
                         key={keyword}
@@ -143,7 +146,10 @@ export default function StickerPicker({ loadStickers, onSelect }: StickerPickerP
                 ))}
             </div>
             {isBrowsing ? (
-                <div className="flex gap-1 px-2 pb-1.5 overflow-x-auto no-scrollbar border-b border-n-weak">
+                <div
+                    data-testid="sticker-picker-packs"
+                    className="flex shrink-0 gap-1 px-2 pb-1.5 overflow-x-auto no-scrollbar border-b border-n-weak"
+                >
                     <button
                         type="button"
                         aria-label={t('CONVERSATION.STICKER_PICKER.RECENT')}
@@ -176,7 +182,7 @@ export default function StickerPicker({ loadStickers, onSelect }: StickerPickerP
                     ))}
                 </div>
             ) : null}
-            <div className="flex-1 min-h-[9rem] overflow-y-auto overscroll-contain p-2">
+            <div data-testid="sticker-picker-grid" className="flex-1 min-h-[9rem] overflow-y-auto overscroll-contain p-2">
                 {status === 'loading' ? (
                     <div className="flex items-center justify-center h-32 text-n-slate-10">
                         <Spinner size={20} />

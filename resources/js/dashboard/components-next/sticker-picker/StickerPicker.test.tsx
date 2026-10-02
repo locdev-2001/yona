@@ -144,6 +144,28 @@ describe('StickerPicker', () => {
         expect(loadStickers.mock.calls[3]).toEqual(loadStickers.mock.calls[2]);
     });
 
+    it('mở một bộ nhiều sticker thì chỉ lưới co lại và cuộn; ô tìm, hàng gợi ý, thanh bộ giữ nguyên chiều cao', async () => {
+        const manyStickers = Array.from({ length: 40 }, (_, index) => ({ ...HELLO, id: `${HELLO.id}-${index}` }));
+        const loadStickers = vi
+            .fn()
+            .mockResolvedValueOnce(browsed())
+            .mockResolvedValueOnce(browsed({ source: 'pack', pack_id: '61900', stickers: manyStickers }));
+        renderPicker(loadStickers);
+
+        fireEvent.click(await screen.findByRole('button', { name: t('CONVERSATION.STICKER_PICKER.PACK') }));
+        await waitFor(() => expect(stickerButtons()).toHaveLength(40));
+
+        const [searchRow, keywordRow, packBar, grid] = Array.from(screen.getByTestId('sticker-picker').children);
+        expect(keywordRow).toBe(screen.getByTestId('sticker-picker-keywords'));
+        expect(packBar).toBe(screen.getByTestId('sticker-picker-packs'));
+        expect(grid).toBe(screen.getByTestId('sticker-picker-grid'));
+        for (const fixedRegion of [searchRow, keywordRow, packBar]) expect(fixedRegion.classList).toContain('shrink-0');
+        expect(keywordRow.classList).toContain('overflow-x-auto');
+        expect(keywordRow.classList).not.toContain('flex-wrap');
+        expect(grid.classList).toContain('flex-1');
+        expect(grid.classList).toContain('overflow-y-auto');
+    });
+
     it('bấm một sticker thì trả đúng mục đó', async () => {
         const loadStickers = vi.fn().mockResolvedValue(browsed({ stickers: [HELLO, THANKS] }));
         const { onSelect } = renderPicker(loadStickers);
