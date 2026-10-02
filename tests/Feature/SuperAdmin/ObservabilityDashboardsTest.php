@@ -55,6 +55,24 @@ it('đưa super admin chưa bật 2FA vào màn cài đặt thay vì cho vào da
         ->assertRedirect('/admin/mfa/setup');
 })->with($dashboards);
 
+it('cho script đọc API log bằng đúng Bearer token', function (string $path) {
+    config(['log-viewer.api_token' => 'log-token']);
+
+    $this->withToken('log-token')->getJson($path)->assertOk();
+})->with(['/logs/api/files', '/logs/api/logs?query=IMAP']);
+
+it('từ chối Bearer token sai hoặc khi chưa cấu hình token', function (?string $configured) {
+    config(['log-viewer.api_token' => $configured]);
+
+    $this->withToken('log-token-sai')->getJson('/logs/api/folders')->assertUnauthorized();
+})->with(['token khác' => 'log-token', 'chưa cấu hình' => null]);
+
+it('token API log chỉ được đọc', function () {
+    config(['log-viewer.api_token' => 'log-token']);
+
+    $this->withToken('log-token')->postJson('/logs/api/clear-cache-all')->assertForbidden();
+});
+
 it('không cho xoá file log qua giao diện', function () {
     expect(Gate::forUser(SuperAdmin::factory()->create())->allows('deleteLogFile'))->toBeFalse();
 });

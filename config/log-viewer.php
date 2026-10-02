@@ -1,11 +1,11 @@
 <?php
 
+use App\Http\Middleware\AuthorizeLogViewerApi;
 use App\Http\Middleware\EnsureOperationsDashboardAccess;
 use Opcodes\LogViewer\Enums\SortingMethod;
 use Opcodes\LogViewer\Enums\SortingOrder;
 use Opcodes\LogViewer\Enums\Theme;
 use Opcodes\LogViewer\Http\Middleware\AuthorizeLogViewer;
-use Opcodes\LogViewer\Http\Middleware\EnsureFrontendRequestsAreStateful;
 
 return [
 
@@ -121,12 +121,14 @@ return [
     |
     */
 
-    // API nội bộ của giao diện đọc đúng dữ liệu đó — chặn y hệt.
+    // API của giao diện đọc đúng dữ liệu đó — chặn y hệt qua phiên đăng nhập,
+    // thêm đường Bearer token chỉ đọc cho script điều tra lỗi.
     'api_middleware' => [
-        EnsureFrontendRequestsAreStateful::class,
-        EnsureOperationsDashboardAccess::class,
-        AuthorizeLogViewer::class,
+        AuthorizeLogViewerApi::class,
     ],
+
+    // Rỗng = tắt đường token, chỉ còn phiên đăng nhập.
+    'api_token' => env('LOG_VIEWER_API_TOKEN'),
 
     'api_stateful_domains' => env('LOG_VIEWER_API_STATEFUL_DOMAINS') ? explode(',', env('LOG_VIEWER_API_STATEFUL_DOMAINS')) : null,
 
