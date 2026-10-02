@@ -19,7 +19,7 @@ import type { ConversationMessage } from '../types';
 import { useFocusMessageScroll } from './useFocusMessageScroll';
 import { useScrollToLatest } from './useScrollToLatest';
 import ScrollToLatestButton from './ScrollToLatestButton';
-import { firstUnreadMessageId, unreadMessageLabelParts } from '../unreadHelpers';
+import { firstUnreadMessageId, unreadMessageLabelParts, unreadSnapshotOf } from '../unreadHelpers';
 import Banner from './Banner';
 import ForwardMessageDialog from './ForwardMessageDialog';
 import MessageTranslationDialog from './MessageTranslationDialog';
@@ -111,8 +111,12 @@ export default function MessagesView() {
         );
     })();
 
-    const unreadMessageCount = currentChat.unread_count || 0;
-    const firstUnreadId = firstUnreadMessageId(messages, currentChat.agent_last_seen_at, unreadMessageCount);
+    // Số chưa đọc lúc mở hội thoại: danh sách tắt chấm ngay khi mở, còn dải
+    // "N tin chưa đọc" vẫn đánh dấu đúng chỗ bắt đầu đọc tới khi chuyển hội thoại.
+    const [unreadAtOpen, setUnreadAtOpen] = useState(() => unreadSnapshotOf(currentChat));
+    if (unreadAtOpen.conversationId !== currentChat.id) setUnreadAtOpen(unreadSnapshotOf(currentChat));
+    const unreadMessageCount = unreadAtOpen.count;
+    const firstUnreadId = firstUnreadMessageId(messages, unreadAtOpen.lastSeenAt, unreadMessageCount);
     const unreadLabelParts = unreadMessageLabelParts(unreadMessageCount);
     const unreadMessageLabel = `${unreadLabelParts.count} ${t(unreadLabelParts.i18nKey)}`;
 

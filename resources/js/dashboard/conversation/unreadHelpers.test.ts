@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
     applyUnreadCount,
+    unreadSnapshotOf,
     firstUnreadMessageId,
     getMetaDebounceKey,
     unreadMessageLabelParts,
@@ -95,5 +96,15 @@ describe('getMetaDebounceKey', () => {
         expect(getMetaDebounceKey(101)).toBe('long');
         expect(getMetaDebounceKey(2000)).toBe('long');
         expect(getMetaDebounceKey(2001)).toBe('superLong');
+    });
+});
+
+describe('unreadSnapshotOf', () => {
+    it('giữ số chưa đọc và mốc đã xem lúc mở, không đổi theo bản ghi sau đó', () => {
+        const conversation = { id: 7, unread_count: 4, agent_last_seen_at: 120 };
+        const snapshot = unreadSnapshotOf(conversation);
+        conversation.unread_count = 0;
+
+        expect(snapshot).toEqual({ conversationId: 7, count: 4, lastSeenAt: 120 });
     });
 });

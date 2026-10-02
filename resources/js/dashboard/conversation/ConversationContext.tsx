@@ -63,7 +63,7 @@ import {
     type FocusWindow,
 } from './messageFocus';
 import { keepSearchMatches, nextSearchMatches, readListSearchQuery, withListSearchQuery } from './chatlist/listSearch';
-import { applyUnreadCount, getMetaDebounceKey, MARK_READ_COMMIT_DELAY } from './unreadHelpers';
+import { applyUnreadCount, getMetaDebounceKey } from './unreadHelpers';
 import type { MetaDebounceKey } from './unreadHelpers';
 import {
     appendMessageAttachments,
@@ -802,50 +802,26 @@ export function ConversationProvider({
         metaDebouncersRef.current![getMetaDebounceKey(allCountRef.current)]();
     }, []);
 
-    // markMessagesRead / markMessagesUnread (messageReadActions.js): đọc thì 4s sau
-    // mới hạ unread_count, đánh dấu chưa đọc thì ghi ngay theo payload server.
-    const markReadTimersRef = useRef(new Map<number, ReturnType<typeof setTimeout>>());
-    const cancelPendingReadCommit = useCallback((targetId: number) => {
-        const timer = markReadTimersRef.current.get(targetId);
-        if (timer) {
-            clearTimeout(timer);
-            markReadTimersRef.current.delete(targetId);
-        }
-    }, []);
-    useEffect(() => {
-        const timers = markReadTimersRef.current;
-        return () => timers.forEach((timer) => clearTimeout(timer));
-    }, []);
-
+    // Mở hội thoại là chấm chưa đọc ở danh sách tắt ngay, không chờ server: dải
+    // "N tin chưa đọc" trong khung chat giữ số lúc mở (MessagesView), không cần
+    // trì hoãn ở đây. Lỗi mạng thì lần tải danh sách sau tự hiện lại chấm.
     const markMessagesRead = useCallback(
         async (targetId: number) => {
             if (!targetId) return;
+            setAllConversations((current) => applyUnreadCount(current, targetId, Math.floor(Date.now() / 1000)));
             try {
                 await markMessagesReadRequest(accountId, targetId);
-                // Backend trả 204 (khác gốc trả conversation) → mốc seen = lúc gọi,
-                // đúng bằng `DateTime.now.utc` mà server vừa ghi.
-                const lastSeen = Math.floor(Date.now() / 1000);
-                cancelPendingReadCommit(targetId);
-                markReadTimersRef.current.set(
-                    targetId,
-                    setTimeout(() => {
-                        markReadTimersRef.current.delete(targetId);
-                        setAllConversations((current) => applyUnreadCount(current, targetId, lastSeen));
-                    }, MARK_READ_COMMIT_DELAY),
-                );
             } catch {
-                // Gốc nuốt lỗi (markMessagesRead không báo gì cho người dùng).
+                // Không báo lỗi cho người dùng: đánh dấu đã đọc là việc nền.
             }
         },
-        [accountId, cancelPendingReadCommit],
+        [accountId],
     );
 
     const markMessagesUnread = useCallback(
         async (targetId: number) => {
             if (!targetId) return;
             await markMessagesUnreadRequest(accountId, targetId);
-            // Vừa mở hội thoại rồi đánh dấu chưa đọc: hủy lần hạ unread còn đang chờ.
-            cancelPendingReadCommit(targetId);
             // 204 rỗng nên mốc seen + unread_count mới phải đọc lại từ server
             // (gốc lấy thẳng trong body của `unread`).
             const conversation = await fetchConversation(accountId, targetId);
@@ -858,7 +834,7 @@ export function ConversationProvider({
                 ),
             );
         },
-        [accountId, cancelPendingReadCommit],
+        [accountId],
     );
 
     markMessagesReadRef.current = markMessagesRead;

@@ -3,10 +3,6 @@ import type { Conversation, ConversationMessage } from './types';
 // Phần thuần của cụm "chưa đọc": mutation UPDATE_MESSAGE_UNREAD_COUNT,
 // nhãn pill của MessagesView.vue và nhịp debounce của conversationStats.js.
 
-// markMessagesRead gốc chỉ hạ unread_count sau 4s (setTimeout trong
-// messageReadActions.js) — pill "N Unread Messages" vì thế còn kịp đọc.
-export const MARK_READ_COMMIT_DELAY = 4000;
-
 // UPDATE_MESSAGE_UNREAD_COUNT của store/modules/conversations/index.js.
 export function applyUnreadCount(
     conversations: Conversation[],
@@ -57,4 +53,19 @@ export function getMetaDebounceKey(allCount: number): MetaDebounceKey {
     if (allCount > 2000 || allCount === 0) return 'superLong';
     if (allCount > 100) return 'long';
     return 'default';
+}
+
+export interface UnreadSnapshot {
+    conversationId: number;
+    count: number;
+    lastSeenAt: number;
+}
+
+// Chụp trạng thái chưa đọc lúc mở hội thoại, trước khi bị đánh dấu đã đọc.
+export function unreadSnapshotOf(conversation: Pick<Conversation, 'id' | 'unread_count' | 'agent_last_seen_at'>): UnreadSnapshot {
+    return {
+        conversationId: conversation.id,
+        count: conversation.unread_count || 0,
+        lastSeenAt: conversation.agent_last_seen_at,
+    };
 }
