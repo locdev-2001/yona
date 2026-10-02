@@ -3,6 +3,9 @@ import { usePage } from '@inertiajs/react';
 import Icon from 'dashboard/components-next/icon/Icon';
 import { useNotificationsUnreadCount } from 'dashboard/notifications/useUnreadCount';
 import { t } from '../../../i18n';
+import { MOBILE_DRAWER_WIDTH } from './provider';
+
+const LAUNCHER_EDGE_GAP = 16;
 
 // Port từ sidebar/MobileSidebarLauncher.vue
 interface MobileSidebarLauncherProps {
@@ -26,7 +29,9 @@ export default function MobileSidebarLauncher({ isMobileSidebarOpen, onToggle }:
             id="mobile-sidebar-launcher"
             type="button"
             aria-label={hasUnreadNotifications ? t('INBOX.BELL.LAUNCHER_UNREAD') : undefined}
-            className="fixed bottom-4 ltr:left-4 rtl:right-4 z-50 flex md:hidden items-center justify-center size-10 rounded-full bg-n-solid-2 border border-n-weak shadow-lg text-n-slate-11"
+            // Khi ngăn kéo mở, nút đóng dời ra ngoài mép ngăn kéo để không đè lên hồ sơ ở đáy.
+            style={{ insetInlineStart: LAUNCHER_EDGE_GAP + (isMobileSidebarOpen ? MOBILE_DRAWER_WIDTH : 0) }}
+            className="fixed bottom-[calc(1rem+env(safe-area-inset-bottom))] z-50 transition-[inset-inline-start] duration-200 ease-out flex md:hidden items-center justify-center size-10 rounded-full bg-n-solid-2 border border-n-weak shadow-lg text-n-slate-11"
             onClick={onToggle}
         >
             <Icon icon={isMobileSidebarOpen ? 'i-lucide-x' : 'i-lucide-menu'} className="size-5" />

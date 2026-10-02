@@ -41,6 +41,7 @@ export default function SidebarGroup({
         expandedItem,
         setExpandedItem,
         isCollapsed,
+        opensFirstChildOnExpand,
         isResizing,
         activePopover,
         setActivePopover,
@@ -90,7 +91,7 @@ export default function SidebarGroup({
     };
 
     const toggleTrigger = () => {
-        if (hasAccessibleChildren && !isExpanded && !hasActiveChild) {
+        if (opensFirstChildOnExpand && hasAccessibleChildren && !isExpanded && !hasActiveChild) {
             router.visit(accessibleItems[0].to!);
         }
         setExpandedItem(name);

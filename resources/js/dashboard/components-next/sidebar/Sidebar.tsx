@@ -11,7 +11,7 @@ import { buildMenuItems } from './menuItems';
 import { useCustomViews } from 'dashboard/composables/useCustomViews';
 import { useLabelsList } from 'dashboard/composables/useLabelsList';
 import { labelsOnSidebar } from 'dashboard/conversation/labelHelpers';
-import { SidebarContextProvider, useSidebarResize, COLLAPSED_THRESHOLD } from './provider';
+import { SidebarContextProvider, useSidebarResize, COLLAPSED_THRESHOLD, MOBILE_DRAWER_WIDTH } from './provider';
 import { filterMenuByRole } from './permissions';
 import { useConversationUnreadCounts } from './useConversationUnreadCounts';
 import NotificationBell from 'dashboard/notifications/components/NotificationBell';
@@ -166,6 +166,7 @@ export default function Sidebar({
                 expandedItem,
                 setExpandedItem,
                 isCollapsed: isEffectivelyCollapsed,
+                opensFirstChildOnExpand: !isMobile,
                 isResizing,
                 sidebarWidth,
                 activePopover,
@@ -177,13 +178,13 @@ export default function Sidebar({
             <aside
                 ref={asideRef}
                 className={[
-                    'bg-n-background flex flex-col text-sm pb-px fixed top-0 ltr:left-0 rtl:right-0 h-full z-40 w-[200px] md:w-auto md:relative md:flex-shrink-0 md:ltr:translate-x-0 md:rtl:translate-x-0 ltr:border-r rtl:border-l border-n-weak',
+                    'bg-n-background flex flex-col text-sm pb-px fixed top-0 ltr:left-0 rtl:right-0 h-full max-md:h-dvh z-40 md:relative md:flex-shrink-0 md:ltr:translate-x-0 md:rtl:translate-x-0 ltr:border-r rtl:border-l border-n-weak',
                     isMobileSidebarOpen ? 'shadow-lg md:shadow-none' : 'ltr:-translate-x-full rtl:translate-x-full',
                     !isResizing ? 'transition-transform duration-200 ease-out md:transition-[width]' : '',
                 ]
                     .filter(Boolean)
                     .join(' ')}
-                style={isMobile ? undefined : { width: `${sidebarWidth}px` }}
+                style={{ width: `${isMobile ? MOBILE_DRAWER_WIDTH : sidebarWidth}px` }}
             >
                 <section className={`grid ${isEffectivelyCollapsed ? 'mt-3 mb-6 gap-4' : 'mt-1 mb-4 gap-2'}`}>
                     <div
@@ -253,7 +254,7 @@ export default function Sidebar({
                         ))}
                     </ul>
                 </nav>
-                <section className="flex relative flex-col flex-shrink-0 gap-1 justify-between items-center">
+                <section className="flex relative flex-col flex-shrink-0 gap-1 justify-between items-center pb-[env(safe-area-inset-bottom)]">
                     <div className="pointer-events-none absolute inset-x-0 -top-[1.938rem] h-8 bg-gradient-to-t from-n-background to-transparent" />
                     <div
                         className={`px-1 py-1.5 flex-shrink-0 flex w-full z-50 gap-2 items-center border-t border-n-weak shadow-[0px_-2px_4px_0px_rgba(27,28,29,0.02)] ${

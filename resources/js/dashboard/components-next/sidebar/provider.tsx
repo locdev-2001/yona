@@ -12,6 +12,8 @@ export const DEFAULT_WIDTH = 200;
 export const MIN_WIDTH = 56;
 export const COLLAPSED_THRESHOLD = 160;
 export const MAX_WIDTH = 320;
+// Bề rộng ngăn kéo điện thoại; nút đóng nổi canh theo đây để nằm ngoài ngăn kéo.
+export const MOBILE_DRAWER_WIDTH = 200;
 
 export type AccountRole = 'agent' | 'administrator';
 
@@ -41,6 +43,9 @@ interface SidebarContextValue {
     expandedItem: string | null;
     setExpandedItem: (name: string) => void;
     isCollapsed: boolean;
+    // Bấm tiêu đề nhóm đang đóng thì mở luôn mục con đầu tiên. Ngăn kéo điện thoại
+    // tắt cờ này: sang trang là ngăn kéo đóng, người dùng không kịp thấy menu con.
+    opensFirstChildOnExpand: boolean;
     isResizing: boolean;
     sidebarWidth: number;
     activePopover: string | null;
