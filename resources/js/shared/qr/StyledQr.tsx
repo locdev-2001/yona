@@ -1,31 +1,30 @@
 import { useEffect, useRef, useState } from 'react';
 import QRCodeStyling, { type Options } from 'qr-code-styling';
 
-const VIETQR_LOGO_CDN = 'https://cdn.vietqr.io/img';
+import { bankLogoUrl } from '../banks/bankLogo';
+
 const YONA_LOGO = '/brand-assets/logo_thumbnail.png';
 
 export interface StyledQrProps {
     payload: string;
     size?: number;
-    /** Mã ngân hàng VietQR (ICB, VCB, BIDV…) — tự tra logo từ CDN. */
-    bankCode?: string;
-    /** URL logo tuỳ chọn, ưu tiên hơn bankCode. */
+    bankBin?: string;
     logoUrl?: string;
     className?: string;
     ariaLabel?: string;
 }
 
-function resolveLogoUrl(bankCode?: string, logoUrl?: string): string {
-    if (logoUrl) return logoUrl;
-    if (bankCode) return `${VIETQR_LOGO_CDN}/${bankCode}.png`;
-    return YONA_LOGO;
-}
-
+// Mức H + logo 0.3: ZXing đọc được QR với mọi logo ngân hàng; logo to hơn bắt đầu có logo làm hỏng.
 const BASE_OPTIONS: Omit<Options, 'data' | 'width' | 'height'> = {
     type: 'svg',
     margin: 4,
     qrOptions: {
-        errorCorrectionLevel: 'Q',
+        errorCorrectionLevel: 'H',
+    },
+    imageOptions: {
+        hideBackgroundDots: true,
+        imageSize: 0.3,
+        margin: 4,
     },
     dotsOptions: {
         type: 'dots',
@@ -44,75 +43,53 @@ const BASE_OPTIONS: Omit<Options, 'data' | 'width' | 'height'> = {
     },
 };
 
-export function buildQrOptions(payload: string, size: number): Options {
+export function buildQrOptions(payload: string, size: number, logo?: string): Options {
     return {
         ...BASE_OPTIONS,
         width: size,
         height: size,
         data: payload,
+        ...(logo ? { image: logo } : {}),
     };
 }
 
-export default function StyledQr({ payload, size = 220, bankCode, logoUrl, className, ariaLabel }: StyledQrProps) {
-    const containerRef = useRef<HTMLDivElement>(null);
-    const qrRef = useRef<QRCodeStyling | null>(null);
-    const [logoLoaded, setLogoLoaded] = useState(false);
-    const resolvedLogo = resolveLogoUrl(bankCode, logoUrl);
-    const logoSize = Math.round(size * 0.22);
+/** Logo chỉ nhúng sau khi tải được: thư viện bỏ vẽ cả QR nếu ảnh nhúng lỗi. */
+function useLoadedLogo(preferred: string): string | undefined {
+    const [loaded, setLoaded] = useState<string>();
 
     useEffect(() => {
-        if (!containerRef.current) return undefined;
+        let alive = true;
+        const tryLoad = (url: string, onFail?: () => void) => {
+            const image = new Image();
+            image.onload = () => alive && setLoaded(url);
+            image.onerror = () => alive && onFail?.();
+            image.src = url;
+        };
 
-        const options = buildQrOptions(payload, size);
-        const qr = new QRCodeStyling(options);
-        containerRef.current.replaceChildren();
-        qr.append(containerRef.current);
-        qrRef.current = qr;
+        setLoaded(undefined);
+        tryLoad(preferred, preferred === YONA_LOGO ? undefined : () => tryLoad(YONA_LOGO));
 
         return () => {
-            containerRef.current?.replaceChildren();
-            qrRef.current = null;
+            alive = false;
         };
-    }, [payload, size]);
+    }, [preferred]);
+
+    return loaded;
+}
+
+export default function StyledQr({ payload, size = 220, bankBin, logoUrl, className, ariaLabel }: StyledQrProps) {
+    const containerRef = useRef<HTMLDivElement>(null);
+    const logo = useLoadedLogo(logoUrl ?? bankLogoUrl(bankBin) ?? YONA_LOGO);
 
     useEffect(() => {
-        setLogoLoaded(false);
-    }, [resolvedLogo]);
+        const container = containerRef.current;
+        if (!container) return undefined;
 
-    return (
-        <div role="img" aria-label={ariaLabel} className={className} style={{ position: 'relative', width: size, height: size }}>
-            <div ref={containerRef} />
-            <div
-                style={{
-                    position: 'absolute',
-                    top: '50%',
-                    left: '50%',
-                    transform: 'translate(-50%, -50%)',
-                    width: logoSize + 12,
-                    height: logoSize + 12,
-                    borderRadius: '50%',
-                    background: '#fff',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    boxShadow: '0 1px 4px rgba(0,0,0,0.08)',
-                }}
-            >
-                <img
-                    src={resolvedLogo}
-                    width={logoSize}
-                    height={logoSize}
-                    alt=""
-                    style={{ borderRadius: '50%', objectFit: 'contain', opacity: logoLoaded ? 1 : 0, transition: 'opacity 0.2s' }}
-                    onLoad={() => setLogoLoaded(true)}
-                    onError={event => {
-                        const img = event.currentTarget;
-                        if (img.src !== YONA_LOGO) {
-                            img.src = YONA_LOGO;
-                        }
-                    }}
-                />
-            </div>
-        </div>
-    );
+        container.replaceChildren();
+        new QRCodeStyling(buildQrOptions(payload, size, logo)).append(container);
+
+        return () => container.replaceChildren();
+    }, [payload, size, logo]);
+
+    return <div ref={containerRef} role="img" aria-label={ariaLabel} className={className} style={{ width: size, height: size }} />;
 }

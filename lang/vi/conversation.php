@@ -162,6 +162,8 @@ return [
             'MEMO' => 'Nội dung chuyển khoản',
             'MEMO_HINT' => 'Ngân hàng chỉ đọc chữ không dấu, tối đa 25 ký tự; Yona tự lược dấu.',
             'NO_ACCOUNTS' => 'Chưa có tài khoản nhận tiền nào bạn được phép gửi. Quản trị viên thêm ở Cài đặt → Chuyển khoản.',
+            'ADD_ACCOUNT' => 'Thêm tài khoản nhận tiền',
+            'NEW_ACCOUNT_TITLE' => 'Tài khoản nhận tiền mới',
         ],
         'SCHEDULE' => [
             'TITLE' => 'Chọn lịch nhận hàng',

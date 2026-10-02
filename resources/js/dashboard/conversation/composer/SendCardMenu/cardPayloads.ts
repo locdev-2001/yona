@@ -141,12 +141,34 @@ export function withPreviewDiscount(draft: StructuredDraft): StructuredDraft {
 
 export interface PaymentAccountOption {
     id: number;
+    bank_bin: string;
     bank_code: string;
     bank_name: string;
     account_number: string;
     account_name: string;
     memo_template: string | null;
     is_default: boolean;
+}
+
+/** Thuộc tính thẻ chuyển khoản để xem trước, cùng hình dạng bản chụp máy chủ lưu vào tin. */
+export function bankTransferPreviewAttributes(
+    account: PaymentAccountOption,
+    qrPayload: string,
+    amount: number | null | undefined,
+    memo: string,
+): Record<string, unknown> {
+    const trimmedMemo = memo.trim();
+
+    return {
+        bank_bin: account.bank_bin,
+        bank_code: account.bank_code,
+        bank_name: account.bank_name,
+        account_number: account.account_number,
+        account_name: account.account_name,
+        ...(amount ? { amount: { amount, currency: 'VND' } } : {}),
+        ...(trimmedMemo ? { memo: trimmedMemo } : {}),
+        qr_payload: qrPayload,
+    };
 }
 
 export interface BankTransferDraft {

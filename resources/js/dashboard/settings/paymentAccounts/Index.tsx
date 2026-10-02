@@ -3,26 +3,19 @@ import { usePage } from '@inertiajs/react';
 
 import { t } from '../../../i18n';
 import { useAlert } from 'dashboard/composables/useAlert';
-import { deleteJson, getJson, parseApiErrorMessage, patchJson, postJson } from 'dashboard/helper/apiClient';
+import { deleteJson, getJson, parseApiErrorMessage, patchJson } from 'dashboard/helper/apiClient';
 import Dashboard from '../../Dashboard';
 import SettingsWrapper from '../SettingsWrapper';
 import BaseSettingsHeader from '../BaseSettingsHeader';
 import Button from 'dashboard/components-next/button/Button';
 import DeleteModal from 'dashboard/components/widgets/modal/DeleteModal';
 import LoadingState from 'dashboard/components/widgets/LoadingState';
-import PaymentAccountForm from './PaymentAccountForm';
+import { bankLogoUrl } from 'shared/banks/bankLogo';
+import PaymentAccountForm, { emptyPaymentAccountValues } from './PaymentAccountForm';
 import QrPreviewCard from './QrPreviewCard';
+import { createPaymentAccount, fetchBanks } from './paymentAccountsApi';
 import type { BankOption, PaymentAccount, PaymentAccountFormValues } from './types';
 import type { DashboardPageProps } from '../../types';
-
-const emptyValues = (): PaymentAccountFormValues => ({
-    bank_bin: '',
-    account_number: '',
-    account_name: '',
-    memo_template: '{ma_hoi_thoai}',
-    is_default: false,
-    allow_all_agents: true,
-});
 
 const valuesOf = (account: PaymentAccount): PaymentAccountFormValues => ({
     bank_bin: account.bank_bin,
@@ -48,12 +41,12 @@ export default function PaymentAccountsIndex() {
         let active = true;
 
         Promise.all([
-            getJson<{ payload: BankOption[] }>(`/api/v1/accounts/${accountId}/payment_accounts/banks`),
+            fetchBanks(accountId),
             getJson<{ payload: PaymentAccount[] }>(`/api/v1/accounts/${accountId}/payment_accounts`),
         ])
             .then(([bankResponse, accountResponse]) => {
                 if (!active) return;
-                setBanks(bankResponse.payload);
+                setBanks(bankResponse);
                 setAccounts(accountResponse.payload);
             })
             .finally(() => {
@@ -71,7 +64,7 @@ export default function PaymentAccountsIndex() {
     const create = async (values: PaymentAccountFormValues) => {
         setSubmitting(true);
         try {
-            const created = await postJson<PaymentAccount>(`/api/v1/accounts/${accountId}/payment_accounts`, { ...values });
+            const created = await createPaymentAccount(accountId, values);
             setAccounts(current => [...current, created]);
             setEditingId(null);
             useAlert(t('PAYMENT_ACCOUNTS.ADD.SUCCESS'));
@@ -139,8 +132,8 @@ export default function PaymentAccountsIndex() {
                                                 }`}
                                             >
                                                 <div className="flex min-w-0 items-center gap-3">
-                                                    <span className="flex size-8 flex-none items-center justify-center rounded-full bg-n-slate-3 text-xs font-medium text-n-slate-11">
-                                                        {account.bank_code.slice(0, 3)}
+                                                    <span className="flex h-8 w-16 flex-none items-center justify-center rounded border border-n-weak bg-white px-1.5">
+                                                        <img src={bankLogoUrl(account.bank_bin)} alt={account.bank_name} className="max-h-5 max-w-full object-contain" />
                                                     </span>
                                                     <div className="flex min-w-0 flex-col">
                                                         <span className="truncate text-sm font-medium text-n-slate-12">
@@ -193,7 +186,7 @@ export default function PaymentAccountsIndex() {
                                     banks={banks}
                                     headerTitle={editingAccount ? t('PAYMENT_ACCOUNTS.EDIT.TITLE') : t('PAYMENT_ACCOUNTS.ADD.TITLE')}
                                     submitLabel={editingAccount ? t('PAYMENT_ACCOUNTS.FORM.SAVE') : t('PAYMENT_ACCOUNTS.FORM.CREATE')}
-                                    initialValues={editingAccount ? valuesOf(editingAccount) : emptyValues()}
+                                    initialValues={editingAccount ? valuesOf(editingAccount) : emptyPaymentAccountValues()}
                                     isSubmitting={isSubmitting}
                                     onCancel={() => setEditingId(null)}
                                     onSubmit={values => void (editingAccount ? update(editingAccount.id, values) : create(values))}

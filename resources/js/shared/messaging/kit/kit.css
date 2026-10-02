@@ -523,51 +523,81 @@ textarea.mk-input {
     font-weight: 500;
 }
 
-/* Thẻ chuyển khoản: nhãn / giá trị / nút chép thẳng cột, kẻ mảnh giữa các dòng. */
-.mk-bank {
-    display: grid;
-    grid-template-columns: auto 1fr 32px;
+.mk-meta--good {
+    display: inline-flex;
     align-items: center;
-    column-gap: 10px;
+    gap: 4px;
+    color: var(--mk-good);
+    font-weight: 500;
+}
+
+/* Logo ngân hàng là chữ nằm ngang: khung trắng bo góc, cao bằng .mk-tile. */
+.mk-bank-logo {
+    height: 40px;
+    max-width: 104px;
+    padding: 6px 8px;
+    border-radius: 12px;
+    border: 1px solid var(--mk-line);
+    background: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+}
+
+.mk-bank-logo img {
+    display: block;
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+/* Thẻ chuyển khoản: mỗi dòng nhãn trên, giá trị dưới, nút chép bên phải; kẻ mảnh giữa các dòng. */
+.mk-bank {
+    display: flex;
+    flex-direction: column;
     margin: 0;
     padding: 2px 12px;
     border-radius: 14px;
     background: var(--mk-soft);
 }
 
-.mk-bank-label,
-.mk-bank-value,
-.mk-bank-action {
-    min-height: 40px;
-    display: flex;
+.mk-bank-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas: 'label action' 'value action';
     align-items: center;
+    column-gap: 8px;
+    padding: 8px 0;
     border-top: 1px solid var(--mk-line);
 }
 
-.mk-bank-label:first-child,
-.mk-bank-label:first-child + .mk-bank-value,
-.mk-bank-label:first-child + .mk-bank-value + .mk-bank-action {
+.mk-bank-row:first-child {
     border-top: 0;
 }
 
 .mk-bank-label {
-    font-size: 13px;
-    line-height: 17px;
+    grid-area: label;
+    font-size: 12px;
+    line-height: 16px;
     color: var(--mk-ink-2);
 }
 
 .mk-bank-value {
+    grid-area: value;
     margin: 0;
-    justify-content: flex-end;
-    text-align: end;
     font-size: 14px;
+    line-height: 20px;
     font-weight: 500;
     color: var(--mk-ink);
+    font-variant-numeric: tabular-nums;
     overflow-wrap: anywhere;
 }
 
 .mk-bank-action {
-    justify-content: flex-end;
+    grid-area: action;
+    width: 32px;
+    height: 32px;
 }
 
 .mk-bank-qr summary {

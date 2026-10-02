@@ -16,6 +16,7 @@ import ScheduleForm from './ScheduleForm';
 import {
     bankTransferError,
     bankTransferPayload,
+    bankTransferPreviewAttributes,
     productError,
     productPayload,
     quickRepliesError,
@@ -247,14 +248,7 @@ export function useCannedCardPreview(accountId: number, cannedCard: CannedCardPa
                         if (!alive) return;
                         setPreview({
                             contentType: 'bank_transfer',
-                            contentAttributes: {
-                                bank_name: account.bank_name,
-                                account_number: account.account_number,
-                                account_name: account.account_name,
-                                ...(typeof amount === 'number' ? { amount: { amount, currency: 'VND' } } : {}),
-                                ...(memo.trim() ? { memo: memo.trim() } : {}),
-                                qr_payload: qrPayload,
-                            },
+                            contentAttributes: bankTransferPreviewAttributes(account, qrPayload, typeof amount === 'number' ? amount : null, memo),
                         });
                     })
                     .catch(() => alive && setPreview(null));

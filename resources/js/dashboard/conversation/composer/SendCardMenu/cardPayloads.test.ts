@@ -63,7 +63,7 @@ describe('thẻ sản phẩm', () => {
 describe('thẻ chuyển khoản và chọn lịch', () => {
     it('chuyển khoản chỉ gửi mã tài khoản, số tiền, nội dung; nội dung mặc định thay số hội thoại', async () => {
         const { bankTransferPayload, bankTransferError, defaultMemo } = await import('./cardPayloads');
-        const account = { id: 3, bank_code: 'VCB', bank_name: 'VCB', account_number: '1023', account_name: 'GOM MOC', memo_template: 'GM {ma_hoi_thoai}', is_default: true };
+        const account = { id: 3, bank_bin: '970436', bank_code: 'VCB', bank_name: 'VCB', account_number: '1023', account_name: 'GOM MOC', memo_template: 'GM {ma_hoi_thoai}', is_default: true };
 
         expect(defaultMemo(account, 17)).toBe('GM 17');
         expect(bankTransferError({ paymentAccountId: null, amount: '', memo: '' })).toBe('ACCOUNT_REQUIRED');

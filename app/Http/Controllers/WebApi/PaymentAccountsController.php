@@ -97,6 +97,28 @@ class PaymentAccountsController extends Controller
         ]);
     }
 
+    // Xem trước QR cho tài khoản đang nhập dở, chưa lưu: chỉ quản trị viên mới tạo tài khoản.
+    public function previewDraft(Request $request): JsonResponse
+    {
+        $this->authorizeAdministrator($request);
+
+        $attributes = $request->validate([
+            'bank_bin' => ['required', 'string', Rule::in(VietQrBanks::bins())],
+            'account_number' => ['required', 'string', 'regex:/^\d{4,30}$/'],
+            'amount' => ['nullable', 'integer', 'min:1'],
+            'memo' => ['nullable', 'string', 'max:100'],
+        ]);
+
+        return response()->json([
+            'qr_payload' => Payload::build(
+                $attributes['bank_bin'],
+                $attributes['account_number'],
+                isset($attributes['amount']) ? (int) $attributes['amount'] : null,
+                $attributes['memo'] ?? null,
+            ),
+        ]);
+    }
+
     public function banks(): JsonResponse
     {
         return response()->json(['payload' => VietQrBanks::all()]);

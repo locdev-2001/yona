@@ -36,7 +36,7 @@ return [
         ],
         'MEMO_TEMPLATE' => [
             'LABEL' => 'Nội dung chuyển khoản',
-            'HINT' => 'Tự thay bằng mã hội thoại khi gửi, ví dụ GM1024. Giúp đối soát nhanh.',
+            'HINT' => 'Khách thấy nội dung này trong app ngân hàng (tối đa 25 ký tự, không dấu). Thêm {ma_hoi_thoai} nếu muốn kèm mã hội thoại để đối soát.',
         ],
         'IS_DEFAULT' => [
             'LABEL' => 'Đặt làm tài khoản mặc định',

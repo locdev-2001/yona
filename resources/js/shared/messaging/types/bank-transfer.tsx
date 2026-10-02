@@ -1,5 +1,6 @@
 import { useState } from 'react';
 
+import { bankLogoUrl } from '../../banks/bankLogo';
 import StyledQr from '../../qr/StyledQr';
 import { useMessageHost } from '../host';
 import type { Price, StructuredMessage } from '../model';
@@ -11,7 +12,7 @@ import { KitRoot, kt } from '../kit/primitives';
 
 interface BankTransferModel {
     bankName: string;
-    bankCode?: string;
+    bankBin?: string;
     accountNumber: string;
     accountName: string;
     amount?: Price;
@@ -20,7 +21,7 @@ interface BankTransferModel {
     paidAt?: string;
 }
 
-/** Một dòng nhãn / giá trị / nút chép; lưới 3 cột nên giá trị các dòng thẳng hàng. */
+/** Nhãn nằm trên giá trị: thẻ hẹp nên giá trị dài (tên chủ tài khoản, nội dung) có trọn bề ngang. */
 function BankRow({ label, value, copyable = false, message }: { label: string; value: string; copyable?: boolean; message: StructuredMessage }) {
     const host = useMessageHost();
     const [copied, setCopied] = useState(false);
@@ -32,17 +33,34 @@ function BankRow({ label, value, copyable = false, message }: { label: string; v
     };
 
     return (
-        <>
+        <div className="mk-bank-row">
             <dt className="mk-bank-label">{label}</dt>
             <dd className="mk-bank-value">{value}</dd>
-            <span className="mk-bank-action">
-                {copyable && host.interactive ? (
-                    <button type="button" className="mk-pill mk-pill--soft mk-pill--icon" aria-label={kt('copy', { label })} onClick={onClick}>
-                        {copied ? <Check size={14} /> : <Copy size={14} />}
-                    </button>
-                ) : null}
+            {copyable && host.interactive ? (
+                <button type="button" className="mk-pill mk-pill--soft mk-pill--icon mk-bank-action" aria-label={kt('copy', { label })} onClick={onClick}>
+                    {copied ? <Check size={14} /> : <Copy size={14} />}
+                </button>
+            ) : null}
+        </div>
+    );
+}
+
+function BankBadge({ bankBin }: { bankBin?: string }) {
+    const [failed, setFailed] = useState(false);
+    const logoUrl = bankLogoUrl(bankBin);
+
+    if (!logoUrl || failed) {
+        return (
+            <span className="mk-tile mk-tile--accent">
+                <Landmark />
             </span>
-        </>
+        );
+    }
+
+    return (
+        <span className="mk-bank-logo">
+            <img src={logoUrl} alt="" onError={() => setFailed(true)} />
+        </span>
     );
 }
 
@@ -53,10 +71,15 @@ function BankTransferView({ model, message }: { model: BankTransferModel; messag
         <KitRoot>
             <div className="mk-card mk-pad">
                 <div className="mk-row">
-                    <span className={`mk-tile ${model.paidAt ? 'mk-tile--good' : 'mk-tile--accent'}`}>{model.paidAt ? <Check /> : <Landmark />}</span>
+                    <BankBadge bankBin={model.bankBin} />
                     <span className="mk-stack">
                         <span className="mk-title">{kt('bank_transfer_title')}</span>
-                        {model.paidAt ? <span className="mk-meta">{kt('paid')}</span> : null}
+                        {model.paidAt ? (
+                            <span className="mk-meta mk-meta--good">
+                                <Check size={14} />
+                                {kt('paid')}
+                            </span>
+                        ) : null}
                     </span>
                 </div>
                 <dl className="mk-bank">
@@ -71,7 +94,7 @@ function BankTransferView({ model, message }: { model: BankTransferModel; messag
                 <details className="mk-bank-qr" open={!host.interactive}>
                     <summary>{kt('show_qr')}</summary>
                     <div className="mk-row" style={{ justifyContent: 'center', paddingTop: 8 }}>
-                        <StyledQr payload={model.qrPayload} size={220} bankCode={model.bankCode} ariaLabel={kt('bank_transfer_qr_alt')} />
+                        <StyledQr payload={model.qrPayload} size={220} bankBin={model.bankBin} ariaLabel={kt('bank_transfer_qr_alt')} />
                     </div>
                 </details>
             </div>
@@ -93,7 +116,7 @@ export default defineMessageType<BankTransferModel>({
 
         return {
             bankName,
-            bankCode: text(attributes.bank_code),
+            bankBin: text(attributes.bank_bin),
             accountNumber,
             accountName,
             qrPayload,

@@ -3756,7 +3756,9 @@ const messages: Record<string, unknown> = {
                 "AMOUNT_PLACEHOLDER": "Leave empty to let the customer enter it",
                 "MEMO": "Transfer memo",
                 "MEMO_HINT": "Banks only read unaccented text, up to 25 characters; Yona strips accents for you.",
-                "NO_ACCOUNTS": "No receiving account you are allowed to send yet. An administrator can add one in Settings → Bank transfer."
+                "NO_ACCOUNTS": "No receiving account you are allowed to send yet. An administrator can add one in Settings → Bank transfer.",
+                "ADD_ACCOUNT": "Add receiving account",
+                "NEW_ACCOUNT_TITLE": "New receiving account"
             },
             "SCHEDULE": {
                 "TITLE": "Delivery time picker",
@@ -10078,7 +10080,7 @@ const messages: Record<string, unknown> = {
             },
             "MEMO_TEMPLATE": {
                 "LABEL": "Transfer memo",
-                "HINT": "Auto-filled with the conversation code when sent, e.g. GM1024. Makes reconciliation faster."
+                "HINT": "Customers see this in their banking app (up to 25 characters, no diacritics). Add {ma_hoi_thoai} to include the conversation code for reconciliation."
             },
             "IS_DEFAULT": {
                 "LABEL": "Set as default account"

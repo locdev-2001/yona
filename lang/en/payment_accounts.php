@@ -36,7 +36,7 @@ return [
         ],
         'MEMO_TEMPLATE' => [
             'LABEL' => 'Transfer memo',
-            'HINT' => 'Auto-filled with the conversation code when sent, e.g. GM1024. Makes reconciliation faster.',
+            'HINT' => 'Customers see this in their banking app (up to 25 characters, no diacritics). Add {ma_hoi_thoai} to include the conversation code for reconciliation.',
         ],
         'IS_DEFAULT' => [
             'LABEL' => 'Set as default account',

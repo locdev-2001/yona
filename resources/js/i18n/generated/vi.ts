@@ -3756,7 +3756,9 @@ const messages: Record<string, unknown> = {
                 "AMOUNT_PLACEHOLDER": "Để trống nếu khách tự nhập",
                 "MEMO": "Nội dung chuyển khoản",
                 "MEMO_HINT": "Ngân hàng chỉ đọc chữ không dấu, tối đa 25 ký tự; Yona tự lược dấu.",
-                "NO_ACCOUNTS": "Chưa có tài khoản nhận tiền nào bạn được phép gửi. Quản trị viên thêm ở Cài đặt → Chuyển khoản."
+                "NO_ACCOUNTS": "Chưa có tài khoản nhận tiền nào bạn được phép gửi. Quản trị viên thêm ở Cài đặt → Chuyển khoản.",
+                "ADD_ACCOUNT": "Thêm tài khoản nhận tiền",
+                "NEW_ACCOUNT_TITLE": "Tài khoản nhận tiền mới"
             },
             "SCHEDULE": {
                 "TITLE": "Chọn lịch nhận hàng",
@@ -10078,7 +10080,7 @@ const messages: Record<string, unknown> = {
             },
             "MEMO_TEMPLATE": {
                 "LABEL": "Nội dung chuyển khoản",
-                "HINT": "Tự thay bằng mã hội thoại khi gửi, ví dụ GM1024. Giúp đối soát nhanh."
+                "HINT": "Khách thấy nội dung này trong app ngân hàng (tối đa 25 ký tự, không dấu). Thêm {ma_hoi_thoai} nếu muốn kèm mã hội thoại để đối soát."
             },
             "IS_DEFAULT": {
                 "LABEL": "Đặt làm tài khoản mặc định"

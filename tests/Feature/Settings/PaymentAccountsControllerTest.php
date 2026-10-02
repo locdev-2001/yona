@@ -4,6 +4,7 @@ use App\Models\Account;
 use App\Models\AccountUser;
 use App\Models\PaymentAccount;
 use App\Models\User;
+use App\Support\VietQr\Payload;
 
 function paymentAccountUser(Account $account, int $role): User
 {
@@ -211,4 +212,23 @@ it('GET /api/v1/accounts/{id}/payment_accounts/banks trả danh sách ngân hàn
         ->assertOk();
 
     expect($response->json('payload'))->not->toBeEmpty();
+});
+
+describe('GET /api/v1/accounts/{id}/payment_accounts/preview (tài khoản chưa lưu)', function () {
+    it('quản trị viên nhận đúng payload máy chủ sẽ gắn vào tin, không lưu gì', function () {
+        $this->actingAs($this->admin)
+            ->getJson("/api/v1/accounts/{$this->account->id}/payment_accounts/preview?bank_bin=970403&account_number=0123456789&amount=150000&memo=GM 12")
+            ->assertOk()
+            ->assertJsonPath('qr_payload', Payload::build('970403', '0123456789', 150000, 'GM 12'));
+
+        expect(PaymentAccount::count())->toBe(0);
+    });
+
+    it('từ chối nhân viên và từ chối ngân hàng hoặc số tài khoản không hợp lệ', function () {
+        $url = "/api/v1/accounts/{$this->account->id}/payment_accounts/preview";
+
+        $this->actingAs($this->agent)->getJson("{$url}?bank_bin=970403&account_number=0123456789")->assertUnauthorized();
+        $this->actingAs($this->admin)->getJson("{$url}?bank_bin=111111&account_number=0123456789")->assertUnprocessable();
+        $this->actingAs($this->admin)->getJson("{$url}?bank_bin=970403&account_number=12ab")->assertUnprocessable();
+    });
 });

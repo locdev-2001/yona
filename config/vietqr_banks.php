@@ -1,7 +1,7 @@
 <?php
 
 // Danh sách tĩnh các ngân hàng có BIN NAPAS (VietQR), không gọi API ngoài lúc
-// chạy. Nguồn: api.vietqr.io/v2/banks (truy vấn 26/09/2026) — chỉ giữ lại
+// chạy. Nguồn: api.vietqr.io/v2/banks (đối chiếu lại 02/10/2026) — chỉ giữ lại
 // ngân hàng có BIN 6 số bắt đầu bằng 970 (NAPAS thật), bỏ ví điện tử/ngân hàng
 // số dùng BIN khác dải (CIMB, HSBC, MoMo, CAKE, Ubank…). Thêm ngân hàng mới thì
 // đối chiếu lại nguồn này trước khi thêm BIN.
@@ -21,6 +21,7 @@ return [
     ['bin' => '970423', 'code' => 'TPB', 'short_name' => 'TPBank', 'name' => 'Ngân hàng TMCP Tiên Phong'],
     ['bin' => '970403', 'code' => 'STB', 'short_name' => 'Sacombank', 'name' => 'Ngân hàng TMCP Sài Gòn Thương Tín'],
     ['bin' => '970437', 'code' => 'HDB', 'short_name' => 'HDBank', 'name' => 'Ngân hàng TMCP Phát triển TP Hồ Chí Minh'],
+    ['bin' => '970448', 'code' => 'OCB', 'short_name' => 'OCB', 'name' => 'Ngân hàng TMCP Phương Đông'],
     ['bin' => '970454', 'code' => 'VCCB', 'short_name' => 'VietCapitalBank', 'name' => 'Ngân hàng TMCP Bản Việt'],
     ['bin' => '970429', 'code' => 'SCB', 'short_name' => 'SCB', 'name' => 'Ngân hàng TMCP Sài Gòn'],
     ['bin' => '970441', 'code' => 'VIB', 'short_name' => 'VIB', 'name' => 'Ngân hàng TMCP Quốc tế Việt Nam'],
@@ -51,4 +52,12 @@ return [
     ['bin' => '970434', 'code' => 'IVB', 'short_name' => 'IndovinaBank', 'name' => 'Ngân hàng TNHH Indovina'],
     ['bin' => '970458', 'code' => 'UOB', 'short_name' => 'UnitedOverseas', 'name' => 'Ngân hàng United Overseas - Chi nhánh TP. Hồ Chí Minh'],
     ['bin' => '970410', 'code' => 'SCVN', 'short_name' => 'StandardChartered', 'name' => 'Ngân hàng TNHH MTV Standard Chartered Bank Việt Nam'],
+    ['bin' => '970406', 'code' => 'Vikki', 'short_name' => 'Vikki', 'name' => 'Ngân hàng TNHH MTV Số Vikki'],
+    ['bin' => '970442', 'code' => 'HLBVN', 'short_name' => 'HongLeong', 'name' => 'Ngân hàng TNHH MTV Hong Leong Việt Nam'],
+    ['bin' => '970467', 'code' => 'KEBHANAHN', 'short_name' => 'KEBHanaHN', 'name' => 'Ngân hàng KEB Hana – Chi nhánh Hà Nội'],
+    ['bin' => '970466', 'code' => 'KEBHANAHCM', 'short_name' => 'KEBHanaHCM', 'name' => 'Ngân hàng KEB Hana – Chi nhánh Thành phố Hồ Chí Minh'],
+    ['bin' => '970462', 'code' => 'KBHN', 'short_name' => 'KookminHN', 'name' => 'Ngân hàng Kookmin - Chi nhánh Hà Nội'],
+    ['bin' => '970463', 'code' => 'KBHCM', 'short_name' => 'KookminHCM', 'name' => 'Ngân hàng Kookmin - Chi nhánh Thành phố Hồ Chí Minh'],
+    ['bin' => '970455', 'code' => 'IBKHN', 'short_name' => 'IBKHN', 'name' => 'Ngân hàng Công nghiệp Hàn Quốc - Chi nhánh Hà Nội'],
+    ['bin' => '970456', 'code' => 'IBKHCM', 'short_name' => 'IBKHCM', 'name' => 'Ngân hàng Công nghiệp Hàn Quốc - Chi nhánh TP. Hồ Chí Minh'],
 ];

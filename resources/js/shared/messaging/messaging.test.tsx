@@ -241,6 +241,7 @@ describe('đơn hàng và yêu cầu đặt hàng', () => {
 
 describe('thẻ chuyển khoản', () => {
     const bankTransfer = messageOf('bank_transfer', {
+        bank_bin: '970436',
         bank_name: 'Vietcombank',
         account_number: '1023456789',
         account_name: 'HKD GOM MOC',
@@ -258,6 +259,16 @@ describe('thẻ chuyển khoản', () => {
         expect(screen.getByText('HKD GOM MOC')).toBeInTheDocument();
         expect(screen.getByText('480.000đ')).toBeInTheDocument();
         expect(screen.getByText('GM1024')).toBeInTheDocument();
+    });
+
+    it('đầu thẻ là logo ngân hàng tra theo BIN; tin cũ không có BIN thì dùng icon', () => {
+        const { container } = renderMessage(bankTransfer);
+
+        expect(container.querySelector('.mk-bank-logo img')).toHaveAttribute('src', '/bank-logos/970436.png');
+
+        const { container: legacy } = renderMessage({ ...bankTransfer, content_attributes: { ...bankTransfer.content_attributes, bank_bin: undefined } });
+        expect(legacy.querySelector('.mk-bank-logo')).toBeNull();
+        expect(legacy.querySelector('.mk-tile--accent')).not.toBeNull();
     });
 
     it('bấm chép số tài khoản giao cho host, không tự đụng clipboard', async () => {

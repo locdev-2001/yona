@@ -9,6 +9,27 @@ import Icon from 'dashboard/components-next/icon/Icon';
 export interface ComboBoxOption {
     value: string;
     label: string;
+    imageUrl?: string;
+}
+
+/** Dòng cuối danh sách, không phải lựa chọn: bấm thì đóng danh sách và chạy onSelect. */
+export interface ComboBoxAction {
+    label: string;
+    icon?: string;
+    onSelect: () => void;
+}
+
+function OptionContent({ option, emphasized = false }: { option: ComboBoxOption; emphasized?: boolean }) {
+    return (
+        <span className="flex min-w-0 items-center gap-2">
+            {option.imageUrl ? (
+                <span className="flex h-6 w-14 flex-none items-center justify-center rounded border border-n-weak bg-white px-1">
+                    <img src={option.imageUrl} alt="" className="max-h-4 max-w-full object-contain" />
+                </span>
+            ) : null}
+            <span className={`truncate text-n-slate-12 ${emphasized ? 'font-medium' : ''}`.trim()}>{option.label}</span>
+        </span>
+    );
 }
 
 interface ComboBoxProps {
@@ -24,6 +45,7 @@ interface ComboBoxProps {
     // useApiResults của gốc: options do caller nạp theo query (không lọc cục bộ).
     useApiResults?: boolean;
     onSearch?: (query: string) => void;
+    action?: ComboBoxAction;
     onChange: (value: string) => void;
 }
 
@@ -39,6 +61,7 @@ export default function ComboBox({
     className = '',
     useApiResults = false,
     onSearch,
+    action,
     onChange,
 }: ComboBoxProps) {
     const [open, setOpen] = useState(false);
@@ -65,7 +88,8 @@ export default function ComboBox({
         : options.filter(option => option.label.toLowerCase().includes(searchTerm));
 
     const selectPlaceholder = placeholder || t('COMBOBOX.PLACEHOLDER');
-    const selectedLabel = options.find(option => option.value === value)?.label ?? selectPlaceholder;
+    const selectedOption = options.find(option => option.value === value);
+    const selectedLabel = selectedOption?.label ?? selectPlaceholder;
 
     const selectOption = (option: ComboBoxOption) => {
         onChange(value === option.value ? '' : option.value);
@@ -110,7 +134,9 @@ export default function ComboBox({
                     .join(' ')}
                 icon={open ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'}
                 onClick={toggleDropdown}
-            />
+            >
+                {selectedOption?.imageUrl ? <OptionContent option={selectedOption} /> : undefined}
+            </Button>
 
             {open ? (
                 <div className="absolute z-50 w-full mt-1 transition-opacity duration-200 border rounded-md shadow-lg bg-n-solid-1 border-n-strong">
@@ -143,9 +169,7 @@ export default function ComboBox({
                                         selectOption(option);
                                     }}
                                 >
-                                    <span className={`text-n-slate-12 ${isSelected ? 'font-medium' : ''}`.trim()}>
-                                        {option.label}
-                                    </span>
+                                    <OptionContent option={option} emphasized={isSelected} />
                                     {isSelected ? (
                                         <span className="flex-shrink-0 i-lucide-check size-4 text-n-slate-11" />
                                     ) : null}
@@ -155,6 +179,22 @@ export default function ComboBox({
                         {filteredOptions.length === 0 ? (
                             <li className="px-3 py-2 text-sm text-n-slate-11">
                                 {emptyState || t('COMBOBOX.EMPTY_STATE')}
+                            </li>
+                        ) : null}
+                        {action ? (
+                            <li
+                                className="flex w-full cursor-pointer items-center gap-2 border-t border-n-weak px-3 py-2 text-sm font-medium text-n-blue-11 hover:bg-n-alpha-2"
+                                role="option"
+                                aria-selected={false}
+                                onClick={event => {
+                                    event.stopPropagation();
+                                    setOpen(false);
+                                    setSearch('');
+                                    action.onSelect();
+                                }}
+                            >
+                                <span className={`${action.icon ?? 'i-lucide-plus'} size-4 flex-none`} />
+                                {action.label}
                             </li>
                         ) : null}
                     </ul>

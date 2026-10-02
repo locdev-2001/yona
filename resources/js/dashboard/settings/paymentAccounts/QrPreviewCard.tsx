@@ -42,7 +42,7 @@ export default function QrPreviewCard({ accountId, paymentAccount }: QrPreviewCa
             ) : (
                 <div className="flex flex-col items-center gap-3 rounded border border-n-weak bg-n-background p-4">
                     {qrPayload ? (
-                        <StyledQr payload={qrPayload} size={180} bankCode={paymentAccount.bank_code} />
+                        <StyledQr payload={qrPayload} size={180} bankBin={paymentAccount.bank_bin} />
                     ) : (
                         <div className="h-[180px] w-[180px] bg-n-slate-3" />
                     )}
