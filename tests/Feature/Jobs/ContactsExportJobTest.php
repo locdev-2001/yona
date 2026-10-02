@@ -96,14 +96,14 @@ it('prepends the UTF-8 BOM', function () {
     expect(e3ExportedCsv($this->account))->toStartWith("\xEF\xBB\xBF");
 });
 
-it('exports only resolved contacts when no filter is given', function () {
+it('exports unidentified contacts too when no filter is given', function () {
     Contact::query()->create(['account_id' => $this->account->id]);
 
     (new ContactsExportJob($this->account->id, $this->user->id, ['id', 'email'], []))->handle();
 
     [, $rows] = Csv::parseWithHeaders(e3ExportedCsv($this->account));
 
-    expect($rows)->toHaveCount(6);
+    expect($rows)->toHaveCount(7);
 });
 
 it('exports only contacts carrying the requested label', function () {

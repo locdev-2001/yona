@@ -180,8 +180,8 @@ final class MeilisearchEngine implements ConfiguresIndexSettings, SearchEngine
             }
         }
 
-        if ($index === SearchTarget::Contacts) {
-            $filters[] = $query->leadContactsOnly ? 'is_lead = true' : 'is_resolved = true';
+        if ($index === SearchTarget::Contacts && $query->leadContactsOnly) {
+            $filters[] = 'is_lead = true';
         }
 
         $timeField = $index->isMessageBound() ? 'created_at' : 'last_activity_at';

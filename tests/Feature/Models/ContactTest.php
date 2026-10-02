@@ -87,18 +87,14 @@ describe('sync contact attributes', function () {
     });
 });
 
-describe('resolved contacts scope', function () {
-    it('returns contacts with email, phone number or identifier when crm_v2 disabled', function () {
+describe('listable contacts scope', function () {
+    it('lists every contact, identified or not, when crm_v2 disabled', function () {
         $account = Account::factory()->create();
         $withEmail = Contact::factory()->create(['account_id' => $account->id, 'email' => 'test@example.com']);
-        $withPhone = Contact::factory()->create(['account_id' => $account->id, 'phone_number' => '+1234567890']);
-        $withIdentifier = Contact::factory()->create(['account_id' => $account->id, 'identifier' => 'user123']);
         $withoutDetails = Contact::factory()->create(['account_id' => $account->id]);
 
-        $resolvedIds = $account->contacts()->resolvedContacts(useCrmV2: false)->pluck('id');
-
-        expect($resolvedIds)->toContain($withEmail->id, $withPhone->id, $withIdentifier->id)
-            ->not->toContain($withoutDetails->id);
+        expect($account->contacts()->listableContacts(useCrmV2: false)->pluck('id'))
+            ->toContain($withEmail->id, $withoutDetails->id);
     });
 
     it('returns only lead contacts when crm_v2 enabled', function () {
@@ -108,10 +104,26 @@ describe('resolved contacts scope', function () {
         $customer = Contact::factory()->create(['account_id' => $account->id, 'email' => 'customer@test.com']);
         $customer->update(['contact_type' => Contact::CONTACT_TYPES[Contact::TYPE_CUSTOMER]]);
 
-        $resolvedIds = $account->contacts()->resolvedContacts(useCrmV2: true)->pluck('id');
+        $resolvedIds = $account->contacts()->listableContacts(useCrmV2: true)->pluck('id');
 
         expect($resolvedIds)->toContain($lead->id)
             ->not->toContain($visitor->id, $customer->id);
+    });
+});
+
+describe('identification', function () {
+    it('splits contacts by whether they carry email, phone number or identifier', function () {
+        $account = Account::factory()->create();
+        $withEmail = Contact::factory()->create(['account_id' => $account->id, 'email' => 'test@example.com']);
+        $withPhone = Contact::factory()->create(['account_id' => $account->id, 'phone_number' => '+84901234567']);
+        $withIdentifier = Contact::factory()->create(['account_id' => $account->id, 'identifier' => 'user123']);
+        $channelOnly = Contact::factory()->create(['account_id' => $account->id, 'email' => null, 'phone_number' => null, 'identifier' => null]);
+
+        expect($account->contacts()->identified()->pluck('id')->all())
+            ->toEqualCanonicalizing([$withEmail->id, $withPhone->id, $withIdentifier->id])
+            ->and($account->contacts()->identified(false)->pluck('id')->all())->toBe([$channelOnly->id])
+            ->and($withEmail->isIdentified())->toBeTrue()
+            ->and($channelOnly->isIdentified())->toBeFalse();
     });
 });
 

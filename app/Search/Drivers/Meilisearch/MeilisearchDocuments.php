@@ -40,7 +40,7 @@ final class MeilisearchDocuments
             SearchTarget::Messages => ['account_id', 'inbox_id', 'conversation_id', 'sender_type', 'sender_id', 'created_at'],
             SearchTarget::Files => ['account_id', 'inbox_id', 'conversation_id', 'message_id', 'sender_type', 'sender_id', 'created_at'],
             SearchTarget::Conversations => ['account_id', 'inbox_id', 'contact_id', 'created_at', 'last_activity_at'],
-            SearchTarget::Contacts => ['account_id', 'is_lead', 'is_resolved', 'created_at', 'last_activity_at'],
+            SearchTarget::Contacts => ['account_id', 'is_lead', 'created_at', 'last_activity_at'],
         };
     }
 
@@ -93,8 +93,6 @@ final class MeilisearchDocuments
             SearchTarget::Contacts => $documents->select(
                 'contacts.id', 'contacts.account_id', 'contacts.name', 'contacts.email', 'contacts.phone_number', 'contacts.identifier',
             )->selectRaw('contacts.contact_type = ? as is_lead', [Contact::CONTACT_TYPES[Contact::TYPE_LEAD]])
-                // Cùng luật với Contact::scopeResolvedContacts khi không bật crm_v2.
-                ->selectRaw("coalesce(contacts.email <> '' or contacts.phone_number <> '' or contacts.identifier <> '', false) as is_resolved")
                 ->selectRaw(self::epoch('contacts.created_at').' as created_at')
                 ->selectRaw(self::epoch('contacts.last_activity_at').' as last_activity_at'),
         };
@@ -118,10 +116,8 @@ final class MeilisearchDocuments
             }
         }
 
-        foreach (['is_lead', 'is_resolved'] as $flag) {
-            if (array_key_exists($flag, $document)) {
-                $document[$flag] = (bool) $document[$flag];
-            }
+        if (array_key_exists('is_lead', $document)) {
+            $document['is_lead'] = (bool) $document['is_lead'];
         }
 
         return $document;

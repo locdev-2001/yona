@@ -48,6 +48,10 @@ class Contact extends Model
     // Devise.email_regexp — cố ý lỏng hơn rule email của Laravel để khớp bản gốc.
     public const EMAIL_REGEX = '/^[^@\s]+@[^@\s]+$/';
 
+    // Đã định danh = có định danh dùng được ngoài kênh (email, số điện thoại, mã
+    // định danh). Chưa định danh = chỉ biết qua kênh: uid Zalo, khách vãng lai widget.
+    private const IDENTIFIED_SQL = "(coalesce(contacts.email, '') <> '' OR coalesce(contacts.phone_number, '') <> '' OR coalesce(contacts.identifier, '') <> '')";
+
     // Default của DB chưa có trên model mới tạo — set sẵn để hook thăng hạng
     // visitor → lead nhìn thấy đúng trạng thái.
     protected $attributes = [
@@ -247,15 +251,23 @@ class Contact extends Model
         }
     }
 
-    // Contact.resolved_contacts — crm_v2 lọc theo lead, còn lại lọc theo
-    // "có ít nhất một định danh".
-    public function scopeResolvedContacts(Builder $query, bool $useCrmV2 = false): Builder
+    // Liên hệ hiện ở danh sách: crm_v2 chỉ tính lead, còn lại hiện tất cả, kể cả
+    // liên hệ chưa định danh (khách Zalo chỉ có tên vẫn là khách thật).
+    public function scopeListableContacts(Builder $query, bool $useCrmV2 = false): Builder
     {
-        if ($useCrmV2) {
-            return $query->where('contact_type', self::CONTACT_TYPES[self::TYPE_LEAD]);
-        }
+        return $useCrmV2
+            ? $query->where('contact_type', self::CONTACT_TYPES[self::TYPE_LEAD])
+            : $query;
+    }
 
-        return $query->whereRaw("(contacts.email <> '' OR contacts.phone_number <> '' OR contacts.identifier <> '')");
+    public function scopeIdentified(Builder $query, bool $identified = true): Builder
+    {
+        return $query->whereRaw(($identified ? '' : 'NOT ').self::IDENTIFIED_SQL);
+    }
+
+    public function isIdentified(): bool
+    {
+        return filled($this->email) || filled($this->phone_number) || filled($this->identifier);
     }
 
     public function scopeOrderOnLastActivityAt(Builder $query, string $direction): Builder

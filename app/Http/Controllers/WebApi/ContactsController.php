@@ -49,16 +49,26 @@ class ContactsController extends Controller
     {
         $query = Contact::query()
             ->where('account_id', $account->id)
-            ->resolvedContacts(useCrmV2: $account->featureEnabled('crm_v2'));
+            ->listableContacts(useCrmV2: $account->featureEnabled('crm_v2'));
 
-        // resolved_contacts.tagged_with(params[:labels], any: true)
         $labels = array_filter((array) $request->query('labels', []));
 
         if ($labels !== []) {
             $query->whereHas('labels', fn (Builder $builder) => $builder->whereIn('title', $labels));
         }
 
-        return $this->paginatedContacts($request, $query);
+        $identificationCounts = [
+            'identified_count' => (clone $query)->identified()->count(),
+            'unidentified_count' => (clone $query)->identified(false)->count(),
+        ];
+
+        $identified = $request->query('identified');
+
+        if (in_array($identified, ['true', 'false'], true)) {
+            $query->identified($identified === 'true');
+        }
+
+        return $this->paginatedContacts($request, $query, $identificationCounts);
     }
 
     // Port từ Contacts::AttachmentsController#index — tệp đã chia sẻ trong mọi
@@ -304,7 +314,8 @@ class ContactsController extends Controller
 
     // fetch_contacts: eager load + phân trang, meta {count, current_page}.
     /** @param Builder<Contact> $query */
-    private function paginatedContacts(Request $request, Builder $query): JsonResponse
+    /** @param  array<string, int>  $extraMeta */
+    private function paginatedContacts(Request $request, Builder $query, array $extraMeta = []): JsonResponse
     {
         $paginated = $this->applySort($request, $query)
             ->with($this->eagerLoads($request))
@@ -314,6 +325,7 @@ class ContactsController extends Controller
             'meta' => [
                 'count' => $paginated->total(),
                 'current_page' => $this->currentPage($request),
+                ...$extraMeta,
             ],
             'payload' => ContactResource::collectionFor($paginated->items(), $this->includeContactInboxes($request)),
         ]);

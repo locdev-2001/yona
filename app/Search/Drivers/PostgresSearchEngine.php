@@ -143,7 +143,7 @@ final class PostgresSearchEngine implements SearchEngine
                 ->orWhereRaw(...$term->plainMatch('contacts.identifier')));
 
         return $term->orderByRelevance($this->applyTimeFilter($matches, $query, 'contacts.last_activity_at'), 'contacts.name')
-            ->resolvedContacts($query->leadContactsOnly)
+            ->listableContacts($query->leadContactsOnly)
             ->orderOnLastActivityAt('desc')
             ->orderByDesc('contacts.id');
     }

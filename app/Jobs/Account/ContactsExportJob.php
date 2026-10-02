@@ -112,7 +112,7 @@ class ContactsExportJob extends ApplicationJob
 
         $contacts = Contact::query()
             ->where('account_id', $account->id)
-            ->resolvedContacts(useCrmV2: $account->featureEnabled('crm_v2'));
+            ->listableContacts(useCrmV2: $account->featureEnabled('crm_v2'));
 
         if (filled($label)) {
             $labels = is_array($label) ? $label : [$label];

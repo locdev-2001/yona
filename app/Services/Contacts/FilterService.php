@@ -54,6 +54,6 @@ class FilterService extends BaseFilterService
     {
         return Contact::query()
             ->where('account_id', $this->account->id)
-            ->resolvedContacts(useCrmV2: $this->account->featureEnabled('crm_v2'));
+            ->listableContacts(useCrmV2: $this->account->featureEnabled('crm_v2'));
     }
 }

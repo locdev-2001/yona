@@ -36,7 +36,7 @@ describe('GET /api/v1/accounts/{id}/contacts', function () {
         $this->getJson("/api/v1/accounts/{$account->id}/contacts")->assertUnauthorized();
     });
 
-    it('returns all resolved contacts along with contact inboxes', function () {
+    it('returns contacts along with contact inboxes', function () {
         $account = Account::factory()->create();
         $admin = contactUserOf($account, AccountUser::ROLE_ADMINISTRATOR);
         $contact = Contact::factory()->withEmail()->create(['account_id' => $account->id]);
@@ -82,18 +82,38 @@ describe('GET /api/v1/accounts/{id}/contacts', function () {
             ->not->toHaveKeys(['hmac_token', 'secret', 'webhook_url']);
     });
 
-    it('does not include unresolved contacts', function () {
+    it('lists unidentified contacts too and counts both kinds', function () {
         $account = Account::factory()->create();
         $admin = contactUserOf($account, AccountUser::ROLE_ADMINISTRATOR);
-        Contact::factory()->create(['account_id' => $account->id]);
+        $identified = Contact::factory()->withEmail()->create(['account_id' => $account->id]);
+        $channelOnly = Contact::factory()->create(['account_id' => $account->id, 'email' => null, 'phone_number' => null, 'identifier' => null]);
 
         $response = $this->actingAs($admin)
             ->getJson("/api/v1/accounts/{$account->id}/contacts")
             ->assertOk();
 
-        expect($response->json('payload'))->toBeEmpty()
-            ->and($response->json('meta.count'))->toBe(0);
+        expect(collect($response->json('payload'))->pluck('identified', 'id')->all())
+            ->toEqual([$identified->id => true, $channelOnly->id => false])
+            ->and($response->json('meta'))->toMatchArray(['count' => 2, 'identified_count' => 1, 'unidentified_count' => 1]);
     });
+
+    it('filters by identification while keeping both counts', function (string $param, bool $expectIdentified) {
+        $account = Account::factory()->create();
+        $admin = contactUserOf($account, AccountUser::ROLE_ADMINISTRATOR);
+        $identified = Contact::factory()->withEmail()->create(['account_id' => $account->id]);
+        $channelOnly = Contact::factory()->create(['account_id' => $account->id, 'email' => null, 'phone_number' => null, 'identifier' => null]);
+
+        $response = $this->actingAs($admin)
+            ->getJson("/api/v1/accounts/{$account->id}/contacts?identified={$param}")
+            ->assertOk();
+
+        expect(collect($response->json('payload'))->pluck('id')->all())
+            ->toBe([$expectIdentified ? $identified->id : $channelOnly->id])
+            ->and($response->json('meta'))->toMatchArray(['count' => 1, 'identified_count' => 1, 'unidentified_count' => 1]);
+    })->with([
+        'đã định danh' => ['true', true],
+        'chưa định danh' => ['false', false],
+    ]);
 
     it('sorts by company name desc with nulls last', function () {
         $account = Account::factory()->create();
