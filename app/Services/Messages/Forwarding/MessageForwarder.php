@@ -45,6 +45,8 @@ final class MessageForwarder
 
             if ($source->content_type === Message::CONTENT_TYPES['sticker']) {
                 $params = [...$params, 'content' => null, 'content_type' => 'sticker', 'sticker_id' => $this->stickerId($source, $target)];
+            } elseif ($source->content_type === Message::CONTENT_TYPES['incoming_email']) {
+                $params['content_type'] = 'incoming_email';
             }
 
             foreach (ForwardRequirements::forwardableAttachments($source) as $attachment) {
@@ -54,13 +56,22 @@ final class MessageForwarder
                 $params['attachments'][] = Attachment::signUpload($copy);
             }
 
-            return (new MessageBuilder($actor, $target, $params, trustedContentAttributes: [
+            $trustedAttributes = [
                 'forwarded_from' => [
                     'origin' => self::ORIGIN_INTERNAL,
                     'message_id' => $source->id,
                     'conversation_id' => $source->conversation->display_id,
                 ],
-            ]))->perform();
+            ];
+
+            if ($source->content_type === Message::CONTENT_TYPES['incoming_email']) {
+                $email = data_get($source->content_attributes, 'email');
+                if (is_array($email)) {
+                    $trustedAttributes['email'] = $email;
+                }
+            }
+
+            return (new MessageBuilder($actor, $target, $params, trustedContentAttributes: $trustedAttributes))->perform();
         } catch (MessageValidationException $exception) {
             Attachment::discardUnattachedCopies($copiedFiles);
 
