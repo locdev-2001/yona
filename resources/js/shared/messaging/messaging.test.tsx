@@ -252,7 +252,7 @@ describe('thẻ chuyển khoản', () => {
     it('vẽ QR từ qr_payload và hiện đủ thông tin ngân hàng', async () => {
         renderMessage(bankTransfer);
 
-        expect(await screen.findByRole('img', { name: 'Mã QR chuyển khoản' })).toHaveAttribute('src', expect.stringContaining('data:image/png'));
+        expect(await screen.findByRole('img', { name: 'Mã QR chuyển khoản' })).toBeInTheDocument();
         expect(screen.getByText('Vietcombank')).toBeInTheDocument();
         expect(screen.getByText('1023456789')).toBeInTheDocument();
         expect(screen.getByText('HKD GOM MOC')).toBeInTheDocument();

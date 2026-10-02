@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
-import QRCode from 'qrcode';
 
 import { t } from '../../../i18n';
 import { getJson } from 'dashboard/helper/apiClient';
+import StyledQr from '../../../shared/qr/StyledQr';
 import type { PaymentAccount } from './types';
 
 interface QrPreviewCardProps {
@@ -10,27 +10,23 @@ interface QrPreviewCardProps {
     paymentAccount: PaymentAccount | null;
 }
 
-// Mã QR luôn dựng từ dữ liệu ĐÃ LƯU trên máy chủ (một nguồn sự thật duy nhất
-// cho chuỗi EMVCo) — sửa form chưa lưu thì chưa đổi mã QR bên phải.
 export default function QrPreviewCard({ accountId, paymentAccount }: QrPreviewCardProps) {
-    const [qrSrc, setQrSrc] = useState<string | null>(null);
+    const [qrPayload, setQrPayload] = useState<string | null>(null);
 
     useEffect(() => {
         if (!paymentAccount) {
-            setQrSrc(null);
-
+            setQrPayload(null);
             return undefined;
         }
 
         let active = true;
 
         getJson<{ qr_payload: string }>(`/api/v1/accounts/${accountId}/payment_accounts/${paymentAccount.id}/preview`)
-            .then(response => QRCode.toDataURL(response.qr_payload, { margin: 1, width: 200 }))
-            .then(url => {
-                if (active) setQrSrc(url);
+            .then(response => {
+                if (active) setQrPayload(response.qr_payload);
             })
             .catch(() => {
-                if (active) setQrSrc(null);
+                if (active) setQrPayload(null);
             });
 
         return () => {
@@ -45,8 +41,8 @@ export default function QrPreviewCard({ accountId, paymentAccount }: QrPreviewCa
                 <p className="m-0 text-sm text-n-slate-10">{t('PAYMENT_ACCOUNTS.PREVIEW.EMPTY')}</p>
             ) : (
                 <div className="flex flex-col items-center gap-3 rounded border border-n-weak bg-n-background p-4">
-                    {qrSrc ? (
-                        <img src={qrSrc} width={180} height={180} alt={t('PAYMENT_ACCOUNTS.PREVIEW.QR_ALT')} />
+                    {qrPayload ? (
+                        <StyledQr payload={qrPayload} size={180} bankCode={paymentAccount.bank_code} />
                     ) : (
                         <div className="h-[180px] w-[180px] bg-n-slate-3" />
                     )}

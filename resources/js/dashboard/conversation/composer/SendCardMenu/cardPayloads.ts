@@ -141,6 +141,7 @@ export function withPreviewDiscount(draft: StructuredDraft): StructuredDraft {
 
 export interface PaymentAccountOption {
     id: number;
+    bank_code: string;
     bank_name: string;
     account_number: string;
     account_name: string;

@@ -62,6 +62,7 @@ export default function BankTransferForm({
                     onPreview({
                         contentType: 'bank_transfer',
                         contentAttributes: {
+                            bank_code: selected.bank_code,
                             bank_name: selected.bank_name,
                             account_number: selected.account_number,
                             account_name: selected.account_name,

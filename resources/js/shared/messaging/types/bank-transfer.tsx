@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
-import QRCode from 'qrcode';
+import { useState } from 'react';
 
+import StyledQr from '../../qr/StyledQr';
 import { useMessageHost } from '../host';
 import type { Price, StructuredMessage } from '../model';
 import { formatMoney } from '../money';
@@ -11,36 +11,13 @@ import { KitRoot, kt } from '../kit/primitives';
 
 interface BankTransferModel {
     bankName: string;
+    bankCode?: string;
     accountNumber: string;
     accountName: string;
     amount?: Price;
     memo?: string;
     qrPayload: string;
     paidAt?: string;
-}
-
-// Vẽ QR ở client từ chuỗi EMVCo server đã dựng sẵn — một nguồn sự thật duy
-// nhất cho payload, kit chỉ lo hiển thị.
-function QrImage({ payload }: { payload: string }) {
-    const [src, setSrc] = useState<string | null>(null);
-
-    useEffect(() => {
-        let active = true;
-
-        QRCode.toDataURL(payload, { margin: 1, width: 220 })
-            .then(url => {
-                if (active) setSrc(url);
-            })
-            .catch(() => undefined);
-
-        return () => {
-            active = false;
-        };
-    }, [payload]);
-
-    if (!src) return <div className="mk-media" style={{ width: 200, height: 200 }} />;
-
-    return <img src={src} width={200} height={200} alt={kt('bank_transfer_qr_alt')} />;
 }
 
 /** Một dòng nhãn / giá trị / nút chép; lưới 3 cột nên giá trị các dòng thẳng hàng. */
@@ -91,12 +68,10 @@ function BankTransferView({ model, message }: { model: BankTransferModel; messag
                     ) : null}
                     {model.memo ? <BankRow label={kt('transfer_memo')} value={model.memo} copyable message={message} /> : null}
                 </dl>
-                {/* Khách đang chat trên chính điện thoại thì không quét được mã trên màn hình mình: số tài khoản
-                    và nút chép lên trước, mã QR thu vào một dòng mở ra khi cần. Hộp thư (chỉ xem) mở sẵn. */}
                 <details className="mk-bank-qr" open={!host.interactive}>
                     <summary>{kt('show_qr')}</summary>
                     <div className="mk-row" style={{ justifyContent: 'center', paddingTop: 8 }}>
-                        <QrImage payload={model.qrPayload} />
+                        <StyledQr payload={model.qrPayload} size={220} bankCode={model.bankCode} ariaLabel={kt('bank_transfer_qr_alt')} />
                     </div>
                 </details>
             </div>
@@ -118,6 +93,7 @@ export default defineMessageType<BankTransferModel>({
 
         return {
             bankName,
+            bankCode: text(attributes.bank_code),
             accountNumber,
             accountName,
             qrPayload,
