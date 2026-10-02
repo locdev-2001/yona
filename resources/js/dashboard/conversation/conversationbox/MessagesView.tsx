@@ -54,6 +54,7 @@ export default function MessagesView() {
         focusedMessageId,
         clearFocusedMessage,
         focusMessage,
+        markMessagesRead,
     } = useConversation();
     const { auth, inboxes = [] } = usePage<DashboardPageProps>().props;
 
@@ -115,8 +116,12 @@ export default function MessagesView() {
     // "N tin chưa đọc" vẫn đánh dấu đúng chỗ bắt đầu đọc tới khi chuyển hội thoại.
     const [unreadAtOpen, setUnreadAtOpen] = useState(() => unreadSnapshotOf(currentChat));
     if (unreadAtOpen.conversationId !== currentChat.id) setUnreadAtOpen(unreadSnapshotOf(currentChat));
-    // Focus vào ô soạn là đã đọc tới đó: dải chưa đọc ẩn luôn.
-    const dismissUnreadDivider = () => setUnreadAtOpen((current) => (current.count > 0 ? { ...current, count: 0 } : current));
+    // Focus vào ô soạn là đã đọc tới đó: dải chưa đọc ẩn, và phát sự kiện đã xem
+    // chung khi danh sách còn chấm (tin tới lúc tab không được nhìn).
+    const readOnComposerFocus = () => {
+        setUnreadAtOpen((current) => (current.count > 0 ? { ...current, count: 0 } : current));
+        if (currentChat.unread_count > 0) void markMessagesRead(currentChat.id);
+    };
     const unreadMessageCount = unreadCountToShow(unreadAtOpen, messages);
     const firstUnreadId = firstUnreadMessageId(messages, unreadAtOpen.lastSeenAt, unreadMessageCount);
     const unreadLabelParts = unreadMessageLabelParts(unreadMessageCount);
@@ -261,7 +266,7 @@ export default function MessagesView() {
                         </div>
                     </div>
                 )}
-                <div className="contents" onFocusCapture={dismissUnreadDivider}>
+                <div className="contents" onFocusCapture={readOnComposerFocus}>
                     <ResizableEditorWrapper
                         ref={resizableEditorWrapperRef}
                         containerHeight={Math.max(0, containerHeight - topBannerHeight)}

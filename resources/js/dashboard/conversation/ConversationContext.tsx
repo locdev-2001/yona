@@ -11,7 +11,8 @@ import { useAlert } from 'dashboard/composables/useAlert';
 import { useViewportWidth } from 'dashboard/composables/useViewportWidth';
 import { updateUISettings as persistUISettings } from 'dashboard/composables/useUISettings';
 import type { UISettings } from 'dashboard/composables/useUISettings';
-import { markConversationSeenInBell, scheduleUnreadCountRefresh, setViewedConversation } from 'dashboard/notifications/useUnreadCount';
+import { scheduleUnreadCountRefresh, setViewedConversation } from 'dashboard/notifications/useUnreadCount';
+import { markConversationSeen, nowInSeconds, unreadCountAfterSeen, type ConversationSeenPayload } from './conversationSeen';
 import { useContactUpdatedEvent } from 'dashboard/realtime/contactUpdated';
 import { useRealtimeEvent } from 'dashboard/realtime/hooks';
 import { BUS_EVENTS } from 'shared/helpers/emitter';
@@ -178,7 +179,7 @@ interface ConversationContextValue {
     assignTeam: (team: TeamMeta | null) => Promise<void>;
     muteConversation: () => Promise<void>;
     unmuteConversation: () => Promise<void>;
-    markMessagesRead: (conversationId: number) => Promise<void>;
+    markMessagesRead: (conversationId: number, seenThrough?: number) => Promise<void>;
     markMessagesUnread: (conversationId: number) => Promise<void>;
     // updateCustomAttributes của store gốc — accordion Conversation Information.
     updateConversationCustomAttributes: (customAttributes: Record<string, unknown>) => Promise<void>;
@@ -399,7 +400,7 @@ export function ConversationProvider({
     // BUS_EVENTS.SCROLL_TO_MESSAGE của gốc kéo theo makeMessagesRead — phát khi mở
     // hội thoại, khi có tin nối vào hội thoại đang mở và khi hội thoại đang mở được
     // cập nhật. Ref để các handler khai báo phía trên gọi được hàm định nghĩa sau.
-    const markMessagesReadRef = useRef<(targetId: number) => void>(() => undefined);
+    const markMessagesReadRef = useRef<(targetId: number, seenThrough?: number) => void>(() => undefined);
     // Bản mới nhất của `messages` cho các handler không nằm trong vòng render.
     const messagesRef = useRef<ConversationMessage[]>([]);
 
@@ -724,6 +725,7 @@ export function ConversationProvider({
     // timestamp + unread_count (từ conversation nhúng, không có thì giữ nguyên).
     const addMessage = useCallback((message: MessageEventPayload) => {
         const { conversation: embedded, ...plainMessage } = message;
+        let readOpenConversation = false;
         if (plainMessage.conversation_id === conversationIdRef.current) {
             // ADD_CONVERSATION_ATTACHMENTS: bản gốc góp tệp từ tin đến (realtime) và
             // từ phản hồi của lần gửi; ở yona tin mình gửi cũng quay lại qua realtime
@@ -733,29 +735,31 @@ export function ConversationProvider({
             // thật sự nối vào cuối hội thoại đang mở, không phải khi thay tin pending.
             const appended = findPendingMessageIndex(messagesRef.current, plainMessage) === -1;
             setMessages((current) => applyIncomingMessage(current, plainMessage).messages);
-            if (appended) markMessagesReadRef.current(plainMessage.conversation_id);
+            if (appended) readOpenConversation = true;
         }
-        setAllConversations((current) =>
-            current.map((item) =>
-                item.id === plainMessage.conversation_id
-                    ? applyMessageToConversation(item, plainMessage, embedded?.unread_count ?? item.unread_count)
-                    : item,
-            ),
-        );
-        setFilteredConversations((current) =>
-            current.map((item) =>
-                item.id === plainMessage.conversation_id
-                    ? applyMessageToConversation(item, plainMessage, embedded?.unread_count ?? item.unread_count)
-                    : item,
-            ),
-        );
+        const withMessage = (item: Conversation) =>
+            item.id === plainMessage.conversation_id
+                ? applyMessageToConversation(
+                      item,
+                      plainMessage,
+                      unreadCountAfterSeen(item.id, embedded?.unread_count ?? item.unread_count, plainMessage.created_at),
+                  )
+                : item;
+        setAllConversations((current) => current.map(withMessage));
+        setFilteredConversations((current) => current.map(withMessage));
+        // Sau khi danh sách nhận số máy chủ gửi kèm tin: sự kiện đã xem phải là cập nhật cuối cùng.
+        if (readOpenConversation) markMessagesReadRef.current(plainMessage.conversation_id, plainMessage.created_at);
     }, []);
 
     const conversationTypeRef = useRef<ConversationType>(conversationType);
     conversationTypeRef.current = conversationType;
 
-    const updateConversation = useCallback((conversation: Conversation) => {
-        if (!conversation?.id) return;
+    const updateConversation = useCallback((incoming: Conversation) => {
+        if (!incoming?.id) return;
+        const conversation = {
+            ...incoming,
+            unread_count: unreadCountAfterSeen(incoming.id, incoming.unread_count, incoming.timestamp ?? incoming.last_activity_at),
+        };
         setAllConversations((current) =>
             applyConversationUpdate(current, conversation, conversationTypeRef.current),
         );
@@ -803,16 +807,13 @@ export function ConversationProvider({
         metaDebouncersRef.current![getMetaDebounceKey(allCountRef.current)]();
     }, []);
 
-    // Mở hội thoại là chấm chưa đọc ở danh sách tắt ngay, không chờ server: dải
-    // "N tin chưa đọc" trong khung chat giữ số lúc mở (MessagesView), không cần
-    // trì hoãn ở đây. Lỗi mạng thì lần tải danh sách sau tự hiện lại chấm.
+    // Xem hội thoại là phát sự kiện đã xem chung ngay, không chờ server: danh sách,
+    // chuông cùng tắt chấm qua sự kiện đó. Lỗi mạng thì lần tải danh sách sau tự hiện lại chấm.
     const markMessagesRead = useCallback(
-        async (targetId: number) => {
+        async (targetId: number, seenThrough = 0) => {
             if (!targetId) return;
-            if ((allConversationsRef.current.find((item) => item.id === targetId)?.unread_count ?? 0) > 0) {
-                markConversationSeenInBell();
-            }
-            setAllConversations((current) => applyUnreadCount(current, targetId, Math.floor(Date.now() / 1000)));
+            const hadUnread = (allConversationsRef.current.find((item) => item.id === targetId)?.unread_count ?? 0) > 0;
+            markConversationSeen(targetId, hadUnread, seenThrough);
             try {
                 await markMessagesReadRequest(accountId, targetId);
                 scheduleUnreadCountRefresh();
@@ -863,8 +864,12 @@ export function ConversationProvider({
     });
     useRealtimeEvent<MessageEventPayload>('message.updated', addMessage);
 
+    useRealtimeEvent<ConversationSeenPayload>(BUS_EVENTS.CONVERSATION_SEEN, ({ conversationId: seenId, seenAt }) => {
+        setAllConversations((current) => applyUnreadCount(current, seenId, seenAt));
+        setFilteredConversations((current) => applyUnreadCount(current, seenId, seenAt));
+    });
     useRealtimeEvent(BUS_EVENTS.CONVERSATIONS_ALL_SEEN, () => {
-        const seenAt = Math.floor(Date.now() / 1000);
+        const seenAt = nowInSeconds();
         setAllConversations((current) => current.map((item) => (item.unread_count > 0 ? { ...item, agent_last_seen_at: seenAt, unread_count: 0 } : item)));
     });
     // Counts: ActionCableConnector emit 'fetch_conversation_stats' sau các event

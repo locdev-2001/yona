@@ -13,7 +13,6 @@ import {
     VIEWED_CONVERSATION_READ_WAIT_MS,
     bindUnreadCount,
     getUnreadCountState,
-    markConversationSeenInBell,
     resetUnreadCount,
     setViewedConversation,
     subscribeUnreadCount,
@@ -226,15 +225,18 @@ describe('store số thông báo chưa đọc', () => {
         expect(getJson).toHaveBeenCalledOnce();
     });
 
-    it('mở hội thoại đang có chấm thì chuông giảm một ngay, không xuống dưới 0', async () => {
-        getJson.mockResolvedValue(1);
+    it('sự kiện đã xem một hội thoại đang có chấm thì chuông giảm một ngay, không xuống dưới 0', async () => {
+        getJson.mockResolvedValue(2);
         bindUnreadCount(2);
         await flushPromises();
+        const seen = (hadUnread: boolean) => emitter.emit(BUS_EVENTS.CONVERSATION_SEEN, { conversationId: 4, seenAt: 100, hadUnread });
 
-        act(() => markConversationSeenInBell());
-        expect(getUnreadCountState().count).toBe(0);
+        act(() => seen(false));
+        expect(getUnreadCountState().count).toBe(2);
 
-        act(() => markConversationSeenInBell());
+        act(() => seen(true));
+        act(() => seen(true));
+        act(() => seen(true));
         expect(getUnreadCountState().count).toBe(0);
     });
 

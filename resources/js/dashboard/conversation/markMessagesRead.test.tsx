@@ -17,7 +17,10 @@ vi.mock('dashboard/helper/apiClient', async importOriginal => ({
     postJson: (url: string) => postJson(url),
 }));
 
+import { act } from '@testing-library/react';
+import { emitter } from 'shared/helpers/emitter';
 import { ConversationProvider, useConversation } from './ConversationContext';
+import { forgetConversationSeen } from './conversationSeen';
 import type { Conversation } from './types';
 
 function buildConversation(id: number, unreadCount: number): Conversation {
@@ -83,6 +86,7 @@ describe('mở hội thoại có tin chưa đọc', () => {
     beforeEach(() => {
         postJson.mockReset();
         postJson.mockReturnValue(new Promise(() => undefined));
+        forgetConversationSeen();
     });
 
     it('tắt chấm chưa đọc ở danh sách ngay, không chờ server trả lời', async () => {
@@ -94,6 +98,31 @@ describe('mở hội thoại có tin chưa đọc', () => {
 
         await waitFor(() => expect(postJson).toHaveBeenCalledWith('/api/v1/accounts/2/conversations/4/update_last_seen'));
         await waitFor(() => expect(screen.getByTestId('unread-4').textContent).toBe('0'));
+        expect(screen.getByTestId('unread-5').textContent).toBe('2');
+    });
+
+    it('tin mới tới hội thoại đang mở thì danh sách vẫn không chấm, dù máy chủ gửi kèm số chưa đọc cũ', async () => {
+        render(
+            <ConversationProvider conversationId={4}>
+                <UnreadProbe />
+            </ConversationProvider>,
+        );
+        await waitFor(() => expect(screen.getByTestId('unread-4').textContent).toBe('0'));
+
+        act(() =>
+            emitter.emit('message.created', {
+                id: 99,
+                conversation_id: 4,
+                account_id: 2,
+                message_type: 0,
+                content: 'tin mới',
+                created_at: Math.floor(Date.now() / 1000),
+                conversation: { unread_count: 1, last_activity_at: Math.floor(Date.now() / 1000) },
+            }),
+        );
+        act(() => emitter.emit('conversation.updated', { ...buildConversation(4, 1), timestamp: Math.floor(Date.now() / 1000) - 1, updated_at: 999 }));
+
+        expect(screen.getByTestId('unread-4').textContent).toBe('0');
         expect(screen.getByTestId('unread-5').textContent).toBe('2');
     });
 });

@@ -23,4 +23,6 @@ export const BUS_EVENTS = {
     WEBSOCKET_RECONNECT_COMPLETED: 'WEBSOCKET_RECONNECT_COMPLETED',
     // "Đánh dấu tất cả đã đọc" ở chuông: máy chủ đã đánh dấu mọi hội thoại chưa đọc là đã xem.
     CONVERSATIONS_ALL_SEEN: 'CONVERSATIONS_ALL_SEEN',
+    // Người dùng vừa xem một hội thoại (mở, tin mới tới khi đang mở, focus ô soạn): payload ConversationSeenPayload.
+    CONVERSATION_SEEN: 'CONVERSATION_SEEN',
 } as const;

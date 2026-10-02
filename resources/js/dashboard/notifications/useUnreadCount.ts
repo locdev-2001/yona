@@ -1,6 +1,7 @@
 import { useSyncExternalStore } from 'react';
 
 import { BUS_EVENTS, emitter } from 'shared/helpers/emitter';
+import type { ConversationSeenPayload } from 'dashboard/conversation/conversationSeen';
 import { fetchUnreadCount } from './api';
 import type { NotificationRealtimePayload, NotificationRecord } from './types';
 
@@ -132,6 +133,7 @@ function attachRealtimeOnce(): void {
     NOTIFICATION_EVENTS.forEach(eventName => emitter.on(eventName, applyRealtimePayload));
     CONVERSATION_EVENTS.forEach(eventName => emitter.on(eventName, refreshForConversationEvent));
     emitter.on(BUS_EVENTS.WEBSOCKET_RECONNECT_COMPLETED, scheduleUnreadCountRefresh);
+    emitter.on(BUS_EVENTS.CONVERSATION_SEEN, applyConversationSeen);
 }
 
 function detachRealtime(): void {
@@ -140,6 +142,7 @@ function detachRealtime(): void {
     NOTIFICATION_EVENTS.forEach(eventName => emitter.off(eventName, applyRealtimePayload));
     CONVERSATION_EVENTS.forEach(eventName => emitter.off(eventName, refreshForConversationEvent));
     emitter.off(BUS_EVENTS.WEBSOCKET_RECONNECT_COMPLETED, scheduleUnreadCountRefresh);
+    emitter.off(BUS_EVENTS.CONVERSATION_SEEN, applyConversationSeen);
 }
 
 // Gọi mỗi lần Dashboard dựng: cùng account mà đã có số (hoặc đang hỏi) thì thôi.
@@ -165,8 +168,9 @@ export function setViewedConversation(conversationId: number): void {
     }
 }
 
-// Vừa mở một hội thoại đang có chấm chưa đọc: chuông giảm một ngay, máy chủ chốt số sau.
-export function markConversationSeenInBell(): void {
+// Vừa xem một hội thoại đang có chấm chưa đọc: chuông giảm một ngay, máy chủ chốt số sau.
+function applyConversationSeen(payload: unknown): void {
+    if (!(payload as Partial<ConversationSeenPayload> | null)?.hadUnread) return;
     if (!unreadState.isLoaded || unreadState.count === 0) return;
     realtimeVersion += 1;
     setUnreadState({ ...unreadState, count: unreadState.count - 1 });
