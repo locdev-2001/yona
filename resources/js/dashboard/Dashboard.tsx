@@ -33,7 +33,8 @@ export default function Dashboard({ children }: { children: ReactNode }) {
 
     return (
         <StickerDisplaySizeProvider size={stickerDisplaySize}>
-            <div className="flex flex-col h-screen w-full">
+            {/* dvh thay vh: trên Safari iPhone 100vh gồm cả vùng thanh công cụ dưới, đáy khung (ô soạn tin) bị che. */}
+            <div className="flex flex-col h-screen supports-[height:100dvh]:h-dvh w-full">
                 <PushSubscriptionSync />
                 <div className="flex flex-grow overflow-hidden text-n-slate-12 min-h-0 w-full">
                     <Sidebar

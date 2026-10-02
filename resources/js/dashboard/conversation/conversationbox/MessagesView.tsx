@@ -250,7 +250,7 @@ export default function MessagesView() {
                     </li>
                 }
             />
-            <div className="flex relative flex-col bg-n-surface-1">
+            <div className="flex relative flex-col bg-n-surface-1 pb-[env(safe-area-inset-bottom)]">
                 {scrollToLatest.isAwayFromLatest ? (
                     <ScrollToLatestButton unseenCount={scrollToLatest.unseenCount} onClick={scrollToLatest.jump} />
                 ) : null}

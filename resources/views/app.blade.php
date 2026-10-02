@@ -3,7 +3,7 @@
 <html data-installation-name="{{ config('yona.branding.installation_name') }}" lang="{{ str_replace('_', '-', app()->getLocale()) }}" dir="ltr" style="color-scheme: light">
     <head>
         <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content">
         <title inertia>{{ config('app.name', 'Yona') }}</title>
         @include('partials.favicon')
         @include('partials.analytics')
