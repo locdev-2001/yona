@@ -138,7 +138,7 @@ const Popover = forwardRef<PopoverHandle, PopoverProps>(function Popover(
                           <div
                               ref={popoverRef}
                               data-popover-content=""
-                              className="relative flex flex-col w-full max-w-lg max-h-[calc(100vh-4rem)] mx-4 bg-n-alpha-3 backdrop-blur-[100px] shadow-xl rounded-xl"
+                              className="relative flex flex-col w-full min-w-0 max-w-lg max-h-[calc(100vh-4rem)] mx-4 bg-n-alpha-3 backdrop-blur-[100px] shadow-xl rounded-xl"
                           >
                               <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain rounded-xl">{content({ hide })}</div>
                           </div>
