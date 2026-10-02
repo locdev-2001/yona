@@ -172,7 +172,7 @@ export default function BaseBubble({
             title={sentAtTooltip}
         >
             <div
-                className={`text-sm min-w-0 overflow-hidden ${messageClass} ${variant !== MESSAGE_VARIANTS.EMAIL ? (forwardedFrom ? 'max-w-3xl' : 'max-w-lg') : ''} ${className}`}
+                className={`text-sm min-w-0 overflow-hidden ${messageClass} ${variant !== MESSAGE_VARIANTS.EMAIL ? 'max-w-lg' : ''} ${className}`}
                 title={title}
                 data-bubble-name={dataBubbleName}
                 onClick={onClick}
