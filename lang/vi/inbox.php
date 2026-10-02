@@ -80,6 +80,9 @@ return [
         'OPEN_LABEL' => 'Thông báo, {count} chưa đọc',
         'EMPTY' => 'Chưa có thông báo nào',
         'VIEW_ALL' => 'Xem tất cả thông báo',
+        'TAB_UNREAD' => 'Chưa đọc',
+        'TAB_ALL' => 'Tất cả',
+        'EMPTY_UNREAD' => 'Đã đọc hết thông báo',
         'LAUNCHER_UNREAD' => 'Có thông báo chưa đọc',
     ],
 ];

@@ -49,7 +49,8 @@ import { bindUnreadCount, resetUnreadCount } from '../useUnreadCount';
 import NotificationBell from './NotificationBell';
 
 const NOTIFICATIONS_URL = '/api/v1/accounts/2/notifications';
-const BELL_LIST_URL = `${NOTIFICATIONS_URL}?page=1&sort_order=desc&includes%5B%5D=read`;
+const BELL_UNREAD_URL = `${NOTIFICATIONS_URL}?page=1&sort_order=desc`;
+const BELL_ALL_URL = `${NOTIFICATIONS_URL}?page=1&sort_order=desc&includes%5B%5D=read`;
 
 function notification(id: number, overrides: Partial<NotificationRecord> = {}): NotificationRecord {
     return {
@@ -134,14 +135,18 @@ describe('chuông thông báo', () => {
         await waitFor(() => expect(bellCount(second.container)).toBe('99+'));
     });
 
-    it('mở panel thì nạp 15 thông báo mới nhất gồm cả đã đọc, không ghi đè bộ lọc của trang đầy đủ', async () => {
+    it('mở panel thì mặc định tab Chưa đọc, tab Tất cả nạp cả đã đọc, không ghi đè bộ lọc của trang đầy đủ', async () => {
         const { container } = await renderBell();
 
         await openPanel(container);
 
-        expect(api.getJson).toHaveBeenCalledWith(BELL_LIST_URL);
+        expect(api.getJson).toHaveBeenCalledWith(BELL_UNREAD_URL);
         await waitFor(() => expect(panel()?.querySelectorAll('[role="button"]')).toHaveLength(2));
         expect(panel()?.textContent).toContain('Khách 2:');
+
+        fireEvent.click(screen.getByRole('button', { name: 'All' }));
+
+        await waitFor(() => expect(api.getJson).toHaveBeenCalledWith(BELL_ALL_URL));
         expect(api.putJson).not.toHaveBeenCalled();
     });
 
@@ -195,9 +200,13 @@ describe('chuông thông báo', () => {
         expect(onNavigate).toHaveBeenCalledOnce();
     });
 
-    it('chưa có thông báo nào thì nói rõ', async () => {
+    it('hết thông báo chưa đọc hay chưa có thông báo nào thì nói rõ theo tab', async () => {
         const { container } = await renderBell({ unreadCount: 0, notifications: [] });
         await openPanel(container);
+
+        expect(await screen.findByText('You are all caught up')).toBeInTheDocument();
+
+        fireEvent.click(screen.getByRole('button', { name: 'All' }));
 
         expect(await screen.findByText('No notifications yet')).toBeInTheDocument();
     });

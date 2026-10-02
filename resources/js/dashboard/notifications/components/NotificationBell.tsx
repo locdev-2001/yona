@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 import Popover from 'dashboard/components-next/popover/Popover';
 import { formatUnreadCount } from 'dashboard/helper/notificationTray';
 import { t } from '../../../i18n';
@@ -7,12 +9,12 @@ import type { FixedNotificationFilters } from '../NotificationsContext';
 import { useNotificationsUnreadCount } from '../useUnreadCount';
 import NotificationBellPanel from './NotificationBellPanel';
 
-// Gồm cả thông báo đã đọc để danh sách không trống trơn ngay sau khi đọc hết;
-// không gồm thông báo đang tạm ẩn.
-const BELL_FILTERS: FixedNotificationFilters = {
-    status: '',
-    type: INBOX_DISPLAY_BY.READ,
-    sortOrder: INBOX_SORT_BY.NEWEST,
+export type BellTab = 'unread' | 'all';
+
+// Mặc định chỉ thông báo chưa đọc; tab "Tất cả" gồm cả đã đọc. Không gồm thông báo đang tạm ẩn.
+const BELL_FILTERS: Record<BellTab, FixedNotificationFilters> = {
+    unread: { status: '', type: '', sortOrder: INBOX_SORT_BY.NEWEST },
+    all: { status: '', type: INBOX_DISPLAY_BY.READ, sortOrder: INBOX_SORT_BY.NEWEST },
 };
 
 const TRIGGER_BASE_CLASS =
@@ -26,6 +28,7 @@ interface NotificationBellProps {
 
 export default function NotificationBell({ isCollapsed, onNavigate }: NotificationBellProps) {
     const count = useNotificationsUnreadCount();
+    const [bellTab, setBellTab] = useState<BellTab>('unread');
     const label = t('INBOX.BELL.OPEN_LABEL', { count });
 
     return (
@@ -53,8 +56,10 @@ export default function NotificationBell({ isCollapsed, onNavigate }: Notificati
                 </button>
             )}
             content={({ hide }) => (
-                <NotificationsProvider fixedFilters={BELL_FILTERS}>
+                <NotificationsProvider key={bellTab} fixedFilters={BELL_FILTERS[bellTab]}>
                     <NotificationBellPanel
+                        activeTab={bellTab}
+                        onTabChange={setBellTab}
                         onNavigate={() => {
                             hide();
                             onNavigate?.();

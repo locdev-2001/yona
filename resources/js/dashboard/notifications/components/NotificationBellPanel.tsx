@@ -2,6 +2,7 @@ import { Link, router, usePage } from '@inertiajs/react';
 
 import Button from 'dashboard/components-next/button/Button';
 import Spinner from 'dashboard/components-next/spinner/Spinner';
+import TabBar from 'dashboard/components-next/tabbar/TabBar';
 import { accountScopedUrl, conversationUrl } from 'dashboard/helper/URLHelper';
 import { t } from '../../../i18n';
 import type { DashboardPageProps } from '../../types';
@@ -9,10 +10,19 @@ import { useNotifications } from '../NotificationsContext';
 import type { NotificationRecord } from '../types';
 import { useNotificationsUnreadCount } from '../useUnreadCount';
 import InboxCard from './InboxCard';
+import type { BellTab } from './NotificationBell';
+
+const BELL_TABS: BellTab[] = ['unread', 'all'];
 
 // Danh sách rút gọn trong chuông: chỉ trang đầu (15 thông báo mới nhất), không
 // cuộn nạp thêm; muốn xem hết thì sang trang thông báo đầy đủ.
-export default function NotificationBellPanel({ onNavigate }: { onNavigate: () => void }) {
+interface NotificationBellPanelProps {
+    activeTab: BellTab;
+    onTabChange: (tab: BellTab) => void;
+    onNavigate: () => void;
+}
+
+export default function NotificationBellPanel({ activeTab, onTabChange, onNavigate }: NotificationBellPanelProps) {
     const { accountId, notifications, isFetching, openNotification, markAsRead, markAsUnread, removeNotification, markAllRead } =
         useNotifications();
     const { inboxes = [] } = usePage<DashboardPageProps>().props;
@@ -44,6 +54,16 @@ export default function NotificationBellPanel({ onNavigate }: { onNavigate: () =
                     onClick={() => void markAllRead().catch(() => undefined)}
                 />
             </div>
+            <div className="flex-shrink-0 px-4 pt-2">
+                <TabBar
+                    tabs={[
+                        { label: t('INBOX.BELL.TAB_UNREAD'), value: 'unread' },
+                        { label: t('INBOX.BELL.TAB_ALL'), value: 'all' },
+                    ]}
+                    initialActiveTab={BELL_TABS.indexOf(activeTab)}
+                    onTabChanged={tab => onTabChange(tab.value as BellTab)}
+                />
+            </div>
             <div className="flex flex-col flex-1 min-h-0 gap-0.5 px-2 py-1 overflow-y-auto divide-y divide-n-weak [&>*:hover]:!border-y-transparent [&>*:hover+*]:!border-t-transparent">
                 {notifications.map(notification => (
                     <InboxCard
@@ -65,7 +85,7 @@ export default function NotificationBellPanel({ onNavigate }: { onNavigate: () =
                     </div>
                 ) : null}
                 {showEmptyState ? (
-                    <p className="p-4 text-sm text-center text-n-slate-10">{t('INBOX.BELL.EMPTY')}</p>
+                    <p className="p-4 text-sm text-center text-n-slate-10">{t(activeTab === 'unread' ? 'INBOX.BELL.EMPTY_UNREAD' : 'INBOX.BELL.EMPTY')}</p>
                 ) : null}
             </div>
             <div className="flex flex-shrink-0 justify-center px-4 py-2.5 border-t border-n-weak">

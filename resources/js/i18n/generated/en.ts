@@ -6441,6 +6441,9 @@ const messages: Record<string, unknown> = {
             "OPEN_LABEL": "Notifications, {count} unread",
             "EMPTY": "No notifications yet",
             "VIEW_ALL": "View all notifications",
+            "TAB_UNREAD": "Unread",
+            "TAB_ALL": "All",
+            "EMPTY_UNREAD": "You are all caught up",
             "LAUNCHER_UNREAD": "You have unread notifications"
         }
     },
