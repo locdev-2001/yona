@@ -8,5 +8,7 @@ return [
     'BCC' => 'Bcc',
     'CC' => 'Cc',
     'SUBJECT' => 'Chủ đề',
-    'EXPAND' => 'Mở rộng email',
+    'EXPAND' => 'Xem toàn bộ thư',
+    'COLLAPSE' => 'Thu gọn thư',
+    'BODY_FRAME_TITLE' => 'Nội dung thư',
 ];

@@ -168,7 +168,7 @@ export default function BaseBubble({
 
     return (
         <div
-            className={`relative min-w-0 ${variant === MESSAGE_VARIANTS.EMAIL ? 'w-full' : ''} ${hasReactions ? 'mb-4' : ''}`}
+            className={`relative min-w-0 ${variant === MESSAGE_VARIANTS.EMAIL ? 'w-full max-w-3xl' : ''} ${hasReactions ? 'mb-4' : ''}`}
             title={sentAtTooltip}
         >
             <div

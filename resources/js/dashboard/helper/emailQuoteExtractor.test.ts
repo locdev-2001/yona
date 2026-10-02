@@ -98,6 +98,27 @@ describe('EmailQuoteExtractor', () => {
     expect(EmailQuoteExtractor.hasQuotes(EMAIL_WITH_SIGNATURE)).toBe(true);
   });
 
+  it('does not drop the whole body when a quote pattern sits inside the wrapping block', () => {
+    const html = '<div><p>New reply</p>Footer line From: Shop newsletter</div>';
+
+    expect(EmailQuoteExtractor.extractQuotes(html)).toContain('New reply');
+    expect(EmailQuoteExtractor.hasQuotes(html)).toBe(false);
+  });
+
+  it('does not report quotes for plain text rendered without block elements', () => {
+    const html = 'Hi<br>On Wed, Oct 1, 2026 Shop wrote:<br>&gt; old';
+
+    expect(EmailQuoteExtractor.hasQuotes(html)).toBe(false);
+  });
+
+  it('removes a Vietnamese Gmail quote header block', () => {
+    const html = '<p>Trả lời mới</p><div>Vào Th 4, 1 thg 10, 2026 Shop đã viết:<br>thư cũ</div>';
+    const cleanedHtml = EmailQuoteExtractor.extractQuotes(html);
+
+    expect(cleanedHtml).toContain('Trả lời mới');
+    expect(cleanedHtml).not.toContain('thư cũ');
+  });
+
   describe('HTML sanitization', () => {
     it('removes onerror handlers from img tags in extractQuotes', () => {
       const maliciousHtml = '<p>Hello</p><img src="x" onerror="alert(1)">';

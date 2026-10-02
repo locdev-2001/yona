@@ -102,7 +102,19 @@ interface OpenMenu {
     fromMoreButton: boolean;
 }
 
-export default function MessageActions({ className = '', children }: { className?: string; children: ReactNode }) {
+// Thanh thao tác nằm giữa chiều cao bong bóng; bong bóng cao (thư email) thì
+// đứng ở đầu và bám theo khi cuộn, để không trôi ra giữa vùng trống.
+export type ActionBarPlacement = 'center' | 'top';
+
+export default function MessageActions({
+    className = '',
+    barPlacement = 'center',
+    children,
+}: {
+    className?: string;
+    barPlacement?: ActionBarPlacement;
+    children: ReactNode;
+}) {
     const {
         id,
         content,
@@ -281,7 +293,9 @@ export default function MessageActions({ className = '', children }: { className
         <div
             ref={barRef}
             data-testid="message-action-bar"
-            className={`relative flex shrink-0 items-center gap-0.5 self-center transition-opacity duration-150 ${
+            className={`relative flex shrink-0 items-center gap-0.5 transition-opacity duration-150 ${
+                barPlacement === 'top' ? 'self-start sticky top-2 z-10' : 'self-center'
+            } ${
                 isBarPinned ? 'opacity-100' : 'opacity-0 focus-within:opacity-100 group-hover/message:opacity-100'
             } ${orientation === ORIENTATION.RIGHT ? 'me-1' : 'ms-1'}`}
         >

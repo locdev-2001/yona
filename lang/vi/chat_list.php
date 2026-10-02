@@ -161,8 +161,8 @@ return [
     'NO_CONTENT' => 'Không có nội dung',
     // Mở rộng của Yona: nhãn thẻ hội thoại cho năng lực `friend_request`.
     'FRIEND_REQUEST' => '[Lời mời kết bạn]',
-    'HIDE_QUOTED_TEXT' => 'Ẩn văn bản được trích dẫn',
-    'SHOW_QUOTED_TEXT' => 'Hiện Văn bản được trích dẫn',
+    'HIDE_QUOTED_TEXT' => 'Ẩn thư trích dẫn',
+    'SHOW_QUOTED_TEXT' => 'Hiện thư trích dẫn',
     'MESSAGE_READ' => 'Đọc',
     'SENDING' => 'Đang gửi',
     'UNREAD_COUNT_OVERFLOW' => '9+',

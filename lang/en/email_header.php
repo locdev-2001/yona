@@ -6,5 +6,7 @@ return [
     'BCC' => 'Bcc',
     'CC' => 'Cc',
     'SUBJECT' => 'Subject',
-    'EXPAND' => 'Expand email',
+    'EXPAND' => 'Show full email',
+    'COLLAPSE' => 'Collapse email',
+    'BODY_FRAME_TITLE' => 'Email content',
 ];

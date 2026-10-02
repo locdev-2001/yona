@@ -2772,8 +2772,8 @@ const messages: Record<string, unknown> = {
         "NO_MESSAGES": "Không có tin nhắn",
         "NO_CONTENT": "Không có nội dung",
         "FRIEND_REQUEST": "[Lời mời kết bạn]",
-        "HIDE_QUOTED_TEXT": "Ẩn văn bản được trích dẫn",
-        "SHOW_QUOTED_TEXT": "Hiện Văn bản được trích dẫn",
+        "HIDE_QUOTED_TEXT": "Ẩn thư trích dẫn",
+        "SHOW_QUOTED_TEXT": "Hiện thư trích dẫn",
         "MESSAGE_READ": "Đọc",
         "SENDING": "Đang gửi",
         "UNREAD_COUNT_OVERFLOW": "9+"
@@ -4806,7 +4806,9 @@ const messages: Record<string, unknown> = {
         "BCC": "Bcc",
         "CC": "Cc",
         "SUBJECT": "Chủ đề",
-        "EXPAND": "Mở rộng email"
+        "EXPAND": "Xem toàn bộ thư",
+        "COLLAPSE": "Thu gọn thư",
+        "BODY_FRAME_TITLE": "Nội dung thư"
     },
     "EMAIL_TRANSCRIPT": {
         "TITLE": "Gửi bản ghi hội thoại",

@@ -37,49 +37,40 @@ export default function EmailMeta({ className = '' }: { className?: string }) {
         fromEmail[0] || toEmail.length || ccEmail.length || bccEmail.length || subject,
     );
 
+    if (!showMeta) return null;
+
+    const mutedClass = hasError ? 'text-n-ruby-11' : 'text-n-slate-11';
+    const strongClass = hasError ? 'text-n-ruby-11' : 'text-n-slate-12';
+    const recipientLines = [
+        { label: t('EMAIL_HEADER.TO'), addresses: toEmail },
+        { label: t('EMAIL_HEADER.CC'), addresses: ccEmail },
+        { label: t('EMAIL_HEADER.BCC'), addresses: bccEmail },
+    ].filter(line => line.addresses.length > 0);
+
     return (
-        <section
-            className={`space-y-1 rtl:pl-9 ltr:pr-9 text-sm break-words ${
-                hasError ? 'text-n-ruby-11' : 'text-n-slate-11'
-            } ${className}`}
-            style={showMeta ? undefined : { display: 'none' }}
-        >
-            {showMeta ? (
-                <>
-                    {fromEmail[0] ? (
-                        <div className={hasError ? 'text-n-ruby-11' : 'text-n-slate-12'}>
-                            {senderName ? (
-                                <>
-                                    <span>{senderName}</span>
-                                    {` <${fromEmail[0]}>`}
-                                </>
-                            ) : (
-                                fromEmail[0]
-                            )}
-                        </div>
-                    ) : null}
-                    {toEmail.length ? (
-                        <div>
-                            {t('EMAIL_HEADER.TO')}: {toEmail.join(', ')}
-                        </div>
-                    ) : null}
-                    {ccEmail.length ? (
-                        <div>
-                            {t('EMAIL_HEADER.CC')}: {ccEmail.join(', ')}
-                        </div>
-                    ) : null}
-                    {bccEmail.length ? (
-                        <div>
-                            {t('EMAIL_HEADER.BCC')}: {bccEmail.join(', ')}
-                        </div>
-                    ) : null}
-                    {subject ? (
-                        <div>
-                            {t('EMAIL_HEADER.SUBJECT')}: {subject}
-                        </div>
-                    ) : null}
-                </>
+        <header data-testid="email-meta" className={`min-w-0 space-y-0.5 break-words ${className}`}>
+            {subject ? (
+                <div data-testid="email-subject" className={`text-sm font-semibold leading-snug ${strongClass}`}>
+                    {subject}
+                </div>
             ) : null}
-        </section>
+            {fromEmail[0] ? (
+                <div className="text-sm leading-snug">
+                    {senderName ? (
+                        <>
+                            <span className={`font-medium ${strongClass}`}>{senderName}</span>{' '}
+                            <span className={`text-xs ${mutedClass}`}>&lt;{fromEmail[0]}&gt;</span>
+                        </>
+                    ) : (
+                        <span className={`font-medium ${strongClass}`}>{fromEmail[0]}</span>
+                    )}
+                </div>
+            ) : null}
+            {recipientLines.map(line => (
+                <div key={line.label} className={`text-xs ${mutedClass}`}>
+                    {line.label}: {line.addresses.join(', ')}
+                </div>
+            ))}
+        </header>
     );
 }

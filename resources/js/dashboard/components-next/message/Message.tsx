@@ -203,6 +203,8 @@ export default function Message({
     const shouldGroupWithNext = joinsNextMessage(effectiveGroupPosition);
 
     const shouldShowAvatar = messageType !== MESSAGE_TYPES.ACTIVITY;
+    // Thư email cao cả trang: ảnh người gửi và thanh thao tác đứng ngang đầu thư.
+    const isEmailVariant = variant === MESSAGE_VARIANTS.EMAIL;
 
     const attachments = (message.attachments ?? []) as unknown as MessageAttachment[];
     const ChannelCardBubble = resolveChannelCardBubble(contentAttributes);
@@ -288,12 +290,15 @@ export default function Message({
                 ) : (
                     <div
                         className={`${GRID_CLASS_MAP[orientation] ?? ''} gap-x-2 ${
-                            variant === MESSAGE_VARIANTS.EMAIL ? 'w-full' : ''
+                            isEmailVariant ? 'w-full' : ''
                         }`}
                         style={{ gridTemplateAreas: GRID_TEMPLATE_MAP[orientation] } as CSSProperties}
                     >
                         {!shouldGroupWithNext && shouldShowAvatar && (
-                            <div title={senderIdentity.tooltip} className="[grid-area:avatar] flex items-end">
+                            <div
+                                title={senderIdentity.tooltip}
+                                className={`[grid-area:avatar] flex ${isEmailVariant ? 'items-start pt-3' : 'items-end'}`}
+                            >
                                 <Avatar
                                     name={senderIdentity.name}
                                     src={senderIdentity.src}
@@ -304,6 +309,7 @@ export default function Message({
                             </div>
                         )}
                         <MessageActions
+                            barPlacement={isEmailVariant ? 'top' : 'center'}
                             className={`[grid-area:bubble] flex min-w-0 items-end ${
                                 orientation === ORIENTATION.RIGHT
                                     ? 'ltr:ml-8 rtl:mr-8 justify-end'

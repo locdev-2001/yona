@@ -14,7 +14,7 @@ const QUOTE_INDICATORS = [
 
 const BLOCKQUOTE_FALLBACK_SELECTOR = 'blockquote';
 
-const QUOTE_PATTERNS = [/On .* wrote:/i, /-----Original Message-----/i, /Sent: /i, /From: /i];
+const QUOTE_PATTERNS = [/On .* wrote:/i, /Vào .* đã viết:/i, /-----Original Message-----/i, /Sent: /i, /From: /i];
 
 const BLOCK_ELEMENTS = ['DIV', 'P', 'BLOCKQUOTE', 'SECTION'];
 
@@ -62,8 +62,13 @@ export class EmailQuoteExtractor {
             const isQuoteLike = QUOTE_PATTERNS.some(pattern => pattern.test(currentNode!.textContent ?? ''));
 
             if (isQuoteLike) {
-                const parentBlock = this.findParentBlock(currentNode);
-                if (parentBlock && !quoteBlocks.includes(parentBlock)) {
+                const parentBlock = this.findParentBlock(currentNode, rootElement);
+                // Chỉ coi là trích dẫn khi dòng mở đầu là chữ đầu tiên của khối; khối có
+                // nội dung đứng trước (thư bọc cả thân trong một <div>, chân thư có chữ
+                // "From: ") mà bỏ đi là mất luôn phần thư mới.
+                const startsWithQuoteHeader =
+                    parentBlock?.textContent?.trimStart().startsWith((currentNode.textContent ?? '').trim()) ?? false;
+                if (parentBlock && startsWithQuoteHeader && !quoteBlocks.includes(parentBlock)) {
                     quoteBlocks.push(parentBlock);
                 }
             }
@@ -72,11 +77,11 @@ export class EmailQuoteExtractor {
         return quoteBlocks;
     }
 
-    /** Khối cha gần nhất (DIV/P/BLOCKQUOTE/SECTION) của một node. */
-    static findParentBlock(node: Node): Element | null {
+    /** Khối cha gần nhất (DIV/P/BLOCKQUOTE/SECTION) của một node, không tính chính gốc. */
+    static findParentBlock(node: Node, rootElement?: Element): Element | null {
         let current = node.parentElement;
 
-        while (current) {
+        while (current && current !== rootElement) {
             if (BLOCK_ELEMENTS.includes(current.tagName)) return current;
             current = current.parentElement;
         }
