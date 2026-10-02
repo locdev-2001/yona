@@ -12,7 +12,7 @@
 #   deploy        (sao lưu nếu có migration mới) → deploy.sh → health; chạy tách khỏi SSH, rớt mạng không dừng giữa chừng
 #   health        gọi APP_URL/up
 #   deploy-log    log lần deploy gần nhất (hoặc `deploy-log <số dòng>`)
-#   app-log       cuối storage/logs/laravel.log (hoặc `app-log <số dòng>`, tối đa 2000)
+#   app-log       cuối tệp log ứng dụng mới nhất trong storage/logs (hoặc `app-log <số dòng>`, tối đa 2000)
 #
 # Không bao giờ: xoá/dựng lại DB, seed demo, reset hay rollback code — những việc đó người làm tay.
 # Bản cài trên server là bản có hiệu lực; sửa file này trong repo không đổi quyền cho tới khi founder cài lại.
@@ -140,6 +140,6 @@ case $action in
   backup-db)  [[ -z ${SSH_ORIGINAL_COMMAND:-} ]] || die "hành động không được phép: 'backup-db'."; backup_database ;;
   health)     check_health ;;
   deploy-log) lines=$(line_count "${argument:-400}"); log=$(latest_log) || true; [[ -n ${log:-} ]] || die "chưa có log deploy."; tail -n "$lines" "$log" ;;
-  app-log)    lines=$(line_count "$argument"); tail -n "$lines" storage/logs/laravel.log ;;
+  app-log)    lines=$(line_count "$argument"); log=$(ls -t storage/logs/laravel*.log 2>/dev/null | head -n 1) || true; [[ -n ${log:-} ]] || die "chưa có log ứng dụng."; echo "== $log"; tail -n "$lines" "$log" ;;
   *)          die "hành động không được phép: '$action'. Dùng: status | plan | dry-run | deploy | health | deploy-log [n] | app-log [n]" ;;
 esac

@@ -15,7 +15,7 @@ và **chỉ** qua script này:
 .claude/skills/yona-deploy/scripts/remote.sh deploy          # sao lưu (nếu có migration mới) → deploy.sh → health
 .claude/skills/yona-deploy/scripts/remote.sh health          # APP_URL/up
 .claude/skills/yona-deploy/scripts/remote.sh deploy-log 400  # log lần deploy gần nhất
-.claude/skills/yona-deploy/scripts/remote.sh app-log 200     # cuối storage/logs/laravel.log (tối đa 2000 dòng)
+.claude/skills/yona-deploy/scripts/remote.sh app-log 200     # cuối tệp log ứng dụng mới nhất (tối đa 2000 dòng)
 ```
 
 `status`, `plan`, `health`, `deploy-log`, `app-log` chỉ đọc — dùng thoải mái khi điều tra.
