@@ -1,6 +1,6 @@
 ---
 name: yona-deploy
-description: Deploy yona.vn lên production qua cổng deploy SSH (chỉ các hành động định sẵn, không shell) - xem trạng thái server, kế hoạch deploy, dry-run, deploy thật, health, log deploy và log ứng dụng. Chỉ deploy khi founder nói rõ "deploy" trong hội thoại. Dùng khi founder bảo deploy, hỏi production đang chạy commit nào, hoặc cần đọc log production để điều tra lỗi.
+description: Deploy yona.vn lên production qua cổng deploy SSH (chỉ các hành động định sẵn, không shell) - xem trạng thái server, kế hoạch deploy, dry-run, deploy thật, health, log deploy và log ứng dụng. Chỉ deploy khi founder nói rõ "deploy" trong hội thoại. Dùng khi founder bảo deploy, hoặc hỏi production đang chạy commit nào. Điều tra lỗi production và tra log có tìm kiếm thì dùng skill yona-debug.
 ---
 
 # Deploy yona.vn
@@ -19,6 +19,8 @@ và **chỉ** qua script này:
 ```
 
 `status`, `plan`, `health`, `deploy-log`, `app-log` chỉ đọc — dùng thoải mái khi điều tra.
+
+Tra log có tìm kiếm, mở đúng một dòng từ link Log Viewer, điều tra lỗi production: skill `yona-debug`.
 
 **Luật cứng:** key cấu hình trong `.env` có thể là key root thật của founder (`github_ed`) — khi đó server không
 chặn được gì, cổng chỉ còn là quy ước. Vì vậy AI **không bao giờ** tự gõ `ssh`, `scp`, `rsync` tới server,
