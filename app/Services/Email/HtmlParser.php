@@ -2,7 +2,7 @@
 
 namespace App\Services\Email;
 
-use Html2Text\Html2Text;
+use Soundasleep\Html2Text;
 
 // Thay mọi <blockquote>
 // (phần thư được trích dẫn lại) bằng dấu "&gt; " rồi đổi HTML sang text.

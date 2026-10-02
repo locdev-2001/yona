@@ -75,3 +75,11 @@ it('marks auto replies on the conversation', function () {
 
     expect($conversation?->additional_attributes['auto_reply'])->toBeTrue();
 });
+
+it('keeps the message of a mail that only has an html body', function () {
+    processImap($this->channel, 'only_html.eml');
+
+    $message = Conversation::query()->where('inbox_id', $this->inbox->id)->first()?->messages()->first();
+
+    expect($message?->content)->toContain('This is html only mail');
+});
