@@ -47,11 +47,22 @@ class NotificationListener extends BaseListener
             return;
         }
 
-        if ($conversation->status === Conversation::STATUS_PENDING) {
+        if ($conversation->status === Conversation::STATUS_PENDING || $this->isAutomaticAssignmentOfReadConversation($event, $conversation)) {
             return;
         }
 
         $this->build('conversation_assignment', $assignee, $account, $conversation);
+    }
+
+    // Chính sách phân công rải dần hàng tồn: hội thoại đã đọc hết thì giao lặng lẽ, không
+    // dựng lại chuông vừa "đánh dấu tất cả đã đọc". Người giao tay thì vẫn báo.
+    private function isAutomaticAssignmentOfReadConversation(DomainEvent $event, Conversation $conversation): bool
+    {
+        if (($event->data['performed_by'] ?? null) instanceof User) {
+            return false;
+        }
+
+        return $conversation->agent_last_seen_at !== null && $conversation->unreadIncomingMessagesCount() === 0;
     }
 
     public function messageCreated(DomainEvent $event): void

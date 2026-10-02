@@ -81,6 +81,27 @@ describe('assignee.changed', function () {
         expect(Notification::query()->count())->toBe(0);
     });
 
+    it('assigns quietly when the assignment policy hands over a conversation already read', function () {
+        $conversation = Conversation::factory()->create(['account_id' => $this->account->id, 'inbox_id' => $this->inbox->id]);
+        Message::factory()->create(['account_id' => $this->account->id, 'inbox_id' => $this->inbox->id, 'conversation_id' => $conversation->id]);
+        $conversation->update(['agent_last_seen_at' => now()->addSecond()]);
+        Notification::query()->delete();
+
+        $conversation->update(['assignee_id' => $this->assignee->id]);
+
+        expect($this->assignee->notifications()->count())->toBe(0);
+    });
+
+    it('still notifies when a teammate assigns a conversation already read', function () {
+        $conversation = Conversation::factory()->create(['account_id' => $this->account->id, 'inbox_id' => $this->inbox->id, 'agent_last_seen_at' => now()]);
+        Notification::query()->delete();
+
+        $this->actingAs($this->agent);
+        $conversation->update(['assignee_id' => $this->assignee->id]);
+
+        expect($this->assignee->notifications()->count())->toBe(1);
+    });
+
     it('does not notify a self-assignment', function () {
         $conversation = Conversation::factory()->create(['account_id' => $this->account->id, 'inbox_id' => $this->inbox->id]);
         Notification::query()->delete();
