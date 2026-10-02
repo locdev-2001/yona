@@ -13,6 +13,7 @@ import {
     VIEWED_CONVERSATION_READ_WAIT_MS,
     bindUnreadCount,
     getUnreadCountState,
+    markConversationSeenInBell,
     resetUnreadCount,
     setViewedConversation,
     subscribeUnreadCount,
@@ -203,6 +204,38 @@ describe('store số thông báo chưa đọc', () => {
         });
 
         expect(getJson).toHaveBeenCalledOnce();
+    });
+
+    it('tin mới ở hội thoại khác thì hỏi lại số, tin ở hội thoại đang mở thì để lần đánh dấu đọc lo', async () => {
+        bindUnreadCount(2);
+        await flushPromises();
+        getJson.mockClear();
+        setViewedConversation(7);
+
+        act(() => emitter.emit('message.created', { id: 1, conversation_id: 7, account_id: 2 }));
+        await act(async () => {
+            await vi.advanceTimersByTimeAsync(UNREAD_COUNT_REFRESH_DELAY_MS);
+        });
+        expect(getJson).not.toHaveBeenCalled();
+
+        act(() => emitter.emit('message.created', { id: 2, conversation_id: 8, account_id: 2 }));
+        act(() => emitter.emit('conversation.status_changed', { id: 9, account_id: 2 }));
+        await act(async () => {
+            await vi.advanceTimersByTimeAsync(UNREAD_COUNT_REFRESH_DELAY_MS);
+        });
+        expect(getJson).toHaveBeenCalledOnce();
+    });
+
+    it('mở hội thoại đang có chấm thì chuông giảm một ngay, không xuống dưới 0', async () => {
+        getJson.mockResolvedValue(1);
+        bindUnreadCount(2);
+        await flushPromises();
+
+        act(() => markConversationSeenInBell());
+        expect(getUnreadCountState().count).toBe(0);
+
+        act(() => markConversationSeenInBell());
+        expect(getUnreadCountState().count).toBe(0);
     });
 
     it('reset xoá số, huỷ lần hỏi đang hẹn và thôi nghe event', async () => {

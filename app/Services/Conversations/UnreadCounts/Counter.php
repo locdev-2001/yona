@@ -78,15 +78,9 @@ class Counter
         return $this->indexByGroup($rows);
     }
 
-    // Builder#unread_conversations: hội thoại open có ít nhất một tin incoming
-    // của account đến sau mốc agent_last_seen_at, giới hạn trong inbox nhìn thấy được.
     private function unreadConversations(): QueryBuilder
     {
-        return DB::table('conversations')
-            ->where('conversations.account_id', $this->account->id)
-            ->where('conversations.status', Conversation::STATUS_OPEN)
-            ->whereIn('conversations.inbox_id', $this->visibleInboxIds())
-            ->whereRaw(Conversation::unreadMessagesCountSql().' > 0');
+        return UnreadConversations::query($this->account, $this->user, $this->accountUser);
     }
 
     /** @param Collection<int, object> $rows @return array<string, int> */
@@ -96,12 +90,6 @@ class Counter
             ->filter(fn (object $row) => (int) $row->unread_conversations > 0)
             ->mapWithKeys(fn (object $row) => [(string) $row->group_id => (int) $row->unread_conversations])
             ->all();
-    }
-
-    /** @return array<int, int> */
-    private function visibleInboxIds(): array
-    {
-        return $this->user->assignedInboxes($this->account, $this->accountUser)->pluck('id')->all();
     }
 
     /** @return array<int, int> */

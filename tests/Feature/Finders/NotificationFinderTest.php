@@ -49,8 +49,7 @@ it('includes read and snoozed notifications when asked', function () {
     $finder = new NotificationFinder($this->user, $this->account, ['includes' => ['read', 'snoozed']]);
 
     expect($finder->notifications())->toHaveCount(6)
-        ->and($finder->count())->toBe(6)
-        ->and($finder->unreadCount())->toBe(4);
+        ->and($finder->count())->toBe(6);
 });
 
 it('includes only read notifications when asked', function () {
@@ -67,11 +66,8 @@ it('sorts ascending when asked', function () {
     expect($notifications->first()->last_activity_at->lessThan($notifications->last()->last_activity_at))->toBeTrue();
 });
 
-it('reports unread and total counts without filters', function () {
-    $finder = new NotificationFinder($this->user, $this->account);
-
-    expect($finder->unreadCount())->toBe(3)
-        ->and($finder->count())->toBe(3);
+it('counts only unread, unsnoozed notifications without filters', function () {
+    expect((new NotificationFinder($this->user, $this->account))->count())->toBe(3);
 });
 
 it('pages 15 notifications at a time', function () {

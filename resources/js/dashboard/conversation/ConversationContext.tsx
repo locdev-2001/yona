@@ -11,7 +11,7 @@ import { useAlert } from 'dashboard/composables/useAlert';
 import { useViewportWidth } from 'dashboard/composables/useViewportWidth';
 import { updateUISettings as persistUISettings } from 'dashboard/composables/useUISettings';
 import type { UISettings } from 'dashboard/composables/useUISettings';
-import { setViewedConversation } from 'dashboard/notifications/useUnreadCount';
+import { markConversationSeenInBell, scheduleUnreadCountRefresh, setViewedConversation } from 'dashboard/notifications/useUnreadCount';
 import { useContactUpdatedEvent } from 'dashboard/realtime/contactUpdated';
 import { useRealtimeEvent } from 'dashboard/realtime/hooks';
 import {
@@ -808,9 +808,13 @@ export function ConversationProvider({
     const markMessagesRead = useCallback(
         async (targetId: number) => {
             if (!targetId) return;
+            if ((allConversationsRef.current.find((item) => item.id === targetId)?.unread_count ?? 0) > 0) {
+                markConversationSeenInBell();
+            }
             setAllConversations((current) => applyUnreadCount(current, targetId, Math.floor(Date.now() / 1000)));
             try {
                 await markMessagesReadRequest(accountId, targetId);
+                scheduleUnreadCountRefresh();
             } catch {
                 // Không báo lỗi cho người dùng: đánh dấu đã đọc là việc nền.
             }

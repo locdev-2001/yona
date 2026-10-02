@@ -2,9 +2,9 @@
 
 namespace App\Services\Notification;
 
-use App\Finders\NotificationFinder;
 use App\Models\Conversation;
 use App\Models\Notification;
+use App\Services\Conversations\UnreadCounts\AttentionCounter;
 use Illuminate\Support\Str;
 
 // phần trình duyệt (Yona không có app di động nên bỏ FCM và push relay hub).
@@ -76,7 +76,7 @@ class PushNotificationService
                 'conversationId' => $conversation->display_id,
             ]),
             'icon' => url((string) config('yona.branding.logo_thumbnail')),
-            'badge_count' => (new NotificationFinder($notification->user, $notification->account))->unreadCount(),
+            'badge_count' => (new AttentionCounter($notification->account, $notification->user))->count(),
             'data' => [
                 'account_id' => $notification->account_id,
                 'notification_id' => $notification->id,

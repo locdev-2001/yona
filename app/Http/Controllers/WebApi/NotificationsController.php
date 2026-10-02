@@ -9,6 +9,7 @@ use App\Jobs\Notification\DeleteNotificationJob;
 use App\Models\Account;
 use App\Models\Conversation;
 use App\Models\Notification;
+use App\Services\Conversations\UnreadCounts\AttentionCounter;
 use App\Support\DateRangeHelper;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -25,7 +26,7 @@ class NotificationsController extends Controller
         return response()->json([
             'data' => [
                 'meta' => [
-                    'unread_count' => $finder->unreadCount(),
+                    'unread_count' => (new AttentionCounter($account, $request->user()))->count(),
                     'count' => $finder->count(),
                     'current_page' => $finder->currentPage(),
                 ],
@@ -36,7 +37,7 @@ class NotificationsController extends Controller
 
     public function unreadCount(Request $request, Account $account): JsonResponse
     {
-        return response()->json($this->finder($request, $account)->unreadCount());
+        return response()->json((new AttentionCounter($account, $request->user()))->count());
     }
 
     // read_all: không có primary_actor thì đánh dấu đã đọc toàn bộ account.

@@ -34,14 +34,6 @@ class NotificationFinder
             ->get();
     }
 
-    public function unreadCount(): int
-    {
-        $query = clone $this->notifications;
-
-        // Đang hiển thị cả tin đã đọc thì phải lọc lại; ngược lại truy vấn đã là chưa đọc.
-        return $this->typeIncluded('read') ? $query->unread()->count() : $query->count();
-    }
-
     public function count(): int
     {
         return (clone $this->notifications)->count();

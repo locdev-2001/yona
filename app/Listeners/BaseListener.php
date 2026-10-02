@@ -10,6 +10,7 @@ use App\Models\Conversation;
 use App\Models\Inbox;
 use App\Models\Message;
 use App\Models\Notification;
+use App\Services\Conversations\UnreadCounts\AttentionCounter;
 
 abstract class BaseListener
 {
@@ -28,7 +29,9 @@ abstract class BaseListener
         $notification = $event->data['notification'];
         $finder = new NotificationFinder($notification->user, $notification->account);
 
-        return [$notification, $notification->account, $finder->unreadCount(), $finder->count()];
+        $unreadCount = (new AttentionCounter($notification->account, $notification->user))->count();
+
+        return [$notification, $notification->account, $unreadCount, $finder->count()];
     }
 
     /** @return array{0: Message, 1: Account} */

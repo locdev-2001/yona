@@ -17,6 +17,7 @@ use App\Models\ContactInbox;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\User;
+use App\Services\Conversations\UnreadCounts\AttentionCounter;
 use App\Support\RealtimePayload;
 use Illuminate\Support\Str;
 
@@ -194,7 +195,7 @@ class ActionCableListener extends BaseListener
 
         $this->broadcast($account, [$user->pubsub_token], EventType::NOTIFICATION_DELETED, [
             'notification' => ['id' => $notificationData['id']],
-            'unread_count' => $finder->unreadCount(),
+            'unread_count' => (new AttentionCounter($account, $user))->count(),
             'count' => $finder->count(),
         ]);
     }
