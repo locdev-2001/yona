@@ -21,10 +21,9 @@ beforeEach(function () {
     config(['yona.system_admin_emails' => '']);
 });
 
-it('ma trận kho riêng và kho nền tảng', function (int $role, bool $systemAdmin, bool $flag, bool $accountLibrary, bool $platformLibrary) {
+it('ma trận kho riêng và kho nền tảng', function (int $role, bool $systemAdmin, bool $accountLibrary, bool $platformLibrary) {
     $account = Account::factory()->create();
-    YonaStickers::enableCustomStickers($account, $flag);
-    $user = libraryAccessMember($account->refresh(), $role);
+    $user = libraryAccessMember($account, $role);
     if ($systemAdmin) {
         YonaStickers::grantSystemAdmin($user);
     }
@@ -32,12 +31,10 @@ it('ma trận kho riêng và kho nền tảng', function (int $role, bool $syste
     expect($this->access->canManageAccountLibrary($user, $account))->toBe($accountLibrary)
         ->and($this->access->canManagePlatformLibrary($user))->toBe($platformLibrary);
 })->with([
-    'quản trị viên, cờ tắt' => [AccountUser::ROLE_ADMINISTRATOR, false, false, false, false],
-    'quản trị viên, cờ bật' => [AccountUser::ROLE_ADMINISTRATOR, false, true, true, false],
-    'quản trị viên có quyền hệ thống, cờ tắt' => [AccountUser::ROLE_ADMINISTRATOR, true, false, true, true],
-    'quản trị viên có quyền hệ thống, cờ bật' => [AccountUser::ROLE_ADMINISTRATOR, true, true, true, true],
-    'nhân viên, cờ bật' => [AccountUser::ROLE_AGENT, false, true, false, false],
-    'nhân viên có quyền hệ thống' => [AccountUser::ROLE_AGENT, true, true, false, true],
+    'quản trị viên' => [AccountUser::ROLE_ADMINISTRATOR, false, true, false],
+    'quản trị viên có quyền hệ thống' => [AccountUser::ROLE_ADMINISTRATOR, true, true, true],
+    'nhân viên' => [AccountUser::ROLE_AGENT, false, false, false],
+    'nhân viên có quyền hệ thống' => [AccountUser::ROLE_AGENT, true, false, true],
 ]);
 
 it('kho nền tảng chỉ cho người có quyền hệ thống', function () {

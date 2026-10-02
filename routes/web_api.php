@@ -295,6 +295,7 @@ Route::middleware(['auth.api_token', 'auth', 'account.scope'])
         // Chuyển khoản (Cài đặt / Tài khoản / Chuyển khoản) — danh sách ngân
         // hàng, CRUD tài khoản nhận tiền, xem trước QR khi đang sửa form.
         Route::get('/payment_accounts/banks', [PaymentAccountsController::class, 'banks']);
+        Route::get('/payment_accounts/preview', [PaymentAccountsController::class, 'previewDraft']);
         Route::get('/payment_accounts', [PaymentAccountsController::class, 'index']);
         Route::post('/payment_accounts', [PaymentAccountsController::class, 'store']);
         Route::match(['put', 'patch'], '/payment_accounts/{paymentAccountId}', [PaymentAccountsController::class, 'update'])->whereNumber('paymentAccountId');
@@ -481,7 +482,7 @@ Route::middleware(['auth.api_token', 'auth', 'account.scope'])
         Route::post('/widget_updates/{updateId}/unpublish', [WidgetUpdatesController::class, 'unpublish'])->whereNumber('updateId');
 
         // Kho sticker riêng của account (cùng lõi với kho nền tảng); ai dùng được
-        // do StickerLibraryAccess quyết: chưa có quyền thì 403.
+        // do StickerLibraryAccess quyết.
         Route::middleware(EnsureStickerLibraryAccess::class.':'.EnsureStickerLibraryAccess::ACCOUNT_LIBRARY)
             ->prefix('/sticker_packs')
             ->group(function () {

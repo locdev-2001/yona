@@ -8,7 +8,7 @@ import type { PackTransfer } from './StickerLibraryManager';
 import type { StickerLibraryAccess } from './types';
 
 const pageProps: { stickerLibraryAccess: StickerLibraryAccess } = {
-    stickerLibraryAccess: { accountLibrary: false, platformLibrary: false },
+    stickerLibraryAccess: { platformLibrary: false },
 };
 const libraryApiBases: string[] = [];
 const movePack = vi.fn();
@@ -58,26 +58,16 @@ beforeEach(() => {
 const tabNames = () => screen.queryAllByRole('button').map(button => button.textContent?.trim());
 
 describe('trang Cài đặt / Kho sticker', () => {
-    it('chưa có quyền: kho riêng hiện trạng thái khoá, không có kho nền tảng, không có nút giả', () => {
-        pageProps.stickerLibraryAccess = { accountLibrary: false, platformLibrary: false };
-        render(<CustomStickersIndex />);
-
-        expect(tabNames()).toEqual([]);
-        expect(screen.getByRole('note')).toHaveTextContent('Chưa mở cho tài khoản này');
-        expect(screen.queryByTestId('library-manager')).not.toBeInTheDocument();
-    });
-
     it('chỉ có một kho thì không hiện thanh tab, hiện thẳng trình quản lý kho riêng', () => {
-        pageProps.stickerLibraryAccess = { accountLibrary: true, platformLibrary: false };
+        pageProps.stickerLibraryAccess = { platformLibrary: false };
         render(<CustomStickersIndex />);
 
         expect(tabNames()).toEqual([]);
         expect(screen.getByTestId('library-manager')).toHaveTextContent('/api/v1/accounts/7');
-        expect(screen.queryByRole('note')).not.toBeInTheDocument();
     });
 
     it('có quyền hệ thống: thêm tab kho nền tảng trỏ vào API kho nền tảng', () => {
-        pageProps.stickerLibraryAccess = { accountLibrary: true, platformLibrary: true };
+        pageProps.stickerLibraryAccess = { platformLibrary: true };
         render(<CustomStickersIndex />);
 
         fireEvent.click(screen.getByRole('button', { name: 'Kho nền tảng' }));
@@ -86,7 +76,7 @@ describe('trang Cài đặt / Kho sticker', () => {
     });
 
     it('tab đang mở ghi vào ?tab= và mở lại đúng tab khi tải lại trang', () => {
-        pageProps.stickerLibraryAccess = { accountLibrary: true, platformLibrary: true };
+        pageProps.stickerLibraryAccess = { platformLibrary: true };
         window.history.replaceState(null, '', '/app/accounts/7/settings/stickers?pack=3');
         const { unmount } = render(<CustomStickersIndex />);
 
@@ -102,7 +92,7 @@ describe('trang Cài đặt / Kho sticker', () => {
     });
 
     it.each(['platform', 'unknown'])('?tab=%s không có quyền hoặc lạ thì mở kho riêng', requestedTab => {
-        pageProps.stickerLibraryAccess = { accountLibrary: true, platformLibrary: false };
+        pageProps.stickerLibraryAccess = { platformLibrary: false };
         window.history.replaceState(null, '', `/app/accounts/7/settings/stickers?tab=${requestedTab}`);
         render(<CustomStickersIndex />);
 
@@ -110,14 +100,14 @@ describe('trang Cài đặt / Kho sticker', () => {
     });
 
     it('không có quyền kho nền tảng thì không trao chức năng chuyển bộ', () => {
-        pageProps.stickerLibraryAccess = { accountLibrary: true, platformLibrary: false };
+        pageProps.stickerLibraryAccess = { platformLibrary: false };
         render(<CustomStickersIndex />);
 
         expect(lastPackTransfer).toBeUndefined();
     });
 
     it('chuyển bộ luôn gọi API của account đang mở, đích là kho còn lại; Mở chuyển tab kèm ?pack=', () => {
-        pageProps.stickerLibraryAccess = { accountLibrary: true, platformLibrary: true };
+        pageProps.stickerLibraryAccess = { platformLibrary: true };
         render(<CustomStickersIndex />);
 
         expect(lastPackTransfer?.destination).toBe('platform');

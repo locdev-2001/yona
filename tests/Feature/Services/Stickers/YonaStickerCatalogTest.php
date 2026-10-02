@@ -57,8 +57,8 @@ it('mã không đúng dạng của kho thì không tra được', function (stri
 })->with(['98930', 'yona:', 'yona:abc', 'yona:0', 'yona:-1', 'yona:1.5', 'zalo:1']);
 
 it('tenant B không resolve được sticker trong kho riêng của tenant A', function () {
-    $owner = Account::factory()->create(['feature_flags' => ['custom_stickers' => true]]);
-    $other = Account::factory()->create(['feature_flags' => ['custom_stickers' => true]]);
+    $owner = Account::factory()->create();
+    $other = Account::factory()->create();
     $own = YonaStickers::ready(YonaStickers::tenantPack($owner));
     $otherInbox = yonaCatalogInbox($other);
 
@@ -66,14 +66,6 @@ it('tenant B không resolve được sticker trong kho riêng của tenant A', f
         ->and($this->catalog->find($otherInbox, "yona:{$own->id}"))->toBeNull()
         ->and(fn () => app(StickerLibrary::class)->resolve($otherInbox, "yona:{$own->id}", Capability::InboundSticker))
         ->toThrow(StickerCatalogException::class, __('errors.stickers.not_found', [], $other->locale));
-});
-
-// Cờ custom_stickers chỉ quyết ai được dựng kho riêng, không ẩn bộ đã xuất bản.
-it('sticker trong kho riêng của chính tenant resolve được dù cờ custom_stickers tắt', function () {
-    $owner = Account::factory()->create(['feature_flags' => ['custom_stickers' => false]]);
-    $own = YonaStickers::ready(YonaStickers::tenantPack($owner));
-
-    expect($this->catalog->find(yonaCatalogInbox($owner), "yona:{$own->id}"))->not->toBeNull();
 });
 
 // `_` giờ là ký tự ngăn cách của search_fold (như mọi ô tìm khác), không còn là

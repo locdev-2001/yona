@@ -296,7 +296,6 @@ it('xoá account dọn tệp kho riêng kể cả sticker đã gửi, giữ tệ
     Queue::fake();
     auth('super_admin')->logout();
     $account = Account::factory()->create();
-    YonaStickers::enableCustomStickers($account);
     $tenantSticker = YonaStickers::ready(YonaStickers::tenantPack($account));
     $globalSticker = YonaStickers::ready();
     $agent = User::factory()->create();

@@ -152,15 +152,14 @@ ra kênh ngoài là sticker gốc của nền tảng hoặc một ảnh, không 
   gọn như sticker gốc và ảnh động vẫn chạy.
 - **Ai thấy gì:** một nguồn là `Sticker::visibleTo($account)`: sticker `ready`
   trong bộ đã xuất bản, của kho nền tảng (`account_id` null) và kho riêng của
-  chính account. Cờ `custom_stickers` không ẩn nội dung, chỉ góp vào luật "ai được
-  quản lý" dưới đây.
+  chính account.
 - **Ai được quản lý kho nào:** một nguồn là `StickerLibraryAccess`
   (`app/Services/Stickers/`), dùng ở trang cài đặt và API dashboard.
-  Kho riêng: quản trị viên account, và account bật cờ `custom_stickers` hoặc người
-  đó có quyền hệ thống. Kho nền tảng: chỉ người có quyền hệ thống. Quyền hệ thống
+  Kho riêng: mọi quản trị viên account. Kho nền tảng: chỉ người có quyền hệ thống. Quyền hệ thống
   = email user trong `YONA_SYSTEM_ADMIN_EMAILS`, đọc DUY NHẤT ở
   `App\Support\SystemAccess`. Trang Cài đặt → Kho sticker mở cho mọi quản trị
-  viên; phần chưa đủ quyền hiện khoá, API trả 403 (`EnsureStickerLibraryAccess`).
+  viên; tab kho nền tảng chỉ hiện với người có quyền hệ thống, API kho nền tảng
+  trả 403 cho người khác (`EnsureStickerLibraryAccess`).
   Kho nền tảng trong dashboard ở `/api/v1/platform_sticker_library/sticker_packs…`;
   console Super Admin giữ nguyên `/admin/api/sticker_packs…`. Hai mặt tiền
   này dùng chung action `ServesStickerLibrary` (chỉ khác `libraryOwner()`), kho

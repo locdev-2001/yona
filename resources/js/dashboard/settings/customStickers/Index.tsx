@@ -25,21 +25,8 @@ interface CustomStickersPageProps extends DashboardPageProps {
     stickerLibraryAccess: StickerLibraryAccess;
 }
 
-function LockedNotice({ message }: { message: string }) {
-    return (
-        <div role="note" className="flex items-start gap-3 rounded-lg border border-n-weak bg-n-alpha-1 p-4">
-            <span className="i-lucide-lock mt-0.5 size-4 shrink-0 text-n-slate-11" aria-hidden="true" />
-            <div className="flex flex-col gap-1">
-                <p className="text-sm font-medium text-n-slate-12">{t('STICKER_LIBRARY.LOCKED_TITLE')}</p>
-                <p className="text-sm text-n-slate-11">{message}</p>
-            </div>
-        </div>
-    );
-}
-
-// Cài đặt / Kho sticker: mở cho mọi quản trị viên. Kho riêng chỉ dùng được khi
-// máy chủ báo có quyền (StickerLibraryAccess); kho nền tảng chỉ hiện với tài
-// khoản có quyền hệ thống.
+// Cài đặt / Kho sticker: kho riêng mở cho mọi quản trị viên; kho nền tảng chỉ
+// hiện khi máy chủ báo có quyền hệ thống (StickerLibraryAccess).
 export default function CustomStickersIndex() {
     const { currentAccount, stickerLibraryAccess } = usePage<CustomStickersPageProps>().props;
     const accountId = currentAccount!.id;
@@ -103,8 +90,7 @@ export default function CustomStickersIndex() {
                             onTabChanged={tab => changeTab(tab.value as StickerLibraryKind)}
                         />
                     ) : null}
-                    {activeTab === 'account' &&
-                        (stickerLibraryAccess.accountLibrary ? manager(accountApi, 'account') : <LockedNotice message={t('STICKER_LIBRARY.LOCKED_ACCOUNT_LIBRARY')} />)}
+                    {activeTab === 'account' ? manager(accountApi, 'account') : null}
                     {activeTab === 'platform' && stickerLibraryAccess.platformLibrary ? manager(platformApi, 'platform') : null}
                 </div>
             </SettingsWrapper>

@@ -8,12 +8,12 @@ const settingsChildNames = (items: SidebarMenuItem[]) =>
     items.find(item => item.name === 'Settings')?.children?.map(child => child.name) ?? [];
 
 describe('mục Kho sticker trong cài đặt', () => {
-    it('hiện cho mọi quản trị viên, kể cả khi account chưa bật cờ custom_stickers', () => {
+    it('hiện cho mọi quản trị viên', () => {
         expect(settingsChildNames(filterMenuByRole(buildMenuItems(1), 'administrator', {}))).toContain('Settings Custom Stickers');
     });
 
     it('không hiện cho nhân viên', () => {
-        expect(settingsChildNames(filterMenuByRole(buildMenuItems(1), 'agent', { custom_stickers: true }))).not.toContain(
+        expect(settingsChildNames(filterMenuByRole(buildMenuItems(1), 'agent', {}))).not.toContain(
             'Settings Custom Stickers',
         );
     });

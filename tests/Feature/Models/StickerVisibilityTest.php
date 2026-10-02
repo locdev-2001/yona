@@ -14,45 +14,33 @@ function visibleStickerIds(Account $account): array
     return Sticker::query()->visibleTo($account)->orderBy('id')->pluck('id')->all();
 }
 
-function accountWithCustomStickers(bool $enabled): Account
-{
-    return Account::factory()->create(['feature_flags' => ['custom_stickers' => $enabled]]);
-}
-
 it('shows the shared library to every account', function () {
     $shared = Sticker::factory()->create();
 
-    expect(visibleStickerIds(accountWithCustomStickers(false)))->toBe([$shared->id])
-        ->and(visibleStickerIds(accountWithCustomStickers(true)))->toBe([$shared->id]);
+    expect(visibleStickerIds(Account::factory()->create()))->toBe([$shared->id]);
 });
 
 it('keeps a tenant library inside its own account', function () {
-    $owner = accountWithCustomStickers(true);
-    $other = accountWithCustomStickers(true);
+    $owner = Account::factory()->create();
+    $other = Account::factory()->create();
     $ownerSticker = Sticker::factory()->for(StickerPack::factory()->forAccount($owner))->create();
 
     expect(visibleStickerIds($owner))->toBe([$ownerSticker->id])
         ->and(visibleStickerIds($other))->toBe([]);
 });
 
-// Cờ chỉ quyết ai được dựng kho riêng (StickerLibraryAccess); bộ đã xuất bản
-// trong kho riêng, dù do người có quyền hệ thống dựng khi cờ tắt, vẫn hiện.
-it('shows the published tenant library to its own account whatever the flag', function (bool $flag) {
-    $account = accountWithCustomStickers($flag);
+it('shows the published tenant library to its own account', function () {
+    $account = Account::factory()->create();
     $shared = Sticker::factory()->create();
     $own = Sticker::factory()->for(StickerPack::factory()->forAccount($account))->create();
 
     expect(visibleStickerIds($account))->toBe([$shared->id, $own->id]);
-})->with(['cờ tắt' => false, 'cờ bật' => true]);
-
-it('keeps the flag off by default', function () {
-    expect(config('features.custom_stickers'))->toBeFalse();
 });
 
 it('hides stickers of unpublished packs', function () {
     Sticker::factory()->for(StickerPack::factory()->unpublished())->create();
 
-    expect(visibleStickerIds(accountWithCustomStickers(true)))->toBe([]);
+    expect(visibleStickerIds(Account::factory()->create()))->toBe([]);
 });
 
 it('hides stickers that are still processing or failed', function () {
@@ -60,12 +48,12 @@ it('hides stickers that are still processing or failed', function () {
     Sticker::factory()->processing()->create();
     Sticker::factory()->failed('render_timeout')->create();
 
-    expect(visibleStickerIds(accountWithCustomStickers(true)))->toBe([$ready->id]);
+    expect(visibleStickerIds(Account::factory()->create()))->toBe([$ready->id]);
 });
 
 it('follows the owner of the pack when a sticker moves to a tenant pack', function () {
-    $owner = accountWithCustomStickers(true);
-    $other = accountWithCustomStickers(true);
+    $owner = Account::factory()->create();
+    $other = Account::factory()->create();
     $sticker = Sticker::factory()->create();
     $sticker->load('stickerPack');
 
@@ -76,8 +64,8 @@ it('follows the owner of the pack when a sticker moves to a tenant pack', functi
 });
 
 it('follows the owner of the pack when the pack changes hands', function () {
-    $owner = accountWithCustomStickers(true);
-    $other = accountWithCustomStickers(true);
+    $owner = Account::factory()->create();
+    $other = Account::factory()->create();
     $sticker = Sticker::factory()->create();
 
     StickerPack::query()->whereKey($sticker->sticker_pack_id)->update(['account_id' => $owner->id]);

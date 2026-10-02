@@ -88,8 +88,7 @@ it('tin đã gửi từ bộ vẫn đọc được ảnh sau khi chuyển', func
         ->and($this->disk->exists($sticker->static_path))->toBeTrue();
 });
 
-it('quản trị viên account không có quyền hệ thống nhận 403, kể cả khi cờ bật', function () {
-    YonaStickers::enableCustomStickers($this->account);
+it('quản trị viên account không có quyền hệ thống nhận 403', function () {
     $admin = stickerMoveMember($this->account);
     $pack = StickerPack::factory()->create();
 

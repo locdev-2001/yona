@@ -64,6 +64,5 @@ export interface StickerLibraryListing {
 }
 
 export interface StickerLibraryAccess {
-    accountLibrary: boolean;
     platformLibrary: boolean;
 }

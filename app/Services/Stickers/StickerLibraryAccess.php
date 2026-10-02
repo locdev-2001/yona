@@ -3,14 +3,12 @@
 namespace App\Services\Stickers;
 
 use App\Models\Account;
-use App\Models\Sticker;
 use App\Models\User;
 use App\Support\SystemAccess;
 
 // Nguồn duy nhất của luật "ai được quản lý kho sticker nào", dùng ở trang cài
 // đặt và API dashboard:
-// - kho riêng của account: quản trị viên account đó, và account bật cờ
-//   custom_stickers hoặc người đó có quyền hệ thống;
+// - kho riêng của account: mọi quản trị viên account đó;
 // - kho nền tảng (kho chung): chỉ người có quyền hệ thống;
 // - chuyển bộ giữa kho nền tảng và kho riêng: người có quyền hệ thống đồng thời
 //   là quản trị viên account đó.
@@ -18,8 +16,7 @@ class StickerLibraryAccess
 {
     public function canManageAccountLibrary(User $user, Account $account): bool
     {
-        return $this->isAdministratorOf($user, $account)
-            && (SystemAccess::isSystemAdmin($user) || $account->featureEnabled(Sticker::CUSTOM_STICKERS_FEATURE));
+        return $this->isAdministratorOf($user, $account);
     }
 
     public function canManagePlatformLibrary(User $user): bool

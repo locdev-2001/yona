@@ -212,7 +212,7 @@ Route::middleware('auth')->group(function () {
             // hình tài khoản nhận tiền + mã QR VietQR.
             Route::get('/settings/payment-accounts', fn (Account $account) => Inertia::render('dashboard/settings/paymentAccounts/Index'))
                 ->name('settings_payment_accounts');
-            // Kho sticker: mở cho mọi quản trị viên, phần chưa có quyền hiện khoá.
+            // Kho sticker: kho riêng cho mọi quản trị viên, kho nền tảng chỉ người có quyền hệ thống.
             Route::get('/settings/custom-stickers', [CustomStickersSettingsController::class, 'show'])
                 ->name('settings_custom_stickers');
 

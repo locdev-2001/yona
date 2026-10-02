@@ -11045,8 +11045,6 @@ const messages: Record<string, unknown> = {
             "ACCOUNT": "Kho riêng",
             "PLATFORM": "Kho nền tảng"
         },
-        "LOCKED_TITLE": "Chưa mở cho tài khoản này",
-        "LOCKED_ACCOUNT_LIBRARY": "Kho sticker riêng hiện chỉ dành cho tài khoản có quyền hệ thống của Yona. Khi tính năng mở cho tài khoản của bạn, mục này sẽ dùng được ngay.",
         "LOADING": "Đang tải kho sticker…",
         "LOAD_ERROR": "Không tải được kho sticker",
         "REFRESH_FAILED": "Không làm mới được",

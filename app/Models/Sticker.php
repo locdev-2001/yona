@@ -17,8 +17,6 @@ class Sticker extends Model
 
     public const DISK = 'stickers';
 
-    public const CUSTOM_STICKERS_FEATURE = 'custom_stickers';
-
     public const STATUS_PROCESSING = 'processing';
 
     public const STATUS_READY = 'ready';
@@ -75,7 +73,7 @@ class Sticker extends Model
      * Nguồn duy nhất của quy tắc "account nào thấy sticker nào": kho nền tảng
      * cho mọi account, kho riêng chỉ cho chính account đó; chỉ sticker đã xử lý
      * xong trong bộ đã xuất bản. Ai được tạo bộ trong kho riêng do
-     * StickerLibraryAccess quyết; bộ đã xuất bản thì account luôn thấy.
+     * StickerLibraryAccess quyết.
      *
      * @param  Builder<self>  $query
      * @return Builder<self>

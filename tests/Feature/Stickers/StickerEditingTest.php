@@ -131,15 +131,7 @@ describe('kho riêng (tenant)', function () {
         $this->url = "/api/v1/accounts/{$this->account->id}/sticker_packs/{$this->pack->id}/stickers/{$this->sticker->id}";
     });
 
-    it('chưa có quyền dùng kho riêng thì PATCH trả 403 và không đổi gì', function () {
-        $this->actingAs($this->admin)->patchJson($this->url, ['label' => 'Lén', 'keywords' => ['lén']])->assertForbidden();
-
-        expect($this->sticker->fresh()->label)->toBe('Giữ')
-            ->and($this->sticker->fresh()->keywords)->toBe([]);
-    });
-
-    it('cờ bật thì quản trị viên sửa được', function () {
-        YonaStickers::enableCustomStickers($this->account);
+    it('quản trị viên sửa được', function () {
 
         $this->actingAs($this->admin)->patchJson($this->url, ['label' => 'Mèo shop', 'keywords' => ['Chào']])
             ->assertOk()
@@ -147,8 +139,7 @@ describe('kho riêng (tenant)', function () {
             ->assertJsonPath('keywords', ['chào']);
     });
 
-    it('cờ bật nhưng nhân viên thường thì bị chặn', function () {
-        YonaStickers::enableCustomStickers($this->account);
+    it('nhân viên thường thì bị chặn', function () {
         $agent = editingTenantUser($this->account, AccountUser::ROLE_AGENT);
 
         $this->actingAs($agent)->patchJson($this->url, ['label' => 'Lén'])->assertUnauthorized();
@@ -156,7 +147,6 @@ describe('kho riêng (tenant)', function () {
     });
 
     it('không sửa được sticker kho chung hay của tenant khác', function () {
-        YonaStickers::enableCustomStickers($this->account);
         $global = YonaStickers::ready(StickerPack::factory()->create());
         $foreign = YonaStickers::ready(YonaStickers::tenantPack(Account::factory()->create()));
         $this->actingAs($this->admin);
@@ -172,7 +162,6 @@ describe('kho riêng (tenant)', function () {
 describe('chỉnh lại ảnh sticker đã lưu', function () {
     beforeEach(function () {
         $this->account = Account::factory()->create();
-        YonaStickers::enableCustomStickers($this->account);
         $this->actingAs(editingTenantUser($this->account, AccountUser::ROLE_ADMINISTRATOR));
         $this->pack = YonaStickers::tenantPack($this->account);
         $this->pack->update(['published_at' => now()]);

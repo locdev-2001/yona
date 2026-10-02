@@ -15,8 +15,6 @@ return [
         'ACCOUNT' => 'Account library',
         'PLATFORM' => 'Platform library',
     ],
-    'LOCKED_TITLE' => 'Not available for this account yet',
-    'LOCKED_ACCOUNT_LIBRARY' => 'Custom sticker libraries are currently limited to Yona system accounts. Once the feature is opened to your account, this section works right away.',
     'LOADING' => 'Loading sticker library…',
     'LOAD_ERROR' => 'Could not load the sticker library',
     'REFRESH_FAILED' => 'Could not refresh',

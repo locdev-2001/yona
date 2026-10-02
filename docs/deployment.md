@@ -1524,11 +1524,8 @@ YONA_SYSTEM_ADMIN_EMAILS=founder@yona.vn,ops@yona.vn
 
 Đổi xong chạy `php artisan config:cache`. Gỡ một email khỏi danh sách là người đó
 mất quyền kho nền tảng ngay ở lượt gọi sau. Cùng danh sách này mở `/horizon`,
-`/pulse`, `/logs` (mục 8, "Ba dashboard vận hành"). Kho riêng của account
-dùng được khi account bật cờ `custom_stickers` (mặc định tắt ở `config/features.php`;
-Super Admin chưa có nút bật, bật theo account qua cột `accounts.feature_flags`, ví
-dụ Platform API cập nhật account với `features`) hoặc khi người dùng có quyền hệ
-thống; account chưa đủ quyền vẫn thấy mục Kho sticker nhưng ở trạng thái khoá.
+`/pulse`, `/logs` (mục 8, "Ba dashboard vận hành"). Kho riêng của account mở
+cho mọi quản trị viên account, không cần cờ hay cấu hình gì.
 
 Sticker làm từ ảnh tải lên (PNG, JPG, WebP, GIF và WebP động) kèm thông số cắt +
 xoá nền. Mỗi lần tải, ảnh gốc được lưu thành `original.<đuôi>` rồi

@@ -122,11 +122,6 @@ final class YonaStickers
         config(['yona.system_admin_emails' => trim(config('yona.system_admin_emails', '').','.$user->email, ',')]);
     }
 
-    public static function enableCustomStickers(Account $account, bool $enabled = true): void
-    {
-        $account->forceFill(['feature_flags' => [...($account->feature_flags ?? []), Sticker::CUSTOM_STICKERS_FEATURE => $enabled]])->save();
-    }
-
     /**
      * Payload sticker Yona phải có đúng các khoá này, KHÔNG có URL.
      *

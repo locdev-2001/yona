@@ -13,8 +13,7 @@ use Symfony\Component\HttpFoundation\Response;
 // Cổng của API dashboard quản lý kho sticker. `account`: kho riêng của account
 // đang mở (đặt sau account.scope); `platform`: kho nền tảng; `transfer`: chuyển
 // bộ giữa kho nền tảng và kho riêng của account đang mở (đặt sau account.scope).
-// Kho riêng: không phải quản trị viên account thì 401 như mọi API cài đặt; là
-// quản trị viên nhưng chưa có quyền dùng kho thì 403.
+// Kho riêng: không phải quản trị viên account thì 401 như mọi API cài đặt.
 class EnsureStickerLibraryAccess
 {
     public const ACCOUNT_LIBRARY = 'account';
