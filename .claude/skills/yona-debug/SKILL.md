@@ -31,8 +31,8 @@ $S "https://yona.vn/logs?file=…&query=…"     # dán nguyên link founder g�
 - Founder gửi **ảnh chụp** Log Viewer → đọc tên tệp và số dòng (cột phải) trong ảnh, rồi `search <identifier> "log-index:<số>"`
   để lấy stack trace đầy đủ. Ảnh chỉ có message cắt ngắn.
 - Dòng cuối báo "mới quét x%" → tệp lớn chưa quét xong, chạy lại cùng lệnh.
-- Lỗi "thiếu PROD_LOG_…" → founder cần đặt `PROD_LOG_URL`, `PROD_LOG_VIEWER_TOKEN` trong `.env` local và cùng token vào
-  `LOG_VIEWER_API_TOKEN` trên production. 401 = token hai bên lệch. Token chỉ cho GET, không xoá hay sửa được gì.
+- Lỗi "thiếu LOG_VIEWER_API_TOKEN" → founder đặt cùng một token vào `LOG_VIEWER_API_TOKEN` ở `.env` local và production.
+  401 = token hai bên lệch. Token chỉ cho GET, không xoá hay sửa được gì.
 
 ## Quy trình
 

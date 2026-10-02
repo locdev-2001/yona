@@ -5,16 +5,18 @@
 #   prod-logs.sh search <file> <query> [page]   tìm trong một tệp; query như ô tìm kiếm, vd "IMAP" hoặc "log-index:337"
 #   prod-logs.sh <link /logs?file=…&query=…>   dán thẳng link copy từ giao diện Log Viewer
 #
-# Cấu hình: PROD_LOG_URL, PROD_LOG_VIEWER_TOKEN trong .env của repo (mẫu ở .env.example).
+# Cấu hình: LOG_VIEWER_API_TOKEN trong .env của repo — cùng giá trị với .env production.
 set -euo pipefail
 
-source "$(git rev-parse --show-toplevel)/scripts/lib/prod-env.sh"
-require_prod_env PROD_LOG_URL PROD_LOG_VIEWER_TOKEN
+readonly LOG_URL=${LOG_URL:-https://yona.vn}
+ENV_FILE=$(git rev-parse --show-toplevel)/.env
+TOKEN=${LOG_VIEWER_API_TOKEN:-$(grep -E '^LOG_VIEWER_API_TOKEN=' "$ENV_FILE" 2>/dev/null | tail -n 1 | cut -d= -f2- | tr -d "\"'" || true)}
+[[ -n $TOKEN ]] || { echo "LỖI: thiếu LOG_VIEWER_API_TOKEN trong $ENV_FILE" >&2; exit 1; }
 
 [[ $# -ge 1 ]] || { sed -n '2,8p' "$0" | sed 's/^# \{0,1\}//'; exit 2; }
 
 api_get() {
-  curl -fsS -G -H "Authorization: Bearer $PROD_LOG_VIEWER_TOKEN" -H 'Accept: application/json' "${PROD_LOG_URL%/}/logs/api/$1" "${@:2}"
+  curl -fsS -G -H "Authorization: Bearer $TOKEN" -H 'Accept: application/json' "${LOG_URL%/}/logs/api/$1" "${@:2}"
 }
 
 print_files() {
