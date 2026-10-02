@@ -9,6 +9,7 @@ import ContactEmptyState from 'dashboard/components-next/Contacts/EmptyState/Con
 import Spinner from 'dashboard/components-next/spinner/Spinner';
 import ContactsList from 'dashboard/components-next/Contacts/Pages/ContactsList';
 import ContactsBulkActionBar from './components/ContactsBulkActionBar';
+import TabBar from 'dashboard/components-next/tabbar/TabBar';
 import Dialog from 'dashboard/components-next/dialog/Dialog';
 import type { DialogHandle } from 'dashboard/components-next/dialog/Dialog';
 import { useAlert } from 'dashboard/composables/useAlert';
@@ -25,12 +26,13 @@ import { buildConversationFilterPayload } from 'dashboard/components-next/filter
 import type { ConversationFilterCondition } from 'dashboard/components-next/filter/helper/filterHelper';
 import { useCustomViews } from 'dashboard/composables/useCustomViews';
 import { mergeContactUpdateIntoList, useContactUpdates } from 'dashboard/contacts/contactUpdates';
-import type { Contact, ContactsMeta } from 'dashboard/contacts/types';
+import type { Contact, ContactIdentificationFilter, ContactsMeta } from 'dashboard/contacts/types';
 import type { DashboardPageProps } from '../types';
 
 // Port từ dashboard/routes/dashboard/contacts/pages/ContactsIndex.vue.
 const DEFAULT_SORT_FIELD = 'last_activity_at';
 const DEBOUNCE_DELAY = 300;
+const IDENTIFICATION_FILTERS: ContactIdentificationFilter[] = ['all', 'identified', 'unidentified'];
 
 const parseSortSettings = (sortString = '') => {
     const hasDescending = sortString.startsWith('-');
@@ -84,6 +86,9 @@ export default function ContactsIndex({ segmentId = 0, label = '', isActiveView 
     const [isBulkActionLoading, setBulkActionLoading] = useState(false);
     const bulkDeleteDialogRef = useRef<DialogHandle>(null);
     const [appliedFilters, setAppliedFilters] = useState<ConversationFilterCondition[]>([]);
+    const [identification, setIdentification] = useState<ContactIdentificationFilter>('all');
+    const identificationRef = useRef(identification);
+    identificationRef.current = identification;
     const appliedFiltersRef = useRef<ConversationFilterCondition[]>([]);
     appliedFiltersRef.current = appliedFilters;
     const searchPageNumber = useRef(1);
@@ -122,8 +127,8 @@ export default function ContactsIndex({ segmentId = 0, label = '', isActiveView 
                     : filterPayload && !label
                       ? await filterContacts(accountId, filterPayload, page, buildSortAttr())
                       : label
-                        ? await fetchContactsByLabel(accountId, label, page, buildSortAttr())
-                        : await fetchContacts(accountId, page, buildSortAttr());
+                        ? await fetchContactsByLabel(accountId, label, page, buildSortAttr(), identificationRef.current)
+                        : await fetchContacts(accountId, page, buildSortAttr(), identificationRef.current);
                 if (seq !== requestSeq.current) return;
                 setContacts(result.contacts);
                 setMeta(result.meta);
@@ -297,6 +302,12 @@ export default function ContactsIndex({ segmentId = 0, label = '', isActiveView 
         void fetchList(1);
     };
 
+    const onIdentificationChanged = (next: ContactIdentificationFilter) => {
+        setIdentification(next);
+        identificationRef.current = next;
+        void fetchList(1);
+    };
+
     const isSearchView = Boolean(searchValue);
     const hasContacts = contacts.length > 0;
     const headerTitle = isSearchView
@@ -307,6 +318,27 @@ export default function ContactsIndex({ segmentId = 0, label = '', isActiveView 
             ? `#${label}`
             : (activeSegment?.name ?? t('CONTACTS_LAYOUT.HEADER.TITLE'));
     const hasAppliedFilters = appliedFilters.length > 0 || Boolean(activeSegment);
+    const showIdentificationTabs = !isSearchView && !isActiveView && !hasAppliedFilters;
+    const identificationTabs = [
+        {
+            value: 'all',
+            label: t('CONTACTS_LAYOUT.IDENTIFICATION.ALL'),
+            count:
+                meta.identifiedCount === undefined || meta.unidentifiedCount === undefined
+                    ? undefined
+                    : meta.identifiedCount + meta.unidentifiedCount,
+        },
+        {
+            value: 'identified',
+            label: t('CONTACTS_LAYOUT.IDENTIFICATION.IDENTIFIED'),
+            count: meta.identifiedCount,
+        },
+        {
+            value: 'unidentified',
+            label: t('CONTACTS_LAYOUT.IDENTIFICATION.UNIDENTIFIED'),
+            count: meta.unidentifiedCount,
+        },
+    ];
     const isContactIndexView = !label && !isActiveView && !segmentId;
     const showEmptyStateLayout =
         !isSearchView &&
@@ -314,9 +346,12 @@ export default function ContactsIndex({ segmentId = 0, label = '', isActiveView 
         isContactIndexView &&
         (meta.currentPage || 1) === 1 &&
         !isFetching &&
-        !hasAppliedFilters;
+        !hasAppliedFilters &&
+        identification === 'all';
     const showEmptyText =
-        (isSearchView || hasAppliedFilters || !isContactIndexView) && !hasContacts && !isFetching;
+        (isSearchView || hasAppliedFilters || !isContactIndexView || identification !== 'all') &&
+        !hasContacts &&
+        !isFetching;
     const emptyStateMessage = isActiveView
         ? t('CONTACTS_LAYOUT.EMPTY_STATE.ACTIVE_EMPTY_STATE_TITLE')
         : !isSearchView || hasAppliedFilters
@@ -360,6 +395,14 @@ export default function ContactsIndex({ segmentId = 0, label = '', isActiveView 
                     showSearch={!segmentId && !isActiveView}
                     activeLabel={label}
                 >
+                    {showIdentificationTabs && !showEmptyStateLayout ? (
+                        <TabBar
+                            className="mt-4 w-fit"
+                            tabs={identificationTabs}
+                            initialActiveTab={IDENTIFICATION_FILTERS.indexOf(identification)}
+                            onTabChanged={tab => onIdentificationChanged(tab.value as ContactIdentificationFilter)}
+                        />
+                    ) : null}
                     {selectedContactIds.length > 0 && !(isFetching && !(isSearchView && hasContacts)) ? (
                         <ContactsBulkActionBar
                             visibleContactIds={contacts.map(contact => contact.id)}

@@ -3419,8 +3419,15 @@ const messages: Record<string, unknown> = {
                 "CLEAR_FILTERS": "Xóa các bộ lọc"
             }
         },
+        "IDENTIFICATION": {
+            "ALL": "Tất cả",
+            "IDENTIFIED": "Đã định danh",
+            "UNIDENTIFIED": "Chưa định danh"
+        },
         "CARD": {
             "OF": "của",
+            "UNIDENTIFIED_BADGE": "Chưa định danh",
+            "UNIDENTIFIED_HINT": "Chưa có email, số điện thoại hay mã định danh — hiện chỉ biết khách qua kênh nhắn tin.",
             "VIEW_DETAILS": "Xem chi tiết",
             "EDIT_DETAILS_FORM": {
                 "TITLE": "Chỉnh sửa liên hệ chi tiết",

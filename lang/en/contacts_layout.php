@@ -130,8 +130,15 @@ return [
             'CLEAR_FILTERS' => 'Clear filters',
         ],
     ],
+    'IDENTIFICATION' => [
+        'ALL' => 'All',
+        'IDENTIFIED' => 'Identified',
+        'UNIDENTIFIED' => 'Unidentified',
+    ],
     'CARD' => [
         'OF' => 'of',
+        'UNIDENTIFIED_BADGE' => 'Unidentified',
+        'UNIDENTIFIED_HINT' => 'No email, phone number or identifier yet — known only through the messaging channel.',
         'VIEW_DETAILS' => 'View details',
         'EDIT_DETAILS_FORM' => [
             'TITLE' => 'Edit contact details',

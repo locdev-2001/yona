@@ -111,6 +111,7 @@ export default function ContactsList({
                         companyId={contact.companyId}
                         thumbnail={contact.thumbnail}
                         phoneNumber={contact.phoneNumber}
+                        identified={contact.identified ?? true}
                         additionalAttributes={contact.additionalAttributes}
                         availabilityStatus={contact.availabilityStatus}
                         isExpanded={expandedCardId === contact.id}

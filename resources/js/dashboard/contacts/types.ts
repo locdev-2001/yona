@@ -39,6 +39,7 @@ export interface Contact {
     email: string | null;
     phoneNumber: string | null;
     identifier: string | null;
+    identified?: boolean;
     thumbnail: string;
     blocked?: boolean;
     availabilityStatus: string | null;
@@ -54,7 +55,13 @@ export interface ContactsMeta {
     count: number;
     currentPage: number;
     hasMore?: boolean;
+    identifiedCount?: number;
+    unidentifiedCount?: number;
 }
+
+// Liên hệ đã định danh có email, số điện thoại hoặc mã định danh; chưa định
+// danh thì chỉ biết qua kênh nhắn tin. Danh sách hiện cả hai.
+export type ContactIdentificationFilter = 'all' | 'identified' | 'unidentified';
 
 // State của ContactsForm (map FORM_CONFIG của bản gốc).
 export interface ContactFormState {

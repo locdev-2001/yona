@@ -1,9 +1,17 @@
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { emitter } from 'shared/helpers/emitter';
 import type { Contact } from './types';
+
+// jsdom không có ResizeObserver — thanh tab định danh của trang Liên hệ đo indicator.
+class ResizeObserverStub {
+    observe(): void {}
+    unobserve(): void {}
+    disconnect(): void {}
+}
+vi.stubGlobal('ResizeObserver', ResizeObserverStub);
 
 vi.mock('@inertiajs/react', () => ({
     router: { visit: vi.fn() },
@@ -136,5 +144,26 @@ describe('contact.updated trên trang Liên hệ', () => {
 
         emitContactUpdated(contactUpdatedPayload(3, { name: 'Lan', thumbnail: '' }));
         expect(screen.getByTestId('contact-3').textContent).toBe('Lan||+84900000003|online');
+    });
+});
+
+describe('tab định danh trên trang Liên hệ', () => {
+    beforeEach(() => {
+        fetchContacts.mockReset();
+        fetchContacts.mockResolvedValue({
+            contacts: [buildContact(3)],
+            meta: { count: 1, currentPage: 1, identifiedCount: 1, unidentifiedCount: 4 },
+        });
+    });
+
+    it('hiện số đếm hai loại và tải lại danh sách theo tab đã chọn', async () => {
+        render(<ContactsIndex />);
+        await waitFor(() => expect(screen.getByTestId('contact-3')).toBeTruthy());
+
+        expect(fetchContacts).toHaveBeenLastCalledWith(2, 1, 'last_activity_at', 'all');
+
+        fireEvent.click(await screen.findByRole('button', { name: /CONTACTS_LAYOUT.IDENTIFICATION.UNIDENTIFIED|Chưa định danh|Unidentified/ }));
+
+        await waitFor(() => expect(fetchContacts).toHaveBeenLastCalledWith(2, 1, 'last_activity_at', 'unidentified'));
     });
 });

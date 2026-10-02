@@ -4,10 +4,16 @@
 import { deleteJson, getJson, postForm, postJson, putForm, putJson } from 'dashboard/helper/apiClient';
 import { camelizeKeys, snakeizeKeys } from 'dashboard/helper/transformKeys';
 import type { ConversationFilterPayload } from 'dashboard/components-next/filter/helper/filterQuery';
-import type { Contact, ContactsMeta } from './types';
+import type { Contact, ContactIdentificationFilter, ContactsMeta } from './types';
 
 interface RawListResponse {
-    meta: { count: number; current_page: number; has_more?: boolean };
+    meta: {
+        count: number;
+        current_page: number;
+        has_more?: boolean;
+        identified_count?: number;
+        unidentified_count?: number;
+    };
     payload: Record<string, unknown>[];
 }
 
@@ -40,14 +46,24 @@ function toClientPage(response: RawListResponse): ContactsPage {
             count: response.meta.count,
             currentPage: Number(response.meta.current_page),
             hasMore: response.meta.has_more,
+            identifiedCount: response.meta.identified_count,
+            unidentifiedCount: response.meta.unidentified_count,
         },
     };
 }
 
 // ContactAPI.get — danh sách không kèm contact_inboxes như bản gốc.
-export async function fetchContacts(accountId: number, page: number, sortAttr: string): Promise<ContactsPage> {
+const identificationParam = (filter: ContactIdentificationFilter) =>
+    filter === 'all' ? '' : `&identified=${filter === 'identified'}`;
+
+export async function fetchContacts(
+    accountId: number,
+    page: number,
+    sortAttr: string,
+    identification: ContactIdentificationFilter = 'all',
+): Promise<ContactsPage> {
     const response = await getJson<RawListResponse>(
-        `${contactsUrl(accountId)}?include_contact_inboxes=false&page=${page}&sort=${encodeURIComponent(sortAttr)}`,
+        `${contactsUrl(accountId)}?include_contact_inboxes=false&page=${page}&sort=${encodeURIComponent(sortAttr)}${identificationParam(identification)}`,
     );
 
     return toClientPage(response);
@@ -168,9 +184,10 @@ export async function fetchContactsByLabel(
     label: string,
     page: number,
     sortAttr: string,
+    identification: ContactIdentificationFilter = 'all',
 ): Promise<ContactsPage> {
     const response = await getJson<RawListResponse>(
-        `${contactsUrl(accountId)}?include_contact_inboxes=false&page=${page}&sort=${encodeURIComponent(sortAttr)}&labels[]=${encodeURIComponent(label)}`,
+        `${contactsUrl(accountId)}?include_contact_inboxes=false&page=${page}&sort=${encodeURIComponent(sortAttr)}&labels[]=${encodeURIComponent(label)}${identificationParam(identification)}`,
     );
 
     return toClientPage(response);

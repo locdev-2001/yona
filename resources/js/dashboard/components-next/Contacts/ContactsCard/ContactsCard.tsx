@@ -20,6 +20,7 @@ interface ContactsCardProps {
     companyId?: number | string;
     additionalAttributes?: ContactAdditionalAttributes;
     phoneNumber?: string | null;
+    identified?: boolean;
     thumbnail?: string;
     availabilityStatus?: string | null;
     isExpanded?: boolean;
@@ -46,6 +47,7 @@ export default function ContactsCard({
     companyId = '',
     additionalAttributes = {},
     phoneNumber = '',
+    identified = true,
     thumbnail = '',
     availabilityStatus = null,
     isExpanded = false,
@@ -166,6 +168,14 @@ export default function ContactsCard({
                     <div className="flex flex-col gap-0.5 flex-1">
                         <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
                             <span className="text-base font-medium truncate text-n-slate-12">{name}</span>
+                            {identified ? null : (
+                                <span
+                                    className="px-1.5 py-0.5 text-xs rounded-md bg-n-alpha-2 text-n-slate-11"
+                                    title={t('CONTACTS_LAYOUT.CARD.UNIDENTIFIED_HINT')}
+                                >
+                                    {t('CONTACTS_LAYOUT.CARD.UNIDENTIFIED_BADGE')}
+                                </span>
+                            )}
                             <span className="inline-flex items-center gap-1">
                                 {additionalAttributes?.companyName ? (
                                     <span className={`${ICONS.company} size-4 text-n-slate-10 mb-0.5`} />
