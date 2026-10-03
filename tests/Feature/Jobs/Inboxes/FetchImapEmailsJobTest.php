@@ -9,9 +9,11 @@ use App\Models\Conversation;
 use App\Models\Inbox;
 use App\Models\Message;
 use App\Services\Email\MailPresenter;
+use App\Services\Email\MailServerException;
 use App\Services\Imap\DeletedMessageTracker;
 use App\Services\Imap\FetchEmailService;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
@@ -19,6 +21,7 @@ use Webklex\PHPIMAP\Client;
 use Webklex\PHPIMAP\ClientManager;
 use Webklex\PHPIMAP\Connection\Protocols\ProtocolInterface;
 use Webklex\PHPIMAP\Connection\Protocols\Response;
+use Webklex\PHPIMAP\Exceptions\ConnectionFailedException;
 use Webklex\PHPIMAP\IMAP;
 
 // Port từ spec/jobs/inboxes/{fetch_imap_email_inboxes_job,fetch_imap_emails_job}_spec.rb
@@ -104,7 +107,7 @@ it('remembers deleted message ids for the inbox', function () {
 
 it('skips quietly while the previous fetch of the same inbox still holds the lock', function () {
     $inbox = emailInboxWith($this->account, ['imap_enabled' => true]);
-    Cache::lock('EMAIL_MESSAGE_MUTEX::'.$inbox->id, 300)->get();
+    Cache::lock('EMAIL_MESSAGE_MUTEX::'.$inbox->id, 150)->get();
     Log::spy();
 
     (new FetchImapEmailsJob($inbox->channel))->handle();
@@ -129,7 +132,8 @@ it('reads the inbox read-only and downloads, in one batch, only the bodies of ma
     $inbox = emailInboxWith($this->account, ['imap_enabled' => true]);
     $knownId = uniqid('known-', true).'@example.com';
     $newId = uniqid('new-', true).'@example.com';
-    Message::factory()->create(['account_id' => $this->account->id, 'inbox_id' => $inbox->id, 'source_id' => $knownId]);
+    $knownMessage = Message::factory()->create(['account_id' => $this->account->id, 'inbox_id' => $inbox->id, 'source_id' => $knownId]);
+    $knownMessage->markDeleted('vi');
 
     $connection = Mockery::mock(ProtocolInterface::class);
     $connection->shouldReceive('examineFolder')->with('INBOX')->once()->andReturn(imapResponse([]));
@@ -140,8 +144,9 @@ it('reads the inbox read-only and downloads, in one batch, only the bodies of ma
     $connection->shouldReceive('content')->with([42], 'RFC822', IMAP::ST_UID)->once()
         ->andReturn(imapResponse([42 => 'Hello']));
     $client = Mockery::mock(Client::class);
-    $client->shouldReceive('connect', 'disconnect')->andReturnSelf();
-    $client->shouldReceive('getConnection')->andReturn($connection);
+    $client->shouldReceive('connect')->andReturnSelf();
+    $client->connection = $connection;
+    $connection->shouldReceive('getStream')->andReturn(null);
     $manager = Mockery::mock(ClientManager::class);
     $manager->shouldReceive('make')->andReturn($client);
     app()->instance(ClientManager::class, $manager);
@@ -156,3 +161,76 @@ it('reads the inbox read-only and downloads, in one batch, only the bodies of ma
         && $context['messages_in_window'] === 2
         && $context['new_messages'] === 1);
 });
+
+it('IMAP dùng timeout riêng và không chờ logout khi kết nối đã thất bại', function () {
+    $inbox = emailInboxWith($this->account, ['imap_enabled' => true]);
+    config(['mail.imap_read_timeout' => 7, 'mail.smtp_read_timeout' => 99]);
+    $client = Mockery::mock(Client::class);
+    $client->shouldReceive('connect')->once()->andThrow(new ConnectionFailedException('connection failed'));
+    $client->shouldNotReceive('disconnect');
+    $manager = Mockery::mock(ClientManager::class);
+    $manager->shouldReceive('make')->once()->withArgs(fn (array $settings) => $settings['timeout'] === 7)->andReturn($client);
+
+    expect(fn () => (new FetchEmailService($inbox->channel, clientManager: $manager))->perform())
+        ->toThrow(MailServerException::class, 'connection failed');
+});
+
+it('job nhập thư một lần rồi lượt kế tiếp chỉ tìm UID mới', function () {
+    $inbox = emailInboxWith($this->account, ['imap_enabled' => true]);
+    $messageId = 'cursor-new@example.test';
+    $connection = Mockery::mock(ProtocolInterface::class);
+    $connection->shouldReceive('getStream')->andReturn(null);
+    $connection->shouldReceive('examineFolder')->twice()->andReturn(imapResponse(['uidvalidity' => 100, 'uidnext' => 43]));
+    $connection->shouldReceive('search')->withArgs(fn (array $criteria, int $flag) => str_starts_with($criteria[0], 'SINCE '))->once()->andReturn(imapResponse([42]));
+    $connection->shouldReceive('search')->with(['UID 43:*'], IMAP::ST_UID)->once()->andReturn(imapResponse([42]));
+    $connection->shouldReceive('headers')->with([42], 'RFC822', IMAP::ST_UID)->once()->andReturn(imapResponse([42 => rawImapHeader($messageId)]));
+    $connection->shouldReceive('content')->with([42], 'RFC822', IMAP::ST_UID)->once()->andReturn(imapResponse([42 => 'Hello']));
+    bindImapClient($connection);
+
+    (new FetchImapEmailsJob($inbox->channel))->handle();
+    expect($inbox->channel->refresh()->imap_sync_state['last_uid'])->toBe(42)
+        ->and($inbox->messages()->where('source_id', $messageId)->count())->toBe(1);
+    (new FetchImapEmailsJob($inbox->channel))->handle();
+    expect($inbox->messages()->where('source_id', $messageId)->count())->toBe(1);
+});
+
+it('job giữ UID thư lỗi để nhập lại khi hết lỗi, không nhân đôi thư sau nó', function () {
+    $inbox = emailInboxWith($this->account, ['imap_enabled' => true]);
+    $failedId = 'retry-first@example.test';
+    $goodId = 'retry-second@example.test';
+    $connection = Mockery::mock(ProtocolInterface::class);
+    $connection->shouldReceive('getStream')->andReturn(null);
+    $connection->shouldReceive('examineFolder')->twice()->andReturn(imapResponse(['uidvalidity' => 100]));
+    $connection->shouldReceive('search')->once()->andReturn(imapResponse([41, 42]));
+    $connection->shouldReceive('search')->with(['UID 41,43:*'], IMAP::ST_UID)->once()->andReturn(imapResponse([41, 42]));
+    $connection->shouldReceive('headers')->twice()->andReturn(imapResponse([41 => rawImapHeader($failedId), 42 => rawImapHeader($goodId)]));
+    $connection->shouldReceive('content')->with([41, 42], 'RFC822', IMAP::ST_UID)->once()->andReturn(imapResponse([41 => 'First', 42 => 'Second']));
+    $connection->shouldReceive('content')->with([41], 'RFC822', IMAP::ST_UID)->once()->andReturn(imapResponse([41 => 'First']));
+    bindImapClient($connection);
+    Message::creating(function (Message $message) use ($failedId) {
+        if ($message->source_id === $failedId) {
+            throw new RuntimeException('Thư giả lập xử lý lỗi');
+        }
+    });
+
+    (new FetchImapEmailsJob($inbox->channel))->handle();
+    expect($inbox->channel->refresh()->imap_sync_state['last_uid'])->toBe(42)
+        ->and($inbox->channel->imap_sync_state['pending_uids'])->toBe([41])
+        ->and($inbox->messages()->where('source_id', $failedId)->count())->toBe(0)
+        ->and($inbox->messages()->where('source_id', $goodId)->count())->toBe(1);
+    Event::forget('eloquent.creating: '.Message::class);
+    (new FetchImapEmailsJob($inbox->channel))->handle();
+    expect($inbox->channel->refresh()->imap_sync_state['last_uid'])->toBe(42)
+        ->and($inbox->messages()->whereIn('source_id', [$failedId, $goodId])->count())->toBe(2);
+});
+
+function bindImapClient(ProtocolInterface $connection): void
+{
+    $client = Mockery::mock(Client::class);
+    $client->connection = $connection;
+    $client->shouldReceive('connect')->andReturnSelf();
+    $client->shouldNotReceive('getConnection', 'disconnect');
+    $manager = Mockery::mock(ClientManager::class);
+    $manager->shouldReceive('make')->andReturn($client);
+    app()->instance(ClientManager::class, $manager);
+}

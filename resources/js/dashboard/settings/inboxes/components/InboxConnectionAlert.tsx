@@ -13,8 +13,9 @@ interface InboxConnectionAlertProps {
 
 export default function InboxConnectionAlert({ inbox, onFixSettings, className = '' }: InboxConnectionAlertProps) {
     const oauthError = typeof window === 'undefined' ? null : oauthErrorKey(window.location.search ?? '');
+    const requiresAction = inbox.reauthorization_required || Boolean(oauthError);
 
-    if (!inbox.reauthorization_required && !oauthError) return null;
+    if (!inbox.reauthorization_required && !inbox.connection_error && !oauthError) return null;
 
     return (
         <div
@@ -24,14 +25,14 @@ export default function InboxConnectionAlert({ inbox, onFixSettings, className =
             <p className="min-w-0 break-words">
                 {oauthError ? t(oauthError) : inbox.connection_error || t('INBOX_MGMT.CONNECTION_CHECK.BANNER_DEFAULT')}
             </p>
-            {inbox.reconnect_url ? (
+            {requiresAction && inbox.reconnect_url ? (
                 <a
                     href={inbox.reconnect_url}
                     className="shrink-0 font-medium underline underline-offset-2 text-n-ruby-12"
                 >
                     {t('INBOX_MGMT.CONNECTION_CHECK.RECONNECT')}
                 </a>
-            ) : onFixSettings ? (
+            ) : requiresAction && onFixSettings ? (
                 <button
                     type="button"
                     className="shrink-0 font-medium underline underline-offset-2 text-n-ruby-12"

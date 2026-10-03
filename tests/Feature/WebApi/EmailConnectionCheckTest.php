@@ -8,6 +8,7 @@ use App\Models\Inbox;
 use App\Models\User;
 use App\Services\Email\MailServerException;
 use App\Services\Imap\FetchEmailService;
+use Illuminate\Support\Facades\Redis;
 
 // Việc #159: lỗi IMAP/SMTP phải tới tay người dùng — báo tại chỗ khi lưu cấu hình,
 // và job quét thư gặp lỗi thì đánh dấu kênh để giao diện hiện cảnh báo.
@@ -116,7 +117,7 @@ it('tạo hộp thư email kèm IMAP sai mật khẩu thì không tạo gì', fu
 
 function failingFetchService(MailServerException $exception): void
 {
-    app()->bind(FetchEmailService::class, fn () => new class($exception)
+    app()->bind(FetchEmailService::class, fn () => new class($exception) extends FetchEmailService
     {
         public function __construct(private MailServerException $exception) {}
 
@@ -149,29 +150,42 @@ it('job gặp lỗi xác thực thì đánh dấu kênh cần kết nối lại 
         ->assertInertia(fn ($page) => $page->where('inboxes.0.reauthorization_required', true));
 });
 
-it('job lỗi kết nối thì chỉ đếm, quá ngưỡng mới đánh dấu', function () {
+it('lỗi mạng liên tiếp không khóa inbox và vẫn tự đồng bộ khi kết nối phục hồi', function () {
     $channel = $this->inbox->channel;
     $channel->update(imapSettings());
     failingFetchService(new MailServerException(MailServerException::CONNECTION, 'imap', 'imap.gmail.com', 993));
 
-    (new FetchImapEmailsJob($channel))->handle();
-
-    expect($channel->reauthorizationRequired())->toBeFalse()
-        ->and($channel->authorizationErrorCount())->toBe(1);
-
-    foreach (range(2, Email::AUTHORIZATION_ERROR_THRESHOLD) as $_) {
+    foreach (range(1, Email::AUTHORIZATION_ERROR_THRESHOLD + 2) as $attempt) {
         (new FetchImapEmailsJob($channel))->handle();
+        $this->travel(11)->minutes();
     }
 
-    expect($channel->reauthorizationRequired())->toBeTrue();
+    expect($channel->reauthorizationRequired())->toBeFalse()
+        ->and($channel->authorizationErrorCount())->toBe(0)
+        ->and($channel->connectionError())->not->toBeNull();
+
+    app()->bind(FetchEmailService::class, fn () => new class extends FetchEmailService
+    {
+        public function __construct() {}
+
+        public function perform(): array
+        {
+            return [];
+        }
+    });
+    (new FetchImapEmailsJob($channel))->handle();
+
+    expect($channel->connectionError())->toBeNull();
 });
 
 it('lần quét thành công sau lỗi kết nối thì xoá bộ đếm', function () {
     $channel = $this->inbox->channel;
     $channel->update(imapSettings());
     $channel->authorizationError();
-    app()->bind(FetchEmailService::class, fn () => new class
+    app()->bind(FetchEmailService::class, fn () => new class extends FetchEmailService
     {
+        public function __construct() {}
+
         public function perform(): array
         {
             return [];
@@ -181,4 +195,35 @@ it('lần quét thành công sau lỗi kết nối thì xoá bộ đếm', funct
     (new FetchImapEmailsJob($channel))->handle();
 
     expect($channel->authorizationErrorCount())->toBe(0);
+});
+
+it('backoff ngăn gọi lại máy chủ trước hạn và API hiện trạng thái tự phục hồi', function () {
+    $channel = $this->inbox->channel;
+    $channel->update(imapSettings());
+    $fetcher = Mockery::mock(FetchEmailService::class);
+    $fetcher->shouldReceive('perform')->once()->andThrow(new MailServerException(MailServerException::CONNECTION, 'imap', 'imap.gmail.com', 993));
+    app()->bind(FetchEmailService::class, fn () => $fetcher);
+
+    (new FetchImapEmailsJob($channel))->handle();
+    expect($channel->syncBackoff()->ready())->toBeFalse()
+        ->and($channel->syncBackoff()->retryAt() - now()->timestamp)->toBeBetween(60, 75);
+    (new FetchImapEmailsJob($channel))->handle();
+    $this->actingAs($this->admin)->getJson("/api/v1/accounts/{$this->account->id}/inboxes/{$this->inbox->id}")
+        ->assertOk()->assertJsonPath('reauthorization_required', false)
+        ->assertJsonPath('connection_error', __('inbox_mgmt.CONNECTION_CHECK.SYNC_INTERRUPTED'));
+
+    $this->travelTo(now()->setTimestamp($channel->syncBackoff()->retryAt()));
+    expect($channel->syncBackoff()->ready())->toBeTrue();
+});
+
+it('cờ lỗi mạng từ phiên bản cũ không chặn job, nhưng yêu cầu xác thực mới vẫn chặn', function () {
+    $channel = $this->inbox->channel;
+    $channel->update(imapSettings());
+    $channel->recordConnectionFailure(new MailServerException(MailServerException::CONNECTION, 'imap', 'imap.gmail.com', 993));
+    $objectType = str_replace('::', '_', strtolower($channel->getMorphClass()));
+    Redis::set("REAUTHORIZATION_REQUIRED::{$objectType}::{$channel->id}", true);
+    expect($channel->reauthorizationRequired())->toBeFalse();
+
+    $channel->promptReauthorization();
+    expect($channel->reauthorizationRequired())->toBeTrue();
 });

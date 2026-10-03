@@ -15,14 +15,18 @@ use Throwable;
 
 /**
  * Quét hộp thư
- * của một kênh. Khóa 5 phút để hai worker không quét trùng (MutexApplicationJob),
+ * của một kênh. Khóa 150 giây, dài hơn timeout job 120 giây, để hai worker không quét trùng;
  * thư nào lỗi 3 lần liên tiếp thì bỏ qua trong 6 tiếng.
  */
 class FetchImapEmailsJob extends ApplicationJob
 {
-    private const LOCK_SECONDS = 300;
+    private const LOCK_SECONDS = 150;
 
     private const MAX_FAILURES_PER_EMAIL = 3;
+
+    public int $timeout = 120;
+
+    public bool $failOnTimeout = true;
 
     public function __construct(
         public readonly Email $channel,
@@ -36,6 +40,10 @@ class FetchImapEmailsJob extends ApplicationJob
                 .' : imap_enabled: '.var_export($this->channel->imap_enabled, true)
                 .', reauthorization_required: '.var_export($this->channel->reauthorizationRequired(), true));
 
+            return;
+        }
+
+        if (! $this->channel->syncBackoff()->ready()) {
             return;
         }
 
@@ -63,7 +71,8 @@ class FetchImapEmailsJob extends ApplicationJob
     private function processEmailsForChannel(): void
     {
         try {
-            $emails = app(FetchEmailService::class, ['channel' => $this->channel, 'interval' => $this->interval])->perform();
+            $fetcher = app(FetchEmailService::class, ['channel' => $this->channel, 'interval' => $this->interval]);
+            $emails = $fetcher->perform();
         } catch (MailServerException $exception) {
             Log::warning('[IMAP] Connection failed for inbox '.$this->channel->inbox->id.' : '.$exception->getMessage());
             $this->channel->recordConnectionFailure($exception);
@@ -75,33 +84,41 @@ class FetchImapEmailsJob extends ApplicationJob
             return;
         }
 
-        if ($this->channel->authorizationErrorCount() > 0) {
-            $this->channel->reauthorized();
-        }
+        $this->channel->reauthorized();
 
         // Lấy thư thành công lần đầu = IMAP đã nối được (chống trùng theo hộp thư).
         app(ProductEventHooks::class)->channelConnected($this->channel->inbox, 'imap');
 
         foreach ($emails as $email) {
-            $this->processMail($email);
+            if ($this->processMail($email)) {
+                $fetcher->acknowledge($email);
+            }
         }
+
+        $fetcher->commitSyncProgress();
     }
 
-    private function processMail(MailPresenter $mail): void
+    private function processMail(MailPresenter $mail): bool
     {
         $messageId = (string) $mail->messageId();
 
         if ($this->failureCount($messageId) >= self::MAX_FAILURES_PER_EMAIL) {
             Log::warning('[IMAP] Skipping problematic email: '.$messageId);
 
-            return;
+            return false;
         }
 
         try {
             (new ImapMailbox)->process($mail, $this->channel);
+
+            Cache::forget($this->failureKey($messageId));
+
+            return true;
         } catch (Throwable $exception) {
             Cache::put($this->failureKey($messageId), $this->failureCount($messageId) + 1, now()->addHours(6));
             Log::error('[IMAP] Failed to process email '.$messageId.': '.$exception->getMessage());
+
+            return false;
         }
     }
 

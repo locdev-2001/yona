@@ -2041,3 +2041,15 @@ php artisan horizon:terminate && php artisan reverb:restart
 
 Migration **không** rollback tự động. Nếu commit cũ cần schema cũ thì phải khôi
 phục từ `pg_dump` — đó là lý do luôn dump trước khi deploy có migration.
+
+
+### Tự phục hồi đồng bộ IMAP (03/10/2026)
+
+- `IMAP_READ_TIMEOUT=20`: timeout đọc/kết nối IMAP riêng, không dùng `SMTP_READ_TIMEOUT`.
+- `IMAP_LOGOUT_TIMEOUT=2`: chờ phản hồi logout của phiên khỏe. Phiên lỗi đóng socket ngay, không NOOP/reconnect.
+- `IMAP_RETRY_MAX_SECONDS=600`: khoảng chờ lỗi mạng tăng từ 60 giây, tối đa 600 giây cộng 0–15 giây jitter; lịch mỗi phút nên lượt thử thực tế được làm tròn tới nhịp scheduler tiếp theo.
+- Giới hạn lượt fetch kiểm tra giữa các pha là 90 giây; job có timeout cứng 120 giây, lock 150 giây. Timeout socket là thời gian chờ đọc, không phải deadline tuyệt đối nếu server gửi nhỏ giọt. Worker phải bật xử lý timeout của Laravel (`pcntl`).
+- Migration `2026_10_03_110000_add_imap_sync_state_to_channel_email` thêm JSONB nullable. Deploy migration trước khi worker chạy code mới. Không backfill thư hoặc sửa dữ liệu khách.
+- `imap_sync_state` lưu định danh hộp thư, UIDVALIDITY, UID đã quét và UID còn phải thử. Lượt đầu giữ cửa sổ SINCE hiện tại; các lượt sau lấy UID mới nên outage nhiều ngày không làm thư mới rơi ra ngoài cửa sổ. UIDVALIDITY đổi thì quét lại INBOX theo lô, chống trùng theo Message-ID.
+- Cờ cấp quyền lại từ bản cũ có lỗi gần nhất là `connection` được coi là có thể phục hồi. Không cần xóa Redis hàng loạt. Lỗi xác thực vẫn yêu cầu người dùng kết nối lại.
+- Nghiệm thu production sau deploy: theo dõi từng pha, trạng thái lỗi, khoảng chờ; thử một email có Message-ID biết trước trên inbox được phép và đối chiếu DB. Chưa đo được tuyến mạng production qua cổng SSH chỉ cho status/deploy/log; cần thao tác trên server hoặc bổ sung một hành động chẩn đoán chỉ đọc riêng để đo DNS/TCP/TLS/IPv4/IPv6.

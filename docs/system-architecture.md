@@ -74,8 +74,14 @@ PostgreSQL (`pg_trgm`) · Redis (cache, queue, session) · Laravel Reverb
 - **Kênh mất kết nối**: kênh dùng `Reauthorizable` (đếm lỗi trong Redis, quá
   ngưỡng hoặc lỗi xác thực thì `promptReauthorization()`); lõi đọc qua
   `Inbox::reauthorizationRequired()` (cần năng lực `session_reauth`). Email ghi
-  thêm lần hỏng gần nhất để API trả `connection_error`; job quét thư thành công
-  hoặc lưu lại cấu hình đúng thì `reauthorized()` gỡ cờ.
+  thêm lần hỏng gần nhất để API trả `connection_error`. Riêng Email, lỗi mạng
+  không bật cờ cấp quyền lại: `EmailSyncBackoff` tự thử lại với khoảng chờ tăng
+  dần, tối đa 10 phút cộng jitter; chỉ lỗi xác thực yêu cầu kết nối lại. Job quét
+  thành công hoặc lưu cấu hình đúng thì `reauthorized()` gỡ trạng thái lỗi.
+  `ImapSyncCursor` lưu UIDVALIDITY, UID đã quét và UID cần thử lại trong
+  `channel_email.imap_sync_state`; chỉ checkpoint sau khi xử lý từng thư. Mỗi
+  lượt tối đa 500 UID, dành tối đa 100 chỗ cho thư lỗi, phần còn lại nhận thư
+  mới. UIDVALIDITY đổi thì quét lại INBOX, chống trùng bằng Message-ID.
 - Zalo cá nhân là một driver như mọi kênh khác (`Channel::Zalo`), nói chuyện với
   bridge Node qua `app/Services/Zalo/ZaloBridgeClient.php`.
 - Ghi âm ở ô soạn: bản ghi là đính kèm âm thanh mang `meta.is_voice_message`

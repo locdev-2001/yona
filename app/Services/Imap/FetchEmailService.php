@@ -7,6 +7,7 @@ use App\Services\Email\MailPresenter;
 use App\Services\Email\MailServerException;
 use App\Services\Email\OAuth\EmailOAuthTokenManager;
 use Illuminate\Support\Facades\Log;
+use RuntimeException;
 use Throwable;
 use Webklex\PHPIMAP\Client;
 use Webklex\PHPIMAP\ClientManager;
@@ -22,6 +23,14 @@ class FetchEmailService
     public const MAX_MESSAGES_PER_SYNC = 500;
 
     private ?Client $client = null;
+
+    private bool $fetchSucceeded = false;
+
+    private ?ImapSyncCursor $cursor = null;
+
+    private array $mailUids = [];
+
+    private int $startedAt = 0;
 
     /** @var array<string, int> Thời gian (ms) từng pha IMAP của lượt quét, để biết lượt chậm nằm ở đâu. */
     private array $phaseMs = [];
@@ -39,9 +48,13 @@ class FetchEmailService
     public function perform(): array
     {
         $startedAt = hrtime(true);
+        $this->startedAt = $startedAt;
 
         try {
-            return $this->fetchEmails();
+            $emails = $this->fetchEmails();
+            $this->fetchSucceeded = true;
+
+            return $emails;
         } finally {
             $this->timed('disconnect', fn () => $this->terminateConnection());
             $this->reportSlowFetch(self::elapsedMs($startedAt));
@@ -58,8 +71,9 @@ class FetchEmailService
      */
     private function fetchEmails(): array
     {
-        $connection = $this->timed('connect', fn () => $this->client()->getConnection());
-        $this->timed('open_inbox', fn () => $connection->examineFolder('INBOX')->validatedData());
+        $connection = $this->timed('connect', fn () => $this->client()->connection ?? throw new RuntimeException('IMAP connection unavailable'));
+        $folder = $this->timed('open_inbox', fn () => $connection->examineFolder('INBOX')->validatedData());
+        $this->cursor = new ImapSyncCursor($this->channel, (array) $folder);
         $uids = $this->timed('search', fn () => $this->recentUids($connection));
         $this->messageCounts['in_window'] = count($uids);
 
@@ -82,7 +96,13 @@ class FetchEmailService
         $emails = [];
 
         foreach ($newHeaders as $uid => $rawHeader) {
-            $emails[] = MailPresenter::fromRaw($rawHeader."\r\n".($rawBodies[$uid] ?? ''), $this->channel->account);
+            if (! array_key_exists($uid, $rawBodies)) {
+                throw new RuntimeException('IMAP body missing for UID '.$uid);
+            }
+
+            $mail = MailPresenter::fromRaw($rawHeader."\r\n".$rawBodies[$uid], $this->channel->account);
+            $this->mailUids[spl_object_id($mail)] = (int) $uid;
+            $emails[] = $mail;
         }
 
         Log::info('[IMAP] Fetched '.count($emails).' new emails for inbox '.$this->channel->inbox->id);
@@ -90,12 +110,26 @@ class FetchEmailService
         return $emails;
     }
 
-    /** @return list<int> UID thư từ mốc cửa sổ, mới nhất giữ lại khi vượt trần một lượt. */
+    /** @return list<int> UID chưa xử lý, ưu tiên thư cần thử lại và nhận thư mới từ cũ tới mới. */
     private function recentUids(ProtocolInterface $connection): array
     {
-        $uids = (array) $connection->search(['SINCE "'.$this->since().'"'], IMAP::ST_UID)->validatedData();
+        $uids = (array) $connection->search($this->cursor->criteria($this->since()), IMAP::ST_UID)->validatedData();
 
-        return array_slice(array_map('intval', $uids), -self::MAX_MESSAGES_PER_SYNC);
+        return $this->cursor->select($uids);
+    }
+
+    public function acknowledge(MailPresenter $mail): void
+    {
+        $uid = $this->mailUids[spl_object_id($mail)] ?? null;
+
+        if ($uid !== null) {
+            $this->cursor?->completed($uid);
+        }
+    }
+
+    public function commitSyncProgress(): void
+    {
+        $this->cursor?->checkpoint();
     }
 
     /**
@@ -105,15 +139,27 @@ class FetchEmailService
     private function headersOfNewMails(array $rawHeaders): array
     {
         $tracker = new DeletedMessageTracker($this->channel->inbox);
+        $presenters = array_map(fn (string $header) => MailPresenter::fromRaw($header, $this->channel->account), $rawHeaders);
+        $messageIds = array_filter(array_map(fn (MailPresenter $mail) => $mail->messageId(), $presenters));
+        $knownIds = $this->channel->inbox->messages()->whereIn('source_id', $messageIds)->pluck('source_id')->flip();
+        $deletedIds = array_fill_keys($tracker->deletedIds(array_values($messageIds)), true);
 
-        return array_filter($rawHeaders, function (string $rawHeader) use ($tracker) {
-            $headers = MailPresenter::fromRaw($rawHeader, $this->channel->account);
+        return array_filter($rawHeaders, function (string $rawHeader, int|string $uid) use ($deletedIds, $presenters, $knownIds) {
+            $headers = $presenters[$uid];
             $messageId = $headers->messageId();
 
-            return filled($messageId)
-                && ! $headers->isNotificationEmailFromSelf()
-                && ! $this->emailAlreadyPresent((string) $messageId, $tracker);
-        });
+            if (blank($messageId)) {
+                return false;
+            }
+
+            if ($headers->isNotificationEmailFromSelf() || $knownIds->has($messageId) || isset($deletedIds[$messageId])) {
+                $this->cursor?->completed((int) $uid);
+
+                return false;
+            }
+
+            return true;
+        }, ARRAY_FILTER_USE_BOTH);
     }
 
     /**
@@ -127,7 +173,28 @@ class FetchEmailService
         $startedAt = hrtime(true);
 
         try {
+            if ($name !== 'disconnect') {
+                $remaining = 90 - intdiv(self::elapsedMs($this->startedAt), 1000);
+
+                if ($remaining <= 0) {
+                    throw new RuntimeException('IMAP fetch deadline exceeded');
+                }
+
+                $stream = $this->client?->connection?->getStream();
+
+                if (is_resource($stream)) {
+                    stream_set_timeout($stream, min($remaining, max(1, (int) config('mail.imap_read_timeout'))));
+                }
+            }
+
             return $phase();
+        } catch (Throwable $exception) {
+            Log::warning('[IMAP] Phase failed for inbox '.$this->channel->inbox->id, [
+                'phase' => $name,
+                'exception_class' => $exception::class,
+            ]);
+
+            throw MailServerException::fromImap($exception, (string) $this->channel->imap_address, (int) $this->channel->imap_port);
         } finally {
             $this->phaseMs[$name] = ($this->phaseMs[$name] ?? 0) + self::elapsedMs($startedAt);
         }
@@ -150,12 +217,6 @@ class FetchEmailService
             'messages_in_window' => $this->messageCounts['in_window'],
             'new_messages' => $this->messageCounts['new'],
         ]);
-    }
-
-    private function emailAlreadyPresent(string $messageId, DeletedMessageTracker $tracker): bool
-    {
-        return $this->channel->inbox->messages()->where('source_id', $messageId)->exists()
-            || $tracker->isDeleted($messageId);
     }
 
     private function client(): Client
@@ -188,7 +249,7 @@ class FetchEmailService
             'password' => $this->imapPassword(),
             'protocol' => 'imap',
             'authentication' => $this->usesOAuth() ? 'oauth' : null,
-            'timeout' => config('mail.smtp_read_timeout'),
+            'timeout' => max(1, (int) config('mail.imap_read_timeout')),
         ];
     }
 
@@ -213,10 +274,27 @@ class FetchEmailService
 
     private function terminateConnection(): void
     {
+        $connection = $this->client?->connection;
+        $stream = $connection?->getStream();
+
+        if (! is_resource($stream)) {
+            return;
+        }
+
         try {
-            $this->client?->disconnect();
+            if ($this->fetchSucceeded) {
+                stream_set_timeout($stream, max(1, (int) config('mail.imap_logout_timeout')));
+                $connection->logout();
+            }
         } catch (Throwable $exception) {
-            Log::info('[IMAP] Logout failed for '.$this->channel->email.' - '.$exception->getMessage());
+            Log::info('[IMAP] Logout failed for inbox '.$this->channel->inbox->id, ['exception_class' => $exception::class]);
+        } finally {
+            if (is_resource($stream)) {
+                fclose($stream);
+            }
+
+            $connection->reset();
+            $this->client->connection = null;
         }
     }
 }

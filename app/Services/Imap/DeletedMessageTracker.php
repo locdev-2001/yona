@@ -19,14 +19,36 @@ class DeletedMessageTracker
             return;
         }
 
-        foreach (array_filter($sourceIds) as $sourceId) {
+        $sourceIds = array_values(array_unique(array_filter($sourceIds)));
+
+        if ($sourceIds === []) {
+            return;
+        }
+
+        foreach ($sourceIds as $sourceId) {
             Redis::setex($this->redisKey($sourceId), self::TTL_SECONDS, true);
         }
     }
 
     public function isDeleted(string $sourceId): bool
     {
-        return (bool) Redis::exists($this->redisKey($sourceId));
+        return in_array($sourceId, $this->deletedIds([$sourceId]), true);
+    }
+
+    /** @param list<string> $sourceIds
+     * @return list<string>
+     */
+    public function deletedIds(array $sourceIds): array
+    {
+        $sourceIds = array_values(array_unique(array_filter($sourceIds)));
+
+        if ($sourceIds === []) {
+            return [];
+        }
+
+        $legacyValues = Redis::mget(array_map(fn (string $id) => $this->redisKey($id), $sourceIds));
+
+        return array_values(array_filter($sourceIds, fn (string $id, int $index) => filled($legacyValues[$index] ?? null), ARRAY_FILTER_USE_BOTH));
     }
 
     private function redisKey(string $sourceId): string

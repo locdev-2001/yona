@@ -7866,6 +7866,7 @@ const messages: Record<string, unknown> = {
             "VOICE": "Thoại"
         },
         "CONNECTION_CHECK": {
+            "SYNC_INTERRUPTED": "Đồng bộ email đang gián đoạn do lỗi kết nối. Yona sẽ tự thử lại; bạn chưa cần kết nối lại tài khoản.",
             "AUTH_FAILED": "Máy chủ {protocol} {host} từ chối đăng nhập. Kiểm tra lại tài khoản và mật khẩu.",
             "CONNECTION_FAILED": "Không kết nối được tới máy chủ {protocol} {host}:{port}. Kiểm tra địa chỉ máy chủ, cổng và tuỳ chọn SSL.",
             "GMAIL_APP_PASSWORD": "Gmail không nhận mật khẩu đăng nhập Google: hãy bật Xác minh 2 bước rồi tạo Mật khẩu ứng dụng (App Password) tại {url} và dán vào ô mật khẩu.",

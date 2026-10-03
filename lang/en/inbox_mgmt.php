@@ -1417,6 +1417,7 @@ return [
         'VOICE' => 'Voice',
     ],
     'CONNECTION_CHECK' => [
+        'SYNC_INTERRUPTED' => 'Email sync is temporarily interrupted by a connection problem. Yona will retry automatically; you do not need to reconnect your account yet.',
         'AUTH_FAILED' => 'The {protocol} server {host} rejected the login. Check the username and password.',
         'CONNECTION_FAILED' => 'Could not connect to the {protocol} server {host}:{port}. Check the server address, port and SSL option.',
         'GMAIL_APP_PASSWORD' => 'Gmail does not accept your Google account password here: turn on 2-Step Verification, create an App Password at {url} and paste it into the password field.',

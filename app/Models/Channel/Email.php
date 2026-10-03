@@ -19,6 +19,7 @@ use App\Models\Message;
 use App\Services\Email\EmailProviderPresets;
 use App\Services\Email\MailServerException;
 use App\Services\Email\OAuth\EmailOAuthProviders;
+use App\Services\Imap\EmailSyncBackoff;
 use Database\Factories\Channel\EmailFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -29,6 +30,8 @@ class Email extends Model implements DeclaresCapabilities, DeclaresConnection, D
     /** @use HasFactory<EmailFactory> */
     use Channelable, HasFactory, Reauthorizable {
         Reauthorizable::reauthorized as clearReauthorizationFlags;
+        Reauthorizable::reauthorizationRequired as authorizationFlagRequired;
+        Reauthorizable::promptReauthorization as markReauthorizationRequired;
     }
 
     public const AUTHORIZATION_ERROR_THRESHOLD = 10;
@@ -93,6 +96,7 @@ class Email extends Model implements DeclaresCapabilities, DeclaresConnection, D
             'verified_for_sending' => 'boolean',
             // Token OAuth (access/refresh) mã hoá ngay trong cột jsonb.
             'provider_config' => EncryptedSecretsArray::class.':access_token,refresh_token',
+            'imap_sync_state' => 'array',
         ];
     }
 
@@ -148,25 +152,57 @@ class Email extends Model implements DeclaresCapabilities, DeclaresConnection, D
     {
         Cache::forever($this->connectionFailureKey(), $exception->toArray());
 
-        $exception->isAuthentication() ? $this->promptReauthorization() : $this->authorizationError();
+        if ($exception->isAuthentication()) {
+            $this->promptReauthorization();
+        } else {
+            $this->syncBackoff()->failed();
+        }
+    }
+
+    public function reauthorizationRequired(): bool
+    {
+        $failure = Cache::get($this->connectionFailureKey());
+
+        // Cờ do lỗi mạng của bản cũ không được ngăn lượt quét tự phục hồi.
+        return $this->authorizationFlagRequired()
+            && (! is_array($failure) || ($failure['reason'] ?? null) !== MailServerException::CONNECTION);
+    }
+
+    public function syncBackoff(): EmailSyncBackoff
+    {
+        return new EmailSyncBackoff((int) $this->getKey());
+    }
+
+    public function promptReauthorization(): void
+    {
+        $failure = Cache::get($this->connectionFailureKey());
+
+        if (is_array($failure) && ($failure['reason'] ?? null) === MailServerException::CONNECTION) {
+            Cache::forget($this->connectionFailureKey());
+        }
+
+        $this->markReauthorizationRequired();
     }
 
     /** Lời nhắn cho người dùng về lần hỏng gần nhất, chỉ khi hộp thư đang bị đánh dấu lỗi. */
     public function connectionError(): ?string
     {
-        if (! $this->reauthorizationRequired()) {
+        $failure = Cache::get($this->connectionFailureKey());
+
+        if (! is_array($failure)) {
             return null;
         }
 
-        $failure = Cache::get($this->connectionFailureKey());
-
-        return is_array($failure) ? MailServerException::messageFor($failure) : null;
+        return ($failure['reason'] ?? null) === MailServerException::CONNECTION
+            ? __('inbox_mgmt.CONNECTION_CHECK.SYNC_INTERRUPTED')
+            : ($this->reauthorizationRequired() ? MailServerException::messageFor($failure) : null);
     }
 
     public function reauthorized(): void
     {
         $this->clearReauthorizationFlags();
         Cache::forget($this->connectionFailureKey());
+        $this->syncBackoff()->recovered();
     }
 
     private function connectionFailureKey(): string
