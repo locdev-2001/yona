@@ -2046,6 +2046,7 @@ phục từ `pg_dump` — đó là lý do luôn dump trước khi deploy có mig
 ### Tự phục hồi đồng bộ IMAP (03/10/2026)
 
 - `IMAP_READ_TIMEOUT=20`: timeout đọc/kết nối IMAP riêng, không dùng `SMTP_READ_TIMEOUT`.
+- `IMAP_SLOW_FETCH_MS=10000`: ngưỡng chung cho log pha IMAP, cảnh báo `queue.job.slow` của job quét IMAP và thẻ Slow Jobs trong Pulse. Job khác vẫn dùng `PULSE_SLOW_JOBS_THRESHOLD` (mặc định 1000 ms); thêm ngưỡng riêng cho job khác tại `config/pulse.php`, không rẽ nhánh theo kênh trong bộ ghi log.
 - `IMAP_LOGOUT_TIMEOUT=2`: chờ phản hồi logout của phiên khỏe. Phiên lỗi đóng socket ngay, không NOOP/reconnect.
 - `IMAP_RETRY_MAX_SECONDS=600`: khoảng chờ lỗi mạng tăng từ 60 giây, tối đa 600 giây cộng 0–15 giây jitter; lịch mỗi phút nên lượt thử thực tế được làm tròn tới nhịp scheduler tiếp theo.
 - Giới hạn lượt fetch kiểm tra giữa các pha là 90 giây; job có timeout cứng 120 giây, lock 150 giây. Timeout socket là thời gian chờ đọc, không phải deadline tuyệt đối nếu server gửi nhỏ giọt. Worker phải bật xử lý timeout của Laravel (`pcntl`).

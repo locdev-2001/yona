@@ -10,6 +10,8 @@ use Illuminate\Queue\Events\JobProcessed;
 use Illuminate\Queue\Events\JobProcessing;
 use Illuminate\Queue\Events\JobReleasedAfterException;
 use Illuminate\Support\Facades\Log;
+use Laravel\Pulse\Recorders\Concerns\Thresholds;
+use Laravel\Pulse\Recorders\SlowJobs;
 
 /**
  * Job chạy quá ngưỡng thì ghi một dòng log chia thời gian theo khâu: SQL, HTTP ra
@@ -19,8 +21,7 @@ use Illuminate\Support\Facades\Log;
  */
 final class SlowJobBreakdown
 {
-    /** Cùng ngưỡng job chậm của Pulse (config/pulse.php, SlowJobs). */
-    public const THRESHOLD_MS = 1000;
+    use Thresholds;
 
     public const LOG_MESSAGE = 'queue.job.slow';
 
@@ -36,9 +37,9 @@ final class SlowJobBreakdown
 
     private int $jobsInProcess = 0;
 
-    private function __construct(private readonly int $thresholdMs) {}
+    private function __construct(private readonly ?int $thresholdMs) {}
 
-    public static function register(Dispatcher $events, int $thresholdMs = self::THRESHOLD_MS): void
+    public static function register(Dispatcher $events, ?int $thresholdMs = null): void
     {
         $breakdown = new self($thresholdMs);
 
@@ -92,14 +93,17 @@ final class SlowJobBreakdown
         $totalMs = (hrtime(true) - $this->startedAt) / 1e6;
         $this->startedAt = null;
 
-        if ($totalMs < $this->thresholdMs) {
+        $jobName = $event->job->resolveName();
+        $thresholdMs = $this->thresholdMs ?? $this->threshold($jobName, SlowJobs::class);
+
+        if ($totalMs < $thresholdMs) {
             return;
         }
 
         $pushedAt = $event->job->payload()['pushedAt'] ?? null;
 
         Log::warning(self::LOG_MESSAGE, [
-            'job' => $event->job->resolveName(),
+            'job' => $jobName,
             'queue' => $event->job->getQueue(),
             'total_ms' => (int) round($totalMs),
             'db_ms' => (int) round($this->databaseMs),
