@@ -204,6 +204,26 @@ describe('chỉnh lại ảnh sticker đã lưu', function () {
         $this->disk->assertExists($this->sticker->fresh()->static_path);
     });
 
+    it('lưu viền, trả cấu hình khi mở lại và viền tắt giữ hash cũ', function () {
+        $edit = [...$this->edit, 'strokeWidth' => 0.03];
+        $this->patchJson($this->url, ['edit' => json_encode($edit)])
+            ->assertOk()->assertJsonPath('edit.strokeWidth', 0.03);
+        expect($this->sticker->fresh()->edit_params['strokeWidth'])->toBe(0.03)
+            ->and($this->renderer->calls[0]['edit']['strokeWidth'])->toBe(0.03);
+        $this->getJson("/api/v1/accounts/{$this->account->id}/sticker_packs/{$this->pack->id}")
+            ->assertOk()->assertJsonPath('stickers.1.edit.strokeWidth', 0.03);
+
+        $this->patchJson($this->url, ['edit' => json_encode($this->edit)])->assertOk();
+        $withoutStroke = $this->sticker->fresh()->content_hash;
+        $this->patchJson($this->url, ['edit' => json_encode([...$this->edit, 'strokeWidth' => 0])])->assertOk();
+        expect($this->sticker->fresh()->content_hash)->toBe($withoutStroke);
+    });
+
+    it('viền sai trả lỗi trường bằng tiếng Việt', function () {
+        $this->patchJson($this->url.'?locale=vi', ['edit' => '{"strokeWidth":0.09}'])
+            ->assertUnprocessable()->assertJsonPath('errors.edit.0', trans('errors.sticker_uploads.invalid_edit', [], 'vi'));
+    });
+
     it('nhãn, từ khoá và ảnh sửa cùng một lượt', function () {
         $this->patchJson($this->url, ['edit' => json_encode($this->edit), 'label' => 'Mèo mới', 'keywords' => ['mới']])
             ->assertOk()
@@ -238,6 +258,9 @@ describe('chỉnh lại ảnh sticker đã lưu', function () {
             ->and($this->renderer->calls)->toBe([]);
     })->with([
         'JSON hỏng' => ['{'],
+        'viền âm' => ['{"strokeWidth":-0.01}'],
+        'viền vượt trần' => ['{"strokeWidth":0.09}'],
+        'viền không phải số' => ['{"strokeWidth":"0.03"}'],
         'crop ngoài ảnh' => [json_encode(['crop' => ['x' => 2, 'y' => 0, 'w' => 0.5, 'h' => 0.5]])],
         'removeBackground không phải boolean' => [json_encode(['removeBackground' => 'có'])],
     ]);

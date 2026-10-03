@@ -1,3 +1,4 @@
+import { addWhiteStroke } from 'sticker-renderer/image/white-stroke.mjs';
 import { applyMask, buildMask, DEFAULT_TOLERANCE } from 'sticker-renderer/image/background-mask.mjs';
 import { cropGeometry, editsInRegion, opaqueBounds, squareLayout } from 'sticker-renderer/image/sticker-geometry.mjs';
 import type { SquareLayout } from 'sticker-renderer/image/sticker-geometry.mjs';
@@ -94,7 +95,10 @@ export function renderSticker(source: SourceFrames, edit: StickerEdit): Rendered
     const bounds = opaqueBounds(regionFrames, region.width, region.height);
     const layout = squareLayout(edit.fit, frame, region, bounds);
 
-    return { frame, region, regionFrames, bounds, layout, squareFrames: composeSquare(regionFrames, region.width, layout) };
+    const stroked = addWhiteStroke(composeSquare(regionFrames, region.width, layout), layout.side, edit.strokeWidth);
+    const strokeLayout = { ...layout, side: stroked.side, offsetX: layout.offsetX + stroked.padding, offsetY: layout.offsetY + stroked.padding };
+
+    return { frame, region, regionFrames, bounds, layout: strokeLayout, squareFrames: stroked.frames };
 }
 
 export const renderedBuffers = (rendered: RenderedSticker): ArrayBuffer[] =>

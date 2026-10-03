@@ -2,6 +2,7 @@ import { useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import type { FormEvent, ReactNode } from 'react';
 
 import { DEFAULT_TOLERANCE } from 'sticker-renderer/image/background-mask.mjs';
+import { DEFAULT_STROKE_WIDTH, MAX_STROKE_WIDTH } from 'sticker-renderer/image/white-stroke.mjs';
 
 import { t } from '../../../i18n';
 import { parseApiErrorMessage } from 'dashboard/helper/apiClient';
@@ -24,7 +25,7 @@ import { StickerFileTooLargeError } from './stickerUploadFile';
 import type { LibrarySticker, UploadedSticker } from './types';
 
 // Thông số của ảnh đang chỉnh áp cho các ảnh còn lại khi Lưu tất cả.
-export type BulkSaveSettings = Pick<StickerDraft, 'removeBackground' | 'tolerance'>;
+export type BulkSaveSettings = Pick<StickerDraft, 'removeBackground' | 'tolerance' | 'strokeWidth'>;
 
 interface StickerEditorWorkspaceProps {
     source: EditableSource;
@@ -202,7 +203,11 @@ export default function StickerEditorWorkspace({
     const saveAll = async () => {
         if (!canSaveAll) return;
         setSaveError(null);
-        await onSaveAll(upload(), { removeBackground: draft.removeBackground, tolerance: draft.tolerance }, throttle.startWaiting);
+        await onSaveAll(
+            upload(),
+            { removeBackground: draft.removeBackground, tolerance: draft.tolerance, strokeWidth: draft.strokeWidth ?? 0 },
+            throttle.startWaiting,
+        );
     };
 
     const updateExisting = async () => {
@@ -420,11 +425,35 @@ export default function StickerEditorWorkspace({
         </div>
     );
 
+    const strokeSettings = (
+        <div className="flex flex-col gap-2">
+            <Switch
+                checked={(draft.strokeWidth ?? 0) > 0}
+                label={editorText('WHITE_STROKE')}
+                onChange={enabled => dispatch({ type: 'set-stroke-width', strokeWidth: enabled ? DEFAULT_STROKE_WIDTH : 0 })}
+            />
+            {draft.strokeWidth ? (
+                <>
+                    <span className="text-xs text-n-slate-11">{editorText('STROKE_WIDTH')}</span>
+                    <StickerSlider
+                        label={editorText('STROKE_WIDTH')}
+                        value={Math.round(draft.strokeWidth * 100)}
+                        valueText={`${Math.round(draft.strokeWidth * 100)}%`}
+                        min={1}
+                        max={MAX_STROKE_WIDTH * 100}
+                        onChange={percent => dispatch({ type: 'set-stroke-width', strokeWidth: percent / 100, merge: true })}
+                    />
+                    <p className="m-0 text-xs text-n-slate-11">{editorText('STROKE_HINT')}</p>
+                </>
+            ) : null}
+        </div>
+    );
+
     const useOriginal = (
         <button
             type="button"
             className="reset-base self-start border-0 bg-transparent p-0 text-sm font-medium text-n-brand underline-offset-2 hover:underline disabled:cursor-not-allowed disabled:text-n-slate-10 disabled:no-underline"
-            disabled={!draft.removeBackground && draft.edits.length === 0 && draft.tolerance === DEFAULT_TOLERANCE}
+            disabled={!draft.removeBackground && draft.edits.length === 0 && draft.tolerance === DEFAULT_TOLERANCE && !draft.strokeWidth}
             onClick={() => dispatch({ type: 'use-original' })}
         >
             {editorText('USE_ORIGINAL')}
@@ -501,8 +530,9 @@ export default function StickerEditorWorkspace({
                                 <>
                                     <p className="m-0 text-xs text-n-slate-11">{editorText(hint)}</p>
                                     {notices}
-                                    {preview128}
                                     {backgroundSettings}
+                                    {strokeSettings}
+                                    {preview128}
                                     {useOriginal}
                                 </>
                             ) : (
@@ -522,6 +552,7 @@ export default function StickerEditorWorkspace({
                             {preview128}
                             {notices}
                             {backgroundSettings}
+                            {strokeSettings}
                             {metaFields}
                             {useOriginal}
                         </div>

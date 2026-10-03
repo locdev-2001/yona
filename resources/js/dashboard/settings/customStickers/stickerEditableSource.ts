@@ -45,6 +45,7 @@ export function newStickerDraft(loaded: LoadedStickerSource): StickerDraft {
         framing,
         crop: framing === 'fit' ? fitCrop(size) : subjectCrop(loaded.subject.subject, size),
         removeBackground: false,
+        strokeWidth: 0,
         tolerance: DEFAULT_TOLERANCE,
         edits: [],
     };
@@ -91,6 +92,7 @@ export function restoredStickerDraft(saved: SavedStickerEdit | null, size: Image
         framing: savedFraming(edit, crop, size),
         crop,
         removeBackground: edit.removeBackground ?? RENDERER_DEFAULT_REMOVE_BACKGROUND,
+        strokeWidth: edit.strokeWidth ?? 0,
         tolerance,
         edits,
     };

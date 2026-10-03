@@ -609,3 +609,44 @@ describe('StickerImageEditor · đóng', () => {
         expect(window.history.state).toMatchObject({ stickerImageEditor: true });
     });
 });
+
+describe('viền trắng', () => {
+    it('mặc định tắt, xem trước đổi ngay, hoàn tác/làm lại và lưu độ dày đã chọn', async () => {
+        const props = renderEditor();
+        await openStage();
+        const toggle = screen.getByRole('switch', { name: 'Viền trắng' });
+        expect(toggle).toHaveAttribute('aria-checked', 'false');
+        expect(screen.queryByRole('slider', { name: 'Độ dày' })).not.toBeInTheDocument();
+        fireEvent.click(toggle);
+        const slider = screen.getByRole('slider', { name: 'Độ dày' });
+        expect(slider).toHaveAttribute('aria-valuenow', '3');
+        fireEvent.keyDown(slider, { key: 'End' });
+        await waitFor(() => expect(renderedEdits.at(-1)?.strokeWidth).toBe(0.08));
+        fireEvent.click(toolbarUndo());
+        expect(slider).toHaveAttribute('aria-valuenow', '3');
+        fireEvent.click(screen.getByRole('button', { name: 'Làm lại' }));
+        expect(slider).toHaveAttribute('aria-valuenow', '8');
+        expect((await savedUpload(props)).edit.strokeWidth).toBe(0.08);
+    });
+
+    it('mở lại khôi phục viền và Dùng ảnh gốc tắt viền', async () => {
+        const props = renderEditor({ reedit: { sticker: { label: 'Mèo', keywords: [] }, edit: { strokeWidth: 0.05, removeBackground: false } } });
+        await openStage();
+        expect(screen.getByRole('slider', { name: 'Độ dày' })).toHaveAttribute('aria-valuenow', '5');
+        fireEvent.click(screen.getByRole('button', { name: 'Dùng ảnh gốc' }));
+        expect(screen.getByRole('switch', { name: 'Viền trắng' })).toHaveAttribute('aria-checked', 'false');
+        expect((await savedUpload(props)).edit.strokeWidth).toBeUndefined();
+    });
+
+    it('Lưu tất cả áp dụng viền cho cả ảnh đang chỉnh và các ảnh còn lại', async () => {
+        const props = renderEditor({ names: ['a.png', 'b.png'] });
+        await openStage();
+        fireEvent.click(screen.getByRole('switch', { name: 'Viền trắng' }));
+        fireEvent.keyDown(screen.getByRole('slider', { name: 'Độ dày' }), { key: 'Home' });
+        const saveAll = screen.getByRole('button', { name: /Lưu tất cả/ });
+        await waitFor(() => expect(saveAll).toBeEnabled());
+        fireEvent.click(saveAll);
+        await waitFor(() => expect(props.onUpload).toHaveBeenCalledTimes(2));
+        expect(props.onUpload.mock.calls.map(([, upload]) => upload.edit.strokeWidth)).toEqual([0.01, 0.01]);
+    });
+});

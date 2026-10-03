@@ -74,6 +74,9 @@ const baseEdit: StickerEdit = { crop: null, fit: 'cover', removeBackground: true
 describe('bản xem trước khớp pixel với renderer', () => {
     it.each<[string, Partial<StickerEdit>]>([
         ['cover cả ảnh', {}],
+        ['cover kèm viền trắng', { strokeWidth: 0.03 }],
+        ['contain viền trắng dày nhất', { fit: 'contain', strokeWidth: 0.08 }],
+        ['viền sau chỉnh đũa thần và cọ', { strokeWidth: 0.01, edits: [{ op: 'wand-remove', x: 0.5, y: 0.2, tolerance: 20 }, { op: 'brush-keep', points: [[0.4, 0.3]], radius: 0.03 }] }],
         ['cover vùng lấy trong ảnh kèm đũa thần và cọ', {
             crop: { x: 0.1, y: 0.05, w: 0.7, h: 0.5 },
             edits: [

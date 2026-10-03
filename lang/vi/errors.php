@@ -92,7 +92,7 @@ return [
         'unsupported_file_type' => 'Chỉ nhận ảnh PNG, JPG, WebP hoặc GIF.',
         'file_too_large' => 'Ảnh tải lên tối đa :max_upload_mb MB.',
         'file_unreadable' => 'Không đọc được tệp vừa tải lên, bạn thử lại nhé.',
-        'invalid_edit' => 'Thông số cắt và xoá nền không hợp lệ, bạn chỉnh lại rồi tải lên nhé.',
+        'invalid_edit' => 'Thông số chỉnh ảnh sticker không hợp lệ, bạn chỉnh lại rồi tải lên nhé.',
         'image_unreadable' => 'Không đọc được ảnh này, bạn lưu lại thành PNG hoặc JPG rồi tải lên nhé.',
         'image_too_large' => 'Ảnh quá lớn để làm sticker (quá nhiều điểm ảnh hoặc hoạt ảnh quá dài), bạn thu nhỏ hoặc cắt ngắn rồi tải lại nhé.',
         'too_many_frames' => 'Ảnh động có quá nhiều khung hình, bạn cắt bớt rồi tải lại nhé.',

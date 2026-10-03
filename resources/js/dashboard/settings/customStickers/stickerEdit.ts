@@ -33,6 +33,7 @@ export interface StickerEdit {
     crop: NormalizedRect | null;
     fit: StickerFit;
     removeBackground: boolean;
+    strokeWidth?: number;
     tolerance: number;
     feather: number;
     edits: StickerEditOperation[];
@@ -70,6 +71,7 @@ export interface StickerDraft {
     framing: StickerFraming;
     crop: CropSquare;
     removeBackground: boolean;
+    strokeWidth?: number;
     tolerance: number;
     edits: SourceEdit[];
 }
@@ -299,6 +301,7 @@ export function toStickerEdit(draft: StickerDraft, size: ImageSize): StickerEdit
         removeBackground: draft.removeBackground,
         tolerance: draft.tolerance,
         feather: 0,
+        ...((draft.strokeWidth ?? 0) > 0 ? { strokeWidth: draft.strokeWidth } : {}),
         edits: withinPointBudget(draft.edits.flatMap(edit => toCropEdits(edit, draft.crop, size))),
     };
 }

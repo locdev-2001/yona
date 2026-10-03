@@ -12,7 +12,7 @@ const MAX_UNDO_STEPS = 100;
 // Các lần nhấn phím mũi tên cách nhau dưới ngần này gộp thành một bước hoàn tác.
 export const NUDGE_MERGE_MS = 500;
 
-type ActionKind = 'tolerance' | 'nudge' | 'other';
+type ActionKind = 'tolerance' | 'stroke-width' | 'nudge' | 'other';
 
 export interface StickerEditorState {
     draft: StickerDraft;
@@ -30,6 +30,7 @@ export type StickerEditorAction =
     | { type: 'crop-nudge'; crop: CropSquare; at: number }
     | { type: 'set-remove-background'; enabled: boolean }
     | { type: 'set-tolerance'; tolerance: number }
+    | { type: 'set-stroke-width'; strokeWidth: number; merge?: boolean }
     | { type: 'wand'; op: WandOperation; x: number; y: number }
     | { type: 'brush-start'; op: BrushOperation; point: [number, number]; radius: number }
     | { type: 'brush-extend'; point: [number, number] }
@@ -92,6 +93,13 @@ export function stickerEditorReducer(state: StickerEditorState, action: StickerE
             const next = { ...draft, tolerance: action.tolerance };
             return state.lastAction?.kind === 'tolerance' ? { ...state, draft: next } : withUndoStep(state, 'tolerance', next);
         }
+        case 'set-stroke-width': {
+            if ((draft.strokeWidth ?? 0) === action.strokeWidth) return state;
+            const next = { ...draft, strokeWidth: action.strokeWidth };
+            return action.merge && state.lastAction?.kind === 'stroke-width'
+                ? { ...state, draft: next }
+                : withUndoStep(state, action.merge ? 'stroke-width' : 'other', next);
+        }
         case 'wand':
             return withUndoStep(state, 'other', {
                 ...draft,
@@ -105,8 +113,8 @@ export function stickerEditorReducer(state: StickerEditorState, action: StickerE
         case 'brush-extend':
             return { ...state, draft: { ...draft, edits: extendLastStroke(draft.edits, action.point) } };
         case 'use-original':
-            if (!draft.removeBackground && draft.edits.length === 0 && draft.tolerance === DEFAULT_TOLERANCE) return state;
-            return withUndoStep(state, 'other', { ...draft, removeBackground: false, edits: [], tolerance: DEFAULT_TOLERANCE });
+            if (!draft.removeBackground && draft.edits.length === 0 && draft.tolerance === DEFAULT_TOLERANCE && !draft.strokeWidth) return state;
+            return withUndoStep(state, 'other', { ...draft, removeBackground: false, edits: [], tolerance: DEFAULT_TOLERANCE, strokeWidth: 0 });
         case 'undo': {
             const previous = state.undoStack[state.undoStack.length - 1];
             if (!previous) return state;

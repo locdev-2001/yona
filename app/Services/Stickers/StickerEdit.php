@@ -30,6 +30,8 @@ final class StickerEdit
 
     public const MAX_FEATHER = 4;
 
+    public const MAX_STROKE_WIDTH = 0.08;
+
     public const MIN_CROP_SIDE = 0.0001;
 
     public const MAX_CROP_OVERFLOW = 8;
@@ -120,6 +122,13 @@ final class StickerEdit
 
         if (array_key_exists('feather', $root)) {
             $params['feather'] = self::number($root['feather'], 0, self::MAX_FEATHER, 'feather');
+        }
+
+        if (array_key_exists('strokeWidth', $root)) {
+            $strokeWidth = self::number($root['strokeWidth'], 0, self::MAX_STROKE_WIDTH, 'strokeWidth');
+            if ($strokeWidth > 0) {
+                $params['strokeWidth'] = $strokeWidth;
+            }
         }
 
         if (array_key_exists('edits', $root)) {

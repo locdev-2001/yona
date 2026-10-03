@@ -94,7 +94,7 @@ return [
         'unsupported_file_type' => 'Only PNG, JPG, WebP or GIF images are accepted.',
         'file_too_large' => 'Uploaded images can be at most :max_upload_mb MB.',
         'file_unreadable' => 'The uploaded file could not be read, please try again.',
-        'invalid_edit' => 'The crop and background removal settings are invalid. Adjust them and upload again.',
+        'invalid_edit' => 'The sticker image settings are invalid. Adjust them and upload again.',
         'image_unreadable' => 'This image could not be read. Save it as PNG or JPG and upload again.',
         'image_too_large' => 'This image is too large for a sticker (too many pixels or too long an animation). Shrink or shorten it and upload again.',
         'too_many_frames' => 'This animation has too many frames. Trim it and upload again.',

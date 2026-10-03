@@ -118,3 +118,19 @@ describe('trạng thái trình chỉnh sticker', () => {
         expect(stickerEditorReducer(state, { type: 'undo' })).toBe(state);
     });
 });
+
+describe('viền trắng và lịch sử chỉnh sửa', () => {
+    it('bật/tắt riêng bước, chỉnh độ dày liên tiếp gộp bước, reset và hoàn tác khôi phục', () => {
+        const enabled = run({ type: 'set-stroke-width', strokeWidth: 0.03 });
+        const thick = stickerEditorReducer(enabled, { type: 'set-stroke-width', strokeWidth: 0.04, merge: true });
+        const thicker = stickerEditorReducer(thick, { type: 'set-stroke-width', strokeWidth: 0.08, merge: true });
+        expect(thicker.undoStack).toHaveLength(2);
+        const undo = stickerEditorReducer(thicker, { type: 'undo' });
+        expect(undo.draft.strokeWidth).toBe(0.03);
+        expect(stickerEditorReducer(undo, { type: 'redo' }).draft.strokeWidth).toBe(0.08);
+        const reset = stickerEditorReducer(thicker, { type: 'use-original' });
+        expect(reset.draft.strokeWidth).toBe(0);
+        expect(stickerEditorReducer(reset, { type: 'undo' }).draft.strokeWidth).toBe(0.08);
+        expect(stickerEditorReducer(enabled, { type: 'set-stroke-width', strokeWidth: 0 }).undoStack).toHaveLength(2);
+    });
+});

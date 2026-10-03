@@ -1,3 +1,4 @@
+import { addWhiteStroke } from './white-stroke.mjs';
 import sharp from 'sharp';
 import { applyMask, buildMask } from './background-mask.mjs';
 import { RenderError } from '../render-error.mjs';
@@ -204,7 +205,11 @@ export async function renderStickerImage(inputBytes, edit, { size, staticSize = 
 
     const layout = squareLayout(edit.fit, frame, region, bounds);
     const strip = placeOnSquare(frames, region.width, layout);
-    const { stickerWebp, staticPng, outboundGif } = await encodeOutputs(strip, layout.side, frames.length, source.delays, { size, staticSize });
+    const frameBytes = layout.side * layout.side * CHANNELS;
+    const squares = frames.map((_, index) => strip.subarray(index * frameBytes, (index + 1) * frameBytes));
+    const stroked = addWhiteStroke(squares, layout.side, edit.strokeWidth);
+    const outputStrip = stroked.padding === 0 ? strip : Buffer.concat(stroked.frames.map(frame => Buffer.from(frame)));
+    const { stickerWebp, staticPng, outboundGif } = await encodeOutputs(outputStrip, stroked.side, frames.length, source.delays, { size, staticSize });
 
     return {
         stickerWebp,

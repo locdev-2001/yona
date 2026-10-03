@@ -94,8 +94,19 @@ declare module 'sticker-renderer/image/sticker-image.mjs' {
             removeBackground: boolean;
             tolerance: number;
             feather: number;
+            strokeWidth?: number;
             edits: readonly import('sticker-renderer/image/background-mask.mjs').BackgroundMaskEdit[];
         },
         options: { size: number; staticSize?: number },
     ): Promise<RenderedStickerImage>;
+}
+
+declare module 'sticker-renderer/image/white-stroke.mjs' {
+    export const DEFAULT_STROKE_WIDTH: number;
+    export const MAX_STROKE_WIDTH: number;
+    export function addWhiteStroke(
+        frames: readonly (Uint8Array | Uint8ClampedArray)[],
+        sourceSide: number,
+        strokeWidth?: number,
+    ): { frames: Uint8ClampedArray[]; side: number; padding: number };
 }

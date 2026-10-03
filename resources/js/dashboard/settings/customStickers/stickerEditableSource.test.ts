@@ -13,6 +13,7 @@ describe('dựng lại bản nháp từ edit đã lưu', () => {
             crop: { left: 40, top: -20, side: 120 },
             removeBackground: true,
             tolerance: 35,
+            strokeWidth: 0.03,
             edits: [
                 { op: 'wand-remove', x: 0.5, y: 0.4, tolerance: 35 },
                 { op: 'brush-keep', points: [[0.3, 0.3], [0.5, 0.6]], radius: 0.05 },
@@ -40,6 +41,7 @@ describe('dựng lại bản nháp từ edit đã lưu', () => {
             crop: { left: 50, top: 0, side: 100 },
             removeBackground: true,
             tolerance: 20,
+            strokeWidth: 0,
             edits: [],
         });
     });

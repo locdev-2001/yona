@@ -100,3 +100,15 @@ it('từ chối thông số sai hợp đồng', function (string $json) {
     'vượt trần dung lượng tệp --edit' => [json_encode(['edits' => array_fill(0, StickerEdit::MAX_EDITS, ['op' => 'brush-remove', 'points' => array_fill(0, StickerEdit::MAX_BRUSH_POINTS, [0.123456789, 0.987654321]), 'radius' => 0.1])])],
     'lồng quá sâu' => [str_repeat('{"a":', 20).'1'.str_repeat('}', 20)],
 ]);
+
+it('viền tắt giữ JSON cũ, viền bật tham gia chuỗi chuẩn hoá', function () {
+    $original = StickerEdit::fromJson('{"tolerance":20,"edits":[]}')->json();
+    expect(StickerEdit::fromJson('{"strokeWidth":0,"tolerance":20,"edits":[]}')->json())->toBe($original)
+        ->and(StickerEdit::fromJson('{"strokeWidth":0.03,"tolerance":20,"edits":[]}')->json())->toBe('{"tolerance":20,"strokeWidth":0.03,"edits":[]}')
+        ->and(StickerEdit::fromJson('{"strokeWidth":0.08}')->params)->toBe(['strokeWidth' => 0.08]);
+});
+
+it('từ chối độ dày viền sai hợp đồng', function (mixed $strokeWidth) {
+    expect(fn () => StickerEdit::fromJson(json_encode(['strokeWidth' => $strokeWidth])))
+        ->toThrow(InvalidArgumentException::class);
+})->with([-0.01, 0.081, '0.03', false, [null]]);

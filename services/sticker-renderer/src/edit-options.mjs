@@ -1,3 +1,4 @@
+import { MAX_STROKE_WIDTH } from './image/white-stroke.mjs';
 import { DEFAULT_FEATHER, DEFAULT_TOLERANCE, EDIT_OPERATIONS, MAX_FEATHER } from './image/background-mask.mjs';
 import { RenderError } from './render-error.mjs';
 import { CROP_BOUND_EPSILON, DEFAULT_FIT, FIT_MODES, MAX_CROP_OVERFLOW, MIN_CROP_SIDE } from './image/sticker-geometry.mjs';
@@ -12,6 +13,7 @@ export const DEFAULT_EDIT = Object.freeze({
     removeBackground: true,
     tolerance: DEFAULT_TOLERANCE,
     feather: DEFAULT_FEATHER,
+    strokeWidth: 0,
     edits: Object.freeze([]),
 });
 
@@ -98,6 +100,7 @@ export function parseEdit(rawEdit) {
         removeBackground: rawEdit.removeBackground ?? DEFAULT_EDIT.removeBackground,
         tolerance: rawEdit.tolerance === undefined ? DEFAULT_EDIT.tolerance : numberInRange(rawEdit.tolerance, 0, 100, 'tolerance'),
         feather: rawEdit.feather === undefined ? DEFAULT_EDIT.feather : numberInRange(rawEdit.feather, 0, MAX_FEATHER, 'feather'),
+        strokeWidth: rawEdit.strokeWidth === undefined ? 0 : numberInRange(rawEdit.strokeWidth, 0, MAX_STROKE_WIDTH, 'strokeWidth'),
         edits: edits.map(parseEditOperation),
     };
 }
