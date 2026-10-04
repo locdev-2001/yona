@@ -1,3 +1,4 @@
+import { isProductFeatureVisible } from 'shared/helpers/productVisibility';
 import { t } from '../i18n';
 import { switchTab, tabOf, useWidgetRoute, type WidgetTab } from '../router';
 import { useConversationList } from '../store/conversationList';
@@ -15,7 +16,11 @@ export default function TabBar() {
     const active = tabOf(useWidgetRoute());
     const hasPortal = useWidgetState(state => Boolean(state.channelConfig?.portal));
     const unread = useConversationList().items.reduce((sum, item) => sum + item.unread_count, 0);
-    const tabs = TABS.filter(({ tab }) => tab !== 'help' || hasPortal);
+    const tabs = TABS.filter(({ tab }) => {
+        if (tab === 'help') return hasPortal && isProductFeatureVisible('helpCenter');
+        if (tab === 'updates') return isProductFeatureVisible('widgetUpdates');
+        return true;
+    });
 
     return (
         <nav

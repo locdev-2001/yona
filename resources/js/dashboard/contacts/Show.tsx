@@ -1,3 +1,4 @@
+import { isProductFeatureVisible } from 'shared/helpers/productVisibility';
 import { useEffect, useState } from 'react';
 import { router, usePage } from '@inertiajs/react';
 
@@ -38,7 +39,11 @@ export default function ContactShow() {
     const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
     const [isFetchingItem, setFetchingItem] = useState(true);
     const [isUpdating, setUpdating] = useState(false);
-    const [activeTab, setActiveTab] = useState('attributes');
+    const availableTabOptions = CONTACT_TABS_OPTIONS.filter(
+        tab => tab.value !== 'attributes' || isProductFeatureVisible('customAttributes'),
+    );
+    const defaultTab = availableTabOptions[0].value;
+    const [activeTab, setActiveTab] = useState(defaultTab);
 
     useEffect(() => {
         let active = true;
@@ -58,11 +63,11 @@ export default function ContactShow() {
 
     useContactUpdates(update => setSelectedContact(current => current && mergeContactUpdate(current, update)));
 
-    const tabs = CONTACT_TABS_OPTIONS.map(tab => ({
+    const tabs = availableTabOptions.map(tab => ({
         label: t(`CONTACTS_LAYOUT.SIDEBAR.TABS.${tab.key}`),
         value: tab.value,
     }));
-    const activeTabIndex = CONTACT_TABS_OPTIONS.findIndex(tab => tab.value === activeTab);
+    const activeTabIndex = availableTabOptions.findIndex(tab => tab.value === activeTab);
 
     const goToContactsList = () => {
         if (window.history.length > 1) {
@@ -118,7 +123,7 @@ export default function ContactShow() {
                             <div className="flex items-center justify-center py-10 text-n-slate-11">
                                 <Spinner />
                             </div>
-                        ) : activeTab === 'attributes' ? (
+                        ) : activeTab === 'attributes' && isProductFeatureVisible('customAttributes') ? (
                             <ContactCustomAttributes
                                 selectedContact={selectedContact}
                                 onContactUpdated={setSelectedContact}
@@ -133,7 +138,7 @@ export default function ContactShow() {
                             <ContactMerge
                                 selectedContact={selectedContact}
                                 onGoToContactsList={goToContactsList}
-                                onResetTab={() => setActiveTab('attributes')}
+                                onResetTab={() => setActiveTab(defaultTab)}
                             />
                         ) : (
                             <div />

@@ -1,5 +1,5 @@
 import { t } from '../../../../../i18n';
-import { WIDGET_BUILDER_SECTIONS } from '../types';
+import { visibleWidgetBuilderSections } from '../types';
 import type { WidgetBuilderSectionId } from '../types';
 
 const SECTION_LABEL_KEYS: Record<WidgetBuilderSectionId, string> = {
@@ -29,7 +29,7 @@ export default function BuilderNav({ activeSection, onSelect, orientation = 'ver
             aria-label={t('WIDGET_BUILDER.NAV.ARIA_LABEL')}
             className={`flex gap-0.5 ${isVertical ? 'flex-col w-56' : 'overflow-x-auto'} ${className}`}
         >
-            {WIDGET_BUILDER_SECTIONS.map(section => {
+            {visibleWidgetBuilderSections().map(section => {
                 const isActive = section === activeSection;
 
                 return (

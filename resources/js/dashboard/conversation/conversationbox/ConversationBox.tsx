@@ -1,3 +1,4 @@
+import { isProductFeatureVisible } from 'shared/helpers/productVisibility';
 import { useEffect, useState } from 'react';
 
 import { t } from '../../../i18n';
@@ -27,10 +28,12 @@ export default function ConversationBox({
 
     useEffect(() => setActiveIndex(0), [currentChat?.id]);
 
-    const showTabs = dashboardApps.length > 0 && Boolean(currentChat);
+    const visibleDashboardApps = isProductFeatureVisible('integrations') ? dashboardApps : [];
+    const showTabs = visibleDashboardApps.length > 0 && Boolean(currentChat);
+    const activeTabIndex = showTabs && activeIndex <= visibleDashboardApps.length ? activeIndex : 0;
     const tabItems = [
         { key: 'messages', name: t('CONVERSATION.DASHBOARD_APP_TAB_MESSAGES') },
-        ...dashboardApps.map(dashboardApp => ({
+        ...visibleDashboardApps.map(dashboardApp => ({
             key: `dashboard-${dashboardApp.id}`,
             name: dashboardApp.title,
         })),
@@ -44,14 +47,14 @@ export default function ConversationBox({
         >
             {currentChat && (
                 <ConversationHeader
-                    className={dashboardApps.length ? '' : 'border-b border-b-n-weak !pt-2'}
+                    className={showTabs ? '' : 'border-b border-b-n-weak !pt-2'}
                     showBackButton={isOnExpandedLayout && !isInboxView}
                 />
             )}
             {showTabs ? (
-                <Tabs items={tabItems} index={activeIndex} isCompact className="h-10" onChange={setActiveIndex} />
+                <Tabs items={tabItems} index={activeTabIndex} isCompact className="h-10" onChange={setActiveIndex} />
             ) : null}
-            <div className="flex h-full min-h-0 m-0" style={{ display: activeIndex ? 'none' : undefined }}>
+            <div className="flex h-full min-h-0 m-0" style={{ display: activeTabIndex ? 'none' : undefined }}>
                 {currentChat ? (
                     <SenderIdentityProvider>
                         <MessagesView />
@@ -61,13 +64,13 @@ export default function ConversationBox({
                 )}
             </div>
             {currentChat
-                ? dashboardApps.map((dashboardApp, index) => (
+                ? visibleDashboardApps.map((dashboardApp, index) => (
                       <DashboardAppFrame
                           key={`${currentChat.id}-${dashboardApp.id}`}
                           accountId={accountId}
                           dashboardApp={dashboardApp}
                           conversation={currentChat}
-                          isVisible={activeIndex - 1 === index}
+                          isVisible={activeTabIndex - 1 === index}
                           position={index}
                       />
                   ))

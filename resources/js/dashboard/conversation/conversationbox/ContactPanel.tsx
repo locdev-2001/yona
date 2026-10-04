@@ -1,3 +1,4 @@
+import { isProductFeatureVisible } from 'shared/helpers/productVisibility';
 import type { ReactNode } from 'react';
 
 import { usePage } from '@inertiajs/react';
@@ -44,7 +45,7 @@ interface SidebarSection {
 export default function ContactPanel() {
     const { selectedConversation, uiSettings, updateUISettings } = useConversation();
     const { currentAccount } = usePage<DashboardPageProps>().props;
-    const macrosEnabled = Boolean(currentAccount.features.macros);
+    const macrosEnabled = Boolean(currentAccount.features.macros) && isProductFeatureVisible('macros');
     const [contact, setContact] = useContactDetails(
         currentAccount.id,
         selectedConversation?.meta.sender ?? NO_CONTACT,
@@ -68,43 +69,49 @@ export default function ContactPanel() {
             compact: false,
             body: <ConversationAction />,
         },
-        conversation_participants: {
-            name: 'conversation_participants',
-            title: t('CONVERSATION_PARTICIPANTS.SIDEBAR_TITLE'),
-            openKey: 'is_conv_participants_open',
-            compact: false,
-            body: <ConversationParticipant />,
-        },
-        conversation_info: {
-            name: 'conversation_info',
-            title: t('CONVERSATION_SIDEBAR.ACCORDION.CONVERSATION_INFO'),
-            openKey: 'is_conv_details_open',
-            compact: true,
-            body: (
-                <ConversationInfo
-                    conversationAttributes={selectedConversation.additional_attributes ?? {}}
-                    contactAttributes={contact.additional_attributes ?? {}}
-                />
-            ),
-        },
-        contact_attributes: {
-            name: 'contact_attributes',
-            title: t('CONVERSATION_SIDEBAR.ACCORDION.CONTACT_ATTRIBUTES'),
-            openKey: 'is_contact_attributes_open',
-            compact: true,
-            body: (
-                <CustomAttributes
-                    attributeType="contact_attribute"
-                    attributeFrom="conversation_contact_panel"
-                    emptyStateMessage={t('CONVERSATION_CUSTOM_ATTRIBUTES.NO_RECORDS_FOUND')}
-                    contactId={contact.id}
-                    contactCustomAttributes={contact.custom_attributes}
-                    onContactCustomAttributesChange={customAttributes =>
-                        setContact(current => ({ ...current, custom_attributes: customAttributes }))
-                    }
-                />
-            ),
-        },
+        conversation_participants: isProductFeatureVisible('conversationParticipants')
+            ? {
+                  name: 'conversation_participants',
+                  title: t('CONVERSATION_PARTICIPANTS.SIDEBAR_TITLE'),
+                  openKey: 'is_conv_participants_open',
+                  compact: false,
+                  body: <ConversationParticipant />,
+              }
+            : null,
+        conversation_info: isProductFeatureVisible('conversationMetadata')
+            ? {
+                  name: 'conversation_info',
+                  title: t('CONVERSATION_SIDEBAR.ACCORDION.CONVERSATION_INFO'),
+                  openKey: 'is_conv_details_open',
+                  compact: true,
+                  body: (
+                      <ConversationInfo
+                          conversationAttributes={selectedConversation.additional_attributes ?? {}}
+                          contactAttributes={contact.additional_attributes ?? {}}
+                      />
+                  ),
+              }
+            : null,
+        contact_attributes: isProductFeatureVisible('customAttributes')
+            ? {
+                  name: 'contact_attributes',
+                  title: t('CONVERSATION_SIDEBAR.ACCORDION.CONTACT_ATTRIBUTES'),
+                  openKey: 'is_contact_attributes_open',
+                  compact: true,
+                  body: (
+                      <CustomAttributes
+                          attributeType="contact_attribute"
+                          attributeFrom="conversation_contact_panel"
+                          emptyStateMessage={t('CONVERSATION_CUSTOM_ATTRIBUTES.NO_RECORDS_FOUND')}
+                          contactId={contact.id}
+                          contactCustomAttributes={contact.custom_attributes}
+                          onContactCustomAttributesChange={customAttributes =>
+                              setContact(current => ({ ...current, custom_attributes: customAttributes }))
+                          }
+                      />
+                  ),
+              }
+            : null,
         // Bản gốc bọc accordion này trong `v-if="contact.id"`.
         previous_conversation: contact.id
             ? {

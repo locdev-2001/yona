@@ -1,3 +1,4 @@
+import { isProductFeatureVisible } from 'shared/helpers/productVisibility';
 import { usePage } from '@inertiajs/react';
 import { BRAND_ICONS, ICONS } from 'dashboard/icons';
 
@@ -37,7 +38,10 @@ export default function NewChannelList({ channels = [] }: NewChannelListProps) {
     const { currentAccount } = usePage<DashboardPageProps>().props;
     const accountId = currentAccount!.id;
 
-    const channelList: ChannelOption[] = channels.map(({ key }) => ({
+    const visibleChannels = channels.filter(({ key }) =>
+        isProductFeatureVisible('advancedChannels') || ['zalo', 'website', 'email', 'facebook'].includes(key),
+    );
+    const channelList: ChannelOption[] = visibleChannels.map(({ key }) => ({
         key,
         title: t(`INBOX_MGMT.ADD.AUTH.CHANNEL.${key.toUpperCase()}.TITLE`),
         description: t(`INBOX_MGMT.ADD.AUTH.CHANNEL.${key.toUpperCase()}.DESCRIPTION`),

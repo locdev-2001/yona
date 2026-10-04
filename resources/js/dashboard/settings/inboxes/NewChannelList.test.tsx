@@ -32,20 +32,20 @@ beforeEach(() => {
 });
 
 describe('NewChannelList', () => {
-    it('chỉ hiện các kênh backend gửi xuống, đúng thứ tự', () => {
+    it('chỉ hiện kênh ưu tiên backend gửi xuống, đúng thứ tự', () => {
         render(<NewChannelList channels={[entry('zalo', 'qr'), entry('email', 'form'), entry('telegram', 'token')]} />);
 
         const titles = screen.getAllByRole('button').map(button => button.querySelector('h3')?.textContent);
-        expect(titles).toStrictEqual(['Zalo', 'Email', 'Telegram']);
+        expect(titles).toStrictEqual(['Zalo', 'Email']);
         expect(screen.queryByText('SMS')).toBeNull();
         expect(screen.queryByText(/Coming soon/i)).toBeNull();
     });
 
     it('bấm thẻ thì sang bước 2 của đúng kênh', () => {
-        render(<NewChannelList channels={[entry('telegram', 'token')]} />);
+        render(<NewChannelList channels={[entry('email', 'form')]} />);
 
-        fireEvent.click(screen.getByRole('button', { name: /Telegram/ }));
+        fireEvent.click(screen.getByRole('button', { name: /Email/ }));
 
-        expect(window.location.href).toBe('/app/accounts/4/settings/inboxes/new/telegram');
+        expect(window.location.href).toBe('/app/accounts/4/settings/inboxes/new/email');
     });
 });

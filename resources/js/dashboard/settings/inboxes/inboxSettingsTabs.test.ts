@@ -7,25 +7,25 @@ import { declaredConfigurationSections, inboxSettingsTabKeys } from './inboxSett
 // đổi khai báo ở backend thì bảng dưới đỏ ngay.
 const declaredBy = (channel: keyof typeof capabilityMatrix) => ({ capabilities: capabilityMatrix[channel] });
 
-const SHARED_TABS = ['inbox-settings', 'collaborators', 'business-hours', 'csat'];
+const SHARED_TABS = ['inbox-settings', 'collaborators', 'business-hours'];
 
 describe('inboxSettingsTabKeys — mỗi kênh thấy đúng tab nó tự khai', () => {
     it.each([
-        ['Channel::WebWidget', [...SHARED_TABS, 'pre-chat-form', 'configuration', 'bot-configuration']],
-        ['Channel::Api', [...SHARED_TABS, 'configuration', 'bot-configuration']],
-        ['Channel::Email', [...SHARED_TABS, 'configuration', 'bot-configuration']],
-        ['Channel::Email (provider=google)', [...SHARED_TABS, 'bot-configuration']],
-        ['Channel::Zalo', [...SHARED_TABS, 'bot-configuration']],
-        ['Channel::Telegram', [...SHARED_TABS, 'bot-configuration']],
-        ['Channel::Line', [...SHARED_TABS, 'bot-configuration']],
-        ['Channel::TwilioSms', [...SHARED_TABS, 'bot-configuration']],
-        ['Channel::Whatsapp (provider=whatsapp_cloud)', [...SHARED_TABS, 'bot-configuration']],
+        ['Channel::WebWidget', [...SHARED_TABS, 'pre-chat-form', 'configuration']],
+        ['Channel::Api', [...SHARED_TABS, 'configuration']],
+        ['Channel::Email', [...SHARED_TABS, 'configuration']],
+        ['Channel::Email (provider=google)', [...SHARED_TABS]],
+        ['Channel::Zalo', [...SHARED_TABS]],
+        ['Channel::Telegram', [...SHARED_TABS]],
+        ['Channel::Line', [...SHARED_TABS]],
+        ['Channel::TwilioSms', [...SHARED_TABS]],
+        ['Channel::Whatsapp (provider=whatsapp_cloud)', [...SHARED_TABS]],
     ] as const)('%s', (channel, expectedTabs) => {
         expect(inboxSettingsTabKeys(declaredBy(channel))).toEqual(expectedTabs);
     });
 
     it('hộp thư chưa khai năng lực (payload rút gọn) chỉ có tab chung', () => {
-        expect(inboxSettingsTabKeys({ capabilities: null })).toEqual([...SHARED_TABS, 'bot-configuration']);
+        expect(inboxSettingsTabKeys({ capabilities: null })).toEqual([...SHARED_TABS]);
     });
 });
 

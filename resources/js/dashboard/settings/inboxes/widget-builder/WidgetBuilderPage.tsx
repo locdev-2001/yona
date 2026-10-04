@@ -19,6 +19,7 @@ import EmbedSection from './sections/EmbedSection';
 import HomeSection from './sections/HomeSection';
 import InviteSection from './sections/InviteSection';
 import { useUnsavedChangesGuard } from '../settingsDraft/useUnsavedChangesGuard';
+import { visibleWidgetBuilderSections } from './types';
 import type { WidgetBuilderFieldErrors, WidgetBuilderSectionId, WidgetDraft } from './types';
 import type { Inbox } from '../types';
 import type { DashboardPageProps } from '../../../types';
@@ -33,6 +34,7 @@ interface WidgetBuilderPageProps {
 export default function WidgetBuilderPage({ inboxId }: WidgetBuilderPageProps) {
     const { currentAccount } = usePage<DashboardPageProps>().props;
     const accountId = currentAccount!.id;
+    const visibleSections = visibleWidgetBuilderSections();
 
     const [inbox, setInbox] = useState<Inbox | null>(null);
     const [draft, setDraft] = useState<WidgetDraft | null>(null);
@@ -150,8 +152,8 @@ export default function WidgetBuilderPage({ inboxId }: WidgetBuilderPageProps) {
                                 />
                                 <ChannelsSection draft={draft} setDraft={patchDraft} errors={serverErrors} />
                                 <CaptureSection draft={draft} setDraft={patchDraft} />
-                                <InviteSection accountId={accountId} inboxId={inbox.id} />
-                                <AiSection />
+                                {visibleSections.includes('invite') ? <InviteSection accountId={accountId} inboxId={inbox.id} /> : null}
+                                {visibleSections.includes('ai') ? <AiSection /> : null}
                                 <EmbedSection embedScript={inbox.web_widget_script ?? ''} draft={draft} setDraft={patchDraft} />
                             </div>
                         </div>

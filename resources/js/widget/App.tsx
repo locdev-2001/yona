@@ -19,7 +19,7 @@ import Messages from './views/Messages';
 import PreChatForm from './views/PreChatForm';
 import UnreadMessages from './views/UnreadMessages';
 import ViewWithHeader from './views/ViewWithHeader';
-import { SCREENS } from './screens/registry';
+import { SCREENS, visibleWidgetRoute } from './screens/registry';
 import TabBar from './ui/TabBar';
 import EmptyState from './ui/EmptyState';
 import { useExpanded } from './ui/expanded';
@@ -35,7 +35,11 @@ import type { AppConfig } from './types';
 const UNREAD_OR_CAMPAIGN_ROUTES: string[] = [WIDGET_ROUTES.UNREAD_MESSAGES, WIDGET_ROUTES.CAMPAIGNS];
 
 export default function App() {
-    const route = useWidgetRoute();
+    const requestedRoute = useWidgetRoute();
+    const route = visibleWidgetRoute(requestedRoute);
+    useEffect(() => {
+        if (route !== requestedRoute) replaceRoute(route);
+    }, [route, requestedRoute]);
     const expanded = useExpanded();
     const channelConfig = useWidgetState(state => state.channelConfig);
     const appConfig = useWidgetState(state => state.appConfig);

@@ -1,3 +1,4 @@
+import { isProductFeatureVisible, type ProductFeature } from 'shared/helpers/productVisibility';
 import type { ComponentType } from 'react';
 
 import { WIDGET_ROUTES, type WidgetRouteName } from '../router';
@@ -27,3 +28,18 @@ export const SCREENS: Partial<Record<WidgetRouteName, { Component: ComponentType
     [WIDGET_ROUTES.UPDATE]: { Component: UpdateScreen, tabBar: false },
     [WIDGET_ROUTES.REQUEST]: { Component: RequestScreen, tabBar: false },
 };
+
+const SCREEN_FEATURES: Partial<Record<WidgetRouteName, ProductFeature>> = {
+    [WIDGET_ROUTES.HELP]: 'helpCenter',
+    [WIDGET_ROUTES.HELP_CATEGORY]: 'helpCenter',
+    [WIDGET_ROUTES.HELP_SEARCH]: 'helpCenter',
+    [WIDGET_ROUTES.ARTICLE]: 'helpCenter',
+    [WIDGET_ROUTES.UPDATES]: 'widgetUpdates',
+    [WIDGET_ROUTES.UPDATE]: 'widgetUpdates',
+    [WIDGET_ROUTES.REQUEST]: 'widgetRequests',
+};
+
+export function visibleWidgetRoute(route: WidgetRouteName): WidgetRouteName {
+    const feature = SCREEN_FEATURES[route];
+    return feature && !isProductFeatureVisible(feature) ? WIDGET_ROUTES.HOME : route;
+}

@@ -1,6 +1,7 @@
 import { createElement } from 'react';
 
 import { t } from '../../../i18n';
+import { COMPACT_INTERFACE } from 'shared/helpers/productVisibility';
 import { accountScopedUrl } from 'dashboard/helper/URLHelper';
 import { SidebarChannelLeafContent } from './SidebarGroupLeaf';
 import type { SidebarMenuItem } from './provider';
@@ -63,7 +64,7 @@ export function buildMenuItems(
     return [
         {
             name: 'Conversation',
-            label: t('SIDEBAR.CONVERSATIONS'),
+            label: t(COMPACT_INTERFACE ? 'SIDEBAR.COMPACT_INBOX' : 'SIDEBAR.CONVERSATIONS'),
             icon: 'i-lucide-message-circle',
             children: [
                 {
@@ -76,6 +77,7 @@ export function buildMenuItems(
                 },
                 {
                     name: 'Mentions',
+                    productFeature: 'conversationViews',
                     label: t('SIDEBAR.MENTIONED_CONVERSATIONS'),
                     icon: 'i-lucide-at-sign',
                     // badgeCount của gốc gắn với cờ `filtered_conversation_unread_counts`
@@ -85,18 +87,21 @@ export function buildMenuItems(
                 },
                 {
                     name: 'Participating',
+                    productFeature: 'conversationViews',
                     label: t('SIDEBAR.PARTICIPATING_CONVERSATIONS'),
                     icon: 'i-lucide-user-round-check',
                     to: scoped('participating/conversations'),
                 },
                 {
                     name: 'Unattended',
+                    productFeature: 'conversationViews',
                     label: t('SIDEBAR.UNATTENDED_CONVERSATIONS'),
                     icon: 'i-lucide-clock-alert',
                     to: scoped('unattended/conversations'),
                 },
                 {
                     name: 'Folders',
+                    productFeature: 'conversationViews',
                     label: t('SIDEBAR.CUSTOM_VIEWS_FOLDER'),
                     icon: 'i-lucide-folder',
                     activeOn: [scoped('custom_view')],
@@ -110,6 +115,7 @@ export function buildMenuItems(
                 },
                 {
                     name: 'Teams',
+                    productFeature: 'teams',
                     label: t('SIDEBAR.TEAMS'),
                     icon: 'i-lucide-users',
                     collapsible: true,
@@ -158,7 +164,9 @@ export function buildMenuItems(
         },
         {
             name: 'Contacts',
-            label: t('SIDEBAR.CONTACTS'),
+            label: t(COMPACT_INTERFACE ? 'SIDEBAR.COMPACT_CONTACTS' : 'SIDEBAR.CONTACTS'),
+            collapseSingleChild: true,
+            activeOn: [scoped('contacts')],
             icon: 'i-lucide-contact',
             children: [
                 {
@@ -168,11 +176,13 @@ export function buildMenuItems(
                 },
                 {
                     name: 'Active',
+                    productFeature: 'contactViews',
                     label: t('SIDEBAR.ACTIVE'),
                     to: scoped('contacts/active'),
                 },
                 {
                     name: 'Segments',
+                    productFeature: 'contactViews',
                     icon: 'i-lucide-group',
                     label: t('SIDEBAR.CUSTOM_VIEWS_SEGMENTS'),
                     activeOn: [scoped('contacts/segments')],
@@ -186,6 +196,7 @@ export function buildMenuItems(
                 },
                 {
                     name: 'Tagged With',
+                    productFeature: 'contactViews',
                     icon: 'i-lucide-tag',
                     label: t('SIDEBAR.TAGGED_WITH'),
                     collapsible: true,
@@ -199,23 +210,26 @@ export function buildMenuItems(
         // report_manage là custom role (EE) nên chỉ administrator; agent ẩn cả nhóm.
         {
             name: 'Reports',
+            collapseSingleChild: true,
+            activeOn: [scoped('reports')],
             permissions: ['administrator'],
             label: t('SIDEBAR.REPORTS'),
             icon: 'i-lucide-chart-spline',
             children: [
                 { name: 'Report Overview', label: t('SIDEBAR.REPORTS_OVERVIEW'), to: scoped('reports/overview') },
-                { name: 'Report Conversation', label: t('SIDEBAR.REPORTS_CONVERSATION'), to: scoped('reports/conversation') },
-                { name: 'Reports Agent', label: t('SIDEBAR.REPORTS_AGENT'), to: scoped('reports/agent') },
-                { name: 'Reports Label', label: t('SIDEBAR.REPORTS_LABEL'), to: scoped('reports/label') },
-                { name: 'Reports Inbox', label: t('SIDEBAR.REPORTS_INBOX'), to: scoped('reports/inboxes') },
-                { name: 'Reports Team', label: t('SIDEBAR.REPORTS_TEAM'), to: scoped('reports/teams') },
-                { name: 'Reports CSAT', label: t('SIDEBAR.CSAT'), to: scoped('reports/csat') },
-                { name: 'Reports Bot', label: t('SIDEBAR.REPORTS_BOT'), to: scoped('reports/bot') },
+                { name: 'Report Conversation', productFeature: 'detailedReports', label: t('SIDEBAR.REPORTS_CONVERSATION'), to: scoped('reports/conversation') },
+                { name: 'Reports Agent', productFeature: 'detailedReports', label: t('SIDEBAR.REPORTS_AGENT'), to: scoped('reports/agent') },
+                { name: 'Reports Label', productFeature: 'detailedReports', label: t('SIDEBAR.REPORTS_LABEL'), to: scoped('reports/label') },
+                { name: 'Reports Inbox', productFeature: 'detailedReports', label: t('SIDEBAR.REPORTS_INBOX'), to: scoped('reports/inboxes') },
+                { name: 'Reports Team', productFeature: 'detailedReports', label: t('SIDEBAR.REPORTS_TEAM'), to: scoped('reports/teams') },
+                { name: 'Reports CSAT', productFeature: 'csat', label: t('SIDEBAR.CSAT'), to: scoped('reports/csat') },
+                { name: 'Reports Bot', productFeature: 'agentBots', label: t('SIDEBAR.REPORTS_BOT'), to: scoped('reports/bot') },
             ],
         },
         // campaigns.routes.js meta.permissions ['administrator'].
         {
             name: 'Campaigns',
+            productFeature: 'campaigns',
             permissions: ['administrator'],
             label: t('SIDEBAR.CAMPAIGNS'),
             icon: 'i-lucide-megaphone',
@@ -233,6 +247,7 @@ export function buildMenuItems(
         },
         {
             name: 'Portals',
+            productFeature: 'helpCenter',
             label: t('SIDEBAR.HELP_CENTER.TITLE'),
             icon: 'i-lucide-library-big',
             children: [
@@ -263,6 +278,7 @@ export function buildMenuItems(
                 },
                 {
                     name: 'Settings Teams',
+                    productFeature: 'teams',
                     permissions: ['administrator'],
                     label: t('SIDEBAR.TEAMS'),
                     icon: 'i-lucide-users',
@@ -279,6 +295,7 @@ export function buildMenuItems(
                 },
                 {
                     name: 'Settings Templates',
+                    productFeature: 'whatsappTemplates',
                     permissions: ['administrator'],
                     label: t('SIDEBAR.WHATSAPP_TEMPLATES'),
                     icon: 'i-lucide-layout-template',
@@ -293,6 +310,7 @@ export function buildMenuItems(
                 },
                 {
                     name: 'Settings Widget Updates',
+                    productFeature: 'widgetUpdates',
                     permissions: ['administrator'],
                     label: t('SIDEBAR.WIDGET_UPDATES'),
                     icon: 'i-lucide-newspaper',
@@ -313,6 +331,7 @@ export function buildMenuItems(
                 },
                 {
                     name: 'Settings Custom Attributes',
+                    productFeature: 'customAttributes',
                     permissions: ['administrator'],
                     label: t('SIDEBAR.CUSTOM_ATTRIBUTES'),
                     icon: 'i-lucide-code',
@@ -320,6 +339,7 @@ export function buildMenuItems(
                 },
                 {
                     name: 'Settings Automation',
+                    productFeature: 'automations',
                     permissions: ['administrator'],
                     label: t('SIDEBAR.AUTOMATION'),
                     icon: 'i-lucide-repeat',
@@ -327,6 +347,7 @@ export function buildMenuItems(
                 },
                 {
                     name: 'Settings Agent Bots',
+                    productFeature: 'agentBots',
                     permissions: ['administrator'],
                     label: t('SIDEBAR.AGENT_BOTS'),
                     icon: 'i-lucide-bot',
@@ -334,6 +355,7 @@ export function buildMenuItems(
                 },
                 {
                     name: 'Settings Macros',
+                    productFeature: 'macros',
                     label: t('SIDEBAR.MACROS'),
                     icon: 'i-lucide-toy-brick',
                     to: scoped('settings/macros'),
@@ -346,6 +368,7 @@ export function buildMenuItems(
                 },
                 {
                     name: 'Settings Integrations',
+                    productFeature: 'integrations',
                     permissions: ['administrator'],
                     label: t('SIDEBAR.INTEGRATIONS'),
                     icon: 'i-lucide-blocks',
@@ -353,6 +376,7 @@ export function buildMenuItems(
                 },
                 {
                     name: 'Settings Data',
+                    productFeature: 'dataManagement',
                     permissions: ['administrator'],
                     label: t('SIDEBAR.DATA'),
                     icon: 'i-lucide-database',
@@ -360,6 +384,7 @@ export function buildMenuItems(
                 },
                 {
                     name: 'Conversation Workflow',
+                    productFeature: 'conversationWorkflow',
                     permissions: ['administrator'],
                     label: t('SIDEBAR.CONVERSATION_WORKFLOW'),
                     icon: 'i-lucide-workflow',
@@ -367,6 +392,7 @@ export function buildMenuItems(
                 },
                 {
                     name: 'Settings Security',
+                    productFeature: 'workspaceSecurity',
                     permissions: ['administrator'],
                     label: t('SIDEBAR.SECURITY'),
                     icon: 'i-lucide-shield',

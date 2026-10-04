@@ -4,6 +4,7 @@ import { usePage } from '@inertiajs/react';
 
 import { putJson } from 'dashboard/helper/apiClient';
 import type { SharedPageProps } from '../../../types';
+import type { ProductFeature } from 'shared/helpers/productVisibility';
 
 // Port từ components-next/sidebar/provider.js — context + resize/collapse.
 // sidebar_width lưu vào ui_settings qua /api/v1/profile.
@@ -25,6 +26,8 @@ export interface SidebarMenuChild {
     // Cờ tính năng của mục: mục chỉ hiện khi account
     // bật cờ đó (accounts.feature_flags).
     featureFlag?: string;
+    productFeature?: ProductFeature;
+    collapseSingleChild?: boolean;
     icon?: string | ReactNode;
     to?: string;
     activeOn?: string[];

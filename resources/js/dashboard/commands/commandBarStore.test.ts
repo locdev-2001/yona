@@ -81,12 +81,12 @@ describe('buildGoToActions', () => {
         expect(commandUrls).toContain('/app/accounts/2/settings/custom-stickers');
     });
 
-    it('mục theo cờ tính năng chỉ có khi account bật cờ, giống sidebar', () => {
+    it('chế độ tinh gọn vẫn ẩn chiến dịch dù account bật cờ', () => {
         const withoutFlag = buildGoToActions(2, 'administrator').map(visitedUrl);
         const withFlag = buildGoToActions(2, 'administrator', { whatsapp_campaign: true }).map(visitedUrl);
 
         expect(withoutFlag).not.toContain('/app/accounts/2/campaigns/whatsapp');
-        expect(withFlag).toContain('/app/accounts/2/campaigns/whatsapp');
+        expect(withFlag).not.toContain('/app/accounts/2/campaigns/whatsapp');
     });
 
     it('mục con không tên riêng vẫn tìm được theo tên nhóm cha', () => {
@@ -94,7 +94,7 @@ describe('buildGoToActions', () => {
             item => visitedUrl(item) === '/app/accounts/2/reports/overview',
         );
 
-        expect(overview?.keywords).toContain(t('SIDEBAR.REPORTS'));
+        expect(overview?.title).toBe(t('SIDEBAR.REPORTS'));
     });
 
     it('mọi icon của mục sidebar có SVG tương ứng cho command bar', () => {

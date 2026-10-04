@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import { isProductFeatureVisible } from 'shared/helpers/productVisibility';
 import { formatNumber } from '@ext/utils';
 
 import { t } from '../../../i18n';
@@ -86,20 +87,22 @@ export default function ChatListHeader({
             <div className="flex items-center gap-1">
                 {hasAppliedFilters && !hasActiveFolders ? (
                     <>
-                        <div className="relative">
-                            <NextButton
-                                title={t('FILTER.CUSTOM_VIEWS.ADD.SAVE_BUTTON')}
-                                icon="i-lucide-save"
-                                slate
-                                xs
-                                faded
-                                onClick={onAddFolders}
-                            />
-                            <div
-                                id="saveFilterTeleportTarget"
-                                className={`absolute z-50 mt-2 ${isOnExpandedLayout ? 'ltr:right-0 rtl:left-0' : ''}`}
-                            />
-                        </div>
+                        {isProductFeatureVisible('conversationViews') ? (
+                            <div className="relative">
+                                <NextButton
+                                    title={t('FILTER.CUSTOM_VIEWS.ADD.SAVE_BUTTON')}
+                                    icon="i-lucide-save"
+                                    slate
+                                    xs
+                                    faded
+                                    onClick={onAddFolders}
+                                />
+                                <div
+                                    id="saveFilterTeleportTarget"
+                                    className={`absolute z-50 mt-2 ${isOnExpandedLayout ? 'ltr:right-0 rtl:left-0' : ''}`}
+                                />
+                            </div>
+                        ) : null}
                         <NextButton
                             title={t('FILTER.CLEAR_BUTTON_LABEL')}
                             icon="i-lucide-circle-x"
@@ -110,7 +113,7 @@ export default function ChatListHeader({
                         />
                     </>
                 ) : null}
-                {hasActiveFolders ? (
+                {hasActiveFolders && isProductFeatureVisible('conversationViews') ? (
                     <>
                         <div className="relative">
                             <NextButton

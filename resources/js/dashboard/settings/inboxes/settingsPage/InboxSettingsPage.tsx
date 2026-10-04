@@ -6,6 +6,7 @@ import { useAlert } from 'dashboard/composables/useAlert';
 import { deleteJson, parseApiErrorMessage, patchJson, postJson, putForm } from 'dashboard/helper/apiClient';
 import { getInboxIconByType } from 'dashboard/helper/inbox';
 import { accountScopedUrl } from 'dashboard/helper/URLHelper';
+import { isProductFeatureVisible } from 'shared/helpers/productVisibility';
 import { copyTextToClipboard } from 'shared/helpers/clipboard';
 import { inboxSupports } from 'shared/composables/useInboxCapabilities';
 import Avatar from 'dashboard/components-next/avatar/Avatar';
@@ -269,7 +270,7 @@ export default function InboxSettingsPage({ inbox, senderEmailAddress, onInboxUp
                         onChange={name => patchDraft({ name })}
                     />
                 </SettingsFieldSection>
-                {hasWebhookSettings ? (
+                {isProductFeatureVisible('integrations') && hasWebhookSettings ? (
                     <SettingsFieldSection label={t('INBOX_MGMT.ADD.WEBSITE_CHANNEL.CHANNEL_WEBHOOK_URL.LABEL')}>
                         <WootInput
                             value={draft.webhookUrl}
@@ -281,7 +282,7 @@ export default function InboxSettingsPage({ inbox, senderEmailAddress, onInboxUp
                     </SettingsFieldSection>
                 ) : null}
 
-                {hasWebhookSettings && inbox.secret ? (
+                {isProductFeatureVisible('integrations') && hasWebhookSettings && inbox.secret ? (
                     <SettingsFieldSection label={t('INBOX_MGMT.ADD.WEBSITE_CHANNEL.CHANNEL_WEBHOOK_SECRET.LABEL')}>
                         <AccessToken
                             value={inbox.secret}
@@ -368,7 +369,7 @@ export default function InboxSettingsPage({ inbox, senderEmailAddress, onInboxUp
 
                         <SettingsFieldSection label={t('INBOX_MGMT.FEATURES.LABEL')} className="[&>div]:!items-start [&>div>label]:mt-2">
                             <div className="flex flex-col gap-1 items-start">
-                                {WEB_WIDGET_FEATURE_FLAGS.map((flag, index) => (
+                                {WEB_WIDGET_FEATURE_FLAGS.filter(flag => flag !== 'use_inbox_avatar_for_bot' || isProductFeatureVisible('agentBots')).map((flag, index) => (
                                     <div key={flag} className={`flex gap-2 py-0.5 ${index === 0 ? 'pt-2' : ''}`}>
                                         <input
                                             id={flag}

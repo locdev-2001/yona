@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { isProductFeatureVisible } from 'shared/helpers/productVisibility';
 import { usePage } from '@inertiajs/react';
 
 import { useAgentsList } from 'dashboard/composables/useAgentsList';
@@ -208,20 +209,20 @@ export function useConversationHotKeys(): void {
                 ICON_ASSIGN_AGENT,
                 agentOptions,
             ),
-            ...buildParentAction(
+            ...(isProductFeatureVisible('teams') ? buildParentAction(
                 'assign_a_team',
                 'COMMAND_BAR.COMMANDS.ASSIGN_A_TEAM',
                 ICON_ASSIGN_TEAM,
                 teamOptions,
-            ),
+            ) : []),
             ...addLabelActions,
             ...(currentActiveLabels.length ? removeLabelActions : []),
-            ...buildParentAction(
+            ...(isProductFeatureVisible('conversationPriority') ? buildParentAction(
                 'assign_priority',
                 'COMMAND_BAR.COMMANDS.ASSIGN_PRIORITY',
                 ICON_ASSIGN_PRIORITY,
                 priorityOptions,
-            ),
+            ) : []),
         ]);
 
         return () => clearCommandBarActions(SOURCE);

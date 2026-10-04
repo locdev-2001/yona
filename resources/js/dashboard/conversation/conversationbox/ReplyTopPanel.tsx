@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { ICONS } from 'dashboard/icons';
+import { isProductFeatureVisible } from 'shared/helpers/productVisibility';
 
 import NextButton from 'dashboard/components-next/button/Button';
 import { CHAR_LENGTH_WARNING, REPLY_EDITOR_MODES } from 'dashboard/components/widgets/WootWriter/constants';
@@ -89,29 +90,31 @@ export default function ReplyTopPanel({
             </div>
             {captainTasksEnabled ? (
                 <div className="flex items-center gap-2">
-                    <div ref={copilotWrapperRef} className="relative">
-                        <NextButton
-                            ghost
-                            disabled={disabled || isEditorDisabled}
-                            className={
-                                showCopilotMenu
-                                    ? 'text-n-violet-9 bg-n-violet-3'
-                                    : 'text-n-violet-9 hover:enabled:!bg-n-violet-3'
-                            }
-                            sm
-                            icon={ICONS.ai}
-                            onClick={() => setShowCopilotMenu(open => !open)}
-                        />
-                        {showCopilotMenu ? (
-                            <CopilotMenuBar
-                                hasContent={hasContent}
-                                conversationId={conversationId}
-                                replyMode={mode}
-                                className="ltr:right-0 rtl:left-0 bottom-full mb-2"
-                                onExecuteCopilotAction={handleCopilotAction}
+                    {isProductFeatureVisible('integrations') ? (
+                        <div ref={copilotWrapperRef} className="relative">
+                            <NextButton
+                                ghost
+                                disabled={disabled || isEditorDisabled}
+                                className={
+                                    showCopilotMenu
+                                        ? 'text-n-violet-9 bg-n-violet-3'
+                                        : 'text-n-violet-9 hover:enabled:!bg-n-violet-3'
+                                }
+                                sm
+                                icon={ICONS.ai}
+                                onClick={() => setShowCopilotMenu(open => !open)}
                             />
-                        ) : null}
-                    </div>
+                            {showCopilotMenu ? (
+                                <CopilotMenuBar
+                                    hasContent={hasContent}
+                                    conversationId={conversationId}
+                                    replyMode={mode}
+                                    className="ltr:right-0 rtl:left-0 bottom-full mb-2"
+                                    onExecuteCopilotAction={handleCopilotAction}
+                                />
+                            ) : null}
+                        </div>
+                    ) : null}
                     <NextButton
                         ghost
                         className="text-n-slate-11"

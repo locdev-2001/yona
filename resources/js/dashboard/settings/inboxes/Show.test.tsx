@@ -82,6 +82,33 @@ describe('InboxShow — tab Cài đặt của hộp thư website', () => {
         getJson.mockResolvedValue(webWidgetInbox);
     });
 
+    it('ẩn webhook và avatar bot nhưng lưu tên vẫn giữ cấu hình nâng cao cũ', async () => {
+        const inboxWithIntegration = {
+            ...webWidgetInbox,
+            capabilities: [...webWidgetInbox.capabilities!, 'settings_webhook'],
+            webhook_url: 'https://integration.example.test/yona',
+            secret: 'existing-webhook-secret',
+            selected_feature_flags: ['attachments', 'use_inbox_avatar_for_bot'],
+        };
+        getJson.mockResolvedValue(inboxWithIntegration);
+        patchJson.mockResolvedValue({ ...inboxWithIntegration, name: 'Tên mới' });
+        await renderShow();
+
+        expect(screen.queryByText(t('INBOX_MGMT.ADD.WEBSITE_CHANNEL.CHANNEL_WEBHOOK_URL.LABEL'))).not.toBeInTheDocument();
+        expect(screen.queryByText(t('INBOX_MGMT.ADD.WEBSITE_CHANNEL.CHANNEL_WEBHOOK_SECRET.LABEL'))).not.toBeInTheDocument();
+        expect(screen.queryByLabelText(t('INBOX_MGMT.FEATURES.USE_INBOX_AVATAR_FOR_BOT'))).not.toBeInTheDocument();
+        expect(screen.getByLabelText(t('INBOX_MGMT.FEATURES.DISPLAY_FILE_PICKER'))).toBeChecked();
+
+        fireEvent.change(screen.getByDisplayValue('Shop Cũ Mai Anh'), { target: { value: 'Tên mới' } });
+        fireEvent.click(screen.getByRole('button', { name: t('SETTINGS_DRAFT.SAVE') }));
+        await waitFor(() => expect(patchJson).toHaveBeenCalledTimes(1));
+        expect(patchJson.mock.calls[0][1].channel).toMatchObject({
+            webhook_url: inboxWithIntegration.webhook_url,
+            selected_feature_flags: inboxWithIntegration.selected_feature_flags,
+        });
+        expect(patchJson.mock.calls[0][1].channel).not.toHaveProperty('secret');
+    });
+
     it('nút Lưu tên doanh nghiệp chỉ gửi tên doanh nghiệp, ô khác đang sửa dở giữ nguyên', async () => {
         patchJson.mockResolvedValue({ ...webWidgetInbox, business_name: 'Tiệm Hoa Mai Anh' });
         await renderShow();
@@ -122,7 +149,7 @@ describe('InboxShow — tab Cài đặt của hộp thư website', () => {
         fireEvent.change(screen.getByDisplayValue('Shop Cũ Mai Anh'), { target: { value: 'Shop Mới Mai Anh' } });
         expect(screen.getByText(t('SETTINGS_DRAFT.UNSAVED'))).toBeInTheDocument();
 
-        fireEvent.click(screen.getByText(t('INBOX_MGMT.TABS.CSAT')));
+        fireEvent.click(screen.getByText(t('INBOX_MGMT.TABS.COLLABORATORS')));
         expect(confirm).toHaveBeenCalledWith(t('SETTINGS_DRAFT.CONFIRM_LEAVE'));
         expect(screen.getByDisplayValue('Shop Mới Mai Anh')).toBeInTheDocument();
 
@@ -202,10 +229,10 @@ describe('InboxShow — tab và khối dựng theo khai báo của kênh', () =>
         expect(screen.queryByText(t('INBOX_MGMT.SETTINGS_POPUP.LOCK_TO_SINGLE_CONVERSATION'))).not.toBeInTheDocument();
     });
 
-    it('API có ô webhook, mục Điều hướng hội thoại và tab Cấu hình', async () => {
+    it('API ẩn ô webhook, giữ mục Điều hướng hội thoại và tab Cấu hình', async () => {
         await renderInbox(apiInbox);
 
-        expect(screen.getByDisplayValue('https://kho.vn/hook')).toBeInTheDocument();
+        expect(screen.queryByDisplayValue('https://kho.vn/hook')).not.toBeInTheDocument();
         expect(screen.getByText(t('INBOX_MGMT.SETTINGS_POPUP.LOCK_TO_SINGLE_CONVERSATION'))).toBeInTheDocument();
         expect(visibleTabNames()).toContain(t('INBOX_MGMT.TABS.CONFIGURATION'));
         expect(visibleTabNames()).not.toContain(t('INBOX_MGMT.TABS.PRE_CHAT_FORM'));

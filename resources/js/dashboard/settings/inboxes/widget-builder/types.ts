@@ -1,3 +1,4 @@
+import { isProductFeatureVisible } from 'shared/helpers/productVisibility';
 import type { WidgetSettingsShape } from '../types';
 
 /** Thứ tự cũng là thứ tự cột nav trái và các thẻ trong cột giữa (điều hướng kiểu cuộn-tới-neo). */
@@ -12,6 +13,14 @@ export const WIDGET_BUILDER_SECTIONS = [
 ] as const;
 
 export type WidgetBuilderSectionId = (typeof WIDGET_BUILDER_SECTIONS)[number];
+
+export function visibleWidgetBuilderSections(): WidgetBuilderSectionId[] {
+    return WIDGET_BUILDER_SECTIONS.filter(section => {
+        if (section === 'invite') return isProductFeatureVisible('campaigns');
+        if (section === 'ai') return isProductFeatureVisible('widgetAi');
+        return true;
+    });
+}
 
 /**
  * Bản nháp màn Widget chat sửa: một state, một nút "Lưu thay đổi" gửi đúng một

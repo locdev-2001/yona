@@ -10889,6 +10889,8 @@ const messages: Record<string, unknown> = {
         "CURRENTLY_VIEWING_ACCOUNT": "Hiện đang xem:",
         "SWITCH": "Chuyển",
         "INBOX_VIEW": "Khung nhìn hộp thư",
+        "COMPACT_INBOX": "Hộp thư",
+        "COMPACT_CONTACTS": "Khách hàng",
         "CONVERSATIONS": "Hội thoại",
         "INBOX": "Hộp thư của tôi",
         "ALL_CONVERSATIONS": "Tất cả hội thoại",

@@ -1,3 +1,4 @@
+import { isProductFeatureVisible } from 'shared/helpers/productVisibility';
 import { forwardRef, useImperativeHandle, useRef, useState } from 'react';
 import { router, usePage } from '@inertiajs/react';
 
@@ -242,7 +243,7 @@ const ContactListHeaderWrapper = forwardRef<ContactListHeaderWrapperHandle, Cont
                                 <ContactsFilter
                                     filters={draftFilters}
                                     attributeFilterTypes={attributeFilterTypes}
-                                    isSegmentView={hasActiveSegments}
+                                    isSegmentView={hasActiveSegments && isProductFeatureVisible('contactViews')}
                                     segmentName={activeSegment?.name ?? ''}
                                     onChange={setDraftFilters}
                                     onApplyFilter={filters => {
@@ -273,8 +274,12 @@ const ContactListHeaderWrapper = forwardRef<ContactListHeaderWrapperHandle, Cont
                     isExporting={isExporting}
                     onExport={onExport}
                 />
-                <CreateSegmentDialog ref={createSegmentDialogRef} onCreate={onCreateSegment} />
-                <DeleteSegmentDialog ref={deleteSegmentDialogRef} onDelete={onDeleteSegment} />
+                {isProductFeatureVisible('contactViews') ? (
+                    <>
+                        <CreateSegmentDialog ref={createSegmentDialogRef} onCreate={onCreateSegment} />
+                        <DeleteSegmentDialog ref={deleteSegmentDialogRef} onDelete={onDeleteSegment} />
+                    </>
+                ) : null}
             </>
         );
     },

@@ -25,6 +25,7 @@ import {
 import type { SearchFilterState, SearchTab } from './types';
 import type { DashboardPageProps } from '../types';
 import { ICONS } from 'dashboard/icons';
+import { isProductFeatureVisible } from 'shared/helpers/productVisibility';
 
 // Port từ dashboard/modules/search/components/SearchView.vue.
 // Khác biệt cố ý: Policy/permission vai trò tuỳ biến là EE — CE mọi vai trò
@@ -40,9 +41,9 @@ export default function SearchView({ tab }: { tab?: string | null }) {
     const { currentAccount } = usePage<DashboardPageProps>().props;
     const accountId = currentAccount.id;
     const isAdvancedSearchEnabled = Boolean(currentAccount.features?.advanced_search);
-    const isHelpCenterEnabled = Boolean(currentAccount.features?.help_center);
+    const isHelpCenterEnabled = Boolean(currentAccount.features?.help_center) && isProductFeatureVisible('helpCenter');
 
-    const [selectedTab, setSelectedTab] = useState<SearchTab>((tab as SearchTab) || ALL_TAB);
+    const [selectedTab, setSelectedTab] = useState<SearchTab>(tab === 'articles' && !isHelpCenterEnabled ? ALL_TAB : (tab as SearchTab) || ALL_TAB);
     const [query, setQuery] = useState(() => new URLSearchParams(window.location.search).get('q') ?? '');
     const [filters, setFilters] = useState<SearchFilterState>(() =>
         parseURLParams(

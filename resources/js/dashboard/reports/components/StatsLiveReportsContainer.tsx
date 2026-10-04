@@ -1,3 +1,4 @@
+import { isProductFeatureVisible } from 'shared/helpers/productVisibility';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { usePage } from '@inertiajs/react';
 
@@ -76,7 +77,7 @@ export default function StatsLiveReportsContainer() {
                     isLoading={uiFlags.isFetchingAccountConversationMetric}
                     loadingMessage={t(`${ACCOUNT_I18N_KEY}.LOADING_MESSAGE`)}
                     control={
-                        teams.length ? (
+                        isProductFeatureVisible('teams') && teams.length ? (
                             <div ref={dropdownRef} className="relative flex items-center group z-50">
                                 <Button
                                     sm

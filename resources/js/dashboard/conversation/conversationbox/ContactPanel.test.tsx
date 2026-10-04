@@ -48,11 +48,7 @@ describe('ContactPanel accordions', () => {
             'Conversation Actions',
             'Media, files and links',
             'Previous Conversations',
-            'Macros',
-            'Conversation Information',
-            'Contact Attributes',
             'Contact Notes',
-            'Conversation participants',
         ]);
     });
 

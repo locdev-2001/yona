@@ -1,3 +1,4 @@
+import { isProductFeatureVisible } from 'shared/helpers/productVisibility';
 import { useEffect, useState } from 'react';
 
 import { articleSlug, fetchArticles, type HelpArticle } from '../api/helpCenter';
@@ -28,6 +29,7 @@ export default function HomeScreen() {
     const portal = channelConfig?.portal ?? null;
     const shopName = channelConfig?.websiteName ?? '';
     const recent = blocks?.recent_conversation ? items[0] : undefined;
+    const showRequest = isProductFeatureVisible('widgetRequests') && blocks?.request;
 
     // Danh sách cần phiên khách: đợi /config xong (channelConfig có) mới tải.
     const hasSession = Boolean(channelConfig);
@@ -36,7 +38,7 @@ export default function HomeScreen() {
     }, [hasSession]);
 
     useEffect(() => {
-        if (!portal || !blocks?.help) return;
+        if (!isProductFeatureVisible('helpCenter') || !portal || !blocks?.help) return;
 
         fetchArticles(portal.slug, portal.defaultLocale, { sort: 'views' })
             .then(({ payload }) => setArticles(payload.slice(0, FEATURED_ARTICLES)))
@@ -115,7 +117,7 @@ export default function HomeScreen() {
                 </span>
             </section>
 
-            {portal && blocks.help ? (
+            {isProductFeatureVisible('helpCenter') && portal && blocks.help ? (
                 <section className="flex flex-none flex-col gap-[10px] px-5 pb-2 pt-6">
                     <h2 className="m-0 text-[13px] font-semibold text-[var(--yona-chat-ink)]">{t('HOME.FIND_ANSWERS')}</h2>
                     <button
@@ -140,7 +142,7 @@ export default function HomeScreen() {
 
             {blocks.other_channels ? <OtherChannels channels={settings.other_channels} shopName={shopName} /> : null}
 
-            {(blocks.custom_links && settings.custom_links.length) || blocks.request ? (
+            {(blocks.custom_links && settings.custom_links.length) || showRequest ? (
                 <section className="flex flex-none flex-col px-5 pb-5 pt-4">
                     {blocks.custom_links
                         ? settings.custom_links.map(link => (
@@ -149,7 +151,7 @@ export default function HomeScreen() {
                               </Row>
                           ))
                         : null}
-                    {blocks.request ? (
+                    {showRequest ? (
                         <Row
                             muted
                             onClick={() => pushRoute(WIDGET_ROUTES.REQUEST)}

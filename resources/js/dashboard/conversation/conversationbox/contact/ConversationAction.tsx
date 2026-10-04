@@ -1,3 +1,4 @@
+import { isProductFeatureVisible } from 'shared/helpers/productVisibility';
 import { useMemo } from 'react';
 import { usePage } from '@inertiajs/react';
 
@@ -30,7 +31,7 @@ import { useTeamsList } from './useTeamsList';
 export default function ConversationAction() {
     const { auth, currentAccount, currentAccountUser } = usePage<DashboardPageProps>().props;
     const { selectedConversation, assignAgent, assignTeam, togglePriority } = useConversation();
-    const { agentsList } = useAgentsList(true, { includeAgentBots: true });
+    const { agentsList } = useAgentsList(true, { includeAgentBots: isProductFeatureVisible('agentBots') });
     const teams = useTeamsList(currentAccount.id);
 
     const priorityOptions = useMemo(() => buildPriorityOptions(), []);
@@ -123,31 +124,35 @@ export default function ConversationAction() {
                     onSelect={onClickAssignAgent}
                 />
             </div>
-            <div>
-                <ContactDetailsItem compact title={t('CONVERSATION_SIDEBAR.TEAM_LABEL')} />
-                <MultiselectDropdown
-                    options={teamsList}
-                    selectedItem={assignedTeam}
-                    showEmojiIcon
-                    multiselectorTitle={t('AGENT_MGMT.MULTI_SELECTOR.TITLE.TEAM')}
-                    multiselectorPlaceholder={t('AGENT_MGMT.MULTI_SELECTOR.PLACEHOLDER')}
-                    noSearchResult={t('AGENT_MGMT.MULTI_SELECTOR.SEARCH.NO_RESULTS.TEAM')}
-                    inputPlaceholder={t('AGENT_MGMT.MULTI_SELECTOR.SEARCH.PLACEHOLDER.TEAM')}
-                    onSelect={onClickAssignTeam}
-                />
-            </div>
-            <div>
-                <ContactDetailsItem compact title={t('CONVERSATION.PRIORITY.TITLE')} />
-                <MultiselectDropdown
-                    options={priorityOptions}
-                    selectedItem={assignedPriority}
-                    multiselectorTitle={t('CONVERSATION.PRIORITY.TITLE')}
-                    multiselectorPlaceholder={t('CONVERSATION.PRIORITY.CHANGE_PRIORITY.SELECT_PLACEHOLDER')}
-                    noSearchResult={t('CONVERSATION.PRIORITY.CHANGE_PRIORITY.NO_RESULTS')}
-                    inputPlaceholder={t('CONVERSATION.PRIORITY.CHANGE_PRIORITY.INPUT_PLACEHOLDER')}
-                    onSelect={onClickAssignPriority}
-                />
-            </div>
+            {isProductFeatureVisible('teams') ? (
+                <div>
+                    <ContactDetailsItem compact title={t('CONVERSATION_SIDEBAR.TEAM_LABEL')} />
+                    <MultiselectDropdown
+                        options={teamsList}
+                        selectedItem={assignedTeam}
+                        showEmojiIcon
+                        multiselectorTitle={t('AGENT_MGMT.MULTI_SELECTOR.TITLE.TEAM')}
+                        multiselectorPlaceholder={t('AGENT_MGMT.MULTI_SELECTOR.PLACEHOLDER')}
+                        noSearchResult={t('AGENT_MGMT.MULTI_SELECTOR.SEARCH.NO_RESULTS.TEAM')}
+                        inputPlaceholder={t('AGENT_MGMT.MULTI_SELECTOR.SEARCH.PLACEHOLDER.TEAM')}
+                        onSelect={onClickAssignTeam}
+                    />
+                </div>
+            ) : null}
+            {isProductFeatureVisible('conversationPriority') ? (
+                <div>
+                    <ContactDetailsItem compact title={t('CONVERSATION.PRIORITY.TITLE')} />
+                    <MultiselectDropdown
+                        options={priorityOptions}
+                        selectedItem={assignedPriority}
+                        multiselectorTitle={t('CONVERSATION.PRIORITY.TITLE')}
+                        multiselectorPlaceholder={t('CONVERSATION.PRIORITY.CHANGE_PRIORITY.SELECT_PLACEHOLDER')}
+                        noSearchResult={t('CONVERSATION.PRIORITY.CHANGE_PRIORITY.NO_RESULTS')}
+                        inputPlaceholder={t('CONVERSATION.PRIORITY.CHANGE_PRIORITY.INPUT_PLACEHOLDER')}
+                        onSelect={onClickAssignPriority}
+                    />
+                </div>
+            ) : null}
             <ContactDetailsItem compact title={t('CONVERSATION_SIDEBAR.ACCORDION.CONVERSATION_LABELS')} />
             <LabelBox />
         </div>

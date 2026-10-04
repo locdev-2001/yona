@@ -6,6 +6,16 @@ quyết định ở đây mà không có lý do mới = lỗi hồi quy.
 
 Kiến trúc: [system-architecture.md](system-architecture.md).
 
+## Giao diện tinh gọn tạm thời
+
+| Màn | Quyết định | Lý do | Ngày |
+|---|---|---|---|
+| Dashboard · điều hướng | Quản trị viên thấy bốn nhóm chính: **Hộp thư · Khách hàng · Báo cáo · Cài đặt**; nhân viên thấy ba nhóm theo quyền hiện có (không có Báo cáo). Khách hàng và Báo cáo mở thẳng màn chính; nhóm rỗng không hiện. Menu và bảng lệnh dùng chung chính sách hiển thị | Người dùng chốt tạm ẩn các phần nâng cao để tập trung nhận tin, trả lời, xem hồ sơ khách và giao người xử lý | 04/10/2026 |
+| Dashboard · chức năng nâng cao | Tạm ẩn các lối vào chiến dịch, Help Center, báo cáo chi tiết/CSAT/bot, nhóm, phân khúc và các view phụ, thuộc tính tuỳ biến, automation, macro, bot, tích hợp, mục cài đặt chưa hoạt động và chi tiết hội thoại nâng cao. Giữ nhãn, câu trả lời mẫu, thành viên, kênh kết nối và thông tin workspace | Giảm lựa chọn trong công việc hằng ngày; đây là quyết định tinh gọn giao diện, chưa phải kết luận về tần suất sử dụng production | 04/10/2026 |
+| Sticker · toàn bộ luồng | **Giữ toàn bộ sticker**: gửi, gợi ý khi gõ, kho chung, kho riêng, upload và chỉnh sửa; kho sticker vẫn có lối vào trong Cài đặt | Người dùng yêu cầu giữ sticker trước khi duyệt tinh gọn | 04/10/2026 |
+| Widget · cấu hình và giao diện khách | Tạm ẩn Trợ giúp, Cập nhật, phần AI sắp ra mắt và cấu hình nâng cao; lưu phần cơ bản phải giữ các giá trị nâng cao đã lưu | Widget tập trung vào liên hệ và tin nhắn; ẩn giao diện không được làm mất cấu hình khi chỉnh sửa | 04/10/2026 |
+| Chính sách và khôi phục | Nguồn duy nhất: `resources/js/shared/helpers/productVisibility.ts`; đặt `COMPACT_INTERFACE = false` để mở lại giao diện đầy đủ. Không thay đổi backend, API, dữ liệu/cấu hình đã lưu hoặc runtime automation/bot đang chạy | Có thể đảo ngược quyết định bằng một thay đổi, không chia nhiều danh sách ẩn độc lập và không biến việc ẩn UI thành việc tắt nghiệp vụ | 04/10/2026 |
+
 ## Hội thoại, panel liên hệ, bong bóng tin
 
 | Màn | Quyết định | Lý do | Ngày |

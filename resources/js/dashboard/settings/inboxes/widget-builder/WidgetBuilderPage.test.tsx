@@ -78,6 +78,27 @@ describe('WidgetBuilderPage — màn Widget chat', () => {
         getJson.mockResolvedValue(webWidgetInbox);
     });
 
+    it('ẩn tính năng nâng cao nhưng lưu giao diện vẫn giữ nguyên cấu hình cũ', async () => {
+        const existingSettings = {
+            ...DEFAULT_WIDGET_SETTINGS,
+            home: { blocks: { ...DEFAULT_WIDGET_SETTINGS.home.blocks, help: true, request: true } },
+        };
+        getJson.mockResolvedValue({ ...webWidgetInbox, widget_settings: existingSettings });
+        patchJson.mockResolvedValue(webWidgetInbox);
+        await renderPage();
+
+        expect(screen.queryByText(t('WIDGET_BUILDER.NAV.AI'))).not.toBeInTheDocument();
+        expect(screen.queryByText(t('WIDGET_BUILDER.NAV.INVITE'))).not.toBeInTheDocument();
+        expect(screen.queryByText(t('WIDGET_BUILDER.HOME.BLOCK_HELP'))).not.toBeInTheDocument();
+        expect(screen.queryByText(t('WIDGET_BUILDER.HOME.BLOCK_REQUEST'))).not.toBeInTheDocument();
+        expect(screen.queryByRole('link', { name: t('WIDGET_BUILDER.HOME.HELP_BLOCK_NOT_CONNECTED') })).not.toBeInTheDocument();
+
+        fireEvent.click(screen.getByRole('radio', { name: 'Có chữ' }));
+        fireEvent.click(screen.getByRole('button', { name: t('SETTINGS_DRAFT.SAVE') }));
+        await waitFor(() => expect(patchJson).toHaveBeenCalledTimes(1));
+        expect(patchJson.mock.calls[0][1].channel.widget_settings.home).toEqual(existingSettings.home);
+    });
+
     it('Lưu thay đổi gửi đúng một PATCH gồm name + widget_color + welcome_tagline + widget_settings', async () => {
         patchJson.mockResolvedValue(webWidgetInbox);
         await renderPage();

@@ -8,6 +8,8 @@ return [
     'CURRENTLY_VIEWING_ACCOUNT' => 'Currently viewing:',
     'SWITCH' => 'Switch',
     'INBOX_VIEW' => 'Inbox View',
+    'COMPACT_INBOX' => 'Inbox',
+    'COMPACT_CONTACTS' => 'Customers',
     'CONVERSATIONS' => 'Conversations',
     'INBOX' => 'My Inbox',
     'ALL_CONVERSATIONS' => 'All Conversations',

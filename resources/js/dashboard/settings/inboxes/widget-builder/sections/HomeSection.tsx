@@ -1,3 +1,4 @@
+import { isProductFeatureVisible } from 'shared/helpers/productVisibility';
 import type { Dispatch, SetStateAction } from 'react';
 import { Link } from '@inertiajs/react';
 
@@ -45,19 +46,21 @@ export default function HomeSection({ accountId, draft, setDraft, helpCenter }: 
                 onChange={value => setBlock('recent_conversation', value)}
             />
 
-            <ToggleRow
-                label={t('WIDGET_BUILDER.HOME.BLOCK_HELP')}
-                description={helpDescription}
-                value={blocks.help}
-                onChange={value => setBlock('help', value)}
-                extra={
-                    !helpCenter ? (
-                        <Link href={accountScopedUrl(accountId, 'portals/new')} className="text-label-small text-n-blue-11 hover:underline">
-                            {t('WIDGET_BUILDER.HOME.HELP_BLOCK_NOT_CONNECTED')}
-                        </Link>
-                    ) : undefined
-                }
-            />
+            {isProductFeatureVisible('helpCenter') ? (
+                <ToggleRow
+                    label={t('WIDGET_BUILDER.HOME.BLOCK_HELP')}
+                    description={helpDescription}
+                    value={blocks.help}
+                    onChange={value => setBlock('help', value)}
+                    extra={
+                        !helpCenter ? (
+                            <Link href={accountScopedUrl(accountId, 'portals/new')} className="text-label-small text-n-blue-11 hover:underline">
+                                {t('WIDGET_BUILDER.HOME.HELP_BLOCK_NOT_CONNECTED')}
+                            </Link>
+                        ) : undefined
+                    }
+                />
+            ) : null}
 
             <ToggleRow
                 label={t('WIDGET_BUILDER.HOME.BLOCK_OTHER_CHANNELS')}
@@ -71,11 +74,13 @@ export default function HomeSection({ accountId, draft, setDraft, helpCenter }: 
                 onChange={value => setBlock('custom_links', value)}
             />
 
-            <ToggleRow
-                label={t('WIDGET_BUILDER.HOME.BLOCK_REQUEST')}
-                description={t('WIDGET_BUILDER.HOME.BLOCK_REQUEST_DESCRIPTION')}
-                badge={t('WIDGET_BUILDER.COMING_SOON')}
-            />
+            {isProductFeatureVisible('widgetRequests') ? (
+                <ToggleRow
+                    label={t('WIDGET_BUILDER.HOME.BLOCK_REQUEST')}
+                    description={t('WIDGET_BUILDER.HOME.BLOCK_REQUEST_DESCRIPTION')}
+                    badge={t('WIDGET_BUILDER.COMING_SOON')}
+                />
+            ) : null}
         </SectionCard>
     );
 }

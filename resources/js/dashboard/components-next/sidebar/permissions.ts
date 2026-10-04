@@ -1,4 +1,5 @@
 import type { AccountRole, SidebarMenuChild, SidebarMenuItem } from './provider';
+import { COMPACT_INTERFACE, isProductFeatureVisible } from 'shared/helpers/productVisibility';
 
 // isAllowed/shouldShow của sidebar: mục khai báo
 // permissions chỉ hiện với role tương ứng, mục khai báo featureFlag chỉ hiện khi
@@ -14,6 +15,7 @@ function filterChildren<T extends SidebarMenuChild>(
     for (const item of items) {
         if (item.permissions && !item.permissions.includes(role)) continue;
         if (item.featureFlag && !features[item.featureFlag]) continue;
+        if (item.productFeature && !isProductFeatureVisible(item.productFeature)) continue;
 
         if (!item.children) {
             allowed.push(item);
@@ -21,7 +23,13 @@ function filterChildren<T extends SidebarMenuChild>(
         }
 
         const children = filterChildren(item.children, role, features);
+        if (COMPACT_INTERFACE && children.length === 0) continue;
         if (item.children.length > 0 && children.length === 0) continue;
+
+        if (COMPACT_INTERFACE && item.collapseSingleChild && children.length === 1 && children[0].to) {
+            allowed.push({ ...item, to: children[0].to, children: undefined });
+            continue;
+        }
 
         allowed.push({ ...item, children });
     }

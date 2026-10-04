@@ -1,3 +1,4 @@
+import { isProductFeatureVisible } from 'shared/helpers/productVisibility';
 import type { ReactNode } from 'react';
 
 import { t } from '../../../../i18n';
@@ -96,7 +97,7 @@ export default function ContactHeader({
                                     {filterSlot}
                                 </div>
                             ) : null}
-                            {hasActiveFilters && !isSegmentsView && !isLabelView && !isActiveView ? (
+                            {isProductFeatureVisible('contactViews') && hasActiveFilters && !isSegmentsView && !isLabelView && !isActiveView ? (
                                 <Button
                                     icon="i-lucide-save"
                                     color="slate"
@@ -105,7 +106,7 @@ export default function ContactHeader({
                                     onClick={onCreateSegment}
                                 />
                             ) : null}
-                            {isSegmentsView && !isLabelView && !isActiveView ? (
+                            {isProductFeatureVisible('contactViews') && isSegmentsView && !isLabelView && !isActiveView ? (
                                 <Button
                                     icon="i-lucide-trash"
                                     color="slate"

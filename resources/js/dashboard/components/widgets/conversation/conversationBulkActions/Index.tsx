@@ -1,3 +1,4 @@
+import { isProductFeatureVisible } from 'shared/helpers/productVisibility';
 import { useCallback, useEffect, useState } from 'react';
 import { getUnixTime } from 'date-fns';
 
@@ -151,12 +152,14 @@ export default function ConversationBulkActions({
                                 isUpdating={isUpdating}
                                 onSelect={onAssignAgent}
                             />
-                            <BulkTeamActions
-                                accountId={accountId}
-                                conversationCount={conversations.length}
-                                isUpdating={isUpdating}
-                                onSelect={onAssignTeam}
-                            />
+                            {isProductFeatureVisible('teams') ? (
+                                <BulkTeamActions
+                                    accountId={accountId}
+                                    conversationCount={conversations.length}
+                                    isUpdating={isUpdating}
+                                    onSelect={onAssignTeam}
+                                />
+                            ) : null}
                         </div>
                     </div>
                 </div>

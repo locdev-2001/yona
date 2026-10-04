@@ -1,3 +1,4 @@
+import { isProductFeatureVisible } from 'shared/helpers/productVisibility';
 import Dashboard from '../Dashboard';
 import { t } from '../../i18n';
 import AgentLiveReportContainer from './components/AgentLiveReportContainer';
@@ -16,10 +17,14 @@ export default function LiveReports() {
                 <ReportHeader headerTitle={t('OVERVIEW_REPORTS.HEADER')} />
                 <div className="flex flex-col gap-4 pb-6">
                     <StatsLiveReportsContainer />
-                    <ConversationHeatmapContainer />
-                    <ResolutionHeatmapContainer />
-                    <AgentLiveReportContainer />
-                    <TeamLiveReportContainer />
+                    {isProductFeatureVisible('detailedReports') ? (
+                        <>
+                            <ConversationHeatmapContainer />
+                            <ResolutionHeatmapContainer />
+                            <AgentLiveReportContainer />
+                        </>
+                    ) : null}
+                    {isProductFeatureVisible('teams') ? <TeamLiveReportContainer /> : null}
                 </div>
             </ReportsWrapper>
         </Dashboard>

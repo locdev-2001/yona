@@ -1,3 +1,4 @@
+import { isProductFeatureVisible } from 'shared/helpers/productVisibility';
 import { inboxSupports } from 'shared/composables/useInboxCapabilities';
 import type { ChannelCapability, InboxWithCapabilities } from 'shared/constants/channelCapabilities';
 
@@ -24,9 +25,9 @@ export function inboxSettingsTabKeys(inbox: InboxWithCapabilities | null | undef
         DEFAULT_INBOX_SETTINGS_TAB,
         'collaborators',
         'business-hours',
-        'csat',
+        ...(isProductFeatureVisible('csat') ? ['csat'] : []),
         ...(inboxSupports(inbox, 'settings_pre_chat_form') ? ['pre-chat-form'] : []),
         ...(declaredConfigurationSections(inbox).length > 0 ? ['configuration'] : []),
-        'bot-configuration',
+        ...(isProductFeatureVisible('agentBots') ? ['bot-configuration'] : []),
     ];
 }

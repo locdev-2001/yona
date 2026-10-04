@@ -1,3 +1,4 @@
+import { isProductFeatureVisible } from 'shared/helpers/productVisibility';
 import { useEffect, useRef, useState } from 'react';
 import type { RefObject } from 'react';
 
@@ -70,6 +71,10 @@ export default function ConversationBasicFilter({
         value,
     }));
 
+    const visibleChatSortOptions = chatSortOptions.filter(
+        option => !option.value.startsWith('priority_') || isProductFeatureVisible('conversationPriority'),
+    );
+
     const activeChatStatusLabel = chatStatusOptions.find(option => option.value === status)?.label || '';
     const activeChatSortLabel = chatSortOptions.find(option => option.value === sortBy)?.label || '';
 
@@ -114,7 +119,7 @@ export default function ConversationBasicFilter({
                         <span className="text-sm truncate text-n-slate-12">{t('CHAT_LIST.CHAT_SORT.ORDER_BY')}</span>
                         <SelectMenu
                             value={sortBy}
-                            options={chatSortOptions}
+                            options={visibleChatSortOptions}
                             label={activeChatSortLabel}
                             subMenuPosition={isOnExpandedLayout ? 'left' : 'right'}
                             onChange={handleSortChange}

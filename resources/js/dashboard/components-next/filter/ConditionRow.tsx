@@ -11,6 +11,7 @@ import SingleSelect from './inputs/SingleSelect';
 import type { FilterOperator } from './operators';
 import type { ConversationFilterCondition, FilterOption, FilterSelectOption, FilterType, FilterValue } from './helper/filterHelper';
 import { validateSingleFilter } from './helper/validations';
+import { selectableFilterTypes } from './helper/filterVisibility';
 
 // Port từ components-next/filter/ConditionRow.vue.
 interface ConditionRowProps {
@@ -217,7 +218,8 @@ export default function ConditionRow({
                 <FilterSelect
                     value={condition.attributeKey}
                     variant="faded"
-                    options={filterTypes.map(filterType => ({
+                    label={currentFilter?.label}
+                    options={selectableFilterTypes(filterTypes).map(filterType => ({
                         value: filterType.value,
                         label: filterType.label,
                         icon: filterType.icon,

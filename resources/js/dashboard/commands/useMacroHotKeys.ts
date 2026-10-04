@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { usePage } from '@inertiajs/react';
+import { isProductFeatureVisible } from 'shared/helpers/productVisibility';
 
 import { useConversation } from 'dashboard/conversation/ConversationContext';
 import { orderMacros } from 'dashboard/conversation/macros/useOrderedMacros';
@@ -19,7 +20,7 @@ const SOURCE = 'macros';
 export function useMacroHotKeys(): void {
     const { currentAccount } = usePage<DashboardPageProps>().props;
     const accountId = currentAccount.id;
-    const isMacrosAvailable = Boolean(currentAccount.features.macros);
+    const isMacrosAvailable = Boolean(currentAccount.features.macros) && isProductFeatureVisible('macros');
 
     const { selectedConversation, uiSettings } = useConversation();
     const { records } = useMacrosSnapshot();
