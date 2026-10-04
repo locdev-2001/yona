@@ -49,10 +49,10 @@ it('cho super admin đã bật 2FA vào', function (string $path) {
         ->assertOk();
 })->with($dashboards);
 
-it('đưa super admin chưa bật 2FA vào màn cài đặt thay vì cho vào dashboard', function (string $path) {
+it('cho super admin chưa bật 2FA vào dashboard', function (string $path) {
     $this->actingAs(SuperAdmin::factory()->create(), 'super_admin')
         ->get($path)
-        ->assertRedirect('/admin/mfa/setup');
+        ->assertOk();
 })->with($dashboards);
 
 it('cho script đọc API log bằng đúng Bearer token', function (string $path) {

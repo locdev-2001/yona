@@ -38,7 +38,6 @@ use App\Http\Controllers\SuperAdmin\SessionsController as SuperAdminSessionsCont
 use App\Http\Controllers\SuperAdmin\SettingsController as SuperAdminSettingsController;
 use App\Http\Controllers\SuperAdmin\StickerPacksController as SuperAdminStickerPacksController;
 use App\Http\Controllers\SuperAdmin\UsersController as SuperAdminUsersController;
-use App\Http\Middleware\EnsureSuperAdminMfaEnrolled;
 use App\Http\Middleware\ExpireIdleSuperAdminSession;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\RecordSuperAdminAudit;
@@ -536,76 +535,74 @@ Route::prefix(SuperAdminArea::PREFIX)->middleware(SuperAdminInertia::class)->gro
         Route::post('/mfa', [SuperAdminMfaController::class, 'store']);
         Route::post('/mfa/verify', [SuperAdminMfaController::class, 'verify']);
 
-        Route::middleware(EnsureSuperAdminMfaEnrolled::class)->group(function () {
-            Route::get('/', [SuperAdminDashboardController::class, 'index'])->name('admin.root');
+        Route::get('/', [SuperAdminDashboardController::class, 'index'])->name('admin.root');
 
-            Route::get('/app_config', [SuperAdminAppConfigsController::class, 'show']);
-            Route::post('/app_config', [SuperAdminAppConfigsController::class, 'store']);
-            Route::get('/settings', [SuperAdminSettingsController::class, 'show']);
-            Route::get('/instance_status', [SuperAdminInstanceStatusesController::class, 'show']);
+        Route::get('/app_config', [SuperAdminAppConfigsController::class, 'show']);
+        Route::post('/app_config', [SuperAdminAppConfigsController::class, 'store']);
+        Route::get('/settings', [SuperAdminSettingsController::class, 'show']);
+        Route::get('/instance_status', [SuperAdminInstanceStatusesController::class, 'show']);
 
-            // Kho sticker chung: trang + JSON cho trang (dùng chung khung với kho riêng của tenant).
-            Route::get('/sticker_packs', [SuperAdminStickerPacksController::class, 'page']);
-            Route::prefix('/api/sticker_packs')->group(function () {
-                Route::get('/', [SuperAdminStickerPacksController::class, 'index']);
-                Route::post('/', [SuperAdminStickerPacksController::class, 'store']);
-                Route::get('/{packId}', [SuperAdminStickerPacksController::class, 'show'])->whereNumber('packId');
-                Route::match(['put', 'patch'], '/{packId}', [SuperAdminStickerPacksController::class, 'update'])->whereNumber('packId');
-                Route::delete('/{packId}', [SuperAdminStickerPacksController::class, 'destroy'])->whereNumber('packId');
-                Route::post('/{packId}/publish', [SuperAdminStickerPacksController::class, 'publish'])->whereNumber('packId');
-                Route::post('/{packId}/unpublish', [SuperAdminStickerPacksController::class, 'unpublish'])->whereNumber('packId');
-                Route::post('/{packId}/stickers', [SuperAdminStickerPacksController::class, 'upload'])
-                    ->whereNumber('packId')
-                    ->middleware('throttle:sticker-uploads');
-                Route::put('/{packId}/stickers/order', [SuperAdminStickerPacksController::class, 'reorder'])->whereNumber('packId');
-                Route::get('/{packId}/stickers/{stickerId}/original', [SuperAdminStickerPacksController::class, 'stickerOriginal'])
-                    ->whereNumber(['packId', 'stickerId']);
-                Route::patch('/{packId}/stickers/{stickerId}', [SuperAdminStickerPacksController::class, 'updateSticker'])
-                    ->whereNumber(['packId', 'stickerId'])
-                    ->middleware('throttle:sticker-uploads');
-                Route::delete('/{packId}/stickers/{stickerId}', [SuperAdminStickerPacksController::class, 'destroySticker'])
-                    ->whereNumber(['packId', 'stickerId']);
-            });
-
-            Route::post('/accounts/{id}/reset_cache', [SuperAdminAccountsController::class, 'resetCache'])->whereNumber('id');
-
-            Route::delete('/users/{id}/avatar', [SuperAdminUsersController::class, 'destroyAvatar'])->whereNumber('id');
-            Route::post('/users/{id}/resend_confirmation', [SuperAdminUsersController::class, 'resendConfirmation'])->whereNumber('id');
-            Route::post('/users/{id}/impersonate', [SuperAdminUsersController::class, 'impersonate'])->whereNumber('id');
-
-            Route::delete('/agent_bots/{id}/avatar', [SuperAdminAgentBotsController::class, 'destroyAvatar'])->whereNumber('id');
-
-            Route::get('/account_users/{id}', [SuperAdminAccountUsersController::class, 'show'])->whereNumber('id');
-            Route::post('/account_users', [SuperAdminAccountUsersController::class, 'store']);
-            Route::delete('/account_users/{id}', [SuperAdminAccountUsersController::class, 'destroy'])->whereNumber('id');
-
-            require __DIR__.'/admin/dashboard.php';
-            require __DIR__.'/admin/operations.php';
-            require __DIR__.'/admin/events.php';
-            require __DIR__.'/admin/alerts.php';
-
-            // Nhật ký đăng nhập hộ — chỉ đọc, không CRUD như các resource khác.
-            Route::get('/impersonations', [SuperAdminImpersonationsController::class, 'index']);
-            Route::get('/impersonations/{id}', [SuperAdminImpersonationsController::class, 'show'])->whereNumber('id');
-
-            // Thứ tự resource quyết định thứ tự mục trong thanh điều hướng của bản gốc.
-            foreach ([
-                'accounts' => SuperAdminAccountsController::class,
-                'users' => SuperAdminUsersController::class,
-                'access_tokens' => SuperAdminAccessTokensController::class,
-                'installation_configs' => SuperAdminInstallationConfigsController::class,
-                'agent_bots' => SuperAdminAgentBotsController::class,
-                'platform_apps' => SuperAdminPlatformAppsController::class,
-            ] as $resource => $controller) {
-                Route::get("/{$resource}", [$controller, 'index']);
-                Route::get("/{$resource}/new", [$controller, 'create']);
-                Route::post("/{$resource}", [$controller, 'store']);
-                Route::get("/{$resource}/{id}", [$controller, 'show'])->whereNumber('id');
-                Route::get("/{$resource}/{id}/edit", [$controller, 'edit'])->whereNumber('id');
-                Route::match(['put', 'patch'], "/{$resource}/{id}", [$controller, 'update'])->whereNumber('id');
-                Route::delete("/{$resource}/{id}", [$controller, 'destroy'])->whereNumber('id');
-            }
+        // Kho sticker chung: trang + JSON cho trang (dùng chung khung với kho riêng của tenant).
+        Route::get('/sticker_packs', [SuperAdminStickerPacksController::class, 'page']);
+        Route::prefix('/api/sticker_packs')->group(function () {
+            Route::get('/', [SuperAdminStickerPacksController::class, 'index']);
+            Route::post('/', [SuperAdminStickerPacksController::class, 'store']);
+            Route::get('/{packId}', [SuperAdminStickerPacksController::class, 'show'])->whereNumber('packId');
+            Route::match(['put', 'patch'], '/{packId}', [SuperAdminStickerPacksController::class, 'update'])->whereNumber('packId');
+            Route::delete('/{packId}', [SuperAdminStickerPacksController::class, 'destroy'])->whereNumber('packId');
+            Route::post('/{packId}/publish', [SuperAdminStickerPacksController::class, 'publish'])->whereNumber('packId');
+            Route::post('/{packId}/unpublish', [SuperAdminStickerPacksController::class, 'unpublish'])->whereNumber('packId');
+            Route::post('/{packId}/stickers', [SuperAdminStickerPacksController::class, 'upload'])
+                ->whereNumber('packId')
+                ->middleware('throttle:sticker-uploads');
+            Route::put('/{packId}/stickers/order', [SuperAdminStickerPacksController::class, 'reorder'])->whereNumber('packId');
+            Route::get('/{packId}/stickers/{stickerId}/original', [SuperAdminStickerPacksController::class, 'stickerOriginal'])
+                ->whereNumber(['packId', 'stickerId']);
+            Route::patch('/{packId}/stickers/{stickerId}', [SuperAdminStickerPacksController::class, 'updateSticker'])
+                ->whereNumber(['packId', 'stickerId'])
+                ->middleware('throttle:sticker-uploads');
+            Route::delete('/{packId}/stickers/{stickerId}', [SuperAdminStickerPacksController::class, 'destroySticker'])
+                ->whereNumber(['packId', 'stickerId']);
         });
+
+        Route::post('/accounts/{id}/reset_cache', [SuperAdminAccountsController::class, 'resetCache'])->whereNumber('id');
+
+        Route::delete('/users/{id}/avatar', [SuperAdminUsersController::class, 'destroyAvatar'])->whereNumber('id');
+        Route::post('/users/{id}/resend_confirmation', [SuperAdminUsersController::class, 'resendConfirmation'])->whereNumber('id');
+        Route::post('/users/{id}/impersonate', [SuperAdminUsersController::class, 'impersonate'])->whereNumber('id');
+
+        Route::delete('/agent_bots/{id}/avatar', [SuperAdminAgentBotsController::class, 'destroyAvatar'])->whereNumber('id');
+
+        Route::get('/account_users/{id}', [SuperAdminAccountUsersController::class, 'show'])->whereNumber('id');
+        Route::post('/account_users', [SuperAdminAccountUsersController::class, 'store']);
+        Route::delete('/account_users/{id}', [SuperAdminAccountUsersController::class, 'destroy'])->whereNumber('id');
+
+        require __DIR__.'/admin/dashboard.php';
+        require __DIR__.'/admin/operations.php';
+        require __DIR__.'/admin/events.php';
+        require __DIR__.'/admin/alerts.php';
+
+        // Nhật ký đăng nhập hộ — chỉ đọc, không CRUD như các resource khác.
+        Route::get('/impersonations', [SuperAdminImpersonationsController::class, 'index']);
+        Route::get('/impersonations/{id}', [SuperAdminImpersonationsController::class, 'show'])->whereNumber('id');
+
+        // Thứ tự resource quyết định thứ tự mục trong thanh điều hướng của bản gốc.
+        foreach ([
+            'accounts' => SuperAdminAccountsController::class,
+            'users' => SuperAdminUsersController::class,
+            'access_tokens' => SuperAdminAccessTokensController::class,
+            'installation_configs' => SuperAdminInstallationConfigsController::class,
+            'agent_bots' => SuperAdminAgentBotsController::class,
+            'platform_apps' => SuperAdminPlatformAppsController::class,
+        ] as $resource => $controller) {
+            Route::get("/{$resource}", [$controller, 'index']);
+            Route::get("/{$resource}/new", [$controller, 'create']);
+            Route::post("/{$resource}", [$controller, 'store']);
+            Route::get("/{$resource}/{id}", [$controller, 'show'])->whereNumber('id');
+            Route::get("/{$resource}/{id}/edit", [$controller, 'edit'])->whereNumber('id');
+            Route::match(['put', 'patch'], "/{$resource}/{id}", [$controller, 'update'])->whereNumber('id');
+            Route::delete("/{$resource}/{id}", [$controller, 'destroy'])->whereNumber('id');
+        }
     });
 });
 

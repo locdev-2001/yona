@@ -2,14 +2,7 @@
 
 use App\Models\SuperAdmin;
 use App\Models\User;
-use App\Services\Mfa\ManagementService;
 use App\Services\Mfa\TokenService;
-use OTPHP\TOTP;
-
-function superAdminOtpFor(SuperAdmin $superAdmin): string
-{
-    return TOTP::createFromSecret($superAdmin->refresh()->otp_secret)->now();
-}
 
 it('chặn khu quản trị khi chưa đăng nhập', function () {
     $this->get('/admin')->assertRedirect('/admin/sign_in');
@@ -70,115 +63,28 @@ describe('throttle bước mật khẩu', function () {
     });
 });
 
-describe('đăng nhập hai bước với 2FA', function () {
-    it('dừng ở bước OTP sau mật khẩu đúng khi đã bật 2FA', function () {
-        $superAdmin = SuperAdmin::factory()->withMfa()->create(['password' => 'Password1!']);
+it('đăng nhập bằng mật khẩu dù super admin đã bật 2FA', function () {
+    $superAdmin = SuperAdmin::factory()->withMfa()->create(['password' => 'Password1!']);
 
-        $response = $this->post('/admin/sign_in', [
-            'super_admin' => ['email' => $superAdmin->email, 'password' => 'Password1!'],
-        ], ['X-Inertia' => 'true'])->assertOk();
+    $this->post('/admin/sign_in', [
+        'super_admin' => ['email' => $superAdmin->email, 'password' => 'Password1!'],
+    ])->assertRedirect('/admin');
 
-        expect($response->json('props.otpRequired'))->toBeTrue()
-            ->and($response->json('props.otpToken'))->not->toBeEmpty();
-        expect(auth()->guard('super_admin')->check())->toBeFalse();
-    });
+    expect(auth()->guard('super_admin')->id())->toBe($superAdmin->id);
+    $this->get('/admin')->assertOk();
+    expect($superAdmin->refresh()->otp_required_for_login)->toBeTrue()
+        ->and($superAdmin->consumed_timestep)->toBeNull();
+});
 
-    it('đăng nhập được với mã OTP đúng', function () {
-        $superAdmin = SuperAdmin::factory()->withMfa()->create();
-        $token = (new TokenService)->generateToken($superAdmin);
+it('token OTP cũ không thay thế được mật khẩu', function () {
+    $superAdmin = SuperAdmin::factory()->withMfa()->create();
 
-        $this->post('/admin/sign_in', [
-            'otp_token' => $token,
-            'otp_code' => superAdminOtpFor($superAdmin),
-        ])->assertRedirect('/admin');
+    $this->post('/admin/sign_in', [
+        'otp_token' => (new TokenService)->generateToken($superAdmin),
+        'otp_code' => '123456',
+    ])->assertSessionHasErrors(['super_admin.email', 'super_admin.password']);
 
-        expect(auth()->guard('super_admin')->id())->toBe($superAdmin->id);
-    });
-
-    it('đăng nhập được bằng mã dự phòng', function () {
-        $superAdmin = SuperAdmin::factory()->withMfa()->create();
-        $codes = (new ManagementService($superAdmin))->generateBackupCodes();
-        $token = (new TokenService)->generateToken($superAdmin);
-
-        $this->post('/admin/sign_in', [
-            'otp_token' => $token,
-            'backup_code' => $codes[0],
-        ])->assertRedirect('/admin');
-
-        expect(auth()->guard('super_admin')->id())->toBe($superAdmin->id);
-    });
-
-    it('từ chối mã OTP sai và giữ nguyên bước OTP', function () {
-        $superAdmin = SuperAdmin::factory()->withMfa()->create();
-        $token = (new TokenService)->generateToken($superAdmin);
-
-        $response = $this->post('/admin/sign_in', [
-            'otp_token' => $token,
-            'otp_code' => '000000',
-        ], ['X-Inertia' => 'true'])->assertOk();
-
-        expect($response->json('props.otpRequired'))->toBeTrue()
-            ->and($response->json('props.otpToken'))->toBe($token)
-            ->and($response->json('props.otpError'))->toBe(__('errors.mfa.invalid_code'));
-        expect(auth()->guard('super_admin')->check())->toBeFalse();
-    });
-
-    it('từ chối token OTP hết hạn/không hợp lệ', function () {
-        $this->post('/admin/sign_in', [
-            'otp_token' => 'khong-hop-le',
-            'otp_code' => '000000',
-        ])->assertRedirect('/admin/sign_in')->assertSessionHas('error', __('errors.mfa.invalid_token'));
-    });
-
-    it('từ chối mfa_token của agent thường, không tiêu mất timestep của agent đó', function () {
-        $agent = User::factory()->withMfa()->create();
-        $token = (new TokenService)->generateToken($agent);
-
-        $this->post('/admin/sign_in', [
-            'otp_token' => $token,
-            'otp_code' => TOTP::createFromSecret($agent->otp_secret)->now(),
-        ])->assertRedirect('/admin/sign_in')->assertSessionHas('error', __('errors.mfa.invalid_token'));
-
-        expect($agent->refresh()->consumed_timestep)->toBeNull();
-    });
-
-    it('khoá bước OTP sau 5 lần sai theo tài khoản', function () {
-        $superAdmin = SuperAdmin::factory()->withMfa()->create();
-        $token = (new TokenService)->generateToken($superAdmin);
-
-        for ($i = 0; $i < 5; $i++) {
-            $this->post('/admin/sign_in', ['otp_token' => $token, 'otp_code' => '000000']);
-        }
-
-        $response = $this->post('/admin/sign_in', [
-            'otp_token' => $token,
-            'otp_code' => superAdminOtpFor($superAdmin),
-        ], ['X-Inertia' => 'true'])->assertOk();
-
-        expect($response->json('props.otpError'))->not->toBeEmpty()
-            ->and($response->json('props.otpError'))->not->toBe(__('errors.mfa.invalid_code'));
-        expect(auth()->guard('super_admin')->check())->toBeFalse();
-    });
-
-    it('khoá bước OTP dù kẻ tấn công đổi IP giữa các lần thử', function () {
-        $superAdmin = SuperAdmin::factory()->withMfa()->create();
-        $token = (new TokenService)->generateToken($superAdmin);
-
-        for ($i = 0; $i < 5; $i++) {
-            $this->withServerVariables(['REMOTE_ADDR' => "203.0.113.{$i}"])
-                ->post('/admin/sign_in', ['otp_token' => $token, 'otp_code' => '000000']);
-        }
-
-        $response = $this->withServerVariables(['REMOTE_ADDR' => '198.51.100.1'])
-            ->post('/admin/sign_in', [
-                'otp_token' => $token,
-                'otp_code' => superAdminOtpFor($superAdmin),
-            ], ['X-Inertia' => 'true'])->assertOk();
-
-        expect($response->json('props.otpError'))->not->toBeEmpty()
-            ->and($response->json('props.otpError'))->not->toBe(__('errors.mfa.invalid_code'));
-        expect(auth()->guard('super_admin')->check())->toBeFalse();
-    });
+    expect(auth()->guard('super_admin')->check())->toBeFalse();
 });
 
 it('chuyển hướng vĩnh viễn đường dẫn console cũ sang prefix mới', function () {

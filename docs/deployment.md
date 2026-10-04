@@ -458,27 +458,14 @@ vì bot ghé landing cũng tạo phiên) × dung lượng trung bình một key.
 300 MB và máy còn RAM thì giữ 30 ngày, đặt `maxmemory` + `volatile-lru`; lớn hơn thì
 hạ `SESSION_LIFETIME` xuống `20160` (14 ngày) và báo founder.
 
-### 2FA bắt buộc cho console quản trị
+### Đăng nhập console quản trị
 
-- Super admin chưa bật 2FA bị chặn ở mọi trang của `/admin/*` (cùng
-  `/horizon`, `/pulse`, `/logs`) trừ `/admin/mfa/setup` (QR + xác
-  nhận mã + hiện mã dự phòng) và logout — không khoá lối ra, chỉ khoá lối vào
-  phần còn lại của console. Luôn bắt buộc, không có cờ tắt. Riêng ba dashboard
-  vận hành còn mở cho user có email hệ thống mà không bắt 2FA (mục 8, "Ba
-  dashboard vận hành").
-- **Việc phải làm ngay sau lần deploy đầu tiên có tính năng này**: đăng nhập
-  `/admin/sign_in` bằng tài khoản founder hiện có, máy sẽ tự đưa vào màn
-  cài đặt 2FA — quét QR bằng Google Authenticator/Authy, nhập mã xác nhận, lưu
-  lại 10 mã dự phòng ở nơi an toàn (chỉ hiện một lần). Làm việc này cho MỌI tài
-  khoản `SuperAdmin` đang có trước khi báo người khác đăng nhập, nếu không họ sẽ
-  bị chặn ở màn cài đặt cho tới khi tự làm xong bước trên.
-- Đăng nhập console: bước mật khẩu throttle 5 lần/phút theo cặp email+IP
-  (dùng chung cơ chế với đăng nhập agent, `App\Services\Mfa`); bước OTP throttle
-  5 lần/phút theo tài khoản (không tính IP — mật khẩu đã lộ thì kẻ tấn công chỉ
-  cần xoay IP để né throttle theo IP).
-- Mất máy xác thực và mất hết mã dự phòng: không có màn tự phục hồi, phải xoá
-  `otp_secret`, `otp_required_for_login`, `otp_backup_codes`, `consumed_timestep`
-  của tài khoản đó qua `artisan tinker` để họ đăng ký lại 2FA từ đầu.
+- Super admin đăng nhập `/admin/sign_in` bằng email và mật khẩu; không yêu cầu
+  cấu hình hoặc xác thực 2FA, kể cả tài khoản đã bật 2FA trước đây.
+- `/admin/*`, `/horizon`, `/pulse`, `/logs` không chuyển super admin sang màn
+  cài đặt 2FA. Dữ liệu 2FA đã lưu được giữ nguyên; 2FA của tài khoản người dùng
+  thường vẫn hoạt động như trước.
+- Bước mật khẩu throttle 5 lần/phút theo cặp email+IP.
 - Đăng nhập hộ (`Impersonate user` trên trang chi tiết user) từ bản này bắt
   buộc nhập lý do (tối thiểu 10 ký tự) và ghi vào bảng
   `super_admin_impersonations` (ai, hộ ai, IP, user agent, thời điểm token SSO
@@ -1140,8 +1127,7 @@ Cả ba (và API nội bộ `/logs/api/*`) chặn sau cùng một middleware
 `SystemAccess::canOpenOperationsDashboards()` và gate `viewPulse`,
 `viewLogViewer`, `Horizon::auth` gọi lại đúng điều kiện đó. Được vào:
 
-- super admin đăng nhập `/admin/sign_in`, bắt buộc đã bật 2FA (chưa bật thì
-  bị đưa sang màn cài 2FA);
+- super admin đăng nhập `/admin/sign_in` bằng email và mật khẩu, không bắt 2FA;
 - user đăng nhập dashboard thường (`/app/login`) có email trong
   `YONA_SYSTEM_ADMIN_EMAILS` (mục 9, "Kho sticker"), **không** bắt 2FA.
 

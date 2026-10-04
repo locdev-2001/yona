@@ -4,14 +4,12 @@ use App\Models\SuperAdmin;
 use App\Services\Mfa\ManagementService;
 use OTPHP\TOTP;
 
-// Super admin chưa bật 2FA bị chặn ở mọi trang console trừ màn cài đặt 2FA +
-// logout — luôn bắt buộc, không có cờ tắt.
-it('đưa super admin chưa bật 2FA vào màn cài đặt thay vì trang console', function () {
+it('cho super admin chưa bật 2FA vào console', function () {
     $superAdmin = SuperAdmin::factory()->create();
 
     $this->actingAs($superAdmin, 'super_admin')
         ->get('/admin')
-        ->assertRedirect('/admin/mfa/setup');
+        ->assertOk();
 });
 
 it('vẫn cho super admin chưa bật 2FA đăng xuất', function () {
@@ -50,7 +48,7 @@ describe('luồng cài đặt 2FA trong console', function () {
             ->and($response->json('secret'))->not->toBeEmpty();
     });
 
-    it('kích hoạt xong thì qua được cổng chặn', function () {
+    it('vẫn cho kích hoạt 2FA thủ công', function () {
         $superAdmin = SuperAdmin::factory()->create();
         (new ManagementService($superAdmin))->enableTwoFactor();
         $code = TOTP::createFromSecret($superAdmin->refresh()->otp_secret)->now();
@@ -74,7 +72,7 @@ describe('luồng cài đặt 2FA trong console', function () {
 
         $this->actingAs($superAdmin, 'super_admin')
             ->get('/admin')
-            ->assertRedirect('/admin/mfa/setup');
+            ->assertOk();
     });
 
 });
