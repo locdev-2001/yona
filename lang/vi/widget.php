@@ -49,7 +49,7 @@ return [
     'START_CONVERSATION' => 'Bắt đầu một hội thoại',
     'END_CONVERSATION' => 'Kết thúc hội thoại',
     'CONTINUE_CONVERSATION' => 'Tiếp tục hội thoại',
-    'YOU' => 'You',
+    'YOU' => 'Bạn',
     'START_NEW_CONVERSATION' => 'Bắt đầu hội thoại mới',
     'RESET_SESSION' => [
         'BUTTON' => 'Bắt đầu lại như khách mới',

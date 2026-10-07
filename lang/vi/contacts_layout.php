@@ -290,7 +290,7 @@ return [
         'NOTES' => [
             'PLACEHOLDER' => 'Thêm ghi chú',
             'WROTE' => 'đã viết',
-            'YOU' => 'You',
+            'YOU' => 'Bạn',
             'SAVE' => 'Lưu ghi chú',
             'ADD_NOTE' => 'Thêm ghi chú cho liên hệ',
             'EXPAND' => 'Mở rộng',

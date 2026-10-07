@@ -3578,7 +3578,7 @@ const messages: Record<string, unknown> = {
             "NOTES": {
                 "PLACEHOLDER": "Thêm ghi chú",
                 "WROTE": "đã viết",
-                "YOU": "You",
+                "YOU": "Bạn",
                 "SAVE": "Lưu ghi chú",
                 "ADD_NOTE": "Thêm ghi chú cho liên hệ",
                 "EXPAND": "Mở rộng",
@@ -11586,7 +11586,7 @@ const messages: Record<string, unknown> = {
         "START_CONVERSATION": "Bắt đầu một hội thoại",
         "END_CONVERSATION": "Kết thúc hội thoại",
         "CONTINUE_CONVERSATION": "Tiếp tục hội thoại",
-        "YOU": "You",
+        "YOU": "Bạn",
         "START_NEW_CONVERSATION": "Bắt đầu hội thoại mới",
         "RESET_SESSION": {
             "BUTTON": "Bắt đầu lại như khách mới",

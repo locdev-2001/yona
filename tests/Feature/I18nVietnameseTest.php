@@ -112,6 +112,17 @@ it('thực sự dịch sang tiếng Việt chứ không chép lại tiếng Anh'
     expect(count($translatable))->toBeLessThan(count($english) * 0.05);
 });
 
+// Nhãn tự xưng quá ngắn để lọt qua kiểm tra dịch sót ở trên; "You đã viết" từng hiện ở ghi chú liên hệ.
+it('dịch mọi nhãn tự xưng YOU sang tiếng Việt', function () {
+    $untranslated = array_keys(array_filter(
+        flattenLocale('vi'),
+        fn ($message, $key) => str_ends_with($key, '.YOU') && is_string($message) && preg_match('/\bYou\b/', $message) === 1,
+        ARRAY_FILTER_USE_BOTH,
+    ));
+
+    expect($untranslated)->toBe([]);
+});
+
 it('bundle frontend khớp lang/ cho cả hai locale', function () {
     $this->artisan('i18n:generate', ['--check' => true])->assertSuccessful();
 
