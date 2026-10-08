@@ -2208,8 +2208,8 @@ const messages: Record<string, unknown> = {
         },
         "ATTRIBUTES": {
             "MESSAGE_TYPE": "Loại tin nhắn",
-            "PRIVATE_NOTE": "Lưu ý riêng",
-            "MESSAGE_CONTAINS": "Message Contains",
+            "PRIVATE_NOTE": "Ghi chú riêng",
+            "MESSAGE_CONTAINS": "Nội dung tin nhắn",
             "EMAIL": "Email",
             "INBOX": "Hộp thư",
             "CONVERSATION_LANGUAGE": "Ngôn ngữ hội thoại",
@@ -3341,7 +3341,7 @@ const messages: Record<string, unknown> = {
                     "TITLE": "Xuất liên hệ",
                     "DESCRIPTION": "Xuất nhanh một tệp csv chứa đầy đủ thông tin liên hệ của bạn",
                     "CONFIRM": "Xuất",
-                    "SUCCESS_MESSAGE": "Export is in progress, You will be notified via email when export file is ready to dowanlod.",
+                    "SUCCESS_MESSAGE": "Đang xuất danh sách liên hệ. Khi tệp sẵn sàng, chúng tôi sẽ gửi email kèm đường dẫn tải về cho bạn.",
                     "ERROR_MESSAGE": "Đã có lỗi, vui lòng thử lại"
                 },
                 "SORT_BY": {
@@ -5061,6 +5061,18 @@ const messages: Record<string, unknown> = {
             "isLessThan": "Nhỏ hơn",
             "daysBefore": "Khoảng x ngày trước",
             "startsWith": "Bắt đầu với"
+        },
+        "PREVIEW_OPERATOR_LABELS": {
+            "equal_to": "là",
+            "not_equal_to": "không là",
+            "contains": "chứa",
+            "does_not_contain": "không chứa",
+            "is_present": "có giá trị",
+            "is_not_present": "không có giá trị",
+            "is_greater_than": "lớn hơn",
+            "is_less_than": "nhỏ hơn",
+            "days_before": "trước (số ngày)",
+            "starts_with": "bắt đầu bằng"
         },
         "ATTRIBUTE_LABELS": {
             "TRUE": "Đúng",

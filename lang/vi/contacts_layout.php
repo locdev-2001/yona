@@ -53,7 +53,7 @@ return [
                 'TITLE' => 'Xuất liên hệ',
                 'DESCRIPTION' => 'Xuất nhanh một tệp csv chứa đầy đủ thông tin liên hệ của bạn',
                 'CONFIRM' => 'Xuất',
-                'SUCCESS_MESSAGE' => 'Export is in progress, You will be notified via email when export file is ready to dowanlod.',
+                'SUCCESS_MESSAGE' => 'Đang xuất danh sách liên hệ. Khi tệp sẵn sàng, chúng tôi sẽ gửi email kèm đường dẫn tải về cho bạn.',
                 'ERROR_MESSAGE' => 'Đã có lỗi, vui lòng thử lại',
             ],
             'SORT_BY' => [

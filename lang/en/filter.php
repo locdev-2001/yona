@@ -45,6 +45,18 @@ return [
         'daysBefore' => 'Is x days before',
         'startsWith' => 'Starts with',
     ],
+    'PREVIEW_OPERATOR_LABELS' => [
+        'equal_to' => 'is',
+        'not_equal_to' => 'is not',
+        'contains' => 'contains',
+        'does_not_contain' => 'does not contain',
+        'is_present' => 'is present',
+        'is_not_present' => 'is not present',
+        'is_greater_than' => 'is greater than',
+        'is_less_than' => 'is less than',
+        'days_before' => 'days before',
+        'starts_with' => 'starts with',
+    ],
     'ATTRIBUTE_LABELS' => [
         'TRUE' => 'True',
         'FALSE' => 'False',

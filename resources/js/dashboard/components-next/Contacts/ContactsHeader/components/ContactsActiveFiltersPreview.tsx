@@ -1,5 +1,6 @@
 import { t } from '../../../../../i18n';
 import ActiveFilterPreview from 'dashboard/components-next/filter/ActiveFilterPreview';
+import { useContactFilterContext } from 'dashboard/components-next/filter/contactProvider';
 import type { ConversationFilterCondition } from 'dashboard/components-next/filter/helper/filterHelper';
 import { camelizeKeys } from 'dashboard/helper/transformKeys';
 import type { CustomView } from 'dashboard/composables/useCustomViews';
@@ -20,6 +21,7 @@ export default function ContactsActiveFiltersPreview({
     onClearFilters,
     onOpenFilter,
 }: ContactsActiveFiltersPreviewProps) {
+    const filterTypes = useContactFilterContext();
     const hasActiveSegments = Boolean(activeSegment);
     const segmentConditions = (activeSegment?.query?.payload ?? []).map(filter => {
         const transformed = camelizeKeys<Record<string, unknown>>(filter);
@@ -39,6 +41,7 @@ export default function ContactsActiveFiltersPreview({
     return (
         <ActiveFilterPreview
             appliedFilters={activeFilterQueryData}
+            filterTypes={filterTypes}
             maxVisibleFilters={2}
             moreFiltersLabel={t('CONTACTS_LAYOUT.FILTER.ACTIVE_FILTERS.MORE_FILTERS', {
                 count: activeFilterQueryData.length - 2,

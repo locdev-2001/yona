@@ -47,6 +47,18 @@ return [
         'daysBefore' => 'Khoảng x ngày trước',
         'startsWith' => 'Bắt đầu với',
     ],
+    'PREVIEW_OPERATOR_LABELS' => [
+        'equal_to' => 'là',
+        'not_equal_to' => 'không là',
+        'contains' => 'chứa',
+        'does_not_contain' => 'không chứa',
+        'is_present' => 'có giá trị',
+        'is_not_present' => 'không có giá trị',
+        'is_greater_than' => 'lớn hơn',
+        'is_less_than' => 'nhỏ hơn',
+        'days_before' => 'trước (số ngày)',
+        'starts_with' => 'bắt đầu bằng',
+    ],
     'ATTRIBUTE_LABELS' => [
         'TRUE' => 'Đúng',
         'FALSE' => 'Sai',

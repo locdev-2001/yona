@@ -1,6 +1,9 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
+
+import { setLocale, t } from '../../../i18n';
 
 import { buildFilterTypes, formatAutomation, formatDelay, generateAutomationPayload, getActionDropdownValues, showActionInput } from './automationHelper';
+import { AUTOMATION_ACTION_TYPES, AUTOMATION_CONDITIONS, AUTOMATION_RULE_EVENTS } from './constants';
 import type { AutomationOptionSets, AutomationRule } from './types';
 
 const optionSets: AutomationOptionSets = {
@@ -117,5 +120,42 @@ describe('hành động gửi thư cho đội', () => {
     it('dropdown lấy danh sách đội và không vẽ ô nhập trên cùng hàng', () => {
         expect(getActionDropdownValues('send_email_to_team', optionSets)).toEqual(optionSets.teams);
         expect(showActionInput('send_email_to_team')).toBe(false);
+    });
+});
+
+// "Email" là danh từ dùng chung hai thứ tiếng nên được phép trùng.
+const SAME_IN_BOTH_LOCALES = ['EMAIL'];
+
+const translatedInBothLocales = (key: string): [string, string] => {
+    setLocale('en');
+    const english = t(key);
+    setLocale('vi');
+    const vietnamese = t(key);
+
+    return [english, vietnamese];
+};
+
+describe('nhãn quy tắc tự động dịch theo giao diện tiếng Việt', () => {
+    afterEach(() => setLocale('en'));
+
+    const conditionNames = [...new Set(Object.values(AUTOMATION_CONDITIONS).flat().map(condition => condition.name))];
+
+    it.each([
+        ...conditionNames.map(name => `AUTOMATION.ATTRIBUTES.${name}`),
+        ...AUTOMATION_ACTION_TYPES.map(action => `AUTOMATION.ACTIONS.${action.label}`),
+        ...AUTOMATION_RULE_EVENTS.map(event => `AUTOMATION.EVENTS.${event.value}`),
+    ])('%s có bản tiếng Việt riêng', key => {
+        const [english, vietnamese] = translatedInBothLocales(key);
+
+        expect(english).not.toBe(key);
+        expect(vietnamese).not.toBe(key);
+        if (!SAME_IN_BOTH_LOCALES.some(name => key.endsWith(`.${name}`))) expect(vietnamese).not.toBe(english);
+    });
+
+    it('điều kiện nội dung tin nhắn hiện tiếng Việt trong ô chọn điều kiện', () => {
+        setLocale('vi');
+        const content = buildFilterTypes('message_created', optionSets).find(item => item.attributeKey === 'content');
+
+        expect(content?.attributeName).toBe('Nội dung tin nhắn');
     });
 });

@@ -3341,7 +3341,7 @@ const messages: Record<string, unknown> = {
                     "TITLE": "Export contacts",
                     "DESCRIPTION": "Quickly export a csv file with comprehensive details of your contacts",
                     "CONFIRM": "Export",
-                    "SUCCESS_MESSAGE": "Export is in progress. You will be notified on email when the export file is ready to download.",
+                    "SUCCESS_MESSAGE": "Export is in progress. We will email you a download link when the export file is ready.",
                     "ERROR_MESSAGE": "There was an error, please try again"
                 },
                 "SORT_BY": {
@@ -5061,6 +5061,18 @@ const messages: Record<string, unknown> = {
             "isLessThan": "Is lesser than",
             "daysBefore": "Is x days before",
             "startsWith": "Starts with"
+        },
+        "PREVIEW_OPERATOR_LABELS": {
+            "equal_to": "is",
+            "not_equal_to": "is not",
+            "contains": "contains",
+            "does_not_contain": "does not contain",
+            "is_present": "is present",
+            "is_not_present": "is not present",
+            "is_greater_than": "is greater than",
+            "is_less_than": "is less than",
+            "days_before": "days before",
+            "starts_with": "starts with"
         },
         "ATTRIBUTE_LABELS": {
             "TRUE": "True",

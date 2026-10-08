@@ -181,8 +181,8 @@ return [
     ],
     'ATTRIBUTES' => [
         'MESSAGE_TYPE' => 'Loại tin nhắn',
-        'PRIVATE_NOTE' => 'Lưu ý riêng',
-        'MESSAGE_CONTAINS' => 'Message Contains',
+        'PRIVATE_NOTE' => 'Ghi chú riêng',
+        'MESSAGE_CONTAINS' => 'Nội dung tin nhắn',
         'EMAIL' => 'Email',
         'INBOX' => 'Hộp thư',
         'CONVERSATION_LANGUAGE' => 'Ngôn ngữ hội thoại',

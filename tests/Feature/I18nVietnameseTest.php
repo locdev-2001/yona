@@ -123,6 +123,20 @@ it('dịch mọi nhãn tự xưng YOU sang tiếng Việt', function () {
     expect($untranslated)->toBe([]);
 });
 
+// Các chuỗi này khác bản tiếng Anh vài chữ nên lọt qua kiểm tra chép lại ở trên, dù vẫn là câu tiếng Anh.
+it('chuỗi người dùng từng thấy còn tiếng Anh nay là tiếng Việt', function (string $file, string $key) {
+    expect(require_vi_string($file, $key))->toMatch('/[àáạảãâầấậẩẫăằắặẳẵèéẹẻẽêềếệểễìíịỉĩòóọỏõôồốộổỗơờớợởỡùúụủũưừứựửữỳýỵỷỹđ]/iu');
+})->with([
+    'điều kiện nội dung tin nhắn' => ['automation', 'ATTRIBUTES.MESSAGE_CONTAINS'],
+    'thông báo đang xuất liên hệ' => ['contacts_layout', 'HEADER.ACTIONS.EXPORT_CONTACT.SUCCESS_MESSAGE'],
+]);
+
+it('thông báo xuất liên hệ đúng chính tả và nói đúng kênh báo là email', function (string $locale, string $channelWord) {
+    $message = Arr::get(require base_path("lang/$locale/contacts_layout.php"), 'HEADER.ACTIONS.EXPORT_CONTACT.SUCCESS_MESSAGE');
+
+    expect($message)->not->toContain('dowanlod')->toContain($channelWord);
+})->with([['en', 'email'], ['vi', 'email']]);
+
 it('bundle frontend khớp lang/ cho cả hai locale', function () {
     $this->artisan('i18n:generate', ['--check' => true])->assertSuccessful();
 

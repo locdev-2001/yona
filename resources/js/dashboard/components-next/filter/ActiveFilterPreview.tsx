@@ -1,20 +1,31 @@
 import { Fragment } from 'react';
 
 import Button from 'dashboard/components-next/button/Button';
-import type { ConversationFilterCondition, FilterOption, FilterValue } from './helper/filterHelper';
+import { t } from '../../../i18n';
+import type { ConversationFilterCondition, FilterOption, FilterSelectOption, FilterType, FilterValue } from './helper/filterHelper';
 import { replaceUnderscoreWithSpace } from './helper/filterHelper';
 
 // Port từ components-next/filter/ActiveFilterPreview.vue
-const OPERATOR_LABELS: Record<string, string> = {
-    equal_to: 'is',
-    not_equal_to: 'is not',
-    contains: 'contains',
-    does_not_contain: 'does not contain',
-    is_present: 'is present',
-    is_not_present: 'is not present',
-    is_greater_than: 'is greater than',
-    is_less_than: 'is less than',
-    days_before: 'days before',
+const PREVIEW_OPERATOR_PREFIX = 'FILTER.PREVIEW_OPERATOR_LABELS';
+
+export const operatorPreviewLabel = (filterOperator: string): string => {
+    const key = `${PREVIEW_OPERATOR_PREFIX}.${filterOperator}`;
+    const translated = t(key);
+
+    return translated === key ? replaceUnderscoreWithSpace(filterOperator) : translated;
+};
+
+// Tên thuộc tính lấy từ chính danh sách FilterType mà modal bộ lọc dùng, nên
+// chip và modal luôn hiện cùng một tên (kể cả thuộc tính tùy biến).
+export const attributePreviewLabel = (
+    attributeKey: string,
+    filterTypes: (FilterType | FilterSelectOption)[],
+): string => {
+    const filterType = filterTypes.find(
+        (type): type is FilterType => 'attributeKey' in type && type.attributeKey === attributeKey,
+    );
+
+    return filterType?.attributeName || replaceUnderscoreWithSpace(attributeKey);
 };
 
 const LOWERCASE_KEYS = ['email'];
@@ -29,6 +40,7 @@ const formatFilterValue = (value: FilterValue): string => {
 
 interface ActiveFilterPreviewProps {
     appliedFilters: ConversationFilterCondition[];
+    filterTypes?: (FilterType | FilterSelectOption)[];
     maxVisibleFilters?: number;
     clearButtonLabel?: string;
     moreFiltersLabel?: string;
@@ -40,6 +52,7 @@ interface ActiveFilterPreviewProps {
 
 export default function ActiveFilterPreview({
     appliedFilters,
+    filterTypes = [],
     maxVisibleFilters = 2,
     clearButtonLabel = '',
     moreFiltersLabel = '',
@@ -58,11 +71,10 @@ export default function ActiveFilterPreview({
                             onClick={onOpenFilter}
                         >
                             <span className="lowercase whitespace-nowrap first-letter:capitalize text-n-slate-12">
-                                {replaceUnderscoreWithSpace(filter.attributeKey)}
+                                {attributePreviewLabel(filter.attributeKey, filterTypes)}
                             </span>
                             <span className="px-1 text-xs text-n-slate-10 whitespace-nowrap">
-                                {OPERATOR_LABELS[filter.filterOperator] ??
-                                    replaceUnderscoreWithSpace(filter.filterOperator)}
+                                {operatorPreviewLabel(filter.filterOperator)}
                             </span>
                             {filter.values ? (
                                 <span
@@ -77,7 +89,7 @@ export default function ActiveFilterPreview({
                         </div>
                         {index < maxVisibleFilters - 1 && index < appliedFilters.length - 1 ? (
                             <span className="content-center h-full px-1 text-xs font-medium uppercase rounded-lg text-n-slate-10">
-                                {filter.queryOperator}
+                                {t(`FILTER.QUERY_DROPDOWN_LABELS.${filter.queryOperator.toUpperCase()}`)}
                             </span>
                         ) : null}
                     </div>

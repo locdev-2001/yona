@@ -52,7 +52,7 @@ return [
                 'TITLE' => 'Export contacts',
                 'DESCRIPTION' => 'Quickly export a csv file with comprehensive details of your contacts',
                 'CONFIRM' => 'Export',
-                'SUCCESS_MESSAGE' => 'Export is in progress. You will be notified on email when the export file is ready to download.',
+                'SUCCESS_MESSAGE' => 'Export is in progress. We will email you a download link when the export file is ready.',
                 'ERROR_MESSAGE' => 'There was an error, please try again',
             ],
             'SORT_BY' => [
