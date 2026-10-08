@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Exceptions\MessageValidationException;
+use App\Jobs\Attachments\RetryAttachmentDownloadJob;
 use App\Models\Concerns\IndexedForSearch;
 use App\Support\FileUploadLimit;
 use Illuminate\Contracts\Encryption\DecryptException;
@@ -111,6 +112,10 @@ class Attachment extends Model
     // Đánh dấu bản ghi âm nhân viên thu ngay ở ô soạn (khác một tệp âm thanh tải lên).
     public const META_VOICE_MESSAGE = 'is_voice_message';
 
+    // Đính kèm `fallback` do tải hỏng tạm thời, URL gốc tải lại được không cần bí
+    // mật của kênh. Giữ loại kênh báo về để lượt tải lại suy loại như đường gốc.
+    public const META_DOWNLOAD_RETRY = 'download_retry';
+
     // displayName() viết bằng SQL, trùng biểu thức index index_attachments_on_folded_display_name.
     public const DISPLAY_NAME_SQL = "COALESCE(NULLIF(attachments.filename, ''), attachments.fallback_title)";
 
@@ -149,6 +154,12 @@ class Attachment extends Model
             $attachment->setExtension();
             $attachment->validateExternalUrlLength();
             $attachment->validateFile();
+        });
+
+        static::created(function (Attachment $attachment) {
+            if ($attachment->awaitsDownloadRetry()) {
+                RetryAttachmentDownloadJob::schedule($attachment);
+            }
         });
 
         static::deleted(fn (Attachment $attachment) => $attachment->discardStoredFile());
@@ -472,6 +483,20 @@ class Attachment extends Model
     public function isVoiceMessage(): bool
     {
         return $this->file_type === self::FILE_TYPE_AUDIO && ($this->meta[self::META_VOICE_MESSAGE] ?? false) === true;
+    }
+
+    public function awaitsDownloadRetry(): bool
+    {
+        return $this->file_type === self::FILE_TYPE_FALLBACK
+            && filled($this->external_url)
+            && is_array($this->meta[self::META_DOWNLOAD_RETRY] ?? null);
+    }
+
+    public function reportedFileTypeForRetry(): ?int
+    {
+        $reportedFileType = $this->meta[self::META_DOWNLOAD_RETRY]['reported_file_type'] ?? null;
+
+        return is_int($reportedFileType) ? $reportedFileType : null;
     }
 
     public function withAttachedFile(): bool

@@ -4,6 +4,7 @@ use App\Channels\Capability;
 use App\Events\DomainEvent;
 use App\Events\EventType;
 use App\Http\Resources\MessageResource;
+use App\Jobs\Attachments\RetryAttachmentDownloadJob;
 use App\Jobs\Webhooks\ZaloEventsJob;
 use App\Jobs\Zalo\StopTypingJob;
 use App\Models\Attachment;
@@ -295,6 +296,22 @@ it('CDN trả 200 thân rỗng thì dựng đính kèm fallback giữ link gốc
         ->and($attachment->fallback_title)->toBe('photo.jpg')
         ->and($attachment->path)->toBeNull()
         ->and(Storage::disk('public')->allFiles())->toBe([]);
+});
+
+it('ảnh tải hỏng tạm thời được hẹn tải lại nền sau khi đính kèm đã có id', function () {
+    Queue::fake([RetryAttachmentDownloadJob::class]);
+    Http::fake(['cdn.anh-rong.test/*' => Http::response('', 200, ['Content-Type' => 'image/jpeg'])]);
+
+    zaloWebhook(zaloPayload('zalo_inbound_image', $this->channel, [
+        'media_url' => 'https://cdn.anh-rong.test/photo.jpg',
+    ]))->assertOk();
+
+    $attachment = Message::query()->latest('id')->first()->attachments()->sole();
+
+    expect($attachment->file_type)->toBe(Attachment::FILE_TYPE_FALLBACK)
+        ->and($attachment->reportedFileTypeForRetry())->toBe(Attachment::FILE_TYPE_IMAGE);
+    Queue::assertPushed(RetryAttachmentDownloadJob::class, fn (RetryAttachmentDownloadJob $job) => $job->attachment->is($attachment)
+        && $job->delay !== null);
 });
 
 it('tệp chung (share.file) lấy loại theo nội dung: mp4 thành video, pdf vẫn là tệp, ảnh thành ảnh', function (string $bytes, string $filename, int $fileType, string $contentType) {

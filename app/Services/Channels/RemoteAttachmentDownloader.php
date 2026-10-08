@@ -104,19 +104,30 @@ class RemoteAttachmentDownloader
      * URL của Telegram nhúng bot token, của Whatsapp/Twilio/Line/TikTok cần
      * header hoặc basic auth riêng — những URL đó KHÔNG được rò ra trình duyệt.
      *
+     * Cũng chính vì mở được không cần bí mật, đính kèm có `$externalUrl` được tải
+     * lại nền (`RetryAttachmentDownloadJob`); `$reportedFileType` là loại kênh báo
+     * về, để lượt tải lại suy `file_type` y như đường tải gốc.
+     *
      * @return array<string, mixed>
      */
     public static function fallbackAttributes(
         ?int $accountId,
         ?string $filename = null,
         ?string $externalUrl = null,
+        ?int $reportedFileType = null,
     ): array {
-        return [
+        $attributes = [
             'account_id' => $accountId,
             'file_type' => Attachment::FILE_TYPE_FALLBACK,
             'external_url' => $externalUrl,
             'fallback_title' => filled($filename) ? mb_substr((string) $filename, 0, 255) : null,
         ];
+
+        if (filled($externalUrl)) {
+            $attributes['meta'] = [Attachment::META_DOWNLOAD_RETRY => ['reported_file_type' => $reportedFileType]];
+        }
+
+        return $attributes;
     }
 
     /**

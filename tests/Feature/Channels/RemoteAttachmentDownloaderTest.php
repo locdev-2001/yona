@@ -1,9 +1,18 @@
 <?php
 
+use App\Events\DomainEvent;
+use App\Events\EventType;
+use App\Http\Resources\MessageResource;
+use App\Jobs\Attachments\RetryAttachmentDownloadJob;
+use App\Models\Attachment;
+use App\Models\Message;
 use App\Services\Channels\RemoteAttachmentDownloader;
 use GuzzleHttp\Psr7\Utils;
 use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 use Tests\Feature\Channels\ChannelFixture;
 
@@ -115,4 +124,105 @@ it('không nạp cả tệp lớn vào RAM', function () {
     expect($attributes)->not->toBeNull()
         ->and($attributes['byte_size'])->toBeGreaterThan($megabytes * 1024 * 1024)
         ->and($growth)->toBeLessThan(12 * 1024 * 1024);
+});
+
+// ─── Tải lại đính kèm fallback ─────────────────────────────────────────────────
+
+// Lưu không qua hook để bài test tự gọi job, không bị lượt tải lại tự hẹn chạy trước.
+function retryableFallbackAttachment(?int $reportedFileType = Attachment::FILE_TYPE_IMAGE): Attachment
+{
+    $message = Message::factory()->create();
+
+    return Attachment::withoutEvents(fn () => $message->attachments()->create(RemoteAttachmentDownloader::fallbackAttributes(
+        accountId: $message->account_id,
+        filename: 'photo.jpg',
+        externalUrl: 'https://cdn.test/photo.jpg',
+        reportedFileType: $reportedFileType,
+    )));
+}
+
+it('chỉ hẹn tải lại fallback có URL mở được, không hẹn khi URL cần bí mật của kênh', function () {
+    Queue::fake([RetryAttachmentDownloadJob::class]);
+    $message = Message::factory()->create();
+
+    $withUrl = $message->attachments()->create(RemoteAttachmentDownloader::fallbackAttributes($message->account_id, 'a.jpg', 'https://cdn.test/a.jpg'));
+    $message->attachments()->create(RemoteAttachmentDownloader::fallbackAttributes($message->account_id, 'b.jpg'));
+
+    Queue::assertPushed(RetryAttachmentDownloadJob::class, 1);
+    Queue::assertPushed(RetryAttachmentDownloadJob::class, fn (RetryAttachmentDownloadJob $job) => $job->attachment->is($withUrl)
+        && $job->attempt === 1
+        && $job->queue === 'low');
+});
+
+it('tải lại được thì đính kèm thành tệp thật và tin phát message.updated', function () {
+    Http::fake(fn () => Http::response(ChannelFixture::jpegBytes(), 200, ['Content-Type' => 'image/jpeg']));
+    $attachment = retryableFallbackAttachment();
+
+    $payloads = [];
+    Event::listen(DomainEvent::class, function (DomainEvent $event) use (&$payloads) {
+        if ($event->type === EventType::MESSAGE_UPDATED) {
+            $payloads[] = MessageResource::pushEventData($event->data['message']);
+        }
+    });
+
+    (new RetryAttachmentDownloadJob($attachment))->handle();
+
+    $attachment->refresh();
+
+    expect($attachment->file_type)->toBe(Attachment::FILE_TYPE_IMAGE)
+        ->and($attachment->byte_size)->toBeGreaterThan(0)
+        ->and(Storage::disk('public')->exists((string) $attachment->path))->toBeTrue()
+        ->and($attachment->external_url)->toBeNull()
+        ->and($attachment->fallback_title)->toBeNull()
+        ->and($attachment->awaitsDownloadRetry())->toBeFalse()
+        ->and($payloads)->toHaveCount(1)
+        ->and($payloads[0]['attachments'][0]['file_type'])->toBe('image');
+});
+
+it('suy loại tệp tải lại như đường gốc: kênh báo âm thanh thì giữ âm thanh', function () {
+    Http::fake(fn () => Http::response(ChannelFixture::jpegBytes(), 200, ['Content-Type' => 'image/jpeg']));
+    $attachment = retryableFallbackAttachment(Attachment::FILE_TYPE_AUDIO);
+
+    (new RetryAttachmentDownloadJob($attachment))->handle();
+
+    expect($attachment->refresh()->file_type)->toBe(Attachment::FILE_TYPE_AUDIO);
+});
+
+it('vẫn thân rỗng thì giữ fallback, không tạo tệp và hẹn lượt kế', function () {
+    Queue::fake([RetryAttachmentDownloadJob::class]);
+    Http::fake(fn () => Http::response('', 200, ['Content-Type' => 'image/jpeg']));
+    $attachment = retryableFallbackAttachment();
+
+    (new RetryAttachmentDownloadJob($attachment))->handle();
+
+    expect($attachment->refresh()->file_type)->toBe(Attachment::FILE_TYPE_FALLBACK)
+        ->and($attachment->external_url)->toBe('https://cdn.test/photo.jpg')
+        ->and(Storage::disk('public')->allFiles())->toBe([]);
+    Queue::assertPushed(RetryAttachmentDownloadJob::class, fn (RetryAttachmentDownloadJob $job) => $job->attempt === 2);
+});
+
+it('hết lượt thì giữ fallback, ghi cảnh báo một lần và thôi hẹn', function () {
+    Queue::fake([RetryAttachmentDownloadJob::class]);
+    Log::spy();
+    Http::fake(fn () => Http::response('', 200, ['Content-Type' => 'image/jpeg']));
+    $attachment = retryableFallbackAttachment();
+
+    (new RetryAttachmentDownloadJob($attachment, count(RetryAttachmentDownloadJob::RETRY_DELAYS_SECONDS)))->handle();
+
+    expect($attachment->refresh()->file_type)->toBe(Attachment::FILE_TYPE_FALLBACK)
+        ->and($attachment->external_url)->toBe('https://cdn.test/photo.jpg')
+        ->and($attachment->awaitsDownloadRetry())->toBeFalse();
+    Queue::assertNothingPushed();
+    Log::shouldHaveReceived('warning')->withArgs(fn (string $line) => str_contains($line, 'Tải lại đính kèm'))->once();
+});
+
+it('đính kèm không còn là fallback thì job không làm gì', function () {
+    Http::fake();
+    $attachment = retryableFallbackAttachment();
+    $attachment->update(['file_type' => Attachment::FILE_TYPE_FILE, 'external_url' => null]);
+
+    (new RetryAttachmentDownloadJob($attachment))->handle();
+
+    Http::assertNothingSent();
+    expect($attachment->refresh()->file_type)->toBe(Attachment::FILE_TYPE_FILE);
 });

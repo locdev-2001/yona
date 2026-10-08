@@ -776,6 +776,7 @@ class IncomingMessageService
             return [];
         }
 
+        $reportedFileType = self::ATTACHMENT_TYPES[$kind] ?? null;
         $attributes = RemoteAttachmentDownloader::download(
             url: (string) $url,
             accountId: $accountId,
@@ -785,15 +786,16 @@ class IncomingMessageService
         if ($attributes === null) {
             // URL CDN Zalo có hạn dùng, lô lịch sử hay về sau khi token đã hết:
             // lưu tin rỗng vô hình là mất hẳn dấu vết, nên rơi về contract
-            // `fallback` của lõi — vẫn còn đường mở tệp gốc.
+            // `fallback` của lõi — vẫn còn đường mở tệp gốc, và lõi tự tải lại nền.
             return [new Attachment(RemoteAttachmentDownloader::fallbackAttributes(
                 accountId: $accountId,
                 filename: $this->params['media_filename'] ?? null,
                 externalUrl: (string) $url,
+                reportedFileType: $reportedFileType,
             ))];
         }
 
-        $attributes['file_type'] = Attachment::fileTypeFromChannel(self::ATTACHMENT_TYPES[$kind] ?? null, $attributes['content_type']);
+        $attributes['file_type'] = Attachment::fileTypeFromChannel($reportedFileType, $attributes['content_type']);
 
         return [new Attachment($attributes)];
     }
