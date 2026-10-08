@@ -40,9 +40,9 @@ import ConversationList from './ConversationList';
 // Advanced filter: modal mở/đóng + validate như gốc (teleport vào
 // #conversationFilterTeleportTarget), Apply gọi endpoint filter riêng.
 const ASSIGNEE_TAB_KEYS: { key: AssigneeTab; countKey: 'mine_count' | 'unassigned_count' | 'all_count' }[] = [
+    { key: ASSIGNEE_TYPE.ALL, countKey: 'all_count' },
     { key: ASSIGNEE_TYPE.ME, countKey: 'mine_count' },
     { key: ASSIGNEE_TYPE.UNASSIGNED, countKey: 'unassigned_count' },
-    { key: ASSIGNEE_TYPE.ALL, countKey: 'all_count' },
 ];
 
 export default function ChatList({
