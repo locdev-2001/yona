@@ -138,6 +138,21 @@ describe('file urls', function () {
         $this->get("/attachments/{$attachment->id}/{$token}/{$attachment->filename}")->assertForbidden();
     });
 
+    // Redirect là 301 (trình duyệt lưu lâu): tệp được thay (tải lại, khôi phục) thì URL
+    // phải đổi theo, nếu không trình duyệt cứ theo chuyển hướng cũ tới tệp đã xoá.
+    it('changes the app url when the stored file is replaced, and the old url still redirects to the new file', function () {
+        $message = attachmentMessage();
+        $attachment = attachmentWithFile($message, UploadedFile::fake()->image('restored.png'));
+        $urlBefore = $attachment->fileUrl();
+
+        $attachment->update(['path' => 'attachments/'.$attachment->account_id.'/replaced.png']);
+        $urlAfter = $attachment->fileUrl();
+
+        expect($urlAfter)->not->toBe($urlBefore);
+        $this->get($urlAfter)->assertRedirect(Storage::disk($attachment->disk)->url($attachment->path));
+        $this->get($urlBefore)->assertRedirect(Storage::disk($attachment->disk)->url($attachment->path));
+    });
+
     it('rejects an expired download signature', function () {
         $message = attachmentMessage();
         $attachment = attachmentWithFile($message, UploadedFile::fake()->image('expired.png'));

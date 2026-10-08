@@ -528,7 +528,7 @@ class Attachment extends Model
     {
         return route('attachments.show', [
             'attachment' => $this->id,
-            'token' => self::fileToken((int) $this->id, $expiresAt),
+            'token' => self::fileToken((int) $this->id, $expiresAt, $this->storedFileVersion()),
             'filename' => $this->filename,
         ]);
     }
@@ -552,10 +552,17 @@ class Attachment extends Model
      *
      * @param  int|null  $expiresAt  null = không hết hạn (URL hiển thị trong app,
      *                               giống blobs/redirect của gốc)
+     * @param  string|null  $fileVersion  đổi khi tệp trên đĩa đổi (tải lại, khôi phục):
+     *                                    URL đổi theo, nên trình duyệt không dùng lại
+     *                                    chuyển hướng 301 đã lưu tới tệp cũ
      */
-    public static function fileToken(int $attachmentId, ?int $expiresAt): string
+    public static function fileToken(int $attachmentId, ?int $expiresAt, ?string $fileVersion = null): string
     {
-        $payload = self::base64UrlEncode((string) json_encode(['id' => $attachmentId, 'exp' => $expiresAt]));
+        $claims = ['id' => $attachmentId, 'exp' => $expiresAt];
+        if ($fileVersion !== null) {
+            $claims['v'] = $fileVersion;
+        }
+        $payload = self::base64UrlEncode((string) json_encode($claims));
 
         return $payload.'.'.self::base64UrlEncode(hash_hmac('sha256', $payload, self::fileTokenKey(), true));
     }
@@ -583,6 +590,11 @@ class Attachment extends Model
         $expiresAt = $claims['exp'] ?? null;
 
         return $expiresAt === null || (is_int($expiresAt) && $expiresAt > time());
+    }
+
+    private function storedFileVersion(): string
+    {
+        return substr(hash('sha256', (string) $this->path), 0, 12);
     }
 
     private static function fileTokenKey(): string
