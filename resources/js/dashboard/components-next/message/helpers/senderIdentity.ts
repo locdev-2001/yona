@@ -1,4 +1,5 @@
 import type { ConversationMessage } from 'dashboard/conversation/types';
+import { avatarSeed, senderAvatarSeed } from 'shared/avatar/avatarSeed';
 import type { ChannelPlatform } from 'shared/constants/channelPlatform';
 import { t } from '../../../../i18n';
 
@@ -12,6 +13,8 @@ export const BOT_SENDER_TYPES: string[] = [SENDER_TYPES.AGENT_BOT, SENDER_TYPES.
 export interface MessageSenderIdentity {
     name: string;
     src: string;
+    // Định danh bền cho avatar hình khối khi người gửi chưa có ảnh.
+    seed: string | undefined;
     platform: ChannelPlatform | null;
     tooltip: string;
 }
@@ -68,37 +71,46 @@ export function resolveMessageSender(
         return {
             name: channelAccount?.name || t('CONVERSATION.NATIVE_APP'),
             src: channelAccount?.avatarUrl ?? '',
+            seed: channelAccount?.seed,
             platform: channelPlatform,
             tooltip: externalEchoCopy(channelPlatform).advisory,
         };
     }
 
-    const build = (name: string, src: string, platform: ChannelPlatform | null): MessageSenderIdentity => ({
+    const build = (
+        name: string,
+        src: string,
+        platform: ChannelPlatform | null,
+        seed: string | undefined,
+    ): MessageSenderIdentity => ({
         name,
         src,
+        seed,
         platform,
         tooltip: sentByTooltip(name, platform),
     });
 
     if (message.message_type === MESSAGE_TYPES.INCOMING) {
         const groupSender = readGroupSender(contentAttributes);
-        if (groupSender) return build(groupSender.name, groupSender.avatar, channelPlatform);
-        if (sender) return build(sender.name ?? '', sender.thumbnail ?? '', channelPlatform);
+        if (groupSender) {
+            return build(groupSender.name, groupSender.avatar, channelPlatform, avatarSeed('group_member', groupSender.externalId));
+        }
+        if (sender) return build(sender.name ?? '', sender.thumbnail ?? '', channelPlatform, senderAvatarSeed(sender));
     }
 
     if (!sender) {
         const { senderName, senderAvatarUrl } = message.additional_attributes ?? {};
 
         return senderName
-            ? build(senderName, senderAvatarUrl ?? '', installation)
-            : build(t('CONVERSATION.BOT'), '', installation);
+            ? build(senderName, senderAvatarUrl ?? '', installation, undefined)
+            : build(t('CONVERSATION.BOT'), '', installation, undefined);
     }
 
     if (BOT_SENDER_TYPES.includes(sender.type)) {
-        return build(sender.name ?? '', sender.avatar_url ?? '', installation);
+        return build(sender.name ?? '', sender.avatar_url ?? '', installation, senderAvatarSeed(sender));
     }
 
-    return build(sender.name ?? '', sender.thumbnail ?? '', installation);
+    return build(sender.name ?? '', sender.thumbnail ?? '', installation, senderAvatarSeed(sender));
 }
 
 /**

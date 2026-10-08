@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { ChatHeader } from './ChatHeader';
 import HeaderActions from './HeaderActions';
+import WidgetAvatar from './WidgetAvatar';
 import { IFrameHelper } from '../helpers/iframe';
 import { widgetStore } from '../store/widgetStore';
 import { getActiveConversation, setActiveConversation } from '../api/client';
@@ -82,7 +83,7 @@ describe('header theo hộp thư hay theo nhân viên', () => {
         expect(screen.getByTestId('header-status').textContent).toBe('Typically replies in a day');
     });
 
-    it('đã có nhân viên nhận: tên và chữ tắt của nhân viên, đang hoạt động theo presence của người đó', async () => {
+    it('đã có nhân viên nhận: tên và avatar hình khối của nhân viên, đang hoạt động theo presence của người đó', async () => {
         await loadConversation({
             id: 3,
             status: 'open',
@@ -92,7 +93,11 @@ describe('header theo hộp thư hay theo nhân viên', () => {
         renderHeader();
 
         expect(screen.getByTestId('header-title').textContent).toBe('Robert Nguyễn');
-        expect(screen.getByTestId('header-avatar').textContent).toBe('RN');
+        const headerAvatar = screen.getByTestId('header-avatar').querySelector('[data-generated-avatar]');
+        const sameAgentElsewhere = render(<WidgetAvatar name="Robert" seed="user:7" size={34} />).container;
+        expect(headerAvatar?.getAttribute('src')).toBe(
+            sameAgentElsewhere.querySelector('[data-generated-avatar]')?.getAttribute('src'),
+        );
         expect(screen.getByTestId('header-status').textContent).toBe('Active now');
     });
 

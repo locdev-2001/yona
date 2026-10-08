@@ -10,7 +10,7 @@ const ZALO: ChannelPlatform = { key: 'zalo', name: 'Zalo', logo_url: '/brand-ass
 const YONA: ChannelPlatform = { key: 'installation', name: 'Yona', logo_url: '/brand-assets/logo_thumbnail.png' };
 
 const IDENTITY: ConversationSenderIdentity = {
-    channelAccount: { name: 'Zalo cá nhân', avatarUrl: '/zalo-account.jpg', platform: ZALO },
+    channelAccount: { name: 'Zalo cá nhân', avatarUrl: '/zalo-account.jpg', seed: 'inbox:3', platform: ZALO },
     installation: YONA,
 };
 
@@ -45,6 +45,7 @@ describe('người gửi của từng tin', () => {
         expect(identity).toEqual({
             name: 'Zalo cá nhân',
             src: '/zalo-account.jpg',
+            seed: 'inbox:3',
             platform: ZALO,
             tooltip: t('CONVERSATION.NATIVE_APP_ADVISORY', { source: 'Zalo' }),
         });
@@ -71,7 +72,13 @@ describe('người gửi của từng tin', () => {
             IDENTITY,
         );
 
-        expect(identity).toEqual({ name: 'Bình', src: '/binh.png', platform: ZALO, tooltip: sentBy('Bình', 'Zalo') });
+        expect(identity).toEqual({
+            name: 'Bình',
+            src: '/binh.png',
+            seed: 'group_member:555',
+            platform: ZALO,
+            tooltip: sentBy('Bình', 'Zalo'),
+        });
     });
 
     it('tin khách đến lấy thumbnail khách, badge nền tảng kênh', () => {
@@ -80,6 +87,7 @@ describe('người gửi của từng tin', () => {
         expect(identity).toEqual({
             name: 'Pham Nguyen',
             src: '/pham.png',
+            seed: 'contact:5',
             platform: ZALO,
             tooltip: sentBy('Pham Nguyen', 'Zalo'),
         });
@@ -108,6 +116,7 @@ describe('người gửi của từng tin', () => {
         expect(identity).toEqual({
             name: 'Bot Trợ Lý',
             src: '/bot.png',
+            seed: 'agent_bot:7',
             platform: YONA,
             tooltip: sentBy('Bot Trợ Lý', 'Yona'),
         });
@@ -116,7 +125,13 @@ describe('người gửi của từng tin', () => {
     it('tin nhân viên lấy thumbnail, badge bản cài đặt', () => {
         const identity = resolveMessageSender(message({ sender: AGENT, sender_id: 2, sender_type: 'User' }), IDENTITY);
 
-        expect(identity).toEqual({ name: 'Lộc', src: '/loc.png', platform: YONA, tooltip: sentBy('Lộc', 'Yona') });
+        expect(identity).toEqual({
+            name: 'Lộc',
+            src: '/loc.png',
+            seed: 'user:2',
+            platform: YONA,
+            tooltip: sentBy('Lộc', 'Yona'),
+        });
     });
 
     it('không có danh tính hộp thư thì không có badge và tooltip giữ như cũ', () => {

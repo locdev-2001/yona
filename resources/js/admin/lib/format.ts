@@ -40,14 +40,3 @@ export function initialsOf(name: string | null | undefined): string {
     const last = words.length > 1 ? (Array.from(words[words.length - 1])[0] ?? '') : (Array.from(words[0])[1] ?? '');
     return (first + last).toLocaleUpperCase('vi-VN');
 }
-
-// Màu avatar chữ cái đầu: chọn theo băm ổn định của tên, nên cùng một tài khoản / người luôn cùng màu
-// ở mọi trang (Tổng quan, danh sách, hồ sơ). Chỉ nền nhạt + chữ đậm, như mọi ô biểu tượng của console.
-export const AVATAR_CLASSES = ['bg-primary-50 text-primary-700', 'bg-navy/10 text-navy', 'bg-cyan/15 text-navy'] as const;
-
-export function avatarClassOf(name: string | null | undefined): string {
-    const seed = (name ?? '').trim().toLocaleLowerCase('vi-VN');
-    let hash = 0;
-    for (const char of seed) hash = (hash * 31 + (char.codePointAt(0) ?? 0)) >>> 0;
-    return AVATAR_CLASSES[hash % AVATAR_CLASSES.length];
-}

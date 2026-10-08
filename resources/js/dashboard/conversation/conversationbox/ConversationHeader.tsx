@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { usePage } from '@inertiajs/react';
 
 import Avatar from 'dashboard/components-next/avatar/Avatar';
+import { avatarSeed } from 'shared/avatar/avatarSeed';
 import BackButton from 'dashboard/components/widgets/BackButton';
 import Button from 'dashboard/components-next/button/Button';
 import { conversationListPageURL } from 'dashboard/helper/URLHelper';
@@ -103,6 +104,7 @@ export default function ConversationHeader({
                     ) : null}
                     <Avatar
                         name={currentContact.name ?? ''}
+                        seed={avatarSeed('contact', currentContact.id)}
                         src={currentContact.thumbnail}
                         size={32}
                         status={contactAvailabilityStatus}
@@ -139,6 +141,7 @@ export default function ConversationHeader({
                 ) : null}
                 <Avatar
                     name={currentContact.name ?? ''}
+                    seed={avatarSeed('contact', currentContact.id)}
                     src={currentContact.thumbnail}
                     size={32}
                     status={contactAvailabilityStatus}

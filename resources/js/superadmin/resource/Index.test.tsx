@@ -151,13 +151,13 @@ describe('ResourceIndex', () => {
         expect(routerDelete).toHaveBeenCalledWith('/admin/accounts/2', expect.anything());
     });
 
-    it('bấm vào dòng mở trang chi tiết; tên là liên kết, kèm avatar chữ cái đầu', () => {
+    it('bấm vào dòng mở trang chi tiết; tên là liên kết, kèm avatar hình khối theo id tài khoản', () => {
         render(<ResourceIndex {...baseProps} />);
 
         // Trên điện thoại cùng dữ liệu vẽ thành thẻ; kiểm bảng của máy tính.
         const table = within(screen.getByRole('table'));
         expect(table.getByRole('link', { name: 'Shop Cây' })).toHaveAttribute('href', '/admin/accounts/1');
-        expect(table.getByText('SC')).toBeInTheDocument();
+        expect(table.getByRole('link', { name: 'Shop Cây' }).closest('div')?.parentElement?.querySelector('[data-generated-avatar]')).not.toBeNull();
 
         fireEvent.click(table.getByText('#1'));
 

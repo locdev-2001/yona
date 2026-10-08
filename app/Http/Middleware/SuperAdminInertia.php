@@ -52,12 +52,13 @@ class SuperAdminInertia
         return $next($request);
     }
 
-    /** @return array{name: string, email: string}|null */
+    /** @return array{id: int, name: string, email: string}|null */
     private function currentUser(Request $request): ?array
     {
         $admin = $request->user('super_admin');
 
         return $admin === null ? null : [
+            'id' => (int) $admin->id,
             'name' => (string) ($admin->name ?: $admin->email),
             'email' => (string) $admin->email,
         ];

@@ -13,6 +13,7 @@ import { ResourceTableFilters } from '@admin/views/apps/resources/list/resource-
 import { ResourceTableToolbar } from '@admin/views/apps/resources/list/resource-table-toolbar';
 
 import FieldValue from '../components/FieldValue';
+import { resourceAvatarSubject } from './avatarSubject';
 import { useNavLabel } from '../components/navigation';
 import { useConsoleDictionary, useConsoleLabels } from '../labels';
 import type { SuperAdminColumn, SuperAdminField, SuperAdminRow } from '../types';
@@ -109,6 +110,7 @@ export default function ResourceIndex({
                 },
                 onDelete: setPendingDelete,
                 renderCell: cell => <FieldValue field={cell as SuperAdminField} nested />,
+                avatarSubject: resourceAvatarSubject(resource),
             }),
         // eslint-disable-next-line react-hooks/exhaustive-deps
         [columns, canEdit, canDestroy, resource],

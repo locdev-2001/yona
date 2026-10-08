@@ -5,6 +5,7 @@ import { usePage } from '@inertiajs/react';
 import { t } from '../../../i18n';
 import { logout } from 'dashboard/helper/logout';
 import Avatar from 'dashboard/components-next/avatar/Avatar';
+import { avatarSeed } from 'shared/avatar/avatarSeed';
 import KeyShortcutModal from 'dashboard/commands/KeyShortcutModal';
 import SidebarProfileMenuStatus from './SidebarProfileMenuStatus';
 import { useSidebarKeyboardShortcuts } from 'dashboard/composables/useSidebarKeyboardShortcuts';
@@ -73,6 +74,7 @@ export default function SidebarProfileMenu({ isCollapsed = false }: { isCollapse
                     onClick={toggle}
                 >
                     <Avatar
+                        seed={avatarSeed('user', user.id)}
                         size={32}
                         src={user.avatar_url}
                         name={availableName}

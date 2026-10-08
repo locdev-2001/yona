@@ -12,10 +12,12 @@ import { cn } from '@admin/lib/utils';
 import type { RecordDetailRow, RecordStat } from '@admin/views/apps/resources/view/record-view-left-panel';
 import { formatCompactNumber, RecordViewLeftPanel } from '@admin/views/apps/resources/view/record-view-left-panel';
 import { SectionCard, TableCard } from '@admin/views/apps/resources/view/section-card';
+import { avatarSeed } from 'shared/avatar/avatarSeed';
 
 import FieldValue from '../components/FieldValue';
 import { useNavLabel } from '../components/navigation';
 import { useConsoleDictionary, useConsoleLabels } from '../labels';
+import { resourceAvatarSubject } from './avatarSubject';
 import type { HasManyValue, SuperAdminField } from '../types';
 
 type AccountUserForm = {
@@ -61,6 +63,8 @@ export default function ResourceShow({
     const { attribute } = useConsoleDictionary();
     const resourceTitle = useNavLabel(`/admin/${resource}`, resourceLabel ?? singularLabel);
     const avatar = fields.find(field => field.type === 'avatar_field');
+    const recordAvatarSubject = resourceAvatarSubject(resource);
+    const recordAvatarSeed = recordAvatarSubject ? avatarSeed(recordAvatarSubject, record.id) : undefined;
     // Hai ô số liệu chỉ hiện khi đủ cặp; lẻ một thì để trong danh sách chi tiết.
     const countFields = fields.filter(field => STAT_FIELD_TYPES.includes(field.type));
     const statFields = countFields.length >= 2 ? countFields.slice(0, 2) : [];
@@ -124,6 +128,7 @@ export default function ResourceShow({
             <RecordViewLeftPanel
                 title={record.title}
                 avatarUrl={avatar?.value ? String(avatar.value) : null}
+                avatarSeed={recordAvatarSeed}
                 badge={resourceTitle}
                 stats={stats}
                 detailsTitle={label('details')}

@@ -3,6 +3,8 @@ import { describe, expect, it } from 'vitest';
 
 import { setLocale } from '../../../i18n';
 
+import Avatar from 'dashboard/components-next/avatar/Avatar';
+
 import Message from './Message';
 import { SenderIdentityContext } from './SenderIdentityContext';
 import type { ConversationSenderIdentity } from './SenderIdentityContext';
@@ -78,7 +80,7 @@ describe('tin chủ shop gửi thẳng từ ứng dụng của kênh', () => {
 describe('tin gửi từ ứng dụng kênh mang danh tính tài khoản kênh', () => {
     const ZALO = { key: 'zalo', name: 'Zalo', logo_url: '/brand-assets/platforms/zalo.webp' };
     const identity = (avatarUrl: string): ConversationSenderIdentity => ({
-        channelAccount: { name: 'Zalo cá nhân', avatarUrl, platform: ZALO },
+        channelAccount: { name: 'Zalo cá nhân', avatarUrl, seed: 'inbox:58', platform: ZALO },
         installation: { key: 'installation', name: 'Yona', logo_url: '/brand-assets/logo_thumbnail.png' },
     });
     const renderWithIdentity = (avatarUrl: string) =>
@@ -99,11 +101,13 @@ describe('tin gửi từ ứng dụng kênh mang danh tính tài khoản kênh',
         expect(container.textContent).not.toContain('NA');
     });
 
-    it('hộp thư chưa có ảnh thì hiện chữ tắt tên hộp thư, vẫn có badge nền tảng', () => {
+    it('hộp thư chưa có ảnh thì hiện avatar hình khối của hộp thư, vẫn có badge nền tảng', () => {
         const container = renderWithIdentity('');
+        const sameInboxElsewhere = render(<Avatar name="Tên khác" seed="inbox:58" size={24} />).container;
 
-        expect(avatarCell(container)?.querySelector('span[role="img"] img')).toBeNull();
-        expect(avatarCell(container)?.querySelector('span[role="img"]')?.textContent).toBe('ZC');
+        expect(avatarCell(container)?.querySelector('[data-generated-avatar]')?.getAttribute('src')).toBe(
+            sameInboxElsewhere.querySelector('[data-generated-avatar]')?.getAttribute('src'),
+        );
         expect(badge(container)?.querySelector('img')?.getAttribute('alt')).toBe('Zalo');
     });
 

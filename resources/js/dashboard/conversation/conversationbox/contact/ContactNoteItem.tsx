@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import DOMPurify from 'dompurify';
 
 import Avatar from 'dashboard/components-next/avatar/Avatar';
+import { avatarSeed } from 'shared/avatar/avatarSeed';
 import NextButton from 'dashboard/components-next/button/Button';
 import MessageFormatter from 'shared/helpers/MessageFormatter';
 import { dynamicTime } from 'shared/helpers/timeHelper';
@@ -45,6 +46,7 @@ export default function ContactNoteItem({
             <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-1.5 min-w-0">
                     <Avatar
+                        seed={avatarSeed('user', note.user?.id)}
                         name={note.user?.name || 'Bot'}
                         src={note.user?.name ? note.user?.thumbnail : BOT_AVATAR_URL}
                         size={16}

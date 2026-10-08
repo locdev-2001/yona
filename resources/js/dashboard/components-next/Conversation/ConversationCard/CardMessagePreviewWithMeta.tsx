@@ -1,4 +1,5 @@
 import Avatar from 'dashboard/components-next/avatar/Avatar';
+import { avatarSeed } from 'shared/avatar/avatarSeed';
 import type { AvailabilityStatus } from 'dashboard/constants/globals';
 import MessagePreview from './MessagePreview';
 import CardLabels from './CardLabels';
@@ -21,6 +22,7 @@ export default function CardMessagePreviewWithMeta({
 }: CardMessagePreviewWithMetaProps) {
     const agent = conversation.meta?.assignee;
     const assignee = {
+        seed: avatarSeed('user', agent?.id),
         name: agent?.name ?? agent?.available_name,
         thumbnail: agent?.thumbnail,
         status: agent?.availability_status as AvailabilityStatus | undefined,
@@ -48,6 +50,7 @@ export default function CardMessagePreviewWithMeta({
                 ) : null}
                 {assignee.name ? (
                     <Avatar
+                        seed={assignee.seed}
                         name={assignee.name}
                         src={assignee.thumbnail}
                         size={20}

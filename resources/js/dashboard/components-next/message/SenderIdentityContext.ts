@@ -5,6 +5,8 @@ import type { ChannelPlatform } from 'shared/constants/channelPlatform';
 export interface ChannelAccountIdentity {
     name: string;
     avatarUrl: string;
+    // Định danh bền (avatarSeed của hộp thư) cho avatar hình khối khi tài khoản kênh chưa có ảnh.
+    seed?: string;
     platform: ChannelPlatform | null;
 }
 

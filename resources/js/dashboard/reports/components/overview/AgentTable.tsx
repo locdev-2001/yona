@@ -6,6 +6,7 @@ import Spinner from 'shared/components/Spinner';
 import Table, { type TableColumn } from 'dashboard/components/table/Table';
 import { useTableModel } from 'dashboard/components/table/useTableModel';
 import { t } from '../../../../i18n';
+import { avatarSeed } from 'shared/avatar/avatarSeed';
 import AgentCell, { type AgentTableRow } from './AgentCell';
 import type { AgentConversationMetric } from '../../types';
 import type { AvailabilityStatus } from '../../../types';
@@ -46,6 +47,7 @@ export default function AgentTable({
                     const metric = agentMetrics.find(item => item.assignee_id === Number(agent.id)) || {};
                     return {
                         agent: agent.available_name || agent.name,
+                        avatarSeed: avatarSeed('user', agent.id),
                         email: agent.email,
                         thumbnail: agent.thumbnail,
                         open: (metric as AgentConversationMetric).open || 0,

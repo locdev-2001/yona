@@ -3,6 +3,7 @@ import { usePage } from '@inertiajs/react';
 import { downloadFile } from '@ext/utils';
 
 import Avatar from 'dashboard/components-next/avatar/Avatar';
+import { senderAvatarSeed } from 'shared/avatar/avatarSeed';
 import NextButton from 'dashboard/components-next/button/Button';
 import Modal from 'dashboard/components/Modal';
 import { useAlert } from 'dashboard/composables/useAlert';
@@ -90,6 +91,7 @@ export default function GalleryView({
         return {
             name: currentUserId === sender.id ? 'You' : name,
             avatar: (sender.thumbnail as string) || (sender.avatar_url as string) || '',
+            seed: senderAvatarSeed(sender as { id?: number; type?: string }),
         };
     }, [activeAttachment, attachment, currentUserId]);
 
@@ -151,6 +153,7 @@ export default function GalleryView({
                     <div className="flex items-center min-w-0 flex-1 sm:flex-none sm:min-w-[15rem] sm:shrink-0">
                         {senderDetails.avatar ? (
                             <Avatar
+                                seed={senderDetails.seed}
                                 name={senderDetails.name}
                                 src={senderDetails.avatar}
                                 size={40}

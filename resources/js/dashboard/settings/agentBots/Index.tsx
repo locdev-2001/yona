@@ -13,6 +13,7 @@ import SettingsLayout from '../SettingsLayout';
 import BaseSettingsHeader from '../BaseSettingsHeader';
 import Button from 'dashboard/components-next/button/Button';
 import Avatar from 'dashboard/components-next/avatar/Avatar';
+import { avatarSeed } from 'shared/avatar/avatarSeed';
 import Dialog from 'dashboard/components-next/dialog/Dialog';
 import type { DialogHandle } from 'dashboard/components-next/dialog/Dialog';
 import BaseTable from 'dashboard/components-next/table/BaseTable';
@@ -118,6 +119,7 @@ export default function AgentBotsIndex() {
                                     <BaseTableCell className="max-w-0">
                                         <div className="flex items-center gap-4 min-w-0">
                                             <Avatar
+                                                seed={avatarSeed('agent_bot', bot.id)}
                                                 name={bot.name || ''}
                                                 src={bot.thumbnail ?? ''}
                                                 size={40}

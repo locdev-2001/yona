@@ -1,3 +1,4 @@
+import { avatarSeed } from 'shared/avatar/avatarSeed';
 import { isProductFeatureVisible } from 'shared/helpers/productVisibility';
 import { useEffect, useState } from 'react';
 
@@ -55,7 +56,7 @@ export default function HomeScreen() {
             <section className="flex flex-none flex-col gap-[18px] bg-[var(--yona-chat-accent)] pb-16 pe-3 ps-5 pt-3 text-[var(--yona-chat-on-accent)]">
                 <div className="flex items-center justify-between">
                     <div className="flex min-w-0 items-center gap-[10px]">
-                        <WidgetAvatar src={channelConfig.avatarUrl} size={36} name={shopName} tone="agent" />
+                        <WidgetAvatar src={channelConfig.avatarUrl} size={36} name={shopName} />
                         <span className="truncate text-[15px] font-semibold">{shopName}</span>
                     </div>
                     <div className="flex gap-1">
@@ -68,7 +69,7 @@ export default function HomeScreen() {
                         <div className="flex">
                             {team.map((agent, index) => (
                                 <span key={agent.id} className={`rounded-full ring-2 ring-[var(--yona-chat-accent)] ${index ? '-ms-2' : ''}`}>
-                                    <WidgetAvatar src={agent.avatar_url} size={36} name={agent.name} tone="agent" />
+                                    <WidgetAvatar src={agent.avatar_url} size={36} name={agent.name} seed={avatarSeed('user', agent.id)} />
                                 </span>
                             ))}
                         </div>
@@ -91,7 +92,12 @@ export default function HomeScreen() {
                         className="flex items-center gap-3 border-b border-[var(--yona-chat-line)] py-[10px] text-start"
                         onClick={() => openConversationScreen(recent.id)}
                     >
-                        <WidgetAvatar src={recent.assignee?.avatar_url ?? channelConfig.avatarUrl} size={36} name={recent.assignee?.name ?? shopName} tone="agent" />
+                        <WidgetAvatar
+                            src={recent.assignee?.avatar_url ?? channelConfig.avatarUrl}
+                            size={36}
+                            name={recent.assignee?.name ?? shopName}
+                            seed={avatarSeed('user', recent.assignee?.id)}
+                        />
                         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                             <span className="text-[12px] text-[var(--yona-chat-ink-soft)]">
                                 {recent.assignee?.name

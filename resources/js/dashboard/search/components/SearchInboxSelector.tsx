@@ -5,6 +5,7 @@ import { t } from '../../../i18n';
 import { useClickAway } from 'dashboard/composables/useClickAway';
 import Button from 'dashboard/components-next/button/Button';
 import DropdownMenu from 'dashboard/components-next/dropdown-menu/DropdownMenu';
+import { avatarSeed } from 'shared/avatar/avatarSeed';
 import type { DashboardPageProps } from '../../types';
 
 // Port từ dashboard/modules/search/components/SearchInboxSelector.vue.
@@ -48,7 +49,7 @@ export default function SearchInboxSelector({ label, value, onChange }: SearchIn
                                 label: inbox.name,
                                 value: inbox.id,
                                 action: 'select',
-                                thumbnail: { name: inbox.name, src: '' },
+                                thumbnail: { name: inbox.name, src: '', seed: avatarSeed('inbox', inbox.id) },
                                 isSelected: value === inbox.id,
                             })),
                         },

@@ -5,6 +5,8 @@ import type { AvailabilityStatus } from '../../../types';
 // Port từ reports/components/overview/AgentCell.vue
 export interface AgentTableRow {
     agent: string;
+    // Định danh bền (avatarSeed) cho avatar hình khối khi nhân viên chưa có ảnh.
+    avatarSeed?: string;
     email?: string;
     thumbnail?: string;
     open: number;
@@ -17,6 +19,7 @@ export default function AgentCell({ row }: { row: AgentTableRow }) {
         <BaseCell>
             <div className="items-center flex text-left">
                 <Avatar
+                    seed={row.avatarSeed}
                     src={row.thumbnail}
                     name={row.agent}
                     status={row.status ?? null}

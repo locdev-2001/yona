@@ -21,6 +21,7 @@ interface MultiselectDropdownProps {
     noSearchResult?: string;
     inputPlaceholder?: string;
     showEmojiIcon?: boolean;
+    avatarSeedOf?: (option: MultiselectOption) => string | undefined;
     onSelect: (option: MultiselectOption) => void;
 }
 
@@ -33,6 +34,7 @@ export default function MultiselectDropdown({
     noSearchResult = 'No results found',
     inputPlaceholder = 'Search',
     showEmojiIcon = false,
+    avatarSeedOf,
     onSelect,
 }: MultiselectDropdownProps) {
     const [showSearchDropdown, setShowSearchDropdown] = useState(false);
@@ -92,6 +94,7 @@ export default function MultiselectDropdown({
                         src={selectedThumbnail}
                         status={selectedItem?.availability_status}
                         name={selectedItemName ?? ''}
+                        seed={selectedItem ? avatarSeedOf?.(selectedItem) : undefined}
                         size={24}
                         hideOfflineStatus
                         roundedFull
@@ -127,6 +130,7 @@ export default function MultiselectDropdown({
                         inputPlaceholder={inputPlaceholder}
                         noSearchResult={noSearchResult}
                         showEmojiIcon={showEmojiIcon}
+                        avatarSeedOf={avatarSeedOf}
                         onSelect={onClickSelectItem}
                     />
                 ) : null}

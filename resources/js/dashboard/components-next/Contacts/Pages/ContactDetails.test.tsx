@@ -33,7 +33,7 @@ function buildContact(overrides: Partial<Contact> = {}): Contact {
     };
 }
 
-const avatarImageSrc = (container: HTMLElement) => container.querySelector('img')?.getAttribute('src') ?? null;
+const avatarImageSrc = (container: HTMLElement) => container.querySelector('img:not([data-generated-avatar])')?.getAttribute('src') ?? null;
 
 describe('ảnh đại diện ở trang chi tiết liên hệ', () => {
     beforeEach(() => {

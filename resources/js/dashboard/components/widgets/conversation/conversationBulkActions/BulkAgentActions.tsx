@@ -3,6 +3,7 @@ import { useCallback, useState } from 'react';
 import { fetchAssignableAgentsForInboxes } from 'dashboard/conversation/bulkApi';
 import type { AssignableAgent, BulkActionAgent } from 'dashboard/conversation/bulkApi';
 import type { DropdownMenuItem } from 'dashboard/components-next/dropdown-menu/DropdownMenu';
+import { avatarSeed } from 'shared/avatar/avatarSeed';
 import { t } from '../../../../../i18n';
 import BulkActionDropdown from './BulkActionDropdown';
 import ConfirmationFooter from './ConfirmationFooter';
@@ -45,7 +46,7 @@ export default function BulkAgentActions({
             action: 'select',
             value: agent.id,
             label: agent.name,
-            thumbnail: { name: agent.name, src: agent.thumbnail ?? '' },
+            thumbnail: { name: agent.name, src: agent.thumbnail ?? '', seed: avatarSeed('user', agent.id) },
             isSelected: selectedAgent?.id === agent.id,
         })),
     ];

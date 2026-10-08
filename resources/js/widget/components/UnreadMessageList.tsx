@@ -1,6 +1,7 @@
 
 import Avatar from 'dashboard/components-next/avatar/Avatar';
 import { emitter } from 'shared/helpers/emitter';
+import { senderAvatarSeed } from 'shared/avatar/avatarSeed';
 
 import { WIDGET_BUS_EVENTS } from '../helpers/constants';
 import { useWidgetState } from '../store/hooks';
@@ -70,6 +71,7 @@ function UnreadMessage({
                             src={avatarUrl}
                             size={20}
                             name={agentName}
+                            seed={senderAvatarSeed(sender)}
                             status={(sender?.availability_status as 'online' | 'offline' | undefined) ?? null}
                             roundedFull
                         />

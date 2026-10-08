@@ -54,14 +54,16 @@ describe('conversation.updated', () => {
 });
 
 describe('conversation.typing_on', () => {
-    it('giữ tên và ảnh người đang gõ để bong bóng ba chấm hiện avatar người đó', () => {
+    it('giữ định danh, tên và ảnh người đang gõ để bong bóng ba chấm hiện avatar người đó', () => {
         deliverEvent('.conversation.typing_on', {
             conversation: { id: 3 },
-            user: { name: 'Nguyễn Minh', available_name: 'Minh', avatar_url: 'https://cdn.example/minh.png' },
+            user: { id: 7, type: 'user', name: 'Nguyễn Minh', available_name: 'Minh', avatar_url: 'https://cdn.example/minh.png' },
         });
 
         expect(widgetStore.getState().uiFlags.isAgentTyping).toBe(true);
         expect(widgetStore.getState().typingAgent).toStrictEqual({
+            id: 7,
+            type: 'user',
             name: 'Minh',
             avatar_url: 'https://cdn.example/minh.png',
         });

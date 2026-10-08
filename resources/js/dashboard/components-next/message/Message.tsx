@@ -301,6 +301,7 @@ export default function Message({
                             >
                                 <Avatar
                                     name={senderIdentity.name}
+                                    seed={senderIdentity.seed}
                                     src={senderIdentity.src}
                                     platform={senderIdentity.platform}
                                     size={24}

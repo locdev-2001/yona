@@ -3,6 +3,7 @@ import type { MouseEvent } from 'react';
 
 import { t } from '../../../../i18n';
 import Avatar from 'dashboard/components-next/avatar/Avatar';
+import { avatarSeed } from 'shared/avatar/avatarSeed';
 import Checkbox from 'dashboard/components-next/checkbox/Checkbox';
 import Icon from 'dashboard/components-next/icon/Icon';
 import type { ChannelIconInbox } from 'dashboard/components-next/icon/ChannelIcon';
@@ -134,6 +135,7 @@ export default function ConversationCard({
             >
                 {!hideThumbnail ? (
                     <Avatar
+                        seed={avatarSeed('contact', currentContact.id)}
                         name={currentContact.name ?? ''}
                         src={currentContact.thumbnail}
                         size={32}

@@ -14,6 +14,7 @@ import SectionLayout from '../account/SectionLayout';
 import BaseSettingsHeader from '../BaseSettingsHeader';
 import RadioCard from 'dashboard/components-next/radioCard/RadioCard';
 import UserProfilePicture from './UserProfilePicture';
+import { avatarSeed } from 'shared/avatar/avatarSeed';
 import UserBasicDetails from './UserBasicDetails';
 import MessageSignature from './MessageSignature';
 import ChangePassword from './ChangePassword';
@@ -190,6 +191,7 @@ export default function ProfileSettingsIndex() {
                             <UserProfilePicture
                                 src={avatarUrl}
                                 name={name}
+                                seed={avatarSeed('user', user.id)}
                                 onChange={updateProfilePicture}
                                 onDelete={() => void deleteProfilePicture()}
                             />

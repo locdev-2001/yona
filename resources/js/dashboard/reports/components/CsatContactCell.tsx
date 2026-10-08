@@ -1,11 +1,12 @@
 import { usePage } from '@inertiajs/react';
 
 import Avatar from 'dashboard/components-next/avatar/Avatar';
+import { avatarSeed } from 'shared/avatar/avatarSeed';
 import type { DashboardPageProps } from '../../types';
 
 // Port từ reports/components/CsatContactCell.vue
 interface CsatContactCellProps {
-    contact?: { name?: string; thumbnail?: string } | null;
+    contact?: { id?: number; name?: string; thumbnail?: string } | null;
     conversationId: number;
     createdAgo?: string;
     createdAt?: string;
@@ -21,7 +22,7 @@ export default function CsatContactCell({
 
     return (
         <div className="flex items-center gap-2">
-            <Avatar src={contact?.thumbnail || ''} name={contact?.name || ''} size={32} roundedFull />
+            <Avatar seed={avatarSeed('contact', contact?.id)} src={contact?.thumbnail || ''} name={contact?.name || ''} size={32} roundedFull />
             <div className="flex flex-col gap-0.5">
                 <span className="text-sm text-n-slate-12 font-medium">{contact?.name || '—'}</span>
                 <div className="flex items-center gap-1 text-xs text-n-slate-10 whitespace-nowrap">

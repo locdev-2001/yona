@@ -252,7 +252,7 @@ Không dùng tab kiểu viên nhộng.
 
 ### §4.8 Avatar
 
-`rounded-full`, cỡ `size-6` · `size-8` · `size-10`. Không ảnh thì chữ cái đầu trên `bg-primary-100 text-primary-700`.
+`rounded-full`, cỡ `size-6` · `size-8` · `size-10`. Không ảnh thì avatar hình khối `GeneratedAvatar` (`resources/js/shared/avatar/`) dựng theo `avatarSeed(loại, id)`, không theo tên; không tự vẽ chữ cái đầu.
 Chồng avatar: đè 8px (`-ml-2`), `ring-2 ring-neutral-0`, tối đa 3 + đếm phần dư.
 
 ---

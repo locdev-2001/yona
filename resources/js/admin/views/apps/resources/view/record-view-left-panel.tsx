@@ -2,16 +2,13 @@
 import type { ReactNode } from 'react'
 
 // Component Imports
-import { Avatar, AvatarFallback, AvatarImage } from '@admin/components/ui/avatar'
+import { Avatar, AvatarGeneratedFallback, AvatarImage } from '@admin/components/ui/avatar'
 import { Badge } from '@admin/components/ui/badge'
 import { Card, CardContent } from '@admin/components/ui/card'
 import { Separator } from '@admin/components/ui/separator'
 
 // Util Imports
-import { avatarClassOf } from '@admin/lib/format'
 import { cn } from '@admin/lib/utils'
-
-import { initialsFromName } from '../list/resource-table-columns'
 
 export type RecordStatusTone = 'active' | 'pending' | 'suspended' | 'inactive'
 
@@ -36,6 +33,8 @@ export type RecordStat = { key: string; icon: ReactNode; value: string; label: s
 export interface RecordViewLeftPanelProps {
   title: string
   avatarUrl?: string | null
+  // Định danh bền (avatarSeed) cho avatar hình khối khi bản ghi chưa có ảnh.
+  avatarSeed?: string
   badge?: ReactNode
   stats?: RecordStat[]
   detailsTitle: string
@@ -62,6 +61,7 @@ export function RecordViewLeftPanel({
   titleAs: TitleTag = 'h1',
   title,
   avatarUrl,
+  avatarSeed,
   badge,
   stats = [],
   detailsTitle,
@@ -75,7 +75,7 @@ export function RecordViewLeftPanel({
         <div className='flex flex-col items-center text-center'>
           <Avatar className='size-24'>
             {avatarUrl ? <AvatarImage src={avatarUrl} alt={title} /> : null}
-            <AvatarFallback className={cn('text-2xl', avatarClassOf(title))}>{initialsFromName(title)}</AvatarFallback>
+            <AvatarGeneratedFallback seed={avatarSeed} name={title} />
           </Avatar>
           <TitleTag className='mt-4 line-clamp-4 text-xl font-semibold break-words'>{title}</TitleTag>
           {badge ? (

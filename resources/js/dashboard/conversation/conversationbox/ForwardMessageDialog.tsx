@@ -3,6 +3,7 @@ import type { KeyboardEvent } from 'react';
 import { router } from '@inertiajs/react';
 
 import Avatar from 'dashboard/components-next/avatar/Avatar';
+import { avatarSeed } from 'shared/avatar/avatarSeed';
 import Button from 'dashboard/components-next/button/Button';
 import Checkbox from 'dashboard/components-next/checkbox/Checkbox';
 import Dialog from 'dashboard/components-next/dialog/Dialog';
@@ -166,7 +167,7 @@ export default function ForwardMessageDialog({ accountId, conversationId, messag
                                     disabled={isDisabled && !isSelected}
                                     onChange={() => toggleTarget(target)}
                                 />
-                                <Avatar name={name} src={target.contact.thumbnail ?? ''} size={28} />
+                                <Avatar seed={avatarSeed('contact', target.contact.id)} name={name} src={target.contact.thumbnail ?? ''} size={28} />
                                 <span className="flex flex-col flex-1 min-w-0">
                                     <span className="text-sm font-medium truncate text-n-slate-12">{name}</span>
                                     {target.forwardable ? (

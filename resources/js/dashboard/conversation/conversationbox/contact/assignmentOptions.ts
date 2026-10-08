@@ -1,4 +1,5 @@
 import type { AssignableAgent } from 'dashboard/composables/useAgentsList';
+import { avatarSeed, senderAvatarSeed } from 'shared/avatar/avatarSeed';
 import type { AvailabilityStatus } from '../../../types';
 import type { AgentMeta, TeamMeta } from '../../types';
 
@@ -49,4 +50,13 @@ export function buildTeamsList(teams: TeamMeta[], hasAnAssignedTeam: boolean, no
 
 export function resolveTeamSelection(assignedTeam: TeamMeta | null, selectedItem: TeamMeta): TeamMeta | null {
     return assignedTeam && assignedTeam.id === selectedItem.id ? null : selectedItem;
+}
+
+// Mục "Không" mang id 0: không phải người thật nên không có định danh bền.
+export function agentOptionAvatarSeed(option: { id: number | string | null; assignee_type?: string }): string | undefined {
+    return option.id ? senderAvatarSeed({ id: option.id, type: option.assignee_type || DEFAULT_ASSIGNEE_TYPE }) : undefined;
+}
+
+export function teamOptionAvatarSeed(option: { id: number | string | null }): string | undefined {
+    return option.id ? avatarSeed('team', option.id) : undefined;
 }

@@ -10,6 +10,7 @@ import SettingsFieldSection from 'dashboard/components-next/Settings/SettingsFie
 import SettingsToggleSection from 'dashboard/components-next/Settings/SettingsToggleSection';
 import TagInput from 'dashboard/components-next/taginput/TagInput';
 import type { DropdownMenuItem } from 'dashboard/components-next/dropdown-menu/DropdownMenu';
+import { avatarSeed } from 'shared/avatar/avatarSeed';
 import SettingsSaveBar from '../settingsDraft/SettingsSaveBar';
 import { useSettingsDraft } from '../settingsDraft/useSettingsDraft';
 import type { DashboardPageProps } from '../../../types';
@@ -57,7 +58,7 @@ export default function CollaboratorsPage({ inbox, onInboxUpdated }: Collaborato
             label: name,
             value: id,
             action: 'select',
-            thumbnail: { name, src: thumbnail || '' },
+            thumbnail: { name, src: thumbnail || '', seed: avatarSeed('user', id) },
         }));
 
     // Thành viên và tự động giao nằm ở hai endpoint; chỉ gửi phần đã đổi.

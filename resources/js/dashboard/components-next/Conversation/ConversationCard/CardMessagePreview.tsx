@@ -1,4 +1,5 @@
 import Avatar from 'dashboard/components-next/avatar/Avatar';
+import { avatarSeed } from 'shared/avatar/avatarSeed';
 import type { AvailabilityStatus } from 'dashboard/constants/globals';
 import MessagePreview from './MessagePreview';
 import type { Conversation } from 'dashboard/conversation/types';
@@ -13,6 +14,7 @@ interface CardMessagePreviewProps {
 export default function CardMessagePreview({ conversation }: CardMessagePreviewProps) {
     const agent = conversation.meta?.assignee;
     const assignee = {
+        seed: avatarSeed('user', agent?.id),
         name: agent?.name ?? agent?.available_name,
         thumbnail: agent?.thumbnail,
         status: agent?.availability_status as AvailabilityStatus | undefined,
@@ -29,6 +31,7 @@ export default function CardMessagePreview({ conversation }: CardMessagePreviewP
             <div className="flex items-center flex-shrink-0 gap-2 pb-2">
                 {assignee.name ? (
                     <Avatar
+                        seed={assignee.seed}
                         name={assignee.name}
                         src={assignee.thumbnail}
                         size={20}

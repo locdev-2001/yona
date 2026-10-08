@@ -15,11 +15,13 @@ import type { TeamMeta } from '../../types';
 import ContactDetailsItem from './ContactDetailsItem';
 import LabelBox from './LabelBox';
 import {
+    agentOptionAvatarSeed,
     buildTeamsList,
     resolveAgentSelection,
     resolveAssignedAgent,
     resolveTeamSelection,
     shouldShowSelfAssign,
+    teamOptionAvatarSeed,
 } from './assignmentOptions';
 import { buildPriorityOptions, findPriorityOption, resolvePrioritySelection } from './priorityOptions';
 import type { PriorityOption } from './priorityOptions';
@@ -117,6 +119,7 @@ export default function ConversationAction() {
                 <MultiselectDropdown
                     options={agentsList}
                     selectedItem={assignedAgent}
+                    avatarSeedOf={agentOptionAvatarSeed}
                     multiselectorTitle={t('AGENT_MGMT.MULTI_SELECTOR.TITLE.AGENT')}
                     multiselectorPlaceholder={t('AGENT_MGMT.MULTI_SELECTOR.PLACEHOLDER')}
                     noSearchResult={t('AGENT_MGMT.MULTI_SELECTOR.SEARCH.NO_RESULTS.AGENT')}
@@ -130,6 +133,7 @@ export default function ConversationAction() {
                     <MultiselectDropdown
                         options={teamsList}
                         selectedItem={assignedTeam}
+                        avatarSeedOf={teamOptionAvatarSeed}
                         showEmojiIcon
                         multiselectorTitle={t('AGENT_MGMT.MULTI_SELECTOR.TITLE.TEAM')}
                         multiselectorPlaceholder={t('AGENT_MGMT.MULTI_SELECTOR.PLACEHOLDER')}

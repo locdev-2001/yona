@@ -5,6 +5,7 @@ import { useAlert } from 'dashboard/composables/useAlert';
 import { getJson, parseApiErrorMessage, postJson } from 'dashboard/helper/apiClient';
 import { dynamicTime } from 'shared/helpers/timeHelper';
 import Avatar from 'dashboard/components-next/avatar/Avatar';
+import { avatarSeed } from 'shared/avatar/avatarSeed';
 import Button from 'dashboard/components-next/button/Button';
 import Dialog from 'dashboard/components-next/dialog/Dialog';
 import type { DialogHandle } from 'dashboard/components-next/dialog/Dialog';
@@ -122,7 +123,7 @@ export default function ZaloSessionBanner({
         return (
             <div className="mb-4 flex flex-col gap-3 p-4 rounded-xl border border-n-weak">
                 <div className="flex items-center gap-3">
-                    <Avatar src={avatarUrl ?? undefined} name={displayName ?? ''} size={40} />
+                    <Avatar seed={avatarSeed('inbox', inboxId)} src={avatarUrl ?? undefined} name={displayName ?? ''} size={40} />
                     <div className="flex-1 min-w-0">
                         <p className="text-n-slate-12 text-sm font-medium truncate">
                             {displayName || t('INBOX_MGMT.ZALO_SESSION.ACCOUNT_UNKNOWN')}

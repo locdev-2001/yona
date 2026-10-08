@@ -9,6 +9,7 @@ import { useWidgetState } from '../store/hooks';
 import EmptyState from '../ui/EmptyState';
 import PanelHeader from '../ui/PanelHeader';
 import { openConversationScreen, startNewConversation } from './navigation';
+import { avatarSeed } from 'shared/avatar/avatarSeed';
 
 /** Tab Tin nhắn: hội thoại của khách, mới nhất trước, chấm chưa đọc, nút nhắn mới nổi ở đáy. */
 export default function MessageListScreen() {
@@ -54,7 +55,12 @@ export default function MessageListScreen() {
                                     onClick={() => openConversationScreen(item.id)}
                                     aria-label={unread ? `${name}, ${t('MESSAGE_LIST.UNREAD', { count: item.unread_count })}` : undefined}
                                 >
-                                    <WidgetAvatar src={item.assignee?.avatar_url ?? channelConfig?.avatarUrl} size={40} name={name} tone="agent" />
+                                    <WidgetAvatar
+                                        src={item.assignee?.avatar_url ?? channelConfig?.avatarUrl}
+                                        size={40}
+                                        name={name}
+                                        seed={avatarSeed('user', item.assignee?.id)}
+                                    />
                                     <span className="flex min-w-0 flex-1 flex-col gap-0.5">
                                         <span className="flex items-baseline justify-between gap-2">
                                             <span className="truncate text-[14px] font-medium text-[var(--yona-chat-ink)]">{name}</span>

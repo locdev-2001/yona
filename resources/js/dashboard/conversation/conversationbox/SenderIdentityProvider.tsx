@@ -4,6 +4,7 @@ import { usePage } from '@inertiajs/react';
 
 import { SenderIdentityContext } from 'dashboard/components-next/message/SenderIdentityContext';
 import type { ConversationSenderIdentity } from 'dashboard/components-next/message/SenderIdentityContext';
+import { avatarSeed } from 'shared/avatar/avatarSeed';
 import { useInstallationPlatform } from 'shared/composables/useInstallationPlatform';
 import type { DashboardPageProps } from '../../types';
 import { useConversation } from '../ConversationContext';
@@ -15,6 +16,7 @@ export default function SenderIdentityProvider({ children }: { children: ReactNo
     const installation = useInstallationPlatform();
 
     const inbox = inboxes.find(item => item.id === selectedConversation?.inbox_id) ?? null;
+    const inboxId = inbox?.id;
     const inboxName = inbox?.name ?? null;
     const inboxAvatarUrl = inbox?.avatar_url ?? '';
     const inboxPlatform = inbox?.platform ?? null;
@@ -22,10 +24,17 @@ export default function SenderIdentityProvider({ children }: { children: ReactNo
     const identity = useMemo<ConversationSenderIdentity>(
         () => ({
             channelAccount:
-                inboxName === null ? null : { name: inboxName, avatarUrl: inboxAvatarUrl, platform: inboxPlatform },
+                inboxName === null
+                    ? null
+                    : {
+                          name: inboxName,
+                          avatarUrl: inboxAvatarUrl,
+                          seed: avatarSeed('inbox', inboxId),
+                          platform: inboxPlatform,
+                      },
             installation,
         }),
-        [inboxName, inboxAvatarUrl, inboxPlatform, installation],
+        [inboxId, inboxName, inboxAvatarUrl, inboxPlatform, installation],
     );
 
     return <SenderIdentityContext.Provider value={identity}>{children}</SenderIdentityContext.Provider>;

@@ -2,6 +2,8 @@ import * as React from 'react'
 
 import { Avatar as AvatarPrimitive } from '@base-ui/react/avatar'
 
+import GeneratedAvatar from 'shared/avatar/GeneratedAvatar'
+
 import { cn } from '@admin/lib/utils'
 
 function Avatar({
@@ -47,6 +49,24 @@ function AvatarFallback({ className, ...props }: AvatarPrimitive.Fallback.Props)
   )
 }
 
+// Dự phòng khi không có ảnh: avatar hình khối theo định danh bền (avatarSeed), thiếu thì theo tên.
+function AvatarGeneratedFallback({
+  seed,
+  name,
+  className,
+  ...props
+}: Omit<AvatarPrimitive.Fallback.Props, 'children'> & { seed?: string; name?: string | null }) {
+  return (
+    <AvatarPrimitive.Fallback
+      data-slot='avatar-fallback'
+      className={cn('flex size-full overflow-hidden rounded-full', className)}
+      {...props}
+    >
+      <GeneratedAvatar seed={seed} name={name} className='size-full' />
+    </AvatarPrimitive.Fallback>
+  )
+}
+
 function AvatarBadge({ className, ...props }: React.ComponentProps<'span'>) {
   return (
     <span
@@ -89,4 +109,4 @@ function AvatarGroupCount({ className, ...props }: React.ComponentProps<'div'>) 
   )
 }
 
-export { Avatar, AvatarImage, AvatarFallback, AvatarGroup, AvatarGroupCount, AvatarBadge }
+export { Avatar, AvatarImage, AvatarFallback, AvatarGeneratedFallback, AvatarGroup, AvatarGroupCount, AvatarBadge }

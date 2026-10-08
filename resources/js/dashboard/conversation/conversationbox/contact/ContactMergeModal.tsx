@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { usePage } from '@inertiajs/react';
 
 import Avatar from 'dashboard/components-next/avatar/Avatar';
+import { avatarSeed } from 'shared/avatar/avatarSeed';
 import NextButton from 'dashboard/components-next/button/Button';
 import ComboBox from 'dashboard/components-next/combobox/ComboBox';
 import Popover from 'dashboard/components-next/popover/Popover';
@@ -156,7 +157,7 @@ export default function ContactMergeModal({
                                     </span>
                                 </div>
                                 <div className="border border-n-strong h-[60px] gap-2 flex items-center rounded-xl p-3">
-                                    <Avatar name={primaryContact.name || ''} src={primaryContact.thumbnail || ''} size={32} roundedFull />
+                                    <Avatar seed={avatarSeed('contact', primaryContact.id)} name={primaryContact.name || ''} src={primaryContact.thumbnail || ''} size={32} roundedFull />
                                     <div className="flex flex-col w-full min-w-0 gap-1">
                                         <span className="text-sm leading-4 truncate text-n-slate-11">{primaryContact.name}</span>
                                         <span className="text-sm leading-4 truncate text-n-slate-11">{primaryContact.email}</span>

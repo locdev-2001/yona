@@ -1,5 +1,6 @@
 import { t } from '../../../i18n';
 import Avatar from 'dashboard/components-next/avatar/Avatar';
+import { avatarSeed } from 'shared/avatar/avatarSeed';
 import Button from 'dashboard/components-next/button/Button';
 import Checkbox from 'dashboard/components-next/checkbox/Checkbox';
 import BaseTable from 'dashboard/components-next/table/BaseTable';
@@ -72,6 +73,7 @@ export default function AgentSelector({
                         <BaseTableCell className="min-w-0 max-w-40">
                             <div className="flex items-center gap-2 min-w-0">
                                 <Avatar
+                                    seed={avatarSeed('user', agent.id)}
                                     src={agent.thumbnail}
                                     name={agent.name}
                                     status={agent.availability_status}

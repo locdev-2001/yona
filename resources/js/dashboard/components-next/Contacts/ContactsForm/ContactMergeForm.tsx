@@ -1,5 +1,6 @@
 import { t } from '../../../../i18n';
 import Avatar from 'dashboard/components-next/avatar/Avatar';
+import { avatarSeed } from 'shared/avatar/avatarSeed';
 import ComboBox from 'dashboard/components-next/combobox/ComboBox';
 import type { ComboBoxOption } from 'dashboard/components-next/combobox/ComboBox';
 import type { Contact } from 'dashboard/contacts/types';
@@ -72,6 +73,7 @@ export default function ContactMergeForm({
                 </div>
                 <div className="border border-n-strong h-[60px] gap-2 flex items-center rounded-xl p-3">
                     <Avatar
+                        seed={avatarSeed('contact', selectedContact.id)}
                         name={selectedContact.name || ''}
                         src={selectedContact.thumbnail || ''}
                         size={32}

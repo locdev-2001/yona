@@ -8,7 +8,7 @@ import { router } from '@inertiajs/react'
 
 // Component Imports
 import Link from '@admin/components/Link'
-import { Avatar, AvatarFallback, AvatarImage } from '@admin/components/ui/avatar'
+import { Avatar, AvatarGeneratedFallback, AvatarImage } from '@admin/components/ui/avatar'
 import { Button, buttonVariants } from '@admin/components/ui/button'
 import {
   DropdownMenu,
@@ -21,8 +21,8 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from '@admin/components/ui/tooltip'
 
 // Util Imports
-import { avatarClassOf, initialsOf } from '@admin/lib/format'
 import { cn } from '@admin/lib/utils'
+import { avatarSeed, type AvatarSubject } from 'shared/avatar/avatarSeed'
 
 // Ô đầu tiên là liên kết tới bản ghi, trừ khi ô đó tự là liên kết (quan hệ, token).
 const LINKED_CELL_TYPES = ['belongs_to', 'belongs_to_search', 'polymorphic', 'secret_field']
@@ -48,6 +48,8 @@ export type ResourceColumnsOptions = {
   labels: ResourceRowActionLabels
   onDelete: (url: string) => void
   renderCell: (cell: ResourceCell) => ReactNode
+  // Loại chủ thể của tài nguyên để avatar hình khối khớp với cùng người/tài khoản ở mọi màn.
+  avatarSubject?: AvatarSubject
 }
 
 function ResourceRowActions({
@@ -116,11 +118,6 @@ function ResourceRowActions({
   )
 }
 
-// Chữ cái đầu cho avatar dự phòng: cùng một cách tính với mọi trang console.
-export function initialsFromName(name: string): string {
-  return initialsOf(name)
-}
-
 // Cột số căn phải (máy chủ gửi `number` hoặc `count-field`).
 export const NUMERIC_COLUMN_CLASSES = ['number', 'count-field']
 
@@ -129,7 +126,15 @@ const cellOf = (row: ResourceRow, name: string) => row.cells.find(cell => cell.n
 // Cột danh tính gộp avatar + tên + dòng phụ (email, hoặc mã bản ghi) thành một ô.
 const IDENTITY_MERGED = ['avatar_url', 'email', 'id']
 
-function IdentityCell({ row, renderCell }: { row: ResourceRow; renderCell: ResourceColumnsOptions['renderCell'] }) {
+function IdentityCell({
+  row,
+  renderCell,
+  avatarSubject
+}: {
+  row: ResourceRow
+  renderCell: ResourceColumnsOptions['renderCell']
+  avatarSubject?: AvatarSubject
+}) {
   const name = String(cellOf(row, 'name')?.value ?? '')
   const avatar = cellOf(row, 'avatar_url')?.value
   const email = cellOf(row, 'email')
@@ -141,7 +146,10 @@ function IdentityCell({ row, renderCell }: { row: ResourceRow; renderCell: Resou
     <div className='flex min-w-44 items-center gap-2'>
       <Avatar className='size-9'>
         {avatar ? <AvatarImage src={String(avatar)} alt={name} /> : null}
-        <AvatarFallback className={cn('text-xs', avatarClassOf(name))}>{initialsFromName(name)}</AvatarFallback>
+        <AvatarGeneratedFallback
+          seed={avatarSubject && (typeof id === 'number' || typeof id === 'string') ? avatarSeed(avatarSubject, id) : undefined}
+          name={name}
+        />
       </Avatar>
       <div className='flex min-w-0 flex-col'>
         {row.url ? (
@@ -158,7 +166,7 @@ function IdentityCell({ row, renderCell }: { row: ResourceRow; renderCell: Resou
 }
 
 export function buildResourceColumns(options: ResourceColumnsOptions): ColumnDef<ResourceRow>[] {
-  const { columns, columnLabel, canEdit, canDestroy, withOverview, renderCell } = options
+  const { columns, columnLabel, canEdit, canDestroy, withOverview, renderCell, avatarSubject } = options
   const hasIdentity = columns.some(column => column.name === 'name')
   const visibleColumns = hasIdentity ? columns.filter(column => !IDENTITY_MERGED.includes(column.name)) : columns
 
@@ -168,7 +176,7 @@ export function buildResourceColumns(options: ResourceColumnsOptions): ColumnDef
     accessorFn: (row: ResourceRow) => cellOf(row, column.name)?.value,
     cell: ({ row }: { row: { original: ResourceRow } }) => {
       if (hasIdentity && column.name === 'name') {
-        return <IdentityCell row={row.original} renderCell={renderCell} />
+        return <IdentityCell row={row.original} renderCell={renderCell} avatarSubject={avatarSubject} />
       }
 
       const cell = cellOf(row.original, column.name)

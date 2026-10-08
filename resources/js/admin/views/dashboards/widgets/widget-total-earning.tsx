@@ -19,7 +19,7 @@ export type TotalEarningItem = {
   value: ReactNode
   // 0–100; bỏ trống thì dòng không có thanh tiến độ.
   progressPercentage?: number
-  // Lớp màu ô avatar: avatarClassOf(tên) để cùng một tài khoản cùng màu ở mọi trang.
+  // Lớp của ô avatar; bỏ trống thì nền trung tính.
   avatarClassName?: string
   // Màu thanh tỉ lệ theo nghĩa của số (MEANING_TONE).
   progressTone?: Tone

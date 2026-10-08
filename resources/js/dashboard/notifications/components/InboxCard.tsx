@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 import Avatar from 'dashboard/components-next/avatar/Avatar';
+import { avatarSeed } from 'shared/avatar/avatarSeed';
 import CardPriorityIcon from 'dashboard/components-next/Conversation/ConversationCard/CardPriorityIcon';
 import Icon from 'dashboard/components-next/icon/Icon';
 import { getInboxIconByType } from 'dashboard/helper/inbox';
@@ -128,6 +129,7 @@ export default function InboxCard({
         >
             <div className="flex items-start gap-2">
                 <Avatar
+                    seed={avatarSeed('contact', assigneeMeta?.id)}
                     name={assigneeMeta?.name ?? ''}
                     src={assigneeMeta?.thumbnail}
                     size={20}

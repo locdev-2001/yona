@@ -3,6 +3,7 @@ import { useMemo, useRef, useState } from 'react';
 import { t } from '../../../i18n';
 import { dynamicTime } from 'shared/helpers/timeHelper';
 import Avatar from 'dashboard/components-next/avatar/Avatar';
+import { avatarSeed } from 'shared/avatar/avatarSeed';
 import Button from 'dashboard/components-next/button/Button';
 import CardLayout from 'dashboard/components-next/CardLayout';
 import Checkbox from 'dashboard/components-next/checkbox/Checkbox';
@@ -187,7 +188,7 @@ export default function ArticleCard({
                 <div className="flex items-center justify-between w-full gap-2 sm:gap-4">
                     <div className="flex items-center min-w-0 gap-2 sm:gap-4">
                         <div className="flex items-center min-w-0 gap-1">
-                            <Avatar name={authorName} src={author?.thumbnail} size={16} roundedFull />
+                            <Avatar seed={avatarSeed('user', author?.id)} name={authorName} src={author?.thumbnail} size={16} roundedFull />
                             <span className="text-sm truncate text-n-slate-11">{authorName || '-'}</span>
                         </div>
                         <span className="flex items-center min-w-0 gap-1 text-sm text-n-slate-11">

@@ -6,6 +6,7 @@ import { t } from '../../../../i18n';
 import { useAlert } from 'dashboard/composables/useAlert';
 import { dynamicTime } from 'shared/helpers/timeHelper';
 import Avatar from 'dashboard/components-next/avatar/Avatar';
+import { avatarSeed } from 'shared/avatar/avatarSeed';
 import Button from 'dashboard/components-next/button/Button';
 import ContactsForm from 'dashboard/components-next/Contacts/ContactsForm/ContactsForm';
 import type { ContactsFormHandle } from 'dashboard/components-next/Contacts/ContactsForm/ContactsForm';
@@ -83,6 +84,7 @@ export default function ContactDetails({
         <div className="flex flex-col items-start gap-8 pb-6">
             <div className="flex flex-col items-start gap-3">
                 <Avatar
+                    seed={avatarSeed('contact', selectedContact.id)}
                     src={avatarSrc}
                     name={selectedContact.name || ''}
                     size={72}

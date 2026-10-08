@@ -256,6 +256,9 @@ export interface ConversationAssignee {
 
 // Người đang gõ bên phía hộp thư (nhân viên hoặc bot), lấy từ sự kiện đang gõ.
 export interface TypingAgent {
+    id?: number;
+    // Loại người gõ trong payload (`user`, `agent_bot`) để dựng avatar theo đúng định danh.
+    type?: string;
     name: string;
     avatar_url?: string | null;
 }

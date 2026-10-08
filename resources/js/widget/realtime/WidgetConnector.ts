@@ -171,14 +171,17 @@ export class WidgetConnector {
     private onTypingOn = (data: {
         conversation?: { id: number };
         is_private?: boolean;
-        user?: { name?: string; available_name?: string; avatar_url?: string | null };
+        user?: { id?: number; type?: string; name?: string; available_name?: string; avatar_url?: string | null };
     }) => {
         const activeConversationId = widgetStore.getState().conversationAttributes.id;
         const isTypingOnAnotherConversation = data.conversation && data.conversation.id !== activeConversationId;
         if (isTypingOnAnotherConversation || data.is_private) return;
 
         const typistName = data.user?.available_name || data.user?.name;
-        widgetStore.toggleAgentTyping('on', typistName ? { name: typistName, avatar_url: data.user?.avatar_url } : null);
+        widgetStore.toggleAgentTyping(
+            'on',
+            typistName ? { id: data.user?.id, type: data.user?.type, name: typistName, avatar_url: data.user?.avatar_url } : null,
+        );
     };
 
     private onTypingOff = () => {

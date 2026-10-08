@@ -14,6 +14,7 @@ import MessageMeta from './message/MessageMeta';
 import UserMessage from './UserMessage';
 import WidgetAvatar from './WidgetAvatar';
 import type { PositionedMessage, WidgetMessage } from '../types';
+import { senderAvatarSeed } from 'shared/avatar/avatarSeed';
 
 const NEAR_BOTTOM_THRESHOLD_PX = 80;
 
@@ -44,7 +45,7 @@ function AgentTypingBubble() {
         <div className="yona-typing sticky bottom-1 flex items-end gap-2" role="status" aria-label={t('TYPING_INDICATOR.LABEL')}>
             <span aria-hidden="true" className="size-[26px] flex-none">
                 {typingAgent ? (
-                    <WidgetAvatar src={typingAgent.avatar_url} size={26} name={typingAgent.name} tone="agent" />
+                    <WidgetAvatar src={typingAgent.avatar_url} size={26} name={typingAgent.name} seed={senderAvatarSeed(typingAgent)} />
                 ) : null}
             </span>
             <span

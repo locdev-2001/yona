@@ -8,6 +8,7 @@ import WidgetAvatar from './WidgetAvatar';
 import { t } from '../i18n';
 import { useWidgetState } from '../store/hooks';
 import type { AvailableAgent } from '../types';
+import { avatarSeed } from 'shared/avatar/avatarSeed';
 
 interface ChatHeaderProps {
     title: string;
@@ -54,9 +55,9 @@ export function ChatHeader({
             ) : null}
             <div className="relative flex-shrink-0" data-testid="header-avatar">
                 {assignee ? (
-                    <WidgetAvatar name={assignee.name} src={assignee.avatar_url} size={34} tone="agent" />
+                    <WidgetAvatar name={assignee.name} seed={avatarSeed('user', assignee.id)} src={assignee.avatar_url} size={34} />
                 ) : (
-                    <WidgetAvatar name={inboxName} src={avatarUrl} size={34} tone="inbox" />
+                    <WidgetAvatar name={inboxName} src={avatarUrl} size={34} />
                 )}
                 <span
                     aria-hidden="true"

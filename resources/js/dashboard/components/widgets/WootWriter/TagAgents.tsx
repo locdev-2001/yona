@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { usePage } from '@inertiajs/react';
 
 import Avatar from 'dashboard/components-next/avatar/Avatar';
+import { avatarSeed } from 'shared/avatar/avatarSeed';
 import EmojiIcon from 'dashboard/components-next/emoji-icon-picker/EmojiIcon';
 import { useKeyboardEvents } from 'dashboard/composables/useKeyboardEvents';
 import { useTeamsList } from 'dashboard/conversation/conversationbox/contact/useTeamsList';
@@ -99,6 +100,7 @@ export default function TagAgents({
             <EmojiIcon value={record.icon} color={record.icon_color} className={iconClass} />
         ) : (
             <Avatar
+                seed={avatarSeed(record.type === 'team' ? 'team' : 'user', record.id)}
                 src={'thumbnail' in record ? record.thumbnail : undefined}
                 name={item.label}
                 size={size}

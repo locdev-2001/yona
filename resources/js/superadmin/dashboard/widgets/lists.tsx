@@ -1,6 +1,8 @@
 import { Link } from '@inertiajs/react';
 
-import { avatarClassOf, formatDate, formatDateTime, initialsOf } from '@admin/lib/format';
+import { formatDate, formatDateTime } from '@admin/lib/format';
+import GeneratedAvatar from 'shared/avatar/GeneratedAvatar';
+import { avatarSeed } from 'shared/avatar/avatarSeed';
 
 import { Button } from '@admin/components/ui/button';
 import { Separator } from '@admin/components/ui/separator';
@@ -19,7 +21,11 @@ const accountLink = (item: { name: string; url: string }) => (
     </Link>
 );
 
-const initialsIcon = (name: string) => <span className="text-xs font-medium">{initialsOf(name)}</span>;
+// Avatar hình khối của tài khoản: cùng định danh với mọi màn console khác.
+const accountAvatar = (item: { id: number; name: string }) => (
+    <GeneratedAvatar seed={avatarSeed('account', item.id)} name={item.name} className="size-full" />
+);
+const ACCOUNT_AVATAR_CLASS = 'overflow-hidden bg-transparent';
 
 export function TopAccounts({ data }: { data: TopAccountsData }) {
     const max = Math.max(1, ...data.items.map(item => item.messages));
@@ -30,8 +36,8 @@ export function TopAccounts({ data }: { data: TopAccountsData }) {
                 key: String(item.id),
                 label: item.name,
                 title: accountLink(item),
-                icon: initialsIcon(item.name),
-                avatarClassName: avatarClassOf(item.name),
+                icon: accountAvatar(item),
+                avatarClassName: ACCOUNT_AVATAR_CLASS,
                 value: t('ADMIN_DASHBOARD.LISTS.MESSAGES', { count: formatNumber(item.messages) }),
                 progressPercentage: (item.messages / max) * 100,
                 progressTone: MEANING_TONE.messages,
@@ -51,8 +57,8 @@ export function RecentSignups({ data }: { data: RecentSignupsData }) {
                 subtitle: [t('ADMIN_DASHBOARD.LISTS.INBOXES', { count: formatNumber(item.inboxesCount) }), item.ownerEmail]
                     .filter(Boolean)
                     .join(' · '),
-                icon: initialsIcon(item.name),
-                avatarClassName: avatarClassOf(item.name),
+                icon: accountAvatar(item),
+                avatarClassName: ACCOUNT_AVATAR_CLASS,
                 value: (
                     <time dateTime={item.createdAt} title={formatDateTime(item.createdAt)} className="font-sans">
                         {formatDate(item.createdAt)}

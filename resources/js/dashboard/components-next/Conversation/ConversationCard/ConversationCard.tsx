@@ -2,6 +2,7 @@ import type { MouseEvent } from 'react';
 import { router } from '@inertiajs/react';
 
 import Avatar from 'dashboard/components-next/avatar/Avatar';
+import { avatarSeed } from 'shared/avatar/avatarSeed';
 import ChannelIcon from 'dashboard/components-next/icon/ChannelIcon';
 import type { ChannelIconInbox } from 'dashboard/components-next/icon/ChannelIcon';
 import type { AvailabilityStatus } from 'dashboard/constants/globals';
@@ -54,6 +55,7 @@ export default function ConversationCard({
             onClick={onCardClick}
         >
             <Avatar
+                seed={avatarSeed('contact', contact?.id)}
                 name={contact?.name ?? ''}
                 src={contact?.thumbnail}
                 size={24}

@@ -2,6 +2,7 @@ import { Link } from '@inertiajs/react';
 import { ICONS } from 'dashboard/icons';
 
 import Avatar from 'dashboard/components-next/avatar/Avatar';
+import { avatarSeed } from 'shared/avatar/avatarSeed';
 import Button from 'dashboard/components-next/button/Button';
 import BaseTableCell from 'dashboard/components-next/table/BaseTableCell';
 import BaseTableRow from 'dashboard/components-next/table/BaseTableRow';
@@ -25,7 +26,7 @@ function AuthorCell({ author }: { author?: MacroAuthor | null }) {
     const name = authorName(author);
     return (
         <div className="flex items-center gap-2 min-w-0">
-            <Avatar name={name} size={24} roundedFull className="flex-shrink-0" />
+            <Avatar seed={avatarSeed('user', author.id)} name={name} size={24} roundedFull className="flex-shrink-0" />
             <span className="text-body-main text-n-slate-12 truncate">{name}</span>
         </div>
     );

@@ -57,7 +57,7 @@ describe('tin nhóm hiện người gửi trên bong bóng', () => {
         const container = renderMessage(incoming({}));
 
         expect(container.textContent).toContain('Chào cả nhà');
-        expect(container.querySelector('img')).toBeNull();
+        expect(container.querySelector('img:not([data-generated-avatar])')).toBeNull();
     });
 
     it('không gắn tên người gửi lên tin của chính mình (bên phải)', () => {

@@ -1,4 +1,5 @@
 import Avatar from './Avatar';
+import { avatarSeed } from 'shared/avatar/avatarSeed';
 
 // Port từ dashboard/components/widgets/ThumbnailGroup.vue. Đặt cạnh Avatar vì
 // components/widgets/ của yona không thuộc vùng sửa của B11 (ghi nợ: dời về đúng
@@ -35,6 +36,7 @@ export default function ThumbnailGroup({
         <div className="flex">
             {usersList.map(user => (
                 <Avatar
+                    seed={avatarSeed('user', user.id)}
                     key={user.id}
                     src={user.thumbnail}
                     name={user.name ?? ''}

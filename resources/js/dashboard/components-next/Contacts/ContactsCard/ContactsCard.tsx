@@ -6,6 +6,7 @@ import CardLayout from 'dashboard/components-next/CardLayout';
 import ContactsForm from 'dashboard/components-next/Contacts/ContactsForm/ContactsForm';
 import Button from 'dashboard/components-next/button/Button';
 import Avatar from 'dashboard/components-next/avatar/Avatar';
+import { avatarSeed } from 'shared/avatar/avatarSeed';
 import Flag from 'dashboard/components-next/flag/Flag';
 import ContactDeleteSection from 'dashboard/components-next/Contacts/ContactsCard/ContactDeleteSection';
 import Checkbox from 'dashboard/components-next/checkbox/Checkbox';
@@ -142,6 +143,7 @@ export default function ContactsCard({
                         onMouseLeave={() => onAvatarHover?.(false)}
                     >
                         <Avatar
+                            seed={avatarSeed('contact', id)}
                             name={name}
                             src={thumbnail}
                             size={42}

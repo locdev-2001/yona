@@ -13,6 +13,7 @@ import WizardLayout, { INBOX_WIZARD_ROUTES } from './WizardLayout';
 import Button from 'dashboard/components-next/button/Button';
 import TagInput from 'dashboard/components-next/taginput/TagInput';
 import type { DropdownMenuItem } from 'dashboard/components-next/dropdown-menu/DropdownMenu';
+import { avatarSeed } from 'shared/avatar/avatarSeed';
 import type { DashboardPageProps } from '../../types';
 import type { Agent } from './types';
 
@@ -44,7 +45,7 @@ export default function AddAgents({ inboxId }: AddAgentsProps) {
             label: name,
             value: id,
             action: 'select',
-            thumbnail: { name, src: thumbnail || '' },
+            thumbnail: { name, src: thumbnail || '', seed: avatarSeed('user', id) },
         }));
 
     const addAgents = async (event: FormEvent) => {

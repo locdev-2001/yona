@@ -15,6 +15,7 @@ import WidgetAvatar from './WidgetAvatar';
 import type { WidgetMessage } from '../types';
 import { BOT_AVATAR_URL } from '../../shared/constants/avatars';
 import { resolveStructured, StructuredMessageView } from 'shared/messaging';
+import { senderAvatarSeed } from 'shared/avatar/avatarSeed';
 
 // Tin của agent/bot. Tin thường (chữ, ảnh, tệp, sticker, thẻ) đi chung khung với
 // tin của khách; tin mẫu có khung riêng (khảo sát, xin email, biểu mẫu) giữ bong bóng cũ.
@@ -85,7 +86,7 @@ function useAgentIdentity(message: WidgetMessage) {
               ? message.sender.avatar_url
               : message.additional_attributes?.sender_avatar_url || botImage;
 
-    return { name: name ?? '', avatarUrl };
+    return { name: name ?? '', avatarUrl, seed: senderAvatarSeed(message.sender) };
 }
 
 function TemplateMessage({ message, showAvatar }: { message: WidgetMessage; showAvatar: boolean }) {
@@ -134,7 +135,7 @@ function TemplateMessage({ message, showAvatar }: { message: WidgetMessage; show
                 <div className="flex items-end gap-2">
                     <div className="w-[26px] flex-none self-end">
                         {showAvatar || hasRecordedResponse ? (
-                            <WidgetAvatar src={agent.avatarUrl} size={26} name={agent.name} tone="agent" />
+                            <WidgetAvatar src={agent.avatarUrl} size={26} name={agent.name} seed={agent.seed} />
                         ) : null}
                     </div>
                     <div className="flex min-w-0 max-w-[74%] flex-col items-start">
@@ -190,7 +191,7 @@ export default function AgentMessage({
         return <ConversationEndCard message={message} />;
     }
 
-    const avatar = showAvatar ? <WidgetAvatar src={agent.avatarUrl} size={26} name={agent.name} tone="agent" /> : null;
+    const avatar = showAvatar ? <WidgetAvatar src={agent.avatarUrl} size={26} name={agent.name} seed={agent.seed} /> : null;
     const structured = isDeletedMessage(message) ? null : resolveStructured(message);
 
     if (structured) {

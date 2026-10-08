@@ -54,7 +54,7 @@ export interface ConversationListItem {
     unread_count: number;
     last_activity_at: number | null;
     created_at?: number;
-    assignee?: { name?: string; avatar_url?: string; availability_status?: string } | null;
+    assignee?: { id?: number; name?: string; avatar_url?: string; availability_status?: string } | null;
     last_message: { id: number; preview: string; message_type: number; created_at: number } | null;
 }
 

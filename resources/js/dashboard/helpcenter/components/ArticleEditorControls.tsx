@@ -9,6 +9,7 @@ import type { DropdownMenuItem } from 'dashboard/components-next/dropdown-menu/D
 import EmojiIcon from 'dashboard/components-next/emoji-icon-picker/EmojiIcon';
 import { getJson } from 'dashboard/helper/apiClient';
 import { useClickAway } from 'dashboard/composables/useClickAway';
+import { avatarSeed } from 'shared/avatar/avatarSeed';
 import ArticleEditorProperties from './ArticleEditorProperties';
 import { useHelpCenterState } from '../store';
 import type { Article, Category } from '../types';
@@ -85,7 +86,7 @@ export default function ArticleEditorControls({
                 .map(({ name, id, thumbnail }) => ({
                     label: name,
                     value: id,
-                    thumbnail: { name, src: thumbnail ?? '' },
+                    thumbnail: { name, src: thumbnail ?? '', seed: avatarSeed('user', id) },
                     isSelected: article?.author?.id
                         ? id === article.author.id
                         : id === (selectedAuthorId || currentUserId),
@@ -156,7 +157,7 @@ export default function ArticleEditorControls({
                         className="!px-0 font-normal hover:!bg-transparent"
                         onClick={() => setOpenAgentsList(open => !open)}
                     >
-                        <Avatar name={authorName} src={author?.thumbnail} size={20} roundedFull />
+                        <Avatar seed={avatarSeed('user', author?.id)} name={authorName} src={author?.thumbnail} size={20} roundedFull />
                         <span className="text-sm text-n-slate-12 hover:text-n-slate-11">{authorName || '-'}</span>
                     </Button>
                     {openAgentsList && agents.length > 1 ? (

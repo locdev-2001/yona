@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 
-import { AVATAR_CLASSES, avatarClassOf } from '@admin/lib/format';
 import { MEANING_TONE, TONE_BADGE, TONE_CHIP, problemTone } from '@admin/views/dashboards/tones';
 
 import { WIDGET_BADGE } from './widgetTones';
@@ -24,16 +23,5 @@ describe('màu theo nghĩa của console', () => {
         for (const badge of Object.values(WIDGET_BADGE)) {
             expect(statusTones.has(badge.tone as never)).toBe(false);
         }
-    });
-});
-
-describe('avatarClassOf', () => {
-    it('cùng tên luôn cùng màu, không phân biệt hoa thường và khoảng trắng hai đầu', () => {
-        expect(avatarClassOf('Shop Mẹ Bắp')).toBe(avatarClassOf('  shop mẹ bắp '));
-        expect(AVATAR_CLASSES).toContain(avatarClassOf('Shop Mẹ Bắp'));
-    });
-
-    it('tên trống vẫn có màu', () => {
-        expect(AVATAR_CLASSES).toContain(avatarClassOf(null));
     });
 });

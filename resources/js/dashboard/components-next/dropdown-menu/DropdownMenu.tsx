@@ -16,7 +16,8 @@ export interface DropdownMenuItem {
     icon?: string;
     disabled?: boolean;
     isSelected?: boolean;
-    thumbnail?: { name: string; src: string };
+    // `seed`: định danh bền (avatarSeed) cho avatar hình khối khi chưa có ảnh.
+    thumbnail?: { name: string; src: string; seed?: string };
     [key: string]: unknown;
 }
 
@@ -102,7 +103,13 @@ export default function DropdownMenu({
             {renderThumbnail
                 ? renderThumbnail(item)
                 : item.thumbnail ? (
-                      <Avatar name={item.thumbnail.name} src={item.thumbnail.src} size={thumbnailSize} roundedFull />
+                      <Avatar
+                          name={item.thumbnail.name}
+                          src={item.thumbnail.src}
+                          seed={item.thumbnail.seed}
+                          size={thumbnailSize}
+                          roundedFull
+                      />
                   ) : null}
             {item.icon ? <Icon icon={item.icon} className="flex-shrink-0 size-3.5" /> : null}
             {item.emoji ? (

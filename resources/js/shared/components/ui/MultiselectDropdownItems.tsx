@@ -28,6 +28,8 @@ interface MultiselectDropdownItemsProps {
     inputPlaceholder?: string;
     noSearchResult?: string;
     showEmojiIcon?: boolean;
+    // Định danh bền (avatarSeed) của từng lựa chọn cho avatar hình khối khi chưa có ảnh.
+    avatarSeedOf?: (option: MultiselectOption) => string | undefined;
     onSelect: (option: MultiselectOption) => void;
 }
 
@@ -38,6 +40,7 @@ export default function MultiselectDropdownItems({
     inputPlaceholder = 'Search',
     noSearchResult = 'No results found',
     showEmojiIcon = false,
+    avatarSeedOf,
     onSelect,
 }: MultiselectDropdownItemsProps) {
     const [search, setSearch] = useState('');
@@ -100,6 +103,7 @@ export default function MultiselectDropdownItems({
                                         <Avatar
                                             src={option.thumbnail}
                                             name={option.name ?? ''}
+                                            seed={avatarSeedOf?.(option)}
                                             status={option.availability_status}
                                             size={24}
                                             hideOfflineStatus

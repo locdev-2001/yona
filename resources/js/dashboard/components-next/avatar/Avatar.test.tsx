@@ -1,3 +1,4 @@
+import type { ReactElement } from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 
@@ -131,7 +132,7 @@ describe('bấm avatar có ảnh để xem ảnh lớn', () => {
         expect(await screen.findByTestId('gallery')).not.toBeNull();
     });
 
-    it('avatar chữ viết tắt không bấm được', () => {
+    it('avatar hình khối không bấm được', () => {
         const { container } = render(<Avatar name="Trang" previewable />);
         const avatar = container.querySelector('[role="img"]') as HTMLElement;
 
@@ -155,5 +156,63 @@ describe('bấm avatar có ảnh để xem ảnh lớn', () => {
 
         expect(screen.queryByRole('button')).toBeNull();
         expect(screen.getByRole('img', { name: 'Trang' })).not.toBeNull();
+    });
+});
+
+describe('avatar hình khối khi không có ảnh', () => {
+    const generatedOf = (container: HTMLElement) =>
+        container.querySelector('[data-generated-avatar]') as HTMLImageElement | null;
+
+    const generatedSrc = (element: ReactElement) => generatedOf(render(element).container)?.getAttribute('src');
+
+    it('không có ảnh thì vẽ avatar hình khối, không còn chữ cái đầu', () => {
+        const { container } = render(<Avatar name="Trang Lê" seed="contact:1" size={32} />);
+        const generated = generatedOf(container);
+
+        expect(generated?.getAttribute('src')).toMatch(/^data:image\/svg\+xml/);
+        expect(generated?.getAttribute('alt')).toBe('Trang Lê');
+        expect(container.textContent).toBe('');
+    });
+
+    it.each([
+        ['cùng seed khác tên', { name: 'Trang', seed: 'contact:1' }, { name: 'Trang Lê (đã đổi tên)', seed: 'contact:1' }],
+        ['không có seed thì theo tên', { name: 'Trang' }, { name: 'Trang' }],
+    ])('%s ra cùng một hình', (_label, first, second) => {
+        expect(generatedSrc(<Avatar {...first} />)).toBe(generatedSrc(<Avatar {...second} />));
+    });
+
+    it.each([
+        ['khác seed', { name: 'Trang', seed: 'contact:1' }, { name: 'Trang', seed: 'contact:2' }],
+        ['cùng id khác loại chủ thể', { name: 'Trang', seed: 'contact:1' }, { name: 'Trang', seed: 'user:1' }],
+    ])('%s ra hình khác nhau', (_label, first, second) => {
+        expect(generatedSrc(<Avatar {...first} />)).not.toBe(generatedSrc(<Avatar {...second} />));
+    });
+
+    it('ảnh tải lỗi thì rơi về avatar hình khối của đúng seed', () => {
+        const { container } = render(<Avatar name="Trang" seed="contact:1" src="/hong.png" />);
+
+        fireEvent.error(container.querySelector('img') as HTMLImageElement);
+
+        expect(generatedOf(container)?.getAttribute('src')).toBe(generatedSrc(<Avatar name="Khác" seed="contact:1" />));
+    });
+
+    it('có ảnh hợp lệ thì không vẽ avatar hình khối', () => {
+        const { container } = render(<Avatar name="Trang" seed="contact:1" src="/trang.png" />);
+
+        expect(generatedOf(container)).toBeNull();
+    });
+
+    it('icon riêng được ưu tiên hơn avatar hình khối', () => {
+        const { container } = render(<Avatar name="Portal" seed="contact:1" iconName="i-lucide-building-2" />);
+
+        expect(generatedOf(container)).toBeNull();
+        expect(container.querySelector('.i-lucide-building-2')).not.toBeNull();
+    });
+
+    it('không tên, không seed, không ảnh thì là icon người vô danh', () => {
+        const { container } = render(<Avatar name="  " />);
+
+        expect(generatedOf(container)).toBeNull();
+        expect(container.querySelector('.i-lucide-user')).not.toBeNull();
     });
 });

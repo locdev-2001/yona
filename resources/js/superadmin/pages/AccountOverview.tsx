@@ -18,7 +18,7 @@ import {
 
 import Link from '@admin/components/Link';
 import { Alert, AlertDescription, AlertTitle } from '@admin/components/ui/alert';
-import { Avatar, AvatarFallback, AvatarImage } from '@admin/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarGeneratedFallback, AvatarImage } from '@admin/components/ui/avatar';
 import { Badge } from '@admin/components/ui/badge';
 import { Button, buttonVariants } from '@admin/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@admin/components/ui/card';
@@ -29,7 +29,8 @@ import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectVa
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@admin/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@admin/components/ui/tabs';
 import { Textarea } from '@admin/components/ui/textarea';
-import { avatarClassOf, formatDate, formatDateTime, initialsOf } from '@admin/lib/format';
+import { formatDate, formatDateTime, initialsOf } from '@admin/lib/format';
+import { avatarSeed } from 'shared/avatar/avatarSeed';
 import { cn } from '@admin/lib/utils';
 import { ActivityTimeline } from '@admin/views/apps/accounts/view/activity-timeline';
 import StatisticsCard from '@admin/views/apps/accounts/view/statistics-card';
@@ -442,9 +443,7 @@ function UsersTable({ users }: { users: AccountUserRow[] }) {
                             <TableCell className="h-14 pl-4">
                                 <div className="flex items-center gap-2">
                                     <Avatar className="size-9">
-                                        <AvatarFallback className={cn('text-xs', avatarClassOf(user.name ?? user.email))}>
-                                            {initialsOf(user.name ?? user.email ?? '')}
-                                        </AvatarFallback>
+                                        <AvatarGeneratedFallback seed={avatarSeed('user', user.id)} name={user.name ?? user.email} />
                                     </Avatar>
                                     <div className="flex min-w-0 flex-col">
                                         <Link href={user.url} className="font-medium hover:underline">
@@ -567,6 +566,7 @@ export default function AccountOverview(props: AccountOverviewProps) {
                 <RecordViewLeftPanel
                     titleAs="h2"
                     title={account.name}
+                    avatarSeed={avatarSeed('account', account.id)}
                     badge={
                         <Badge
                             className={cn(

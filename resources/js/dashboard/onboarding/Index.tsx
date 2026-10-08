@@ -5,6 +5,7 @@ import { router, usePage } from '@inertiajs/react';
 import { t } from '../../i18n';
 import { useAlert } from 'dashboard/composables/useAlert';
 import Avatar from 'dashboard/components-next/avatar/Avatar';
+import { avatarSeed } from 'shared/avatar/avatarSeed';
 import Icon from 'dashboard/components-next/icon/Icon';
 import Input from 'dashboard/components-next/input/Input';
 import SnackbarContainer from 'v3/components/SnackBar/Container';
@@ -102,7 +103,7 @@ export default function OnboardingIndex() {
             >
                 <OnboardingSection title={t('ONBOARDING_NEXT.YOUR_DETAILS')} icon="i-lucide-user">
                     <div className="flex items-center gap-2 px-3 py-3">
-                        <Avatar name={userName} size={16} roundedFull />
+                        <Avatar seed={avatarSeed('user', auth.user?.id)} name={userName} size={16} roundedFull />
                         <span className="text-sm font-medium text-n-slate-12">{userName}</span>
                     </div>
                     <OnboardingFormRow title={t('ONBOARDING_NEXT.FIELDS.EMAIL')} icon="i-lucide-mail">

@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 
 import Avatar from 'dashboard/components-next/avatar/Avatar';
+import { avatarSeed } from 'shared/avatar/avatarSeed';
 import type { GroupMember } from 'dashboard/conversation/groupMembersApi';
 import { searchHighlightHtml } from 'dashboard/helper/searchHighlight';
 import { t } from '../../../../i18n';
@@ -63,7 +64,7 @@ export default function TagGroupMembers({
             onClose={onClose}
             onRemoveTrigger={onRemoveTrigger}
             renderLeading={item => (
-                <Avatar src={item.member.avatar ?? undefined} name={item.label} size={24} roundedFull className="flex-shrink-0" />
+                <Avatar seed={avatarSeed('group_member', item.member.external_id)} src={item.member.avatar ?? undefined} name={item.label} size={24} roundedFull className="flex-shrink-0" />
             )}
         />
     );

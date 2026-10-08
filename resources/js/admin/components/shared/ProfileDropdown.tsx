@@ -2,7 +2,7 @@
 import { HouseIcon, LogOutIcon } from 'lucide-react'
 
 // Component Imports
-import { Avatar, AvatarFallback } from '@admin/components/ui/avatar'
+import { Avatar, AvatarGeneratedFallback } from '@admin/components/ui/avatar'
 import { Button } from '@admin/components/ui/button'
 import {
   DropdownMenu,
@@ -15,7 +15,7 @@ import {
 } from '@admin/components/ui/dropdown-menu'
 
 // Util Imports
-import { initialsOf } from '@admin/lib/format'
+import { avatarSeed } from 'shared/avatar/avatarSeed'
 
 // Config Imports
 import useThemeConfig from '@admin/configs/themeConfig'
@@ -24,7 +24,7 @@ import useThemeConfig from '@admin/configs/themeConfig'
 const ProfileDropdown = () => {
   const { currentUser, labels, templateName } = useThemeConfig()
   const fullName = currentUser?.name ?? templateName
-  const initials = initialsOf(fullName)
+  const currentUserSeed = avatarSeed('user', currentUser?.id)
 
   return (
     <DropdownMenu>
@@ -39,7 +39,7 @@ const ProfileDropdown = () => {
         }
       >
         <Avatar>
-          <AvatarFallback>{initials}</AvatarFallback>
+          <AvatarGeneratedFallback seed={currentUserSeed} name={fullName} />
         </Avatar>
         <span className='ring-card absolute right-0 bottom-0 block size-2 rounded-full bg-green-600 ring-2' />
       </DropdownMenuTrigger>
@@ -50,7 +50,7 @@ const ProfileDropdown = () => {
               <DropdownMenuLabel className='flex items-center gap-4 px-2 py-2.5 font-normal'>
                 <div className='relative'>
                   <Avatar className='size-10'>
-                    <AvatarFallback>{initials}</AvatarFallback>
+                    <AvatarGeneratedFallback seed={currentUserSeed} name={fullName} />
                   </Avatar>
                   <span className='ring-card absolute right-0 bottom-0 block size-2 rounded-full bg-green-600 ring-2' />
                 </div>

@@ -6,6 +6,7 @@ import { useClickAway } from 'dashboard/composables/useClickAway';
 import Button from 'dashboard/components-next/button/Button';
 import DropdownMenu from 'dashboard/components-next/dropdown-menu/DropdownMenu';
 import { searchContacts } from 'dashboard/contacts/api';
+import { avatarSeed } from 'shared/avatar/avatarSeed';
 import { fetchContactDetails } from '../helpers/searchHelper';
 
 // Port từ dashboard/modules/search/components/SearchContactAgentSelector.vue.
@@ -157,7 +158,7 @@ export default function SearchContactAgentSelector({
                                 action: 'select',
                                 type: FROM_TYPE.CONTACT,
                                 description: contact.email || contact.phoneNumber || '',
-                                thumbnail: { name: contact.name, src: contact.thumbnail ?? '' },
+                                thumbnail: { name: contact.name, src: contact.thumbnail ?? '', seed: avatarSeed('contact', contact.id) },
                                 isSelected: value === `${FROM_TYPE.CONTACT}:${contact.id}`,
                             })),
                         },
@@ -169,7 +170,7 @@ export default function SearchContactAgentSelector({
                                 value: `${FROM_TYPE.AGENT}:${agent.id}`,
                                 action: 'select',
                                 type: FROM_TYPE.AGENT,
-                                thumbnail: { name: agent.name, src: agent.thumbnail ?? '' },
+                                thumbnail: { name: agent.name, src: agent.thumbnail ?? '', seed: avatarSeed('user', agent.id) },
                                 isSelected: value === `${FROM_TYPE.AGENT}:${agent.id}`,
                             })),
                         },

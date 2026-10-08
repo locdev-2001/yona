@@ -7,7 +7,7 @@ type BrandingProps = {
     logoThumbnail?: string
     version?: string
     labels?: Record<string, string>
-    currentUser?: { name: string; email: string } | null
+    currentUser?: { id: number; name: string; email: string } | null
   }
 }
 

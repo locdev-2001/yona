@@ -8,6 +8,7 @@ import { widgetStore } from '../store/widgetStore';
 import { t } from '../i18n';
 import WidgetAvatar from './WidgetAvatar';
 import type { WidgetMessage } from '../types';
+import { avatarSeed } from 'shared/avatar/avatarSeed';
 
 const MINUTES_IN_HOUR = 60;
 const MINUTES_IN_DAY = 24 * 60;
@@ -60,9 +61,9 @@ export default function ConversationEndCard({ message }: { message: WidgetMessag
         >
             <div className="flex items-center gap-2.5">
                 {assignee ? (
-                    <WidgetAvatar name={assignee.name} src={assignee.avatar_url} size={36} tone="agent" />
+                    <WidgetAvatar name={assignee.name} seed={avatarSeed('user', assignee.id)} src={assignee.avatar_url} size={36} />
                 ) : (
-                    <WidgetAvatar name={inboxName} src={inboxAvatarUrl} size={36} tone="inbox" />
+                    <WidgetAvatar name={inboxName} src={inboxAvatarUrl} size={36} />
                 )}
                 <div className="min-w-0">
                     <div className="text-[13.5px] font-semibold leading-[1.3] truncate text-[var(--yona-chat-ink)]">

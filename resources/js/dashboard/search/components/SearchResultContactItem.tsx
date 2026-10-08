@@ -5,6 +5,7 @@ import { frontendURL } from 'dashboard/helper/URLHelper';
 import { dynamicTime } from 'shared/helpers/timeHelper';
 import countries from 'shared/constants/countries';
 import Avatar from 'dashboard/components-next/avatar/Avatar';
+import { avatarSeed } from 'shared/avatar/avatarSeed';
 import CardLayout from 'dashboard/components-next/CardLayout';
 import Flag from 'dashboard/components-next/flag/Flag';
 import HighlightedText from './HighlightedText';
@@ -64,7 +65,7 @@ export default function SearchResultContactItem({
                 layout="row"
                 className="[&>div]:justify-start [&>div]:px-4 [&>div]:py-3 [&>div]:items-start hover:bg-n-slate-2"
             >
-                <Avatar name={name} src={thumbnail} size={24} roundedFull className="mt-1 flex-shrink-0" />
+                <Avatar seed={avatarSeed('contact', id)} name={name} src={thumbnail} size={24} roundedFull className="mt-1 flex-shrink-0" />
                 <div className="min-w-0 flex flex-col items-start gap-1.5 w-full">
                     <div className="flex items-center min-w-0 justify-between gap-2 w-full">
                         <h5 className="text-sm font-medium truncate min-w-0 text-n-slate-12 py-1">

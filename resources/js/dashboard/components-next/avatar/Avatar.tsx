@@ -3,6 +3,8 @@ import type { ChangeEvent, KeyboardEvent, MouseEvent, ReactNode } from 'react';
 
 import Icon from 'dashboard/components-next/icon/Icon';
 import PlatformLogo from 'dashboard/components-next/icon/PlatformLogo';
+import GeneratedAvatar from 'shared/avatar/GeneratedAvatar';
+import { resolveAvatarIdentity } from 'shared/avatar/avatarSeed';
 import type { ChannelPlatform } from 'shared/constants/channelPlatform';
 
 import { t } from '../../../i18n';
@@ -20,6 +22,8 @@ const PLATFORM_BADGE_MIN_AVATAR = 20;
 interface AvatarProps {
     src?: string;
     name: string;
+    // Định danh bền (avatarSeed) cho avatar hình khối khi không có ảnh; thiếu thì dựng theo tên.
+    seed?: string;
     size?: number;
     allowUpload?: boolean;
     roundedFull?: boolean;
@@ -29,39 +33,13 @@ interface AvatarProps {
     // Nền tảng tin/khách đến từ (hoặc chính bản cài đặt) — badge tròn ở góc dưới cuối avatar.
     platform?: ChannelPlatform | null;
     className?: string;
-    // Bấm (hoặc Enter/Space) vào avatar có ảnh thật thì mở ảnh cỡ lớn; chữ viết tắt không bấm được.
+    // Bấm (hoặc Enter/Space) vào avatar có ảnh thật thì mở ảnh cỡ lớn; avatar hình khối không bấm được.
     previewable?: boolean;
     // Slot overlay của bản gốc: thay thế lớp upload phủ trên avatar
     // (ContactsCard dùng để hiện checkbox chọn khi hover).
     overlay?: (args: { size: number }) => ReactNode;
     onUpload?: (payload: { file: File; url: string | null }) => void;
     onDelete?: () => void;
-}
-
-const AVATAR_COLORS = {
-    palette: [
-        ['#FBDCEF', '#C2298A'],
-        ['#FFE0BB', '#99543A'],
-        ['#E8E8E8', '#60646C'],
-        ['#CCF3EA', '#008573'],
-        ['#EBEBFE', '#4747C2'],
-        ['#E1E9FF', '#3A5BC7'],
-    ],
-    default: { bg: '#E8E8E8', text: '#60646C' },
-};
-
-const EMOJI_REGEX = /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}\u{200D}]/gu;
-
-function getInitials(name: string): string {
-    if (!name) return '';
-    const words = name.replace(EMOJI_REGEX, '').trim().split(/\s+/);
-    return words.length === 1
-        ? words[0].charAt(0).toUpperCase()
-        : words
-              .slice(0, 2)
-              .map(word => word.charAt(0))
-              .join('')
-              .toUpperCase();
 }
 
 function getBorderRadiusClass(size: number, roundedFull: boolean): string {
@@ -76,6 +54,7 @@ function getBorderRadiusClass(size: number, roundedFull: boolean): string {
 export default function Avatar({
     src = '',
     name,
+    seed,
     size = 32,
     allowUpload = false,
     roundedFull = false,
@@ -103,14 +82,9 @@ export default function Avatar({
         ...(hideOfflineStatus ? {} : { offline: 'bg-n-slate-10' }),
     };
 
-    const showDefaultAvatar = !src && !name;
-    const showColors = !showDefaultAvatar && (!src || !isImageValid);
-
-    const colorIndex = name ? name.length % AVATAR_COLORS.palette.length : -1;
-    const colors =
-        colorIndex >= 0
-            ? { bg: AVATAR_COLORS.palette[colorIndex][0], text: AVATAR_COLORS.palette[colorIndex][1] }
-            : AVATAR_COLORS.default;
+    const showImage = Boolean(src) && isImageValid;
+    const hasGeneratedIdentity = Boolean(resolveAvatarIdentity(seed, name));
+    const showIcon = !showImage && (Boolean(iconName) || !hasGeneratedIdentity);
 
     const badgeSize = Math.max(size * 0.35, 8);
     const showPlatformBadge = Boolean(platform) && size >= PLATFORM_BADGE_MIN_AVATAR;
@@ -119,7 +93,7 @@ export default function Avatar({
         PLATFORM_BADGE_MAX,
     );
     const borderRadiusClass = getBorderRadiusClass(size, roundedFull);
-    const canPreview = previewable && Boolean(src) && isImageValid;
+    const canPreview = previewable && showImage;
 
     const openPreview = (event: MouseEvent | KeyboardEvent) => {
         event.stopPropagation();
@@ -184,33 +158,24 @@ export default function Avatar({
             <span
                 {...previewTriggerProps}
                 className={[
-                    'relative inline-flex items-center justify-center object-cover overflow-hidden font-medium outline outline-1 -outline-offset-1 outline-[rgb(0_0_0_/_0.03)]',
+                    'relative inline-flex items-center justify-center object-cover overflow-hidden outline outline-1 -outline-offset-1 outline-[rgb(0_0_0_/_0.03)]',
                     borderRadiusClass,
                     canPreview
                         ? 'cursor-zoom-in focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-n-brand'
                         : '',
-                    showDefaultAvatar ? 'bg-n-slate-3' : '',
+                    showIcon ? 'bg-n-slate-3 text-n-slate-11' : '',
                 ]
                     .filter(Boolean)
                     .join(' ')}
-                style={{
-                    width: size,
-                    height: size,
-                    backgroundColor: showColors ? colors.bg : undefined,
-                    color: showColors ? colors.text : undefined,
-                }}
+                style={{ width: size, height: size }}
             >
-                {src && isImageValid ? (
+                {showImage ? (
                     <img src={src} alt={name} onError={() => setImageValid(false)} />
-                ) : iconName ? (
-                    // iconStyles của bản gốc: glyph icon to theo size avatar.
-                    <Icon icon={iconName} className="" style={{ fontSize: size / 1.6 }} />
-                ) : !showDefaultAvatar ? (
-                    <span className="select-none" style={{ fontSize: Math.min(size / 2.5, 24) }}>
-                        {getInitials(name)}
-                    </span>
+                ) : showIcon ? (
+                    // Glyph to theo cỡ avatar; không có icon riêng và không có danh tính thì là người vô danh.
+                    <Icon icon={iconName || 'i-lucide-user'} className="" style={{ fontSize: size / 1.6 }} />
                 ) : (
-                    <Icon icon="i-lucide-user" className="" style={{ fontSize: size / 1.6 }} />
+                    <GeneratedAvatar seed={seed} name={name} size={size} alt={name} />
                 )}
 
                 {overlay ? (

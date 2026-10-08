@@ -4,6 +4,7 @@ import { router, usePage } from '@inertiajs/react';
 import { ICONS } from 'dashboard/icons';
 
 import Avatar from 'dashboard/components-next/avatar/Avatar';
+import { avatarSeed } from 'shared/avatar/avatarSeed';
 import NextButton from 'dashboard/components-next/button/Button';
 import Flag from 'dashboard/components-next/flag/Flag';
 import ComposeConversation from 'dashboard/components-next/NewConversation/ComposeConversation';
@@ -153,6 +154,7 @@ export default function ContactInfo({
             <div className="flex flex-col w-full gap-2 text-left rtl:text-right">
                 <div className="flex flex-row justify-between">
                     <Avatar
+                        seed={avatarSeed('contact', contact.id)}
                         src={contact.thumbnail}
                         name={contact.name ?? ''}
                         status={contactAvailabilityStatus}

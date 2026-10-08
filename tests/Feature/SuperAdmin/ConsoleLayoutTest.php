@@ -58,6 +58,7 @@ it('chia sẻ chữ của khung, đường dẫn tìm kiếm và người đang 
             ->where('superAdmin.labels.logout', 'Đăng xuất')
             ->where('superAdmin.dictionary.filters.suspended', 'Tạm khoá')
             ->where('superAdmin.searchUrl', '/admin/api/search')
+            ->where('superAdmin.currentUser.id', $this->superAdmin->id)
             ->where('superAdmin.currentUser.name', 'Lộc Admin')
             ->where('superAdmin.currentUser.email', $this->superAdmin->email)
             ->where('superAdmin.currentPath', '/admin/settings')

@@ -12,6 +12,7 @@ import SettingsWrapper from '../SettingsWrapper';
 import SettingsLayout from '../SettingsLayout';
 import BaseSettingsHeader from '../BaseSettingsHeader';
 import Avatar from 'dashboard/components-next/avatar/Avatar';
+import { avatarSeed } from 'shared/avatar/avatarSeed';
 import Button from 'dashboard/components-next/button/Button';
 import ChannelIcon from 'dashboard/components-next/icon/ChannelIcon';
 import ChannelName from './components/ChannelName';
@@ -77,6 +78,7 @@ export default function InboxesIndex() {
                 {inbox.avatar_url ? (
                     <div className="bg-n-alpha-3 rounded-xl size-10 ring ring-n-solid-1 border border-n-strong shadow-sm grid place-items-center">
                         <Avatar
+                            seed={avatarSeed('inbox', inbox.id)}
                             src={inbox.avatar_url}
                             name={inbox.name}
                             size={24}

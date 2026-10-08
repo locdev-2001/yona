@@ -11,6 +11,7 @@ import SettingsWrapper from '../SettingsWrapper';
 import SettingsLayout from '../SettingsLayout';
 import BaseSettingsHeader from '../BaseSettingsHeader';
 import Avatar from 'dashboard/components-next/avatar/Avatar';
+import { avatarSeed } from 'shared/avatar/avatarSeed';
 import Button from 'dashboard/components-next/button/Button';
 import Modal from 'dashboard/components/Modal';
 import DeleteModal from 'dashboard/components/widgets/modal/DeleteModal';
@@ -150,6 +151,7 @@ export default function AgentsIndex() {
                                     >
                                         <div className="flex items-center gap-4">
                                             <Avatar
+                                                seed={avatarSeed('user', agent.id)}
                                                 src={agent.thumbnail}
                                                 name={agent.name}
                                                 status={agent.availability_status}
