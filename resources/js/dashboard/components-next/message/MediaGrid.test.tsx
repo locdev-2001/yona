@@ -1,4 +1,4 @@
-import { fireEvent, render } from '@testing-library/react';
+import { act, fireEvent, render } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 import Message from './Message';
@@ -129,5 +129,44 @@ describe('thẻ tệp trong tin', () => {
         expect(cards[0].textContent).toContain('cuoi.pdf');
         expect(cards[0].textContent).toContain('2.4 MB');
         expect(cards[0].querySelector('a[download]')?.getAttribute('href')).toBe(files[0].data_url);
+    });
+});
+
+describe('ảnh tải hỏng trong lưới', () => {
+    // Ảnh ở URL gốc luôn hỏng (trình duyệt theo chuyển hướng cũ đã lưu), URL có tham số tải lại thì được.
+    function stubImageLoader(requestedUrls: string[]) {
+        vi.stubGlobal(
+            'Image',
+            class {
+                onload: (() => void) | null = null;
+                onerror: (() => void) | null = null;
+                set src(url: string) {
+                    requestedUrls.push(url);
+                    setTimeout(() => (url.includes('reload=') ? this.onload?.() : this.onerror?.()), 0);
+                }
+            },
+        );
+    }
+
+    it('bấm ô ảnh hỏng thì tải lại bằng URL mới, không mở trình xem', async () => {
+        vi.useFakeTimers();
+        const requestedUrls: string[] = [];
+        stubImageLoader(requestedUrls);
+
+        const container = renderMessage(message({ attachments: attachments(1) as never }));
+        await act(() => vi.runAllTimersAsync());
+        const tile = tiles(container)[0] as HTMLElement;
+
+        expect(tile.textContent).toContain('Tap to reload');
+
+        fireEvent.click(tile);
+        await act(() => vi.runAllTimersAsync());
+
+        expect(document.querySelector('[data-testid="gallery"]')).toBeNull();
+        expect(requestedUrls.at(-1)).toMatch(/^https:\/\/cdn\.test\/anh-1\.jpg\?reload=\d+$/);
+        expect(container.querySelector('[data-media-tile] img')?.getAttribute('src')).toBe(requestedUrls.at(-1));
+
+        vi.useRealTimers();
+        vi.unstubAllGlobals();
     });
 });

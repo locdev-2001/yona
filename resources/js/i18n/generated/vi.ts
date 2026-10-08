@@ -2907,6 +2907,7 @@ const messages: Record<string, unknown> = {
         "MEDIA": {
             "IMAGE_UNAVAILABLE": "Ảnh này không còn nữa.",
             "LOADING_FAILED": "Tải thất bại",
+            "TAP_TO_RELOAD": "Bấm để tải lại",
             "OPEN_IMAGE": "Xem ảnh",
             "OPEN_VIDEO": "Xem video",
             "ATTACHMENTS_COUNT": "{count} tệp",

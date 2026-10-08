@@ -30,32 +30,56 @@ interface MediaTileProps {
     onNaturalSize?: (size: NaturalSize) => void;
 }
 
-function TileFailed() {
+// URL ảnh là chuyển hướng 301 mà trình duyệt lưu lâu: lượt tải lại do người dùng bấm
+// phải là một URL khác để trình duyệt hỏi lại máy chủ thay vì theo chuyển hướng cũ.
+function withReloadParam(url: string, reloadNonce: number): string {
+    if (reloadNonce === 0) return url;
+    return `${url}${url.includes('?') ? '&' : '?'}reload=${reloadNonce}`;
+}
+
+function TileFailed({ canReload = false }: { canReload?: boolean }) {
     return (
         <div className="flex flex-col items-center justify-center gap-1 p-2 text-xs text-center size-full bg-n-alpha-2 text-n-slate-11">
             <Icon icon="i-lucide-image-off" className="size-5" />
             {t('COMPONENTS.MEDIA.LOADING_FAILED')}
+            {canReload ? (
+                <span className="inline-flex items-center gap-1 font-medium text-n-brand">
+                    <Icon icon="i-lucide-refresh-cw" className="size-3.5" />
+                    {t('COMPONENTS.MEDIA.TAP_TO_RELOAD')}
+                </span>
+            ) : null}
         </div>
     );
 }
 
-function ImageTileContent({ attachment, onNaturalSize }: Pick<MediaTileProps, 'attachment' | 'onNaturalSize'>) {
-    const { isLoaded, hasError, loadWithRetry } = useLoadWithRetry();
+interface ImageTileContentProps extends Pick<MediaTileProps, 'attachment' | 'onNaturalSize'> {
+    reloadNonce: number;
+    onFailedChange: (hasFailed: boolean) => void;
+}
+
+function ImageTileContent({ attachment, onNaturalSize, reloadNonce, onFailedChange }: ImageTileContentProps) {
+    const { isLoaded, hasError, setHasError, loadWithRetry } = useLoadWithRetry();
     const [reloadKey, setReloadKey] = useState(0);
+    const imageUrl = attachment.data_url ? withReloadParam(attachment.data_url, reloadNonce) : '';
 
     useEffect(() => {
-        if (attachment.data_url) void loadWithRetry(attachment.data_url);
+        if (!imageUrl) return;
+        setHasError(false);
+        void loadWithRetry(imageUrl);
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [attachment.data_url, reloadKey]);
+    }, [imageUrl, reloadKey]);
 
     useRetryWhenBack(hasError, () => setReloadKey((key) => key + 1));
 
-    if (hasError || !attachment.data_url) return <TileFailed />;
+    const hasFailed = hasError || !attachment.data_url;
+    useEffect(() => onFailedChange(hasFailed), [hasFailed, onFailedChange]);
+
+    if (hasFailed) return <TileFailed canReload={Boolean(attachment.data_url)} />;
     if (!isLoaded) return <div data-media-placeholder className="size-full bg-n-alpha-2 animate-pulse" />;
 
     return (
         <img
-            src={attachment.data_url}
+            src={imageUrl}
             alt=""
             draggable={false}
             className="object-cover size-full skip-context-menu"
@@ -114,23 +138,42 @@ function VideoTileContent({ attachment, onNaturalSize }: Pick<MediaTileProps, 'a
 
 function MediaTile({ attachment, className = '', style, hiddenCount, onOpen, onNaturalSize }: MediaTileProps) {
     const isVideo = VIDEO_TYPES.includes(attachment.file_type);
+    // Ảnh hỏng thì bấm ô là tải lại (mở trình xem một ảnh hỏng không giúp gì).
+    const [hasImageFailed, setImageFailed] = useState(false);
+    const [reloadNonce, setReloadNonce] = useState(0);
+    const canReloadImage = !isVideo && hasImageFailed && Boolean(attachment.data_url);
 
     return (
         <button
             type="button"
             data-media-tile={isVideo ? 'video' : 'image'}
-            aria-label={isVideo ? t('COMPONENTS.MEDIA.OPEN_VIDEO') : t('COMPONENTS.MEDIA.OPEN_IMAGE')}
+            aria-label={
+                canReloadImage
+                    ? t('COMPONENTS.MEDIA.TAP_TO_RELOAD')
+                    : isVideo
+                      ? t('COMPONENTS.MEDIA.OPEN_VIDEO')
+                      : t('COMPONENTS.MEDIA.OPEN_IMAGE')
+            }
             className={`relative block p-0 m-0 overflow-hidden cursor-pointer bg-n-alpha-2 focus-visible:outline-2 focus-visible:outline-n-brand focus-visible:-outline-offset-2 ${className}`}
             style={style}
             onClick={(event) => {
                 event.stopPropagation();
+                if (canReloadImage) {
+                    setReloadNonce(Date.now());
+                    return;
+                }
                 onOpen();
             }}
         >
             {isVideo ? (
                 <VideoTileContent attachment={attachment} onNaturalSize={onNaturalSize} />
             ) : (
-                <ImageTileContent attachment={attachment} onNaturalSize={onNaturalSize} />
+                <ImageTileContent
+                    attachment={attachment}
+                    onNaturalSize={onNaturalSize}
+                    reloadNonce={reloadNonce}
+                    onFailedChange={setImageFailed}
+                />
             )}
             {hiddenCount ? (
                 <span

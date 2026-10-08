@@ -28,6 +28,7 @@ return [
     'MEDIA' => [
         'IMAGE_UNAVAILABLE' => 'This image is no longer available.',
         'LOADING_FAILED' => 'Loading failed',
+        'TAP_TO_RELOAD' => 'Tap to reload',
         'OPEN_IMAGE' => 'View image',
         'OPEN_VIDEO' => 'View video',
         'ATTACHMENTS_COUNT' => '{count} file | {count} files',
