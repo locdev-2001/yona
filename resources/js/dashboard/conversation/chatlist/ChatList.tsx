@@ -132,13 +132,21 @@ export default function ChatList({
         [selectAllConversations, conversations],
     );
 
+    const [selectionModeRequested, setSelectionModeRequested] = useState(false);
+    const isSelecting = selectionModeRequested || selection.ids.length > 0;
+    const toggleSelectionMode = () => {
+        if (isSelecting) resetBulkActions();
+        setSelectionModeRequested(!isSelecting);
+    };
+
     const bulkSelectionValue = useMemo(
         () => ({
+            isSelecting,
             isConversationSelected: bulkActions.isConversationSelected,
             selectConversation: bulkActions.selectConversation,
             deSelectConversation: bulkActions.deSelectConversation,
         }),
-        [bulkActions.isConversationSelected, bulkActions.selectConversation, bulkActions.deSelectConversation],
+        [isSelecting, bulkActions.isConversationSelected, bulkActions.selectConversation, bulkActions.deSelectConversation],
     );
 
     // onToggleAdvanceFiltersModal: mở lần đầu khởi tạo 1 dòng mặc định (status = ...).
@@ -213,9 +221,28 @@ export default function ChatList({
                     onDeleteFolders={() => setShowDeleteFolderModal(true)}
                 />
                 <ChatListSearch />
-                {appliedFilters === null ? (
-                    <ChatTypeTabs items={assigneeTabItems} activeTab={assigneeTab} onChatTabChange={setAssigneeTab} />
-                ) : null}
+                <div className="flex items-center min-w-0 pe-2">
+                    <div className="flex-1 min-w-0">
+                        {appliedFilters === null ? (
+                            <ChatTypeTabs
+                                items={assigneeTabItems}
+                                activeTab={assigneeTab}
+                                onChatTabChange={setAssigneeTab}
+                            />
+                        ) : null}
+                    </div>
+                    <NextButton
+                        xs
+                        ghost
+                        slate={!isSelecting}
+                        icon={isSelecting ? 'i-lucide-x' : 'i-lucide-list-checks'}
+                        title={t(isSelecting ? 'CHAT_LIST.SELECTION_MODE.EXIT' : 'CHAT_LIST.SELECTION_MODE.START')}
+                        aria-label={t(isSelecting ? 'CHAT_LIST.SELECTION_MODE.EXIT' : 'CHAT_LIST.SELECTION_MODE.START')}
+                        aria-pressed={isSelecting}
+                        className="flex-shrink-0"
+                        onClick={toggleSelectionMode}
+                    />
+                </div>
                 {!listLoading && !conversations.length && searchQuery ? (
                     <p className="px-4 py-6 mb-0 text-sm text-center break-words text-n-slate-11">
                         {t('CHAT_LIST.SEARCH.NO_RESULTS', { query: searchQuery })}

@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react';
 import type { MouseEvent } from 'react';
 
 import { t } from '../../../../i18n';
@@ -41,14 +40,15 @@ function ConversationStatusChip({ status }: { status: string }) {
 // Port từ dashboard/components/widgets/conversation/ConversationCard.vue.
 // Khác biệt cố ý: VoiceCallStatus + SLACardLabel (EE) — `showLabelsSection` vì thế
 // chỉ còn nhánh `chat.labels`.
-// B6: checkbox chọn hàng loạt phủ lên avatar khi hover/đang chọn; gốc emit
-// `props.inbox.id`, ở đây dùng `chat.inbox_id` (cùng giá trị, khỏi nới type inbox).
+// Checkbox chọn hàng loạt phủ lên avatar chỉ khi đang ở chế độ chọn nhiều (bật từ
+// thanh tab), không hiện khi rê chuột — xem docs/ux-decisions.md.
 interface ConversationCardProps {
     chat: Conversation;
     currentContact: ContactMeta;
     assignee?: Partial<AgentMeta>;
     inbox?: ChannelIconInbox & { name: string; reauthorization_required?: boolean };
     selected?: boolean;
+    isSelecting?: boolean;
     isActiveChat?: boolean;
     showAssignee?: boolean;
     showInboxName?: boolean;
@@ -71,6 +71,7 @@ export default function ConversationCard({
     assignee = {},
     inbox = { name: '', channel_type: '' },
     selected = false,
+    isSelecting = false,
     isActiveChat = false,
     showAssignee = false,
     showInboxName = false,
@@ -83,7 +84,6 @@ export default function ConversationCard({
     onSelectConversation,
     onDeSelectConversation,
 }: ConversationCardProps) {
-    const [hovered, setHovered] = useState(false);
     const unreadCount = chat.unread_count;
     const contactAvailabilityStatus = useContactAvailabilityStatus(
         currentContact.id,
@@ -95,9 +95,6 @@ export default function ConversationCard({
     const showMetaSection = showInboxName || (showAssignee && assignee.name) || chat.priority || showStatus;
     const showLabelsSection = (chat.labels?.length ?? 0) > 0;
     const isAgentBotAssignee = chat.meta?.assignee_type === 'AgentBot';
-
-    // watch(() => props.chat.id) của gốc: đổi conversation thì bỏ trạng thái hover.
-    useEffect(() => setHovered(false), [chat.id]);
 
     const onSelectChange = (checked: boolean) => {
         if (checked) {
@@ -128,11 +125,7 @@ export default function ConversationCard({
             onClick={onClick}
             onContextMenu={onContextMenu}
         >
-            <div
-                className="relative"
-                onMouseEnter={() => setHovered(!hideThumbnail)}
-                onMouseLeave={() => setHovered(false)}
-            >
+            <div className="relative">
                 {!hideThumbnail ? (
                     <Avatar
                         seed={avatarSeed('contact', currentContact.id)}
@@ -140,17 +133,16 @@ export default function ConversationCard({
                         src={currentContact.thumbnail}
                         size={32}
                         status={contactAvailabilityStatus}
-                        platform={inbox.platform ?? null}
                         className={!showInboxName ? 'mt-4' : 'mt-8'}
                         hideOfflineStatus
                         overlay={({ size }) =>
-                            hovered || selected ? (
+                            isSelecting || selected ? (
                                 <label
                                     className="flex items-center justify-center rounded-full cursor-pointer absolute inset-0 z-10 backdrop-blur-[2px]"
                                     style={{ width: size, height: size }}
                                     onClick={event => event.stopPropagation()}
                                 >
-                                    <Checkbox checked={selected} onChange={() => onSelectChange(!selected)} />
+                                    <Checkbox className="rounded bg-n-surface-1" checked={selected} onChange={() => onSelectChange(!selected)} />
                                 </label>
                             ) : null
                         }

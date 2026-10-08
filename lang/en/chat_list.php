@@ -25,6 +25,10 @@ return [
         'NO_RESULTS' => 'No conversation in this list matches “{query}”.',
     ],
     'FILTER_ALL' => 'All',
+    'SELECTION_MODE' => [
+        'START' => 'Select conversations',
+        'EXIT' => 'Exit selection',
+    ],
     'ASSIGNEE_TYPE_TABS' => [
         'me' => 'Mine',
         'unassigned' => 'Unassigned',

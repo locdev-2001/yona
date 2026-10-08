@@ -218,6 +218,8 @@ export function useBulkActions(accountId: number): BulkActionsValue {
 // Thay provide/inject `selectConversation` / `deSelectConversation` / `isConversationSelected`
 // của ChatList.vue — card đọc qua context này.
 export interface BulkSelectionContextValue {
+    // Checkbox của từng card chỉ hiện khi đang ở chế độ chọn nhiều (bật từ thanh tab).
+    isSelecting: boolean;
     isConversationSelected: (conversationId: number) => boolean;
     selectConversation: (conversationId: number, inboxId: number) => void;
     deSelectConversation: (conversationId: number, inboxId: number) => void;

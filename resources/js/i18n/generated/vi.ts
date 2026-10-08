@@ -2641,6 +2641,10 @@ const messages: Record<string, unknown> = {
             "NO_RESULTS": "Không có hội thoại nào khớp “{query}” trong danh sách đang xem."
         },
         "FILTER_ALL": "Tất cả",
+        "SELECTION_MODE": {
+            "START": "Chọn nhiều hội thoại",
+            "EXIT": "Thoát chọn nhiều"
+        },
         "ASSIGNEE_TYPE_TABS": {
             "me": "Của tôi",
             "unassigned": "Chưa gán",

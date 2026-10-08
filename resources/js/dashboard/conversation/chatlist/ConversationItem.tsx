@@ -29,6 +29,8 @@ export default function ConversationItem({
     const { accountId, inboxId, teamId, label, conversationId, searchQuery, markMessagesRead, markMessagesUnread } =
         useConversation();
     const bulkSelection = useBulkSelection();
+    const isSelecting = bulkSelection?.isSelecting ?? false;
+    const isSelected = bulkSelection?.isConversationSelected(source.id) ?? false;
     const { inboxes = [] } = usePage<DashboardPageProps>().props;
 
     const chatMetadata = source.meta || {};
@@ -70,6 +72,12 @@ export default function ConversationItem({
     };
 
     const onCardClick = (event: MouseEvent<HTMLDivElement>) => {
+        if (isSelecting) {
+            if (isSelected) bulkSelection?.deSelectConversation(source.id, source.inbox_id);
+            else bulkSelection?.selectConversation(source.id, source.inbox_id);
+            return;
+        }
+
         if (event.metaKey || event.ctrlKey) {
             event.preventDefault();
             window.open(conversationPath, '_blank', 'noopener,noreferrer');
@@ -87,7 +95,8 @@ export default function ConversationItem({
                 currentContact={currentContact}
                 assignee={assignee}
                 inbox={inbox}
-                selected={bulkSelection?.isConversationSelected(source.id) ?? false}
+                selected={isSelected}
+                isSelecting={isSelecting}
                 isActiveChat={isActiveChat}
                 showAssignee={showAssignee}
                 showInboxName={showInboxName}

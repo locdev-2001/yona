@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react';
+import { fireEvent, render } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { setLocale } from '../../../../i18n';
@@ -27,28 +27,46 @@ const CONVERSATION = {
 
 const badgeOf = (container: HTMLElement) => container.querySelector('[data-testid="avatar-platform-badge"]');
 
+const ZALO_INBOX = {
+    name: 'Nguyễn Phước Lộc',
+    channel_type: 'Channel::Zalo',
+    platform: { key: 'zalo', name: 'Zalo', logo_url: '/brand-assets/platforms/zalo.webp' },
+};
+
 describe('thẻ hội thoại trong danh sách', () => {
-    it('avatar khách mang badge nền tảng của hộp thư', () => {
+    // Nền tảng đã hiện ở dòng tên hộp thư phía trên, avatar không vẽ badge lặp lại.
+    it('avatar khách không mang badge nền tảng', () => {
+        const { container } = render(
+            <ConversationCard chat={CONVERSATION} currentContact={CONTACT} inbox={ZALO_INBOX} showInboxName />,
+        );
+
+        expect(container.querySelector('img')?.getAttribute('src')).toBe('/pham.png');
+        expect(badgeOf(container)).toBeNull();
+    });
+
+    it.each([
+        { isSelecting: false, selected: false, hasCheckbox: false },
+        { isSelecting: true, selected: false, hasCheckbox: true },
+        { isSelecting: false, selected: true, hasCheckbox: true },
+    ])('checkbox chọn nhiều chỉ hiện ở chế độ chọn hoặc khi đã chọn: %o', ({ isSelecting, selected, hasCheckbox }) => {
         const { container } = render(
             <ConversationCard
                 chat={CONVERSATION}
                 currentContact={CONTACT}
-                inbox={{
-                    name: 'Nguyễn Phước Lộc',
-                    channel_type: 'Channel::Zalo',
-                    platform: { key: 'zalo', name: 'Zalo', logo_url: '/brand-assets/platforms/zalo.webp' },
-                }}
+                isSelecting={isSelecting}
+                selected={selected}
             />,
         );
 
-        expect(container.querySelector('img')?.getAttribute('src')).toBe('/pham.png');
-        expect(badgeOf(container)?.querySelector('img')?.getAttribute('alt')).toBe('Zalo');
+        expect(container.querySelector('input[type="checkbox"]') !== null).toBe(hasCheckbox);
     });
 
-    it('hộp thư chưa rõ (prop inboxes chưa có) thì không vẽ badge', () => {
+    it('rê chuột vào avatar không hiện checkbox', () => {
         const { container } = render(<ConversationCard chat={CONVERSATION} currentContact={CONTACT} />);
 
-        expect(badgeOf(container)).toBeNull();
+        fireEvent.mouseEnter(container.querySelector('img')!.parentElement!);
+
+        expect(container.querySelector('input[type="checkbox"]')).toBeNull();
     });
 
     describe('cột thời gian', () => {

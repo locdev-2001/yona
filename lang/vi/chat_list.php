@@ -29,6 +29,10 @@ return [
     'FILTER_ALL' => 'Tất cả',
     // Nhãn tab phải ngắn để ba tab vừa bề rộng mặc định của cột hội thoại
     // (tiếng Việt dài hơn tiếng Anh) — xem reports/ux-deviations.md.
+    'SELECTION_MODE' => [
+        'START' => 'Chọn nhiều hội thoại',
+        'EXIT' => 'Thoát chọn nhiều',
+    ],
     'ASSIGNEE_TYPE_TABS' => [
         'me' => 'Của tôi',
         'unassigned' => 'Chưa gán',
