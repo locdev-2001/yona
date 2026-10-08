@@ -189,8 +189,8 @@ class DataImportJob extends ApplicationJob
         $actionUrl = $failedRecords?->url() ?? url("/app/accounts/{$account->id}/contacts");
 
         $this->notifyAdministrators(new AccountNotification(
+            account: $account,
             template: 'contact-import-complete',
-            subject: 'Contact Import Completed',
             actionUrl: $actionUrl,
             meta: [
                 'failed_contacts' => (int) $dataImport->total_records - (int) $dataImport->processed_records,
@@ -202,8 +202,8 @@ class DataImportJob extends ApplicationJob
     private function sendImportFailedNotificationToAdmin(): void
     {
         $this->notifyAdministrators(new AccountNotification(
+            account: $this->dataImport->account,
             template: 'contact-import-failed',
-            subject: 'Contact Import Failed',
         ));
     }
 

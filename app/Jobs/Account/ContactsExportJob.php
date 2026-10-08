@@ -53,8 +53,8 @@ class ContactsExportJob extends ApplicationJob
         }
 
         Notification::route('mail', $user->email)->notify(new AccountNotification(
+            account: $account,
             template: 'contact-export-complete',
-            subject: "Your contact's export file is available to download.",
             actionUrl: $attachment->url(),
         ));
     }

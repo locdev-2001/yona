@@ -9,9 +9,9 @@ use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
 /**
- * Port từ AdministratorNotifications::AccountNotificationMailer (+ BaseMailer):
- * một lớp cho mọi thư báo cấp tài khoản, thân thư là blade
- * `mail.account-notification.<template>`, biến dùng chung là action_url + meta.
+ * Một lớp cho mọi thư báo cấp tài khoản: thân thư là blade
+ * `mail.account-notification.<template>`, tiêu đề là `notifications.account.<template>.subject`,
+ * cả hai dịch theo ngôn ngữ của tài khoản (job chạy hàng đợi không có locale của người bấm).
  */
 class AccountNotification extends Notification
 {
@@ -19,11 +19,13 @@ class AccountNotification extends Notification
 
     /** @param array<string, mixed> $meta */
     public function __construct(
+        Account $account,
         private readonly string $template,
-        private readonly string $subject,
         private readonly ?string $actionUrl = null,
         private readonly array $meta = [],
-    ) {}
+    ) {
+        $this->locale($account->locale ?: config('app.locale'));
+    }
 
     public function via(object $notifiable): array
     {
@@ -33,7 +35,7 @@ class AccountNotification extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject($this->subject)
+            ->subject(__('notifications.account.'.str_replace('-', '_', $this->template).'.subject'))
             ->view('mail.account-notification.'.$this->template, [
                 'actionUrl' => $this->actionUrl,
                 'meta' => $this->meta,

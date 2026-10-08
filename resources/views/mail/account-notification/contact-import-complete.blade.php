@@ -1,18 +1,13 @@
-{{-- Port từ .../account_notification_mailer/contact_import_complete.liquid --}}
-<p>Hello,</p>
+<p>{{ __('notifications.account.greeting') }}</p>
 
-<p>Your contact import has been completed. Please check the contacts tab to view the imported contacts.</p>
+<p>{{ __('notifications.account.contact_import_complete.body') }}</p>
 
-<p>Number of records imported: {{ $meta['imported_contacts'] }}</p>
+<p>{{ __('notifications.account.contact_import_complete.imported', ['count' => $meta['imported_contacts']]) }}</p>
 
-<p>Number of records failed: {{ $meta['failed_contacts'] }}</p>
+<p>{{ __('notifications.account.contact_import_complete.failed', ['count' => $meta['failed_contacts']]) }}</p>
 
 @if ($meta['failed_contacts'] === 0)
-    <p>
-        Click <a href="{{ $actionUrl }}">here</a> to view the imported contacts.
-    </p>
+    <p><a href="{{ $actionUrl }}">{{ __('notifications.account.contact_import_complete.action_view_contacts') }}</a></p>
 @else
-    <p>
-        Click <a href="{{ $actionUrl }}" target="_blank">here</a> to view failed records.
-    </p>
+    <p><a href="{{ $actionUrl }}" target="_blank">{{ __('notifications.account.contact_import_complete.action_view_failed') }}</a></p>
 @endif

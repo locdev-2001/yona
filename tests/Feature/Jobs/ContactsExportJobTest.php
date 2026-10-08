@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Notifications\AccountNotification;
 use App\Support\Csv;
 use App\Support\RoleAttachment;
+use Illuminate\Notifications\ChannelManager;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 
@@ -133,3 +134,21 @@ it('exports the filtered contacts when a payload is given', function () {
 
     expect($rows)->toHaveCount(4);
 });
+
+it('emails the export link in the account language', function (string $locale, string $subject, string $action) {
+    $this->account->update(['locale' => $locale]);
+    Notification::swap(new ChannelManager(app()));
+    config(['mail.default' => 'array']);
+    app('mail.manager')->forgetMailers();
+
+    (new ContactsExportJob($this->account->id, $this->user->id, [], []))->handle();
+
+    $sent = app('mail.manager')->mailer('array')->getSymfonyTransport()->messages()->last()->getOriginalMessage();
+
+    expect($sent->getSubject())->toBe($subject)
+        ->and($sent->getHtmlBody())->toContain($action)
+        ->and($sent->getHtmlBody())->not->toContain('notifications.account');
+})->with([
+    'vi' => ['vi', 'Tệp xuất danh sách liên hệ đã sẵn sàng', 'Tải tệp xuất về'],
+    'en' => ['en', 'Your contact export file is ready to download', 'Download the export file'],
+]);

@@ -1,8 +1,5 @@
-{{-- Port từ .../account_notification_mailer/contact_export_complete.liquid --}}
-<p>Hi</p>
+<p>{{ __('notifications.account.greeting') }}</p>
 
-<p>Your contact export file is ready to download.</p>
+<p>{{ __('notifications.account.contact_export_complete.body') }}</p>
 
-<p>
-    Click <a href="{{ $actionUrl }}">here</a> to download the export file.
-</p>
+<p><a href="{{ $actionUrl }}">{{ __('notifications.account.contact_export_complete.action') }}</a></p>

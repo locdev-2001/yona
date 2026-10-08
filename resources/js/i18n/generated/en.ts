@@ -9847,6 +9847,26 @@ const messages: Record<string, unknown> = {
             "conversation_mention": "{agent_name}, You have been mentioned in conversation [ID - {display_id}]",
             "assigned_conversation_new_message": "{agent_name}, New message in your assigned conversation [ID - {display_id}].",
             "participating_conversation_new_message": "{agent_name}, New message in your participating conversation [ID - {display_id}]."
+        },
+        "account": {
+            "greeting": "Hello,",
+            "contact_export_complete": {
+                "subject": "Your contact export file is ready to download",
+                "body": "Your contact export file is ready.",
+                "action": "Download the export file"
+            },
+            "contact_import_complete": {
+                "subject": "Contact import completed",
+                "body": "Your contact import has been completed. Open the Contacts page to see the imported contacts.",
+                "imported": "Records imported: {count}",
+                "failed": "Records failed: {count}",
+                "action_view_contacts": "View imported contacts",
+                "action_view_failed": "View failed records"
+            },
+            "contact_import_failed": {
+                "subject": "Contact import failed",
+                "body": "Your contact import has failed. The CSV file you uploaded may not be valid. Please check the file and make sure it follows the required format."
+            }
         }
     },
     "ONBOARDING": {
