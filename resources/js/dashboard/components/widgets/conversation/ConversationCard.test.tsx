@@ -61,6 +61,20 @@ describe('thẻ hội thoại trong danh sách', () => {
         expect(container.querySelector('input[type="checkbox"]') !== null).toBe(hasCheckbox);
     });
 
+    it('avatar hình khối chỉ chuyển động khi đang trỏ vào thẻ', () => {
+        const { container } = render(
+            <ConversationCard chat={CONVERSATION} currentContact={{ ...CONTACT, thumbnail: '' }} />,
+        );
+        const card = container.querySelector('.conversation') as HTMLElement;
+        const lively = () => container.querySelector('[data-generated-avatar] svg') !== null;
+
+        expect(lively()).toBe(false);
+        fireEvent.mouseEnter(card);
+        expect(lively()).toBe(true);
+        fireEvent.mouseLeave(card);
+        expect(lively()).toBe(false);
+    });
+
     it('rê chuột vào avatar không hiện checkbox', () => {
         const { container } = render(<ConversationCard chat={CONVERSATION} currentContact={CONTACT} />);
 

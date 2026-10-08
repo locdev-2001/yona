@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { MouseEvent } from 'react';
 
 import { t } from '../../../../i18n';
@@ -84,6 +85,8 @@ export default function ConversationCard({
     onSelectConversation,
     onDeSelectConversation,
 }: ConversationCardProps) {
+    // Avatar hình khối chỉ chuyển động khi đang trỏ vào thẻ, danh sách dài vẫn là ảnh tĩnh.
+    const [isPointerInside, setPointerInside] = useState(false);
     const unreadCount = chat.unread_count;
     const contactAvailabilityStatus = useContactAvailabilityStatus(
         currentContact.id,
@@ -124,11 +127,14 @@ export default function ConversationCard({
                 .join(' ')}
             onClick={onClick}
             onContextMenu={onContextMenu}
+            onMouseEnter={() => setPointerInside(true)}
+            onMouseLeave={() => setPointerInside(false)}
         >
             <div className="relative">
                 {!hideThumbnail ? (
                     <Avatar
                         seed={avatarSeed('contact', currentContact.id)}
+                        animated={isPointerInside}
                         name={currentContact.name ?? ''}
                         src={currentContact.thumbnail}
                         size={40}

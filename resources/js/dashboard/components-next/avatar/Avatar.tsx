@@ -27,6 +27,8 @@ interface AvatarProps {
     name: string;
     // Định danh bền (avatarSeed) cho avatar hình khối khi không có ảnh; thiếu thì dựng theo tên.
     seed?: string;
+    // Avatar hình khối chuyển động (chớp, nhìn theo con trỏ); nơi chứa bật khi đang được trỏ vào.
+    animated?: boolean;
     size?: number;
     allowUpload?: boolean;
     roundedFull?: boolean;
@@ -58,6 +60,7 @@ export default function Avatar({
     src = '',
     name,
     seed,
+    animated = false,
     size = 32,
     allowUpload = false,
     roundedFull = false,
@@ -179,7 +182,7 @@ export default function Avatar({
                     // Glyph to theo cỡ avatar; không có icon riêng và không có danh tính thì là người vô danh.
                     <Icon icon={iconName || 'i-lucide-user'} className="" style={{ fontSize: size / 1.6 }} />
                 ) : (
-                    <GeneratedAvatar seed={seed} name={name} size={size} alt={name} />
+                    <GeneratedAvatar seed={seed} name={name} size={size} alt={name} animated={animated} />
                 )}
 
                 {overlay ? (
