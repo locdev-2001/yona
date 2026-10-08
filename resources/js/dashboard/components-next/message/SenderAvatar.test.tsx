@@ -16,7 +16,7 @@ const IDENTITY: ConversationSenderIdentity = {
     channelAccount: {
         name: 'Nguyễn Phước Lộc',
         avatarUrl: '/zalo-account.jpg',
-        platform: { key: 'zalo', name: 'Zalo', logo_url: '/brand-assets/platforms/zalo.svg' },
+        platform: { key: 'zalo', name: 'Zalo', logo_url: '/brand-assets/platforms/zalo.webp' },
     },
     installation: { key: 'installation', name: 'Yona', logo_url: '/brand-assets/logo_thumbnail.png' },
 };

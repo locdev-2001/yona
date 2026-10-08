@@ -177,7 +177,7 @@ const CONV_ITEM_ACTIVE = 'bg-primary-50';
 
 Cao 72px: avatar `size-10` · tên `text-base font-medium text-neutral-900` · tin cuối cắt một dòng `text-meta text-neutral-500 truncate` · giờ `text-micro text-neutral-500` góc phải trên · badge chưa đọc.
 Mục đang mở: `bg-primary-50`, không viền trái, không đổi weight chữ.
-Huy hiệu kênh: `<Avatar platform={inbox.platform} />` (badge tròn góc dưới) hoặc `<ChannelIcon inbox={inbox} />`. Logo là tệp tĩnh `public/brand-assets/platforms/{key}.svg` do kênh tự khai (`DeclaresPlatform`); không dùng class `i-simple-icons-*` (bộ này không đăng ký trong Tailwind nên không sinh CSS).
+Huy hiệu kênh: `<Avatar platform={inbox.platform} />` (badge tròn góc dưới) hoặc `<ChannelIcon inbox={inbox} />`. Logo là tệp tĩnh `public/brand-assets/platforms/{key}.webp` do kênh tự khai (`DeclaresPlatform`); không dùng class `i-simple-icons-*` (bộ này không đăng ký trong Tailwind nên không sinh CSS).
 
 **Chuyển hội thoại KHÔNG animate.** Agent làm việc này hàng trăm lần mỗi ca.
 

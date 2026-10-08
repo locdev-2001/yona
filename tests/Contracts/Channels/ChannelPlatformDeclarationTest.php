@@ -72,7 +72,7 @@ it('toArray trả logo_url tuyệt đối trỏ đúng tệp', function () {
     expect($payload['key'])->toBe('zalo')
         ->and($payload['name'])->toBe('Zalo')
         ->and($payload['logo_url'])->toStartWith('http')
-        ->and($payload['logo_url'])->toEndWith('/brand-assets/platforms/zalo.svg');
+        ->and($payload['logo_url'])->toEndWith('/brand-assets/platforms/zalo.webp');
 });
 
 // Hai mặt tiền (InboxResource của API và prop Inertia `inboxes` của sidebar) phải

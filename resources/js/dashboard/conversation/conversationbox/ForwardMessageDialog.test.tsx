@@ -99,7 +99,7 @@ describe('ForwardMessageDialog', () => {
     });
 
     it('hộp thư đích có nền tảng thì dòng hiện logo nền tảng, không có thì icon theo loại kênh', async () => {
-        const zaloPlatform = { key: 'zalo', name: 'Zalo', logo_url: '/brand-assets/platforms/zalo.svg' };
+        const zaloPlatform = { key: 'zalo', name: 'Zalo', logo_url: '/brand-assets/platforms/zalo.webp' };
         fetchTargetsSpy.mockResolvedValue({
             max_targets: 10,
             payload: [target(45, 'Chị Lan', { inbox: { ...LAN.inbox, platform: zaloPlatform } }), BINH],

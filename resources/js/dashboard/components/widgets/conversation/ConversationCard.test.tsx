@@ -36,7 +36,7 @@ describe('thẻ hội thoại trong danh sách', () => {
                 inbox={{
                     name: 'Nguyễn Phước Lộc',
                     channel_type: 'Channel::Zalo',
-                    platform: { key: 'zalo', name: 'Zalo', logo_url: '/brand-assets/platforms/zalo.svg' },
+                    platform: { key: 'zalo', name: 'Zalo', logo_url: '/brand-assets/platforms/zalo.webp' },
                 }}
             />,
         );

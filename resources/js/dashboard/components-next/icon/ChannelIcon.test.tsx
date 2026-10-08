@@ -41,14 +41,14 @@ describe('icon kênh', () => {
         const zaloInbox = {
             channel_type: INBOX_TYPES.ZALO,
             name: 'Zalo shop chính',
-            platform: { key: 'zalo', name: 'Zalo', logo_url: '/brand-assets/platforms/zalo.svg' },
+            platform: { key: 'zalo', name: 'Zalo', logo_url: '/brand-assets/platforms/zalo.webp' },
         };
 
         it('vẽ logo màu của nền tảng thay icon đơn sắc', () => {
             const { container } = render(<ChannelIcon inbox={zaloInbox} />);
 
             expect(container.querySelector('img[data-platform="zalo"]')?.getAttribute('src')).toBe(
-                '/brand-assets/platforms/zalo.svg',
+                '/brand-assets/platforms/zalo.webp',
             );
             expect(container.querySelector('.i-yona-zalo')).toBeNull();
         });

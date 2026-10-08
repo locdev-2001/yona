@@ -74,7 +74,7 @@ describe('tin chủ shop gửi từ điện thoại', () => {
 });
 
 describe('tin từ điện thoại mang danh tính tài khoản kênh', () => {
-    const ZALO = { key: 'zalo', name: 'Zalo', logo_url: '/brand-assets/platforms/zalo.svg' };
+    const ZALO = { key: 'zalo', name: 'Zalo', logo_url: '/brand-assets/platforms/zalo.webp' };
     const identity = (avatarUrl: string): ConversationSenderIdentity => ({
         channelAccount: { name: 'Zalo cá nhân', avatarUrl, platform: ZALO },
         installation: { key: 'installation', name: 'Yona', logo_url: '/brand-assets/logo_thumbnail.png' },

@@ -6,7 +6,7 @@ namespace App\Channels;
  * Nền tảng mà một hộp thư nói chuyện qua — kênh tự khai (DeclaresPlatform).
  *
  * `key` là hợp đồng công khai (payload API + tên tệp logo): đổi giá trị là breaking
- * change. Logo là tệp tĩnh public/brand-assets/platforms/{key}.svg — test hợp đồng
+ * change. Logo là tệp tĩnh public/brand-assets/platforms/{key}.webp — test hợp đồng
  * bắt thiếu tệp. Tên nền tảng là tên thương hiệu nên không dịch.
  */
 final class ChannelPlatform
@@ -32,7 +32,7 @@ final class ChannelPlatform
 
     public function logoPath(): string
     {
-        return self::LOGO_DIRECTORY."/{$this->key}.svg";
+        return self::LOGO_DIRECTORY."/{$this->key}.webp";
     }
 
     /** @return array{key: string, name: string, logo_url: string} */

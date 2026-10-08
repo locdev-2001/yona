@@ -16,7 +16,7 @@ vi.mock('dashboard/components/widgets/conversation/components/GalleryView', () =
     ),
 }));
 
-const ZALO: ChannelPlatform = { key: 'zalo', name: 'Zalo', logo_url: '/brand-assets/platforms/zalo.svg' };
+const ZALO: ChannelPlatform = { key: 'zalo', name: 'Zalo', logo_url: '/brand-assets/platforms/zalo.webp' };
 
 const badgeOf = (container: HTMLElement) => container.querySelector('[data-testid="avatar-platform-badge"]');
 

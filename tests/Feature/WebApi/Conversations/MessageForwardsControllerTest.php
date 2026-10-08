@@ -111,7 +111,7 @@ describe('GET …/forward_targets', function () {
             ])
             ->and($response->json('payload.0.inbox'))->toMatchArray(['id' => $this->smsInbox->id, 'name' => 'SMS Shop', 'channel_type' => 'Channel::Sms'])
             ->and($response->json('payload.0.inbox.platform'))->toMatchArray(['key' => 'sms', 'name' => 'SMS'])
-            ->and($response->json('payload.0.inbox.platform.logo_url'))->toEndWith('/brand-assets/platforms/sms.svg')
+            ->and($response->json('payload.0.inbox.platform.logo_url'))->toEndWith('/brand-assets/platforms/sms.webp')
             ->and($response->json('payload.0.contact'))->toMatchArray(['name' => 'Anh Bình', 'thumbnail' => '']);
     });
 

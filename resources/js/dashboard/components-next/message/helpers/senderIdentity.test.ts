@@ -6,7 +6,7 @@ import { t } from '../../../../i18n';
 import type { ConversationSenderIdentity } from '../SenderIdentityContext';
 import { messageSenderKey, resolveMessageSender } from './senderIdentity';
 
-const ZALO: ChannelPlatform = { key: 'zalo', name: 'Zalo', logo_url: '/brand-assets/platforms/zalo.svg' };
+const ZALO: ChannelPlatform = { key: 'zalo', name: 'Zalo', logo_url: '/brand-assets/platforms/zalo.webp' };
 const YONA: ChannelPlatform = { key: 'installation', name: 'Yona', logo_url: '/brand-assets/logo_thumbnail.png' };
 
 const IDENTITY: ConversationSenderIdentity = {
