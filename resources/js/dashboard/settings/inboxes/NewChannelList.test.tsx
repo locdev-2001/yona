@@ -23,6 +23,7 @@ const entry = (key: string, method: ChannelConnection['method']): ChannelConnect
     available: true,
     preset: null,
     guide_url: null,
+    logo_url: null,
     start_url: null,
     options: [],
 });

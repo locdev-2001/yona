@@ -1,6 +1,6 @@
 import { isProductFeatureVisible } from 'shared/helpers/productVisibility';
 import { usePage } from '@inertiajs/react';
-import { BRAND_ICONS, ICONS } from 'dashboard/icons';
+import { ICONS } from 'dashboard/icons';
 
 import { t } from '../../../i18n';
 import { accountScopedUrl } from 'dashboard/helper/URLHelper';
@@ -18,22 +18,6 @@ interface NewChannelListProps {
     channels: ChannelConnection[];
 }
 
-const CHANNEL_ICONS: Record<string, string> = {
-    website: ICONS.channelWebsite,
-    facebook: 'i-yona-messenger',
-    whatsapp: 'i-yona-whatsapp',
-    sms: ICONS.channelSms,
-    email: ICONS.channelEmail,
-    api: ICONS.channelApi,
-    telegram: 'i-yona-telegram',
-    line: 'i-yona-line',
-    instagram: 'i-yona-instagram',
-    tiktok: BRAND_ICONS.tiktok,
-    zalo: BRAND_ICONS.zalo,
-};
-
-const FALLBACK_ICON = ICONS.channelDefault;
-
 export default function NewChannelList({ channels = [] }: NewChannelListProps) {
     const { currentAccount } = usePage<DashboardPageProps>().props;
     const accountId = currentAccount!.id;
@@ -41,11 +25,12 @@ export default function NewChannelList({ channels = [] }: NewChannelListProps) {
     const visibleChannels = channels.filter(({ key }) =>
         isProductFeatureVisible('advancedChannels') || ['zalo', 'website', 'email', 'facebook'].includes(key),
     );
-    const channelList: ChannelOption[] = visibleChannels.map(({ key }) => ({
+    const channelList: ChannelOption[] = visibleChannels.map(({ key, logo_url }) => ({
         key,
         title: t(`INBOX_MGMT.ADD.AUTH.CHANNEL.${key.toUpperCase()}.TITLE`),
         description: t(`INBOX_MGMT.ADD.AUTH.CHANNEL.${key.toUpperCase()}.DESCRIPTION`),
-        icon: CHANNEL_ICONS[key] ?? FALLBACK_ICON,
+        icon: ICONS.channelDefault,
+        logoUrl: logo_url,
     }));
 
     return (

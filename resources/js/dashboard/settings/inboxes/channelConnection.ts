@@ -8,6 +8,7 @@ export interface ChannelConnection {
     available: boolean;
     preset: Record<string, string | number | boolean> | null;
     guide_url: string | null;
+    logo_url: string | null;
     start_url: string | null;
     options: ChannelConnection[];
 }

@@ -8,6 +8,7 @@ interface ChannelSelectorProps {
     title: string;
     description?: string;
     icon: string;
+    logoUrl?: string | null;
     isComingSoon?: boolean;
     isBeta?: boolean;
     disabled?: boolean;
@@ -18,6 +19,7 @@ export default function ChannelSelector({
     title,
     description = '',
     icon,
+    logoUrl = null,
     isComingSoon = false,
     isBeta = false,
     disabled = false,
@@ -36,9 +38,13 @@ export default function ChannelSelector({
             onClick={onClick}
         >
             <div className="relative">
-                <div className="flex size-10 items-center justify-center rounded-full bg-n-alpha-2">
-                    <Icon icon={icon} className="text-n-slate-10 size-6" />
-                </div>
+                {logoUrl ? (
+                    <img src={logoUrl} alt="" className="size-10 object-contain" />
+                ) : (
+                    <div className="flex size-10 items-center justify-center rounded-full bg-n-alpha-2">
+                        <Icon icon={icon} className="text-n-slate-10 size-6" />
+                    </div>
+                )}
             </div>
 
             <div className="flex flex-col items-start gap-1.5">

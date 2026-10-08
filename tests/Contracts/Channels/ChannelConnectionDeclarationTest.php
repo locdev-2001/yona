@@ -61,3 +61,17 @@ it('lối vào con khai cách kết nối, key không trùng, lối OAuth có đ
         }
     }
 });
+
+it('mọi lối vào và lối vào con mang logo nền tảng có tệp thật', function () {
+    $connections = [];
+
+    foreach (ChannelConnectionCatalog::all() as $entry) {
+        $connections = [...$connections, $entry, ...$entry->options];
+    }
+
+    foreach ($connections as $connection) {
+        expect($connection->platform)->not->toBeNull("lối vào {$connection->key} thiếu platform")
+            ->and(file_exists(public_path($connection->platform->logoPath())))->toBeTrue("thiếu logo của {$connection->key}")
+            ->and($connection->toArray()['logo_url'])->toEndWith($connection->platform->logoPath());
+    }
+});

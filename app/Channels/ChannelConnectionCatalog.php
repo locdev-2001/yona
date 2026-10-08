@@ -18,7 +18,7 @@ final class ChannelConnectionCatalog
         $entries = [];
 
         foreach (self::drivers() as $driver) {
-            $connection = $driver::connection();
+            $connection = self::withDriverPlatform($driver::connection(), $driver);
             $existing = $entries[$connection->key] ?? null;
 
             if ($existing === null) {
@@ -52,6 +52,21 @@ final class ChannelConnectionCatalog
     public static function availableFor(Account $account): array
     {
         return array_map(static fn (ChannelConnection $entry) => $entry->toArray($account), self::available());
+    }
+
+    /**
+     * Lối vào mang logo nền tảng mà driver đã khai (DeclaresPlatform) — một nguồn logo
+     * cho cả hộp thư lẫn thẻ chọn kênh. Driver đặt sẵn platform thì giữ nguyên.
+     *
+     * @param  class-string<DeclaresConnection>  $driver
+     */
+    private static function withDriverPlatform(ChannelConnection $connection, string $driver): ChannelConnection
+    {
+        if ($connection->platform !== null || ! is_subclass_of($driver, DeclaresPlatform::class)) {
+            return $connection;
+        }
+
+        return $connection->withPlatform((new $driver)->platform());
     }
 
     /** @return list<class-string<DeclaresConnection>> */

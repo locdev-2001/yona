@@ -8,6 +8,7 @@ use App\Models\Account;
  * Giao kèo kết nối của một kênh: màn "Thêm kênh" và API đọc từ đây, không map theo
  * `channel_type`. `key` là đường dẫn bước 2 của wizard (settings/inboxes/new/{key});
  * `options` là các lối vào con (vd nhà cung cấp email), mỗi lối khai cách kết nối riêng.
+ * `platform` cho thẻ chọn kênh vẽ đúng logo nền tảng mà hộp thư sẽ mang.
  */
 final class ChannelConnection
 {
@@ -26,6 +27,7 @@ final class ChannelConnection
         public readonly ?string $guideUrl = null,
         public readonly ?string $startRoute = null,
         public readonly array $startRouteParameters = [],
+        public readonly ?ChannelPlatform $platform = null,
     ) {}
 
     public static function of(string $key, ConnectionMethod $method): self
@@ -65,6 +67,11 @@ final class ChannelConnection
         return $this->copy(['startRoute' => $routeName, 'startRouteParameters' => $parameters]);
     }
 
+    public function withPlatform(ChannelPlatform $platform): self
+    {
+        return $this->copy(['platform' => $platform]);
+    }
+
     /** @return list<self> */
     public function availableOptions(): array
     {
@@ -91,6 +98,7 @@ final class ChannelConnection
             'available' => $this->available,
             'preset' => $this->preset === [] ? null : $this->preset,
             'guide_url' => $this->guideUrl,
+            'logo_url' => $this->platform?->toArray()['logo_url'],
             'start_url' => $this->startRoute !== null && $account !== null
                 ? route($this->startRoute, ['account' => $account->id, ...$this->startRouteParameters], false)
                 : null,
@@ -111,6 +119,7 @@ final class ChannelConnection
             'guideUrl' => $this->guideUrl,
             'startRoute' => $this->startRoute,
             'startRouteParameters' => $this->startRouteParameters,
+            'platform' => $this->platform,
             ...$changes,
         ]);
     }

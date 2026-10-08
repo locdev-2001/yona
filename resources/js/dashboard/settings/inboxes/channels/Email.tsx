@@ -16,16 +16,8 @@ import type { ChannelConnection } from '../channelConnection';
 // Kênh Email: chọn nhà cung cấp trong các lối backend khai (`connection.options`).
 // Lối OAuth chuyển sang nhà cung cấp; lối có `preset` (Gmail, Outlook) chỉ hỏi địa chỉ +
 // App Password; "Khác" điền đủ máy chủ. Máy chủ thử đăng nhập IMAP/SMTP khi lưu.
-const OPTION_ICONS: Record<string, string> = {
-    google: 'i-yona-gmail',
-    microsoft: 'i-yona-outlook',
-    gmail: 'i-yona-gmail',
-    outlook: 'i-yona-outlook',
-    other: ICONS.channelEmail,
-};
-
 const FALLBACK_OPTIONS: ChannelConnection[] = [
-    { key: 'other', method: 'form', available: true, preset: null, guide_url: null, start_url: null, options: [] },
+    { key: 'other', method: 'form', available: true, preset: null, guide_url: null, start_url: null, logo_url: null, options: [] },
 ];
 
 // email của @vuelidate/validators rút gọn: đủ để chặn lỗi gõ, máy chủ kiểm lại.
@@ -340,7 +332,8 @@ export default function EmailChannelForm({ connection = null }: ChannelFormProps
                         key={option.key}
                         title={optionText(option.key, 'TITLE')}
                         description={optionText(option.key, 'DESCRIPTION')}
-                        icon={OPTION_ICONS[option.key] ?? ICONS.channelEmail}
+                        icon={ICONS.channelEmail}
+                        logoUrl={option.logo_url}
                         onClick={() => choose(option)}
                     />
                 ))}

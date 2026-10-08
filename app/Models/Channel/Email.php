@@ -117,9 +117,9 @@ class Email extends Model implements DeclaresCapabilities, DeclaresConnection, D
     public function platform(): ChannelPlatform
     {
         return match (true) {
-            $this->isMicrosoft() => ChannelPlatform::of('outlook', 'Outlook'),
-            $this->isGoogle() || $this->isLegacyGoogle() => ChannelPlatform::of('gmail', 'Gmail'),
-            default => ChannelPlatform::of('email', 'Email'),
+            $this->isMicrosoft() => self::outlookPlatform(),
+            $this->isGoogle() || $this->isLegacyGoogle() => self::gmailPlatform(),
+            default => self::emailPlatform(),
         };
     }
 
@@ -251,16 +251,33 @@ class Email extends Model implements DeclaresCapabilities, DeclaresConnection, D
         return ChannelConnection::of('email', ConnectionMethod::Form)
             ->ordered(30)
             ->withOptions(
-                self::oauthOption('google'),
-                self::oauthOption('microsoft'),
+                self::oauthOption('google')->withPlatform(self::gmailPlatform()),
+                self::oauthOption('microsoft')->withPlatform(self::outlookPlatform()),
                 ChannelConnection::of('gmail', ConnectionMethod::Form)
+                    ->withPlatform(self::gmailPlatform())
                     ->withPreset(EmailProviderPresets::for('gmail'))
                     ->withGuideUrl(EmailProviderPresets::GMAIL_APP_PASSWORD_URL),
                 ChannelConnection::of('outlook', ConnectionMethod::Form)
+                    ->withPlatform(self::outlookPlatform())
                     ->withPreset(EmailProviderPresets::for('outlook'))
                     ->withGuideUrl(EmailProviderPresets::MICROSOFT_APP_PASSWORD_URL),
-                ChannelConnection::of('other', ConnectionMethod::Form),
+                ChannelConnection::of('other', ConnectionMethod::Form)->withPlatform(self::emailPlatform()),
             );
+    }
+
+    private static function gmailPlatform(): ChannelPlatform
+    {
+        return ChannelPlatform::of('gmail', 'Gmail');
+    }
+
+    private static function outlookPlatform(): ChannelPlatform
+    {
+        return ChannelPlatform::of('outlook', 'Outlook');
+    }
+
+    private static function emailPlatform(): ChannelPlatform
+    {
+        return ChannelPlatform::of('email', 'Email');
     }
 
     // Đăng nhập nhà cung cấp (OAuth): đóng khi thiếu app hoặc cờ khoá (Gmail chờ Google duyệt).

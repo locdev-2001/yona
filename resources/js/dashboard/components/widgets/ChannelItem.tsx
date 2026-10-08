@@ -7,6 +7,7 @@ export interface ChannelOption {
     title: string;
     description: string;
     icon: string;
+    logoUrl: string | null;
 }
 
 interface ChannelItemProps {
@@ -20,6 +21,7 @@ export default function ChannelItem({ channel, onChannelItemClick }: ChannelItem
             title={channel.title}
             description={channel.description}
             icon={channel.icon}
+            logoUrl={channel.logoUrl}
             onClick={() => onChannelItemClick(channel.key)}
         />
     );

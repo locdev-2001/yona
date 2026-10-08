@@ -32,6 +32,7 @@ const option = (key: string, overrides: Partial<ChannelConnection> = {}): Channe
     available: true,
     preset: null,
     guide_url: null,
+    logo_url: null,
     start_url: null,
     options: [],
     ...overrides,
