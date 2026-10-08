@@ -1,6 +1,8 @@
 import { render } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
+import { setLocale } from '../../../i18n';
+
 import Message from './Message';
 import { SenderIdentityContext } from './SenderIdentityContext';
 import type { ConversationSenderIdentity } from './SenderIdentityContext';
@@ -9,8 +11,8 @@ import type { ConversationMessage } from 'dashboard/conversation/types';
 
 const BASE_TIME = 1756707112;
 
-// Nhánh `externalEcho` của Message.vue: tin chủ hộp thư gửi thẳng từ điện thoại
-// rồi kênh dội lại. Không có sender nội bộ nên trước lô 2b nó rơi vào nhánh
+// Nhánh `externalEcho` của Message.vue: tin chủ hộp thư gửi thẳng từ ứng dụng
+// của kênh rồi kênh dội lại. Không có sender nội bộ nên trước lô 2b nó rơi vào nhánh
 // isBot và hiện thành bong bóng "Bot" tím.
 function outgoingEcho(contentAttributes: Record<string, unknown> = {}): ConversationMessage {
     return {
@@ -34,7 +36,7 @@ function outgoingEcho(contentAttributes: Record<string, unknown> = {}): Conversa
 const renderMessage = (payload: ConversationMessage) =>
     render(<Message message={payload} channelType="Channel::Zalo" />).container;
 
-describe('tin chủ shop gửi từ điện thoại', () => {
+describe('tin chủ shop gửi thẳng từ ứng dụng của kênh', () => {
     it('mang bong bóng của agent, không phải bong bóng Bot', () => {
         const container = renderMessage(outgoingEcho());
         const bubble = container.querySelector('.right-bubble');
@@ -43,12 +45,12 @@ describe('tin chủ shop gửi từ điện thoại', () => {
         expect(bubble?.className).not.toContain('bg-n-solid-iris');
     });
 
-    it('có nhãn nhỏ "từ điện thoại" kèm giải thích', () => {
+    it('không biết nền tảng của hộp thư thì nhãn trung tính, không nói "điện thoại"', () => {
         const container = renderMessage(outgoingEcho());
         const label = container.querySelector('[data-testid="external-echo-label"]');
 
-        expect(label?.textContent).toBe('from phone');
-        expect(label?.getAttribute('title')).toContain('native app');
+        expect(label?.textContent).toBe('sent outside Yona');
+        expect(label?.getAttribute('title')).toBe("This message was sent directly from the channel's own app, not through Yona.");
     });
 
     it('không đề tên Bot ở avatar', () => {
@@ -73,7 +75,7 @@ describe('tin chủ shop gửi từ điện thoại', () => {
     });
 });
 
-describe('tin từ điện thoại mang danh tính tài khoản kênh', () => {
+describe('tin gửi từ ứng dụng kênh mang danh tính tài khoản kênh', () => {
     const ZALO = { key: 'zalo', name: 'Zalo', logo_url: '/brand-assets/platforms/zalo.webp' };
     const identity = (avatarUrl: string): ConversationSenderIdentity => ({
         channelAccount: { name: 'Zalo cá nhân', avatarUrl, platform: ZALO },
@@ -105,10 +107,18 @@ describe('tin từ điện thoại mang danh tính tài khoản kênh', () => {
         expect(badge(container)?.querySelector('img')?.getAttribute('alt')).toBe('Zalo');
     });
 
-    it('vẫn giữ nhãn "từ điện thoại"', () => {
+    it.each([
+        ['en', 'via Zalo', 'This message was sent directly from the Zalo app, not through Yona.'],
+        ['vi', 'từ Zalo', 'Tin nhắn này được gửi thẳng từ ứng dụng Zalo, không qua Yona.'],
+    ])('nhãn và giải thích ghi tên nền tảng của hộp thư (%s)', (locale, label, advisory) => {
+        setLocale(locale);
         const container = renderWithIdentity('/zalo-account.jpg');
+        setLocale('en');
+        const echoLabel = container.querySelector('[data-testid="external-echo-label"]');
 
-        expect(container.querySelector('[data-testid="external-echo-label"]')?.textContent).toBe('from phone');
+        expect(echoLabel?.textContent).toBe(label);
+        expect(echoLabel?.getAttribute('title')).toBe(advisory);
+        expect(echoLabel?.getAttribute('title')).not.toMatch(/\{|window|cửa sổ/);
     });
 });
 

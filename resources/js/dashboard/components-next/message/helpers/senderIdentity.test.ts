@@ -4,7 +4,7 @@ import type { ConversationMessage } from 'dashboard/conversation/types';
 import type { ChannelPlatform } from 'shared/constants/channelPlatform';
 import { t } from '../../../../i18n';
 import type { ConversationSenderIdentity } from '../SenderIdentityContext';
-import { messageSenderKey, resolveMessageSender } from './senderIdentity';
+import { externalEchoCopy, messageSenderKey, resolveMessageSender } from './senderIdentity';
 
 const ZALO: ChannelPlatform = { key: 'zalo', name: 'Zalo', logo_url: '/brand-assets/platforms/zalo.webp' };
 const YONA: ChannelPlatform = { key: 'installation', name: 'Yona', logo_url: '/brand-assets/logo_thumbnail.png' };
@@ -39,18 +39,18 @@ const sentBy = (name: string, platform: string) =>
     `${t('CONVERSATION.SENT_BY')} ${name} · ${t('CONVERSATION.SENT_VIA_PLATFORM', { platform })}`;
 
 describe('người gửi của từng tin', () => {
-    it('tin gửi từ điện thoại mang ảnh và tên tài khoản kênh kèm nền tảng', () => {
+    it('tin gửi thẳng từ ứng dụng kênh mang ảnh và tên tài khoản kênh kèm nền tảng', () => {
         const identity = resolveMessageSender(message({ content_attributes: { external_echo: true } }), IDENTITY);
 
         expect(identity).toEqual({
             name: 'Zalo cá nhân',
             src: '/zalo-account.jpg',
             platform: ZALO,
-            tooltip: t('CONVERSATION.NATIVE_APP_ADVISORY'),
+            tooltip: t('CONVERSATION.NATIVE_APP_ADVISORY', { source: 'Zalo' }),
         });
     });
 
-    it('tin từ điện thoại khi hộp thư chưa có ảnh vẫn đứng tên hộp thư, không phải "ứng dụng gốc"', () => {
+    it('tin từ ứng dụng kênh khi hộp thư chưa có ảnh vẫn đứng tên hộp thư, không phải "ứng dụng gốc"', () => {
         const withoutAvatar = { ...IDENTITY, channelAccount: { ...IDENTITY.channelAccount!, avatarUrl: '' } };
         const identity = resolveMessageSender(message({ content_attributes: { external_echo: true } }), withoutAvatar);
 
@@ -127,13 +127,24 @@ describe('người gửi của từng tin', () => {
         expect(agent.tooltip).toBe(`${t('CONVERSATION.SENT_BY')} Lộc`);
         expect(echo.platform).toBeNull();
         expect(echo.name).toBe(t('CONVERSATION.NATIVE_APP'));
-        expect(echo.tooltip).toBe(t('CONVERSATION.NATIVE_APP_ADVISORY'));
+        expect(echo.tooltip).toBe(t('CONVERSATION.NATIVE_APP_ADVISORY_UNKNOWN_SOURCE'));
     });
 
     it('tooltip nói tin đi qua nền tảng nào', () => {
         const identity = resolveMessageSender(message({ message_type: 0, sender: CONTACT, sender_id: 5 }), IDENTITY);
 
         expect(identity.tooltip).toContain('via Zalo');
+    });
+});
+
+describe('chữ cho tin gửi thẳng từ ứng dụng kênh', () => {
+    it.each([
+        [ZALO, 'via Zalo', 'This message was sent directly from the Zalo app, not through Yona.'],
+        [{ ...ZALO, key: 'telegram', name: 'Telegram' }, 'via Telegram', 'This message was sent directly from the Telegram app, not through Yona.'],
+        [null, 'sent outside Yona', "This message was sent directly from the channel's own app, not through Yona."],
+        [{ ...ZALO, name: '  ' }, 'sent outside Yona', "This message was sent directly from the channel's own app, not through Yona."],
+    ])('nguồn lấy từ tên nền tảng kênh tự khai (%o)', (platform, label, advisory) => {
+        expect(externalEchoCopy(platform)).toEqual({ label, advisory });
     });
 });
 

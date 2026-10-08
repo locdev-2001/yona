@@ -9,7 +9,7 @@ export interface ChannelAccountIdentity {
 }
 
 export interface ConversationSenderIdentity {
-    // Tài khoản kênh của hộp thư đang mở: tin gửi từ điện thoại mang danh tính này.
+    // Tài khoản kênh của hộp thư đang mở: tin chủ hộp thư gửi thẳng từ ứng dụng của kênh mang danh tính này.
     channelAccount: ChannelAccountIdentity | null;
     // Badge cho tin gửi từ bản cài đặt (nhân viên, bot, tự động, ghi chú).
     installation: ChannelPlatform | null;

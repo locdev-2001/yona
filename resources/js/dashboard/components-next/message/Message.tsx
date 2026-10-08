@@ -7,7 +7,6 @@ import { INBOX_TYPES } from 'dashboard/helper/inbox';
 import type { ConversationMessage } from 'dashboard/conversation/types';
 import { joinsNextMessage } from 'shared/helpers/messageGrouping';
 import type { MessageGroupPosition } from 'shared/helpers/messageGrouping';
-import { t } from '../../../i18n';
 
 import { MessageProvider } from './provider';
 import type { MessageContextValue } from './provider';
@@ -42,7 +41,7 @@ import ZaloReminderBubble from './bubbles/ZaloReminder';
 import { BUBBLE_NAMES, resolveBubbleName } from './helpers/attachments';
 import type { MessageAttachment } from './helpers/attachments';
 import { resolveReplyQuote } from './helpers/replyQuote';
-import { BOT_SENDER_TYPES, resolveMessageSender } from './helpers/senderIdentity';
+import { BOT_SENDER_TYPES, externalEchoCopy, resolveMessageSender } from './helpers/senderIdentity';
 import { useSenderIdentityContext } from './SenderIdentityContext';
 
 // Port từ dashboard/components-next/message/Message.vue. Payload spine giữ
@@ -154,7 +153,7 @@ export default function Message({
         messageType === MESSAGE_TYPES.INCOMING || messageType === MESSAGE_TYPES.OUTGOING;
 
     // `externalEcho` của Message.vue: tin do chính chủ hộp thư gửi thẳng từ ứng
-    // dụng của kênh (điện thoại) rồi kênh dội lại. Không có sender nội bộ nên nếu
+    // dụng của kênh (ngoài Yona) rồi kênh dội lại. Không có sender nội bộ nên nếu
     // để rơi vào nhánh isBot thì nó hiện thành bong bóng "Bot" tím — sai người gửi.
     const isExternalEcho = Boolean(contentAttributes.external_echo);
 
@@ -331,10 +330,10 @@ export default function Message({
                                 ) : isExternalEcho ? (
                                     <div
                                         data-testid="external-echo-label"
-                                        title={t('CONVERSATION.NATIVE_APP_ADVISORY')}
+                                        title={senderIdentity.tooltip}
                                         className="flex mt-1 text-xs text-n-slate-11"
                                     >
-                                        {t('CONVERSATION.SENT_FROM_NATIVE_APP')}
+                                        {externalEchoCopy(senderIdentity.platform).label}
                                     </div>
                                 ) : null}
                                 {choiceOf ? <ChoiceOfLabel question={choiceOf} onJump={onJumpToMessage} /> : null}

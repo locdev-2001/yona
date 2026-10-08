@@ -3795,7 +3795,8 @@ const messages: Record<string, unknown> = {
             },
             "MARK_BANK_TRANSFER_PAID": "Mark as paid"
         },
-        "SENT_FROM_NATIVE_APP": "from phone",
+        "SENT_FROM_NATIVE_APP": "via {source}",
+        "SENT_OUTSIDE_APP": "sent outside Yona",
         "MESSAGE_ACTIONS": {
             "REPLY": "Reply",
             "MORE": "More actions",
@@ -4183,7 +4184,8 @@ const messages: Record<string, unknown> = {
         "SENT_VIA_PLATFORM": "via {platform}",
         "BOT": "Bot",
         "NATIVE_APP": "Native app",
-        "NATIVE_APP_ADVISORY": "This message was sent from the native app. Reply from {installationName} to maintain the message window.",
+        "NATIVE_APP_ADVISORY": "This message was sent directly from the {source} app, not through Yona.",
+        "NATIVE_APP_ADVISORY_UNKNOWN_SOURCE": "This message was sent directly from the channel's own app, not through Yona.",
         "SEND_FAILED": "Couldn't send message! Try again",
         "TRY_AGAIN": "retry",
         "ASSIGNMENT": {

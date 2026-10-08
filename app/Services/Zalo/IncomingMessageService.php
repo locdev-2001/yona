@@ -581,7 +581,7 @@ class IncomingMessageService
         }
 
         if ($this->direction() !== 'in') {
-            // `outgoing_echo` của gốc: tin do chính chủ shop gửi từ điện thoại
+            // `outgoing_echo` của gốc: tin do chính chủ shop gửi thẳng từ ứng dụng Zalo
             // hoặc do CRM đẩy lại. Thiếu cờ này thì lõi không coi là "đã trả
             // lời" — mốc chờ, first_reply, SLA và báo cáo đều sai.
             $attributes['external_echo'] = true;

@@ -16,6 +16,31 @@ export interface MessageSenderIdentity {
     tooltip: string;
 }
 
+export interface ExternalEchoCopy {
+    label: string;
+    advisory: string;
+}
+
+/**
+ * Chữ cho tin chủ hộp thư gửi thẳng từ ứng dụng của kênh: nguồn là tên nền tảng
+ * mà kênh tự khai, không biết nền tảng thì nói trung tính là gửi ngoài sản phẩm.
+ */
+export function externalEchoCopy(platform: ChannelPlatform | null): ExternalEchoCopy {
+    const source = platform?.name?.trim();
+
+    if (!source) {
+        return {
+            label: t('CONVERSATION.SENT_OUTSIDE_APP'),
+            advisory: t('CONVERSATION.NATIVE_APP_ADVISORY_UNKNOWN_SOURCE'),
+        };
+    }
+
+    return {
+        label: t('CONVERSATION.SENT_FROM_NATIVE_APP', { source }),
+        advisory: t('CONVERSATION.NATIVE_APP_ADVISORY', { source }),
+    };
+}
+
 function sentByTooltip(name: string, platform: ChannelPlatform | null): string {
     if (!name) return '';
 
@@ -44,7 +69,7 @@ export function resolveMessageSender(
             name: channelAccount?.name || t('CONVERSATION.NATIVE_APP'),
             src: channelAccount?.avatarUrl ?? '',
             platform: channelPlatform,
-            tooltip: t('CONVERSATION.NATIVE_APP_ADVISORY'),
+            tooltip: externalEchoCopy(channelPlatform).advisory,
         };
     }
 

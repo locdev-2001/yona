@@ -200,7 +200,8 @@ return [
         ],
         'MARK_BANK_TRANSFER_PAID' => 'Đánh dấu đã nhận tiền',
     ],
-    'SENT_FROM_NATIVE_APP' => 'từ điện thoại',
+    'SENT_FROM_NATIVE_APP' => 'từ {source}',
+    'SENT_OUTSIDE_APP' => 'gửi ngoài Yona',
     'MESSAGE_ACTIONS' => [
         'REPLY' => 'Trả lời',
         'MORE' => 'Thêm hành động',
@@ -593,7 +594,8 @@ return [
     'SENT_VIA_PLATFORM' => 'qua {platform}',
     'BOT' => 'Bot',
     'NATIVE_APP' => 'Ứng dụng gốc',
-    'NATIVE_APP_ADVISORY' => 'Tin nhắn này được gửi từ ứng dụng gốc. Hãy trả lời từ {installationName} để giữ cửa sổ nhắn tin.',
+    'NATIVE_APP_ADVISORY' => 'Tin nhắn này được gửi thẳng từ ứng dụng {source}, không qua Yona.',
+    'NATIVE_APP_ADVISORY_UNKNOWN_SOURCE' => 'Tin nhắn này được gửi thẳng từ ứng dụng của kênh, không qua Yona.',
     'SEND_FAILED' => 'Không thể gửi tin nhắn! Thử lại',
     'TRY_AGAIN' => 'thử lại',
     'ASSIGNMENT' => [
