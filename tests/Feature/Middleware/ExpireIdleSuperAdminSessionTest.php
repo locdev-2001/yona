@@ -3,26 +3,17 @@
 use App\Http\Middleware\ExpireIdleSuperAdminSession;
 use App\Models\SuperAdmin;
 use App\Models\User;
-use OTPHP\TOTP;
 
 beforeEach(function () {
     config(['yona.super_admin_idle_minutes' => 120]);
 });
 
-// 2FA luôn bắt buộc: đăng nhập trọn vẹn nghĩa là qua cả bước mật khẩu lẫn OTP.
 function signInSuperAdmin(): SuperAdmin
 {
-    $superAdmin = SuperAdmin::factory()->withMfa()->create(['password' => 'Password1!']);
-
-    $response = test()->post('/admin/sign_in', [
-        'super_admin' => ['email' => $superAdmin->email, 'password' => 'Password1!'],
-    ], ['X-Inertia' => 'true'])->assertOk();
-
-    $code = TOTP::createFromSecret($superAdmin->refresh()->otp_secret)->now();
+    $superAdmin = SuperAdmin::factory()->create(['password' => 'Password1!']);
 
     test()->post('/admin/sign_in', [
-        'otp_token' => $response->json('props.otpToken'),
-        'otp_code' => $code,
+        'super_admin' => ['email' => $superAdmin->email, 'password' => 'Password1!'],
     ])->assertRedirect('/admin');
 
     return $superAdmin;
