@@ -26,6 +26,9 @@ use Throwable;
  *     không kéo theo 1GB RAM của worker.
  *  3. Kiểu MIME lấy từ chính nội dung, không tin lời khai của máy chủ lạ.
  *
+ * Tệp 0 byte cũng là thất bại: CDN đôi khi trả 200 kèm thân rỗng, lưu nó như
+ * tệp hợp lệ thì bong bóng thành ảnh vỡ và mất luôn đường mở tệp gốc.
+ *
  * Mọi thất bại đều trả `null` chứ không ném ra ngoài: bên gọi dựng đính kèm
  * `fallback` để tin của khách vẫn còn dấu vết (`fallbackAttributes`).
  */
@@ -68,6 +71,13 @@ class RemoteAttachmentDownloader
             self::assertDeclaredSizeWithinLimit($response);
 
             $temporaryPath = self::streamToTemporaryFile($response);
+
+            if (filesize($temporaryPath) === 0) {
+                Log::warning("[CHANNEL] Không tải được tệp đính kèm (thân rỗng, 0 byte): {$url}");
+
+                return null;
+            }
+
             $contentType = MimeType::resolveForFile($response->header('Content-Type'), $temporaryPath);
 
             return Attachment::storeLocalFile(

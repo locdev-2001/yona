@@ -72,6 +72,13 @@ it('lỗi mạng trả null thay vì ném ra ngoài', function () {
     expect(RemoteAttachmentDownloader::download('https://cdn.test/anh.jpg', 1))->toBeNull();
 });
 
+it('thân rỗng dù trả 200 là tải hỏng, không lưu tệp 0 byte', function () {
+    Http::fake(['*' => Http::response('', 200, ['Content-Type' => 'image/jpeg'])]);
+
+    expect(RemoteAttachmentDownloader::download('https://cdn.test/anh.jpg', 1))->toBeNull()
+        ->and(Storage::disk('public')->allFiles())->toBe([]);
+});
+
 it('lấy kiểu MIME từ nội dung chứ không tin lời khai của máy chủ', function () {
     Http::fake(['*' => Http::response('<html><body>xin chào</body></html>', 200, ['Content-Type' => 'image/png'])]);
 

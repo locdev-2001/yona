@@ -42,7 +42,9 @@ function zaloPayload(string $fixture, Zalo $channel, array $overrides = []): arr
 beforeEach(function () {
     config()->set('zalo.bridge.webhook_secret', 'secret-bridge');
     Http::fake([
-        'cdn.zalo.test/*' => Http::response('binary-image', 200, ['Content-Type' => 'image/jpeg']),
+        // Closure để mỗi request nhận thân mới: một response dùng chung thì ảnh
+        // đại diện đọc cạn stream trước, ảnh tin sau đó nhận thân rỗng.
+        'cdn.zalo.test/*' => fn () => Http::response('binary-image', 200, ['Content-Type' => 'image/jpeg']),
         // Bridge phải được giả ở ĐÂY chứ không riêng từng test: tin đi ra và việc
         // xoá inbox đều gọi bridge trong cùng request (QUEUE_CONNECTION=sync), nên
         // thiếu fake là suite gõ thẳng vào bridge THẬT của founder ở cầu nối cấu hình ở config/zalo.php.
@@ -277,6 +279,23 @@ it('gắn đúng file_type cho video / âm thanh / tệp / gif', function (strin
     ['zalo_inbound_file', Attachment::FILE_TYPE_FILE],
     ['zalo_inbound_gif', Attachment::FILE_TYPE_IMAGE],
 ]);
+
+it('CDN trả 200 thân rỗng thì dựng đính kèm fallback giữ link gốc, không lưu ảnh 0 byte', function () {
+    Storage::fake('public');
+    Http::fake(['cdn.anh-rong.test/*' => Http::response('', 200, ['Content-Type' => 'image/jpeg'])]);
+
+    zaloWebhook(zaloPayload('zalo_inbound_image', $this->channel, [
+        'media_url' => 'https://cdn.anh-rong.test/photo.jpg',
+    ]))->assertOk();
+
+    $attachment = Message::query()->latest('id')->first()->attachments()->sole();
+
+    expect($attachment->file_type)->toBe(Attachment::FILE_TYPE_FALLBACK)
+        ->and($attachment->external_url)->toBe('https://cdn.anh-rong.test/photo.jpg')
+        ->and($attachment->fallback_title)->toBe('photo.jpg')
+        ->and($attachment->path)->toBeNull()
+        ->and(Storage::disk('public')->allFiles())->toBe([]);
+});
 
 it('tệp chung (share.file) lấy loại theo nội dung: mp4 thành video, pdf vẫn là tệp, ảnh thành ảnh', function (string $bytes, string $filename, int $fileType, string $contentType) {
     Storage::fake('public');

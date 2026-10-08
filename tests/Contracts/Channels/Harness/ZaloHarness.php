@@ -127,7 +127,8 @@ final class ZaloHarness implements ChannelHarness
     private function fakeBridge(): void
     {
         Http::fake([
-            'cdn.zalo.test/*' => Http::response('binary-image', 200, ['Content-Type' => 'image/jpeg']),
+            // Closure: mỗi request một thân mới, ảnh đại diện không đọc cạn stream của ảnh tin.
+            'cdn.zalo.test/*' => fn () => Http::response('binary-image', 200, ['Content-Type' => 'image/jpeg']),
             '*/personal-messages/send' => Http::response(['ok' => true, 'source_id' => 'contract-sent-'.uniqid()]),
             '*/personal-messages/stickers/*' => Http::response(['ok' => true, 'stickers' => [$this->catalogSticker()]]),
             '*' => Http::response(['ok' => true]),

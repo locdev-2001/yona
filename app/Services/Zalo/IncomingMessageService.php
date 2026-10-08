@@ -786,14 +786,11 @@ class IncomingMessageService
             // URL CDN Zalo có hạn dùng, lô lịch sử hay về sau khi token đã hết:
             // lưu tin rỗng vô hình là mất hẳn dấu vết, nên rơi về contract
             // `fallback` của lõi — vẫn còn đường mở tệp gốc.
-            return [new Attachment([
-                'account_id' => $accountId,
-                'file_type' => Attachment::FILE_TYPE_FALLBACK,
-                'external_url' => (string) $url,
-                'fallback_title' => filled($this->params['media_filename'] ?? null)
-                    ? mb_substr((string) $this->params['media_filename'], 0, 255)
-                    : null,
-            ])];
+            return [new Attachment(RemoteAttachmentDownloader::fallbackAttributes(
+                accountId: $accountId,
+                filename: $this->params['media_filename'] ?? null,
+                externalUrl: (string) $url,
+            ))];
         }
 
         $attributes['file_type'] = Attachment::fileTypeFromChannel(self::ATTACHMENT_TYPES[$kind] ?? null, $attributes['content_type']);
