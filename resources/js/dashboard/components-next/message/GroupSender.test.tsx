@@ -38,6 +38,15 @@ describe('tin nhóm hiện người gửi trên bong bóng', () => {
         expect(container.textContent).toContain('Bình');
     });
 
+    it('tên có dấu chồng vẫn cắt một dòng nhưng dòng đủ cao để không xén phần dấu', () => {
+        const container = renderMessage(incoming({ sender: { ...sender, name: 'Đỗ Ngọc Ẫn' } }));
+        const name = container.querySelector('[data-testid="group-sender-name"]');
+
+        expect(name?.textContent).toBe('Đỗ Ngọc Ẫn');
+        expect(name).toHaveClass('truncate', 'leading-5');
+        expect(name).not.toHaveClass('leading-none');
+    });
+
     it('dùng avatar người gửi', () => {
         const container = renderMessage(incoming({ sender }));
 
