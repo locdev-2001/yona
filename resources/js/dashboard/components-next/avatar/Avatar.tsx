@@ -5,12 +5,15 @@ import Icon from 'dashboard/components-next/icon/Icon';
 import PlatformLogo from 'dashboard/components-next/icon/PlatformLogo';
 import GeneratedAvatar from 'shared/avatar/GeneratedAvatar';
 import { resolveAvatarIdentity } from 'shared/avatar/avatarSeed';
+import { generatedAvatarUri } from 'shared/avatar/generatedAvatarUri';
 import type { ChannelPlatform } from 'shared/constants/channelPlatform';
 
 import { t } from '../../../i18n';
 
 // Trình xem ảnh chỉ nạp khi có người bấm, avatar ở danh sách dài không phải kéo theo.
 const AvatarPreview = lazy(() => import('./AvatarPreview'));
+
+const GENERATED_AVATAR_PREVIEW_SIZE = 480;
 
 // Badge nền tảng: 24px→12, 32px→14, 40px→18; avatar nhỏ hơn 20px thì badge không đọc được nên bỏ.
 const PLATFORM_BADGE_RATIO = 0.45;
@@ -83,7 +86,8 @@ export default function Avatar({
     };
 
     const showImage = Boolean(src) && isImageValid;
-    const hasGeneratedIdentity = Boolean(resolveAvatarIdentity(seed, name));
+    const generatedIdentity = resolveAvatarIdentity(seed, name);
+    const hasGeneratedIdentity = Boolean(generatedIdentity);
     const showIcon = !showImage && (Boolean(iconName) || !hasGeneratedIdentity);
 
     const badgeSize = Math.max(size * 0.35, 8);
@@ -93,7 +97,7 @@ export default function Avatar({
         PLATFORM_BADGE_MAX,
     );
     const borderRadiusClass = getBorderRadiusClass(size, roundedFull);
-    const canPreview = previewable && showImage;
+    const canPreview = previewable && !showIcon;
 
     const openPreview = (event: MouseEvent | KeyboardEvent) => {
         event.stopPropagation();
@@ -211,7 +215,11 @@ export default function Avatar({
 
             {canPreview && isPreviewOpen ? (
                 <Suspense fallback={null}>
-                    <AvatarPreview src={src} name={name} onClose={() => setPreviewOpen(false)} />
+                    <AvatarPreview
+                        src={showImage ? src : generatedAvatarUri(generatedIdentity, GENERATED_AVATAR_PREVIEW_SIZE)}
+                        name={name}
+                        onClose={() => setPreviewOpen(false)}
+                    />
                 </Suspense>
             ) : null}
         </span>

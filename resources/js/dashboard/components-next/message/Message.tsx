@@ -82,8 +82,8 @@ const FLEX_ORIENTATION_MAP: Record<string, string> = {
 };
 
 const GRID_CLASS_MAP: Record<string, string> = {
-    [ORIENTATION.LEFT]: 'grid grid-cols-[24px_1fr]',
-    [ORIENTATION.RIGHT]: 'grid grid-cols-[1fr_24px]',
+    [ORIENTATION.LEFT]: 'grid grid-cols-[32px_1fr]',
+    [ORIENTATION.RIGHT]: 'grid grid-cols-[1fr_32px]',
 };
 
 const GRID_TEMPLATE_MAP: Record<string, string> = {
@@ -304,7 +304,7 @@ export default function Message({
                                     seed={senderIdentity.seed}
                                     src={senderIdentity.src}
                                     platform={senderIdentity.platform}
-                                    size={24}
+                                    size={32}
                                     previewable={messageType === MESSAGE_TYPES.INCOMING}
                                 />
                             </div>

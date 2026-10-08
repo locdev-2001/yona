@@ -33,6 +33,31 @@ function inMemoryStorage(): Storage {
     });
 }
 
+// jsdom không có matchMedia; thư viện avatar (theo dõi con trỏ, giảm chuyển động) gọi
+// nó ngay khi gắn. Mặc định không khớp truy vấn nào: test cần khớp thì tự stub.
+if (typeof window.matchMedia !== 'function') {
+    window.matchMedia = (query: string) =>
+        ({
+            matches: false,
+            media: query,
+            onchange: null,
+            addListener: () => undefined,
+            removeListener: () => undefined,
+            addEventListener: () => undefined,
+            removeEventListener: () => undefined,
+            dispatchEvent: () => false,
+        }) as MediaQueryList;
+}
+
+// Cùng lý do: bộ theo dõi mắt của avatar đo lại khung khi đổi cỡ.
+if (typeof globalThis.ResizeObserver !== 'function') {
+    globalThis.ResizeObserver = class {
+        observe() {}
+        unobserve() {}
+        disconnect() {}
+    } as unknown as typeof ResizeObserver;
+}
+
 for (const name of ['localStorage', 'sessionStorage'] as const) {
     const storage = inMemoryStorage();
     for (const target of new Set<object>([globalThis, window])) {

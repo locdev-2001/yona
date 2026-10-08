@@ -95,8 +95,9 @@ describe('header theo hộp thư hay theo nhân viên', () => {
         expect(screen.getByTestId('header-title').textContent).toBe('Robert Nguyễn');
         const headerAvatar = screen.getByTestId('header-avatar').querySelector('[data-generated-avatar]');
         const sameAgentElsewhere = render(<WidgetAvatar name="Robert" seed="user:7" size={34} />).container;
-        expect(headerAvatar?.getAttribute('src')).toBe(
-            sameAgentElsewhere.querySelector('[data-generated-avatar]')?.getAttribute('src'),
+        expect(headerAvatar?.getAttribute('data-generated-avatar')).toBe('user:7');
+        expect(sameAgentElsewhere.querySelector('[data-generated-avatar]')?.getAttribute('data-generated-avatar')).toBe(
+            'user:7',
         );
         expect(screen.getByTestId('header-status').textContent).toBe('Active now');
     });

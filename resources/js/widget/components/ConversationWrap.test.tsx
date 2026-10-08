@@ -166,8 +166,8 @@ describe('avatar nhân viên trong luồng tin', () => {
         const agentAvatar = container.querySelector('.yona-msg-group:last-of-type [data-generated-avatar]');
         const typingAvatar = screen.getByRole('status').querySelector('[data-generated-avatar]');
 
-        expect(agentAvatar?.getAttribute('src')).toMatch(/^data:image\/svg\+xml/);
-        expect(typingAvatar?.getAttribute('src')).toBe(agentAvatar?.getAttribute('src'));
+        expect(agentAvatar?.getAttribute('data-generated-avatar')).toBe('user:7');
+        expect(typingAvatar?.getAttribute('data-generated-avatar')).toBe('user:7');
         act(() => widgetStore.toggleAgentTyping('off'));
     });
 });

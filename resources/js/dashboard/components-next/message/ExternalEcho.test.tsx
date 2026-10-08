@@ -105,9 +105,11 @@ describe('tin gửi từ ứng dụng kênh mang danh tính tài khoản kênh',
         const container = renderWithIdentity('');
         const sameInboxElsewhere = render(<Avatar name="Tên khác" seed="inbox:58" size={24} />).container;
 
-        expect(avatarCell(container)?.querySelector('[data-generated-avatar]')?.getAttribute('src')).toBe(
-            sameInboxElsewhere.querySelector('[data-generated-avatar]')?.getAttribute('src'),
-        );
+        const identityOf = (root: Element | null | undefined) =>
+            root?.querySelector('[data-generated-avatar]')?.getAttribute('data-generated-avatar');
+
+        expect(identityOf(avatarCell(container))).toBe('inbox:58');
+        expect(identityOf(sameInboxElsewhere)).toBe('inbox:58');
         expect(badge(container)?.querySelector('img')?.getAttribute('alt')).toBe('Zalo');
     });
 

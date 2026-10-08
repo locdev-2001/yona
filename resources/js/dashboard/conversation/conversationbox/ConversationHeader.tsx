@@ -106,7 +106,7 @@ export default function ConversationHeader({
                         name={currentContact.name ?? ''}
                         seed={avatarSeed('contact', currentContact.id)}
                         src={currentContact.thumbnail}
-                        size={32}
+                        size={36}
                         status={contactAvailabilityStatus}
                         platform={inbox?.platform ?? null}
                         hideOfflineStatus
@@ -143,7 +143,7 @@ export default function ConversationHeader({
                     name={currentContact.name ?? ''}
                     seed={avatarSeed('contact', currentContact.id)}
                     src={currentContact.thumbnail}
-                    size={32}
+                    size={36}
                     status={contactAvailabilityStatus}
                     platform={inbox?.platform ?? null}
                     hideOfflineStatus

@@ -131,7 +131,7 @@ export default function ConversationCard({
                         seed={avatarSeed('contact', currentContact.id)}
                         name={currentContact.name ?? ''}
                         src={currentContact.thumbnail}
-                        size={32}
+                        size={40}
                         status={contactAvailabilityStatus}
                         className={!showInboxName ? 'mt-4' : 'mt-8'}
                         hideOfflineStatus
