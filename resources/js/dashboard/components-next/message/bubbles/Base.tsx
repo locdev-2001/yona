@@ -136,7 +136,7 @@ export default function BaseBubble({
                 onClick={jumpToRepliedMessage}
             >
                 {replyQuote.senderName ? (
-                    <span className="block text-xs font-medium truncate">{replyQuote.senderName}</span>
+                    <span className="block text-xs leading-5 font-medium truncate">{replyQuote.senderName}</span>
                 ) : null}
                 <span
                     className="block prose prose-bubble line-clamp-2"
@@ -149,7 +149,6 @@ export default function BaseBubble({
                 className="flex items-center mb-1 min-w-0"
                 title={t('CONVERSATION.MESSAGE_SENDER.IN_GROUP', { name: groupSender.name })}
             >
-                {/* text-xs mặc định cao 16px: truncate cắt mất dấu chồng của chữ hoa tiếng Việt (Ỗ, Ẫ) — nới dòng lên 20px. */}
                 <span data-testid="group-sender-name" className="text-xs leading-5 font-medium truncate text-n-slate-11">
                     {groupSender.name}
                 </span>

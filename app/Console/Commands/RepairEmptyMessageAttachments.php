@@ -17,13 +17,6 @@ use Illuminate\Support\Facades\Storage;
  */
 class RepairEmptyMessageAttachments extends Command
 {
-    private const FILE_BEARING_TYPES = [
-        Attachment::FILE_TYPE_IMAGE,
-        Attachment::FILE_TYPE_AUDIO,
-        Attachment::FILE_TYPE_VIDEO,
-        Attachment::FILE_TYPE_FILE,
-    ];
-
     private const CHUNK_SIZE = 500;
 
     protected $signature = 'attachments:repair-empty
@@ -70,7 +63,7 @@ class RepairEmptyMessageAttachments extends Command
     {
         return Attachment::query()
             ->where('attachable_type', (new Message)->getMorphClass())
-            ->whereIn('file_type', self::FILE_BEARING_TYPES)
+            ->whereIn('file_type', Attachment::FILE_BEARING_TYPES)
             ->whereNotNull('path')
             ->where('byte_size', 0);
     }

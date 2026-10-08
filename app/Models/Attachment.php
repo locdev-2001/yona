@@ -92,7 +92,7 @@ class Attachment extends Model
     ];
 
     // with_attached_file? — các loại thực sự mang tệp trên đĩa.
-    private const FILE_BEARING_TYPES = [
+    public const FILE_BEARING_TYPES = [
         self::FILE_TYPE_IMAGE, self::FILE_TYPE_AUDIO, self::FILE_TYPE_VIDEO, self::FILE_TYPE_FILE,
     ];
 
