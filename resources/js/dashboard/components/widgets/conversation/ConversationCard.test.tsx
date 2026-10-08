@@ -66,7 +66,7 @@ describe('thẻ hội thoại trong danh sách', () => {
             <ConversationCard chat={CONVERSATION} currentContact={{ ...CONTACT, thumbnail: '' }} />,
         );
         const card = container.querySelector('.conversation') as HTMLElement;
-        const lively = () => container.querySelector('[data-generated-avatar] svg') !== null;
+        const lively = () => container.querySelector('[data-generated-avatar] .mo-always') !== null;
 
         expect(lively()).toBe(false);
         fireEvent.mouseEnter(card);

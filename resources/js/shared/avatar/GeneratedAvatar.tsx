@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { Blobatar } from '@blobatar/react';
 import { useGaze } from '@blobatar/react/gaze';
 import 'blobatar/motion.css';
@@ -5,6 +6,7 @@ import 'blobatar/gaze.css';
 
 import { avatarExpression } from './avatarMood';
 import { resolveAvatarIdentity } from './avatarSeed';
+import { watchPointerProximity } from './pointerProximity';
 
 // Đơn vị viewBox (khuôn mặt rộng 100). Cao hơn mức 1.5–4 thư viện gợi ý để avatar
 // nhỏ trong danh sách vẫn thấy rõ mắt đưa theo con trỏ.
@@ -22,49 +24,16 @@ interface GeneratedAvatarProps {
     size?: number;
     alt?: string;
     className?: string;
-    // Nơi chứa bật khi người dùng đang trỏ vào nó (vd thẻ hội thoại): chớp, liếc, nhìn theo con trỏ.
+    // Nơi chứa bật khi người dùng đang trỏ vào nó (vd thẻ hội thoại): chớp, liếc, nhún.
     animated?: boolean;
-}
-
-interface FaceProps {
-    identity: string;
-    size?: number;
-}
-
-function StillFace({ identity, size }: FaceProps) {
-    return (
-        <Blobatar
-            name={identity}
-            size={size}
-            background="square"
-            expression={avatarExpression(identity)}
-            alt=""
-            draggable={false}
-        />
-    );
-}
-
-function LivelyFace({ identity, size }: FaceProps) {
-    const { ref } = useGaze({ travel: GAZE_TRAVEL, lookAt: 'pointer' });
-
-    return (
-        <Blobatar
-            ref={ref}
-            name={identity}
-            size={size}
-            background="square"
-            animate="always"
-            expression={avatarExpression(identity)}
-            aria-hidden="true"
-        />
-    );
 }
 
 /**
  * Avatar hình khối tất định cho chủ thể chưa có ảnh: cùng định danh luôn ra cùng
- * một hình và một biểu cảm. Mặc định là ảnh tĩnh (danh sách dài không tốn gì);
- * chỉ chuyển động khi nơi chứa bật `animated`. Nền vuông phủ kín để khung bo góc
- * của nơi chứa cắt ra đúng hình.
+ * một hình và một biểu cảm. Mắt luôn nhìn theo con trỏ khi con trỏ ở gần; chớp,
+ * liếc, nhún chỉ chạy khi nơi chứa bật `animated` (chế độ `hover` của thư viện giữ
+ * các chuyển động đó tạm dừng nhưng ánh mắt vẫn điều khiển được). Nền vuông phủ kín
+ * để khung bo góc của nơi chứa cắt ra đúng hình.
  */
 export default function GeneratedAvatar({
     seed,
@@ -75,16 +44,32 @@ export default function GeneratedAvatar({
     animated = false,
 }: GeneratedAvatarProps) {
     const identity = resolveAvatarIdentity(seed, name);
+    const frameRef = useRef<HTMLSpanElement>(null);
+    const { ref: gazeRef, lookAt } = useGaze({ travel: GAZE_TRAVEL });
+
+    useEffect(() => {
+        if (!frameRef.current) return undefined;
+        return watchPointerProximity(frameRef.current, isNear => lookAt(isNear ? 'pointer' : null));
+    }, [lookAt]);
 
     return (
         <span
+            ref={frameRef}
             role="img"
             aria-label={alt}
             data-generated-avatar={identity}
             className={`block size-full overflow-hidden select-none ${className}`.trim()}
         >
             <span className={FACE_FRAME_CLASS}>
-                {animated ? <LivelyFace identity={identity} size={size} /> : <StillFace identity={identity} size={size} />}
+                <Blobatar
+                    ref={gazeRef}
+                    name={identity}
+                    size={size}
+                    background="square"
+                    animate={animated ? 'always' : 'hover'}
+                    expression={avatarExpression(identity)}
+                    aria-hidden="true"
+                />
             </span>
         </span>
     );

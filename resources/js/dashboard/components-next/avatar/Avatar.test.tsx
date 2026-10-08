@@ -176,7 +176,7 @@ describe('avatar hình khối khi không có ảnh', () => {
         const { container } = render(<Avatar name="Trang Lê" seed="contact:1" size={32} />);
         const generated = generatedOf(container);
 
-        expect(generated?.querySelector('img')?.getAttribute('src')).toMatch(/^data:image\/svg\+xml/);
+        expect(generated?.querySelector('svg')).not.toBeNull();
         expect(generated?.getAttribute('aria-label')).toBe('Trang Lê');
         expect(container.textContent).toBe('');
     });
@@ -203,14 +203,10 @@ describe('avatar hình khối khi không có ảnh', () => {
         expect(generatedOf(container)?.getAttribute('data-generated-avatar')).toBe('contact:1');
     });
 
-    it.each([
-        { animated: false, still: true },
-        { animated: true, still: false },
-    ])('chỉ chuyển động khi nơi chứa bật animated: %o', ({ animated, still }) => {
+    it.each([false, true])('chớp, liếc chỉ chạy khi nơi chứa bật animated=%s', animated => {
         const { container } = render(<Avatar name="Trang" seed="contact:1" animated={animated} />);
 
-        expect(generatedOf(container)?.querySelector('img') !== null).toBe(still);
-        expect(generatedOf(container)?.querySelector('svg') !== null).toBe(!still);
+        expect(generatedOf(container)?.querySelector('.mo-always') !== null).toBe(animated);
     });
 
     it('có ảnh hợp lệ thì không vẽ avatar hình khối', () => {
