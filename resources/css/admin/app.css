@@ -12,6 +12,7 @@
 @source '../../js/shared/reorder';
 @source '../../js/shared/requestSigning';
 @source '../../js/shared/sticker';
+@source '../../js/shared/avatar';
 /* Khối mượn của dashboard mà các trang console chưa chuyển vẫn dùng. */
 @source '../../js/dashboard/components-next/inline-input';
 @source '../../js/shared/components/loader';
