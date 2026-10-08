@@ -1,6 +1,6 @@
 import { usePage } from '@inertiajs/react';
 
-import Spinner from 'dashboard/components-next/spinner/Spinner';
+import Loader from 'shared/components/loader/Loader';
 import Dashboard from '../../Dashboard';
 import { t } from '../../../i18n';
 import type { DashboardPageProps } from '../../types';
@@ -39,7 +39,7 @@ export default function EntityReportsPage({ type, id, downloadLabelKey }: Entity
             <Dashboard>
                 <ReportsWrapper>
                     <div className="w-full py-20">
-                        <Spinner className="mx-auto" />
+                        <Loader className="mx-auto" />
                     </div>
                 </ReportsWrapper>
             </Dashboard>

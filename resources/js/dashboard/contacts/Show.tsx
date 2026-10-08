@@ -6,7 +6,7 @@ import { t } from '../../i18n';
 import { useAlert } from 'dashboard/composables/useAlert';
 import Dashboard from '../Dashboard';
 import ContactsDetailsLayout from 'dashboard/components-next/Contacts/ContactsDetailsLayout';
-import Spinner from 'dashboard/components-next/spinner/Spinner';
+import Loader from 'shared/components/loader/Loader';
 import ContactDetails from 'dashboard/components-next/Contacts/Pages/ContactDetails';
 import TabBar from 'dashboard/components-next/tabbar/TabBar';
 import ContactCustomAttributes from 'dashboard/components-next/Contacts/ContactsSidebar/ContactCustomAttributes';
@@ -121,7 +121,7 @@ export default function ContactShow() {
                     sidebar={
                         isFetchingItem ? (
                             <div className="flex items-center justify-center py-10 text-n-slate-11">
-                                <Spinner />
+                                <Loader />
                             </div>
                         ) : activeTab === 'attributes' && isProductFeatureVisible('customAttributes') ? (
                             <ContactCustomAttributes
@@ -147,7 +147,7 @@ export default function ContactShow() {
                 >
                     {isFetchingItem ? (
                         <div className="flex items-center justify-center py-10 text-n-slate-11">
-                            <Spinner />
+                            <Loader />
                         </div>
                     ) : selectedContact ? (
                         <ContactDetails

@@ -239,3 +239,9 @@ Kiến trúc: [system-architecture.md](system-architecture.md).
 | Header bộ | Xuất bản là **Switch** cạnh huy hiệu trạng thái, bị khoá khi bộ chưa có sticker sẵn sàng; tắt Switch thì toast "Đã chuyển về nháp" có nút **Hoàn tác**. Nút chính duy nhất là "+ Thêm sticker"; Đổi tên/Xoá bộ trong menu ⋯ | Hai nút primary tranh nhau và xuất bản được bộ rỗng; gỡ xuất bản là thao tác làm khách mất sticker nên phải lấy lại được một chạm | 28/09/2026 |
 | Điện thoại | **Hai màn** điều khiển bằng `?pack=` (danh sách bộ → chi tiết bộ, nút ‹ và Back của trình duyệt quay lại); "+ Thêm sticker" là thanh cố định đáy, chừa chỗ nút menu nổi. Kéo đổi chỗ chỉ có trong chế độ **Sắp xếp** (menu ⋯, nhấn giữ 250ms, bấm Xong mới lưu) | Chi tiết bộ nằm dưới cả danh sách nên chọn bộ xong không thấy gì; chạm giữ ngoài chế độ riêng sẽ tranh cử chỉ cuộn | 28/09/2026 |
 | Sticker · trình chỉnh, vùng lấy Tuỳ chỉnh | Khung Tuỳ chỉnh gửi `fit: contain` (sticker lấy đúng khung người dùng kéo, phần vượt biên là lề trong suốt) thay vì cover | Cover tự ôm chủ thể nên kéo khung không đổi kết quả, người dùng tưởng công cụ hỏng | 28/09/2026 |
+
+## Trạng thái đang tải
+
+| Màn | Quyết định | Lý do | Ngày |
+|---|---|---|---|
+| Mọi bề mặt (dashboard, widget khách, console Super Admin, khảo sát, onboarding/đăng nhập) | Chờ tải dùng **một** hiệu ứng: ba khối nảy (bouncy của `ldrs`), màu theo chữ xung quanh, không còn vòng quay. Nguồn duy nhất `resources/js/shared/components/loader/LoaderIcon.tsx`; `Loader` là bản mang nhãn "Đang tải" (`role="status"`), `LoaderIcon` không nhãn chỉ dùng cạnh chữ "Đang…" đã hiện sẵn. Người dùng bật giảm chuyển động thấy ba khối đứng yên so le, không ẩn hẳn. Skeleton giữ chỗ, chấm "đang gõ" và biểu cảm avatar không thuộc loại này | Vòng cung dày cũ trông như logo của sản phẩm khác và mỗi vùng tự vẽ một kiểu quay riêng; đổi kiểu tải về sau chỉ sửa một tệp | 08/10/2026 |

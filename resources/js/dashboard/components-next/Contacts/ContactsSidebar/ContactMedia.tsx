@@ -4,7 +4,7 @@ import { router, usePage } from '@inertiajs/react';
 import { t } from '../../../../i18n';
 import Files from 'dashboard/components-next/SharedAttachments/Files';
 import Media from 'dashboard/components-next/SharedAttachments/Media';
-import Spinner from 'dashboard/components-next/spinner/Spinner';
+import Loader from 'shared/components/loader/Loader';
 import GalleryView from 'dashboard/components/widgets/conversation/components/GalleryView';
 import type { MessageAttachment } from 'dashboard/components-next/message/helpers/attachments';
 import { hasSharedContent, mediaAttachments } from 'dashboard/conversation/conversationbox/contact/sharedAttachments';
@@ -59,7 +59,7 @@ export default function ContactMedia({ contactId }: ContactMediaProps) {
         <div className="px-6">
             {isFetching ? (
                 <div className="flex justify-center p-3">
-                    <Spinner className="size-5" />
+                    <Loader size={20} />
                 </div>
             ) : !hasSharedContent(attachments) ? (
                 <p className="p-3 text-sm text-center text-n-slate-11">

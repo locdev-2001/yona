@@ -3,7 +3,7 @@ import { Link, router } from '@inertiajs/react';
 
 import { t } from '../../../../../i18n';
 import Button from 'dashboard/components-next/button/Button';
-import Spinner from 'dashboard/components-next/spinner/Spinner';
+import Loader from 'shared/components/loader/Loader';
 import { getJson } from 'dashboard/helper/apiClient';
 import { accountScopedUrl } from 'dashboard/helper/URLHelper';
 import SectionCard from '../components/SectionCard';
@@ -58,7 +58,7 @@ export default function InviteSection({ accountId, inboxId }: InviteSectionProps
         >
             {campaigns === null ? (
                 <div className="flex justify-center py-6">
-                    <Spinner size={20} className="text-n-slate-9" />
+                    <Loader size={20} className="text-n-slate-9" />
                 </div>
             ) : campaigns.length === 0 ? (
                 <p className="text-body-main text-n-slate-11">{t('WIDGET_BUILDER.INVITE.EMPTY')}</p>

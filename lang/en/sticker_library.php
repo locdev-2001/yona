@@ -19,7 +19,6 @@ return [
     'LOAD_ERROR' => 'Could not load the sticker library',
     'REFRESH_FAILED' => 'Could not refresh',
     'RETRY' => 'Retry',
-    'WORKING' => 'Working…',
     'DISMISS' => 'Dismiss',
     'CLOSE' => 'Close',
     'BACK' => 'Back',

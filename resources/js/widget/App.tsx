@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
-import Spinner from 'shared/components/Spinner';
+import Loader from 'shared/components/loader/Loader';
 import { emitter } from 'shared/helpers/emitter';
 import { StickerDisplaySizeProvider } from 'shared/sticker/stickerDisplaySize';
 
@@ -330,7 +330,7 @@ export default function App() {
     if (!conversationSize && isFetchingList) {
         return (
             <div className="flex items-center justify-center flex-1 h-full bg-n-background">
-                <Spinner size="" />
+                <Loader />
             </div>
         );
     }

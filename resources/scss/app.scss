@@ -157,45 +157,6 @@ body {
   }
 }
 
-// Port từ shared/components/Spinner.vue (scoped style)
-@keyframes spinner {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.spinner {
-  @apply relative inline-block w-6 h-6 align-middle;
-
-  &:before {
-    @apply border-n-slate-10 border-2 border-solid content-[''] box-border absolute top-[50%] left-[50%] rounded-full border-t-n-strong -ml-2.5 -mt-2.5 w-6 h-6 animate-[spinner_0.9s_linear_infinite];
-  }
-
-  &.message {
-    @apply p-2.5 top-0 left-0 mx-auto my-0 mt-3 bg-n-background rounded-[2rem];
-
-    &:before {
-      @apply -mt-3 -ml-3;
-    }
-  }
-
-  &.small {
-    @apply w-4 h-4;
-
-    &:before {
-      @apply w-4 h-4 -mt-2;
-    }
-  }
-
-  &.tiny {
-    @apply w-2.5 h-2.5 py-0 px-1;
-
-    &:before {
-      @apply w-2.5 h-2.5 -mt-1.5;
-    }
-  }
-}
-
 // Từ khoá của thanh tìm trong hội thoại (CSS Custom Highlight API) — cùng màu
 // với kiểu tô kết quả tìm kiếm (SEARCH_MATCH_CLASS), sáng lẫn tối.
 ::highlight(conversation-search) {

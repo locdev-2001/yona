@@ -11,13 +11,13 @@ import {
   EllipsisVerticalIcon,
   ImagePlusIcon,
   InfoIcon,
-  Loader2Icon,
   PencilIcon,
   PlusIcon,
   StickerIcon,
   Trash2Icon,
   TriangleAlertIcon
 } from 'lucide-react'
+import Loader from 'shared/components/loader/Loader'
 
 // Component Imports
 import { Button } from '@admin/components/ui/button'
@@ -207,7 +207,7 @@ const StickerLibrary = ({ api, packTransfer, className }: StickerLibraryProps) =
             setRetrying(false)
           }}
         >
-          {isRetrying ? <Loader2Icon className='animate-spin' /> : null}
+          {isRetrying ? <Loader size={16} /> : null}
           {t('STICKER_LIBRARY.RETRY')}
         </Button>
       </div>
@@ -386,7 +386,7 @@ const StickerLibrary = ({ api, packTransfer, className }: StickerLibraryProps) =
                         onCheckedChange={checked => void library.setPublished(checked)}
                       />
                       <Label htmlFor='sticker-pack-published'>{t('STICKER_LIBRARY.PUBLISH')}</Label>
-                      {pending.publish ? <Loader2Icon className='text-muted-foreground size-4 animate-spin' /> : null}
+                      {pending.publish ? <Loader size={16} className='text-muted-foreground' /> : null}
                       {!canPublish ? (
                         <span className='text-muted-foreground text-xs'>{t('STICKER_LIBRARY.PUBLISH_NEEDS_STICKER')}</span>
                       ) : null}

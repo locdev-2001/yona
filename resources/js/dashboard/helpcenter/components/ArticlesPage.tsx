@@ -10,7 +10,7 @@ import Dialog from 'dashboard/components-next/dialog/Dialog';
 import type { DialogHandle } from 'dashboard/components-next/dialog/Dialog';
 import DropdownMenu from 'dashboard/components-next/dropdown-menu/DropdownMenu';
 import Input from 'dashboard/components-next/input/Input';
-import Spinner from 'dashboard/components-next/spinner/Spinner';
+import Loader from 'shared/components/loader/Loader';
 import type { TabBarTab } from 'dashboard/components-next/tabbar/TabBar';
 import { useClickAway } from 'dashboard/composables/useClickAway';
 import ArticleEmptyState from './ArticleEmptyState';
@@ -327,7 +327,7 @@ export default function ArticlesPage({
             content={
                 isLoading && !isArticleDragging ? (
                     <div className="flex items-center justify-center py-10 text-n-slate-11">
-                        <Spinner />
+                        <Loader />
                     </div>
                 ) : !hasNoArticles ? (
                     <>

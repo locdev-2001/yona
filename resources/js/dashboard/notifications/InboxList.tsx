@@ -4,7 +4,7 @@ import { usePage } from '@inertiajs/react';
 
 import CmdBarConversationSnooze from 'dashboard/commands/CmdBarConversationSnooze';
 import { useInboxHotKeys } from 'dashboard/commands/useInboxHotKeys';
-import Spinner from 'dashboard/components-next/spinner/Spinner';
+import Loader from 'shared/components/loader/Loader';
 import { ConversationProvider } from 'dashboard/conversation/ConversationContext';
 import { accountScopedUrl } from 'dashboard/helper/URLHelper';
 import { t } from '../../i18n';
@@ -108,7 +108,7 @@ function InboxLayout({ conversationId }: { conversationId: number }) {
                     ))}
                     {isFetching ? (
                         <div className="flex justify-center my-4">
-                            <Spinner className="text-n-brand" />
+                            <Loader className="text-n-brand" />
                         </div>
                     ) : null}
                     {showEmptyState ? (

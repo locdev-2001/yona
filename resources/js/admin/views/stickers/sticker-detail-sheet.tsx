@@ -7,10 +7,10 @@ import {
   ArrowUpToLineIcon,
   CircleAlertIcon,
   CropIcon,
-  Loader2Icon,
   Trash2Icon,
   TriangleAlertIcon
 } from 'lucide-react'
+import Loader from 'shared/components/loader/Loader'
 
 // Component Imports
 import { Alert, AlertDescription } from '@admin/components/ui/alert'
@@ -182,7 +182,7 @@ function StickerDetail({
             title={sticker.has_original ? undefined : t('STICKER_LIBRARY.REEDIT_NO_ORIGINAL')}
             onClick={onReedit}
           >
-            {reediting ? <Loader2Icon className='animate-spin' /> : <CropIcon />}
+            {reediting ? <Loader size={16} /> : <CropIcon />}
             {t('STICKER_LIBRARY.REEDIT')}
           </Button>
           <Button variant='ghost' className='justify-start' disabled={index === 0} onClick={() => onMove('first')}>
@@ -204,7 +204,7 @@ function StickerDetail({
             disabled={deleting}
             onClick={onDelete}
           >
-            {deleting ? <Loader2Icon className='animate-spin' /> : <Trash2Icon />}
+            {deleting ? <Loader size={16} /> : <Trash2Icon />}
             {t('STICKER_LIBRARY.DELETE_STICKER')}
           </Button>
         </div>
@@ -215,7 +215,7 @@ function StickerDetail({
           {t('STICKER_LIBRARY.CANCEL')}
         </Button>
         <Button disabled={!canSave} onClick={() => void save()}>
-          {saving ? <Loader2Icon className='animate-spin' /> : null}
+          {saving ? <Loader size={16} /> : null}
           {t('STICKER_LIBRARY.SAVE')}
         </Button>
       </SheetFooter>

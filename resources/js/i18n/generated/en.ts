@@ -2880,6 +2880,9 @@ const messages: Record<string, unknown> = {
         "CLICK_HERE": "click here"
     },
     "COMPONENTS": {
+        "LOADER": {
+            "LABEL": "Loading"
+        },
         "CODE": {
             "BUTTON_TEXT": "Copy",
             "CODEPEN": "Open in CodePen",
@@ -11092,7 +11095,6 @@ const messages: Record<string, unknown> = {
         "LOAD_ERROR": "Could not load the sticker library",
         "REFRESH_FAILED": "Could not refresh",
         "RETRY": "Retry",
-        "WORKING": "Working…",
         "DISMISS": "Dismiss",
         "CLOSE": "Close",
         "BACK": "Back",

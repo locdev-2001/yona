@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 import Icon from 'dashboard/components-next/icon/Icon';
+import Loader from 'shared/components/loader/Loader';
 import { t } from '../../../i18n';
 import { useMessageContext } from './provider';
 import { ORIENTATION } from './constants';
@@ -74,10 +75,11 @@ export default function MessageError({
                     className="bg-n-alpha-2 rounded-md h-5 px-1.5 inline-flex items-center gap-1 cursor-pointer disabled:opacity-60 disabled:cursor-default hover:bg-n-alpha-3 transition-colors duration-150"
                     onClick={handleRetry}
                 >
-                    <Icon
-                        icon="i-lucide-refresh-ccw"
-                        className={`text-n-ruby-11 size-[14px] ${isRetrying ? 'animate-spin' : ''}`}
-                    />
+                    {isRetrying ? (
+                        <Loader size={14} className="text-n-ruby-11" />
+                    ) : (
+                        <Icon icon="i-lucide-refresh-ccw" className="text-n-ruby-11 size-[14px]" />
+                    )}
                     <span className="text-n-ruby-11">{t('CONVERSATION.MESSAGE_FAILURE.RETRY')}</span>
                 </button>
             ) : null}

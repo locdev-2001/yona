@@ -82,6 +82,9 @@ importers:
       laravel-echo:
         specifier: 2.4.0
         version: 2.4.0(pusher-js@8.6.0)
+      ldrs:
+        specifier: 1.1.9
+        version: 1.1.9
       lettersanitizer:
         specifier: 1.0.8
         version: 1.0.8
@@ -2380,6 +2383,9 @@ packages:
     peerDependenciesMeta:
       fontaine:
         optional: true
+
+  ldrs@1.1.9:
+    resolution: {integrity: sha512-JKVdzboxeZrKecA8ovi5iIDgs59wUrtJ+LDrHCgZecNrR0AJi2cJ3ZANJ+UCNS/sHRol73/jlypNCAMCXS+Ung==}
 
   lettersanitizer@1.0.8:
     resolution: {integrity: sha512-xVP+ip61D7FgJsR9j3fsGo2xMw8+EUudVmvfj5CXg0DxbznVIurRyQcak+uT988AZT6g/SUW29ize8eq1NuBRw==}
@@ -5649,6 +5655,8 @@ snapshots:
       tinyglobby: 0.2.17
       vite: 8.2.2(@types/node@26.4.1)(esbuild@0.28.2)(jiti@1.21.7)(sass@1.103.1)
       vite-plugin-full-reload: 1.2.0
+
+  ldrs@1.1.9: {}
 
   lettersanitizer@1.0.8: {}
 

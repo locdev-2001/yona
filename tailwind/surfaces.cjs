@@ -8,7 +8,7 @@ const SHARED = [sourcesIn('shared'), sourcesIn('i18n')];
 // Khối dựng giao diện của dashboard mà các bề mặt khác mượn lại. Thư mục icon/ và
 // helper/ chỉ lấy đúng file dùng: phần còn lại kéo theo cả bộ icon (~35-40 KB CSS).
 const DASHBOARD_PRIMITIVES = [
-    sourcesIn('dashboard/components-next/{avatar,button,dialog,inline-input,input,spinner}'),
+    sourcesIn('dashboard/components-next/{avatar,button,dialog,inline-input,input}'),
     './resources/js/dashboard/components-next/icon/{Icon,PlatformLogo}.tsx',
     sourcesIn('dashboard/composables'),
     './resources/js/dashboard/components/Modal.tsx',
@@ -51,7 +51,6 @@ module.exports = {
             './resources/js/dashboard/components-next/button/Button.tsx',
             './resources/js/dashboard/components-next/dialog/Dialog.tsx',
             './resources/js/dashboard/components-next/icon/Icon.tsx',
-            './resources/js/dashboard/components-next/spinner/Spinner.tsx',
             sourcesIn('dashboard/components/auth'),
             './resources/js/dashboard/composables/useAlert.ts',
             './resources/js/dashboard/helper/apiClient.ts',

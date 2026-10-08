@@ -1,0 +1,15 @@
+.yona-loader {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    line-height: 0;
+    vertical-align: middle;
+}
+
+/* Giảm chuyển động: khối đứng yên ở thế so le, vẫn đọc được là đang tải. */
+@media (prefers-reduced-motion: reduce) {
+    .yona-loader * {
+        animation-play-state: paused;
+    }
+}

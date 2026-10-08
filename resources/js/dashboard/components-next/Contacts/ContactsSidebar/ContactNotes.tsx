@@ -4,7 +4,7 @@ import { usePage } from '@inertiajs/react';
 import { t } from '../../../../i18n';
 import Editor from 'dashboard/components-next/Editor/Editor';
 import Button from 'dashboard/components-next/button/Button';
-import Spinner from 'dashboard/components-next/spinner/Spinner';
+import Loader from 'shared/components/loader/Loader';
 import ContactNoteItem from 'dashboard/conversation/conversationbox/contact/ContactNoteItem';
 import { useKeyboardEvents } from 'dashboard/composables/useKeyboardEvents';
 import { createContactNote, deleteContactNote, fetchContactNotes } from 'dashboard/conversation/panelApi';
@@ -97,7 +97,7 @@ export default function ContactNotes({ contactId }: ContactNotesProps) {
             />
             {isFetching ? (
                 <div className="flex items-center justify-center py-10 text-n-slate-11">
-                    <Spinner />
+                    <Loader />
                 </div>
             ) : notes.length > 0 ? (
                 <div>

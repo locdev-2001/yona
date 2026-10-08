@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 import Button from 'dashboard/components-next/button/Button';
 import EmojiIcon from 'dashboard/components-next/emoji-icon-picker/EmojiIcon';
 import Icon from 'dashboard/components-next/icon/Icon';
-import Spinner from 'dashboard/components-next/spinner/Spinner';
+import Loader from 'shared/components/loader/Loader';
 import { useClickAway } from 'dashboard/composables/useClickAway';
 import ComboBoxDropdown from './ComboBoxDropdown';
 import type { ComboBoxDropdownHandle, ComboBoxDropdownOption } from './ComboBoxDropdown';
@@ -197,7 +197,7 @@ export default function ReorderableMultiSelect({
                                 }}
                             >
                                 {loading && !isOpen ? (
-                                    <Spinner size={16} className="text-n-slate-11" />
+                                    <Loader size={16} className="text-n-slate-11" />
                                 ) : (
                                     <Icon icon="i-lucide-search" className="flex-shrink-0 size-4" />
                                 )}

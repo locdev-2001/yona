@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { usePage } from '@inertiajs/react';
 
 import { t } from '../../../../i18n';
-import Spinner from 'dashboard/components-next/spinner/Spinner';
+import Loader from 'shared/components/loader/Loader';
 import ConversationCard from 'dashboard/components-next/Conversation/ConversationCard/ConversationCard';
 import type { AccountLabel } from 'dashboard/components-next/Conversation/ConversationCard/CardLabels';
 import { useLabelsList } from 'dashboard/composables/useLabelsList';
@@ -44,7 +44,7 @@ export default function ContactHistory({ contactId, selectedContact = null }: Co
     if (isFetching) {
         return (
             <div className="flex items-center justify-center py-10 text-n-slate-11">
-                <Spinner />
+                <Loader />
             </div>
         );
     }

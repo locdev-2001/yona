@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import DOMPurify from 'dompurify';
 
 import Icon from 'dashboard/components-next/icon/Icon';
-import Spinner from 'dashboard/components-next/spinner/Spinner';
+import Loader from 'shared/components/loader/Loader';
 
 // Port từ dashboard/components-next/preview-picker/PreviewPicker.vue.
 // Đặt trong WootWriter/ (thay vì components-next/preview-picker/) theo ranh giới
@@ -193,7 +193,7 @@ function PreviewPickerInner<TItem extends PreviewPickerItem>(
                     </ul>
                     {!items.length ? (
                         <div role="status" className="flex items-center px-2 py-1.5 text-sm text-n-slate-11">
-                            {isLoading ? <Spinner size={16} /> : (renderEmpty?.() ?? emptyLabel)}
+                            {isLoading ? <Loader size={16} /> : (renderEmpty?.() ?? emptyLabel)}
                         </div>
                     ) : null}
                 </div>

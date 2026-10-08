@@ -1,6 +1,6 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 
-import Spinner from 'dashboard/components-next/spinner/Spinner';
+import Loader from 'shared/components/loader/Loader';
 import Icon from 'dashboard/components-next/icon/Icon';
 import type {
     ButtonColor,
@@ -186,7 +186,7 @@ export default function Button({
     return (
         <button className={classes} {...attrs}>
             {icon && !isLoading ? <Icon icon={icon} className="flex-shrink-0" /> : null}
-            {isLoading ? <Spinner className="!w-5 !h-5 flex-shrink-0" /> : null}
+            {isLoading ? <Loader size={20} /> : null}
             {children ?? (label !== '' ? <span className="min-w-0 truncate">{label}</span> : null)}
         </button>
     );

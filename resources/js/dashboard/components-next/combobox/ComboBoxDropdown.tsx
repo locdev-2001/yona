@@ -2,7 +2,7 @@ import { forwardRef, useImperativeHandle, useRef } from 'react';
 
 import { t } from '../../../i18n';
 import Icon from 'dashboard/components-next/icon/Icon';
-import Spinner from 'dashboard/components-next/spinner/Spinner';
+import Loader from 'shared/components/loader/Loader';
 
 // Port từ components-next/combobox/ComboBoxDropdown.vue.
 export interface ComboBoxDropdownOption {
@@ -58,7 +58,7 @@ const ComboBoxDropdown = forwardRef<ComboBoxDropdownHandle, ComboBoxDropdownProp
         >
             <div className="relative border-b border-n-strong">
                 {loading ? (
-                    <Spinner size={16} className="absolute top-2.5 start-3 text-n-slate-11" />
+                    <Loader size={16} className="absolute top-2.5 start-3 text-n-slate-11" />
                 ) : (
                     <Icon icon="i-lucide-search" className="absolute top-2.5 size-4 start-3" />
                 )}

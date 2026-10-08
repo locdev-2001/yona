@@ -2880,6 +2880,9 @@ const messages: Record<string, unknown> = {
         "CLICK_HERE": "click vào đây"
     },
     "COMPONENTS": {
+        "LOADER": {
+            "LABEL": "Đang tải"
+        },
         "CODE": {
             "BUTTON_TEXT": "Sao chép",
             "CODEPEN": "Mở trong CodePen",
@@ -11092,7 +11095,6 @@ const messages: Record<string, unknown> = {
         "LOAD_ERROR": "Không tải được kho sticker",
         "REFRESH_FAILED": "Không làm mới được",
         "RETRY": "Thử lại",
-        "WORKING": "Đang xử lý…",
         "DISMISS": "Đóng",
         "CLOSE": "Đóng",
         "BACK": "Quay lại",

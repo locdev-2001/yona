@@ -3,7 +3,8 @@ import type { KeyboardEvent, PointerEvent } from 'react';
 
 import { t } from '../../../i18n';
 import StickerImage from 'shared/sticker/StickerImage';
-import { Menu, Spinner } from './stickerLibraryUi';
+import { Menu } from './stickerLibraryUi';
+import Loader from 'shared/components/loader/Loader';
 import type { MenuItem } from './stickerLibraryUi';
 import type { LibrarySticker } from './types';
 
@@ -103,7 +104,7 @@ export default function StickerTile({
                         {t('STICKER_LIBRARY.POLL_EXHAUSTED')}
                     </span>
                 ) : isProcessing ? (
-                    <Spinner size={20} />
+                    <Loader size={20} className="text-n-slate-11" />
                 ) : (
                     <StickerThumb sticker={sticker} animate={isHovered || isSelected} />
                 )}

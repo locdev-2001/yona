@@ -4,7 +4,7 @@ import { t } from '../../../i18n';
 import Button from 'dashboard/components-next/button/Button';
 import EmptyStateLayout from 'dashboard/components-next/EmptyStateLayout';
 import Input from 'dashboard/components-next/input/Input';
-import Spinner from 'dashboard/components-next/spinner/Spinner';
+import Loader from 'shared/components/loader/Loader';
 import type { DialogHandle } from 'dashboard/components-next/dialog/Dialog';
 import AddLocaleDialog from './AddLocaleDialog';
 import HelpCenterLayout from './HelpCenterLayout';
@@ -68,7 +68,7 @@ export default function LocalesPage({ locales, portal, portalSlug }: LocalesPage
             content={
                 portalUiFlags.isSwitching ? (
                     <div className="flex items-center justify-center py-10 text-n-slate-11">
-                        <Spinner />
+                        <Loader />
                     </div>
                 ) : isSearching && !filteredLocales.length ? (
                     <EmptyStateLayout

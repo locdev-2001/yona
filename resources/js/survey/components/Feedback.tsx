@@ -1,6 +1,6 @@
 import { useState } from 'react';
 
-import Spinner from 'shared/components/Spinner';
+import Loader from 'shared/components/loader/Loader';
 
 import { t } from '../i18n';
 
@@ -42,7 +42,7 @@ export default function Feedback({
                         if (!isSubmitDisabled) onSendFeedback(feedback);
                     }}
                 >
-                    {isUpdating ? <Spinner className="p-0" /> : null}
+                    {isUpdating ? <Loader size={16} /> : null}
                     {t('FEEDBACK.BUTTON_TEXT')}
                 </button>
             </div>

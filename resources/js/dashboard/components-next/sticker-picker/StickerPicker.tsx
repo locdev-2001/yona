@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import Button from 'dashboard/components-next/button/Button';
 import Icon from 'dashboard/components-next/icon/Icon';
 import Input from 'dashboard/components-next/input/Input';
-import Spinner from 'dashboard/components-next/spinner/Spinner';
+import Loader from 'shared/components/loader/Loader';
 import { parseApiErrorMessage } from 'dashboard/helper/apiClient';
 import { isTouchOnlyDevice } from 'shared/helpers/kbd';
 import StickerImage from 'shared/sticker/StickerImage';
@@ -185,7 +185,7 @@ export default function StickerPicker({ loadStickers, onSelect }: StickerPickerP
             <div data-testid="sticker-picker-grid" className="flex-1 min-h-[9rem] overflow-y-auto overscroll-contain p-2">
                 {status === 'loading' ? (
                     <div className="flex items-center justify-center h-32 text-n-slate-10">
-                        <Spinner size={20} />
+                        <Loader size={20} />
                     </div>
                 ) : status === 'error' ? (
                     <div className="flex flex-col items-center justify-center gap-2 h-32 px-4 text-center">

@@ -14,7 +14,7 @@
 @source '../../js/shared/sticker';
 /* Khối mượn của dashboard mà các trang console chưa chuyển vẫn dùng. */
 @source '../../js/dashboard/components-next/inline-input';
-@source '../../js/dashboard/components-next/spinner';
+@source '../../js/shared/components/loader';
 @source '../../js/dashboard/helper/{apiClient,sessionRecovery,pushHelper}.ts';
 @source '../../js/dashboard/reports/helpers';
 @source '../../js/dashboard/settings/customStickers';

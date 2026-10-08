@@ -19,7 +19,6 @@ return [
     'LOAD_ERROR' => 'Không tải được kho sticker',
     'REFRESH_FAILED' => 'Không làm mới được',
     'RETRY' => 'Thử lại',
-    'WORKING' => 'Đang xử lý…',
     'DISMISS' => 'Đóng',
     'CLOSE' => 'Đóng',
     'BACK' => 'Quay lại',

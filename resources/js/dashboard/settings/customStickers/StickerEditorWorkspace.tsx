@@ -18,7 +18,8 @@ import { createEditorState, stickerEditorReducer } from './stickerEditorState';
 import { hasMetaErrors, stickerMetaErrorsFromApi, validateStickerMeta } from './stickerLimits';
 import type { StickerLimits, StickerMetaErrors } from './stickerLimits';
 import type { StickerUpload } from './stickerLibraryApi';
-import { IconButton, MOBILE_QUERY, Spinner, StickerButton, Switch, useMediaQuery } from './stickerLibraryUi';
+import { IconButton, MOBILE_QUERY, StickerButton, Switch, useMediaQuery } from './stickerLibraryUi';
+import Loader from 'shared/components/loader/Loader';
 import type { EditableSource } from './stickerEditableSource';
 import type { StickerMaskRunner } from './stickerMaskRunner';
 import { StickerFileTooLargeError } from './stickerUploadFile';
@@ -576,7 +577,7 @@ export default function StickerEditorWorkspace({
                     <StickerButton type="submit" tone="primary" disabled={!canSave} aria-keyshortcuts="Control+Enter">
                         {isRendering || isSaving ? (
                             <span aria-hidden="true" className="inline-flex">
-                                <Spinner size={16} className="text-white" />
+                                <Loader size={16} className="text-white" />
                             </span>
                         ) : null}
                         {saveLabel}

@@ -4,7 +4,7 @@ import { usePage } from '@inertiajs/react';
 
 import MessageList from 'dashboard/components-next/message/MessageList';
 import { collectMediaAttachments } from 'dashboard/components-next/message/helpers/attachments';
-import Spinner from 'dashboard/components-next/spinner/Spinner';
+import Loader from 'shared/components/loader/Loader';
 import Modal from 'dashboard/components/Modal';
 import { findIntegrationApp, useIntegrationApps } from 'dashboard/composables/useIntegrationApps';
 import AddCanned from 'dashboard/settings/canned/AddCanned';
@@ -239,7 +239,7 @@ export default function MessagesView() {
                 onJumpToMessage={focusMessage}
                 beforeAll={
                     <li className="min-h-[4rem] flex flex-shrink-0 flex-grow-0 items-center flex-auto justify-center max-w-full mt-0 mr-0 mb-1 ml-0 relative first:mt-auto last:mb-0">
-                        {shouldShowSpinner && <Spinner className="text-n-brand" />}
+                        {shouldShowSpinner && <Loader className="text-n-brand" />}
                     </li>
                 }
                 unreadBadge={

@@ -4,7 +4,7 @@ import { usePage } from '@inertiajs/react';
 
 import { t } from '../../../../i18n';
 import Dashboard from '../../../Dashboard';
-import Spinner from 'dashboard/components-next/spinner/Spinner';
+import Loader from 'shared/components/loader/Loader';
 import { useAlert } from 'dashboard/composables/useAlert';
 import { getJson, parseApiErrorMessage, patchJson } from 'dashboard/helper/apiClient';
 import BuilderHeader from './components/BuilderHeader';
@@ -106,7 +106,7 @@ export default function WidgetBuilderPage({ inboxId }: WidgetBuilderPageProps) {
         return (
             <Dashboard>
                 <div className="flex items-center justify-center h-full w-full">
-                    <Spinner size={28} className="text-n-blue-9" />
+                    <Loader size={28} className="text-n-blue-9" />
                 </div>
             </Dashboard>
         );

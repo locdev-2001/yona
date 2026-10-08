@@ -1,4 +1,4 @@
-import Spinner from 'dashboard/components-next/spinner/Spinner';
+import Loader from 'shared/components/loader/Loader';
 import { t } from '../../i18n';
 import { useNotifications } from './NotificationsContext';
 import { ICONS } from 'dashboard/icons';
@@ -11,7 +11,7 @@ export default function InboxEmptyState({ emptyStateMessage = '' }: { emptyState
         <div className="items-center justify-center hidden w-full h-full text-center bg-n-surface-1 lg:flex">
             {isFetching ? (
                 <div className="flex justify-center my-4">
-                    <Spinner className="text-n-brand" />
+                    <Loader className="text-n-brand" />
                 </div>
             ) : (
                 <div className="flex flex-col items-center gap-2">

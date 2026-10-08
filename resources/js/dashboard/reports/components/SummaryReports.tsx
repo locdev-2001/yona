@@ -4,7 +4,7 @@ import { formatTime } from '@ext/utils';
 import { ICONS } from 'dashboard/icons';
 
 import Button from 'dashboard/components-next/button/Button';
-import Spinner from 'dashboard/components-next/spinner/Spinner';
+import Loader from 'shared/components/loader/Loader';
 import Table, { type TableColumn } from 'dashboard/components/table/Table';
 import { useTableModel } from 'dashboard/components/table/useTableModel';
 import { useAlert } from 'dashboard/composables/useAlert';
@@ -173,7 +173,7 @@ export default function SummaryReports({ type }: { type: EntityReportType }) {
                     <Table table={table} columns={columns} rowKey={row => row.id} />
                     {isLoading && (
                         <div className="absolute inset-0 flex justify-center pt-[12.5rem] bg-n-solid-1/70 rounded-xl pointer-events-none">
-                            <Spinner size={32} className="text-n-brand" />
+                            <Loader size={32} className="text-n-brand" />
                         </div>
                     )}
                 </div>

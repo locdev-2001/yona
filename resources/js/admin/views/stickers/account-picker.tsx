@@ -2,7 +2,8 @@
 import { useEffect, useId, useRef, useState } from 'react'
 
 // Third-party Imports
-import { ChevronsUpDownIcon, Loader2Icon } from 'lucide-react'
+import { ChevronsUpDownIcon } from 'lucide-react'
+import Loader from 'shared/components/loader/Loader'
 
 // Component Imports
 import { Button } from '@admin/components/ui/button'
@@ -96,7 +97,7 @@ const AccountPicker = ({ label, placeholder, emptyText, current, onSelect, class
             <CommandList>
               {loading ? (
                 <div className='text-muted-foreground flex items-center justify-center gap-2 py-6 text-sm'>
-                  <Loader2Icon className='size-4 animate-spin' />
+                  <Loader size={16} />
                 </div>
               ) : results === null ? null : results.length === 0 ? (
                 <CommandEmpty>{emptyText}</CommandEmpty>

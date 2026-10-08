@@ -1,4 +1,4 @@
-import Spinner from 'dashboard/components-next/spinner/Spinner';
+import Loader from 'shared/components/loader/Loader';
 import { t } from '../../../../i18n';
 import { useReportMetrics } from '../../composables/useReportMetrics';
 import { reportsSelectors, STATUS } from '../../store';
@@ -36,7 +36,7 @@ export default function ChartStats({
             <div className="flex items-end text-n-slate-12">
                 {fetchingStatus === STATUS.FETCHING && (
                     <div>
-                        <Spinner />
+                        <Loader />
                     </div>
                 )}
                 {fetchingStatus === STATUS.FAILED && (

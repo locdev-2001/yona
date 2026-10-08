@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 
 import { t } from '../../../i18n';
-import Spinner from 'dashboard/components-next/spinner/Spinner';
+import Loader from 'shared/components/loader/Loader';
 import VerticalTabs from 'dashboard/components-next/vertical-tabs/VerticalTabs';
 import HelpCenterLayout from './HelpCenterLayout';
 import PortalConfigurationSettings from './PortalConfigurationSettings';
@@ -55,7 +55,7 @@ export default function PortalSettings({
             content={
                 isLoading ? (
                     <div className="flex items-center justify-center py-10 pt-2 pb-8 text-n-slate-11">
-                        <Spinner />
+                        <Loader />
                     </div>
                 ) : activePortal ? (
                     <VerticalTabs

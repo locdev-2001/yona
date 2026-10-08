@@ -8,13 +8,13 @@ import {
   ArrowDownToLineIcon,
   ArrowUpToLineIcon,
   EllipsisVerticalIcon,
-  Loader2Icon,
   PencilIcon,
   PlusIcon,
   RefreshCwIcon,
   Trash2Icon,
   TriangleAlertIcon
 } from 'lucide-react'
+import Loader from 'shared/components/loader/Loader'
 
 // Component Imports
 import { Badge } from '@admin/components/ui/badge'
@@ -248,7 +248,7 @@ const StickerGrid = ({
                       {t('STICKER_LIBRARY.POLL_EXHAUSTED')}
                     </span>
                   ) : isProcessing ? (
-                    <Loader2Icon className='text-muted-foreground size-5 animate-spin' aria-hidden='true' />
+                    <Loader size={20} className='text-muted-foreground' />
                   ) : (
                     <StickerThumb sticker={sticker} animate={hoveredId === sticker.id || isSelected} />
                   )}

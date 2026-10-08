@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { router } from '@inertiajs/react';
 
-import Spinner from 'dashboard/components-next/spinner/Spinner';
+import Loader from 'shared/components/loader/Loader';
 import { useConversation } from 'dashboard/conversation/ConversationContext';
 import ConversationBox from 'dashboard/conversation/conversationbox/ConversationBox';
 import ConversationSidebar from 'dashboard/conversation/conversationbox/ConversationSidebar';
@@ -68,7 +68,7 @@ export default function InboxView({ conversationId }: { conversationId: number }
                 />
                 {messagesLoading && !selectedConversation ? (
                     <div className="flex items-center flex-1 my-4 justify-center bg-n-solid-1">
-                        <Spinner className="text-n-brand" />
+                        <Loader className="text-n-brand" />
                     </div>
                 ) : (
                     <div className="flex h-[calc(100%-48px)] min-w-0">

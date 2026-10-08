@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 
+import Loader from 'shared/components/loader/Loader';
 import { formatMoney } from 'shared/messaging';
 import type { CardItem, Variant } from 'shared/messaging/model';
 import { KitRoot, Media, PriceBlock } from 'shared/messaging/kit/primitives';
@@ -173,7 +174,7 @@ export default function VariantSheet({ item, onClose, onSubmit }: VariantSheetPr
                     className="flex h-12 items-center justify-center gap-2 rounded-full bg-[var(--yona-chat-accent)] text-[16px] font-semibold text-[var(--yona-chat-on-accent)] active:scale-[0.98] disabled:opacity-60"
                     onClick={() => void submit()}
                 >
-                    {busy ? <span className="i-lucide-loader-circle size-4 animate-spin" /> : null}
+                    {busy ? <Loader size={16} /> : null}
                     {t('ORDER_SHEET.SUBMIT')}
                 </button>
                 {siteLink?.url ? (

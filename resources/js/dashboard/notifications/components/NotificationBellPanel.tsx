@@ -1,7 +1,7 @@
 import { Link, router, usePage } from '@inertiajs/react';
 
 import Button from 'dashboard/components-next/button/Button';
-import Spinner from 'dashboard/components-next/spinner/Spinner';
+import Loader from 'shared/components/loader/Loader';
 import TabBar from 'dashboard/components-next/tabbar/TabBar';
 import { accountScopedUrl, conversationUrl } from 'dashboard/helper/URLHelper';
 import { t } from '../../../i18n';
@@ -81,7 +81,7 @@ export default function NotificationBellPanel({ activeTab, onTabChange, onNaviga
                 ))}
                 {isFetching ? (
                     <div className="flex justify-center my-4">
-                        <Spinner className="text-n-brand" />
+                        <Loader className="text-n-brand" />
                     </div>
                 ) : null}
                 {showEmptyState ? (

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePage } from '@inertiajs/react';
 
 import Dashboard from '../Dashboard';
-import Spinner from 'dashboard/components-next/spinner/Spinner';
+import Loader from 'shared/components/loader/Loader';
 import CampaignLayout from 'dashboard/components-next/Campaigns/CampaignLayout';
 import CampaignList from 'dashboard/components-next/Campaigns/Pages/CampaignPage/CampaignList';
 import ConfirmDeleteCampaignDialog from 'dashboard/components-next/Campaigns/Pages/CampaignPage/ConfirmDeleteCampaignDialog';
@@ -118,7 +118,7 @@ export default function LiveChatCampaignsPage() {
                 >
                     {isFetching ? (
                         <div className="flex justify-center items-center py-10 text-n-slate-11">
-                            <Spinner />
+                            <Loader />
                         </div>
                     ) : hasNoLiveChatCampaigns ? (
                         <LiveChatCampaignEmptyState

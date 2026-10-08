@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { router, usePage } from '@inertiajs/react';
 
 import Dashboard from '../../Dashboard';
-import Spinner from 'dashboard/components-next/spinner/Spinner';
+import Loader from 'shared/components/loader/Loader';
 import { fetchPortals, getHelpCenterState } from '../store';
 import type { DashboardPageProps } from '../../types';
 
@@ -69,7 +69,7 @@ export default function PortalsIndex({ navigationPath = '' }: { navigationPath?:
     return (
         <Dashboard>
             <div className="flex items-center justify-center w-full bg-n-surface-1 text-n-slate-11">
-                <Spinner />
+                <Loader />
             </div>
         </Dashboard>
     );

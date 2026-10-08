@@ -1,6 +1,7 @@
 import { router, usePage } from '@inertiajs/react';
 import * as Icon from 'lucide-react';
-import { ExternalLinkIcon, Loader2Icon } from 'lucide-react';
+import { ExternalLinkIcon } from 'lucide-react';
+import LoaderIcon from 'shared/components/loader/LoaderIcon';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ComponentType } from 'react';
 
@@ -239,7 +240,7 @@ function CommandPaletteContent({ onClose }: { onClose: () => void }) {
 
                 {remote.status === 'loading' && results.length === 0 ? (
                     <CommandItem disabled value='__loading'>
-                        <Loader2Icon className='animate-spin' />
+                        <LoaderIcon size={16} />
                         <span role='status'>{label('command_loading')}</span>
                     </CommandItem>
                 ) : null}

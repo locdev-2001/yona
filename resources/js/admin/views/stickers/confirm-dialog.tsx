@@ -2,7 +2,7 @@
 import { useState } from 'react'
 
 // Third-party Imports
-import { Loader2Icon } from 'lucide-react'
+import Loader from 'shared/components/loader/Loader'
 
 // Component Imports
 import { Button } from '@admin/components/ui/button'
@@ -58,7 +58,7 @@ const ConfirmDialog = ({ request, onClose }: ConfirmDialogProps) => {
                 disabled={busy}
                 onClick={() => void confirm()}
               >
-                {busy ? <Loader2Icon className='animate-spin' /> : null}
+                {busy ? <Loader size={16} /> : null}
                 {request.confirmLabel}
               </Button>
             </div>

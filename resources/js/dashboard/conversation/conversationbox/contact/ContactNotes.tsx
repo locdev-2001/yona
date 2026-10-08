@@ -4,7 +4,7 @@ import { usePage } from '@inertiajs/react';
 import Editor from 'dashboard/components-next/Editor/Editor';
 import NextButton from 'dashboard/components-next/button/Button';
 import Modal from 'dashboard/components/Modal';
-import Spinner from 'dashboard/components-next/spinner/Spinner';
+import Loader from 'shared/components/loader/Loader';
 import { useKeyboardEvents } from 'dashboard/composables/useKeyboardEvents';
 
 import { t } from '../../../../i18n';
@@ -97,7 +97,7 @@ export default function ContactNotes({ contactId }: ContactNotesProps) {
 
             {isFetching ? (
                 <div className="flex items-center justify-center py-8 text-n-slate-11">
-                    <Spinner />
+                    <Loader />
                 </div>
             ) : notes.length ? (
                 <div className="flex flex-col max-h-[300px] overflow-y-auto">

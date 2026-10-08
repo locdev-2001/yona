@@ -8,7 +8,7 @@ import SettingsContent from '../SettingsContent';
 import SettingIntroBanner from 'dashboard/components/widgets/SettingIntroBanner';
 import Tabs from 'dashboard/components/ui/Tabs';
 import type { TabItem } from 'dashboard/components/ui/Tabs';
-import Spinner from 'dashboard/components-next/spinner/Spinner';
+import Loader from 'shared/components/loader/Loader';
 import WeeklyAvailability from './components/WeeklyAvailability';
 import PreChatFormSettings from './PreChatForm/Settings';
 import InboxSettingsPage from './settingsPage/InboxSettingsPage';
@@ -87,7 +87,7 @@ export default function InboxShow({ inboxId, tab = null, senderEmailAddress, tim
             <Dashboard>
                 <SettingsContent headerTitle={t('INBOX_MGMT.HEADER')} showBackButton>
                     <div className="flex items-center justify-center h-full w-full">
-                        <Spinner size={28} className="text-n-blue-9" />
+                        <Loader size={28} className="text-n-blue-9" />
                     </div>
                 </SettingsContent>
             </Dashboard>

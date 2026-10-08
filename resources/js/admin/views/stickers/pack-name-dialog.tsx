@@ -2,7 +2,7 @@
 import { useEffect, useId, useState } from 'react'
 
 // Third-party Imports
-import { Loader2Icon } from 'lucide-react'
+import Loader from 'shared/components/loader/Loader'
 
 // Component Imports
 import { Button } from '@admin/components/ui/button'
@@ -119,7 +119,7 @@ const PackNameDialog = ({
               {t('STICKER_LIBRARY.CANCEL')}
             </Button>
             <Button type='submit' disabled={busy || !name.trim()}>
-              {busy ? <Loader2Icon className='animate-spin' /> : null}
+              {busy ? <Loader size={16} /> : null}
               {submitLabel}
             </Button>
           </div>

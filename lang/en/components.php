@@ -1,6 +1,9 @@
 <?php
 
 return [
+    'LOADER' => [
+        'LABEL' => 'Loading',
+    ],
     'CODE' => [
         'BUTTON_TEXT' => 'Copy',
         'CODEPEN' => 'Open in CodePen',

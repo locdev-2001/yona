@@ -5,7 +5,7 @@ import { ICONS } from 'dashboard/icons';
 
 import Button from 'dashboard/components-next/button/Button';
 import SidePanel from 'dashboard/components-next/side-panel/SidePanel';
-import Spinner from 'dashboard/components-next/spinner/Spinner';
+import Loader from 'shared/components/loader/Loader';
 import { t } from '../../../i18n';
 import type { DashboardPageProps } from '../../types';
 import { createReportDrilldownFetcher, useReportDrilldown } from '../composables/useReportDrilldown';
@@ -158,7 +158,7 @@ export default function ReportDrilldownDrawer({
         >
             {isFetching ? (
                 <div className="flex h-40 items-center justify-center">
-                    <Spinner />
+                    <Loader />
                 </div>
             ) : hasError ? (
                 <div className="flex h-40 items-center justify-center text-sm text-n-ruby-11">

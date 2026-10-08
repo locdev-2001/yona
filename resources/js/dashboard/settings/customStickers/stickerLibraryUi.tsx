@@ -3,7 +3,7 @@ import type { ButtonHTMLAttributes, KeyboardEvent as ReactKeyboardEvent, ReactNo
 import { createPortal } from 'react-dom';
 
 import { t } from '../../../i18n';
-import BaseSpinner from 'dashboard/components-next/spinner/Spinner';
+import Loader from 'shared/components/loader/Loader';
 
 // Primitive giao diện của màn kho sticker, chạy ở cả dashboard lẫn console Super Admin.
 // Màu chỉ dùng token n-*; mọi <button> mang `reset-base` để CSS Administrate không tô
@@ -93,7 +93,7 @@ export const StickerButton = forwardRef<HTMLButtonElement, StickerButtonProps>(f
             aria-busy={busy || undefined}
             {...buttonProps}
         >
-            {busy ? <Spinner size={16} /> : icon ? <span className={`${icon} size-4 shrink-0`} aria-hidden="true" /> : null}
+            {busy ? <Loader size={16} className="text-n-slate-11" /> : icon ? <span className={`${icon} size-4 shrink-0`} aria-hidden="true" /> : null}
             {children}
         </button>
     );
@@ -124,15 +124,6 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(functio
     );
 });
 
-export function Spinner({ size = 20, className = '' }: { size?: number; className?: string }) {
-    return (
-        <span role="status" className={`inline-flex text-n-slate-11 ${className}`.trim()}>
-            <BaseSpinner size={size} />
-            <span className="sr-only">{t('STICKER_LIBRARY.WORKING')}</span>
-        </span>
-    );
-}
-
 interface SwitchProps {
     checked: boolean;
     label: string;
@@ -161,7 +152,7 @@ export function Switch({ checked, label, disabled = false, busy = false, describ
                     className={`absolute left-0.5 size-4 rounded-full bg-white shadow transition-transform ${checked ? 'translate-x-4' : 'translate-x-0'}`}
                 />
             </span>
-            {busy ? <Spinner size={14} /> : null}
+            {busy ? <Loader size={14} className="text-n-slate-11" /> : null}
             <span>{label}</span>
         </button>
     );

@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import Files from 'dashboard/components-next/SharedAttachments/Files';
 import Media from 'dashboard/components-next/SharedAttachments/Media';
 import Button from 'dashboard/components-next/button/Button';
-import Spinner from 'dashboard/components-next/spinner/Spinner';
+import Loader from 'shared/components/loader/Loader';
 import type { MessageAttachment } from 'dashboard/components-next/message/helpers/attachments';
 import Tabs from 'dashboard/components/ui/Tabs';
 import GalleryView from 'dashboard/components/widgets/conversation/components/GalleryView';
@@ -98,7 +98,7 @@ function PageFooter<T>({ list, isEmpty }: { list: PagedItems<T>; isEmpty: boolea
     if (list.loading) {
         return (
             <div className="flex justify-center p-3">
-                <Spinner className="size-5" />
+                <Loader size={20} />
             </div>
         );
     }

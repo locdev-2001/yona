@@ -3,6 +3,9 @@
 // Bản dịch tiếng Việt của lang/en/components.php.
 
 return [
+    'LOADER' => [
+        'LABEL' => 'Đang tải',
+    ],
     'CODE' => [
         'BUTTON_TEXT' => 'Sao chép',
         'CODEPEN' => 'Mở trong CodePen',

@@ -2,7 +2,8 @@
 import { useEffect, useMemo, useReducer, useRef, useState } from 'react'
 
 // Third-party Imports
-import { CircleAlertIcon, CircleCheckIcon, Loader2Icon, TriangleAlertIcon } from 'lucide-react'
+import { CircleAlertIcon, CircleCheckIcon, TriangleAlertIcon } from 'lucide-react'
+import Loader from 'shared/components/loader/Loader'
 
 // Component Imports
 import { Alert, AlertDescription } from '@admin/components/ui/alert'
@@ -279,7 +280,7 @@ function EditorWorkspace({
           {square ? <PreviewCanvas canvas={square} size={imageSize || 256} /> : null}
           {isRendering || !preview ? (
             <span className='bg-background/70 absolute inset-0 flex items-center justify-center'>
-              <Loader2Icon className='text-muted-foreground size-6 animate-spin' />
+              <Loader className='text-muted-foreground' />
             </span>
           ) : null}
         </div>
@@ -353,7 +354,7 @@ function EditorWorkspace({
                 : editorText('EXISTING', { slot: existing.position + 1 })}
               <div className='flex flex-wrap gap-2'>
                 <Button size='sm' disabled={isUpdatingExisting} onClick={() => void updateExisting()}>
-                  {isUpdatingExisting ? <Loader2Icon className='animate-spin' /> : null}
+                  {isUpdatingExisting ? <Loader size={16} /> : null}
                   {editorText('UPDATE_EXISTING')}
                 </Button>
                 <Button size='sm' variant='outline' onClick={onSkip}>
@@ -381,7 +382,7 @@ function EditorWorkspace({
             </Button>
           ) : null}
           <Button disabled={!canSave} onClick={() => void save()}>
-            {isSaving ? <Loader2Icon className='animate-spin' /> : null}
+            {isSaving ? <Loader size={16} /> : null}
             {isSaving
               ? waitSeconds !== null && waitSeconds > 0
                 ? editorText('WAITING_FOR_SERVER', { seconds: waitSeconds })
@@ -646,7 +647,7 @@ const StickerEditorDialog = ({ session, imageSize, limits, onUpload, onUpdateExi
           </Alert>
         ) : (
           <>
-            <Loader2Icon className='text-muted-foreground size-6 animate-spin' />
+            <Loader className='text-muted-foreground' />
             <p className='text-muted-foreground text-sm'>{editorText('LOADING')}</p>
           </>
         )}

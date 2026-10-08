@@ -5,7 +5,7 @@ import NextButton from 'dashboard/components-next/button/Button';
 import ThumbnailGroup from 'dashboard/components-next/avatar/ThumbnailGroup';
 import MultiselectDropdownItems from 'shared/components/ui/MultiselectDropdownItems';
 import type { MultiselectOption } from 'shared/components/ui/MultiselectDropdownItems';
-import Spinner from 'shared/components/Spinner';
+import Loader from 'shared/components/loader/Loader';
 import { useAgentsList } from 'dashboard/composables/useAgentsList';
 import { useAlert } from 'dashboard/composables/useAlert';
 import { parseApiErrorMessage } from 'dashboard/helper/apiClient';
@@ -90,9 +90,9 @@ export default function ConversationParticipant() {
                 <div className="flex justify-between w-full mb-1">
                     <div>
                         {participants.length ? (
-                            <p className="m-0 text-sm total-watchers">
-                                {isFetching ? <Spinner size="tiny" /> : null} {totalWatchersText}
-                            </p>
+                            <div className="m-0 text-sm leading-[1.65] total-watchers">
+                                {isFetching ? <Loader size={12} /> : null} {totalWatchersText}
+                            </div>
                         ) : (
                             <p className="m-0 text-sm text-n-slate-10">
                                 {t('CONVERSATION_PARTICIPANTS.NO_PARTICIPANTS_TEXT')}

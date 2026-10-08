@@ -6,7 +6,8 @@ import { useStickerDisplaySize } from 'shared/sticker/stickerDisplaySize';
 import { drawSquareScaled } from './stickerCanvas';
 import type { StickerPreview } from './stickerEditorHooks';
 import { TOGGLE_BUTTON_CLASS, TOGGLE_OFF_CLASS, TOGGLE_ON_CLASS } from './stickerLibraryStyles';
-import { CHECKERBOARD_STYLE, IconButton, Spinner } from './stickerLibraryUi';
+import { CHECKERBOARD_STYLE, IconButton } from './stickerLibraryUi';
+import Loader from 'shared/components/loader/Loader';
 
 // Điều khiển dùng trong trình chỉnh ảnh: nhóm nút chọn một, thanh trượt an toàn khi vuốt, ô xem trước.
 
@@ -173,7 +174,7 @@ export function StickerPreviewPair({ preview, frameIndex, imageSize, isRendering
         <section className="flex flex-col gap-2" aria-label={t('STICKER_LIBRARY.EDITOR.PREVIEW')}>
             <div className="flex h-5 items-center justify-between">
                 <h4 className="m-0 text-sm font-medium text-n-slate-12">{t('STICKER_LIBRARY.EDITOR.PREVIEW')}</h4>
-                {isRendering ? <Spinner size={14} /> : null}
+                {isRendering ? <Loader size={14} className="text-n-slate-11" /> : null}
             </div>
             <div className="flex flex-wrap items-end gap-3">
                 <figure className="m-0 flex flex-col items-center gap-1">

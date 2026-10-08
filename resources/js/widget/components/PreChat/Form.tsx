@@ -2,7 +2,7 @@ import { useId, useMemo, useState } from 'react';
 import DOMPurify from 'dompurify';
 
 import MessageFormatter from 'shared/helpers/MessageFormatter';
-import Spinner from 'shared/components/Spinner';
+import Loader from 'shared/components/loader/Loader';
 
 import {
     buildPreChatSubmission,
@@ -240,7 +240,7 @@ export default function PreChatForm({ preChatMessage, preChatFields, onSubmitPre
                 className="py-3 px-4 rounded-lg shadow-sm leading-4 cursor-pointer disabled:opacity-50 w-full mt-3 mb-5 font-medium flex items-center justify-center gap-2 bg-[var(--yona-chat-accent)] text-[var(--yona-chat-on-accent)]"
                 disabled={isCreating}
             >
-                {isCreating ? <Spinner className="p-0" /> : null}
+                {isCreating ? <Loader size={16} /> : null}
                 {t('START_CONVERSATION')}
             </button>
         </form>

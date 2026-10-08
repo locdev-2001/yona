@@ -3,7 +3,7 @@ import DOMPurify from 'dompurify';
 
 import Branding from 'shared/components/Branding';
 import CsatLevelPicker from 'shared/components/CsatLevelPicker';
-import Spinner from 'shared/components/Spinner';
+import Loader from 'shared/components/loader/Loader';
 import MessageFormatter from 'shared/helpers/MessageFormatter';
 import { csatSurveyUuidFromUrl, isCsatFeedbackSubmitted, isCsatRatingSubmitted } from 'shared/helpers/csatHelpers';
 import type { CsatSurveyResponseValues } from 'shared/helpers/csatHelpers';
@@ -75,7 +75,7 @@ export default function Response() {
     if (isLoading) {
         return (
             <div className="flex items-center justify-center flex-1 h-full min-h-screen bg-n-background">
-                <Spinner size="" />
+                <Loader />
             </div>
         );
     }

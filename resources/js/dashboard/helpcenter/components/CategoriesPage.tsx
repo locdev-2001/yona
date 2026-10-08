@@ -4,7 +4,7 @@ import { router, usePage } from '@inertiajs/react';
 import { t } from '../../../i18n';
 import { useAlert } from 'dashboard/composables/useAlert';
 import { parseApiErrorMessage } from 'dashboard/helper/apiClient';
-import Spinner from 'dashboard/components-next/spinner/Spinner';
+import Loader from 'shared/components/loader/Loader';
 import type { DialogHandle } from 'dashboard/components-next/dialog/Dialog';
 import CategoryEmptyState from './CategoryEmptyState';
 import CategoryHeaderControls from './CategoryHeaderControls';
@@ -86,7 +86,7 @@ export default function CategoriesPage({
             content={
                 isLoading ? (
                     <div className="flex items-center justify-center py-10 text-n-slate-11">
-                        <Spinner />
+                        <Loader />
                     </div>
                 ) : filteredCategories.length ? (
                     <CategoryList

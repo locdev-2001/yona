@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { t } from '../../../../i18n';
 import { getJson, postJson } from 'dashboard/helper/apiClient';
 import Button from 'dashboard/components-next/button/Button';
-import Spinner from 'dashboard/components-next/spinner/Spinner';
+import Loader from 'shared/components/loader/Loader';
 
 // Panel quét mã QR — port từ main:resources/js/pages/integration/zalo/index.tsx.
 // Bridge chỉ cấp mã QR sống ~100 giây nên panel đếm ngược rồi tự xin mã mới tối đa
@@ -239,12 +239,12 @@ export default function ZaloQrPanel({ accountId, inboxId, boundAccountName, onCo
                 />
             ) : null}
 
-            <p className="text-n-slate-11 text-sm flex items-center gap-2">
-                {phase === 'error' ? null : <Spinner size={16} />}
+            <div className="text-n-slate-11 text-sm leading-[1.65] mb-2 flex items-center gap-2">
+                {phase === 'error' ? null : <Loader size={16} />}
                 <span className={phase === 'error' ? 'text-n-ruby-11' : ''}>
                     {phase === 'error' ? errorMessage : statusMessage}
                 </span>
-            </p>
+            </div>
 
             {phase === 'waiting' && !isRefreshing ? (
                 <p className="text-n-slate-10 text-xs">

@@ -11,7 +11,7 @@ import SettingsContent from '../SettingsContent';
 import SettingsSubPageHeader from '../SettingsSubPageHeader';
 import WizardLayout, { EDIT_ROUTES } from './WizardLayout';
 import AgentSelector from './AgentSelector';
-import Spinner from 'dashboard/components-next/spinner/Spinner';
+import Loader from 'shared/components/loader/Loader';
 import type { Agent } from '../agents/types';
 import type { Team } from './types';
 import type { DashboardPageProps } from '../../types';
@@ -97,7 +97,7 @@ export default function EditAgents({ team }: EditAgentsProps) {
                                 ) : null}
                                 {isFetching ? (
                                     <div className="flex items-center justify-center py-6">
-                                        <Spinner className="text-n-blue-11" />
+                                        <Loader className="text-n-blue-11" />
                                     </div>
                                 ) : (
                                     <AgentSelector

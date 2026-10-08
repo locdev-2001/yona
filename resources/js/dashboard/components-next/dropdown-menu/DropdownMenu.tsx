@@ -5,7 +5,7 @@ import { t } from '../../../i18n';
 import Avatar from 'dashboard/components-next/avatar/Avatar';
 import EmojiIcon from 'dashboard/components-next/emoji-icon-picker/EmojiIcon';
 import Icon from 'dashboard/components-next/icon/Icon';
-import Spinner from 'dashboard/components-next/spinner/Spinner';
+import Loader from 'shared/components/loader/Loader';
 
 // Port từ dashboard/components-next/dropdown-menu/DropdownMenu.vue — nhánh
 // menuItems phẳng + showSearch lọc theo label (menuSections vào khi màn nào cần).
@@ -155,7 +155,7 @@ export default function DropdownMenu({
                               ) : null}
                               {section.isLoading ? (
                                   <div className="flex items-center justify-center py-2">
-                                      <Spinner size={24} />
+                                      <Loader />
                                   </div>
                               ) : !section.items.length && section.emptyState ? (
                                   <div className="text-sm text-n-slate-11 px-2 py-1.5">{section.emptyState}</div>
@@ -171,7 +171,7 @@ export default function DropdownMenu({
                           <>
                               {isLoading ? (
                                   <div className="flex items-center justify-center py-2">
-                                      <Spinner size={24} />
+                                      <Loader />
                                   </div>
                               ) : null}
                               {visibleItems.map((item, index) => renderItem(item, `${item.value}-${index}`))}

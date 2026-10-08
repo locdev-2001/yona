@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 
 import { t } from '../../../i18n';
-import Spinner from 'dashboard/components-next/spinner/Spinner';
+import Loader from 'shared/components/loader/Loader';
 import type { Conversation } from '../types';
 import ConversationItem from './ConversationItem';
 
@@ -65,7 +65,7 @@ export default function ConversationList({
             </div>
             {isLoading ? (
                 <div className="flex justify-center my-4">
-                    <Spinner className="text-n-brand" />
+                    <Loader className="text-n-brand" />
                 </div>
             ) : showEndOfListMessage ? (
                 <p className="p-4 text-center text-n-slate-11">{t('CHAT_LIST.EOF')}</p>

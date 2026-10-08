@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-import Spinner from 'shared/components/Spinner';
+import Loader from 'shared/components/loader/Loader';
 import { t } from '../../../../i18n';
 
 // Port từ reports/components/overview/MetricCard.vue
@@ -35,7 +35,7 @@ export default function MetricCard({
                 <div className="card-body max-w-full w-full ml-auto mr-auto justify-between flex">{children}</div>
             ) : (
                 <div className="items-center flex text-base justify-center px-12 py-6">
-                    <Spinner />
+                    <Loader size={16} />
                     <span className="text-n-slate-11">{loadingMessage}</span>
                 </div>
             )}

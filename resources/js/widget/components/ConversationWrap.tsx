@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { isToday, isYesterday } from 'date-fns';
 
-import Spinner from 'shared/components/Spinner';
+import Loader from 'shared/components/loader/Loader';
 
 import { MESSAGE_TYPE } from '../helpers/constants';
 import { groupMessagesByDate } from '../helpers/messageHelpers';
@@ -168,7 +168,7 @@ export default function ConversationWrap() {
             <div className={`conversation-wrap ${isAgentTyping ? 'is-typing' : ''}`.trim()}>
                 {isFetchingList ? (
                     <div className="message--loader">
-                        <Spinner size="" />
+                        <Loader />
                     </div>
                 ) : null}
                 {messagesByDay.map(day => (

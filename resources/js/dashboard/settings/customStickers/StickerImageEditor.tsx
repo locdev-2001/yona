@@ -24,7 +24,8 @@ import {
 } from './stickerEditorQueue';
 import type { EditorQueueSummary, QueueItem } from './stickerEditorQueue';
 import type { StickerUpload, UploadOptions } from './stickerLibraryApi';
-import { IconButton, Modal, Spinner, StickerButton } from './stickerLibraryUi';
+import { IconButton, Modal, StickerButton } from './stickerLibraryUi';
+import Loader from 'shared/components/loader/Loader';
 import type { ModalCloseReason } from './stickerLibraryUi';
 import type { StickerLimits } from './stickerLimits';
 import { createStickerMaskRunner } from './stickerMaskRunner';
@@ -174,7 +175,7 @@ function QueueStrip({ items, index, urls }: { items: QueueItem[]; index: number;
                         {urls[itemIndex] ? <img src={urls[itemIndex]} alt="" className="size-full object-cover" /> : null}
                         {item.status === 'saving' ? (
                             <span className="absolute inset-0 flex items-center justify-center bg-n-solid-1/70">
-                                <Spinner size={14} />
+                                <Loader size={14} className="text-n-slate-11" />
                             </span>
                         ) : null}
                         {item.status === 'failed' ? (
@@ -232,7 +233,7 @@ function QueueSummary({ summary, rejectedCount }: { summary: EditorQueueSummary;
 function BulkProgress({ done, total }: { done: number; total: number }) {
     return (
         <div role="status" aria-live="polite" className="flex min-h-0 flex-col items-center justify-center gap-3 p-8 text-center">
-            <Spinner size={24} />
+            <Loader className="text-n-slate-11" />
             <p className="m-0 text-sm font-medium text-n-slate-12">{editorText('BULK_PROGRESS', { done, total })}</p>
         </div>
     );
@@ -374,7 +375,7 @@ export default function StickerImageEditor({ files, reedit, rejected, imageSize,
                     </p>
                 ) : (
                     <>
-                        <Spinner size={24} />
+                        <Loader className="text-n-slate-11" />
                         <p className="m-0 text-sm text-n-slate-11">{editorText('LOADING')}</p>
                     </>
                 )}

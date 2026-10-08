@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 
 import EmptyState from 'dashboard/components/widgets/EmptyState';
 import Pagination from 'dashboard/components/table/Pagination';
-import Spinner from 'shared/components/Spinner';
+import Loader from 'shared/components/loader/Loader';
 import Table, { type TableColumn } from 'dashboard/components/table/Table';
 import { useTableModel } from 'dashboard/components/table/useTableModel';
 import { t } from '../../../../i18n';
@@ -97,7 +97,7 @@ export default function AgentTable({
             <Pagination className="mt-2" table={table} showPageSizeSelector onPageSizeChange={onPageSizeChange} />
             {isLoading ? (
                 <div className="items-center flex text-base justify-center p-8">
-                    <Spinner />
+                    <Loader size={16} />
                     <span>{t('OVERVIEW_REPORTS.AGENT_CONVERSATIONS.LOADING_MESSAGE')}</span>
                 </div>
             ) : (

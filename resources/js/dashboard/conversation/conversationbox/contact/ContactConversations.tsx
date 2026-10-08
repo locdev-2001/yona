@@ -3,7 +3,7 @@ import type { MouseEvent } from 'react';
 import { router, usePage } from '@inertiajs/react';
 
 import ConversationCard from 'dashboard/components/widgets/conversation/ConversationCard';
-import Spinner from 'dashboard/components-next/spinner/Spinner';
+import Loader from 'shared/components/loader/Loader';
 import { conversationUrl } from 'dashboard/helper/URLHelper';
 
 import { t } from '../../../../i18n';
@@ -47,7 +47,7 @@ export default function ContactConversations({ contactId }: ContactConversations
     if (isFetching) {
         return (
             <div className="flex items-center justify-center py-5">
-                <Spinner />
+                <Loader />
             </div>
         );
     }

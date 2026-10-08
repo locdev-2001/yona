@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react';
 
 import { t } from '../../../i18n';
+import Loader from 'shared/components/loader/Loader';
 import InlineInput from 'dashboard/components-next/inline-input/InlineInput';
 import { isCounterVisible } from './stickerLimits';
 import { PackNameSheet } from './StickerPackList';
@@ -194,7 +195,7 @@ export default function StickerPackHeader({
                             void commitRename(nameDraft);
                         }}
                     />
-                    {isRenaming ? <span className="i-lucide-loader-circle size-4 animate-spin text-n-slate-11" aria-hidden="true" /> : null}
+                    {isRenaming ? <Loader size={16} className="text-n-slate-11" /> : null}
                     {showSaved ? (
                         <span role="status" className="inline-flex shrink-0 items-center gap-1 text-xs text-n-teal-11">
                             <span className="i-lucide-check size-3.5" aria-hidden="true" />

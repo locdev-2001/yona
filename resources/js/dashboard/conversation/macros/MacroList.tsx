@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 import { Link, usePage } from '@inertiajs/react';
 
 import Button from 'dashboard/components-next/button/Button';
-import Spinner from 'dashboard/components-next/spinner/Spinner';
+import Loader from 'shared/components/loader/Loader';
 import { accountScopedUrl } from 'dashboard/helper/URLHelper';
 import { useMacros } from 'dashboard/settings/macros/macrosStore';
 import { useMacroOptionSets } from 'dashboard/settings/macros/useMacroOptionSets';
@@ -41,7 +41,7 @@ export default function MacroList({ conversationId }: { conversationId: number }
         return (
             <div className="flex items-center gap-2 justify-center p-6 text-n-slate-12">
                 <span className="text-sm">{t('MACROS.LOADING')}</span>
-                <Spinner className="size-5" />
+                <Loader size={20} />
             </div>
         );
     }

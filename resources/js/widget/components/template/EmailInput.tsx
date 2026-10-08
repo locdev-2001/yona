@@ -1,6 +1,6 @@
 import { useId, useState } from 'react';
 
-import Spinner from 'shared/components/Spinner';
+import Loader from 'shared/components/loader/Loader';
 
 import { t } from '../../i18n';
 import { widgetStore } from '../../store/widgetStore';
@@ -98,7 +98,7 @@ export default function EmailInput({ title, messageId, messageContentAttributes 
                             }}
                         />
                         <button type="submit" className="mk-go" aria-label={t('COMPOSER.SEND')} title={t('COMPOSER.SEND')} disabled={isInvalid || isUpdating}>
-                            {isUpdating ? <Spinner /> : <ArrowRight />}
+                            {isUpdating ? <Loader size={16} /> : <ArrowRight />}
                         </button>
                     </span>
                     {hasSaveFailed ? (
