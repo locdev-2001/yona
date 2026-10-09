@@ -31,7 +31,7 @@ export default function ChatTypeTabs({ items, activeTab, onChatTabChange }: Chat
             items={items.map(item => ({ key: item.key, name: item.name, count: item.count, showBadge: true }))}
             index={activeTabIndex}
             isCompact
-            className="w-full px-3 -mt-1 py-0 [&_ul]:p-0 h-10 text-sm [&_a]:font-medium"
+            className="w-full ps-3 pe-0 -mt-1 py-0 [&_ul]:p-0 h-10 text-sm [&_a]:font-medium"
             onChange={onTabChange}
         />
     );
