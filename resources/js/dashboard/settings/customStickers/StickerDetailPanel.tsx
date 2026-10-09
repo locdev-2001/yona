@@ -119,7 +119,7 @@ export default function StickerDetailPanel({
         >
             <div className="flex items-start gap-3 px-5 pt-4">
                 <div
-                    className="flex shrink-0 items-center justify-center overflow-hidden rounded-lg border border-solid border-n-weak"
+                    className="flex shrink-0 items-center justify-center overflow-hidden rounded-lg"
                     style={{ ...CHECKERBOARD_STYLE, width: previewSize + 16, height: previewSize + 16 }}
                 >
                     {source ? <StickerImage src={source} alt={sticker.label ?? ''} style={{ width: previewSize }} /> : null}
@@ -158,7 +158,7 @@ export default function StickerDetailPanel({
                         setErrors(current => ({ ...current, [field]: undefined }));
                     }}
                 />
-                <div className="flex flex-col gap-1 border-0 border-t border-solid border-n-weak pt-4">
+                <div className="flex flex-col gap-1 pt-4">
                     <StickerButton
                         tone="ghost"
                         size="sheet"
@@ -190,7 +190,7 @@ export default function StickerDetailPanel({
                 </div>
             </div>
 
-            <div className="flex shrink-0 justify-end gap-2 border-0 border-t border-solid border-n-weak px-5 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] md:pb-3">
+            <div className="flex shrink-0 justify-end gap-2 px-5 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] md:pb-3">
                 <StickerButton tone="secondary" size="sheet" className="flex-1 md:flex-none" onClick={cancel}>
                     {t('STICKER_LIBRARY.CANCEL')}
                 </StickerButton>

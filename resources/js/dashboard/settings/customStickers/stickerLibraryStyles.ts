@@ -10,4 +10,4 @@ export {
 export const TOGGLE_BUTTON_CLASS =
     'reset-base inline-flex min-h-11 flex-1 items-center justify-center whitespace-nowrap rounded-lg border border-solid px-3 py-1.5 text-sm font-medium active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50 md:min-h-9';
 export const TOGGLE_ON_CLASS = 'border-n-brand bg-n-brand/10 text-n-slate-12';
-export const TOGGLE_OFF_CLASS = 'border-n-weak bg-n-solid-1 text-n-slate-11 [@media(hover:hover)]:hover:bg-n-alpha-2';
+export const TOGGLE_OFF_CLASS = 'border-transparent bg-n-surface-field text-n-slate-11 [@media(hover:hover)]:hover:bg-n-surface-field-hover';

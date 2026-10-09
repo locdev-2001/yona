@@ -7,7 +7,7 @@ import Loader from 'shared/components/loader/Loader';
 
 // Primitive giao diện của màn kho sticker, chạy ở cả dashboard lẫn console Super Admin.
 // Màu chỉ dùng token n-*; mọi <button> mang `reset-base` để CSS Administrate không tô
-// xanh, mọi ô nhập tự đặt viền/nền/cỡ chữ để thắng `[type=text]` của Administrate.
+// xanh. Ô nhập dùng lớp chung `field-surface`/`field-invalid`, lớp nổi dùng `overlay-surface`.
 
 export const MOBILE_QUERY = '(max-width: 767px)';
 export const WIDE_QUERY = '(min-width: 1280px)';
@@ -18,14 +18,14 @@ const FOCUSABLE_SELECTOR =
 
 const FOCUS_RING = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-n-brand focus-visible:ring-offset-1';
 
-export const INPUT_CLASS = `reset-base block h-11 w-full rounded-lg border border-solid border-n-weak bg-n-solid-1 px-3 py-0 text-base text-n-slate-12 placeholder:text-n-slate-10 md:h-9 md:text-sm focus:border-n-brand focus:outline-none focus:ring-1 focus:ring-n-brand disabled:cursor-not-allowed disabled:opacity-50`;
-export const INPUT_ERROR_CLASS = 'border-n-ruby-8 focus:border-n-ruby-9 focus:ring-n-ruby-9';
+export const INPUT_CLASS = `reset-base field-surface block h-11 w-full rounded-lg border-0 px-3 py-0 text-base text-n-slate-12 placeholder:text-n-slate-10 md:h-9 md:text-sm disabled:cursor-not-allowed disabled:opacity-50`;
+export const INPUT_ERROR_CLASS = 'field-invalid';
 
 const BUTTON_BASE = `reset-base inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-lg border border-solid text-sm font-medium transition-colors active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 ${FOCUS_RING}`;
 
 const BUTTON_TONES = {
     primary: 'border-transparent bg-n-brand text-white [@media(hover:hover)]:hover:bg-n-brand/90',
-    secondary: 'border-n-strong bg-n-solid-1 text-n-slate-12 [@media(hover:hover)]:hover:bg-n-alpha-2',
+    secondary: 'border-transparent bg-n-surface-field text-n-slate-12 [@media(hover:hover)]:hover:bg-n-surface-field-hover',
     danger: 'border-transparent bg-n-ruby-9 text-white [@media(hover:hover)]:hover:bg-n-ruby-10',
     ghost: 'border-transparent bg-transparent text-n-slate-12 [@media(hover:hover)]:hover:bg-n-alpha-2',
     'ghost-danger': 'border-transparent bg-transparent text-n-ruby-11 [@media(hover:hover)]:hover:bg-n-ruby-3',
@@ -191,7 +191,7 @@ export function InfoTip({ text, label }: { text: string; label: string }) {
                 <span
                     id={tipId}
                     role="tooltip"
-                    className="absolute left-0 top-full z-20 mt-1 w-64 rounded-lg border border-solid border-n-weak bg-n-solid-1 p-3 text-xs font-normal text-n-slate-12 shadow-lg"
+                    className="overlay-surface absolute left-0 top-full z-20 mt-1 w-64 rounded-lg p-3 text-xs font-normal text-n-slate-12"
                 >
                     {text}
                 </span>
@@ -341,7 +341,7 @@ export function Modal({
                 aria-labelledby={titleId}
                 aria-describedby={describedBy}
                 tabIndex={-1}
-                className={`flex flex-col overflow-hidden bg-n-solid-1 text-n-slate-12 shadow-xl outline-none ${layout.panel} ${variant === 'dialog' ? widthClassName : ''}`}
+                className={`overlay-surface flex flex-col overflow-hidden text-n-slate-12 outline-none ${layout.panel} ${variant === 'dialog' ? widthClassName : ''}`}
             >
                 <div className="mx-auto mt-2 h-1 w-10 shrink-0 rounded-full bg-n-slate-6 md:hidden" aria-hidden="true" />
                 <h2 id={titleId} className={hideTitle ? 'sr-only' : 'm-0 shrink-0 px-5 pb-1 pt-4 text-base font-semibold text-n-slate-12'}>
@@ -349,7 +349,7 @@ export function Modal({
                 </h2>
                 <div className="min-h-0 flex-1 overflow-y-auto">{children}</div>
                 {footer ? (
-                    <div className="shrink-0 border-0 border-t border-solid border-n-weak px-5 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] md:pb-3">
+                    <div className="shrink-0 px-5 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] md:pb-3">
                         {footer}
                     </div>
                 ) : null}
@@ -485,7 +485,7 @@ export function Menu({ label, items, triggerClassName = '', compact = false, ton
                           aria-label={label}
                           onKeyDown={onListKeyDown}
                           style={{ top: position.top, left: position.left }}
-                          className={`fixed ${MODAL_Z_CLASS} flex w-[232px] flex-col rounded-xl border border-solid border-n-weak bg-n-solid-1 p-1 shadow-lg`}
+                          className={`overlay-surface fixed ${MODAL_Z_CLASS} flex w-[232px] flex-col rounded-xl p-1`}
                       >
                           {renderItems(false)}
                       </div>,

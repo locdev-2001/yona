@@ -489,7 +489,7 @@ export default function StickerEditorWorkspace({
         <form className="contents" onSubmit={submit} noValidate>
             <div className="flex min-h-0 flex-col">
                 {existing ? (
-                    <div role="status" className="flex shrink-0 flex-wrap items-center gap-2 border-0 border-b border-solid border-n-weak bg-n-amber-3 px-4 py-2 text-sm text-n-amber-11">
+                    <div role="status" className="flex shrink-0 flex-wrap items-center gap-2 bg-n-amber-3 px-4 py-2 text-sm text-n-amber-11">
                         <span className="min-w-0 flex-1">
                             {existing.label
                                 ? editorText('EXISTING_LABELLED', { slot: existing.position + 1, label: existing.label })
@@ -509,7 +509,7 @@ export default function StickerEditorWorkspace({
                             {canvasArea}
                             {toolbar}
                         </div>
-                        <div role="tablist" aria-label={editorText('SETTINGS')} className="flex shrink-0 gap-1 border-0 border-b border-solid border-n-weak px-4">
+                        <div role="tablist" aria-label={editorText('SETTINGS')} className="flex shrink-0 gap-1 px-4">
                             {(['image', 'details'] as const).map(tab => (
                                 <button
                                     key={tab}
@@ -549,7 +549,7 @@ export default function StickerEditorWorkspace({
                             {canvasArea}
                             <p className="m-0 h-4 shrink-0 truncate text-xs text-n-slate-11">{editorText(hint)}</p>
                         </div>
-                        <div className="flex min-h-0 flex-col gap-5 overflow-y-auto overflow-x-hidden border-0 border-l border-solid border-n-weak p-4">
+                        <div className="flex min-h-0 flex-col gap-5 overflow-y-auto overflow-x-hidden p-4">
                             {preview128}
                             {notices}
                             {backgroundSettings}
@@ -561,7 +561,7 @@ export default function StickerEditorWorkspace({
                 )}
             </div>
 
-            <footer className="flex min-h-16 flex-wrap items-center gap-2 border-0 border-t border-solid border-n-weak px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] md:flex-nowrap md:pb-3">
+            <footer className="flex min-h-16 flex-wrap items-center gap-2 px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] md:flex-nowrap md:pb-3">
                 <StickerButton tone="secondary" disabled={isSaving} onClick={total > 1 ? onSkip : onCancel}>
                     {total > 1 ? editorText('SKIP') : editorText('CANCEL')}
                 </StickerButton>

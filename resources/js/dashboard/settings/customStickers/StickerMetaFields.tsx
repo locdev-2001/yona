@@ -124,16 +124,16 @@ export default function StickerMetaFields({ draft, limits, errors, disabled = fa
                     </span>
                 </div>
                 <div
-                    className={`flex min-h-11 flex-wrap items-center gap-1.5 rounded-lg border border-solid bg-n-solid-1 p-1.5 focus-within:border-n-brand md:min-h-9 ${
-                        errors.keywords ? 'border-n-ruby-8' : 'border-n-weak'
+                    className={`flex min-h-11 flex-wrap items-center gap-1.5 rounded-lg p-1.5 md:min-h-9 ${
+                        errors.keywords ? 'field-invalid' : 'field-surface'
                     }`}
                     onClick={() => keywordInputRef.current?.focus()}
                 >
                     {draft.keywords.map((keyword, index) => (
                         <span
                             key={keyword}
-                            className={`inline-flex h-7 max-w-full items-center gap-1 rounded-md border border-solid pl-2 text-sm text-n-slate-12 ${
-                                keyword.length > limits.maxKeywordLength ? 'border-n-ruby-8 bg-n-ruby-3' : 'border-transparent bg-n-alpha-2'
+                            className={`inline-flex h-7 max-w-full items-center gap-1 rounded-md pl-2 text-sm text-n-slate-12 ${
+                                keyword.length > limits.maxKeywordLength ? 'bg-n-ruby-3 outline outline-1 -outline-offset-1 outline-n-ruby-8' : 'bg-n-surface-panel'
                             }`}
                         >
                             <span className="truncate">{keyword}</span>

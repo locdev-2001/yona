@@ -136,7 +136,7 @@ function PackCover({ pack, size }: { pack: LibraryStickerPack; size: 'sm' | 'lg'
             <img src={pack.cover_url} alt="" className="size-full object-contain" />
         </span>
     ) : (
-        <span className={`flex ${box} shrink-0 items-center justify-center rounded-md border border-dashed border-n-slate-7 bg-n-solid-1`}>
+        <span className={`flex ${box} shrink-0 items-center justify-center rounded-md bg-n-surface-field`}>
             <span className="i-lucide-sticker size-4 text-n-slate-9" aria-hidden="true" />
         </span>
     );

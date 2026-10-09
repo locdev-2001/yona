@@ -483,7 +483,7 @@ function StickerLibrary({ api, packTransfer }: StickerLibraryManagerProps) {
             message: t('STICKER_LIBRARY.DELETE_STICKER_CONFIRM', { name: currentDetail.name }),
             confirmLabel: t('STICKER_LIBRARY.DELETE_STICKER'),
             preview: (
-                <span className="flex size-12 shrink-0 items-center justify-center rounded-lg border border-solid border-n-weak bg-n-solid-1">
+                <span className="flex size-12 shrink-0 items-center justify-center rounded-lg bg-n-surface-field">
                     <StickerThumb sticker={sticker} animate={false} className="size-10" />
                 </span>
             ),
@@ -717,7 +717,7 @@ function StickerLibrary({ api, packTransfer }: StickerLibraryManagerProps) {
     return (
         <div className="flex h-full min-h-0 w-full flex-col md:flex-row">
             {showListScreen ? (
-                <aside className="flex min-h-0 w-full shrink-0 flex-col md:w-60 md:border-0 md:border-r md:border-solid md:border-n-weak md:pr-4">
+                <aside className="flex min-h-0 w-full shrink-0 flex-col md:w-60 md:pr-4">
                     <StickerPackList
                         packs={packs}
                         selectedPackId={selectedPackId}
@@ -834,7 +834,7 @@ function StickerLibrary({ api, packTransfer }: StickerLibraryManagerProps) {
             ) : null}
 
             {detailPanel && isWide ? (
-                <aside className="flex w-80 shrink-0 flex-col border-0 border-l border-solid border-n-weak" aria-label={t('STICKER_LIBRARY.DETAIL_TITLE')}>
+                <aside className="flex w-80 shrink-0 flex-col" aria-label={t('STICKER_LIBRARY.DETAIL_TITLE')}>
                     {detailPanel}
                 </aside>
             ) : null}

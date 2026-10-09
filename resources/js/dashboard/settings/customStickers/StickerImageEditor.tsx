@@ -380,7 +380,7 @@ export default function StickerImageEditor({ files, reedit, rejected, imageSize,
                     </>
                 )}
             </div>
-            <footer className="flex min-h-16 items-center gap-2 border-0 border-t border-solid border-n-weak px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] md:pb-3">
+            <footer className="flex min-h-16 items-center gap-2 px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] md:pb-3">
                 <StickerButton tone="secondary" onClick={files.length > 1 ? skip : () => requestCloseRef.current('button')}>
                     {files.length > 1 ? editorText('SKIP') : editorText('CANCEL')}
                 </StickerButton>
@@ -391,7 +391,7 @@ export default function StickerImageEditor({ files, reedit, rejected, imageSize,
     const summaryBody = (
         <>
             <QueueSummary summary={summary} rejectedCount={rejected.length} />
-            <footer className="flex min-h-16 items-center justify-end gap-2 border-0 border-t border-solid border-n-weak px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] md:pb-3">
+            <footer className="flex min-h-16 items-center justify-end gap-2 px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] md:pb-3">
                 <StickerButton tone="primary" onClick={() => finishRef.current(false)}>
                     {editorText('DONE')}
                 </StickerButton>
@@ -410,7 +410,7 @@ export default function StickerImageEditor({ files, reedit, rejected, imageSize,
                 onRequestClose={reason => requestCloseRef.current(reason)}
             >
                 <div className="grid h-full grid-rows-[auto_minmax(0,1fr)_auto]">
-                    <div className="flex min-w-0 flex-col border-0 border-b border-solid border-n-weak">
+                    <div className="flex min-w-0 flex-col">
                         <header className="flex h-14 shrink-0 items-center gap-3 px-4">
                             <div className="flex min-w-0 flex-1 flex-col">
                                 <h3 ref={titleRef} tabIndex={-1} className="m-0 truncate text-base font-semibold text-n-slate-12 outline-none">
