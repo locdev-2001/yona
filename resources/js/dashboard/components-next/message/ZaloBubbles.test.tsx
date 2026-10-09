@@ -117,6 +117,29 @@ describe('bong bóng xem trước liên kết', () => {
         expect(screen.getByText('Anh xem giúp em')).not.toBeNull();
     });
 
+    it('chữ khách gõ kèm liên kết: bong bóng chữ đầy đủ, thẻ riêng bên dưới không lặp chữ', () => {
+        const url = 'https://canva.link/abc123';
+        const typed = `${url} dạ đây từ 36 về sau ạ`;
+        const container = renderZalo(zaloMessage({ link_preview: { url, title: typed } }, typed));
+
+        const textBubble = container.querySelector('[data-bubble-name="text"]');
+        const card = screen.getByTestId('link-preview-card');
+
+        expect(textBubble?.textContent).toContain('dạ đây từ 36 về sau ạ');
+        expect(textBubble?.querySelector('a')?.getAttribute('href')).toBe(url);
+        expect(textBubble?.contains(card)).toBe(false);
+        expect(screen.getByTestId('link-preview-title').textContent).toBe('canva.link');
+        expect(card.textContent).not.toContain('dạ đây');
+    });
+
+    it('tin chỉ có liên kết: chỉ có thẻ, không có bong bóng chữ', () => {
+        const url = 'https://canva.link/abc123';
+        const container = renderZalo(zaloMessage({ link_preview: { url, title: url } }, url));
+
+        expect(container.querySelector('[data-bubble-name="text"]')).toBeNull();
+        expect(screen.getByTestId('link-preview-title').textContent).toBe('canva.link');
+    });
+
     it('không rơi về bong bóng danh thiếp', () => {
         const container = renderZalo(zaloMessage(preview, preview.link_preview.url));
 
