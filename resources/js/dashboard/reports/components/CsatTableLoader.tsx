@@ -3,7 +3,7 @@ export default function CsatTableLoader({ rows = 5 }: { rows?: number }) {
     return (
         <div className="p-6">
             <div className="space-y-4">
-                <div className="flex gap-4 pb-3 border-b border-n-weak">
+                <div className="flex gap-4 pb-3">
                     <div className="h-4 w-32 rounded bg-n-slate-3 animate-pulse" />
                     <div className="h-4 w-28 rounded bg-n-slate-3 animate-pulse" />
                     <div className="h-4 w-20 rounded bg-n-slate-3 animate-pulse" />

@@ -46,9 +46,9 @@ export default function PortalSwitcher({
 
     return (
         <div
-            className={`pt-5 bg-n-alpha-3 backdrop-blur-[100px] outline outline-n-container outline-1 z-50 absolute w-[27.5rem] max-h-96 rounded-xl shadow-md flex flex-col gap-4 ${className}`.trim()}
+            className={`pt-5 overlay-surface z-50 absolute w-[27.5rem] max-h-96 rounded-xl flex flex-col gap-4 ${className}`.trim()}
         >
-            <div className="flex items-center justify-between gap-4 px-6 pb-3 border-b border-n-alpha-2">
+            <div className="flex items-center justify-between gap-4 px-6 pb-3">
                 <div className="flex flex-col gap-1">
                     <div className="flex items-center gap-2">
                         <h2

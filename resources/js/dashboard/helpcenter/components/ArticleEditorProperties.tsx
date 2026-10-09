@@ -43,7 +43,7 @@ export default function ArticleEditorProperties({
 
     return (
         <div
-            className={`flex flex-col absolute w-[25rem] bg-n-alpha-3 outline outline-1 outline-n-container backdrop-blur-[100px] shadow-lg gap-6 rounded-xl p-6 ${className}`.trim()}
+            className={`flex flex-col absolute w-[25rem] overlay-surface gap-6 rounded-xl p-6 ${className}`.trim()}
         >
             <div className="flex items-center justify-between">
                 <h3>{t('HELP_CENTER.EDIT_ARTICLE_PAGE.ARTICLE_PROPERTIES.ARTICLE_PROPERTIES')}</h3>

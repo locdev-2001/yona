@@ -58,7 +58,7 @@ export default function CategoryCard({
                             {icon ? <EmojiIcon value={icon} color={iconColor} className="shrink-0 size-4" /> : null}
                             <span className="truncate">{title}</span>
                         </span>
-                        <span className="inline-flex items-center justify-center h-6 px-2 py-1 text-xs text-center border rounded-lg bg-n-slate-1 whitespace-nowrap shrink-0 text-n-slate-11 border-n-slate-4">
+                        <span className="inline-flex items-center justify-center h-6 px-2 py-1 text-xs text-center rounded-lg bg-n-surface-field whitespace-nowrap shrink-0 text-n-slate-11">
                             {t('HELP_CENTER.CATEGORY_PAGE.CATEGORY_CARD.ARTICLES_COUNT', { count: articlesCount })}
                         </span>
                     </div>

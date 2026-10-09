@@ -18,7 +18,7 @@ export default function CsatMetrics() {
 
     return (
         <div className="flex flex-col gap-4">
-            <div className="flex sm:flex-row flex-col w-full gap-4 sm:gap-14 shadow outline-1 outline outline-n-container rounded-xl bg-n-solid-2 px-6 py-5">
+            <div className="flex sm:flex-row flex-col w-full gap-4 sm:gap-14 panel-surface rounded-xl px-6 py-5">
                 <CsatMetricCard
                     label={t('CSAT_REPORTS.METRIC.TOTAL_RESPONSES.LABEL')}
                     tooltip={t('CSAT_REPORTS.METRIC.TOTAL_RESPONSES.TOOLTIP')}

@@ -60,7 +60,7 @@ export default function CategoryDialog({
     };
 
     return (
-        <div className="w-[25rem] absolute top-10 ltr:right-0 rtl:left-0 bg-n-alpha-3 backdrop-blur-[100px] p-6 rounded-xl border border-n-weak shadow-md flex flex-col gap-6">
+        <div className="w-[25rem] absolute top-10 ltr:right-0 rtl:left-0 overlay-surface p-6 rounded-xl flex flex-col gap-6">
             <h3 className="text-base font-medium text-n-slate-12">
                 {t(`HELP_CENTER.CATEGORY_PAGE.CATEGORY_DIALOG.HEADER.${mode.toUpperCase()}`)}
             </h3>

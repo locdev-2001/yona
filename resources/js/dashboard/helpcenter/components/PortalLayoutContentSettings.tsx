@@ -120,7 +120,7 @@ export default function PortalLayoutContentSettings({
                         description={t('HELP_CENTER.PORTAL_SETTINGS.LAYOUT_CONTENT.LAYOUT.CLASSIC.DESCRIPTION')}
                         onSelect={value => setLayout(value)}
                     >
-                        <div className="w-full mt-2 rounded-md overflow-hidden border border-solid border-n-weak bg-n-slate-2">
+                        <div className="w-full mt-2 rounded-md overflow-hidden bg-n-slate-2">
                             <span dangerouslySetInnerHTML={{ __html: classicLayoutPreview }} />
                         </div>
                     </RadioCard>
@@ -132,7 +132,7 @@ export default function PortalLayoutContentSettings({
                         description={t('HELP_CENTER.PORTAL_SETTINGS.LAYOUT_CONTENT.LAYOUT.SIDEBAR.DESCRIPTION')}
                         onSelect={value => setLayout(value)}
                     >
-                        <div className="w-full mt-2 rounded-md overflow-hidden border border-solid border-n-weak bg-n-slate-2">
+                        <div className="w-full mt-2 rounded-md overflow-hidden bg-n-slate-2">
                             <span dangerouslySetInnerHTML={{ __html: documentationLayoutPreview }} />
                         </div>
                     </RadioCard>
@@ -153,7 +153,7 @@ export default function PortalLayoutContentSettings({
                     {visiblePlatformDetails.map(platform => (
                         <div
                             key={platform.key}
-                            className="flex items-center h-10 gap-1.5 px-3 rounded-lg outline outline-1 outline-n-weak focus-within:outline-n-brand"
+                            className="field-surface flex items-center h-10 gap-1.5 px-3 rounded-lg"
                         >
                             <Icon icon={platform.icon} className="size-4 shrink-0 text-n-slate-11" />
                             <span className="text-sm shrink-0 text-n-slate-10">{platform.prefix}</span>

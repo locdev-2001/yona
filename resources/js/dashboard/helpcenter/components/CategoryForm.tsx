@@ -91,7 +91,7 @@ const CategoryForm = forwardRef<CategoryFormHandle, CategoryFormProps>(function 
 
     return (
         <div className="flex flex-col gap-4">
-            <div className="flex items-center justify-start gap-8 px-4 py-2 border rounded-lg border-n-strong">
+            <div className="panel-surface flex items-center justify-start gap-8 px-4 py-2 rounded-lg">
                 <div className="flex flex-col items-start w-full gap-2 py-2">
                     <span className="text-sm font-medium text-n-slate-11">
                         {t('HELP_CENTER.CATEGORY_PAGE.CATEGORY_DIALOG.HEADER.PORTAL')}

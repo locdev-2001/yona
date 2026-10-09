@@ -64,7 +64,7 @@ const ArticlePendingChangesPopover = forwardRef<PendingChangesPopoverHandle, Art
             <div
                 ref={containerRef}
                 style={{ display: isOpen ? undefined : 'none' }}
-                className="absolute z-50 flex flex-col gap-4 p-4 mt-2 outline outline-1 shadow-lg w-96 end-0 top-full rounded-xl bg-n-alpha-3 backdrop-blur-[100px] outline-n-container"
+                className="overlay-surface absolute z-50 flex flex-col gap-4 p-4 mt-2 w-96 end-0 top-full rounded-xl"
             >
                 <div className="flex items-start justify-between gap-2">
                     <div className="flex flex-col gap-1">

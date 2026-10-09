@@ -39,7 +39,7 @@ export default function BotMetrics({ filters }: BotMetricsProps) {
     }, [accountId, from, to]);
 
     return (
-        <div className="flex flex-wrap mx-0 shadow outline-1 outline outline-n-container rounded-xl bg-n-solid-2 px-6 py-5">
+        <div className="flex flex-wrap mx-0 panel-surface rounded-xl px-6 py-5">
             <ReportMetricCard
                 label={t('BOT_REPORTS.METRIC.TOTAL_CONVERSATIONS.LABEL')}
                 infoText={t('BOT_REPORTS.METRIC.TOTAL_CONVERSATIONS.TOOLTIP')}

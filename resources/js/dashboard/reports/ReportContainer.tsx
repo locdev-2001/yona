@@ -218,7 +218,7 @@ export default function ReportContainer({
 
     return (
         <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 px-6 py-5 shadow outline-1 outline outline-n-container rounded-xl bg-n-solid-2 mt-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 px-6 py-5 panel-surface rounded-xl mt-4">
                 {metrics.map(metric => (
                     <div key={metric.KEY} className="py-4 mb-3 rounded-md">
                         <ChartStats

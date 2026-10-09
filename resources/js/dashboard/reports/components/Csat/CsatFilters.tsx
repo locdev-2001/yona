@@ -218,10 +218,6 @@ export default function CsatFilters({ showTeamFilter = false, onFilterChange }: 
                     </div>
                 )}
 
-                {hasActiveFilters && !isAllFilterSelected && (
-                    <div className="w-full h-px border md:w-px md:h-5 border-n-weak" />
-                )}
-
                 <div className="flex items-center gap-2">
                     {!isAllFilterSelected && (
                         <AddFilterChip
@@ -238,8 +234,6 @@ export default function CsatFilters({ showTeamFilter = false, onFilterChange }: 
                             onAddFilter={addFilter}
                         />
                     )}
-
-                    {hasActiveFilters && <div className="w-px h-5 border border-n-weak" />}
 
                     {hasActiveFilters && (
                         <DropdownButton buttonText={t('CSAT_REPORTS.FILTERS.CLEAR_ALL')} onClick={clearAllFilters} />

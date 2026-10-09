@@ -27,7 +27,7 @@ export default function CsatRatingDistribution({
     };
 
     return (
-        <div className="shadow outline-1 outline outline-n-container rounded-xl bg-n-solid-2 px-6 py-5">
+        <div className="panel-surface rounded-xl px-6 py-5">
             <span className="text-sm font-medium text-n-slate-11">{t('CSAT_REPORTS.METRIC.RATING_DISTRIBUTION')}</span>
 
             {isLoading ? (

@@ -86,7 +86,7 @@ export default function ReportDrilldownCard({ record }: { record: DrilldownRecor
         <article
             role="link"
             tabIndex={0}
-            className="cursor-pointer rounded-md border border-n-weak bg-n-solid-2 p-3 hover:bg-n-alpha-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-n-brand"
+            className="panel-surface cursor-pointer rounded-lg p-3 transition-colors hover:bg-n-slate-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-n-brand"
             onClick={openRecord}
             onKeyDown={event => {
                 if (event.target !== event.currentTarget) return;

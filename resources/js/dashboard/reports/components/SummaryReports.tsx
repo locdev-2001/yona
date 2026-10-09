@@ -169,7 +169,7 @@ export default function SummaryReports({ type }: { type: EntityReportType }) {
 
                 <OverviewReportFilters disabled={isLoading} onFilterChange={setRange} />
 
-                <div className="relative flex-1 overflow-auto px-2 py-2 mt-5 shadow outline-1 outline outline-n-container rounded-xl bg-n-solid-2">
+                <div className="relative flex-1 overflow-auto px-2 py-2 mt-5 panel-surface rounded-xl">
                     <Table table={table} columns={columns} rowKey={row => row.id} />
                     {isLoading && (
                         <div className="absolute inset-0 flex justify-center pt-[12.5rem] bg-n-solid-1/70 rounded-xl pointer-events-none">

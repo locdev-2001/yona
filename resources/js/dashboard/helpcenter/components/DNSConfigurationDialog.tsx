@@ -52,14 +52,14 @@ const DNSConfigurationDialog = forwardRef<DialogHandle, DNSConfigurationDialogPr
                     onClose();
                 }}
             />
-            <div className="flex flex-col gap-6 divide-y divide-n-strong">
+            <div className="flex flex-col gap-8">
                 <div className="flex flex-col gap-6">
                     <div className="flex flex-col gap-2 ltr:pr-10 rtl:pl-10">
                         <h3 className="text-base font-medium leading-6 text-n-slate-12">{t(`${KEY}.HEADER`)}</h3>
                         <p className="mb-0 text-sm text-n-slate-12">{t(`${KEY}.DESCRIPTION`)}</p>
                     </div>
                     <div className="flex items-center gap-3 w-full">
-                        <span className="min-h-10 px-3 py-2.5 inline-flex items-center w-full text-sm bg-transparent border rounded-lg text-n-slate-11 border-n-strong">
+                        <span className="min-h-10 px-3 py-2.5 inline-flex items-center w-full text-sm bg-n-surface-field rounded-lg text-n-slate-11">
                             {subdomainCNAME}
                         </span>
                         <Button
@@ -77,7 +77,7 @@ const DNSConfigurationDialog = forwardRef<DialogHandle, DNSConfigurationDialogPr
                     </div>
                 </div>
 
-                <div className="flex flex-col gap-6 pt-6">
+                <div className="flex flex-col gap-6">
                     <div className="flex flex-col gap-2 ltr:pr-10 rtl:pl-10">
                         <h3 className="text-base font-medium leading-6 text-n-slate-12">
                             {t(`${KEY}.SEND_INSTRUCTIONS.HEADER`)}

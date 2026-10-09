@@ -119,7 +119,6 @@ export default function PortalIntegrationsSettings({
                     value={liveChatWidgetInboxId}
                     options={liveChatWidgets}
                     placeholder={t('HELP_CENTER.PORTAL_SETTINGS.INTEGRATIONS.LIVE_CHAT.PLACEHOLDER')}
-                    className="[&>div>button:not(.focused)]:!outline-n-weak"
                     onChange={setLiveChatWidgetInboxId}
                 />
             </IntegrationCard>

@@ -45,13 +45,13 @@ export default function CsatTable({ pageIndex, onPageChange }: CsatTableProps) {
     ];
 
     return (
-        <div className="shadow outline-1 outline outline-n-container rounded-xl bg-n-solid-2 overflow-hidden">
+        <div className="panel-surface rounded-xl overflow-hidden">
             {uiFlags.isFetching ? (
                 <CsatTableLoader />
             ) : responses.length ? (
                 <div className="overflow-x-auto">
                     <table className="w-full">
-                        <thead className="bg-n-solid-2 border-b border-n-container">
+                        <thead className="border-b border-n-weak">
                             <tr>
                                 {headers.map((header, index) => (
                                     <th
@@ -64,7 +64,7 @@ export default function CsatTable({ pageIndex, onPageChange }: CsatTableProps) {
                                 ))}
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-n-container">
+                        <tbody className="divide-y divide-n-weak">
                             {responses.map(response => {
                                 const rating = getRatingData(response.rating);
                                 return (
@@ -124,7 +124,7 @@ export default function CsatTable({ pageIndex, onPageChange }: CsatTableProps) {
             )}
 
             {Boolean(metrics.totalResponseCount) && (
-                <div className="px-6 py-4 border-t border-n-weak">
+                <div className="px-6 py-4">
                     <Pagination table={table} />
                 </div>
             )}

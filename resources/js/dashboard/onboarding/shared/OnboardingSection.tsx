@@ -18,7 +18,7 @@ export default function OnboardingSection({ title, icon, bare = false, children 
                     <svg width="6" height="5" viewBox="0 0 6 5" fill="none" className="text-n-slate-5">
                         <path d="M3 0L6 5H0L3 0Z" fill="currentColor" />
                     </svg>
-                    <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-n-solid-1 border border-n-weak">
+                    <div className="flex items-center justify-center w-8 h-8 rounded-lg panel-surface">
                         <Icon icon={icon} className="size-4 text-n-slate-11" />
                     </div>
                     <svg width="6" height="5" viewBox="0 0 6 5" fill="none" className="text-n-slate-5">
@@ -31,7 +31,7 @@ export default function OnboardingSection({ title, icon, bare = false, children 
             {bare ? (
                 children
             ) : (
-                <div className="border border-n-weak rounded-xl overflow-hidden bg-n-surface-1">{children}</div>
+                <div className="panel-surface rounded-xl overflow-hidden">{children}</div>
             )}
         </div>
     );

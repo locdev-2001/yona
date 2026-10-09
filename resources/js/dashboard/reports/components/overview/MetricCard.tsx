@@ -20,7 +20,7 @@ export default function MetricCard({
     children,
 }: MetricCardProps) {
     return (
-        <div className="flex flex-col m-0.5 px-6 py-5 rounded-xl flex-grow text-n-slate-12 shadow outline-1 outline outline-n-container bg-n-solid-2 min-h-[10rem]">
+        <div className="flex flex-col m-0.5 px-6 py-5 rounded-xl flex-grow text-n-slate-12 panel-surface min-h-[10rem]">
             <div className="card-header grid w-full mb-6 grid-cols-[repeat(auto-fit,minmax(max-content,50%))] gap-y-2">
                 <div className="flex items-center gap-2 flex-row">
                     <h5 className="mb-0 text-n-slate-12 font-medium text-lg">{header}</h5>
