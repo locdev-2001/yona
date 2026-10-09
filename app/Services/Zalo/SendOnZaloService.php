@@ -214,10 +214,10 @@ class SendOnZaloService extends BaseSendOnChannelService
     /**
      * Một phần = một lượt gọi bridge. Sticker của Zalo đi lệnh sticker riêng, sticker
      * kho Yona đi lệnh sticker tự tạo (không gửi đính kèm của nó); tin chữ chuyển tiếp trong
-     * cùng phiên đi lệnh chuyển tiếp gốc; tin có đính kèm thì các ảnh tĩnh (từ hai ảnh)
-     * gộp thành MỘT phần khối album đứng đầu, mỗi tệp còn lại một phần, rồi chữ +
-     * trích dẫn + nhắc tên đi CUỐI thành một tin chữ riêng — đúng thứ tự Yona hiện
-     * tệp và chữ thành hai bong bóng, không thành chú thích đè lên ảnh.
+     * cùng phiên đi lệnh chuyển tiếp gốc; tin có tệp (đính kèm thật hoặc ảnh thẻ
+     * image_text) gửi tệp trước, rồi chữ + trích dẫn + nhắc tên đi CUỐI thành một tin
+     * chữ riêng — đúng thứ tự Yona hiện tệp và chữ thành hai bong bóng, không thành
+     * chú thích đè lên ảnh.
      *
      * @return list<array{payload: array<string, mixed>, filename: string|null}>
      */
@@ -252,27 +252,50 @@ class SendOnZaloService extends BaseSendOnChannelService
             return [$this->part([...$thread, 'text' => $text, 'forward' => $nativeForward])];
         }
 
-        // 6b: mức image_text (không có tệp đính kèm thật) — gửi ảnh thẻ (satori) như
-        // MỘT đính kèm mang chữ, cùng khuôn với nhánh đính kèm thật bên dưới (Zalo
-        // không có khung thẻ riêng để vẽ tiêu đề/giá/nút).
-        if ($attachments === [] && $plan->imageUrl() !== null) {
-            return [$this->part([
-                ...$thread,
-                ...$this->captionPayload($channel, $text),
-                'file_url' => $plan->imageUrl(),
-                'media_kind' => 'image',
-                'filename' => 'the.png',
-                'content_type' => 'image/png',
-            ])];
+        $fileParts = $attachments === []
+            ? $this->cardImageParts($thread, $plan->imageUrl())
+            : $this->attachmentParts($channel, $thread, $attachments);
+        $textPart = $this->part([...$thread, ...$this->captionPayload($channel, $text)]);
+
+        if ($fileParts === []) {
+            return [$textPart];
         }
 
-        if ($attachments === []) {
-            return [$this->part([
-                ...$thread,
-                ...$this->captionPayload($channel, $text),
-            ])];
+        return filled($text) ? [...$fileParts, $textPart] : $fileParts;
+    }
+
+    /**
+     * Mức image_text (không có tệp đính kèm thật): ảnh thẻ (satori) đi như một tệp
+     * ảnh, vì Zalo không có khung thẻ riêng để vẽ tiêu đề/giá/nút. Chữ kèm danh sách
+     * số đi tin chữ riêng như mọi tệp kèm chữ.
+     *
+     * @param  array<string, mixed>  $thread
+     * @return list<array{payload: array<string, mixed>, filename: string|null, bytes: int|null}>
+     */
+    private function cardImageParts(array $thread, ?string $imageUrl): array
+    {
+        if ($imageUrl === null) {
+            return [];
         }
 
+        return [$this->part([
+            ...$thread,
+            'file_url' => $imageUrl,
+            'media_kind' => self::IMAGE_MEDIA_KIND,
+            'filename' => 'the.png',
+            'content_type' => 'image/png',
+        ])];
+    }
+
+    /**
+     * Ảnh tĩnh (từ hai ảnh) gộp thành MỘT phần khối album đứng đầu, mỗi tệp còn lại một phần.
+     *
+     * @param  array<string, mixed>  $thread
+     * @param  list<Attachment>  $attachments
+     * @return list<array{payload: array<string, mixed>, filename: string|null, bytes: int|null}>
+     */
+    private function attachmentParts(Zalo $channel, array $thread, array $attachments): array
+    {
         $albumImages = $this->albumImages($channel, $attachments);
         $separateFiles = array_values(array_filter($attachments, fn (Attachment $attachment) => ! in_array($attachment, $albumImages, true)));
         $parts = $albumImages === [] ? [] : [$this->albumPart($thread, $albumImages)];
@@ -286,10 +309,6 @@ class SendOnZaloService extends BaseSendOnChannelService
                 // Bridge dùng đúng trần Yona đã chặn lúc đính kèm, không tự giữ một con số riêng.
                 'max_bytes' => Zalo::MAX_ATTACHMENT_BYTES,
             ], $attachment);
-        }
-
-        if (filled($text)) {
-            $parts[] = $this->part([...$thread, ...$this->captionPayload($channel, $text)]);
         }
 
         return $parts;

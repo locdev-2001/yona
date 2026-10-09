@@ -141,33 +141,46 @@ it('tin có lựa chọn gửi thành chữ kèm danh sách đánh số và ghi 
 });
 
 // 6b: ảnh thẻ (satori) — Zalo không có khung thẻ gốc nên gửi ảnh như một đính kèm mang chữ.
-it('cards gửi ra Zalo bằng một đính kèm ảnh (file_url PNG) kèm chữ, khi bridge vẽ ảnh được', function () {
+it('cards gửi ra Zalo: ảnh thẻ (PNG) đi trước không chú thích, chữ kèm danh sách số thành tin riêng ngay sau', function () {
     Storage::fake('public');
     config(['zalo.bridge.send_secret' => 'test-secret']);
     // render/card PHẢI đứng trước personal-messages/send và '*': Http chọn stub khớp
     // ĐẦU TIÊN theo thứ tự khai, không theo độ cụ thể — xem CardImageDeliveryTest.php.
     Http::fake([
         zaloBridgePattern('render/card') => Http::response('fake-png-bytes', 200, ['Content-Type' => 'image/png']),
-        zaloBridgePattern('personal-messages/send') => Http::response(['ok' => true, 'source_id' => 'sent-1']),
+        zaloBridgePattern('personal-messages/send') => Http::sequence()
+            ->push(['ok' => true, 'source_id' => 'msg-card'])
+            ->push(['ok' => true, 'source_id' => 'msg-text']),
         zaloBridgePattern('*') => Http::response(['ok' => true]),
     ]);
 
-    $this->conversation->messages()->create([
+    $message = $this->conversation->messages()->create([
         'account_id' => $this->conversation->account_id,
         'inbox_id' => $this->conversation->inbox_id,
         'message_type' => Message::TYPE_OUTGOING,
         'content' => 'Xem sản phẩm này nhé',
         'content_type' => Message::CONTENT_TYPES['cards'],
-        'content_attributes' => ['items' => [['title' => 'Bình men lam', 'price' => 450000]]],
+        'content_attributes' => ['items' => [[
+            'title' => 'Bình men lam',
+            'price' => 450000,
+            'actions' => [['kind' => 'reply', 'label' => 'Đặt mua', 'value' => 'order']],
+        ]]],
     ]);
 
-    $payload = zaloSendPayloads()[0];
+    [$cardPayload, $textPayload] = zaloSendPayloads();
 
-    expect($payload['text'])->toContain('Xem sản phẩm này nhé')
-        ->and($payload['file_url'])->toContain('card-images/')
-        ->and($payload['media_kind'])->toBe('image')
-        ->and($payload['filename'])->toBe('the.png')
-        ->and($payload['content_type'])->toBe('image/png');
+    expect(zaloSendPayloads())->toHaveCount(2)
+        ->and($cardPayload)->not->toHaveKey('text')
+        ->and($cardPayload['file_url'])->toContain('card-images/')
+        ->and($cardPayload['media_kind'])->toBe('image')
+        ->and($cardPayload['filename'])->toBe('the.png')
+        ->and($cardPayload['content_type'])->toBe('image/png')
+        // Khách trả lời bằng số: danh sách số phải nằm trong tin chữ khách đọc được.
+        ->and($textPayload['text'])->toContain('Xem sản phẩm này nhé')
+        ->and($textPayload['text'])->toContain('1. Đặt mua')
+        ->and($textPayload)->not->toHaveKey('file_url')
+        ->and($message->refresh()->content_attributes['delivery'])->toBe('image_text')
+        ->and($message->content_attributes['external_source_ids'])->toBe(['msg-card', 'msg-text']);
 });
 
 it('gửi kèm quote zca khi agent trả lời trích dẫn', function () {
