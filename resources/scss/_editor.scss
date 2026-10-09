@@ -221,21 +221,30 @@
     mask-composite: intersect, exclude;
   }
 
-  // Dây LED: vành 2px.
+  // Dây LED: vành 2px, để dịu (founder muốn mờ mờ, không chói).
   &::before {
     inset: -1px;
     padding: 2px;
+    opacity: 0.55;
   }
 
-  // Quầng neon: lớp rộng hơn ô đúng bằng lề 8px của ô (rộng hơn thì khung cha cắt
-  // vuông mép phải và lem sang cột bên trái), làm nhòe rồi mới khoét ruột nên ánh sáng
-  // chỉ lan ra ngoài mép và tắt hẳn trước biên lớp.
+  // Quầng neon: hai bên và dưới chỉ rộng hơn ô đúng lề 8px (rộng hơn thì khung cha cắt
+  // vuông mép phải và lem sang cột bên trái); phía trên là khung tin nhắn nên lan được
+  // xa hơn. Làm nhòe rồi mới khoét ruột nên ánh sáng chỉ lan ra ngoài mép.
   &::after {
-    inset: -8px;
-    padding: 8px;
-    border-radius: calc(0.75rem + 8px);
-    filter: blur(4px);
-    opacity: 0.8;
+    inset: -12px -8px -8px;
+    padding: 12px 8px 8px;
+    border-radius: calc(0.75rem + 12px);
+    filter: blur(6px);
+    opacity: 0.35;
+    // Thêm dải mờ ngang ở hai mép ngoài để quầng tắt dần thay vì bị cắt ở biên lớp.
+    -webkit-mask:
+      linear-gradient(to bottom, #000 0, transparent 70%),
+      linear-gradient(to right, transparent, #000 8px, #000 calc(100% - 8px), transparent),
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: source-in, source-in, xor;
+    mask-composite: intersect, intersect, exclude;
   }
 
   @media (prefers-reduced-motion: reduce) {
