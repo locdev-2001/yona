@@ -225,6 +225,8 @@
   &::before {
     inset: -1px;
     padding: 2px;
+    // Dây nằm ngoài ô 1px nên bo lớn hơn ô (rounded-xl) đúng 1px để đồng tâm với góc ô.
+    border-radius: calc(0.75rem + 1px);
     opacity: 0.55;
   }
 
