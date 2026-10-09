@@ -19,6 +19,9 @@ import { t } from '../../../i18n';
 // (integrations), WhatsApp/Content templates (F5), quoted reply + insert
 // article (email/help center). EmojiIconPicker dùng bản portal của A6.
 // Khung soạn tự quyết nguồn dữ liệu và việc gửi; panel chỉ vẽ nút + bảng chọn.
+// Nút gửi ghi chú trung tính (nền trắng, chữ đậm) kèm ổ khoá: phân biệt với nút gửi khách màu thương hiệu.
+const NOTE_SEND_ICON = 'i-lucide-lock';
+
 export interface ReplyStickerPicker {
     loadStickers: (params: StickerBrowseParams) => Promise<StickerBrowseResult>;
     onSelect: (sticker: StickerItem) => void;
@@ -198,7 +201,8 @@ export default function ReplyBottomPanel({
                     label={sendButtonText}
                     type="submit"
                     sm
-                    color={isNote ? 'amber' : 'blue'}
+                    color={isNote ? 'slate' : 'blue'}
+                    icon={isNote ? NOTE_SEND_ICON : undefined}
                     disabled={isSendDisabled}
                     className="flex-shrink-0"
                     onClick={onSend}

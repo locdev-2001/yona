@@ -25,14 +25,16 @@ const RECENT: StickerBrowseResult = {
 function renderPanel({
     stickerPicker = null,
     isEditorDisabled = false,
+    isNote = false,
 }: {
     stickerPicker?: ReplyStickerPicker | null;
     isEditorDisabled?: boolean;
+    isNote?: boolean;
 } = {}) {
     render(
         <ReplyBottomPanel
-            isNote={false}
-            isOnPrivateNote={false}
+            isNote={isNote}
+            isOnPrivateNote={isNote}
             isEditorDisabled={isEditorDisabled}
             showAudioRecorder={false}
             isSendDisabled={false}
@@ -85,6 +87,21 @@ describe('ReplyBottomPanel — nút sticker', () => {
 
         expect(onSelect).toHaveBeenCalledWith(RECENT.stickers[0]);
         await waitFor(() => expect(screen.queryByTestId('sticker-picker')).toBeNull());
+    });
+});
+
+describe('ReplyBottomPanel — nút gửi', () => {
+    it.each([
+        [false, 'bg-n-brand', false],
+        [true, 'bg-n-button-color', true],
+    ])('Lưu ý riêng %s → nền %s, có ổ khoá %s; không dùng nền vàng', (isNote, backgroundClass, hasLock) => {
+        renderPanel({ isNote });
+
+        const sendButton = screen.getByRole('button', { name: /Gửi/ });
+
+        expect(sendButton).toHaveClass(backgroundClass);
+        expect(sendButton.className).not.toMatch(/bg-n-amber/);
+        expect(sendButton.querySelector('.i-lucide-lock') !== null).toBe(hasLock);
     });
 });
 
