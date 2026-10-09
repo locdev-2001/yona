@@ -8,7 +8,9 @@ import MessageMeta from '../MessageMeta';
 import MessageReactions from '../MessageReactions';
 import QuotedMessage from '../QuotedMessage';
 import { useMessageContext } from '../provider';
+import type { MessageGroupPosition } from 'shared/helpers/messageGrouping';
 import { MESSAGE_VARIANTS, ORIENTATION } from '../constants';
+import type { MessageOrientation, MessageVariant } from '../constants';
 import { bubbleCornerClass } from '../helpers/bubbleShape';
 import { readForwardedFrom } from '../helpers/forwardedFrom';
 import { readGroupSender } from '../helpers/groupSender';
@@ -42,14 +44,25 @@ const FLEX_ORIENTATION_MAP: Record<string, string> = {
     [ORIENTATION.CENTER]: 'justify-center',
 };
 
+// Nền và bo góc của một bong bóng theo loại tin, phía và vị trí trong nhóm.
+export function bubbleSurfaceClass(
+    variant: MessageVariant,
+    orientation: MessageOrientation,
+    groupPosition: MessageGroupPosition,
+): string {
+    const cornerClass = variant !== MESSAGE_VARIANTS.ACTIVITY ? bubbleCornerClass(orientation, groupPosition) : 'rounded-lg';
+
+    return `${VARIANT_BASE_MAP[variant] ?? ''} ${cornerClass}`;
+}
+
 interface BaseBubbleProps {
     hideMeta?: boolean;
     className?: string;
     title?: string;
     dataBubbleName?: string;
-    // Nội dung sát viền (lưới ảnh): phần đầu (trích dẫn, người gửi, chuyển tiếp)
-    // tự có đệm và không nới bề ngang bong bóng.
-    flush?: boolean;
+    // Khung không nền (khối ảnh/video): không màu, không bo theo nhóm; phần đầu
+    // (trích dẫn, người gửi, chuyển tiếp) không nới bề ngang khối.
+    bare?: boolean;
     onClick?: MouseEventHandler<HTMLDivElement>;
     children: ReactNode;
 }
@@ -59,7 +72,7 @@ export default function BaseBubble({
     className = '',
     title,
     dataBubbleName,
-    flush = false,
+    bare = false,
     onClick,
     children,
 }: BaseBubbleProps) {
@@ -95,8 +108,7 @@ export default function BaseBubble({
 
 
     const messageClass = [
-        VARIANT_BASE_MAP[variant],
-        variant !== MESSAGE_VARIANTS.ACTIVITY ? bubbleCornerClass(orientation, groupPosition) : 'rounded-lg',
+        bare ? '' : bubbleSurfaceClass(variant, orientation, groupPosition),
         SIDE_MARKER_CLASS[orientation] ?? '',
     ].join(' ');
 
@@ -177,12 +189,12 @@ export default function BaseBubble({
             title={sentAtTooltip}
         >
             <div
-                className={`text-sm min-w-0 overflow-hidden ${messageClass} ${variant !== MESSAGE_VARIANTS.EMAIL ? 'max-w-lg' : ''} ${className}`}
+                className={`text-sm min-w-0 ${bare ? '' : 'overflow-hidden'} ${messageClass} ${variant !== MESSAGE_VARIANTS.EMAIL ? 'max-w-lg' : ''} ${className}`}
                 title={title}
                 data-bubble-name={dataBubbleName}
                 onClick={onClick}
             >
-                {flush ? (hasHeader ? <div className="w-0 min-w-full px-3 pt-2">{header}</div> : null) : header}
+                {bare ? (hasHeader ? <div className="w-0 min-w-full px-1">{header}</div> : null) : header}
                 {children}
                 {shouldShowMeta && (
                     <MessageMeta className={`${FLEX_ORIENTATION_MAP[orientation]} px-3 pb-3 text-n-slate-11 mt-2`} />

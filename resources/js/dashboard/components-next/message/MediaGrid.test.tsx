@@ -85,15 +85,61 @@ describe('lưới ảnh/video trong một tin', () => {
         expect(gallery?.getAttribute('data-items')).toBe('1,2,3,4,5,6,7');
     });
 
-    it('chú thích nằm dưới lưới trong cùng bong bóng', () => {
+    it('khối ảnh không nền, chữ kèm là bong bóng riêng ngay dưới khối ảnh', () => {
         const container = renderMessage(message({ content: 'Mẫu này còn hàng không?', attachments: attachments(2) as never }));
-        const bubble = container.querySelector('[data-bubble-name="text"]');
+        const bubble = container.querySelector('[data-bubble-name="text"]') as HTMLElement;
+        const mediaBlock = bubble.querySelector('[data-media-block]') as HTMLElement;
+        const caption = bubble.querySelector('[data-media-caption]') as HTMLElement;
 
-        expect(bubble?.querySelector('[data-media-grid]')).not.toBeNull();
-        expect(bubble?.querySelector('[data-media-caption]')?.textContent).toContain('Mẫu này còn hàng không?');
-        expect(
-            bubble?.querySelector('[data-media-grid]')?.compareDocumentPosition(bubble.querySelector('[data-media-caption]')!),
-        ).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+        expect(bubble.className).not.toMatch(/\bbg-n-/);
+        expect(mediaBlock.className).not.toMatch(/\bbg-n-/);
+        expect(mediaBlock.className).toContain('rounded-2xl');
+        expect(mediaBlock.className).toContain('w-fit');
+        expect(mediaBlock.contains(caption)).toBe(false);
+        expect(caption.textContent).toContain('Mẫu này còn hàng không?');
+        expect(caption.className).toContain('bg-n-slate-4');
+        expect(mediaBlock.compareDocumentPosition(caption)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
+    });
+
+    it('tin chỉ có ảnh: không có bong bóng chữ', () => {
+        const container = renderMessage(message({ attachments: attachments(1) as never }));
+
+        expect(container.querySelector('[data-media-block]')).not.toBeNull();
+        expect(container.querySelector('[data-media-caption]')).toBeNull();
+    });
+
+    it.each([
+        ['khách', 0, 'items-start', 'bg-n-slate-4'],
+        ['mình', 1, 'items-end', 'bg-n-solid-blue'],
+    ])('tin của %s: khối ảnh và chữ căn cùng phía', (_who, messageType, alignClass, surfaceClass) => {
+        const container = renderMessage(
+            message({
+                message_type: messageType,
+                content: 'Ảnh mẫu',
+                sender: { id: 3, name: 'An', type: messageType === 1 ? 'user' : 'contact' } as never,
+                sender_id: 3,
+                sender_type: messageType === 1 ? 'User' : 'Contact',
+                attachments: attachments(1) as never,
+            }),
+        );
+        const bubble = container.querySelector('[data-bubble-name="text"]') as HTMLElement;
+
+        expect(bubble.className).toContain(alignClass);
+        expect(bubble.querySelector('[data-media-caption]')?.className).toContain(surfaceClass);
+    });
+
+    it.each([
+        [1, null],
+        [2, '1fr 1fr'],
+        [3, '1fr 1fr 1fr'],
+        [4, '1fr 1fr'],
+    ])('%i ảnh: lưới đúng số cột, không chừa ô trống', (count, columns) => {
+        const container = renderMessage(message({ content: 'Chú thích dài '.repeat(20), attachments: attachments(count) as never }));
+        const grid = container.querySelector('[data-media-grid] > .grid') as HTMLElement | null;
+
+        expect(grid?.style.gridTemplateColumns ?? null).toBe(columns);
+        expect(tiles(container)).toHaveLength(count);
+        expect(container.querySelector('[data-media-grid]')?.className ?? '').not.toContain('justify-center');
     });
 
     it('video có nút play, không tự phát, bấm mở trình xem', () => {
