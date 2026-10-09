@@ -1,5 +1,7 @@
 import { useState } from 'react';
 
+import { EXTERNAL_LINK_PROPS } from 'shared/helpers/externalLinks';
+
 import { t } from '../../../../i18n';
 import BaseAttachmentBubble from './BaseAttachment';
 import { useMessageContext } from '../provider';
@@ -71,7 +73,7 @@ export default function ZaloBankCardBubble() {
                     <div className="truncate text-sm text-n-slate-11">{card.account_holder}</div>
                 ) : null}
                 {card.qr_url ? (
-                    <a href={card.qr_url} rel="noreferrer noopener nofollow" target="_blank" className="block pt-1">
+                    <a href={card.qr_url} {...EXTERNAL_LINK_PROPS} className="block pt-1">
                         <img
                             src={card.qr_url}
                             alt=""

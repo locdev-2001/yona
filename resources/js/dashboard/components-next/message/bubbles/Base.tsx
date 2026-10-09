@@ -1,7 +1,6 @@
-import DOMPurify from 'dompurify';
 import type { MouseEvent, MouseEventHandler, ReactNode } from 'react';
 
-import MessageFormatter from 'shared/helpers/MessageFormatter';
+import { messageMarkdownHtml, sanitizeMessageHtml } from 'shared/helpers/externalLinks';
 import { messageTimestamp } from 'shared/helpers/timeHelper';
 import Icon from 'dashboard/components-next/icon/Icon';
 import { t } from '../../../../i18n';
@@ -107,7 +106,7 @@ export default function BaseBubble({
 
     const replyQuotePreview = (() => {
         if (!replyQuote) return '';
-        if (replyQuote.content) return new MessageFormatter(replyQuote.content).formattedMessage;
+        if (replyQuote.content) return messageMarkdownHtml(replyQuote.content);
         if (replyQuote.attachmentType) {
             const attachmentKey = `CHAT_LIST.ATTACHMENTS.${replyQuote.attachmentType}.CONTENT`;
             const attachmentLabel = t(attachmentKey);
@@ -116,7 +115,7 @@ export default function BaseBubble({
         if (replyQuote.unavailable) return t('CONVERSATION.REPLY_MESSAGE_NOT_FOUND');
         return t('CONVERSATION.REPLY_QUOTE.ORIGINAL');
     })();
-    const replyQuoteInnerHtml = useInnerHtml(DOMPurify.sanitize(replyQuotePreview));
+    const replyQuoteInnerHtml = useInnerHtml(sanitizeMessageHtml(replyQuotePreview));
 
     const jumpToRepliedMessage = (event: MouseEvent<HTMLButtonElement>) => {
         event.stopPropagation();

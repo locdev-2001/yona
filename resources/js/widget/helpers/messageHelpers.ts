@@ -1,7 +1,5 @@
 import { format, fromUnixTime } from 'date-fns';
-import DOMPurify from 'dompurify';
-
-import MessageFormatter from 'shared/helpers/MessageFormatter';
+import { messageMarkdownHtml } from 'shared/helpers/externalLinks';
 
 import { joinsPreviousMessage, resolveGroupPositions } from 'shared/helpers/messageGrouping';
 import type { GroupableMessage } from 'shared/helpers/messageGrouping';
@@ -15,13 +13,8 @@ import type { MessageAttachment, MessagesOfDay, PositionedMessage, WidgetMessage
 // Port từ widget/store/modules/conversation/helpers.js + getters.js (phần thuần)
 // và shared/helpers/DateHelper.js#formatUnixDate.
 
-/**
- * HTML của nội dung tin trong widget: URL trần thành link, và giữ `target="_blank"`
- * (DOMPurify mặc định gỡ đi) để link mở tab mới thay vì điều hướng ngay trong iframe
- * widget. `rel="noopener noreferrer nofollow"` do MessageFormatter gắn sẵn.
- */
-export const messageHtml = (content: string | null | undefined): string =>
-    DOMPurify.sanitize(new MessageFormatter(content).formattedMessage, { ADD_ATTR: ['target'] });
+/** HTML của nội dung tin trong widget: link mở tab mới thay vì điều hướng ngay trong iframe widget. */
+export const messageHtml = (content: string | null | undefined): string => messageMarkdownHtml(content);
 
 export const formatUnixDate =(date: number, dateFormat = 'MMM dd, yyyy'): string =>
     format(fromUnixTime(date), dateFormat);

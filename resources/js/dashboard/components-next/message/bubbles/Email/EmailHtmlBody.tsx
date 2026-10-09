@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { allowedCssProperties, sanitize } from 'lettersanitizer';
 
+import { withExternalLinkTargets } from 'shared/helpers/externalLinks';
+
 import { t } from '../../../../../i18n';
 import {
     EMAIL_FRAME_ROOT_ID,
@@ -26,7 +28,9 @@ export default function EmailHtmlBody({ html }: { html: string }) {
     const frameDocument = useMemo(
         () =>
             buildEmailFrameDocument(
-                sanitize(html, '', { allowedCssProperties: ALLOWED_CSS_PROPERTIES, preserveCssPriority: false }),
+                withExternalLinkTargets(
+                    sanitize(html, '', { allowedCssProperties: ALLOWED_CSS_PROPERTIES, preserveCssPriority: false }),
+                ),
             ),
         [html],
     );

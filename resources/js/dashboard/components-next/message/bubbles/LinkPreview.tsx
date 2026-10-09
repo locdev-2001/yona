@@ -1,3 +1,5 @@
+import { EXTERNAL_LINK_PROPS } from 'shared/helpers/externalLinks';
+
 import { t } from '../../../../i18n';
 import BaseBubble from './Base';
 import FormattedContent from './FormattedContent';
@@ -58,8 +60,7 @@ export default function LinkPreviewBubble() {
             {caption ? <FormattedContent content={caption} className="mb-2" /> : null}
             <a
                 href={url}
-                target="_blank"
-                rel="noopener noreferrer nofollow"
+                {...EXTERNAL_LINK_PROPS}
                 className="block max-w-[320px] overflow-hidden rounded-lg border border-n-container bg-n-solid-2"
                 data-testid="link-preview-card"
             >

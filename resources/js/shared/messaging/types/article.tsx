@@ -1,3 +1,5 @@
+import { EXTERNAL_LINK_PROPS } from 'shared/helpers/externalLinks';
+
 import { useMessageHost } from '../host';
 import type { ArticleItem, StructuredMessage } from '../model';
 import { records, safeUrl, text } from '../parse';
@@ -33,8 +35,7 @@ function ArticleRow({ item, message }: { item: ArticleItem; message: StructuredM
         <a
             className="mk-link-card"
             href={item.url}
-            target="_blank"
-            rel="noopener nofollow noreferrer"
+            {...EXTERNAL_LINK_PROPS}
             onClick={event => {
                 event.preventDefault();
                 host.act({ kind: 'link', label: item.title, url: item.url }, { message });

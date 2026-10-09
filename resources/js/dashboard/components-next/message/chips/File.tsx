@@ -1,4 +1,5 @@
 import Icon from 'dashboard/components-next/icon/Icon';
+import { EXTERNAL_LINK_PROPS } from 'shared/helpers/externalLinks';
 
 import { t } from '../../../../i18n';
 import { attachmentExtension, attachmentFileName } from '../helpers/attachments';
@@ -18,8 +19,7 @@ export default function FileChip({ attachment }: { attachment: MessageAttachment
                     className="grid shrink-0 size-8 place-content-center rounded-md cursor-pointer text-n-slate-11 hover:text-n-slate-12 hover:bg-n-alpha-2 transition-colors"
                     href={attachment.data_url ?? ''}
                     download
-                    rel="noreferrer noopener nofollow"
-                    target="_blank"
+                    {...EXTERNAL_LINK_PROPS}
                     onClick={(event) => event.stopPropagation()}
                 >
                     <Icon icon="i-lucide-download" />

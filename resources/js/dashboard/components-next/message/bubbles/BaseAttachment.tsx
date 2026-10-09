@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 
 import Icon from 'dashboard/components-next/icon/Icon';
+import { EXTERNAL_LINK_PROPS } from 'shared/helpers/externalLinks';
 
 import { t } from '../../../../i18n';
 import BaseBubble from './Base';
@@ -58,8 +59,7 @@ export default function BaseAttachmentBubble({
                     {action.href ? (
                         <a
                             href={action.href}
-                            rel="noreferrer noopener nofollow"
-                            target="_blank"
+                            {...EXTERNAL_LINK_PROPS}
                             className="w-full block bg-n-solid-3 px-4 py-2 rounded-lg text-sm text-center border border-n-container"
                         >
                             {action.label}

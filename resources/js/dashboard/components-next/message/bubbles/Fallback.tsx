@@ -1,3 +1,5 @@
+import { EXTERNAL_LINK_PROPS } from 'shared/helpers/externalLinks';
+
 import BaseBubble from './Base';
 import FormattedContent from './FormattedContent';
 import { useMessageContext } from '../provider';
@@ -15,8 +17,7 @@ export default function FallbackBubble() {
             {url ? (
                 <a
                     href={url}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    {...EXTERNAL_LINK_PROPS}
                     className="block max-w-[320px] truncate text-sm text-n-brand underline"
                 >
                     {title}

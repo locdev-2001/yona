@@ -309,3 +309,19 @@ it('thêm một loại tin mới không cần sửa kit', () => {
     renderMessage(messageOf('poll_demo', { options: ['Có', 'Không'] }));
     expect(screen.getByText('Có')).toBeInTheDocument();
 });
+
+describe('liên kết trong tin có cấu trúc mở tab mới', () => {
+    it.each([
+        ['nút liên kết của thẻ sản phẩm', messageOf('cards', { items: [{ id: 'sp-1', title: 'Sản phẩm 1', actions: [{ kind: 'link', label: 'Chi tiết', url: 'https://shop.vn/sp-1' }] }] })],
+        ['bài viết trợ giúp', messageOf('article', { items: [{ title: 'Đổi trả', url: 'https://shop.vn/doi-tra' }] })],
+    ])('%s', (_, message) => {
+        const { container } = renderMessage(message);
+        const anchors = Array.from(container.querySelectorAll('a[href]'));
+
+        expect(anchors.length).toBeGreaterThan(0);
+        anchors.forEach(anchor => {
+            expect(anchor).toHaveAttribute('target', '_blank');
+            expect(anchor.getAttribute('rel')).toMatch(/noopener.*noreferrer|noreferrer.*noopener/);
+        });
+    });
+});

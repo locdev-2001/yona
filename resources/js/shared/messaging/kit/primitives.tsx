@@ -1,5 +1,7 @@
 import { useState, type ReactNode } from 'react';
 
+import { EXTERNAL_LINK_PROPS } from 'shared/helpers/externalLinks';
+
 import { t } from '../../../i18n';
 import { useMessageHost } from '../host';
 import type { Price, StructuredAction, StructuredMessage } from '../model';
@@ -93,7 +95,7 @@ export function ActionButton({
 
     if (action.kind === 'link' && action.url) {
         return (
-            <a className={className} href={action.url} target="_blank" rel="noopener nofollow noreferrer">
+            <a className={className} href={action.url} {...EXTERNAL_LINK_PROPS}>
                 {label}
                 {icon}
             </a>

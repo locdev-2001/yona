@@ -1,6 +1,4 @@
-import DOMPurify from 'dompurify';
-
-import MessageFormatter from 'shared/helpers/MessageFormatter';
+import { messageMarkdownHtml, sanitizeMessageHtml } from 'shared/helpers/externalLinks';
 
 import { useMessageContext } from '../provider';
 import { MESSAGE_VARIANTS } from '../constants';
@@ -10,9 +8,9 @@ import { useInnerHtml } from '../helpers/useInnerHtml';
 export default function FormattedContent({ content, className = '' }: { content: string; className?: string }) {
     const { variant } = useMessageContext();
 
-    const formattedContent =
-        variant === MESSAGE_VARIANTS.ACTIVITY ? content : new MessageFormatter(content).formattedMessage;
-    const innerHtml = useInnerHtml(DOMPurify.sanitize(formattedContent));
+    const innerHtml = useInnerHtml(
+        variant === MESSAGE_VARIANTS.ACTIVITY ? sanitizeMessageHtml(content) : messageMarkdownHtml(content),
+    );
 
     return (
         <span
