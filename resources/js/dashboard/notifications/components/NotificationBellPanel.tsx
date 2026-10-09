@@ -42,7 +42,7 @@ export default function NotificationBellPanel({ activeTab, onTabChange, onNaviga
 
     return (
         <div data-test-id="notification-bell-panel" className="flex flex-col w-full md:w-[360px] max-h-[min(480px,70vh)]">
-            <div className="flex items-center justify-between flex-shrink-0 gap-2 px-4 py-3 border-b border-n-weak">
+            <div className="flex items-center justify-between flex-shrink-0 gap-2 px-4 py-3">
                 <h3 className="text-sm font-medium text-n-slate-12">{t('SIDEBAR.NOTIFICATIONS')}</h3>
                 <Button
                     type="button"
@@ -64,13 +64,13 @@ export default function NotificationBellPanel({ activeTab, onTabChange, onNaviga
                     onTabChanged={tab => onTabChange(tab.value as BellTab)}
                 />
             </div>
-            <div className="flex flex-col flex-1 min-h-0 gap-0.5 px-2 py-1 overflow-y-auto divide-y divide-n-weak [&>*:hover]:!border-y-transparent [&>*:hover+*]:!border-t-transparent">
+            <div className="flex flex-col flex-1 min-h-0 gap-0.5 px-2 py-1 overflow-y-auto">
                 {notifications.map(notification => (
                     <InboxCard
                         key={notification.id}
                         inboxItem={notification}
                         stateInbox={inboxes.find(inbox => inbox.id === notification.primary_actor?.inbox_id)}
-                        className="rounded-none hover:rounded-lg hover:bg-n-alpha-1"
+                        className="rounded-lg hover:bg-n-surface-hover"
                         onClick={() => openConversation(notification)}
                         onMarkAsRead={() => void markAsRead(notification).catch(() => undefined)}
                         onMarkAsUnread={() => void markAsUnread(notification).catch(() => undefined)}
@@ -88,7 +88,7 @@ export default function NotificationBellPanel({ activeTab, onTabChange, onNaviga
                     <p className="p-4 text-sm text-center text-n-slate-10">{t(activeTab === 'unread' ? 'INBOX.BELL.EMPTY_UNREAD' : 'INBOX.BELL.EMPTY')}</p>
                 ) : null}
             </div>
-            <div className="flex flex-shrink-0 justify-center px-4 py-2.5 border-t border-n-weak">
+            <div className="flex flex-shrink-0 justify-center px-4 py-2.5 bg-n-surface-canvas">
                 <Link
                     href={accountScopedUrl(accountId, 'inbox-view')}
                     className="text-sm font-medium text-n-blue-11 hover:underline underline-offset-2"

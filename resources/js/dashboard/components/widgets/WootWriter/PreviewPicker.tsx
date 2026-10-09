@@ -80,9 +80,9 @@ function PreviewPickerInner<TItem extends PreviewPickerItem>(
         ? 'w-full'
         : isStacked
           ? 'w-full flex-1'
-          : 'w-2/5 flex-shrink-0 border-r rtl:border-r-0 rtl:border-l border-n-strong';
+          : 'w-2/5 flex-shrink-0';
 
-    const previewClass = isStacked ? 'h-28 flex-shrink-0 border-t border-n-strong' : 'flex-1';
+    const previewClass = `bg-n-surface-canvas ${isStacked ? 'h-28 flex-shrink-0' : 'flex-1'}`;
 
     // Cuộn chính danh sách: scrollIntoView sẽ cuộn cả tổ tiên bị cắt, làm thẻ nhảy
     // dưới con trỏ đứng yên và mouseover nhấp nháy giữa các hàng.
@@ -116,7 +116,7 @@ function PreviewPickerInner<TItem extends PreviewPickerItem>(
 
     return (
         <div
-            className={`flex overflow-hidden border shadow-lg rounded-xl border-n-strong bg-n-alpha-3 backdrop-blur-[100px] ${
+            className={`flex overflow-hidden overlay-surface rounded-xl ${
                 isStacked ? 'flex-col' : ''
             } ${className}`}
             style={style}
@@ -124,7 +124,7 @@ function PreviewPickerInner<TItem extends PreviewPickerItem>(
         >
             <div className={`flex flex-col min-h-0 ${listClass}`}>
                 {hideSearch ? null : (
-                    <div className="relative flex items-center flex-shrink-0 h-11 px-3 border-b border-n-strong">
+                    <div className="relative flex items-center flex-shrink-0 h-11 px-3">
                         <Icon icon="i-lucide-search" className="size-4 text-n-slate-10" />
                         <input
                             ref={searchRef}
@@ -201,7 +201,7 @@ function PreviewPickerInner<TItem extends PreviewPickerItem>(
             {hasPreview ? (
                 <div className={`flex flex-col min-w-0 ${previewClass}`}>
                     {!isStacked ? (
-                        <div className="flex items-center flex-shrink-0 h-11 px-4 border-b border-n-strong">
+                        <div className="flex items-center flex-shrink-0 h-11 px-4">
                             <span className="min-w-0 text-xs font-medium truncate text-n-slate-11">
                                 {selectedItem?.label}
                             </span>

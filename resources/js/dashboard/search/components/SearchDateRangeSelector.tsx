@@ -112,7 +112,7 @@ export default function SearchDateRangeSelector({ value, className = '', onChang
                     }}
                     footer={
                         <>
-                            <div className="h-px bg-n-strong" />
+                            <div className="h-1" aria-hidden="true" />
                             <div className="flex flex-col gap-2 px-2 py-2">
                                 <div className="flex items-center justify-between gap-2 px-1 h-9">
                                     <span className="text-sm text-n-slate-11">
@@ -127,7 +127,7 @@ export default function SearchDateRangeSelector({ value, className = '', onChang
                                     type="date"
                                     min={minDate}
                                     max={customTo || maxDate}
-                                    className="!w-full !mb-0 !rounded-lg !bg-n-alpha-black2 !outline-n-strong -outline-offset-1 !px-3 !py-2 !text-sm text-n-slate-12 !h-8"
+                                    className="!w-full !mb-0 !rounded-lg !px-3 !py-2 !text-sm text-n-slate-12 !h-8"
                                     onChange={event => setCustomFrom(event.target.value)}
                                 />
                                 <div className="flex items-center gap-3 h-5 px-1">
@@ -140,7 +140,7 @@ export default function SearchDateRangeSelector({ value, className = '', onChang
                                     type="date"
                                     min={customFrom || minDate}
                                     max={maxDate}
-                                    className="!w-full !mb-0 !rounded-lg !bg-n-alpha-black2 !outline-n-strong -outline-offset-1 !px-3 !py-2 !text-sm text-n-slate-12 !h-8"
+                                    className="!w-full !mb-0 !rounded-lg !px-3 !py-2 !text-sm text-n-slate-12 !h-8"
                                     onChange={event => setCustomTo(event.target.value)}
                                 />
                                 <div className="flex items-center gap-2 mt-2">

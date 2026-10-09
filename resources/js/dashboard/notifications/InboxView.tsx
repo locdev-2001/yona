@@ -72,7 +72,7 @@ export default function InboxView({ conversationId }: { conversationId: number }
                     </div>
                 ) : (
                     <div className="flex h-[calc(100%-48px)] min-w-0">
-                        <ConversationBox isInboxView className="flex-1 [&.conversation-details-wrap]:!border-0" />
+                        <ConversationBox isInboxView className="flex-1" />
                         {isContactPanelOpen ? <ConversationSidebar /> : null}
                     </div>
                 )}

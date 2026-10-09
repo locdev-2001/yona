@@ -83,8 +83,8 @@ export default function SearchInput({
 
     return (
         <div
-            className={`rounded-xl transition-[border-bottom] duration-[0.2s] ease-[ease-in-out] relative flex items-start flex-col border border-solid bg-n-solid-1 divide-y divide-n-strong ${
-                isInputFocused ? 'border-n-brand' : 'border-n-strong'
+            className={`rounded-xl transition-[outline-color] duration-200 ease-in-out relative flex items-start flex-col bg-n-surface-panel outline outline-2 -outline-offset-2 ${
+                isInputFocused ? 'outline-n-brand' : 'outline-transparent'
             }`}
         >
             <div className="flex items-center w-full h-[3.25rem] px-4 gap-2">
@@ -113,7 +113,7 @@ export default function SearchInput({
             {children}
 
             <div
-                className={`transition-all duration-200 ease-out grid overflow-hidden w-full !border-t-0 ${
+                className={`transition-all duration-200 ease-out grid overflow-hidden w-full ${
                     showRecentSearches ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
                 }`}
             >

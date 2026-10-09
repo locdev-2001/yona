@@ -68,7 +68,7 @@ export default function InboxItemHeader({
     };
 
     return (
-        <div className="flex items-center justify-between w-full gap-2 border-b px-3 h-12 rtl:border-r border-n-weak flex-shrink-0 bg-n-surface-1">
+        <div className="flex items-center justify-between w-full gap-2 px-3 h-12 flex-shrink-0 bg-n-surface-1">
             <div className="flex items-center gap-4">
                 <BackButton compact buttonLabel={t('INBOX.ACTION_HEADER.BACK')} className="xl:hidden flex" />
                 {totalLength > 1 ? (

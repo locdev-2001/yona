@@ -79,24 +79,24 @@ function InboxLayout({ conversationId }: { conversationId: number }) {
     return (
         <section className="flex w-full h-full min-w-0 bg-n-surface-1">
             <div
-                className={`flex-col h-full w-full lg:min-w-[340px] lg:max-w-[340px] ltr:border-r rtl:border-l border-n-weak ${
+                className={`flex-col h-full w-full lg:min-w-[340px] lg:max-w-[340px] bg-n-surface-list ${
                     conversationId ? 'hidden xl:flex' : 'flex'
                 }`}
             >
                 <InboxListHeader isContextMenuOpen={isContextMenuOpen} onRedirect={redirectToInbox} />
                 <div
                     ref={listRef}
-                    className="flex flex-col gap-0.5 w-full h-[calc(100%-56px)] pb-4 overflow-x-hidden px-2 overflow-y-auto divide-y divide-n-weak [&>*:hover]:!border-y-transparent [&>*.active]:!border-y-transparent [&>*:hover+*]:!border-t-transparent [&>*.active+*]:!border-t-transparent"
+                    className="flex flex-col gap-0.5 w-full h-[calc(100%-56px)] pb-4 overflow-x-hidden px-2 overflow-y-auto"
                 >
                     {notifications.map(notification => (
                         <InboxCard
                             key={notification.id}
                             inboxItem={notification}
                             stateInbox={inboxes.find(inbox => inbox.id === notification.primary_actor?.inbox_id)}
-                            className={`inbox-card rounded-none hover:rounded-lg hover:bg-n-alpha-1 ${
+                            className={`inbox-card rounded-lg ${
                                 conversationId === notification.primary_actor?.id
-                                    ? 'bg-n-alpha-1 !rounded-lg active'
-                                    : ''
+                                    ? 'bg-n-surface-selected active'
+                                    : 'hover:bg-n-surface-hover'
                             }`}
                             onClick={() => openConversation(notification)}
                             onMarkAsRead={() => void markAsRead(notification).catch(() => undefined)}

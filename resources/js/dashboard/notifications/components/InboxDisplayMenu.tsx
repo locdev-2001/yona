@@ -37,7 +37,7 @@ export default function InboxDisplayMenu({ filters, className = '', onFilter }: 
 
     return (
         <div
-            className={`flex flex-col bg-n-alpha-3 backdrop-blur-[100px] border-0 outline outline-1 outline-n-container shadow-lg z-50 max-w-64 min-w-[170px] w-fit rounded-xl divide-y divide-n-weak ${className}`}
+            className={`flex flex-col overlay-surface z-50 max-w-64 min-w-[170px] w-fit rounded-xl ${className}`}
         >
             <div className="flex items-center gap-2 justify-between p-3 rounded-t-lg h-11">
                 <div className="flex gap-1.5 min-w-0">
@@ -58,13 +58,13 @@ export default function InboxDisplayMenu({ filters, className = '', onFilter }: 
                         onClick={() => setShowSortMenu(open => !open)}
                     />
                     {showSortMenu ? (
-                        <div className="absolute flex flex-col gap-0.5 bg-n-alpha-3 backdrop-blur-[100px] z-60 rounded-lg p-0.5 w-fit min-w-20 max-w-32 top-px outline outline-1 outline-n-container">
+                        <div className="absolute flex flex-col gap-0.5 overlay-surface z-60 rounded-lg p-0.5 w-fit min-w-20 max-w-32 top-px">
                             {SORT_OPTIONS.map(option => (
                                 <div
                                     key={option.key}
                                     role="button"
                                     className={`flex rounded-md h-5 w-full items-center justify-between px-1.5 py-0.5 gap-2 whitespace-nowrap ${
-                                        activeSort === option.key ? 'bg-n-brand/10' : ''
+                                        activeSort === option.key ? 'bg-n-surface-selected' : ''
                                     }`}
                                     onClick={event => {
                                         event.stopPropagation();
@@ -90,7 +90,7 @@ export default function InboxDisplayMenu({ filters, className = '', onFilter }: 
             </div>
             <div>
                 <span className="px-3 py-4 text-xs font-medium text-n-slate-11">{t('INBOX.DISPLAY_MENU.DISPLAY')}</span>
-                <div className="flex flex-col divide-y divide-n-weak">
+                <div className="flex flex-col">
                     {DISPLAY_OPTIONS.map(option => (
                         <div key={option.key} className="flex items-center px-3 py-2 gap-1.5 h-9">
                             <input
