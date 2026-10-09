@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Notifications\ConfirmationInstructions;
 use App\Support\AlertSound\AgentAlertPreference;
+use App\Support\Appearance\ColorScheme;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -51,6 +52,7 @@ class ProfilesController extends Controller
             // Kiểm riêng: luật lồng trong cùng validate() làm validated() bỏ mất các khoá ui_settings khác.
             $request->validate([
                 ...AgentAlertPreference::rules(),
+                ...ColorScheme::rules(),
                 // null = theo ngôn ngữ của tài khoản.
                 'ui_settings.locale' => ['nullable', 'string', Rule::in(array_column(config('yona.available_locales', []), 'iso_639_1_code'))],
             ]);

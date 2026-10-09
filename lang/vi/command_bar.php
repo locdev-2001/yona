@@ -55,6 +55,7 @@ return [
         'GO_TO_SETTINGS_ACCOUNT' => 'Đi đến Cài đặt Tài khoản',
         'GO_TO_SETTINGS_PROFILE' => 'Đi đến Cài đặt Hồ sơ',
         'CHANGE_LANGUAGE' => 'Đổi ngôn ngữ giao diện',
+        'CHANGE_APPEARANCE' => 'Đổi chế độ màu (sáng / tối)',
         'ADD_LABELS_TO_CONVERSATION' => 'Thêm nhãn vào hội thoại',
         'ASSIGN_AN_AGENT' => 'Gán cho nhân viên',
         'AI_ASSIST' => 'Trợ lý AI',

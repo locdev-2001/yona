@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { usePage } from '@inertiajs/react';
 
 import { applyFontSizeToDOM } from 'dashboard/composables/useFontSize';
+import { applyColorScheme, useColorScheme } from 'dashboard/composables/useColorScheme';
 import Sidebar from 'dashboard/components-next/sidebar/Sidebar';
 import MobileSidebarLauncher from 'dashboard/components-next/sidebar/MobileSidebarLauncher';
 import SnackbarContainer from 'v3/components/SnackBar/Container';
@@ -21,9 +22,15 @@ export default function Dashboard({ children }: { children: ReactNode }) {
     const { auth, currentAccount, stickerDisplaySize } = usePage<DashboardPageProps>().props;
     const fontSize = auth.user?.ui_settings?.font_size as string | undefined;
 
+    const { colorScheme } = useColorScheme();
+
     useEffect(() => {
         applyFontSizeToDOM(fontSize);
     }, [fontSize]);
+
+    useEffect(() => {
+        applyColorScheme(colorScheme);
+    }, [colorScheme]);
 
     const accountId = currentAccount?.id ?? 0;
 

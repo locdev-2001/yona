@@ -53,6 +53,15 @@ return [
                     'EXTRA_LARGE' => 'Extra Large',
                 ],
             ],
+            'COLOR_SCHEME' => [
+                'TITLE' => 'Color mode',
+                'NOTE' => 'Light or dark. Applies to the dashboard only, not the widget or public pages.',
+                'UPDATE_ERROR' => 'Could not update the color mode, please try again',
+                'OPTIONS' => [
+                    'LIGHT' => 'Light',
+                    'DARK' => 'Dark',
+                ],
+            ],
             'LANGUAGE' => [
                 'TITLE' => 'Preferred Language',
                 'NOTE' => 'Choose the language you want to use.',

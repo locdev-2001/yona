@@ -8,6 +8,9 @@ import { useAlert } from 'dashboard/composables/useAlert';
 import { useInterfaceLocale } from 'dashboard/composables/useInterfaceLocale';
 import { isEditorHotKeyEnabled } from 'dashboard/composables/useUISettings';
 import { applyFontSizeToDOM, DEFAULT_FONT_SIZE } from 'dashboard/composables/useFontSize';
+import ColorSchemeToggle from 'dashboard/components-next/color-scheme-toggle/ColorSchemeToggle';
+import { useColorScheme } from 'dashboard/composables/useColorScheme';
+import { SettingRow } from './SettingSelectRow';
 import { deleteJson, parseApiErrorMessage, putForm, putJson } from 'dashboard/helper/apiClient';
 import Dashboard from '../../Dashboard';
 import SettingsWrapper from '../SettingsWrapper';
@@ -41,12 +44,14 @@ const HOT_KEYS = [
         titleKey: 'PROFILE_SETTINGS.FORM.SEND_MESSAGE.CARD.ENTER_KEY.HEADING',
         descriptionKey: 'PROFILE_SETTINGS.FORM.SEND_MESSAGE.CARD.ENTER_KEY.CONTENT',
         lightImage: '/assets/images/dashboard/profile/hot-key-enter.svg',
+        darkImage: '/assets/images/dashboard/profile/hot-key-enter-dark.svg',
     },
     {
         key: 'cmd_enter' as const,
         titleKey: 'PROFILE_SETTINGS.FORM.SEND_MESSAGE.CARD.CMD_ENTER_KEY.HEADING',
         descriptionKey: 'PROFILE_SETTINGS.FORM.SEND_MESSAGE.CARD.CMD_ENTER_KEY.CONTENT',
         lightImage: '/assets/images/dashboard/profile/hot-key-ctrl-enter.svg',
+        darkImage: '/assets/images/dashboard/profile/hot-key-ctrl-enter-dark.svg',
     },
 ];
 
@@ -60,6 +65,7 @@ export default function ProfileSettingsIndex() {
     const user = auth.user!;
     const { replaceInstallationName } = useBranding();
     const { changeLocale } = useInterfaceLocale();
+    const { colorScheme } = useColorScheme();
 
     const [avatarFile, setAvatarFile] = useState<File | null>(null);
     const [avatarUrl, setAvatarUrl] = useState(user.avatar_url);
@@ -214,6 +220,12 @@ export default function ProfileSettingsIndex() {
                                 description={t('PROFILE_SETTINGS.FORM.INTERFACE_SECTION.FONT_SIZE.NOTE')}
                                 onChange={value => void updateFontSize(value)}
                             />
+                            <SettingRow
+                                label={t('PROFILE_SETTINGS.FORM.INTERFACE_SECTION.COLOR_SCHEME.TITLE')}
+                                description={t('PROFILE_SETTINGS.FORM.INTERFACE_SECTION.COLOR_SCHEME.NOTE')}
+                            >
+                                <ColorSchemeToggle />
+                            </SettingRow>
                             <UserLanguageSelect
                                 label={t('PROFILE_SETTINGS.FORM.INTERFACE_SECTION.LANGUAGE.TITLE')}
                                 description={t('PROFILE_SETTINGS.FORM.INTERFACE_SECTION.LANGUAGE.NOTE')}
@@ -247,7 +259,7 @@ export default function ProfileSettingsIndex() {
                                     onSelect={key => void toggleHotKey(key)}
                                 >
                                     <img
-                                        src={hotKey.lightImage}
+                                        src={colorScheme === 'dark' ? hotKey.darkImage : hotKey.lightImage}
                                         alt={t(hotKey.titleKey)}
                                         className="block object-cover w-full"
                                     />

@@ -55,6 +55,15 @@ return [
                     'EXTRA_LARGE' => 'Rất lớn',
                 ],
             ],
+            'COLOR_SCHEME' => [
+                'TITLE' => 'Chế độ màu',
+                'NOTE' => 'Sáng hoặc tối. Chỉ áp cho màn quản trị, không đổi widget hay trang công khai.',
+                'UPDATE_ERROR' => 'Có lỗi khi cập nhật chế độ màu, bạn hãy thử lại',
+                'OPTIONS' => [
+                    'LIGHT' => 'Sáng',
+                    'DARK' => 'Tối',
+                ],
+            ],
             'LANGUAGE' => [
                 'TITLE' => 'Ngôn ngữ ưa dùng',
                 'NOTE' => 'Chọn ngôn ngữ bạn muốn dùng.',

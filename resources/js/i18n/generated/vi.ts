@@ -2888,6 +2888,7 @@ const messages: Record<string, unknown> = {
             "GO_TO_SETTINGS_ACCOUNT": "Đi đến Cài đặt Tài khoản",
             "GO_TO_SETTINGS_PROFILE": "Đi đến Cài đặt Hồ sơ",
             "CHANGE_LANGUAGE": "Đổi ngôn ngữ giao diện",
+            "CHANGE_APPEARANCE": "Đổi chế độ màu (sáng / tối)",
             "ADD_LABELS_TO_CONVERSATION": "Thêm nhãn vào hội thoại",
             "ASSIGN_AN_AGENT": "Gán cho nhân viên",
             "AI_ASSIST": "Trợ lý AI",
@@ -10274,6 +10275,15 @@ const messages: Record<string, unknown> = {
                         "EXTRA_LARGE": "Rất lớn"
                     }
                 },
+                "COLOR_SCHEME": {
+                    "TITLE": "Chế độ màu",
+                    "NOTE": "Sáng hoặc tối. Chỉ áp cho màn quản trị, không đổi widget hay trang công khai.",
+                    "UPDATE_ERROR": "Có lỗi khi cập nhật chế độ màu, bạn hãy thử lại",
+                    "OPTIONS": {
+                        "LIGHT": "Sáng",
+                        "DARK": "Tối"
+                    }
+                },
                 "LANGUAGE": {
                     "TITLE": "Ngôn ngữ ưa dùng",
                     "NOTE": "Chọn ngôn ngữ bạn muốn dùng.",
@@ -11105,6 +11115,7 @@ const messages: Record<string, unknown> = {
         "KEYBOARD_SHORTCUTS": "Phím tắt",
         "LANGUAGE": "Ngôn ngữ",
         "LANGUAGE_ACCOUNT_DEFAULT": "Theo tài khoản",
+        "APPEARANCE": "Giao diện",
         "SUPER_ADMIN_CONSOLE": "Console quản trị",
         "DOCS": "Đọc tài liệu",
         "CHANGELOG": "Nhật ký thay đổi",

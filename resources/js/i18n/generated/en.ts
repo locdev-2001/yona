@@ -2888,6 +2888,7 @@ const messages: Record<string, unknown> = {
             "GO_TO_SETTINGS_ACCOUNT": "Go to Account Settings",
             "GO_TO_SETTINGS_PROFILE": "Go to Profile Settings",
             "CHANGE_LANGUAGE": "Change interface language",
+            "CHANGE_APPEARANCE": "Change color mode (light / dark)",
             "ADD_LABELS_TO_CONVERSATION": "Add label to the conversation",
             "ASSIGN_AN_AGENT": "Assign an agent",
             "AI_ASSIST": "AI Assist",
@@ -10274,6 +10275,15 @@ const messages: Record<string, unknown> = {
                         "EXTRA_LARGE": "Extra Large"
                     }
                 },
+                "COLOR_SCHEME": {
+                    "TITLE": "Color mode",
+                    "NOTE": "Light or dark. Applies to the dashboard only, not the widget or public pages.",
+                    "UPDATE_ERROR": "Could not update the color mode, please try again",
+                    "OPTIONS": {
+                        "LIGHT": "Light",
+                        "DARK": "Dark"
+                    }
+                },
                 "LANGUAGE": {
                     "TITLE": "Preferred Language",
                     "NOTE": "Choose the language you want to use.",
@@ -11105,6 +11115,7 @@ const messages: Record<string, unknown> = {
         "KEYBOARD_SHORTCUTS": "Keyboard shortcuts",
         "LANGUAGE": "Language",
         "LANGUAGE_ACCOUNT_DEFAULT": "Account default",
+        "APPEARANCE": "Appearance",
         "SUPER_ADMIN_CONSOLE": "SuperAdmin console",
         "DOCS": "Read documentation",
         "CHANGELOG": "Changelog",

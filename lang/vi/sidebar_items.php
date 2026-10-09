@@ -13,6 +13,7 @@ return [
     'KEYBOARD_SHORTCUTS' => 'Phím tắt',
     'LANGUAGE' => 'Ngôn ngữ',
     'LANGUAGE_ACCOUNT_DEFAULT' => 'Theo tài khoản',
+    'APPEARANCE' => 'Giao diện',
     'SUPER_ADMIN_CONSOLE' => 'Console quản trị',
     'DOCS' => 'Đọc tài liệu',
     'CHANGELOG' => 'Nhật ký thay đổi',

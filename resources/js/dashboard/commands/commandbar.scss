@@ -5,6 +5,19 @@ ninja-keys {
   z-index: 9999;
 }
 
+// ninja-keys vẽ trong shadow root, không đọc biến màu của portal nên phải đặt riêng.
+.dark ninja-keys {
+  --ninja-overflow-background: rgba(0, 0, 0, 0.5);
+  --ninja-modal-background: rgb(var(--surface-raised));
+  --ninja-secondary-background-color: rgb(var(--slate-4));
+  --ninja-selected-background: rgb(var(--slate-4));
+  --ninja-footer-background: rgb(var(--slate-3));
+  --ninja-text-color: rgb(var(--slate-12));
+  --ninja-icon-color: rgb(var(--slate-12));
+  --ninja-secondary-text-color: rgb(var(--slate-11));
+  --ninja-separate-border: 1px solid rgb(var(--slate-5));
+}
+
 // Chân bảng do Yona dựng qua <slot name="footer"> (xem CommandBarFooter.tsx).
 // Nội dung nằm ở light DOM nên không hưởng style trong shadow root của ninja-keys,
 // phải chép lại bộ đo của `.modal-footer` gốc; biến --ninja-* vẫn kế thừa xuống.

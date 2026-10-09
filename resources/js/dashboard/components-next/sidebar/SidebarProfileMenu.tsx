@@ -9,6 +9,7 @@ import { avatarSeed } from 'shared/avatar/avatarSeed';
 import KeyShortcutModal from 'dashboard/commands/KeyShortcutModal';
 import SidebarProfileMenuStatus from './SidebarProfileMenuStatus';
 import SidebarProfileMenuLanguage from './SidebarProfileMenuLanguage';
+import SidebarProfileMenuAppearance from './SidebarProfileMenuAppearance';
 import { useSidebarKeyboardShortcuts } from 'dashboard/composables/useSidebarKeyboardShortcuts';
 import { accountScopedUrl } from 'dashboard/helper/URLHelper';
 import { useCurrentUserAvailability } from 'dashboard/realtime/hooks';
@@ -21,7 +22,7 @@ import {
 import type { DashboardPageProps } from '../../types';
 
 // Port từ sidebar/SidebarProfileMenu.vue
-// Khác gốc: Appearance mở submenu đổi theme trực tiếp (gốc mở ninja-keys — B10);
+// Khác gốc: Ngôn ngữ và Giao diện chọn thẳng trong menu (gốc mở ninja-keys);
 // Contact support / Docs / Changelog (link ra site ngoài) bỏ theo branding;
 // Keyboard shortcuts vào B10.
 export default function SidebarProfileMenu({ isCollapsed = false }: { isCollapsed?: boolean }) {
@@ -41,6 +42,7 @@ export default function SidebarProfileMenu({ isCollapsed = false }: { isCollapse
             <SidebarProfileMenuStatus />
             <DropdownSeparator />
             <SidebarProfileMenuLanguage />
+            <SidebarProfileMenuAppearance />
             <DropdownItem
                 label={t('SIDEBAR_ITEMS.KEYBOARD_SHORTCUTS')}
                 icon="i-lucide-keyboard"

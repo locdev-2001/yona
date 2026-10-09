@@ -114,7 +114,7 @@ export default function PortalBaseSettings({ activePortal, isFetching = false, o
     return (
         <div className="flex flex-col w-full gap-4">
             <div className="flex flex-col w-full gap-2">
-                <label className="mb-0.5 text-sm font-medium text-gray-900">
+                <label className="mb-0.5 text-sm font-medium text-n-slate-12">
                     {t('HELP_CENTER.PORTAL_SETTINGS.FORM.AVATAR.LABEL')}
                 </label>
                 <Avatar

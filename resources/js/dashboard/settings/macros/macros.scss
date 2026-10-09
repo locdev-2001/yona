@@ -1,7 +1,7 @@
 // Style scoped của MacroForm.vue + MacroNodes.vue (nền chấm bi + đường nối nét
 // đứt giữa các node). Giữ nguyên selector/hằng số của gốc.
 .macro-gradient-radial {
-  background-image: radial-gradient(#ebf0f5 1.2px, transparent 0);
+  background-image: radial-gradient(rgb(var(--slate-4)) 1.2px, transparent 0);
 }
 
 .macro-gradient-radial-size {

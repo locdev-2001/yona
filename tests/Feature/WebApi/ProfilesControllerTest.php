@@ -223,6 +223,27 @@ describe('PUT /api/v1/profile', function () {
         expect($user->fresh()->ui_settings)->toBeEmpty();
     });
 
+    it('lưu chế độ màu của portal vào ui_settings, giữ nguyên các tuỳ chọn khác', function (string $scheme) {
+        $user = User::factory()->create(['ui_settings' => ['font_size' => '18px']]);
+
+        $this->actingAs($user)
+            ->putJson('/api/v1/profile', ['ui_settings' => ['color_scheme' => $scheme]])
+            ->assertOk()
+            ->assertJsonPath('ui_settings.color_scheme', $scheme)
+            ->assertJsonPath('ui_settings.font_size', '18px');
+    })->with(['light', 'dark']);
+
+    it('từ chối chế độ màu không có', function () {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->putJson('/api/v1/profile', ['ui_settings' => ['color_scheme' => 'sepia']])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('ui_settings.color_scheme');
+
+        expect($user->fresh()->ui_settings)->toBeEmpty();
+    });
+
     it('populates the unconfirmed email and sends confirmation to the new address', function () {
         Notification::fake();
         $user = User::factory()->create(['email' => 'old@example.com']);

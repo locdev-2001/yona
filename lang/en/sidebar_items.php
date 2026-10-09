@@ -11,6 +11,7 @@ return [
     'KEYBOARD_SHORTCUTS' => 'Keyboard shortcuts',
     'LANGUAGE' => 'Language',
     'LANGUAGE_ACCOUNT_DEFAULT' => 'Account default',
+    'APPEARANCE' => 'Appearance',
     'SUPER_ADMIN_CONSOLE' => 'SuperAdmin console',
     'DOCS' => 'Read documentation',
     'CHANGELOG' => 'Changelog',

@@ -42,6 +42,33 @@ it('key đúng dạng, name không rỗng, tệp logo tồn tại', function () 
     }
 });
 
+// Logo hiện trên cả nền sáng lẫn nền tối của portal: hình chỉ có nét đen (hoặc chỉ nét
+// rất tối) thì chìm mất ở chế độ tối. Đo trên lưới điểm ảnh lấy mẫu cho nhanh.
+it('mọi logo nền tảng đều có phần sáng đủ thấy trên nền tối', function () {
+    foreach (glob(public_path('brand-assets/platforms/*.webp')) as $path) {
+        $image = imagecreatefromwebp($path);
+        $width = imagesx($image);
+        $height = imagesy($image);
+        $step = max(1, intdiv(min($width, $height), 64));
+        $opaque = 0;
+        $visibleOnDark = 0;
+
+        for ($x = 0; $x < $width; $x += $step) {
+            for ($y = 0; $y < $height; $y += $step) {
+                $color = imagecolorsforindex($image, imagecolorat($image, $x, $y));
+                if ($color['alpha'] > 63) {
+                    continue;
+                }
+                $opaque++;
+                $luminance = 0.2126 * $color['red'] + 0.7152 * $color['green'] + 0.0722 * $color['blue'];
+                $visibleOnDark += $luminance >= 100 ? 1 : 0;
+            }
+        }
+
+        expect($visibleOnDark / max(1, $opaque))->toBeGreaterThan(0.05, basename($path).' tối trơn, chìm ở chế độ tối');
+    }
+});
+
 it('Twilio quyết nền tảng theo medium', function () {
     expect((new TwilioSms(['medium' => 'sms']))->platform()->key)->toBe('sms')
         ->and((new TwilioSms(['medium' => 'whatsapp']))->platform()->key)->toBe('whatsapp');

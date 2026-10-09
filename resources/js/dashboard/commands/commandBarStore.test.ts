@@ -4,6 +4,8 @@ import { router } from '@inertiajs/react';
 import { t } from '../../i18n';
 import { buildGoToActions } from './useGoToCommandHotKeys';
 import { buildLanguageActions } from './useLanguageCommandHotKeys';
+import { buildColorSchemeActions } from './useColorSchemeCommandHotKeys';
+import { colorSchemeOptions } from 'dashboard/composables/useColorScheme';
 import { NAVIGATION_ICONS } from 'dashboard/helper/commandbar/icons';
 import { buildMenuItems } from 'dashboard/components-next/sidebar/menuItems';
 import { filterMenuByRole } from 'dashboard/components-next/sidebar/permissions';
@@ -177,5 +179,28 @@ describe('buildLanguageActions', () => {
         accountDefault.handler?.();
 
         expect(changeLocale.mock.calls).toEqual([['vi'], ['']]);
+    });
+});
+
+describe('buildColorSchemeActions', () => {
+    it('gõ "Giao diện" hoặc "dark mode" tìm được lệnh, mở ra Sáng / Tối', () => {
+        const [parent, ...children] = buildColorSchemeActions(colorSchemeOptions(), vi.fn());
+
+        expect(parent.title).toBe(t('COMMAND_BAR.COMMANDS.CHANGE_APPEARANCE'));
+        expect(parent.keywords).toContain(t('SIDEBAR_ITEMS.APPEARANCE'));
+        expect(parent.keywords).toContain('dark mode');
+        expect(children.map(child => child.title)).toEqual(colorSchemeOptions().map(option => option.label));
+        expect(parent.children).toEqual(children.map(child => child.id));
+        children.forEach(child => expect(child.parent).toBe(parent.id));
+    });
+
+    it('chọn một chế độ thì lưu đúng chế độ đó', () => {
+        const changeColorScheme = vi.fn().mockResolvedValue(undefined);
+        const [, light, dark] = buildColorSchemeActions(colorSchemeOptions(), changeColorScheme);
+
+        dark.handler?.();
+        light.handler?.();
+
+        expect(changeColorScheme.mock.calls).toEqual([['dark'], ['light']]);
     });
 });

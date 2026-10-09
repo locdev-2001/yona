@@ -34,7 +34,7 @@ const defaultSansFonts = [
 ];
 
 const tailwindConfig = {
-  darkMode: [], // sản phẩm chỉ có một chủ đề sáng (gỡ dark mode 20/09/2026)
+  darkMode: [], // chế độ tối của portal đi qua biến màu (resources/scss/_dark-colors.scss), không dùng biến thể dark:
   content: [
     './resources/js/**/*.{ts,tsx,js,jsx}',
     './resources/views/**/*.blade.php',

@@ -12,7 +12,7 @@ export default function Logo({ className }: { className?: string }) {
         <img
             src={globalConfig.logoThumbnail}
             alt={globalConfig.installationName}
-            className={`object-contain rounded-md ${className ?? 'size-4'}`}
+            className={`brand-mark object-contain rounded-md ${className ?? 'size-4'}`}
         />
     );
 }

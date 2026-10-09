@@ -6,6 +6,7 @@ import { t } from '../../i18n';
 import CommandBarFooter from './CommandBarFooter';
 import { useGoToCommandHotKeys } from './useGoToCommandHotKeys';
 import { useLanguageCommandHotKeys } from './useLanguageCommandHotKeys';
+import { useColorSchemeCommandHotKeys } from './useColorSchemeCommandHotKeys';
 import { useCommandBarActions } from './commandBarStore';
 import type { NinjaKeysElement } from './commandBarStore';
 
@@ -44,6 +45,7 @@ export default function CommandBar() {
     // nguồn `conversation` do ConversationView đăng ký.
     useGoToCommandHotKeys();
     useLanguageCommandHotKeys();
+    useColorSchemeCommandHotKeys();
     const actions = useCommandBarActions();
     const [currentCommandRoot, setCurrentCommandRoot] = useState<string | null>(null);
     const [hasNoMatches, setHasNoMatches] = useState(false);

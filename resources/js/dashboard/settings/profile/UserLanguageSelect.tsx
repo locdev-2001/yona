@@ -1,6 +1,6 @@
 import { t } from '../../../i18n';
-import FormSelect from 'v3/components/Form/Select';
 import { useInterfaceLocale } from 'dashboard/composables/useInterfaceLocale';
+import SettingSelectRow from './SettingSelectRow';
 
 // Danh sách ngôn ngữ lấy đúng các ngôn ngữ máy chủ bật (globalConfig.availableLocales),
 // lựa chọn lưu vào ui_settings.locale; rỗng = theo ngôn ngữ của tài khoản.
@@ -22,12 +22,13 @@ export default function UserLanguageSelect({ label, description, value, onChange
     ];
 
     return (
-        <div className="flex gap-2 justify-between w-full items-start">
-            <div>
-                <label className="text-n-gray-12 font-medium leading-6 text-sm">{label}</label>
-                <p className="text-n-gray-11">{description}</p>
-            </div>
-            <FormSelect name="language" className="min-w-28 mt-px" value={value} options={options} onChange={onChange} />
-        </div>
+        <SettingSelectRow
+            name="language"
+            label={label}
+            description={description}
+            value={value}
+            options={options}
+            onChange={onChange}
+        />
     );
 }
