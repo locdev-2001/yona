@@ -228,19 +228,18 @@
     opacity: 0.55;
   }
 
-  // Quầng neon: hai bên và dưới chỉ rộng hơn ô đúng lề 8px (rộng hơn thì khung cha cắt
-  // vuông mép phải và lem sang cột bên trái); phía trên là khung tin nhắn nên lan được
-  // xa hơn. Làm nhòe rồi mới khoét ruột nên ánh sáng chỉ lan ra ngoài mép.
+  // Quầng neon: lan đúng 4px ra ngoài dây LED (dây nằm ở -1px), sáng giảm dần ra ngoài
+  // nhờ độ nhòe cộng dải mờ ở mép lớp. Làm nhòe rồi mới khoét ruột nên ánh sáng chỉ lan
+  // ra ngoài, không ám vào ô soạn.
   &::after {
-    inset: -12px -8px -8px;
-    padding: 12px 8px 8px;
-    border-radius: calc(0.75rem + 12px);
-    filter: blur(6px);
-    opacity: 0.35;
-    // Thêm dải mờ ngang ở hai mép ngoài để quầng tắt dần thay vì bị cắt ở biên lớp.
+    inset: -5px;
+    padding: 5px;
+    border-radius: calc(0.75rem + 5px);
+    filter: blur(2px);
+    opacity: 0.5;
     -webkit-mask:
-      linear-gradient(to bottom, #000 0, transparent 70%),
-      linear-gradient(to right, transparent, #000 8px, #000 calc(100% - 8px), transparent),
+      linear-gradient(to bottom, transparent 0, #000 5px, transparent 70%),
+      linear-gradient(to right, transparent, #000 5px, #000 calc(100% - 5px), transparent),
       linear-gradient(#000 0 0) content-box,
       linear-gradient(#000 0 0);
     -webkit-mask-composite: source-in, source-in, xor;
