@@ -383,9 +383,10 @@ class Message extends Model
         return OutgoingText::render($this->content, $this->inbox->capabilities()->textFormat());
     }
 
+    // Loại không còn trong bảng (dữ liệu cũ) hiện như chữ, để một tin lạ không làm hỏng cả hội thoại.
     public function contentTypeName(): string
     {
-        return array_flip(self::CONTENT_TYPES)[$this->content_type];
+        return array_flip(self::CONTENT_TYPES)[$this->content_type] ?? 'text';
     }
 
     public function statusName(): ?string

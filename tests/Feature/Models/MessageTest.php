@@ -76,6 +76,14 @@ describe('when content_type is blank', function () {
 
         expect($message->contentTypeName())->toBe('text');
     });
+
+    it('treats an unknown stored content type as text instead of failing the whole conversation', function () {
+        $conversation = messageConversation();
+        $message = Message::factory()->create(messageAttributesFor($conversation));
+        Message::query()->whereKey($message->id)->update(['content_type' => 999]);
+
+        expect($message->fresh()->contentTypeName())->toBe('text');
+    });
 });
 
 describe('processed_message_content', function () {
