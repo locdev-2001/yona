@@ -25,7 +25,7 @@ export default function AccordionItem({
     children,
 }: AccordionItemProps) {
     return (
-        <div className="text-sm rounded-lg bg-n-surface-canvas">
+        <div className="text-sm rounded-lg bg-n-surface-canvas border border-n-weak">
             <button
                 type="button"
                 aria-expanded={isOpen}
