@@ -126,8 +126,8 @@ class FilterService extends BaseFilterService
     }
 
     /**
-     * Danh sách lọc chỉ phân trang bằng `page` nên xếp nhóm ghim lên đầu ngay
-     * trong ORDER BY, số đếm cửa sổ vẫn tính trên trọn tập khớp bộ lọc.
+     * Danh sách lọc chỉ phân trang bằng `page` nên xếp nhóm ghim lên đầu (theo
+     * thứ tự người xem xếp) ngay trong ORDER BY, số đếm cửa sổ vẫn tính trên trọn tập khớp bộ lọc.
      *
      * @param  Builder<Conversation>  $query
      */
@@ -136,7 +136,7 @@ class FilterService extends BaseFilterService
         $pinnedIds = ConversationPin::conversationIdsPinnedBy($this->user, $this->account->id);
 
         if ($pinnedIds !== []) {
-            $query->orderByRaw('conversations.id = ANY(?::bigint[]) DESC', ['{'.implode(',', $pinnedIds).'}']);
+            $query->orderByRaw('array_position(?::bigint[], conversations.id) ASC NULLS LAST', ['{'.implode(',', $pinnedIds).'}']);
         }
     }
 

@@ -119,6 +119,8 @@ export interface Conversation {
     sla_policy_id: number | null;
     // Cờ ghim của chính người xem; vắng mặt ở payload realtime (dựng chung cho cả account).
     pinned?: boolean;
+    // Thứ tự trong nhóm ghim của người xem, nhỏ đứng trên; null khi chưa ghim.
+    pin_position?: number | null;
 }
 
 export interface ConversationListMeta {

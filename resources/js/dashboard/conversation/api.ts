@@ -1,6 +1,6 @@
 import type { MessageAttachment } from 'dashboard/components-next/message/helpers/attachments';
 import type { ConversationFilterPayload } from 'dashboard/components-next/filter/helper/filterQuery';
-import { deleteJson, getJson, postForm, postJson } from '../helper/apiClient';
+import { deleteJson, getJson, patchJson, postForm, postJson } from '../helper/apiClient';
 import type { RequestOptions } from '../helper/apiClient';
 import type { ConversationType } from './constants';
 import type {
@@ -482,6 +482,18 @@ export function setConversationPinned(accountId: number, conversationId: number,
     const url = `/api/v1/accounts/${accountId}/conversations/${conversationId}/pin`;
 
     return (pinned ? postWithoutBody(url) : deleteJson(url)).then(() => undefined);
+}
+
+export interface PinPosition {
+    id: number;
+    pin_position: number;
+}
+
+// Xếp lại nhóm ghim của người đang đăng nhập; máy chủ trả vị trí mới của cả nhóm.
+export function reorderPinnedConversations(accountId: number, orderedIds: number[]): Promise<PinPosition[]> {
+    return patchJson<{ payload: PinPosition[] }>(`/api/v1/accounts/${accountId}/conversations/pins/order`, {
+        conversation_ids: orderedIds,
+    }).then(response => response.payload);
 }
 
 // AssignmentsController#create: agent trả partial _agent (null khi gỡ), team trả `json: @team`.

@@ -308,6 +308,7 @@ export default function ChatList({
                     <ConversationList
                         key="list"
                         conversationList={conversations}
+                        sortablePins
                         isLoading={listLoading}
                         showEndOfListMessage={showEndOfListMessage}
                         showAssignee={showAssigneeInConversationCard}

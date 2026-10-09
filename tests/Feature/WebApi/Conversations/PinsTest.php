@@ -181,4 +181,124 @@ describe('ghim hội thoại', function () {
             ->assertOk()
             ->assertJsonPath('pinned', true);
     });
+    it('ghim mới đứng đầu nhóm ghim, payload mang pin_position', function () {
+        $account = Account::factory()->create();
+        $pinner = pinsTestAdminOf($account);
+        [$newest, $middle, $oldest] = pinsTestConversations($account, 3);
+
+        foreach ([$newest, $oldest] as $conversation) {
+            $this->actingAs($pinner)
+                ->postJson("/api/v1/accounts/{$account->id}/conversations/{$conversation->display_id}/pin")
+                ->assertNoContent();
+        }
+
+        $payload = $this->actingAs($pinner)
+            ->getJson("/api/v1/accounts/{$account->id}/conversations?status=all")
+            ->json('data.payload');
+
+        expect(array_column($payload, 'id'))->toBe([$oldest->display_id, $newest->display_id, $middle->display_id])
+            ->and(array_column($payload, 'pin_position'))->toBe([-2, -1, null]);
+    });
+
+    it('đổi thứ tự nhóm ghim, danh sách thường và lọc nâng cao theo thứ tự mới', function () {
+        $account = Account::factory()->create();
+        $pinner = pinsTestAdminOf($account);
+        [$first, $second, $third, $unpinned] = pinsTestConversations($account, 4);
+        foreach ([$third, $second, $first] as $conversation) {
+            ConversationPin::pin($pinner, $conversation);
+        }
+
+        $this->actingAs($pinner)
+            ->patchJson("/api/v1/accounts/{$account->id}/conversations/pins/order", [
+                'conversation_ids' => [$third->display_id, $first->display_id, $second->display_id],
+            ])
+            ->assertOk()
+            ->assertExactJson(['payload' => [
+                ['id' => $third->display_id, 'pin_position' => 0],
+                ['id' => $first->display_id, 'pin_position' => 1],
+                ['id' => $second->display_id, 'pin_position' => 2],
+            ]]);
+
+        $expected = [$third->display_id, $first->display_id, $second->display_id, $unpinned->display_id];
+        $filtered = $this->actingAs($pinner)->postJson("/api/v1/accounts/{$account->id}/conversations/filter", [
+            'payload' => [['attribute_key' => 'status', 'filter_operator' => 'equal_to', 'values' => ['open'], 'query_operator' => null]],
+        ])->json('data.payload.*.id');
+
+        expect(pinsTestListIds($account, $pinner))->toBe($expected)
+            ->and($filtered)->toBe($expected);
+    });
+
+    it('xếp một phần nhóm ghim chỉ đổi chỗ trong những ô đang chiếm, bỏ qua mã không ghim', function () {
+        $account = Account::factory()->create();
+        $pinner = pinsTestAdminOf($account);
+        [$a, $b, $c, $d, $unpinned] = pinsTestConversations($account, 5);
+        foreach ([$d, $c, $b, $a] as $conversation) {
+            ConversationPin::pin($pinner, $conversation);
+        }
+
+        $this->actingAs($pinner)
+            ->patchJson("/api/v1/accounts/{$account->id}/conversations/pins/order", [
+                'conversation_ids' => [$d->display_id, $unpinned->display_id, 999999, $b->display_id],
+            ])
+            ->assertOk();
+
+        expect(pinsTestListIds($account, $pinner))
+            ->toBe([$a->display_id, $d->display_id, $c->display_id, $b->display_id, $unpinned->display_id]);
+    });
+
+    it('đổi thứ tự chỉ chạm nhóm ghim của chính người gọi trong account đó', function () {
+        $account = Account::factory()->create();
+        $pinner = pinsTestAdminOf($account);
+        $colleague = pinsTestAdminOf($account);
+        [$first, $second] = pinsTestConversations($account, 2);
+        foreach ([$pinner, $colleague] as $user) {
+            ConversationPin::pin($user, $second);
+            ConversationPin::pin($user, $first);
+        }
+        $otherAccount = Account::factory()->create();
+        AccountUser::factory()->create(['account_id' => $otherAccount->id, 'user_id' => $pinner->id, 'role' => AccountUser::ROLE_ADMINISTRATOR]);
+        [$foreign] = pinsTestConversations($otherAccount, 1);
+        ConversationPin::pin($pinner, $foreign);
+
+        $this->actingAs($pinner)
+            ->patchJson("/api/v1/accounts/{$account->id}/conversations/pins/order", [
+                'conversation_ids' => [$second->display_id, $first->display_id],
+            ])
+            ->assertOk()
+            ->assertJsonCount(2, 'payload');
+
+        expect(pinsTestListIds($account, $pinner))->toBe([$second->display_id, $first->display_id])
+            ->and(pinsTestListIds($account, $colleague))->toBe([$first->display_id, $second->display_id])
+            ->and(ConversationPin::query()->where('conversation_id', $foreign->id)->value('position'))->toBe(-1);
+    });
+
+    it('từ chối danh sách đổi thứ tự rỗng hoặc sai kiểu', function (mixed $conversationIds) {
+        $account = Account::factory()->create();
+        $pinner = pinsTestAdminOf($account);
+
+        $this->actingAs($pinner)
+            ->patchJson("/api/v1/accounts/{$account->id}/conversations/pins/order", ['conversation_ids' => $conversationIds])
+            ->assertUnprocessable();
+    })->with([
+        'rỗng' => [[]],
+        'không phải mảng' => ['1,2'],
+        'phần tử không phải số' => [['abc']],
+    ]);
+
+    it('sau khi đổi thứ tự, trang theo con trỏ vẫn không lặp nhóm ghim', function () {
+        $account = Account::factory()->create();
+        $pinner = pinsTestAdminOf($account);
+        $conversations = pinsTestConversations($account, 28);
+        [$lastPinned, $firstPinned] = [$conversations[26], $conversations[27]];
+        ConversationPin::pin($pinner, $lastPinned);
+        ConversationPin::pin($pinner, $firstPinned);
+        ConversationPin::reorder($pinner, $account->id, [$lastPinned->display_id, $firstPinned->display_id]);
+
+        $firstPage = $this->actingAs($pinner)->getJson("/api/v1/accounts/{$account->id}/conversations?status=all");
+        $secondIds = pinsTestListIds($account, $pinner, 'status=all&cursor='.$firstPage->json('data.meta.next_cursor'));
+
+        expect(array_slice($firstPage->json('data.payload.*.id'), 0, 2))->toBe([$lastPinned->display_id, $firstPinned->display_id])
+            ->and($firstPage->json('data.payload.*.id'))->toHaveCount(27)
+            ->and($secondIds)->toBe([$conversations[25]->display_id]);
+    });
 });

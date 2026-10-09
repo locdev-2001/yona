@@ -35,9 +35,11 @@ class ConversationResource extends JsonResource
     /** @var list<int>|null Nhóm người xem là thành viên, nạp sẵn khi dựng cả trang. */
     private ?array $viewerTeamIds = null;
 
-    // Ghim là của riêng người xem: null khi payload không dựng cho một người cụ thể
-    // (realtime, webhook) thì bỏ hẳn cờ `pinned` để client giữ giá trị đang có.
-    private ?bool $pinnedByViewer = null;
+    // Ghim là của riêng người xem: false khi payload không dựng cho một người cụ thể
+    // (realtime, webhook) thì bỏ hẳn cờ `pinned`/`pin_position` để client giữ giá trị đang có.
+    private bool $knowsViewerPins = false;
+
+    private ?int $viewerPinPosition = null;
 
     /** @param iterable<Conversation> $conversations */
     public static function collectionFor(iterable $conversations): array
@@ -45,13 +47,13 @@ class ConversationResource extends JsonResource
         $conversations = new EloquentCollection(collect($conversations)->values()->all());
         self::preload($conversations);
         $viewerTeamIds = self::viewerTeamIds($conversations);
-        $viewerPinnedIds = self::viewerPinnedIds($conversations);
+        $viewerPinPositions = self::viewerPinPositions($conversations);
 
         return $conversations
-            ->map(function (Conversation $conversation) use ($viewerTeamIds, $viewerPinnedIds) {
+            ->map(function (Conversation $conversation) use ($viewerTeamIds, $viewerPinPositions) {
                 $resource = new self($conversation);
                 $resource->viewerTeamIds = $viewerTeamIds;
-                $resource->rememberViewerPins($viewerPinnedIds);
+                $resource->rememberViewerPins($viewerPinPositions);
 
                 return $resource->toArray(request());
             })
@@ -63,24 +65,23 @@ class ConversationResource extends JsonResource
     public static function forViewer(Conversation $conversation, Request $request): array
     {
         $resource = new self($conversation);
-        $resource->rememberViewerPins(self::viewerPinnedIds(new EloquentCollection([$conversation])));
+        $resource->rememberViewerPins(self::viewerPinPositions(new EloquentCollection([$conversation])));
 
         return $resource->toArray($request);
     }
 
-    /** @param list<int>|null $viewerPinnedIds */
-    private function rememberViewerPins(?array $viewerPinnedIds): void
+    /** @param array<int, int>|null $viewerPinPositions */
+    private function rememberViewerPins(?array $viewerPinPositions): void
     {
-        $this->pinnedByViewer = $viewerPinnedIds === null
-            ? null
-            : in_array($this->resource->id, $viewerPinnedIds, true);
+        $this->knowsViewerPins = $viewerPinPositions !== null;
+        $this->viewerPinPosition = $viewerPinPositions[$this->resource->id] ?? null;
     }
 
     /**
      * @param  EloquentCollection<int, Conversation>  $conversations
-     * @return list<int>|null
+     * @return array<int, int>|null vị trí ghim của người xem theo khoá chính hội thoại
      */
-    private static function viewerPinnedIds(EloquentCollection $conversations): ?array
+    private static function viewerPinPositions(EloquentCollection $conversations): ?array
     {
         $viewer = request()->user();
         $first = $conversations->first();
@@ -89,7 +90,7 @@ class ConversationResource extends JsonResource
             return null;
         }
 
-        return ConversationPin::conversationIdsPinnedBy($viewer, $first->account_id, $conversations->modelKeys());
+        return ConversationPin::positionsPinnedBy($viewer, $first->account_id, $conversations->modelKeys());
     }
 
     /**
@@ -170,7 +171,7 @@ class ConversationResource extends JsonResource
             'priority' => $conversation->priorityName(),
             'waiting_since' => $conversation->waiting_since?->getTimestamp() ?? 0,
             'sla_policy_id' => null,
-            ...($this->pinnedByViewer === null ? [] : ['pinned' => $this->pinnedByViewer]),
+            ...($this->knowsViewerPins ? ['pinned' => $this->viewerPinPosition !== null, 'pin_position' => $this->viewerPinPosition] : []),
         ];
     }
 

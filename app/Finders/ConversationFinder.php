@@ -424,9 +424,10 @@ class ConversationFinder
     }
 
     /**
-     * Hội thoại người xem đã ghim đứng đầu danh sách: trang đầu trả trọn nhóm ghim
-     * khớp bộ lọc, còn phần phân trang (page lẫn cursor) chỉ đi trên hội thoại chưa
-     * ghim, nên con trỏ không bao giờ trỏ vào nhóm ghim.
+     * Hội thoại người xem đã ghim đứng đầu danh sách theo thứ tự người đó xếp:
+     * trang đầu trả trọn nhóm ghim khớp bộ lọc, còn phần phân trang (page lẫn
+     * cursor) chỉ đi trên hội thoại chưa ghim, nên con trỏ không bao giờ trỏ vào
+     * nhóm ghim.
      *
      * @param  Builder<Conversation>  $query
      * @return array{0: Collection<int, Conversation>, 1: Builder<Conversation>}
@@ -439,8 +440,11 @@ class ConversationFinder
             return [new EloquentCollection, $query];
         }
 
+        $pinRank = array_flip($pinnedIds);
         $pinnedConversations = $isFirstPage
             ? $query->clone()->whereIn('conversations.id', $pinnedIds)->get()
+                ->sortBy(fn (Conversation $conversation) => $pinRank[$conversation->id])
+                ->values()
             : new EloquentCollection;
 
         return [$pinnedConversations, $query->whereNotIn('conversations.id', $pinnedIds)];

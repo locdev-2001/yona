@@ -56,6 +56,8 @@ class ConversationsController extends Controller
     // Ô tìm trong danh sách là từ khoá người gõ, không phải văn bản dài.
     private const LIST_SEARCH_MAX_LENGTH = 200;
 
+    private const MAX_REORDERED_PINS = 500;
+
     private const UNREAD_COUNTS_FEATURE = 'conversation_unread_counts';
 
     // `page` (OFFSET) giữ cho client cũ; `cursor` lấy từ meta.next_cursor của trang
@@ -353,6 +355,27 @@ class ConversationsController extends Controller
         ConversationPin::unpin($this->pinningUser($request), $this->fetchConversationForUser($request, $account, $conversationId));
 
         return response()->noContent();
+    }
+
+    // Đổi thứ tự nhóm ghim của người gọi: `conversation_ids` là mã hội thoại theo thứ tự mới.
+    public function reorderPins(Request $request, Account $account): JsonResponse
+    {
+        $validated = $request->validate([
+            'conversation_ids' => ['required', 'array', 'min:1', 'max:'.self::MAX_REORDERED_PINS],
+            'conversation_ids.*' => ['required', 'integer', 'min:1'],
+        ]);
+
+        $positions = ConversationPin::reorder(
+            $this->pinningUser($request),
+            $account->id,
+            array_map('intval', $validated['conversation_ids']),
+        );
+
+        return response()->json([
+            'payload' => collect($positions)
+                ->map(fn (int $position, int $displayId) => ['id' => $displayId, 'pin_position' => $position])
+                ->values(),
+        ]);
     }
 
     // Agent bot không có danh sách hội thoại riêng nên không có gì để ghim.

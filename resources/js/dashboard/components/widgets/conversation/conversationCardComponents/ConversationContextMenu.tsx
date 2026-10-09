@@ -5,6 +5,15 @@ import MenuItem from 'dashboard/components/widgets/conversation/contextMenu/Menu
 import { t } from '../../../../../i18n';
 import { ICONS } from 'dashboard/icons';
 
+export type PinMoveDirection = 'top' | 'up' | 'down';
+
+// Đổi chỗ trong nhóm ghim bằng menu: lối duy nhất trên màn cảm ứng (không kéo thả).
+export interface PinMoveActions {
+    canMoveUp: boolean;
+    canMoveDown: boolean;
+    onMove: (direction: PinMoveDirection) => void;
+}
+
 // Menu thao tác của một thẻ hội thoại. Một nguồn menu cho mọi cách mở: chuột phải
 // lên thẻ hoặc nút "…" trên thẻ.
 interface ConversationContextMenuProps {
@@ -15,6 +24,7 @@ interface ConversationContextMenuProps {
     onMarkAsRead: () => void;
     onMarkAsUnread: () => void;
     onTogglePin: () => void;
+    pinMoves?: PinMoveActions | null;
     onClose: () => void;
 }
 
@@ -26,6 +36,7 @@ export default function ConversationContextMenu({
     onMarkAsRead,
     onMarkAsUnread,
     onTogglePin,
+    pinMoves = null,
     onClose,
 }: ConversationContextMenuProps): ReactNode {
     return (
@@ -36,6 +47,27 @@ export default function ConversationContextMenu({
                     icon={isPinned ? ICONS.unpin : ICONS.pin}
                     onClick={onTogglePin}
                 />
+                {pinMoves?.canMoveUp ? (
+                    <>
+                        <MenuItem
+                            label={t('CONVERSATION.CARD_CONTEXT_MENU.MOVE_PIN_TOP')}
+                            icon={ICONS.pinMoveTop}
+                            onClick={() => pinMoves.onMove('top')}
+                        />
+                        <MenuItem
+                            label={t('CONVERSATION.CARD_CONTEXT_MENU.MOVE_PIN_UP')}
+                            icon={ICONS.pinMoveUp}
+                            onClick={() => pinMoves.onMove('up')}
+                        />
+                    </>
+                ) : null}
+                {pinMoves?.canMoveDown ? (
+                    <MenuItem
+                        label={t('CONVERSATION.CARD_CONTEXT_MENU.MOVE_PIN_DOWN')}
+                        icon={ICONS.pinMoveDown}
+                        onClick={() => pinMoves.onMove('down')}
+                    />
+                ) : null}
                 {hasUnreadMessages ? (
                     <MenuItem
                         label={t('CONVERSATION.CARD_CONTEXT_MENU.MARK_AS_READ')}

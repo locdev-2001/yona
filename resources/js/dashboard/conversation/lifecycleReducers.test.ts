@@ -4,6 +4,9 @@ import {
     applyConversationMuted,
     applyConversationPinned,
     applyConversationPriority,
+    applyPinPositions,
+    moveId,
+    pinPositionsForOrder,
     applyConversationStatus,
     snoozedUntilForStatus,
 } from './lifecycleReducers';
@@ -97,5 +100,36 @@ describe('applyConversationPinned', () => {
 
         expect(pinned.map(item => item.pinned)).toEqual([true, undefined]);
         expect(applyConversationPinned(pinned, 4, false)[0].pinned).toBe(false);
+    });
+});
+
+describe('thứ tự nhóm ghim', () => {
+    it('ghim mới đứng đầu nhóm ghim, bỏ ghim xoá vị trí', () => {
+        const list = [buildConversation({ id: 4 }), buildConversation({ id: 5, pinned: true, pin_position: -3 })];
+        const pinned = applyConversationPinned(list, 4, true);
+
+        expect(pinned[0].pin_position).toBe(-4);
+        expect(applyConversationPinned(pinned, 4, false)[0].pin_position).toBeNull();
+    });
+
+    it('xếp lại dùng đúng những ô đang chiếm, ghim không hiện giữ chỗ', () => {
+        const list = [
+            buildConversation({ id: 1, pinned: true, pin_position: 0 }),
+            buildConversation({ id: 2, pinned: true, pin_position: 3 }),
+            buildConversation({ id: 3, pinned: true, pin_position: 5 }),
+        ];
+        const positions = pinPositionsForOrder(list, [3, 1, 2]);
+
+        expect([...positions]).toEqual([[3, 0], [1, 3], [2, 5]]);
+        expect(applyPinPositions(list, positions).map(item => item.pin_position)).toEqual([3, 5, 0]);
+    });
+
+    it.each([
+        { id: 3, target: 0, expected: [3, 1, 2] },
+        { id: 1, target: 1, expected: [2, 1, 3] },
+        { id: 1, target: 9, expected: [2, 3, 1] },
+        { id: 7, target: 0, expected: [1, 2, 3] },
+    ])('moveId($id → $target)', ({ id, target, expected }) => {
+        expect(moveId([1, 2, 3], id, target)).toEqual(expected);
     });
 });

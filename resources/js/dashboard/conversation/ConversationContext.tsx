@@ -49,6 +49,7 @@ import {
     toggleTyping,
     unmuteConversation as unmuteConversationRequest,
     setConversationPinned as setConversationPinnedRequest,
+    reorderPinnedConversations as reorderPinnedConversationsRequest,
 } from './api';
 import type { SendMessagePayload } from './api';
 import type { StickerItem } from './stickerApi';
@@ -64,6 +65,9 @@ import {
     applyConversationMuted,
     applyConversationPinned,
     applyConversationPriority,
+    applyPinPositions,
+    applyPinState,
+    pinPositionsForOrder,
     applyConversationStatus,
     snoozedUntilForStatus,
 } from './lifecycleReducers';
@@ -201,6 +205,8 @@ interface ConversationContextValue {
     markMessagesUnread: (conversationId: number) => Promise<void>;
     // Ghim của riêng người xem: cập nhật ngay trên danh sách, lỗi thì trả lại như cũ.
     setConversationPinned: (conversationId: number, pinned: boolean) => Promise<void>;
+    // Xếp lại nhóm ghim đang hiện theo `orderedIds`; cập nhật ngay, lỗi thì trả về chỗ cũ.
+    reorderPinnedConversations: (orderedIds: number[]) => Promise<void>;
     // updateCustomAttributes của store gốc — accordion Conversation Information.
     updateConversationCustomAttributes: (customAttributes: Record<string, unknown>) => Promise<void>;
 }
@@ -450,6 +456,8 @@ export function ConversationProvider({
                 : selectVisibleConversations(allConversations, viewFilters, sortBy),
         [allConversations, appliedFilters, filteredConversations, viewFilters, sortBy],
     );
+    const visibleConversationsRef = useRef(conversations);
+    visibleConversationsRef.current = conversations;
     const selectedConversation = useMemo(
         () => allConversations.find((item) => item.id === conversationId) ?? null,
         [allConversations, conversationId],
@@ -1365,16 +1373,41 @@ export function ConversationProvider({
 
     const setConversationPinned = useCallback(
         async (targetId: number, pinned: boolean) => {
-            const applyPinned = (value: boolean) => {
-                setAllConversations(current => applyConversationPinned(current, targetId, value));
-                setFilteredConversations(current => applyConversationPinned(current, targetId, value));
-            };
-            applyPinned(pinned);
+            const previous = visibleConversationsRef.current.find(item => item.id === targetId)
+                ?? allConversationsRef.current.find(item => item.id === targetId);
+            const previousPinState = { pinned: previous?.pinned ?? false, pin_position: previous?.pin_position ?? null };
+
+            setAllConversations(current => applyConversationPinned(current, targetId, pinned));
+            setFilteredConversations(current => applyConversationPinned(current, targetId, pinned));
             try {
                 await setConversationPinnedRequest(accountId, targetId, pinned);
             } catch {
-                applyPinned(!pinned);
+                setAllConversations(current => applyPinState(current, targetId, previousPinState));
+                setFilteredConversations(current => applyPinState(current, targetId, previousPinState));
                 useAlert(t(pinned ? 'CONVERSATION.CARD_CONTEXT_MENU.PIN_ERROR' : 'CONVERSATION.CARD_CONTEXT_MENU.UNPIN_ERROR'));
+            }
+        },
+        [accountId],
+    );
+
+    const reorderPinnedConversations = useCallback(
+        async (orderedIds: number[]) => {
+            const visible = visibleConversationsRef.current;
+            const previousPositions = new Map(
+                visible.filter(item => orderedIds.includes(item.id)).map(item => [item.id, item.pin_position ?? null]),
+            );
+            const applyPositions = (positions: Map<number, number | null>) => {
+                setAllConversations(current => applyPinPositions(current, positions));
+                setFilteredConversations(current => applyPinPositions(current, positions));
+            };
+
+            applyPositions(pinPositionsForOrder(visible, orderedIds));
+            try {
+                const saved = await reorderPinnedConversationsRequest(accountId, orderedIds);
+                applyPositions(new Map(saved.map(item => [item.id, item.pin_position])));
+            } catch {
+                applyPositions(previousPositions);
+                useAlert(t('CONVERSATION.CARD_CONTEXT_MENU.REORDER_PIN_ERROR'));
             }
         },
         [accountId],
@@ -1437,6 +1470,7 @@ export function ConversationProvider({
             markMessagesRead,
             markMessagesUnread,
             setConversationPinned,
+            reorderPinnedConversations,
             updateConversationCustomAttributes,
         }),
         [
@@ -1495,6 +1529,7 @@ export function ConversationProvider({
             markMessagesRead,
             markMessagesUnread,
             setConversationPinned,
+            reorderPinnedConversations,
             updateConversationCustomAttributes,
         ],
     );

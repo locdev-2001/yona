@@ -226,6 +226,18 @@ describe('shouldAddConversationToList / matchesConversationView', () => {
 
         expect(selectVisibleConversations([newer, pinnedOld], filters, sortKey).map((c) => c.id)).toEqual([1, 2]);
     });
+
+    it('nhóm ghim xếp theo pin_position, bất kể thứ tự sắp xếp danh sách', () => {
+        const filters = { assigneeTab: 'all' as const, status: 'all', inboxId: 0, teamId: 0, currentUserId: 7 };
+        const list = [
+            buildConversation({ id: 1, last_activity_at: 30, pinned: true, pin_position: 2 }),
+            buildConversation({ id: 2, last_activity_at: 10, pinned: true, pin_position: -1 }),
+            buildConversation({ id: 3, last_activity_at: 20, pinned: true, pin_position: 0 }),
+            buildConversation({ id: 4, last_activity_at: 40 }),
+        ];
+
+        expect(selectVisibleConversations(list, filters, 'last_activity_at_desc').map((c) => c.id)).toEqual([2, 3, 1, 4]);
+    });
 });
 
 describe('mergeFetchedConversations', () => {

@@ -4,6 +4,10 @@ import { router, usePage } from '@inertiajs/react';
 
 import ConversationCard from '../../components/widgets/conversation/ConversationCard';
 import ConversationContextMenu from '../../components/widgets/conversation/conversationCardComponents/ConversationContextMenu';
+import type {
+    PinMoveActions,
+    PinMoveDirection,
+} from '../../components/widgets/conversation/conversationCardComponents/ConversationContextMenu';
 import { useBulkSelection } from 'dashboard/composables/useBulkActions';
 import { conversationListPageURL, conversationUrl } from 'dashboard/helper/URLHelper';
 import type { DashboardPageProps } from '../../types';
@@ -22,6 +26,8 @@ interface ConversationItemProps {
     conversationType?: string;
     // Mục "Hội thoại" của ô tìm: dòng xem trước là tin khớp, bấm thẻ nhảy tới tin đó.
     matchedMessage?: ConversationMessage | null;
+    // Thẻ đã ghim trong danh sách xếp được: các mục đổi chỗ trong nhóm ghim.
+    pinMoves?: PinMoveActions | null;
 }
 
 export default function ConversationItem({
@@ -29,6 +35,7 @@ export default function ConversationItem({
     showAssignee = false,
     conversationType = '',
     matchedMessage = null,
+    pinMoves = null,
 }: ConversationItemProps) {
     const {
         accountId,
@@ -81,6 +88,16 @@ export default function ConversationItem({
         void setConversationPinned(source.id, !source.pinned);
         closeContextMenu();
     };
+
+    const contextMenuPinMoves = pinMoves
+        ? {
+              ...pinMoves,
+              onMove: (direction: PinMoveDirection) => {
+                  pinMoves.onMove(direction);
+                  closeContextMenu();
+              },
+          }
+        : null;
 
     const onMarkAsRead = () => {
         void markMessagesRead(source.id);
@@ -147,6 +164,7 @@ export default function ConversationItem({
                     onMarkAsRead={onMarkAsRead}
                     onMarkAsUnread={onMarkAsUnread}
                     onTogglePin={onTogglePin}
+                    pinMoves={contextMenuPinMoves}
                     onClose={closeContextMenu}
                 />
             ) : null}

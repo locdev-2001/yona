@@ -45,6 +45,9 @@ export const ICONS = {
     pin: 'i-lucide-pin',
     pinned: 'i-yona-pin-filled',
     unpin: 'i-lucide-pin-off',
+    pinMoveTop: 'i-lucide-arrow-up-to-line',
+    pinMoveUp: 'i-lucide-arrow-up',
+    pinMoveDown: 'i-lucide-arrow-down',
     moreActions: 'i-lucide-ellipsis',
 
     // Soạn tin
