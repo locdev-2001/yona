@@ -133,7 +133,7 @@ export default function ConversationList({
     }, [showLoadMoreSentinel]);
 
     return (
-        <div ref={conversationListRef} className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden conversations-list">
+        <div ref={conversationListRef} className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden [scrollbar-gutter:stable] conversations-list">
             {header}
             <div className="flex flex-col gap-0.5 px-2">
                 {pinnedConversations.length ? (

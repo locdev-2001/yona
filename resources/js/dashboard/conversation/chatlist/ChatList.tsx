@@ -228,7 +228,7 @@ export default function ChatList({
                     onDeleteFolders={() => setShowDeleteFolderModal(true)}
                 />
                 <ChatListSearch />
-                <div className="flex items-center min-w-0 pe-2">
+                <div className="flex items-center min-w-0">
                     <div className="flex-1 min-w-0">
                         {appliedFilters === null ? (
                             <ChatTypeTabs
@@ -238,17 +238,21 @@ export default function ChatList({
                             />
                         ) : null}
                     </div>
-                    <NextButton
-                        xs
-                        ghost
-                        slate={!isSelecting}
-                        icon={isSelecting ? 'i-lucide-x' : 'i-lucide-list-checks'}
-                        title={t(isSelecting ? 'CHAT_LIST.SELECTION_MODE.EXIT' : 'CHAT_LIST.SELECTION_MODE.START')}
-                        aria-label={t(isSelecting ? 'CHAT_LIST.SELECTION_MODE.EXIT' : 'CHAT_LIST.SELECTION_MODE.START')}
-                        aria-pressed={isSelecting}
-                        className="flex-shrink-0"
-                        onClick={toggleSelectionMode}
-                    />
+                    {/* Thẳng cột với nút "…" của thẻ: cùng khe thanh cuộn (scrollbar-gutter) với
+                        danh sách, rồi lùi đúng px-2 của danh sách + px-3 của thẻ. */}
+                    <div className="flex flex-shrink-0 py-1 pe-5 overflow-hidden [scrollbar-gutter:stable]">
+                        <NextButton
+                            xs
+                            ghost
+                            slate={!isSelecting}
+                            icon={isSelecting ? 'i-lucide-x' : 'i-lucide-list-checks'}
+                            title={t(isSelecting ? 'CHAT_LIST.SELECTION_MODE.EXIT' : 'CHAT_LIST.SELECTION_MODE.START')}
+                            aria-label={t(isSelecting ? 'CHAT_LIST.SELECTION_MODE.EXIT' : 'CHAT_LIST.SELECTION_MODE.START')}
+                            aria-pressed={isSelecting}
+                            className="flex-shrink-0"
+                            onClick={toggleSelectionMode}
+                        />
+                    </div>
                 </div>
                 {isSearching && !listSearch.loading && !listSearch.contacts.length && !listSearch.conversations.length ? (
                     <p className="px-4 py-6 mb-0 text-sm text-center break-words text-n-slate-11">
