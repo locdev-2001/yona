@@ -136,10 +136,10 @@
     // bậc nền, không bằng đường kẻ. Đổi phong cách = sửa đúng các biến dưới đây.
     // Hover, đang chọn, ô nhập là lớp phủ trong suốt để đặt trên nền nào cũng ra
     // đúng một bậc đậm hơn nền đó.
-    --surface-app: 241 242 244;
+    --surface-app: 255 255 255;
     --surface-sidebar: var(--surface-app);
     --surface-list: 255 255 255;
-    --surface-canvas: 247 248 250;
+    --surface-canvas: 248 250 253;
     --surface-panel: 255 255 255;
     --surface-raised: 255 255 255;
     --surface-hover: 15, 23, 42, 0.05;

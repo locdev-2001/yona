@@ -172,3 +172,27 @@ body {
   background-color: rgb(var(--amber-4));
   color: rgb(var(--slate-12));
 }
+
+// Thanh cuộn mảnh và mờ để không tranh chỗ với nội dung; đậm lên khi rê chuột.
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(var(--slate-12) / 0.14) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgb(var(--slate-12) / 0.14);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgb(var(--slate-12) / 0.3);
+}
