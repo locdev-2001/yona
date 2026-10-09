@@ -6,6 +6,7 @@ import Icon from 'dashboard/components-next/icon/Icon';
 import { t } from '../../../../i18n';
 import MessageMeta from '../MessageMeta';
 import MessageReactions from '../MessageReactions';
+import QuotedMessage from '../QuotedMessage';
 import { useMessageContext } from '../provider';
 import { MESSAGE_VARIANTS, ORIENTATION } from '../constants';
 import { bubbleCornerClass } from '../helpers/bubbleShape';
@@ -134,12 +135,15 @@ export default function BaseBubble({
                 disabled={replyQuote.targetId === null}
                 onClick={jumpToRepliedMessage}
             >
-                {replyQuote.senderName ? (
-                    <span className="block text-xs leading-5 font-medium truncate">{replyQuote.senderName}</span>
-                ) : null}
-                <span
-                    className="block prose prose-bubble line-clamp-2"
-                    dangerouslySetInnerHTML={replyQuoteInnerHtml}
+                <QuotedMessage
+                    senderName={replyQuote.senderName}
+                    media={replyQuote.media}
+                    text={
+                        <span
+                            className="block prose prose-bubble line-clamp-2"
+                            dangerouslySetInnerHTML={replyQuoteInnerHtml}
+                        />
+                    }
                 />
             </button>
         )}

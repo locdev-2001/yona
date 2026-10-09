@@ -1,6 +1,8 @@
 import Button from 'dashboard/components-next/button/Button';
 import Icon from 'dashboard/components-next/icon/Icon';
 import MessagePreview from 'dashboard/components/widgets/conversation/MessagePreview';
+import QuotedMessage from 'dashboard/components-next/message/QuotedMessage';
+import { replyQuoteMediaOf } from 'dashboard/components-next/message/helpers/replyQuote';
 
 import { t } from '../../../i18n';
 import type { ConversationMessage } from '../types';
@@ -19,11 +21,18 @@ export default function ReplyToMessage({ message, onDismiss }: ReplyToMessagePro
         >
             <Icon icon="i-lucide-reply" className="size-3.5 shrink-0 text-n-slate-11" />
             <span className="shrink-0 text-n-slate-11">{t('CONVERSATION.REPLYBOX.REPLYING_TO')}</span>
-            <MessagePreview
-                message={message}
-                showMessageType={false}
-                defaultEmptyMessage={t('CONVERSATION.REPLY_MESSAGE_NOT_FOUND')}
-                className="flex-1 min-w-0 text-n-slate-12"
+            <QuotedMessage
+                compact
+                media={replyQuoteMediaOf(message)}
+                className="flex-1 text-n-slate-12"
+                text={
+                    <MessagePreview
+                        message={message}
+                        showMessageType={false}
+                        defaultEmptyMessage={t('CONVERSATION.REPLY_MESSAGE_NOT_FOUND')}
+                        className="min-w-0"
+                    />
+                }
             />
             <Button
                 title={t('CONVERSATION.REPLYBOX.DISMISS_REPLY')}

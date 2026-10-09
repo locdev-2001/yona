@@ -37,6 +37,28 @@ describe('ReplyToMessage', () => {
         expect(container.textContent).toContain('Picture message');
     });
 
+    it('đang trả lời một ảnh thì hiện ảnh thu nhỏ', () => {
+        const { container } = render(
+            <ReplyToMessage
+                message={message({ content: null, attachments: [{ id: 1, file_type: 'image', data_url: 'https://cdn.test/a.jpg' }] })}
+                onDismiss={vi.fn()}
+            />,
+        );
+
+        expect(container.querySelector('[data-testid="quoted-media-image"]')?.getAttribute('src')).toBe('https://cdn.test/a.jpg');
+    });
+
+    it('đang trả lời một tệp thì hiện tên tệp thay cho nhãn chung', () => {
+        const { container } = render(
+            <ReplyToMessage
+                message={message({ content: null, attachments: [{ id: 1, file_type: 'file', data_url: 'https://cdn.test/f', filename: 'bao-gia.pdf', file_size: 20480 }] })}
+                onDismiss={vi.fn()}
+            />,
+        );
+
+        expect(container.querySelector('[data-testid="quoted-file"]')?.textContent).toContain('bao-gia.pdf');
+    });
+
     it('bấm X thì gọi onDismiss', () => {
         const onDismiss = vi.fn();
         render(<ReplyToMessage message={message()} onDismiss={onDismiss} />);

@@ -172,6 +172,46 @@ describe('MessageList khối trích dẫn ngoài trang đang tải', () => {
         expect(onJumpToMessage).toHaveBeenCalledExactlyOnceWith(10);
     });
 
+    it.each([
+        ['ảnh', { attachments: [{ id: 1, file_type: 'image', data_url: 'https://cdn.test/a.jpg', thumb_url: 'https://cdn.test/a-thumb.jpg' }] }, 'https://cdn.test/a-thumb.jpg', 'Picture message'],
+        ['sticker', { content_type: 'sticker', attachments: [{ id: 1, file_type: 'image', data_url: 'https://cdn.test/s.webp' }] }, 'https://cdn.test/s.webp', 'Sticker'],
+    ])('trả lời tin %s: khối trích dẫn có ảnh thu nhỏ và nhãn, bấm thì nhảy tới tin gốc', (_, overrides, imageUrl, label) => {
+        const onJumpToMessage = vi.fn();
+        const container = renderList(
+            [message(10, { content: null, ...(overrides as Partial<ConversationMessage>) }), message(11, { content_attributes: { in_reply_to: 10 } })],
+            undefined,
+            onJumpToMessage,
+        );
+        const quote = quoteBlock(container, 11) as HTMLButtonElement;
+
+        expect(quote.querySelector('[data-testid="quoted-media-image"]')?.getAttribute('src')).toBe(imageUrl);
+        expect(quote.textContent).toContain(label);
+
+        fireEvent.click(quote);
+        expect(onJumpToMessage).toHaveBeenCalledExactlyOnceWith(10);
+    });
+
+    it('trả lời tin tệp: khối trích dẫn có icon, tên tệp và dung lượng', () => {
+        const file = { id: 1, file_type: 'file', data_url: 'https://cdn.test/f', filename: 'bao-gia.pdf', file_size: 20480 };
+        const container = renderList([
+            message(10, { content: null, attachments: [file] }),
+            message(11, { content_attributes: { in_reply_to: 10 } }),
+        ]);
+        const fileSummary = quoteBlock(container, 11)?.querySelector('[data-testid="quoted-file"]');
+
+        expect(fileSummary?.textContent).toContain('bao-gia.pdf');
+        expect(fileSummary?.textContent).toContain('20');
+    });
+
+    it('ảnh chụp của nền tảng (tin gốc không có trong Yona) không có ảnh thu nhỏ, giữ nhãn', () => {
+        const container = renderList([
+            message(12, { content_attributes: { in_reply_to_preview: { attachment_type: 'image' } } }),
+        ]);
+
+        expect(quoteBlock(container, 12)?.querySelector('[data-testid="quoted-media-image"]')).toBeNull();
+        expect(quoteBlock(container, 12)?.textContent).toContain('Picture message');
+    });
+
     it('tin gốc chưa có trong khung chat thì bấm khối vẫn nhảy tới đúng tin', () => {
         const onJumpToMessage = vi.fn();
         const container = renderList(

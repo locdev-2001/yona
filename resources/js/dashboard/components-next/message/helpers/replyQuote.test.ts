@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { ConversationMessage } from 'dashboard/conversation/types';
-import { resolveReplyQuote } from './replyQuote';
+import { replyQuoteMediaOf, resolveReplyQuote } from './replyQuote';
 
 function message(id: number, overrides: Partial<ConversationMessage> = {}): ConversationMessage {
     return {
@@ -35,6 +35,7 @@ describe('resolveReplyQuote', () => {
             senderName: 'Khách A',
             content: 'Chào shop, còn hàng không?',
             attachmentType: null,
+            media: null,
             unavailable: false,
         });
     });
@@ -64,6 +65,7 @@ describe('resolveReplyQuote', () => {
             senderName: 'Chủ Shop',
             content: 'Tin trước khi kết nối',
             attachmentType: null,
+            media: null,
             unavailable: false,
         });
     });
@@ -81,6 +83,7 @@ describe('resolveReplyQuote', () => {
             senderName: null,
             content: null,
             attachmentType: null,
+            media: null,
             unavailable: true,
         });
     });
@@ -91,5 +94,38 @@ describe('resolveReplyQuote', () => {
 
     it('ảnh chụp rỗng coi như không có', () => {
         expect(resolveReplyQuote({ in_reply_to_preview: { content: '  ' } }, undefined)).toBeNull();
+    });
+});
+
+describe('replyQuoteMediaOf', () => {
+    const attachment = (overrides: Record<string, unknown>) => ({ id: 1, file_type: 'image', data_url: 'https://cdn.test/a.jpg', ...overrides });
+
+    it.each([
+        ['ảnh → ảnh thu nhỏ', { attachments: [attachment({ thumb_url: 'https://cdn.test/a-thumb.jpg' })] }, { kind: 'image', imageUrl: 'https://cdn.test/a-thumb.jpg' }],
+        ['ảnh chưa có bản thu nhỏ → ảnh gốc', { attachments: [attachment({})] }, { kind: 'image', imageUrl: 'https://cdn.test/a.jpg' }],
+        ['video không có ảnh bìa → khung đầu từ tệp', { attachments: [attachment({ file_type: 'video', data_url: 'https://cdn.test/v.mp4' })] }, { kind: 'video', imageUrl: null, videoUrl: 'https://cdn.test/v.mp4' }],
+        ['sticker nền tảng → ảnh đính kèm', { content_type: 'sticker', attachments: [attachment({ data_url: 'https://cdn.test/s.webp' })] }, { kind: 'sticker', imageUrl: 'https://cdn.test/s.webp' }],
+        [
+            'sticker kho Yona → ảnh WebP của kho',
+            { content_type: 'sticker', content_attributes: { sticker: { source: 'yona', image_url: 'https://yona.test/s.webp' } }, attachments: [attachment({ data_url: 'https://yona.test/s.png' })] },
+            { kind: 'sticker', imageUrl: 'https://yona.test/s.webp' },
+        ],
+        [
+            'tệp → tên, đuôi, dung lượng',
+            { attachments: [attachment({ file_type: 'file', data_url: 'https://cdn.test/f', filename: 'bao-gia.pdf', file_size: 20480 })] },
+            { kind: 'file', imageUrl: null, fileName: 'bao-gia.pdf', extension: 'pdf', fileSize: 20480 },
+        ],
+    ])('%s', (_, overrides, expected) => {
+        expect(replyQuoteMediaOf(message(10, { content: null, ...(overrides as Partial<ConversationMessage>) }))).toMatchObject(expected);
+    });
+
+    it('tin chữ không có media', () => {
+        expect(replyQuoteMediaOf(message(10))).toBeNull();
+    });
+
+    it('trích dẫn sticker ghi nhãn sticker, không phải ảnh', () => {
+        const target = message(10, { content: null, content_type: 'sticker', attachments: [attachment({})] });
+
+        expect(resolveReplyQuote({ in_reply_to: 10 }, target)?.attachmentType).toBe('sticker');
     });
 });
