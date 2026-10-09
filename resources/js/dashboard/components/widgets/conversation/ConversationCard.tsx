@@ -222,9 +222,9 @@ export default function ConversationCard({
                             {showInboxName && inbox.reauthorization_required ? (
                                 <span
                                     title={t('SIDEBAR.REAUTHORIZE')}
-                                    className="grid place-content-center size-4 rounded-full bg-n-ruby-5/60 flex-shrink-0"
+                                    className="grid place-content-center size-3.5 rounded-full bg-n-ruby-5/60 flex-shrink-0"
                                 >
-                                    <Icon icon="i-lucide-triangle-alert" className="size-2.5 text-n-ruby-9" />
+                                    <Icon icon="i-lucide-triangle-alert" className="size-2 text-n-ruby-9" />
                                 </span>
                             ) : null}
                             <TimeAgo
@@ -260,7 +260,7 @@ export default function ConversationCard({
                             type="button"
                             aria-label={t('CONVERSATION.CARD_CONTEXT_MENU.MORE_ACTIONS')}
                             aria-haspopup="menu"
-                            className="grid place-content-center flex-shrink-0 size-6 -my-1 rounded text-n-slate-11 hover:bg-n-surface-hover hover:text-n-slate-12"
+                            className="grid place-content-center flex-shrink-0 size-6 -my-1 -me-1 rounded text-n-slate-11 hover:bg-n-surface-hover hover:text-n-slate-12"
                             onClick={openActionsFromButton}
                         >
                             <Icon icon={ICONS.moreActions} className="size-4" />

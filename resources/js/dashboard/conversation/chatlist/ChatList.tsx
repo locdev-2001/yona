@@ -239,8 +239,8 @@ export default function ChatList({
                         ) : null}
                     </div>
                     {/* Thẳng cột với nút "…" của thẻ: cùng khe thanh cuộn (scrollbar-gutter) với
-                        danh sách, rồi lùi đúng px-2 của danh sách + px-3 của thẻ. */}
-                    <div className="flex flex-shrink-0 py-1 pe-5 overflow-hidden [scrollbar-gutter:stable]">
+                        danh sách, rồi lùi đúng px-2 của danh sách + px-3 của thẻ, trừ -me-1 của nút "…". */}
+                    <div className="flex flex-shrink-0 py-1 pe-4 overflow-hidden [scrollbar-gutter:stable]">
                         <NextButton
                             xs
                             ghost
