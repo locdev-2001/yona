@@ -20,7 +20,7 @@ import type { Conversation, ConversationMessage } from '../types';
 import ConversationItem from './ConversationItem';
 import { closestPinInsideGroup } from './pinDragCollision';
 
-// Kéo thả bằng tay nắm ở mép trái thẻ ghim, chỉ bằng chuột (MouseSensor): màn cảm
+// Kéo thả cả thẻ ghim, chỉ bằng chuột (MouseSensor): màn cảm
 // ứng không kéo để khỏi tranh cuộn, đổi chỗ bằng mục Lên/Xuống trong menu thao tác.
 // Phải rê quá ngưỡng mới thành kéo. Bản sao thẻ (DragOverlay, portal vào body) bay
 // tự do theo con trỏ; dòng gốc đứng lại làm khoảng trống, chỉ các dòng ghim trượt.
@@ -187,28 +187,25 @@ export default function ConversationList({
 }
 
 function SortablePinnedRow({ conversationId, children }: { conversationId: number; children: ReactNode }) {
-    const { setNodeRef, setActivatorNodeRef, listeners, transform, transition, isDragging } = useSortable({
+    const { setNodeRef, listeners, transform, transition, isDragging } = useSortable({
         id: conversationId,
     });
 
+    // Kéo được cả thẻ; MouseSensor chỉ bắt đầu kéo khi rê quá ngưỡng nên bấm mở hội
+    // thoại, chuột phải và chọn nhiều vẫn như thường. Tay nắm chỉ là dấu hiệu kéo được.
     return (
         <div
             ref={setNodeRef}
             data-pinned-row={conversationId}
             style={{ transform: CSS.Translate.toString(transform), transition }}
-            className={`group/pinned relative rounded-lg ${isDragging ? 'bg-n-slate-3 [&>*]:invisible' : ''}`}
+            className={`group/pinned relative rounded-lg [@media(hover:hover)]:cursor-grab ${isDragging ? 'bg-n-slate-3 [&>*]:invisible' : ''}`}
+            {...listeners}
         >
             {children}
-            {/* Tay nắm nằm trong khoảng đệm trái của thẻ nên không đẩy lệch bố cục; nằm
-                ngoài thẻ nên bấm vào không mở hội thoại. Màn cảm ứng không có. */}
             <span
-                ref={setActivatorNodeRef}
                 data-pin-drag-handle
                 aria-hidden="true"
-                className={`absolute inset-y-0 left-0 w-3 hidden [@media(hover:hover)]:flex items-center justify-center text-n-slate-9 group-hover/pinned:text-n-slate-11 ${
-                    isDragging ? 'cursor-grabbing' : 'cursor-grab'
-                }`}
-                {...listeners}
+                className="pointer-events-none absolute inset-y-0 left-1 w-3 hidden [@media(hover:hover)]:flex items-center justify-center text-n-slate-9 group-hover/pinned:text-n-slate-11"
             >
                 <span className={`${ICONS.dragHandle} size-3`} />
             </span>
