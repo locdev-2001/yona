@@ -71,7 +71,7 @@ export default function ContactMergeForm({
                         {t('CONTACTS_LAYOUT.SIDEBAR.MERGE.PARENT_HELP_LABEL')}
                     </span>
                 </div>
-                <div className="border border-n-strong h-[60px] gap-2 flex items-center rounded-xl p-3">
+                <div className="panel-surface h-[60px] gap-2 flex items-center rounded-xl p-3">
                     <Avatar
                         seed={avatarSeed('contact', selectedContact.id)}
                         name={selectedContact.name || ''}

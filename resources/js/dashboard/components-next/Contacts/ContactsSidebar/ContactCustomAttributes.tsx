@@ -96,7 +96,7 @@ export default function ContactCustomAttributes({
                             value={searchQuery}
                             type="search"
                             placeholder={t('CONTACTS_LAYOUT.SIDEBAR.ATTRIBUTES.SEARCH_PLACEHOLDER')}
-                            className="w-full h-8 py-2 pl-10 pr-2 text-sm reset-base outline-none border-none rounded-lg bg-n-alpha-black2 text-n-slate-12"
+                            className="field-surface w-full h-8 py-2 pl-10 pr-2 text-sm reset-base border-none rounded-lg text-n-slate-12"
                             onChange={event => setSearchQuery(event.target.value)}
                         />
                     </div>

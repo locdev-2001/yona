@@ -23,7 +23,7 @@ export default function ContactDeleteSection({ contactId, onDeleted }: ContactDe
 
     return (
         <>
-            <div className="flex flex-col items-start border-t border-n-strong px-6 py-5">
+            <div className="flex flex-col items-start px-6 py-5">
                 <Button
                     label={t('CONTACTS_LAYOUT.DETAILS.DELETE_CONTACT')}
                     sm

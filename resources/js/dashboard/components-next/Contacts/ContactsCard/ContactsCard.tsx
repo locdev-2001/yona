@@ -105,7 +105,7 @@ export default function ContactsCard({
         <div className="relative">
             <CardLayout
                 layout="row"
-                className={isSelected ? 'outline-n-weak !bg-n-slate-3' : ''}
+                className={isSelected ? '!bg-n-surface-selected' : ''}
                 after={
                     <div
                         className={`transition-all duration-500 ease-in-out grid overflow-hidden ${
@@ -113,7 +113,7 @@ export default function ContactsCard({
                         }`}
                     >
                         <div className="overflow-hidden">
-                            <div className="flex flex-col gap-6 p-6 border-t border-n-strong">
+                            <div className="flex flex-col gap-6 p-6 pt-2">
                                 {isExpanded ? (
                                     <ContactsForm
                                         contactData={getInitialContactData()}
@@ -153,7 +153,7 @@ export default function ContactsCard({
                                 selectable
                                     ? ({ size }) => (
                                           <label
-                                              className="flex items-center justify-center rounded-full cursor-pointer absolute inset-0 z-10 backdrop-blur-[2px] border border-n-weak"
+                                              className="flex items-center justify-center rounded-full cursor-pointer absolute inset-0 z-10 backdrop-blur-[2px]"
                                               style={{ width: `${size}px`, height: `${size}px` }}
                                               onClick={event => event.stopPropagation()}
                                           >

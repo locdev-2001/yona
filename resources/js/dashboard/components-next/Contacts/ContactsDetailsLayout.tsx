@@ -85,7 +85,7 @@ export default function ContactsDetailsLayout({
 
             {/* Sidebar desktop */}
             {sidebar ? (
-                <div className="hidden lg:flex flex-col min-w-52 w-full max-w-md border-l border-n-weak bg-n-solid-2">
+                <div className="hidden lg:flex flex-col min-w-52 w-full max-w-md bg-n-surface-panel">
                     <div className="shrink-0">{sidebarHeader}</div>
                     <div className="flex-1 min-h-0 overflow-y-auto pb-6 pt-3">{sidebar}</div>
                 </div>
@@ -100,7 +100,7 @@ export default function ContactsDetailsLayout({
                 >
                     <div
                         ref={toggleRef}
-                        className={`flex items-start p-1 w-fit h-fit relative order-1 xs:top-24 top-28 transition-all bg-n-solid-2 border border-n-weak duration-500 ease-in-out ${
+                        className={`flex items-start p-1 w-fit h-fit relative order-1 xs:top-24 top-28 transition-all overlay-surface duration-500 ease-in-out ${
                             isContactSidebarOpen
                                 ? 'justify-end ltr:rounded-l-full rtl:rounded-r-full ltr:rounded-r-none rtl:rounded-l-none'
                                 : 'justify-center rounded-full ltr:mr-6 rtl:ml-6'
@@ -122,7 +122,7 @@ export default function ContactsDetailsLayout({
                         <div
                             ref={sidebarContentRef}
                             id="contact-sidebar-content"
-                            className="order-2 w-[85%] sm:w-[50%] flex flex-col bg-n-solid-2 ltr:border-l rtl:border-r border-n-weak shadow-lg"
+                            className="order-2 w-[85%] sm:w-[50%] flex flex-col overlay-surface"
                         >
                             <div className="shrink-0">{sidebarHeader}</div>
                             <div className="flex-1 min-h-0 overflow-y-auto pb-6 pt-3">{sidebar}</div>

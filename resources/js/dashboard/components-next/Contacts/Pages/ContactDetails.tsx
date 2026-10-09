@@ -131,7 +131,7 @@ export default function ContactDetails({
             </div>
             {currentAccountUser.role === 'administrator' ? (
                 <>
-                    <div className="flex flex-col items-start w-full gap-4 pt-6 border-t border-n-strong">
+                    <div className="flex flex-col items-start w-full gap-4 pt-6">
                         <div className="flex flex-col gap-2">
                             <h6 className="text-base font-medium text-n-slate-12">
                                 {t('CONTACTS_LAYOUT.DETAILS.DELETE_CONTACT')}

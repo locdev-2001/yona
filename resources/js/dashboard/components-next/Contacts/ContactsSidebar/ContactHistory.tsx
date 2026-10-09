@@ -58,7 +58,7 @@ export default function ContactHistory({ contactId, selectedContact = null }: Co
     }
 
     return (
-        <div className="px-6 divide-y divide-n-strong [&>*:hover]:!border-y-transparent [&>*:hover+*]:!border-t-transparent">
+        <div className="px-4 flex flex-col gap-0.5">
             {conversations.map(conversation => (
                 <ConversationCard
                     key={conversation.id}
@@ -67,7 +67,7 @@ export default function ContactHistory({ contactId, selectedContact = null }: Co
                     stateInbox={inboxes.find(inbox => inbox.id === conversation.inbox_id) ?? null}
                     accountLabels={accountLabels}
                     accountId={accountId}
-                    className="rounded-none hover:rounded-xl hover:bg-n-alpha-1"
+                    className="rounded-xl hover:bg-n-surface-hover"
                 />
             ))}
         </div>

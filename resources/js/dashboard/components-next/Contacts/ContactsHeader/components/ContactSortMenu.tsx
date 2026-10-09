@@ -68,7 +68,7 @@ export default function ContactSortMenu({
                 onClick={() => setMenuOpen(open => !open)}
             />
             {isMenuOpen ? (
-                <div className="absolute top-full mt-1 ltr:-right-32 rtl:-left-32 sm:ltr:right-0 sm:rtl:left-0 flex flex-col gap-4 bg-n-alpha-3 backdrop-blur-[100px] border border-n-weak w-72 rounded-xl p-4 z-50">
+                <div className="absolute top-full mt-1 ltr:-right-32 rtl:-left-32 sm:ltr:right-0 sm:rtl:left-0 overlay-surface flex flex-col gap-4 w-72 rounded-xl p-4 z-50">
                     <div className="flex items-center justify-between gap-2">
                         <span className="text-sm text-n-slate-12">
                             {t('CONTACTS_LAYOUT.HEADER.ACTIONS.SORT_BY.LABEL')}
