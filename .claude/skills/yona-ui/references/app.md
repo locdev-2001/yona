@@ -100,13 +100,13 @@ Tiêu đề trang và tiêu đề khối dùng `font-medium` (500). Thân dùng 
 ```
 
 ```tsx
-<div className="flex h-dvh overflow-hidden bg-neutral-0">
-  <aside className="hidden w-60 shrink-0 border-r border-neutral-300 bg-neutral-50 md:block">…</aside>
+<div className="flex h-dvh overflow-hidden bg-n-surface-app">
+  <aside className="hidden w-60 shrink-0 bg-n-surface-sidebar md:block">…</aside>
   <div className="flex min-w-0 flex-1 flex-col">
-    <header className="h-14 shrink-0 border-b border-neutral-300 px-4 md:px-6">…</header>
+    <header className="h-14 shrink-0 bg-n-surface-panel shadow-bar px-4 md:px-6">…</header>
     <div className="flex min-h-0 flex-1">
-      <div className="hidden w-80 shrink-0 overflow-y-auto border-r border-neutral-300 lg:block">…</div>
-      <main className="min-w-0 flex-1 overflow-y-auto p-4 md:p-6">…</main>
+      <div className="hidden w-80 shrink-0 overflow-y-auto bg-n-surface-list lg:block">…</div>
+      <main className="min-w-0 flex-1 overflow-y-auto bg-n-surface-canvas p-4 md:p-6">…</main>
     </div>
   </div>
 </div>
@@ -125,7 +125,11 @@ Khung lưới dọc + dấu `+` của §7.1b **chỉ thuộc bề mặt công kh
 | Padding nội dung | `p-4` mobile · `p-6` desktop |
 | Gap | 4 · 6 · 8 · 12 · 16 · 20 · 24 · 32 |
 
-- Phân vùng bằng **viền `1px neutral-300`**, không bóng, không khoảng trống.
+- **Phân vùng bằng bậc nền + khoảng cách, không kẻ.** Nguồn duy nhất: biến `--surface-*`, `--shadow-bar`, `--shadow-overlay` ở `resources/scss/_next-colors.scss` (token `bg-n-surface-{app,sidebar,list,canvas,panel,raised,hover,selected,field}`) và lớp chung ở `resources/scss/_base.scss`. Quyết định và ngoại lệ: `docs/ux-decisions.md` mục "Dashboard · phân lớp không viền".
+- **Khối nội dung** (khối cấu hình, thẻ trong lưới, khung thống kê): `panel-surface` (nền panel + viền nhẹ `border-n-weak`) + `rounded-xl`; khối đang lỗi thêm `panel-invalid`. Không viền đậm (`border-n-strong`, `outline-n-container`).
+- **Danh sách dòng** (nhân viên, hộp thư, nhãn…): không kẻ giữa dòng; dòng có nền khi rê chuột (`row-list`, hoặc `BaseTable`/`BaseTableRow` cho danh sách nhiều cột), đang chọn `bg-n-surface-selected`.
+- **Ngăn vùng** (dưới đầu trang, trên chân trang, giữa section): không `border-t/b`, không `divide-*`; dùng khoảng cách, thanh dính dùng `shadow-bar`.
+- **Ô nhập:** `field-surface` / `field-invalid`. **Lớp nổi:** `overlay-surface`, không viền.
 - **Chỉ vùng nội dung cuộn.** Sidebar, topbar, header danh sách đứng yên.
 - Trang render **vào** khung; không trang nào tự dựng lại nav hay topbar.
 - Dưới 768px: ba vùng thành ba cấp điều hướng, **không** nhồi ba cột.
@@ -144,7 +148,7 @@ Nhãn nhóm: `text-label font-medium uppercase text-neutral-500`.
 
 ### §3.2 Topbar
 
-`bg-neutral-0 border-b border-neutral-300`. Chứa breadcrumb → tiêu đề trang (`text-page font-medium`) → hành động theo ngữ cảnh (phải). Không lặp lại điều hướng đã có ở sidebar.
+`bg-n-surface-panel shadow-bar`, không kẻ đáy. Chứa breadcrumb → tiêu đề trang (`text-page font-medium`) → hành động theo ngữ cảnh (phải). Không lặp lại điều hướng đã có ở sidebar.
 
 ---
 
@@ -153,15 +157,16 @@ Nhãn nhóm: `text-label font-medium uppercase text-neutral-500`.
 ### §4.1 Bảng
 
 ```tsx
-const TH  = 'sticky top-0 z-10 bg-neutral-50 border-b border-neutral-300 px-3 py-2 ' +
+const TH  = 'sticky top-0 z-10 bg-neutral-50 border-b border-n-weak px-3 py-2 ' +
             'text-label font-medium uppercase text-neutral-500 text-left';
-const TD  = 'border-b border-neutral-200 px-3 py-2 text-base text-neutral-700';
+const TD  = 'border-b border-n-weak px-3 py-2 text-base text-neutral-700';
 const TD_NUM = TD + ' font-num text-right';
 const TR  = 'h-12 md:h-10 hover:bg-neutral-50';
 const TR_SELECTED = 'bg-primary-50';
 ```
 
-- **Không sọc vằn.** Viền đã đủ tách hàng.
+- Đây là **bảng số liệu dày nhiều cột** (`components/table/Table`, báo cáo): ngoại lệ duy nhất còn kẻ hàng mảnh. Danh sách ở settings dùng `BaseTable` không kẻ hàng.
+- **Không sọc vằn.** Kẻ mảnh đã đủ tách hàng.
 - Cột số: `font-num`, căn phải. Không cần `tabular-nums` — bản Tnum (doc nền §1.2) đã đều bề rộng. Cột hành động cố định bên phải.
 - Sắp xếp: header bấm được, có `aria-sort`, icon `i-lucide-chevron-up size-3`.
 - Phân trang **phía máy chủ**. Danh sách dài phải ảo hoá.
@@ -171,8 +176,8 @@ const TR_SELECTED = 'bg-primary-50';
 ### §4.2 Danh sách hội thoại
 
 ```tsx
-const CONV_ITEM = 'flex gap-3 border-b border-neutral-200 p-3 text-left w-full hover:bg-neutral-50';
-const CONV_ITEM_ACTIVE = 'bg-primary-50';
+const CONV_ITEM = 'flex gap-3 rounded-xl p-3 text-left w-full hover:bg-n-surface-hover';
+const CONV_ITEM_ACTIVE = 'bg-n-surface-selected';
 ```
 
 Cao 72px: avatar `size-10` · tên `text-base font-medium text-neutral-900` · tin cuối cắt một dòng `text-meta text-neutral-500 truncate` · giờ `text-micro text-neutral-500` góc phải trên · badge chưa đọc.
@@ -197,15 +202,14 @@ Tin mới về dùng `transition`, **không** `@keyframes` — tin về dồn d�
 ### §4.4 Form
 
 ```tsx
-const FIELD = 'h-11 md:h-9 w-full rounded border border-neutral-300 bg-neutral-0 px-3 text-base text-neutral-900 ' +
-  'placeholder:text-neutral-400 ' +
-  'focus-visible:border-primary-600 focus-visible:outline-2 focus-visible:outline-offset-2 ' +
-  'focus-visible:outline-primary-600 focus-visible:shadow-focus';
+// Nền ô + vòng tiêu điểm brand 2px đến từ lớp chung `field-surface` (lỗi: `field-invalid`).
+const FIELD = 'field-surface h-11 md:h-9 w-full rounded-lg border-0 px-3 text-base text-neutral-900 ' +
+  'placeholder:text-neutral-400';
 ```
 
 Nhãn trên ô: `text-label font-medium text-neutral-700 mb-1.5`. Nhóm trường cách nhau `gap-4`.
 Trợ giúp `text-label text-neutral-500`. Lỗi `text-label text-danger` thay chỗ dòng trợ giúp.
-Nút lưu **dính đáy** ở form dài: `sticky bottom-0 bg-neutral-0 border-t border-neutral-300 p-4`.
+Nút lưu **dính đáy** ở form dài: `sticky bottom-0 bg-n-surface-canvas p-4`, không kẻ trên.
 
 ### §4.5 Rỗng / đang tải / lỗi
 
@@ -232,8 +236,8 @@ Bắt buộc có cả ba. Không để màn trắng.
 
 | | Quy cách |
 |---|---|
-| Dialog | `max-w-[560px] rounded-none bg-neutral-0 border border-neutral-300 shadow-overlay`. Nền mờ `bg-navy/40`. `transform-origin: center` |
-| Dropdown | `rounded border border-neutral-300 bg-neutral-0 shadow-overlay`, mục `h-8 px-3 hover:bg-neutral-100`. `--origin` = vị trí trigger |
+| Dialog | `max-w-[560px] overlay-surface` (nền trắng + `shadow-overlay`, không viền). Nền mờ `bg-navy/40`. `transform-origin: center` |
+| Dropdown | `rounded-xl overlay-surface`, mục `h-8 px-3 hover:bg-n-surface-hover`. `--origin` = vị trí trigger |
 | Tooltip | `rounded bg-neutral-900 text-neutral-0 text-label px-2 py-1`, trễ 300ms; đã có một tooltip mở thì cái kế hiện **tức thì, không animation** |
 | Toast | góc dưới phải, `rounded border-l-[3px]` màu trạng thái, tự ẩn sau 5s (lỗi thì không tự ẩn) |
 
