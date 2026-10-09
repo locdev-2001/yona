@@ -1,5 +1,9 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+
+vi.mock('@inertiajs/react', () => ({
+    usePage: () => ({ props: { auth: { user: { id: 1, name: 'Lộc' } } } }),
+}));
 
 import { setLocale } from '../../../i18n';
 import AttachmentsPreview from './AttachmentsPreview';
@@ -24,12 +28,14 @@ describe('khay đính kèm của ô soạn', () => {
     beforeAll(() => setLocale('vi'));
     afterAll(() => setLocale('en'));
 
-    it('ảnh/video thành thumbnail 64px, tài liệu thành thẻ tệp, đếm số tệp (không tính ghi âm)', () => {
+    afterEach(() => vi.restoreAllMocks());
+
+    it('ảnh/video thành ảnh thu nhỏ 80px, tài liệu thành thẻ tệp, đếm số tệp (không tính ghi âm)', () => {
         render(<AttachmentsPreview attachments={tray} onRemoveAttachment={vi.fn()} />);
 
         const thumbnails = screen.getAllByTestId('pending-media');
         expect(thumbnails).toHaveLength(2);
-        expect(thumbnails[0].className).toContain('size-16');
+        expect(thumbnails[0].className).toContain('size-20');
         expect(thumbnails[1].querySelector('video')).not.toBeNull();
         expect(screen.getAllByTestId('file-card')).toHaveLength(1);
         expect(screen.getByTestId('file-card').textContent).toContain('cung.pdf');
@@ -41,24 +47,38 @@ describe('khay đính kèm của ô soạn', () => {
         const onRemoveAttachment = vi.fn();
         render(<AttachmentsPreview attachments={tray} onRemoveAttachment={onRemoveAttachment} />);
 
-        fireEvent.click(screen.getByLabelText(/huong-dan-lap-dat/));
+        fireEvent.click(screen.getByRole('button', { name: /Bỏ tệp này: huong-dan-lap-dat/ }));
 
         expect(onRemoveAttachment).toHaveBeenCalledWith([tray[0], tray[2], tray[3]]);
     });
 
-    it('đang gửi: mỗi tệp có tiến trình riêng, không bỏ tệp được', () => {
-        render(
-            <AttachmentsPreview
-                attachments={tray}
-                uploadProgress={{ loadedBytes: 275, totalBytes: 550 }}
-                onRemoveAttachment={vi.fn()}
-            />,
-        );
+    it('bấm ảnh thu nhỏ mở trình xem ảnh lớn đúng ảnh đó; nút bỏ không mở trình xem', () => {
+        const onRemoveAttachment = vi.fn();
+        render(<AttachmentsPreview attachments={tray} onRemoveAttachment={onRemoveAttachment} />);
 
-        const progressValues = screen.getAllByRole('progressbar').map((bar) => bar.getAttribute('aria-valuenow'));
-        // Thứ tự hiển thị: ảnh, video, rồi thẻ tệp; byte gửi theo thứ tự đính kèm.
-        expect(progressValues).toStrictEqual(['100', '0', '58']);
-        expect((screen.getByLabelText(/san-pham-1/) as HTMLButtonElement).disabled).toBe(true);
+        fireEvent.click(screen.getByRole('button', { name: /Bỏ tệp này: san-pham-1/ }));
+        expect(document.querySelector('.modal-mask')).toBeNull();
+
+        fireEvent.click(screen.getByRole('button', { name: 'Xem ảnh: san-pham-1.jpg' }));
+
+        const viewer = document.querySelector('.modal-mask') as HTMLElement;
+        expect(viewer).not.toBeNull();
+        expect(viewer.querySelector(`img[src="${tray[0].thumb}"]`)).not.toBeNull();
+        expect(viewer.textContent).toContain('san-pham-1.jpg');
+    });
+
+    it('tài liệu: bấm mở thì mở chính tệp ở tab mới, không bỏ tệp', () => {
+        const onRemoveAttachment = vi.fn();
+        const createObjectURL = vi.fn(() => 'blob:tep-dang-chon');
+        Object.assign(URL, { createObjectURL, revokeObjectURL: vi.fn() });
+        const open = vi.spyOn(window, 'open').mockReturnValue(null);
+        render(<AttachmentsPreview attachments={tray} onRemoveAttachment={onRemoveAttachment} />);
+
+        fireEvent.click(screen.getByRole('button', { name: /Mở tệp: huong-dan-lap-dat/ }));
+
+        expect(createObjectURL).toHaveBeenCalledWith(tray[1].resource);
+        expect(open).toHaveBeenCalledWith('blob:tep-dang-chon', '_blank', 'noopener');
+        expect(onRemoveAttachment).not.toHaveBeenCalled();
     });
 
     it('chỉ có ghi âm thì không hiện khay', () => {

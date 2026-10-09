@@ -15,7 +15,7 @@ import { filesFromDataTransfer } from 'shared/helpers/FileHelper';
 // và bỏ qua đúng sự kiện đó. So theo sự kiện chứ không theo cờ: cú bấm làm ô
 // soạn bung ra xảy ra khi listener chưa gắn, cờ còn sót sẽ nuốt cú bấm ra ngoài kế tiếp.
 
-const DIALOG_SELECTOR = '[role="dialog"], dialog[open], ninja-keys[opened]';
+const DIALOG_SELECTOR = '[role="dialog"], dialog[open], ninja-keys[opened], .modal-mask';
 
 export function useComposerExpansion({ canCollapse, resetKey }: { canCollapse: boolean; resetKey: unknown }) {
     const [isExpandedByUser, setIsExpandedByUser] = useState(false);

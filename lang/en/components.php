@@ -31,6 +31,7 @@ return [
         'TAP_TO_RELOAD' => 'Tap to reload',
         'OPEN_IMAGE' => 'View image',
         'OPEN_VIDEO' => 'View video',
+        'OPEN_FILE' => 'Open file',
         'ATTACHMENTS_COUNT' => '{count} file | {count} files',
         'REMOVE_ATTACHMENT' => 'Remove this file',
     ],

@@ -33,6 +33,7 @@ return [
         'TAP_TO_RELOAD' => 'Bấm để tải lại',
         'OPEN_IMAGE' => 'Xem ảnh',
         'OPEN_VIDEO' => 'Xem video',
+        'OPEN_FILE' => 'Mở tệp',
         'ATTACHMENTS_COUNT' => '{count} tệp',
         'REMOVE_ATTACHMENT' => 'Bỏ tệp này',
     ],
