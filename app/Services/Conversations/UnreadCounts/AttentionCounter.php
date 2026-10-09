@@ -22,13 +22,35 @@ final class AttentionCounter
 
     public function count(): int
     {
+        return array_sum($this->countByInbox());
+    }
+
+    /**
+     * Số trên chuông kèm phần chia theo kênh, cùng một lần đếm nên tổng các kênh luôn
+     * bằng số trên chuông. Mọi nơi gửi số này cho giao diện (API, realtime) dùng chung.
+     *
+     * @return array{unread_count: int, unread_inbox_counts: object}
+     */
+    public function payload(): array
+    {
+        $byInbox = $this->countByInbox();
+
+        return [
+            'unread_count' => array_sum($byInbox),
+            'unread_inbox_counts' => (object) $byInbox,
+        ];
+    }
+
+    /** @return array<string, int> id kênh => số hội thoại cần để mắt, chỉ kênh có số > 0 */
+    public function countByInbox(): array
+    {
         $accountUser = AccountUser::query()
             ->where('account_id', $this->account->id)
             ->where('user_id', $this->user->id)
             ->first();
 
         if ($accountUser === null) {
-            return 0;
+            return [];
         }
 
         $unread = UnreadConversations::query($this->account, $this->user, $accountUser)->select('conversations.id');
@@ -40,6 +62,13 @@ final class AttentionCounter
             ->where('primary_actor_type', (new Conversation)->getMorphClass())
             ->select('primary_actor_id AS id');
 
-        return DB::query()->fromSub($unread->union($notified), 'attention')->count();
+        return DB::query()
+            ->fromSub($unread->union($notified), 'attention')
+            ->join('conversations', 'conversations.id', '=', 'attention.id')
+            ->groupBy('conversations.inbox_id')
+            ->select('conversations.inbox_id', DB::raw('COUNT(*) AS attention_count'))
+            ->pluck('attention_count', 'inbox_id')
+            ->mapWithKeys(fn ($attentionCount, $inboxId) => [(string) $inboxId => (int) $attentionCount])
+            ->all();
     }
 }

@@ -195,18 +195,18 @@ class ActionCableListener extends BaseListener
 
         $this->broadcast($account, [$user->pubsub_token], EventType::NOTIFICATION_DELETED, [
             'notification' => ['id' => $notificationData['id']],
-            'unread_count' => (new AttentionCounter($account, $user))->count(),
+            ...(new AttentionCounter($account, $user))->payload(),
             'count' => $finder->count(),
         ]);
     }
 
     private function broadcastNotification(DomainEvent $event, EventType $type): void
     {
-        [$notification, $account, $unreadCount, $count] = $this->extractNotificationAndAccount($event);
+        [$notification, $account, $attention, $count] = $this->extractNotificationAndAccount($event);
 
         $this->broadcast($account, [$notification->user?->pubsub_token], $type, [
             'notification' => $notification->pushEventData(),
-            'unread_count' => $unreadCount,
+            ...$attention,
             'count' => $count,
         ]);
     }

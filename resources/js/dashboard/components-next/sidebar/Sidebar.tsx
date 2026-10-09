@@ -14,6 +14,7 @@ import { labelsOnSidebar } from 'dashboard/conversation/labelHelpers';
 import { SidebarContextProvider, useSidebarResize, COLLAPSED_THRESHOLD, MOBILE_DRAWER_WIDTH } from './provider';
 import { filterMenuByRole } from './permissions';
 import { useConversationUnreadCounts } from './useConversationUnreadCounts';
+import { useNotificationsUnreadInboxCounts } from 'dashboard/notifications/useUnreadCount';
 import NotificationBell from 'dashboard/notifications/components/NotificationBell';
 import { accountScopedUrl } from 'dashboard/helper/URLHelper';
 import type { DashboardPageProps } from '../../types';
@@ -37,7 +38,13 @@ export default function Sidebar({
     const conversationCustomViews = useCustomViews(accountId, 'conversation');
     const contactCustomViews = useCustomViews(accountId, 'contact');
     // watch([accountId, hasConversationUnreadCounts], fetchConversationUnreadCounts) của Sidebar.vue.
-    const unreadCounts = useConversationUnreadCounts();
+    const conversationUnreadCounts = useConversationUnreadCounts();
+    // Badge từng kênh đếm y như số trên chuông, chỉ chia theo kênh — không theo cờ tính năng.
+    const inboxUnreadCounts = useNotificationsUnreadInboxCounts();
+    const unreadCounts = useMemo(
+        () => ({ ...conversationUnreadCounts, inboxes: inboxUnreadCounts }),
+        [conversationUnreadCounts, inboxUnreadCounts],
+    );
 
     const [windowWidth, setWindowWidth] = useState(() => window.innerWidth);
     const isMobile = windowWidth < 768;

@@ -22,16 +22,16 @@ abstract class BaseListener
         return [$conversation, $conversation->account];
     }
 
-    /** @return array{0: Notification, 1: Account, 2: int, 3: int} */
+    /** @return array{0: Notification, 1: Account, 2: array{unread_count: int, unread_inbox_counts: object}, 3: int} */
     protected function extractNotificationAndAccount(DomainEvent $event): array
     {
         /** @var Notification $notification */
         $notification = $event->data['notification'];
         $finder = new NotificationFinder($notification->user, $notification->account);
 
-        $unreadCount = (new AttentionCounter($notification->account, $notification->user))->count();
+        $attention = (new AttentionCounter($notification->account, $notification->user))->payload();
 
-        return [$notification, $notification->account, $unreadCount, $finder->count()];
+        return [$notification, $notification->account, $attention, $finder->count()];
     }
 
     /** @return array{0: Message, 1: Account} */

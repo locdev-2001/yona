@@ -36,9 +36,10 @@ class NotificationsController extends Controller
         ]);
     }
 
-    public function unreadCount(Request $request, Account $account): JsonResponse
+    // Số trên chuông kèm phần chia theo kênh cho badge từng kênh ở sidebar.
+    public function unreadCounts(Request $request, Account $account): JsonResponse
     {
-        return response()->json((new AttentionCounter($account, $request->user()))->count());
+        return response()->json((new AttentionCounter($account, $request->user()))->payload());
     }
 
     // read_all: không có primary_actor thì đánh dấu đã đọc toàn bộ account.

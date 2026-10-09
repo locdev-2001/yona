@@ -13,7 +13,7 @@ const tray = vi.hoisted(() => ({
 vi.mock('dashboard/helper/notificationTray', () => tray);
 
 const api = vi.hoisted(() => ({
-    fetchUnreadCount: vi.fn(),
+    fetchUnreadCounts: vi.fn(),
     fetchNotifications: vi.fn(),
 }));
 vi.mock('./api', () => api);
@@ -48,7 +48,7 @@ function emitNotification(eventName: string, notification: Record<string, unknow
 }
 
 async function bindLoaded(unreadCount: number) {
-    api.fetchUnreadCount.mockResolvedValue(unreadCount);
+    api.fetchUnreadCounts.mockResolvedValue({ unread_count: unreadCount, unread_inbox_counts: {} });
     bindUnreadIndicators(ACCOUNT_ID);
     await flushPromises();
 }
@@ -90,11 +90,11 @@ describe('chỉ báo chưa đọc ngoài app', () => {
 
         expect(tray.setAppBadgeCount).toHaveBeenCalledWith(0);
         expect(tray.closeTrayNotifications).not.toHaveBeenCalled();
-        expect(api.fetchUnreadCount).not.toHaveBeenCalled();
+        expect(api.fetchUnreadCounts).not.toHaveBeenCalled();
     });
 
     it('chưa nạp xong số thì tiêu đề không có tiền tố, không đụng badge và khay', () => {
-        api.fetchUnreadCount.mockReturnValue(new Promise(() => undefined));
+        api.fetchUnreadCounts.mockReturnValue(new Promise(() => undefined));
 
         bindUnreadIndicators(ACCOUNT_ID);
 

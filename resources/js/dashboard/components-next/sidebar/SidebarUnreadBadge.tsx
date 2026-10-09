@@ -6,7 +6,7 @@ export default function SidebarUnreadBadge({ count = 0 }: { count?: number | str
     return (
         <span
             data-test-id="sidebar-unread-badge"
-            className="inline-grid h-5 min-w-5 place-items-center rounded-full bg-n-slate-4 px-1 text-xxs font-medium leading-3 text-n-slate-12 flex-shrink-0"
+            className="inline-grid h-4 min-w-4 place-items-center rounded-full bg-n-ruby-9 px-1 text-xxs font-medium leading-4 text-white flex-shrink-0"
         >
             {normalizedCount > 99 ? '99+' : String(normalizedCount)}
         </span>

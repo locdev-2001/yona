@@ -831,8 +831,8 @@ export function ConversationProvider({
     const markMessagesRead = useCallback(
         async (targetId: number, seenThrough = 0) => {
             if (!targetId) return;
-            const hadUnread = (allConversationsRef.current.find((item) => item.id === targetId)?.unread_count ?? 0) > 0;
-            markConversationSeen(targetId, hadUnread, seenThrough);
+            const target = allConversationsRef.current.find((item) => item.id === targetId);
+            markConversationSeen(targetId, (target?.unread_count ?? 0) > 0, seenThrough, target?.inbox_id);
             try {
                 await markMessagesReadRequest(accountId, targetId);
                 scheduleUnreadCountRefresh();

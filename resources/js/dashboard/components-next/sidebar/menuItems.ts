@@ -41,8 +41,9 @@ export interface SidebarLabel {
 // Folders (custom view hội thoại) và Segments (custom view liên hệ) đọc store
 // composables/useCustomViews (E1); nhóm "Tagged With" vẫn rỗng (route liên hệ
 // theo nhãn chưa port).
-// badgeCount lấy từ store conversationUnreadCounts (B8) — rỗng khi account chưa
-// bật cờ `conversation_unread_counts`, đúng như oracle. Trung tâm thông báo không
+// badgeCount nhãn/team lấy từ store conversationUnreadCounts — rỗng khi account chưa
+// bật cờ `conversation_unread_counts`. Badge từng kênh là số trên chuông chia theo
+// kênh (Sidebar.tsx ghép vào `inboxes`), luôn bật. Trung tâm thông báo không
 // còn là mục menu: mở từ chuông ở hàng đầu sidebar (NotificationBell).
 // Custom view rút gọn cho hai nhóm Folders/Segments.
 export interface SidebarCustomView {

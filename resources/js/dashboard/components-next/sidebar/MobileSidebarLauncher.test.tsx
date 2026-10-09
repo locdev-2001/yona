@@ -15,7 +15,7 @@ import MobileSidebarLauncher from './MobileSidebarLauncher';
 const UNREAD_DOT = '[data-test-id="mobile-launcher-unread-dot"]';
 
 async function renderLauncher(unreadCount: number) {
-    getJson.mockResolvedValue(unreadCount);
+    getJson.mockResolvedValue({ unread_count: unreadCount, unread_inbox_counts: {} });
     const view = render(<MobileSidebarLauncher isMobileSidebarOpen={false} onToggle={() => undefined} />);
     await act(async () => {
         bindUnreadCount(2);

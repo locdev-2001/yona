@@ -9,6 +9,7 @@ export interface ConversationSeenPayload {
     conversationId: number;
     seenAt: number;
     hadUnread: boolean;
+    inboxId?: number;
 }
 
 const seenAtByConversation = new Map<number, number>();
@@ -17,10 +18,15 @@ export function nowInSeconds(): number {
     return Math.floor(Date.now() / 1000);
 }
 
-export function markConversationSeen(conversationId: number, hadUnread: boolean, seenThrough = 0): ConversationSeenPayload {
+export function markConversationSeen(
+    conversationId: number,
+    hadUnread: boolean,
+    seenThrough = 0,
+    inboxId?: number,
+): ConversationSeenPayload {
     const seenAt = Math.max(nowInSeconds(), seenThrough, seenAtByConversation.get(conversationId) ?? 0);
     seenAtByConversation.set(conversationId, seenAt);
-    const payload = { conversationId, seenAt, hadUnread };
+    const payload = { conversationId, seenAt, hadUnread, inboxId };
     emitter.emit(BUS_EVENTS.CONVERSATION_SEEN, payload);
 
     return payload;

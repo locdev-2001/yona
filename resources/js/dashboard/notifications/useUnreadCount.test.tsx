@@ -19,7 +19,11 @@ import {
     useNotificationsUnreadCount,
 } from './useUnreadCount';
 
-const UNREAD_COUNT_URL = '/api/v1/accounts/2/notifications/unread_count';
+const UNREAD_COUNT_URL = '/api/v1/accounts/2/notifications/unread_counts';
+
+function countsPayload(unreadCount: number, inboxCounts: Record<string, number> = {}) {
+    return { unread_count: unreadCount, unread_inbox_counts: inboxCounts };
+}
 
 function Probe({ testId }: { testId: string }) {
     const count = useNotificationsUnreadCount();
@@ -79,7 +83,7 @@ describe('store số thông báo chưa đọc', () => {
     beforeEach(() => {
         resetUnreadCount();
         getJson.mockReset();
-        getJson.mockResolvedValue(3);
+        getJson.mockResolvedValue(countsPayload(3));
         vi.useFakeTimers();
     });
 
@@ -105,7 +109,7 @@ describe('store số thông báo chưa đọc', () => {
         expect(getJson).toHaveBeenCalledWith(UNREAD_COUNT_URL);
         expect(getByTestId('bell').textContent).toBe('3');
         expect(getByTestId('launcher').textContent).toBe('3');
-        expect(getUnreadCountState()).toEqual({ accountId: 2, count: 3, isLoaded: true });
+        expect(getUnreadCountState()).toEqual({ accountId: 2, count: 3, inboxCounts: {}, isLoaded: true });
     });
 
     it('Dashboard dựng lại cùng account thì không hỏi lại máy chủ', async () => {
@@ -127,7 +131,7 @@ describe('store số thông báo chưa đọc', () => {
         await flushPromises();
 
         expect(getJson).toHaveBeenCalledTimes(2);
-        expect(getUnreadCountState()).toEqual({ accountId: 2, count: 3, isLoaded: true });
+        expect(getUnreadCountState()).toEqual({ accountId: 2, count: 3, inboxCounts: {}, isLoaded: true });
     });
 
     it('đi theo số của event realtime cùng account, bỏ qua account khác', async () => {
@@ -147,7 +151,7 @@ describe('store số thông báo chưa đọc', () => {
         act(() => bindUnreadCount(2));
         await flushPromises();
         getJson.mockClear();
-        getJson.mockResolvedValue(1);
+        getJson.mockResolvedValue(countsPayload(1));
 
         emitNotificationEvent('notification.updated', 5);
         emitNotificationEvent('notification.updated', 4);
@@ -163,13 +167,13 @@ describe('store số thông báo chưa đọc', () => {
     });
 
     it('kết quả GET cũ không ghi đè số mới hơn từ event tới trong lúc chờ', async () => {
-        const pending = deferred<number>();
+        const pending = deferred<ReturnType<typeof countsPayload>>();
         getJson.mockReturnValueOnce(pending.promise);
         const { getByTestId } = render(<Probe testId="bell" />);
         act(() => bindUnreadCount(2));
 
         emitNotificationEvent('notification.created', 6);
-        pending.resolve(2);
+        pending.resolve(countsPayload(2));
         await flushPromises();
 
         expect(getByTestId('bell').textContent).toBe('6');
@@ -179,17 +183,17 @@ describe('store số thông báo chưa đọc', () => {
         bindUnreadCount(2);
         await flushPromises();
         getJson.mockClear();
-        const pending = deferred<number>();
+        const pending = deferred<ReturnType<typeof countsPayload>>();
         getJson.mockReturnValueOnce(pending.promise);
 
         bindUnreadCount(5);
 
-        expect(getUnreadCountState()).toEqual({ accountId: 5, count: 0, isLoaded: false });
-        expect(getJson).toHaveBeenCalledWith('/api/v1/accounts/5/notifications/unread_count');
+        expect(getUnreadCountState()).toEqual({ accountId: 5, count: 0, inboxCounts: {}, isLoaded: false });
+        expect(getJson).toHaveBeenCalledWith('/api/v1/accounts/5/notifications/unread_counts');
 
-        pending.resolve(8);
+        pending.resolve(countsPayload(8));
         await flushPromises();
-        expect(getUnreadCountState()).toEqual({ accountId: 5, count: 8, isLoaded: true });
+        expect(getUnreadCountState()).toEqual({ accountId: 5, count: 8, inboxCounts: {}, isLoaded: true });
     });
 
     it('nối lại realtime thì hẹn hỏi lại máy chủ', async () => {
@@ -226,7 +230,7 @@ describe('store số thông báo chưa đọc', () => {
     });
 
     it('sự kiện đã xem một hội thoại đang có chấm thì chuông giảm một ngay, không xuống dưới 0', async () => {
-        getJson.mockResolvedValue(2);
+        getJson.mockResolvedValue(countsPayload(2));
         bindUnreadCount(2);
         await flushPromises();
         const seen = (hadUnread: boolean) => emitter.emit(BUS_EVENTS.CONVERSATION_SEEN, { conversationId: 4, seenAt: 100, hadUnread });
@@ -238,6 +242,33 @@ describe('store số thông báo chưa đọc', () => {
         act(() => seen(true));
         act(() => seen(true));
         expect(getUnreadCountState().count).toBe(0);
+    });
+
+    it('giữ số chia theo kênh cùng nhịp với số trên chuông: nạp, realtime, đã xem', async () => {
+        getJson.mockResolvedValue(countsPayload(3, { '7': 2, '8': 1 }));
+        bindUnreadCount(2);
+        await flushPromises();
+        expect(getUnreadCountState().inboxCounts).toEqual({ '7': 2, '8': 1 });
+
+        act(() =>
+            emitter.emit('notification.created', {
+                notification: { id: 1 },
+                unread_count: 4,
+                unread_inbox_counts: { '7': 2, '8': 2 },
+                count: 9,
+                account_id: 2,
+            }),
+        );
+        expect(getUnreadCountState()).toMatchObject({ count: 4, inboxCounts: { '7': 2, '8': 2 } });
+
+        emitNotificationEvent('notification.updated', 4);
+        expect(getUnreadCountState().inboxCounts).toEqual({ '7': 2, '8': 2 });
+
+        const seenInInbox = (inboxId: number) =>
+            emitter.emit(BUS_EVENTS.CONVERSATION_SEEN, { conversationId: 4, seenAt: 100, hadUnread: true, inboxId });
+        act(() => seenInInbox(8));
+        act(() => seenInInbox(8));
+        expect(getUnreadCountState()).toMatchObject({ count: 2, inboxCounts: { '7': 2 } });
     });
 
     it('reset xoá số, huỷ lần hỏi đang hẹn và thôi nghe event', async () => {
@@ -253,7 +284,7 @@ describe('store số thông báo chưa đọc', () => {
         emitNotificationEvent('notification.created', 9);
 
         expect(getJson).not.toHaveBeenCalled();
-        expect(getUnreadCountState()).toEqual({ accountId: 0, count: 0, isLoaded: false });
+        expect(getUnreadCountState()).toEqual({ accountId: 0, count: 0, inboxCounts: {}, isLoaded: false });
     });
 
     describe('hội thoại đang mở ở tab này', () => {
@@ -261,7 +292,7 @@ describe('store số thông báo chưa đọc', () => {
         const READ_AT = '2026-09-25T00:00:00Z';
 
         beforeEach(async () => {
-            getJson.mockResolvedValue(0);
+            getJson.mockResolvedValue(countsPayload(0));
             bindUnreadCount(2);
             await flushPromises();
             getJson.mockClear();
@@ -290,7 +321,7 @@ describe('store số thông báo chưa đọc', () => {
         });
 
         it('trong lúc chờ đọc, số hỏi được từ máy chủ không được áp', async () => {
-            getJson.mockResolvedValue(1);
+            getJson.mockResolvedValue(countsPayload(1));
             emitNotificationEvent('notification.updated', 0);
             emitConversationNotification('notification.created', VIEWED_ID, 1);
 
@@ -302,7 +333,7 @@ describe('store số thông báo chưa đọc', () => {
         });
 
         it('chờ quá hạn mà không có event đã đọc thì lấy số của máy chủ', async () => {
-            getJson.mockResolvedValue(1);
+            getJson.mockResolvedValue(countsPayload(1));
             emitConversationNotification('notification.created', VIEWED_ID, 1);
 
             await act(async () => {
@@ -314,7 +345,7 @@ describe('store số thông báo chưa đọc', () => {
         });
 
         it('rời hội thoại khi đang chờ thì hỏi lại máy chủ', async () => {
-            getJson.mockResolvedValue(1);
+            getJson.mockResolvedValue(countsPayload(1));
             emitConversationNotification('notification.created', VIEWED_ID, 1);
 
             setViewedConversation(0);

@@ -6,7 +6,7 @@ import { App, router } from '@inertiajs/react';
 import { emitter } from 'shared/helpers/emitter';
 
 const api = vi.hoisted(() => ({
-    fetchUnreadCount: vi.fn(),
+    fetchUnreadCounts: vi.fn(),
     fetchNotifications: vi.fn(),
 }));
 vi.mock('dashboard/notifications/api', () => api);
@@ -47,8 +47,8 @@ async function emitUnreadCount(unreadCount: number) {
 
 // Số chưa đọc về muộn hơn lần ghi <title> đầu tiên, như trên trình duyệt thật.
 async function mountAppWithUnreadCount(unreadCount: number) {
-    let resolveUnreadCount: (count: number) => void = () => undefined;
-    api.fetchUnreadCount.mockImplementation(() => new Promise<number>(resolve => (resolveUnreadCount = resolve)));
+    let resolveUnreadCounts: (payload: { unread_count: number; unread_inbox_counts: Record<string, number> }) => void = () => undefined;
+    api.fetchUnreadCounts.mockImplementation(() => new Promise(resolve => (resolveUnreadCounts = resolve)));
 
     render(
         <App
@@ -61,7 +61,7 @@ async function mountAppWithUnreadCount(unreadCount: number) {
     );
     await waitForHeadWrite();
 
-    await act(async () => resolveUnreadCount(unreadCount));
+    await act(async () => resolveUnreadCounts({ unread_count: unreadCount, unread_inbox_counts: {} }));
     await waitForHeadWrite();
 }
 

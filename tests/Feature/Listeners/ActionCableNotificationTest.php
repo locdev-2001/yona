@@ -49,6 +49,7 @@ it('broadcasts notification.created only to the notified user', function () {
         ->and($job->eventName)->toBe('notification.created')
         ->and($job->data['notification']['id'])->toBe($this->notification->id)
         ->and($job->data['unread_count'])->toBe(1)
+        ->and((array) $job->data['unread_inbox_counts'])->toEqual([(string) $this->notification->primaryActor->inbox_id => 1])
         ->and($job->data['count'])->toBe(1)
         ->and($job->queue)->toBe('critical');
 });

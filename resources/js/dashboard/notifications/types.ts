@@ -45,6 +45,7 @@ export interface NotificationFilters {
 export interface NotificationRealtimePayload {
     notification: NotificationRecord | { id: number };
     unread_count: number;
+    unread_inbox_counts?: Record<string, number>;
     count: number;
     account_id: number;
 }

@@ -6,6 +6,7 @@ use App\Jobs\Notification\DeleteNotificationJob;
 use App\Models\Account;
 use App\Models\AccountUser;
 use App\Models\Conversation;
+use App\Models\Inbox;
 use App\Models\Message;
 use App\Models\Notification;
 use App\Models\User;
@@ -83,14 +84,14 @@ describe('POST /api/v1/accounts/{id}/notifications/read_all', function () {
         $resolved = Conversation::factory()->create(['account_id' => $this->account->id]);
         Message::factory()->create(['account_id' => $this->account->id, 'inbox_id' => $resolved->inbox_id, 'conversation_id' => $resolved->id]);
         $resolved->forceFill(['status' => Conversation::STATUS_RESOLVED])->save();
-        $unreadCountUrl = "/api/v1/accounts/{$this->account->id}/notifications/unread_count";
-        expect($this->actingAs($this->admin)->getJson($unreadCountUrl)->json())->toBe(2);
+        $unreadCountUrl = "/api/v1/accounts/{$this->account->id}/notifications/unread_counts";
+        expect($this->actingAs($this->admin)->getJson($unreadCountUrl)->json('unread_count'))->toBe(2);
 
         $this->actingAs($this->admin)
             ->postJson("/api/v1/accounts/{$this->account->id}/notifications/read_all")
             ->assertOk();
 
-        expect($this->actingAs($this->admin)->getJson($unreadCountUrl)->json())->toBe(0)
+        expect($this->actingAs($this->admin)->getJson($unreadCountUrl)->json('unread_count'))->toBe(0)
             ->and($unread->fresh()->agent_last_seen_at)->not->toBeNull()
             ->and($unread->fresh()->assignee_last_seen_at)->not->toBeNull()
             ->and($resolved->fresh()->agent_last_seen_at)->not->toBeNull();
@@ -191,20 +192,37 @@ describe('POST /api/v1/accounts/{id}/notifications/{id}/unread', function () {
     });
 });
 
-describe('GET /api/v1/accounts/{id}/notifications/unread_count', function () {
+describe('GET /api/v1/accounts/{id}/notifications/unread_counts', function () {
     it('returns unauthorized for an unauthenticated user', function () {
-        $this->getJson("/api/v1/accounts/{$this->account->id}/notifications/unread_count")->assertUnauthorized();
+        $this->getJson("/api/v1/accounts/{$this->account->id}/notifications/unread_counts")->assertUnauthorized();
     });
 
-    it('returns the bare number of unread notifications', function () {
-        notificationForAdminUser($this->account, $this->admin);
-        notificationForAdminUser($this->account, $this->admin);
+    it('returns the bell count split by inbox, summing to the bell count', function () {
+        $firstInbox = Inbox::factory()->create(['account_id' => $this->account->id]);
+        $secondInbox = Inbox::factory()->create(['account_id' => $this->account->id]);
+        foreach ([$firstInbox, $firstInbox, $secondInbox] as $inbox) {
+            $conversation = Conversation::factory()->create(['account_id' => $this->account->id, 'inbox_id' => $inbox->id]);
+            Notification::factory()->create([
+                'account_id' => $this->account->id,
+                'user_id' => $this->admin->id,
+                'primary_actor_id' => $conversation->id,
+            ]);
+        }
 
         $response = $this->actingAs($this->admin)
-            ->getJson("/api/v1/accounts/{$this->account->id}/notifications/unread_count")
+            ->getJson("/api/v1/accounts/{$this->account->id}/notifications/unread_counts")
             ->assertOk();
 
-        expect($response->json())->toBe(2);
+        expect($response->json('unread_count'))->toBe(3)
+            ->and($response->json('unread_inbox_counts'))->toEqual([(string) $firstInbox->id => 2, (string) $secondInbox->id => 1]);
+    });
+
+    it('returns an empty object, not a list, when nothing needs attention', function () {
+        $response = $this->actingAs($this->admin)
+            ->getJson("/api/v1/accounts/{$this->account->id}/notifications/unread_counts")
+            ->assertOk();
+
+        expect($response->getContent())->toContain('"unread_inbox_counts":{}');
     });
 });
 

@@ -44,8 +44,13 @@ export async function fetchNotifications({
     };
 }
 
-export function fetchUnreadCount(accountId: number): Promise<number> {
-    return getJson<number>(`${notificationsUrl(accountId)}/unread_count`);
+export interface UnreadCountsPayload {
+    unread_count: number;
+    unread_inbox_counts: Record<string, number>;
+}
+
+export function fetchUnreadCounts(accountId: number): Promise<UnreadCountsPayload> {
+    return getJson<UnreadCountsPayload>(`${notificationsUrl(accountId)}/unread_counts`);
 }
 
 export function markNotificationsRead(

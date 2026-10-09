@@ -71,3 +71,26 @@ it('is zero for a user outside the account', function () {
 
     expect((new AttentionCounter($this->account, User::factory()->create()))->count())->toBe(0);
 });
+
+it('splits the same count by inbox so the inboxes always add up to the bell', function () {
+    $secondInbox = Inbox::factory()->create(['account_id' => $this->account->id]);
+    $secondInbox->members()->attach($this->agent->id);
+
+    withIncomingMessage(attentionConversation($this->agentInbox));
+    $unreadAndNotified = withIncomingMessage(attentionConversation($this->agentInbox));
+    notifyAbout($unreadAndNotified, $this->agent);
+    notifyAbout(attentionConversation($secondInbox), $this->agent);
+    withIncomingMessage(attentionConversation($this->otherInbox));
+    $mentionedOutsideMembership = attentionConversation($this->otherInbox);
+    notifyAbout($mentionedOutsideMembership, $this->agent);
+
+    $counter = new AttentionCounter($this->account, $this->agent);
+
+    expect($counter->countByInbox())->toEqual([
+        (string) $this->agentInbox->id => 2,
+        (string) $secondInbox->id => 1,
+        (string) $this->otherInbox->id => 1,
+    ])
+        ->and($counter->count())->toBe(4)
+        ->and($counter->payload()['unread_count'])->toBe(array_sum($counter->countByInbox()));
+});

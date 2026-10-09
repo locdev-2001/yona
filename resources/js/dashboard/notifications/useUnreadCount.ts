@@ -2,18 +2,21 @@ import { useSyncExternalStore } from 'react';
 
 import { BUS_EVENTS, emitter } from 'shared/helpers/emitter';
 import type { ConversationSeenPayload } from 'dashboard/conversation/conversationSeen';
-import { fetchUnreadCount } from './api';
+import { fetchUnreadCounts } from './api';
 import type { NotificationRealtimePayload, NotificationRecord } from './types';
 
 // Nguồn DUY NHẤT phía giao diện cho số trên chuông của account đang mở — số hội
 // thoại cần để mắt (có tin chưa đọc hoặc còn thông báo, máy chủ đếm mỗi hội thoại một lần):
-// chuông, chấm trên nút menu điện thoại, tiêu đề tab, badge biểu tượng app và việc
-// dọn khay thông báo đều đọc ở đây. Sống ở module vì Dashboard dựng lại mỗi lần
+// chuông, chấm trên nút menu điện thoại, tiêu đề tab, badge biểu tượng app, badge từng
+// kênh ở sidebar (cùng số, chia theo kênh) và việc dọn khay thông báo đều đọc ở đây. Sống ở module vì Dashboard dựng lại mỗi lần
 // Inertia đổi trang; state trong component sẽ mất và phải nạp lại.
+
+export type InboxUnreadCounts = Record<string, number>;
 
 export interface UnreadCountState {
     accountId: number;
     count: number;
+    inboxCounts: InboxUnreadCounts;
     isLoaded: boolean;
 }
 
@@ -28,7 +31,8 @@ const NOTIFICATION_EVENTS = ['notification.created', 'notification.updated', 'no
 // Hội thoại có tin mới hoặc đổi trạng thái/người nhận làm số trên chuông đổi mà không
 // sinh thông báo: hỏi lại máy chủ (gộp loạt event bằng nhịp refresh).
 const CONVERSATION_EVENTS = ['message.created', 'conversation.created', 'conversation.status_changed', 'conversation.updated'] as const;
-const EMPTY_STATE: UnreadCountState = { accountId: 0, count: 0, isLoaded: false };
+const EMPTY_INBOX_COUNTS: InboxUnreadCounts = {};
+const EMPTY_STATE: UnreadCountState = { accountId: 0, count: 0, inboxCounts: EMPTY_INBOX_COUNTS, isLoaded: false };
 
 let unreadState: UnreadCountState = EMPTY_STATE;
 // Tăng mỗi khi có event realtime của account đang mở: kết quả GET bắt đầu trước
@@ -47,6 +51,16 @@ const listeners = new Set<() => void>();
 function setUnreadState(nextState: UnreadCountState): void {
     unreadState = nextState;
     listeners.forEach(listener => listener());
+}
+
+function normalizeInboxCounts(counts: unknown): InboxUnreadCounts {
+    if (!counts || typeof counts !== 'object') return EMPTY_INBOX_COUNTS;
+
+    return Object.entries(counts as Record<string, unknown>).reduce<InboxUnreadCounts>((result, [inboxId, count]) => {
+        const parsed = Number(count);
+        if (Number.isFinite(parsed) && parsed > 0) result[inboxId] = parsed;
+        return result;
+    }, {});
 }
 
 function isWaitingForViewedRead(): boolean {
@@ -82,13 +96,18 @@ function refreshNow(): void {
     const versionAtStart = realtimeVersion;
     fetchingAccountId = accountId;
 
-    fetchUnreadCount(accountId)
-        .then(count => {
+    fetchUnreadCounts(accountId)
+        .then(payload => {
             if (unreadState.accountId !== accountId || realtimeVersion !== versionAtStart) return;
             if (isWaitingForViewedRead()) return;
-            const normalizedCount = Number(count);
+            const normalizedCount = Number(payload?.unread_count);
             if (!Number.isFinite(normalizedCount)) return;
-            setUnreadState({ accountId, count: Math.max(0, normalizedCount), isLoaded: true });
+            setUnreadState({
+                accountId,
+                count: Math.max(0, normalizedCount),
+                inboxCounts: normalizeInboxCounts(payload.unread_inbox_counts),
+                isLoaded: true,
+            });
         })
         .catch(() => undefined)
         .finally(() => {
@@ -115,7 +134,11 @@ function applyRealtimePayload(payload: unknown): void {
 
     const nextCount = Number(realtimePayload.unread_count);
     if (Number.isFinite(nextCount)) {
-        setUnreadState({ ...unreadState, count: Math.max(0, nextCount), isLoaded: true });
+        const inboxCounts =
+            realtimePayload.unread_inbox_counts === undefined
+                ? unreadState.inboxCounts
+                : normalizeInboxCounts(realtimePayload.unread_inbox_counts);
+        setUnreadState({ ...unreadState, count: Math.max(0, nextCount), inboxCounts, isLoaded: true });
     }
     scheduleUnreadCountRefresh();
 }
@@ -154,7 +177,7 @@ export function bindUnreadCount(accountId: number): void {
 
     clearTimeout(refreshTimer);
     if (unreadState.accountId !== accountId) {
-        setUnreadState({ accountId, count: 0, isLoaded: false });
+        setUnreadState({ accountId, count: 0, inboxCounts: EMPTY_INBOX_COUNTS, isLoaded: false });
     }
     refreshNow();
 }
@@ -168,12 +191,26 @@ export function setViewedConversation(conversationId: number): void {
     }
 }
 
-// Vừa xem một hội thoại đang có chấm chưa đọc: chuông giảm một ngay, máy chủ chốt số sau.
+function withoutOneInInbox(inboxCounts: InboxUnreadCounts, inboxId: number | undefined): InboxUnreadCounts {
+    const key = String(inboxId ?? '');
+    const current = inboxCounts[key] ?? 0;
+    if (current <= 0) return inboxCounts;
+
+    const { [key]: _removed, ...rest } = inboxCounts;
+    return current > 1 ? { ...rest, [key]: current - 1 } : rest;
+}
+
+// Vừa xem một hội thoại đang có chấm chưa đọc: chuông và badge kênh của nó giảm một ngay, máy chủ chốt số sau.
 function applyConversationSeen(payload: unknown): void {
-    if (!(payload as Partial<ConversationSeenPayload> | null)?.hadUnread) return;
+    const seen = payload as Partial<ConversationSeenPayload> | null;
+    if (!seen?.hadUnread) return;
     if (!unreadState.isLoaded || unreadState.count === 0) return;
     realtimeVersion += 1;
-    setUnreadState({ ...unreadState, count: unreadState.count - 1 });
+    setUnreadState({
+        ...unreadState,
+        count: unreadState.count - 1,
+        inboxCounts: withoutOneInInbox(unreadState.inboxCounts, seen.inboxId),
+    });
 }
 
 export function scheduleUnreadCountRefresh(): void {
@@ -203,7 +240,12 @@ export function resetUnreadCount(): void {
 }
 
 const readCount = () => unreadState.count;
+const readInboxCounts = () => unreadState.inboxCounts;
 
 export function useNotificationsUnreadCount(): number {
     return useSyncExternalStore(subscribeUnreadCount, readCount, readCount);
+}
+
+export function useNotificationsUnreadInboxCounts(): InboxUnreadCounts {
+    return useSyncExternalStore(subscribeUnreadCount, readInboxCounts, readInboxCounts);
 }

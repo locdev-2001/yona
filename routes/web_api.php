@@ -280,7 +280,7 @@ Route::middleware(['auth.api_token', 'auth', 'account.scope'])
 
         // resources :notifications + resource :notification_settings (số ít).
         Route::get('/notifications', [NotificationsController::class, 'index']);
-        Route::get('/notifications/unread_count', [NotificationsController::class, 'unreadCount']);
+        Route::get('/notifications/unread_counts', [NotificationsController::class, 'unreadCounts']);
         Route::post('/notifications/read_all', [NotificationsController::class, 'readAll']);
         Route::post('/notifications/destroy_all', [NotificationsController::class, 'destroyAll']);
         Route::post('/notifications/{notificationId}/snooze', [NotificationsController::class, 'snooze'])->whereNumber('notificationId');

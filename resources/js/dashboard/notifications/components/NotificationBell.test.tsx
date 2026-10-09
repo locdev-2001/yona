@@ -74,7 +74,7 @@ function notification(id: number, overrides: Partial<NotificationRecord> = {}): 
 
 function serveApi({ unreadCount, notifications }: { unreadCount: number; notifications: NotificationRecord[] }) {
     api.getJson.mockImplementation(async (url: string) => {
-        if (url.endsWith('/unread_count')) return unreadCount;
+        if (url.endsWith('/unread_counts')) return { unread_count: unreadCount, unread_inbox_counts: {} };
         return { data: { meta: { count: notifications.length, current_page: 1, unread_count: unreadCount }, payload: notifications } };
     });
 }
@@ -86,7 +86,7 @@ async function renderBell({ unreadCount = 2, notifications = [notification(1), n
     await act(async () => {
         bindUnreadCount(2);
     });
-    await waitFor(() => expect(api.getJson).toHaveBeenCalledWith(`${NOTIFICATIONS_URL}/unread_count`));
+    await waitFor(() => expect(api.getJson).toHaveBeenCalledWith(`${NOTIFICATIONS_URL}/unread_counts`));
     return { ...view, onNavigate };
 }
 
