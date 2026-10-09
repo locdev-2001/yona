@@ -45,7 +45,6 @@ export default function ConversationBox({
         >
             {currentChat && (
                 <ConversationHeader
-                    className={showTabs ? '' : '!pt-2'}
                     showBackButton={isOnExpandedLayout && !isInboxView}
                 />
             )}

@@ -133,7 +133,7 @@ export default function ConversationHeader({
     return (
         <div
             data-testid="conversation-header"
-            className={`relative z-10 flex flex-col gap-3 items-center justify-between flex-1 w-full min-w-0 xl:flex-row px-3 pt-3 pb-2 h-24 xl:h-12 bg-n-surface-panel shadow-bar ${className}`}
+            className={`relative z-10 flex flex-none flex-col gap-3 items-center justify-between w-full min-w-0 xl:flex-row px-4 py-3 h-28 xl:h-16 xl:py-0 bg-n-surface-panel shadow-bar ${className}`}
         >
             <div className="flex items-center justify-start w-full xl:w-auto max-w-full min-w-0 xl:flex-1">
                 {showBackButton ? (
