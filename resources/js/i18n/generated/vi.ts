@@ -2675,7 +2675,7 @@ const messages: Record<string, unknown> = {
         "MENTION_HEADING": "Nhắn đến",
         "UNATTENDED_HEADING": "Không giám sát",
         "SEARCH": {
-            "INPUT": "Tìm tên, SĐT, email, nội dung, #id",
+            "INPUT": "Tìm kiếm",
             "LABEL": "Tìm hội thoại trong danh sách đang xem",
             "CLEAR": "Xoá từ khoá",
             "NO_RESULTS": "Không có hội thoại nào khớp “{query}” trong danh sách đang xem."

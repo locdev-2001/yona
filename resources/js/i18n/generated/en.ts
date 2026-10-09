@@ -2675,7 +2675,7 @@ const messages: Record<string, unknown> = {
         "MENTION_HEADING": "Mentions",
         "UNATTENDED_HEADING": "Unattended",
         "SEARCH": {
-            "INPUT": "Search name, phone, email, message, #id",
+            "INPUT": "Search",
             "LABEL": "Search conversations in this list",
             "CLEAR": "Clear search",
             "NO_RESULTS": "No conversation in this list matches “{query}”."
