@@ -216,7 +216,7 @@ export default function ConversationCard({
                                     title={t('CONVERSATION.CARD_CONTEXT_MENU.PINNED')}
                                     className="inline-flex"
                                 >
-                                    <Icon icon={ICONS.pin} className="size-3.5 text-n-slate-11" />
+                                    <Icon icon={ICONS.pinned} className="size-3.5 text-n-brand" />
                                 </span>
                             ) : null}
                             <CardPriorityIcon priority={chat.priority} className="flex-shrink-0 !size-3.5" />

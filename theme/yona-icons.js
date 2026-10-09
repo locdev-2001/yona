@@ -3,6 +3,12 @@
 // HOẶC của bộ lọc và hình chấm của màn chào onboarding. Icon giao diện mới dùng Lucide
 // qua resources/js/dashboard/icons.ts.
 export const icons = {
+  // Ghim đã đặc ruột: cùng hình `lucide:pin` nhưng tô kín để thẻ hội thoại đã ghim nổi bật.
+  'pin-filled': {
+    body: `<path fill="currentColor" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1a2 2 0 0 0 0-4H8a2 2 0 0 0 0 4a1 1 0 0 1 1 1z"/><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="2" d="M12 17v5"/>`,
+    width: 24,
+    height: 24,
+  },
   // Nhãn kênh Zalo — Iconify (logos/ri/lucide/ph) cũng không.
   // Vẽ tay đơn sắc theo hình khối của Zalo (bong bóng vuông bo góc + chữ Z khoét
   // rỗng) để đọc được ở 16px; dùng `currentColor` như mọi icon kênh khác.

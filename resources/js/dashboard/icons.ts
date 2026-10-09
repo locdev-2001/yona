@@ -43,6 +43,7 @@ export const ICONS = {
     markRead: 'i-lucide-mail-open',
     markUnread: 'i-lucide-mail',
     pin: 'i-lucide-pin',
+    pinned: 'i-yona-pin-filled',
     unpin: 'i-lucide-pin-off',
     moreActions: 'i-lucide-ellipsis',
 
