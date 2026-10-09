@@ -295,7 +295,6 @@ const ContactsForm = forwardRef<ContactsFormHandle, ContactsFormProps>(function 
                                     key={key}
                                     value={state.phoneNumber}
                                     placeholder={placeholder}
-                                    showBorder={isDetailsView}
                                     onChange={value => setFieldValue('phoneNumber', value)}
                                 />
                             );

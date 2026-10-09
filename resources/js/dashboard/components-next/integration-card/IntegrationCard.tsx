@@ -12,7 +12,7 @@ interface IntegrationCardProps {
 
 export default function IntegrationCard({ icon, title, description = '', children }: IntegrationCardProps) {
     return (
-        <div className="flex flex-col gap-4 p-4 rounded-xl outline outline-1 outline-n-weak">
+        <div className="flex flex-col gap-4 p-4 rounded-xl bg-n-surface-panel">
             <div className="flex items-start gap-3">
                 <div className="flex items-center justify-center rounded-lg size-9 shrink-0 bg-n-alpha-2 text-n-slate-12">
                     <Icon icon={icon} className="size-5" />

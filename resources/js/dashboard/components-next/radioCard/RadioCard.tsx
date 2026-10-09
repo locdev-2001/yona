@@ -37,10 +37,10 @@ export default function RadioCard({
         <label
             htmlFor={id}
             className={[
-                'rounded-xl outline outline-1 p-4 transition-all duration-200 bg-n-solid-1 py-4 ltr:pl-4 rtl:pr-4 ltr:pr-6 rtl:pl-6 focus-within:has-[:focus-visible]:ring-2 focus-within:has-[:focus-visible]:ring-n-strong',
+                'rounded-xl outline outline-1 -outline-offset-1 p-4 transition-all duration-200 py-4 ltr:pl-4 rtl:pr-4 ltr:pr-6 rtl:pl-6 focus-within:has-[:focus-visible]:ring-2 focus-within:has-[:focus-visible]:ring-n-brand',
                 disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer',
-                isActive ? 'outline-n-blue-9' : 'outline-n-weak',
-                !disabled && !isActive ? 'hover:outline-n-strong' : '',
+                isActive ? 'bg-n-surface-selected outline-n-blue-9' : 'bg-n-surface-field outline-transparent',
+                !disabled && !isActive ? 'hover:bg-n-surface-field-hover' : '',
                 className,
             ]
                 .filter(Boolean)

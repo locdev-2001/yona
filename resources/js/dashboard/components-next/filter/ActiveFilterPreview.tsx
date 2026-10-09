@@ -67,7 +67,7 @@ export default function ActiveFilterPreview({
                 index < maxVisibleFilters ? (
                     <div key={index} className="inline-flex items-center gap-2 h-7">
                         <div
-                            className="flex items-center h-full min-w-0 gap-1 px-2 py-1 text-xs border rounded-lg hover:bg-n-solid-2 max-w-72 border-n-weak hover:cursor-pointer"
+                            className="flex items-center h-full min-w-0 gap-1 px-2 py-1 text-xs rounded-lg bg-n-surface-field hover:bg-n-surface-field-hover max-w-72 hover:cursor-pointer"
                             onClick={onOpenFilter}
                         >
                             <span className="lowercase whitespace-nowrap first-letter:capitalize text-n-slate-12">

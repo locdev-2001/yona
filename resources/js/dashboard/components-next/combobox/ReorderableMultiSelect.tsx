@@ -104,7 +104,7 @@ export default function ReorderableMultiSelect({
 
             <div ref={containerRef}>
                 <div
-                    className={`flex flex-col gap-1 p-1 border rounded-xl border-n-weak bg-n-background ${
+                    className={`flex flex-col gap-1 p-1 rounded-xl bg-n-surface-field ${
                         disabled ? 'opacity-50 pointer-events-none' : ''
                     }`}
                 >

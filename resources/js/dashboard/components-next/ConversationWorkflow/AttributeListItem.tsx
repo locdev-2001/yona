@@ -38,7 +38,7 @@ export default function AttributeListItem({ attribute, badges = [], onEdit, onDe
         <div className="flex flex-col py-4 min-w-0">
             <div className="flex justify-between flex-row items-center gap-4 min-w-0">
                 <div className="flex items-center gap-4 min-w-0">
-                    <div className="flex items-center flex-shrink-0 size-10 justify-center rounded-xl outline outline-1 outline-n-weak -outline-offset-1">
+                    <div className="flex items-center flex-shrink-0 size-10 justify-center rounded-xl bg-n-surface-field">
                         <Icon icon={attributeIcon} className="size-4 text-n-slate-11" />
                     </div>
                     <div className="flex flex-col gap-1.5 items-start min-w-0 overflow-hidden">

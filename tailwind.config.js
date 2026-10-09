@@ -51,6 +51,9 @@ const tailwindConfig = {
         inter: ['Inter', ...defaultSansFonts],
         interDisplay: ['InterDisplay', ...defaultSansFonts],
       },
+      boxShadow: {
+        overlay: 'var(--shadow-overlay)',
+      },
       fontWeight: {
         420: '420',
         440: '440',

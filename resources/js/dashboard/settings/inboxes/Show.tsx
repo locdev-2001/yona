@@ -103,7 +103,6 @@ export default function InboxShow({ inboxId, tab = null, senderEmailAddress, tim
                             className="[&_ul]:p-0 top-px relative"
                             items={tabs}
                             index={selectedTabIndex}
-                            border={false}
                             isCompact
                             onChange={onTabChange}
                         />

@@ -51,7 +51,7 @@ export default function SelectMenu({ options, value, label, subMenuPosition = 'r
             />
             {isOpen ? (
                 <div
-                    className={`absolute select-none max-w-64 flex flex-col gap-1 bg-n-alpha-3 backdrop-blur-[100px] p-1 top-0 shadow-lg z-40 rounded-lg border border-n-weak ${SUB_MENU_POSITION_CLASSES[subMenuPosition]}`}
+                    className={`absolute select-none max-w-64 flex flex-col gap-1 overlay-surface p-1 top-0 z-40 rounded-lg ${SUB_MENU_POSITION_CLASSES[subMenuPosition]}`}
                 >
                     {options.map(option => (
                         <Button
@@ -62,7 +62,7 @@ export default function SelectMenu({ options, value, label, subMenuPosition = 'r
                             variant="ghost"
                             color="slate"
                             trailingIcon
-                            className={`!justify-end !px-2.5 !h-7 ${option.value === value ? '!bg-n-alpha-2' : ''}`.trim()}
+                            className={`!justify-end !px-2.5 !h-7 ${option.value === value ? '!bg-n-surface-selected' : ''}`.trim()}
                             onClick={() => {
                                 onChange(option.value);
                                 setOpen(false);

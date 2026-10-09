@@ -56,7 +56,7 @@ export default function PaginationFooter({
 
     return (
         <div
-            className={`flex justify-between h-[3.375rem] w-full border-t border-n-weak mx-auto bg-n-surface-1 py-3 px-6 items-center before:absolute before:inset-x-0 before:-top-4 before:bg-gradient-to-t before:from-n-surface-1 before:from-0% before:to-transparent before:h-4 before:pointer-events-none ${className}`.trim()}
+            className={`flex justify-between h-[3.375rem] w-full mx-auto bg-n-surface-1 py-3 px-6 items-center before:absolute before:inset-x-0 before:-top-4 before:bg-gradient-to-t before:from-n-surface-1 before:from-0% before:to-transparent before:h-4 before:pointer-events-none ${className}`.trim()}
         >
             <div className="flex items-center gap-3">
                 <span className="min-w-0 text-body-main line-clamp-1 text-n-slate-11">{currentPageInformation}</span>

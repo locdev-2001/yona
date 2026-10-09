@@ -54,20 +54,20 @@ const ComboBoxDropdown = forwardRef<ComboBoxDropdownHandle, ComboBoxDropdownProp
     return (
         <div
             style={{ display: open ? undefined : 'none' }}
-            className="absolute z-50 w-full mt-1 transition-opacity duration-200 border rounded-md shadow-lg bg-n-solid-1 border-n-strong"
+            className="overlay-surface absolute z-50 w-full mt-1 transition-opacity duration-200 rounded-lg"
         >
-            <div className="relative border-b border-n-strong">
+            <div className="relative p-1">
                 {loading ? (
-                    <Loader size={16} className="absolute top-2.5 start-3 text-n-slate-11" />
+                    <Loader size={16} className="absolute top-3.5 start-4 text-n-slate-11" />
                 ) : (
-                    <Icon icon="i-lucide-search" className="absolute top-2.5 size-4 start-3" />
+                    <Icon icon="i-lucide-search" className="absolute top-3.5 size-4 start-4 text-n-slate-10" />
                 )}
                 <input
                     ref={searchInputRef}
                     value={searchValue}
                     type="search"
                     placeholder={searchPlaceholder || t('COMBOBOX.SEARCH_PLACEHOLDER')}
-                    className="reset-base w-full py-2 !ps-10 !pe-2 text-sm focus:outline-none border-none rounded-t-md bg-n-solid-1 text-n-slate-12"
+                    className="field-surface reset-base w-full py-2 !ps-9 !pe-2 text-sm border-none rounded-md text-n-slate-12"
                     onChange={event => onSearch(event.target.value)}
                 />
             </div>
@@ -75,8 +75,8 @@ const ComboBoxDropdown = forwardRef<ComboBoxDropdownHandle, ComboBoxDropdownProp
                 {options.map((option, index) => (
                     <li
                         key={`${option.value}-${index}`}
-                        className={`flex items-center justify-between w-full gap-2 px-3 py-2 text-sm transition-colors duration-150 cursor-pointer hover:bg-n-alpha-2 ${
-                            isSelected(option) ? 'bg-n-alpha-2' : ''
+                        className={`flex items-center justify-between w-full gap-2 px-3 py-2 text-sm transition-colors duration-150 cursor-pointer hover:bg-n-surface-hover ${
+                            isSelected(option) ? 'bg-n-surface-selected' : ''
                         }`}
                         role="option"
                         aria-selected={isSelected(option)}

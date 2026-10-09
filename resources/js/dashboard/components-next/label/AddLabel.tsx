@@ -29,7 +29,7 @@ export default function AddLabel({ labelMenuItems = [], onUpdateLabel }: AddLabe
         <div ref={rootRef} className="relative">
             <button
                 type="button"
-                className={`flex items-center gap-1 px-2 py-1 rounded-md outline-dashed h-6 outline-1 outline-n-slate-6 hover:bg-n-alpha-2 ${
+                className={`flex items-center gap-1 px-2 py-1 rounded-md h-6 bg-n-surface-field hover:bg-n-surface-field-hover ${
                     showDropdown ? 'bg-n-alpha-2' : ''
                 }`.trim()}
                 onClick={() => setShowDropdown(open => !open)}

@@ -39,7 +39,7 @@ export default function MultiTextInput({ value, placeholder = '', onChange }: Mu
             onClick={() => setFocused(true)}
         >
             {value.map((item, index) => (
-                <div key={index} className="flex items-center justify-center max-w-full h-6 gap-1 px-1 py-0.5 text-sm leading-4 border rounded-lg bg-n-solid-1 border-n-weak">
+                <div key={index} className="flex items-center justify-center max-w-full h-6 gap-1 px-1 py-0.5 text-sm leading-4 rounded-lg bg-n-surface-field">
                     <span className="flex-grow min-w-0 truncate text-n-slate-12">{item}</span>
                     <span
                         className="flex-shrink-0 transition-colors cursor-pointer i-lucide-x size-3.5 text-n-slate-9 hover:text-n-slate-12"

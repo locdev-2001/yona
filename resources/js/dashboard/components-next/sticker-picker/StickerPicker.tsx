@@ -148,7 +148,7 @@ export default function StickerPicker({ loadStickers, onSelect }: StickerPickerP
             {isBrowsing ? (
                 <div
                     data-testid="sticker-picker-packs"
-                    className="flex shrink-0 gap-1 px-2 pb-1.5 overflow-x-auto no-scrollbar border-b border-n-weak"
+                    className="flex shrink-0 gap-1 px-2 pb-1.5 overflow-x-auto no-scrollbar"
                 >
                     <button
                         type="button"

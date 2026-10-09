@@ -68,19 +68,15 @@ export default function Editor({
         }
     }, [value, maxLength, showCharacterCount, actions, onChange]);
 
-    const borderClasses = disabled
-        ? 'cursor-not-allowed opacity-50 pointer-events-none !bg-n-alpha-black2 disabled:border-n-weak'
-        : isFocused
-          ? 'border-n-brand'
-          : messageType === 'error'
-            ? 'border-n-ruby-8 hover:border-n-ruby-9'
-            : 'hover:border-n-slate-6 border-n-weak';
+    const surfaceClasses = disabled
+        ? 'cursor-not-allowed opacity-50 pointer-events-none'
+        : [isFocused ? 'focus' : '', messageType === 'error' ? 'field-invalid' : ''].filter(Boolean).join(' ');
 
     return (
         <div className={`flex flex-col min-w-0 gap-1 ${className}`.trim()}>
             {label ? <label className="mb-0.5 text-sm font-medium text-n-slate-12">{label}</label> : null}
             <div
-                className={`flex flex-col w-full gap-2 px-3 py-3 transition-all duration-500 ease-in-out border rounded-lg editor-wrapper bg-n-alpha-black2 ${borderClasses}`}
+                className={`field-surface flex flex-col w-full gap-2 px-3 py-3 rounded-lg editor-wrapper ${surfaceClasses}`}
             >
                 <WootEditor
                     ref={editorRef}

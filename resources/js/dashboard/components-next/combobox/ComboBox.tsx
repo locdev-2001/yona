@@ -23,7 +23,7 @@ function OptionContent({ option, emphasized = false }: { option: ComboBoxOption;
     return (
         <span className="flex min-w-0 items-center gap-2">
             {option.imageUrl ? (
-                <span className="flex h-6 w-14 flex-none items-center justify-center rounded border border-n-weak bg-white px-1">
+                <span className="flex h-6 w-14 flex-none items-center justify-center rounded bg-white px-1">
                     <img src={option.imageUrl} alt="" className="max-h-4 max-w-full object-contain" />
                 </span>
             ) : null}
@@ -124,11 +124,9 @@ export default function ComboBox({
                 noAnimation
                 type="button"
                 className={[
-                    'justify-between w-full !px-3 !py-2.5 text-n-slate-12 font-normal group-hover/combobox:border-n-slate-6 focus:outline-n-brand',
-                    open ? 'focused' : '',
-                    !hasError
-                        ? '[&:not(.focused)]:hover:enabled:outline-n-slate-6'
-                        : '',
+                    'justify-between w-full !px-3 !py-2.5 text-n-slate-12 font-normal',
+                    open ? 'focused !outline-2 !-outline-offset-2 !outline-n-brand' : '',
+                    hasError && !open ? '!bg-n-ruby-2 !outline-1 !-outline-offset-1 !outline-n-ruby-9' : '',
                 ]
                     .filter(Boolean)
                     .join(' ')}
@@ -139,15 +137,15 @@ export default function ComboBox({
             </Button>
 
             {open ? (
-                <div className="absolute z-50 w-full mt-1 transition-opacity duration-200 border rounded-md shadow-lg bg-n-solid-1 border-n-strong">
-                    <div className="relative border-b border-n-strong">
-                        <Icon icon="i-lucide-search" className="absolute top-2.5 size-4 start-3" />
+                <div className="overlay-surface absolute z-50 w-full mt-1 transition-opacity duration-200 rounded-lg">
+                    <div className="relative p-1">
+                        <Icon icon="i-lucide-search" className="absolute top-3.5 size-4 start-4 text-n-slate-10" />
                         <input
                             ref={searchInputRef}
                             value={search}
                             type="search"
                             placeholder={searchPlaceholder || t('COMBOBOX.SEARCH_PLACEHOLDER')}
-                            className="reset-base w-full py-2 !ps-10 !pe-2 text-sm focus:outline-none border-none rounded-t-md bg-n-solid-1 text-n-slate-12"
+                            className="field-surface reset-base w-full py-2 !ps-9 !pe-2 text-sm border-none rounded-md text-n-slate-12"
                             onChange={event => {
                                 setSearch(event.target.value);
                                 onSearch?.(event.target.value);
@@ -161,7 +159,7 @@ export default function ComboBox({
                             return (
                                 <li
                                     key={`${option.value}-${index}`}
-                                    className={`flex items-center justify-between w-full gap-2 px-3 py-2 text-sm transition-colors duration-150 cursor-pointer hover:bg-n-alpha-2 ${isSelected ? 'bg-n-alpha-2' : ''}`.trim()}
+                                    className={`flex items-center justify-between w-full gap-2 px-3 py-2 text-sm transition-colors duration-150 cursor-pointer hover:bg-n-surface-hover ${isSelected ? 'bg-n-surface-selected' : ''}`.trim()}
                                     role="option"
                                     aria-selected={isSelected}
                                     onClick={event => {
@@ -183,7 +181,7 @@ export default function ComboBox({
                         ) : null}
                         {action ? (
                             <li
-                                className="flex w-full cursor-pointer items-center gap-2 border-t border-n-weak px-3 py-2 text-sm font-medium text-n-blue-11 hover:bg-n-alpha-2"
+                                className="flex w-full cursor-pointer items-center gap-2 mt-1 px-3 py-2 text-sm font-medium text-n-blue-11 hover:bg-n-surface-hover"
                                 role="option"
                                 aria-selected={false}
                                 onClick={event => {

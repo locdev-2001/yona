@@ -85,7 +85,7 @@ export default function TagInput({
     return (
         <div
             ref={containerRef}
-            className={`flex flex-wrap w-full gap-2 border border-transparent focus:outline-none ${className}`.trim()}
+            className={`flex flex-wrap w-full gap-2 focus:outline-none ${className}`.trim()}
             tabIndex={0}
             onFocus={handleFocus}
             onClick={handleFocus}

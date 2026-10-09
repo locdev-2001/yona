@@ -69,18 +69,57 @@ textarea {
   outline: none;
 }
 
-// Field base styles (Input, TextArea, Select)
+// Bề mặt dùng chung của giao diện không viền. Primitive (Input, TextArea, Select,
+// Editor, dropdown, dialog…) và ô nhập thô của form cùng dùng các lớp này, nên đổi
+// phong cách ô nhập hay lớp nổi chỉ sửa ở đây.
 @layer components {
+  // Ô nhập: nền tách khỏi panel một bậc, không viền. Tiêu điểm = vòng brand 2px
+  // (tương phản ≥3:1 với cả nền ô lẫn nền panel). Dùng được cho thẻ nhập lẫn khung
+  // bọc (focus-within) và lớp `.focus` do component tự gắn.
+  .field-surface {
+    @apply bg-n-surface-field outline outline-2 -outline-offset-2 outline-transparent transition-[background-color,outline-color] duration-150 ease-out;
+
+    &:hover:not(:disabled) {
+      @apply bg-n-surface-field-hover;
+    }
+
+    &:focus,
+    &:focus-within,
+    &.focus {
+      @apply outline-n-brand;
+    }
+  }
+
+  // Lỗi: nền đỏ nhạt + vòng đỏ mảnh, tiêu điểm thì vòng đỏ đậm; chữ lỗi do component hiện.
+  .field-invalid {
+    @apply bg-n-ruby-2 outline-1 -outline-offset-1 outline-n-ruby-9;
+
+    &:hover:not(:disabled) {
+      @apply bg-n-ruby-3;
+    }
+
+    &:focus,
+    &:focus-within,
+    &.focus {
+      @apply outline-2 -outline-offset-2 outline-n-ruby-9;
+    }
+  }
+
+  // Lớp nổi (menu, popover, dialog, panel trượt): nền trắng + bóng mềm thay viền.
+  .overlay-surface {
+    @apply bg-n-surface-raised shadow-overlay;
+  }
+
   .field-base {
-    @apply block box-border w-full transition-colors duration-[0.25s] ease-[ease-in-out] focus:outline-n-brand appearance-none mx-0 mt-0 mb-4 py-2 px-3 rounded-lg text-sm font-normal bg-n-alpha-black2 placeholder:text-n-slate-10 text-n-slate-12 border-none outline outline-1 outline-n-weak hover:outline-n-slate-6;
+    @apply field-surface block box-border w-full appearance-none mx-0 mt-0 mb-4 py-2 px-3 rounded-lg text-sm font-normal placeholder:text-n-slate-10 text-n-slate-12 border-none;
   }
 
   .field-disabled {
-    @apply opacity-50 outline-n-weak cursor-not-allowed;
+    @apply opacity-50 cursor-not-allowed;
   }
 
   .field-error {
-    @apply outline outline-1 outline-n-ruby-8 hover:outline-n-ruby-9 disabled:outline-n-ruby-8;
+    @apply field-invalid;
   }
 }
 

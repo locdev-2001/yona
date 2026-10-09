@@ -23,7 +23,7 @@ export default function BaseTable({
         <div className="w-full">
             <table className="min-w-full table-auto divide-y divide-n-weak">
                 {showHeaders ? (
-                    <thead className="border-t border-n-weak">
+                    <thead>
                         <tr>
                             {headers.map((header, index) => (
                                 <th

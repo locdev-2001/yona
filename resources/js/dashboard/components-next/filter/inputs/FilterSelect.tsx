@@ -78,7 +78,7 @@ export default function FilterSelect({
         <DropdownContainer
             className={className}
             menu={
-                <DropdownBody className="min-w-56 z-50 top-0" strong>
+                <DropdownBody className="min-w-56 z-50 top-0">
                     {showSearch ? <SearchInput value={searchTerm} onChange={setSearchTerm} /> : null}
                     <DropdownSection className="[&>ul]:max-h-72">
                         {searchResults.map(option =>

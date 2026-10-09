@@ -53,7 +53,7 @@ export default function BulkSelectBar({
 
     return (
         <div
-            className={`flex items-center gap-3 py-1 ltr:pl-3 rtl:pr-3 ltr:pr-4 rtl:pl-4 rounded-lg bg-n-solid-2 outline outline-1 outline-n-container shadow ${className}`.trim()}
+            className={`flex items-center gap-3 py-1 ltr:pl-3 rtl:pr-3 ltr:pr-4 rtl:pl-4 rounded-lg overlay-surface ${className}`.trim()}
         >
             <div className="flex items-center gap-3 min-w-0">
                 <div className="flex items-center gap-1.5 min-w-0">

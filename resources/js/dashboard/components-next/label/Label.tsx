@@ -11,12 +11,12 @@ export interface LabelObject {
 }
 
 const COLOR_CLASSES: Record<LabelColor, string> = {
-    slate: 'bg-n-label-color outline-n-label-border text-n-slate-12',
-    amber: 'bg-n-amber-2 outline-n-amber-4 text-n-amber-11',
-    teal: 'bg-n-teal-2 outline-n-teal-4 text-n-teal-11',
-    ruby: 'bg-n-ruby-2 outline-n-ruby-4 text-n-ruby-11',
-    blue: 'bg-n-blue-2 outline-n-blue-4 text-n-blue-11',
-    iris: 'bg-n-iris-2 outline-n-iris-4 text-n-iris-11',
+    slate: 'bg-n-surface-field text-n-slate-12',
+    amber: 'bg-n-amber-3 text-n-amber-11',
+    teal: 'bg-n-teal-3 text-n-teal-11',
+    ruby: 'bg-n-ruby-3 text-n-ruby-11',
+    blue: 'bg-n-blue-3 text-n-blue-11',
+    iris: 'bg-n-iris-3 text-n-iris-11',
 };
 
 interface LabelProps extends Omit<HTMLAttributes<HTMLDivElement>, 'color' | 'title'> {
@@ -49,7 +49,7 @@ export default function Label({
             {...rest}
             title={labelDescription}
             className={[
-                'rounded-lg -outline-offset-1 outline outline-1 inline-flex items-center flex-shrink-0',
+                'rounded-lg inline-flex items-center flex-shrink-0',
                 COLOR_CLASSES[color],
                 compact ? 'px-1.5 h-6 gap-1 rounded-md' : 'px-2.5 h-8 gap-1.5 rounded-lg',
                 className,

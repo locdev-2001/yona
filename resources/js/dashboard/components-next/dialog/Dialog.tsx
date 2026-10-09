@@ -111,7 +111,7 @@ const Dialog = forwardRef<DialogHandle, DialogProps>(function Dialog(
         <dialog
             ref={dialogRef}
             className={[
-                'w-full transition-all duration-300 ease-in-out shadow-xl rounded-xl dialog-next',
+                'w-full transition-all duration-300 ease-in-out shadow-overlay rounded-xl dialog-next',
                 MAX_WIDTH_CLASSES[width] ?? 'max-w-md',
                 position === 'top' ? 'dialog-position-top' : '',
                 overflowYAuto ? 'overflow-y-auto' : 'overflow-visible',
@@ -124,7 +124,7 @@ const Dialog = forwardRef<DialogHandle, DialogProps>(function Dialog(
             onClick={handleBackdropClick}
         >
             <form
-                className="flex flex-col w-full h-auto gap-6 p-6 overflow-visible text-start align-middle transition-all duration-300 ease-in-out transform bg-n-alpha-3 backdrop-blur-[100px] shadow-xl rounded-xl"
+                className="flex flex-col w-full h-auto gap-6 p-6 overflow-visible text-start align-middle transition-all duration-300 ease-in-out transform bg-n-surface-raised rounded-xl"
                 onSubmit={handleSubmit}
                 onClick={event => event.stopPropagation()}
             >

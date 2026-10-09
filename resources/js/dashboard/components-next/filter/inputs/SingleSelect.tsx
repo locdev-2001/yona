@@ -72,7 +72,7 @@ export default function SingleSelect({
     return (
         <DropdownContainer
             menu={
-                <DropdownBody className="top-0 min-w-56 z-50" strong>
+                <DropdownBody className="top-0 min-w-56 z-50">
                     {!disableSearch ? (
                         <div className="relative">
                             <Icon className="absolute size-4 left-2 top-2" icon="i-lucide-search" />

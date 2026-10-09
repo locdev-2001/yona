@@ -93,27 +93,11 @@ export function DropdownContainer({ className = '', onClose, children, menu }: D
     );
 }
 
-// `strong`: dropdown lồng trong dropdown khác — viền đậm + lớp blur phụ
-// (hack cho giới hạn stacked backdrop-blur của Chrome, như DropdownBody.vue).
-export function DropdownBody({
-    className = '',
-    strong = false,
-    children,
-}: {
-    className?: string;
-    strong?: boolean;
-    children: ReactNode;
-}) {
-    const borderClass = strong ? 'border-n-strong' : 'border-n-weak';
-    const beforeClass = strong
-        ? "before:content-['\u00A0'] before:absolute before:bottom-0 before:left-0 before:w-full before:h-full before:rounded-xl before:backdrop-contrast-70 before:backdrop-blur-sm before:z-0 [&>*]:relative"
-        : '';
-
+// Lớp nổi không viền: tách khỏi nền (kể cả khi lồng trong dropdown khác) bằng bóng.
+export function DropdownBody({ className = '', children }: { className?: string; children: ReactNode }) {
     return (
         <div className={`absolute ${className}`}>
-            <ul
-                className={`text-sm bg-n-alpha-3 backdrop-blur-[100px] border rounded-xl shadow-sm py-2 n-dropdown-body gap-2 grid list-none px-2 reset-base relative ${borderClass} ${beforeClass}`}
-            >
+            <ul className="overlay-surface text-sm rounded-xl py-2 n-dropdown-body gap-2 grid list-none px-2 reset-base relative">
                 {children}
             </ul>
         </div>
@@ -144,7 +128,7 @@ export function DropdownSection({
 }
 
 export function DropdownSeparator() {
-    return <div className="h-0 border-b border-n-strong -mx-2" />;
+    return <div role="separator" className="h-px bg-n-surface-hover -mx-2" />;
 }
 
 interface DropdownItemProps {

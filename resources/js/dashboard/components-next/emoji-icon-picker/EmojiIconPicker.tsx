@@ -177,7 +177,7 @@ export default function EmojiIconPicker({
                 // xong trước khi trình duyệt vẽ).
                 opacity: position ? 1 : 0,
             }}
-            className="fixed z-20 flex flex-col overflow-hidden shadow-xl w-[22rem] bg-n-surface-2 backdrop-blur-[100px] rounded-2xl outline outline-1 outline-n-weak"
+            className="fixed z-20 flex flex-col overflow-hidden w-[22rem] overlay-surface rounded-2xl"
         >
             {showHeader ? (
                 <div className="flex items-center justify-between gap-2 p-2">
@@ -190,7 +190,7 @@ export default function EmojiIconPicker({
                                     title={tab.label}
                                     className={`flex items-center justify-center !p-0 transition-all rounded-md size-7 active:scale-[0.92] ${
                                         activeTab === tab.id
-                                            ? 'bg-n-surface-1 shadow-sm text-n-slate-12'
+                                            ? 'bg-n-surface-selected text-n-slate-12'
                                             : 'text-n-slate-10 hover:text-n-slate-12'
                                     }`}
                                     onClick={() => setActiveTab(tab.id)}

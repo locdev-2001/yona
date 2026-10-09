@@ -8,6 +8,15 @@
 // Next Colors
 @import 'next-colors';
 
+// Dashboard: nền trang (`bg-n-surface-1`, dùng ở mọi khung màn) chính là khung nội
+// dung của giao diện không viền, để thẻ và panel trắng nổi lên bằng nền thay cho
+// viền. Bề mặt công khai không nạp tệp này nên giữ nguyên giá trị gốc.
+@layer base {
+  :root {
+    --surface-1: var(--surface-canvas);
+  }
+}
+
 // Base styles for elements
 @import 'base';
 

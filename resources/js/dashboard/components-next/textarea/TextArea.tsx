@@ -67,13 +67,9 @@ export default function TextArea({
         if (autofocus) textareaRef.current?.focus();
     }, [autofocus]);
 
-    const borderClasses = disabled
-        ? 'cursor-not-allowed opacity-50 !bg-n-alpha-black2 disabled:border-n-weak'
-        : isFocused
-          ? 'border-n-brand'
-          : messageType === 'error'
-            ? 'border-n-ruby-8 hover:border-n-ruby-9'
-            : 'hover:border-n-slate-6 border-n-weak';
+    const surfaceClasses = disabled
+        ? 'cursor-not-allowed opacity-50'
+        : [isFocused ? 'focus' : '', messageType === 'error' ? 'field-invalid' : ''].filter(Boolean).join(' ');
 
     return (
         <div className={`relative flex flex-col gap-1 ${className}`.trim()}>
@@ -83,7 +79,7 @@ export default function TextArea({
                 </label>
             ) : null}
             <div
-                className={`flex flex-col gap-2 px-3 pt-3 pb-3 transition-all duration-500 ease-in-out border rounded-lg bg-n-alpha-black2 ${customTextAreaWrapperClass} ${borderClasses}`}
+                className={`field-surface flex flex-col gap-2 px-3 pt-3 pb-3 rounded-lg ${customTextAreaWrapperClass} ${surfaceClasses}`}
             >
                 {children}
                 <textarea

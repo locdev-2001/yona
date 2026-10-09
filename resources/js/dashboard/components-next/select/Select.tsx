@@ -34,16 +34,16 @@ export default function SelectInput({
     ...attrs
 }: SelectInputProps) {
     const stateClass = disabled
-        ? 'outline-n-weak bg-n-slate-2 cursor-not-allowed opacity-60'
+        ? 'cursor-not-allowed opacity-60'
         : error
-          ? 'outline-n-red-9 focus:outline-n-red-9'
-          : 'outline-n-weak hover:outline-n-slate-6 focus:outline-n-blue-9';
+          ? 'field-invalid'
+          : '';
 
     return (
         <div className={`w-fit relative ${className}`}>
             <select
                 disabled={disabled}
-                className={`appearance-none bg-none rounded-lg border-0 outline-1 outline -outline-offset-1 transition-all duration-200 bg-n-surface-1 !mb-0 py-2 px-3 pr-10 text-sm ${stateClass}`}
+                className={`field-surface appearance-none bg-none rounded-lg border-0 !mb-0 py-2 px-3 pr-10 text-sm ${stateClass}`}
                 onChange={event => onChange(event.target.value)}
                 {...attrs}
             >

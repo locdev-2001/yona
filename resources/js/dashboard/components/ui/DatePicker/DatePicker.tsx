@@ -291,9 +291,9 @@ export default function DatePicker({
                 onNavigateMonth={navigateMonth}
             />
             {showDatePicker && (
-                <div className="flex absolute top-9 ltr:left-0 rtl:right-0 z-30 shadow-md select-none w-[880px] rounded-2xl bg-n-alpha-3 backdrop-blur-[100px] border-0 outline outline-1 outline-n-container">
+                <div className="flex absolute top-9 ltr:left-0 rtl:right-0 z-30 select-none w-[880px] rounded-2xl overflow-hidden overlay-surface">
                     <CalendarDateRange selectedRange={selectedRange} onSetRange={setDateRange} />
-                    <div className="flex flex-col w-[680px] ltr:border-l rtl:border-r border-n-strong">
+                    <div className="flex flex-col w-[680px]">
                         <div className="flex justify-around h-fit">
                             {([START_CALENDAR, END_CALENDAR] as CalendarType[]).map(calendar => (
                                 <div key={`${calendar}-calendar`} className="flex flex-col items-center">
@@ -308,11 +308,9 @@ export default function DatePicker({
                                         onValidate={date => updateManualInput(date, calendar)}
                                         onError={message => useAlert(message)}
                                     />
-                                    <div className="py-5 border-b border-n-strong">
+                                    <div className="py-5">
                                         <div
-                                            className={`flex flex-col items-center gap-2 px-5 min-w-[340px] max-h-[352px] ${
-                                                calendar === START_CALENDAR ? 'ltr:border-r rtl:border-l border-n-strong' : ''
-                                            }`}
+                                            className="flex flex-col items-center gap-2 px-5 min-w-[340px] max-h-[352px]"
                                         >
                                             {calendarViews[calendar] === YEAR && (
                                                 <CalendarYear

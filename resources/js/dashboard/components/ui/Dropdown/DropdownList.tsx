@@ -45,7 +45,7 @@ export function DropdownListItemButton({
     return (
         <button
             type="button"
-            className="relative inline-flex items-center justify-start w-full p-3 border-0 rounded-none first:rounded-t-xl last:rounded-b-xl h-11 hover:enabled:bg-n-alpha-2"
+            className="relative inline-flex items-center justify-start w-full p-3 border-0 rounded-none first:rounded-t-xl last:rounded-b-xl h-11 hover:enabled:bg-n-surface-hover"
             onClick={onClick}
             onMouseEnter={onMouseEnter}
             onMouseLeave={onMouseLeave}
@@ -97,11 +97,11 @@ export default function DropdownList({
     return (
         <div
             ref={rootRef}
-            className={`absolute z-20 w-40 bg-n-solid-2 border-0 outline outline-1 outline-n-weak shadow rounded-xl max-h-[400px] ${className}`}
+            className={`absolute z-20 w-40 overlay-surface rounded-xl max-h-[400px] ${className}`}
             onClick={event => event.stopPropagation()}
         >
             {enableSearch && (
-                <div className="flex items-center justify-between h-10 min-h-[40px] sticky top-0 bg-n-solid-2 z-10 gap-2 px-3 border-b rounded-t-xl border-n-weak">
+                <div className="flex items-center justify-between h-10 min-h-[40px] sticky top-0 bg-n-surface-raised z-10 gap-2 px-3 rounded-t-xl">
                     <div className="flex items-center w-full gap-2">
                         <span className={`${ICONS.search} size-4 text-n-slate-11 flex-shrink-0`} aria-hidden="true" />
                         <input

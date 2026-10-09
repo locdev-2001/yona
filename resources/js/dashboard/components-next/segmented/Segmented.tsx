@@ -59,7 +59,7 @@ export default function Segmented({ options, value, onChange, ariaLabel, classNa
         <div
             role="radiogroup"
             aria-label={ariaLabel}
-            className={`inline-flex items-stretch gap-0.5 rounded-lg bg-n-alpha-1 outline outline-1 -outline-offset-1 outline-n-weak p-0.5 ${className}`}
+            className={`inline-flex items-stretch gap-0.5 rounded-lg bg-n-surface-field p-0.5 ${className}`}
         >
             {options.map(option => {
                 const isSelected = option.value === value;
@@ -78,7 +78,7 @@ export default function Segmented({ options, value, onChange, ariaLabel, classNa
                         tabIndex={isSelected ? 0 : -1}
                         className={`flex-1 rounded-md font-medium whitespace-nowrap transition-colors outline-none focus-visible:ring-1 focus-visible:ring-n-brand ${SIZE_CLASSES[size]} ${
                             isSelected
-                                ? 'bg-n-solid-3 text-n-slate-12 shadow-sm'
+                                ? 'bg-n-surface-raised text-n-slate-12'
                                 : 'text-n-slate-11 hover:text-n-slate-12 disabled:opacity-40 disabled:hover:text-n-slate-11'
                         }`}
                         onClick={() => (option.disabled ? undefined : onChange(option.value))}

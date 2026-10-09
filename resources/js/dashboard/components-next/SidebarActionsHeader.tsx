@@ -11,7 +11,7 @@ interface SidebarActionsHeaderProps {
 
 export default function SidebarActionsHeader({ title, buttons = [], onClick, onClose }: SidebarActionsHeaderProps) {
     return (
-        <div className="flex items-center justify-between px-4 py-2 border-b border-n-weak h-12">
+        <div className="flex items-center justify-between px-4 py-2 h-12">
             <div className="flex items-center justify-between gap-2 flex-1">
                 <span className="font-medium text-sm text-n-slate-12">{title}</span>
                 <div className="flex items-center">

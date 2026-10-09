@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { revealHorizontally } from 'shared/helpers/revealHorizontally';
 
@@ -52,45 +52,34 @@ export default function TabBar({ tabs, initialActiveTab = 0, className = '', onT
         return () => cancelAnimationFrame(frame);
     }, []);
 
-    const showDivider = (index: number) =>
-        (index > activeTab && index < tabs.length - 1) || (index < activeTab - 1 && index > -1);
-
     // Chiều cao chỉ đặt ở khung: màn nhỏ cao 44px cho vừa ngón tay, từ md về 32px;
     // indicator và nút giãn theo khung. Tab chưa chọn chỉ thu nhỏ từ md để màn nhỏ
     // giữ trọn vùng chạm 44px (transform thu nhỏ cả vùng nhận chạm).
     return (
         <div
-            className={`relative flex items-center h-11 md:h-8 rounded-lg bg-n-alpha-1 w-fit transition-all duration-200 ease-out has-[button:active]:scale-[1.01] ${className}`.trim()}
+            className={`relative flex items-center h-11 md:h-8 rounded-lg bg-n-surface-field w-fit transition-all duration-200 ease-out has-[button:active]:scale-[1.01] ${className}`.trim()}
         >
             <div
-                className={`absolute rounded-lg bg-n-solid-active shadow-sm pointer-events-none outline-1 outline outline-n-container inset-y-0 ${enableTransition ? 'transition-all duration-300 ease-out' : ''}`.trim()}
+                className={`absolute rounded-lg bg-n-surface-raised pointer-events-none inset-y-0.5 ${enableTransition ? 'transition-all duration-300 ease-out' : ''}`.trim()}
                 style={indicatorStyle}
             />
 
             {/* Button phải là con TRỰC TIẾP của root — caller gốc dùng selector
                 [&>button]:w-full (ContactManageView) nên không được bọc thêm div. */}
             {tabs.map((tab, index) => (
-                <Fragment key={index}>
-                    <button
-                        ref={el => {
-                            tabRefs.current[index] = el;
-                        }}
-                        type="button"
-                        className={`relative z-10 h-full px-4 truncate text-sm border-0 outline-1 outline-transparent rounded-lg transition-all duration-200 ease-out hover:text-n-brand active:scale-[1.02] ${
-                            activeTab === index ? 'text-n-blue-11 scale-100' : 'text-n-slate-10 md:scale-[0.98]'
-                        }`}
-                        onClick={() => onTabChanged(tabs[index])}
-                    >
-                        {tab.label} {tab.count ? `(${tab.count})` : ''}
-                    </button>
-                    {index < tabs.length - 1 ? (
-                        <div
-                            className={`w-px h-3.5 rounded my-auto transition-colors duration-300 ease-in-out ${
-                                showDivider(index) ? 'bg-n-strong' : 'bg-transparent'
-                            }`}
-                        />
-                    ) : null}
-                </Fragment>
+                <button
+                    key={index}
+                    ref={el => {
+                        tabRefs.current[index] = el;
+                    }}
+                    type="button"
+                    className={`relative z-10 h-full px-4 truncate text-sm border-0 outline-1 outline-transparent focus-visible:outline-2 focus-visible:outline-n-brand rounded-lg transition-all duration-200 ease-out hover:text-n-brand active:scale-[1.02] ${
+                        activeTab === index ? 'text-n-blue-11 scale-100' : 'text-n-slate-10 md:scale-[0.98]'
+                    }`}
+                    onClick={() => onTabChanged(tabs[index])}
+                >
+                    {tab.label} {tab.count ? `(${tab.count})` : ''}
+                </button>
             ))}
         </div>
     );

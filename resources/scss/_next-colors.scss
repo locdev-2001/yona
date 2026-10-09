@@ -131,6 +131,24 @@
     --solid-red: 254 200 201;
     --solid-amber-button: 255 221 141;
     --card-color: 255 255 255;
+
+    // Bề mặt theo vai của dashboard. Giao diện không viền: các vùng tách nhau bằng
+    // bậc nền, không bằng đường kẻ. Đổi phong cách = sửa đúng các biến dưới đây.
+    // Hover, đang chọn, ô nhập là lớp phủ trong suốt để đặt trên nền nào cũng ra
+    // đúng một bậc đậm hơn nền đó.
+    --surface-app: 241 242 244;
+    --surface-sidebar: var(--surface-app);
+    --surface-list: 255 255 255;
+    --surface-canvas: 247 248 250;
+    --surface-panel: 255 255 255;
+    --surface-raised: 255 255 255;
+    --surface-hover: 15, 23, 42, 0.05;
+    --surface-selected: 39, 129, 246, 0.1;
+    --surface-field: 15, 23, 42, 0.05;
+    --surface-field-hover: 15, 23, 42, 0.08;
+    // Lớp nổi (menu, dialog, popover) tách khỏi nền bằng bóng mềm thay cho viền.
+    --shadow-overlay: 0 1px 3px rgb(16 24 40 / 0.08), 0 8px 24px rgb(16 24 40 / 0.12);
+
     --overlay: 0, 0, 0, 0.12;
     --overlay-avatar: 255, 255, 255, 0.67;
     --button-color: 255 255 255;

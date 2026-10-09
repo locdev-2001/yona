@@ -155,7 +155,7 @@ export default function Avatar({
 
             {src && allowUpload ? (
                 <div
-                    className="absolute z-20 flex items-center justify-center invisible w-6 h-6 transition-all duration-300 ease-in-out opacity-0 cursor-pointer outline outline-1 outline-n-container -top-2 ltr:-right-2 rtl:-left-2 rounded-xl bg-n-solid-3 group-hover/avatar:visible group-hover/avatar:opacity-100"
+                    className="absolute z-20 flex items-center justify-center invisible w-6 h-6 transition-all duration-300 ease-in-out opacity-0 cursor-pointer -top-2 ltr:-right-2 rtl:-left-2 rounded-xl overlay-surface group-hover/avatar:visible group-hover/avatar:opacity-100"
                     onClick={handleDismiss}
                 >
                     <Icon icon="i-lucide-x" className="text-n-slate-11 size-4" />

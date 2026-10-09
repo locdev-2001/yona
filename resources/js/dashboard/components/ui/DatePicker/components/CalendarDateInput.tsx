@@ -59,7 +59,7 @@ export default function CalendarDateInput({
             <input
                 value={localDateValue}
                 type="text"
-                className="!text-sm !mb-0 disabled:!outline-n-strong"
+                className="!text-sm !mb-0"
                 placeholder={dateFormat}
                 disabled={isDisabled}
                 onChange={event => handleChange(event.target.value)}

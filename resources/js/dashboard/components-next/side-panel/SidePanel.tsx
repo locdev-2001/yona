@@ -85,9 +85,9 @@ export default function SidePanel({
                 aria-modal="true"
                 aria-label={title}
                 tabIndex={-1}
-                className={`fixed z-50 flex flex-col w-[calc(100%-1.5rem)] overflow-hidden rounded-xl shadow-lg outline outline-1 outline-n-container inset-y-3 end-3 bg-n-solid-1 will-change-transform ${MAX_WIDTH_CLASSES[width]}`}
+                className={`fixed z-50 flex flex-col w-[calc(100%-1.5rem)] overflow-hidden rounded-xl overlay-surface inset-y-3 end-3 will-change-transform ${MAX_WIDTH_CLASSES[width]}`}
             >
-                <header className={`flex justify-between flex-shrink-0 gap-4 px-6 py-5 border-b border-n-weak ${header ? 'items-start' : 'items-center'}`}>
+                <header className={`flex justify-between flex-shrink-0 gap-4 px-6 py-5 ${header ? 'items-start' : 'items-center'}`}>
                     {header ?? (
                         <div className="min-w-0">
                             <h3 className="text-base font-medium truncate text-n-slate-12">{title}</h3>
@@ -100,7 +100,7 @@ export default function SidePanel({
                     </div>
                 </header>
                 <div className="flex-1 min-h-0 px-6 py-5 overflow-y-auto">{children}</div>
-                {footer ? <footer className="flex-shrink-0 px-6 py-4 border-t border-n-weak">{footer}</footer> : null}
+                {footer ? <footer className="flex-shrink-0 px-6 py-4 bg-n-surface-canvas">{footer}</footer> : null}
             </aside>
         </>,
         document.body,

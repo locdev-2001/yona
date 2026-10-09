@@ -3,7 +3,7 @@ import { ICONS } from 'dashboard/icons';
 // Port từ dashboard/components/ui/Label.vue (`woot-label`) — chip nhãn của khối
 // Conversation Labels và của thẻ danh sách hội thoại. KHÁC với
 // components-next/label/Label.tsx (chip của trang Contacts, bo góc + outline).
-// Chỉ port hai variant đang dùng (smooth/dashed) + `small` + nút đóng; các
+// Chỉ port variant đang dùng (smooth) + `small` + nút đóng; các
 // colorScheme primary/secondary/... chưa có call-site nào nên chưa dựng.
 // Style scoped SCSS gốc dựng lại bằng class Tailwind: mỗi thuộc tính chỉ phát
 // đúng một lớp để không phụ thuộc thứ tự luật trong bundle CSS.
@@ -11,7 +11,7 @@ interface LabelProps {
     title: string;
     description?: string;
     color?: string;
-    variant?: 'smooth' | 'dashed' | '';
+    variant?: 'smooth' | '';
     small?: boolean;
     showClose?: boolean;
     className?: string;
@@ -19,9 +19,8 @@ interface LabelProps {
 }
 
 const VARIANT_CLASSES: Record<string, string> = {
-    smooth: 'bg-transparent text-n-slate-11 border-solid border-n-strong',
-    dashed: 'bg-transparent text-n-slate-11 border-dashed border-n-strong',
-    '': 'bg-n-slate-3 text-n-slate-12 border-solid border-n-strong',
+    smooth: 'bg-n-surface-field text-n-slate-11',
+    '': 'bg-n-slate-3 text-n-slate-12',
 };
 
 export default function Label({
@@ -34,12 +33,12 @@ export default function Label({
     className = '',
     onRemove,
 }: LabelProps) {
-    const showColorDot = Boolean((variant === 'smooth' || variant === 'dashed') && title);
+    const showColorDot = Boolean(variant === 'smooth' && title);
 
     return (
         <div
             className={[
-                'label inline-flex ltr:mr-1 rtl:ml-1 mb-1 items-center font-medium text-xs rounded-[4px] gap-1 border',
+                'label inline-flex ltr:mr-1 rtl:ml-1 mb-1 items-center font-medium text-xs rounded-[4px] gap-1',
                 small ? 'py-0.5 px-1 leading-tight h-5' : 'p-1 h-6',
                 VARIANT_CLASSES[variant],
                 className,
@@ -50,7 +49,7 @@ export default function Label({
         >
             {showColorDot ? (
                 <span
-                    className={`label-color-dot flex-shrink-0 inline-block rounded-sm shadow-sm ${
+                    className={`label-color-dot flex-shrink-0 inline-block rounded-sm ${
                         small ? 'w-2 h-2' : 'w-3 h-3'
                     }`}
                     style={{ background: color }}

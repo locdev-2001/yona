@@ -9,7 +9,9 @@ import type {
     ButtonVariant,
 } from './constants';
 
-// Port từ dashboard/components-next/button/Button.vue — giữ nguyên STYLE_CONFIG.
+// Port từ dashboard/components-next/button/Button.vue. Giao diện không viền: biến thể
+// outline và slate solid là nền ô (bg-n-surface-field) thay cho đường viền; tiêu điểm
+// bàn phím là vòng brand chung cho mọi biến thể.
 // Shorthand boolean (solid/outline/…, blue/ruby/…, xs/sm/md/lg) giữ lại để
 // call-site đọc gọn như template.
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -46,35 +48,35 @@ const STYLE_CONFIG = {
         blue: {
             solid: 'bg-n-brand text-white hover:enabled:brightness-110 focus-visible:brightness-110 outline-transparent',
             faded: 'bg-n-brand/10 text-n-blue-11 hover:enabled:bg-n-brand/20 focus-visible:bg-n-brand/20 outline-transparent',
-            outline: 'text-n-blue-11 outline-n-brand',
+            outline: 'bg-n-surface-field text-n-blue-11 hover:enabled:bg-n-surface-field-hover focus-visible:bg-n-surface-field-hover outline-transparent',
             ghost: 'text-n-blue-11 hover:enabled:bg-n-alpha-2 focus-visible:bg-n-alpha-2 outline-transparent',
             link: 'text-n-blue-11 hover:enabled:underline focus-visible:underline outline-transparent',
         },
         ruby: {
             solid: 'bg-n-ruby-9 text-white hover:enabled:bg-n-ruby-10 focus-visible:bg-n-ruby-10 outline-transparent',
             faded: 'bg-n-ruby-9/10 text-n-ruby-11 hover:enabled:bg-n-ruby-9/20 focus-visible:bg-n-ruby-9/20 outline-transparent',
-            outline: 'text-n-ruby-11 hover:enabled:bg-n-ruby-9/10 focus-visible:bg-n-ruby-9/10 outline-n-ruby-8',
+            outline: 'bg-n-surface-field text-n-ruby-11 hover:enabled:bg-n-ruby-9/10 focus-visible:bg-n-ruby-9/10 outline-transparent',
             ghost: 'text-n-ruby-11 hover:enabled:bg-n-alpha-2 focus-visible:bg-n-alpha-2 outline-transparent',
             link: 'text-n-ruby-9 hover:enabled:underline focus-visible:underline outline-transparent',
         },
         amber: {
             solid: 'bg-n-amber-9 text-n-amber-12 hover:enabled:bg-n-amber-10 focus-visible:bg-n-amber-10 outline-transparent',
             faded: 'bg-n-amber-9/10 text-n-slate-12 hover:enabled:bg-n-amber-9/20 focus-visible:bg-n-amber-9/20 outline-transparent',
-            outline: 'text-n-amber-11 hover:enabled:bg-n-amber-9/10 focus-visible:bg-n-amber-9/10 outline-n-amber-9',
+            outline: 'bg-n-surface-field text-n-amber-11 hover:enabled:bg-n-amber-9/10 focus-visible:bg-n-amber-9/10 outline-transparent',
             link: 'text-n-amber-9 hover:enabled:underline focus-visible:underline outline-transparent',
             ghost: 'text-n-amber-9 hover:enabled:bg-n-alpha-2 focus-visible:bg-n-alpha-2 outline-transparent',
         },
         slate: {
-            solid: 'bg-n-button-color hover:enabled:bg-n-alpha-2 focus-visible:bg-n-alpha-2 text-n-slate-12 outline-n-container',
+            solid: 'bg-n-surface-field hover:enabled:bg-n-surface-field-hover focus-visible:bg-n-surface-field-hover text-n-slate-12 outline-transparent',
             faded: 'bg-n-slate-9/10 text-n-slate-12 hover:enabled:bg-n-slate-9/20 focus-visible:bg-n-slate-9/20 outline-transparent',
-            outline: 'text-n-slate-11 outline-n-strong hover:enabled:bg-n-slate-9/10 focus-visible:bg-n-slate-9/10',
+            outline: 'bg-n-surface-field text-n-slate-11 hover:enabled:bg-n-surface-field-hover focus-visible:bg-n-surface-field-hover outline-transparent',
             link: 'text-n-slate-11 hover:enabled:text-n-slate-12 focus-visible:text-n-slate-12 hover:enabled:underline focus-visible:underline outline-transparent',
-            ghost: 'text-n-slate-12 hover:enabled:bg-n-alpha-2 focus-visible:bg-n-alpha-2 outline-transparent',
+            ghost: 'text-n-slate-12 hover:enabled:bg-n-surface-hover focus-visible:bg-n-surface-hover outline-transparent',
         },
         teal: {
             solid: 'bg-n-teal-9 text-white hover:enabled:bg-n-teal-10 focus-visible:bg-n-teal-10 outline-transparent',
             faded: 'bg-n-teal-9/10 text-n-teal-11 hover:enabled:bg-n-teal-9/20 focus-visible:bg-n-teal-9/20 outline-transparent',
-            outline: 'text-n-teal-11 hover:enabled:bg-n-teal-9/10 focus-visible:bg-n-teal-9/10 outline-n-teal-9',
+            outline: 'bg-n-surface-field text-n-teal-11 hover:enabled:bg-n-teal-9/10 focus-visible:bg-n-teal-9/10 outline-transparent',
             link: 'text-n-teal-9 hover:enabled:underline focus-visible:underline outline-transparent',
             ghost: 'text-n-teal-9 hover:enabled:bg-n-alpha-2 focus-visible:bg-n-alpha-2 outline-transparent',
         },
@@ -116,7 +118,7 @@ const STYLE_CONFIG = {
         center: 'justify-center',
         end: 'justify-end',
     },
-    base: 'inline-flex items-center min-w-0 gap-2 transition-all duration-100 ease-out border-0 rounded-lg outline-1 outline disabled:opacity-50',
+    base: 'inline-flex items-center min-w-0 gap-2 transition-all duration-100 ease-out border-0 rounded-lg outline-1 outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-n-brand disabled:opacity-50',
 };
 
 export default function Button({

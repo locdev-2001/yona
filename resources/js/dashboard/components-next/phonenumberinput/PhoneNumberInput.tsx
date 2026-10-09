@@ -15,18 +15,13 @@ interface PhoneNumberInputProps {
     value: string;
     placeholder?: string;
     disabled?: boolean;
-    showBorder?: boolean;
     onChange: (value: string) => void;
 }
-
-const ERROR_OUTLINE = 'outline-n-ruby-8 hover:outline-n-ruby-9';
-const FOCUS_OUTLINE = 'has-[:focus]:outline-n-brand';
 
 export default function PhoneNumberInput({
     value,
     placeholder = '',
     disabled = false,
-    showBorder = true,
     onChange,
 }: PhoneNumberInputProps) {
     const [showDropdown, setShowDropdown] = useState(false);
@@ -102,13 +97,7 @@ export default function PhoneNumberInput({
         }
     };
 
-    const inputBorderClass = !showBorder
-        ? hasError
-            ? ERROR_OUTLINE
-            : `outline-transparent ${FOCUS_OUTLINE}`
-        : hasError
-          ? ERROR_OUTLINE
-          : `${FOCUS_OUTLINE} outline-n-weak hover:outline-n-slate-6`;
+    const inputSurfaceClass = hasError ? 'field-invalid' : '';
 
     const phoneNumberError = isDirty && isPhoneNumberInvalid ? t('PHONE_INPUT.ERROR') : '';
 
@@ -116,7 +105,7 @@ export default function PhoneNumberInput({
         <div>
             <div
                 ref={rootRef}
-                className={`relative flex items-center h-8 transition-all duration-500 ease-in-out outline outline-1 outline-offset-[-1px] rounded-lg bg-n-alpha-black2 ${inputBorderClass} ${disabled ? 'cursor-not-allowed opacity-50' : ''}`.trim()}
+                className={`field-surface relative flex items-center h-8 rounded-lg ${inputSurfaceClass} ${disabled ? 'cursor-not-allowed opacity-50' : ''}`.trim()}
             >
                 <Input
                     value={phoneNumber}

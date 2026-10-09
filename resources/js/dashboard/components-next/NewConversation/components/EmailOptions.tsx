@@ -37,7 +37,7 @@ export default function EmailOptions({
         onChange({ [field]: list.join(',') });
 
     return (
-        <div className="flex flex-col divide-y divide-n-strong">
+        <div className="flex flex-col">
             <div className="flex items-baseline flex-1 w-full h-8 gap-3 px-4 py-3">
                 <InlineInput
                     autoFocus

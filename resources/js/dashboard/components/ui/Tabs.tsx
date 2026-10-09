@@ -15,13 +15,12 @@ export interface TabItem {
 interface TabsProps {
     items: TabItem[];
     index: number;
-    border?: boolean;
     isCompact?: boolean;
     className?: string;
     onChange: (index: number) => void;
 }
 
-export default function Tabs({ items, index, border = true, isCompact = false, className = '', onChange }: TabsProps) {
+export default function Tabs({ items, index, isCompact = false, className = '', onChange }: TabsProps) {
     const listRef = useRef<HTMLUListElement>(null);
     const [hasScroll, setHasScroll] = useState(false);
 
@@ -47,7 +46,7 @@ export default function Tabs({ items, index, border = true, isCompact = false, c
     };
 
     return (
-        <div className={`flex ${border ? 'border-b border-b-n-weak' : ''} ${className}`}>
+        <div className={`flex ${className}`}>
             {hasScroll ? (
                 <button
                     type="button"
@@ -59,7 +58,7 @@ export default function Tabs({ items, index, border = true, isCompact = false, c
             ) : null}
             <ul
                 ref={listRef}
-                className={`border-r-0 border-l-0 border-t-0 flex min-w-[6.25rem] py-0 px-4 list-none mb-0 ${
+                className={`flex min-w-[6.25rem] py-0 px-4 list-none mb-0 ${
                     hasScroll ? 'overflow-hidden py-0 px-1 max-w-[calc(100%-64px)]' : ''
                 }`}
             >

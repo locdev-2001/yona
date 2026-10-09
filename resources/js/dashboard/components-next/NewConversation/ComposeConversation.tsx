@@ -156,7 +156,6 @@ export default function ComposeConversation({ contact, uiSettings, onToggleSigna
         <Popover
             ref={popoverRef}
             align="end"
-            showContentBorder={false}
             closeOnScroll={false}
             onHide={() => {
                 clearForm();
@@ -164,8 +163,8 @@ export default function ComposeConversation({ contact, uiSettings, onToggleSigna
             }}
             trigger={trigger}
             content={({ hide }) => (
-                <div className="w-full md:w-[42rem] divide-y divide-n-strong overflow-visible transition-all duration-300 ease-in-out top-full flex flex-col bg-n-alpha-3 border border-n-strong shadow-sm backdrop-blur-[100px] rounded-xl min-w-0 max-h-[calc(100vh-8rem)]">
-                    <div className="flex-1 overflow-y-auto divide-y divide-n-strong">
+                <div className="w-full md:w-[42rem] overflow-visible transition-all duration-300 ease-in-out top-full flex flex-col rounded-xl min-w-0 max-h-[calc(100vh-8rem)]">
+                    <div className="flex-1 overflow-y-auto">
                         <div className="relative flex-1 px-4 py-3 overflow-y-visible">
                             <div className="flex items-baseline w-full gap-3 min-h-7">
                                 <label className="text-sm font-medium text-n-slate-11 whitespace-nowrap">
@@ -241,7 +240,7 @@ export default function ComposeConversation({ contact, uiSettings, onToggleSigna
                                 ref={editorRef}
                                 value={message}
                                 editorId={`compose-${contact.id}`}
-                                className={`[&>div]:!border-transparent [&>div]:px-0 [&>div]:py-0 [&>div]:!bg-transparent h-full [&_.ProseMirror-woot-style]:!max-h-[12.5rem] [&_.ProseMirror-woot-style]:!min-h-[12rem] [&_.ProseMirror-menubar]:!pt-0 ${
+                                className={`[&>div]:!outline-transparent [&>div]:px-0 [&>div]:py-0 [&>div]:!bg-transparent h-full [&_.ProseMirror-woot-style]:!max-h-[12.5rem] [&_.ProseMirror-woot-style]:!min-h-[12rem] [&_.ProseMirror-menubar]:!pt-0 ${
                                     showErrors && isMessageEmpty
                                         ? '[&_.empty-node]:before:!text-n-ruby-9'
                                         : ''
@@ -254,7 +253,7 @@ export default function ComposeConversation({ contact, uiSettings, onToggleSigna
                             />
                         </div>
                     </div>
-                    <div className="flex items-center justify-between w-full h-[3.25rem] gap-2 px-4 py-3">
+                    <div className="flex items-center justify-between w-full h-[3.25rem] gap-2 px-4 py-3 rounded-b-xl bg-n-surface-canvas">
                         <div className="flex gap-2 items-center">
                             <div ref={emojiButtonRef} className="relative">
                                 <Button

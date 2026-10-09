@@ -64,7 +64,7 @@ export default function MultiSelect({
     return (
         <DropdownContainer
             menu={
-                <DropdownBody className="top-0 min-w-48 z-50" strong>
+                <DropdownBody className="top-0 min-w-48 z-50">
                     {showSearch ? (
                         <div className="relative">
                             <Icon className="absolute size-4 left-2 top-2" icon="i-lucide-search" />
@@ -120,11 +120,11 @@ export default function MultiSelect({
                     toggle();
                 };
                 return hasItems ? (
-                    <button type="button" className="bg-n-alpha-2 py-2 rounded-lg h-8 flex items-center px-0" onClick={open}>
+                    <button type="button" className="bg-n-surface-field hover:bg-n-surface-field-hover rounded-lg h-8 flex items-center gap-1 px-1" onClick={open}>
                         {selectedVisibleItems.map(item => (
                             <div
                                 key={item.name}
-                                className="px-3 border-r rtl:border-l rtl:border-r-0 border-n-weak text-n-slate-12 text-sm flex gap-2 items-center max-w-[100px]"
+                                className="px-2 h-6 rounded-md bg-n-surface-raised text-n-slate-12 text-sm flex gap-2 items-center max-w-[100px]"
                             >
                                 {item.icon ? <Icon icon={item.icon} className="flex-shrink-0" /> : null}
                                 {item.color ? (
@@ -139,12 +139,12 @@ export default function MultiSelect({
                         {remainingItems.length > 0 ? (
                             <div
                                 title={remainingTooltip}
-                                className="px-3 border-r rtl:border-l rtl:border-r-0 border-n-weak text-n-slate-12 text-sm flex gap-2 items-center max-w-[100px]"
+                                className="px-2 h-6 rounded-md bg-n-surface-raised text-n-slate-12 text-sm flex gap-2 items-center max-w-[100px]"
                             >
                                 <span className="truncate">{t('COMBOBOX.MORE', { count: remainingItems.length })}</span>
                             </div>
                         ) : null}
-                        <div className="flex items-center border-none px-3 gap-2">
+                        <div className="flex items-center px-2 gap-2">
                             <Icon icon="i-lucide-plus" />
                         </div>
                     </button>

@@ -84,7 +84,7 @@ export default function DurationInput({
             <select
                 value={unit}
                 disabled={disabled}
-                className="mb-0 text-sm disabled:outline-n-weak disabled:opacity-40"
+                className="mb-0 text-sm disabled:opacity-40"
                 onChange={event => onUnitChange(event.target.value as DurationUnit)}
             >
                 <option value={DURATION_UNITS.MINUTES}>{t('DURATION_INPUT.MINUTES')}</option>

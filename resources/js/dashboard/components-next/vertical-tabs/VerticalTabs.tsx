@@ -26,7 +26,7 @@ export default function VerticalTabs({
 }: VerticalTabsProps) {
     return (
         <div className="flex flex-col w-full gap-4 md:flex-row md:items-start md:gap-8">
-            <nav className="flex flex-row w-full gap-1 pb-2 overflow-x-auto no-scrollbar border-b shrink-0 border-n-weak md:sticky md:top-0 md:flex-col md:w-48 md:gap-0.5 md:border-b-0 md:overflow-visible">
+            <nav className="flex flex-row w-full gap-1 pb-2 overflow-x-auto no-scrollbar shrink-0 md:sticky md:top-0 md:flex-col md:w-48 md:gap-0.5 md:overflow-visible">
                 {tabs.map(tab => (
                     <button
                         key={tab.id}

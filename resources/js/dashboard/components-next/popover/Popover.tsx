@@ -21,7 +21,6 @@ interface PopoverProps {
     align?: 'start' | 'end';
     disableMobileView?: boolean;
     closeOnScroll?: boolean;
-    showContentBorder?: boolean;
     onShow?: () => void;
     onHide?: () => void;
     trigger: (context: { isOpen: boolean }) => ReactNode;
@@ -29,7 +28,7 @@ interface PopoverProps {
 }
 
 const Popover = forwardRef<PopoverHandle, PopoverProps>(function Popover(
-    { align = 'end', disableMobileView = false, closeOnScroll = true, showContentBorder = true, onShow, onHide, trigger, content },
+    { align = 'end', disableMobileView = false, closeOnScroll = true, onShow, onHide, trigger, content },
     ref,
 ) {
     const [isActive, setIsActive] = useState(false);
@@ -138,7 +137,7 @@ const Popover = forwardRef<PopoverHandle, PopoverProps>(function Popover(
                           <div
                               ref={popoverRef}
                               data-popover-content=""
-                              className="relative flex flex-col w-full min-w-0 max-w-lg max-h-[calc(100vh-4rem)] mx-4 bg-n-alpha-3 backdrop-blur-[100px] shadow-xl rounded-xl"
+                              className="relative flex flex-col w-full min-w-0 max-w-lg max-h-[calc(100vh-4rem)] mx-4 overlay-surface rounded-xl"
                           >
                               <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain rounded-xl">{content({ hide })}</div>
                           </div>
@@ -152,13 +151,9 @@ const Popover = forwardRef<PopoverHandle, PopoverProps>(function Popover(
                           ref={popoverRef}
                           data-popover-content=""
                           style={style}
-                          className="flex flex-col bg-n-alpha-3 backdrop-blur-[100px] shadow-xl rounded-xl"
+                          className="flex flex-col overlay-surface rounded-xl"
                       >
-                          <div
-                              className={`flex-1 min-h-0 overflow-y-auto overscroll-contain rounded-xl ${
-                                  showContentBorder ? 'border border-n-strong' : ''
-                              }`}
-                          >
+                          <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain rounded-xl">
                               {content({ hide })}
                           </div>
                       </div>,

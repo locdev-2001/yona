@@ -20,10 +20,6 @@ const MESSAGE_CLASSES: Record<MessageType, string> = {
     info: 'text-n-slate-11',
 };
 
-const OUTLINE_CLASSES: Record<string, string> = {
-    error: 'outline-n-ruby-8 hover:outline-n-ruby-9 disabled:outline-n-ruby-8',
-    default: 'outline-n-weak hover:outline-n-slate-6 disabled:outline-n-weak focus:outline-n-brand',
-};
 
 const SIZE_CLASSES: Record<InputSize, string> = {
     sm: 'h-8 !px-3 !py-2',
@@ -54,11 +50,12 @@ export default function Input({
     const inputClasses = [
         className,
         customInputClass,
-        OUTLINE_CLASSES[messageType === 'error' ? 'error' : 'default'],
+        'field-surface',
+        messageType === 'error' ? 'field-invalid' : '',
         SIZE_CLASSES[size],
         messageType === 'error' ? 'error' : '',
         isFocused ? 'focus' : '',
-        'block w-full reset-base text-sm !mb-0 outline outline-1 border-none border-0 outline-offset-[-1px] rounded-lg bg-n-alpha-black2 file:border-0 file:bg-transparent file:text-sm file:font-medium text-ellipsis placeholder:text-n-slate-10 disabled:cursor-not-allowed disabled:opacity-50 text-n-slate-12 transition-all duration-500 ease-in-out [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none',
+        'block w-full reset-base text-sm !mb-0 border-none border-0 rounded-lg file:border-0 file:bg-transparent file:text-sm file:font-medium text-ellipsis placeholder:text-n-slate-10 disabled:cursor-not-allowed disabled:opacity-50 text-n-slate-12 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none',
     ]
         .filter(Boolean)
         .join(' ');

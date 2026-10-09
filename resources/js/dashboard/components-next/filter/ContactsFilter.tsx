@@ -84,14 +84,14 @@ export default function ContactsFilter({
     return (
         <div
             ref={rootRef}
-            className="z-40 max-w-3xl min-w-96 lg:w-[750px] overflow-visible w-full border border-n-weak bg-n-alpha-3 backdrop-blur-[100px] shadow-lg rounded-xl p-6 grid gap-6"
+            className="z-40 max-w-3xl min-w-96 lg:w-[750px] overflow-visible w-full overlay-surface rounded-xl p-6 grid gap-6"
         >
             <h3 className="text-base font-medium leading-6 text-n-slate-12">
                 {isSegmentView ? t('CONTACTS_LAYOUT.FILTER.EDIT_SEGMENT') : t('CONTACTS_LAYOUT.FILTER.TITLE')}
             </h3>
             {isSegmentView ? (
                 <div>
-                    <div className="pb-6 border-b border-n-weak">
+                    <div className="pb-2">
                         <Input
                             value={segmentNameLocal}
                             label={t('CONTACTS_LAYOUT.FILTER.SEGMENT.LABEL')}
