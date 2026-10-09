@@ -15,7 +15,7 @@ export default function UnreadBadge({ count, alignBottom = false, className = ''
     return (
         <span
             className={[
-                'bg-n-teal-9 rounded-full h-4 min-w-4 max-w-5 px-1 w-fit font-medium text-xxs leading-3 text-white inline-grid place-items-center flex-shrink-0',
+                'bg-n-ruby-9 rounded-full h-4 min-w-4 max-w-5 px-1 w-fit font-medium text-xxs leading-3 text-white inline-grid place-items-center flex-shrink-0',
                 alignBottom ? 'mb-0.5' : '',
                 className,
             ]
