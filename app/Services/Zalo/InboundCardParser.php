@@ -217,7 +217,7 @@ class InboundCardParser
     }
 
     /** @return array<string, mixed>|null */
-    private static function decodeJson(mixed $value): ?array
+    public static function decodeJson(mixed $value): ?array
     {
         if (is_array($value)) {
             return $value;

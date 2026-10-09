@@ -166,6 +166,98 @@ it('bỏ qua sticker thiếu URL ảnh nhưng vẫn giữ content_type sticker',
         ->and($message->attachments()->count())->toBe(0);
 });
 
+/** Sticker tự tạo về tới máy nhận dưới dạng ảnh: chỉ `content.params.pStickerType` cho biết. */
+function zaloCustomStickerPayload(Zalo $channel, array $params, string $sourceId = 'msg-zalo-custom-1'): array
+{
+    $imageUrl = 'https://cdn.zalo.test/custom/c652.jpg';
+
+    return zaloPayload('zalo_inbound_image', $channel, [
+        'source_id' => $sourceId,
+        'content' => null,
+        'quote' => null,
+        'media_url' => $imageUrl,
+        'media_filename' => 'c652.jpg',
+        'listener_data' => [
+            'msgId' => $sourceId,
+            'msgType' => 'chat.photo',
+            'content' => [
+                'title' => null,
+                'description' => null,
+                'href' => $imageUrl,
+                'thumb' => $imageUrl,
+                'childnumber' => 0,
+                'action' => null,
+                'params' => json_encode([
+                    'thumb_width' => 130,
+                    'thumb_height' => 130,
+                    'width' => 130,
+                    'height' => 130,
+                    'contentId' => '1791514839303',
+                    'pStickerType' => 1,
+                    'hd' => $imageUrl,
+                    ...$params,
+                ]),
+                'type' => null,
+            ],
+            'propertyExt' => ['color' => -1, 'size' => -1, 'type' => 3, 'subType' => 0],
+        ],
+    ]);
+}
+
+it('lưu sticker tự tạo (ảnh mang pStickerType) thành tin sticker, ảnh hiển thị là bản WebP của kho', function () {
+    $webpUrl = 'https://yona.test/storage/stickers/86/86b8aa/sticker-130.webp';
+
+    zaloWebhook(zaloCustomStickerPayload($this->channel, [
+        'webp' => ['width' => 130, 'url' => $webpUrl, 'height' => 130],
+    ]))->assertOk();
+
+    $message = Message::query()->latest('id')->first();
+    $attachment = $message->attachments()->sole();
+
+    expect($message->content_type)->toBe(Message::CONTENT_TYPES['sticker'])
+        ->and($message->content)->toBeNull()
+        ->and($message->content_attributes['sticker'])->toBe([
+            'source' => 'zalo_custom',
+            'id' => '1791514839303',
+            'url' => $webpUrl,
+            'width' => 130,
+            'height' => 130,
+        ])
+        ->and($attachment->file_type)->toBe(Attachment::FILE_TYPE_IMAGE)
+        ->and($attachment->external_url)->toBe($webpUrl)
+        ->and(Attachment::query()->excludingStickers()->count())->toBe(0);
+});
+
+it('sticker tự tạo ngoài kho (không có WebP) vẫn là sticker, ảnh JPG được tải về', function () {
+    zaloWebhook(zaloCustomStickerPayload($this->channel, []))->assertOk();
+
+    $message = Message::query()->latest('id')->first();
+    $attachment = $message->attachments()->sole();
+
+    expect($message->content_type)->toBe(Message::CONTENT_TYPES['sticker'])
+        ->and($message->content_attributes['sticker']['url'])->toBe('https://cdn.zalo.test/custom/c652.jpg')
+        ->and($attachment->file_type)->toBe(Attachment::FILE_TYPE_IMAGE)
+        ->and($attachment->path)->not->toBeNull();
+});
+
+it('chỉ sticker (thường và tự tạo) rời khỏi mục ảnh, ảnh thường giữ nguyên', function () {
+    zaloWebhook(zaloPayload('zalo_inbound_sticker', $this->channel))->assertOk();
+    zaloWebhook(zaloCustomStickerPayload($this->channel, []))->assertOk();
+    zaloWebhook(zaloPayload('zalo_inbound_image', $this->channel, ['quote' => null]))->assertOk();
+
+    $messages = Message::query()->orderBy('id')->get();
+    $photo = $messages->last();
+
+    expect($messages->pluck('content_type')->all())->toBe([
+        Message::CONTENT_TYPES['sticker'],
+        Message::CONTENT_TYPES['sticker'],
+        Message::CONTENT_TYPES['text'],
+    ])
+        ->and($photo->content)->toBe('Ảnh sản phẩm')
+        ->and($photo->content_attributes)->not->toHaveKey('sticker')
+        ->and(Attachment::query()->excludingStickers()->pluck('attachable_id')->all())->toBe([$photo->id]);
+});
+
 it('giữ content_type text cho tin thường', function () {
     zaloWebhook(zaloPayload('zalo_inbound_text', $this->channel))->assertOk();
 

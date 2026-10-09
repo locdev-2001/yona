@@ -124,6 +124,10 @@ class IncomingMessageService
 
     private bool $cardParsed = false;
 
+    private ?ZaloCustomSticker $customSticker = null;
+
+    private bool $customStickerParsed = false;
+
     /** @param array<string, mixed> $params */
     public function __construct(
         private readonly Inbox $inbox,
@@ -501,8 +505,35 @@ class IncomingMessageService
 
     private function isSticker(): bool
     {
+        return $this->customSticker() !== null || $this->isPlatformSticker();
+    }
+
+    private function isPlatformSticker(): bool
+    {
         return ($this->params['inbound_kind'] ?? null) === self::STICKER_KIND
             && filled($this->params['sticker'] ?? null);
+    }
+
+    private function customSticker(): ?ZaloCustomSticker
+    {
+        if (! $this->customStickerParsed) {
+            $this->customSticker = ZaloCustomSticker::fromZcaMessage($this->params['listener_data'] ?? null);
+            $this->customStickerParsed = true;
+        }
+
+        return $this->customSticker;
+    }
+
+    /** @return array<string, mixed>|null */
+    private function stickerPayload(): ?array
+    {
+        $customSticker = $this->customSticker();
+
+        if ($customSticker !== null) {
+            return $customSticker->payload();
+        }
+
+        return filled($this->params['sticker'] ?? null) ? (array) $this->params['sticker'] : null;
     }
 
     /**
@@ -523,6 +554,10 @@ class IncomingMessageService
 
     private function content(): ?string
     {
+        if ($this->customSticker() !== null) {
+            return null;
+        }
+
         $content = $this->params['content'] ?? null;
         $card = $this->card();
 
@@ -543,8 +578,10 @@ class IncomingMessageService
     {
         $attributes = [];
 
-        if (filled($this->params['sticker'] ?? null)) {
-            $attributes['sticker'] = $this->params['sticker'];
+        $sticker = $this->stickerPayload();
+
+        if ($sticker !== null) {
+            $attributes['sticker'] = $sticker;
         }
 
         $card = $this->card();
@@ -748,7 +785,9 @@ class IncomingMessageService
     /** @return list<Attachment> */
     private function buildAttachments(int $accountId): array
     {
-        if ($this->isSticker()) {
+        // Sticker tự tạo ngoài kho Yona chỉ có ảnh JPG trên CDN Zalo (có hạn
+        // dùng): đi tiếp đường tải tệp bên dưới như ảnh thường.
+        if ($this->isPlatformSticker() || $this->customSticker()?->webpUrl !== null) {
             $sticker = $this->stickerAttachment($accountId);
 
             return $sticker === null ? [] : [$sticker];
@@ -835,7 +874,7 @@ class IncomingMessageService
      */
     private function stickerAttachment(int $accountId): ?Attachment
     {
-        $sticker = (array) $this->params['sticker'];
+        $sticker = $this->stickerPayload() ?? [];
         $url = null;
 
         foreach (self::STICKER_URL_KEYS as $key) {
