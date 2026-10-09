@@ -224,14 +224,15 @@
     padding: 2px;
   }
 
-  // Quầng neon: lớp rộng hơn ô 14px, làm nhòe rồi mới khoét ruột nên ánh sáng chỉ
-  // lan ra ngoài mép, không ám vào ô soạn.
+  // Quầng neon: lớp rộng hơn ô đúng bằng lề 8px của ô (rộng hơn thì khung cha cắt
+  // vuông mép phải và lem sang cột bên trái), làm nhòe rồi mới khoét ruột nên ánh sáng
+  // chỉ lan ra ngoài mép và tắt hẳn trước biên lớp.
   &::after {
-    inset: -14px;
-    padding: 14px;
-    border-radius: calc(0.75rem + 14px);
-    filter: blur(10px);
-    opacity: 0.7;
+    inset: -8px;
+    padding: 8px;
+    border-radius: calc(0.75rem + 8px);
+    filter: blur(4px);
+    opacity: 0.8;
   }
 
   @media (prefers-reduced-motion: reduce) {
