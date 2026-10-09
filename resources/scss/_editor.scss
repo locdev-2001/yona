@@ -174,8 +174,9 @@
   }
 }
 
-// Chế độ tối: viền LED cầu vồng chạy ở mép trên ô trả lời khách, hai cạnh bên mờ dần
-// xuống dưới (founder yêu cầu). Chế độ sáng giữ viền thường; Lưu ý riêng giữ viền vàng.
+// Chế độ tối: viền LED cầu vồng chạy ở mép trên ô soạn (cả Trả lời lẫn Lưu ý riêng; Lưu
+// ý riêng vẫn phân biệt bằng nền vàng), hai cạnh bên mờ dần xuống dưới (founder yêu cầu).
+// Chế độ sáng giữ viền thường.
 @property --reply-box-led-angle {
   syntax: '<angle>';
   initial-value: 0deg;
@@ -224,8 +225,11 @@
   display: none;
 }
 
-.dark .reply-box:not(.is-private) {
-  border-color: transparent;
+.dark .reply-box {
+  &,
+  &.is-private {
+    border-color: transparent;
+  }
 
   // Dây LED, để dịu (founder muốn mờ mờ, không chói).
   &::before {
