@@ -209,6 +209,9 @@
     );
     animation: reply-box-led-spin 4s linear infinite;
     pointer-events: none;
+    // Trên thanh kéo đổi chiều cao (z-10, nền gradient tối) nằm sát mép trên, nếu không
+    // nó phủ một dải đen lên quầng sáng. Không nhận chuột nên thanh kéo vẫn dùng được.
+    z-index: 11;
     // Khoét phần ruột (content-box), giữ phần vành, rồi giao với dải mờ dần từ trên xuống.
     -webkit-mask:
       linear-gradient(to bottom, #000 0, transparent 70%),
