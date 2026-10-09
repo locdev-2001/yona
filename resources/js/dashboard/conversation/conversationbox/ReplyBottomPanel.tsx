@@ -201,7 +201,7 @@ export default function ReplyBottomPanel({
                     label={sendButtonText}
                     type="submit"
                     sm
-                    color={isNote ? 'slate' : 'blue'}
+                    color="blue"
                     icon={isNote ? NOTE_SEND_ICON : undefined}
                     disabled={isSendDisabled}
                     className="flex-shrink-0"

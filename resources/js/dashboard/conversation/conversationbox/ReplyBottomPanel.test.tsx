@@ -93,7 +93,7 @@ describe('ReplyBottomPanel — nút sticker', () => {
 describe('ReplyBottomPanel — nút gửi', () => {
     it.each([
         [false, 'bg-n-brand', false],
-        [true, 'bg-n-button-color', true],
+        [true, 'bg-n-brand', true],
     ])('Lưu ý riêng %s → nền %s, có ổ khoá %s; không dùng nền vàng', (isNote, backgroundClass, hasLock) => {
         renderPanel({ isNote });
 
