@@ -152,8 +152,9 @@ it('ghi bí danh ngay sau mỗi phần chứ không đợi hết vòng gửi', f
     $message->save();
 
     // Phần thứ N thấy đủ bí danh của N-1 phần trước — echo về giữa chừng vẫn dedupe được.
-    expect($seen)->toBe([[], ['msg-1'], ['msg-1', 'msg-2']])
-        ->and($message->refresh()->content_attributes['external_source_ids'])->toBe(['msg-1', 'msg-2', 'msg-3']);
+    // Ba tệp rồi tin chữ đi cuối: bốn lượt gọi bridge.
+    expect($seen)->toBe([[], ['msg-1'], ['msg-1', 'msg-2'], ['msg-1', 'msg-2', 'msg-3']])
+        ->and($message->refresh()->content_attributes['external_source_ids'])->toBe(['msg-1', 'msg-2', 'msg-3', 'msg-4']);
 });
 
 it('gộp tin ma trùng source_id vào tin gốc sau khi gửi xong', function () {

@@ -2,24 +2,19 @@ import path from 'node:path';
 import { buildSendMessageContent, captionOf } from './send-content.mjs';
 
 /**
- * Nhiều ảnh của MỘT tin Yona đi thành một khối album trên Zalo, chú thích nằm
- * dưới khối như khi người dùng tự chọn nhiều ảnh trong app.
+ * Nhiều ảnh của MỘT tin Yona đi thành một khối album trên Zalo, như khi người
+ * dùng tự chọn nhiều ảnh trong app. Chữ của tin KHÔNG làm chú thích đè lên ảnh:
+ * nó đi thành một tin chữ riêng NGAY SAU các tệp (mang trích dẫn, nhắc tên),
+ * đúng thứ tự Yona hiện tệp và chữ thành hai bong bóng.
  *
  * Trên Zalo, album là N tin `chat.photo` (mỗi ảnh một msgId) nối với nhau bằng
- * `groupLayoutId` + `idInGroup` + `totalItemInGroup`; app gom chúng thành một
- * lưới. Chú thích là `desc` của ảnh ĐẦU, các ảnh sau để trống (tin khách gửi
- * album từ app tới Yona cũng mang chú thích ở ảnh đầu).
+ * `groupLayoutId` + `idInGroup` + `totalItemInGroup`; app gom chúng thành một lưới.
  *
- * `api.sendMessage` của zca-js dựng được khối album nhưng luôn tách chữ thành
- * tin riêng khi có hơn một tệp, và gửi các ảnh song song. Module này tải ảnh lên
- * bằng `api.uploadAttachment` rồi gửi từng ảnh qua `api.custom()` theo đúng tham
- * số ảnh của `sendMessage.js` (zca-js 2.1.2), lần lượt theo thứ tự trong khối.
- * Tên bắt đầu bằng `_` để buildAllowlist (zca-adapter.mjs) bỏ qua: chỉ đi đường
- * /personal-messages/send.
- *
- * Trích dẫn và nhắc tên không gắn được vào ảnh trong khối: có một trong hai thì
- * chú thích đi trước thành một tin chữ mang chúng (cùng cách zca làm với nhiều
- * tệp), khối ảnh đi sau không chú thích.
+ * `api.sendMessage` của zca-js dựng được khối album nhưng gửi chữ TRƯỚC tệp và
+ * gửi các ảnh song song. Module này tải ảnh lên bằng `api.uploadAttachment` rồi
+ * gửi từng ảnh qua `api.custom()` theo đúng tham số ảnh của `sendMessage.js`
+ * (zca-js 2.1.2), lần lượt theo thứ tự trong khối. Tên bắt đầu bằng `_` để
+ * buildAllowlist (zca-adapter.mjs) bỏ qua: chỉ đi đường /personal-messages/send.
  */
 export const PHOTO_ALBUM_METHOD = '_sendPhotoAlbum';
 
@@ -47,11 +42,11 @@ function chunk(items, size) {
  * Tham số một ảnh trong khối, khớp nhánh `case "image"` của `handleAttachment`
  * (zca-js 2.1.2 `apis/sendMessage.js`) khi gửi nhiều tệp.
  */
-export function albumPhotoParams({ upload, index, total, groupLayoutId, caption, threadId, isGroup, clientId }) {
+export function albumPhotoParams({ upload, index, total, groupLayoutId, threadId, isGroup, clientId }) {
     const params = {
         photoId: upload.photoId,
         clientId: String(clientId),
-        desc: index === 0 ? caption : '',
+        desc: '',
         width: upload.width,
         height: upload.height,
         rawUrl: upload.normalUrl,
@@ -97,7 +92,7 @@ export function ensurePhotoAlbumApi(api) {
         return;
     }
     api.custom(PHOTO_ALBUM_METHOD, async ({ ctx, utils, props }) => {
-        const { photos, caption, threadId, threadType, isGroup, fileService, onSent } = props;
+        const { photos, threadId, threadType, isGroup, fileService, onSent } = props;
         const maxPhotos = Number(ctx?.settings?.features?.sharefile?.max_file) || FALLBACK_MAX_ALBUM_PHOTOS;
         const chunks = chunk(photos, Math.max(MIN_ALBUM_PHOTOS, maxPhotos));
         for (let chunkIndex = 0; chunkIndex < chunks.length; chunkIndex++) {
@@ -110,7 +105,6 @@ export function ensurePhotoAlbumApi(api) {
                     index,
                     total: uploads.length,
                     groupLayoutId,
-                    caption: chunkIndex === 0 ? caption : '',
                     threadId,
                     isGroup,
                     clientId: clientId++,
@@ -142,21 +136,12 @@ export class PartialSendError extends Error {
     }
 }
 
-async function sendOneByOne(api, { paths, text, quote, mentions, threadId, threadType, isGroup, sent }) {
-    for (let index = 0; index < paths.length; index++) {
-        const content = buildSendMessageContent({
-            text: index === 0 ? text : null,
-            quote: index === 0 ? quote : null,
-            mentions: index === 0 ? mentions : null,
-            attachmentPath: paths[index],
-            isGroup,
-        });
-        const result = await api.sendMessage(content, threadId, threadType);
-        if (result?.message) {
-            sent.attachment.push(result.message);
-        }
-        sent.attachment.push(...(Array.isArray(result?.attachment) ? result.attachment : []));
+async function sendAndCollect(api, content, { threadId, threadType, sent }) {
+    const result = await api.sendMessage(content, threadId, threadType);
+    if (result?.message) {
+        sent.attachment.push(result.message);
     }
+    sent.attachment.push(...(Array.isArray(result?.attachment) ? result.attachment : []));
 }
 
 /**
@@ -166,40 +151,34 @@ async function sendOneByOne(api, { paths, text, quote, mentions, threadId, threa
  */
 export async function sendPhotoAlbum(api, { paths, text, quote, mentions, threadId, threadType, isGroup }) {
     const photos = paths.filter(isAlbumPhotoPath);
-    const others = paths.filter((filePath) => !isAlbumPhotoPath(filePath));
-    const sent = { message: null, attachment: [] };
+    const asAlbum = photos.length >= MIN_ALBUM_PHOTOS;
+    const separateFiles = asAlbum ? paths.filter((filePath) => !isAlbumPhotoPath(filePath)) : paths;
+    const target = { threadId, threadType, sent: { message: null, attachment: [] } };
 
     try {
-        if (photos.length < MIN_ALBUM_PHOTOS) {
-            await sendOneByOne(api, { paths, text, quote, mentions, threadId, threadType, isGroup, sent });
-
-            return sent;
+        if (asAlbum) {
+            const fileService = fileServiceOf(api);
+            ensurePhotoAlbumApi(api);
+            await api[PHOTO_ALBUM_METHOD]({
+                photos,
+                threadId,
+                threadType,
+                isGroup,
+                fileService,
+                onSent: (result) => target.sent.attachment.push(result),
+            });
+        }
+        for (const filePath of separateFiles) {
+            await sendAndCollect(api, buildSendMessageContent({ attachmentPath: filePath, isGroup }), target);
+        }
+        const caption = captionOf(text);
+        if (caption !== '') {
+            await sendAndCollect(api, buildSendMessageContent({ text: caption, quote, mentions, isGroup }), target);
         }
 
-        const fileService = fileServiceOf(api);
-        ensurePhotoAlbumApi(api);
-        const captionMessage = buildSendMessageContent({ text: captionOf(text), quote, mentions, isGroup });
-        const captionNeedsOwnMessage = captionMessage.msg !== '' && (captionMessage.quote || captionMessage.mentions);
-        if (captionNeedsOwnMessage) {
-            sent.message = (await api.sendMessage(captionMessage, threadId, threadType))?.message ?? null;
-        }
-        const caption = captionNeedsOwnMessage ? '' : captionMessage.msg;
-
-        await api[PHOTO_ALBUM_METHOD]({
-            photos,
-            caption,
-            threadId,
-            threadType,
-            isGroup,
-            fileService,
-            onSent: (result) => sent.attachment.push(result),
-        });
-
-        await sendOneByOne(api, { paths: others, threadId, threadType, isGroup, sent });
-
-        return sent;
+        return target.sent;
     } catch (error) {
-        throw new PartialSendError(error, sent);
+        throw new PartialSendError(error, target.sent);
     }
 }
 

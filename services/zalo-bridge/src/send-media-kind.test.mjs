@@ -142,6 +142,7 @@ test('media_kind=audio: tệp âm thanh tải lên vẫn gửi dạng tệp, kh�
 function fakeAlbumSlot({ failOnPhotoRequest = null } = {}) {
     const uploads = [];
     const photoRequests = [];
+    const textMessages = [];
     let nextMsgId = 9100;
     const utils = {
         encodeAES: (plain) => `enc(${plain})`,
@@ -164,12 +165,13 @@ function fakeAlbumSlot({ failOnPhotoRequest = null } = {}) {
             uploads.push(paths);
             return paths.map((filePath) => ({ fileType: 'image', photoId: filePath, width: 1, height: 1, totalSize: 1 }));
         },
-        sendMessage: async () => {
-            throw new Error('album không được đi sendMessage');
+        sendMessage: async (content) => {
+            textMessages.push(content);
+            return { message: { msgId: nextMsgId++ }, attachment: [] };
         },
     };
 
-    return { slot: { api, outboundEchoIds: new Map() }, uploads, photoRequests };
+    return { slot: { api, outboundEchoIds: new Map() }, uploads, photoRequests, textMessages };
 }
 
 function albumBody() {
@@ -185,8 +187,8 @@ function albumBody() {
     };
 }
 
-test('album: tải mọi ảnh, gửi một khối có chú thích, mọi msgId vào bộ chống echo, dọn tệp tạm', async () => {
-    const { slot, uploads, photoRequests } = fakeAlbumSlot();
+test('album: tải mọi ảnh, gửi một khối rồi tin chữ, mọi msgId vào bộ chống echo, dọn tệp tạm', async () => {
+    const { slot, uploads, photoRequests, textMessages } = fakeAlbumSlot();
 
     const result = await sendTextOrMediaThroughZca(slot, albumBody(), timing);
 
@@ -195,12 +197,13 @@ test('album: tải mọi ảnh, gửi một khối có chú thích, mọi msgId 
     assert.deepEqual(
         photoRequests.map((request) => [request.params.idInGroup, request.params.desc]),
         [
-            [0, 'Hai mẫu mới'],
+            [0, ''],
             [1, ''],
         ]
     );
-    assert.deepEqual(result, { source_id: '9100', source_ids: ['9100', '9101'] });
-    assert.ok(slot.outboundEchoIds.has('9100') && slot.outboundEchoIds.has('9101'));
+    assert.deepEqual(textMessages, [{ msg: 'Hai mẫu mới' }]);
+    assert.deepEqual(result, { source_id: '9100', source_ids: ['9100', '9101', '9102'] });
+    assert.ok(['9100', '9101', '9102'].every((id) => slot.outboundEchoIds.has(id)));
     assert.ok(uploads[0].every((filePath) => !existsSync(filePath)), 'tệp tạm đã dọn');
 });
 

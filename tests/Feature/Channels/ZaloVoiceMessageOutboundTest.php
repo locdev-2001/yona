@@ -90,7 +90,7 @@ it('bản ghi âm gửi từ ô soạn tới bridge là tin thoại, kèm tên v
         ->and($message->statusName())->not->toBe('failed');
 });
 
-it('bản ghi âm kèm chữ: chữ đi cùng lượt gửi tin thoại để bridge tách thành tin chữ riêng', function () {
+it('bản ghi âm kèm chữ: tin thoại đi trước, chữ thành tin chữ riêng ngay sau', function () {
     $this->actingAs(voiceOutboundAgent($this->inbox))->post($this->messagesUrl, [
         'content' => 'Shop gửi lời nhắn nha',
         'attachments' => [browserRecordingUpload('voice-message-20260929-101500.m4a', 'audio/mp4')],
@@ -100,9 +100,11 @@ it('bản ghi âm kèm chữ: chữ đi cùng lượt gửi tin thoại để br
 
     $sends = voiceOutboundBridgeSends();
 
-    expect($sends)->toHaveCount(1)
+    expect($sends)->toHaveCount(2)
         ->and($sends[0]['media_kind'])->toBe('voice')
-        ->and($sends[0]['text'])->toBe('Shop gửi lời nhắn nha');
+        ->and($sends[0])->not->toHaveKey('text')
+        ->and($sends[1]['text'])->toBe('Shop gửi lời nhắn nha')
+        ->and($sends[1])->not->toHaveKey('file_url');
 });
 
 it('tệp âm thanh tải lên (không phải bản ghi âm) vẫn gửi dạng tệp âm thanh', function () {

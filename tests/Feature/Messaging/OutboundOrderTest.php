@@ -64,12 +64,12 @@ function outboundOrderRun(int $messageId): void
         ->handle();
 }
 
-/** @return list<string> Nội dung chữ bridge nhận, theo thứ tự gọi. */
+/** @return list<string> Nội dung chữ bridge nhận, theo thứ tự gọi (tệp đi lượt riêng, không mang chữ). */
 function outboundOrderBridgeTexts(): array
 {
     return collect(Http::recorded())
-        ->filter(fn (array $pair) => str_ends_with($pair[0]->url(), '/personal-messages/send'))
-        ->map(fn (array $pair) => $pair[0]->data()['text'] ?? '')
+        ->filter(fn (array $pair) => str_ends_with($pair[0]->url(), '/personal-messages/send') && isset($pair[0]->data()['text']))
+        ->map(fn (array $pair) => $pair[0]->data()['text'])
         ->values()
         ->all();
 }

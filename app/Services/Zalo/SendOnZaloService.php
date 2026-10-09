@@ -215,8 +215,9 @@ class SendOnZaloService extends BaseSendOnChannelService
      * Một phần = một lượt gọi bridge. Sticker của Zalo đi lệnh sticker riêng, sticker
      * kho Yona đi lệnh sticker tự tạo (không gửi đính kèm của nó); tin chữ chuyển tiếp trong
      * cùng phiên đi lệnh chuyển tiếp gốc; tin có đính kèm thì các ảnh tĩnh (từ hai ảnh)
-     * gộp thành MỘT phần khối album đứng đầu, mỗi tệp còn lại một phần; chú thích +
-     * trích dẫn + nhắc tên bám vào phần đầu tiên (bridge gắn chú thích vào khối/tệp đó).
+     * gộp thành MỘT phần khối album đứng đầu, mỗi tệp còn lại một phần, rồi chữ +
+     * trích dẫn + nhắc tên đi CUỐI thành một tin chữ riêng — đúng thứ tự Yona hiện
+     * tệp và chữ thành hai bong bóng, không thành chú thích đè lên ảnh.
      *
      * @return list<array{payload: array<string, mixed>, filename: string|null}>
      */
@@ -272,15 +273,13 @@ class SendOnZaloService extends BaseSendOnChannelService
             ])];
         }
 
-        $caption = $this->captionPayload($channel, $text);
         $albumImages = $this->albumImages($channel, $attachments);
         $separateFiles = array_values(array_filter($attachments, fn (Attachment $attachment) => ! in_array($attachment, $albumImages, true)));
-        $parts = $albumImages === [] ? [] : [$this->albumPart([...$thread, ...$caption], $albumImages)];
+        $parts = $albumImages === [] ? [] : [$this->albumPart($thread, $albumImages)];
 
         foreach ($separateFiles as $attachment) {
             $parts[] = $this->part([
                 ...$thread,
-                ...($parts === [] ? $caption : []),
                 'file_url' => $this->attachmentUrl($attachment),
                 'media_kind' => $this->mediaKind($channel, $attachment),
                 ...$this->fileDescriptor($attachment),
@@ -289,12 +288,16 @@ class SendOnZaloService extends BaseSendOnChannelService
             ], $attachment);
         }
 
+        if (filled($text)) {
+            $parts[] = $this->part([...$thread, ...$this->captionPayload($channel, $text)]);
+        }
+
         return $parts;
     }
 
     /**
-     * Chữ + trích dẫn + nhắc tên của tin: chỉ phần đầu tiên mang, nếu không khách
-     * nhận cùng một câu nhiều lần.
+     * Chữ + trích dẫn + nhắc tên của tin: chỉ phần chữ mang, nếu không khách nhận
+     * cùng một câu nhiều lần.
      *
      * @return array{text: string|null, quote: array<string, mixed>|null, mentions: list<array{uid: string, pos: int, len: int}>|null}
      */

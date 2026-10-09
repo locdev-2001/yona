@@ -74,12 +74,16 @@ function send(api, overrides = {}) {
     });
 }
 
-test('ba ảnh kèm chữ: một lượt tải lên, ba ảnh chung một khối, chú thích chỉ ở ảnh đầu', async () => {
-    const { api, callsTo, photoRequests } = fakeZcaApi();
+test('ba ảnh kèm chữ: một lượt tải lên, ba ảnh chung một khối không chú thích, chữ thành tin riêng ngay sau', async () => {
+    const { api, calls, callsTo, photoRequests } = fakeZcaApi();
 
     const result = await send(api);
 
-    assert.equal(callsTo('sendMessage').length, 0, 'chữ không tách thành tin riêng');
+    assert.deepEqual(
+        calls.map((call) => call.name),
+        ['uploadAttachment', 'sendMessage']
+    );
+    assert.deepEqual(callsTo('sendMessage')[0].args, [{ msg: 'Mẫu mới về nè' }, THREAD_ID, 0]);
     assert.deepEqual(callsTo('uploadAttachment')[0].args, [['/tmp/a.jpg', '/tmp/b.png', '/tmp/c.webp'], THREAD_ID, 0]);
     assert.equal(photoRequests.length, 3);
     assert.ok(photoRequests.every((request) => request.url.startsWith(`${FILE_SERVICE}/api/message/photo_original/send?`)));
@@ -90,7 +94,7 @@ test('ba ảnh kèm chữ: một lượt tải lên, ba ảnh chung một khối
     assert.deepEqual(
         params.map((p) => [p.groupLayoutId, p.isGroupLayout, p.idInGroup, p.totalItemInGroup, p.desc]),
         [
-            [groupLayoutId, 1, 0, 3, 'Mẫu mới về nè'],
+            [groupLayoutId, 1, 0, 3, ''],
             [groupLayoutId, 1, 1, 3, ''],
             [groupLayoutId, 1, 2, 3, ''],
         ]
@@ -102,25 +106,26 @@ test('ba ảnh kèm chữ: một lượt tải lên, ba ảnh chung một khối
     assert.equal(params[0].grid, undefined);
     assert.equal(new Set(params.map((p) => p.clientId)).size, 3, 'mỗi ảnh một clientId');
 
-    assert.deepEqual(collectSourceIdsFromSendResult(result), ['9000', '9001', '9002']);
+    assert.deepEqual(collectSourceIdsFromSendResult(result), ['9000', '9001', '9002', '9003']);
 });
 
-test('trả lời trích dẫn: chữ đi trước thành tin mang trích dẫn, khối ảnh không chú thích', async () => {
-    const { api, callsTo, photoRequests } = fakeZcaApi();
+test('trả lời trích dẫn: khối ảnh đi trước, tin chữ mang trích dẫn đi sau', async () => {
+    const { api, calls, callsTo } = fakeZcaApi();
 
     const result = await send(api, { quote: QUOTE });
+
+    assert.deepEqual(
+        calls.map((call) => call.name),
+        ['uploadAttachment', 'sendMessage']
+    );
 
     const [content, threadId] = callsTo('sendMessage')[0].args;
     assert.deepEqual(content, { msg: 'Mẫu mới về nè', quote: QUOTE });
     assert.equal(threadId, THREAD_ID);
-    assert.deepEqual(
-        photoRequests.map((request) => request.params.desc),
-        ['', '', '']
-    );
     assert.deepEqual(collectSourceIdsFromSendResult(result), ['9000', '9001', '9002', '9003']);
 });
 
-test('nhóm có nhắc tên: chữ mang nhắc tên đi trước, ảnh gửi theo khuôn nhóm (grid, oriUrl)', async () => {
+test('nhóm có nhắc tên: tin chữ mang nhắc tên, ảnh gửi theo khuôn nhóm (grid, oriUrl)', async () => {
     const { api, callsTo, photoRequests } = fakeZcaApi();
 
     await send(api, { text: '@Bình xem mẫu', mentions: [{ uid: '555', pos: 0, len: 5 }], threadType: 1, isGroup: true });
@@ -134,7 +139,7 @@ test('nhóm có nhắc tên: chữ mang nhắc tên đi trước, ảnh gửi th
     assert.equal(params.desc, '');
 });
 
-test('chữ chỉ có khoảng trắng: không chú thích, không tách tin chữ', async () => {
+test('chữ chỉ có khoảng trắng: không sinh tin chữ', async () => {
     const { api, callsTo, photoRequests } = fakeZcaApi();
 
     await send(api, { text: '   ', quote: QUOTE });
@@ -143,7 +148,7 @@ test('chữ chỉ có khoảng trắng: không chú thích, không tách tin ch�
     assert.equal(photoRequests[0].params.desc, '');
 });
 
-test('vượt trần số tệp mỗi lượt của phiên: chia nhiều khối, chú thích ở khối đầu', async () => {
+test('vượt trần số tệp mỗi lượt của phiên: chia nhiều khối', async () => {
     const { api, callsTo, photoRequests } = fakeZcaApi({ maxFile: 2 });
 
     await send(api, { paths: ['/tmp/1.jpg', '/tmp/2.jpg', '/tmp/3.jpg', '/tmp/4.jpg'] });
@@ -159,7 +164,7 @@ test('vượt trần số tệp mỗi lượt của phiên: chia nhiều khối,
     assert.deepEqual(
         params.map((p) => [p.idInGroup, p.totalItemInGroup, p.desc]),
         [
-            [0, 2, 'Mẫu mới về nè'],
+            [0, 2, ''],
             [1, 2, ''],
             [0, 2, ''],
             [1, 2, ''],
@@ -167,11 +172,14 @@ test('vượt trần số tệp mỗi lượt của phiên: chia nhiều khối,
     );
 });
 
-test('ảnh đuôi Zalo không xếp vào ảnh vẫn đi riêng sau khối; dưới hai ảnh thì gửi từng tệp như cũ', async () => {
+test('ảnh đuôi Zalo không xếp vào ảnh vẫn đi riêng sau khối; dưới hai ảnh thì gửi từng tệp; chữ luôn đi cuối', async () => {
     const mixed = fakeZcaApi();
     await send(mixed.api, { paths: ['/tmp/a.jpg', '/tmp/b.heic', '/tmp/c.png'] });
     assert.deepEqual(mixed.callsTo('uploadAttachment')[0].args[0], ['/tmp/a.jpg', '/tmp/c.png']);
-    assert.deepEqual(mixed.callsTo('sendMessage')[0].args[0], { msg: '', attachments: ['/tmp/b.heic'] });
+    assert.deepEqual(
+        mixed.callsTo('sendMessage').map((call) => call.args[0]),
+        [{ msg: '', attachments: ['/tmp/b.heic'] }, { msg: 'Mẫu mới về nè' }]
+    );
 
     const single = fakeZcaApi();
     await send(single.api, { paths: ['/tmp/a.jpg', '/tmp/b.heic'], quote: QUOTE });
@@ -179,8 +187,9 @@ test('ảnh đuôi Zalo không xếp vào ảnh vẫn đi riêng sau khối; dư
     assert.deepEqual(
         single.callsTo('sendMessage').map((call) => call.args[0]),
         [
-            { msg: 'Mẫu mới về nè', attachments: ['/tmp/a.jpg'], quote: QUOTE },
+            { msg: '', attachments: ['/tmp/a.jpg'] },
             { msg: '', attachments: ['/tmp/b.heic'] },
+            { msg: 'Mẫu mới về nè', quote: QUOTE },
         ]
     );
 });
