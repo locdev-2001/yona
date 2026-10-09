@@ -154,6 +154,15 @@ describe('đổi thứ tự nhóm ghim', () => {
         expect(reorderPinnedConversations).toHaveBeenCalledWith([12, 13, 11]);
     });
 
+    it('thả ngoài nhóm ghim thì không đổi thứ tự', () => {
+        renderList();
+        layoutRows();
+
+        dragRow(11, ROW_HEIGHT * 5);
+
+        expect(reorderPinnedConversations).not.toHaveBeenCalled();
+    });
+
     it('rê chưa quá ngưỡng thì không thành kéo', () => {
         renderList();
         layoutRows();
