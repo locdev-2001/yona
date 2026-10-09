@@ -57,7 +57,7 @@ import ReplyBottomPanel from './ReplyBottomPanel';
 import VoiceMessagePreview from './voiceRecorder/VoiceMessagePreview';
 import VoiceRecorderBar from './voiceRecorder/VoiceRecorderBar';
 import { useVoiceRecorder } from './voiceRecorder/useVoiceRecorder';
-import { useComposerExpansion, useTypeToFocusComposer } from './useComposerExpansion';
+import { useComposerExpansion, usePasteToComposer, useTypeToFocusComposer } from './useComposerExpansion';
 import ComposerExpandableRegion from './ComposerExpandableRegion';
 import type { VoiceRecording } from './voiceRecorder/useVoiceRecorder';
 import {
@@ -84,7 +84,7 @@ import type { CannedCardPayload } from 'dashboard/conversation/composer/SendCard
 // cờ `voice_recorder` + kênh khai `outbound_audio` + trình duyệt có MediaRecorder thì
 // nút mic mở máy ghi; bản ghi là một đính kèm `isVoiceMessage` (một bản mỗi tin),
 // gửi kèm cờ `is_voice_message` để kênh có tin thoại gửi thành tin thoại. Bỏ: draft
-// (B10), email head/quoted reply, WhatsApp templates, copilot editor, variables. Dán (Ctrl+V) hoặc thả tệp vào ô soạn = đính kèm như nút kẹp giấy.
+// (B10), email head/quoted reply, WhatsApp templates, copilot editor, variables. Dán (Ctrl+V) hoặc thả tệp vào ô soạn = đính kèm như nút kẹp giấy; dán khi chưa đứng ở ô nhập nào cũng vào ô soạn.
 
 const DEFAULT_CHANNEL_TYPE = 'Channel::Api';
 
@@ -631,6 +631,7 @@ export default function ReplyBox({
         resetKey: conversationId,
     });
     useTypeToFocusComposer(editorRef, !isEditorDisabled);
+    usePasteToComposer(editorRef, !isEditorDisabled, onAttachFiles);
 
     return (
         <>

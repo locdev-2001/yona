@@ -198,4 +198,72 @@ describe('ReplyBox · thu gọn khi chưa soạn', () => {
         expect(editor().textContent).toBe('');
         otherInput.remove();
     });
+
+    function pasteOn(target: EventTarget, { text = '', files = [] }: { text?: string; files?: File[] }): Event {
+        const event = new Event('paste', { bubbles: true, cancelable: true });
+        Object.defineProperty(event, 'clipboardData', {
+            value: {
+                files,
+                types: [...(text ? ['text/plain'] : []), ...(files.length ? ['Files'] : [])],
+                items: [],
+                getData: (type: string) => (type === 'text/plain' ? text : ''),
+            },
+        });
+        target.dispatchEvent(event);
+        return event;
+    }
+
+    it('không đứng ở ô nhập nào mà dán chữ thì chữ vào ô soạn', async () => {
+        render(<ReplyBox />);
+        (document.activeElement as HTMLElement | null)?.blur();
+
+        const event = pasteOn(document.body, { text: 'Dạ em gửi báo giá' });
+
+        await waitFor(() => expect(focusedEditor()?.textContent).toBe('Dạ em gửi báo giá'));
+        expect(event.defaultPrevented).toBe(true);
+        expect(isExpanded()).toBe(true);
+    });
+
+    it('không đứng ở ô nhập nào mà dán ảnh thì ảnh vào khay đính kèm của ô soạn', async () => {
+        render(<ReplyBox />);
+        (document.activeElement as HTMLElement | null)?.blur();
+
+        pasteOn(document.body, { files: [new File(['png'], 'anh-chup.png', { type: 'image/png' })] });
+
+        expect(await screen.findByTestId('attachment-tray')).toBeInTheDocument();
+        expect(editor().textContent).toBe('');
+    });
+
+    it.each([
+        ['ô tìm kiếm', () => document.body.appendChild(Object.assign(document.createElement('input'), { type: 'search' }))],
+        ['vùng soạn thảo khác', () => {
+            const editable = document.createElement('div');
+            editable.setAttribute('contenteditable', 'true');
+            editable.tabIndex = 0;
+            return document.body.appendChild(editable);
+        }],
+    ])('đang đứng ở %s thì dán vẫn thuộc về nơi đó', (_name, createTarget) => {
+        render(<ReplyBox />);
+        const target = createTarget();
+        target.focus();
+
+        const event = pasteOn(target, { text: 'mã đơn 123' });
+
+        expect(event.defaultPrevented).toBe(false);
+        expect(editor().textContent).toBe('');
+        target.remove();
+    });
+
+    it('hộp thoại đang mở thì dán không chạy vào ô soạn', () => {
+        render(<ReplyBox />);
+        (document.activeElement as HTMLElement | null)?.blur();
+        const dialog = document.body.appendChild(document.createElement('div'));
+        dialog.setAttribute('role', 'dialog');
+
+        const event = pasteOn(document.body, { text: 'mã đơn 123' });
+
+        expect(event.defaultPrevented).toBe(false);
+        expect(editor().textContent).toBe('');
+        dialog.remove();
+    });
 });
