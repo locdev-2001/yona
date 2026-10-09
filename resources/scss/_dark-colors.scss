@@ -126,9 +126,11 @@
     --solid-3: 44 45 54;
     --solid-active: 53 57 66;
     --solid-amber: 56 50 41;
-    --solid-blue: 15 57 102;
+    // Bong bóng tin gửi đi (nhân viên, bot, mẫu) giữ màu xanh Yona; đậm hơn #2781F6 một
+    // chút để chữ sáng đạt tương phản ~4.6:1.
+    --solid-blue: 31 111 214;
     --solid-blue-2: 26 29 35;
-    --solid-iris: 38 42 101;
+    --solid-iris: var(--solid-blue);
     --solid-purple: 51 51 107;
     --solid-red: 90 33 34;
     --solid-amber-button: 255 221 141;

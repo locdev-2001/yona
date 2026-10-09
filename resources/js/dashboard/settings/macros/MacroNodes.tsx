@@ -21,7 +21,7 @@ interface Props {
     onResetAction: (index: number) => void;
 }
 
-const FLOW_LABEL_CLASS = 'bg-n-solid-blue text-n-blue-11 py-1 px-1.5 leading-none text-sm rounded-md';
+const FLOW_LABEL_CLASS = 'bg-n-solid-blue text-n-slate-12 py-1 px-1.5 leading-none text-sm rounded-md';
 
 export default function MacroNodes({
     actions,

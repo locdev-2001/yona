@@ -33,8 +33,8 @@ const PILL_SIZE_CLASSES: Record<SegmentedSize, string> = {
     md: 'text-sm py-1.5 px-4 gap-1.5',
 };
 
-// `pill`: công tắc viên thuốc, ô đang chọn tô gradient xanh phát sáng (bám ảnh mẫu
-// founder duyệt cho công tắc Sáng/Tối, xem docs/ux-decisions.md). Rãnh dùng lớp phủ
+// `pill`: công tắc viên thuốc, ô đang chọn tô đặc màu xanh Yona (founder duyệt cho
+// công tắc Sáng/Tối, xem docs/ux-decisions.md). Rãnh dùng lớp phủ
 // đen trong suốt nên sáng thì xám nhạt, tối thì sâu hơn nền như mẫu.
 const APPEARANCE_CLASSES: Record<SegmentedAppearance, { group: string; item: string; selected: string; idle: string }> = {
     default: {
@@ -46,8 +46,7 @@ const APPEARANCE_CLASSES: Record<SegmentedAppearance, { group: string; item: str
     pill: {
         group: 'gap-1 rounded-full bg-n-alpha-black1 p-1',
         item: 'inline-flex items-center justify-center rounded-full border border-solid',
-        selected:
-            'border-[#5fd8ff]/70 bg-gradient-to-b from-[#12c8ff] to-[#0a7cff] text-white shadow-[0_0_14px_rgb(14_165_255/0.45)]',
+        selected: 'border-transparent bg-n-brand text-white shadow-sm',
         idle: 'border-transparent text-n-slate-11 hover:text-n-slate-12 disabled:opacity-40',
     },
 };
