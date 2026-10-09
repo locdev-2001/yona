@@ -26,6 +26,7 @@ export const ICONS = {
     fullscreen: 'i-lucide-maximize',
     move: 'i-lucide-move',
     dragHandle: 'i-lucide-grip-vertical',
+    dragHandleHorizontal: 'i-lucide-grip-horizontal',
     sortAscending: 'i-lucide-arrow-down-narrow-wide',
     sortDescending: 'i-lucide-arrow-down-wide-narrow',
     scrollToLatest: 'i-lucide-arrow-down',

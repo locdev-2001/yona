@@ -205,9 +205,9 @@ function SortablePinnedRow({ conversationId, children }: { conversationId: numbe
             <span
                 data-pin-drag-handle
                 aria-hidden="true"
-                className="pointer-events-none absolute top-3 left-0.5 h-4 w-3 hidden [@media(hover:hover)]:flex items-center justify-center text-n-slate-9 group-hover/pinned:text-n-slate-11"
+                className="pointer-events-none absolute top-3 left-4 h-4 w-10 hidden [@media(hover:hover)]:flex items-center justify-center text-n-slate-9 group-hover/pinned:text-n-slate-11"
             >
-                <span className={`${ICONS.dragHandle} size-3`} />
+                <span className={`${ICONS.dragHandleHorizontal} size-3.5`} />
             </span>
         </div>
     );
