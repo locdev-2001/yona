@@ -77,7 +77,7 @@ function OutboxProbe() {
                 type="button"
                 disabled={!selectedConversation}
                 onClick={() =>
-                    sendReply({ content: '', isPrivate: false, attachments: [{ file: PHOTO, previewUrl: PREVIEW_URL }] })
+                    sendReply({ content: 'Mẫu mới về ạ', isPrivate: false, attachments: [{ file: PHOTO, previewUrl: PREVIEW_URL }] })
                 }
             >
                 gửi ảnh
@@ -148,13 +148,14 @@ describe('gửi tệp từ ô soạn', () => {
         const [pending] = renderedMessages();
         expect(pending).toMatchObject({
             status: 'progress',
-            content: null,
+            content: 'Mẫu mới về ạ',
             attachments: [{ file_type: 'image', data_url: PREVIEW_URL, filename: 'anh-san-pham.png' }],
         });
         expect(pending.id).toBeLessThan(0);
         const [url, form] = postForm.mock.calls[0] as [string, FormData];
         expect(url).toBe(MESSAGES_URL);
         expect(form.getAll('attachments[]')).toHaveLength(1);
+        expect(form.get('content')).toBe('Mẫu mới về ạ');
         expect(form.get('echo_id')).toBe(pending.echo_id);
 
         await act(async () => resolveUpload(serverMessage(pending.echo_id)));
@@ -172,6 +173,7 @@ describe('gửi tệp từ ô soạn', () => {
         const [failed] = renderedMessages();
         expect(failed.content_attributes.external_error).toEqual({ message: 'Mạng chập chờn.' });
         expect(failed.attachments).toHaveLength(1);
+        expect(failed.content).toBe('Mẫu mới về ạ');
         expect(alertSpy).toHaveBeenCalledWith('Mạng chập chờn.');
 
         let resolveUpload: (message: ConversationMessage) => void = () => undefined;
@@ -183,6 +185,7 @@ describe('gửi tệp từ ô soạn', () => {
         const retriedForm = postForm.mock.calls[1][1] as FormData;
         expect(retriedForm.get('echo_id')).toBe(failed.echo_id);
         expect((retriedForm.get('attachments[]') as File).name).toBe('anh-san-pham.png');
+        expect(retriedForm.get('content')).toBe('Mẫu mới về ạ');
         expect(postJson).not.toHaveBeenCalledWith(expect.stringContaining('/retry'), expect.anything());
 
         await act(async () => resolveUpload(serverMessage(failed.echo_id)));

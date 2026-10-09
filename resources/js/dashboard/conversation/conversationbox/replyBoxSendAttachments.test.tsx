@@ -84,41 +84,42 @@ async function attachPhotoAndType(text: string) {
 // Nút gửi của ô soạn là nút submit cuối khung (menu Gửi thẻ cũng có nút submit).
 const sendButton = () => [...document.querySelectorAll<HTMLButtonElement>('.reply-box button[type="submit"]')].at(-1)!;
 
-describe('ReplyBox — gửi chữ kèm tệp', () => {
+describe('ReplyBox — gửi tin kèm tệp', () => {
     beforeEach(() => {
         window.localStorage.clear();
         sendReplySpy.mockReset();
     });
 
-    it('chữ đi thành tin riêng trước, tệp đi tin sau; ô soạn và khay trống ngay', async () => {
+    it.each(['Channel::Zalo', 'Channel::Email'])(
+        '%s: chữ và tệp đi chung một tin (chữ là chú thích); ô soạn và khay trống ngay',
+        async (channel) => {
+            channelType.current = channel;
+            await attachPhotoAndType('Mẫu này còn size M ạ');
+
+            fireEvent.click(sendButton());
+
+            expect(sendReplySpy).toHaveBeenCalledTimes(1);
+            expect(sendReplySpy.mock.calls[0][0]).toMatchObject({
+                content: 'Mẫu này còn size M ạ',
+                isPrivate: false,
+                attachments: [{ file: PHOTO, previewUrl: expect.stringMatching(/^data:/) }],
+                isVoiceMessage: false,
+            });
+            await waitFor(() => expect(screen.queryByTestId('attachment-tray')).toBeNull());
+            expect((screen.getByLabelText('editor-stub') as HTMLTextAreaElement).value).toBe('');
+        },
+    );
+
+    it('chỉ có chữ thì gửi tin chữ không kèm tệp', async () => {
         channelType.current = 'Channel::Zalo';
-        await attachPhotoAndType('Mẫu này còn size M ạ');
-
-        fireEvent.click(sendButton());
-
-        expect(sendReplySpy).toHaveBeenCalledTimes(2);
-        expect(sendReplySpy.mock.calls[0][0]).toMatchObject({ content: 'Mẫu này còn size M ạ', isPrivate: false });
-        expect(sendReplySpy.mock.calls[0][0].attachments).toBeUndefined();
-        expect(sendReplySpy.mock.calls[1][0]).toMatchObject({
-            content: '',
-            attachments: [{ file: PHOTO, previewUrl: expect.stringMatching(/^data:/) }],
-            isVoiceMessage: false,
-        });
-        await waitFor(() => expect(screen.queryByTestId('attachment-tray')).toBeNull());
-        expect((screen.getByLabelText('editor-stub') as HTMLTextAreaElement).value).toBe('');
-    });
-
-    it('kênh email: chữ và tệp là một lá thư, gửi chung một tin', async () => {
-        channelType.current = 'Channel::Email';
-        await attachPhotoAndType('Gửi anh báo giá');
+        render(<ReplyBox />);
+        fireEvent.change(screen.getByLabelText('editor-stub'), { target: { value: 'Dạ' } });
 
         fireEvent.click(sendButton());
 
         expect(sendReplySpy).toHaveBeenCalledTimes(1);
-        expect(sendReplySpy.mock.calls[0][0]).toMatchObject({
-            content: 'Gửi anh báo giá',
-            attachments: [{ file: PHOTO }],
-        });
+        expect(sendReplySpy.mock.calls[0][0]).toMatchObject({ content: 'Dạ' });
+        expect(sendReplySpy.mock.calls[0][0].attachments).toBeUndefined();
     });
 
     it('chỉ có tệp thì gửi một tin tệp', async () => {

@@ -484,24 +484,24 @@ export default function ReplyBox({
     });
 
     // Bấm Gửi là tin hiện ngay trong khung chat và ô soạn trống ngay; tệp tải lên
-    // sau trong bong bóng của nó. Chữ kèm tệp đi thành tin riêng để không phải chờ
-    // tệp tải xong — trừ thư email, nơi chữ và tệp là cùng một lá thư. Chỉ có chữ
-    // ký thì chữ ký đi cùng tệp như chú thích.
+    // sau trong bong bóng của nó. Chữ kèm tệp là một tin (chữ thành chú thích của tệp).
     const onSendReply = () => {
         if (isReplyButtonDisabled) return;
         const { content, contentAttributes, isReplyingToMessage } = buildOutgoingPayload();
-        const sendsTextSeparately = hasAttachments && hasContent && !isAnEmailChannel;
-
-        if (sendsTextSeparately || (!hasAttachments && !isMessageEmpty)) {
-            sendReply({ content, isPrivate, contentAttributes, ...emailPayloadFields() });
-        }
-        if (hasAttachments) {
+        if (hasAttachments || !isMessageEmpty) {
             sendReply({
-                content: sendsTextSeparately ? '' : content,
+                content,
                 isPrivate,
-                contentAttributes: sendsTextSeparately ? undefined : contentAttributes,
-                attachments: attachedFiles.map((attachment) => ({ file: attachment.resource, previewUrl: attachment.thumb })),
-                isVoiceMessage: pendingVoiceMessage !== null,
+                contentAttributes,
+                ...(hasAttachments
+                    ? {
+                          attachments: attachedFiles.map((attachment) => ({
+                              file: attachment.resource,
+                              previewUrl: attachment.thumb,
+                          })),
+                          isVoiceMessage: pendingVoiceMessage !== null,
+                      }
+                    : {}),
                 ...emailPayloadFields(),
             });
         }
