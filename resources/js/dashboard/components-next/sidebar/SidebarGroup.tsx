@@ -103,8 +103,8 @@ export default function SidebarGroup({
     if (isCollapsed) {
         const collapsedClasses = `flex items-center justify-center size-10 rounded-lg ${
             isActive || hasActiveChild
-                ? 'text-n-slate-12 bg-n-alpha-2'
-                : 'text-n-slate-11 hover:bg-n-alpha-2'
+                ? 'text-n-slate-12 bg-n-surface-selected'
+                : 'text-n-slate-11 hover:bg-n-surface-hover'
         }`;
 
         return (

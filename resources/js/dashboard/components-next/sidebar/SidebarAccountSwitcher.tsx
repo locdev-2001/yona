@@ -52,7 +52,7 @@ export default function SidebarAccountSwitcher({ isCollapsed = false }: { isColl
             {({ toggle, isOpen }) =>
                 isCollapsed ? (
                     <button
-                        className={`grid flex-shrink-0 place-content-center p-2 rounded-lg cursor-pointer hover:bg-n-alpha-1 ${isOpen ? 'bg-n-alpha-1' : ''}`}
+                        className={`grid flex-shrink-0 place-content-center p-2 rounded-lg cursor-pointer hover:bg-n-surface-hover ${isOpen ? 'bg-n-surface-hover' : ''}`}
                         title={currentAccount.name}
                         onClick={toggle}
                     >
@@ -63,8 +63,8 @@ export default function SidebarAccountSwitcher({ isCollapsed = false }: { isColl
                         id="sidebar-account-switcher"
                         data-account-id={currentAccount.id}
                         aria-haspopup="listbox"
-                        className={`flex items-center gap-2 justify-between w-full rounded-lg px-2 ${isOpen ? 'bg-n-alpha-1' : ''} ${
-                            showAccountSwitcher ? 'hover:bg-n-alpha-1 cursor-pointer' : 'cursor-default'
+                        className={`flex items-center gap-2 justify-between w-full rounded-lg px-2 ${isOpen ? 'bg-n-surface-hover' : ''} ${
+                            showAccountSwitcher ? 'hover:bg-n-surface-hover cursor-pointer' : 'cursor-default'
                         }`}
                         onClick={() => showAccountSwitcher && toggle()}
                     >

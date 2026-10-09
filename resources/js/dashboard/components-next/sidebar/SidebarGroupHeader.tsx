@@ -31,9 +31,9 @@ export default function SidebarGroupHeader({
 }: SidebarGroupHeaderProps) {
     const classes = [
         'flex items-center gap-2 px-1.5 py-1 rounded-lg h-8 min-w-0 cursor-pointer',
-        isActive && !hasActiveChild ? 'text-n-slate-12 bg-n-alpha-2 font-medium' : '',
+        isActive && !hasActiveChild ? 'text-n-slate-12 bg-n-surface-selected font-medium' : '',
         hasActiveChild ? 'text-n-slate-12 font-medium' : '',
-        !isActive && !hasActiveChild ? 'text-n-slate-11 hover:bg-n-alpha-2' : '',
+        !isActive && !hasActiveChild ? 'text-n-slate-11 hover:bg-n-surface-hover' : '',
     ]
         .filter(Boolean)
         .join(' ');
@@ -44,7 +44,7 @@ export default function SidebarGroupHeader({
                 <div className="relative flex items-center gap-2">
                     <Icon icon={icon} className="size-4" />
                     {showBadge ? (
-                        <span className="size-2 -top-px ltr:-right-px rtl:-left-px bg-n-brand absolute rounded-full border border-n-solid-2" />
+                        <span className="size-2 -top-px ltr:-right-px rtl:-left-px bg-n-brand absolute rounded-full ring-1 ring-n-surface-sidebar" />
                     ) : null}
                 </div>
             ) : null}

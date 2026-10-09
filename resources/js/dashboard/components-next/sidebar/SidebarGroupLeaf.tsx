@@ -82,7 +82,7 @@ export default function SidebarGroupLeaf({
                 href={to}
                 title={label}
                 className={`flex h-8 items-center gap-2 px-2 py-1 rounded-lg ltr:hover:bg-gradient-to-r rtl:hover:bg-gradient-to-l from-transparent via-n-slate-3/70 to-n-slate-3/70 group min-w-0 ${
-                    active ? 'text-n-slate-12 bg-n-alpha-2 active' : ''
+                    active ? 'text-n-slate-12 bg-n-surface-selected active' : ''
                 }`}
             >
                 {component ? (

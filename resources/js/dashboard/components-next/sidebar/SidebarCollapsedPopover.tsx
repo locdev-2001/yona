@@ -75,15 +75,15 @@ export default function SidebarCollapsedPopover({
             onMouseEnter={onMouseEnter}
             onMouseLeave={onMouseLeave}
         >
-            <div className="bg-n-alpha-3 backdrop-blur-[100px] outline outline-1 -outline-offset-1 w-56 outline-n-weak rounded-xl shadow-lg py-2 px-2">
-                <div className="px-2 py-1.5 text-xs font-medium text-n-slate-11 uppercase tracking-wider border-b border-n-weak mb-1">
+            <div className="overlay-surface w-56 rounded-xl py-2 px-2">
+                <div className="px-2 py-1.5 text-xs font-medium text-n-slate-11 uppercase tracking-wider mb-1">
                     {label}
                 </div>
                 <ul className="m-0 p-0 list-none max-h-[400px] overflow-y-auto no-scrollbar">
                     {accessibleChildren.map(child =>
                         child.children ? (
                             <li key={child.name} className="group/sidebar-section py-0.5">
-                                <div className="flex items-center rounded-lg text-n-slate-11 hover:bg-n-alpha-2 transition-colors duration-150 ease-out">
+                                <div className="flex items-center rounded-lg text-n-slate-11 hover:bg-n-surface-hover transition-colors duration-150 ease-out">
                                     <button
                                         type="button"
                                         className="flex flex-1 min-w-0 items-center gap-2 ps-2 py-1.5 text-left rtl:text-right"
@@ -97,7 +97,7 @@ export default function SidebarCollapsedPopover({
                                     <div className="flex flex-shrink-0 items-center gap-1 pe-2">
                                         <button
                                             type="button"
-                                            className="flex size-6 flex-shrink-0 items-center justify-center rounded-md text-n-slate-11 hover:bg-n-alpha-2 focus-visible:bg-n-alpha-2 focus-visible:outline-none"
+                                            className="flex size-6 flex-shrink-0 items-center justify-center rounded-md text-n-slate-11 hover:bg-n-surface-hover focus-visible:bg-n-surface-hover focus-visible:outline-none"
                                             onClick={event => {
                                                 event.stopPropagation();
                                                 toggleSubGroup(child.name);
@@ -152,7 +152,7 @@ function PopoverItem({
         <button
             type="button"
             className={`flex items-center gap-2 px-2 py-1.5 w-full rounded-lg text-sm text-left rtl:text-right transition-colors duration-150 ease-out ${
-                active ? 'text-n-slate-12 bg-n-alpha-2' : 'text-n-slate-11 hover:bg-n-alpha-2'
+                active ? 'text-n-slate-12 bg-n-surface-selected' : 'text-n-slate-11 hover:bg-n-surface-hover'
             }`}
             onClick={() => child.to && onNavigate(child.to)}
         >

@@ -41,7 +41,7 @@ export default function Dashboard({ children }: { children: ReactNode }) {
                         isMobileSidebarOpen={isMobileSidebarOpen}
                         onCloseMobileSidebar={() => setMobileSidebarOpen(false)}
                     />
-                    <main className="flex flex-1 h-full w-full min-h-0 px-0 overflow-hidden bg-n-surface-1">
+                    <main className="flex flex-1 h-full w-full min-h-0 px-0 overflow-hidden bg-n-surface-canvas">
                         {children}
                         <MobileSidebarLauncher
                             isMobileSidebarOpen={isMobileSidebarOpen}

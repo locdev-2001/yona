@@ -178,8 +178,8 @@ export default function Sidebar({
             <aside
                 ref={asideRef}
                 className={[
-                    'bg-n-background flex flex-col text-sm pb-px fixed top-0 ltr:left-0 rtl:right-0 h-full max-md:h-dvh z-40 md:relative md:flex-shrink-0 md:ltr:translate-x-0 md:rtl:translate-x-0 ltr:border-r rtl:border-l border-n-weak',
-                    isMobileSidebarOpen ? 'shadow-lg md:shadow-none' : 'ltr:-translate-x-full rtl:translate-x-full',
+                    'bg-n-surface-sidebar flex flex-col text-sm pb-px fixed top-0 ltr:left-0 rtl:right-0 h-full max-md:h-dvh z-40 md:relative md:flex-shrink-0 md:ltr:translate-x-0 md:rtl:translate-x-0',
+                    isMobileSidebarOpen ? 'shadow-overlay md:shadow-none' : 'ltr:-translate-x-full rtl:translate-x-full',
                     !isResizing ? 'transition-transform duration-200 ease-out md:transition-[width]' : '',
                 ]
                     .filter(Boolean)
@@ -209,7 +209,7 @@ export default function Sidebar({
                             <Link
                                 href={accountScopedUrl(accountId, 'search')}
                                 title={t('SIDEBAR.GLOBAL_SEARCH_HINT')}
-                                className="flex gap-2 items-center px-2 py-1 w-full min-w-0 h-7 rounded-lg outline outline-1 outline-n-weak bg-n-button-color transition-all duration-100 ease-out"
+                                className="flex gap-2 items-center px-2 py-1 w-full min-w-0 h-7 rounded-lg bg-n-surface-field hover:bg-n-surface-field-hover transition-colors duration-100 ease-out"
                             >
                                 <span className="flex-shrink-0 i-lucide-search size-4 text-n-slate-10" />
                                 <span className="flex-grow min-w-0 truncate text-start text-n-slate-10">
@@ -219,7 +219,7 @@ export default function Sidebar({
                         ) : (
                             <Link
                                 href={accountScopedUrl(accountId, 'search')}
-                                className="flex items-center justify-center size-8 rounded-lg outline outline-1 outline-n-weak bg-n-button-color transition-all duration-100 ease-out hover:bg-n-alpha-2"
+                                className="flex items-center justify-center size-8 rounded-lg bg-n-surface-field hover:bg-n-surface-field-hover transition-colors duration-100 ease-out"
                                 title={t('SIDEBAR.GLOBAL_SEARCH_HINT')}
                             >
                                 <span className="i-lucide-search size-4 text-n-slate-11" />
@@ -233,8 +233,8 @@ export default function Sidebar({
                             disabled
                             className={`flex-shrink-0 ${
                                 isEffectivelyCollapsed
-                                    ? '!size-8 !outline-n-weak !text-n-slate-11'
-                                    : '!h-7 !outline-n-weak !text-n-slate-11'
+                                    ? '!size-8 !text-n-slate-11'
+                                    : '!h-7 !text-n-slate-11'
                             }`}
                         />
                     </div>
@@ -255,9 +255,9 @@ export default function Sidebar({
                     </ul>
                 </nav>
                 <section className="flex relative flex-col flex-shrink-0 gap-1 justify-between items-center pb-[env(safe-area-inset-bottom)]">
-                    <div className="pointer-events-none absolute inset-x-0 -top-[1.938rem] h-8 bg-gradient-to-t from-n-background to-transparent" />
+                    <div className="pointer-events-none absolute inset-x-0 -top-[1.938rem] h-8 bg-gradient-to-t from-n-surface-sidebar to-transparent" />
                     <div
-                        className={`px-1 py-1.5 flex-shrink-0 flex w-full z-50 gap-2 items-center border-t border-n-weak shadow-[0px_-2px_4px_0px_rgba(27,28,29,0.02)] ${
+                        className={`px-1 py-1.5 flex-shrink-0 flex w-full z-50 gap-2 items-center ${
                             isEffectivelyCollapsed ? 'justify-center' : 'justify-between'
                         }`}
                     >

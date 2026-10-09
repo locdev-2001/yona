@@ -69,8 +69,8 @@ export default function SidebarProfileMenu({ isCollapsed = false }: { isCollapse
         <DropdownContainer className={`relative min-w-0 ${isCollapsed ? 'w-auto' : 'w-full'}`} menu={menu}>
             {({ toggle, isOpen }) => (
                 <button
-                    className={`flex gap-2 items-center p-1 text-left rounded-lg cursor-pointer hover:bg-n-alpha-1 ${
-                        isOpen ? 'bg-n-alpha-1' : ''
+                    className={`flex gap-2 items-center p-1 text-left rounded-lg cursor-pointer hover:bg-n-surface-hover ${
+                        isOpen ? 'bg-n-surface-hover' : ''
                     } ${isCollapsed ? 'justify-center' : 'w-full'}`}
                     title={isCollapsed ? availableName : undefined}
                     onClick={toggle}
