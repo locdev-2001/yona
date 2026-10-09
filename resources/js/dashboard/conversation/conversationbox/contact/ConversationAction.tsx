@@ -33,7 +33,7 @@ import { useTeamsList } from './useTeamsList';
 export default function ConversationAction() {
     const { auth, currentAccount, currentAccountUser } = usePage<DashboardPageProps>().props;
     const { selectedConversation, assignAgent, assignTeam, togglePriority } = useConversation();
-    const { agentsList } = useAgentsList(true, { includeAgentBots: isProductFeatureVisible('agentBots') });
+    const { agentsList } = useAgentsList(false, { includeAgentBots: isProductFeatureVisible('agentBots') });
     const teams = useTeamsList(currentAccount.id);
 
     const priorityOptions = useMemo(() => buildPriorityOptions(), []);
