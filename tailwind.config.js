@@ -53,6 +53,7 @@ const tailwindConfig = {
       },
       boxShadow: {
         overlay: 'var(--shadow-overlay)',
+        bar: 'var(--shadow-bar)',
       },
       fontWeight: {
         420: '420',

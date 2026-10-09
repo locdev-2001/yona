@@ -133,7 +133,7 @@ export default function ConversationHeader({
     return (
         <div
             data-testid="conversation-header"
-            className={`flex flex-col gap-3 items-center justify-between flex-1 w-full min-w-0 xl:flex-row px-3 pt-3 pb-2 h-24 xl:h-12 ${className}`}
+            className={`relative z-10 flex flex-col gap-3 items-center justify-between flex-1 w-full min-w-0 xl:flex-row px-3 pt-3 pb-2 h-24 xl:h-12 bg-n-surface-panel shadow-bar ${className}`}
         >
             <div className="flex items-center justify-start w-full xl:w-auto max-w-full min-w-0 xl:flex-1">
                 {showBackButton ? (
@@ -158,12 +158,12 @@ export default function ConversationHeader({
                     <div className="flex items-center gap-1 overflow-hidden text-xs conversation--header--actions text-n-slate-11 text-ellipsis whitespace-nowrap">
                         <button
                             type="button"
-                            className="truncate text-label-small text-n-slate-11 hover:text-n-slate-12 !p-0 cursor-pointer"
+                            className="shrink-0 tabular-nums text-label-small text-n-slate-11 hover:text-n-slate-12 !p-0 cursor-pointer"
                             onClick={copyConversationId}
                         >
                             {`#${selectedConversation.id}`}
                         </button>
-                        {hasMultipleInboxes && inbox ? <span>•</span> : null}
+                        {hasMultipleInboxes && inbox ? <span className="shrink-0">•</span> : null}
                         {hasMultipleInboxes && inbox ? (
                             <div title={inbox.name} className="flex items-center gap-0.5 min-w-0 !mx-0">
                                 <ChannelIcon inbox={inbox} className="size-4 flex-shrink-0 text-n-slate-11" />

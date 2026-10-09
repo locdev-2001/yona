@@ -147,6 +147,8 @@
     --surface-field: 15, 23, 42, 0.05;
     --surface-field-hover: 15, 23, 42, 0.08;
     // Lớp nổi (menu, dialog, popover) tách khỏi nền bằng bóng mềm thay cho viền.
+    // Thanh đầu khung nội dung tách khỏi phần cuộn bên dưới bằng một vệt bóng mảnh.
+    --shadow-bar: 0 1px 2px rgb(16 24 40 / 0.04), 0 4px 12px rgb(16 24 40 / 0.05);
     --shadow-overlay: 0 1px 3px rgb(16 24 40 / 0.08), 0 8px 24px rgb(16 24 40 / 0.12);
 
     --overlay: 0, 0, 0, 0.12;
