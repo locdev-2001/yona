@@ -161,7 +161,7 @@ export default function ConversationCard({
     return (
         <div
             className={[
-                'relative flex items-start flex-grow-0 flex-shrink-0 w-full min-w-0 py-0 cursor-pointer conversation rounded-lg group',
+                'relative flex items-center flex-grow-0 flex-shrink-0 w-full min-w-0 py-0 cursor-pointer conversation rounded-lg group',
                 isActiveChat ? 'active animate-card-select' : '',
                 selected ? 'selected' : '',
                 isActiveChat || selected ? 'bg-n-surface-selected' : 'hover:bg-n-surface-hover',
@@ -183,7 +183,6 @@ export default function ConversationCard({
                         src={currentContact.thumbnail}
                         size={40}
                         status={contactAvailabilityStatus}
-                        className={showMetaSection ? 'mt-8' : 'mt-4'}
                         hideOfflineStatus
                         overlay={({ size }) =>
                             isSelecting || selected ? (
