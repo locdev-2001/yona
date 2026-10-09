@@ -25,12 +25,11 @@ export default function AccordionItem({
     children,
 }: AccordionItemProps) {
     return (
-        <div className="text-sm">
+        <div className="text-sm rounded-lg bg-n-surface-canvas">
             <button
                 type="button"
-                className={`flex items-center select-none w-full rounded-lg bg-n-slate-2 outline outline-1 outline-n-weak m-0 cursor-grab justify-between py-2 px-4 drag-handle ${
-                    isOpen ? 'rounded-bl-none rounded-br-none' : ''
-                }`}
+                aria-expanded={isOpen}
+                className="flex items-center select-none w-full rounded-lg bg-transparent hover:bg-n-surface-hover m-0 cursor-grab justify-between py-2 px-4 drag-handle"
                 onClick={event => {
                     event.stopPropagation();
                     onToggle();
@@ -48,11 +47,7 @@ export default function AccordionItem({
                 </div>
             </button>
             {isOpen ? (
-                <div
-                    className={`outline outline-1 outline-n-weak -mt-[-1px] border-t-0 rounded-br-lg rounded-bl-lg ${
-                        compact ? 'p-0' : 'px-2 py-4'
-                    }`}
-                >
+                <div className={compact ? 'p-0' : 'px-2 pt-1 pb-4'}>
                     {children}
                 </div>
             ) : null}

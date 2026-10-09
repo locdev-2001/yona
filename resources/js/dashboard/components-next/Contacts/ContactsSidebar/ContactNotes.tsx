@@ -100,11 +100,11 @@ export default function ContactNotes({ contactId }: ContactNotesProps) {
                     <Loader />
                 </div>
             ) : notes.length > 0 ? (
-                <div>
+                <div className="flex flex-col gap-2">
                     {notes.map(note => (
                         <ContactNoteItem
                             key={note.id}
-                            className="mx-6 py-4"
+                            className="mx-4 py-3 px-4 rounded-lg bg-n-surface-canvas"
                             note={note}
                             writtenBy={getWrittenBy(note)}
                             allowDelete

@@ -63,7 +63,7 @@ export default function EditorModeToggle({
 
     return (
         <button
-            className={`flex items-center w-auto h-8 p-1 transition-all border rounded-full bg-n-alpha-2 group relative duration-300 ease-in-out z-0 active:scale-[0.995] active:duration-75 ${
+            className={`flex items-center w-auto h-8 p-1 transition-all rounded-full bg-n-surface-field group relative duration-300 ease-in-out z-0 active:scale-[0.995] active:duration-75 ${
                 disabled || isReplyRestricted ? 'cursor-not-allowed' : ''
             }`}
             disabled={disabled || isReplyRestricted}
@@ -77,7 +77,7 @@ export default function EditorModeToggle({
             </div>
             <div
                 data-testid="editor-mode-chip"
-                className={`absolute shadow-sm rounded-full h-6 w-[var(--chip-width)] ease-in-out translate-x-[var(--translate-x)] rtl:translate-x-[var(--rtl-translate-x)] bg-n-solid-1 ${
+                className={`absolute rounded-full h-6 w-[var(--chip-width)] ease-in-out translate-x-[var(--translate-x)] rtl:translate-x-[var(--rtl-translate-x)] bg-n-surface-raised ${
                     !disabled && !isReplyRestricted ? 'transition-all duration-300' : ''
                 }`}
                 style={

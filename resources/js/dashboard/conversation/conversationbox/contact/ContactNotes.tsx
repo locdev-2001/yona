@@ -100,11 +100,11 @@ export default function ContactNotes({ contactId }: ContactNotesProps) {
                     <Loader />
                 </div>
             ) : notes.length ? (
-                <div className="flex flex-col max-h-[300px] overflow-y-auto">
+                <div className="flex flex-col gap-1 max-h-[300px] overflow-y-auto">
                     {notes.map(note => (
                         <ContactNoteItem
                             key={note.id}
-                            className="py-4 last-of-type:border-b-0 px-4"
+                            className="py-3 px-4 rounded-lg bg-n-surface-panel"
                             note={note}
                             writtenBy={writtenBy(note)}
                             allowDelete
@@ -135,7 +135,7 @@ export default function ContactNotes({ contactId }: ContactNotesProps) {
                         uiSettings={uiSettings}
                         focusOnMount
                         placeholder={t('CONTACTS_LAYOUT.SIDEBAR.NOTES.PLACEHOLDER')}
-                        className="[&>div]:!border-transparent [&>div]:px-4 [&>div]:py-4"
+                        className="[&>div]:px-4 [&>div]:py-4"
                     />
                     <div className="flex items-center justify-end gap-3">
                         <NextButton

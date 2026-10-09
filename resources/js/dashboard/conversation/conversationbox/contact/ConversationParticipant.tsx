@@ -143,7 +143,7 @@ export default function ConversationParticipant() {
             </div>
             <div
                 className={[
-                    'border rounded-lg shadow-lg bg-n-alpha-3 absolute backdrop-blur-[100px] border-n-strong p-2 z-[9999] box-border top-8 w-full',
+                    'rounded-lg overlay-surface absolute p-2 z-[9999] box-border top-8 w-full',
                     showDropDown ? 'block visible' : 'hidden invisible',
                 ].join(' ')}
             >

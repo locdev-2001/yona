@@ -56,7 +56,7 @@ describe('ContactPanel accordions', () => {
         const { getAllByRole } = render(<ContactPanel />);
 
         const headers = getAllByRole('button').filter(button => button.classList.contains('drag-handle'));
-        const openHeaders = headers.filter(header => header.classList.contains('rounded-bl-none'));
+        const openHeaders = headers.filter(header => header.getAttribute('aria-expanded') === 'true');
 
         expect(openHeaders.map(header => header.textContent)).toEqual(['Previous Conversations']);
     });

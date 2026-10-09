@@ -104,7 +104,7 @@ export default function BulkLabelActions({
                 ) : null
             }
             footer={
-                <div className="sticky bottom-0 rounded-b-md px-2 py-2 z-20 bg-n-alpha-3 backdrop-blur-[4px]">
+                <div className="sticky bottom-0 rounded-b-md px-2 py-2 z-20 bg-n-surface-raised">
                     <NextButton
                         sm
                         className="w-full [&>span:nth-child(2)]:hidden md:[&>span:nth-child(2)]:inline-flex"

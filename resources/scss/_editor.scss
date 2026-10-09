@@ -96,7 +96,7 @@
 }
 
 .ProseMirror-prompt {
-  @apply bg-n-alpha-3 border border-n-strong p-6 shadow-xl rounded-xl w-96 #{!important};
+  @apply overlay-surface p-6 rounded-xl w-96 #{!important};
 
   h5 {
     @apply text-n-slate-12 mb-3;
@@ -119,7 +119,7 @@
 
 .is-private {
   .prosemirror-mention-node {
-    @apply font-medium bg-n-amber-2/80 text-n-slate-12 py-0 px-1;
+    @apply font-medium bg-n-amber-4/60 text-n-slate-12 py-0 px-1;
   }
 
   .ProseMirror-menubar-wrapper {
@@ -138,11 +138,11 @@
 }
 
 .message-editor {
-  @apply rounded-lg outline outline-1 outline-n-weak hover:outline-n-slate-6 bg-n-alpha-black2 py-0 px-1 mb-0;
+  @apply field-surface rounded-lg py-0 px-1 mb-0;
 }
 
 .editor_warning {
-  @apply outline outline-1 outline-n-ruby-8 hover:outline-n-ruby-9;
+  @apply field-invalid;
 }
 
 .editor-warning__message {
@@ -164,16 +164,17 @@
 
 // <style scoped> của ReplyBox.vue.
 .reply-box {
-  @apply relative mb-2 mx-2 border border-n-weak rounded-xl bg-n-solid-1;
+  @apply relative mb-2 mx-2 rounded-xl bg-n-surface-panel;
 
-  // Lưu ý riêng: nền gần trắng + viền vàng nhạt, đủ khác ô trả lời khách mà không lấn khung chat.
+  // Lưu ý riêng: nền vàng nhạt thay cho viền vàng, đủ khác ô trả lời khách (panel trắng)
+  // trên nền khung chat mà không lấn nội dung.
   &.is-private {
-    @apply bg-n-amber-1 border-n-amber-6;
+    @apply bg-n-amber-2;
   }
 }
 
 .reply-box__top {
-  @apply relative py-0 px-3 -mt-px;
+  @apply relative py-0 px-3;
 }
 
 // <style> global cuối bubbles/Text/Index.vue (p:last-child { margin-bottom: 0 })

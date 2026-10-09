@@ -125,7 +125,7 @@ export default function ContactInfoRow({
                         ref={inputRef}
                         value={editValue}
                         placeholder={title}
-                        className="w-full min-w-0 bg-transparent text-sm text-n-slate-12 outline-none border-b border-n-weak"
+                        className="w-full min-w-0 field-surface rounded-md px-1.5 text-sm text-n-slate-12"
                         onChange={event => setEditValue(event.target.value)}
                         onKeyDown={event => {
                             if (event.key === 'Enter') saveEdit();

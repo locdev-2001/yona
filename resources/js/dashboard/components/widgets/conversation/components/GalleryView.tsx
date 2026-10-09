@@ -147,7 +147,7 @@ export default function GalleryView({
                 onClick={onClose}
             >
                 <header
-                    className="z-10 flex items-center justify-between w-full h-16 px-3 sm:px-6 py-2 bg-n-background border-b border-n-weak"
+                    className="z-10 flex items-center justify-between w-full h-16 px-3 sm:px-6 py-2 bg-n-surface-panel"
                     onClick={(event) => event.stopPropagation()}
                 >
                     <div className="flex items-center min-w-0 flex-1 sm:flex-none sm:min-w-[15rem] sm:shrink-0">
@@ -337,7 +337,7 @@ export default function GalleryView({
                 </main>
 
                 {hasMoreThanOneAttachment ? (
-                    <footer className="z-10 flex items-center justify-center h-12 border-t border-n-weak">
+                    <footer className="z-10 flex items-center justify-center h-12 bg-n-surface-panel">
                         <div
                             data-testid="gallery-position"
                             className="rounded-md flex items-center justify-center px-3 py-1 bg-n-slate-3 text-n-slate-12 text-sm font-medium tabular-nums"

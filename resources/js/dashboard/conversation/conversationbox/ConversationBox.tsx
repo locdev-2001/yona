@@ -41,13 +41,11 @@ export default function ConversationBox({
 
     return (
         <div
-            className={`conversation-details-wrap flex flex-col min-w-0 w-full bg-n-surface-1 relative ${
-                isOnExpandedLayout ? '' : 'border-l rtl:border-l-0 rtl:border-r border-n-weak'
-            } ${className}`}
+            className={`conversation-details-wrap flex flex-col min-w-0 w-full bg-n-surface-canvas relative ${className}`}
         >
             {currentChat && (
                 <ConversationHeader
-                    className={showTabs ? '' : 'border-b border-b-n-weak !pt-2'}
+                    className={showTabs ? '' : '!pt-2'}
                     showBackButton={isOnExpandedLayout && !isInboxView}
                 />
             )}

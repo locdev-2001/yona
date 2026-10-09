@@ -42,7 +42,7 @@ export default function ContactNoteItem({
     }, [collapsible, note.content]);
 
     return (
-        <div className={`flex flex-col gap-2 border-b border-n-strong group/note ${className}`.trim()}>
+        <div className={`flex flex-col gap-2 group/note ${className}`.trim()}>
             <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-1.5 min-w-0">
                     <Avatar

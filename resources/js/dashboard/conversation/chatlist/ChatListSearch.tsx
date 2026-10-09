@@ -31,7 +31,7 @@ export default function ChatListSearch() {
 
     return (
         <div className="px-3 pb-2">
-            <div className="flex items-center gap-2 h-8 px-2.5 rounded-lg outline outline-1 outline-n-weak bg-n-alpha-black2 focus-within:outline-n-brand transition-[outline-color] duration-150">
+            <div className="field-surface flex items-center gap-2 h-8 px-2.5 rounded-lg">
                 <span className="i-lucide-search size-4 shrink-0 text-n-slate-10" aria-hidden="true" />
                 <input
                     type="search"
@@ -52,7 +52,7 @@ export default function ChatListSearch() {
                         type="button"
                         title={t('CHAT_LIST.SEARCH.CLEAR')}
                         aria-label={t('CHAT_LIST.SEARCH.CLEAR')}
-                        className="grid place-content-center size-5 shrink-0 rounded text-n-slate-10 hover:text-n-slate-12 hover:bg-n-alpha-2"
+                        className="grid place-content-center size-5 shrink-0 rounded text-n-slate-10 hover:text-n-slate-12 hover:bg-n-surface-hover"
                         onClick={clearSearch}
                     >
                         <span className="i-lucide-x size-3.5" aria-hidden="true" />

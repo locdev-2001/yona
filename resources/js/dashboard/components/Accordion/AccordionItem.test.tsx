@@ -14,7 +14,7 @@ describe('AccordionItem', () => {
         );
 
         expect(queryByText('body')).toBeNull();
-        expect(container.querySelector('button')).not.toHaveClass('rounded-bl-none');
+        expect(container.querySelector('button')).toHaveAttribute('aria-expanded', 'false');
         expect(container.querySelector('.i-lucide-plus')).not.toBeNull();
     });
 
@@ -26,7 +26,7 @@ describe('AccordionItem', () => {
         );
 
         expect(getByText('body')).toBeInTheDocument();
-        expect(container.querySelector('button')).toHaveClass('rounded-bl-none');
+        expect(container.querySelector('button')).toHaveAttribute('aria-expanded', 'true');
         expect(container.querySelector('.i-lucide-minus')).not.toBeNull();
     });
 });

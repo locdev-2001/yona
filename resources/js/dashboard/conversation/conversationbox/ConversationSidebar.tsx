@@ -53,11 +53,11 @@ export default function ConversationSidebar() {
     }, [isOverlay, isOpen, setOpen]);
 
     const frameClass = isOverlay
-        ? `fixed top-0 z-50 w-full max-w-sm ltr:right-0 rtl:left-0 shadow-lg transition-transform ${SLIDE_TRANSITION} ${
+        ? `fixed top-0 z-50 w-full max-w-sm ltr:right-0 rtl:left-0 shadow-overlay transition-transform ${SLIDE_TRANSITION} ${
               isOpen ? 'translate-x-0' : 'ltr:translate-x-full rtl:-translate-x-full'
           }`
         : `relative shrink-0 transition-[width] ${SLIDE_TRANSITION} ${
-              isOpen ? 'w-[320px] 2xl:w-[360px] ltr:border-l rtl:border-r border-n-weak' : 'w-0'
+              isOpen ? 'w-[320px] 2xl:w-[360px]' : 'w-0'
           }`;
 
     return (
@@ -84,7 +84,7 @@ export default function ConversationSidebar() {
                 data-testid="conversation-sidebar"
                 data-open={isOpen}
                 inert={!isOpen}
-                className={`bg-n-surface-2 h-full overflow-hidden flex flex-col ${frameClass}`}
+                className={`bg-n-surface-panel h-full overflow-hidden flex flex-col ${frameClass}`}
             >
                 <div className="flex flex-1 overflow-auto w-full xl:w-[320px] xl:min-w-[320px] 2xl:w-[360px] 2xl:min-w-[360px]">
                     {isContentMounted ? <ContactPanel /> : null}

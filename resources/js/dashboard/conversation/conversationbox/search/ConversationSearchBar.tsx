@@ -101,7 +101,7 @@ export default function ConversationSearchBar({ onClose }: { onClose: () => void
         <div
             data-testid="conversation-search-bar"
             role="search"
-            className="flex items-center w-full min-w-0 gap-1 h-9 ps-2.5 pe-1 rounded-lg bg-n-alpha-black2 outline outline-1 outline-n-weak focus-within:outline-n-brand"
+            className="field-surface flex items-center w-full min-w-0 gap-1 h-9 ps-2.5 pe-1 rounded-lg"
             onKeyDown={onKeyDown}
         >
             <span className="flex-shrink-0 i-lucide-search size-4 text-n-slate-10" aria-hidden />

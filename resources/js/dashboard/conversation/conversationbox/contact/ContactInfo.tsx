@@ -171,7 +171,7 @@ export default function ContactInfo({
                                 <input
                                     ref={nameInputRef}
                                     value={editName}
-                                    className="!text-base !font-medium !w-auto max-w-full min-w-0 bg-transparent outline-none border-b border-n-weak text-n-slate-12 [field-sizing:content]"
+                                    className="!text-base !font-medium !w-auto max-w-full min-w-0 field-surface rounded-md px-1.5 text-n-slate-12 [field-sizing:content]"
                                     onChange={event => setEditName(event.target.value)}
                                     onKeyDown={event => {
                                         if (event.key === 'Enter') void saveNameEdit();

@@ -19,7 +19,7 @@ import type { StaticAttributeElement } from './conversationInfoAttributes';
 // ui_settings vẫn được tôn trọng khi đọc.
 const PEEK_LIMIT = 5;
 
-const EVEN_ODD_CLASS = '[&>*:nth-child(odd)]:!bg-n-surface-1 [&>*:nth-child(even)]:!bg-n-slate-1';
+const EVEN_ODD_CLASS = '[&>*:nth-child(even)]:bg-n-surface-hover';
 
 interface CustomAttributesProps {
     attributeType: 'conversation_attribute' | 'contact_attribute';
@@ -131,9 +131,8 @@ export default function CustomAttributes({
                     <div
                         key={element.key}
                         className={[
-                            'drag-handle relative border-b border-n-weak/50',
+                            'drag-handle relative rounded-md',
                             showAllAttributes ? 'cursor-grab' : '',
-                            combinedElements.length <= PEEK_LIMIT ? 'last:border-transparent' : '',
                         ]
                             .filter(Boolean)
                             .join(' ')}

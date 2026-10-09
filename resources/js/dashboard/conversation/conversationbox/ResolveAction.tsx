@@ -123,9 +123,7 @@ export default function ResolveAction({ isCompact = false }: { isCompact?: boole
     return (
         <div className="flex relative justify-end items-center resolve-actions">
             <div
-                className={`flex-shrink-0 rounded-lg shadow outline-1 outline ${
-                    !showOpenButton ? 'outline-n-container' : 'outline-transparent'
-                }`}
+                className="flex-shrink-0 rounded-lg"
             >
                 {isOpen ? (
                     <NextButton
@@ -179,7 +177,7 @@ export default function ResolveAction({ isCompact = false }: { isCompact?: boole
             {showActionsDropdown ? (
                 <div
                     ref={dropdownRef}
-                    className={`border rounded-lg shadow-lg border-n-strong box-content p-2 w-fit z-10 bg-n-alpha-3 backdrop-blur-[100px] absolute block left-auto top-full mt-0.5 max-w-[12.5rem] min-w-[9.75rem] [&_ul>li]:mb-0 ${
+                    className={`rounded-lg overlay-surface box-content p-2 w-fit z-10 absolute block left-auto top-full mt-0.5 max-w-[12.5rem] min-w-[9.75rem] [&_ul>li]:mb-0 ${
                         // Nút gọn nằm sát mép phải màn hẹp: neo start-0 như gốc thì
                         // menu 156px tràn ra ngoài khung nhìn.
                         isCompact ? 'end-0' : 'start-0 xl:start-auto xl:end-0'

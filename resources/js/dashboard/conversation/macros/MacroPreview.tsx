@@ -13,7 +13,7 @@ export default function MacroPreview({ macro, optionSets }: Props) {
 
     return (
         <div
-            className="macro-preview absolute border border-n-weak max-h-[22.5rem] z-50 w-64 rounded-md bg-n-alpha-3 backdrop-blur-[100px] shadow-lg bottom-8 end-8 overflow-y-auto p-4 text-start"
+            className="macro-preview absolute max-h-[22.5rem] z-50 w-64 rounded-md overlay-surface bottom-8 end-8 overflow-y-auto p-4 text-start"
         >
             <h6 className="mb-4 text-sm text-n-slate-12">{macro.name}</h6>
             {resolvedMacro.map((action, index) => (

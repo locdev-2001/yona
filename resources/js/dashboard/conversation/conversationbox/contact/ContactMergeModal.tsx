@@ -156,7 +156,7 @@ export default function ContactMergeModal({
                                         {t('CONTACTS_LAYOUT.SIDEBAR.MERGE.PARENT_HELP_LABEL')}
                                     </span>
                                 </div>
-                                <div className="border border-n-strong h-[60px] gap-2 flex items-center rounded-xl p-3">
+                                <div className="bg-n-surface-field h-[60px] gap-2 flex items-center rounded-xl p-3">
                                     <Avatar seed={avatarSeed('contact', primaryContact.id)} name={primaryContact.name || ''} src={primaryContact.thumbnail || ''} size={32} roundedFull />
                                     <div className="flex flex-col w-full min-w-0 gap-1">
                                         <span className="text-sm leading-4 truncate text-n-slate-11">{primaryContact.name}</span>
@@ -166,7 +166,7 @@ export default function ContactMergeModal({
                             </div>
                         </div>
                         {parentContactName ? (
-                            <div className="my-4 relative p-2.5 border rounded-[4px] text-n-slate-12 border-n-weak bg-n-background">
+                            <div className="my-4 relative p-2.5 rounded-[4px] text-n-slate-12 bg-n-surface-field">
                                 <h5 className="text-base font-medium text-n-slate-12">{t('MERGE_CONTACTS.SUMMARY.TITLE')}</h5>
                                 <ul className="ml-0 list-none">
                                     <li>

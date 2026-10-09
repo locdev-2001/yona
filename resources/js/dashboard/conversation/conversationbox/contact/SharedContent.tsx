@@ -270,7 +270,7 @@ export default function SharedContent() {
             />
             {isScreenOpen ? (
                 <div data-testid="shared-content-screen" className="fixed inset-0 z-50 flex flex-col bg-n-background">
-                    <header className="flex items-center gap-2 px-2 border-b h-12 border-n-weak">
+                    <header className="flex items-center gap-2 px-2 h-12 bg-n-surface-panel">
                         <Button
                             ghost
                             slate

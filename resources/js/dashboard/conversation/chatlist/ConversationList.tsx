@@ -6,9 +6,8 @@ import type { Conversation } from '../types';
 import ConversationItem from './ConversationItem';
 
 // Port từ dashboard/components/ConversationList.vue — bỏ Virtualizer (virtua):
-// render list thường; selector [&>div:has(+_div_.active)>*] của Virtualizer
-// (xóa border-top của card đứng trước card active/selected) tái hiện trên
-// wrapper phẳng vì card giờ là con trực tiếp. IntersectionObserver dùng API
+// render list thường. Thẻ không có đường kẻ: tách nhau bằng khoảng cách, hover
+// và đang chọn là nền bo góc. IntersectionObserver dùng API
 // trực tiếp thay component; phím tắt j/k cắt (B3).
 interface ConversationListProps {
     conversationList: Conversation[];
@@ -53,7 +52,7 @@ export default function ConversationList({
 
     return (
         <div ref={conversationListRef} className="flex-1 min-h-0 overflow-y-auto conversations-list">
-            <div className="[&>div:has(+div.active)]:!border-n-surface-1 [&>div:has(+div.selected)]:!border-n-surface-1">
+            <div className="flex flex-col gap-0.5 px-2">
                 {conversationList.map(chat => (
                     <ConversationItem
                         key={chat.id}

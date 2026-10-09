@@ -430,7 +430,7 @@ export default function SendCardMenu({ accountId, conversationDisplayId, onSend,
                                             {k(`ERRORS.${error}`)}
                                         </p>
                                     ) : null}
-                                    <div className="mt-2 flex items-end gap-2 border-t border-n-weak pt-3">
+                                    <div className="mt-2 flex items-end gap-2 pt-3">
                                         <Input
                                             className="flex-1"
                                             label={k('SAVE_AS_CANNED_LABEL')}

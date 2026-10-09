@@ -244,19 +244,19 @@ export default function MessagesView() {
                 }
                 unreadBadge={
                     <li className="list-none flex justify-center items-center">
-                        <span className="shadow-lg rounded-full bg-n-brand text-white text-xs font-medium my-2.5 mx-auto px-2.5 py-1.5">
+                        <span className="rounded-full bg-n-brand text-white text-xs font-medium my-2.5 mx-auto px-2.5 py-1.5">
                             {unreadMessageLabel}
                         </span>
                     </li>
                 }
             />
-            <div className="flex relative flex-col bg-n-surface-1 pb-[env(safe-area-inset-bottom)]">
+            <div className="flex relative flex-col bg-n-surface-canvas pb-[env(safe-area-inset-bottom)]">
                 {scrollToLatest.isAwayFromLatest ? (
                     <ScrollToLatestButton unseenCount={scrollToLatest.unseenCount} onClick={scrollToLatest.jump} />
                 ) : null}
                 {isAnyoneTyping && (
                     <div className="absolute flex items-center w-full h-0 -top-7">
-                        <div className="flex py-2 pr-4 pl-5 shadow-md rounded-full bg-white text-n-slate-11 text-xs font-semibold my-2.5 mx-auto">
+                        <div className="flex py-2 pr-4 pl-5 overlay-surface rounded-full text-n-slate-11 text-xs font-semibold my-2.5 mx-auto">
                             {typingUserNames}
                             <img
                                 className="w-6 ltr:ml-2 rtl:mr-2"

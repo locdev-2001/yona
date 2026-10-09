@@ -39,12 +39,12 @@ function greetingKey(hours: number): string {
 
 function OnboardingFeatureCard({ card, accountId }: { card: FeatureCard; accountId: number }) {
     return (
-        <div className="h-full w-full bg-n-surface-2 border border-n-weak rounded-lg p-4 flex flex-col">
+        <div className="h-full w-full bg-n-surface-panel rounded-lg p-4 flex flex-col">
             <div className="flex-1 min-h-36 flex items-center justify-center gap-3" aria-hidden="true">
                 {card.illustrationIcons.map(icon => (
                     <span
                         key={icon}
-                        className="flex items-center justify-center size-14 rounded-2xl bg-n-solid-1 border border-n-weak shadow-sm"
+                        className="flex items-center justify-center size-14 rounded-2xl bg-n-surface-field"
                     >
                         <Icon icon={icon} className="size-7 text-n-slate-12" />
                     </span>

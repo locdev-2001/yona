@@ -76,7 +76,7 @@ export default function ContactConversations({ contactId }: ContactConversations
 
     return (
         <div>
-            <div className="contact-conversation--list [&>.conversation:last-child]:!border-b-0 [&>.conversation:last-child:hover]:!border-b-0 [&>.conversation:last-child]:!rounded-b-lg">
+            <div className="contact-conversation--list flex flex-col gap-0.5">
                 {previousConversations.map(conversation => (
                     <ConversationCard
                         key={conversation.id}

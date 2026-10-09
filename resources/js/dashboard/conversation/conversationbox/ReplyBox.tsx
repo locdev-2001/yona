@@ -88,10 +88,10 @@ const DEFAULT_CHANNEL_TYPE = 'Channel::Api';
 
 const STICKER_SUGGESTION_CLASS_NAMES = {
     root: 'flex items-center gap-1 pt-2 pb-1 overflow-x-auto no-scrollbar',
-    item: 'flex items-center justify-center shrink-0 p-1 rounded-lg transition-colors hover:bg-n-alpha-2 focus-visible:outline focus-visible:outline-2 focus-visible:outline-n-brand active:scale-[0.97]',
+    item: 'flex items-center justify-center shrink-0 p-1 rounded-lg transition-colors hover:bg-n-surface-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-n-brand active:scale-[0.97]',
     image: 'pointer-events-none',
     dismiss:
-        'flex items-center justify-center shrink-0 ms-auto size-8 rounded-lg text-n-slate-11 hover:bg-n-alpha-2 hover:text-n-slate-12 focus-visible:outline focus-visible:outline-2 focus-visible:outline-n-brand',
+        'flex items-center justify-center shrink-0 ms-auto size-8 rounded-lg text-n-slate-11 hover:bg-n-surface-hover hover:text-n-slate-12 focus-visible:outline focus-visible:outline-2 focus-visible:outline-n-brand',
 };
 
 // useKbd(['$mod', '+', 'enter']) của bản gốc: '⌘ + ↵' (mac) / 'CTRL + ↵'.

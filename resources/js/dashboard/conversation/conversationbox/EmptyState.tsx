@@ -38,10 +38,10 @@ function FeaturePlaceholder() {
             {keyShortcuts.map(keyShortcut => (
                 <div key={keyShortcut.key} className="flex items-center gap-2">
                     <div className="flex items-center gap-2">
-                        <Hotkey customClass="w-8 h-6 text-xs font-medium text-n-slate-12 outline outline-n-container outline-1 bg-n-alpha-3">
+                        <Hotkey customClass="w-8 h-6 text-xs font-medium text-n-slate-12 bg-n-surface-field">
                             {modifierKey}
                         </Hotkey>
-                        <Hotkey customClass="w-8 h-6 text-xs font-medium text-n-slate-12 outline outline-n-container outline-1 bg-n-alpha-3">
+                        <Hotkey customClass="w-8 h-6 text-xs font-medium text-n-slate-12 bg-n-surface-field">
                             {keyShortcut.key}
                         </Hotkey>
                     </div>

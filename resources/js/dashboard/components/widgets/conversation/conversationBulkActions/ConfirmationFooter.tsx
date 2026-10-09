@@ -13,7 +13,7 @@ interface ConfirmationFooterProps {
 
 export default function ConfirmationFooter({ label, isUpdating, onCancel, onConfirm }: ConfirmationFooterProps) {
     return (
-        <div className="pt-2 pb-2 px-2 border-t border-n-weak sticky bottom-0 rounded-b-md z-20 bg-n-alpha-3 backdrop-blur-[4px]">
+        <div className="pt-2 pb-2 px-2 sticky bottom-0 rounded-b-md z-20 bg-n-surface-canvas">
             <div className="flex flex-col gap-2">
                 <p className="text-xs text-n-slate-11 px-1 mb-0">{label}</p>
                 <div className="flex gap-2">

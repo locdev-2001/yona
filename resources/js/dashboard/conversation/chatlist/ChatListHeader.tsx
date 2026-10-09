@@ -54,9 +54,7 @@ export default function ChatListHeader({
     return (
         <div
             ref={headerRef}
-            className={`flex items-center justify-between gap-2 px-3 h-[3.25rem] ${
-                hasAppliedFiltersOrActiveFolders ? 'border-b border-n-strong' : ''
-            }`}
+            className="flex items-center justify-between gap-2 px-3 h-[3.25rem]"
         >
             <div className="flex items-center justify-center min-w-0">
                 <h1 className="text-base font-medium truncate text-n-slate-12" title={pageTitle}>

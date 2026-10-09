@@ -154,9 +154,10 @@ export default function ConversationCard({
     return (
         <div
             className={[
-                "relative flex items-start flex-grow-0 flex-shrink-0 w-full min-w-0 py-0 cursor-pointer conversation border-b border-n-slate-3 hover:border-n-surface-1 hover:bg-n-alpha-1 group hover:z-[1] before:content-[none] before:absolute before:-top-px before:inset-x-0 before:h-px before:bg-n-surface-1 before:pointer-events-none hover:before:content-['']",
-                isActiveChat ? 'active animate-card-select bg-n-background !border-n-surface-1' : '',
-                selected ? 'selected bg-n-slate-2 !border-n-surface-1' : '',
+                'relative flex items-start flex-grow-0 flex-shrink-0 w-full min-w-0 py-0 cursor-pointer conversation rounded-lg group',
+                isActiveChat ? 'active animate-card-select' : '',
+                selected ? 'selected' : '',
+                isActiveChat || selected ? 'bg-n-surface-selected' : 'hover:bg-n-surface-hover',
                 compact ? 'px-0' : 'px-3',
             ]
                 .filter(Boolean)
@@ -184,14 +185,14 @@ export default function ConversationCard({
                                     style={{ width: size, height: size }}
                                     onClick={event => event.stopPropagation()}
                                 >
-                                    <Checkbox className="rounded bg-n-surface-1" checked={selected} onChange={() => onSelectChange(!selected)} />
+                                    <Checkbox className="rounded bg-n-surface-list" checked={selected} onChange={() => onSelectChange(!selected)} />
                                 </label>
                             ) : null
                         }
                     />
                 ) : null}
             </div>
-            <div className="px-0 py-3 flex-1 min-w-0 border-line">
+            <div className="px-0 py-3 flex-1 min-w-0">
                 {showMetaSection ? (
                     <div
                         className={[

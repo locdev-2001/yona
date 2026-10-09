@@ -16,7 +16,7 @@ export default function MessageSignatureMissingAlert({ accountId, className = ''
         <button
             type="button"
             title={t('CONVERSATION.FOOTER.MESSAGE_SIGNATURE_NOT_CONFIGURED')}
-            className={`flex w-full items-center gap-1.5 rounded-sm border border-dashed border-n-weak px-1.5 py-0.5 text-xs text-n-slate-11 hover:bg-n-slate-1 hover:text-n-slate-12 cursor-pointer ${className}`}
+            className={`flex w-full items-center gap-1.5 rounded-sm bg-n-surface-field px-1.5 py-0.5 text-xs text-n-slate-11 hover:bg-n-surface-field-hover hover:text-n-slate-12 cursor-pointer ${className}`}
             onClick={() => router.visit(accountScopedUrl(accountId, 'profile/settings'))}
         >
             <Icon icon="i-lucide-pen-line" className="size-3.5 flex-shrink-0" />

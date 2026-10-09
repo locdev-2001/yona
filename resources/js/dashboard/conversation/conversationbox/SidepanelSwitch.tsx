@@ -39,7 +39,7 @@ export default function SidepanelSwitch() {
                 slate
                 sm
                 className={`!rounded-full transition-all duration-[250ms] ease-out active:!scale-95 active:!brightness-105 active:duration-75 ${
-                    isContactSidebarOpen ? 'bg-n-alpha-2 active:shadow-sm' : ''
+                    isContactSidebarOpen ? 'bg-n-surface-selected' : ''
                 }`}
                 icon={isContactSidebarOpen ? ICONS.contactPanelClose : ICONS.contactPanelOpen}
                 onClick={handleConversationSidebarToggle}
@@ -51,7 +51,7 @@ export default function SidepanelSwitch() {
                     slate
                     sm
                     className={`!rounded-full transition-all duration-[250ms] ease-out active:!scale-95 active:duration-75 ${
-                        isCopilotPanelOpen ? 'bg-n-alpha-2 !text-n-iris-9 active:!brightness-105 active:shadow-sm' : ''
+                        isCopilotPanelOpen ? 'bg-n-surface-selected !text-n-iris-9 active:!brightness-105' : ''
                     }`}
                     icon={ICONS.aiAssistant}
                     onClick={handleCopilotSidebarToggle}

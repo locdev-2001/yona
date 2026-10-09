@@ -203,7 +203,7 @@ export default function ChatList({
             <div
                 // min-w-0: flex item mặc định min-width:auto nên cột này phình theo nội dung
                 // rộng nhất bên trong và tràn khỏi màn hình điện thoại, không cuộn ngang được.
-                className={`flex flex-col flex-shrink-0 min-w-0 conversations-list-wrap bg-n-surface-1 relative ${
+                className={`flex flex-col flex-shrink-0 min-w-0 conversations-list-wrap bg-n-surface-list relative ${
                     showConversationList ? '' : 'hidden'
                 } ${isOnExpandedLayout ? 'basis-full' : 'w-[340px] 2xl:w-[412px]'}`}
             >

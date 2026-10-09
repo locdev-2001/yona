@@ -93,7 +93,7 @@ export default function CardLabels({ conversationLabels, className = '' }: CardL
                                     ? t('CONVERSATION.CARD.HIDE_LABELS')
                                     : t('CONVERSATION.CARD.SHOW_LABELS')
                             }
-                            className="h-5 py-0 px-1 flex-shrink-0 mr-6 ml-0 rtl:ml-6 rtl:mr-0 rtl:rotate-180 text-n-slate-11 border-n-strong"
+                            className="h-5 py-0 px-1 flex-shrink-0 mr-6 ml-0 rtl:ml-6 rtl:mr-0 rtl:rotate-180 text-n-slate-11"
                             onClick={event => {
                                 event.stopPropagation();
                                 setShowAllLabels(current => !current);
