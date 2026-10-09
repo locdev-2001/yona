@@ -6,7 +6,6 @@ import { t } from '../../../i18n';
 interface SectionLayoutProps {
     title?: ReactNode;
     description?: ReactNode;
-    withBorder?: boolean;
     hideContent?: boolean;
     beta?: boolean;
     headerActions?: ReactNode;
@@ -17,7 +16,6 @@ interface SectionLayoutProps {
 export default function SectionLayout({
     title = '',
     description = '',
-    withBorder = false,
     hideContent = false,
     beta = false,
     headerActions,
@@ -28,7 +26,6 @@ export default function SectionLayout({
         <section
             className={[
                 'grid grid-cols-1 pt-8 gap-5 [interpolate-size:allow-keywords]',
-                withBorder ? 'border-t border-n-weak' : '',
                 !hideContent ? 'pb-8' : '',
                 className,
             ]
@@ -44,7 +41,7 @@ export default function SectionLayout({
                                 {beta ? (
                                     <div
                                         title={t('GENERAL.BETA_DESCRIPTION')}
-                                        className="text-xs uppercase text-n-iris-11 border border-1 border-n-iris-10 leading-none rounded-lg px-1 py-0.5"
+                                        className="text-xs uppercase text-n-iris-11 bg-n-iris-3 leading-none rounded-lg px-1.5 py-1"
                                     >
                                         {t('GENERAL.BETA')}
                                     </div>

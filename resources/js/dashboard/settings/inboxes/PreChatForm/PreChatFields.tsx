@@ -21,7 +21,7 @@ interface PreChatFieldsProps {
 }
 
 const ROW_GRID = 'grid grid-cols-[auto_auto_minmax(0,1fr)_auto] md:grid-cols-[1rem_2.5rem_minmax(0,1fr)_minmax(0,1fr)_5.5rem]';
-const INPUT_CLASS = 'w-full text-sm !mb-0 px-2 py-1 border border-n-weak rounded disabled:opacity-60';
+const INPUT_CLASS = 'field-surface w-full text-sm !mb-0 px-2 py-1 border-0 rounded-md disabled:opacity-60';
 
 export default function PreChatFields({ preChatFields, onToggle, onEdit, onReorder }: PreChatFieldsProps) {
     const draggedIndex = useRef<number | null>(null);
@@ -35,9 +35,9 @@ export default function PreChatFields({ preChatFields, onToggle, onEdit, onReord
     };
 
     return (
-        <div className="outline outline-1 -outline-offset-1 outline-n-weak rounded-xl">
+        <div className="panel-surface rounded-xl">
             <div
-                className={`hidden md:grid ${ROW_GRID} gap-x-3 items-center px-4 py-3 border-b border-n-weak text-heading-3 text-n-slate-12`}
+                className={`hidden md:grid ${ROW_GRID} gap-x-3 items-center px-4 py-3 text-heading-3 text-n-slate-12`}
                 aria-hidden="true"
             >
                 <span />
@@ -46,7 +46,7 @@ export default function PreChatFields({ preChatFields, onToggle, onEdit, onReord
                 <span>{t('INBOX_MGMT.PRE_CHAT_FORM.SET_FIELDS_HEADER.PLACE_HOLDER')}</span>
                 <span>{t('INBOX_MGMT.PRE_CHAT_FORM.SET_FIELDS_HEADER.REQUIRED')}</span>
             </div>
-            <ul className="list-none m-0 p-0 divide-y divide-n-weak">
+            <ul className="list-none m-0 p-0">
                 {preChatFields.map((item, index) => (
                     <li
                         key={item.name}

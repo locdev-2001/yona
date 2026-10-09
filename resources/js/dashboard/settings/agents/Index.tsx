@@ -143,7 +143,7 @@ export default function AgentsIndex() {
                                 {t('AGENT_MGMT.NO_RESULTS')}
                             </span>
                         ) : (
-                            <div className="divide-y divide-n-weak border-t border-n-weak">
+                            <div className="row-list">
                                 {filteredAgents.map(agent => (
                                     <div
                                         key={agent.email}

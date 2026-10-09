@@ -26,12 +26,12 @@ export default function IntegrationItem({
     const { replaceInstallationName } = useBranding();
 
     return (
-        <div className="flex flex-col flex-1 p-4 m-px outline outline-n-container outline-1 bg-n-card rounded-xl">
+        <div className="flex flex-col flex-1 p-4 m-px panel-surface rounded-xl">
             <div className="flex items-start justify-between">
                 <div className="flex h-12 w-12 mb-2">
                     <img
                         src={`/dashboard/images/integrations/${id}.png`}
-                        className="max-w-full rounded-md border border-n-weak shadow-sm block bg-n-alpha-3"
+                        className="max-w-full rounded-md block bg-n-surface-field"
                     />
                 </div>
                 <Label label={t(`INTEGRATION_APPS.STATUS.${enabled ? 'ENABLED' : 'DISABLED'}`)} color={enabled ? 'teal' : 'slate'} compact />

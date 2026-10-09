@@ -27,7 +27,7 @@ export default function BuilderHeader({
     onSave,
 }: BuilderHeaderProps) {
     return (
-        <header className="flex flex-col gap-2 px-4 sm:px-6 py-4 border-b border-n-weak bg-n-surface-1 shrink-0">
+        <header className="flex flex-col gap-2 px-4 sm:px-6 py-4 bg-n-surface-panel shadow-bar relative z-10 shrink-0">
             <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="min-w-0">
                     <nav aria-label={t('WIDGET_BUILDER.HEADER.BREADCRUMB_ARIA_LABEL')} className="flex items-center gap-1.5 text-label-small text-n-slate-11">

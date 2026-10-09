@@ -10,7 +10,7 @@ export default function MfaSettingsCard() {
     const { currentAccount } = usePage<DashboardPageProps>().props;
 
     return (
-        <div className="bg-n-background rounded-xl p-4 border border-n-slate-4">
+        <div className="panel-surface rounded-xl p-4">
             <div className="flex flex-col xs:flex-row items-center justify-between gap-4">
                 <div className="flex flex-col items-start gap-1.5">
                     <div className="flex items-center gap-2">

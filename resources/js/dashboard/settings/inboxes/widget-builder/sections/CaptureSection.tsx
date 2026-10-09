@@ -22,7 +22,6 @@ export default function CaptureSection({ draft, setDraft }: CaptureSectionProps)
     return (
         <SectionCard id="capture" title={t('WIDGET_BUILDER.CAPTURE.TITLE')} description={t('WIDGET_BUILDER.CAPTURE.DESCRIPTION')}>
             <ToggleRow
-                isFirst
                 label={t('WIDGET_BUILDER.CAPTURE.PHONE_LABEL')}
                 value={capture.phone}
                 onChange={value => setCapture('phone', value)}

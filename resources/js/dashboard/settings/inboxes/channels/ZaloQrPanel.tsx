@@ -235,7 +235,7 @@ export default function ZaloQrPanel({ accountId, inboxId, boundAccountName, onCo
                 <img
                     src={qrImage}
                     alt={t('INBOX_MGMT.ADD.ZALO_CHANNEL.QR.TITLE')}
-                    className="size-48 rounded-lg border border-n-weak bg-white p-2"
+                    className="panel-surface size-48 rounded-lg !bg-white p-2"
                 />
             ) : null}
 

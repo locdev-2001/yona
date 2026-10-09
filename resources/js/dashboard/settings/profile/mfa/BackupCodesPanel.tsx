@@ -13,7 +13,7 @@ interface BackupCodesPanelProps {
 
 export function BackupCodesWarning() {
     return (
-        <div className="flex items-start gap-2 p-4 bg-n-solid-1 outline outline-n-weak rounded-xl outline-1">
+        <div className="flex items-start gap-2 p-4 panel-surface rounded-xl">
             <Icon icon="i-lucide-circle-alert" className="size-4 text-n-slate-10 flex-shrink-0 mt-0.5" />
             <p className="text-sm text-n-slate-11">
                 <strong>{t('MFA_SETTINGS.BACKUP.IMPORTANT')}</strong>
@@ -30,7 +30,7 @@ export default function BackupCodesPanel({ codes, installationName }: BackupCode
     };
 
     return (
-        <div className="bg-n-solid-1 rounded-xl outline-1 outline-n-weak outline flex flex-col gap-6 p-6">
+        <div className="panel-surface rounded-xl flex flex-col gap-6 p-6">
             <div className="grid grid-cols-2 xs:grid-cols-4 sm:grid-cols-5 gap-3">
                 {codes.map((code, index) => (
                     <span

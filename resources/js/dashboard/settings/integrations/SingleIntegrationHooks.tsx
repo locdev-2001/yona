@@ -19,12 +19,12 @@ export default function SingleIntegrationHooks({
     const hasConnectedHooks = Boolean(integration.hooks?.length);
 
     return (
-        <div className="outline outline-n-container outline-1 bg-n-card rounded-xl flex-grow overflow-auto p-4">
+        <div className="panel-surface rounded-xl flex-grow overflow-auto p-4">
             <div className="flex items-center justify-center">
                 <div className="flex h-16 w-16 items-center justify-center">
                     <img
                         src={`/dashboard/images/integrations/${integration.id}.png`}
-                        className="max-w-full rounded-md border border-n-weak shadow-sm block bg-n-alpha-3"
+                        className="max-w-full rounded-md block bg-n-surface-field"
                     />
                 </div>
                 <div className="flex flex-col justify-center m-0 mx-4 flex-1">

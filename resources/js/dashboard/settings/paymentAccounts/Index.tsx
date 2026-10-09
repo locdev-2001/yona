@@ -115,7 +115,7 @@ export default function PaymentAccountsIndex() {
                         {isLoading ? (
                             <LoadingState message={t('PAYMENT_ACCOUNTS.LOADING')} />
                         ) : (
-                            <div className="flex flex-col gap-3 rounded border border-n-weak p-4">
+                            <div className="panel-surface flex flex-col gap-3 rounded-xl p-4">
                                 <div className="flex items-center justify-between">
                                     <h3 className="m-0 text-sm font-medium text-n-slate-11">{t('PAYMENT_ACCOUNTS.LIST.TITLE')}</h3>
                                 </div>
@@ -127,12 +127,12 @@ export default function PaymentAccountsIndex() {
                                         {accounts.map(account => (
                                             <li
                                                 key={account.id}
-                                                className={`flex items-center justify-between gap-3 rounded border p-3 ${
-                                                    editingId === account.id ? 'border-n-brand' : 'border-n-weak'
+                                                className={`flex items-center justify-between gap-3 rounded-lg p-3 ${
+                                                    editingId === account.id ? 'bg-n-surface-selected' : 'hover:bg-n-surface-hover'
                                                 }`}
                                             >
                                                 <div className="flex min-w-0 items-center gap-3">
-                                                    <span className="flex h-8 w-16 flex-none items-center justify-center rounded border border-n-weak bg-white px-1.5">
+                                                    <span className="flex h-8 w-16 flex-none items-center justify-center rounded bg-white px-1.5">
                                                         <img src={bankLogoUrl(account.bank_bin)} alt={account.bank_name} className="max-h-5 max-w-full object-contain" />
                                                     </span>
                                                     <div className="flex min-w-0 flex-col">
@@ -181,7 +181,7 @@ export default function PaymentAccountsIndex() {
                         )}
 
                         {editingId !== null ? (
-                            <div className="rounded border border-n-weak p-4">
+                            <div className="panel-surface rounded-xl p-4">
                                 <PaymentAccountForm
                                     banks={banks}
                                     headerTitle={editingAccount ? t('PAYMENT_ACCOUNTS.EDIT.TITLE') : t('PAYMENT_ACCOUNTS.ADD.TITLE')}

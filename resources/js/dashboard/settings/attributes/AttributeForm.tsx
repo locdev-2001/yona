@@ -119,7 +119,7 @@ export default function AttributeForm({
                 <div className="mb-4">
                     <label className="mb-1 block">{listLabel}</label>
                     <div
-                        className={`rounded-xl border px-3 py-2 ${isTagInputInvalid ? 'border-n-ruby-9' : 'border-n-weak'}`}
+                        className={`rounded-xl px-3 py-2 ${isTagInputInvalid ? 'field-invalid' : 'field-surface'}`}
                     >
                         <TagInput
                             value={value.values}

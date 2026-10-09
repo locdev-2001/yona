@@ -142,7 +142,7 @@ export default function WidgetBuilderPage({ inboxId }: WidgetBuilderPageProps) {
                                 activeSection={activeSection}
                                 onSelect={scrollToSection}
                                 orientation="horizontal"
-                                className="lg:hidden pb-3 mb-1 border-b border-n-weak"
+                                className="lg:hidden pb-3 mb-1"
                             />
                             <BuilderNav
                                 activeSection={activeSection}
@@ -174,7 +174,7 @@ export default function WidgetBuilderPage({ inboxId }: WidgetBuilderPageProps) {
                             </div>
                         </div>
 
-                        <div className="shrink-0 lg:w-[26rem] px-4 lg:px-6 py-4 lg:py-6 border-t lg:border-t-0 lg:border-l border-n-weak">
+                        <div className="shrink-0 lg:w-[26rem] px-4 lg:px-6 py-4 lg:py-6">
                             {/* Widget đọc ngôn ngữ của tài khoản lúc nạp: đổi xong thì nạp lại khung xem trước. */}
                             <PreviewPane
                                 key={savedAccountLocale}

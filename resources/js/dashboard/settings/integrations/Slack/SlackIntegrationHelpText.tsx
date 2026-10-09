@@ -15,7 +15,7 @@ export default function SlackIntegrationHelpText({ selectedChannelName }: SlackI
     ).formattedMessage;
 
     return (
-        <div className="flex-1 w-full px-6 py-5 outline outline-n-container outline-1 bg-n-card rounded-xl">
+        <div className="flex-1 w-full px-6 py-5 panel-surface rounded-xl">
             <div className="prose-lg max-w-5xl">
                 <h5 className="text-n-slate-12 text-heading-1 tracking-tight">
                     {t('INTEGRATION_SETTINGS.SLACK.HELP_TEXT.TITLE')}

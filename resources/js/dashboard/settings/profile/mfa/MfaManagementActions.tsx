@@ -64,7 +64,7 @@ const MfaManagementActions = forwardRef<MfaManagementHandle, MfaManagementAction
         return (
             <div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="bg-n-solid-1 rounded-xl outline-1 outline-n-weak outline p-5">
+                    <div className="panel-surface rounded-xl p-5">
                         <div className="flex-1 flex flex-col gap-2">
                             <div className="flex items-center gap-2">
                                 <Icon icon="i-lucide-key" className="size-4 flex-shrink-0 text-n-slate-11" />
@@ -84,7 +84,7 @@ const MfaManagementActions = forwardRef<MfaManagementHandle, MfaManagementAction
                         </div>
                     </div>
 
-                    <div className="bg-n-solid-1 rounded-xl outline-1 outline-n-weak outline p-5">
+                    <div className="panel-surface rounded-xl p-5">
                         <div className="flex-1 flex flex-col gap-2">
                             <div className="flex items-center gap-2">
                                 <Icon

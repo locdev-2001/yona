@@ -34,7 +34,6 @@ export default function HomeSection({ accountId, draft, setDraft, helpCenter }: 
     return (
         <SectionCard id="home" title={t('WIDGET_BUILDER.HOME.TITLE')} description={t('WIDGET_BUILDER.HOME.DESCRIPTION')}>
             <ToggleRow
-                isFirst
                 label={t('WIDGET_BUILDER.HOME.BLOCK_MESSAGE_SHOP')}
                 description={t('WIDGET_BUILDER.HOME.BLOCK_MESSAGE_SHOP_DESCRIPTION')}
                 lockedLabel={t('WIDGET_BUILDER.HOME.ALWAYS_ON')}

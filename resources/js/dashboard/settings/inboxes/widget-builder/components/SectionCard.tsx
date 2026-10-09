@@ -10,13 +10,13 @@ interface SectionCardProps {
 }
 
 // Thẻ trắng bo góc dùng cho mọi mục ở cột giữa (Giao diện, Trang chủ, Kênh
-// khác…) — không viền màu một bên, chỉ outline mảnh quanh thẻ. `id` là neo mà
+// khác…) — nền panel và viền nhẹ quanh thẻ. `id` là neo mà
 // nav trái cuộn tới (xem BuilderNav + WidgetBuilderPage).
 export default function SectionCard({ id, title, description = '', action, children, className = '' }: SectionCardProps) {
     return (
         <section
             id={id}
-            className={`rounded-2xl bg-n-solid-1 outline outline-1 -outline-offset-1 outline-n-weak p-5 scroll-mt-4 ${className}`}
+            className={`panel-surface rounded-2xl p-5 scroll-mt-4 ${className}`}
         >
             <header className="flex items-start justify-between gap-3 mb-4">
                 <div>

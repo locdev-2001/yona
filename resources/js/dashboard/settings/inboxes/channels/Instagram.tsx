@@ -62,7 +62,7 @@ export default function InstagramChannelForm() {
                         {errorStateDescription ? <SanitizedHtml as="p" html={errorStateDescription} /> : null}
                     </div>
                 ) : (
-                    <div className="flex flex-col items-center justify-center w-full px-8 py-10 text-center rounded-2xl outline outline-1 outline-n-weak">
+                    <div className="flex flex-col items-center justify-center w-full px-8 py-10 text-center rounded-2xl panel-surface">
                         <div className="flex flex-col items-center w-full max-w-2xl">
                             <h6 className="text-2xl font-medium">
                                 {t('INBOX_MGMT.ADD.INSTAGRAM.CONNECT_YOUR_INSTAGRAM_PROFILE')}

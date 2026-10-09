@@ -78,7 +78,7 @@ export default function WhatsappChannelForm() {
     return (
         <div className="overflow-auto col-span-6 p-6 w-full h-full">
             <div>
-                <div className="px-6 py-5 rounded-2xl border border-n-weak">
+                <div className="panel-surface px-6 py-5 rounded-2xl">
                     {selectedProvider === PROVIDER_TYPES.TWILIO ? (
                         <TwilioChannelForm type="whatsapp" />
                     ) : selectedProvider === PROVIDER_TYPES.THREE_SIXTY_DIALOG ? (

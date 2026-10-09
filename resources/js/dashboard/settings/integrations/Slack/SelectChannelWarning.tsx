@@ -63,7 +63,7 @@ export default function SelectChannelWarning({ accountId, hasConnectedAChannel =
     };
 
     return (
-        <div className="px-6 py-4 mb-4 outline outline-n-container outline-1 bg-n-card rounded-xl">
+        <div className="px-6 py-4 mb-4 panel-surface rounded-xl">
             <div className="flex">
                 <div className="flex-shrink-0">
                     <div className="i-lucide-bell text-xl text-n-amber-11 mt-1" />
@@ -92,7 +92,7 @@ export default function SelectChannelWarning({ accountId, hasConnectedAChannel =
                             <select
                                 value={selectedChannelId}
                                 onChange={event => setSelectedChannelId(event.target.value)}
-                                className="h-8 py-1 mr-4 text-xs leading-4 border border-n-amber-10"
+                                className="h-8 py-1 mr-4 text-xs leading-4"
                             >
                                 <option value="">{t('INTEGRATION_SETTINGS.SLACK.SELECT_CHANNEL.OPTION_LABEL')}</option>
                                 {availableChannels.map(channel => (

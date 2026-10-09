@@ -126,9 +126,7 @@ export default function AutomationWaitCondition({
             <label className="mb-0">{t('AUTOMATION.ADD.FORM.WAIT.LABEL')}</label>
             <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_17rem]">
                 <div
-                    className={`flex flex-col gap-3 p-4 outline outline-1 -outline-offset-1 rounded-xl ${
-                        hasError ? 'outline-n-ruby-5 bg-n-ruby-2/50' : 'outline-n-weak'
-                    }`}
+                    className={`panel-surface flex flex-col gap-3 p-4 rounded-xl ${hasError ? 'panel-invalid' : ''}`}
                 >
                     <div className="flex items-center gap-3 min-h-8">
                         <span className="text-sm w-20 shrink-0 text-n-slate-11">{t('AUTOMATION.ADD.FORM.WAIT.WHEN_LABEL')}</span>

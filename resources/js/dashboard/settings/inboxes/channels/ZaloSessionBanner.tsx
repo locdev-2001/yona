@@ -121,7 +121,7 @@ export default function ZaloSessionBanner({
             : null;
 
         return (
-            <div className="mb-4 flex flex-col gap-3 p-4 rounded-xl border border-n-weak">
+            <div className="panel-surface mb-4 flex flex-col gap-3 p-4 rounded-xl">
                 <div className="flex items-center gap-3">
                     <Avatar seed={avatarSeed('inbox', inboxId)} src={avatarUrl ?? undefined} name={displayName ?? ''} size={40} />
                     <div className="flex-1 min-w-0">

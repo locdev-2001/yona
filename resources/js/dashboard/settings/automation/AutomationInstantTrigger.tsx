@@ -76,9 +76,7 @@ export default function AutomationInstantTrigger({
             <section>
                 <label>{t('AUTOMATION.ADD.FORM.CONDITIONS.LABEL')}</label>
                 <ul
-                    className={`grid gap-4 p-3 list-none outline outline-1 rounded-xl -outline-offset-1 ${
-                        hasConditionErrors ? 'outline-n-ruby-5 bg-n-ruby-2/50' : 'outline-n-weak'
-                    }`}
+                    className={`panel-surface grid gap-4 p-3 list-none rounded-xl ${hasConditionErrors ? 'panel-invalid' : ''}`}
                 >
                     {conditions.map((condition, index) => (
                         <ConditionRow

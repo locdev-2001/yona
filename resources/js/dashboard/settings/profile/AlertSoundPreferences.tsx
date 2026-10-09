@@ -19,7 +19,7 @@ interface AlertSoundPreferencesProps {
 
 function PreferenceRow({ label, htmlFor, note, children }: { label: string; htmlFor?: string; note?: string; children: ReactNode }) {
     return (
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between border-t border-n-weak pt-4">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex flex-col gap-0.5 min-w-0">
                 <label htmlFor={htmlFor} className="text-body-main text-n-slate-12">
                     {label}
@@ -36,7 +36,7 @@ export default function AlertSoundPreferences({ value, onChange }: AlertSoundPre
     const update = (patch: Partial<AgentAlertPreference>) => onChange({ ...value, ...patch });
 
     return (
-        <div id="profile-settings-alert-sound" className="flex flex-col gap-4 p-4 border border-solid border-n-weak rounded-xl">
+        <div id="profile-settings-alert-sound" className="panel-surface flex flex-col gap-4 p-4 rounded-xl">
             <div className="flex items-center justify-between w-full gap-2">
                 <div className="flex flex-row items-start gap-2">
                     <span className={`${ICONS.notificationSound} size-[1.125rem] flex-shrink-0 mt-0.5 text-n-slate-12`} aria-hidden="true" />

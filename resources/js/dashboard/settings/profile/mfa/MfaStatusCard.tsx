@@ -13,7 +13,7 @@ export default function MfaStatusCard({ mfaEnabled, showSetup, onEnableMfa }: Mf
     if (!mfaEnabled && !showSetup) {
         return (
             <div className="space-y-6">
-                <div className="bg-n-solid-1 rounded-lg p-6 outline outline-n-weak outline-1 text-center">
+                <div className="panel-surface rounded-xl p-6 text-center">
                     <Icon icon="i-lucide-lock-keyhole" className="size-8 text-n-slate-10 mx-auto mb-4 block" />
                     <h3 className="text-lg font-medium text-n-slate-12 mb-2">
                         {t('MFA_SETTINGS.ENHANCE_SECURITY')}
@@ -34,7 +34,7 @@ export default function MfaStatusCard({ mfaEnabled, showSetup, onEnableMfa }: Mf
     if (mfaEnabled && !showSetup) {
         return (
             <div>
-                <div className="bg-n-solid-1 rounded-xl outline-1 outline-n-weak outline p-4 flex-1 flex flex-col gap-2">
+                <div className="panel-surface rounded-xl p-4 flex-1 flex flex-col gap-2">
                     <div className="flex items-center gap-2">
                         <Icon icon="i-lucide-lock-keyhole" className="size-4 flex-shrink-0 text-n-slate-11" />
                         <h4 className="text-sm font-medium text-n-slate-12">

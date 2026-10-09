@@ -47,7 +47,7 @@ export default function EmbedSection({ embedScript, draft, setDraft }: EmbedSect
                 <Code script={embedScript} lang="html" className="!text-start" />
             </div>
 
-            <div className="flex flex-col gap-2 pt-2 border-t border-n-weak">
+            <div className="flex flex-col gap-2 pt-2">
                 <p className="text-body-main font-medium text-n-slate-12">{t('WIDGET_BUILDER.EMBED.DOMAINS_LABEL')}</p>
                 <p className="text-label-small text-n-slate-11">{t('WIDGET_BUILDER.EMBED.DOMAINS_HINT')}</p>
                 <div className="flex flex-wrap gap-1.5">

@@ -35,12 +35,12 @@ export default function QrPreviewCard({ accountId, paymentAccount }: QrPreviewCa
     }, [accountId, paymentAccount?.id, paymentAccount?.bank_bin, paymentAccount?.account_number, paymentAccount?.memo_template]);
 
     return (
-        <div className="flex flex-col gap-4 rounded border border-n-weak bg-n-solid-1 p-4">
+        <div className="panel-surface flex flex-col gap-4 rounded-xl p-4">
             <h3 className="m-0 text-sm font-medium text-n-slate-11">{t('PAYMENT_ACCOUNTS.PREVIEW.TITLE')}</h3>
             {!paymentAccount ? (
                 <p className="m-0 text-sm text-n-slate-10">{t('PAYMENT_ACCOUNTS.PREVIEW.EMPTY')}</p>
             ) : (
-                <div className="flex flex-col items-center gap-3 rounded border border-n-weak bg-n-background p-4">
+                <div className="flex flex-col items-center gap-3 rounded-lg bg-n-surface-canvas p-4">
                     {qrPayload ? (
                         <StyledQr payload={qrPayload} size={180} bankBin={paymentAccount.bank_bin} />
                     ) : (

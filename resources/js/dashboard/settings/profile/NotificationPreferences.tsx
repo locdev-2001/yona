@@ -230,7 +230,7 @@ export default function NotificationPreferences() {
             </div>
 
             {isPushAvailable && (
-                <div className="flex items-center justify-between w-full gap-2 p-4 border border-solid border-n-weak rounded-xl">
+                <div className="panel-surface flex items-center justify-between w-full gap-2 p-4 rounded-xl">
                     <div className="flex flex-row items-center gap-2">
                         <span className={`${ICONS.bell} size-[1.125rem] flex-shrink-0 text-n-slate-12`} aria-hidden="true" />
                         <span className="text-body-main text-n-slate-12">

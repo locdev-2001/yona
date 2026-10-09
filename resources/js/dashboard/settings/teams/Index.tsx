@@ -75,7 +75,7 @@ export default function TeamsIndex() {
     const teamRow = (team: Team) => (
         <div key={team.id} className="flex justify-between flex-row items-start gap-4 py-4">
             <div className="flex items-start gap-4">
-                <div className="flex items-center flex-shrink-0 size-10 justify-center rounded-xl outline outline-1 outline-n-weak -outline-offset-1 text-lg">
+                <div className="flex items-center flex-shrink-0 size-10 justify-center rounded-xl bg-n-surface-field text-lg">
                     {team.icon ? (
                         <EmojiIcon value={team.icon} color={team.icon_color} className="size-5" />
                     ) : (
@@ -147,7 +147,7 @@ export default function TeamsIndex() {
                                 {t('TEAMS_SETTINGS.NO_RESULTS')}
                             </span>
                         ) : (
-                            <div className="divide-y divide-n-weak border-t border-n-weak">
+                            <div className="row-list">
                                 {filteredTeams.map(teamRow)}
                             </div>
                         )

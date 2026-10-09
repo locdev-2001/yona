@@ -63,12 +63,12 @@ export default function Integration({
     const configureUrl = accountScopedUrl(accountId, `settings/integrations/${integrationId}`);
 
     return (
-        <div className="flex flex-col items-start justify-between lg:flex-row lg:items-center p-6 outline outline-n-container outline-1 bg-n-card rounded-xl gap-6">
+        <div className="flex flex-col items-start justify-between lg:flex-row lg:items-center p-6 panel-surface rounded-xl gap-6">
             <div className="flex items-start lg:items-center justify-start flex-1 m-0 gap-6 flex-col lg:flex-row">
                 <div className="flex h-16 w-16 items-center justify-center flex-shrink-0">
                     <img
                         src={`/dashboard/images/integrations/${integrationId}.png`}
-                        className="max-w-full rounded-md border border-n-weak shadow-sm block bg-n-alpha-3"
+                        className="max-w-full rounded-md block bg-n-surface-field"
                     />
                 </div>
                 <div>

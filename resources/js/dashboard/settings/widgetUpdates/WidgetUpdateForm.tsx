@@ -159,7 +159,7 @@ export default function WidgetUpdateForm({
                         <span className="mb-0.5 text-sm font-medium text-n-slate-12">{t('WIDGET_UPDATES_MGMT.FORM.COVER.LABEL')}</span>
                         <div className="flex items-center gap-3">
                             {values.coverUrl ? (
-                                <img src={values.coverUrl} alt="" className="object-cover w-20 h-12 border rounded-lg border-n-weak" />
+                                <img src={values.coverUrl} alt="" className="object-cover w-20 h-12 rounded-lg" />
                             ) : null}
                             <Button
                                 type="button"

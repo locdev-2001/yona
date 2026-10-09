@@ -128,7 +128,7 @@ export default function AttributesIndex() {
                                     {t('ATTRIBUTES_MGMT.NO_RESULTS')}
                                 </span>
                             ) : filteredAttributes.length ? (
-                                <div className="flex flex-col divide-y divide-n-weak border-t border-n-weak">
+                                <div className="row-list">
                                     {filteredAttributes.map(attribute => (
                                         <AttributeListItem
                                             key={attribute.id}

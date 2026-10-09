@@ -74,7 +74,7 @@ export default function ActiveSessions() {
             {sessions.map(session => (
                 <div
                     key={session.id}
-                    className="flex items-center justify-between gap-4 rounded-xl border border-n-slate-4 bg-n-background p-4"
+                    className="panel-surface flex items-center justify-between gap-4 rounded-xl p-4"
                 >
                     <div className="flex items-start gap-3">
                         <Icon

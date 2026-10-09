@@ -76,7 +76,7 @@ export default function InboxesIndex() {
         <div key={inbox.id} className="flex justify-between flex-row items-start gap-4 py-4">
             <div className="flex items-center gap-4">
                 {inbox.avatar_url ? (
-                    <div className="bg-n-alpha-3 rounded-xl size-10 ring ring-n-solid-1 border border-n-strong shadow-sm grid place-items-center">
+                    <div className="bg-n-surface-field rounded-xl size-10 grid place-items-center">
                         <Avatar
                             seed={avatarSeed('inbox', inbox.id)}
                             src={inbox.avatar_url}
@@ -87,7 +87,7 @@ export default function InboxesIndex() {
                         />
                     </div>
                 ) : (
-                    <div className="size-10 justify-center bg-n-alpha-3 rounded-xl ring ring-n-solid-1 border border-n-strong shadow-sm grid place-items-center">
+                    <div className="size-10 justify-center bg-n-surface-field rounded-xl grid place-items-center">
                         <ChannelIcon className="size-6 text-n-slate-10" inbox={inbox} />
                     </div>
                 )}
@@ -165,7 +165,7 @@ export default function InboxesIndex() {
                                 {t('INBOX_MGMT.NO_RESULTS')}
                             </span>
                         ) : (
-                            <div className="divide-y divide-n-weak border-t border-n-weak">
+                            <div className="row-list">
                                 {filteredInboxesList.map(inboxRow)}
                             </div>
                         )

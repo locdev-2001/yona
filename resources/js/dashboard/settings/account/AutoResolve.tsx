@@ -150,7 +150,7 @@ export default function AutoResolve({ uiSettings }: AutoResolveProps) {
     };
 
     return (
-        <div className="flex flex-col w-full outline-1 outline outline-n-container rounded-xl bg-n-solid-2 divide-y divide-n-weak">
+        <div className="panel-surface flex flex-col w-full rounded-xl">
             <div className="flex flex-col gap-2 items-start px-5 py-4">
                 <div className="flex justify-between items-center w-full">
                     <h3 className="text-heading-2 text-n-slate-12">
@@ -166,7 +166,7 @@ export default function AutoResolve({ uiSettings }: AutoResolveProps) {
             </div>
 
             {isEnabled ? (
-                <div className="px-5 py-4">
+                <div className="px-5 pb-4 pt-1">
                     <form className="grid gap-5" onSubmit={handleSubmit}>
                         <WithLabel
                             name="auto-resolve-duration"
@@ -205,7 +205,7 @@ export default function AutoResolve({ uiSettings }: AutoResolveProps) {
                             name="auto-resolve-preferences"
                             label={t('GENERAL_SETTINGS.FORM.AUTO_RESOLVE.PREFERENCES')}
                         >
-                            <div className="rounded-xl border border-n-weak bg-n-solid-1 w-full text-sm text-n-slate-12 divide-y divide-n-weak">
+                            <div className="rounded-xl bg-n-surface-canvas w-full text-sm text-n-slate-12">
                                 <div className="p-3 h-12 flex items-center justify-between">
                                     <span>{t('GENERAL_SETTINGS.FORM.AUTO_RESOLVE.IGNORE_WAITING.LABEL')}</span>
                                     <Switch value={ignoreWaiting} onChange={setIgnoreWaiting} />

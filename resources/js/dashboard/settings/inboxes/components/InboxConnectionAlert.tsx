@@ -20,7 +20,7 @@ export default function InboxConnectionAlert({ inbox, onFixSettings, className =
     return (
         <div
             role="alert"
-            className={`flex flex-col gap-2 rounded-xl border border-n-ruby-6 bg-n-ruby-2 px-4 py-3 text-body-main text-n-ruby-12 sm:flex-row sm:items-center sm:justify-between ${className}`}
+            className={`flex flex-col gap-2 rounded-xl bg-n-ruby-2 px-4 py-3 text-body-main text-n-ruby-12 sm:flex-row sm:items-center sm:justify-between ${className}`}
         >
             <p className="min-w-0 break-words">
                 {oauthError ? t(oauthError) : inbox.connection_error || t('INBOX_MGMT.CONNECTION_CHECK.BANNER_DEFAULT')}

@@ -34,9 +34,7 @@ export default function MacroNode({
     onDragHandleUp,
 }: Props) {
     const errorMessage = errorKey ? t(`MACROS.ERRORS.${errorKey}`) : '';
-    const boxClass = errorKey
-        ? 'animate-shake bg-n-ruby-8/20 outline-n-ruby-5'
-        : 'bg-n-background';
+    const boxClass = errorKey ? 'animate-shake panel-invalid' : '';
 
     return (
         <div className="relative flex items-start w-full min-w-0 basis-full">
@@ -52,7 +50,7 @@ export default function MacroNode({
                 />
             ) : null}
             <div
-                className={`flex-grow p-2 ltr:mr-2 rtl:ml-2 rounded-md shadow-sm outline outline-1 outline-n-weak ${boxClass}`}
+                className={`flex-grow p-2 ltr:mr-2 rtl:ml-2 panel-surface rounded-lg ${boxClass}`}
             >
                 <AutomationActionInput
                     action={action}

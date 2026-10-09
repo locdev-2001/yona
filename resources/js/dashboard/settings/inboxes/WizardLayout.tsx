@@ -44,7 +44,7 @@ export default function WizardLayout({ activeRoute, className = '', children }: 
             <div className="block lg:hidden !mb-0">
                 <SettingsSubPageHeader headerTitle={pageTitle} />
             </div>
-            <div className="grid grid-cols-1 lg:grid-cols-8 lg:divide-x lg:divide-n-weak rounded-xl border border-n-weak h-full min-h-[50dvh]">
+            <div className="panel-surface grid grid-cols-1 lg:grid-cols-8 rounded-xl h-full min-h-[50dvh]">
                 <Wizard items={items} activeRoute={activeRoute} className="hidden lg:block col-span-2 h-fit py-8 px-6" />
                 <div className="col-span-6 flex flex-col overflow-y-auto">{children}</div>
             </div>

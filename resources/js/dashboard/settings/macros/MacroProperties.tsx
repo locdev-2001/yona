@@ -21,7 +21,7 @@ interface Props {
 }
 
 const ACTIVE_CLASS = 'bg-n-blue-2 border-n-blue-3';
-const INACTIVE_CLASS = 'bg-white border-n-weak';
+const INACTIVE_CLASS = 'bg-n-surface-panel border-n-weak';
 const CARD_CLASS = 'p-2 relative rounded-md border border-solid justify-between items-start gap-2 flex flex-col text-start';
 
 export default function MacroProperties({
@@ -56,7 +56,7 @@ export default function MacroProperties({
     };
 
     return (
-        <div className="p-4 bg-n-solid-2 border border-n-weak rounded-lg shadow-sm h-full flex flex-col">
+        <div className="panel-surface p-4 rounded-xl h-full flex flex-col">
             <div>
                 <WootInput
                     value={macroName}

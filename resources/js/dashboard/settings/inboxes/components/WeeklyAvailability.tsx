@@ -136,16 +136,16 @@ export default function WeeklyAvailability({ inbox, timeZoneOptions, uiSettings,
 
             <div className="flex flex-col">
                 {isBusinessHoursEnabled ? (
-                    <div className="mt-2 outline outline-1 -outline-offset-1 outline-n-weak rounded-xl">
+                    <div className="panel-surface mt-2 rounded-xl">
                         <div
-                            className={`hidden md:grid ${BUSINESS_DAY_GRID} gap-x-3 px-4 py-3 border-b border-n-weak text-heading-3 text-n-slate-12`}
+                            className={`hidden md:grid ${BUSINESS_DAY_GRID} gap-x-3 px-4 py-3 text-heading-3 text-n-slate-12`}
                             aria-hidden="true"
                         >
                             <span>{t('INBOX_MGMT.BUSINESS_HOURS.DAY.DAY')}</span>
                             <span>{t('INBOX_MGMT.BUSINESS_HOURS.DAY.AVAILABILITY')}</span>
                             <span>{t('INBOX_MGMT.BUSINESS_HOURS.DAY.HOURS')}</span>
                         </div>
-                        <ul className="list-none m-0 p-0 divide-y divide-n-weak">
+                        <ul className="list-none m-0 p-0">
                             {mondayFirst(timeSlots).map(timeSlot => (
                                 <BusinessDay
                                     key={timeSlot.day}

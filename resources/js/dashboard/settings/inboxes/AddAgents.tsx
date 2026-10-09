@@ -84,7 +84,7 @@ export default function AddAgents({ inboxId }: AddAgentsProps) {
                                         {t('INBOX_MGMT.ADD.AGENTS.TITLE')}
                                         <div
                                             data-testid="agent-selector"
-                                            className="rounded-xl outline outline-1 -outline-offset-1 outline-n-weak hover:outline-n-strong px-2 py-2"
+                                            className="field-surface rounded-xl px-2 py-2"
                                         >
                                             <TagInput
                                                 value={selectedAgentNames}

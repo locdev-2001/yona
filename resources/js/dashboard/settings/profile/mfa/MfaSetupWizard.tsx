@@ -88,7 +88,7 @@ export default function MfaSetupWizard({
     if (setupStep === 'qr') {
         return (
             <div className="space-y-6">
-                <div className="bg-n-solid-1 rounded-xl outline-1 outline-n-weak outline p-10 flex flex-col gap-4">
+                <div className="panel-surface rounded-xl p-10 flex flex-col gap-4">
                     <div className="text-center">
                         <h3 className="text-lg font-medium text-n-slate-12 mb-2">
                             {t('MFA_SETTINGS.SETUP.STEP1_TITLE')}
@@ -96,7 +96,7 @@ export default function MfaSetupWizard({
                         <p className="text-sm text-n-slate-11">{t('MFA_SETTINGS.SETUP.STEP1_DESCRIPTION')}</p>
                     </div>
                     <div className="flex justify-center">
-                        <div className="bg-n-background p-4 rounded-lg outline outline-1 outline-n-weak">
+                        <div className="panel-surface !bg-white p-4 rounded-lg">
                             {qrCodeUrl ? (
                                 <img src={qrCodeUrl} alt="MFA QR Code" className="w-48 h-48" />
                             ) : (
@@ -107,7 +107,7 @@ export default function MfaSetupWizard({
                         </div>
                     </div>
 
-                    <details className="border border-n-slate-4 rounded-lg">
+                    <details className="panel-surface rounded-lg">
                         <summary className="px-4 py-3 cursor-pointer hover:bg-n-slate-2 text-sm font-medium text-n-slate-11">
                             {t('MFA_SETTINGS.SETUP.MANUAL_ENTRY')}
                         </summary>

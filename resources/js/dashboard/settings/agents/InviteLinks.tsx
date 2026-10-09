@@ -114,14 +114,14 @@ export default function InviteLinks({ accountId, onClose }: InviteLinksProps) {
 
             <div className="px-8 pb-8">
                 {created ? (
-                    <div className="mt-4 p-4 rounded-md bg-n-solid-2 outline outline-1 outline-n-container">
+                    <div className="panel-surface mt-4 p-4 rounded-xl">
                         <p className="text-sm font-medium text-n-slate-12">{t('INVITE_LINKS.MANAGE.CREATED.TITLE')}</p>
                         <p className="text-sm text-n-slate-11 mt-1">{t('INVITE_LINKS.MANAGE.CREATED.HINT')}</p>
                         <div className="flex items-center gap-2 mt-3">
                             <input
                                 readOnly
                                 value={created.url}
-                                className="flex-1 text-sm rounded-md border-0 px-3 py-2 bg-n-alpha-black2 outline outline-1 outline-n-weak text-n-slate-12"
+                                className="field-surface flex-1 text-sm rounded-lg border-0 px-3 py-2 text-n-slate-12"
                                 onFocus={event => event.currentTarget.select()}
                             />
                             <Button
@@ -178,9 +178,9 @@ export default function InviteLinks({ accountId, onClose }: InviteLinksProps) {
                     </div>
                 </form>
 
-                <div className="mt-6 divide-y divide-n-weak border-t border-n-weak">
+                <div className="mt-6 row-list">
                     {isFetching ? null : links.length === 0 ? (
-                        <p className="py-4 text-sm text-n-slate-11">{t('INVITE_LINKS.MANAGE.LIST.EMPTY')}</p>
+                        <p className="py-4 text-sm text-n-slate-11 hover:!bg-transparent">{t('INVITE_LINKS.MANAGE.LIST.EMPTY')}</p>
                     ) : (
                         links.map(link => (
                             <div key={link.id} className="flex items-center justify-between gap-4 py-3">

@@ -204,7 +204,6 @@ export default function ProfileSettingsIndex() {
                         </div>
                     </SectionLayout>
                     <SectionLayout
-                        withBorder
                         title={t('PROFILE_SETTINGS.FORM.INTERFACE_SECTION.TITLE')}
                         description={replaceInstallationName(t('PROFILE_SETTINGS.FORM.INTERFACE_SECTION.NOTE'))}
                     >
@@ -224,7 +223,6 @@ export default function ProfileSettingsIndex() {
                         </div>
                     </SectionLayout>
                     <SectionLayout
-                        withBorder
                         title={t('PROFILE_SETTINGS.FORM.MESSAGE_SIGNATURE_SECTION.TITLE')}
                         description={t('PROFILE_SETTINGS.FORM.MESSAGE_SIGNATURE_SECTION.NOTE')}
                     >
@@ -234,7 +232,6 @@ export default function ProfileSettingsIndex() {
                         />
                     </SectionLayout>
                     <SectionLayout
-                        withBorder
                         title={t('PROFILE_SETTINGS.FORM.SEND_MESSAGE.TITLE')}
                         description={t('PROFILE_SETTINGS.FORM.SEND_MESSAGE.NOTE')}
                     >
@@ -258,24 +255,22 @@ export default function ProfileSettingsIndex() {
                             ))}
                         </div>
                     </SectionLayout>
-                    <SectionLayout withBorder title={t('PROFILE_SETTINGS.FORM.PASSWORD_SECTION.TITLE')}>
+                    <SectionLayout title={t('PROFILE_SETTINGS.FORM.PASSWORD_SECTION.TITLE')}>
                         <ChangePassword />
                     </SectionLayout>
                     <SectionLayout
-                        withBorder
                         title={t('PROFILE_SETTINGS.FORM.SECURITY_SECTION.TITLE')}
                         description={t('PROFILE_SETTINGS.FORM.SECURITY_SECTION.NOTE')}
                     >
                         <MfaSettingsCard />
                     </SectionLayout>
                     <SectionLayout
-                        withBorder
                         title={t('PROFILE_SETTINGS.FORM.SESSIONS_SECTION.TITLE')}
                         description={t('PROFILE_SETTINGS.FORM.SESSIONS_SECTION.NOTE')}
                     >
                         <ActiveSessions />
                     </SectionLayout>
-                    <SectionLayout withBorder title={t('PROFILE_SETTINGS.FORM.NOTIFICATIONS.TITLE')}>
+                    <SectionLayout title={t('PROFILE_SETTINGS.FORM.NOTIFICATIONS.TITLE')}>
                         <div className="flex flex-col gap-6">
                             <NotificationPreferences />
                             <AlertSoundPreferences

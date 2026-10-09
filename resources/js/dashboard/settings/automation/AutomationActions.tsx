@@ -33,9 +33,7 @@ export default function AutomationActions({ actions, errors, uiSettings, getActi
         <section>
             <label>{t('AUTOMATION.ADD.FORM.ACTIONS.LABEL')}</label>
             <ul
-                className={`grid p-3 list-none border-solid outline outline-1 rounded-xl -outline-offset-1 ${
-                    hasActionErrors ? 'outline-n-ruby-5 bg-n-ruby-2/50' : 'outline-n-weak'
-                }`}
+                className={`panel-surface grid p-3 list-none rounded-xl ${hasActionErrors ? 'panel-invalid' : ''}`}
             >
                 {actions.map((action, index) => (
                     <AutomationActionInput

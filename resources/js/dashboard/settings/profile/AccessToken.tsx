@@ -34,7 +34,7 @@ export default function AccessToken({
                     value={value}
                     disabled={disabled}
                     readOnly
-                    className="!py-1.5 ltr:!pr-9 ltr:!pl-3 rtl:!pl-9 rtl:!pr-3 focus:!border-n-weak cursor-not-allowed"
+                    className="!py-1.5 ltr:!pr-9 ltr:!pl-3 rtl:!pl-9 rtl:!pr-3 cursor-not-allowed"
                     style={{ borderRadius: '12px', fontSize: '14px', marginBottom: '2px' }}
                     onChange={() => undefined}
                 />

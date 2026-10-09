@@ -93,7 +93,7 @@ export default function CollaboratorsPage({ inbox, onInboxUpdated }: Collaborato
                 helpText={t('INBOX_MGMT.SETTINGS_POPUP.INBOX_AGENTS_SUB_TEXT')}
                 className="[&>div]:!items-start"
             >
-                <div className="rounded-xl outline outline-1 -outline-offset-1 outline-n-weak hover:outline-n-strong px-2 py-2">
+                <div className="field-surface rounded-xl px-2 py-2">
                     <TagInput
                         value={selectedAgentNames}
                         placeholder={t('INBOX_MGMT.ADD.AGENTS.PICK_AGENTS')}

@@ -72,7 +72,7 @@ export default function WizardLayout({
 
     return (
         <div className={`flex flex-col gap-6 mb-8 max-w-7xl mx-auto w-full !px-6 ${className}`}>
-            <div className="grid grid-cols-1 lg:grid-cols-8 lg:divide-x lg:divide-n-weak rounded-xl border border-n-weak h-full min-h-[50dvh] w-full">
+            <div className="panel-surface grid grid-cols-1 lg:grid-cols-8 rounded-xl h-full min-h-[50dvh] w-full">
                 <Wizard
                     items={items}
                     activeRoute={activeRoute}

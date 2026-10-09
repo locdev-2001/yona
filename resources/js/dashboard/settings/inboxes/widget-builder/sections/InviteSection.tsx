@@ -63,7 +63,7 @@ export default function InviteSection({ accountId, inboxId }: InviteSectionProps
             ) : campaigns.length === 0 ? (
                 <p className="text-body-main text-n-slate-11">{t('WIDGET_BUILDER.INVITE.EMPTY')}</p>
             ) : (
-                <ul className="flex flex-col divide-y divide-n-weak">
+                <ul className="flex flex-col">
                     {campaigns.map(campaign => (
                         <li key={campaign.id} className="flex items-center justify-between gap-3 py-3 first:pt-0 last:pb-0">
                             <div className="min-w-0">
