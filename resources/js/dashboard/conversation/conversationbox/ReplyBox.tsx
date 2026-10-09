@@ -37,7 +37,6 @@ import { openCommandBar } from 'dashboard/commands/commandBarStore';
 
 import { t } from '../../../i18n';
 import { draftKey, getDraft, removeDraft, setDraft } from '../draftApi';
-import { sendMessage } from '../api';
 import type { Inbox } from 'dashboard/settings/inboxes/types';
 import type { DashboardPageProps } from '../../types';
 import { useConversation } from '../ConversationContext';
@@ -73,9 +72,8 @@ import type { CannedCardPayload } from 'dashboard/conversation/composer/SendCard
 // Channel::Api (B3): isWithinMessagingWindow luôn true (can_reply || isAPIInbox),
 // editor khóa khi hết cửa sổ trả lời và không ở private note. Đính kèm: chọn
 // file + kiểm size + preview/gỡ như gốc (fileUploadMixin.onIndirectFileUpload).
-// B9: tin CÓ tệp đi thẳng multipart qua conversation/api.ts rồi chờ kết quả —
-// xóa soạn thảo khi thành công, giữ preview + báo lỗi khi backend từ chối; tin
-// chỉ có chữ vẫn theo đường sendReply (pending → sent) của spine. Trả lời trích
+// Mọi tin (chữ, tệp, ghi âm) đi qua sendReply của spine: tin tạm hiện ngay, ô
+// soạn trống ngay, lỗi thì bong bóng giữ nội dung kèm Gửi lại / Xoá. Trả lời trích
 // dẫn: MessagesView giữ tin đang trả lời, ReplyBox chỉ hiện khối "Đang trả lời"
 // và gửi kèm qua buildOutgoingContentAttributes. Nhắc tên thành viên nhóm: kênh
 // khai `outbound_mention` thì `@` ở chế độ Trả lời gợi ý thành viên, link mention
@@ -158,7 +156,6 @@ export default function ReplyBox({
     const [message, setMessage] = useState('');
     const [isFocused, setIsFocused] = useState(false);
     const [attachedFiles, setAttachedFiles] = useState<PendingAttachment[]>([]);
-    const [isUploading, setIsUploading] = useState(false);
     // Câu trả lời mẫu có thẻ vừa được chọn ở `/`: mở sẵn dialog Gửi thẻ với thẻ này.
     const [cannedCard, setCannedCard] = useState<CannedCardPayload | null>(null);
 
@@ -215,7 +212,7 @@ export default function ReplyBox({
     const pendingVoiceMessage = attachedFiles.find(attachment => attachment.isVoiceMessage) ?? null;
     // isReplyButtonDisabled gốc: có đính kèm thì gửi được dù chưa gõ chữ.
     const isReplyButtonDisabled =
-        isEditorDisabled || isUploading || (!hasAttachments && (isMessageEmpty || message.length > maxLength));
+        isEditorDisabled || (!hasAttachments && (isMessageEmpty || message.length > maxLength));
     // hasMeaningfulEditorContent gốc: nội dung ngoài chữ ký.
     const messageWithoutSignature = removeSignature(message, messageSignature, channelType);
     const hasContent = !isMessageEmpty && messageWithoutSignature.trim() !== '';
@@ -479,34 +476,6 @@ export default function ReplyBox({
         };
     };
 
-    // getMessagePayload gốc gom `files` vào cùng một tin (kênh API không tách
-    // chữ và tệp như Instagram/TikTok/WhatsApp).
-    const sendReplyWithAttachments = async () => {
-        setIsUploading(true);
-        try {
-            const { content, contentAttributes, isReplyingToMessage } = buildOutgoingPayload();
-            await sendMessage(
-                accountId,
-                conversationId,
-                {
-                    content,
-                    private: isPrivate,
-                    files: attachedFiles.map((attachment) => attachment.resource),
-                    is_voice_message: pendingVoiceMessage !== null,
-                    ...(contentAttributes ? { content_attributes: contentAttributes } : {}),
-                    ...emailPayloadFields(),
-                },
-            );
-            if (isReplyingToMessage) onClearReplyTarget?.();
-            afterSent();
-        } catch (error: unknown) {
-            const body = (error as { body?: { error?: string } }).body;
-            useAlert(body?.error || t('CONVERSATION.MESSAGE_ERROR'));
-        } finally {
-            setIsUploading(false);
-        }
-    };
-
     // getMessagePayload gốc: chỉ đính cc/bcc/to khi có giá trị và không phải note.
     const emailPayloadFields = () => ({
         ...(ccEmails && !isOnPrivateNote ? { cc_emails: ccEmails } : {}),
@@ -514,22 +483,29 @@ export default function ReplyBox({
         ...(toEmails && !isOnPrivateNote ? { to_emails: toEmails } : {}),
     });
 
+    // Bấm Gửi là tin hiện ngay trong khung chat và ô soạn trống ngay; tệp tải lên
+    // sau trong bong bóng của nó. Chữ kèm tệp đi thành tin riêng để không phải chờ
+    // tệp tải xong — trừ thư email, nơi chữ và tệp là cùng một lá thư. Chỉ có chữ
+    // ký thì chữ ký đi cùng tệp như chú thích.
     const onSendReply = () => {
         if (isReplyButtonDisabled) return;
-        if (hasAttachments) {
-            void sendReplyWithAttachments();
-            return;
+        const { content, contentAttributes, isReplyingToMessage } = buildOutgoingPayload();
+        const sendsTextSeparately = hasAttachments && hasContent && !isAnEmailChannel;
+
+        if (sendsTextSeparately || (!hasAttachments && !isMessageEmpty)) {
+            sendReply({ content, isPrivate, contentAttributes, ...emailPayloadFields() });
         }
-        if (!isMessageEmpty) {
-            const { content, contentAttributes, isReplyingToMessage } = buildOutgoingPayload();
+        if (hasAttachments) {
             sendReply({
-                content,
+                content: sendsTextSeparately ? '' : content,
                 isPrivate,
-                contentAttributes,
+                contentAttributes: sendsTextSeparately ? undefined : contentAttributes,
+                attachments: attachedFiles.map((attachment) => ({ file: attachment.resource, previewUrl: attachment.thumb })),
+                isVoiceMessage: pendingVoiceMessage !== null,
                 ...emailPayloadFields(),
             });
-            if (isReplyingToMessage) onClearReplyTarget?.();
         }
+        if (isReplyingToMessage) onClearReplyTarget?.();
         afterSent();
     };
 
@@ -730,7 +706,6 @@ export default function ReplyBox({
                 {pendingVoiceMessage ? (
                     <VoiceMessagePreview
                         recording={pendingVoiceMessage.resource}
-                        isSending={isUploading}
                         onSend={onSendReply}
                         onDiscard={discardVoiceMessage}
                     />
@@ -758,7 +733,7 @@ export default function ReplyBox({
                 isAudioRecording={voiceRecorder.status !== 'idle'}
                 onStartAudioRecording={() => void voiceRecorder.start()}
                 isSendDisabled={isReplyButtonDisabled}
-                sendButtonText={isUploading ? t('CONVERSATION.UPLOADING_ATTACHMENTS') : replyButtonLabel}
+                sendButtonText={replyButtonLabel}
                 sendWithSignature={sendWithSignature}
                 showQuotedReplyToggle={shouldShowQuotedReplyToggle}
                 quotedReplyEnabled={quotedReplyPreference}

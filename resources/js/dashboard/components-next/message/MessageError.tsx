@@ -6,6 +6,7 @@ import { t } from '../../../i18n';
 import { useMessageContext } from './provider';
 import { ORIENTATION } from './constants';
 import { canRetryMessage, readExternalError } from './helpers/retry';
+import { isUnsentMessageId } from 'dashboard/conversation/pendingMessages';
 
 // Port từ components-next/message/MessageError.vue. Thêm so với gốc: gợi ý theo
 // `external_error.code` có cấu trúc của kênh khai `outbound_retry`
@@ -18,7 +19,8 @@ export default function MessageError({
     className?: string;
     onRetry?: () => Promise<void> | void;
 }) {
-    const { orientation, status, createdAt, content, attachments, contentAttributes } = useMessageContext();
+    const { id, orientation, status, createdAt, content, attachments, contentAttributes, onDeleteMessage } =
+        useMessageContext();
     const [isRetrying, setIsRetrying] = useState(false);
 
     const error = readExternalError(contentAttributes.external_error);
@@ -38,6 +40,9 @@ export default function MessageError({
             hasContent: content !== null && content !== '',
             hasAttachments: attachments.length > 0,
         });
+
+    // Tin chưa tới máy chủ chỉ nằm ở máy: bỏ đi là xong, không cần hỏi lại.
+    const canDiscard = Boolean(onDeleteMessage) && isUnsentMessageId(id);
 
     const handleRetry = async () => {
         if (isRetrying) return;
@@ -81,6 +86,17 @@ export default function MessageError({
                         <Icon icon="i-lucide-refresh-ccw" className="text-n-ruby-11 size-[14px]" />
                     )}
                     <span className="text-n-ruby-11">{t('CONVERSATION.MESSAGE_FAILURE.RETRY')}</span>
+                </button>
+            ) : null}
+            {canDiscard ? (
+                <button
+                    type="button"
+                    disabled={isRetrying}
+                    className="bg-n-alpha-2 rounded-md h-5 px-1.5 inline-flex items-center gap-1 cursor-pointer disabled:opacity-60 disabled:cursor-default hover:bg-n-alpha-3 transition-colors duration-150 text-n-ruby-11"
+                    onClick={onDeleteMessage}
+                >
+                    <Icon icon="i-lucide-trash-2" className="size-[14px]" />
+                    <span>{t('CONVERSATION.MESSAGE_ACTIONS.DELETE')}</span>
                 </button>
             ) : null}
         </div>

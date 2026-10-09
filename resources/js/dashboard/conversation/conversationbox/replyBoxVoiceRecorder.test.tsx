@@ -3,8 +3,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { t } from '../../../i18n';
 
-const { sendMessageSpy, alertSpy, inboxCapabilities, accountFeatures } = vi.hoisted(() => ({
-    sendMessageSpy: vi.fn(),
+const { sendReplySpy, alertSpy, inboxCapabilities, accountFeatures } = vi.hoisted(() => ({
+    sendReplySpy: vi.fn(),
     alertSpy: vi.fn(),
     inboxCapabilities: { current: ['outbound_text', 'outbound_audio'] as string[] },
     accountFeatures: { current: { voice_recorder: true } as Record<string, boolean> },
@@ -37,8 +37,6 @@ vi.mock('dashboard/helper/apiClient', () => ({
 
 vi.mock('dashboard/composables/useAlert', () => ({ useAlert: alertSpy }));
 
-vi.mock('../api', () => ({ sendMessage: sendMessageSpy }));
-
 vi.mock('../ConversationContext', () => ({
     useConversation: () => ({
         selectedConversation: {
@@ -51,7 +49,7 @@ vi.mock('../ConversationContext', () => ({
         conversationId: 4,
         accountId: 2,
         messages: [],
-        sendReply: vi.fn(),
+        sendReply: sendReplySpy,
         sendSticker: vi.fn(),
         sendStructured: vi.fn(),
         uiSettings: {},
@@ -139,8 +137,7 @@ describe('ReplyBox — ghi âm', () => {
         stopTrack.mockReset();
         getUserMedia.mockReset();
         getUserMedia.mockResolvedValue({ getTracks: () => [{ stop: stopTrack }] });
-        sendMessageSpy.mockReset();
-        sendMessageSpy.mockResolvedValue({ id: 99 });
+        sendReplySpy.mockReset();
         alertSpy.mockReset();
         inboxCapabilities.current = ['outbound_text', 'outbound_audio'];
         accountFeatures.current = { voice_recorder: true };
@@ -172,14 +169,13 @@ describe('ReplyBox — ghi âm', () => {
 
         fireEvent.click(screen.getByRole('button', { name: t('CONVERSATION.REPLYBOX.VOICE_RECORDER.SEND') }));
 
-        await waitFor(() => expect(sendMessageSpy).toHaveBeenCalledTimes(1));
-        const [accountId, conversationId, payload] = sendMessageSpy.mock.calls[0];
-        expect([accountId, conversationId]).toEqual([2, 4]);
-        expect(payload.is_voice_message).toBe(true);
-        expect(payload.private).toBe(false);
-        expect(payload.files).toHaveLength(1);
-        expect(payload.files[0].type).toBe('audio/webm');
-        expect(payload.files[0].name).toMatch(/^voice-message-\d{8}-\d{6}\.webm$/);
+        await waitFor(() => expect(sendReplySpy).toHaveBeenCalledTimes(1));
+        const [payload] = sendReplySpy.mock.calls[0];
+        expect(payload.isVoiceMessage).toBe(true);
+        expect(payload.isPrivate).toBe(false);
+        expect(payload.attachments).toHaveLength(1);
+        expect(payload.attachments[0].file.type).toBe('audio/webm');
+        expect(payload.attachments[0].file.name).toMatch(/^voice-message-\d{8}-\d{6}\.webm$/);
         await waitFor(() => expect(screen.queryByTestId('voice-message-preview')).toBeNull());
     });
 
@@ -204,7 +200,7 @@ describe('ReplyBox — ghi âm', () => {
         fireEvent.click(screen.getByRole('button', { name: t('CONVERSATION.REPLYBOX.VOICE_RECORDER.DISCARD') }));
 
         expect(screen.queryByTestId('voice-message-preview')).toBeNull();
-        expect(sendMessageSpy).not.toHaveBeenCalled();
+        expect(sendReplySpy).not.toHaveBeenCalled();
     });
 
     it('ghi lại lần hai thay bản ghi cũ, một tin chỉ mang một bản ghi', async () => {
@@ -217,8 +213,8 @@ describe('ReplyBox — ghi âm', () => {
 
         fireEvent.click(screen.getByRole('button', { name: t('CONVERSATION.REPLYBOX.VOICE_RECORDER.SEND') }));
 
-        await waitFor(() => expect(sendMessageSpy).toHaveBeenCalledTimes(1));
-        expect(sendMessageSpy.mock.calls[0][2].files).toHaveLength(1);
+        await waitFor(() => expect(sendReplySpy).toHaveBeenCalledTimes(1));
+        expect(sendReplySpy.mock.calls[0][0].attachments).toHaveLength(1);
     });
 
     it('bị từ chối quyền micro: báo cách cho phép, không vào trạng thái ghi', async () => {
@@ -254,8 +250,8 @@ describe('ReplyBox — ghi âm', () => {
 
         fireEvent.click(screen.getByRole('button', { name: t('CONVERSATION.REPLYBOX.VOICE_RECORDER.SEND') }));
 
-        await waitFor(() => expect(sendMessageSpy).toHaveBeenCalledTimes(1));
-        const [file] = sendMessageSpy.mock.calls[0][2].files as File[];
+        await waitFor(() => expect(sendReplySpy).toHaveBeenCalledTimes(1));
+        const [{ file }] = sendReplySpy.mock.calls[0][0].attachments as Array<{ file: File }>;
         expect(file.type).toBe('audio/mp4');
         expect(file.name.endsWith('.m4a')).toBe(true);
     });

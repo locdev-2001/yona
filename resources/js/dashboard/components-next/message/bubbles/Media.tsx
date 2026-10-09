@@ -1,7 +1,9 @@
+import Loader from 'shared/components/loader/Loader';
 import BaseBubble from './Base';
 import FormattedContent from './FormattedContent';
 import AttachmentChips from '../chips/AttachmentChips';
 import MediaGrid from '../chips/MediaGrid';
+import { MESSAGE_STATUS } from '../constants';
 import { groupAttachmentChips } from '../helpers/attachments';
 import { emphasizeMentions, readGroupMentions } from '../helpers/groupSender';
 import { useMessageContext } from '../provider';
@@ -11,7 +13,8 @@ import { useMessageContext } from '../provider';
 // chú thích dài (thư chuyển tiếp kèm logo nhỏ) được nới tới bề ngang tối đa của
 // bong bóng thay vì bị ép vào cột rộng bằng ảnh.
 export default function MediaBubble({ dataBubbleName }: { dataBubbleName: string }) {
-    const { content, attachments, contentAttributes } = useMessageContext();
+    const { content, attachments, contentAttributes, status } = useMessageContext();
+    const isUploading = status === MESSAGE_STATUS.PROGRESS;
     const { media, recordings, files } = groupAttachmentChips(attachments);
     const otherAttachments = [...recordings, ...files];
     const displayContent = content ? emphasizeMentions(content, readGroupMentions(contentAttributes)) : content;
@@ -19,7 +22,17 @@ export default function MediaBubble({ dataBubbleName }: { dataBubbleName: string
 
     return (
         <BaseBubble className="overflow-hidden" flush dataBubbleName={dataBubbleName}>
-            <MediaGrid media={media} className="flex justify-center" />
+            <div className="relative">
+                <MediaGrid media={media} className="flex justify-center" />
+                {isUploading ? (
+                    <div
+                        data-media-uploading
+                        className="absolute inset-0 grid place-content-center bg-n-black/30 text-white pointer-events-none"
+                    >
+                        <Loader size={32} />
+                    </div>
+                ) : null}
+            </div>
             {hasFooter ? (
                 <div data-media-caption className="flex flex-col min-w-full gap-2 px-3 py-2">
                     {displayContent ? <FormattedContent content={displayContent} /> : null}

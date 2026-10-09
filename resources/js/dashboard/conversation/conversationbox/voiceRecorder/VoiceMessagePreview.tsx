@@ -7,13 +7,12 @@ import { t } from '../../../../i18n';
 
 interface VoiceMessagePreviewProps {
     recording: File;
-    isSending: boolean;
     onSend: () => void;
     onDiscard: () => void;
 }
 
 // Khay của bản ghi âm chờ gửi: nghe lại, gửi, hoặc xoá để ghi lại.
-export default function VoiceMessagePreview({ recording, isSending, onSend, onDiscard }: VoiceMessagePreviewProps) {
+export default function VoiceMessagePreview({ recording, onSend, onDiscard }: VoiceMessagePreviewProps) {
     const [playbackUrl, setPlaybackUrl] = useState<string | null>(null);
 
     useEffect(() => {
@@ -46,7 +45,6 @@ export default function VoiceMessagePreview({ recording, isSending, onSend, onDi
                     slate
                     ghost
                     sm
-                    disabled={isSending}
                     onClick={onDiscard}
                 />
                 <NextButton
@@ -55,8 +53,6 @@ export default function VoiceMessagePreview({ recording, isSending, onSend, onDi
                     icon={ICONS.send}
                     blue
                     sm
-                    isLoading={isSending}
-                    disabled={isSending}
                     onClick={onSend}
                 />
             </div>

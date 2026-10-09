@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
+import { t } from '../../../i18n';
 import Message from './Message';
 import type { ConversationMessage } from 'dashboard/conversation/types';
 import { canRetryMessage, hasOneDayPassed, readExternalError } from './helpers/retry';
@@ -109,5 +110,52 @@ describe('điều kiện thử lại', () => {
     it('tin rỗng cả nội dung lẫn đính kèm thì không thử lại được', () => {
         expect(canRetryMessage({ ...base, hasContent: false })).toBe(false);
         expect(canRetryMessage({ ...base, hasContent: false, hasAttachments: true })).toBe(true);
+    });
+});
+
+describe('tin tạm chưa tới máy chủ', () => {
+    const DELETE_LABEL = t('CONVERSATION.MESSAGE_ACTIONS.DELETE');
+
+    it.each([
+        [-3, true],
+        [42, false],
+    ])('tin id %s gửi hỏng: có nút Xoá ngay trên bong bóng = %s', (id, hasDiscard) => {
+        const onDeleteMessage = vi.fn();
+        render(
+            <Message
+                message={failedMessage({ id, content_attributes: { external_error: { message: 'Mạng chập chờn.' } } })}
+                channelType="Channel::Zalo"
+                onRetry={vi.fn()}
+                onDeleteMessage={onDeleteMessage}
+            />,
+        );
+
+        const discardButton = screen.queryByRole('button', { name: DELETE_LABEL });
+        expect(discardButton !== null).toBe(hasDiscard);
+        expect(screen.getByRole('button', { name: RETRY_LABEL })).toBeInTheDocument();
+        if (discardButton) {
+            fireEvent.click(discardButton);
+            expect(onDeleteMessage).toHaveBeenCalledTimes(1);
+        }
+    });
+
+    it.each([
+        ['progress', true],
+        ['sent', false],
+    ])('ảnh trong tin trạng thái %s hiện hiệu ứng đang tải lên = %s', (status, isUploading) => {
+        const { container } = render(
+            <Message
+                message={failedMessage({
+                    id: -4,
+                    content: null,
+                    status,
+                    content_attributes: {},
+                    attachments: [{ id: -1, file_type: 'image', data_url: 'data:image/png;base64,AAAA' }],
+                })}
+                channelType="Channel::Zalo"
+            />,
+        );
+
+        expect(container.querySelector('[data-media-uploading]') !== null).toBe(isUploading);
     });
 });

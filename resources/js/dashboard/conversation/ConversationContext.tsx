@@ -52,6 +52,14 @@ import {
 import type { SendMessagePayload } from './api';
 import type { StickerItem } from './stickerApi';
 import {
+    isUnsentMessageId,
+    markUnsentFailed,
+    markUnsentSending,
+    pendingAttachments,
+    removeUnsent,
+} from './pendingMessages';
+import type { OutgoingAttachment } from './pendingMessages';
+import {
     applyConversationMuted,
     applyConversationPinned,
     applyConversationPriority,
@@ -165,13 +173,18 @@ interface ConversationContextValue {
         to_emails?: string;
         // Dựng bằng buildOutgoingContentAttributes (trả lời trích dẫn…).
         contentAttributes?: Record<string, unknown>;
+        attachments?: OutgoingAttachment[];
+        // Tệp âm thanh trong `attachments` là bản ghi âm của ô soạn.
+        isVoiceMessage?: boolean;
     }) => void;
     // Sticker đi một mình: không nội dung, không trích dẫn; máy chủ tự dựng tin từ mã.
     sendSticker: (sticker: StickerItem) => void;
     // Thẻ từ menu "Gửi thẻ": máy chủ kiểm payload, sai thì tin chuyển sang lỗi kèm lý do.
     sendStructured: (contentType: string, contentAttributes: Record<string, unknown>, content?: string) => void;
+    // Tin tạm gửi hỏng (chưa tới máy chủ) thì gửi lại chính nội dung ở máy.
     retryFailedMessage: (message: ConversationMessage) => Promise<void>;
     toggleMessageReaction: (message: ConversationMessage, emoji: string) => Promise<void>;
+    // Tin tạm gửi hỏng thì chỉ bỏ khỏi khung chat.
     deleteConversationMessage: (message: ConversationMessage) => Promise<void>;
     markBankTransferPaid: (message: ConversationMessage) => Promise<void>;
     toggleTypingStatus: (typingStatus: 'on' | 'off', isPrivate: boolean) => void;
@@ -962,18 +975,44 @@ export function ConversationProvider({
         [accountId, conversationId],
     );
 
-    // createPendingMessageAndSend: chèn tin pending (status progress) rồi thay bằng
-    // bản server trả về; lỗi → đánh dấu failed như bản gốc. Mọi kiểu tin agent gửi
-    // từ khung soạn (chữ, sticker) đi qua đây — chỉ khác phần vá lên tin pending.
+    // Nội dung của tin tạm chưa tới máy chủ, giữ để Gửi lại không cần soạn lại.
+    const unsentPayloadsRef = useRef(new Map<string, SendMessagePayload>());
+
+    // Tin tạm gửi ở hội thoại nào thì đi về đúng hội thoại đó, kể cả khi đã chuyển sang hội thoại khác.
+    const deliverPendingMessage = useCallback(
+        (targetConversationId: number, echoId: string) => {
+            const payload = unsentPayloadsRef.current.get(echoId);
+            if (!payload) return;
+
+            sendMessage(accountId, targetConversationId, { ...payload, echo_id: echoId }).then(
+                (message) => {
+                    unsentPayloadsRef.current.delete(echoId);
+                    addMessage(message);
+                },
+                (error: unknown) => {
+                    const body = (error as { body?: { error?: string } }).body;
+                    const reason = body?.error || t('CONVERSATION.MESSAGE_ERROR');
+                    setMessages((current) => markUnsentFailed(current, echoId, reason));
+                    useAlert(reason);
+                },
+            );
+        },
+        [accountId, addMessage],
+    );
+
+    // createPendingMessageAndSend: chèn tin tạm (status progress) rồi thay bằng
+    // bản server trả về; lỗi → tin tạm thành thất bại, giữ nội dung để gửi lại.
+    // Mọi kiểu tin agent gửi từ khung soạn (chữ, tệp, sticker, thẻ) đi qua đây —
+    // chỉ khác phần vá lên tin tạm.
     const sendWithPendingMessage = useCallback(
-        (payload: Omit<SendMessagePayload, 'echo_id' | 'files'>, pendingPatch: Partial<ConversationMessage> = {}) => {
+        (payload: Omit<SendMessagePayload, 'echo_id'>, pendingPatch: Partial<ConversationMessage> = {}) => {
             if (!conversationId || !selectedConversation) return;
 
             pendingEchoCounter += 1;
             const echoId = `${Date.now()}-${pendingEchoCounter}`;
             const pending: ConversationMessage = {
                 id: -pendingEchoCounter,
-                content: payload.content ?? null,
+                content: payload.content || null,
                 inbox_id: selectedConversation.inbox_id,
                 conversation_id: conversationId,
                 message_type: MESSAGE_TYPES.OUTGOING,
@@ -993,23 +1032,10 @@ export function ConversationProvider({
                 ...pendingPatch,
             };
             setMessages((current) => [...current, pending]);
-
-            sendMessage(accountId, conversationId, { ...payload, echo_id: echoId }).then(
-                (message) => {
-                    addMessage(message);
-                },
-                (error: unknown) => {
-                    setMessages((current) =>
-                        current.map((item) =>
-                            item.echo_id === echoId ? { ...item, status: MESSAGE_STATUS.FAILED } : item,
-                        ),
-                    );
-                    const body = (error as { body?: { error?: string } }).body;
-                    useAlert(body?.error || t('CONVERSATION.MESSAGE_ERROR'));
-                },
-            );
+            unsentPayloadsRef.current.set(echoId, payload);
+            deliverPendingMessage(conversationId, echoId);
         },
-        [accountId, conversationId, selectedConversation, currentUserId, user, addMessage],
+        [conversationId, selectedConversation, currentUserId, user, deliverPendingMessage],
     );
 
     const sendReply = useCallback(
@@ -1020,6 +1046,8 @@ export function ConversationProvider({
             bcc_emails: bccEmails,
             to_emails: toEmails,
             contentAttributes,
+            attachments = [],
+            isVoiceMessage = false,
         }: {
             content: string;
             isPrivate: boolean;
@@ -1027,15 +1055,22 @@ export function ConversationProvider({
             bcc_emails?: string;
             to_emails?: string;
             contentAttributes?: Record<string, unknown>;
+            attachments?: OutgoingAttachment[];
+            isVoiceMessage?: boolean;
         }) => {
-            sendWithPendingMessage({
-                content,
-                private: isPrivate,
-                ...(contentAttributes ? { content_attributes: contentAttributes } : {}),
-                ...(ccEmails !== undefined ? { cc_emails: ccEmails } : {}),
-                ...(bccEmails !== undefined ? { bcc_emails: bccEmails } : {}),
-                ...(toEmails !== undefined ? { to_emails: toEmails } : {}),
-            });
+            sendWithPendingMessage(
+                {
+                    content,
+                    private: isPrivate,
+                    ...(contentAttributes ? { content_attributes: contentAttributes } : {}),
+                    ...(attachments.length ? { files: attachments.map((attachment) => attachment.file) } : {}),
+                    ...(isVoiceMessage ? { is_voice_message: true } : {}),
+                    ...(ccEmails !== undefined ? { cc_emails: ccEmails } : {}),
+                    ...(bccEmails !== undefined ? { bcc_emails: bccEmails } : {}),
+                    ...(toEmails !== undefined ? { to_emails: toEmails } : {}),
+                },
+                attachments.length ? { attachments: pendingAttachments(attachments) } : {},
+            );
         },
         [sendWithPendingMessage],
     );
@@ -1070,6 +1105,13 @@ export function ConversationProvider({
     const retryFailedMessage = useCallback(
         async (message: ConversationMessage) => {
             if (!conversationId || !message.id) return;
+            if (isUnsentMessageId(message.id)) {
+                const echoId = message.echo_id;
+                if (!echoId || !unsentPayloadsRef.current.has(echoId)) return;
+                setMessages((current) => markUnsentSending(current, echoId));
+                deliverPendingMessage(message.conversation_id, echoId);
+                return;
+            }
             try {
                 addMessage(await retryMessage(accountId, conversationId, message.id));
             } catch (error: unknown) {
@@ -1077,7 +1119,7 @@ export function ConversationProvider({
                 useAlert(body?.error || t('CONVERSATION.MESSAGE_FAILURE.RETRY_FAILED'));
             }
         },
-        [accountId, conversationId, addMessage],
+        [accountId, conversationId, addMessage, deliverPendingMessage],
     );
 
     // Thả/gỡ biểu cảm: bấm lại chính emoji phía tenant đã thả là gỡ (lô 4: một
@@ -1107,6 +1149,13 @@ export function ConversationProvider({
     const deleteConversationMessage = useCallback(
         async (message: ConversationMessage) => {
             if (!conversationId || !message.id) return;
+            if (isUnsentMessageId(message.id)) {
+                const echoId = message.echo_id;
+                if (!echoId) return;
+                unsentPayloadsRef.current.delete(echoId);
+                setMessages((current) => removeUnsent(current, echoId));
+                return;
+            }
             try {
                 addMessage(await deleteMessage(accountId, conversationId, message.id));
             } catch (error: unknown) {
