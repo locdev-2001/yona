@@ -3,8 +3,10 @@ import type { Dispatch, SetStateAction } from 'react';
 import { t } from '../../../../../i18n';
 import Input from 'dashboard/components-next/input/Input';
 import Segmented from 'dashboard/components-next/segmented/Segmented';
+import SelectInput from 'dashboard/components-next/select/Select';
 import Switch from 'dashboard/components-next/switch/Switch';
 import AlertTonePicker from 'dashboard/alertSound/AlertTonePicker';
+import { useInterfaceLocale } from 'dashboard/composables/useInterfaceLocale';
 import AccentColorField from '../components/AccentColorField';
 import FieldRow from '../components/FieldRow';
 import SectionCard from '../components/SectionCard';
@@ -16,10 +18,15 @@ const LAUNCHER_LABEL_MAX_LENGTH = 30;
 interface AppearanceSectionProps {
     draft: WidgetDraft;
     setDraft: Dispatch<SetStateAction<WidgetDraft>>;
+    // Ngôn ngữ cấp tài khoản (không thuộc riêng hộp thư này): widget của mọi
+    // website và dashboard của người chưa tự chọn ngôn ngữ đều theo giá trị này.
+    accountLocale: string;
+    onAccountLocaleChange: (locale: string) => void;
 }
 
-export default function AppearanceSection({ draft, setDraft }: AppearanceSectionProps) {
+export default function AppearanceSection({ draft, setDraft, accountLocale, onAccountLocaleChange }: AppearanceSectionProps) {
     const { appearance, notification_sound: notificationSound } = draft.widgetSettings;
+    const { availableLocales } = useInterfaceLocale();
 
     const setAppearance = (patch: Partial<WidgetDraft['widgetSettings']['appearance']>) =>
         setDraft(current => ({
@@ -81,6 +88,15 @@ export default function AppearanceSection({ draft, setDraft }: AppearanceSection
                     maxLength={GREETING_MAX_LENGTH}
                     placeholder={t('WIDGET_BUILDER.APPEARANCE.GREETING_PLACEHOLDER')}
                     onChange={event => setAppearance({ greeting: event.target.value })}
+                />
+            </FieldRow>
+
+            <FieldRow label={t('WIDGET_BUILDER.APPEARANCE.ACCOUNT_LANGUAGE_LABEL')} hint={t('WIDGET_BUILDER.APPEARANCE.ACCOUNT_LANGUAGE_HINT')}>
+                <SelectInput
+                    className="max-w-xs"
+                    value={accountLocale}
+                    options={availableLocales.map(locale => ({ value: locale.iso_639_1_code, label: locale.name }))}
+                    onChange={onAccountLocaleChange}
                 />
             </FieldRow>
 

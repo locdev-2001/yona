@@ -90,6 +90,18 @@ class InboxesSettingsController extends Controller
         ]);
     }
 
+    // Ngôn ngữ mặc định của tài khoản (widget + người chưa tự chọn) chỉnh ở màn
+    // Widget chat; URL cũ của trang "Cài đặt tài khoản" dẫn về đó, chưa có
+    // hộp thư website thì về danh sách hộp thư để tạo.
+    public function accountLanguage(Account $account): RedirectResponse
+    {
+        $widgetInboxId = $account->inboxes()->where('channel_type', 'Channel::WebWidget')->orderBy('id')->value('id');
+
+        return $widgetInboxId === null
+            ? redirect()->route('settings_inbox_list', ['account' => $account->id])
+            : redirect()->route('settings_inbox_widget_builder', ['account' => $account->id, 'inboxId' => $widgetInboxId]);
+    }
+
     private function fetchInboxId(Account $account, int $inboxId): int
     {
         return $account->inboxes()->whereKey($inboxId)->firstOrFail()->id;

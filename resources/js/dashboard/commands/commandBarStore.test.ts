@@ -1,8 +1,9 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { router } from '@inertiajs/react';
 
 import { t } from '../../i18n';
 import { buildGoToActions } from './useGoToCommandHotKeys';
+import { buildLanguageActions } from './useLanguageCommandHotKeys';
 import { NAVIGATION_ICONS } from 'dashboard/helper/commandbar/icons';
 import { buildMenuItems } from 'dashboard/components-next/sidebar/menuItems';
 import { filterMenuByRole } from 'dashboard/components-next/sidebar/permissions';
@@ -71,6 +72,12 @@ describe('buildGoToActions', () => {
         const titles = buildGoToActions(2, 'administrator').map(item => item.title);
 
         expect(titles).toEqual(expect.arrayContaining([t('STICKER_LIBRARY.MENU'), t('SIDEBAR.PAYMENT_ACCOUNTS')]));
+    });
+
+    it('không còn lệnh trỏ trang Cài đặt tài khoản đã gỡ', () => {
+        const commandUrls = buildGoToActions(2, 'administrator').map(visitedUrl);
+
+        expect(commandUrls).not.toContain('/app/accounts/2/settings/general');
     });
 
     it('agent không thấy đích chỉ dành cho quản trị viên', () => {
@@ -142,5 +149,33 @@ describe('SHORTCUT_KEYS', () => {
     it('resolve-and-next dùng $mod+Alt+E', () => {
         const resolveAndNext = SHORTCUT_KEYS.find(shortcut => shortcut.label === 'RESOLVE_AND_NEXT')!;
         expect(resolveAndNext.keySet).toEqual(['$mod+Alt+KeyE']);
+    });
+});
+
+describe('buildLanguageActions', () => {
+    const locales = [
+        { name: 'English', iso_639_1_code: 'en' },
+        { name: 'Tiếng Việt', iso_639_1_code: 'vi' },
+    ];
+
+    it('gõ "Ngôn ngữ" tìm được lệnh đổi ngôn ngữ, mở ra nhánh con theo từng ngôn ngữ', () => {
+        const [parent, ...children] = buildLanguageActions(locales, vi.fn());
+
+        expect(parent.title).toBe(t('COMMAND_BAR.COMMANDS.CHANGE_LANGUAGE'));
+        expect(parent.keywords).toContain(t('SIDEBAR_ITEMS.LANGUAGE'));
+        expect(parent.icon).toMatch(/^<svg/);
+        expect(children.map(child => child.title)).toEqual([t('SIDEBAR_ITEMS.LANGUAGE_ACCOUNT_DEFAULT'), 'English', 'Tiếng Việt']);
+        expect(parent.children).toEqual(children.map(child => child.id));
+        children.forEach(child => expect(child.parent).toBe(parent.id));
+    });
+
+    it('chọn một ngôn ngữ thì lưu ngôn ngữ riêng, "Theo tài khoản" lưu rỗng', () => {
+        const changeLocale = vi.fn().mockResolvedValue(undefined);
+        const [, accountDefault, , vietnamese] = buildLanguageActions(locales, changeLocale);
+
+        vietnamese.handler?.();
+        accountDefault.handler?.();
+
+        expect(changeLocale.mock.calls).toEqual([['vi'], ['']]);
     });
 });

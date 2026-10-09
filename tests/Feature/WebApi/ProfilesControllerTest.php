@@ -192,6 +192,37 @@ describe('PUT /api/v1/profile', function () {
         'khoá lạ' => [['enabled' => true, 'tone' => 'ding', 'scope' => 'all', 'only_when_hidden' => false, 'volume' => 11], ''],
     ]);
 
+    it('đổi ngôn ngữ giao diện của riêng mình: dashboard đổi ngữ ngay, ngôn ngữ tài khoản giữ nguyên', function () {
+        $account = Account::factory()->create(['locale' => 'en']);
+        $user = User::factory()->create(['ui_settings' => ['font_size' => '18px']]);
+        AccountUser::factory()->create(['account_id' => $account->id, 'user_id' => $user->id]);
+        $dashboardHtml = fn () => $this->actingAs($user)->get("/app/accounts/{$account->id}/profile/settings")->assertOk()->getContent();
+
+        $this->actingAs($user)
+            ->putJson('/api/v1/profile', ['ui_settings' => ['locale' => 'vi']])
+            ->assertOk()
+            ->assertJsonPath('ui_settings.locale', 'vi')
+            ->assertJsonPath('ui_settings.font_size', '18px');
+
+        expect($dashboardHtml())->toMatch('/<html\b[^>]*\blang="vi"/')
+            ->and($account->fresh()->locale)->toBe('en');
+
+        $this->actingAs($user)->putJson('/api/v1/profile', ['ui_settings' => ['locale' => null]])->assertOk();
+
+        expect($dashboardHtml())->toMatch('/<html\b[^>]*\blang="en"/');
+    });
+
+    it('từ chối ngôn ngữ giao diện chưa có bản dịch', function () {
+        $user = User::factory()->create();
+
+        $this->actingAs($user)
+            ->putJson('/api/v1/profile', ['ui_settings' => ['locale' => 'fr']])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('ui_settings.locale');
+
+        expect($user->fresh()->ui_settings)->toBeEmpty();
+    });
+
     it('populates the unconfirmed email and sends confirmation to the new address', function () {
         Notification::fake();
         $user = User::factory()->create(['email' => 'old@example.com']);

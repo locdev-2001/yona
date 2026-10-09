@@ -5,6 +5,7 @@ import { t } from '../../../i18n';
 import { logout } from 'dashboard/helper/logout';
 import { useBranding } from 'shared/composables/useBranding';
 import { useAlert } from 'dashboard/composables/useAlert';
+import { useInterfaceLocale } from 'dashboard/composables/useInterfaceLocale';
 import { isEditorHotKeyEnabled } from 'dashboard/composables/useUISettings';
 import { applyFontSizeToDOM, DEFAULT_FONT_SIZE } from 'dashboard/composables/useFontSize';
 import { deleteJson, parseApiErrorMessage, putForm, putJson } from 'dashboard/helper/apiClient';
@@ -58,6 +59,7 @@ export default function ProfileSettingsIndex() {
     const { auth, globalConfig } = usePage<DashboardPageProps>().props;
     const user = auth.user!;
     const { replaceInstallationName } = useBranding();
+    const { changeLocale } = useInterfaceLocale();
 
     const [avatarFile, setAvatarFile] = useState<File | null>(null);
     const [avatarUrl, setAvatarUrl] = useState(user.avatar_url);
@@ -172,10 +174,7 @@ export default function ProfileSettingsIndex() {
 
     const updateLanguage = async (locale: string) => {
         try {
-            await updateUISettings({ locale: locale || null });
-            useAlert(t('PROFILE_SETTINGS.FORM.INTERFACE_SECTION.LANGUAGE.UPDATE_SUCCESS'));
-            // Bundle ngôn ngữ nạp lúc khởi động: nạp lại trang để toàn bộ giao diện đổi ngữ.
-            window.location.reload();
+            await changeLocale(locale);
         } catch {
             useAlert(t('PROFILE_SETTINGS.FORM.INTERFACE_SECTION.LANGUAGE.UPDATE_ERROR'));
         }

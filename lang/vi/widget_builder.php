@@ -50,6 +50,8 @@ return [
         'GREETING_LABEL' => 'Lời chào trang chủ',
         'GREETING_HINT' => 'Hiện ngay dưới tên shop ở màn trang chủ widget.',
         'GREETING_PLACEHOLDER' => 'Chúng tôi có thể giúp gì?',
+        'ACCOUNT_LANGUAGE_LABEL' => 'Ngôn ngữ',
+        'ACCOUNT_LANGUAGE_HINT' => 'Áp cho cả tài khoản: mọi widget chat trên website và dashboard của nhân viên chưa tự chọn ngôn ngữ riêng. Trang nhúng vẫn chọn được ngôn ngữ khác bằng tuỳ chọn locale trong mã nhúng.',
         'SOUND_LABEL' => 'Âm báo tin mới',
         'SOUND_HINT' => 'Kêu trên website của bạn khi shop trả lời lúc khách đang mở trang.',
     ],

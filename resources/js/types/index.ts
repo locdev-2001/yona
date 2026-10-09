@@ -12,6 +12,11 @@ export interface AuthUser {
     has_push_subscription?: boolean;
 }
 
+export interface AvailableLocale {
+    name: string;
+    iso_639_1_code: string;
+}
+
 export interface GlobalConfig {
     installationName: string;
     logo: string;
@@ -19,6 +24,7 @@ export interface GlobalConfig {
     logoThumbnail: string;
     termsURL: string;
     privacyURL: string;
+    availableLocales: AvailableLocale[];
     // App id của Meta — kênh Facebook/Instagram chỉ bật khi cấu hình (như
     // biến cấu hình toàn cục fbAppId của bản trước).
     fbAppId?: string;

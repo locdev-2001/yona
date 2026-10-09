@@ -31,9 +31,7 @@ export default function BuilderHeader({
             <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="min-w-0">
                     <nav aria-label={t('WIDGET_BUILDER.HEADER.BREADCRUMB_ARIA_LABEL')} className="flex items-center gap-1.5 text-label-small text-n-slate-11">
-                        <Link href={accountScopedUrl(accountId, 'settings/general')} className="hover:underline">
-                            {t('WIDGET_BUILDER.HEADER.BREADCRUMB_SETTINGS')}
-                        </Link>
+                        <span>{t('WIDGET_BUILDER.HEADER.BREADCRUMB_SETTINGS')}</span>
                         <span aria-hidden="true">/</span>
                         <Link href={accountScopedUrl(accountId, 'settings/inboxes/list')} className="hover:underline">
                             {t('WIDGET_BUILDER.HEADER.BREADCRUMB_INBOXES')}

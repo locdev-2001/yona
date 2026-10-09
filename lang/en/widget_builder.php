@@ -50,6 +50,8 @@ return [
         'GREETING_LABEL' => 'Home greeting',
         'GREETING_HINT' => 'Shown right under the shop name on the widget home screen.',
         'GREETING_PLACEHOLDER' => 'How can we help?',
+        'ACCOUNT_LANGUAGE_LABEL' => 'Language',
+        'ACCOUNT_LANGUAGE_HINT' => 'Applies to the whole account: every website chat widget and the dashboard of teammates who have not picked their own language. The embedding page can still pick another language with the locale option of the embed code.',
         'SOUND_LABEL' => 'New message sound',
         'SOUND_HINT' => 'Plays on your website when the shop replies while the visitor has the page open.',
     ],

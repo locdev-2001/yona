@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 // availability + auto_offline tách ở ProfileAvailabilityController;
 // reset_access_token (F8), set_active_account (khi account switcher cần) chưa port.
@@ -48,7 +49,11 @@ class ProfilesController extends Controller
 
         if (array_key_exists('ui_settings', $data)) {
             // Kiểm riêng: luật lồng trong cùng validate() làm validated() bỏ mất các khoá ui_settings khác.
-            $request->validate(AgentAlertPreference::rules());
+            $request->validate([
+                ...AgentAlertPreference::rules(),
+                // null = theo ngôn ngữ của tài khoản.
+                'ui_settings.locale' => ['nullable', 'string', Rule::in(array_column(config('yona.available_locales', []), 'iso_639_1_code'))],
+            ]);
             $user->ui_settings = array_merge($user->ui_settings ?? [], $data['ui_settings']);
         }
 

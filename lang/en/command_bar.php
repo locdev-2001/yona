@@ -52,6 +52,7 @@ return [
         'GO_TO_SETTINGS_BILLING' => 'Go to Billing',
         'GO_TO_SETTINGS_ACCOUNT' => 'Go to Account Settings',
         'GO_TO_SETTINGS_PROFILE' => 'Go to Profile Settings',
+        'CHANGE_LANGUAGE' => 'Change interface language',
         'ADD_LABELS_TO_CONVERSATION' => 'Add label to the conversation',
         'ASSIGN_AN_AGENT' => 'Assign an agent',
         'AI_ASSIST' => 'AI Assist',

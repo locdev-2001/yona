@@ -126,7 +126,7 @@ describe('PATCH /api/v1/accounts/{id}', function () {
 });
 
 describe('ngôn ngữ tài khoản', function () {
-    it('quản trị viên đổi ngôn ngữ, trang cài đặt tài khoản và widget của account đổi theo', function () {
+    it('quản trị viên đổi ngôn ngữ, widget của account đổi theo', function () {
         $account = Account::factory()->create(['locale' => 'en']);
         $admin = accountMember($account, AccountUser::ROLE_ADMINISTRATOR);
         $widget = WidgetSession::make();
@@ -136,11 +136,6 @@ describe('ngôn ngữ tài khoản', function () {
         $this->actingAs($admin)->patchJson("/api/v1/accounts/{$account->id}", ['locale' => 'vi'])
             ->assertOk()
             ->assertJsonPath('locale', 'vi');
-
-        $this->actingAs($admin)->get("/app/accounts/{$account->id}/settings/general")
-            ->assertOk()
-            ->assertInertia(fn ($page) => $page->component('dashboard/settings/account/Index')
-                ->where('availableLocales', config('yona.available_locales')));
 
         config()->set('app.locale', 'en');
         $html = $this->get(route('widget', ['website_token' => $widget->channel->website_token]))->assertOk()->getContent();
@@ -156,6 +151,20 @@ describe('ngôn ngữ tài khoản', function () {
             ->assertJsonValidationErrors('locale');
 
         expect($account->refresh()->locale)->toBe('vi');
+    });
+
+    it('URL cũ của trang cài đặt tài khoản dẫn tới màn Widget chat, chưa có hộp thư website thì về danh sách hộp thư', function () {
+        $account = Account::factory()->create();
+        $admin = accountMember($account, AccountUser::ROLE_ADMINISTRATOR);
+
+        $this->actingAs($admin)->get("/app/accounts/{$account->id}/settings/general")
+            ->assertRedirect("/app/accounts/{$account->id}/settings/inboxes/list");
+
+        $widget = WidgetSession::make();
+        $widget->inbox->update(['account_id' => $account->id]);
+
+        $this->actingAs($admin)->get("/app/accounts/{$account->id}/settings/general")
+            ->assertRedirect("/app/accounts/{$account->id}/settings/inboxes/{$widget->inbox->id}/widget");
     });
 
     it('nhân viên không vào được trang cài đặt tài khoản', function () {

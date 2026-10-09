@@ -8,6 +8,7 @@ import Avatar from 'dashboard/components-next/avatar/Avatar';
 import { avatarSeed } from 'shared/avatar/avatarSeed';
 import KeyShortcutModal from 'dashboard/commands/KeyShortcutModal';
 import SidebarProfileMenuStatus from './SidebarProfileMenuStatus';
+import SidebarProfileMenuLanguage from './SidebarProfileMenuLanguage';
 import { useSidebarKeyboardShortcuts } from 'dashboard/composables/useSidebarKeyboardShortcuts';
 import { accountScopedUrl } from 'dashboard/helper/URLHelper';
 import { useCurrentUserAvailability } from 'dashboard/realtime/hooks';
@@ -39,6 +40,7 @@ export default function SidebarProfileMenu({ isCollapsed = false }: { isCollapse
         <DropdownBody className="bottom-12 z-50 mb-2 w-80 ltr:left-0 rtl:right-0">
             <SidebarProfileMenuStatus />
             <DropdownSeparator />
+            <SidebarProfileMenuLanguage />
             <DropdownItem
                 label={t('SIDEBAR_ITEMS.KEYBOARD_SHORTCUTS')}
                 icon="i-lucide-keyboard"

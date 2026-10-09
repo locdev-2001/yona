@@ -36,6 +36,8 @@ class HandleInertiaRequests extends Middleware
                 'logo' => fn () => app(BrandAssets::class)->logo(),
                 'logoDark' => fn () => app(BrandAssets::class)->logoDark(),
                 'logoThumbnail' => fn () => app(BrandAssets::class)->logoThumbnail(),
+                // Ngôn ngữ giao diện bật được — menu avatar, Ctrl+K, màn Widget chat chọn từ đây.
+                'availableLocales' => config('yona.available_locales'),
                 'termsURL' => config('yona.terms_url'),
                 'privacyURL' => config('yona.privacy_url'),
                 'fbAppId' => config('services.facebook.app_id'),

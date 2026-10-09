@@ -12,7 +12,17 @@ const getJson = vi.fn();
 const patchJson = vi.fn();
 
 vi.mock('@inertiajs/react', () => ({
-    usePage: () => ({ props: { currentAccount: { id: 3 } } }),
+    usePage: () => ({
+        props: {
+            currentAccount: { id: 3, locale: 'en' },
+            globalConfig: {
+                availableLocales: [
+                    { name: 'English', iso_639_1_code: 'en' },
+                    { name: 'Tiếng Việt', iso_639_1_code: 'vi' },
+                ],
+            },
+        },
+    }),
     router: { visit: vi.fn(), on: () => () => undefined },
     Link: ({ children, href }: { children: ReactNode; href: string }) => <a href={href}>{children}</a>,
 }));
@@ -167,6 +177,23 @@ describe('WidgetBuilderPage — màn Widget chat', () => {
         fireEvent.click(screen.getByRole('button', { name: t('SETTINGS_DRAFT.CANCEL') }));
         expect(screen.queryByText(t('SETTINGS_DRAFT.UNSAVED'))).not.toBeInTheDocument();
         expect(screen.getByRole('radio', { name: 'Phải' })).toHaveAttribute('aria-checked', 'true');
+    });
+
+    it('ngôn ngữ cấp tài khoản chỉnh ở đây: đổi rồi Lưu chỉ cập nhật tài khoản, không gửi lại hộp thư', async () => {
+        patchJson.mockResolvedValue({});
+        await renderPage();
+
+        expect(screen.getByText(t('WIDGET_BUILDER.APPEARANCE.ACCOUNT_LANGUAGE_HINT'))).toBeInTheDocument();
+        const languageSelect = screen.getByLabelText(t('WIDGET_BUILDER.APPEARANCE.ACCOUNT_LANGUAGE_LABEL'));
+        expect(languageSelect).toHaveValue('en');
+
+        fireEvent.change(languageSelect, { target: { value: 'vi' } });
+        expect(screen.getByText(t('SETTINGS_DRAFT.UNSAVED'))).toBeInTheDocument();
+        fireEvent.click(screen.getByRole('button', { name: t('SETTINGS_DRAFT.SAVE') }));
+
+        await waitFor(() => expect(patchJson).toHaveBeenCalledTimes(1));
+        expect(patchJson).toHaveBeenCalledWith('/api/v1/accounts/3', { locale: 'vi' });
+        await waitFor(() => expect(screen.queryByText(t('SETTINGS_DRAFT.UNSAVED'))).not.toBeInTheDocument());
     });
 
     it('lỗi 422 hiện đúng ô kênh khác gây lỗi, không rơi vào thẻ khác', async () => {

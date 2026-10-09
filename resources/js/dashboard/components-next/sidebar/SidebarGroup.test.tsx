@@ -21,8 +21,8 @@ const settingsGroup = {
     name: 'Settings',
     label: 'Cài đặt',
     children: [
-        { name: 'Settings Account Settings', label: 'Cài đặt tài khoản', to: '/app/accounts/2/settings/general' },
         { name: 'Settings Agents', label: 'Nhân viên', to: '/app/accounts/2/settings/agents/list' },
+        { name: 'Settings Inboxes', label: 'Hộp thư', to: '/app/accounts/2/settings/inboxes/list' },
     ],
 };
 
@@ -71,6 +71,6 @@ describe('bấm tiêu đề nhóm có menu con', () => {
 
         fireEvent.click(screen.getByTitle('Cài đặt'));
 
-        expect(visit).toHaveBeenCalledWith('/app/accounts/2/settings/general');
+        expect(visit).toHaveBeenCalledWith('/app/accounts/2/settings/agents/list');
     });
 });

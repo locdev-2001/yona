@@ -42,6 +42,8 @@ export default function WidgetBuilderPage({ inboxId }: WidgetBuilderPageProps) {
     const [activeSection, setActiveSection] = useState<WidgetBuilderSectionId>('appearance');
     const [isSaving, setSaving] = useState(false);
     const [serverErrors, setServerErrors] = useState<WidgetBuilderFieldErrors>({});
+    const [accountLocale, setAccountLocale] = useState(currentAccount!.locale);
+    const [savedAccountLocale, setSavedAccountLocale] = useState(currentAccount!.locale);
 
     const syncInbox = (nextInbox: Inbox) => {
         setInbox(nextInbox);
@@ -54,7 +56,9 @@ export default function WidgetBuilderPage({ inboxId }: WidgetBuilderPageProps) {
         void getJson<Inbox>(`/api/v1/accounts/${accountId}/inboxes/${inboxId}`).then(syncInbox);
     }, [accountId, inboxId]);
 
-    const isDirty = Boolean(draft && savedDraft && !draftsEqual(draft, savedDraft));
+    const isDraftDirty = Boolean(draft && savedDraft && !draftsEqual(draft, savedDraft));
+    const isAccountLocaleDirty = accountLocale !== savedAccountLocale;
+    const isDirty = isDraftDirty || isAccountLocaleDirty;
     useUnsavedChangesGuard(isDirty, t('SETTINGS_DRAFT.CONFIRM_LEAVE'));
 
     // Dispatch không null-able cho các thẻ con: chỉ được render sau khi draft đã
@@ -77,6 +81,7 @@ export default function WidgetBuilderPage({ inboxId }: WidgetBuilderPageProps) {
     const handleCancel = () => {
         if (!savedDraft) return;
         setDraft(savedDraft);
+        setAccountLocale(savedAccountLocale);
         setServerErrors({});
     };
 
@@ -84,8 +89,14 @@ export default function WidgetBuilderPage({ inboxId }: WidgetBuilderPageProps) {
         if (!draft) return;
         setSaving(true);
         try {
-            const updated = await patchJson<Inbox>(`/api/v1/accounts/${accountId}/inboxes/${inboxId}`, buildSavePayload(draft));
-            syncInbox(updated);
+            if (isAccountLocaleDirty) {
+                await patchJson(`/api/v1/accounts/${accountId}`, { locale: accountLocale });
+                setSavedAccountLocale(accountLocale);
+            }
+            if (isDraftDirty) {
+                const updated = await patchJson<Inbox>(`/api/v1/accounts/${accountId}/inboxes/${inboxId}`, buildSavePayload(draft));
+                syncInbox(updated);
+            }
             setServerErrors({});
             useAlert(t('WIDGET_BUILDER.HEADER.SAVE_SUCCESS'));
         } catch (error) {
@@ -143,7 +154,12 @@ export default function WidgetBuilderPage({ inboxId }: WidgetBuilderPageProps) {
 
                         <div className="flex-1 min-w-0 lg:h-full lg:overflow-y-auto px-4 lg:px-6 py-4 lg:py-6">
                             <div className="flex flex-col gap-5 max-w-3xl mx-auto lg:mx-0">
-                                <AppearanceSection draft={draft} setDraft={patchDraft} />
+                                <AppearanceSection
+                                    draft={draft}
+                                    setDraft={patchDraft}
+                                    accountLocale={accountLocale}
+                                    onAccountLocaleChange={setAccountLocale}
+                                />
                                 <HomeSection
                                     accountId={accountId}
                                     draft={draft}
@@ -159,7 +175,9 @@ export default function WidgetBuilderPage({ inboxId }: WidgetBuilderPageProps) {
                         </div>
 
                         <div className="shrink-0 lg:w-[26rem] px-4 lg:px-6 py-4 lg:py-6 border-t lg:border-t-0 lg:border-l border-n-weak">
+                            {/* Widget đọc ngôn ngữ của tài khoản lúc nạp: đổi xong thì nạp lại khung xem trước. */}
                             <PreviewPane
+                                key={savedAccountLocale}
                                 websiteToken={inbox.website_token ?? ''}
                                 websiteName={draft.name}
                                 widgetColor={draft.widgetColor}

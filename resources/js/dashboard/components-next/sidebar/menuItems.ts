@@ -263,13 +263,6 @@ export function buildMenuItems(
             icon: 'i-lucide-bolt',
             children: [
                 {
-                    name: 'Settings Account Settings',
-                    permissions: ['administrator'],
-                    label: t('SIDEBAR.ACCOUNT_SETTINGS'),
-                    icon: 'i-lucide-briefcase',
-                    to: scoped('settings/general'),
-                },
-                {
                     name: 'Settings Agents',
                     permissions: ['administrator'],
                     label: t('SIDEBAR.AGENTS'),

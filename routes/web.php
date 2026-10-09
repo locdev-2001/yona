@@ -262,9 +262,7 @@ Route::middleware('auth')->group(function () {
             Route::get('/settings/inboxes/{inboxId}/{tab?}', [InboxesSettingsController::class, 'show'])
                 ->whereNumber('inboxId')->where('tab', '[a-z-]+')->name('settings_inbox_show');
 
-            Route::get('/settings/general', fn (Account $account) => Inertia::render('dashboard/settings/account/Index', [
-                'availableLocales' => config('yona.available_locales'),
-            ]))->name('general_settings_index');
+            Route::get('/settings/general', [InboxesSettingsController::class, 'accountLanguage'])->name('general_settings_index');
 
             // Tương đương conversationWorkflow.routes.js.
             Route::get('/settings/conversation-workflow', fn (Account $account) => Inertia::render('dashboard/settings/conversationWorkflow/Index'))
