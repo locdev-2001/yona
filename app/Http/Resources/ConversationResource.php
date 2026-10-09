@@ -4,6 +4,7 @@ namespace App\Http\Resources;
 
 use App\Http\Resources\Concerns\SerializesAttributeMaps;
 use App\Models\Conversation;
+use App\Models\ConversationPin;
 use App\Models\Message;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
@@ -34,22 +35,61 @@ class ConversationResource extends JsonResource
     /** @var list<int>|null Nhóm người xem là thành viên, nạp sẵn khi dựng cả trang. */
     private ?array $viewerTeamIds = null;
 
+    // Ghim là của riêng người xem: null khi payload không dựng cho một người cụ thể
+    // (realtime, webhook) thì bỏ hẳn cờ `pinned` để client giữ giá trị đang có.
+    private ?bool $pinnedByViewer = null;
+
     /** @param iterable<Conversation> $conversations */
     public static function collectionFor(iterable $conversations): array
     {
         $conversations = new EloquentCollection(collect($conversations)->values()->all());
         self::preload($conversations);
         $viewerTeamIds = self::viewerTeamIds($conversations);
+        $viewerPinnedIds = self::viewerPinnedIds($conversations);
 
         return $conversations
-            ->map(function (Conversation $conversation) use ($viewerTeamIds) {
+            ->map(function (Conversation $conversation) use ($viewerTeamIds, $viewerPinnedIds) {
                 $resource = new self($conversation);
                 $resource->viewerTeamIds = $viewerTeamIds;
+                $resource->rememberViewerPins($viewerPinnedIds);
 
                 return $resource->toArray(request());
             })
             ->values()
             ->all();
+    }
+
+    // Một hội thoại trả cho chính người đang gọi (show, update…): kèm cờ ghim của người đó.
+    public static function forViewer(Conversation $conversation, Request $request): array
+    {
+        $resource = new self($conversation);
+        $resource->rememberViewerPins(self::viewerPinnedIds(new EloquentCollection([$conversation])));
+
+        return $resource->toArray($request);
+    }
+
+    /** @param list<int>|null $viewerPinnedIds */
+    private function rememberViewerPins(?array $viewerPinnedIds): void
+    {
+        $this->pinnedByViewer = $viewerPinnedIds === null
+            ? null
+            : in_array($this->resource->id, $viewerPinnedIds, true);
+    }
+
+    /**
+     * @param  EloquentCollection<int, Conversation>  $conversations
+     * @return list<int>|null
+     */
+    private static function viewerPinnedIds(EloquentCollection $conversations): ?array
+    {
+        $viewer = request()->user();
+        $first = $conversations->first();
+
+        if (! $viewer instanceof User || $first === null) {
+            return null;
+        }
+
+        return ConversationPin::conversationIdsPinnedBy($viewer, $first->account_id, $conversations->modelKeys());
     }
 
     /**
@@ -130,6 +170,7 @@ class ConversationResource extends JsonResource
             'priority' => $conversation->priorityName(),
             'waiting_since' => $conversation->waiting_since?->getTimestamp() ?? 0,
             'sla_policy_id' => null,
+            ...($this->pinnedByViewer === null ? [] : ['pinned' => $this->pinnedByViewer]),
         ];
     }
 

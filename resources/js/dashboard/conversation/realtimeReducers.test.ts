@@ -218,6 +218,14 @@ describe('shouldAddConversationToList / matchesConversationView', () => {
 
         expect(selectVisibleConversations([older, newer], filters, 'last_activity_at_desc').map((c) => c.id)).toEqual([2, 1]);
     });
+
+    it.each(['last_activity_at_desc', 'created_at_asc', 'priority_desc'])('hội thoại đã ghim luôn đứng đầu (%s)', (sortKey) => {
+        const pinnedOld = buildConversation({ id: 1, last_activity_at: 10, created_at: 30, pinned: true });
+        const newer = buildConversation({ id: 2, last_activity_at: 20, created_at: 5, priority: 'urgent' });
+        const filters = { assigneeTab: 'all' as const, status: 'all', inboxId: 0, teamId: 0, currentUserId: 7 };
+
+        expect(selectVisibleConversations([newer, pinnedOld], filters, sortKey).map((c) => c.id)).toEqual([1, 2]);
+    });
 });
 
 describe('mergeFetchedConversations', () => {

@@ -448,6 +448,13 @@ export function unmuteConversation(accountId: number, conversationId: number): P
     return postWithoutBody(`/api/v1/accounts/${accountId}/conversations/${conversationId}/unmute`);
 }
 
+// Ghim là của riêng người đang đăng nhập; máy chủ trả 204.
+export function setConversationPinned(accountId: number, conversationId: number, pinned: boolean): Promise<void> {
+    const url = `/api/v1/accounts/${accountId}/conversations/${conversationId}/pin`;
+
+    return (pinned ? postWithoutBody(url) : deleteJson(url)).then(() => undefined);
+}
+
 // AssignmentsController#create: agent trả partial _agent (null khi gỡ), team trả `json: @team`.
 // Thân "null" là JSON hợp lệ; 200 rỗng (nếu backend đổi) rơi vào SyntaxError → coi như null.
 function postAssignment<T>(url: string, body: Record<string, unknown>): Promise<T | null> {

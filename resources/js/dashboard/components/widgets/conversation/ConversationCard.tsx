@@ -38,11 +38,36 @@ function ConversationStatusChip({ status }: { status: string }) {
     );
 }
 
+// Người được giao ở góc phải dưới thẻ, ngang hàng dòng nhãn; tên dài cắt "…".
+function CardAssignee({ assignee, isAgentBot }: { assignee: Partial<AgentMeta>; isAgentBot: boolean }) {
+    const name = assignee.available_name || assignee.name || '';
+
+    return (
+        <span
+            data-testid="card-assignee"
+            title={name}
+            className="flex items-center gap-1 min-w-0 max-w-[45%] ltr:ml-auto rtl:mr-auto text-xs font-medium leading-4 text-n-slate-11"
+        >
+            <Avatar
+                seed={avatarSeed(isAgentBot ? 'agent_bot' : 'user', assignee.id)}
+                name={name}
+                src={assignee.thumbnail || assignee.avatar_url}
+                size={16}
+                roundedFull
+                className="flex-shrink-0"
+            />
+            <span className="truncate">{name}</span>
+        </span>
+    );
+}
+
 // Port từ dashboard/components/widgets/conversation/ConversationCard.vue.
 // Khác biệt cố ý: VoiceCallStatus + SLACardLabel (EE) — `showLabelsSection` vì thế
 // chỉ còn nhánh `chat.labels`.
 // Checkbox chọn hàng loạt phủ lên avatar chỉ khi đang ở chế độ chọn nhiều (bật từ
 // thanh tab), không hiện khi rê chuột — xem docs/ux-decisions.md.
+// Bố cục: dòng trên = logo nền tảng + tên hộp thư; góc phải trên = thời gian tin
+// mới nhất; góc phải dưới = người được giao (chưa giao thì để trống).
 interface ConversationCardProps {
     chat: Conversation;
     currentContact: ContactMeta;
@@ -62,6 +87,8 @@ interface ConversationCardProps {
     highlightQuery?: string;
     onClick?: (event: MouseEvent<HTMLDivElement>) => void;
     onContextMenu?: (event: MouseEvent<HTMLDivElement>) => void;
+    // Nút "…" mở cùng menu với chuột phải, neo tại toạ độ cho sẵn.
+    onOpenActions?: (position: { x: number; y: number }) => void;
     onSelectConversation?: (conversationId: number, inboxId: number) => void;
     onDeSelectConversation?: (conversationId: number, inboxId: number) => void;
 }
@@ -82,6 +109,7 @@ export default function ConversationCard({
     highlightQuery = '',
     onClick,
     onContextMenu,
+    onOpenActions,
     onSelectConversation,
     onDeSelectConversation,
 }: ConversationCardProps) {
@@ -95,9 +123,17 @@ export default function ConversationCard({
     const hasUnread = unreadCount > 0;
     const lastMessageInChat = getLastMessage(chat);
 
-    const showMetaSection = showInboxName || (showAssignee && assignee.name) || chat.priority || showStatus;
+    const isPinned = Boolean(chat.pinned);
+    const showMetaSection = showInboxName || chat.priority || showStatus || isPinned || Boolean(onOpenActions);
     const showLabelsSection = (chat.labels?.length ?? 0) > 0;
+    const showAssigneeSection = showAssignee && Boolean(assignee.name);
     const isAgentBotAssignee = chat.meta?.assignee_type === 'AgentBot';
+
+    const openActionsFromButton = (event: MouseEvent<HTMLButtonElement>) => {
+        event.stopPropagation();
+        const anchor = event.currentTarget.getBoundingClientRect();
+        onOpenActions?.({ x: anchor.left, y: anchor.bottom });
+    };
 
     const onSelectChange = (checked: boolean) => {
         if (checked) {
@@ -139,7 +175,7 @@ export default function ConversationCard({
                         src={currentContact.thumbnail}
                         size={40}
                         status={contactAvailabilityStatus}
-                        className={!showInboxName ? 'mt-4' : 'mt-8'}
+                        className={showMetaSection ? 'mt-8' : 'mt-4'}
                         hideOfflineStatus
                         overlay={({ size }) =>
                             isSelecting || selected ? (
@@ -173,24 +209,28 @@ export default function ConversationCard({
                             </span>
                         ) : null}
                         {showStatus ? <ConversationStatusChip status={chat.status} /> : null}
-                        <div
-                            className={[
-                                'flex items-baseline gap-2 flex-shrink-0',
-                                !showInboxName ? 'flex-1 justify-between' : '',
-                            ]
-                                .filter(Boolean)
-                                .join(' ')}
-                        >
-                            {showAssignee && assignee.name ? (
-                                <span className="text-n-slate-11 text-xs font-medium leading-3 py-0.5 px-0 inline-flex items-center gap-px truncate">
-                                    <Icon
-                                        icon={isAgentBotAssignee ? 'i-lucide-bot' : 'i-lucide-user-round'}
-                                        className="size-3 text-n-slate-11 flex-shrink-0"
-                                    />
-                                    <span className="truncate">{assignee.name}</span>
+                        <div className="flex items-center gap-1 flex-shrink-0 ltr:ml-auto rtl:mr-auto">
+                            {isPinned ? (
+                                <span
+                                    data-testid="card-pinned"
+                                    title={t('CONVERSATION.CARD_CONTEXT_MENU.PINNED')}
+                                    className="inline-flex"
+                                >
+                                    <Icon icon={ICONS.pin} className="size-3.5 text-n-slate-11" />
                                 </span>
                             ) : null}
                             <CardPriorityIcon priority={chat.priority} className="flex-shrink-0 !size-3.5" />
+                            {onOpenActions ? (
+                                <button
+                                    type="button"
+                                    aria-label={t('CONVERSATION.CARD_CONTEXT_MENU.MORE_ACTIONS')}
+                                    aria-haspopup="menu"
+                                    className="grid place-content-center size-5 -my-1 rounded text-n-slate-11 hover:bg-n-alpha-2 hover:text-n-slate-12 focus-visible:opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100"
+                                    onClick={openActionsFromButton}
+                                >
+                                    <Icon icon={ICONS.moreActions} className="size-4" />
+                                </button>
+                            ) : null}
                         </div>
                     </div>
                 ) : null}
@@ -216,6 +256,7 @@ export default function ConversationCard({
                         lastActivityTimestamp={chat.timestamp}
                         createdAtTimestamp={chat.created_at}
                         conversationId={chat.id}
+                        showCreatedAt={false}
                         className="flex-shrink-0 whitespace-nowrap font-normal"
                     />
                 </div>
@@ -241,8 +282,13 @@ export default function ConversationCard({
                         className={['absolute ltr:right-3 rtl:left-3', showMetaSection ? 'top-[3.25rem]' : 'top-9'].join(' ')}
                     />
                 ) : null}
-                {showLabelsSection ? (
-                    <CardLabels conversationLabels={chat.labels ?? []} className="mt-0.5 mx-2 mb-0" />
+                {showLabelsSection || showAssigneeSection ? (
+                    <div className="flex items-center gap-2 min-w-0 mt-0.5 mx-2">
+                        {showLabelsSection ? (
+                            <CardLabels conversationLabels={chat.labels ?? []} className="flex-1 min-w-0 my-0" />
+                        ) : null}
+                        {showAssigneeSection ? <CardAssignee assignee={assignee} isAgentBot={isAgentBotAssignee} /> : null}
+                    </div>
                 ) : null}
             </div>
         </div>

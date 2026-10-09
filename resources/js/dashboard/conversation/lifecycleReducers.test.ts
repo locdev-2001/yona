@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
     applyConversationMuted,
+    applyConversationPinned,
     applyConversationPriority,
     applyConversationStatus,
     snoozedUntilForStatus,
@@ -86,5 +87,15 @@ describe('applyConversationMuted (MUTE/UNMUTE_CONVERSATION)', () => {
         const muted = applyConversationMuted(list, 4, true);
         expect(muted[0].muted).toBe(true);
         expect(applyConversationMuted(muted, 4, false)[0].muted).toBe(false);
+    });
+});
+
+describe('applyConversationPinned', () => {
+    it('chỉ đổi cờ ghim của đúng hội thoại', () => {
+        const list = [buildConversation(), buildConversation({ id: 5 })];
+        const pinned = applyConversationPinned(list, 4, true);
+
+        expect(pinned.map(item => item.pinned)).toEqual([true, undefined]);
+        expect(applyConversationPinned(pinned, 4, false)[0].pinned).toBe(false);
     });
 });

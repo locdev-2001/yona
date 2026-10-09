@@ -41,3 +41,11 @@ export function applyConversationMuted(
 ): Conversation[] {
     return patchConversation(conversations, conversationId, { muted });
 }
+
+export function applyConversationPinned(
+    conversations: Conversation[],
+    conversationId: number,
+    pinned: boolean,
+): Conversation[] {
+    return patchConversation(conversations, conversationId, { pinned });
+}

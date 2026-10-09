@@ -439,6 +439,12 @@ return [
         'CONFIRM' => 'Delete',
     ],
     'CARD_CONTEXT_MENU' => [
+        'PIN' => 'Pin conversation',
+        'UNPIN' => 'Unpin conversation',
+        'PIN_ERROR' => 'Couldn\'t pin the conversation. Please try again.',
+        'UNPIN_ERROR' => 'Couldn\'t unpin the conversation. Please try again.',
+        'PINNED' => 'Pinned',
+        'MORE_ACTIONS' => 'Conversation actions',
         'PENDING' => 'Mark as pending',
         'RESOLVED' => 'Mark as resolved',
         'MARK_AS_UNREAD' => 'Mark as unread',

@@ -86,19 +86,19 @@ describe('thẻ hội thoại trong danh sách', () => {
     describe('cột thời gian', () => {
         afterEach(() => setLocale('en'));
 
-        // Tiếng Việt ("26 phút • 3 phút") rộng hơn khoảng chừa cố định cho "26m • 3m":
-        // thời gian phải nằm cùng hàng với tên để tên tự nhường chỗ, không bị đè.
-        it('nằm cùng hàng với tên khách và hiện đơn vị tiếng Việt', () => {
+        // Thời gian nằm cùng hàng với tên để tên tự nhường đúng bề rộng chữ thời gian.
+        // Chỉ hiện mốc tin mới nhất; tuổi hội thoại không còn trên thẻ.
+        it('chỉ hiện thời gian tin mới nhất, cùng hàng với tên khách', () => {
             setLocale('vi');
             const now = Math.floor(Date.now() / 1000);
-            const chat = { ...CONVERSATION, created_at: now - 26 * 60, timestamp: now - 3 * 60 } as Conversation;
+            const chat = { ...CONVERSATION, created_at: now - 15 * 86400, timestamp: now - 25 * 60 } as Conversation;
 
-            const { container, getByText } = render(<ConversationCard chat={chat} currentContact={CONTACT} />);
+            const { container, getByText, queryByText } = render(<ConversationCard chat={chat} currentContact={CONTACT} />);
             const name = container.querySelector('h4.conversation--user');
-            const time = getByText('26 phút • 3 phút');
+            const time = getByText('25 phút');
 
             expect(name?.parentElement?.contains(time)).toBe(true);
-            expect(name?.className).not.toMatch(/pr-16/);
+            expect(queryByText(/15 ngày/)).toBeNull();
         });
     });
 
@@ -118,5 +118,75 @@ describe('thẻ hội thoại trong danh sách', () => {
         const { container } = render(<ConversationCard chat={CONVERSATION} currentContact={CONTACT} />);
 
         expect(container.querySelector('mark')).toBeNull();
+    });
+
+    describe('dòng trên và góc phải dưới', () => {
+        const ASSIGNEE = { id: 7, name: 'Robert Nguyen', available_name: 'Robert Nguyen', thumbnail: '' };
+
+        it('dòng trên là logo nền tảng và tên hộp thư', () => {
+            const { container, getByText } = render(
+                <ConversationCard chat={CONVERSATION} currentContact={CONTACT} inbox={ZALO_INBOX} showInboxName />,
+            );
+
+            expect(getByText('Nguyễn Phước Lộc')).toBeTruthy();
+            expect(container.querySelector('img[data-platform="zalo"]')?.getAttribute('src')).toBe(
+                '/brand-assets/platforms/zalo.webp',
+            );
+        });
+
+        it('người được giao hiện ở góc phải dưới kèm avatar, không còn ở dòng trên', () => {
+            const { getByTestId } = render(
+                <ConversationCard
+                    chat={CONVERSATION}
+                    currentContact={CONTACT}
+                    inbox={ZALO_INBOX}
+                    showInboxName
+                    assignee={ASSIGNEE}
+                    showAssignee
+                />,
+            );
+            const assignee = getByTestId('card-assignee');
+
+            expect(assignee.textContent).toBe('Robert Nguyen');
+            expect(assignee.title).toBe('Robert Nguyen');
+            expect(assignee.querySelector('[data-generated-avatar], img')).not.toBeNull();
+        });
+
+        it('chưa giao ai thì góc phải dưới để trống', () => {
+            const { queryByTestId } = render(
+                <ConversationCard chat={CONVERSATION} currentContact={CONTACT} inbox={ZALO_INBOX} showInboxName showAssignee />,
+            );
+
+            expect(queryByTestId('card-assignee')).toBeNull();
+        });
+    });
+
+    describe('ghim và nút thao tác', () => {
+        it('hội thoại đã ghim mang biểu tượng ghim', () => {
+            const { queryByTestId, rerender } = render(<ConversationCard chat={CONVERSATION} currentContact={CONTACT} />);
+            expect(queryByTestId('card-pinned')).toBeNull();
+
+            rerender(<ConversationCard chat={{ ...CONVERSATION, pinned: true }} currentContact={CONTACT} />);
+            expect(queryByTestId('card-pinned')).not.toBeNull();
+        });
+
+        it('nút "…" mở menu thao tác tại vị trí nút, không mở hội thoại', () => {
+            const onOpenActions = vi.fn();
+            const onClick = vi.fn();
+            const { getByRole } = render(
+                <ConversationCard chat={CONVERSATION} currentContact={CONTACT} onClick={onClick} onOpenActions={onOpenActions} />,
+            );
+
+            fireEvent.click(getByRole('button', { name: 'Conversation actions' }));
+
+            expect(onOpenActions).toHaveBeenCalledWith({ x: expect.any(Number), y: expect.any(Number) });
+            expect(onClick).not.toHaveBeenCalled();
+        });
+
+        it('không có nơi nhận thao tác thì không vẽ nút "…"', () => {
+            const { queryByRole } = render(<ConversationCard chat={CONVERSATION} currentContact={CONTACT} />);
+
+            expect(queryByRole('button', { name: 'Conversation actions' })).toBeNull();
+        });
     });
 });

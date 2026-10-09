@@ -12,8 +12,8 @@ import type { Conversation } from '../types';
 
 // Port từ dashboard/components/ConversationItem.vue — cắt: expanded layout.
 // Bulk select đọc qua BulkSelectionContext (thay inject
-// 'isConversationSelected'/'selectConversation' của ChatList.vue). Context menu
-// chuột phải mới có phần đọc/chưa đọc (B8); các mục còn lại nợ B10.
+// 'isConversationSelected'/'selectConversation' của ChatList.vue). Menu thao tác
+// mở bằng chuột phải hoặc nút "…" trên thẻ — cùng một menu.
 interface ConversationItemProps {
     source: Conversation;
     showAssignee?: boolean;
@@ -26,8 +26,17 @@ export default function ConversationItem({
     showAssignee = false,
     conversationType = '',
 }: ConversationItemProps) {
-    const { accountId, inboxId, teamId, label, conversationId, searchQuery, markMessagesRead, markMessagesUnread } =
-        useConversation();
+    const {
+        accountId,
+        inboxId,
+        teamId,
+        label,
+        conversationId,
+        searchQuery,
+        markMessagesRead,
+        markMessagesUnread,
+        setConversationPinned,
+    } = useConversation();
     const bulkSelection = useBulkSelection();
     const isSelecting = bulkSelection?.isSelecting ?? false;
     const isSelected = bulkSelection?.isConversationSelected(source.id) ?? false;
@@ -43,7 +52,8 @@ export default function ConversationItem({
         name: '',
         channel_type: '',
     };
-    const showInboxName = !inboxId && inboxes.length > 1;
+    // Dòng trên của thẻ luôn là nền tảng + hộp thư, kể cả khi account chỉ có một hộp thư.
+    const showInboxName = Boolean(inbox.name);
 
     const conversationPath = conversationUrl({ accountId, inboxId, teamId, label, conversationType, id: source.id });
 
@@ -56,6 +66,11 @@ export default function ConversationItem({
         setContextMenu({ x: event.pageX || event.clientX, y: event.pageY || event.clientY });
     };
     const closeContextMenu = () => setContextMenu(null);
+
+    const onTogglePin = () => {
+        void setConversationPinned(source.id, !source.pinned);
+        closeContextMenu();
+    };
 
     const onMarkAsRead = () => {
         void markMessagesRead(source.id);
@@ -103,6 +118,7 @@ export default function ConversationItem({
                 highlightQuery={searchQuery}
                 onClick={onCardClick}
                 onContextMenu={openContextMenu}
+                onOpenActions={setContextMenu}
                 onSelectConversation={bulkSelection?.selectConversation}
                 onDeSelectConversation={bulkSelection?.deSelectConversation}
             />
@@ -111,8 +127,10 @@ export default function ConversationItem({
                     x={contextMenu.x}
                     y={contextMenu.y}
                     hasUnreadMessages={source.unread_count > 0}
+                    isPinned={Boolean(source.pinned)}
                     onMarkAsRead={onMarkAsRead}
                     onMarkAsUnread={onMarkAsUnread}
+                    onTogglePin={onTogglePin}
                     onClose={closeContextMenu}
                 />
             ) : null}

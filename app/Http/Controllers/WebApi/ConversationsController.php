@@ -21,6 +21,7 @@ use App\Models\Attachment;
 use App\Models\Contact;
 use App\Models\ContactInbox;
 use App\Models\Conversation;
+use App\Models\ConversationPin;
 use App\Models\Inbox;
 use App\Models\Message;
 use App\Models\User;
@@ -175,7 +176,7 @@ class ConversationsController extends Controller
     {
         $conversation = $this->fetchConversationForUser($request, $account, $conversationId);
 
-        return response()->json((new ConversationResource($conversation))->toArray($request));
+        return response()->json(ConversationResource::forViewer($conversation, $request));
     }
 
     public function store(Request $request, Account $account): JsonResponse
@@ -205,7 +206,7 @@ class ConversationsController extends Controller
             return response()->json(['error' => $exception->getMessage()], 422);
         }
 
-        return response()->json((new ConversationResource($conversation))->toArray($request));
+        return response()->json(ConversationResource::forViewer($conversation, $request));
     }
 
     public function update(Request $request, Account $account, int $conversationId): JsonResponse
@@ -218,7 +219,7 @@ class ConversationsController extends Controller
             $conversation->update(['priority' => Conversation::priorityFromName($validated['priority'])]);
         }
 
-        return response()->json((new ConversationResource($conversation))->toArray($request));
+        return response()->json(ConversationResource::forViewer($conversation, $request));
     }
 
     public function toggleStatus(Request $request, Account $account, int $conversationId): JsonResponse
@@ -286,6 +287,30 @@ class ConversationsController extends Controller
         return response()->noContent(200);
     }
 
+    // Ghim/bỏ ghim của riêng người gọi; gọi lặp lại không đổi kết quả.
+    public function pin(Request $request, Account $account, int $conversationId): Response
+    {
+        ConversationPin::pin($this->pinningUser($request), $this->fetchConversationForUser($request, $account, $conversationId));
+
+        return response()->noContent();
+    }
+
+    public function unpin(Request $request, Account $account, int $conversationId): Response
+    {
+        ConversationPin::unpin($this->pinningUser($request), $this->fetchConversationForUser($request, $account, $conversationId));
+
+        return response()->noContent();
+    }
+
+    // Agent bot không có danh sách hội thoại riêng nên không có gì để ghim.
+    private function pinningUser(Request $request): User
+    {
+        $user = $request->user();
+        abort_unless($user instanceof User, 403);
+
+        return $user;
+    }
+
     public function toggleTypingStatus(Request $request, Account $account, int $conversationId): Response
     {
         $conversation = $this->fetchConversationForUser($request, $account, $conversationId);
@@ -332,7 +357,7 @@ class ConversationsController extends Controller
         $conversation->custom_attributes = $attributes;
         $conversation->save();
 
-        return response()->json((new ConversationResource($conversation))->toArray($request));
+        return response()->json(ConversationResource::forViewer($conversation, $request));
     }
 
     // ConversationCustomAttributesConcern#destroy_custom_attributes.
@@ -344,7 +369,7 @@ class ConversationsController extends Controller
         $conversation->custom_attributes = array_diff_key($conversation->custom_attributes ?? [], array_flip($keys));
         $conversation->save();
 
-        return response()->json((new ConversationResource($conversation))->toArray($request));
+        return response()->json(ConversationResource::forViewer($conversation, $request));
     }
 
     // update_last_seen: mở hội thoại là đánh dấu đã đọc. Ghi thẳng bằng update

@@ -13,6 +13,8 @@ interface TimeAgoProps {
     lastActivityTimestamp: number;
     createdAtTimestamp: number;
     conversationId?: number | string;
+    // Thẻ hội thoại chỉ hiện mốc tin mới nhất; tuổi hội thoại còn trong tooltip.
+    showCreatedAt?: boolean;
     className?: string;
 }
 
@@ -32,6 +34,7 @@ export default function TimeAgo({
     lastActivityTimestamp,
     createdAtTimestamp,
     conversationId = '',
+    showCreatedAt = true,
     className = '',
 }: TimeAgoProps) {
     const [lastActivityAtTimeAgo, setLastActivityAtTimeAgo] = useState(() => dynamicTime(lastActivityTimestamp));
@@ -78,7 +81,7 @@ export default function TimeAgo({
             title={`${createdAt}\n${lastActivity}`}
             className={`ml-auto leading-4 text-xxs text-n-slate-10 hover:text-n-slate-11 ${className}`.trimEnd()}
         >
-            <span>{`${createdAtTime} • ${lastActivityTime}`}</span>
+            <span>{showCreatedAt ? `${createdAtTime} • ${lastActivityTime}` : lastActivityTime}</span>
         </div>
     );
 }

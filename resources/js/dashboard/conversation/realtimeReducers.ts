@@ -233,7 +233,10 @@ const SORT_OPTIONS: Record<string, [keyof typeof SORT_METHODS, SortDirection]> =
     priority_desc_created_at_asc: ['sortOnPriorityCreatedAt', 'desc'],
 };
 
+// Hội thoại người xem đã ghim luôn đứng trước, khớp thứ tự máy chủ trả về.
 export function sortComparator(a: Conversation, b: Conversation, sortKey: string): number {
+    if (Boolean(a.pinned) !== Boolean(b.pinned)) return a.pinned ? -1 : 1;
+
     const [method, direction] = SORT_OPTIONS[sortKey] || SORT_OPTIONS.last_activity_at_desc;
     return SORT_METHODS[method](a, b, direction);
 }

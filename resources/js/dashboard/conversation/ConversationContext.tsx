@@ -47,11 +47,13 @@ import {
     toggleStatus as toggleStatusRequest,
     toggleTyping,
     unmuteConversation as unmuteConversationRequest,
+    setConversationPinned as setConversationPinnedRequest,
 } from './api';
 import type { SendMessagePayload } from './api';
 import type { StickerItem } from './stickerApi';
 import {
     applyConversationMuted,
+    applyConversationPinned,
     applyConversationPriority,
     applyConversationStatus,
     snoozedUntilForStatus,
@@ -181,6 +183,8 @@ interface ConversationContextValue {
     unmuteConversation: () => Promise<void>;
     markMessagesRead: (conversationId: number, seenThrough?: number) => Promise<void>;
     markMessagesUnread: (conversationId: number) => Promise<void>;
+    // Ghim của riêng người xem: cập nhật ngay trên danh sách, lỗi thì trả lại như cũ.
+    setConversationPinned: (conversationId: number, pinned: boolean) => Promise<void>;
     // updateCustomAttributes của store gốc — accordion Conversation Information.
     updateConversationCustomAttributes: (customAttributes: Record<string, unknown>) => Promise<void>;
 }
@@ -1317,6 +1321,23 @@ export function ConversationProvider({
     const muteConversation = useCallback(() => setMuted(true), [setMuted]);
     const unmuteConversation = useCallback(() => setMuted(false), [setMuted]);
 
+    const setConversationPinned = useCallback(
+        async (targetId: number, pinned: boolean) => {
+            const applyPinned = (value: boolean) => {
+                setAllConversations(current => applyConversationPinned(current, targetId, value));
+                setFilteredConversations(current => applyConversationPinned(current, targetId, value));
+            };
+            applyPinned(pinned);
+            try {
+                await setConversationPinnedRequest(accountId, targetId, pinned);
+            } catch {
+                applyPinned(!pinned);
+                useAlert(t(pinned ? 'CONVERSATION.CARD_CONTEXT_MENU.PIN_ERROR' : 'CONVERSATION.CARD_CONTEXT_MENU.UNPIN_ERROR'));
+            }
+        },
+        [accountId],
+    );
+
     const value = useMemo<ConversationContextValue>(
         () => ({
             accountId,
@@ -1372,6 +1393,7 @@ export function ConversationProvider({
             unmuteConversation,
             markMessagesRead,
             markMessagesUnread,
+            setConversationPinned,
             updateConversationCustomAttributes,
         }),
         [
@@ -1428,6 +1450,7 @@ export function ConversationProvider({
             unmuteConversation,
             markMessagesRead,
             markMessagesUnread,
+            setConversationPinned,
             updateConversationCustomAttributes,
         ],
     );

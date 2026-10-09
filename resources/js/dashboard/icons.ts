@@ -42,6 +42,9 @@ export const ICONS = {
     collapse: 'i-lucide-minus',
     markRead: 'i-lucide-mail-open',
     markUnread: 'i-lucide-mail',
+    pin: 'i-lucide-pin',
+    unpin: 'i-lucide-pin-off',
+    moreActions: 'i-lucide-ellipsis',
 
     // Soạn tin
     send: 'i-lucide-send',

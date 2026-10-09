@@ -6,10 +6,12 @@ use App\Models\Account;
 use App\Models\AccountUser;
 use App\Models\Conversation;
 use App\Models\ConversationParticipant;
+use App\Models\ConversationPin;
 use App\Models\Mention;
 use App\Models\User;
 use App\Services\SearchService;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Validation\ValidationException;
@@ -372,10 +374,12 @@ class ConversationFinder
             ];
         }
 
+        $page = max(1, (int) ($this->params['page'] ?? 1));
+        [$pinnedConversations, $query] = $this->separatePinned($query, $cursor === null && $page === 1);
+
         if ($cursor !== null) {
             self::afterCursor($query, $cursorColumn, $sortDirection, $cursor);
         } else {
-            $page = max(1, (int) ($this->params['page'] ?? 1));
             $query->offset(($page - 1) * self::RESULTS_PER_PAGE);
         }
 
@@ -387,6 +391,29 @@ class ConversationFinder
             ? self::encodeCursor($conversations->last(), $cursorColumn)
             : null;
 
-        return [$conversations, $nextCursor];
+        return [$pinnedConversations->concat($conversations)->values(), $nextCursor];
+    }
+
+    /**
+     * Hội thoại người xem đã ghim đứng đầu danh sách: trang đầu trả trọn nhóm ghim
+     * khớp bộ lọc, còn phần phân trang (page lẫn cursor) chỉ đi trên hội thoại chưa
+     * ghim, nên con trỏ không bao giờ trỏ vào nhóm ghim.
+     *
+     * @param  Builder<Conversation>  $query
+     * @return array{0: Collection<int, Conversation>, 1: Builder<Conversation>}
+     */
+    private function separatePinned(Builder $query, bool $isFirstPage): array
+    {
+        $pinnedIds = ConversationPin::conversationIdsPinnedBy($this->currentUser, $this->currentAccount->id);
+
+        if ($pinnedIds === []) {
+            return [new EloquentCollection, $query];
+        }
+
+        $pinnedConversations = $isFirstPage
+            ? $query->clone()->whereIn('conversations.id', $pinnedIds)->get()
+            : new EloquentCollection;
+
+        return [$pinnedConversations, $query->whereNotIn('conversations.id', $pinnedIds)];
     }
 }

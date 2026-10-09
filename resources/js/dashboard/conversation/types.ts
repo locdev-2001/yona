@@ -117,6 +117,8 @@ export interface Conversation {
     created_at: number;
     updated_at: number;
     sla_policy_id: number | null;
+    // Cờ ghim của chính người xem; vắng mặt ở payload realtime (dựng chung cho cả account).
+    pinned?: boolean;
 }
 
 export interface ConversationListMeta {

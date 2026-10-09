@@ -248,6 +248,8 @@ Route::middleware(['auth.api_token', 'auth', 'account.scope'])
         Route::post('/conversations/{conversationId}/destroy_custom_attributes', [ConversationsController::class, 'destroyCustomAttributes'])->whereNumber('conversationId');
         Route::post('/conversations/{conversationId}/update_last_seen', [ConversationsController::class, 'updateLastSeen'])->whereNumber('conversationId');
         Route::post('/conversations/{conversationId}/unread', [ConversationsController::class, 'unread'])->whereNumber('conversationId');
+        Route::post('/conversations/{conversationId}/pin', [ConversationsController::class, 'pin'])->whereNumber('conversationId');
+        Route::delete('/conversations/{conversationId}/pin', [ConversationsController::class, 'unpin'])->whereNumber('conversationId');
         Route::post('/conversations/{conversationId}/assignments', [AssignmentsController::class, 'create'])->whereNumber('conversationId');
         Route::post('/conversations/{conversationId}/mute', [ConversationsController::class, 'mute'])->whereNumber('conversationId');
         Route::post('/conversations/{conversationId}/unmute', [ConversationsController::class, 'unmute'])->whereNumber('conversationId');

@@ -6,6 +6,7 @@ use App\Finders\ConversationFinder;
 use App\Models\Account;
 use App\Models\AccountUser;
 use App\Models\Conversation;
+use App\Models\ConversationPin;
 use App\Models\CustomAttributeDefinition;
 use App\Models\User;
 use App\Services\Filters\BaseFilterService;
@@ -48,6 +49,7 @@ class FilterService extends BaseFilterService
             ->selectRaw('COUNT(*) FILTER (WHERE assignee_id IS NULL AND assignee_agent_bot_id IS NULL) OVER() AS filter_unassigned_count')
             ->selectRaw('COUNT(*) OVER() AS filter_all_count')
             ->with(['inbox', 'assignee.avatar', 'contact.avatar', 'team', 'contactInbox'])
+            ->tap(fn (Builder $query) => $this->orderPinnedFirst($query))
             ->sortOnLastActivityAt('desc')
             ->offset(($page - 1) * ConversationFinder::RESULTS_PER_PAGE)
             ->limit(ConversationFinder::RESULTS_PER_PAGE)
@@ -102,6 +104,21 @@ class FilterService extends BaseFilterService
         };
 
         return in_array($attributeKey, ['status', 'priority', 'assignee_id', 'display_id'], true);
+    }
+
+    /**
+     * Danh sách lọc chỉ phân trang bằng `page` nên xếp nhóm ghim lên đầu ngay
+     * trong ORDER BY, số đếm cửa sổ vẫn tính trên trọn tập khớp bộ lọc.
+     *
+     * @param  Builder<Conversation>  $query
+     */
+    private function orderPinnedFirst(Builder $query): void
+    {
+        $pinnedIds = ConversationPin::conversationIdsPinnedBy($this->user, $this->account->id);
+
+        if ($pinnedIds !== []) {
+            $query->orderByRaw('conversations.id = ANY(?::bigint[]) DESC', ['{'.implode(',', $pinnedIds).'}']);
+        }
     }
 
     /** @return Builder<Conversation> */

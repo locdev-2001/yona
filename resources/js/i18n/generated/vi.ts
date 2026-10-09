@@ -4040,6 +4040,12 @@ const messages: Record<string, unknown> = {
             "CONFIRM": "Xoá"
         },
         "CARD_CONTEXT_MENU": {
+            "PIN": "Ghim hội thoại",
+            "UNPIN": "Bỏ ghim hội thoại",
+            "PIN_ERROR": "Không ghim được hội thoại. Vui lòng thử lại.",
+            "UNPIN_ERROR": "Không bỏ ghim được hội thoại. Vui lòng thử lại.",
+            "PINNED": "Đã ghim",
+            "MORE_ACTIONS": "Thao tác hội thoại",
             "PENDING": "Đánh dấu chưa giải quyết",
             "RESOLVED": "Đánh dấu là đã giải quyết",
             "MARK_AS_UNREAD": "Đánh dấu là chưa đọc",
