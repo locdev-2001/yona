@@ -165,7 +165,7 @@ export default function ConversationCard({
                 isActiveChat ? 'active animate-card-select' : '',
                 selected ? 'selected' : '',
                 isActiveChat || selected ? 'bg-n-surface-selected' : 'hover:bg-n-surface-hover',
-                compact ? 'px-0' : 'px-3',
+                compact ? 'px-0' : 'ps-4 pe-3',
             ]
                 .filter(Boolean)
                 .join(' ')}

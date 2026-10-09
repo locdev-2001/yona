@@ -198,14 +198,14 @@ function SortablePinnedRow({ conversationId, children }: { conversationId: numbe
             ref={setNodeRef}
             data-pinned-row={conversationId}
             style={{ transform: CSS.Translate.toString(transform), transition }}
-            className={`group/pinned relative rounded-lg [@media(hover:hover)]:cursor-grab [@media(hover:hover)]:[&_.conversation]:ps-7 ${isDragging ? 'bg-n-slate-3 [&>*]:invisible' : ''}`}
+            className={`group/pinned relative rounded-lg [@media(hover:hover)]:cursor-grab ${isDragging ? 'bg-n-slate-3 [&>*]:invisible' : ''}`}
             {...listeners}
         >
             {children}
             <span
                 data-pin-drag-handle
                 aria-hidden="true"
-                className="pointer-events-none absolute inset-y-0 left-1.5 w-3 hidden [@media(hover:hover)]:flex items-center justify-center text-n-slate-9 group-hover/pinned:text-n-slate-11"
+                className="pointer-events-none absolute inset-y-0 -left-1.5 w-3 hidden [@media(hover:hover)]:flex items-center justify-center text-n-slate-9 group-hover/pinned:text-n-slate-11"
             >
                 <span className={`${ICONS.dragHandle} size-3`} />
             </span>
