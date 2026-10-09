@@ -7,6 +7,7 @@ import {
     searchCatalog,
 } from '../stickers.mjs';
 import { INVALID_CUSTOM_STICKER } from '../custom-sticker.mjs';
+import { INVALID_ALBUM } from '../send-album.mjs';
 
 function recipientTypeToThreadType(rt) {
     if (rt == null || rt === '') {
@@ -170,6 +171,7 @@ export function registerPersonalMessageRoutes(app, deps) {
                 custom_sticker: req.body?.custom_sticker,
                 mentions: req.body?.mentions,
                 forward: req.body?.forward,
+                album: req.body?.album,
             });
             return res.json({
                 ok: true,
@@ -185,12 +187,15 @@ export function registerPersonalMessageRoutes(app, deps) {
                 msg === 'thread_id required' ||
                 msg === 'thread_id and text or file_url required' ||
                 msg === 'invalid media_kind' ||
-                msg === INVALID_CUSTOM_STICKER
+                msg === INVALID_CUSTOM_STICKER ||
+                msg === INVALID_ALBUM
             ) {
                 return res.status(400).json({ ok: false, message: msg });
             }
             console.error('personal-messages/send', e);
-            return res.status(500).json({ ok: false, message: msg });
+            // Tin nhiều phần hỏng giữa chừng: phần đã tới khách vẫn phải về Laravel để chống echo, thu hồi.
+            const sentSourceIds = Array.isArray(e?.sourceIds) ? e.sourceIds : [];
+            return res.status(500).json({ ok: false, message: msg, source_ids: sentSourceIds });
         }
     });
 

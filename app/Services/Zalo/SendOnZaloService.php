@@ -19,8 +19,8 @@ use Illuminate\Support\Facades\Log;
  * Gửi tin ra Zalo cá nhân qua bridge. Port từ ZaloSendService của nhánh `main`,
  * đặt lại trên khung BaseSendOnChannelService để SendReplyJob gọi như mọi kênh khác.
  *
- * Một tin của lõi có thể thành NHIỀU lượt gọi bridge (mỗi đính kèm một lượt, vì
- * zca chỉ nhận một tệp mỗi lần gửi). Mọi msgId bridge trả về được gom vào
+ * Một tin của lõi có thể thành NHIỀU lượt gọi bridge: nhiều ảnh đi chung MỘT lượt
+ * thành khối album, mỗi tệp khác một lượt. Mọi msgId bridge trả về được gom vào
  * `content_attributes.external_source_ids`; phần đầu tiên là `source_id` chính.
  * Hợp đồng này là thứ IncomingMessageService dùng để dedupe tin dội lại.
  *
@@ -66,6 +66,13 @@ class SendOnZaloService extends BaseSendOnChannelService
     private const GIF_MEDIA_KIND = 'gif';
 
     private const GIF_CONTENT_TYPE = 'image/gif';
+
+    /** Từ hai ảnh tĩnh trở lên thì gửi thành một khối album, như khi chọn nhiều ảnh trong app Zalo. */
+    private const MIN_ALBUM_IMAGES = 2;
+
+    private const IMAGE_MEDIA_KIND = 'image';
+
+    private const ALBUM_TIMING_LABEL = 'album';
 
     /** Bản ghi âm đi loại tin thoại của Zalo (phát ngay trong khung chat) thay vì thẻ tệp âm thanh. */
     private const VOICE_MEDIA_KIND = 'voice';
@@ -138,7 +145,7 @@ class SendOnZaloService extends BaseSendOnChannelService
             $callStartedAt = hrtime(true);
             $outcome = $this->callBridge($channel, $monitor, $part['payload']);
             $this->partTimings[] = [
-                'media_kind' => (string) ($part['payload']['media_kind'] ?? 'text'),
+                'media_kind' => (string) ($part['payload']['media_kind'] ?? (isset($part['payload']['album']) ? self::ALBUM_TIMING_LABEL : 'text')),
                 'bytes' => $part['bytes'],
                 'bridge_ms' => self::elapsedMs($callStartedAt),
             ];
@@ -207,9 +214,9 @@ class SendOnZaloService extends BaseSendOnChannelService
     /**
      * Một phần = một lượt gọi bridge. Sticker của Zalo đi lệnh sticker riêng, sticker
      * kho Yona đi lệnh sticker tự tạo (không gửi đính kèm của nó); tin chữ chuyển tiếp trong
-     * cùng phiên đi lệnh chuyển tiếp gốc; tin có đính kèm thì mỗi tệp một phần, chú
-     * thích + trích dẫn + nhắc tên bám vào tệp đầu tiên (zca gộp caption vào chính
-     * tin đính kèm).
+     * cùng phiên đi lệnh chuyển tiếp gốc; tin có đính kèm thì các ảnh tĩnh (từ hai ảnh)
+     * gộp thành MỘT phần khối album đứng đầu, mỗi tệp còn lại một phần; chú thích +
+     * trích dẫn + nhắc tên bám vào phần đầu tiên (bridge gắn chú thích vào khối/tệp đó).
      *
      * @return list<array{payload: array<string, mixed>, filename: string|null}>
      */
@@ -250,9 +257,7 @@ class SendOnZaloService extends BaseSendOnChannelService
         if ($attachments === [] && $plan->imageUrl() !== null) {
             return [$this->part([
                 ...$thread,
-                'text' => $text,
-                'quote' => $this->quotePayload(),
-                'mentions' => $this->mentionsPayload($channel, $text),
+                ...$this->captionPayload($channel, $text),
                 'file_url' => $plan->imageUrl(),
                 'media_kind' => 'image',
                 'filename' => 'the.png',
@@ -263,31 +268,89 @@ class SendOnZaloService extends BaseSendOnChannelService
         if ($attachments === []) {
             return [$this->part([
                 ...$thread,
-                'text' => $text,
-                'quote' => $this->quotePayload(),
-                'mentions' => $this->mentionsPayload($channel, $text),
+                ...$this->captionPayload($channel, $text),
             ])];
         }
 
-        $parts = [];
+        $caption = $this->captionPayload($channel, $text);
+        $albumImages = $this->albumImages($channel, $attachments);
+        $separateFiles = array_values(array_filter($attachments, fn (Attachment $attachment) => ! in_array($attachment, $albumImages, true)));
+        $parts = $albumImages === [] ? [] : [$this->albumPart([...$thread, ...$caption], $albumImages)];
 
-        foreach ($attachments as $index => $attachment) {
+        foreach ($separateFiles as $attachment) {
             $parts[] = $this->part([
                 ...$thread,
-                'text' => $index === 0 ? $text : null,
-                'quote' => $index === 0 ? $this->quotePayload() : null,
-                'mentions' => $index === 0 ? $this->mentionsPayload($channel, $text) : null,
+                ...($parts === [] ? $caption : []),
                 'file_url' => $this->attachmentUrl($attachment),
                 'media_kind' => $this->mediaKind($channel, $attachment),
-                // Không gửi hai trường này thì khách nhận `zbr-<uuid>.bin` (bridge tự đặt tên tạm).
-                'filename' => $attachment->filename,
-                'content_type' => $attachment->content_type,
+                ...$this->fileDescriptor($attachment),
                 // Bridge dùng đúng trần Yona đã chặn lúc đính kèm, không tự giữ một con số riêng.
                 'max_bytes' => Zalo::MAX_ATTACHMENT_BYTES,
             ], $attachment);
         }
 
         return $parts;
+    }
+
+    /**
+     * Chữ + trích dẫn + nhắc tên của tin: chỉ phần đầu tiên mang, nếu không khách
+     * nhận cùng một câu nhiều lần.
+     *
+     * @return array{text: string|null, quote: array<string, mixed>|null, mentions: list<array{uid: string, pos: int, len: int}>|null}
+     */
+    private function captionPayload(Zalo $channel, ?string $text): array
+    {
+        return [
+            'text' => $text,
+            'quote' => $this->quotePayload(),
+            'mentions' => $this->mentionsPayload($channel, $text),
+        ];
+    }
+
+    /**
+     * Ảnh tĩnh của tin, khi đủ số để gửi thành khối album; ảnh GIF đi đường ảnh
+     * động riêng của Zalo nên không vào khối.
+     *
+     * @param  list<Attachment>  $attachments
+     * @return list<Attachment>
+     */
+    private function albumImages(Zalo $channel, array $attachments): array
+    {
+        $images = array_values(array_filter(
+            $attachments,
+            fn (Attachment $attachment) => $this->mediaKind($channel, $attachment) === self::IMAGE_MEDIA_KIND,
+        ));
+
+        return count($images) >= self::MIN_ALBUM_IMAGES ? $images : [];
+    }
+
+    /**
+     * @param  array<string, mixed>  $thread
+     * @param  list<Attachment>  $images
+     * @return array{payload: array<string, mixed>, filename: string|null, bytes: int|null}
+     */
+    private function albumPart(array $thread, array $images): array
+    {
+        $part = $this->part([
+            ...$thread,
+            'album' => array_map(fn (Attachment $image) => [
+                'file_url' => $this->attachmentUrl($image),
+                ...array_filter($this->fileDescriptor($image), fn ($value) => filled($value)),
+            ], $images),
+            'max_bytes' => Zalo::MAX_ATTACHMENT_BYTES,
+        ]);
+
+        return [...$part, 'bytes' => array_sum(array_map(fn (Attachment $image) => (int) $image->byte_size, $images))];
+    }
+
+    /**
+     * Không gửi hai trường này thì khách nhận `zbr-<uuid>.bin` (bridge tự đặt tên tạm).
+     *
+     * @return array{filename: string|null, content_type: string|null}
+     */
+    private function fileDescriptor(Attachment $attachment): array
+    {
+        return ['filename' => $attachment->filename, 'content_type' => $attachment->content_type];
     }
 
     /**
@@ -409,7 +472,7 @@ class SendOnZaloService extends BaseSendOnChannelService
      */
     private function callBridge(Zalo $channel, ZaloHealthMonitor $monitor, array $payload): array
     {
-        $response = app(ZaloBridgeClient::class)->sendMessage($payload, isset($payload['file_url']));
+        $response = app(ZaloBridgeClient::class)->sendMessage($payload, isset($payload['file_url']) || isset($payload['album']));
 
         if ($response === null) {
             return ['source_ids' => [], 'failure' => $this->failure(self::ERROR_BRIDGE_UNREACHABLE)];
@@ -432,7 +495,8 @@ class SendOnZaloService extends BaseSendOnChannelService
             $channel->markState(Zalo::STATE_SESSION_LOST, 'not_logged_in');
         }
 
-        return ['source_ids' => [], 'failure' => $this->failure($code, $detail)];
+        // Khối album hỏng giữa chừng: bridge vẫn trả msgId các ảnh đã tới khách.
+        return ['source_ids' => $this->sourceIdsFrom($body), 'failure' => $this->failure($code, $detail)];
     }
 
     /**

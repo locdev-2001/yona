@@ -13,6 +13,7 @@ import { Zalo, ThreadType, LoginQRCallbackEventType, CloseReason } from 'zca-js'
 import { registerPersonalMessageRoutes } from './routes/personal-messages.mjs';
 import { zcaReactionCode } from './reaction-icons.mjs';
 import { buildSendMessageContent } from './send-content.mjs';
+import { PartialSendError, parseAlbumItems, sendPhotoAlbum } from './send-album.mjs';
 import { sendForwardOrFallback } from './forward-content.mjs';
 import { stickerSendPayload } from './stickers.mjs';
 import { customStickerLayout, parseCustomSticker, sendCustomSticker } from './custom-sticker.mjs';
@@ -2228,7 +2229,9 @@ async function bridgeSendTextOrMedia(slot, body) {
         messageId: body?.message_id,
         mediaKind: hasFile
             ? String(body?.media_kind || '').trim().toLowerCase()
-            : body?.custom_sticker
+            : Array.isArray(body?.album)
+              ? 'album'
+              : body?.custom_sticker
               ? 'custom_sticker'
               : body?.sticker
                 ? 'sticker'
@@ -2259,6 +2262,7 @@ export async function sendTextOrMediaThroughZca(slot, body, timing) {
         custom_sticker,
         mentions,
         forward,
+        album,
     } = body || {};
     if (!thread_id) {
         throw new Error('thread_id required');
@@ -2298,6 +2302,20 @@ export async function sendTextOrMediaThroughZca(slot, body, timing) {
         const sendResult = await slot.api.sendSticker(stickerPayload, String(thread_id), tt);
         timing.lap('zalo_send');
         return registerAllOutboundSourceIds(slot, sendResult);
+    }
+
+    const albumItems = parseAlbumItems(album);
+    if (albumItems) {
+        return sendAlbumThroughZca(slot, {
+            items: albumItems,
+            text,
+            quote,
+            mentions,
+            maxBytes: resolveMaxFetchBytes(max_bytes),
+            threadId: String(thread_id),
+            threadType: tt,
+            timing,
+        });
     }
 
     if (!hasFile && (text === undefined || text === null)) {
@@ -2343,6 +2361,57 @@ export async function sendTextOrMediaThroughZca(slot, body, timing) {
         return registerAllOutboundSourceIds(slot, sendResult);
     } finally {
         await cleanupTempDownload(tmpPath);
+    }
+}
+
+/**
+ * Nhiều ảnh của một tin → một khối album trên Zalo (send-album.mjs). Tải song
+ * song mọi ảnh trước khi gửi: một ảnh tải hỏng thì cả khối chưa đi, lỗi tải giữ
+ * nguyên mã (`download_failed_*`) để Laravel báo đúng loại lỗi.
+ */
+async function sendAlbumThroughZca(slot, { items, text, quote, mentions, maxBytes, threadId, threadType, timing }) {
+    const downloads = await Promise.allSettled(
+        items.map((item) =>
+            downloadUrlToTemp(item.fileUrl, {
+                allowedHosts: FETCH_ALLOWED_HOSTS,
+                maxBytes,
+                userAgent: ZCA_USER_AGENT,
+                mediaKind: 'image',
+                filenameHint: item.filename,
+                contentTypeHint: item.contentType,
+            })
+        )
+    );
+    const paths = downloads.filter((d) => d.status === 'fulfilled').map((d) => d.value);
+    try {
+        const failedDownload = downloads.find((d) => d.status === 'rejected');
+        if (failedDownload) {
+            throw failedDownload.reason;
+        }
+        timing.lap('download');
+        for (const filePath of paths) {
+            timing.recordBytes((await fs.stat(filePath)).size);
+        }
+        try {
+            const sendResult = await sendPhotoAlbum(slot.api, {
+                paths,
+                text,
+                quote,
+                mentions,
+                threadId,
+                threadType,
+                isGroup: threadType === ThreadType.Group,
+            });
+            timing.lap('zalo_send');
+            return registerAllOutboundSourceIds(slot, sendResult);
+        } catch (error) {
+            if (error instanceof PartialSendError) {
+                error.sourceIds = registerAllOutboundSourceIds(slot, error.sentResult).source_ids;
+            }
+            throw error;
+        }
+    } finally {
+        await Promise.all(paths.map((filePath) => cleanupTempDownload(filePath)));
     }
 }
 

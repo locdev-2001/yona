@@ -4,6 +4,7 @@ import express from 'express';
 import { ThreadType } from 'zca-js';
 import { classifyZcaError, firstSourceId, registerPersonalMessageRoutes } from './personal-messages.mjs';
 import { zcaReactionCode } from '../reaction-icons.mjs';
+import { INVALID_ALBUM } from '../send-album.mjs';
 
 const SEND_SECRET = 'secret-cho-test';
 
@@ -527,4 +528,60 @@ test('sticker: Zalo từ chối → zalo_rejected (502)', async () => {
             assert.deepEqual(res.body, { ok: false, code: 'zalo_rejected', message: 'Invalid category' });
         }
     );
+});
+
+test('/personal-messages/send: chuyển album xuống lớp gửi; album sai khuôn là 400; hỏng giữa chừng trả msgId đã gửi', async () => {
+    const sent = [];
+    const outcomes = [
+        async () => ({ source_id: 'p1', source_ids: ['p1', 'p2'] }),
+        async () => {
+            throw new Error(INVALID_ALBUM);
+        },
+        async () => {
+            throw Object.assign(new Error('Zalo từ chối'), { sourceIds: ['p1'] });
+        },
+    ];
+    const app = express();
+    app.use(express.json());
+    registerPersonalMessageRoutes(app, {
+        checkSendSecret: () => true,
+        getSlot: () => ({ api: {} }),
+        resolveSlot: () => ({ api: {} }),
+        bridgeSendTextOrMedia: async (_slot, body) => {
+            sent.push(body);
+            return outcomes[sent.length - 1]();
+        },
+        ThreadType,
+        zcaReactionCode,
+    });
+    const server = app.listen(0, '127.0.0.1');
+    await new Promise((r) => server.once('listening', r));
+    const originalError = console.error;
+    console.error = () => {};
+    try {
+        const { port } = server.address();
+        const album = [{ file_url: 'https://yona.test/a.jpg' }, { file_url: 'https://yona.test/b.jpg' }];
+        const post = async () => {
+            const res = await fetch(`http://127.0.0.1:${port}/personal-messages/send`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ connection_id: 6, thread_id: '9876543210', text: 'Hai mẫu', album }),
+            });
+            return { status: res.status, body: await res.json() };
+        };
+
+        const ok = await post();
+        assert.equal(ok.status, 200);
+        assert.deepEqual(sent[0].album, album);
+        assert.deepEqual(ok.body.source_ids, ['p1', 'p2']);
+
+        assert.equal((await post()).status, 400);
+
+        const partial = await post();
+        assert.equal(partial.status, 500);
+        assert.deepEqual(partial.body.source_ids, ['p1']);
+    } finally {
+        console.error = originalError;
+        server.close();
+    }
 });

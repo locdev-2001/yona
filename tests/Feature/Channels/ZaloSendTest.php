@@ -309,10 +309,9 @@ it('không đếm tin trả lời trong cửa sổ hội thoại vào số tin c
 
 // ── Lô 3: mọi đính kèm đều đi, tên tệp thật, lỗi có cấu trúc, thử lại ──
 
-it('gửi MỌI đính kèm của một tin và lưu đủ mọi source_id', function () {
+it('nhiều ảnh của một tin đi thành MỘT khối album kèm chú thích, tệp khác đi riêng, lưu đủ mọi source_id', function () {
     fakeZaloSendBridge([zaloBridgePattern('personal-messages/send') => Http::sequence()
-        ->push(['ok' => true, 'source_ids' => ['msg-a', 'msg-a-caption']])
-        ->push(['ok' => true, 'source_id' => 'msg-b'])
+        ->push(['ok' => true, 'source_id' => 'msg-a', 'source_ids' => ['msg-a', 'msg-b']])
         ->push(['ok' => true, 'source_id' => 'msg-c'])]);
 
     $message = zaloOutgoingWithFiles($this->conversation, [
@@ -323,18 +322,56 @@ it('gửi MỌI đính kèm của một tin và lưu đủ mọi source_id', fun
 
     $payloads = zaloSendPayloads();
 
-    expect($payloads)->toHaveCount(3)
-        // Chú thích chỉ đi cùng tệp đầu — nếu không tin sẽ ra ba lần cùng một câu.
+    expect($payloads)->toHaveCount(2)
         ->and($payloads[0]['text'])->toBe('Ba tệp nhé')
+        ->and($payloads[0])->not->toHaveKey('file_url')
+        ->and($payloads[0]['max_bytes'])->toBe(Zalo::MAX_ATTACHMENT_BYTES)
+        ->and(collect($payloads[0]['album'])->pluck('filename')->all())->toBe(['a.png', 'b.png'])
+        ->and(collect($payloads[0]['album'])->pluck('content_type')->all())->toBe(['image/png', 'image/png'])
+        ->and(collect($payloads[0]['album'])->every(fn (array $item) => filled($item['file_url'])))->toBeTrue()
+        // Chú thích chỉ đi cùng khối ảnh — nếu không tin sẽ ra hai lần cùng một câu.
         ->and($payloads[1])->not->toHaveKey('text')
-        ->and($payloads[2])->not->toHaveKey('text')
-        ->and(collect($payloads)->pluck('filename')->all())->toBe(['a.png', 'b.png', 'c.pdf']);
+        ->and($payloads[1]['filename'])->toBe('c.pdf');
 
     $message->refresh();
 
-    expect($message->content_attributes['external_source_ids'])->toBe(['msg-a', 'msg-a-caption', 'msg-b', 'msg-c'])
+    expect($message->content_attributes['external_source_ids'])->toBe(['msg-a', 'msg-b', 'msg-c'])
         ->and($message->source_id)->toBe('msg-a')
         ->and($message->status)->not->toBe(Message::STATUSES['failed']);
+});
+
+it('ảnh GIF không vào khối album, đi riêng như ảnh động; một ảnh tĩnh thì gửi như ảnh đơn', function () {
+    fakeZaloSendBridge();
+
+    zaloOutgoingWithFiles($this->conversation, [
+        ['path' => 'zalo/a.png', 'filename' => 'a.png', 'content_type' => 'image/png', 'file_type' => Attachment::FILE_TYPE_IMAGE],
+        ['path' => 'zalo/b.gif', 'filename' => 'b.gif', 'content_type' => 'image/gif', 'file_type' => Attachment::FILE_TYPE_IMAGE],
+    ], 'Ảnh động nè');
+
+    $payloads = zaloSendPayloads();
+
+    expect($payloads)->toHaveCount(2)
+        ->and(collect($payloads)->every(fn (array $payload) => ! array_key_exists('album', $payload)))->toBeTrue()
+        ->and(collect($payloads)->pluck('media_kind')->all())->toBe(['image', 'gif'])
+        ->and($payloads[0]['text'])->toBe('Ảnh động nè');
+});
+
+it('khối album hỏng giữa chừng vẫn giữ msgId các ảnh đã tới khách', function () {
+    fakeZaloSendBridge([zaloBridgePattern('personal-messages/send') => Http::response(
+        ['ok' => false, 'message' => 'Zalo từ chối', 'source_ids' => ['msg-a']], 500
+    )]);
+
+    $message = zaloOutgoingWithFiles($this->conversation, [
+        ['path' => 'zalo/a.png', 'filename' => 'a.png', 'content_type' => 'image/png', 'file_type' => Attachment::FILE_TYPE_IMAGE],
+        ['path' => 'zalo/b.png', 'filename' => 'b.png', 'content_type' => 'image/png', 'file_type' => Attachment::FILE_TYPE_IMAGE],
+    ]);
+
+    $message->refresh();
+
+    expect($message->status)->toBe(Message::STATUSES['failed'])
+        ->and($message->source_id)->toBe('msg-a')
+        ->and($message->content_attributes['external_source_ids'])->toBe(['msg-a'])
+        ->and($message->content_attributes['external_error']['code'])->toBe(SendOnZaloService::ERROR_ZALO_REJECTED);
 });
 
 it('tin có tệp đã lưu được đẩy ngay vào hàng đợi media riêng, không đứng chờ trễ cố định', function () {
@@ -365,15 +402,15 @@ it('ghi một dòng log thời gian từng chặng và gửi kèm message_id đ�
         ['path' => 'zalo/b.jpg', 'filename' => 'b.jpg', 'content_type' => 'image/jpeg', 'file_type' => Attachment::FILE_TYPE_IMAGE],
     ]);
 
-    expect(collect(zaloSendPayloads())->pluck('message_id')->all())->toBe([$message->id, $message->id]);
+    expect(collect(zaloSendPayloads())->pluck('message_id')->all())->toBe([$message->id]);
 
     Log::shouldHaveReceived('info')->once()->withArgs(fn (string $event, array $context) => $event === 'zalo.send.timing'
         && $context['message_id'] === $message->id
         && $context['queue_wait_ms'] === 0
         && $context['failure'] === null
         && is_int($context['total_ms'])
-        && collect($context['parts'])->pluck('media_kind')->all() === ['image', 'image']
-        && collect($context['parts'])->pluck('bytes')->all() === [2048, 2048]
+        && collect($context['parts'])->pluck('media_kind')->all() === ['album']
+        && collect($context['parts'])->pluck('bytes')->all() === [4096]
         && collect($context['parts'])->every(fn (array $part) => is_int($part['bridge_ms']) && $part['bridge_ms'] >= 0));
 });
 
@@ -598,7 +635,7 @@ function zaloReplyTargetWithSnapshot(Conversation $conversation, array $snapshot
     ]);
 }
 
-it('chỉ gắn quote vào phần đầu khi trả lời kèm nhiều tệp', function () {
+it('trả lời trích dẫn kèm nhiều ảnh: trích dẫn đi cùng khối album', function () {
     fakeZaloSendBridge();
     $quoted = zaloReplyTargetWithSnapshot($this->conversation);
 
@@ -618,10 +655,11 @@ it('chỉ gắn quote vào phần đầu khi trả lời kèm nhiều tệp', fu
 
     $payloads = zaloSendPayloads();
 
-    expect($payloads)->toHaveCount(2)
+    // Hai ảnh thành một khối album: trích dẫn đi cùng khối, bridge tách chữ mang trích dẫn ra trước.
+    expect($payloads)->toHaveCount(1)
         ->and($payloads[0]['text'])->toBe('Mẫu đây ạ')
         ->and($payloads[0]['quote']['msgId'])->toBe('msg-zalo-quoted')
-        ->and($payloads[1])->not->toHaveKey('quote');
+        ->and($payloads[0]['album'])->toHaveCount(2);
 });
 
 it('gửi không trích dẫn khi tin gốc là bình chọn nhóm', function () {
@@ -732,7 +770,7 @@ it('tin có hai tệp: chỉ phần đầu mang chú thích và nhắc tên', fu
     ]);
     $message->pendingAttachments = [
         new Attachment(['account_id' => $conversation->account_id, 'file_type' => Attachment::FILE_TYPE_IMAGE, 'path' => 'zalo/a.png', 'filename' => 'a.png', 'content_type' => 'image/png', 'byte_size' => 10]),
-        new Attachment(['account_id' => $conversation->account_id, 'file_type' => Attachment::FILE_TYPE_IMAGE, 'path' => 'zalo/b.png', 'filename' => 'b.png', 'content_type' => 'image/png', 'byte_size' => 10]),
+        new Attachment(['account_id' => $conversation->account_id, 'file_type' => Attachment::FILE_TYPE_FILE, 'path' => 'zalo/b.pdf', 'filename' => 'b.pdf', 'content_type' => 'application/pdf', 'byte_size' => 10]),
     ];
     $message->save();
 
@@ -743,6 +781,32 @@ it('tin có hai tệp: chỉ phần đầu mang chú thích và nhắc tên', fu
         ->and($payloads[0]['mentions'])->toBe([['uid' => '555', 'pos' => 0, 'len' => 5]])
         ->and($payloads[1])->not->toHaveKey('mentions')
         ->and($payloads[1])->not->toHaveKey('text');
+});
+
+it('nhóm: khối album nhiều ảnh mang chú thích và nhắc tên', function () {
+    fakeZaloSendBridge();
+    $conversation = zaloGroupConversation($this->inbox);
+
+    $message = new Message([
+        'account_id' => $conversation->account_id,
+        'inbox_id' => $conversation->inbox_id,
+        'conversation_id' => $conversation->id,
+        'message_type' => Message::TYPE_OUTGOING,
+        'content' => '@Bình mẫu mới',
+        'content_attributes' => ['mentions' => [['external_id' => '555', 'name' => 'Bình', 'offset' => 0]]],
+    ]);
+    $message->pendingAttachments = [
+        new Attachment(['account_id' => $conversation->account_id, 'file_type' => Attachment::FILE_TYPE_IMAGE, 'path' => 'zalo/a.png', 'filename' => 'a.png', 'content_type' => 'image/png', 'byte_size' => 10]),
+        new Attachment(['account_id' => $conversation->account_id, 'file_type' => Attachment::FILE_TYPE_IMAGE, 'path' => 'zalo/b.jpg', 'filename' => 'b.jpg', 'content_type' => 'image/jpeg', 'byte_size' => 10]),
+    ];
+    $message->save();
+
+    $payloads = zaloSendPayloads();
+
+    expect($payloads)->toHaveCount(1)
+        ->and($payloads[0]['text'])->toBe('@Bình mẫu mới')
+        ->and($payloads[0]['mentions'])->toBe([['uid' => '555', 'pos' => 0, 'len' => 5]])
+        ->and($payloads[0]['album'])->toHaveCount(2);
 });
 
 it('trả lời trích dẫn kèm nhắc tên: phần chữ mang cả quote lẫn mentions', function () {

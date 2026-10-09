@@ -139,14 +139,15 @@ it('ghi bí danh ngay sau mỗi phần chứ không đợi hết vòng gửi', f
         'content' => 'Ba tệp nhé',
     ]);
 
+    // Tệp tài liệu: mỗi tệp một lượt gọi bridge (ảnh thì gộp chung một khối album).
     $message->pendingAttachments = array_map(fn (string $name) => new Attachment([
         'account_id' => $conversation->account_id,
-        'file_type' => Attachment::FILE_TYPE_IMAGE,
+        'file_type' => Attachment::FILE_TYPE_FILE,
         'path' => "zalo/{$name}",
         'filename' => $name,
-        'content_type' => 'image/png',
+        'content_type' => 'application/pdf',
         'byte_size' => 2048,
-    ]), ['a.png', 'b.png', 'c.png']);
+    ]), ['a.pdf', 'b.pdf', 'c.pdf']);
 
     $message->save();
 
@@ -165,9 +166,10 @@ it('gộp tin ma trùng source_id vào tin gốc sau khi gửi xong', function (
     ]);
     $ghost->setReaction('9876543210', '👍');
 
-    Http::fake([zaloBridgePattern('personal-messages/send') => Http::sequence()
-        ->push(['ok' => true, 'source_id' => 'msg-a'])
-        ->push(['ok' => true, 'source_id' => 'msg-b'])]);
+    // Hai ảnh đi chung một khối album: một lượt gọi bridge trả msgId của cả hai ảnh.
+    Http::fake([zaloBridgePattern('personal-messages/send') => Http::response(
+        ['ok' => true, 'source_id' => 'msg-a', 'source_ids' => ['msg-a', 'msg-b']]
+    )]);
 
     $message = new Message([
         'account_id' => $conversation->account_id,

@@ -17,7 +17,7 @@ function isSendableQuote(quote) {
     return quote !== null && typeof quote === 'object' && !Array.isArray(quote) && quote.msgId != null;
 }
 
-function captionOf(text) {
+export function captionOf(text) {
     return text != null && String(text).trim() !== '' ? String(text) : '';
 }
 

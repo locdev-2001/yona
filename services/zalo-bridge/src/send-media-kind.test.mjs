@@ -138,3 +138,78 @@ test('media_kind=audio: tệp âm thanh tải lên vẫn gửi dạng tệp, kh�
 
     assert.deepEqual(callNames(), ['sendMessage']);
 });
+
+function fakeAlbumSlot({ failOnPhotoRequest = null } = {}) {
+    const uploads = [];
+    const photoRequests = [];
+    let nextMsgId = 9100;
+    const utils = {
+        encodeAES: (plain) => `enc(${plain})`,
+        makeURL: (base, params) => `${base}?${new URLSearchParams(params)}`,
+        request: async (url, options) => {
+            if (failOnPhotoRequest === photoRequests.length) {
+                throw Object.assign(new Error('Zalo từ chối'), { name: 'ZcaApiError' });
+            }
+            photoRequests.push({ url, params: JSON.parse(options.body.get('params').slice('enc('.length, -1)) });
+            return {};
+        },
+        resolve: async () => ({ msgId: nextMsgId++ }),
+    };
+    const api = {
+        zpwServiceMap: { file: ['https://files.zalo.test'] },
+        custom(name, callback) {
+            Object.defineProperty(api, name, { value: (props) => callback({ ctx: {}, utils, props }) });
+        },
+        uploadAttachment: async (paths) => {
+            uploads.push(paths);
+            return paths.map((filePath) => ({ fileType: 'image', photoId: filePath, width: 1, height: 1, totalSize: 1 }));
+        },
+        sendMessage: async () => {
+            throw new Error('album không được đi sendMessage');
+        },
+    };
+
+    return { slot: { api, outboundEchoIds: new Map() }, uploads, photoRequests };
+}
+
+function albumBody() {
+    return {
+        thread_id: THREAD_ID,
+        thread_type: 0,
+        text: 'Hai mẫu mới',
+        album: [
+            { file_url: fileUrl, filename: 'mau-1.jpg', content_type: 'image/jpeg' },
+            { file_url: fileUrl, filename: 'mau-2.jpg', content_type: 'image/jpeg' },
+        ],
+        message_id: 43,
+    };
+}
+
+test('album: tải mọi ảnh, gửi một khối có chú thích, mọi msgId vào bộ chống echo, dọn tệp tạm', async () => {
+    const { slot, uploads, photoRequests } = fakeAlbumSlot();
+
+    const result = await sendTextOrMediaThroughZca(slot, albumBody(), timing);
+
+    assert.equal(uploads.length, 1);
+    assert.deepEqual(uploads[0].map((filePath) => path.basename(filePath)), ['mau-1.jpg', 'mau-2.jpg']);
+    assert.deepEqual(
+        photoRequests.map((request) => [request.params.idInGroup, request.params.desc]),
+        [
+            [0, 'Hai mẫu mới'],
+            [1, ''],
+        ]
+    );
+    assert.deepEqual(result, { source_id: '9100', source_ids: ['9100', '9101'] });
+    assert.ok(slot.outboundEchoIds.has('9100') && slot.outboundEchoIds.has('9101'));
+    assert.ok(uploads[0].every((filePath) => !existsSync(filePath)), 'tệp tạm đã dọn');
+});
+
+test('album hỏng giữa khối: lỗi mang msgId ảnh đã gửi, ảnh đó vẫn vào bộ chống echo', async () => {
+    const { slot } = fakeAlbumSlot({ failOnPhotoRequest: 1 });
+
+    await assert.rejects(sendTextOrMediaThroughZca(slot, albumBody(), timing), (error) => {
+        assert.deepEqual(error.sourceIds, ['9100']);
+        return true;
+    });
+    assert.ok(slot.outboundEchoIds.has('9100'));
+});
