@@ -133,15 +133,17 @@ class SearchService
     }
 
     /**
-     * Tin khớp từ khoá mới nhất của từng hội thoại, trong phạm vi tin người tìm
-     * được xem — mục "Hội thoại" của ô tìm trong danh sách.
+     * Tin trò chuyện khớp từ khoá mới nhất của từng hội thoại (bỏ tin hoạt động hệ
+     * thống), trong phạm vi tin người tìm được xem — mục "Hội thoại" của ô tìm
+     * trong danh sách.
      *
      * @return Builder<Message>
      */
     public function latestMatchedMessages(): Builder
     {
         return $this->permittedMessages()
-            ->whereIn('messages.id', $this->engine()->latestMatchedMessageIds($this->searchQuery(SearchTarget::Messages)));
+            ->where('messages.message_type', '!=', Message::TYPE_ACTIVITY)
+            ->whereIn('messages.id', $this->engine()->latestMatchedMessageIds($this->searchQuery(SearchTarget::Messages, conversationMessagesOnly: true)));
     }
 
     /** @return Collection<int, Message> */
@@ -188,8 +190,12 @@ class SearchService
      * người tìm được xem; tin và tệp bỏ lọc hộp thư khi người tìm xem được mọi hộp
      * thư, bộ lọc nâng cao thu hẹp về đúng một hộp thư được phép.
      */
-    public function searchQuery(SearchTarget $target, ?int $page = null, int $perPage = self::RESULTS_PER_PAGE): SearchQuery
-    {
+    public function searchQuery(
+        SearchTarget $target,
+        ?int $page = null,
+        int $perPage = self::RESULTS_PER_PAGE,
+        bool $conversationMessagesOnly = false,
+    ): SearchQuery {
         $advanced = $this->advancedSearchEnabled();
         $messageBound = $target->isMessageBound();
         [$senderType, $senderId] = $advanced && $messageBound ? $this->parseFromParam($this->params['from'] ?? null) : [null, null];
@@ -208,6 +214,7 @@ class SearchService
             since: $advanced ? $this->capSinceTime($this->params['since'] ?? null) : null,
             until: $advanced ? $this->capUntilTime($this->params['until'] ?? null) : null,
             leadContactsOnly: $this->currentAccount->featureEnabled('crm_v2'),
+            conversationMessagesOnly: $conversationMessagesOnly,
         );
     }
 

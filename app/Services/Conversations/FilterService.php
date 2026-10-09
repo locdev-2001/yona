@@ -83,15 +83,6 @@ class FilterService extends BaseFilterService
     }
 
     /** @return array<string, int> */
-    public function searchCounts(): array
-    {
-        $conversations = $this->listScope();
-        ConversationFinder::filterBySearchQuery($conversations, $this->user, $this->account, $this->searchQuery);
-
-        return self::countPayload(...$this->counts($conversations));
-    }
-
-    /** @return array<string, int> */
     private static function countPayload(int $mineCount, int $unassignedCount, int $allCount): array
     {
         return [

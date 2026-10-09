@@ -9,8 +9,10 @@ use App\Models\Message;
 use App\Models\User;
 use App\Services\SearchService;
 use App\Support\SearchTerm;
+use Closure;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Ô tìm trong cột danh sách hội thoại, chia hai mục trong đúng phạm vi danh sách
@@ -18,7 +20,7 @@ use Illuminate\Database\Eloquent\Collection;
  * - Liên hệ: mỗi khách khớp từ khoá một dòng, mang hội thoại gần nhất của khách
  *   trong phạm vi; trùng khít → đầu chuỗi/đầu từ → một phần, hoà thì hoạt động
  *   gần nhất trước. Chỉ ở trang đầu, có trần.
- * - Hội thoại: hội thoại có tin khớp, kèm tin khớp mới nhất (`matched_message_id`),
+ * - Hội thoại: hội thoại có tin trò chuyện khớp (bỏ tin hoạt động hệ thống), kèm tin khớp mới nhất (`matched_message_id`),
  *   xếp theo tin khớp mới nhất, phân trang. Gõ đúng mã hội thoại ("#12") thì hội
  *   thoại đó đứng đầu trang đầu.
  * Engine tìm kiếm quyết "khớp hay không"; lớp này chỉ giao với phạm vi và xếp.
@@ -79,21 +81,75 @@ final class ListSearchService
         ];
     }
 
-    /** @return Collection<int, Conversation> */
-    private function contactMatches(): Collection
+    /**
+     * Số đếm tab khi đang tìm: mỗi tab đếm đúng số hội thoại hai mục hiện ở tab đó
+     * (không tính trần mục Liên hệ và phân trang).
+     *
+     * @param  Closure(string): Builder<Conversation>  $scopeForTab  phạm vi danh sách ở một tab (all, me, assigned, unassigned)
+     * @return array{mine_count: int, assigned_count: int, unassigned_count: int, all_count: int}
+     */
+    public static function tabCounts(User $user, Account $account, string $keyword, Closure $scopeForTab): array
     {
-        $latestPerContact = $this->listScope->clone()
+        $count = fn (string $tab) => (new self($user, $account, $scopeForTab($tab), $keyword))->matchCount();
+
+        return [
+            'mine_count' => $count('me'),
+            'assigned_count' => $count('assigned'),
+            'unassigned_count' => $count('unassigned'),
+            'all_count' => $count('all'),
+        ];
+    }
+
+    // Số hội thoại khác nhau mà hai mục sẽ hiện trong phạm vi này.
+    public function matchCount(): int
+    {
+        if ($this->term->raw() === '') {
+            return 0;
+        }
+
+        $shown = $this->latestConversationPerContact()
+            ->union($this->conversationsWithMatchedMessage()->select('conversations.id'));
+        $displayId = $this->requestedDisplayId();
+
+        if ($displayId !== null) {
+            $shown->union($this->listScope->clone()->where('conversations.display_id', $displayId)->select('conversations.id'));
+        }
+
+        return DB::query()->fromSub($shown, 'shown')->count();
+    }
+
+    // Mỗi khách khớp từ khoá một hội thoại: hội thoại hoạt động gần nhất của khách trong phạm vi.
+    /** @return Builder<Conversation> */
+    private function latestConversationPerContact(): Builder
+    {
+        return $this->listScope->clone()
             ->whereIn('conversations.id', $this->search->conversationIdsMatchingContact())
             ->reorder()
             ->selectRaw('DISTINCT ON (conversations.contact_id) conversations.id')
             ->orderBy('conversations.contact_id')
             ->orderByRaw('conversations.last_activity_at DESC NULLS LAST')
             ->orderByDesc('conversations.id');
+    }
 
+    // Hội thoại trong phạm vi có tin trò chuyện khớp, nối sẵn tin khớp mới nhất (bảng `matched`).
+    /** @return Builder<Conversation> */
+    private function conversationsWithMatchedMessage(): Builder
+    {
+        $matched = $this->search->latestMatchedMessages()
+            ->select('messages.conversation_id', 'messages.id as '.self::MATCHED_MESSAGE_ID, 'messages.created_at as matched_at');
+
+        return $this->listScope->clone()
+            ->reorder()
+            ->joinSub($matched, 'matched', 'matched.conversation_id', '=', 'conversations.id');
+    }
+
+    /** @return Collection<int, Conversation> */
+    private function contactMatches(): Collection
+    {
         $query = Conversation::query()
             ->select('conversations.*')
             ->join('contacts', 'contacts.id', '=', 'conversations.contact_id')
-            ->whereIn('conversations.id', $latestPerContact);
+            ->whereIn('conversations.id', $this->latestConversationPerContact());
 
         $rank = $this->term->leadingMatchRank(['contacts.name'], ['contacts.email', 'contacts.phone_number', 'contacts.identifier']);
 
@@ -111,13 +167,8 @@ final class ListSearchService
     /** @return array{0: Collection<int, Conversation>, 1: bool} */
     private function messageMatches(): array
     {
-        $matched = $this->search->latestMatchedMessages()
-            ->select('messages.conversation_id', 'messages.id as '.self::MATCHED_MESSAGE_ID, 'messages.created_at as matched_at');
-
-        $query = $this->listScope->clone()
-            ->joinSub($matched, 'matched', 'matched.conversation_id', '=', 'conversations.id')
+        $query = $this->conversationsWithMatchedMessage()
             ->select('conversations.*', 'matched.'.self::MATCHED_MESSAGE_ID)
-            ->reorder()
             ->orderByDesc('matched.matched_at')
             ->orderByDesc('matched.'.self::MATCHED_MESSAGE_ID);
 

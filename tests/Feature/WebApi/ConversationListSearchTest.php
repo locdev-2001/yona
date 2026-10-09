@@ -202,6 +202,59 @@ it('đường tìm chia mục ra đúng tập hội thoại của đường lọ
     }
 });
 
+it('mục hội thoại chỉ lấy tin nhắn thật, bỏ tin hoạt động hệ thống khớp từ khoá', function () {
+    $onlyActivity = ($this->conversationOf)(['name' => 'Khách A']);
+    Message::factory()->create([
+        'account_id' => $this->account->id, 'inbox_id' => $this->inbox->id, 'conversation_id' => $onlyActivity->id,
+        'message_type' => Message::TYPE_ACTIVITY, 'content' => 'Phước Lộc tạo nhắc hẹn mới', 'created_at' => now(),
+    ]);
+    $realBehindActivity = ($this->conversationOf)(['name' => 'Khách B']);
+    $realMatch = ($this->messageIn)($realBehindActivity, 'Lộc ơi, mai giao nhé', now()->subHour());
+    Message::factory()->create([
+        'account_id' => $this->account->id, 'inbox_id' => $this->inbox->id, 'conversation_id' => $realBehindActivity->id,
+        'message_type' => Message::TYPE_ACTIVITY, 'content' => 'Lộc đã đánh dấu xử lý xong', 'created_at' => now(),
+    ]);
+    $privateNote = ($this->conversationOf)(['name' => 'Khách C']);
+    $note = Message::factory()->create([
+        'account_id' => $this->account->id, 'inbox_id' => $this->inbox->id, 'conversation_id' => $privateNote->id,
+        'message_type' => Message::TYPE_OUTGOING, 'private' => true, 'content' => 'ghi chú: gọi lại cho Lộc',
+    ]);
+
+    $result = ($this->search)('q='.urlencode('lộc'));
+    $matchedIds = collect($result['conversations'])->mapWithKeys(fn (array $row) => [$row['id'] => $row['matched_message']['id']]);
+
+    expect($matchedIds->all())->toEqual([
+        $realBehindActivity->display_id => $realMatch->id,
+        $privateNote->display_id => $note->id,
+    ]);
+});
+
+it('số đếm tab khi tìm bằng số hội thoại hiện ở hai mục, theo từng tab', function () {
+    $contact = Contact::factory()->create(['account_id' => $this->account->id, 'name' => 'Mít Ngọt', 'email' => null, 'phone_number' => null, 'identifier' => null]);
+    $olderOfContact = ($this->conversationOf)([], ['last_activity_at' => now()->subDays(3), 'assignee_id' => $this->admin->id], $contact);
+    ($this->conversationOf)([], ['last_activity_at' => now()], $contact);
+    $byMessage = ($this->conversationOf)(['name' => 'Khách quen'], ['assignee_id' => $this->admin->id]);
+    ($this->messageIn)($byMessage, 'còn mít không shop');
+    $onlyActivity = ($this->conversationOf)(['name' => 'Khách lạ']);
+    Message::factory()->create([
+        'account_id' => $this->account->id, 'inbox_id' => $this->inbox->id, 'conversation_id' => $onlyActivity->id,
+        'message_type' => Message::TYPE_ACTIVITY, 'content' => 'nhắc hẹn mua mít',
+    ]);
+
+    $shownIn = fn (array $result) => collect($result['contacts'])->pluck('id')
+        ->merge(collect($result['conversations'])->pluck('id'))->unique()->count();
+
+    $all = ($this->search)('q=mit');
+    $mine = ($this->search)('q=mit&assignee_type=me');
+    $unassigned = ($this->search)('q=mit&assignee_type=unassigned');
+
+    expect($all['meta']['all_count'])->toBe($shownIn($all))->toBe(2)
+        ->and($all['meta']['mine_count'])->toBe($shownIn($mine))->toBe(2)
+        ->and(collect($mine['contacts'])->pluck('id')->all())->toBe([$olderOfContact->display_id])
+        ->and($all['meta']['unassigned_count'])->toBe($shownIn($unassigned))->toBe(1)
+        ->and($all['meta']['assigned_count'])->toBe(2);
+});
+
 it('tìm trong danh sách lọc nâng cao giữ đúng bộ lọc', function () {
     $open = ($this->conversationOf)(['name' => 'Mít mở']);
     ($this->conversationOf)(['name' => 'Mít xong'], ['status' => Conversation::STATUS_RESOLVED]);

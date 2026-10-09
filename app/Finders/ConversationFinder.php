@@ -109,12 +109,27 @@ class ConversationFinder
      *
      * @return Builder<Conversation>
      */
-    public function listScope(): Builder
+    public function listScope(?string $assigneeType = null): Builder
     {
         $this->applyListFilters();
-        $this->filterByAssigneeType();
+        self::applyAssigneeTab($this->conversations, $assigneeType ?? $this->params['assignee_type'] ?? null, $this->currentUser);
 
         return $this->conversations;
+    }
+
+    /**
+     * Tab Của tôi / Chưa gán / Đã gán của danh sách; tab khác (Tất cả) không lọc.
+     *
+     * @param  Builder<Conversation>  $conversations
+     */
+    public static function applyAssigneeTab(Builder $conversations, mixed $assigneeType, User $user): void
+    {
+        match ($assigneeType) {
+            'me' => $conversations->assignedTo($user),
+            'unassigned' => $conversations->unassigned(),
+            'assigned' => $conversations->assigned(),
+            default => $conversations,
+        };
     }
 
     private function setUp(): void
@@ -250,12 +265,7 @@ class ConversationFinder
 
     private function filterByAssigneeType(): void
     {
-        match ($this->params['assignee_type'] ?? null) {
-            'me' => $this->conversations->assignedTo($this->currentUser),
-            'unassigned' => $this->conversations->unassigned(),
-            'assigned' => $this->conversations->assigned(),
-            default => $this->conversations,
-        };
+        self::applyAssigneeTab($this->conversations, $this->params['assignee_type'] ?? null, $this->currentUser);
     }
 
     /** @return array<string, int> */

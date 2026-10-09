@@ -139,7 +139,9 @@ it('gõ không dấu ra chữ có dấu, kể cả đ: "dong" ↔ "đồng", "da
 });
 
 it('mọi lượt tìm bị giới hạn trong account và hộp thư được phép', function () {
-    $ownMessage = ($this->message)('báo giá');
+    $ownMessage = ($this->message)('báo giá', now()->subMinute());
+    $activityMessage = ($this->message)('đã gửi báo giá tự động');
+    $activityMessage->forceFill(['message_type' => Message::TYPE_ACTIVITY])->saveQuietly();
     $otherInbox = Inbox::factory()->create(['account_id' => $this->account->id, 'enable_auto_assignment' => false]);
     $otherInboxConversation = Conversation::factory()->create([
         'account_id' => $this->account->id, 'inbox_id' => $otherInbox->id, 'contact_id' => $this->contact->id,
@@ -156,14 +158,14 @@ it('mọi lượt tìm bị giới hạn trong account và hộp thư được p
         'account_id' => $foreignAccount->id, 'inbox_id' => $foreignInbox->id, 'conversation_id' => $foreignConversation->id, 'content' => 'báo giá',
     ]);
     indexInMeilisearch([
-        $ownMessage, $otherInboxMessage, $foreignMessage,
+        $ownMessage, $activityMessage, $otherInboxMessage, $foreignMessage,
         $this->conversation, $otherInboxConversation, $foreignConversation, $this->contact, $foreignContact,
     ]);
 
     $inboxScope = ['inboxIds' => [$this->inbox->id]];
 
-    expect(meilisearchIds(SearchTarget::Messages, 'bao gia', $this->account->id))->toEqualCanonicalizing([$ownMessage->id, $otherInboxMessage->id])
-        ->and(meilisearchIds(SearchTarget::Messages, 'bao gia', $this->account->id, $inboxScope))->toBe([$ownMessage->id])
+    expect(meilisearchIds(SearchTarget::Messages, 'bao gia', $this->account->id))->toEqualCanonicalizing([$ownMessage->id, $activityMessage->id, $otherInboxMessage->id])
+        ->and(meilisearchIds(SearchTarget::Messages, 'bao gia', $this->account->id, $inboxScope))->toEqualCanonicalizing([$ownMessage->id, $activityMessage->id])
         ->and(meilisearchIds(SearchTarget::Conversations, 'hanh', $this->account->id, $inboxScope))->toBe([$this->conversation->id])
         ->and(meilisearchIds(SearchTarget::Contacts, 'hanh', $this->account->id))->toBe([$this->contact->id])
         ->and(meilisearchIds(SearchTarget::Messages, 'bao gia', $this->account->id, ['inboxIds' => []]))->toBe([])
@@ -181,7 +183,7 @@ it('mọi lượt tìm bị giới hạn trong account và hộp thư được p
         )))->toBe([])
         ->and(app(SearchEngine::class)->latestMatchedMessageIds(new SearchQuery(
             target: SearchTarget::Messages, accountId: $this->account->id, keyword: 'bao gia',
-            lookbackStart: now()->subYear(), inboxIds: [$this->inbox->id],
+            lookbackStart: now()->subYear(), inboxIds: [$this->inbox->id], conversationMessagesOnly: true,
         )))->toBe([$ownMessage->id]);
 });
 

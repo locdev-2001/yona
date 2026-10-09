@@ -17,7 +17,7 @@ final class MeilisearchDocuments
 {
     private const EPOCH_SQL = 'extract(epoch from %s)::bigint';
 
-    private const INTEGER_FIELDS = ['id', 'account_id', 'inbox_id', 'conversation_id', 'contact_id', 'message_id', 'sender_id', 'created_at', 'last_activity_at'];
+    private const INTEGER_FIELDS = ['id', 'account_id', 'inbox_id', 'conversation_id', 'contact_id', 'message_id', 'message_type', 'sender_id', 'created_at', 'last_activity_at'];
 
     // Số điện thoại, mã định danh, mã hội thoại là chuỗi tìm nguyên văn.
     private const TEXT_FIELDS = ['display_id', 'phone_number', 'contact_phone_number', 'identifier', 'contact_identifier'];
@@ -37,7 +37,7 @@ final class MeilisearchDocuments
     public static function filterableAttributes(SearchTarget $target): array
     {
         return match ($target) {
-            SearchTarget::Messages => ['account_id', 'inbox_id', 'conversation_id', 'sender_type', 'sender_id', 'created_at'],
+            SearchTarget::Messages => ['account_id', 'inbox_id', 'conversation_id', 'message_type', 'sender_type', 'sender_id', 'created_at'],
             SearchTarget::Files => ['account_id', 'inbox_id', 'conversation_id', 'message_id', 'sender_type', 'sender_id', 'created_at'],
             SearchTarget::Conversations => ['account_id', 'inbox_id', 'contact_id', 'created_at', 'last_activity_at'],
             SearchTarget::Contacts => ['account_id', 'is_lead', 'created_at', 'last_activity_at'],
@@ -66,7 +66,7 @@ final class MeilisearchDocuments
         return match ($target) {
             SearchTarget::Messages => $documents->select(
                 'messages.id', 'messages.account_id', 'messages.inbox_id', 'messages.conversation_id',
-                'messages.sender_type', 'messages.sender_id', 'messages.content',
+                'messages.message_type', 'messages.sender_type', 'messages.sender_id', 'messages.content',
             )->selectRaw(PostgresSearchEngine::GROUP_SENDER_NAME_SQL.' as group_sender_name')
                 ->selectRaw(self::epoch('messages.created_at').' as created_at'),
 

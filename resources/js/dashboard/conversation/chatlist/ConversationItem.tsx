@@ -128,7 +128,9 @@ export default function ConversationItem({
                 isActiveChat={isActiveChat}
                 showAssignee={showAssignee}
                 showInboxName={showInboxName}
-                highlightQuery={searchQuery}
+                // Mục "Hội thoại" khớp theo tin, không theo tên: chỉ tô trong đoạn tin khớp.
+                highlightQuery={matchedMessage ? '' : searchQuery}
+                previewHighlightQuery={searchQuery}
                 previewMessage={previewMessage}
                 onClick={onCardClick}
                 onContextMenu={openContextMenu}

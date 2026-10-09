@@ -2,6 +2,7 @@
 
 namespace App\Search\Drivers;
 
+use App\Models\Message;
 use App\Search\ConfiguresIndexSettings;
 use App\Search\Drivers\Meilisearch\MeilisearchDocuments;
 use App\Search\SearchEngine;
@@ -215,6 +216,11 @@ final class MeilisearchEngine implements ConfiguresIndexSettings, SearchEngine
             if ($query->senderType !== null && $query->senderId !== null) {
                 $filters[] = 'sender_type = '.json_encode($query->senderType, JSON_UNESCAPED_UNICODE);
                 $filters[] = 'sender_id = '.$query->senderId;
+            }
+
+            // `!=` cũng giữ tài liệu chưa mang message_type (chỉ mục cũ chưa reindex).
+            if ($query->conversationMessagesOnly && $index === SearchTarget::Messages) {
+                $filters[] = 'message_type != '.Message::TYPE_ACTIVITY;
             }
         }
 

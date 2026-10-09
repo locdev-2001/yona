@@ -203,6 +203,10 @@ final class PostgresSearchEngine implements SearchEngine
             $messages->where('messages.sender_type', $query->senderType)->where('messages.sender_id', $query->senderId);
         }
 
+        if ($query->conversationMessagesOnly) {
+            $messages->where('messages.message_type', '!=', Message::TYPE_ACTIVITY);
+        }
+
         return $this->applyTimeFilter($messages, $query, 'messages.created_at');
     }
 

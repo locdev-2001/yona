@@ -107,11 +107,15 @@ class ConversationsController extends Controller
     public function search(Request $request, Account $account): JsonResponse
     {
         $keyword = $this->validatedListSearch($request);
-        $finder = $this->finder($request, $account);
 
         return $this->listSearchResponse(
-            new ListSearchService($request->user(), $account, $finder->listScope(), $keyword, (int) $request->query('page', '1')),
-            $this->finder($request, $account)->performMetaOnly()['count'],
+            new ListSearchService($request->user(), $account, $this->finder($request, $account)->listScope(), $keyword, (int) $request->query('page', '1')),
+            ListSearchService::tabCounts(
+                $request->user(),
+                $account,
+                $keyword,
+                fn (string $tab) => $this->finder($request, $account)->listScope($tab),
+            ),
         );
     }
 
@@ -125,12 +129,22 @@ class ConversationsController extends Controller
         ]);
         /** @var AccountUser $accountUser */
         $accountUser = $request->attributes->get('currentAccountUser');
-        $filter = new FilterService($request->user(), $account, $accountUser, $validated['payload'], 1, $keyword);
+        $filter = new FilterService($request->user(), $account, $accountUser, $validated['payload']);
 
         try {
             return $this->listSearchResponse(
                 new ListSearchService($request->user(), $account, $filter->listScope(), $keyword, (int) $request->query('page', '1')),
-                $filter->searchCounts(),
+                ListSearchService::tabCounts(
+                    $request->user(),
+                    $account,
+                    $keyword,
+                    function (string $tab) use ($filter, $request) {
+                        $scope = $filter->listScope();
+                        ConversationFinder::applyAssigneeTab($scope, $tab, $request->user());
+
+                        return $scope;
+                    },
+                ),
             );
         } catch (CustomFilterException $exception) {
             return response()->json(['message' => $exception->getMessage()], 422);

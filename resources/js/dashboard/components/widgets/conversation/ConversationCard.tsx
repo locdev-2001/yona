@@ -87,6 +87,8 @@ interface ConversationCardProps {
     highlightQuery?: string;
     // Tin hiện ở dòng xem trước thay cho tin cuối (vd đoạn tin khớp khi tìm).
     previewMessage?: ConversationMessage;
+    // Từ khoá chỉ tô ở dòng xem trước; mặc định theo highlightQuery.
+    previewHighlightQuery?: string;
     onClick?: (event: MouseEvent<HTMLDivElement>) => void;
     onContextMenu?: (event: MouseEvent<HTMLDivElement>) => void;
     // Nút "…" mở cùng menu với chuột phải, neo tại toạ độ cho sẵn.
@@ -110,6 +112,7 @@ export default function ConversationCard({
     compact = false,
     highlightQuery = '',
     previewMessage,
+    previewHighlightQuery,
     onClick,
     onContextMenu,
     onOpenActions,
@@ -269,7 +272,7 @@ export default function ConversationCard({
                     <MessagePreview
                         key="message-preview"
                         message={lastMessageInChat}
-                        highlightQuery={highlightQuery}
+                        highlightQuery={previewHighlightQuery ?? highlightQuery}
                         className={`my-0 mx-2 leading-6 h-6 flex-1 min-w-0 text-sm ${messagePreviewClass}`.trim()}
                     />
                 ) : (

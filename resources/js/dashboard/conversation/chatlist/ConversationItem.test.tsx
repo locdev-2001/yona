@@ -110,6 +110,16 @@ describe('thẻ ở mục Hội thoại của ô tìm', () => {
         expect(vi.mocked(router.visit).mock.calls[0][0]).toContain('messageId=901');
     });
 
+    it('không tô tên liên hệ, chỉ tô trong đoạn tin khớp', () => {
+        searchQuery = 'nguyen';
+        const { container } = render(
+            <ConversationItem source={CONVERSATION} matchedMessage={{ ...MATCHED, content: 'Chị Nguyễn hẹn mai lấy hàng' }} />,
+        );
+
+        expect(container.querySelector('h4 mark')).toBeNull();
+        expect([...container.querySelectorAll('mark')].map(mark => mark.textContent)).toEqual(['Nguyễn']);
+    });
+
     it('hội thoại đang mở thì nhảy tới tin khớp tại chỗ', () => {
         conversationId = 138;
         const { container } = render(<ConversationItem source={CONVERSATION} matchedMessage={MATCHED} />);
