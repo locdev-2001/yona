@@ -615,6 +615,7 @@ export default function ReplyBox({
                 onFocus={expand}
                 onPointerDown={markPointerInsideComposer}
             >
+            <span aria-hidden="true" className="reply-box__glow" />
             <ComposerExpandableRegion isExpanded={isExpanded}>
             <ReplyTopPanel
                 mode={replyType}

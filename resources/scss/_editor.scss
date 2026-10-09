@@ -188,71 +188,72 @@
   }
 }
 
+// Vành LED 2px ôm sát mép ô (nằm ngoài ô 1px nên bo lớn hơn rounded-xl đúng 1px để đồng
+// tâm với góc ô), gradient xoay vòng, khoét ruột và mờ dần từ trên xuống.
+@mixin reply-box-led-ring {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  padding: 2px;
+  border-radius: calc(0.75rem + 1px);
+  background: conic-gradient(
+    from var(--reply-box-led-angle),
+    #ff2d55,
+    #ff9500,
+    #ffd60a,
+    #30d158,
+    #00c7ff,
+    #5e5ce6,
+    #bf5af2,
+    #ff2d55
+  );
+  animation: reply-box-led-spin 4s linear infinite;
+  -webkit-mask:
+    linear-gradient(to bottom, #000 0, transparent 70%),
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: source-in, xor;
+  mask-composite: intersect, exclude;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+.reply-box__glow {
+  display: none;
+}
+
 .dark .reply-box:not(.is-private) {
   border-color: transparent;
 
-  &::before,
-  &::after {
-    content: '';
-    position: absolute;
-    border-radius: inherit;
-    background: conic-gradient(
-      from var(--reply-box-led-angle),
-      #ff2d55,
-      #ff9500,
-      #ffd60a,
-      #30d158,
-      #00c7ff,
-      #5e5ce6,
-      #bf5af2,
-      #ff2d55
-    );
-    animation: reply-box-led-spin 4s linear infinite;
-    pointer-events: none;
-    // Trên thanh kéo đổi chiều cao (z-10, nền gradient tối) nằm sát mép trên, nếu không
-    // nó phủ một dải đen lên quầng sáng. Không nhận chuột nên thanh kéo vẫn dùng được.
-    z-index: 11;
-    // Khoét phần ruột (content-box), giữ phần vành, rồi giao với dải mờ dần từ trên xuống.
-    -webkit-mask:
-      linear-gradient(to bottom, #000 0, transparent 70%),
-      linear-gradient(#000 0 0) content-box,
-      linear-gradient(#000 0 0);
-    -webkit-mask-composite: source-in, xor;
-    mask-composite: intersect, exclude;
-  }
-
-  // Dây LED: vành 2px, để dịu (founder muốn mờ mờ, không chói).
+  // Dây LED, để dịu (founder muốn mờ mờ, không chói).
   &::before {
-    inset: -1px;
-    padding: 2px;
-    // Dây nằm ngoài ô 1px nên bo lớn hơn ô (rounded-xl) đúng 1px để đồng tâm với góc ô.
-    border-radius: calc(0.75rem + 1px);
+    @include reply-box-led-ring;
     opacity: 0.55;
   }
 
-  // Quầng neon: lan đúng 4px ra ngoài dây LED (dây nằm ở -1px), sáng giảm dần ra ngoài
-  // nhờ độ nhòe cộng dải mờ ở mép lớp. Làm nhòe rồi mới khoét ruột nên ánh sáng chỉ lan
-  // ra ngoài, không ám vào ô soạn.
-  &::after {
-    inset: -5px;
-    padding: 5px;
-    border-radius: calc(0.75rem + 5px);
-    filter: blur(2px);
-    opacity: 0.5;
-    -webkit-mask:
-      linear-gradient(to bottom, transparent 0, #000 5px, transparent 70%),
-      linear-gradient(to right, transparent, #000 5px, #000 calc(100% - 5px), transparent),
-      linear-gradient(#000 0 0) content-box,
-      linear-gradient(#000 0 0);
-    -webkit-mask-composite: source-in, source-in, xor;
-    mask-composite: intersect, intersect, exclude;
+  // Quầng neon: làm nhòe chính vành LED nên ánh sáng lan đều theo đường cong, kể cả ở
+  // góc, và nhạt dần khoảng 4px ra ngoài.
+  .reply-box__glow {
+    display: block;
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    filter: blur(3px);
+    opacity: 0.6;
+
+    &::before {
+      @include reply-box-led-ring;
+    }
   }
 
-  @media (prefers-reduced-motion: reduce) {
-    &::before,
-    &::after {
-      animation: none;
-    }
+  // Trên thanh kéo đổi chiều cao (z-10, nền gradient tối) nằm sát mép trên, nếu không nó
+  // phủ một dải đen lên quầng sáng. Không nhận chuột nên thanh kéo vẫn dùng được.
+  &::before,
+  .reply-box__glow {
+    z-index: 11;
+    pointer-events: none;
   }
 }
 
