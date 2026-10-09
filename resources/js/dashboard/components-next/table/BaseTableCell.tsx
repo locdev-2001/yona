@@ -14,5 +14,5 @@ interface BaseTableCellProps {
 }
 
 export default function BaseTableCell({ align = 'start', className = '', children }: BaseTableCellProps) {
-    return <td className={`py-3 ltr:pr-4 rtl:pl-4 text-body-main ${ALIGN_CLASSES[align]} ${className}`}>{children}</td>;
+    return <td className={`py-3 px-3 text-body-main ${ALIGN_CLASSES[align]} ${className}`}>{children}</td>;
 }

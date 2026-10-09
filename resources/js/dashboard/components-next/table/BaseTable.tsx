@@ -20,15 +20,17 @@ export default function BaseTable({
     const showHeaders = headers.length > 0 && hasItems;
 
     return (
-        <div className="w-full">
-            <table className="min-w-full table-auto divide-y divide-n-weak">
+        // Danh sách ở settings: không kẻ giữa các hàng, hàng có nền khi rê chuột (BaseTableRow).
+        // Bảng lùi lề âm để chữ cột đầu thẳng hàng với tiêu đề trang.
+        <div className="-mx-3">
+            <table className="min-w-full table-auto">
                 {showHeaders ? (
                     <thead>
                         <tr>
                             {headers.map((header, index) => (
                                 <th
                                     key={index}
-                                    className="py-4 ltr:pr-4 rtl:pl-4 text-start text-heading-3 text-n-slate-12 capitalize"
+                                    className="py-4 px-3 text-start text-heading-3 text-n-slate-12 capitalize"
                                 >
                                     {header}
                                 </th>
@@ -36,7 +38,7 @@ export default function BaseTable({
                         </tr>
                     </thead>
                 ) : null}
-                <tbody className="divide-y divide-n-weak text-n-slate-11">
+                <tbody className="text-n-slate-11">
                     {hasItems ? (
                         children
                     ) : noDataMessage && !loading ? (

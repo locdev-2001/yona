@@ -28,7 +28,7 @@ export default function SettingsToggleSection({
 }: SettingsToggleSectionProps) {
     return (
         <div
-            className={`flex flex-col items-start outline outline-1 -outline-offset-1 outline-n-weak rounded-xl [interpolate-size:allow-keywords] ${className}`}
+            className={`flex flex-col items-start panel-surface rounded-xl [interpolate-size:allow-keywords] ${className}`}
         >
             <div className="flex flex-col gap-1 items-start w-full py-3">
                 <div className="flex items-center gap-3 w-full justify-between px-4">
@@ -43,7 +43,7 @@ export default function SettingsToggleSection({
                 {children}
             </div>
             {editor ? (
-                <div className={`w-full border-t border-n-weak ${compact ? 'p-0' : 'px-4 pb-4 pt-2'}`}>
+                <div className={`w-full ${compact ? 'p-0' : 'px-4 pb-4 pt-2'}`}>
                     {editor}
                 </div>
             ) : null}

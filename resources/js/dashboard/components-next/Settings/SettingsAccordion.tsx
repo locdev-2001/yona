@@ -20,7 +20,7 @@ export default function SettingsAccordion({
     return (
         <>
             <div
-                className={`flex items-center justify-between w-full cursor-pointer pb-2 pt-4 border-t border-n-weak ${className}`}
+                className={`flex items-center justify-between w-full cursor-pointer pb-2 pt-4 ${className}`}
                 onClick={() => setOpen(open => !open)}
             >
                 <span className="text-heading-2 text-n-slate-12 w-full">{title}</span>

@@ -24,7 +24,7 @@ export default function CardLayout({
 }: CardLayoutProps) {
     return (
         <div
-            className={`flex flex-col w-full group/cardLayout rounded-xl bg-n-surface-panel ${className}`.trim()}
+            className={`flex flex-col w-full group/cardLayout rounded-xl panel-surface ${className}`.trim()}
             onMouseEnter={onMouseEnter}
             onMouseLeave={onMouseLeave}
         >

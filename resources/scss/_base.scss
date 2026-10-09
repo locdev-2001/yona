@@ -110,6 +110,31 @@ textarea {
     @apply bg-n-surface-raised shadow-overlay;
   }
 
+  // Khối nội dung (thẻ cấu hình, thẻ trong lưới, khung thống kê): nền panel + viền nhẹ.
+  // Đường kẻ giữa các dòng và giữa các vùng thì không dùng; độ bo do từng khối chọn.
+  .panel-surface {
+    @apply bg-n-surface-panel border border-solid border-n-weak;
+  }
+
+  // Danh sách dòng (nhân viên, hộp thư, nhóm…): không kẻ giữa các dòng, mỗi dòng có
+  // nền khi rê chuột. Dòng lùi lề âm để chữ vẫn thẳng hàng với tiêu đề trang.
+  .row-list {
+    @apply flex flex-col gap-0.5;
+
+    > * {
+      @apply -mx-3 px-3 rounded-xl transition-colors duration-150;
+    }
+
+    > *:hover {
+      @apply bg-n-surface-hover;
+    }
+  }
+
+  // Khối đang có lỗi: viền và nền đỏ nhạt, đặt cùng `panel-surface`.
+  .panel-invalid {
+    @apply border-n-ruby-5 bg-n-ruby-2;
+  }
+
   .field-base {
     @apply field-surface block box-border w-full appearance-none mx-0 mt-0 mb-4 py-2 px-3 rounded-lg text-sm font-normal placeholder:text-n-slate-10 text-n-slate-12 border-none;
   }
