@@ -170,18 +170,23 @@ class IncomingMessageService
         ]);
 
         $isOutgoing = $this->direction() !== 'in';
+        $isChatTip = ZaloChatTip::matches($this->zcaMessage());
 
         $message = $conversation->messages()->make([
             'content' => $this->content(),
             'account_id' => $this->inbox->account_id,
             'inbox_id' => $this->inbox->id,
             'content_type' => $this->contentType(),
-            'message_type' => $isOutgoing ? Message::TYPE_OUTGOING : Message::TYPE_INCOMING,
+            'message_type' => match (true) {
+                $isChatTip => Message::TYPE_ACTIVITY,
+                $isOutgoing => Message::TYPE_OUTGOING,
+                default => Message::TYPE_INCOMING,
+            },
             'content_attributes' => $this->contentAttributes($conversation),
             'source_id' => $sourceId,
         ]);
 
-        if (! $isOutgoing) {
+        if (! $isOutgoing && ! $isChatTip) {
             $message->sender()->associate($contactInbox->contact);
         }
 

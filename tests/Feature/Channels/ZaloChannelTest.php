@@ -347,6 +347,27 @@ it('dựng thẻ nhắc hẹn từ listener_data thay vì để lọt link ảnh
         ->and($reminder['start_time'])->toBe(1788716940000);
 });
 
+it('dòng thông báo hệ thống của Zalo (msginfo.actionlist) là tin hoạt động, không phải tin khách', function () {
+    zaloWebhook(zaloPayload('zalo_inbound_chat_tip', $this->channel))->assertOk();
+
+    $message = Message::query()->latest('id')->first();
+
+    expect($message->message_type)->toBe(Message::TYPE_ACTIVITY)
+        ->and($message->content)->toBe('Khách A tạo nhắc hẹn mới Dậy - 06:05.')
+        ->and($message->sender_id)->toBeNull()
+        ->and($message->conversation->unreadIncomingMessagesCount())->toBe(0);
+});
+
+it('tin chữ thường của khách vẫn là tin đến', function () {
+    $payload = ChannelFixture::load('zalo_inbound_chat_tip');
+    $payload['listener_data']['content'] = 'Dạ em nhắc chị mai nhé';
+    $payload['content'] = 'Dạ em nhắc chị mai nhé';
+
+    zaloWebhook([...$payload, 'connection_id' => $this->channel->connectionId()])->assertOk();
+
+    expect(Message::query()->latest('id')->first()->message_type)->toBe(Message::TYPE_INCOMING);
+});
+
 it('không nhầm tin ecard thường thành nhắc hẹn', function () {
     $payload = ChannelFixture::load('zalo_inbound_reminder');
     $payload['listener_data']['content']['params'] = json_encode(['actions' => [['data' => '{"act":"open.link"}']]]);
