@@ -95,6 +95,8 @@ it('mở thẳng URL bước 2 của kênh đã ẩn thì quay về màn chọn 
 })->with(['sms', 'facebook', 'instagram', 'tiktok', 'khong_co']);
 
 it('bước 2 của kênh đang mở nhận kèm giao kèo kết nối', function () {
+    config(['services.google_mail.enabled' => false]);
+
     $this->actingAs($this->admin)
         ->get("/app/accounts/{$this->account->id}/settings/inboxes/new/email")
         ->assertInertia(fn ($page) => $page
