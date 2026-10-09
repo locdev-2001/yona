@@ -252,6 +252,17 @@
     }
   }
 
+  // Viên đánh dấu Trả lời / Lưu ý riêng: surface-raised gần trùng màu rãnh ở chế độ tối
+  // nên không thấy đang chọn bên nào. Tô theo chế độ: xanh Yona khi trả lời, hổ phách
+  // (cùng tông nền ô) khi ghi chú riêng.
+  .editor-mode-chip {
+    background-color: rgb(var(--solid-blue));
+  }
+
+  &.is-private .editor-mode-chip {
+    background-color: rgb(var(--amber-7));
+  }
+
   // Trên thanh kéo đổi chiều cao (z-10, nền gradient tối) nằm sát mép trên, nếu không nó
   // phủ một dải đen lên quầng sáng. Không nhận chuột nên thanh kéo vẫn dùng được.
   &::before,

@@ -77,7 +77,7 @@ export default function EditorModeToggle({
             </div>
             <div
                 data-testid="editor-mode-chip"
-                className={`absolute rounded-full h-6 w-[var(--chip-width)] ease-in-out translate-x-[var(--translate-x)] rtl:translate-x-[var(--rtl-translate-x)] bg-n-surface-raised ${
+                className={`editor-mode-chip absolute rounded-full h-6 w-[var(--chip-width)] ease-in-out translate-x-[var(--translate-x)] rtl:translate-x-[var(--rtl-translate-x)] bg-n-surface-raised ${
                     !disabled && !isReplyRestricted ? 'transition-all duration-300' : ''
                 }`}
                 style={
