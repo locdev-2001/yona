@@ -261,7 +261,7 @@ export default function ConversationCard({
                             type="button"
                             aria-label={t('CONVERSATION.CARD_CONTEXT_MENU.MORE_ACTIONS')}
                             aria-haspopup="menu"
-                            className="grid place-content-center flex-shrink-0 size-6 -my-1 rounded text-n-slate-11 hover:bg-n-surface-hover hover:text-n-slate-12 focus-visible:opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100"
+                            className="grid place-content-center flex-shrink-0 size-6 -my-1 rounded text-n-slate-11 hover:bg-n-surface-hover hover:text-n-slate-12"
                             onClick={openActionsFromButton}
                         >
                             <Icon icon={ICONS.moreActions} className="size-4" />
