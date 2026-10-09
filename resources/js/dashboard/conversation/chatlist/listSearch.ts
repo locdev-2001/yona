@@ -1,4 +1,7 @@
-import type { Conversation } from '../types';
+import { getPlainText } from 'shared/helpers/MessageFormatter';
+import { excerptAroundFirstMatch } from 'shared/helpers/searchFold';
+import { FOCUS_MESSAGE_PARAM } from '../messageFocus';
+import type { Conversation, ConversationMessage } from '../types';
 
 // Ô tìm trong cột danh sách hội thoại: từ khoá sống trên query string để reload,
 // mở hội thoại hay chia sẻ liên kết vẫn giữ đúng danh sách đang lọc.
@@ -22,24 +25,33 @@ export function withListSearchQuery(pathAndSearch: string, query: string): strin
     return `${url.pathname}${url.search}`;
 }
 
-// Tập id hội thoại khớp từ khoá do máy chủ trả về, gộp theo từng trang đã nạp.
-// Không tìm thì không giới hạn (null).
-export function nextSearchMatches(
-    previous: ReadonlySet<number> | null,
-    payload: Pick<Conversation, 'id'>[],
-    query: string | undefined,
-    append: boolean,
-): ReadonlySet<number> | null {
-    if (!query) return null;
+// Dòng xem trước của một hội thoại trong mục "Hội thoại": đoạn tin khớp cắt quanh
+// chỗ khớp đầu tiên, thay cho dòng tóm tắt mà tin đó vẫn hiện ở danh sách thường
+// (tiêu đề thư, chữ máy chủ dựng sẵn) — để thấy đúng lý do hội thoại khớp.
+export function matchedMessagePreview(message: ConversationMessage, query: string): ConversationMessage {
+    const plainContent = getPlainText(message.content).replace(/\s+/g, ' ').trim();
 
-    return new Set([...(append && previous ? previous : []), ...payload.map(conversation => conversation.id)]);
+    if (!plainContent) return message;
+
+    return {
+        ...message,
+        content: excerptAroundFirstMatch(plainContent, query),
+        preview_text: null,
+        content_attributes: {},
+    };
 }
 
-// Hội thoại nạp qua đường khác (realtime, hội thoại đang mở) chưa chắc khớp từ khoá —
-// khi đang tìm, danh sách chỉ hiện đúng những hội thoại máy chủ đã trả cho từ khoá.
-export function keepSearchMatches<T extends Pick<Conversation, 'id'>>(
-    conversations: T[],
-    matches: ReadonlySet<number> | null,
-): T[] {
-    return matches ? conversations.filter(conversation => matches.has(conversation.id)) : conversations;
+// Liên kết mở hội thoại tại đúng tin khớp.
+export function withFocusMessage(conversationPath: string, messageId: number): string {
+    const url = new URL(conversationPath, 'http://local');
+    url.searchParams.set(FOCUS_MESSAGE_PARAM, String(messageId));
+
+    return `${url.pathname}${url.search}`;
+}
+
+// Nối trang sau vào danh sách đã có, bỏ hội thoại đã hiện (dữ liệu đổi giữa hai lượt tải).
+export function appendSearchPage<T extends Pick<Conversation, 'id'>>(previous: T[], page: T[]): T[] {
+    const known = new Set(previous.map(item => item.id));
+
+    return [...previous, ...page.filter(item => !known.has(item.id))];
 }

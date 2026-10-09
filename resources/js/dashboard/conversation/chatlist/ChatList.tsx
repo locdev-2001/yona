@@ -33,6 +33,8 @@ import ChatListHeader from './ChatListHeader';
 import ChatListSearch from './ChatListSearch';
 import ChatTypeTabs from './ChatTypeTabs';
 import ConversationList from './ConversationList';
+import ListSearchHeader from './ListSearchHeader';
+import { useListSearchResults } from './useListSearchResults';
 
 // Port từ dashboard/components/ChatList.vue — cắt: participating/unattended view. Tab Mentions dùng chung màn này
 // và chung một nguồn danh sách: `conversationType` chỉ đổi tham số lọc gửi lên
@@ -74,6 +76,11 @@ export default function ChatList({
         loadMoreConversations,
     } = useConversation();
     const { inboxes = [], teams = [] } = usePage<DashboardPageProps>().props;
+    // Có từ khoá thì cột hiện kết quả chia mục thay cho danh sách thường; bỏ từ khoá
+    // là danh sách thường (ghim, phân trang) trở lại nguyên vẹn.
+    const listSearch = useListSearchResults();
+    const isSearching = Boolean(searchQuery);
+    const tabMeta = isSearching && listSearch.meta ? listSearch.meta : listMeta;
 
     const bulkActions = useBulkActions(accountId);
     const { selection, resetBulkActions, selectAllConversations } = bulkActions;
@@ -190,7 +197,7 @@ export default function ChatList({
     const assigneeTabItems = ASSIGNEE_TAB_KEYS.map(({ key, countKey }) => ({
         key,
         name: t(`CHAT_LIST.ASSIGNEE_TYPE_TABS.${key}`),
-        count: listMeta[countKey] || 0,
+        count: tabMeta[countKey] || 0,
     }));
 
     const emptyHint = emptyListHint(assigneeTab, listMeta, appliedFilters !== null);
@@ -214,8 +221,8 @@ export default function ChatList({
                     onFiltersModal={onToggleAdvanceFiltersModal}
                     hasAppliedFilters={appliedFilters !== null}
                     hasActiveFolders={hasActiveFolders}
-                    allCount={listMeta.all_count || 0}
-                    isListLoading={listLoading}
+                    allCount={tabMeta.all_count || 0}
+                    isListLoading={isSearching ? listSearch.loading : listLoading}
                     onResetFilters={clearConversationFilters}
                     onAddFolders={() => setShowSaveFilterModal(true)}
                     onDeleteFolders={() => setShowDeleteFolderModal(true)}
@@ -243,12 +250,12 @@ export default function ChatList({
                         onClick={toggleSelectionMode}
                     />
                 </div>
-                {!listLoading && !conversations.length && searchQuery ? (
+                {isSearching && !listSearch.loading && !listSearch.contacts.length && !listSearch.conversations.length ? (
                     <p className="px-4 py-6 mb-0 text-sm text-center break-words text-n-slate-11">
                         {t('CHAT_LIST.SEARCH.NO_RESULTS', { query: searchQuery })}
                     </p>
                 ) : null}
-                {!listLoading && !conversations.length && !searchQuery ? (
+                {!isSearching && !listLoading && !conversations.length ? (
                     <div className="flex flex-col gap-2 items-center px-4 py-6 text-center">
                         <p className="mb-0 text-sm text-n-slate-11">{t(emptyHint.messageKey)}</p>
                         {emptyHint.action ? (
@@ -280,14 +287,34 @@ export default function ChatList({
                     onRemoveLabels={bulkActions.onRemoveLabels}
                     onUpdateConversations={bulkActions.onUpdateConversations}
                 />
-                <ConversationList
-                    conversationList={conversations}
-                    isLoading={listLoading}
-                    showEndOfListMessage={showEndOfListMessage}
-                    showAssignee={showAssigneeInConversationCard}
-                    conversationType={conversationType}
-                    onLoadMore={loadMoreConversations}
-                />
+                {isSearching ? (
+                    <ConversationList
+                        key="search"
+                        conversationList={listSearch.conversations}
+                        header={
+                            <ListSearchHeader
+                                contacts={listSearch.contacts}
+                                hasConversationMatches={listSearch.conversations.length > 0}
+                                conversationType={conversationType}
+                            />
+                        }
+                        isLoading={listSearch.loading}
+                        showEndOfListMessage={listSearch.conversations.length > 0 && !listSearch.hasMore && !listSearch.loading}
+                        showAssignee={showAssigneeInConversationCard}
+                        conversationType={conversationType}
+                        onLoadMore={listSearch.loadMore}
+                    />
+                ) : (
+                    <ConversationList
+                        key="list"
+                        conversationList={conversations}
+                        isLoading={listLoading}
+                        showEndOfListMessage={showEndOfListMessage}
+                        showAssignee={showAssigneeInConversationCard}
+                        conversationType={conversationType}
+                        onLoadMore={loadMoreConversations}
+                    />
+                )}
                 {showAdvancedFilters && teleportTarget
                     ? createPortal(
                           <ConversationFilter

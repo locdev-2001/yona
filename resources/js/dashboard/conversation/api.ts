@@ -62,10 +62,13 @@ export interface FetchConversationsParams {
     labels?: string[];
     // conversationFilters.conversationType: tab Mentions/Participating/Unattended.
     conversationType?: ConversationType;
-    // Từ khoá ô tìm trong cột danh sách: chỉ thu hẹp danh sách, mọi bộ lọc khác giữ nguyên.
+    // Từ khoá ô tìm trong cột danh sách — chỉ đường tìm chia mục (searchConversationList) gửi.
     searchQuery?: string;
     updatedWithin?: number;
 }
+
+// Phạm vi danh sách đang xem (tab, trạng thái, hộp thư, nhóm, nhãn, loại, sắp xếp) — không gồm trang.
+export type ConversationListScope = Omit<FetchConversationsParams, 'page' | 'cursor' | 'searchQuery' | 'updatedWithin'>;
 
 // conversationFilters của ChatList.vue — cùng một bộ tham số cho danh sách và
 // bộ đếm, nên chỉ dựng ở một chỗ (`page`/`cursor`/`updated_within` chỉ danh sách mới có).
@@ -108,11 +111,37 @@ export function fetchFilteredConversations(
     accountId: number,
     payload: ConversationFilterPayload[],
     page: number,
-    searchQuery = '',
 ): Promise<ConversationListResponse> {
-    const query = new URLSearchParams({ page: String(page), ...(searchQuery ? { q: searchQuery } : {}) });
+    return postJson(`/api/v1/accounts/${accountId}/conversations/filter?${new URLSearchParams({ page: String(page) })}`, { payload });
+}
 
-    return postJson(`/api/v1/accounts/${accountId}/conversations/filter?${query}`, { payload });
+// Hội thoại của mục "Hội thoại" khi tìm: thẻ thường kèm tin khớp mới nhất (null
+// khi hội thoại ra vì gõ đúng mã hội thoại).
+export type MatchedConversation = Conversation & { matched_message: ConversationMessage | null };
+
+export interface ConversationListSearchResponse {
+    data: {
+        meta: ConversationListPageMeta & { has_more: boolean };
+        // Mỗi liên hệ khớp một dòng, mang hội thoại gần nhất của liên hệ trong danh sách đang xem.
+        contacts: Conversation[];
+        conversations: MatchedConversation[];
+    };
+}
+
+// Ô tìm trong cột danh sách: kết quả chia mục trong đúng phạm vi danh sách đang
+// xem — `params` như danh sách thường, có `filterPayload` thì phạm vi là bộ lọc nâng cao.
+export function searchConversationList(
+    params: FetchConversationsParams & { searchQuery: string; filterPayload?: ConversationFilterPayload[] },
+): Promise<ConversationListSearchResponse> {
+    const base = `/api/v1/accounts/${params.accountId}/conversations`;
+
+    if (params.filterPayload) {
+        const query = new URLSearchParams({ q: params.searchQuery, page: String(params.page ?? 1) });
+
+        return postJson(`${base}/filter/search?${query}`, { payload: params.filterPayload });
+    }
+
+    return getJson(`${base}/search?${buildConversationQuery(params)}`);
 }
 
 export function fetchConversationMeta(

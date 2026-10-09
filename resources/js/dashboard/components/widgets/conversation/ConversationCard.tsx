@@ -10,7 +10,7 @@ import type { ChannelIconInbox } from 'dashboard/components-next/icon/ChannelIco
 import CardPriorityIcon from 'dashboard/components-next/Conversation/ConversationCard/CardPriorityIcon';
 import UnreadBadge from 'dashboard/components-next/Conversation/ConversationCard/UnreadBadge';
 import { getLastMessage } from '../../../helper/conversationHelper';
-import type { AgentMeta, ContactMeta, Conversation } from '../../../conversation/types';
+import type { AgentMeta, ContactMeta, Conversation, ConversationMessage } from '../../../conversation/types';
 import InboxName from '../InboxName';
 import TimeAgo from '../../ui/TimeAgo';
 import MessagePreview from './MessagePreview';
@@ -85,6 +85,8 @@ interface ConversationCardProps {
     compact?: boolean;
     // Từ khoá ô tìm của danh sách: tô đoạn khớp trên tên khách và tin cuối.
     highlightQuery?: string;
+    // Tin hiện ở dòng xem trước thay cho tin cuối (vd đoạn tin khớp khi tìm).
+    previewMessage?: ConversationMessage;
     onClick?: (event: MouseEvent<HTMLDivElement>) => void;
     onContextMenu?: (event: MouseEvent<HTMLDivElement>) => void;
     // Nút "…" mở cùng menu với chuột phải, neo tại toạ độ cho sẵn.
@@ -107,6 +109,7 @@ export default function ConversationCard({
     hideThumbnail = false,
     compact = false,
     highlightQuery = '',
+    previewMessage,
     onClick,
     onContextMenu,
     onOpenActions,
@@ -121,7 +124,7 @@ export default function ConversationCard({
         currentContact.availability_status as AvailabilityStatus | undefined,
     );
     const hasUnread = unreadCount > 0;
-    const lastMessageInChat = getLastMessage(chat);
+    const lastMessageInChat = previewMessage ?? getLastMessage(chat);
 
     const isPinned = Boolean(chat.pinned);
     // Hàng trên cùng luôn có thời gian tương tác cuối nên luôn hiện.

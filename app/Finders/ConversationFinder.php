@@ -103,7 +103,27 @@ class ConversationFinder
         Cache::forever(self::tabCountsVersionKey($accountId), (string) hrtime(true));
     }
 
+    /**
+     * Hội thoại của danh sách đang xem (quyền, hộp thư, tab, trạng thái, nhãn, loại)
+     * trước khi lọc theo từ khoá — phạm vi của ô tìm chia mục.
+     *
+     * @return Builder<Conversation>
+     */
+    public function listScope(): Builder
+    {
+        $this->applyListFilters();
+        $this->filterByAssigneeType();
+
+        return $this->conversations;
+    }
+
     private function setUp(): void
+    {
+        $this->applyListFilters();
+        self::filterBySearchQuery($this->conversations, $this->currentUser, $this->currentAccount, $this->params['q'] ?? null);
+    }
+
+    private function applyListFilters(): void
     {
         $this->findAllConversations();
         $this->filterByConversationType();
@@ -111,7 +131,6 @@ class ConversationFinder
         $this->filterByTeam();
         $this->filterByLabels();
         $this->filterBySourceId();
-        self::filterBySearchQuery($this->conversations, $this->currentUser, $this->currentAccount, $this->params['q'] ?? null);
     }
 
     /**

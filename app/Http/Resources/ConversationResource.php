@@ -223,6 +223,15 @@ class ConversationResource extends JsonResource
         return [$lastMessage, $lastNonActivityMessage];
     }
 
+    // Payload một tin của hội thoại đã dựng trong cùng trang (vd tin khớp của ô
+    // tìm): dùng chung cha đã nạp, không tra lại hội thoại, account, hộp thư.
+    public static function messagePayloadFor(Message $message, Conversation $conversation): array
+    {
+        self::shareParentRelations($message, $conversation);
+
+        return MessageResource::pushEventData($message);
+    }
+
     // Tin đọc từ hội thoại mang sẵn cha của nó: dựng payload tin không tra lại hội thoại, account, inbox.
     private static function shareParentRelations(?Message $message, Conversation $conversation): void
     {

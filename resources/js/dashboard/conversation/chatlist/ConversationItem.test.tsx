@@ -1,10 +1,15 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { router } from '@inertiajs/react';
+
 import ConversationItem from './ConversationItem';
-import type { Conversation } from '../types';
+import type { Conversation, ConversationMessage } from '../types';
 
 const setConversationPinned = vi.fn(() => Promise.resolve());
+const focusMessage = vi.fn(() => Promise.resolve());
+let searchQuery = '';
+let conversationId = 0;
 
 vi.mock('../ConversationContext', () => ({
     useConversation: () => ({
@@ -12,8 +17,9 @@ vi.mock('../ConversationContext', () => ({
         inboxId: 0,
         teamId: 0,
         label: '',
-        conversationId: 0,
-        searchQuery: '',
+        conversationId,
+        searchQuery,
+        focusMessage,
         markMessagesRead: vi.fn(),
         markMessagesUnread: vi.fn(),
         setConversationPinned,
@@ -75,5 +81,42 @@ describe('menu thao tác của thẻ hội thoại', () => {
 
         expect(setConversationPinned).toHaveBeenCalledWith(138, next);
         expect(document.querySelector('[data-popover-content]')).toBeNull();
+    });
+});
+
+describe('thẻ ở mục Hội thoại của ô tìm', () => {
+    const MATCHED = {
+        id: 901,
+        content: 'Dạ shop gửi chị thông tin chuyển khoản để chị nhận hàng nhé',
+        message_type: 0,
+        content_attributes: {},
+        attachments: undefined,
+    } as unknown as ConversationMessage;
+
+    beforeEach(() => {
+        searchQuery = 'nhan hang';
+        conversationId = 0;
+        vi.mocked(router.visit).mockClear();
+        focusMessage.mockClear();
+    });
+
+    it('dòng xem trước là đoạn tin khớp có tô từ khoá, bấm mở hội thoại tại tin đó', () => {
+        const { container } = render(<ConversationItem source={CONVERSATION} matchedMessage={MATCHED} />);
+
+        expect(container.textContent).toContain('…khoản để chị nhận hàng nhé');
+        expect([...container.querySelectorAll('mark')].map(mark => mark.textContent)).toEqual(['nhận hàng']);
+
+        fireEvent.click(container.querySelector('.conversation')!);
+        expect(vi.mocked(router.visit).mock.calls[0][0]).toContain('messageId=901');
+    });
+
+    it('hội thoại đang mở thì nhảy tới tin khớp tại chỗ', () => {
+        conversationId = 138;
+        const { container } = render(<ConversationItem source={CONVERSATION} matchedMessage={MATCHED} />);
+
+        fireEvent.click(container.querySelector('.conversation')!);
+
+        expect(focusMessage).toHaveBeenCalledWith(901);
+        expect(router.visit).not.toHaveBeenCalled();
     });
 });

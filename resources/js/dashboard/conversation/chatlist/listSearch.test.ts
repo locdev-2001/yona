@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
-import { keepSearchMatches, nextSearchMatches, readListSearchQuery, withListSearchQuery } from './listSearch';
+import type { ConversationMessage } from '../types';
+import {
+    appendSearchPage,
+    matchedMessagePreview,
+    readListSearchQuery,
+    withFocusMessage,
+    withListSearchQuery,
+} from './listSearch';
 
 describe('listSearch', () => {
     it('đọc từ khoá từ query string, bỏ khoảng trắng thừa', () => {
@@ -18,19 +25,29 @@ describe('listSearch', () => {
         expect(withListSearchQuery('/app/accounts/1/dashboard', '')).toBe('/app/accounts/1/dashboard');
     });
 
-    it('gộp id khớp theo trang, trang 1 thay tập cũ, không tìm thì không giới hạn', () => {
-        const firstPage = nextSearchMatches(null, [{ id: 1 }, { id: 2 }], 'lan', false);
-        const secondPage = nextSearchMatches(firstPage, [{ id: 3 }], 'lan', true);
+    it('dòng xem trước của tin khớp là đoạn cắt quanh chỗ khớp, bỏ tóm tắt thay chữ', () => {
+        const message = {
+            id: 7,
+            content: 'Chào chị, bên em gửi lại thông tin chuyển khoản để chị nhận hàng nhé',
+            preview_text: 'Thư: Đơn hàng',
+            content_attributes: { email: { subject: 'Đơn hàng' } },
+        } as unknown as ConversationMessage;
 
-        expect([...secondPage!]).toEqual([1, 2, 3]);
-        expect([...nextSearchMatches(secondPage, [{ id: 9 }], 'lan', false)!]).toEqual([9]);
-        expect(nextSearchMatches(secondPage, [{ id: 9 }], undefined, true)).toBeNull();
+        const preview = matchedMessagePreview(message, 'nhan hang');
+
+        expect(preview.content).toBe('…khoản để chị nhận hàng nhé');
+        expect(preview.preview_text).toBeNull();
+        expect(preview.content_attributes).toEqual({});
+        expect(matchedMessagePreview({ ...message, content: '' }, 'nhan')).toEqual({ ...message, content: '' });
     });
 
-    it('khi đang tìm chỉ giữ hội thoại máy chủ đã trả cho từ khoá', () => {
-        const list = [{ id: 1 }, { id: 2 }, { id: 3 }];
+    it('liên kết mở hội thoại tại tin khớp giữ các tham số khác', () => {
+        expect(withFocusMessage('/app/accounts/1/conversations/7?q=lan', 42)).toBe(
+            '/app/accounts/1/conversations/7?q=lan&messageId=42',
+        );
+    });
 
-        expect(keepSearchMatches(list, new Set([3, 1]))).toEqual([{ id: 1 }, { id: 3 }]);
-        expect(keepSearchMatches(list, null)).toBe(list);
+    it('nối trang sau không lặp hội thoại đã hiện', () => {
+        expect(appendSearchPage([{ id: 1 }, { id: 2 }], [{ id: 2 }, { id: 3 }])).toEqual([{ id: 1 }, { id: 2 }, { id: 3 }]);
     });
 });

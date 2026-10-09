@@ -1,8 +1,9 @@
 import { useEffect, useRef } from 'react';
+import type { ReactNode } from 'react';
 
 import { t } from '../../../i18n';
 import Loader from 'shared/components/loader/Loader';
-import type { Conversation } from '../types';
+import type { Conversation, ConversationMessage } from '../types';
 import ConversationItem from './ConversationItem';
 
 // Port từ dashboard/components/ConversationList.vue — bỏ Virtualizer (virtua):
@@ -10,7 +11,10 @@ import ConversationItem from './ConversationItem';
 // và đang chọn là nền bo góc. IntersectionObserver dùng API
 // trực tiếp thay component; phím tắt j/k cắt (B3).
 interface ConversationListProps {
-    conversationList: Conversation[];
+    // `matched_message` (ô tìm): dòng xem trước là tin khớp, bấm thẻ nhảy tới tin đó.
+    conversationList: (Conversation & { matched_message?: ConversationMessage | null })[];
+    // Nội dung đứng trên các thẻ trong cùng vùng cuộn (mục Liên hệ của ô tìm).
+    header?: ReactNode;
     isLoading?: boolean;
     showEndOfListMessage?: boolean;
     showAssignee?: boolean;
@@ -24,6 +28,7 @@ export default function ConversationList({
     showEndOfListMessage = false,
     showAssignee = false,
     conversationType = '',
+    header = null,
     onLoadMore,
 }: ConversationListProps) {
     const conversationListRef = useRef<HTMLDivElement>(null);
@@ -52,6 +57,7 @@ export default function ConversationList({
 
     return (
         <div ref={conversationListRef} className="flex-1 min-h-0 overflow-y-auto conversations-list">
+            {header}
             <div className="flex flex-col gap-0.5 px-2">
                 {conversationList.map(chat => (
                     <ConversationItem
@@ -59,6 +65,7 @@ export default function ConversationList({
                         source={chat}
                         showAssignee={showAssignee}
                         conversationType={conversationType}
+                        matchedMessage={chat.matched_message}
                     />
                 ))}
             </div>

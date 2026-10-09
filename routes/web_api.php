@@ -199,6 +199,8 @@ Route::middleware(['auth.api_token', 'auth', 'account.scope'])
         Route::get('/conversations', [ConversationsController::class, 'index']);
         Route::post('/conversations', [ConversationsController::class, 'store']);
         Route::post('/conversations/filter', [ConversationsController::class, 'filter']);
+        Route::get('/conversations/search', [ConversationsController::class, 'search']);
+        Route::post('/conversations/filter/search', [ConversationsController::class, 'filterSearch']);
         Route::post('/contacts/filter', [ContactsController::class, 'filter']);
         Route::get('/conversations/meta', [ConversationsController::class, 'meta']);
         Route::get('/conversations/unread_counts', [ConversationsController::class, 'unreadCounts']);

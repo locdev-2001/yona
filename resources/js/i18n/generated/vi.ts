@@ -2678,7 +2678,9 @@ const messages: Record<string, unknown> = {
             "INPUT": "Tìm kiếm",
             "LABEL": "Tìm hội thoại trong danh sách đang xem",
             "CLEAR": "Xoá từ khoá",
-            "NO_RESULTS": "Không có hội thoại nào khớp “{query}” trong danh sách đang xem."
+            "NO_RESULTS": "Không có hội thoại nào khớp “{query}” trong danh sách đang xem.",
+            "CONTACTS_HEADING": "Liên hệ",
+            "CONVERSATIONS_HEADING": "Hội thoại"
         },
         "FILTER_ALL": "Tất cả",
         "SELECTION_MODE": {

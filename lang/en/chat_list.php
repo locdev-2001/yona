@@ -23,6 +23,8 @@ return [
         'LABEL' => 'Search conversations in this list',
         'CLEAR' => 'Clear search',
         'NO_RESULTS' => 'No conversation in this list matches “{query}”.',
+        'CONTACTS_HEADING' => 'Contacts',
+        'CONVERSATIONS_HEADING' => 'Conversations',
     ],
     'FILTER_ALL' => 'All',
     'SELECTION_MODE' => [

@@ -14,6 +14,7 @@ use App\Search\SearchEngine;
 use App\Search\SearchHits;
 use App\Search\SearchQuery;
 use App\Search\SearchTarget;
+use App\Services\Conversations\ListSearchService;
 use App\Services\SearchService;
 use Illuminate\Database\Eloquent\Builder;
 
@@ -74,6 +75,16 @@ function fakeSearchEngine(array $idsByTarget): void
         public function matchingConversationIds(SearchQuery $query): Builder|array
         {
             return $this->idsByTarget[SearchTarget::Conversations->value] ?? [];
+        }
+
+        public function conversationIdsMatchingContact(SearchQuery $query): Builder|array
+        {
+            return $this->idsByTarget[SearchTarget::Conversations->value] ?? [];
+        }
+
+        public function latestMatchedMessageIds(SearchQuery $query): Builder|array
+        {
+            return $this->idsByTarget[SearchTarget::Messages->value] ?? [];
         }
 
         public function keepsSeparateIndex(): bool
@@ -142,6 +153,18 @@ it('keeps foreign, deleted and hidden conversations out of the conversation list
 
     expect($conversations->orderBy('id')->pluck('id')->all())
         ->toBe([$this->visible['conversation']->id, $this->secondVisible['conversation']->id]);
+});
+
+it('keeps foreign, deleted and hidden records out of both sections of the list search', function () {
+    fakeSearchEngine(['conversations' => engineSuggestions('conversation'), 'messages' => engineSuggestions('message')]);
+
+    $result = (new ListSearchService($this->agent, $this->account, Conversation::query(), 'bao gia'))->perform();
+    $visibleIds = collect([$this->visible['conversation']->id, $this->secondVisible['conversation']->id])->sort()->values()->all();
+
+    expect($result['contacts']->pluck('id')->sort()->values()->all())->toBe($visibleIds)
+        ->and($result['conversations']->pluck('id')->sort()->values()->all())->toBe($visibleIds)
+        ->and($result['matched_messages']->keys()->sort()->values()->all())
+        ->toBe(collect([$this->visible['message']->id, $this->secondVisible['message']->id])->sort()->values()->all());
 });
 
 it('lets an administrator see every inbox of the account but never another account', function () {

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { MouseEvent } from 'react';
 import { router, usePage } from '@inertiajs/react';
 
@@ -8,7 +8,8 @@ import { useBulkSelection } from 'dashboard/composables/useBulkActions';
 import { conversationListPageURL, conversationUrl } from 'dashboard/helper/URLHelper';
 import type { DashboardPageProps } from '../../types';
 import { useConversation } from '../ConversationContext';
-import type { Conversation } from '../types';
+import type { Conversation, ConversationMessage } from '../types';
+import { matchedMessagePreview, withFocusMessage } from './listSearch';
 
 // Port từ dashboard/components/ConversationItem.vue — cắt: expanded layout.
 // Bulk select đọc qua BulkSelectionContext (thay inject
@@ -19,12 +20,15 @@ interface ConversationItemProps {
     showAssignee?: boolean;
     // Tab hội thoại lọc sẵn đang mở (mention…) — quyết định URL của thẻ như gốc.
     conversationType?: string;
+    // Mục "Hội thoại" của ô tìm: dòng xem trước là tin khớp, bấm thẻ nhảy tới tin đó.
+    matchedMessage?: ConversationMessage | null;
 }
 
 export default function ConversationItem({
     source,
     showAssignee = false,
     conversationType = '',
+    matchedMessage = null,
 }: ConversationItemProps) {
     const {
         accountId,
@@ -36,6 +40,7 @@ export default function ConversationItem({
         markMessagesRead,
         markMessagesUnread,
         setConversationPinned,
+        focusMessage,
     } = useConversation();
     const bulkSelection = useBulkSelection();
     const isSelecting = bulkSelection?.isSelecting ?? false;
@@ -55,7 +60,12 @@ export default function ConversationItem({
     // Dòng trên của thẻ luôn là nền tảng + hộp thư, kể cả khi account chỉ có một hộp thư.
     const showInboxName = Boolean(inbox.name);
 
-    const conversationPath = conversationUrl({ accountId, inboxId, teamId, label, conversationType, id: source.id });
+    const listConversationPath = conversationUrl({ accountId, inboxId, teamId, label, conversationType, id: source.id });
+    const conversationPath = matchedMessage ? withFocusMessage(listConversationPath, matchedMessage.id) : listConversationPath;
+    const previewMessage = useMemo(
+        () => (matchedMessage ? matchedMessagePreview(matchedMessage, searchQuery) : undefined),
+        [matchedMessage, searchQuery],
+    );
 
     // watch(() => props.source.id) gốc: hàng bị tái dùng cho hội thoại khác thì đóng menu.
     const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
@@ -99,7 +109,10 @@ export default function ConversationItem({
             return;
         }
 
-        if (isActiveChat) return;
+        if (isActiveChat) {
+            if (matchedMessage) void focusMessage(matchedMessage.id);
+            return;
+        }
         router.visit(conversationPath, { preserveState: true, preserveScroll: true });
     };
 
@@ -116,6 +129,7 @@ export default function ConversationItem({
                 showAssignee={showAssignee}
                 showInboxName={showInboxName}
                 highlightQuery={searchQuery}
+                previewMessage={previewMessage}
                 onClick={onCardClick}
                 onContextMenu={openContextMenu}
                 onOpenActions={setContextMenu}

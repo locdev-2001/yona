@@ -25,6 +25,8 @@ return [
         'LABEL' => 'Tìm hội thoại trong danh sách đang xem',
         'CLEAR' => 'Xoá từ khoá',
         'NO_RESULTS' => 'Không có hội thoại nào khớp “{query}” trong danh sách đang xem.',
+        'CONTACTS_HEADING' => 'Liên hệ',
+        'CONVERSATIONS_HEADING' => 'Hội thoại',
     ],
     'FILTER_ALL' => 'Tất cả',
     // Nhãn tab phải ngắn để ba tab vừa bề rộng mặc định của cột hội thoại

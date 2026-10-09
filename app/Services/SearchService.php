@@ -119,6 +119,31 @@ class SearchService
             ->whereIn('conversations.id', $this->engine()->matchingConversationIds($this->searchQuery(SearchTarget::Conversations)));
     }
 
+    /**
+     * Id hội thoại có khách khớp từ khoá (tên, email, SĐT, mã định danh), trong
+     * hộp thư người tìm được xem — mục "Liên hệ" của ô tìm trong danh sách.
+     *
+     * @return Builder<Conversation>
+     */
+    public function conversationIdsMatchingContact(): Builder
+    {
+        return $this->permitted(SearchTarget::Conversations)
+            ->select('conversations.id')
+            ->whereIn('conversations.id', $this->engine()->conversationIdsMatchingContact($this->searchQuery(SearchTarget::Conversations)));
+    }
+
+    /**
+     * Tin khớp từ khoá mới nhất của từng hội thoại, trong phạm vi tin người tìm
+     * được xem — mục "Hội thoại" của ô tìm trong danh sách.
+     *
+     * @return Builder<Message>
+     */
+    public function latestMatchedMessages(): Builder
+    {
+        return $this->permittedMessages()
+            ->whereIn('messages.id', $this->engine()->latestMatchedMessageIds($this->searchQuery(SearchTarget::Messages)));
+    }
+
     /** @return Collection<int, Message> */
     public function filterMessages(): Collection
     {

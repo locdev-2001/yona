@@ -3,6 +3,7 @@
 namespace App\Search;
 
 use App\Models\Conversation;
+use App\Models\Message;
 use Illuminate\Database\Eloquent\Builder;
 
 /**
@@ -22,6 +23,25 @@ interface SearchEngine
      * @return Builder<Conversation>|list<int>
      */
     public function matchingConversationIds(SearchQuery $query): Builder|array;
+
+    /**
+     * Tập id hội thoại có khách khớp từ khoá theo tên, email, số điện thoại hoặc mã
+     * định danh — mục "Liên hệ" của ô tìm trong danh sách hội thoại. Không xếp
+     * hạng, không phân trang; cùng dạng trả về như matchingConversationIds.
+     *
+     * @return Builder<Conversation>|list<int>
+     */
+    public function conversationIdsMatchingContact(SearchQuery $query): Builder|array;
+
+    /**
+     * Id tin khớp từ khoá mới nhất của từng hội thoại có tin khớp — mục "Hội thoại"
+     * của ô tìm trong danh sách hội thoại. Cùng phạm vi tin như search() với
+     * target Messages. Engine cùng CSDL trả truy vấn con một cột id; engine ngoài
+     * trả mảng id.
+     *
+     * @return Builder<Message>|list<int>
+     */
+    public function latestMatchedMessageIds(SearchQuery $query): Builder|array;
 
     /**
      * Engine giữ chỉ mục riêng ngoài PostgreSQL thì cần outbox đồng bộ; engine tìm

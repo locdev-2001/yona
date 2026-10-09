@@ -26,6 +26,7 @@ use App\Models\Inbox;
 use App\Models\Message;
 use App\Models\User;
 use App\Services\Conversations\FilterService;
+use App\Services\Conversations\ListSearchService;
 use App\Services\Conversations\TypingStatusManager;
 use App\Services\Conversations\UnreadCounts\Counter as UnreadCountsCounter;
 use App\Services\Notification\MarkConversationReadService;
@@ -51,6 +52,9 @@ class ConversationsController extends Controller
     // Tin có thể chứa liên kết; giao diện tách từng liên kết bằng đúng bộ linkify
     // của khung chat, nên ở đây chỉ cần lọc thô cho gọn trang.
     private const LINK_CANDIDATE_PATTERN = '(https?://|www\.)';
+
+    // Ô tìm trong danh sách là từ khoá người gõ, không phải văn bản dài.
+    private const LIST_SEARCH_MAX_LENGTH = 200;
 
     private const UNREAD_COUNTS_FEATURE = 'conversation_unread_counts';
 
@@ -96,6 +100,41 @@ class ConversationsController extends Controller
                 'payload' => ConversationResource::collectionFor($result['conversations']),
             ],
         ]);
+    }
+
+    // Ô tìm trong cột danh sách: kết quả chia mục Liên hệ / Hội thoại trong đúng
+    // phạm vi danh sách đang xem (cùng tham số với index); meta là số đếm tab.
+    public function search(Request $request, Account $account): JsonResponse
+    {
+        $keyword = $this->validatedListSearch($request);
+        $finder = $this->finder($request, $account);
+
+        return $this->listSearchResponse(
+            new ListSearchService($request->user(), $account, $finder->listScope(), $keyword, (int) $request->query('page', '1')),
+            $this->finder($request, $account)->performMetaOnly()['count'],
+        );
+    }
+
+    // Như search nhưng phạm vi là danh sách lọc nâng cao (cùng payload với filter).
+    public function filterSearch(Request $request, Account $account): JsonResponse
+    {
+        $keyword = $this->validatedListSearch($request);
+        $validated = $request->validate([
+            'payload' => ['required', 'array', 'min:1', 'max:20'],
+            'payload.*' => ['required', 'array'],
+        ]);
+        /** @var AccountUser $accountUser */
+        $accountUser = $request->attributes->get('currentAccountUser');
+        $filter = new FilterService($request->user(), $account, $accountUser, $validated['payload'], 1, $keyword);
+
+        try {
+            return $this->listSearchResponse(
+                new ListSearchService($request->user(), $account, $filter->listScope(), $keyword, (int) $request->query('page', '1')),
+                $filter->searchCounts(),
+            );
+        } catch (CustomFilterException $exception) {
+            return response()->json(['message' => $exception->getMessage()], 422);
+        }
     }
 
     // conversations#attachments: mọi tệp của hội thoại, mới nhất trước, phân trang.
@@ -488,6 +527,36 @@ class ConversationsController extends Controller
 
             $conversation->save();
         });
+    }
+
+    private function validatedListSearch(Request $request): string
+    {
+        return $request->validate([
+            'q' => ['required', 'string', 'max:'.self::LIST_SEARCH_MAX_LENGTH],
+            'page' => ['sometimes', 'integer', 'min:1'],
+        ])['q'];
+    }
+
+    /** @param  array<string, int>  $counts */
+    private function listSearchResponse(ListSearchService $search, array $counts): JsonResponse
+    {
+        $result = $search->perform();
+        $conversations = ConversationResource::collectionFor($result['conversations']);
+
+        foreach ($result['conversations']->values() as $index => $conversation) {
+            $matchedMessage = $result['matched_messages']->get((int) $conversation->getAttribute(ListSearchService::MATCHED_MESSAGE_ID));
+            $conversations[$index]['matched_message'] = $matchedMessage === null
+                ? null
+                : ConversationResource::messagePayloadFor($matchedMessage, $conversation);
+        }
+
+        return response()->json([
+            'data' => [
+                'meta' => [...$counts, 'has_more' => $result['has_more']],
+                'contacts' => ConversationResource::collectionFor($result['contacts']),
+                'conversations' => $conversations,
+            ],
+        ]);
     }
 
     private function finder(Request $request, Account $account): ConversationFinder

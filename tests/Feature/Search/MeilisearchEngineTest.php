@@ -170,7 +170,19 @@ it('mọi lượt tìm bị giới hạn trong account và hộp thư được p
         ->and(app(SearchEngine::class)->matchingConversationIds(new SearchQuery(
             target: SearchTarget::Conversations, accountId: $this->account->id, keyword: 'bao gia',
             lookbackStart: now()->subYear(), inboxIds: [$this->inbox->id],
-        )))->toBe([$this->conversation->id]);
+        )))->toBe([$this->conversation->id])
+        ->and(app(SearchEngine::class)->conversationIdsMatchingContact(new SearchQuery(
+            target: SearchTarget::Conversations, accountId: $this->account->id, keyword: 'hanh',
+            lookbackStart: now()->subYear(), inboxIds: [$this->inbox->id],
+        )))->toBe([$this->conversation->id])
+        ->and(app(SearchEngine::class)->conversationIdsMatchingContact(new SearchQuery(
+            target: SearchTarget::Conversations, accountId: $this->account->id, keyword: 'bao gia',
+            lookbackStart: now()->subYear(), inboxIds: [$this->inbox->id],
+        )))->toBe([])
+        ->and(app(SearchEngine::class)->latestMatchedMessageIds(new SearchQuery(
+            target: SearchTarget::Messages, accountId: $this->account->id, keyword: 'bao gia',
+            lookbackStart: now()->subYear(), inboxIds: [$this->inbox->id],
+        )))->toBe([$ownMessage->id]);
 });
 
 it('xoá hội thoại hay liên hệ gỡ luôn tin và tệp bên dưới khỏi chỉ mục', function () {

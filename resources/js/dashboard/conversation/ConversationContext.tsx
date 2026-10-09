@@ -30,6 +30,7 @@ import {
     fetchConversationAttachments,
     fetchConversationMeta,
     fetchConversations,
+    type ConversationListScope,
     tabCountsOf,
     fetchFilteredConversations,
     fetchMessages,
@@ -74,7 +75,7 @@ import {
     readFocusMessageId,
     type FocusWindow,
 } from './messageFocus';
-import { keepSearchMatches, nextSearchMatches, readListSearchQuery, withListSearchQuery } from './chatlist/listSearch';
+import { readListSearchQuery, withListSearchQuery } from './chatlist/listSearch';
 import { applyUnreadCount, getMetaDebounceKey } from './unreadHelpers';
 import type { MetaDebounceKey } from './unreadHelpers';
 import {
@@ -139,6 +140,8 @@ interface ConversationContextValue {
     status: ConversationStatusFilter;
     sortBy: string;
     appliedFilters: ConversationFilterCondition[] | null;
+    // Phạm vi danh sách thường đang xem — ô tìm chia mục tìm trong đúng phạm vi này.
+    listQuery: ConversationListScope;
     // Từ khoá ô tìm trong cột danh sách (đồng bộ với ?q= trên URL).
     searchQuery: string;
     setSearchQuery: (query: string) => void;
@@ -395,7 +398,6 @@ export function ConversationProvider({
     const [filteredConversations, setFilteredConversations] = useState<Conversation[]>([]);
     const [searchQuery, setSearchQueryState] = useState(() => readListSearchQuery(window.location.search));
     const setSearchQuery = useCallback((query: string) => setSearchQueryState(query.trim()), []);
-    const [searchMatchIds, setSearchMatchIds] = useState<ReadonlySet<number> | null>(null);
 
     const [allConversations, setAllConversations] = useState<Conversation[]>([]);
     const allConversationsRef = useRef<Conversation[]>([]);
@@ -441,19 +443,19 @@ export function ConversationProvider({
         () => ({ assigneeTab, status, inboxId, teamId, currentUserId, labels: labelFilters }),
         [assigneeTab, status, inboxId, teamId, currentUserId, labelFilters],
     );
-    const conversations = useMemo(() => {
-        const visible = appliedFilters
-            ? [...filteredConversations].sort((a, b) => sortComparator(a, b, SORT_BY_TYPE.LAST_ACTIVITY_AT_DESC))
-            : selectVisibleConversations(allConversations, viewFilters, sortBy);
-
-        return keepSearchMatches(visible, searchMatchIds);
-    }, [allConversations, appliedFilters, filteredConversations, viewFilters, sortBy, searchMatchIds]);
+    const conversations = useMemo(
+        () =>
+            appliedFilters
+                ? [...filteredConversations].sort((a, b) => sortComparator(a, b, SORT_BY_TYPE.LAST_ACTIVITY_AT_DESC))
+                : selectVisibleConversations(allConversations, viewFilters, sortBy),
+        [allConversations, appliedFilters, filteredConversations, viewFilters, sortBy],
+    );
     const selectedConversation = useMemo(
         () => allConversations.find((item) => item.id === conversationId) ?? null,
         [allConversations, conversationId],
     );
 
-    const listQuery = useMemo(
+    const listQuery = useMemo<ConversationListScope>(
         () => ({
             accountId,
             assigneeType: assigneeTab,
@@ -463,9 +465,8 @@ export function ConversationProvider({
             teamId: teamId || undefined,
             labels: labelFilters.length ? labelFilters : undefined,
             conversationType: conversationType || undefined,
-            searchQuery: searchQuery || undefined,
         }),
-        [accountId, assigneeTab, status, sortBy, inboxId, teamId, labelFilters, conversationType, searchQuery],
+        [accountId, assigneeTab, status, sortBy, inboxId, teamId, labelFilters, conversationType],
     );
 
     const fetchPage = useCallback(
@@ -489,12 +490,7 @@ export function ConversationProvider({
                 }
                 const cursor = !appliedFilters && append ? nextCursorRef.current : null;
                 const response = appliedFilters
-                    ? await fetchFilteredConversations(
-                          accountId,
-                          buildConversationFilterPayload(appliedFilters),
-                          page,
-                          listQuery.searchQuery,
-                      )
+                    ? await fetchFilteredConversations(accountId, buildConversationFilterPayload(appliedFilters), page)
                     : await fetchConversations({ ...listQuery, ...(cursor ? { cursor } : { page }) });
                 if (
                     listRequestVersionRef.current !== requestVersion
@@ -504,7 +500,6 @@ export function ConversationProvider({
                 const tabCounts = tabCountsOf(response.data.meta);
                 if (tabCounts) setListMeta(tabCounts);
                 nextCursorRef.current = response.data.meta.next_cursor ?? null;
-                setSearchMatchIds(previous => nextSearchMatches(previous, payload, listQuery.searchQuery, append));
                 setFilteredConversations(previous => {
                     if (!appliedFilters) return [];
                     const kept = append ? previous : [];
@@ -540,7 +535,6 @@ export function ConversationProvider({
     // Đổi filter/tab/inbox/team → nạp lại từ trang 1 (resetAndFetchData của bản gốc).
     useEffect(() => {
         setAllConversations((previous) => previous.filter((c) => c.id === conversationIdRef.current));
-        setSearchMatchIds(previous => (previous ? new Set() : null));
         setEndReached(false);
         pageRef.current = 0;
         nextCursorRef.current = null;
@@ -938,7 +932,6 @@ export function ConversationProvider({
             });
             const tabCounts = tabCountsOf(response.data.meta);
             if (tabCounts) setListMeta(tabCounts);
-            setSearchMatchIds(previous => nextSearchMatches(previous, response.data.payload, listQuery.searchQuery, true));
             setAllConversations((current) =>
                 mergeFetchedConversations(current, response.data.payload, conversationIdRef.current),
             );
@@ -1404,6 +1397,7 @@ export function ConversationProvider({
             status,
             sortBy,
             appliedFilters,
+            listQuery,
             searchQuery,
             setSearchQuery,
             selectedConversation,
@@ -1461,6 +1455,7 @@ export function ConversationProvider({
             status,
             sortBy,
             appliedFilters,
+            listQuery,
             searchQuery,
             setSearchQuery,
             selectedConversation,

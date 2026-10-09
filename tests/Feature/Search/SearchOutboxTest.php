@@ -40,6 +40,16 @@ function syncingSearchEngine(bool $failing = false): object
             return [];
         }
 
+        public function conversationIdsMatchingContact(SearchQuery $query): Builder|array
+        {
+            return [];
+        }
+
+        public function latestMatchedMessageIds(SearchQuery $query): Builder|array
+        {
+            return [];
+        }
+
         public function keepsSeparateIndex(): bool
         {
             return true;

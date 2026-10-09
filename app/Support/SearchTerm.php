@@ -24,6 +24,13 @@ final class SearchTerm
 
     private const RANK_PARTIAL_WORDS = 2;
 
+    // Mức khớp khi gợi ý theo tên — xem leadingMatchRank().
+    private const RANK_WHOLE_VALUE = 0;
+
+    private const RANK_LEADING = 1;
+
+    private const RANK_INSIDE = 2;
+
     // Một từ "đứng trọn" khi hai bên không dính chữ hay số (regex PostgreSQL).
     private const WHOLE_WORD_PATTERN = '(?<![[:alnum:]])%s(?![[:alnum:]])';
 
@@ -133,6 +140,51 @@ final class SearchTerm
     }
 
     /**
+     * Mức khớp để gợi ý theo tên, tốt nhất trước: trùng khít cả giá trị → cụm từ
+     * khoá đứng ở đầu chuỗi hoặc đầu một từ → còn lại (khớp một phần, hay dòng chỉ
+     * khớp qua cột khác). Chữ người đọc so không dấu như foldedMatch; giá trị
+     * nguyên văn (email, số điện thoại, mã) so không phân biệt hoa/thường. Nhiều
+     * cột thì lấy mức tốt nhất. Chỉ xếp, không lọc.
+     *
+     * @param  list<string>  $foldedColumnSqls
+     * @param  list<string>  $plainColumnSqls
+     * @return array{0: string, 1: list<string>}|null
+     */
+    public function leadingMatchRank(array $foldedColumnSqls, array $plainColumnSqls = []): ?array
+    {
+        $words = $this->foldedWords();
+        $ranks = [];
+        $bindings = [];
+
+        if ($words !== []) {
+            $phrase = implode(self::PHRASE_WORD_GAP, array_map(preg_quote(...), $words));
+
+            foreach ($foldedColumnSqls as $columnSql) {
+                $folded = "search_fold({$columnSql})";
+                $ranks[] = "CASE WHEN {$folded} ~ ? THEN ".self::RANK_WHOLE_VALUE
+                    ." WHEN {$folded} ~ ? THEN ".self::RANK_LEADING
+                    .' ELSE '.self::RANK_INSIDE.' END';
+                array_push($bindings, '^\s*'.$phrase.'\s*$', self::leadingWordPatternOf($phrase));
+            }
+        }
+
+        if ($this->raw !== '') {
+            foreach ($plainColumnSqls as $columnSql) {
+                $ranks[] = "CASE WHEN lower({$columnSql}) = lower(?) THEN ".self::RANK_WHOLE_VALUE
+                    ." WHEN {$columnSql} ILIKE ? THEN ".self::RANK_LEADING
+                    .' ELSE '.self::RANK_INSIDE.' END';
+                array_push($bindings, $this->raw, strtr($this->raw, self::LIKE_ESCAPES).'%');
+            }
+        }
+
+        if ($ranks === []) {
+            return null;
+        }
+
+        return [count($ranks) === 1 ? $ranks[0] : 'LEAST('.implode(', ', $ranks).')', $bindings];
+    }
+
+    /**
      * Khớp nguyên văn, không phân biệt hoa/thường — cho email, số điện thoại, mã.
      *
      * @return array{0: string, 1: list<string>}
@@ -160,6 +212,11 @@ final class SearchTerm
     private static function containsPatternOf(string $text): string
     {
         return '%'.strtr($text, self::LIKE_ESCAPES).'%';
+    }
+
+    private static function leadingWordPatternOf(string $escapedWords): string
+    {
+        return '(?<![[:alnum:]])'.$escapedWords;
     }
 
     private static function wholeWordPatternOf(string $escapedWords): string

@@ -35,8 +35,7 @@ class FilterService extends BaseFilterService
     /** @return array{conversations: Collection<int, Conversation>, count: array<string, int>} */
     public function perform(): array
     {
-        $conversations = $this->baseRelation();
-        $this->applyPayload($conversations);
+        $conversations = $this->listScope();
         ConversationFinder::filterBySearchQuery($conversations, $this->user, $this->account, $this->searchQuery);
 
         $page = max(1, $this->page);
@@ -65,12 +64,41 @@ class FilterService extends BaseFilterService
 
         return [
             'conversations' => $items,
-            'count' => [
-                'mine_count' => $mineCount,
-                'assigned_count' => $allCount - $unassignedCount,
-                'unassigned_count' => $unassignedCount,
-                'all_count' => $allCount,
-            ],
+            'count' => self::countPayload($mineCount, $unassignedCount, $allCount),
+        ];
+    }
+
+    /**
+     * Hội thoại khớp bộ lọc trong quyền người xem, trước khi lọc theo từ khoá —
+     * phạm vi của ô tìm chia mục khi đang lọc nâng cao.
+     *
+     * @return Builder<Conversation>
+     */
+    public function listScope(): Builder
+    {
+        $conversations = $this->baseRelation();
+        $this->applyPayload($conversations);
+
+        return $conversations;
+    }
+
+    /** @return array<string, int> */
+    public function searchCounts(): array
+    {
+        $conversations = $this->listScope();
+        ConversationFinder::filterBySearchQuery($conversations, $this->user, $this->account, $this->searchQuery);
+
+        return self::countPayload(...$this->counts($conversations));
+    }
+
+    /** @return array<string, int> */
+    private static function countPayload(int $mineCount, int $unassignedCount, int $allCount): array
+    {
+        return [
+            'mine_count' => $mineCount,
+            'assigned_count' => $allCount - $unassignedCount,
+            'unassigned_count' => $unassignedCount,
+            'all_count' => $allCount,
         ];
     }
 

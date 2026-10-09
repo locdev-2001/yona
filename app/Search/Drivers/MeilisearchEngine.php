@@ -27,6 +27,9 @@ final class MeilisearchEngine implements ConfiguresIndexSettings, SearchEngine
 
     private const RECENCY_RANKING_RULE = 'created_at:desc';
 
+    // Thuộc tính khách trong tài liệu hội thoại — mục "Liên hệ" chỉ tìm trên đây.
+    private const CONTACT_ATTRIBUTES = ['contact_name', 'contact_email', 'contact_phone_number', 'contact_identifier'];
+
     private ?Client $adminClient = null;
 
     private ?Client $searchClient = null;
@@ -80,6 +83,41 @@ final class MeilisearchEngine implements ConfiguresIndexSettings, SearchEngine
             ...array_map(fn (array $hit) => (int) $hit['id'], $byConversation['hits']),
             ...array_map(fn (array $hit) => (int) $hit['conversation_id'], $byMessage['hits']),
         ]));
+    }
+
+    public function conversationIdsMatchingContact(SearchQuery $query): array
+    {
+        if ($query->inboxIds === []) {
+            return [];
+        }
+
+        $result = $this->searchIndex(SearchTarget::Conversations)->rawSearch($query->keyword, [
+            'filter' => $this->scopeFilters($query, SearchTarget::Conversations),
+            'limit' => self::MATCHING_CONVERSATION_LIMIT,
+            'attributesToSearchOn' => self::CONTACT_ATTRIBUTES,
+            'attributesToRetrieve' => ['id'],
+        ]);
+
+        return array_map(fn (array $hit) => (int) $hit['id'], $result['hits']);
+    }
+
+    // Mỗi hội thoại một tin; sort chỉ phá hoà sau các luật liên quan nên tin giữ
+    // lại là tin khớp tốt nhất, mới nhất trong số khớp ngang nhau.
+    public function latestMatchedMessageIds(SearchQuery $query): array
+    {
+        if ($query->inboxIds === []) {
+            return [];
+        }
+
+        $result = $this->searchIndex(SearchTarget::Messages)->rawSearch($query->keyword, [
+            'filter' => $this->scopeFilters($query, SearchTarget::Messages),
+            'limit' => self::MATCHING_CONVERSATION_LIMIT,
+            'distinct' => 'conversation_id',
+            'sort' => [self::RECENCY_RANKING_RULE],
+            'attributesToRetrieve' => ['id'],
+        ]);
+
+        return array_map(fn (array $hit) => (int) $hit['id'], $result['hits']);
     }
 
     public function keepsSeparateIndex(): bool

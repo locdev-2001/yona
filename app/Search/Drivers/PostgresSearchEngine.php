@@ -52,6 +52,27 @@ final class PostgresSearchEngine implements SearchEngine
                     ->whereRaw(...$term->foldedMatch('messages.content'))));
     }
 
+    /** @return Builder<Conversation> */
+    public function conversationIdsMatchingContact(SearchQuery $query): Builder
+    {
+        $term = $this->term($query);
+
+        return $this->conversations($query)
+            ->select('conversations.id')
+            ->where(fn (Builder $matches) => $this->whereContactMatches($matches, $term));
+    }
+
+    /** @return Builder<Message> */
+    public function latestMatchedMessageIds(SearchQuery $query): Builder
+    {
+        return $this->messages($query)
+            ->whereRaw(...$this->term($query)->foldedMatch('messages.content'))
+            ->selectRaw('DISTINCT ON (messages.conversation_id) messages.id')
+            ->orderBy('messages.conversation_id')
+            ->orderByDesc('messages.created_at')
+            ->orderByDesc('messages.id');
+    }
+
     // Chỉ mục chính là các bảng — không có gì để đồng bộ.
     public function keepsSeparateIndex(): bool
     {
@@ -209,12 +230,23 @@ final class PostgresSearchEngine implements SearchEngine
     {
         return $matches
             ->whereRaw(...$term->withoutIdPrefix()->plainMatch('cast(conversations.display_id as text)'))
-            ->orWhereRaw(...$term->foldedMatch('contacts.name'))
-            ->orWhereRaw(...$term->plainMatch('contacts.email'))
-            ->orWhereRaw(...$term->plainMatch('contacts.phone_number'))
-            ->orWhereRaw(...$term->plainMatch('contacts.identifier'))
+            ->orWhere(fn (Builder $contact) => $this->whereContactMatches($contact, $term))
             ->orWhereRaw(...$term->foldedMatch(self::MAIL_SUBJECT_SQL))
             ->orWhereExists($this->groupMemberMatch($term));
+    }
+
+    // Khách của hội thoại (truy vấn đã nối contacts) khớp tên, email, SĐT, mã định danh.
+    /**
+     * @param  Builder<Conversation>  $matches
+     * @return Builder<Conversation>
+     */
+    private function whereContactMatches(Builder $matches, SearchTerm $term): Builder
+    {
+        return $matches
+            ->whereRaw(...$term->foldedMatch('contacts.name'))
+            ->orWhereRaw(...$term->plainMatch('contacts.email'))
+            ->orWhereRaw(...$term->plainMatch('contacts.phone_number'))
+            ->orWhereRaw(...$term->plainMatch('contacts.identifier'));
     }
 
     // Tin trong nhóm của hội thoại đang xét mà người gửi thật khớp từ khoá.
