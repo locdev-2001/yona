@@ -88,7 +88,7 @@ describe('thẻ hội thoại trong danh sách', () => {
 
         // Thời gian nằm cùng hàng với tên để tên tự nhường đúng bề rộng chữ thời gian.
         // Chỉ hiện mốc tin mới nhất; tuổi hội thoại không còn trên thẻ.
-        it('chỉ hiện thời gian tin mới nhất, cùng hàng với tên khách', () => {
+        it('chỉ hiện thời gian tin mới nhất, ở hàng trên cùng chứ không ở hàng tên khách', () => {
             setLocale('vi');
             const now = Math.floor(Date.now() / 1000);
             const chat = { ...CONVERSATION, created_at: now - 15 * 86400, timestamp: now - 25 * 60 } as Conversation;
@@ -97,7 +97,7 @@ describe('thẻ hội thoại trong danh sách', () => {
             const name = container.querySelector('h4.conversation--user');
             const time = getByText('25 phút');
 
-            expect(name?.parentElement?.contains(time)).toBe(true);
+            expect(name?.parentElement?.contains(time)).toBe(false);
             expect(queryByText(/15 ngày/)).toBeNull();
         });
     });

@@ -124,7 +124,8 @@ export default function ConversationCard({
     const lastMessageInChat = getLastMessage(chat);
 
     const isPinned = Boolean(chat.pinned);
-    const showMetaSection = showInboxName || chat.priority || showStatus || isPinned || Boolean(onOpenActions);
+    // Hàng trên cùng luôn có thời gian tương tác cuối nên luôn hiện.
+    const showMetaSection = true;
     const showLabelsSection = (chat.labels?.length ?? 0) > 0;
     const showAssigneeSection = showAssignee && Boolean(assignee.name);
     const isAgentBotAssignee = chat.meta?.assignee_type === 'AgentBot';
@@ -201,14 +202,6 @@ export default function ConversationCard({
                         ].join(' ')}
                     >
                         {showInboxName ? <InboxName inbox={inbox} className="flex-1 min-w-0" /> : null}
-                        {showInboxName && inbox.reauthorization_required ? (
-                            <span
-                                title={t('SIDEBAR.REAUTHORIZE')}
-                                className="grid place-content-center size-4 rounded-full bg-n-ruby-5/60 flex-shrink-0"
-                            >
-                                <Icon icon="i-lucide-triangle-alert" className="size-2.5 text-n-ruby-9" />
-                            </span>
-                        ) : null}
                         {showStatus ? <ConversationStatusChip status={chat.status} /> : null}
                         <div className="flex items-center gap-1 flex-shrink-0 ltr:ml-auto rtl:mr-auto">
                             {isPinned ? (
@@ -221,21 +214,25 @@ export default function ConversationCard({
                                 </span>
                             ) : null}
                             <CardPriorityIcon priority={chat.priority} className="flex-shrink-0 !size-3.5" />
-                            {onOpenActions ? (
-                                <button
-                                    type="button"
-                                    aria-label={t('CONVERSATION.CARD_CONTEXT_MENU.MORE_ACTIONS')}
-                                    aria-haspopup="menu"
-                                    className="grid place-content-center size-5 -my-1 rounded text-n-slate-11 hover:bg-n-alpha-2 hover:text-n-slate-12 focus-visible:opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100"
-                                    onClick={openActionsFromButton}
+                            {showInboxName && inbox.reauthorization_required ? (
+                                <span
+                                    title={t('SIDEBAR.REAUTHORIZE')}
+                                    className="grid place-content-center size-4 rounded-full bg-n-ruby-5/60 flex-shrink-0"
                                 >
-                                    <Icon icon={ICONS.moreActions} className="size-4" />
-                                </button>
+                                    <Icon icon="i-lucide-triangle-alert" className="size-2.5 text-n-ruby-9" />
+                                </span>
                             ) : null}
+                            <TimeAgo
+                                lastActivityTimestamp={chat.timestamp}
+                                createdAtTimestamp={chat.created_at}
+                                conversationId={chat.id}
+                                showCreatedAt={false}
+                                className="flex-shrink-0 whitespace-nowrap font-normal"
+                            />
                         </div>
                     </div>
                 ) : null}
-                {/* Thời gian cùng hàng với tên: tên nhường đúng bề rộng chữ thời gian của từng ngôn ngữ. */}
+                {/* Nút … nằm cuối hàng tên, giữa chiều cao thẻ; thời gian và cảnh báo ở hàng trên cùng. */}
                 <div
                     className={['flex items-center gap-2 min-w-0 pt-0.5 ltr:ml-2 rtl:mr-2', compact ? 'ltr:mr-3 rtl:ml-3' : '']
                         .filter(Boolean)
@@ -253,13 +250,17 @@ export default function ConversationCard({
                             currentContact.name
                         )}
                     </h4>
-                    <TimeAgo
-                        lastActivityTimestamp={chat.timestamp}
-                        createdAtTimestamp={chat.created_at}
-                        conversationId={chat.id}
-                        showCreatedAt={false}
-                        className="flex-shrink-0 whitespace-nowrap font-normal"
-                    />
+                    {onOpenActions ? (
+                        <button
+                            type="button"
+                            aria-label={t('CONVERSATION.CARD_CONTEXT_MENU.MORE_ACTIONS')}
+                            aria-haspopup="menu"
+                            className="grid place-content-center flex-shrink-0 size-6 -my-1 rounded text-n-slate-11 hover:bg-n-surface-hover hover:text-n-slate-12 focus-visible:opacity-100 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100"
+                            onClick={openActionsFromButton}
+                        >
+                            <Icon icon={ICONS.moreActions} className="size-4" />
+                        </button>
+                    ) : null}
                 </div>
                 {lastMessageInChat ? (
                     <MessagePreview
