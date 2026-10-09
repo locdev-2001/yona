@@ -40,6 +40,7 @@ final class ConsoleNavigation
                 self::item('access_tokens', SuperAdminArea::url('access_tokens')),
             ],
             'config' => [
+                self::item('branding', SuperAdminArea::url('branding')),
                 self::item('app_config', SuperAdminArea::url('app_config'), children: self::appConfigSections()),
                 self::item('installation_configs', SuperAdminArea::url('installation_configs')),
             ],

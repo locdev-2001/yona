@@ -499,6 +499,7 @@ const messages: Record<string, unknown> = {
             "agent_bots": "Agent bots",
             "platform_apps": "Platform apps",
             "access_tokens": "Access tokens",
+            "branding": "Branding",
             "app_config": "App config",
             "installation_configs": "Installation configs",
             "settings": "Settings",
@@ -508,6 +509,45 @@ const messages: Record<string, unknown> = {
             "pulse": "Performance (Pulse)",
             "logs": "Server logs",
             "dash": "dash.yona.vn"
+        },
+        "branding": {
+            "page": {
+                "title": "Branding",
+                "description": "Logo, icon and favicon used across Yona: sign-in page, sidebar, public pages, widget, push notifications. Changes apply immediately, no deploy needed.",
+                "upload": "Upload image",
+                "replace": "Replace image",
+                "uploading": "Uploading…",
+                "reset": "Use default",
+                "reset_confirm_title": "Revert to the default image?",
+                "reset_confirm_description": "The uploaded image is deleted and every screen goes back to the default Yona file.",
+                "using_custom": "Using uploaded image",
+                "using_default": "Using default file",
+                "preview_alt": "Preview of {name}"
+            },
+            "slots": {
+                "logo": {
+                    "title": "Logo",
+                    "description": "Full logo on light backgrounds: sign-in page, home page, public pages."
+                },
+                "logo_dark": {
+                    "title": "Logo for dark backgrounds",
+                    "description": "Logo variant placed on dark backgrounds."
+                },
+                "logo_thumbnail": {
+                    "title": "Icon",
+                    "description": "Square compact logo: sidebar, widget, Help Center pages, push notification icon. Use a square image of 512 px or more."
+                },
+                "favicon": {
+                    "title": "Favicon",
+                    "description": "Browser tab icon. Use an ICO or square PNG of 32–64 px, or an SVG."
+                }
+            },
+            "requirements": "Formats :formats, up to :size.",
+            "unsafe_svg": "The SVG file contains scripts or unsafe links. Export the SVG again with shapes only.",
+            "flash": {
+                "updated": "Branding image updated.",
+                "reset": "Reverted to the default image."
+            }
         },
         "app_config": {
             "page_title": "App config",

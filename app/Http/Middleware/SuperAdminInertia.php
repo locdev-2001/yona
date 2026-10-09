@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Services\Branding\BrandAssets;
 use App\Support\SuperAdmin\ConsoleNavigation;
 use App\Support\SuperAdmin\DashboardRegistry;
 use App\Support\SuperAdminArea;
@@ -24,8 +25,8 @@ class SuperAdminInertia
         Inertia::share([
             'superAdmin' => fn () => [
                 'installationName' => config('yona.branding.installation_name', config('app.name')),
-                'logo' => config('yona.branding.logo'),
-                'logoThumbnail' => config('yona.branding.logo_thumbnail'),
+                'logo' => app(BrandAssets::class)->logo(),
+                'logoThumbnail' => app(BrandAssets::class)->logoThumbnail(),
                 'version' => config('yona.version'),
                 'navigation' => $this->registry->navigationItems(),
                 // Nhãn dịch sẵn ở máy chủ: layout nằm trong entry của console,

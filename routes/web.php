@@ -28,6 +28,7 @@ use App\Http\Controllers\SuperAdmin\AccountsController as SuperAdminAccountsCont
 use App\Http\Controllers\SuperAdmin\AccountUsersController as SuperAdminAccountUsersController;
 use App\Http\Controllers\SuperAdmin\AgentBotsController as SuperAdminAgentBotsController;
 use App\Http\Controllers\SuperAdmin\AppConfigsController as SuperAdminAppConfigsController;
+use App\Http\Controllers\SuperAdmin\BrandingController as SuperAdminBrandingController;
 use App\Http\Controllers\SuperAdmin\DashboardController as SuperAdminDashboardController;
 use App\Http\Controllers\SuperAdmin\ImpersonationsController as SuperAdminImpersonationsController;
 use App\Http\Controllers\SuperAdmin\InstallationConfigsController as SuperAdminInstallationConfigsController;
@@ -48,6 +49,7 @@ use App\Http\Middleware\SuperAdminInertia;
 use App\Http\Middleware\TrackUserSessionActivity;
 use App\Http\Middleware\ValidateCsrfToken;
 use App\Models\Account;
+use App\Services\Branding\BrandAssets;
 use App\Support\SuperAdminArea;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -123,7 +125,7 @@ Route::get('/widget', fn () => view('widget'))->middleware([RestrictWidgetEmbedd
 // ngoài widget; dữ liệu đi qua mặt tiền public API, trang chỉ nhúng cấu hình
 // cài đặt như bản gốc.
 Route::get('/survey/responses/{uuid}', fn () => view('survey', ['globalConfig' => [
-    'LOGO_THUMBNAIL' => config('yona.branding.logo_thumbnail'),
+    'LOGO_THUMBNAIL' => app(BrandAssets::class)->logoThumbnail(),
     'BRAND_NAME' => config('yona.branding.brand_name'),
     'WIDGET_BRAND_URL' => config('yona.branding.widget_brand_url'),
     'INSTALLATION_NAME' => config('yona.branding.installation_name'),
@@ -540,6 +542,12 @@ Route::prefix(SuperAdminArea::PREFIX)->middleware(SuperAdminInertia::class)->gro
         Route::get('/app_config', [SuperAdminAppConfigsController::class, 'show']);
         Route::post('/app_config', [SuperAdminAppConfigsController::class, 'store']);
         Route::get('/settings', [SuperAdminSettingsController::class, 'show']);
+
+        // Logo, biểu tượng, favicon của cả bản cài đặt.
+        Route::get('/branding', [SuperAdminBrandingController::class, 'show']);
+        Route::post('/branding/{slot}', [SuperAdminBrandingController::class, 'update'])->where('slot', '[a-z_]+');
+        Route::delete('/branding/{slot}', [SuperAdminBrandingController::class, 'destroy'])->where('slot', '[a-z_]+');
+
         Route::get('/instance_status', [SuperAdminInstanceStatusesController::class, 'show']);
 
         // Kho sticker chung: trang + JSON cho trang (dùng chung khung với kho riêng của tenant).

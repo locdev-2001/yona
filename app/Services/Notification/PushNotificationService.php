@@ -4,6 +4,7 @@ namespace App\Services\Notification;
 
 use App\Models\Conversation;
 use App\Models\Notification;
+use App\Services\Branding\BrandAssets;
 use App\Services\Conversations\UnreadCounts\AttentionCounter;
 use Illuminate\Support\Str;
 
@@ -75,7 +76,7 @@ class PushNotificationService
                 'account' => $conversation->account_id,
                 'conversationId' => $conversation->display_id,
             ]),
-            'icon' => url((string) config('yona.branding.logo_thumbnail')),
+            'icon' => url(app(BrandAssets::class)->logoThumbnail()),
             'badge_count' => (new AttentionCounter($notification->account, $notification->user))->count(),
             'data' => [
                 'account_id' => $notification->account_id,

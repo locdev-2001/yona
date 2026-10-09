@@ -499,6 +499,7 @@ const messages: Record<string, unknown> = {
             "agent_bots": "Agent bot",
             "platform_apps": "Ứng dụng nền tảng",
             "access_tokens": "Access token",
+            "branding": "Thương hiệu",
             "app_config": "Cấu hình ứng dụng",
             "installation_configs": "Biến cấu hình hệ thống",
             "settings": "Cài đặt",
@@ -508,6 +509,45 @@ const messages: Record<string, unknown> = {
             "pulse": "Hiệu năng (Pulse)",
             "logs": "Log máy chủ",
             "dash": "dash.yona.vn"
+        },
+        "branding": {
+            "page": {
+                "title": "Thương hiệu",
+                "description": "Logo, biểu tượng và favicon dùng ở mọi màn hình của Yona: trang đăng nhập, thanh bên, trang công khai, widget, thông báo đẩy. Đổi ở đây là có hiệu lực ngay, không cần deploy.",
+                "upload": "Tải ảnh lên",
+                "replace": "Thay ảnh",
+                "uploading": "Đang tải lên…",
+                "reset": "Về mặc định",
+                "reset_confirm_title": "Về ảnh mặc định?",
+                "reset_confirm_description": "Ảnh đã tải lên bị xoá, mọi màn hình quay về tệp mặc định của Yona.",
+                "using_custom": "Đang dùng ảnh đã tải lên",
+                "using_default": "Đang dùng tệp mặc định",
+                "preview_alt": "Xem trước {name}"
+            },
+            "slots": {
+                "logo": {
+                    "title": "Logo",
+                    "description": "Logo đầy đủ trên nền sáng: trang đăng nhập, trang chủ, trang công khai."
+                },
+                "logo_dark": {
+                    "title": "Logo cho nền tối",
+                    "description": "Bản logo đặt trên nền tối."
+                },
+                "logo_thumbnail": {
+                    "title": "Biểu tượng",
+                    "description": "Logo thu gọn hình vuông: thanh bên, widget, trang Help Center, icon thông báo đẩy. Nên dùng ảnh vuông từ 512 px."
+                },
+                "favicon": {
+                    "title": "Favicon",
+                    "description": "Icon trên tab trình duyệt. Nên dùng ICO hoặc PNG vuông 32–64 px, hoặc SVG."
+                }
+            },
+            "requirements": "Định dạng :formats, tối đa :size.",
+            "unsafe_svg": "Tệp SVG chứa script hoặc liên kết không an toàn. Hãy xuất lại SVG chỉ gồm hình vẽ.",
+            "flash": {
+                "updated": "Đã cập nhật ảnh thương hiệu.",
+                "reset": "Đã quay về ảnh mặc định."
+            }
         },
         "app_config": {
             "page_title": "Cấu hình ứng dụng",

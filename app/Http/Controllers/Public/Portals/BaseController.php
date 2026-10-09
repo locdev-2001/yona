@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Public\Portals;
 
 use App\Http\Controllers\Controller;
 use App\Models\Portal;
+use App\Services\Branding\BrandAssets;
 use App\Support\HelpCenter\PortalLinks;
 use Illuminate\Http\Request;
 
@@ -54,7 +55,7 @@ abstract class BaseController extends Controller
             'portalLayout' => $this->portalLayout($portal),
             'languages' => config('portal_languages'),
             'globalConfig' => [
-                'LOGO_THUMBNAIL' => config('yona.branding.logo_thumbnail'),
+                'LOGO_THUMBNAIL' => app(BrandAssets::class)->logoThumbnail(),
                 'BRAND_NAME' => config('yona.branding.brand_name'),
                 'BRAND_URL' => config('yona.branding.widget_brand_url'),
                 'INSTALLATION_NAME' => config('yona.branding.installation_name'),

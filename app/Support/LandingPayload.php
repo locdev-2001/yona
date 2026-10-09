@@ -2,6 +2,8 @@
 
 namespace App\Support;
 
+use App\Services\Branding\BrandAssets;
+
 /**
  * Cấu hình đẩy xuống mọi trang của bề mặt công khai (`landing.blade.php`).
  *
@@ -25,7 +27,7 @@ final class LandingPayload
             'meta' => $extra['meta'] ?? $strings['meta'],
             'brand' => [
                 'name' => config('yona.branding.brand_name'),
-                'logo' => config('yona.branding.logo'),
+                'logo' => app(BrandAssets::class)->logo(),
             ],
             'isAuthenticated' => auth()->check(),
             'urls' => [

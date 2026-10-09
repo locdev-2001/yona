@@ -74,6 +74,7 @@ export const NAV_ICONS: Record<string, IconName> = {
   agent_bots: 'BotIcon',
   platform_apps: 'BlocksIcon',
   access_tokens: 'KeyRoundIcon',
+  branding: 'PaletteIcon',
   app_config: 'SlidersHorizontalIcon',
   installation_configs: 'FileCogIcon',
   settings: 'SettingsIcon',

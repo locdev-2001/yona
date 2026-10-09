@@ -5,6 +5,7 @@ namespace App\Notifications;
 use App\Models\User;
 use App\Notifications\Channels\WebPushChannel;
 use App\Services\Admin\Alerts\AlertMessage;
+use App\Services\Branding\BrandAssets;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
@@ -54,7 +55,7 @@ class AlertNotification extends Notification
             'body' => implode(' ', $this->message->lines),
             'tag' => $this->message->tag,
             'url' => $this->message->actionUrl,
-            'icon' => url((string) config('yona.branding.logo_thumbnail')),
+            'icon' => url(app(BrandAssets::class)->logoThumbnail()),
         ];
     }
 }

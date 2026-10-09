@@ -6,6 +6,7 @@ use App\Channels\Capability;
 use App\Models\Channel\WebWidget;
 use App\Models\ContactInbox;
 use App\Models\Sticker as LibrarySticker;
+use App\Services\Branding\BrandAssets;
 use App\Services\Channels\Stickers\Sticker;
 use App\Services\Channels\Stickers\StickerLibrary;
 use DateTimeZone;
@@ -78,7 +79,7 @@ final class WidgetConfigResource
             ],
             // GlobalConfig.get(...) — cấu hình mức cài đặt, ở Yona nằm trong config/.
             'global_config' => [
-                'LOGO_THUMBNAIL' => config('yona.branding.logo_thumbnail'),
+                'LOGO_THUMBNAIL' => app(BrandAssets::class)->logoThumbnail(),
                 'BRAND_NAME' => config('yona.branding.brand_name'),
                 'WIDGET_BRAND_URL' => config('yona.branding.widget_brand_url'),
                 'MAXIMUM_FILE_UPLOAD_SIZE' => config('limits.maximum_file_upload_size'),

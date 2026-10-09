@@ -6,6 +6,7 @@ use App\Builders\Messages\MessageBuilder;
 use App\Http\Controllers\Controller;
 use App\Messaging\Structured\InvalidStructuredPayload;
 use App\Models\MessageAccessToken;
+use App\Services\Branding\BrandAssets;
 use App\Services\Messaging\PublicFlowService;
 use App\Services\Messaging\SubmissionService;
 use Illuminate\Http\JsonResponse;
@@ -110,7 +111,7 @@ class FlowsController extends Controller
     private function globalConfig(): array
     {
         return [
-            'LOGO_THUMBNAIL' => config('yona.branding.logo_thumbnail'),
+            'LOGO_THUMBNAIL' => app(BrandAssets::class)->logoThumbnail(),
             'BRAND_NAME' => config('yona.branding.brand_name'),
             'WIDGET_BRAND_URL' => config('yona.branding.widget_brand_url'),
             'INSTALLATION_NAME' => config('yona.branding.installation_name'),

@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\Sticker;
+use App\Services\Branding\BrandAssets;
 use App\Services\Notification\VapidService;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -32,9 +33,9 @@ class HandleInertiaRequests extends Middleware
                 // chung với trang chủ, widget và email; viết cứng ở đây từng làm
                 // đường dẫn logo tối lệch tên tệp thật và trả 404.
                 'installationName' => config('yona.branding.installation_name'),
-                'logo' => config('yona.branding.logo'),
-                'logoDark' => config('yona.branding.logo_dark'),
-                'logoThumbnail' => config('yona.branding.logo_thumbnail'),
+                'logo' => fn () => app(BrandAssets::class)->logo(),
+                'logoDark' => fn () => app(BrandAssets::class)->logoDark(),
+                'logoThumbnail' => fn () => app(BrandAssets::class)->logoThumbnail(),
                 'termsURL' => config('yona.terms_url'),
                 'privacyURL' => config('yona.privacy_url'),
                 'fbAppId' => config('services.facebook.app_id'),
