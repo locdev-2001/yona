@@ -123,6 +123,7 @@ it('IMAP lấy thư thành công lần đầu ghi channel_connected (imap)', fun
     $inbox = Inbox::factory()->create(['account_id' => $account->id, 'channel_id' => $channel->id, 'channel_type' => 'Channel::Email']);
     $fetcher = Mockery::mock(FetchEmailService::class);
     $fetcher->shouldReceive('perform')->twice()->andReturn([]);
+    $fetcher->shouldReceive('commitSyncProgress')->twice();
     app()->bind(FetchEmailService::class, fn () => $fetcher);
 
     (new FetchImapEmailsJob($channel->fresh()))->handle();
