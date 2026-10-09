@@ -31,14 +31,14 @@ export default function ChatListSearch() {
 
     return (
         <div className="px-3 pb-2">
-            <div className="field-surface flex items-center gap-2 h-8 px-2.5 rounded-lg">
-                <span className="i-lucide-search size-4 shrink-0 text-n-slate-10" aria-hidden="true" />
+            <div className="field-surface flex items-center gap-2.5 h-10 px-3 rounded-xl">
+                <span className="i-lucide-search size-[1.125rem] shrink-0 text-n-slate-10" aria-hidden="true" />
                 <input
                     type="search"
                     value={draft}
                     placeholder={t('CHAT_LIST.SEARCH.INPUT')}
                     aria-label={t('CHAT_LIST.SEARCH.LABEL')}
-                    className="reset-base flex-1 min-w-0 h-full m-0 p-0 text-sm bg-transparent border-none shadow-none outline-none text-n-slate-12 placeholder:text-n-slate-10 [&::-webkit-search-cancel-button]:hidden"
+                    className="reset-base flex-1 min-w-0 h-full m-0 p-0 text-[0.9375rem] bg-transparent border-none shadow-none outline-none text-n-slate-12 placeholder:text-n-slate-10 [&::-webkit-search-cancel-button]:hidden"
                     onChange={event => setDraft(event.target.value)}
                     onKeyDown={event => {
                         if (event.key === 'Escape' && draft) {
