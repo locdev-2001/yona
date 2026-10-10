@@ -256,3 +256,23 @@ it('cảm xúc của khách trên Instagram ghi vào tin đi', function () {
 
     expect($outgoing->fresh()->reactionList()[0]['emoji'])->toBe('😍');
 });
+
+it('Instagram báo đã xem theo read.mid thì tin đi lên đã xem', function () {
+    Http::fake(['graph.instagram.com/*' => Http::response(['id' => 'ig-user-id', 'name' => 'Khách IG'])]);
+    instagramPost(ChannelFixture::load('instagram_messaging'))->assertOk();
+    $conversation = Message::query()->latest('id')->first()->conversation;
+    $outgoing = $conversation->messages()->create([
+        'account_id' => $conversation->account_id,
+        'inbox_id' => $conversation->inbox_id,
+        'message_type' => Message::TYPE_OUTGOING,
+        'content' => 'Chào bạn',
+    ]);
+    $outgoing->forceFill(['source_id' => 'mid.ig.seen', 'status' => Message::STATUSES['sent']])->save();
+
+    $payload = ChannelFixture::load('instagram_messaging');
+    unset($payload['entry'][0]['messaging'][0]['message']);
+    $payload['entry'][0]['messaging'][0]['read'] = ['mid' => 'mid.ig.seen'];
+    instagramPost($payload)->assertOk();
+
+    expect($outgoing->fresh()->status)->toBe(Message::STATUSES['read']);
+});

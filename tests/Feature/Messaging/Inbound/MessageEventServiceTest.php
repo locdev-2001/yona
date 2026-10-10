@@ -48,8 +48,9 @@ it('thu hồi: đánh dấu xoá; tới trước tin thì nhớ và áp khi tin 
     expect($this->events->apply($this->inbox, new RecallEvent('in-2')))->toBeFalse();
     $late = app(InboundMessageWriter::class)->write($this->inbox, new InboundSender('khach-1', 'An'), new InboundMessage(sourceId: 'in-2', text: 'tin tới trễ'));
 
-    expect($this->events->applyPendingRecall($this->inbox, 'in-2'))->toBeTrue()
-        ->and($late->fresh()->isDeleted())->toBeTrue();
+    // Writer đã áp bia mộ ngay khi lưu; gọi lại không còn gì để áp.
+    expect($late->fresh()->isDeleted())->toBeTrue()
+        ->and($this->events->applyPendingRecall($this->inbox, 'in-2'))->toBeFalse();
 });
 
 it('sửa tin đổi nội dung và ghi mốc sửa', function () {

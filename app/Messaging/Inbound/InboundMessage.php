@@ -19,6 +19,7 @@ final class InboundMessage
      * @param  list<InboundAttachment>  $attachments
      * @param  array<string, mixed>  $attributes
      * @param  array<string, mixed>  $conversationAttributes  gợi ý cho hội thoại mới (thread…)
+     * @param  bool  $backfill  tin lịch sử kéo về (không phải hoạt động mới): giữ `created_at` theo `sentAt`
      */
     public function __construct(
         public readonly ?string $sourceId,
@@ -31,6 +32,7 @@ final class InboundMessage
         public readonly ?ForwardOrigin $forwardedFrom = null,
         public readonly array $attributes = [],
         public readonly array $conversationAttributes = [],
+        public readonly bool $backfill = false,
     ) {}
 
     public function isEcho(): bool

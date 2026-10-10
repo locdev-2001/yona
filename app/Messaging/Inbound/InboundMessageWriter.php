@@ -17,13 +17,17 @@ use Illuminate\Support\Facades\DB;
  *   - Message: content, loại/trạng thái theo chiều, trích dẫn (`in_reply_to_external_id` +
  *     `in_reply_to_preview`; id nội bộ do lõi tự suy lúc lưu), chuyển tiếp, `external_echo`;
  *   - đính kèm dựng TRƯỚC khi lưu để `message.created` phát ra đã có đính kèm;
- *   - sticker đi qua StickerMessage; `created_at` theo giờ nền tảng khi kênh báo.
+ *   - sticker đi qua StickerMessage; `created_at` theo giờ nền tảng với lô lịch sử (`backfill`);
+ *   - thu hồi tới trước tin được áp ngay sau khi lưu.
  *
  * Driver không dựng Message/Attachment nữa; đặc thù chỉ còn ở cách bóc payload.
  */
 class InboundMessageWriter
 {
-    public function __construct(private readonly InboundAttachmentFactory $attachments) {}
+    public function __construct(
+        private readonly InboundAttachmentFactory $attachments,
+        private readonly MessageEventService $events,
+    ) {}
 
     public function write(Inbox $inbox, InboundSender $sender, InboundMessage $inbound): ?Message
     {
@@ -68,11 +72,16 @@ class InboundMessageWriter
                 StickerMessage::apply($message, $inbound->sticker, $this->downloadedStickerImage($message, $inbound));
             }
 
-            if ($inbound->sentAt !== null && $inbound->sentAt->year >= 2000 && ! $inbound->sentAt->isFuture()) {
+            // Giờ nền tảng chỉ cho lô lịch sử: webhook tin mới đến trễ mà ghi lùi `created_at`
+            // thì hội thoại tụt xuống và tin không được đếm là chưa đọc.
+            if ($inbound->backfill && $inbound->sentAt !== null && $inbound->sentAt->year >= 2000 && ! $inbound->sentAt->isFuture()) {
                 $message->created_at = $inbound->sentAt;
             }
 
             $message->save();
+
+            // Thu hồi có thể tới trước tin nó nói đến.
+            $this->events->applyPendingRecall($inbox, $inbound->sourceId);
 
             return $message;
         });
@@ -89,7 +98,10 @@ class InboundMessageWriter
         ], fn ($value) => $value !== null);
     }
 
-    /** Sticker có ảnh trên URL cần tải: kênh đưa ảnh vào `attachments`, lõi lấy ảnh đầu. */
+    /**
+     * Sticker có ảnh trên URL cần tải: kênh đưa ảnh vào `attachments`, lõi lấy ảnh đầu.
+     * Tải hỏng thì đính kèm là fallback — vẫn giữ để tin còn hiện và còn đường tải lại.
+     */
     private function downloadedStickerImage(Message $message, InboundMessage $inbound): ?Attachment
     {
         if ($inbound->sticker?->imageUrl !== null) {
@@ -102,7 +114,7 @@ class InboundMessageWriter
             }
         }
 
-        return null;
+        return $message->pendingAttachments[0] ?? null;
     }
 
     /**

@@ -1,12 +1,14 @@
 <?php
 
 use App\Messaging\Inbound\AttachmentKind;
+use App\Messaging\Inbound\Events\RecallEvent;
 use App\Messaging\Inbound\ForwardOrigin;
 use App\Messaging\Inbound\InboundAttachment;
 use App\Messaging\Inbound\InboundDirection;
 use App\Messaging\Inbound\InboundMessage;
 use App\Messaging\Inbound\InboundMessageWriter;
 use App\Messaging\Inbound\InboundSender;
+use App\Messaging\Inbound\MessageEventService;
 use App\Messaging\Inbound\ReplyReference;
 use App\Messaging\Stickers\StickerContent;
 use App\Messaging\Stickers\StickerMessage;
@@ -116,10 +118,34 @@ it('sticker cần tải: ảnh tải về trở thành ảnh sticker, không cò
         ->and($message->content_attributes['sticker']['id'])->toBe('77');
 });
 
-it('giờ nền tảng hợp lệ thành created_at; mốc tương lai hay rác thì lấy giờ máy chủ', function () {
-    $old = writeInbound($this->inbox, $this->sender, new InboundMessage(sourceId: 't1', text: 'cũ', sentAt: now()->subDay()));
-    $future = writeInbound($this->inbox, $this->sender, new InboundMessage(sourceId: 't2', text: 'tương lai', sentAt: now()->addDay()));
+it('giờ nền tảng chỉ áp cho lô lịch sử; tin mới đến trễ vẫn lấy giờ máy chủ để còn tính chưa đọc', function () {
+    $backfill = writeInbound($this->inbox, $this->sender, new InboundMessage(sourceId: 't1', text: 'cũ', sentAt: now()->subDay(), backfill: true));
+    $late = writeInbound($this->inbox, $this->sender, new InboundMessage(sourceId: 't2', text: 'webhook trễ', sentAt: now()->subDay()));
+    $future = writeInbound($this->inbox, $this->sender, new InboundMessage(sourceId: 't3', text: 'tương lai', sentAt: now()->addDay(), backfill: true));
 
-    expect($old->created_at->isSameDay(now()->subDay()))->toBeTrue()
+    expect($backfill->created_at->isSameDay(now()->subDay()))->toBeTrue()
+        ->and($late->created_at->isSameDay(now()))->toBeTrue()
         ->and($future->created_at->isSameDay(now()))->toBeTrue();
+});
+
+it('sticker tải ảnh hỏng vẫn giữ đính kèm fallback để tin còn hiện và còn đường tải lại', function () {
+    Http::fake(['cdn.test/*' => Http::response('', 500)]);
+
+    $message = writeInbound($this->inbox, $this->sender, new InboundMessage(
+        sourceId: 's2',
+        sticker: new StickerContent(id: '78'),
+        attachments: [InboundAttachment::download('https://cdn.test/s.webp', AttachmentKind::Image)],
+    ));
+
+    expect(StickerMessage::isSticker($message))->toBeTrue()
+        ->and($message->attachments)->toHaveCount(1)
+        ->and($message->attachments->first()->file_type)->toBe(Attachment::FILE_TYPE_FALLBACK);
+});
+
+it('thu hồi tới trước tin thì tin vừa ghi bị đánh dấu xoá ngay', function () {
+    app(MessageEventService::class)->apply($this->inbox, new RecallEvent('late-1'));
+
+    $message = writeInbound($this->inbox, $this->sender, new InboundMessage(sourceId: 'late-1', text: 'tin tới trễ'));
+
+    expect($message->fresh()->isDeleted())->toBeTrue();
 });

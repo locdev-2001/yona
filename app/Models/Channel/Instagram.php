@@ -2,7 +2,6 @@
 
 namespace App\Models\Channel;
 
-use App\Builders\ContactInboxWithContactBuilder;
 use App\Channels\Capability;
 use App\Channels\CapabilitySet;
 use App\Channels\ChannelConnection;
@@ -14,7 +13,6 @@ use App\Channels\DeclaresPlatform;
 use App\Channels\TextFormat;
 use App\Models\Channel\Concerns\Channelable;
 use App\Models\Concerns\Reauthorizable;
-use App\Models\ContactInbox;
 use Database\Factories\Channel\InstagramFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -66,15 +64,6 @@ class Instagram extends Model implements DeclaresCapabilities, DeclaresConnectio
     public function baseUri(): string
     {
         return 'https://graph.instagram.com/'.self::apiVersion();
-    }
-
-    public function createContactInbox(string $sourceId, ?string $name): ?ContactInbox
-    {
-        return (new ContactInboxWithContactBuilder(
-            inbox: $this->inbox,
-            contactAttributes: ['name' => $name],
-            sourceId: $sourceId,
-        ))->perform();
     }
 
     /** Luồng ủy quyền Instagram chưa có ở backend nên chưa mở cho khách. */

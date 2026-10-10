@@ -266,18 +266,16 @@ it('cảm xúc của khách trên Messenger ghi vào tin, gỡ thì xoá', funct
     expect($outgoing->fresh()->reactionList())->toBe([]);
 });
 
-it('tin Messenger giữ giờ nền tảng và trích dẫn theo mid', function () {
+it('tin Messenger trích dẫn theo mid được lõi nối về tin gốc', function () {
     Http::fake(['graph.facebook.com/*' => Http::response(['name' => 'Nguyễn An'])]);
     facebookPost(ChannelFixture::load('facebook_messaging'));
     $quoted = Message::query()->latest('id')->first();
 
     $payload = ChannelFixture::load('facebook_messaging');
-    $payload['entry'][0]['messaging'][0]['timestamp'] = now()->subHours(3)->getTimestampMs();
     $payload['entry'][0]['messaging'][0]['message'] = ['mid' => 'mid.facebook.reply', 'text' => 'hỏi lại', 'reply_to' => ['mid' => 'mid.facebook.1']];
     facebookPost($payload)->assertOk();
 
     $reply = Message::query()->latest('id')->first();
 
-    expect($reply->content_attributes['in_reply_to'])->toBe($quoted->id)
-        ->and($reply->created_at->diffInHours(now()))->toBeGreaterThanOrEqual(2);
+    expect($reply->content_attributes['in_reply_to'])->toBe($quoted->id);
 });

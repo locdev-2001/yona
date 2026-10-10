@@ -271,6 +271,11 @@ class IncomingMessageService
             return;
         }
 
+        // `sent` tới trễ hơn `read` thì không được kéo tick lùi; tin đi đã ở trạng thái đó.
+        if ($state === 'sent') {
+            return;
+        }
+
         $message = Message::query()->where('inbox_id', $this->inbox->id)->where('source_id', $sourceId)->first();
 
         if ($message === null) {

@@ -853,8 +853,8 @@ class IncomingMessageService
 
     /**
      * Danh thiếp Zalo giữ thẻ riêng ở `content_attributes.business_card` cho bong bóng
-     * của nó, và thêm đính kèm `contact` chuẩn của lõi để tìm kiếm, tab tệp và kênh
-     * khác nhìn thấy cùng một thứ.
+     * của nó, và thêm đính kèm `contact` theo hình dạng chung của lõi (cùng loại với
+     * Telegram, WhatsApp) để mọi nơi đọc danh thiếp không phải biết kênh.
      */
     private function businessCardSpec(): ?InboundAttachment
     {

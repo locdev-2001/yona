@@ -2,7 +2,6 @@
 
 namespace App\Models\Channel;
 
-use App\Builders\ContactInboxWithContactBuilder;
 use App\Channels\Capability;
 use App\Channels\CapabilitySet;
 use App\Channels\ChannelConnection;
@@ -14,7 +13,6 @@ use App\Channels\DeclaresPlatform;
 use App\Channels\TextFormat;
 use App\Models\Channel\Concerns\Channelable;
 use App\Models\Concerns\Reauthorizable;
-use App\Models\ContactInbox;
 use Database\Factories\Channel\FacebookPageFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -58,15 +56,6 @@ class FacebookPage extends Model implements DeclaresCapabilities, DeclaresConnec
             'page_access_token' => ['required', 'string'],
             'user_access_token' => ['required', 'string'],
         ];
-    }
-
-    public function createContactInbox(string $sourceId, ?string $name): ?ContactInbox
-    {
-        return (new ContactInboxWithContactBuilder(
-            inbox: $this->inbox,
-            contactAttributes: ['name' => $name],
-            sourceId: $sourceId,
-        ))->perform();
     }
 
     /** Đăng nhập Meta bằng SDK (cửa sổ bật lên) — cần app Meta của bản cài đặt. */

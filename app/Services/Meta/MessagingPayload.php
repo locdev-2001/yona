@@ -136,12 +136,13 @@ class MessagingPayload
         $specs = [];
         $seen = [];
 
-        foreach ($this->rawAttachments() as $attachment) {
+        foreach ($this->rawAttachments() as $index => $attachment) {
             $type = (string) ($attachment['type'] ?? '');
             $url = $type === 'ig_story'
                 ? data_get($attachment, 'payload.story_media_url')
                 : (data_get($attachment, 'payload.url') ?? ($attachment['url'] ?? null));
-            $key = $type.'|'.($url ?? spl_object_id($this));
+            // Không có URL (vị trí, fallback) thì không có gì để trùng: mỗi phần tử một khoá.
+            $key = $type.'|'.($url ?? "#{$index}");
 
             if (isset($seen[$key])) {
                 continue;
@@ -192,9 +193,13 @@ class MessagingPayload
             $events[] = ReceiptEvent::deliveredUpTo($contactSourceId, Carbon::createFromTimestampMs((int) $delivery['watermark']));
         }
 
+        // Messenger báo đã xem theo mốc (`read.watermark`), Instagram theo từng tin (`read.mid`).
         $readWatermark = data_get($this->messaging, 'read.watermark');
+        $readMid = data_get($this->messaging, 'read.mid');
 
-        if (filled($readWatermark) && $contactSourceId !== null) {
+        if (filled($readMid)) {
+            $events[] = ReceiptEvent::read([(string) $readMid]);
+        } elseif (filled($readWatermark) && $contactSourceId !== null) {
             $events[] = ReceiptEvent::readUpTo($contactSourceId, Carbon::createFromTimestampMs((int) $readWatermark));
         }
 
