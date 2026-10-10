@@ -3,10 +3,19 @@
 namespace Tests\Contracts\Channels;
 
 use Tests\Contracts\Channels\Contracts\ChannelContract;
+use Tests\Contracts\Channels\Contracts\EventDeliveredContract;
+use Tests\Contracts\Channels\Contracts\EventReactionContract;
+use Tests\Contracts\Channels\Contracts\EventRecallContract;
 use Tests\Contracts\Channels\Contracts\EventSeenContract;
+use Tests\Contracts\Channels\Contracts\InboundAudioContract;
+use Tests\Contracts\Channels\Contracts\InboundContactCardContract;
+use Tests\Contracts\Channels\Contracts\InboundFileContract;
 use Tests\Contracts\Channels\Contracts\InboundForwardContract;
 use Tests\Contracts\Channels\Contracts\InboundImageContract;
+use Tests\Contracts\Channels\Contracts\InboundLocationContract;
+use Tests\Contracts\Channels\Contracts\InboundReplyToContract;
 use Tests\Contracts\Channels\Contracts\InboundStickerContract;
+use Tests\Contracts\Channels\Contracts\InboundVideoContract;
 use Tests\Contracts\Channels\Contracts\MentionContract;
 use Tests\Contracts\Channels\Contracts\OutboundAttachmentsContract;
 use Tests\Contracts\Channels\Contracts\OutboundStickerContract;
@@ -26,12 +35,21 @@ final class ChannelContractRunner
     public const CONTRACTS = [
         InboundImageContract::class,
         InboundStickerContract::class,
+        InboundFileContract::class,
+        InboundVideoContract::class,
+        InboundAudioContract::class,
+        InboundLocationContract::class,
+        InboundContactCardContract::class,
+        InboundReplyToContract::class,
+        InboundForwardContract::class,
         OutboundAttachmentsContract::class,
         ReplyToContract::class,
         MentionContract::class,
-        EventSeenContract::class,
         OutboundStickerContract::class,
-        InboundForwardContract::class,
+        EventDeliveredContract::class,
+        EventSeenContract::class,
+        EventReactionContract::class,
+        EventRecallContract::class,
         SingleConversationContract::class,
     ];
 

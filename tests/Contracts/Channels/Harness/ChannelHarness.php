@@ -22,6 +22,9 @@ interface ChannelHarness
     /** Bơm một tin đến thật của kênh, trả về Message lõi đã dựng. */
     public function receiveInbound(Capability $capability): Message;
 
+    /** Khách trích dẫn `$quoted` trong một tin chữ mới. */
+    public function receiveReply(Message $quoted): Message;
+
     /** Gọi driver gửi $message ra kênh. */
     public function sendOutbound(Message $message): OutboundAttempt;
 

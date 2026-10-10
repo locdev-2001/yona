@@ -1,0 +1,26 @@
+{
+  "update_id": 1144,
+  "message": {
+    "message_id": 1144,
+    "from": {
+      "id": 23,
+      "is_bot": false,
+      "first_name": "Sojan",
+      "last_name": "Jose",
+      "username": "sojan",
+      "language_code": "en"
+    },
+    "chat": {
+      "id": 23,
+      "first_name": "Sojan",
+      "last_name": "Jose",
+      "username": "sojan",
+      "type": "private"
+    },
+    "date": 1631132077,
+    "location": {
+      "latitude": 10.7769,
+      "longitude": 106.7009
+    }
+  }
+}

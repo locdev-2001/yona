@@ -234,6 +234,7 @@ class Zalo extends Model implements DeclaresCapabilities, DeclaresConnection, De
             Capability::InboundCallLog,
             Capability::InboundLinkPreview,
             Capability::InboundCaption,
+            Capability::InboundReplyTo,
             Capability::OutboundText,
             Capability::OutboundImage,
             Capability::OutboundGif,

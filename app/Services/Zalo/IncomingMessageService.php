@@ -833,6 +833,10 @@ class IncomingMessageService
             return $this->locationSpec();
         }
 
+        if ($kind === 'business_card') {
+            return $this->businessCardSpec();
+        }
+
         $url = $this->params['media_url'] ?? null;
 
         if (blank($url)) {
@@ -845,6 +849,23 @@ class IncomingMessageService
             $this->params['media_filename'] ?? null,
             urlIsPublic: true,
         );
+    }
+
+    /**
+     * Danh thiếp Zalo giữ thẻ riêng ở `content_attributes.business_card` cho bong bóng
+     * của nó, và thêm đính kèm `contact` chuẩn của lõi để tìm kiếm, tab tệp và kênh
+     * khác nhìn thấy cùng một thứ.
+     */
+    private function businessCardSpec(): ?InboundAttachment
+    {
+        $card = is_array($this->params['business_card'] ?? null) ? $this->params['business_card'] : [];
+        $title = $card['phone'] ?? $card['name'] ?? $card['title'] ?? null;
+
+        return blank($title) ? null : InboundAttachment::contactCard((string) $title, array_filter([
+            'first_name' => $card['name'] ?? $card['title'] ?? null,
+            'url' => $card['url'] ?? null,
+            'avatar_url' => $card['thumbnail'] ?? null,
+        ]));
     }
 
     private function locationSpec(): ?InboundAttachment

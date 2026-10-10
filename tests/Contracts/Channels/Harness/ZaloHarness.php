@@ -32,6 +32,9 @@ final class ZaloHarness implements ChannelHarness
         Capability::InboundImage->value => 'image',
         Capability::InboundGif->value => 'gif',
         Capability::InboundFile->value => 'file',
+        // Hai loại này chưa có bản bắt từ bridge thật; fixture dựng tay cùng hình dạng.
+        Capability::InboundVideo->value => '../../zalo_inbound_video',
+        Capability::InboundAudio->value => '../../zalo_inbound_audio',
         Capability::InboundSticker->value => 'sticker',
         Capability::InboundLocation->value => 'location',
         Capability::InboundContactCard->value => 'business_card',
@@ -74,6 +77,19 @@ final class ZaloHarness implements ChannelHarness
             $payload['listener_data']['msgId'] = $sourceId;
             $payload['listener_data']['cliMsgId'] = $payload['listener_data']['cliMsgId'].$this->sequence;
         }
+
+        $this->dispatch($payload);
+
+        return Message::query()->where('source_id', $sourceId)->firstOrFail();
+    }
+
+    public function receiveReply(Message $quoted): Message
+    {
+        $payload = ChannelFixture::load(self::REAL.'quote');
+        $sourceId = $payload['source_id'].'-'.(++$this->sequence);
+        $payload['source_id'] = $sourceId;
+        $payload['quote_msg_id'] = $quoted->source_id;
+        $payload['quote']['msg_id'] = $quoted->source_id;
 
         $this->dispatch($payload);
 

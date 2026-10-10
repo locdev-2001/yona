@@ -89,6 +89,49 @@ PostgreSQL (`pg_trgm`) · Redis (cache, queue, session) · Laravel Reverb
   thoại gốc (Zalo: bridge `send-voice.mjs` đổi sang m4a rồi `sendVoice`); kênh
   khác gửi như mọi tệp âm thanh (`outbound_audio`).
 
+### Tin đến và sự kiện: một đường vào cho mọi kênh
+
+`app/Messaging/Inbound/` là lõi trung tính; driver kênh chỉ bóc payload của nền
+tảng thành giá trị của lõi, không dựng Message/Attachment/Conversation.
+
+- **Giá trị kênh tạo (không I/O):** `InboundSender` (id ổn định trên kênh + hồ sơ),
+  `InboundMessage` (chiều `InboundDirection`: khách gửi / tenant gửi từ app nền tảng
+  / hoạt động; chữ; giờ nền tảng; sticker `StickerContent`; danh sách
+  `InboundAttachment`; trích dẫn `ReplyReference`; chuyển tiếp `ForwardOrigin`;
+  `attributes` là khoá `content_attributes` riêng của kênh đã có hợp đồng với giao
+  diện; `conversationAttributes` gợi ý cho hội thoại mới). `InboundAttachment` mô tả
+  một đính kèm theo đúng một cách: `download()` (lõi tải về; `urlIsPublic` quyết
+  định fallback có giữ liên kết để tự tải lại không), `external()` (CDN công khai
+  không hết hạn), `location()`, `contactCard()`, `fallback()`; loại theo
+  `AttachmentKind`.
+- **Lõi ghi:** `InboundMessageWriter::write(Inbox, InboundSender, InboundMessage)` là
+  nơi DUY NHẤT: chống trùng theo inbox + `source_id` (tin dội lại tra thêm bí danh
+  `external_source_ids`), liên hệ qua `ContactInboxWithContactBuilder`, hội thoại qua
+  `IncomingConversationResolver`, Message với loại/trạng thái theo chiều, trích dẫn
+  (`in_reply_to_external_id` + `in_reply_to_preview`; id nội bộ do
+  `InReplyToMessageBuilder` suy khi lưu), `forwarded_from`, `external_echo`, đính kèm
+  dựng trước khi lưu qua `InboundAttachmentFactory` (tải, suy loại theo MIME khi kênh
+  chỉ nói "tệp", fallback), sticker qua `StickerMessage`, `created_at` theo giờ nền
+  tảng khi hợp lệ. Mọi thứ trong một transaction.
+- **Sự kiện lên tin đã có:** `MessageEventService::apply(Inbox, InboundEvent)` với
+  `ReactionEvent` (emoji rỗng = gỡ; `isSelf` = tenant thả từ app → ô agent),
+  `RecallEvent` (kèm bia mộ chờ tin tới sau), `EditEvent`, `ReceiptEvent` (theo
+  danh sách id hoặc theo mốc thời gian cho một người, uỷ quyền
+  `MessageReceiptService`; chỉ nâng tin đi, không hạ). Tra tin theo `source_id` rồi bí
+  danh.
+- **Kênh đã đi đường này:** Messenger và Instagram (`app/Services/Meta/MessagingPayload`
+  bóc một phần tử Messenger Platform, dùng chung), Telegram, WhatsApp, Line, SMS,
+  Twilio, TikTok, kho sticker Yona. **Zalo** mới chuyển phần sự kiện
+  (`RelayEventParser::events()`) và đính kèm (`InboundAttachmentFactory`); writer tin
+  đến của Zalo còn giữ riêng vì luật backfill (không đổi trạng thái hội thoại), chờ
+  echo khớp bí danh và đồng bộ hồ sơ nhóm — nợ có tên, chuyển sau.
+- **Ép bằng contract** (`tests/Contracts/Channels`): kênh khai năng lực nào thì
+  harness của nó phải qua contract đó: `inbound_image/sticker/file/video/audio/
+  location/contact_card/reply_to/forward`, `event_delivered/seen/reaction/recall`,
+  `outbound_*`, `settings_single_conversation`. Harness có cho Telegram, Zalo,
+  Messenger. **Thêm kênh = viết parser + harness; thêm loại tin = thêm giá trị +
+  contract, không sửa kênh nào.**
+
 ### Tin nhắn có cấu trúc và hạ cấp theo kênh
 
 Tin đặc biệt (trả lời nhanh, nút, thẻ sản phẩm, yêu cầu đặt hàng, tra đơn, form,
