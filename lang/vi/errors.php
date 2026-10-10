@@ -19,6 +19,9 @@ return [
     'reports' => [
         'date_range_too_long' => 'Khoảng thời gian không được quá 6 tháng',
     ],
+    'inboxes' => [
+        'connection_not_open' => 'Cách kết nối này chưa mở, hãy chọn cách kết nối khác',
+    ],
     'conversations' => [
         'resolved' => 'Hội thoại đã kết thúc nên không nhận thêm tin nhắn',
         'contact_unreachable' => 'Liên hệ chưa có địa chỉ để gửi qua hộp thư này',

@@ -120,6 +120,10 @@ class InboxesController extends Controller
 
         $data = $request->validate($this->storeRules($request->input('channel.type')));
 
+        if (! self::CHANNEL_TYPES[$data['channel']['type']]::connection()->opensByForm()) {
+            return response()->json(['error' => __('errors.inboxes.connection_not_open')], 422);
+        }
+
         // Kiểm thông tin đăng nhập trước khi mở transaction: gọi mạng không giữ khoá DB.
         $channel = $this->buildChannel($account, $data['channel']);
         app(ChannelCredentialsCheck::class)->verify($channel);

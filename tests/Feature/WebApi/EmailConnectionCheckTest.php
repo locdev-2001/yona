@@ -101,20 +101,6 @@ it('không thử kết nối khi chỉ đổi phần không liên quan tới má
     expect($this->mailServerProbe->attempts)->toBe([]);
 });
 
-it('tạo hộp thư email kèm IMAP sai mật khẩu thì không tạo gì', function () {
-    $this->mailServerProbe->rejectImap();
-
-    $this->actingAs($this->admin)
-        ->postJson("/api/v1/accounts/{$this->account->id}/inboxes", [
-            'name' => 'Gmail cửa hàng',
-            'channel' => ['type' => 'email', 'email' => 'shop@gmail.com', ...imapSettings()],
-        ])
-        ->assertStatus(422)
-        ->assertJsonValidationErrors(['channel.imap_password']);
-
-    expect(Email::query()->where('email', 'shop@gmail.com')->exists())->toBeFalse();
-});
-
 function failingFetchService(MailServerException $exception): void
 {
     app()->bind(FetchEmailService::class, fn () => new class($exception) extends FetchEmailService

@@ -16,26 +16,20 @@ function emailChannelMemberOf(Account $account, int $role = AccountUser::ROLE_AG
     return $user;
 }
 
-it('creates an email inbox', function () {
-    config(['mail.inbound_email_domain' => 'inbound.yona.vn']);
+it('không tạo hộp Email bằng form khi mọi lựa chọn form đang sắp ra mắt hoặc đã bỏ', function () {
     $account = Account::factory()->create();
     $admin = emailChannelMemberOf($account, AccountUser::ROLE_ADMINISTRATOR);
 
-    $response = $this->actingAs($admin)
+    $this->actingAs($admin)
         ->postJson("/api/v1/accounts/{$account->id}/inboxes", [
             'name' => 'Support Email',
-            'channel' => ['type' => 'email', 'email' => 'care@acme.test'],
+            'channel' => ['type' => 'email', 'email' => 'care@acme.test', 'imap_password' => 'mat-khau-ung-dung'],
         ])
-        ->assertOk();
+        ->assertUnprocessable()
+        ->assertJson(['error' => __('errors.inboxes.connection_not_open')]);
 
-    expect($response->json('channel_type'))->toBe('Channel::Email')
-        ->and($response->json('email'))->toBe('care@acme.test')
-        ->and($response->json('forwarding_enabled'))->toBeTrue()
-        ->and($response->json('forward_to_email'))->toEndWith('@inbound.yona.vn')
-        ->and($response->json('imap_enabled'))->toBeFalse()
-        ->and($response->json('imap_authentication'))->toBe('plain')
-        ->and($response->json('smtp_authentication'))->toBe('login')
-        ->and($response->json('smtp_openssl_verify_mode'))->toBe('none');
+    expect(Email::query()->where('email', 'care@acme.test')->exists())->toBeFalse()
+        ->and($this->mailServerProbe->attempts)->toBe([]);
 });
 
 it('rejects an email inbox without an email address', function () {
@@ -155,27 +149,18 @@ it('turns imap off with an empty address', function () {
 });
 
 it('deletes the email channel with the inbox so the address can be reused', function () {
-    config(['mail.inbound_email_domain' => 'inbound.yona.vn']);
     $account = Account::factory()->create();
     $admin = emailChannelMemberOf($account, AccountUser::ROLE_ADMINISTRATOR);
-
-    $created = $this->actingAs($admin)
-        ->postJson("/api/v1/accounts/{$account->id}/inboxes", [
-            'name' => 'Support Email',
-            'channel' => ['type' => 'email', 'email' => 'care@acme.test'],
-        ])
-        ->assertOk();
+    $inbox = Inbox::factory()->email()->create(['account_id' => $account->id]);
+    $inbox->channel->update(['email' => 'care@acme.test']);
 
     $this->actingAs($admin)
-        ->deleteJson("/api/v1/accounts/{$account->id}/inboxes/{$created->json('id')}")
+        ->deleteJson("/api/v1/accounts/{$account->id}/inboxes/{$inbox->id}")
         ->assertOk();
 
     expect(Email::where('email', 'care@acme.test')->exists())->toBeFalse();
 
-    $this->actingAs($admin)
-        ->postJson("/api/v1/accounts/{$account->id}/inboxes", [
-            'name' => 'Support Email again',
-            'channel' => ['type' => 'email', 'email' => 'care@acme.test'],
-        ])
-        ->assertOk();
+    Email::factory()->create(['account_id' => $account->id, 'email' => 'care@acme.test']);
+
+    expect(Email::where('email', 'care@acme.test')->count())->toBe(1);
 });

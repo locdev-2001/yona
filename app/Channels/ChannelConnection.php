@@ -53,6 +53,26 @@ final class ChannelConnection
         return $this->available && ! $this->comingSoon;
     }
 
+    /**
+     * Tạo hộp thư thẳng bằng form (POST /inboxes) được không. Lối vào chia lựa chọn thì cần
+     * một lựa chọn đang mở mà không đi đường riêng (OAuth có trang bắt đầu riêng); lựa chọn
+     * sắp ra mắt hay đã bỏ khỏi danh sách đều không tính.
+     */
+    public function opensByForm(): bool
+    {
+        if ($this->options === []) {
+            return $this->startRoute === null;
+        }
+
+        foreach ($this->options as $option) {
+            if ($option->startable() && $option->startRoute === null) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public function ordered(int $order): self
     {
         return $this->copy(['order' => $order]);

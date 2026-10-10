@@ -4957,6 +4957,9 @@ const messages: Record<string, unknown> = {
         "reports": {
             "date_range_too_long": "Date range cannot exceed 6 months"
         },
+        "inboxes": {
+            "connection_not_open": "This connection method is not open yet, please choose another one"
+        },
         "conversations": {
             "resolved": "Conversation is resolved and does not accept new messages",
             "contact_unreachable": "This contact has no address this inbox can send to",
