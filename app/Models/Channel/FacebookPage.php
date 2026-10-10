@@ -94,6 +94,7 @@ class FacebookPage extends Model implements DeclaresCapabilities, DeclaresConnec
             Capability::ProfileAvatar,
             Capability::IdentityStableId,
             Capability::ThreadingContinuous,
+            Capability::ConversationOutboundResume,
             Capability::SessionOauth,
             Capability::SessionReauth,
             Capability::SettingsSingleConversation,

@@ -22,6 +22,12 @@ return [
     'conversations' => [
         'resolved' => 'Conversation is resolved and does not accept new messages',
         'contact_unreachable' => 'This contact has no address this inbox can send to',
+        'email_undeliverable' => 'Cannot send email to :email: :reason',
+    ],
+    'email_addresses' => [
+        'invalid_syntax' => 'the email address is malformed',
+        'domain_not_found' => 'the domain does not exist',
+        'domain_no_mail' => 'this domain does not accept email',
     ],
     'custom_filters' => [
         'number_of_records' => 'Limit reached. The maximum number of allowed custom filters for a user per account is 1000.',

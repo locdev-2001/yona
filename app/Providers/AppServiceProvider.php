@@ -35,6 +35,8 @@ use App\Search\SearchEngine;
 use App\Services\Analytics\PlausibleProxy;
 use App\Services\Email\MailServerProbe;
 use App\Services\Email\SocketMailServerProbe;
+use App\Services\Email\Verification\MailDomainResolver;
+use App\Services\Email\Verification\SystemMailDomainResolver;
 use App\Services\Messaging\PublicFlowService;
 use App\Services\Stickers\StickerLibraryManager;
 use App\Support\Queue\SlowJobBreakdown;
@@ -101,6 +103,7 @@ class AppServiceProvider extends ServiceProvider
         ));
 
         $this->app->bind(MailServerProbe::class, SocketMailServerProbe::class);
+        $this->app->bind(MailDomainResolver::class, SystemMailDomainResolver::class);
         $this->app->scoped(SharedModels::class);
 
         $this->app->bind(SearchEngine::class, function ($app): SearchEngine {

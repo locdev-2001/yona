@@ -82,6 +82,8 @@ enum Capability: string
     case MessagingWindow = 'messaging_window';
     // Người trực chủ động mở hội thoại mới tới một liên hệ: kênh tự suy địa chỉ gửi từ hồ sơ liên hệ.
     case ConversationOutboundStart = 'conversation_outbound_start';
+    // Người trực mở hội thoại mới trên địa chỉ khách đã có ở kênh (contact_inbox sẵn có), không cần kênh tự suy địa chỉ.
+    case ConversationOutboundResume = 'conversation_outbound_resume';
     case SessionQr = 'session_qr';
     case SessionToken = 'session_token';
     case SessionOauth = 'session_oauth';

@@ -8,12 +8,14 @@ use App\Channels\Capability;
 use App\Channels\CapabilitySet;
 use App\Channels\ChannelConnection;
 use App\Channels\ChannelPlatform;
+use App\Channels\ChecksContactAddress;
 use App\Channels\ConnectionMethod;
 use App\Channels\DeclaresCapabilities;
 use App\Channels\DeclaresConnection;
 use App\Channels\DeclaresPlatform;
 use App\Channels\LinksMessagesToSource;
 use App\Channels\TextFormat;
+use App\Channels\UndeliverableContactAddress;
 use App\Models\Channel\Concerns\Channelable;
 use App\Models\Concerns\Reauthorizable;
 use App\Models\Contact;
@@ -21,13 +23,14 @@ use App\Models\Message;
 use App\Services\Email\EmailProviderPresets;
 use App\Services\Email\MailServerException;
 use App\Services\Email\OAuth\EmailOAuthProviders;
+use App\Services\Email\Verification\EmailAddressVerifier;
 use App\Services\Imap\EmailSyncBackoff;
 use Database\Factories\Channel\EmailFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
 
-class Email extends Model implements AddressesContacts, DeclaresCapabilities, DeclaresConnection, DeclaresPlatform, LinksMessagesToSource
+class Email extends Model implements AddressesContacts, ChecksContactAddress, DeclaresCapabilities, DeclaresConnection, DeclaresPlatform, LinksMessagesToSource
 {
     /** @use HasFactory<EmailFactory> */
     use Channelable, HasFactory, Reauthorizable {
@@ -297,6 +300,16 @@ class Email extends Model implements AddressesContacts, DeclaresCapabilities, De
     public function contactSourceId(Contact $contact): ?string
     {
         return filled($contact->email) ? (string) $contact->email : null;
+    }
+
+    /** Địa chỉ sai cú pháp hay tên miền không nhận thư thì không mở hội thoại, thư sẽ không bao giờ tới. */
+    public function assertDeliverable(string $sourceId): void
+    {
+        $verification = app(EmailAddressVerifier::class)->verify($sourceId);
+
+        if (! $verification->deliverable()) {
+            throw new UndeliverableContactAddress((string) $verification->message());
+        }
     }
 
     /** Thư đến qua IMAP/mailbox: thân HTML thành markdown, tệp đính kèm giữ nguyên tên. */

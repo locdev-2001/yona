@@ -3,6 +3,7 @@
 namespace Tests\Contracts\Channels;
 
 use Tests\Contracts\Channels\Contracts\ChannelContract;
+use Tests\Contracts\Channels\Contracts\ConversationOutboundResumeContract;
 use Tests\Contracts\Channels\Contracts\EventDeliveredContract;
 use Tests\Contracts\Channels\Contracts\EventReactionContract;
 use Tests\Contracts\Channels\Contracts\EventRecallContract;
@@ -51,6 +52,7 @@ final class ChannelContractRunner
         EventReactionContract::class,
         EventRecallContract::class,
         SingleConversationContract::class,
+        ConversationOutboundResumeContract::class,
     ];
 
     /** @return list<string> tên các contract đã chạy, để test khẳng định không chạy rỗng. */

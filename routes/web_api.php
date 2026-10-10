@@ -14,6 +14,7 @@ use App\Http\Controllers\WebApi\CallbacksController;
 use App\Http\Controllers\WebApi\CampaignsController;
 use App\Http\Controllers\WebApi\CannedResponsesController;
 use App\Http\Controllers\WebApi\CategoriesController;
+use App\Http\Controllers\WebApi\Contacts\ContactableInboxesController;
 use App\Http\Controllers\WebApi\Contacts\ContactInboxesController;
 use App\Http\Controllers\WebApi\Contacts\ConversationsController as ContactConversationsController;
 use App\Http\Controllers\WebApi\Contacts\LabelsController as ContactLabelsController;
@@ -34,6 +35,7 @@ use App\Http\Controllers\WebApi\CustomAttributeDefinitionsController;
 use App\Http\Controllers\WebApi\CustomFiltersController;
 use App\Http\Controllers\WebApi\DashboardAppsController;
 use App\Http\Controllers\WebApi\DataImportsController;
+use App\Http\Controllers\WebApi\EmailAddressesController;
 use App\Http\Controllers\WebApi\InboxesController;
 use App\Http\Controllers\WebApi\InboxMembersController;
 use App\Http\Controllers\WebApi\Integrations\AppsController as IntegrationAppsController;
@@ -191,6 +193,10 @@ Route::middleware(['auth.api_token', 'auth', 'account.scope'])
         Route::delete('/contacts/{contactId}/notes/{noteId}', [ContactNotesController::class, 'destroy'])
             ->whereNumber(['contactId', 'noteId']);
         Route::get('/contacts/{contactId}/conversations', [ContactConversationsController::class, 'index'])->whereNumber('contactId');
+        // Hộp thư mở được hội thoại mới tới liên hệ (khung soạn hội thoại mới).
+        Route::get('/contacts/{contactId}/contactable_inboxes', [ContactableInboxesController::class, 'index'])->whereNumber('contactId');
+        // Tra DNS ra ngoài nên chặn nhịp theo người dùng; kết quả theo tên miền đã cache.
+        Route::post('/email_addresses/verify', [EmailAddressesController::class, 'verify'])->middleware('throttle:60,1');
         Route::get('/conversations/{conversationId}/attachments', [ConversationsController::class, 'attachments'])->whereNumber('conversationId');
         Route::get('/conversations/{conversationId}/links', [ConversationsController::class, 'links'])->whereNumber('conversationId');
         Route::get('/contacts/{contactId}/labels', [ContactLabelsController::class, 'index'])->whereNumber('contactId');
@@ -270,6 +276,13 @@ Route::middleware(['auth.api_token', 'auth', 'account.scope'])
         // Gợi ý khi gõ chỉ đọc DB của kho nên nới nhịp hơn bảng chọn; FE vẫn debounce.
         Route::get('/conversations/{conversationId}/stickers/suggestions', [StickersController::class, 'suggestions'])
             ->whereNumber('conversationId')
+            ->middleware('throttle:120,1');
+        // Cùng bảng chọn cho khung soạn hội thoại mới, khi mới chọn hộp thư mà chưa có hội thoại.
+        Route::get('/inboxes/{inboxId}/stickers', [StickersController::class, 'inboxIndex'])
+            ->whereNumber('inboxId')
+            ->middleware('throttle:60,1');
+        Route::get('/inboxes/{inboxId}/stickers/suggestions', [StickersController::class, 'inboxSuggestions'])
+            ->whereNumber('inboxId')
             ->middleware('throttle:120,1');
         Route::get('/conversations/{conversationId}/labels', [ConversationLabelsController::class, 'index'])->whereNumber('conversationId');
         Route::post('/conversations/{conversationId}/labels', [ConversationLabelsController::class, 'create'])->whereNumber('conversationId');

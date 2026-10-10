@@ -22,6 +22,12 @@ return [
     'conversations' => [
         'resolved' => 'Hội thoại đã kết thúc nên không nhận thêm tin nhắn',
         'contact_unreachable' => 'Liên hệ chưa có địa chỉ để gửi qua hộp thư này',
+        'email_undeliverable' => 'Không gửi được thư tới :email: :reason',
+    ],
+    'email_addresses' => [
+        'invalid_syntax' => 'địa chỉ email sai định dạng',
+        'domain_not_found' => 'tên miền không tồn tại',
+        'domain_no_mail' => 'tên miền này không nhận thư',
     ],
     'custom_filters' => [
         'number_of_records' => 'Đã đạt giới hạn. Số lượng tuỳ chọn lọc tối đa cho mỗi mỗi người dùng mỗi tài khoản là 1000.',

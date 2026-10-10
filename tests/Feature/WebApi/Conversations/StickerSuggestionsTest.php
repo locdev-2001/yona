@@ -143,3 +143,23 @@ it('agent không thuộc hộp thư thì 401', function () {
 
     $this->actingAs($outsider)->getJson(suggestionsUrl($this->account, $this->conversation, 'haha'))->assertUnauthorized();
 });
+
+it('khung soạn hội thoại mới lấy cùng gợi ý theo hộp thư, chỉ hộp mình là thành viên', function () {
+    $thanks = YonaStickers::ready($this->pack, ['keywords' => ['cảm ơn'], 'position' => 1]);
+    $inboxUrl = fn (Inbox $inbox) => "/api/v1/accounts/{$this->account->id}/inboxes/{$inbox->id}/stickers/suggestions?q=cam";
+
+    expect($this->getJson($inboxUrl($this->inbox))->assertOk()->json())
+        ->toBe($this->getJson(suggestionsUrl($this->account, $this->conversation, 'cam'))->json())
+        ->and(suggestedIds($this->getJson($inboxUrl($this->inbox))))->toBe(["yona:{$thanks->id}"]);
+
+    $this->getJson($inboxUrl(Inbox::factory()->zalo()->create(['account_id' => $this->account->id])))->assertNotFound();
+});
+
+it('bảng chọn theo hộp thư báo kênh không gửi được sticker như bản theo hội thoại', function () {
+    $twitter = Inbox::factory()->twitterProfile()->create(['account_id' => $this->account->id]);
+    $twitter->addMembers([$this->agent->id]);
+
+    $this->getJson("/api/v1/accounts/{$this->account->id}/inboxes/{$twitter->id}/stickers")
+        ->assertUnprocessable()
+        ->assertJsonPath('code', 'capability_not_supported');
+});

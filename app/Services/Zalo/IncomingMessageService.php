@@ -113,9 +113,9 @@ class IncomingMessageService
     ];
 
     /** Nhóm là một "người" trên kênh: hồ sơ mang tên + ảnh nhóm, đánh dấu bằng khoá này. */
-    private const THREAD_KIND_ATTRIBUTE = 'zalo_thread_type';
+    private const THREAD_KIND_ATTRIBUTE = Zalo::CONTACT_THREAD_KIND_ATTRIBUTE;
 
-    private const THREAD_KIND_GROUP = 'group';
+    private const THREAD_KIND_GROUP = Zalo::CONTACT_THREAD_KIND_GROUP;
 
     /**
      * Cờ do lớp hàng đợi bật khi đã chờ hết lượt cho tin dội lại: dựng tin ngay

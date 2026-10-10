@@ -54,6 +54,11 @@ class Zalo extends Model implements DeclaresCapabilities, DeclaresConnection, De
     /** Giá trị `thread_type` của luồng nhóm (0 = chat 1-1). */
     public const THREAD_TYPE_GROUP = 1;
 
+    /** Hồ sơ liên hệ của một nhóm Zalo đánh dấu bằng khoá này trong additional_attributes. */
+    public const CONTACT_THREAD_KIND_ATTRIBUTE = 'zalo_thread_type';
+
+    public const CONTACT_THREAD_KIND_GROUP = 'group';
+
     /** @var list<string> */
     public const EDITABLE_ATTRS = [];
 
@@ -173,7 +178,16 @@ class Zalo extends Model implements DeclaresCapabilities, DeclaresConnection, De
      * group/undomsg, group/typing) nên mọi lời gọi bridge đều phải mang giá trị này. */
     public function threadTypeOf(Conversation $conversation): int
     {
-        return (int) ($conversation->additional_attributes['thread_type'] ?? 0);
+        $threadType = $conversation->additional_attributes['thread_type'] ?? null;
+
+        if ($threadType !== null) {
+            return (int) $threadType;
+        }
+
+        // Hội thoại người trực tự mở chưa mang thread_type: nhóm nhận ra qua hồ sơ liên hệ của nhóm.
+        $kind = $conversation->contact?->additional_attributes[self::CONTACT_THREAD_KIND_ATTRIBUTE] ?? null;
+
+        return $kind === self::CONTACT_THREAD_KIND_GROUP ? self::THREAD_TYPE_GROUP : 0;
     }
 
     public function isGroupThread(Conversation $conversation): bool
@@ -262,6 +276,7 @@ class Zalo extends Model implements DeclaresCapabilities, DeclaresConnection, De
             Capability::GroupThreads,
             Capability::FriendRequest,
             Capability::ThreadingContinuous,
+            Capability::ConversationOutboundResume,
             Capability::SessionQr,
             Capability::SessionReauth,
             Capability::SessionDisconnect,

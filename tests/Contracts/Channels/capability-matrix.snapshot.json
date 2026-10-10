@@ -21,7 +21,6 @@
         "profile_email",
         "identity_stable_id",
         "threading_continuous",
-        "conversation_outbound_start",
         "settings_single_conversation",
         "settings_webhook",
         "settings_client_api"
@@ -101,6 +100,7 @@
         "profile_avatar",
         "identity_stable_id",
         "threading_continuous",
+        "conversation_outbound_resume",
         "session_oauth",
         "session_reauth",
         "settings_single_conversation"
@@ -128,6 +128,7 @@
         "profile_avatar",
         "identity_stable_id",
         "threading_continuous",
+        "conversation_outbound_resume",
         "session_oauth",
         "session_reauth",
         "settings_single_conversation"
@@ -153,6 +154,7 @@
         "profile_avatar",
         "identity_stable_id",
         "threading_continuous",
+        "conversation_outbound_resume",
         "session_token",
         "settings_single_conversation"
     ],
@@ -163,6 +165,7 @@
         "profile_phone",
         "identity_stable_id",
         "threading_continuous",
+        "conversation_outbound_resume",
         "session_token",
         "settings_single_conversation"
     ],
@@ -192,6 +195,7 @@
         "profile_avatar",
         "identity_stable_id",
         "threading_continuous",
+        "conversation_outbound_resume",
         "session_token",
         "settings_single_conversation"
     ],
@@ -215,6 +219,7 @@
         "profile_phone",
         "identity_stable_id",
         "threading_continuous",
+        "conversation_outbound_resume",
         "session_token",
         "settings_single_conversation"
     ],
@@ -235,6 +240,7 @@
         "profile_phone",
         "identity_stable_id",
         "threading_continuous",
+        "conversation_outbound_resume",
         "session_token",
         "settings_single_conversation"
     ],
@@ -294,6 +300,7 @@
         "profile_phone",
         "identity_stable_id",
         "threading_continuous",
+        "conversation_outbound_resume",
         "session_token",
         "session_reauth",
         "settings_single_conversation"
@@ -321,6 +328,7 @@
         "profile_phone",
         "identity_stable_id",
         "threading_continuous",
+        "conversation_outbound_resume",
         "session_token",
         "session_reauth",
         "settings_single_conversation"
@@ -368,6 +376,7 @@
         "group_threads",
         "friend_request",
         "threading_continuous",
+        "conversation_outbound_resume",
         "session_qr",
         "session_reauth",
         "session_disconnect",

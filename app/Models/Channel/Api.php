@@ -114,7 +114,6 @@ class Api extends Model implements AddressesContacts, DeclaresCapabilities, Decl
             Capability::ProfileEmail,
             Capability::IdentityStableId,
             Capability::ThreadingContinuous,
-            Capability::ConversationOutboundStart,
             Capability::SettingsSingleConversation,
             Capability::SettingsWebhook,
             Capability::SettingsClientApi,

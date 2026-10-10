@@ -91,9 +91,11 @@ class Telegram extends Model implements DeclaresCapabilities, DeclaresConnection
 
     // Channel::Telegram#chat_id / #business_connection_id — hai khóa nằm trong
     // additional_attributes của hội thoại, gửi tin ra cần cả hai.
+    // Hội thoại người trực tự mở chưa mang chat_id: chat riêng với bot có id trùng id người dùng.
     public function chatId(Message $message): mixed
     {
-        return $message->conversation->additional_attributes['chat_id'] ?? null;
+        return $message->conversation->additional_attributes['chat_id']
+            ?? $message->conversation->contactInbox?->source_id;
     }
 
     public function businessConnectionId(Message $message): mixed
@@ -142,6 +144,7 @@ class Telegram extends Model implements DeclaresCapabilities, DeclaresConnection
             Capability::ProfileAvatar,
             Capability::IdentityStableId,
             Capability::ThreadingContinuous,
+            Capability::ConversationOutboundResume,
             Capability::SessionToken,
             Capability::SettingsSingleConversation,
         )->withTextFormat(TextFormat::TelegramHtml);

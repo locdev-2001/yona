@@ -52,7 +52,9 @@ PostgreSQL (`pg_trgm`) · Redis (cache, queue, session) · Laravel Reverb
   email). `ChannelConnectionCatalog` gom từ morph map, nhiều driver chung một lối
   vào (WhatsApp Cloud + Twilio) thì mở khi một driver mở. Màn "Thêm kênh" (prop
   `channels`) và `GET /api/v1/accounts/{id}/channel_connections` đọc cùng nguồn;
-  bước 2 của lối vào đã đóng chuyển về màn chọn. Contract test
+  bước 2 của lối vào đã đóng chuyển về màn chọn. Lối vào con có thể ở trạng thái
+  sắp ra mắt (`comingSoon()`, API trả `coming_soon: true`, không có `start_url`, route
+  bắt đầu trả 404 cho hộp mới); Email hiện chỉ mở đăng nhập Google. Contract test
   `tests/Contracts/Channels/ChannelConnectionDeclarationTest.php` bắt driver quên
   khai hoặc khai lệch năng lực phiên (`session_qr`/`session_oauth`/`session_token`).
   SMS (Bandwidth, Twilio SMS) đóng có chủ đích; dữ liệu và hộp thư cũ giữ nguyên.
@@ -82,6 +84,18 @@ PostgreSQL (`pg_trgm`) · Redis (cache, queue, session) · Laravel Reverb
   `channel_email.imap_sync_state`; chỉ checkpoint sau khi xử lý từng thư. Mỗi
   lượt tối đa 500 UID, dành tối đa 100 chỗ cho thư lỗi, phần còn lại nhận thư
   mới. UIDVALIDITY đổi thì quét lại INBOX, chống trùng bằng Message-ID.
+- **Người trực mở hội thoại mới**: hai năng lực. `conversation_outbound_start` =
+  kênh tự suy địa chỉ từ hồ sơ liên hệ (`AddressesContacts::contactSourceId`, hiện
+  chỉ Email); kênh nào cần chặn địa chỉ không gửi được thì implement thêm
+  `ChecksContactAddress` (Email: `EmailAddressVerifier` kiểm cú pháp + MX/A, cache
+  theo tên miền 1 giờ; từ chối → `UndeliverableContactAddress` render 422).
+  `conversation_outbound_resume` = mở hội thoại mới trên `contact_inbox` khách đã có
+  (Zalo, Telegram, Messenger, Instagram, LINE, SMS, Twilio, WhatsApp); hội thoại tự
+  mở không mang thuộc tính định tuyến của hội thoại cũ nên driver phải tự suy người
+  nhận từ `contact_inbox` (contract `ConversationOutboundResumeContract`).
+  `ContactInboxBuilder` chọn đường theo năng lực, `ContactableInboxes` liệt kê hộp
+  cho khung soạn (`GET contacts/{id}/contactable_inboxes`). Api và widget không khai
+  cả hai nên không bao giờ hiện trong khung soạn.
 - Zalo cá nhân là một driver như mọi kênh khác (`Channel::Zalo`), nói chuyện với
   bridge Node qua `app/Services/Zalo/ZaloBridgeClient.php`.
 - Ghi âm ở ô soạn: bản ghi là đính kèm âm thanh mang `meta.is_voice_message`

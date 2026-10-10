@@ -59,6 +59,7 @@ export const CHANNEL_CAPABILITIES = [
     'threading_continuous',
     'messaging_window',
     'conversation_outbound_start',
+    'conversation_outbound_resume',
     'session_qr',
     'session_token',
     'session_oauth',

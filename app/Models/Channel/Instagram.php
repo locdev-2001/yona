@@ -98,6 +98,7 @@ class Instagram extends Model implements DeclaresCapabilities, DeclaresConnectio
             Capability::ProfileAvatar,
             Capability::IdentityStableId,
             Capability::ThreadingContinuous,
+            Capability::ConversationOutboundResume,
             Capability::SessionOauth,
             Capability::SessionReauth,
             Capability::SettingsSingleConversation,

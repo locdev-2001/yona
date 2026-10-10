@@ -147,6 +147,7 @@ class Whatsapp extends Model implements DeclaresCapabilities, DeclaresConnection
             Capability::ProfilePhone,
             Capability::IdentityStableId,
             Capability::ThreadingContinuous,
+            Capability::ConversationOutboundResume,
             Capability::SessionToken,
             Capability::SessionReauth,
             Capability::SettingsSingleConversation,
