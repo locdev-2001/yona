@@ -28,6 +28,8 @@ enum Capability: string
     case InboundLinkPreview = 'inbound_link_preview';
     case InboundCaption = 'inbound_caption';
     case InboundForward = 'inbound_forward';
+    // Khách trích dẫn một tin: driver đặt `in_reply_to_external_id` (+ ảnh chụp `in_reply_to_preview`), lõi suy id nội bộ.
+    case InboundReplyTo = 'inbound_reply_to';
 
     // §2.2 Nội dung tin đi
     case OutboundText = 'outbound_text';
