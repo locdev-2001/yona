@@ -78,6 +78,11 @@ export function detectNewRecipient(query: string): Extract<ComposeRecipient, { k
     return null;
 }
 
+/** Địa chỉ của khách ở một kênh chỉ đáng hiện khi người đọc hiểu được (email/SĐT), không phải mã nội bộ của nền tảng. */
+export function readableAddress(address: string | null | undefined): string | null {
+    return address && detectNewRecipient(address) ? address : null;
+}
+
 /**
  * Liên hệ chưa tồn tại thì chưa hỏi được máy chủ: chỉ hộp khai mở hội thoại chủ
  * động VÀ biết loại địa chỉ đó của khách (profile_email / profile_phone).

@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import ChannelIcon from 'dashboard/components-next/icon/ChannelIcon';
 import LoaderIcon from 'shared/components/loader/LoaderIcon';
 import { t } from '../../../i18n';
-import { unavailableReasonKey } from './composeDraft';
+import { readableAddress, unavailableReasonKey } from './composeDraft';
 import type { ChannelOption } from './composeDraft';
 
 interface ChannelPickerProps {
@@ -84,7 +84,8 @@ function ChannelCard({
     hasError: boolean;
     onSelect: () => void;
 }) {
-    const { inbox, source_id: address, available, reason } = option;
+    const { inbox, available, reason } = option;
+    const address = readableAddress(option.source_id);
     const platformName = inbox.platform?.name;
     const outline = isSelected
         ? 'outline-2 outline-n-brand bg-n-brand/5'

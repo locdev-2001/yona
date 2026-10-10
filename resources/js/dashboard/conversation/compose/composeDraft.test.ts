@@ -7,6 +7,7 @@ import {
     detectNewRecipient,
     draftBlocker,
     optionsForNewRecipient,
+    readableAddress,
     resolveTarget,
 } from './composeDraft';
 import type { ChannelOption, ComposeDraft, ComposeInbox } from './composeDraft';
@@ -53,6 +54,17 @@ describe('kênh cho địa chỉ mới', () => {
         });
 
         expect(only).toMatchObject({ available: false, reason: 'reauthorization_required' });
+    });
+});
+
+describe('địa chỉ của khách trên thẻ kênh', () => {
+    it.each([
+        ['khach@example.com', 'khach@example.com'],
+        ['+84901234567', '+84901234567'],
+        ['e2e-274cdf38-6033-44fc-b38d', null],
+        [null, null],
+    ])('%s hiện thành %s', (address, expected) => {
+        expect(readableAddress(address)).toBe(expected);
     });
 });
 

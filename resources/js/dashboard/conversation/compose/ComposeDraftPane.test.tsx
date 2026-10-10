@@ -126,7 +126,7 @@ describe('bản nháp hội thoại mới trong Inbox', () => {
 
         const zalo = await screen.findByRole('radio', { name: /Zalo shop/ });
         const telegram = screen.getByRole('radio', { name: /Telegram shop/ });
-        expect(zalo.textContent).toContain('zalo-uid-9');
+        expect(zalo.textContent).not.toContain('zalo-uid-9');
         await waitFor(() => expect(zalo.getAttribute('aria-checked')).toBe('true'));
         expect((telegram as HTMLButtonElement).disabled).toBe(true);
         expect(telegram.textContent).toContain(t('COMPOSE_NEW_CONVERSATION.DRAFT.UNAVAILABLE.MESSAGING_WINDOW_CLOSED'));
