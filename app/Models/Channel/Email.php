@@ -245,8 +245,9 @@ class Email extends Model implements AddressesContacts, DeclaresCapabilities, De
     }
 
     /**
-     * Một lối vào "Email", bên trong chọn nhà cung cấp: Gmail/Outlook tự điền máy chủ thư,
-     * khách chỉ nhập địa chỉ + App Password; "Khác" điền đủ thông số.
+     * Một lối vào "Email", bên trong chọn nhà cung cấp. Mở kết nối mới chỉ bằng đăng nhập
+     * Google; Outlook và máy chủ thư tự cấu hình đang sắp ra mắt. Hộp thư đã nối bằng mật
+     * khẩu ứng dụng hay IMAP vẫn chạy và sửa được như cũ.
      */
     public static function connection(): ChannelConnection
     {
@@ -254,16 +255,13 @@ class Email extends Model implements AddressesContacts, DeclaresCapabilities, De
             ->ordered(30)
             ->withOptions(
                 self::oauthOption('google')->withPlatform(self::gmailPlatform()),
-                self::oauthOption('microsoft')->withPlatform(self::outlookPlatform()),
-                ChannelConnection::of('gmail', ConnectionMethod::Form)
-                    ->withPlatform(self::gmailPlatform())
-                    ->withPreset(EmailProviderPresets::for('gmail'))
-                    ->withGuideUrl(EmailProviderPresets::GMAIL_APP_PASSWORD_URL),
+                self::oauthOption('microsoft')->withPlatform(self::outlookPlatform())->comingSoon(),
                 ChannelConnection::of('outlook', ConnectionMethod::Form)
                     ->withPlatform(self::outlookPlatform())
                     ->withPreset(EmailProviderPresets::for('outlook'))
-                    ->withGuideUrl(EmailProviderPresets::MICROSOFT_APP_PASSWORD_URL),
-                ChannelConnection::of('other', ConnectionMethod::Form)->withPlatform(self::emailPlatform()),
+                    ->withGuideUrl(EmailProviderPresets::MICROSOFT_APP_PASSWORD_URL)
+                    ->comingSoon(),
+                ChannelConnection::of('other', ConnectionMethod::Form)->withPlatform(self::emailPlatform())->comingSoon(),
             );
     }
 

@@ -51,7 +51,8 @@ it('Facebook chỉ hiện khi bản cài đặt có app Meta (client id + secret
     expect(array_column($payload, 'method', 'key')['facebook'] ?? null)->toBe('oauth_popup');
 });
 
-it('Telegram kèm đường mở BotFather; Email kèm mẫu máy chủ Gmail và Outlook', function () {
+it('Telegram kèm đường mở BotFather; Email chỉ mở đăng nhập Google, Outlook và Khác sắp ra mắt', function () {
+    config(['services.google_mail.enabled' => true, 'services.google_mail.client_id' => 'g', 'services.google_mail.client_secret' => 's']);
     $payload = collect($this->actingAs($this->admin)
         ->getJson("/api/v1/accounts/{$this->account->id}/channel_connections")->json('payload'))->keyBy('key');
 
@@ -59,17 +60,13 @@ it('Telegram kèm đường mở BotFather; Email kèm mẫu máy chủ Gmail v�
 
     $email = collect($payload['email']['options'])->keyBy('key');
 
-    expect($email->keys()->all())->toContain('gmail', 'outlook', 'other')
-        ->and($email['gmail']['preset'])->toMatchArray([
-            'imap_address' => 'imap.gmail.com', 'imap_port' => 993, 'imap_enable_ssl' => true,
-            'smtp_address' => 'smtp.gmail.com', 'smtp_port' => 587, 'smtp_enable_starttls_auto' => true,
-        ])
-        ->and($email['gmail']['guide_url'])->toBe('https://myaccount.google.com/apppasswords')
-        ->and($email['outlook']['preset'])->toMatchArray([
-            'imap_address' => 'outlook.office365.com', 'imap_port' => 993,
-            'smtp_address' => 'smtp.office365.com', 'smtp_port' => 587,
-        ])
-        ->and($email['other']['preset'])->toBeNull();
+    expect($email->keys()->all())->not->toContain('gmail')
+        ->and($email['google']['coming_soon'])->toBeFalse()
+        ->and($email['google']['start_url'])->toBe("/app/accounts/{$this->account->id}/email/oauth/google")
+        ->and($email['outlook']['coming_soon'])->toBeTrue()
+        ->and($email['other']['coming_soon'])->toBeTrue()
+        ->and($email['microsoft']['coming_soon'])->toBeTrue()
+        ->and($email['microsoft']['start_url'])->toBeNull();
 });
 
 it('agent không xem được danh sách lối vào', function () {
@@ -95,7 +92,7 @@ it('mở thẳng URL bước 2 của kênh đã ẩn thì quay về màn chọn 
 })->with(['sms', 'facebook', 'instagram', 'tiktok', 'khong_co']);
 
 it('bước 2 của kênh đang mở nhận kèm giao kèo kết nối', function () {
-    config(['services.google_mail.enabled' => false]);
+    config(['services.google_mail.enabled' => true, 'services.google_mail.client_id' => 'g', 'services.google_mail.client_secret' => 's']);
 
     $this->actingAs($this->admin)
         ->get("/app/accounts/{$this->account->id}/settings/inboxes/new/email")
@@ -103,7 +100,8 @@ it('bước 2 của kênh đang mở nhận kèm giao kèo kết nối', functio
             ->component('dashboard/settings/inboxes/NewChannel')
             ->where('channelName', 'email')
             ->where('connection.method', 'form')
-            ->where('connection.options.0.key', 'gmail'));
+            ->where('connection.options.0.key', 'google')
+            ->where('connection.options.0.coming_soon', false));
 });
 
 it('hộp thư SMS cũ vẫn còn và vẫn mở được sau khi ẩn SMS', function () {

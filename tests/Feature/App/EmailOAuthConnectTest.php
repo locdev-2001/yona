@@ -70,29 +70,37 @@ function oauthEmailInbox(Account $account, array $config): Inbox
     return Inbox::factory()->create(['account_id' => $account->id, 'channel_id' => $channel->id, 'channel_type' => 'Channel::Email']);
 }
 
-it('Gmail OAuth ẩn khi cờ tắt dù đã có client id; Outlook hiện khi có app Azure', function () {
+it('Gmail OAuth ẩn khi cờ tắt dù đã có client id; Outlook hiện sắp ra mắt, không bắt đầu được', function () {
     $options = emailOptions($this);
 
     expect($options)->not->toHaveKey('google')
         ->and($options['microsoft']['method'])->toBe('oauth_redirect')
-        ->and($options['microsoft']['start_url'])->toBe("/app/accounts/{$this->account->id}/email/oauth/microsoft");
+        ->and($options['microsoft']['coming_soon'])->toBeTrue()
+        ->and($options['microsoft']['start_url'])->toBeNull();
 
     $this->actingAs($this->admin)->get("/app/accounts/{$this->account->id}/email/oauth/google")->assertNotFound();
+    $this->actingAs($this->admin)->get("/app/accounts/{$this->account->id}/email/oauth/microsoft")->assertNotFound();
 
     config(['services.google_mail.enabled' => true]);
 
-    expect(emailOptions($this))->toHaveKey('google');
+    expect(emailOptions($this))->toHaveKey('google')
+        ->and(emailOptions($this)['google']['coming_soon'])->toBeFalse();
 });
 
-it('thiếu client secret Azure thì Outlook OAuth tự ẩn', function () {
+it('thiếu client secret Azure thì kết nối lại Outlook cũng không bắt đầu được', function () {
     config(['services.microsoft_mail.client_secret' => null]);
+    $inbox = oauthEmailInbox($this->account, ['refresh_token' => 'cu']);
 
-    expect(emailOptions($this))->not->toHaveKey('microsoft');
-    $this->actingAs($this->admin)->get("/app/accounts/{$this->account->id}/email/oauth/microsoft")->assertNotFound();
+    $this->actingAs($this->admin)
+        ->get("/app/accounts/{$this->account->id}/email/oauth/microsoft?inbox_id={$inbox->id}")
+        ->assertNotFound();
 });
 
-it('bắt đầu chuyển sang Microsoft với scope IMAP/SMTP, state lưu trong session', function () {
-    $response = $this->actingAs($this->admin)->get("/app/accounts/{$this->account->id}/email/oauth/microsoft")->assertRedirect();
+it('kết nối lại hộp Outlook đã nối chuyển sang Microsoft với scope IMAP/SMTP, state lưu trong session', function () {
+    $inbox = oauthEmailInbox($this->account, ['refresh_token' => 'cu']);
+    $response = $this->actingAs($this->admin)
+        ->get("/app/accounts/{$this->account->id}/email/oauth/microsoft?inbox_id={$inbox->id}")
+        ->assertRedirect();
 
     $location = $response->headers->get('Location');
     parse_str((string) parse_url($location, PHP_URL_QUERY), $query);
@@ -101,7 +109,9 @@ it('bắt đầu chuyển sang Microsoft với scope IMAP/SMTP, state lưu trong
         ->and($query['client_id'])->toBe('ms-client')
         ->and($query['scope'])->toBe('https://outlook.office.com/IMAP.AccessAsUser.All https://outlook.office.com/SMTP.Send offline_access email openid')
         ->and($query['redirect_uri'])->toEndWith('/app/email/oauth/microsoft/callback')
-        ->and(session('email_oauth_state.'.$query['state']))->toMatchArray(['account_id' => $this->account->id, 'provider' => 'microsoft']);
+        ->and(session('email_oauth_state.'.$query['state']))->toMatchArray([
+            'account_id' => $this->account->id, 'provider' => 'microsoft', 'inbox_id' => $inbox->id,
+        ]);
 });
 
 it('Gmail OAuth (khi đã mở) xin scope https://mail.google.com/ kèm refresh token', function () {
@@ -115,36 +125,48 @@ it('Gmail OAuth (khi đã mở) xin scope https://mail.google.com/ kèm refresh 
         ->and($query['access_type'])->toBe('offline');
 });
 
-it('callback lưu token (mã hoá), tạo hộp thư Outlook rồi sang bước gán agent', function () {
-    Http::fake(['login.microsoftonline.com/*' => Http::response([
+it('callback lưu token (mã hoá), tạo hộp thư Gmail rồi sang bước gán agent', function () {
+    config(['services.google_mail.enabled' => true]);
+    Http::fake(['oauth2.googleapis.com/*' => Http::response([
         'access_token' => 'access-1',
         'refresh_token' => 'refresh-1',
         'expires_in' => 3600,
-        'id_token' => fakeIdToken('Shop@Outlook.com'),
+        'id_token' => fakeIdToken('Shop@Gmail.com'),
     ])]);
 
-    $response = $this->actingAs($this->admin)->withSession(oauthState())
-        ->get('/app/email/oauth/microsoft/callback?code=code-1&state=state-123');
+    $response = $this->actingAs($this->admin)->withSession(oauthState(['provider' => 'google']))
+        ->get('/app/email/oauth/google/callback?code=code-1&state=state-123');
 
-    $channel = Email::query()->where('email', 'shop@outlook.com')->firstOrFail();
+    $channel = Email::query()->where('email', 'shop@gmail.com')->firstOrFail();
     $inbox = $channel->inbox;
 
     $response->assertRedirect("/app/accounts/{$this->account->id}/settings/inboxes/new/{$inbox->id}/agents");
 
-    expect($channel->provider)->toBe('microsoft')
+    expect($channel->provider)->toBe('google')
         ->and($channel->imap_enabled)->toBeTrue()
-        ->and($channel->imap_address)->toBe('outlook.office365.com')
-        ->and($channel->imap_login)->toBe('shop@outlook.com')
+        ->and($channel->imap_address)->toBe('imap.gmail.com')
+        ->and($channel->imap_login)->toBe('shop@gmail.com')
         ->and($channel->provider_config['access_token'])->toBe('access-1')
         ->and($channel->provider_config['refresh_token'])->toBe('refresh-1')
-        ->and($inbox->name)->toBe('shop@outlook.com');
+        ->and($inbox->name)->toBe('shop@gmail.com');
 
     $raw = (string) DB::table('channel_email')->where('id', $channel->id)->value('provider_config');
     expect($raw)->not->toContain('refresh-1')->not->toContain('access-1');
 
     Http::assertSent(fn (HttpRequest $request) => $request['grant_type'] === 'authorization_code'
         && $request['code'] === 'code-1'
-        && str_ends_with($request['redirect_uri'], '/app/email/oauth/microsoft/callback'));
+        && str_ends_with($request['redirect_uri'], '/app/email/oauth/google/callback'));
+});
+
+it('callback tạo hộp mới của nhà cung cấp sắp ra mắt thì từ chối, không tạo gì', function () {
+    Http::fake();
+
+    $this->actingAs($this->admin)->withSession(oauthState())
+        ->get('/app/email/oauth/microsoft/callback?code=code-1&state=state-123')
+        ->assertNotFound();
+
+    expect(Email::query()->count())->toBe(0);
+    Http::assertNothingSent();
 });
 
 it('callback sai state thì từ chối, không tạo gì', function () {
@@ -159,8 +181,10 @@ it('callback sai state thì từ chối, không tạo gì', function () {
 });
 
 it('người dùng huỷ ở trang nhà cung cấp thì quay về form Email kèm lỗi', function () {
-    $this->actingAs($this->admin)->withSession(oauthState())
-        ->get('/app/email/oauth/microsoft/callback?error=access_denied&state=state-123')
+    config(['services.google_mail.enabled' => true]);
+
+    $this->actingAs($this->admin)->withSession(oauthState(['provider' => 'google']))
+        ->get('/app/email/oauth/google/callback?error=access_denied&state=state-123')
         ->assertRedirect("/app/accounts/{$this->account->id}/settings/inboxes/new/email?oauth_error=denied");
 });
 

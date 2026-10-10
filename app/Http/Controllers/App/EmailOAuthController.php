@@ -37,6 +37,8 @@ class EmailOAuthController extends Controller
         if ($inboxId !== null) {
             $inbox = $account->inboxes()->whereKey($inboxId)->where('channel_type', 'Channel::Email')->firstOrFail();
             abort_unless($inbox->channel?->provider === $provider, 404);
+        } else {
+            $this->ensureOpenForNewConnections($provider);
         }
 
         $state = Str::random(48);
@@ -59,6 +61,10 @@ class EmailOAuthController extends Controller
             is_array($context) && $context['provider'] === $provider && $context['user_id'] === $request->user()->id,
             403,
         );
+
+        if ($context['inbox_id'] === null) {
+            $this->ensureOpenForNewConnections($provider);
+        }
 
         $account = Account::query()->findOrFail($context['account_id']);
         abort_unless(
@@ -147,6 +153,12 @@ class EmailOAuthController extends Controller
             : 'settings/inboxes/new/email';
 
         return redirect("/app/accounts/{$account->id}/{$path}?oauth_error={$reason}");
+    }
+
+    // Nhà cung cấp sắp ra mắt chỉ còn cho kết nối lại hộp thư đã nối, không mở hộp mới.
+    private function ensureOpenForNewConnections(string $provider): void
+    {
+        abort_unless(Email::connection()->option($provider)?->startable() ?? false, 404);
     }
 
     private function availableProvider(string $provider): EmailOAuthProvider

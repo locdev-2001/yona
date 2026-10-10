@@ -28,6 +28,7 @@ final class ChannelConnection
         public readonly ?string $startRoute = null,
         public readonly array $startRouteParameters = [],
         public readonly ?ChannelPlatform $platform = null,
+        public readonly bool $comingSoon = false,
     ) {}
 
     public static function of(string $key, ConnectionMethod $method): self
@@ -38,6 +39,18 @@ final class ChannelConnection
     public function available(bool $available = true): self
     {
         return $this->copy(['available' => $available]);
+    }
+
+    /** Lối vào đã định có nhưng chưa mở: vẫn hiện để khách biết, không bắt đầu kết nối được. */
+    public function comingSoon(bool $comingSoon = true): self
+    {
+        return $this->copy(['comingSoon' => $comingSoon]);
+    }
+
+    /** Bắt đầu kết nối mới được: đang mở và không ở trạng thái sắp ra mắt. */
+    public function startable(): bool
+    {
+        return $this->available && ! $this->comingSoon;
     }
 
     public function ordered(int $order): self
@@ -72,10 +85,10 @@ final class ChannelConnection
         return $this->copy(['platform' => $platform]);
     }
 
-    /** @return list<self> */
-    public function availableOptions(): array
+    /** @return list<self> Lựa chọn hiện trên màn chọn: đang mở hoặc sắp ra mắt. */
+    public function listedOptions(): array
     {
-        return array_values(array_filter($this->options, static fn (self $option) => $option->available));
+        return array_values(array_filter($this->options, static fn (self $option) => $option->available || $option->comingSoon));
     }
 
     public function option(string $key): ?self
@@ -96,13 +109,14 @@ final class ChannelConnection
             'key' => $this->key,
             'method' => $this->method->value,
             'available' => $this->available,
+            'coming_soon' => $this->comingSoon,
             'preset' => $this->preset === [] ? null : $this->preset,
             'guide_url' => $this->guideUrl,
             'logo_url' => $this->platform?->toArray()['logo_url'],
-            'start_url' => $this->startRoute !== null && $account !== null
+            'start_url' => $this->startRoute !== null && $account !== null && ! $this->comingSoon
                 ? route($this->startRoute, ['account' => $account->id, ...$this->startRouteParameters], false)
                 : null,
-            'options' => array_map(static fn (self $option) => $option->toArray($account), $this->availableOptions()),
+            'options' => array_map(static fn (self $option) => $option->toArray($account), $this->listedOptions()),
         ];
     }
 
@@ -120,6 +134,7 @@ final class ChannelConnection
             'startRoute' => $this->startRoute,
             'startRouteParameters' => $this->startRouteParameters,
             'platform' => $this->platform,
+            'comingSoon' => $this->comingSoon,
             ...$changes,
         ]);
     }
