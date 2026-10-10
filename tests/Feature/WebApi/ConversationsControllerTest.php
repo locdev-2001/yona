@@ -381,6 +381,49 @@ describe('POST /api/v1/accounts/{id}/conversations', function () {
         'tên miền khai MX rỗng' => ['khach@null-mx.vn', 'domain_no_mail'],
     ]);
 
+    it('kiểm cả địa chỉ email người trực truyền vào bằng source_id', function () {
+        FakeMailDomainResolver::bind();
+        $account = Account::factory()->create();
+        $inbox = Inbox::factory()->email()->create(['account_id' => $account->id]);
+        $contact = Contact::factory()->create(['account_id' => $account->id, 'email' => null]);
+        $agent = conversationApiUserOf($account);
+        $inbox->addMembers([$agent->id]);
+
+        $this->actingAs($agent)
+            ->postJson("/api/v1/accounts/{$account->id}/conversations", [
+                'contact_id' => $contact->id,
+                'inbox_id' => $inbox->id,
+                'source_id' => 'khach@khong-ton-tai.vn',
+            ])
+            ->assertUnprocessable()
+            ->assertJson(['error' => __('errors.conversations.email_undeliverable', [
+                'email' => 'khach@khong-ton-tai.vn',
+                'reason' => __('errors.email_addresses.domain_not_found'),
+            ])]);
+
+        expect($contact->contactInboxes()->count())->toBe(0);
+    });
+
+    it('dùng lại địa chỉ email sẵn có của liên hệ dù khác hoa thường', function () {
+        Queue::fake();
+        $account = Account::factory()->create();
+        $inbox = Inbox::factory()->email()->create(['account_id' => $account->id]);
+        $contact = Contact::factory()->create(['account_id' => $account->id, 'email' => 'khach@example.com']);
+        $known = ContactInbox::factory()->create(['contact_id' => $contact->id, 'inbox_id' => $inbox->id, 'source_id' => 'Khach@Example.com']);
+        $agent = conversationApiUserOf($account);
+        $inbox->addMembers([$agent->id]);
+
+        $response = $this->actingAs($agent)
+            ->postJson("/api/v1/accounts/{$account->id}/conversations", [
+                'contact_id' => $contact->id,
+                'inbox_id' => $inbox->id,
+            ])
+            ->assertOk();
+
+        expect($account->conversations()->where('display_id', $response->json('id'))->value('contact_inbox_id'))->toBe($known->id)
+            ->and($contact->contactInboxes()->count())->toBe(1);
+    });
+
     it('reopens a conversation with a contact on the address the channel already knows', function () {
         $account = Account::factory()->create();
         $inbox = Inbox::factory()->zalo()->create(['account_id' => $account->id]);

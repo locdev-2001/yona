@@ -11,7 +11,6 @@ use App\Jobs\Avatar\AvatarFromUrlJob;
 use App\Models\Account;
 use App\Models\Attachment;
 use App\Models\Contact;
-use App\Models\ContactInbox;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Services\Contacts\FilterService;
@@ -214,15 +213,19 @@ class ContactsController extends Controller
     public function store(Request $request, Account $account): JsonResponse
     {
         $data = $this->validateContactPayload($request, $account);
+        $attributes = collect($data)->except(['avatar', 'avatar_url'])->all();
 
-        [$contact, $contactInbox] = DB::transaction(function () use ($request, $account, $data) {
-            $contact = $account->contacts()->create(collect($data)->except(['avatar', 'avatar_url'])->all());
+        // Kiểm địa chỉ có thể tra mạng: làm trước transaction, không giữ khoá DB khi chờ.
+        $this->contactInboxBuilder($request, $account, $account->contacts()->make($attributes))?->assertDeliverable();
+
+        [$contact, $contactInbox] = DB::transaction(function () use ($request, $account, $attributes) {
+            $contact = $account->contacts()->create($attributes);
 
             if ($request->file('avatar') instanceof UploadedFile) {
                 $contact->replaceAvatar($request->file('avatar'));
             }
 
-            return [$contact, $this->buildContactInbox($request, $account, $contact)];
+            return [$contact, $this->contactInboxBuilder($request, $account, $contact)?->perform()];
         });
 
         $this->processAvatarFromUrl($request, $contact);
@@ -382,19 +385,18 @@ class ContactsController extends Controller
             : $query->{$scope}($direction);
     }
 
-    private function buildContactInbox(Request $request, Account $account, Contact $contact): ?ContactInbox
+    private function contactInboxBuilder(Request $request, Account $account, Contact $contact): ?ContactInboxBuilder
     {
         if (blank($request->input('inbox_id'))) {
             return null;
         }
 
-        $inbox = $account->inboxes()->findOrFail((int) $request->input('inbox_id'));
-
-        return (new ContactInboxBuilder(
+        return new ContactInboxBuilder(
             contact: $contact,
-            inbox: $inbox,
+            inbox: $account->inboxes()->findOrFail((int) $request->input('inbox_id')),
             sourceId: $request->input('source_id'),
-        ))->perform();
+            outbound: true,
+        );
     }
 
     private function processAvatarFromUrl(Request $request, Contact $contact): void

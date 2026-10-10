@@ -14,6 +14,7 @@ use App\Channels\DeclaresCapabilities;
 use App\Channels\DeclaresConnection;
 use App\Channels\DeclaresPlatform;
 use App\Channels\LinksMessagesToSource;
+use App\Channels\MatchesContactAddressCaseInsensitively;
 use App\Channels\TextFormat;
 use App\Channels\UndeliverableContactAddress;
 use App\Models\Channel\Concerns\Channelable;
@@ -31,7 +32,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
 
-class Email extends Model implements AddressesContacts, ChecksContactAddress, DeclaresCapabilities, DeclaresConnection, DeclaresPlatform, LinksMessagesToSource
+class Email extends Model implements AddressesContacts, ChecksContactAddress, DeclaresCapabilities, DeclaresConnection, DeclaresPlatform, LinksMessagesToSource, MatchesContactAddressCaseInsensitively
 {
     /** @use HasFactory<EmailFactory> */
     use Channelable, HasFactory, Reauthorizable {

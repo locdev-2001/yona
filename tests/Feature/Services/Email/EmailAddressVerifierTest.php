@@ -48,7 +48,7 @@ it('nhớ kết quả theo tên miền, không tra DNS lại trong một giờ',
     expect($resolver->lookups)->toBe(2);
 });
 
-it('tra DNS lỗi tạm thời thì cho qua và không nhớ', function () {
+it('tra DNS lỗi tạm thời thì cho qua và chỉ nhớ 60 giây', function () {
     $resolver = new FakeMailDomainResolver(failingDomains: ['cham.vn']);
     $verifier = verifierWith($resolver);
 
@@ -56,7 +56,12 @@ it('tra DNS lỗi tạm thời thì cho qua và không nhớ', function () {
 
     $verifier->verify('khach@cham.vn');
 
-    expect($resolver->lookups)->toBe(2);
+    expect($resolver->lookups)->toBe(1);
+
+    $this->travel(61)->seconds();
+
+    expect($verifier->verify('khach@cham.vn')->deliverable())->toBeTrue()
+        ->and($resolver->lookups)->toBe(2);
 });
 
 it('lý do đọc được nêu rõ địa chỉ', function () {

@@ -5,6 +5,7 @@ namespace App\Builders;
 use App\Channels\AddressesContacts;
 use App\Channels\Capability;
 use App\Channels\ChecksContactAddress;
+use App\Channels\MatchesContactAddressCaseInsensitively;
 use App\Channels\UndeliverableContactAddress;
 use App\Models\Contact;
 use App\Models\ContactInbox;
@@ -14,6 +15,8 @@ use RuntimeException;
 /**
  * source_id không truyền vào thì kênh tự suy từ hồ sơ liên hệ (AddressesContacts); kênh
  * không suy được nhưng khai mở lại hội thoại thì dùng địa chỉ khách đã có ở hộp thư đó.
+ * `outbound` = người trực chủ động mở hội thoại: địa chỉ truyền vào cũng phải qua kiểm của
+ * kênh (ChecksContactAddress), như địa chỉ kênh tự suy.
  */
 class ContactInboxBuilder
 {
@@ -22,6 +25,7 @@ class ContactInboxBuilder
         private readonly Inbox $inbox,
         private ?string $sourceId = null,
         private readonly bool $hmacVerified = false,
+        private readonly bool $outbound = false,
     ) {}
 
     /** @throws UndeliverableContactAddress */
@@ -31,9 +35,39 @@ class ContactInboxBuilder
             return $this->latestKnownContactInbox();
         }
 
-        $this->sourceId ??= $this->generateSourceId();
+        $this->assertDeliverable();
+        $this->sourceId ??= $this->derivedSourceId();
 
-        return filled($this->sourceId) ? $this->createContactInbox() : null;
+        if (blank($this->sourceId)) {
+            return null;
+        }
+
+        return $this->existingContactInboxIgnoringCase() ?? $this->createContactInbox();
+    }
+
+    /**
+     * Kiểm địa chỉ sẽ dùng mà không ghi gì, để gọi trước transaction (kiểm có thể tra mạng);
+     * liên hệ chưa lưu cũng được. Kết quả kiểm được kênh nhớ nên perform() sau đó không tra lại.
+     *
+     * @throws UndeliverableContactAddress
+     */
+    public function assertDeliverable(): void
+    {
+        $channel = $this->inbox->channel;
+
+        if (! $channel instanceof ChecksContactAddress || ($this->sourceId !== null && ! $this->outbound)) {
+            return;
+        }
+
+        if ($this->sourceId === null && $this->resumesKnownAddress()) {
+            return;
+        }
+
+        $sourceId = $this->sourceId ?? $this->derivedSourceId();
+
+        if (filled($sourceId)) {
+            $channel->assertDeliverable($sourceId);
+        }
     }
 
     private function resumesKnownAddress(): bool
@@ -50,7 +84,7 @@ class ContactInboxBuilder
             ->first();
     }
 
-    private function generateSourceId(): ?string
+    private function derivedSourceId(): ?string
     {
         $channel = $this->inbox->channel;
 
@@ -58,13 +92,20 @@ class ContactInboxBuilder
             throw new RuntimeException("Unsupported operation for this channel: {$this->inbox->channel_type}");
         }
 
-        $sourceId = $channel->contactSourceId($this->contact);
+        return $channel->contactSourceId($this->contact);
+    }
 
-        if (filled($sourceId) && $channel instanceof ChecksContactAddress) {
-            $channel->assertDeliverable($sourceId);
+    private function existingContactInboxIgnoringCase(): ?ContactInbox
+    {
+        if (! $this->inbox->channel instanceof MatchesContactAddressCaseInsensitively || $this->contact->id === null) {
+            return null;
         }
 
-        return $sourceId;
+        return $this->inbox->contactInboxes()
+            ->where('contact_id', $this->contact->id)
+            ->whereRaw('LOWER(source_id) = ?', [mb_strtolower((string) $this->sourceId)])
+            ->latest('id')
+            ->first();
     }
 
     private function createContactInbox(): ContactInbox

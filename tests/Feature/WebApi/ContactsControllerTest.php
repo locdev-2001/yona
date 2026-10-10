@@ -8,8 +8,10 @@ use App\Models\Contact;
 use App\Models\ContactInbox;
 use App\Models\Inbox;
 use App\Models\User;
+use App\Services\Email\Verification\MailDomainResolver;
 use App\Support\OnlineStatusTracker;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Facades\Storage;
 
@@ -454,6 +456,52 @@ describe('POST /api/v1/accounts/{id}/contacts', function () {
 
         expect(ContactInbox::query()->count())->toBe(1)
             ->and($response->json('payload.contact_inbox.source_id'))->not->toBeNull();
+    });
+
+    it('email không nhận thư thì 422, không tạo liên hệ, tra DNS ngoài transaction', function () {
+        $account = Account::factory()->create();
+        $admin = contactUserOf($account, AccountUser::ROLE_ADMINISTRATOR);
+        $inbox = Inbox::factory()->email()->create(['account_id' => $account->id]);
+        $resolver = new class implements MailDomainResolver
+        {
+            /** @var list<int> */
+            public array $transactionLevels = [];
+
+            public function mxHosts(string $domain): ?array
+            {
+                $this->transactionLevels[] = DB::transactionLevel();
+
+                return [];
+            }
+
+            public function hasAddressRecord(string $domain): ?bool
+            {
+                return false;
+            }
+        };
+        app()->instance(MailDomainResolver::class, $resolver);
+        $baseline = DB::transactionLevel();
+
+        $this->actingAs($admin)
+            ->postJson("/api/v1/accounts/{$account->id}/contacts", [
+                'name' => 'Khách mới', 'email' => 'khach@khong-ton-tai.vn', 'inbox_id' => $inbox->id,
+            ])
+            ->assertUnprocessable();
+
+        expect(Contact::query()->where('account_id', $account->id)->count())->toBe(0)
+            ->and($resolver->transactionLevels)->toBe([$baseline]);
+    });
+
+    it('tạo contact_inbox mà kênh không suy được địa chỉ thì 422 thay vì lỗi máy chủ', function () {
+        $account = Account::factory()->create();
+        $admin = contactUserOf($account, AccountUser::ROLE_ADMINISTRATOR);
+        $inbox = Inbox::factory()->email()->create(['account_id' => $account->id]);
+        $contact = Contact::factory()->create(['account_id' => $account->id, 'email' => null]);
+
+        $this->actingAs($admin)
+            ->postJson("/api/v1/accounts/{$account->id}/contacts/{$contact->id}/contact_inboxes", ['inbox_id' => $inbox->id])
+            ->assertUnprocessable()
+            ->assertJson(['error' => __('errors.conversations.contact_unreachable')]);
     });
 });
 

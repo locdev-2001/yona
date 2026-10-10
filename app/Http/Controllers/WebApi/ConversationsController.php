@@ -634,6 +634,7 @@ class ConversationsController extends Controller
                 inbox: $inbox,
                 sourceId: $request->input('source_id'),
                 hmacVerified: filter_var($request->input('hmac_verified'), FILTER_VALIDATE_BOOLEAN),
+                outbound: true,
             ))->perform();
 
             if ($contactInbox !== null) {

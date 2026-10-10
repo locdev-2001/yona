@@ -106,8 +106,13 @@ PostgreSQL (`pg_trgm`) · Redis (cache, queue, session) · Laravel Reverb
 - **Người trực mở hội thoại mới**: hai năng lực. `conversation_outbound_start` =
   kênh tự suy địa chỉ từ hồ sơ liên hệ (`AddressesContacts::contactSourceId`, hiện
   chỉ Email); kênh nào cần chặn địa chỉ không gửi được thì implement thêm
-  `ChecksContactAddress` (Email: `EmailAddressVerifier` kiểm cú pháp + MX/A, cache
-  theo tên miền 1 giờ; từ chối → `UndeliverableContactAddress` render 422).
+  `ChecksContactAddress` (Email: `EmailAddressVerifier` kiểm cú pháp + MX/A qua
+  `TimeLimitedMailDomainResolver` hạn chờ 2,5 giây, cache theo tên miền 1 giờ, tra lỗi
+  thì cho qua và nhớ 60 giây; từ chối → `UndeliverableContactAddress` render 422).
+  `ContactInboxBuilder(outbound: true)` (người trực mở hội thoại, tạo liên hệ kèm hộp,
+  tạo contact_inbox) kiểm cả `source_id` truyền vào; `assertDeliverable()` gọi được trước
+  transaction. Kênh khai `MatchesContactAddressCaseInsensitively` (Email) thì địa chỉ
+  sẵn có của liên hệ được dùng lại dù khác hoa thường.
   `conversation_outbound_resume` = mở hội thoại mới trên `contact_inbox` khách đã có
   (Zalo, Telegram, Messenger, Instagram, LINE, SMS, Twilio, WhatsApp); hội thoại tự
   mở không mang thuộc tính định tuyến của hội thoại cũ nên driver phải tự suy người

@@ -8,7 +8,8 @@ use Illuminate\Support\Facades\Cache;
  * Kiểm một địa chỉ email có thể nhận thư: đúng cú pháp và tên miền nhận thư (MX, không có
  * MX thì A/AAAA theo RFC 5321 §5.1). Không dò hộp thư bằng SMTP RCPT: máy chủ lớn chặn và
  * trả lời không tin được; hộp thư không tồn tại được bắt khi thư bị trả về.
- * Tra DNS lỗi tạm thời thì cho qua và không nhớ kết quả, để không chặn nhầm người trực.
+ * Tra DNS lỗi tạm thời thì cho qua (không chặn nhầm người trực) và nhớ ngắn 60 giây, để
+ * DNS chậm không làm mỗi lần kiểm lại chờ thêm một lượt tra.
  */
 class EmailAddressVerifier
 {
@@ -16,11 +17,15 @@ class EmailAddressVerifier
 
     private const CACHE_TTL_SECONDS = 3600;
 
+    private const LOOKUP_FAILED_TTL_SECONDS = 60;
+
     private const MAX_ADDRESS_LENGTH = 254;
 
     private const MAX_LOCAL_PART_LENGTH = 64;
 
     private const DELIVERABLE = 'deliverable';
+
+    private const LOOKUP_FAILED = 'lookup_failed';
 
     public function __construct(private readonly MailDomainResolver $resolver) {}
 
@@ -64,16 +69,20 @@ class EmailAddressVerifier
         $cached = Cache::get(self::CACHE_PREFIX.$domain);
 
         if (is_string($cached)) {
-            return $cached === self::DELIVERABLE ? null : $cached;
+            return in_array($cached, [self::DELIVERABLE, self::LOOKUP_FAILED], true) ? null : $cached;
         }
 
         $reason = $this->lookup($domain);
 
-        if ($reason !== false) {
-            Cache::put(self::CACHE_PREFIX.$domain, $reason ?? self::DELIVERABLE, self::CACHE_TTL_SECONDS);
+        if ($reason === false) {
+            Cache::put(self::CACHE_PREFIX.$domain, self::LOOKUP_FAILED, self::LOOKUP_FAILED_TTL_SECONDS);
+
+            return null;
         }
 
-        return $reason === false ? null : $reason;
+        Cache::put(self::CACHE_PREFIX.$domain, $reason ?? self::DELIVERABLE, self::CACHE_TTL_SECONDS);
+
+        return $reason;
     }
 
     /** @return string|null|false lý do không nhận thư, null khi nhận được, false khi tra cứu lỗi */

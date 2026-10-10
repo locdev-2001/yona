@@ -34,7 +34,12 @@ class ContactInboxesController extends Controller
             inbox: $inbox,
             sourceId: $request->input('source_id'),
             hmacVerified: filter_var($request->input('hmac_verified'), FILTER_VALIDATE_BOOLEAN),
+            outbound: true,
         ))->perform();
+
+        if ($contactInbox === null) {
+            return response()->json(['error' => __('errors.conversations.contact_unreachable')], 422);
+        }
 
         return response()->json(ContactResource::contactInboxPayload($contactInbox));
     }
