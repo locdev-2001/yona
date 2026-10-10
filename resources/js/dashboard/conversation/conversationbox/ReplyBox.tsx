@@ -128,6 +128,8 @@ export default function ReplyBox({
         toggleTypingStatus,
         isComposing,
         composeDraft,
+        registerDraftComposer,
+        takeCarriedAttachments,
     } = useConversation();
     const { auth, currentAccount, inboxes = [] } = usePage<DashboardPageProps>().props;
     const user = auth.user!;
@@ -364,6 +366,23 @@ export default function ReplyBox({
         if (current?.conversationId) removeDraft(draftKey(current.conversationId, current.replyMode));
     };
 
+    // Bản nháp hội thoại mới chưa có khoá nháp: phần chưa gửi được context đọc để
+    // mang sang hội thoại vừa tạo khi lần gửi đầu không phải chính ô soạn này.
+    const draftComposerStateRef = useRef({ hasContent, replyType, attachedFiles, maxLength });
+    draftComposerStateRef.current = { hasContent, replyType, attachedFiles, maxLength };
+    useEffect(() => {
+        if (!isComposing) return undefined;
+        return registerDraftComposer(() => {
+            const state = draftComposerStateRef.current;
+            return {
+                content: state.hasContent ? trimContent(messageRef.current, state.maxLength) : '',
+                replyMode: state.replyType,
+                attachments: state.attachedFiles,
+            };
+        });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isComposing, registerDraftComposer]);
+
     // doAutoSaveDraft gốc: debounce 500ms, immediate.
     const autoSaveDraft = useMemo(
         () => debounce(() => saveDraftFor(draftContextRef.current), 500, true),
@@ -371,10 +390,11 @@ export default function ReplyBox({
         [],
     );
 
-    // Đổi conversation: về chế độ REPLY, bỏ đính kèm, chuyển ngữ cảnh nháp.
+    // Đổi conversation: về chế độ REPLY, chuyển ngữ cảnh nháp; đính kèm chỉ còn
+    // phần mang từ bản nháp sang (hội thoại vừa tạo bằng sticker/thẻ).
     useEffect(() => {
         setReplyType(REPLY_EDITOR_MODES.REPLY);
-        setAttachedFiles([]);
+        setAttachedFiles(conversationId ? takeCarriedAttachments(conversationId) : []);
         switchDraftContext(conversationId, REPLY_EDITOR_MODES.REPLY);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [conversationId]);
@@ -643,7 +663,7 @@ export default function ReplyBox({
                 isMessageLengthReachingThreshold={isMessageLengthReachingThreshold}
                 charactersRemaining={charactersRemaining}
                 onSetReplyMode={setReplyMode}
-                onToggleEditorSize={toggleEditorSize}
+                onToggleEditorSize={onToggleEditorSize ? toggleEditorSize : undefined}
             />
             </ComposerExpandableRegion>
             <div

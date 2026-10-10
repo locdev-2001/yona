@@ -4,11 +4,13 @@ import { defaultMemo } from '../composer/SendCardMenu/cardPayloads';
 import {
     EMPTY_COMPOSE_DRAFT,
     canComposeIn,
+    contactHasAddress,
     detectNewRecipient,
     draftBlocker,
     optionsForNewRecipient,
-    readableAddress,
+    isSamePhoneNumber,
     resolveTarget,
+    unavailableReasonKey,
 } from './composeDraft';
 import type { ChannelOption, ComposeDraft, ComposeInbox } from './composeDraft';
 
@@ -19,7 +21,13 @@ const EMAIL: ComposeInbox = {
     capabilities: ['conversation_outbound_start', 'profile_email'],
 };
 const ZALO: ComposeInbox = { id: 3, name: 'Zalo shop', channel_type: 'Channel::Zalo', capabilities: ['outbound_sticker'] };
-const option = (inbox: ComposeInbox, available = true): ChannelOption => ({ inbox, source_id: 'x', available, reason: null });
+const option = (inbox: ComposeInbox, available = true): ChannelOption => ({
+    inbox,
+    source_id: 'x',
+    display_address: null,
+    available,
+    reason: null,
+});
 
 describe('ô Đến nhận ra địa chỉ để tạo liên hệ mới', () => {
     it.each([
@@ -39,7 +47,9 @@ describe('kênh cho địa chỉ mới', () => {
     it('email mới chỉ đi qua hộp mở hội thoại chủ động được và biết email của khách', () => {
         const options = optionsForNewRecipient([EMAIL, ZALO], { kind: 'new', address: 'a@b.vn', addressType: 'email' });
 
-        expect(options).toEqual([{ inbox: EMAIL, source_id: 'a@b.vn', available: true, reason: null }]);
+        expect(options).toEqual([
+            { inbox: EMAIL, source_id: 'a@b.vn', display_address: 'a@b.vn', available: true, reason: null },
+        ]);
     });
 
     it('số điện thoại mới không mượn hộp chỉ biết email', () => {
@@ -57,14 +67,33 @@ describe('kênh cho địa chỉ mới', () => {
     });
 });
 
-describe('địa chỉ của khách trên thẻ kênh', () => {
+describe('liên hệ có sẵn đã mang địa chỉ vừa gõ', () => {
     it.each([
-        ['khach@example.com', 'khach@example.com'],
-        ['+84901234567', '+84901234567'],
-        ['e2e-274cdf38-6033-44fc-b38d', null],
-        [null, null],
-    ])('%s hiện thành %s', (address, expected) => {
-        expect(readableAddress(address)).toBe(expected);
+        ['0901234567', '+84901234567', true],
+        ['84 901 234 567', '+84901234567', true],
+        ['0901234567', '+84901234568', false],
+        ['1234567', '+841234567', false],
+        ['0901234567', null, false],
+    ])('%s ≡ %s: %s', (typed, stored, expected) => {
+        expect(isSamePhoneNumber(typed, stored)).toBe(expected);
+    });
+
+    it('so email không phân biệt hoa thường, SĐT theo số đã chuẩn hoá', () => {
+        const contact = { email: 'Lan@Example.com', phone_number: '+84901234567' };
+        expect(contactHasAddress(contact, { kind: 'new', address: 'lan@example.com', addressType: 'email' })).toBe(true);
+        expect(contactHasAddress(contact, { kind: 'new', address: '0901234567', addressType: 'phone' })).toBe(true);
+        expect(contactHasAddress(contact, { kind: 'new', address: 'khac@example.com', addressType: 'email' })).toBe(false);
+    });
+});
+
+describe('lý do kênh không gửi được', () => {
+    it.each([
+        ['messaging_window_closed', 'COMPOSE_NEW_CONVERSATION.DRAFT.UNAVAILABLE.MESSAGING_WINDOW_CLOSED'],
+        ['reauthorization_required', 'COMPOSE_NEW_CONVERSATION.DRAFT.UNAVAILABLE.REAUTHORIZATION_REQUIRED'],
+        ['email_undeliverable', 'COMPOSE_NEW_CONVERSATION.DRAFT.UNAVAILABLE.EMAIL_UNDELIVERABLE'],
+        ['la_lam', 'COMPOSE_NEW_CONVERSATION.DRAFT.UNAVAILABLE.OTHER'],
+    ])('%s', (reason, key) => {
+        expect(unavailableReasonKey(reason)).toBe(key);
     });
 });
 

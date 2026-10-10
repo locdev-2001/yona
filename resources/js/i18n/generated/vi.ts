@@ -2965,9 +2965,6 @@ const messages: Record<string, unknown> = {
         "CONTACT_SEARCH": {
             "ERROR_MESSAGE": "Chúng tôi không tìm kiếm được. Bạn hãy thử lại."
         },
-        "CONTACT_CREATE": {
-            "ERROR_MESSAGE": "Chúng tôi không tạo được liên hệ. Bạn hãy thử lại."
-        },
         "DRAFT": {
             "TITLE": "Tin nhắn mới",
             "EMPTY": "Chưa có tin nhắn. Chọn người nhận và kênh gửi rồi soạn tin bên dưới.",
@@ -2979,10 +2976,13 @@ const messages: Record<string, unknown> = {
             "CONTACT_LOAD_FAILED": "Không tải được liên hệ. Bạn hãy chọn lại người nhận.",
             "LOADING_CHANNELS": "Đang tìm kênh gửi được tới người này…",
             "LOAD_CHANNELS_FAILED": "Không tải được danh sách kênh gửi.",
+            "CREATED_ELSEWHERE": "Đã tạo hội thoại mới từ bản nháp.",
+            "OPEN_CONVERSATION": "Mở hội thoại",
             "RETRY": "Thử lại",
             "UNAVAILABLE": {
                 "MESSAGING_WINDOW_CLOSED": "Đã quá thời gian kênh cho phép nhắn kể từ tin cuối của khách",
                 "REAUTHORIZATION_REQUIRED": "Kênh đang mất kết nối, cần đăng nhập lại",
+                "EMAIL_UNDELIVERABLE": "Email của liên hệ này không nhận được thư",
                 "OTHER": "Kênh này hiện không gửi được tới người này"
             },
             "EMAIL_CHECK": {
@@ -3001,14 +3001,11 @@ const messages: Record<string, unknown> = {
             }
         },
         "FORM": {
-            "GO_TO_CONVERSATION": "Xem",
-            "SUCCESS_MESSAGE": "Đã gửi tin nhắn!",
             "ERROR_MESSAGE": "Có lỗi khi tạo hội thoại. Bạn hãy thử lại sau.",
             "NO_INBOX_ALERT": "Không có hộp thư nào để bắt đầu hội thoại với liên hệ này.",
             "CONTACT_SELECTOR": {
                 "LABEL": "Đến:",
                 "TAG_INPUT_PLACEHOLDER": "Nhập ít nhất 2 ký tự để tìm theo tên, email hoặc số điện thoại",
-                "CONTACT_CREATING": "Đang tạo liên hệ...",
                 "NO_RESULTS": "Không tìm thấy liên hệ nào",
                 "CHANGE": "Đổi người nhận"
             },
@@ -3017,40 +3014,7 @@ const messages: Record<string, unknown> = {
                 "PICK_CONTACT_FIRST": "Chọn người nhận để xem các hộp thư gửi được"
             },
             "EMAIL_OPTIONS": {
-                "SUBJECT_LABEL": "Chủ đề :",
-                "SUBJECT_PLACEHOLDER": "Nhập tiêu đề email tại đây",
-                "CC_LABEL": "Cc:",
-                "CC_PLACEHOLDER": "Nhập ít nhất 2 ký tự để tìm theo email",
-                "BCC_LABEL": "Bcc:",
-                "BCC_PLACEHOLDER": "Nhập ít nhất 2 ký tự để tìm theo email",
-                "BCC_BUTTON": "Bcc"
-            },
-            "MESSAGE_EDITOR": {
-                "PLACEHOLDER": "Viết tin nhắn ở đây..."
-            },
-            "WHATSAPP_OPTIONS": {
-                "LABEL": "Chọn mẫu tin",
-                "SEARCH_PLACEHOLDER": "Tìm mẫu tin",
-                "EMPTY_STATE": "Không có mẫu tin nào",
-                "TEMPLATE_PARSER": {
-                    "TEMPLATE_NAME": "Mẫu tin WhatsApp: {templateName}",
-                    "VARIABLES": "Biến",
-                    "BACK": "Trở về",
-                    "SEND_MESSAGE": "Gửi tin nhắn"
-                }
-            },
-            "TWILIO_OPTIONS": {
-                "LABEL": "Chọn mẫu tin",
-                "SEARCH_PLACEHOLDER": "Tìm mẫu tin",
-                "EMPTY_STATE": "Không có mẫu tin nào",
-                "TEMPLATE_PARSER": {
-                    "BACK": "Trở về",
-                    "SEND_MESSAGE": "Gửi tin nhắn"
-                }
-            },
-            "ACTION_BUTTONS": {
-                "DISCARD": "Bỏ",
-                "SEND": "Gửi ({keyCode})"
+                "SUBJECT_PLACEHOLDER": "Nhập tiêu đề email tại đây"
             }
         }
     },

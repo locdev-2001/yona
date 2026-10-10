@@ -21,7 +21,8 @@ import { useChannelOptions } from './useChannelOptions';
 // là ô soạn chung của Inbox chạy theo năng lực kênh đã chọn. Lần gửi đầu tiên
 // tạo hội thoại rồi mở hội thoại đó.
 export default function ComposeDraftPane() {
-    const { accountId, isOnExpandedLayout, composeContactId, composeDraft, updateComposeDraft } = useConversation();
+    const { accountId, inboxId, teamId, label, isOnExpandedLayout, composeContactId, composeDraft, updateComposeDraft } =
+        useConversation();
     const { inboxes = [] } = usePage<DashboardPageProps>().props;
     const { recipient, target, subject, emailCheck, showErrors, isSending, error } = composeDraft;
     const channels = useChannelOptions(accountId, recipient, inboxes);
@@ -85,11 +86,11 @@ export default function ComposeDraftPane() {
     );
 
     const selectChannel = (option: ChannelOption) => {
-        if (option.available) updateComposeDraft({ target: option, error: null });
+        if (option.available && !isSending) updateComposeDraft({ target: option, error: null });
     };
 
     const needsSubject = inboxNeedsSubject(target?.inbox);
-    const backUrl = conversationListPageURL({ accountId });
+    const backUrl = conversationListPageURL({ accountId, inboxId, teamId, label });
 
     return (
         <div
@@ -109,6 +110,7 @@ export default function ComposeDraftPane() {
                         recipient={recipient}
                         emailCheck={emailCheck}
                         hasError={showErrors && !recipient}
+                        disabled={isSending}
                         onSelect={selectRecipient}
                     />
                 </FieldRow>
@@ -120,6 +122,7 @@ export default function ComposeDraftPane() {
                         hasRecipient={recipient !== null}
                         selectedInboxId={target?.inbox.id ?? null}
                         hasError={showErrors}
+                        disabled={isSending}
                         onSelect={selectChannel}
                         onRetry={channels.reload}
                     />
@@ -128,6 +131,7 @@ export default function ComposeDraftPane() {
                     <FieldRow label={t('COMPOSE_NEW_CONVERSATION.DRAFT.SUBJECT_LABEL')}>
                         <input
                             value={subject}
+                            disabled={isSending}
                             aria-label={t('COMPOSE_NEW_CONVERSATION.DRAFT.SUBJECT_LABEL')}
                             placeholder={t('COMPOSE_NEW_CONVERSATION.FORM.EMAIL_OPTIONS.SUBJECT_PLACEHOLDER')}
                             aria-invalid={showErrors && !subject.trim()}

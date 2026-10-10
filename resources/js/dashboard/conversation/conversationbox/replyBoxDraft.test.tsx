@@ -44,6 +44,8 @@ vi.mock('../api', () => ({ sendMessage: vi.fn() }));
 vi.mock('../ConversationContext', () => ({
     useConversation: () => ({
         isComposing: true,
+        registerDraftComposer: () => () => undefined,
+        takeCarriedAttachments: () => [],
         composeDraft: draftState.current,
         selectedConversation: null,
         conversationId: 0,
@@ -93,7 +95,7 @@ import ReplyBox from './ReplyBox';
 const draftFor = (inbox: typeof ZALO | null): ComposeDraft => ({
     ...EMPTY_COMPOSE_DRAFT,
     recipient: { kind: 'contact', contact: { id: 9, name: 'Khách A', email: 'khach@example.com' } },
-    target: inbox ? { inbox, source_id: 'khach@example.com', available: true, reason: null } : null,
+    target: inbox ? { inbox, source_id: 'khach@example.com', display_address: 'khach@example.com', available: true, reason: null } : null,
 });
 
 const stickerButton = () => screen.queryByTitle(t('CONVERSATION.REPLYBOX.TIP_STICKER_ICON'));

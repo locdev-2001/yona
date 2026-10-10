@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import type { CSSProperties } from 'react';
 import { messageSentAt } from 'dashboard/conversation/messageTime';
 import { resolveStructured } from 'shared/messaging';
@@ -143,6 +144,8 @@ export default function Message({
     const status = message.status;
     const isPrivate = message.private;
     const contentAttributes = message.content_attributes ?? {};
+    // Lỗi đã có từ lúc tin hiện ra là lỗi cũ trong lịch sử; chỉ lỗi xảy ra khi đang xem mới cần đọc lên.
+    const failedWhenShownRef = useRef(Boolean(contentAttributes.external_error));
     const sender = message.sender ?? null;
     const senderType = message.sender_type ?? null;
     const additionalAttributes = message.additional_attributes ?? {};
@@ -327,6 +330,7 @@ export default function Message({
                                 {contentAttributes.external_error ? (
                                     <MessageError
                                         className={FLEX_ORIENTATION_MAP[orientation]}
+                                        announce={!failedWhenShownRef.current}
                                         onRetry={onRetry ? () => onRetry(message) : undefined}
                                     />
                                 ) : isExternalEcho ? (

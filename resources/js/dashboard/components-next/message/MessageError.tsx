@@ -14,9 +14,12 @@ import { isUnsentMessageId } from 'dashboard/conversation/pendingMessages';
 
 export default function MessageError({
     className = '',
+    announce = false,
     onRetry,
 }: {
     className?: string;
+    // Đọc lý do lên ngay (live region) — chỉ cho lỗi vừa xảy ra, không cho lỗi cũ trong lịch sử.
+    announce?: boolean;
     onRetry?: () => Promise<void> | void;
 }) {
     const { id, orientation, status, createdAt, content, attachments, contentAttributes, onDeleteMessage } =
@@ -107,7 +110,7 @@ export default function MessageError({
     return (
         <div className="flex flex-col gap-1">
             {row}
-            <p role="alert" className="text-xs text-n-ruby-11 max-w-xs break-words">
+            <p role={announce ? 'alert' : undefined} className="text-xs text-n-ruby-11 max-w-xs break-words">
                 {detail}
             </p>
         </div>

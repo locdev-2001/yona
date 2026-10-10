@@ -11,7 +11,7 @@ const SEARCH_DEBOUNCE_MS = 300;
 // Ô tìm ngay trong cột danh sách: lọc tại chỗ danh sách đang xem (hộp thư, tab,
 // trạng thái, bộ lọc giữ nguyên). Tìm mọi thứ trong hệ thống là ô ở sidebar.
 export default function ChatListSearch() {
-    const { accountId, searchQuery, setSearchQuery, isComposing } = useConversation();
+    const { accountId, inboxId, teamId, label, searchQuery, setSearchQuery, isComposing } = useConversation();
     const [draft, setDraft] = useState(searchQuery);
 
     // Từ khoá đổi từ ngoài (điều hướng) thì ô theo; khoảng trắng đang gõ dở thì giữ.
@@ -70,7 +70,10 @@ export default function ChatListSearch() {
                     isComposing ? 'text-n-brand' : 'text-n-slate-11'
                 }`}
                 onClick={() =>
-                    router.visit(composeConversationUrl({ accountId }), { preserveState: true, preserveScroll: true })
+                    router.visit(composeConversationUrl({ accountId, inboxId, teamId, label }), {
+                        preserveState: true,
+                        preserveScroll: true,
+                    })
                 }
             >
                 <span className="i-lucide-square-pen size-[1.125rem]" aria-hidden="true" />

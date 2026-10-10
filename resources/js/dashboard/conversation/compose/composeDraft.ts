@@ -28,6 +28,8 @@ export interface ComposeInbox {
 export interface ChannelOption {
     inbox: ComposeInbox;
     source_id: string | null;
+    // Địa chỉ của khách ở kênh này mà người trực đọc hiểu được (email/SĐT); null khi kênh chỉ biết mã nội bộ.
+    display_address: string | null;
     available: boolean;
     reason: string | null;
 }
@@ -61,11 +63,16 @@ export const EMPTY_COMPOSE_DRAFT: ComposeDraft = {
 export const UNAVAILABLE_REASON = {
     MESSAGING_WINDOW_CLOSED: 'messaging_window_closed',
     REAUTHORIZATION_REQUIRED: 'reauthorization_required',
+    EMAIL_UNDELIVERABLE: 'email_undeliverable',
 } as const;
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_PATTERN = /^\+?\d{8,15}$/;
 const PHONE_SEPARATORS = /[\s().-]/g;
+const NON_DIGITS = /\D/g;
+const LEADING_ZEROS = /^0+/;
+// Phần cuối chung tối thiểu để coi hai cách viết là cùng một số (đủ dài để không trùng nhầm).
+const MIN_SHARED_PHONE_DIGITS = 8;
 
 /** Chuỗi gõ ở ô "Đến" có phải email/SĐT để tạo liên hệ mới không. */
 export function detectNewRecipient(query: string): Extract<ComposeRecipient, { kind: 'new' }> | null {
@@ -78,9 +85,26 @@ export function detectNewRecipient(query: string): Extract<ComposeRecipient, { k
     return null;
 }
 
-/** Địa chỉ của khách ở một kênh chỉ đáng hiện khi người đọc hiểu được (email/SĐT), không phải mã nội bộ của nền tảng. */
-export function readableAddress(address: string | null | undefined): string | null {
-    return address && detectNewRecipient(address) ? address : null;
+/**
+ * Hai cách viết của cùng một số (0901…, +84901…, 84 901…) có khớp nhau không. Không
+ * đoán mã nước: bỏ tiền tố, so phần đuôi chung — máy chủ vẫn là nơi chuẩn hoá thật.
+ */
+export function isSamePhoneNumber(left: string | null | undefined, right: string | null | undefined): boolean {
+    const leftDigits = (left ?? '').replace(NON_DIGITS, '').replace(LEADING_ZEROS, '');
+    const rightDigits = (right ?? '').replace(NON_DIGITS, '').replace(LEADING_ZEROS, '');
+    const [shorter, longer] = leftDigits.length <= rightDigits.length ? [leftDigits, rightDigits] : [rightDigits, leftDigits];
+
+    return shorter.length >= MIN_SHARED_PHONE_DIGITS && longer.endsWith(shorter);
+}
+
+/** Liên hệ trong kết quả tìm đã mang đúng địa chỉ vừa gõ — khi đó không mời tạo liên hệ mới. */
+export function contactHasAddress(
+    contact: Pick<ContactMeta, 'email' | 'phone_number'>,
+    recipient: Extract<ComposeRecipient, { kind: 'new' }>,
+): boolean {
+    return recipient.addressType === 'email'
+        ? contact.email?.toLowerCase() === recipient.address
+        : isSamePhoneNumber(contact.phone_number, recipient.address);
 }
 
 /**
@@ -98,6 +122,7 @@ export function optionsForNewRecipient(
         .map(inbox => ({
             inbox,
             source_id: recipient.address,
+            display_address: recipient.address,
             available: !inbox.reauthorization_required,
             reason: inbox.reauthorization_required ? UNAVAILABLE_REASON.REAUTHORIZATION_REQUIRED : null,
         }));
@@ -149,6 +174,8 @@ export function unavailableReasonKey(reason: string | null): string {
             return 'COMPOSE_NEW_CONVERSATION.DRAFT.UNAVAILABLE.MESSAGING_WINDOW_CLOSED';
         case UNAVAILABLE_REASON.REAUTHORIZATION_REQUIRED:
             return 'COMPOSE_NEW_CONVERSATION.DRAFT.UNAVAILABLE.REAUTHORIZATION_REQUIRED';
+        case UNAVAILABLE_REASON.EMAIL_UNDELIVERABLE:
+            return 'COMPOSE_NEW_CONVERSATION.DRAFT.UNAVAILABLE.EMAIL_UNDELIVERABLE';
         default:
             return 'COMPOSE_NEW_CONVERSATION.DRAFT.UNAVAILABLE.OTHER';
     }

@@ -46,8 +46,29 @@ export const conversationUrl = ({
 };
 
 // Bản nháp hội thoại mới trong khung Inbox, điền sẵn người nhận khi mở từ một liên hệ.
-export const composeConversationUrl = ({ accountId, contactId }: { accountId: number; contactId?: number | null }) =>
-    accountScopedUrl(accountId, contactId ? `inbox/new?contact_id=${contactId}` : 'inbox/new');
+// Bản nháp mang theo bộ lọc cột danh sách đang xem (hộp thư / nhãn / nhóm) để
+// soạn xong vẫn đứng ở đúng danh sách đó.
+export const composeConversationUrl = ({
+    accountId,
+    contactId = null,
+    inboxId = 0,
+    teamId = 0,
+    label = '',
+}: {
+    accountId: number;
+    contactId?: number | null;
+    inboxId?: number;
+    teamId?: number;
+    label?: string;
+}) => {
+    const query = new URLSearchParams();
+    if (contactId) query.set('contact_id', String(contactId));
+    if (inboxId) query.set('inbox_id', String(inboxId));
+    if (teamId) query.set('team_id', String(teamId));
+    if (label) query.set('label', label);
+    const search = query.toString();
+    return accountScopedUrl(accountId, search ? `inbox/new?${search}` : 'inbox/new');
+};
 
 // Port từ URLHelper.conversationListPageURL (label → team → inbox →
 // conversationType → mặc định dashboard; custom_view vào E1).

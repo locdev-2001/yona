@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
-import { markUnsentFailed, markUnsentSending, pendingAttachments, removeUnsent } from './pendingMessages';
+import {
+    markUnsentFailed,
+    markUnsentSending,
+    pendingAttachments,
+    removeUnsent,
+    splitFailedUnsent,
+    withUnsentOf,
+} from './pendingMessages';
 import { applyIncomingMessage } from './realtimeReducers';
 import type { ConversationMessage } from './types';
 
@@ -74,5 +81,24 @@ describe('tin tạm của khung chat', () => {
             data_url: 'data:,',
             file_size: 1,
         });
+    });
+});
+
+describe('tin tạm khi đổi hội thoại đang mở', () => {
+    const failedHere = message(-5, { echo_id: 'echo-5', conversation_id: 77, status: 'failed' });
+    const failedElsewhere = message(-6, { echo_id: 'echo-6', conversation_id: 4, status: 'failed' });
+    const sendingElsewhere = message(-7, { echo_id: 'echo-7', conversation_id: 4 });
+
+    it('giữ tin hỏng của hội thoại đích, bỏ tin hỏng nơi khác, không đụng tin đang gửi', () => {
+        expect(splitFailedUnsent([message(400), failedHere, failedElsewhere, sendingElsewhere], 77)).toEqual({
+            kept: [failedHere],
+            discardedEchoIds: ['echo-6'],
+        });
+    });
+
+    it('nạp xong thì tin tạm nối cuối, trừ tin máy chủ đã có bản thật', () => {
+        const loaded = [message(400, { conversation_id: 77 })];
+        expect(withUnsentOf(loaded, [failedHere, failedElsewhere], 77).map(item => item.id)).toEqual([400, -5]);
+        expect(withUnsentOf([...loaded, message(501, { echo_id: 'echo-5', conversation_id: 77 })], [failedHere], 77).map(item => item.id)).toEqual([400, 501]);
     });
 });

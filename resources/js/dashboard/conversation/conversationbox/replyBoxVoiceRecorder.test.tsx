@@ -40,6 +40,8 @@ vi.mock('dashboard/composables/useAlert', () => ({ useAlert: alertSpy }));
 vi.mock('../ConversationContext', () => ({
     useConversation: () => ({
         isComposing: false,
+        registerDraftComposer: () => () => undefined,
+        takeCarriedAttachments: () => [],
         composeDraft: { recipient: null, target: null, subject: '', emailCheck: { status: 'idle' }, isSending: false, showErrors: false, error: null },
         selectedConversation: {
             id: 4,

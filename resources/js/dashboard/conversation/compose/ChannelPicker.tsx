@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import ChannelIcon from 'dashboard/components-next/icon/ChannelIcon';
 import LoaderIcon from 'shared/components/loader/LoaderIcon';
 import { t } from '../../../i18n';
-import { readableAddress, unavailableReasonKey } from './composeDraft';
+import { unavailableReasonKey } from './composeDraft';
 import type { ChannelOption } from './composeDraft';
 
 interface ChannelPickerProps {
@@ -13,6 +13,8 @@ interface ChannelPickerProps {
     hasRecipient: boolean;
     selectedInboxId: number | null;
     hasError: boolean;
+    // Đang gửi: tin đã chụp kênh này, đổi kênh lúc đó chỉ làm giao diện nói sai.
+    disabled?: boolean;
     onSelect: (option: ChannelOption) => void;
     onRetry: () => void;
 }
@@ -26,6 +28,7 @@ export default function ChannelPicker({
     hasRecipient,
     selectedInboxId,
     hasError,
+    disabled = false,
     onSelect,
     onRetry,
 }: ChannelPickerProps) {
@@ -58,6 +61,7 @@ export default function ChannelPicker({
         <div
             role="radiogroup"
             aria-label={t('COMPOSE_NEW_CONVERSATION.FORM.INBOX_SELECTOR.LABEL')}
+            aria-disabled={disabled || undefined}
             className="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-3 gap-2 flex-1 min-w-0 max-h-56 overflow-y-auto p-0.5"
         >
             {options.map(option => (
@@ -66,6 +70,7 @@ export default function ChannelPicker({
                     option={option}
                     isSelected={option.inbox.id === selectedInboxId}
                     hasError={hasError && selectedInboxId === null}
+                    disabled={disabled}
                     onSelect={() => onSelect(option)}
                 />
             ))}
@@ -77,15 +82,16 @@ function ChannelCard({
     option,
     isSelected,
     hasError,
+    disabled,
     onSelect,
 }: {
     option: ChannelOption;
     isSelected: boolean;
     hasError: boolean;
+    disabled: boolean;
     onSelect: () => void;
 }) {
-    const { inbox, available, reason } = option;
-    const address = readableAddress(option.source_id);
+    const { inbox, available, reason, display_address: address } = option;
     const platformName = inbox.platform?.name;
     const outline = isSelected
         ? 'outline-2 outline-n-brand bg-n-brand/5'
@@ -98,11 +104,11 @@ function ChannelCard({
             type="button"
             role="radio"
             aria-checked={isSelected}
-            aria-disabled={!available}
-            disabled={!available}
+            aria-disabled={!available || disabled}
+            disabled={!available || disabled}
             onClick={onSelect}
             className={`flex items-start gap-3 min-w-0 p-3 rounded-xl text-start outline -outline-offset-1 transition-colors ${outline} ${
-                available ? 'hover:bg-n-alpha-2 cursor-pointer' : 'opacity-60 cursor-not-allowed'
+                !available ? 'opacity-60 cursor-not-allowed' : disabled ? 'cursor-default' : 'hover:bg-n-alpha-2 cursor-pointer'
             }`}
         >
             <ChannelIcon inbox={inbox} className="size-8 shrink-0" />

@@ -56,3 +56,39 @@ export function markUnsentSending(messages: ConversationMessage[], echoId: strin
 export function removeUnsent(messages: ConversationMessage[], echoId: string): ConversationMessage[] {
     return messages.filter((message) => !(message.echo_id === echoId && isUnsentMessageId(message.id)));
 }
+
+/**
+ * Đổi hội thoại đang mở: tin tạm gửi hỏng của chính hội thoại đích được giữ để
+ * còn Gửi lại (tin gửi từ bản nháp hỏng ngay lúc mở hội thoại mới); tin tạm hỏng
+ * của hội thoại khác bị bỏ cùng nội dung chờ gửi của nó. Tin đang gửi dở không
+ * đụng tới — đường gửi của nó tự dọn khi xong.
+ */
+export function splitFailedUnsent(
+    messages: ConversationMessage[],
+    conversationId: number,
+): { kept: ConversationMessage[]; discardedEchoIds: string[] } {
+    const kept: ConversationMessage[] = [];
+    const discardedEchoIds: string[] = [];
+    for (const message of messages) {
+        if (!isUnsentMessageId(message.id) || message.status !== MESSAGE_STATUS.FAILED || !message.echo_id) continue;
+        if (message.conversation_id === conversationId) kept.push(message);
+        else discardedEchoIds.push(message.echo_id);
+    }
+    return { kept, discardedEchoIds };
+}
+
+/** Tin nạp từ máy chủ + tin tạm của cùng hội thoại chưa có bản máy chủ, tin tạm ở cuối. */
+export function withUnsentOf(
+    loaded: ConversationMessage[],
+    current: ConversationMessage[],
+    conversationId: number,
+): ConversationMessage[] {
+    const loadedEchoIds = new Set(loaded.map((message) => message.echo_id).filter(Boolean));
+    const unsent = current.filter(
+        (message) =>
+            isUnsentMessageId(message.id) &&
+            message.conversation_id === conversationId &&
+            !loadedEchoIds.has(message.echo_id),
+    );
+    return unsent.length ? [...loaded, ...unsent] : loaded;
+}

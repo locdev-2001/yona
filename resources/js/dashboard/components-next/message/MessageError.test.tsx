@@ -43,15 +43,26 @@ describe('lý do lỗi và nút Thử lại trên tin thất bại', () => {
 
     it('thư bị trả về: lý do và cách xử lý hiện ngay dưới bong bóng, không mời thử lại vô ích', () => {
         const message = 'Địa chỉ khach@ao.vn không nhận thư: 550 5.1.1 user unknown';
-        renderMessage(
+        const container = renderMessage(
             failedMessage({ content_attributes: { external_error: { code: 'email_bounced', message } } }),
             vi.fn(),
         );
 
-        const alert = screen.getByRole('alert');
-        expect(alert.textContent).toContain(message);
-        expect(alert.textContent).toContain(t('CONVERSATION.MESSAGE_FAILURE.HINT.email_bounced'));
+        expect(container.textContent).toContain(message);
+        expect(container.textContent).toContain(t('CONVERSATION.MESSAGE_FAILURE.HINT.email_bounced'));
         expect(screen.queryByRole('button', { name: RETRY_LABEL })).toBeNull();
+    });
+
+    it('thư trả về đã có trong lịch sử thì không đọc dồn cảnh báo; thư vừa bị trả về lúc đang xem thì có', () => {
+        const message = 'Địa chỉ khach@ao.vn không nhận thư';
+        const bounced = failedMessage({ content_attributes: { external_error: { code: 'email_bounced', message } } });
+        renderMessage(bounced, vi.fn());
+        expect(screen.queryByRole('alert')).toBeNull();
+
+        const sending = failedMessage({ id: 43, status: 'progress', content_attributes: {} });
+        const { rerender } = render(<Message message={sending} channelType="Channel::Email" onRetry={vi.fn()} />);
+        rerender(<Message message={{ ...bounced, id: 43 }} channelType="Channel::Email" onRetry={vi.fn()} />);
+        expect(screen.getByRole('alert').textContent).toContain(message);
     });
 
     it('hiện lý do lỗi kênh trả về', () => {

@@ -31,6 +31,7 @@ import { draftKey, setDraft as saveReplyDraft } from './draftApi';
 import { createConversationFromDraft } from './compose/composeApi';
 import { EMPTY_COMPOSE_DRAFT, draftBlocker } from './compose/composeDraft';
 import type { ComposeDraft } from './compose/composeDraft';
+import type { PendingAttachment } from 'dashboard/components/widgets/AttachmentsPreview';
 import {
     assignAgent as assignAgentRequest,
     assignTeam as assignTeamRequest,
@@ -67,6 +68,8 @@ import {
     markUnsentSending,
     pendingAttachments,
     removeUnsent,
+    splitFailedUnsent,
+    withUnsentOf,
 } from './pendingMessages';
 import type { OutgoingAttachment } from './pendingMessages';
 import {
@@ -223,6 +226,18 @@ interface ConversationContextValue {
     composeContactId: number | null;
     composeDraft: ComposeDraft;
     updateComposeDraft: (patch: Partial<ComposeDraft> | ((draft: ComposeDraft) => Partial<ComposeDraft>)) => void;
+    // Ô soạn của bản nháp khai cách đọc phần chưa gửi (chữ, tệp) để nó đi theo sang
+    // hội thoại vừa tạo khi lần gửi đầu là sticker/thẻ. Trả về hàm huỷ khai báo.
+    registerDraftComposer: (readComposer: () => DraftComposerContent) => () => void;
+    // Tệp đang chờ mang từ bản nháp sang hội thoại vừa tạo; lấy một lần.
+    takeCarriedAttachments: (conversationId: number) => PendingAttachment[];
+}
+
+export interface DraftComposerContent {
+    // Rỗng khi ô soạn không có gì ngoài chữ ký.
+    content: string;
+    replyMode: string;
+    attachments: PendingAttachment[];
 }
 
 export interface ToggleStatusPayload {
@@ -449,6 +464,8 @@ export function ConversationProvider({
 
     const [messages, setMessages] = useState<ConversationMessage[]>([]);
     messagesRef.current = messages;
+    // Nội dung của tin tạm chưa tới máy chủ, giữ để Gửi lại không cần soạn lại.
+    const unsentPayloadsRef = useRef(new Map<string, SendMessagePayload>());
     const [allMessagesLoaded, setAllMessagesLoaded] = useState(false);
     const [messagesLoading, setMessagesLoading] = useState(false);
     const [focusedMessageId, setFocusedMessageId] = useState<number | null>(null);
@@ -675,6 +692,9 @@ export function ConversationProvider({
         let cancelled = false;
         setFocusedMessageId(null);
 
+        const { kept: keptUnsent, discardedEchoIds } = splitFailedUnsent(messagesRef.current, conversationId);
+        discardedEchoIds.forEach((echoId) => unsentPayloadsRef.current.delete(echoId));
+
         if (!conversationId) {
             setMessages([]);
             setAllMessagesLoaded(false);
@@ -688,7 +708,7 @@ export function ConversationProvider({
             }, () => undefined);
         }
 
-        setMessages([]);
+        setMessages(keptUnsent);
         setAllMessagesLoaded(false);
         setMessagesLoading(true);
         fetchMessages(accountId, conversationId).then(
@@ -697,7 +717,7 @@ export function ConversationProvider({
                 const latest = response.payload;
                 const focus = requestedFocusId ? await loadFocus(latest, requestedFocusId) : null;
                 if (cancelled) return;
-                setMessages(focus?.messages ?? latest);
+                setMessages((current) => withUnsentOf(focus?.messages ?? latest, current, conversationId));
                 if (latest.length < 20) {
                     setAllMessagesLoaded(true);
                 }
@@ -994,9 +1014,6 @@ export function ConversationProvider({
         [accountId, conversationId],
     );
 
-    // Nội dung của tin tạm chưa tới máy chủ, giữ để Gửi lại không cần soạn lại.
-    const unsentPayloadsRef = useRef(new Map<string, SendMessagePayload>());
-
     // Tin tạm gửi ở hội thoại nào thì đi về đúng hội thoại đó, kể cả khi đã chuyển sang hội thoại khác.
     const deliverPendingMessage = useCallback(
         (targetConversationId: number, echoId: string) => {
@@ -1013,6 +1030,10 @@ export function ConversationProvider({
                     const body = (error as { body?: { error?: string } }).body;
                     const reason = body?.error || t('CONVERSATION.MESSAGE_ERROR');
                     setMessages((current) => markUnsentFailed(current, echoId, reason));
+                    // Không còn bong bóng nào để bấm Gửi lại (đã rời hội thoại đó) thì bỏ luôn nội dung chờ.
+                    if (!messagesRef.current.some((item) => item.echo_id === echoId)) {
+                        unsentPayloadsRef.current.delete(echoId);
+                    }
                     useAlert(reason);
                     return false;
                 },
@@ -1031,6 +1052,7 @@ export function ConversationProvider({
             targetInboxId: number,
             payload: Omit<SendMessagePayload, 'echo_id'>,
             pendingPatch: Partial<ConversationMessage>,
+            { showPending = true }: { showPending?: boolean } = {},
         ) => {
             pendingEchoCounter += 1;
             const echoId = `${Date.now()}-${pendingEchoCounter}`;
@@ -1055,7 +1077,7 @@ export function ConversationProvider({
                 },
                 ...pendingPatch,
             };
-            setMessages((current) => [...current, pending]);
+            if (showPending) setMessages((current) => [...current, pending]);
             unsentPayloadsRef.current.set(echoId, payload);
             return deliverPendingMessage(targetConversationId, echoId);
         },
@@ -1063,49 +1085,85 @@ export function ConversationProvider({
     );
 
     const [composeDraft, setComposeDraft] = useState<ComposeDraft>(EMPTY_COMPOSE_DRAFT);
+    // Bản mới nhất ghi vào ref ngay lúc cập nhật (không chờ render), để hai lần bấm
+    // gửi liền nhau thấy được cờ đang gửi của nhau.
     const composeDraftRef = useRef(composeDraft);
-    composeDraftRef.current = composeDraft;
     const updateComposeDraft = useCallback(
         (patch: Partial<ComposeDraft> | ((draft: ComposeDraft) => Partial<ComposeDraft>)) => {
-            setComposeDraft((current) => {
-                const changes = typeof patch === 'function' ? patch(current) : patch;
-                const keys = Object.keys(changes) as (keyof ComposeDraft)[];
-                if (keys.every((key) => Object.is(changes[key], current[key]))) return current;
-                const next = { ...current, ...changes };
-                composeDraftRef.current = next;
-                return next;
-            });
+            const current = composeDraftRef.current;
+            const changes = typeof patch === 'function' ? patch(current) : patch;
+            const keys = Object.keys(changes) as (keyof ComposeDraft)[];
+            if (keys.every((key) => Object.is(changes[key], current[key]))) return;
+            const next = { ...current, ...changes };
+            composeDraftRef.current = next;
+            setComposeDraft(next);
         },
         [],
     );
     // Hội thoại tạo từ bản nháp — mọi kiểu gửi (chữ, tệp, sticker, thẻ) dùng chung một lần tạo.
     const draftConversationRef = useRef<Promise<Conversation> | null>(null);
 
-    // Mỗi lần vào bản nháp (hoặc đổi người nhận điền sẵn) là một bản nháp mới. Đặt
-    // lại ngay trong lúc render để hiệu ứng của khung nháp không bị xoá sau khi chạy.
+    // Mỗi lần vào bản nháp (hoặc đổi người nhận điền sẵn, hoặc rời bản nháp) là một
+    // phiên mới. Đặt lại ngay trong lúc render để hiệu ứng của khung nháp không bị
+    // xoá sau khi chạy. Số phiên cho việc đang chạy dở biết người dùng còn ở đó không.
     const composeSessionKey = `${isComposing}:${composeContactId ?? ''}`;
     const [activeComposeSession, setActiveComposeSession] = useState(composeSessionKey);
+    const composeSessionRef = useRef(0);
     if (activeComposeSession !== composeSessionKey) {
         setActiveComposeSession(composeSessionKey);
         setComposeDraft(EMPTY_COMPOSE_DRAFT);
         composeDraftRef.current = EMPTY_COMPOSE_DRAFT;
         draftConversationRef.current = null;
+        composeSessionRef.current += 1;
     }
 
+    const draftComposerRef = useRef<(() => DraftComposerContent) | null>(null);
+    const registerDraftComposer = useCallback((readComposer: () => DraftComposerContent) => {
+        draftComposerRef.current = readComposer;
+        return () => {
+            if (draftComposerRef.current === readComposer) draftComposerRef.current = null;
+        };
+    }, []);
+    const carriedAttachmentsRef = useRef(new Map<number, PendingAttachment[]>());
+    const takeCarriedAttachments = useCallback((targetConversationId: number) => {
+        const carried = carriedAttachmentsRef.current.get(targetConversationId) ?? [];
+        carriedAttachmentsRef.current.delete(targetConversationId);
+        return carried;
+    }, []);
+
+    // Phần ô soạn chưa gửi đi theo sang hội thoại mới: chữ thành bản nháp của nó, tệp
+    // chờ ô soạn của hội thoại đó lấy khi mở ra.
+    const carryDraftComposer = useCallback((targetConversationId: number) => {
+        const composer = draftComposerRef.current?.();
+        if (!composer) return;
+        if (composer.content) saveReplyDraft(draftKey(targetConversationId, composer.replyMode), composer.content);
+        if (composer.attachments.length) carriedAttachmentsRef.current.set(targetConversationId, composer.attachments);
+    }, []);
+
     const ensureConversation = useCallback((): Promise<Conversation> => {
-        draftConversationRef.current ??= createConversationFromDraft(accountId, composeDraftRef.current, (contact) =>
-            updateComposeDraft({ recipient: { kind: 'contact', contact } }),
-        ).catch((error: unknown) => {
-            draftConversationRef.current = null;
+        if (draftConversationRef.current) return draftConversationRef.current;
+
+        const session = composeSessionRef.current;
+        const creation: Promise<Conversation> = createConversationFromDraft(accountId, composeDraftRef.current, (contact) => {
+            if (composeSessionRef.current === session) updateComposeDraft({ recipient: { kind: 'contact', contact } });
+        }).catch((error: unknown) => {
+            if (draftConversationRef.current === creation) draftConversationRef.current = null;
             throw error;
         });
-        return draftConversationRef.current;
+        draftConversationRef.current = creation;
+        return creation;
     }, [accountId, updateComposeDraft]);
 
     // Gửi từ bản nháp: tạo hội thoại, gửi tin vào đó qua đường chung, rồi mở hội
-    // thoại thật. Tin gửi hỏng vẫn còn trong ô soạn của hội thoại mới để gửi lại.
+    // thoại thật — chỉ khi người dùng vẫn đang ở bản nháp này; đã sang chỗ khác thì
+    // tin vẫn đi, chỉ báo kèm lối mở hội thoại mới. Tin gửi hỏng còn nguyên trong
+    // hội thoại mới để Gửi lại. Gửi bằng sticker/thẻ thì chữ và tệp đang soạn đi theo.
     const sendFromDraft = useCallback(
-        async (payload: Omit<SendMessagePayload, 'echo_id'>, pendingPatch: Partial<ConversationMessage>) => {
+        async (
+            payload: Omit<SendMessagePayload, 'echo_id'>,
+            pendingPatch: Partial<ConversationMessage>,
+            sentFromComposer: boolean,
+        ) => {
             const draft = composeDraftRef.current;
             if (draft.isSending) return;
             const blocker = draftBlocker(draft);
@@ -1115,34 +1173,64 @@ export function ConversationProvider({
                 return;
             }
 
+            const session = composeSessionRef.current;
+            const isStillOnDraft = () => composeSessionRef.current === session;
             updateComposeDraft({ isSending: true, error: null });
             let conversation: Conversation;
             try {
                 conversation = await ensureConversation();
             } catch (error: unknown) {
                 const reason = parseApiErrorMessage(error) || t('COMPOSE_NEW_CONVERSATION.FORM.ERROR_MESSAGE');
-                updateComposeDraft({ isSending: false, error: reason });
+                if (isStillOnDraft()) updateComposeDraft({ isSending: false, error: reason });
                 useAlert(reason);
                 return;
             }
 
             setAllConversations((current) => applyConversationUpdate(current, conversation));
-            const delivered = await enqueuePendingMessage(conversation.id, conversation.inbox_id, payload, pendingPatch);
-            if (!delivered && payload.content) {
-                saveReplyDraft(draftKey(conversation.id, REPLY_EDITOR_MODES.REPLY), payload.content);
+            const targetUrl = conversationUrl({ accountId, inboxId, teamId, label, id: conversation.id });
+            const isOnDraftAtCreation = isStillOnDraft();
+            if (isOnDraftAtCreation && !sentFromComposer) carryDraftComposer(conversation.id);
+
+            const delivered = await enqueuePendingMessage(conversation.id, conversation.inbox_id, payload, pendingPatch, {
+                showPending: isOnDraftAtCreation,
+            });
+
+            if (!isStillOnDraft()) {
+                if (!delivered && payload.content) {
+                    saveReplyDraft(draftKey(conversation.id, REPLY_EDITOR_MODES.REPLY), payload.content);
+                }
+                useAlert(t('COMPOSE_NEW_CONVERSATION.DRAFT.CREATED_ELSEWHERE'), {
+                    message: t('COMPOSE_NEW_CONVERSATION.DRAFT.OPEN_CONVERSATION'),
+                    onClick: () => router.visit(targetUrl),
+                });
+                return;
             }
-            router.visit(conversationUrl({ accountId, id: conversation.id }), { preserveState: true, preserveScroll: true });
+
+            const releaseSending = () => {
+                if (isStillOnDraft()) updateComposeDraft({ isSending: false });
+            };
+            router.visit(targetUrl, {
+                preserveState: true,
+                preserveScroll: true,
+                // Inertia không gọi onFinish cho lượt bị huỷ.
+                onCancel: releaseSending,
+                onFinish: releaseSending,
+            });
         },
-        [accountId, ensureConversation, enqueuePendingMessage, updateComposeDraft],
+        [accountId, inboxId, teamId, label, ensureConversation, enqueuePendingMessage, carryDraftComposer, updateComposeDraft],
     );
 
     const sendWithPendingMessage = useCallback(
-        (payload: Omit<SendMessagePayload, 'echo_id'>, pendingPatch: Partial<ConversationMessage> = {}) => {
+        (
+            payload: Omit<SendMessagePayload, 'echo_id'>,
+            pendingPatch: Partial<ConversationMessage> = {},
+            sentFromComposer = false,
+        ) => {
             if (conversationId && selectedConversation) {
                 void enqueuePendingMessage(conversationId, selectedConversation.inbox_id, payload, pendingPatch);
                 return;
             }
-            if (isComposing) void sendFromDraft(payload, pendingPatch);
+            if (isComposing) void sendFromDraft(payload, pendingPatch, sentFromComposer);
         },
         [conversationId, selectedConversation, isComposing, enqueuePendingMessage, sendFromDraft],
     );
@@ -1179,6 +1267,7 @@ export function ConversationProvider({
                     ...(toEmails !== undefined ? { to_emails: toEmails } : {}),
                 },
                 attachments.length ? { attachments: pendingAttachments(attachments) } : {},
+                true,
             );
         },
         [sendWithPendingMessage],
@@ -1584,6 +1673,8 @@ export function ConversationProvider({
             composeContactId,
             composeDraft,
             updateComposeDraft,
+            registerDraftComposer,
+            takeCarriedAttachments,
         }),
         [
             accountId,
@@ -1647,6 +1738,8 @@ export function ConversationProvider({
             composeContactId,
             composeDraft,
             updateComposeDraft,
+            registerDraftComposer,
+            takeCarriedAttachments,
         ],
     );
 

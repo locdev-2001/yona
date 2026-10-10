@@ -122,13 +122,15 @@ export default function ReplyTopPanel({
                             ) : null}
                         </div>
                     ) : null}
-                    <NextButton
-                        ghost
-                        className="text-n-slate-11"
-                        sm
-                        icon="i-lucide-maximize-2"
-                        onClick={onToggleEditorSize}
-                    />
+                    {onToggleEditorSize ? (
+                        <NextButton
+                            ghost
+                            className="text-n-slate-11"
+                            sm
+                            icon="i-lucide-maximize-2"
+                            onClick={onToggleEditorSize}
+                        />
+                    ) : null}
                 </div>
             ) : null}
         </div>

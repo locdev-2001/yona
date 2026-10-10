@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 
 import Avatar from 'dashboard/components-next/avatar/Avatar';
 import Button from 'dashboard/components-next/button/Button';
@@ -7,7 +7,7 @@ import { getJson } from 'dashboard/helper/apiClient';
 import { avatarSeed } from 'shared/avatar/avatarSeed';
 import { t } from '../../../i18n';
 import type { ContactMeta } from '../types';
-import { detectNewRecipient, emailReasonKey, recipientLabel } from './composeDraft';
+import { contactHasAddress, detectNewRecipient, emailReasonKey, recipientLabel } from './composeDraft';
 import type { ComposeRecipient, EmailCheck } from './composeDraft';
 
 const SEARCH_DEBOUNCE_MS = 300;
@@ -18,39 +18,54 @@ interface RecipientFieldProps {
     recipient: ComposeRecipient | null;
     emailCheck: EmailCheck;
     hasError: boolean;
+    // Đang gửi: tin đã chụp người nhận này, không cho đổi giữa chừng.
+    disabled?: boolean;
     onSelect: (recipient: ComposeRecipient | null) => void;
 }
 
 type Suggestion = { key: string; recipient: ComposeRecipient };
 
+type SearchOutcome = { query: string; contacts: ContactMeta[]; failed: boolean };
+
 // Ô "Đến": tìm liên hệ theo tên/email/SĐT; chuỗi là email/SĐT mà chưa có liên hệ
 // thì mời tạo liên hệ mới (tạo khi gửi). Email mới hiện ngay kết quả kiểm địa chỉ.
-export default function RecipientField({ accountId, recipient, emailCheck, hasError, onSelect }: RecipientFieldProps) {
+export default function RecipientField({
+    accountId,
+    recipient,
+    emailCheck,
+    hasError,
+    disabled = false,
+    onSelect,
+}: RecipientFieldProps) {
     const [query, setQuery] = useState('');
-    const [results, setResults] = useState<ContactMeta[]>([]);
-    const [searchedQuery, setSearchedQuery] = useState('');
+    const [search, setSearch] = useState<SearchOutcome | null>(null);
     const [activeIndex, setActiveIndex] = useState(0);
+    // Danh sách gợi ý đóng khi rời ô hoặc bấm Esc; gõ tiếp là mở lại.
+    const [isDismissed, setIsDismissed] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
+    const listboxId = useId();
+    const optionId = (index: number) => `${listboxId}-option-${index}`;
 
     const trimmedQuery = query.trim();
     useEffect(() => {
         if (trimmedQuery.length < MIN_QUERY_LENGTH) {
-            setResults([]);
-            setSearchedQuery('');
+            setSearch(null);
             return undefined;
         }
         let cancelled = false;
         const timer = window.setTimeout(() => {
             getJson<{ payload: ContactMeta[] }>(
                 `/api/v1/accounts/${accountId}/contacts/search?q=${encodeURIComponent(trimmedQuery)}`,
-            )
-                .then(response => response.payload ?? [], () => [] as ContactMeta[])
-                .then(payload => {
+            ).then(
+                response => {
                     if (cancelled) return;
-                    setResults(payload);
-                    setSearchedQuery(trimmedQuery);
+                    setSearch({ query: trimmedQuery, contacts: response.payload ?? [], failed: false });
                     setActiveIndex(0);
-                });
+                },
+                () => {
+                    if (!cancelled) setSearch({ query: trimmedQuery, contacts: [], failed: true });
+                },
+            );
         }, SEARCH_DEBOUNCE_MS);
 
         return () => {
@@ -59,22 +74,26 @@ export default function RecipientField({ accountId, recipient, emailCheck, hasEr
         };
     }, [accountId, trimmedQuery]);
 
+    const currentSearch = search?.query === trimmedQuery ? search : null;
+    const results = currentSearch?.contacts ?? [];
     const newRecipient = detectNewRecipient(trimmedQuery);
-    const matchesExisting = (address: string) =>
-        results.some(contact => [contact.email, contact.phone_number].some(value => value?.toLowerCase() === address));
+    // Tìm kiếm lỗi thì không biết địa chỉ đã có liên hệ chưa — không mời tạo mới để khỏi tạo trùng.
+    const canOfferNewContact =
+        newRecipient !== null &&
+        currentSearch !== null &&
+        !currentSearch.failed &&
+        !results.some(contact => contactHasAddress(contact, newRecipient));
     const suggestions: Suggestion[] = [
         ...results.map(contact => ({ key: `contact-${contact.id}`, recipient: { kind: 'contact', contact } as ComposeRecipient })),
-        ...(newRecipient && searchedQuery === trimmedQuery && !matchesExisting(newRecipient.address)
-            ? [{ key: 'new', recipient: newRecipient }]
-            : []),
+        ...(canOfferNewContact ? [{ key: 'new', recipient: newRecipient }] : []),
     ];
-    const isOpen = trimmedQuery.length >= MIN_QUERY_LENGTH && searchedQuery === trimmedQuery;
+    const isOpen = currentSearch !== null && !isDismissed;
+    const activeOption = isOpen && suggestions.length > 0 ? Math.min(activeIndex, suggestions.length - 1) : null;
 
     const pick = (picked: ComposeRecipient) => {
         onSelect(picked);
         setQuery('');
-        setResults([]);
-        setSearchedQuery('');
+        setSearch(null);
     };
 
     if (recipient) {
@@ -105,6 +124,7 @@ export default function RecipientField({ accountId, recipient, emailCheck, hasEr
                         color="slate"
                         size="xs"
                         className="shrink-0"
+                        disabled={disabled}
                         title={t('COMPOSE_NEW_CONVERSATION.FORM.CONTACT_SELECTOR.CHANGE')}
                         aria-label={t('COMPOSE_NEW_CONVERSATION.FORM.CONTACT_SELECTOR.CHANGE')}
                         onClick={() => {
@@ -124,20 +144,39 @@ export default function RecipientField({ accountId, recipient, emailCheck, hasEr
                 ref={inputRef}
                 autoFocus
                 value={query}
+                disabled={disabled}
                 role="combobox"
                 aria-expanded={isOpen}
                 aria-autocomplete="list"
+                aria-controls={listboxId}
+                aria-activedescendant={activeOption === null ? undefined : optionId(activeOption)}
                 aria-label={t('COMPOSE_NEW_CONVERSATION.FORM.CONTACT_SELECTOR.LABEL')}
-                onChange={event => setQuery(event.target.value)}
+                onChange={event => {
+                    setQuery(event.target.value);
+                    setIsDismissed(false);
+                }}
+                onFocus={() => setIsDismissed(false)}
+                onBlur={() => setIsDismissed(true)}
                 onKeyDown={event => {
-                    if (!isOpen || suggestions.length === 0) return;
+                    if (event.key === 'Escape' && isOpen) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        setIsDismissed(true);
+                        return;
+                    }
+                    if (event.key === 'ArrowDown' && isDismissed && currentSearch) {
+                        event.preventDefault();
+                        setIsDismissed(false);
+                        return;
+                    }
+                    if (activeOption === null) return;
                     if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
                         event.preventDefault();
                         const step = event.key === 'ArrowDown' ? 1 : -1;
-                        setActiveIndex(current => (current + step + suggestions.length) % suggestions.length);
+                        setActiveIndex((activeOption + step + suggestions.length) % suggestions.length);
                     } else if (event.key === 'Enter') {
                         event.preventDefault();
-                        pick(suggestions[Math.min(activeIndex, suggestions.length - 1)].recipient);
+                        pick(suggestions[activeOption].recipient);
                     }
                 }}
                 placeholder={t('COMPOSE_NEW_CONVERSATION.FORM.CONTACT_SELECTOR.TAG_INPUT_PLACEHOLDER')}
@@ -147,22 +186,30 @@ export default function RecipientField({ accountId, recipient, emailCheck, hasEr
             />
             {isOpen ? (
                 <ul
+                    id={listboxId}
                     role="listbox"
+                    aria-label={t('COMPOSE_NEW_CONVERSATION.FORM.CONTACT_SELECTOR.LABEL')}
+                    // Giữ focus ở ô nhập khi bấm chọn, để blur không đóng danh sách trước khi click chạy.
+                    onMouseDown={event => event.preventDefault()}
                     className="absolute z-[100] top-9 inset-x-0 max-w-md max-h-64 overflow-y-auto overlay-surface rounded-lg py-1"
                 >
-                    {suggestions.length === 0 ? (
+                    {currentSearch?.failed && suggestions.length === 0 ? (
+                        <li role="alert" className="px-3 py-2 text-sm text-n-ruby-11">
+                            {t('COMPOSE_NEW_CONVERSATION.CONTACT_SEARCH.ERROR_MESSAGE')}
+                        </li>
+                    ) : suggestions.length === 0 ? (
                         <li className="px-3 py-2 text-sm text-n-slate-11">
                             {t('COMPOSE_NEW_CONVERSATION.FORM.CONTACT_SELECTOR.NO_RESULTS')}
                         </li>
                     ) : (
                         suggestions.map((suggestion, index) => (
-                            <li key={suggestion.key} role="presentation">
-                                <SuggestionRow
-                                    recipient={suggestion.recipient}
-                                    isActive={index === activeIndex}
-                                    onPick={() => pick(suggestion.recipient)}
-                                />
-                            </li>
+                            <SuggestionRow
+                                key={suggestion.key}
+                                id={optionId(index)}
+                                recipient={suggestion.recipient}
+                                isActive={index === activeOption}
+                                onPick={() => pick(suggestion.recipient)}
+                            />
                         ))
                     )}
                 </ul>
@@ -172,36 +219,40 @@ export default function RecipientField({ accountId, recipient, emailCheck, hasEr
 }
 
 function SuggestionRow({
+    id,
     recipient,
     isActive,
     onPick,
 }: {
+    id: string;
     recipient: ComposeRecipient;
     isActive: boolean;
     onPick: () => void;
 }) {
-    const rowClass = `flex items-center gap-2.5 w-full px-3 py-1.5 text-start ${isActive ? 'bg-n-alpha-2' : 'hover:bg-n-alpha-2'}`;
+    const rowClass = `flex items-center gap-2.5 w-full px-3 py-1.5 text-start cursor-pointer ${
+        isActive ? 'bg-n-alpha-2' : 'hover:bg-n-alpha-2'
+    }`;
 
     if (recipient.kind === 'new') {
         return (
-            <button type="button" role="option" aria-selected={isActive} className={rowClass} onClick={onPick}>
+            <li id={id} role="option" aria-selected={isActive} className={rowClass} onClick={onPick}>
                 <span className="i-lucide-user-plus size-5 shrink-0 text-n-brand" aria-hidden="true" />
                 <span className="text-sm truncate text-n-slate-12">
                     {t('COMPOSE_NEW_CONVERSATION.DRAFT.CREATE_CONTACT', { address: recipient.address })}
                 </span>
-            </button>
+            </li>
         );
     }
 
     const { name, secondary } = recipientLabel(recipient);
     return (
-        <button type="button" role="option" aria-selected={isActive} className={rowClass} onClick={onPick}>
+        <li id={id} role="option" aria-selected={isActive} className={rowClass} onClick={onPick}>
             <Avatar name={name} seed={avatarSeed('contact', recipient.contact.id)} src={recipient.contact.thumbnail} size={24} />
             <span className="flex flex-col min-w-0">
                 <span className="text-sm truncate text-n-slate-12">{name}</span>
                 {secondary ? <span className="text-xs truncate text-n-slate-11">{secondary}</span> : null}
             </span>
-        </button>
+        </li>
     );
 }
 
