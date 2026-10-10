@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { compareBySentAt } from './messageTime';
 import type { ReactNode } from 'react';
 import { router, usePage } from '@inertiajs/react';
 import { debounce } from '@ext/utils';
@@ -968,7 +969,7 @@ export function ConversationProvider({
             setMessages((current) => {
                 const known = new Set(current.map((item) => item.id));
                 const missing = response.payload.filter((item) => !known.has(item.id));
-                return [...current, ...missing].sort((a, b) => a.created_at - b.created_at);
+                return [...current, ...missing].sort(compareBySentAt);
             });
             lastMessageIdBeforeDisconnectRef.current = null;
         },

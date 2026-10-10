@@ -215,6 +215,7 @@ export interface WidgetMessage {
         items?: unknown[];
     };
     created_at: number;
+    platform_sent_at?: number;
     conversation_id?: number;
     attachments?: MessageAttachment[];
     sender?: MessageSender;

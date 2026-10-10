@@ -118,14 +118,19 @@ it('sticker cần tải: ảnh tải về trở thành ảnh sticker, không cò
         ->and($message->content_attributes['sticker']['id'])->toBe('77');
 });
 
-it('giờ nền tảng chỉ áp cho lô lịch sử; tin mới đến trễ vẫn lấy giờ máy chủ để còn tính chưa đọc', function () {
-    $backfill = writeInbound($this->inbox, $this->sender, new InboundMessage(sourceId: 't1', text: 'cũ', sentAt: now()->subDay(), backfill: true));
-    $late = writeInbound($this->inbox, $this->sender, new InboundMessage(sourceId: 't2', text: 'webhook trễ', sentAt: now()->subDay()));
-    $future = writeInbound($this->inbox, $this->sender, new InboundMessage(sourceId: 't3', text: 'tương lai', sentAt: now()->addDay(), backfill: true));
+it('giờ nền tảng vào platform_sent_at để xếp thứ tự; created_at vẫn là giờ nhận nên tin trễ vẫn tính chưa đọc', function () {
+    $first = writeInbound($this->inbox, $this->sender, new InboundMessage(sourceId: 't0', text: 'đến trước', sentAt: now()->subMinute()));
+    $this->inbox->conversations()->update(['agent_last_seen_at' => now()]);
+    // Cùng giây với tin đầu thì không phân biệt được; nhích đồng hồ cho hai tin sau.
+    $this->travelTo(now()->addSeconds(5));
+    $late = writeInbound($this->inbox, $this->sender, new InboundMessage(sourceId: 't1', text: 'gửi hôm qua, webhook tới giờ', sentAt: now()->subDay()));
+    $future = writeInbound($this->inbox, $this->sender, new InboundMessage(sourceId: 't2', text: 'đồng hồ chạy trước', sentAt: now()->addDay()));
 
-    expect($backfill->created_at->isSameDay(now()->subDay()))->toBeTrue()
+    expect($late->platform_sent_at->isSameDay(now()->subDay()))->toBeTrue()
         ->and($late->created_at->isSameDay(now()))->toBeTrue()
-        ->and($future->created_at->isSameDay(now()))->toBeTrue();
+        ->and($future->platform_sent_at->isSameDay(now()))->toBeTrue()
+        ->and($first->conversation->messages()->pluck('id')->all())->toBe([$late->id, $first->id, $future->id])
+        ->and($first->conversation->fresh()->unreadIncomingMessagesCount())->toBe(2);
 });
 
 it('sticker tải ảnh hỏng vẫn giữ đính kèm fallback để tin còn hiện và còn đường tải lại', function () {

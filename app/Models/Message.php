@@ -109,6 +109,7 @@ class Message extends Model
         'private',
         'status',
         'source_id',
+        'platform_sent_at',
         'content_type',
         'content_attributes',
         'sender_type',
@@ -121,6 +122,7 @@ class Message extends Model
     {
         return [
             'private' => 'boolean',
+            'platform_sent_at' => 'datetime',
             'content_attributes' => 'array',
             'external_source_ids' => 'array',
             'additional_attributes' => 'array',
@@ -148,6 +150,9 @@ class Message extends Model
         static::creating(function (Message $message) {
             // ensure_content_type + prevent_message_flooding + Liquidable#process_liquid_in_content.
             $message->content_type ??= self::CONTENT_TYPES['text'];
+            // Tin tạo trong Yona (agent, bot, widget) gửi đúng lúc tạo; driver kênh đặt
+            // giờ nền tảng trước khi lưu. Cột không bao giờ rỗng để thứ tự sắp theo nó.
+            $message->platform_sent_at ??= $message->created_at ?? $message->freshTimestamp();
             $message->preventMessageFlooding();
             $message->renderContentVariables();
             // Neo sau Liquid: biến đổi độ dài nội dung thì vị trí nhắc tên mới đúng.

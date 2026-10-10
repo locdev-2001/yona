@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\DB;
  *   - Message: content, loại/trạng thái theo chiều, trích dẫn (`in_reply_to_external_id` +
  *     `in_reply_to_preview`; id nội bộ do lõi tự suy lúc lưu), chuyển tiếp, `external_echo`;
  *   - đính kèm dựng TRƯỚC khi lưu để `message.created` phát ra đã có đính kèm;
- *   - sticker đi qua StickerMessage; `created_at` theo giờ nền tảng với lô lịch sử (`backfill`);
+ *   - sticker đi qua StickerMessage; `platform_sent_at` theo giờ nền tảng, `created_at` là giờ nhận;
  *   - thu hồi tới trước tin được áp ngay sau khi lưu.
  *
  * Driver không dựng Message/Attachment nữa; đặc thù chỉ còn ở cách bóc payload.
@@ -72,10 +72,10 @@ class InboundMessageWriter
                 StickerMessage::apply($message, $inbound->sticker, $this->downloadedStickerImage($message, $inbound));
             }
 
-            // Giờ nền tảng chỉ cho lô lịch sử: webhook tin mới đến trễ mà ghi lùi `created_at`
-            // thì hội thoại tụt xuống và tin không được đếm là chưa đọc.
-            if ($inbound->backfill && $inbound->sentAt !== null && $inbound->sentAt->year >= 2000 && ! $inbound->sentAt->isFuture()) {
-                $message->created_at = $inbound->sentAt;
+            // Thứ tự theo giờ nền tảng; `created_at` vẫn là giờ nhận (chưa đọc, mốc hoạt động).
+            // Mốc rác (0, âm) hay đồng hồ điện thoại chạy trước thì lấy giờ máy chủ.
+            if ($inbound->sentAt !== null && $inbound->sentAt->year >= 2000 && ! $inbound->sentAt->isFuture()) {
+                $message->platform_sent_at = $inbound->sentAt;
             }
 
             $message->save();

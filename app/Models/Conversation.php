@@ -364,27 +364,32 @@ class Conversation extends Model
         return $this->belongsTo(Team::class);
     }
 
+    /**
+     * Thứ tự tin trong hội thoại theo giờ nền tảng (`platform_sent_at`, luôn có; bằng
+     * `created_at` với tin tạo trong Yona) rồi `id` — khớp với app của kênh kể cả khi
+     * webhook đến trễ. Số chưa đọc và mốc hoạt động vẫn theo `created_at`.
+     */
     public function messages(): HasMany
     {
-        return $this->hasMany(Message::class)->orderBy('created_at');
+        return $this->hasMany(Message::class)->orderBy('platform_sent_at')->orderBy('id');
     }
 
     /**
      * Tin mới nhất đứng trước. `latest()`/`orderByDesc()` nối sau `messages()` chỉ
-     * thành khoá sắp xếp phụ sau `created_at` tăng dần, nên vẫn ra tin cũ nhất.
+     * thành khoá sắp xếp phụ sau thứ tự tăng dần, nên vẫn ra tin cũ nhất.
      *
      * @return HasMany<Message, $this>
      */
     public function messagesNewestFirst(): HasMany
     {
-        return $this->messages()->reorder('created_at', 'desc')->orderByDesc('id');
+        return $this->messages()->reorder('platform_sent_at', 'desc')->orderByDesc('id');
     }
 
     // Tin đầu tiên theo thứ tự của messages(), nạp gộp được cho cả trang thông báo.
     /** @return HasOne<Message, $this> */
     public function firstMessage(): HasOne
     {
-        return $this->hasOne(Message::class)->ofMany(['created_at' => 'min', 'id' => 'min'])->chaperone('conversation');
+        return $this->hasOne(Message::class)->ofMany(['platform_sent_at' => 'min', 'id' => 'min'])->chaperone('conversation');
     }
 
     /** @return HasOne<Message, $this> */
@@ -411,7 +416,7 @@ class Conversation extends Model
     /** @return HasOne<Message, $this> */
     public function latestMessage(): HasOne
     {
-        return $this->hasOne(Message::class)->ofMany(['created_at' => 'max', 'id' => 'max'])->chaperone('conversation');
+        return $this->hasOne(Message::class)->ofMany(['platform_sent_at' => 'max', 'id' => 'max'])->chaperone('conversation');
     }
 
     /** @return HasOne<Message, $this> */
@@ -419,7 +424,7 @@ class Conversation extends Model
     {
         return $this->hasOne(Message::class)
             ->ofMany(
-                ['created_at' => 'max', 'id' => 'max'],
+                ['platform_sent_at' => 'max', 'id' => 'max'],
                 fn (Builder $query) => $query->where('messages.message_type', '!=', Message::TYPE_ACTIVITY),
             )
             ->chaperone('conversation');

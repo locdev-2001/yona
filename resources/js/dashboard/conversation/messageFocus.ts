@@ -1,4 +1,5 @@
 import { fetchMessages } from './api';
+import { compareBySentAt } from './messageTime';
 import type { ConversationMessage } from './types';
 
 // Mở hội thoại tại đúng một tin (liên kết `?messageId=` từ tìm kiếm, Media của
@@ -59,7 +60,7 @@ export function mergeMessagesChronologically(
         if (!byId.has(message.id)) byId.set(message.id, message);
     });
 
-    return [...byId.values()].sort((a, b) => a.created_at - b.created_at || a.id - b.id);
+    return [...byId.values()].sort(compareBySentAt);
 }
 
 async function fetchRangeUpTo(

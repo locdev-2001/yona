@@ -65,7 +65,7 @@ class MessageFinder
     /** @return Collection<int, Message> */
     private function messagesAfter(int $afterId): Collection
     {
-        return $this->messages()->reorder('created_at', 'asc')->where('id', '>', $afterId)->limit(100)->get();
+        return $this->messages()->reorder('platform_sent_at', 'asc')->orderBy('id')->where('id', '>', $afterId)->limit(100)->get();
     }
 
     /** @return Collection<int, Message> */
@@ -76,7 +76,7 @@ class MessageFinder
         }
 
         return $this->messages()
-            ->reorder('created_at', 'desc')
+            ->reorder('platform_sent_at', 'desc')->orderByDesc('id')
             ->where('id', '<', $this->normalized($beforeId))
             ->limit(20)
             ->get()
@@ -87,7 +87,7 @@ class MessageFinder
     /** @return Collection<int, Message> */
     private function messagesBetween(int $afterId, int $beforeId): Collection
     {
-        $query = $this->messages()->reorder('created_at', 'asc')->where('id', '>=', $afterId);
+        $query = $this->messages()->reorder('platform_sent_at', 'asc')->orderBy('id')->where('id', '>=', $afterId);
 
         if (! $this->oversized($beforeId)) {
             $query->where('id', '<', $this->normalized($beforeId));
@@ -99,7 +99,7 @@ class MessageFinder
     /** @return Collection<int, Message> */
     private function messagesLatest(): Collection
     {
-        return $this->messages()->reorder('created_at', 'desc')->limit(20)->get()->reverse()->values();
+        return $this->messages()->reorder('platform_sent_at', 'desc')->orderByDesc('id')->limit(20)->get()->reverse()->values();
     }
 
     private function normalized(int|string $value): int

@@ -1,4 +1,5 @@
 import { MESSAGE_TYPES } from '../conversation/constants';
+import { messageSentAt } from '../conversation/messageTime';
 import type { Conversation, ConversationMessage } from '../conversation/types';
 
 // Port từ dashboard/helper/conversationHelper.js (chỉ getLastMessage cho B3).
@@ -7,7 +8,7 @@ function getLastNonActivityMessage(
     messageFromApi: ConversationMessage | null | undefined,
 ): ConversationMessage | null | undefined {
     if (messageInStore && messageFromApi) {
-        return messageInStore.created_at >= messageFromApi.created_at ? messageInStore : messageFromApi;
+        return messageSentAt(messageInStore) >= messageSentAt(messageFromApi) ? messageInStore : messageFromApi;
     }
     return messageInStore || messageFromApi;
 }

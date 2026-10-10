@@ -64,6 +64,8 @@ export interface ConversationMessage {
     /** Dòng xem trước máy chủ dựng cho tin có cấu trúc; null với tin thường. */
     preview_text?: string | null;
     created_at: number;
+    /** Giờ gửi trên nền tảng (unix giây); thứ tự và giờ hiển thị theo đây. Payload cũ có thể thiếu. */
+    platform_sent_at?: number;
     private: boolean;
     source_id: string | null;
     /** Đường mở tin tại nền tảng gốc (thư trong Gmail…); vắng khi kênh không khai. */

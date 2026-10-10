@@ -1,4 +1,5 @@
 import { forwardRef, Fragment, useMemo } from 'react';
+import { messageSentAt } from 'dashboard/conversation/messageTime';
 import type { ReactNode, UIEventHandler } from 'react';
 import { fromUnixTime, isToday } from 'date-fns';
 
@@ -53,7 +54,7 @@ const STANDALONE_MESSAGE_TYPES: number[] = [MESSAGE_TYPES.TEMPLATE, MESSAGE_TYPE
 function toGroupableMessage(message: ConversationMessage): GroupableMessage {
     return {
         senderKey: `${message.message_type}:${messageSenderKey(message) ?? ''}`,
-        createdAt: message.created_at,
+        createdAt: messageSentAt(message),
         standalone: message.status === MESSAGE_STATUS.FAILED || STANDALONE_MESSAGE_TYPES.includes(message.message_type),
     };
 }
@@ -118,12 +119,12 @@ const MessageList = forwardRef<HTMLUListElement, MessageListProps>(function Mess
             {messages.map((message, index) => (
                 <Fragment key={message.id}>
                     {firstUnreadId != null && message.id === firstUnreadId && unreadBadge}
-                    {needsTimeDivider(index > 0 ? messages[index - 1].created_at : null, message.created_at) ? (
+                    {needsTimeDivider(index > 0 ? messageSentAt(messages[index - 1]) : null, messageSentAt(message)) ? (
                         <li
                             data-testid="message-time-divider"
                             className="list-none flex justify-center py-2 text-xs font-medium text-n-slate-11"
                         >
-                            <time>{timeDividerLabel(message.created_at)}</time>
+                            <time>{timeDividerLabel(messageSentAt(message))}</time>
                         </li>
                     ) : null}
                     <Message

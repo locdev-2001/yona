@@ -137,8 +137,16 @@ tảng thành giá trị của lõi, không dựng Message/Attachment/Conversati
   (`in_reply_to_external_id` + `in_reply_to_preview`; id nội bộ do
   `InReplyToMessageBuilder` suy khi lưu), `forwarded_from`, `external_echo`, đính kèm
   dựng trước khi lưu qua `InboundAttachmentFactory` (tải, suy loại theo MIME khi kênh
-  chỉ nói "tệp", fallback), sticker qua `StickerMessage`, `created_at` theo giờ nền
-  tảng khi hợp lệ. Mọi thứ trong một transaction.
+  chỉ nói "tệp", fallback), sticker qua `StickerMessage`. Mọi thứ trong một transaction.
+- **Hai mốc giờ trên tin:** `messages.platform_sent_at` là giờ tin được gửi trên nền
+  tảng (driver đặt từ `InboundMessage::$sentAt`; tin tạo trong Yona bằng `created_at`,
+  cột không bao giờ rỗng). **Thứ tự tin trong hội thoại, phân trang (`MessageFinder`),
+  tin đầu/cuối và giờ hiển thị ở bong bóng đều theo cột này** nên khớp với app của
+  kênh kể cả khi webhook đến trễ. `created_at` là giờ Yona nhận: số chưa đọc
+  (`agent_last_seen_at`), `last_activity_at`, mốc chờ, báo cáo theo đó, nên tin trễ
+  vẫn được đếm là mới. Lô lịch sử Zalo (`backfill`) ghi cả hai bằng giờ nền tảng vì đó
+  không phải hoạt động mới. Giao diện đọc qua `messageSentAt()`
+  (`resources/js/dashboard/conversation/messageTime.ts`).
 - **Sự kiện lên tin đã có:** `MessageEventService::apply(Inbox, InboundEvent)` với
   `ReactionEvent` (emoji rỗng = gỡ; `isSelf` = tenant thả từ app → ô agent),
   `RecallEvent` (kèm bia mộ chờ tin tới sau), `EditEvent`, `ReceiptEvent` (theo

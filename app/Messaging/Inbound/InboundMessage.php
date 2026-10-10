@@ -19,12 +19,12 @@ final class InboundMessage
      * @param  list<InboundAttachment>  $attachments
      * @param  array<string, mixed>  $attributes
      * @param  array<string, mixed>  $conversationAttributes  gợi ý cho hội thoại mới (thread…)
-     * @param  bool  $backfill  tin lịch sử kéo về (không phải hoạt động mới): giữ `created_at` theo `sentAt`
      */
     public function __construct(
         public readonly ?string $sourceId,
         public readonly InboundDirection $direction = InboundDirection::Incoming,
         public readonly ?string $text = null,
+        /** Giờ tin được gửi trên nền tảng → `platform_sent_at`; null = giờ Yona nhận. */
         public readonly ?CarbonInterface $sentAt = null,
         public readonly ?StickerContent $sticker = null,
         public readonly array $attachments = [],
@@ -32,7 +32,6 @@ final class InboundMessage
         public readonly ?ForwardOrigin $forwardedFrom = null,
         public readonly array $attributes = [],
         public readonly array $conversationAttributes = [],
-        public readonly bool $backfill = false,
     ) {}
 
     public function isEcho(): bool

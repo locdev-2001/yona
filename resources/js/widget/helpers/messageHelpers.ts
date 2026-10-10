@@ -73,7 +73,7 @@ const splitIntoGroups = (messages: WidgetMessage[]): PositionedMessage[][] => {
 };
 
 export const groupMessagesByDate = (messages: WidgetMessage[]): MessagesOfDay[] => {
-    const messagesGroupedByDate = groupBy(messages, message => formatUnixDate(message.created_at));
+    const messagesGroupedByDate = groupBy(messages, message => formatUnixDate(message.platform_sent_at ?? message.created_at));
     return Object.keys(messagesGroupedByDate).map(date => ({
         date,
         groups: splitIntoGroups(messagesGroupedByDate[date]),

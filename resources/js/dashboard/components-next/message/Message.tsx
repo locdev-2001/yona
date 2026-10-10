@@ -1,4 +1,5 @@
 import type { CSSProperties } from 'react';
+import { messageSentAt } from 'dashboard/conversation/messageTime';
 import { resolveStructured } from 'shared/messaging';
 import StructuredBubble, { ChoiceOfLabel } from './bubbles/Structured';
 
@@ -240,7 +241,7 @@ export default function Message({
     const contextValue: MessageContextValue = {
         id: message.id,
         content: message.content,
-        createdAt: message.created_at,
+        createdAt: messageSentAt(message),
         messageType,
         status,
         isPrivate,

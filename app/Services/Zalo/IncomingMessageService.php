@@ -215,7 +215,12 @@ class IncomingMessageService
         $sentAt = $this->sentAt();
 
         if ($sentAt !== null) {
-            $message->created_at = $sentAt;
+            $message->platform_sent_at = $sentAt;
+
+            // Lô lịch sử còn lấy `created_at` theo giờ đó để không bị đếm vào chưa đọc.
+            if ($this->isBackfill()) {
+                $message->created_at = $sentAt;
+            }
         }
 
         $this->persist($message, $conversation);
