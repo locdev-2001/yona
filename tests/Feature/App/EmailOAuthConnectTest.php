@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Resources\InboxResource;
+use App\Jobs\Inboxes\SubscribeMailboxPushJob;
 use App\Models\Account;
 use App\Models\AccountUser;
 use App\Models\Channel\Email;
@@ -11,6 +12,7 @@ use App\Services\Email\OAuth\EmailOAuthTokenManager;
 use Illuminate\Http\Client\Request as HttpRequest;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Queue;
 
 // #161: kết nối hộp thư email bằng OAuth Google/Microsoft qua giao kèo kết nối kênh.
 
@@ -275,7 +277,8 @@ it('kết nối lại bằng tài khoản khác thì không ghi đè hộp thư 
     expect($inbox->channel->fresh()->provider_config['refresh_token'])->toBe('cu');
 });
 
-it('nối Gmail xong thì đăng ký báo thư mới khi đã cấu hình Pub/Sub', function () {
+it('nối Gmail xong thì xếp job đăng ký báo thư mới, không gọi Gmail trong request', function () {
+    Queue::fake([SubscribeMailboxPushJob::class]);
     config(['services.google_mail.enabled' => true, 'services.google_mail.pubsub_topic' => 'projects/yona-511104/topics/gmail-inbox']);
     Http::fake([
         'oauth2.googleapis.com/*' => Http::response([
@@ -291,7 +294,6 @@ it('nối Gmail xong thì đăng ký báo thư mới khi đã cấu hình Pub/Su
         ->get('/app/email/oauth/google/callback?code=code-1&state=state-123')
         ->assertRedirect();
 
-    Http::assertSent(fn (HttpRequest $request) => $request->url() === 'https://gmail.googleapis.com/gmail/v1/users/me/watch'
-        && $request->hasHeader('Authorization', 'Bearer access-1'));
-    expect(Email::query()->where('email', 'shop@gmail.com')->firstOrFail()->provider_config['push']['cursor'])->toBe('1');
+    Http::assertNotSent(fn (HttpRequest $request) => str_contains($request->url(), 'gmail.googleapis.com'));
+    Queue::assertPushed(SubscribeMailboxPushJob::class, fn (SubscribeMailboxPushJob $job) => $job->channel->email === 'shop@gmail.com');
 });

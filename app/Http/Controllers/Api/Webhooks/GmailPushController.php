@@ -9,18 +9,15 @@ use App\Models\Channel\Email;
 use App\Services\Email\Push\GooglePubSubTokenVerifier;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 /**
  * Pub/Sub đẩy báo "hộp Gmail có thư mới" ({emailAddress, historyId}); chỉ là tín hiệu để
  * quét IMAP ngay. Luôn trả 204: Pub/Sub thử lại khi non-2xx, mà báo sai hay không khớp
- * hộp nào thì thử lại cũng vô ích. Báo dồn dập trong vài giây gộp thành một lượt quét.
+ * hộp nào thì thử lại cũng vô ích. Báo dồn dập gộp lại, kèm một lượt quét cuối.
  */
 class GmailPushController extends Controller
 {
-    private const DEBOUNCE_SECONDS = 5;
-
     public function __invoke(Request $request, GooglePubSubTokenVerifier $verifier): Response
     {
         if (! $verifier->verify((string) $request->bearerToken())) {
@@ -55,8 +52,8 @@ class GmailPushController extends Controller
             ->get();
 
         foreach ($channels as $channel) {
-            if ($channel->inbox !== null && Cache::add('gmail_push_fetch:'.$channel->id, true, self::DEBOUNCE_SECONDS)) {
-                FetchImapEmailsJob::dispatch($channel);
+            if ($channel->inbox !== null) {
+                FetchImapEmailsJob::requestFetch($channel);
             }
         }
     }

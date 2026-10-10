@@ -3,7 +3,6 @@
 namespace App\Services\Email\Push;
 
 use App\Models\Channel\Email;
-use App\Services\Email\MailServerException;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Log;
 
@@ -31,7 +30,7 @@ class MailboxPushSubscriptions
 
         try {
             $subscription = $subscriber->subscribe($channel);
-        } catch (MailboxPushException|MailServerException $exception) {
+        } catch (MailboxPushException $exception) {
             Log::warning("[EMAIL PUSH] Không đăng ký được báo thư mới cho kênh {$channel->id}: {$exception->getMessage()}");
 
             return false;
@@ -58,6 +57,22 @@ class MailboxPushSubscriptions
         }
 
         return $this->subscribe($channel);
+    }
+
+    /** Huỷ đăng ký trước khi hộp thư bị xoá; hỏng thì thôi, đăng ký tự hết hạn sau 7 ngày. */
+    public function stop(Email $channel): void
+    {
+        $subscriber = $this->subscriberFor($channel);
+
+        if ($subscriber === null || blank($channel->provider_config['push'] ?? null)) {
+            return;
+        }
+
+        try {
+            $subscriber->stop($channel);
+        } catch (MailboxPushException $exception) {
+            Log::warning("[EMAIL PUSH] Không huỷ được báo thư mới cho kênh {$channel->id}: {$exception->getMessage()}");
+        }
     }
 
     private function subscriberFor(Email $channel): ?MailboxPushSubscriber

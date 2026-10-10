@@ -17,12 +17,17 @@ use Throwable;
  * Quét hộp thư
  * của một kênh. Khóa 150 giây, dài hơn timeout job 120 giây, để hai worker không quét trùng;
  * thư nào lỗi 3 lần liên tiếp thì bỏ qua trong 6 tiếng.
+ *
+ * Báo "có thư mới" (`requestFetch`) gộp lại: đã có lượt đang chờ hoặc đang quét thì chỉ đặt
+ * cờ quét lại, lượt đó quét xong thấy cờ thì xếp thêm đúng một lượt cuối, không rơi thư nào.
  */
 class FetchImapEmailsJob extends ApplicationJob
 {
     private const LOCK_SECONDS = 150;
 
     private const MAX_FAILURES_PER_EMAIL = 3;
+
+    private const RESCAN_DELAY_SECONDS = 2;
 
     public int $timeout = 120;
 
@@ -33,34 +38,74 @@ class FetchImapEmailsJob extends ApplicationJob
         public readonly int $interval = 1,
     ) {}
 
+    /** Xếp một lượt quét ngay, hoặc hẹn lượt quét lại nếu đã có lượt đang chờ/đang quét. */
+    public static function requestFetch(Email $channel, int $delaySeconds = 0): void
+    {
+        // Cờ đặt trước: lượt đang chạy luôn thấy được nó khi xong (xem handle()).
+        Cache::put(self::rescanKey($channel), true, self::LOCK_SECONDS);
+
+        if (Cache::add(self::pendingKey($channel), true, self::LOCK_SECONDS)) {
+            Cache::forget(self::rescanKey($channel));
+            self::dispatch($channel)->delay($delaySeconds);
+        }
+    }
+
     public function handle(): void
     {
         if (! $this->shouldFetchEmail()) {
             Log::info('[IMAP] Skipping fetch for inbox '.$this->channel->inbox->id
                 .' : imap_enabled: '.var_export($this->channel->imap_enabled, true)
                 .', reauthorization_required: '.var_export($this->channel->reauthorizationRequired(), true));
+            $this->forgetFetchRequests();
 
             return;
         }
 
         if (! $this->channel->syncBackoff()->ready()) {
+            $this->forgetFetchRequests();
+
             return;
         }
 
+        // Cờ đặt trước khi giành khoá: lượt đang giữ khoá nhả khoá xong mới đọc cờ nên không lỡ.
+        Cache::put(self::rescanKey($this->channel), true, self::LOCK_SECONDS);
         $lock = Cache::lock('EMAIL_MESSAGE_MUTEX::'.$this->channel->inbox->id, self::LOCK_SECONDS);
 
-        // Lượt quét trước của hộp thư này chưa xong: bỏ lượt này, không phải lỗi.
+        // Lượt quét trước của hộp thư này chưa xong: lượt đó sẽ quét lại theo cờ, không phải lỗi.
         if (! $lock->get()) {
-            Log::info('[IMAP] Previous fetch still running for inbox '.$this->channel->inbox->id.', skipping');
+            Log::info('[IMAP] Previous fetch still running for inbox '.$this->channel->inbox->id.', rescan queued');
 
             return;
         }
+
+        Cache::forget(self::rescanKey($this->channel));
 
         try {
             $this->processEmailsForChannel();
         } finally {
             $lock->release();
+            Cache::forget(self::pendingKey($this->channel));
+
+            if (Cache::pull(self::rescanKey($this->channel))) {
+                self::requestFetch($this->channel, self::RESCAN_DELAY_SECONDS);
+            }
         }
+    }
+
+    private function forgetFetchRequests(): void
+    {
+        Cache::forget(self::pendingKey($this->channel));
+        Cache::forget(self::rescanKey($this->channel));
+    }
+
+    private static function pendingKey(Email $channel): string
+    {
+        return 'email_fetch_pending:'.$channel->getKey();
+    }
+
+    private static function rescanKey(Email $channel): string
+    {
+        return 'email_fetch_rescan_pending:'.$channel->getKey();
     }
 
     private function shouldFetchEmail(): bool

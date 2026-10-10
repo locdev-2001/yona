@@ -23,6 +23,7 @@ use App\Models\Message;
 use App\Services\Email\EmailProviderPresets;
 use App\Services\Email\MailServerException;
 use App\Services\Email\OAuth\EmailOAuthProviders;
+use App\Services\Email\Push\MailboxPushSubscriptions;
 use App\Services\Email\Verification\EmailAddressVerifier;
 use App\Services\Imap\EmailSyncBackoff;
 use Database\Factories\Channel\EmailFactory;
@@ -111,6 +112,8 @@ class Email extends Model implements AddressesContacts, ChecksContactAddress, De
         static::creating(function (Email $channel) {
             $channel->forward_to_email ??= bin2hex(random_bytes(16)).'@'.$channel->account->inboundEmailDomain();
         });
+
+        static::deleting(fn (Email $channel) => app(MailboxPushSubscriptions::class)->stop($channel));
     }
 
     public function name(): string

@@ -86,10 +86,14 @@ PostgreSQL (`pg_trgm`) · Redis (cache, queue, session) · Laravel Reverb
   mới. UIDVALIDITY đổi thì quét lại INBOX, chống trùng bằng Message-ID.
 - **Báo thư mới (push)**: `MailboxPushSubscriptions` là sổ đăng ký trung tính theo nhà
   cung cấp (`MailboxPushSubscriber`; hiện chỉ `GmailPushSubscriber` gọi `users.watch`),
-  đăng ký khi nối OAuth và gia hạn hằng ngày (`RenewMailboxPushSubscriptionsJob`), hạn
-  lưu ở `provider_config.push`. Webhook `POST /webhooks/gmail/push` kiểm OIDC token của
-  Pub/Sub (`GooglePubSubTokenVerifier`) rồi xếp `FetchImapEmailsJob`; push chỉ là tín
-  hiệu, đọc thư vẫn qua IMAP, quét mỗi phút giữ làm lưới an toàn.
+  đăng ký bằng job khi nối OAuth (`SubscribeMailboxPushJob`), gia hạn hằng ngày
+  (`RenewMailboxPushSubscriptionsJob`), huỷ (`stop`) khi xoá hộp; hạn lưu ở
+  `provider_config.push`; lỗi đường này không tính là lỗi kết nối IMAP. Webhook
+  `POST /webhooks/gmail/push` (giới hạn 120 lần/phút/IP) lọc claims rồi mới kiểm chữ ký
+  OIDC của Pub/Sub (`GooglePubSubTokenVerifier`, tải lại khoá tối đa 1 lần/phút) và gọi
+  `FetchImapEmailsJob::requestFetch`: báo dồn dập gộp một lượt, báo tới lúc đang quét thì
+  quét xong xếp thêm một lượt cuối. Push chỉ là tín hiệu, đọc thư vẫn qua IMAP, quét mỗi
+  phút giữ làm lưới an toàn.
 - **Thư trả về và lỗi gửi Email**: thư báo trạng thái gửi (DSN: người gửi phong bì
   rỗng hoặc MAILER-DAEMON/postmaster, có phần `message/delivery-status`) khi đồng bộ IMAP
   không mở hội thoại. Chỉ người nhận `Action: failed` (hoặc `Status: 5.x.x`) mới là thư

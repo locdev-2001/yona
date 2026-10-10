@@ -60,12 +60,46 @@ function pushGmail($test, ?string $token, string $emailAddress = 'Shop@Gmail.com
         ->postJson('/webhooks/gmail/push', $body);
 }
 
-it('token hợp lệ thì quét ngay hộp Gmail khớp địa chỉ, báo dồn dập gộp một lượt', function () {
+it('token hợp lệ thì quét ngay hộp Gmail khớp địa chỉ, báo dồn dập gộp một lượt và hẹn quét lại', function () {
     pushGmail($this, pubSubToken($this))->assertNoContent();
     pushGmail($this, pubSubToken($this))->assertNoContent();
 
     Queue::assertPushed(FetchImapEmailsJob::class, 1);
     Queue::assertPushed(FetchImapEmailsJob::class, fn (FetchImapEmailsJob $job) => $job->channel->is($this->channel));
+    expect(Cache::get('email_fetch_rescan_pending:'.$this->channel->id))->toBeTrue();
+});
+
+it('claims sai thì loại ngay, không tải khoá công khai của Google', function (array $claims) {
+    pushGmail($this, pubSubToken($this, $claims))->assertNoContent();
+
+    Http::assertNothingSent();
+})->with([
+    'sai audience' => [['aud' => 'https://ke-khac.vn/push']],
+    'sai service account' => [['email' => 'ai-do@evil.iam.gserviceaccount.com']],
+    'sai nơi cấp' => [['iss' => 'https://evil.example.com']],
+]);
+
+it('kid lạ dồn dập chỉ tải lại khoá công khai một lần mỗi phút', function () {
+    pushGmail($this, pubSubToken($this, kid: 'kid-la-1'));
+    pushGmail($this, pubSubToken($this, kid: 'kid-la-2'));
+    $this->travel(30)->seconds();
+    pushGmail($this, pubSubToken($this, kid: 'kid-la-3'));
+
+    Http::assertSentCount(1);
+
+    $this->travel(31)->seconds();
+    pushGmail($this, pubSubToken($this, kid: 'kid-la-4'));
+
+    Http::assertSentCount(2);
+    Queue::assertNothingPushed();
+});
+
+it('giới hạn số lần gọi webhook theo IP', function () {
+    foreach (range(1, 120) as $attempt) {
+        pushGmail($this, 'khong.phai.jwt')->assertNoContent();
+    }
+
+    pushGmail($this, 'khong.phai.jwt')->assertTooManyRequests();
 });
 
 it('token sai thì trả 204 nhưng không quét', function (Closure $token) {

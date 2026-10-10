@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\App;
 
 use App\Http\Controllers\Controller;
+use App\Jobs\Inboxes\SubscribeMailboxPushJob;
 use App\Models\Account;
 use App\Models\AccountUser;
 use App\Models\Channel\Email;
@@ -13,7 +14,6 @@ use App\Services\Email\OAuth\EmailOAuthProvider;
 use App\Services\Email\OAuth\EmailOAuthProviders;
 use App\Services\Email\OAuth\EmailOAuthTokenManager;
 use App\Services\Email\OAuth\EmailOAuthTokens;
-use App\Services\Email\Push\MailboxPushSubscriptions;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -101,7 +101,7 @@ class EmailOAuthController extends Controller
 
         $inbox = DB::transaction(fn () => $this->connectInbox($account, $oauthProvider, $context['inbox_id'], $tokens));
         $isNew = $inbox->wasRecentlyCreated;
-        app(MailboxPushSubscriptions::class)->subscribe($inbox->channel);
+        SubscribeMailboxPushJob::dispatch($inbox->channel);
 
         if ($isNew) {
             app(ChannelSetupService::class)->register($inbox);

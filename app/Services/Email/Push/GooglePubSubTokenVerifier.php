@@ -9,7 +9,8 @@ use Illuminate\Support\Facades\Http;
 /**
  * Xác thực OIDC token (JWT RS256) mà Pub/Sub kèm theo mỗi lần đẩy: chữ ký theo khoá công
  * khai của Google, đúng nơi cấp, đúng audience, đúng service account đã cấu hình, còn hạn.
- * Khoá công khai cache theo giờ; gặp `kid` lạ thì tải lại một lần (Google xoay khoá).
+ * Claims được lọc trước khi đụng tới khoá: token rác không làm Yona gọi ra Google. Khoá công
+ * khai cache theo giờ; gặp `kid` lạ thì tải lại, nhiều nhất một lần mỗi phút (Google xoay khoá).
  */
 class GooglePubSubTokenVerifier
 {
@@ -18,6 +19,10 @@ class GooglePubSubTokenVerifier
     private const CERTS_CACHE_KEY = 'google_oidc_certs';
 
     private const CERTS_CACHE_SECONDS = 3600;
+
+    private const CERTS_REFRESH_GATE_KEY = 'google_oidc_certs_refresh_gate';
+
+    private const CERTS_REFRESH_GATE_SECONDS = 60;
 
     private const ISSUERS = ['accounts.google.com', 'https://accounts.google.com'];
 
@@ -47,14 +52,15 @@ class GooglePubSubTokenVerifier
             return false;
         }
 
-        $certificate = $this->certificate((string) ($header['kid'] ?? ''));
-
-        if ($certificate === null
-            || openssl_verify($encodedHeader.'.'.$encodedClaims, $signature, $certificate, OPENSSL_ALGO_SHA256) !== 1) {
+        // Claims chưa xác minh chỉ dùng để loại sớm; chữ ký vẫn kiểm sau đó.
+        if (! $this->claimsValid($claims, (string) $audience, (string) $serviceAccount)) {
             return false;
         }
 
-        return $this->claimsValid($claims, (string) $audience, (string) $serviceAccount);
+        $certificate = $this->certificate((string) ($header['kid'] ?? ''));
+
+        return $certificate !== null
+            && openssl_verify($encodedHeader.'.'.$encodedClaims, $signature, $certificate, OPENSSL_ALGO_SHA256) === 1;
     }
 
     /** @param  array<string, mixed>  $claims */
@@ -78,11 +84,12 @@ class GooglePubSubTokenVerifier
 
         $certificates = Cache::get(self::CERTS_CACHE_KEY);
 
-        if (! is_array($certificates) || ! isset($certificates[$keyId])) {
+        if ((! is_array($certificates) || ! isset($certificates[$keyId]))
+            && Cache::add(self::CERTS_REFRESH_GATE_KEY, true, self::CERTS_REFRESH_GATE_SECONDS)) {
             $certificates = $this->fetchCertificates();
         }
 
-        $certificate = $certificates[$keyId] ?? null;
+        $certificate = is_array($certificates) ? ($certificates[$keyId] ?? null) : null;
 
         return is_string($certificate) ? $certificate : null;
     }

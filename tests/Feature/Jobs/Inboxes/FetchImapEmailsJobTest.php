@@ -105,6 +105,51 @@ it('remembers deleted message ids for the inbox', function () {
         ->and($tracker->isDeleted(uniqid('other-', true).'@example.com'))->toBeFalse();
 });
 
+function fetcherRunning(Closure $duringScan): void
+{
+    $fetcher = Mockery::mock(FetchEmailService::class);
+    $fetcher->shouldReceive('perform')->andReturnUsing(function () use ($duringScan) {
+        $duringScan();
+
+        return [];
+    });
+    $fetcher->shouldReceive('commitSyncProgress');
+    app()->bind(FetchEmailService::class, fn () => $fetcher);
+}
+
+it('báo quét dồn dập chỉ xếp một lượt; báo tới giữa lúc quét thì quét xong xếp đúng một lượt cuối', function () {
+    Queue::fake();
+    $channel = emailInboxWith($this->account, ['imap_enabled' => true])->channel;
+
+    FetchImapEmailsJob::requestFetch($channel);
+    FetchImapEmailsJob::requestFetch($channel);
+
+    Queue::assertPushed(FetchImapEmailsJob::class, 1);
+
+    fetcherRunning(function () use ($channel) {
+        FetchImapEmailsJob::requestFetch($channel);
+        FetchImapEmailsJob::requestFetch($channel);
+    });
+    (new FetchImapEmailsJob($channel))->handle();
+
+    Queue::assertPushed(FetchImapEmailsJob::class, 2);
+
+    fetcherRunning(fn () => null);
+    (new FetchImapEmailsJob($channel))->handle();
+
+    Queue::assertPushed(FetchImapEmailsJob::class, 2);
+});
+
+it('lượt bị khoá chặn không rơi: lượt đang giữ khoá quét xong thì xếp một lượt cuối', function () {
+    Queue::fake();
+    $channel = emailInboxWith($this->account, ['imap_enabled' => true])->channel;
+
+    fetcherRunning(fn () => (new FetchImapEmailsJob($channel))->handle());
+    (new FetchImapEmailsJob($channel))->handle();
+
+    Queue::assertPushed(FetchImapEmailsJob::class, 1);
+});
+
 it('skips quietly while the previous fetch of the same inbox still holds the lock', function () {
     $inbox = emailInboxWith($this->account, ['imap_enabled' => true]);
     Cache::lock('EMAIL_MESSAGE_MUTEX::'.$inbox->id, 150)->get();

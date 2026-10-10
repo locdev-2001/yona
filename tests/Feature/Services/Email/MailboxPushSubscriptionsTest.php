@@ -1,6 +1,7 @@
 <?php
 
 use App\Jobs\Inboxes\RenewMailboxPushSubscriptionsJob;
+use App\Jobs\Inboxes\SubscribeMailboxPushJob;
 use App\Models\Account;
 use App\Models\Channel\Email;
 use App\Models\Inbox;
@@ -95,4 +96,51 @@ it('job hằng ngày chỉ gia hạn hộp còn dưới 2 ngày hoặc chưa đ�
     expect(now()->diffInDays($expiring->fresh()->provider_config['push']['expires_at']))->toBeGreaterThan(6.0)
         ->and($never->fresh()->provider_config)->toHaveKey('push')
         ->and(now()->diffInDays($fresh->fresh()->provider_config['push']['expires_at']))->toBeLessThan(6.0);
+});
+
+it('job đăng ký báo thư mới gọi Gmail watch', function () {
+    fakeGmailWatch();
+    $channel = gmailChannel($this->account);
+
+    app()->call([new SubscribeMailboxPushJob($channel), 'handle']);
+
+    expect($channel->fresh()->provider_config['push']['cursor'])->toBe('987654');
+});
+
+it('làm mới token hỏng ở đường báo thư mới không tính là lỗi kết nối của hộp thư', function () {
+    Http::fake([
+        'oauth2.googleapis.com/*' => Http::response(['error' => 'temporarily_unavailable'], 503),
+        'gmail.googleapis.com/*' => Http::response([], 500),
+    ]);
+    $channel = gmailChannel($this->account, ['provider_config' => ['access_token' => 'cu', 'refresh_token' => 'refresh-1', 'expires_at' => now()->subHour()->toIso8601String()]]);
+
+    expect(app(MailboxPushSubscriptions::class)->subscribe($channel))->toBeFalse()
+        ->and($channel->fresh()->connectionError())->toBeNull()
+        ->and($channel->fresh()->reauthorizationRequired())->toBeFalse()
+        ->and($channel->fresh()->syncBackoff()->ready())->toBeTrue();
+});
+
+it('xoá hộp Gmail đã đăng ký thì huỷ báo thư mới', function () {
+    Http::fake(['gmail.googleapis.com/gmail/v1/users/me/stop' => Http::response(null, 204)]);
+    $channel = gmailChannel($this->account);
+    $channel->forceFill(['provider_config' => [...$channel->provider_config, 'push' => ['expires_at' => now()->addDays(5)->toIso8601String()]]])->save();
+
+    $channel->inbox->delete();
+
+    Http::assertSent(fn (HttpRequest $request) => $request->url() === 'https://gmail.googleapis.com/gmail/v1/users/me/stop'
+        && $request->hasHeader('Authorization', 'Bearer access-1'));
+    expect(Email::query()->whereKey($channel->id)->exists())->toBeFalse();
+});
+
+it('huỷ báo thư mới hỏng hoặc hộp chưa đăng ký thì vẫn xoá được hộp', function () {
+    Http::fake(['gmail.googleapis.com/*' => Http::response(['error' => ['code' => 500]], 500)]);
+    $registered = gmailChannel($this->account, ['email' => 'da-dang-ky@gmail.com']);
+    $registered->forceFill(['provider_config' => [...$registered->provider_config, 'push' => ['expires_at' => now()->addDays(5)->toIso8601String()]]])->save();
+    $unregistered = gmailChannel($this->account, ['email' => 'chua-dang-ky@gmail.com']);
+
+    $registered->inbox->delete();
+    $unregistered->inbox->delete();
+
+    Http::assertSentCount(1);
+    expect(Email::query()->whereKey([$registered->id, $unregistered->id])->exists())->toBeFalse();
 });

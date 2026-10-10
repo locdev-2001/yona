@@ -15,8 +15,13 @@ class EmailOAuthTokenManager
 {
     private const REFRESH_MARGIN_SECONDS = 300;
 
-    /** @throws MailServerException */
-    public function accessToken(Email $channel): string
+    /**
+     * `$recordFailure` = false cho đường phụ (báo thư mới): làm mới hỏng ở đó không được tính
+     * là lỗi kết nối của hộp thư, lượt quét IMAP tự phát hiện nếu lỗi là thật.
+     *
+     * @throws MailServerException
+     */
+    public function accessToken(Email $channel, bool $recordFailure = true): string
     {
         $provider = EmailOAuthProviders::forChannel($channel);
         $config = $channel->provider_config ?? [];
@@ -38,7 +43,9 @@ class EmailOAuthTokenManager
         try {
             $tokens = $provider->refresh($refreshToken);
         } catch (MailServerException $exception) {
-            $channel->recordConnectionFailure($exception);
+            if ($recordFailure) {
+                $channel->recordConnectionFailure($exception);
+            }
 
             throw $exception;
         }

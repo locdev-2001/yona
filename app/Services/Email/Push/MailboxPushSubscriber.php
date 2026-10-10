@@ -14,4 +14,7 @@ interface MailboxPushSubscriber
 
     /** @throws MailboxPushException */
     public function subscribe(Email $channel): MailboxPushSubscription;
+
+    /** @throws MailboxPushException */
+    public function stop(Email $channel): void;
 }

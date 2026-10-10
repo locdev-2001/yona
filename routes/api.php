@@ -150,8 +150,9 @@ Route::post('/webhooks/whatsapp/{phoneNumber}', [WhatsappWebhooksController::cla
 Route::get('/webhooks/instagram', [InstagramWebhooksController::class, 'verify']);
 Route::post('/webhooks/instagram', [InstagramWebhooksController::class, 'events']);
 Route::post('/webhooks/tiktok', [TiktokWebhooksController::class, 'events']);
-// Gmail push qua Pub/Sub: xác thực bằng OIDC token của service account trong header.
-Route::post('/webhooks/gmail/push', GmailPushController::class);
+// Gmail push qua Pub/Sub: xác thực bằng OIDC token của service account trong header;
+// giới hạn theo IP để token rác không biến thành tải dồn lên máy chủ.
+Route::post('/webhooks/gmail/push', GmailPushController::class)->middleware('throttle:120,1');
 Route::post('/twilio/callback', [TwilioWebhooksController::class, 'processPayload']);
 Route::post('/twilio/delivery_status', [TwilioWebhooksController::class, 'deliveryStatus'])->name('twilio.delivery_status');
 // F2-F5 webhooks — END
