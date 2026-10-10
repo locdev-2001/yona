@@ -15,6 +15,8 @@ import LoadingState from 'dashboard/components/widgets/LoadingState';
 import SettingsSubPageHeader from '../../SettingsSubPageHeader';
 import type { Inbox } from '../types';
 
+const FACEBOOK_LOGO_URL = '/brand-assets/platforms/facebook.webp';
+
 // Port từ settings/inbox/channels/Facebook.vue — đăng nhập Meta bằng SDK rồi
 // chọn trang để tạo inbox. Banner giới hạn tạo inbox Meta chỉ có trên bản cloud
 // Cloud nên không port.
@@ -103,17 +105,22 @@ export default function FacebookChannelForm() {
 
     if (!hasLoginStarted) {
         return (
-            <div className="w-full h-full col-span-6 p-6 overflow-auto">
-                <div className="flex flex-col items-center justify-center h-full text-center">
+            <div className="h-full p-6 w-full max-w-full flex-shrink-0 flex-grow-0">
+                <div className="flex flex-col items-center justify-center w-full px-8 py-10 text-center rounded-2xl panel-surface">
                     <div className="flex flex-col items-center w-full max-w-2xl">
-                        <button type="button" onClick={() => void startLogin()}>
-                            <img
-                                className="w-auto h-10 rounded-md"
-                                src="/assets/images/dashboard/channels/facebook_login.png"
-                                alt="Facebook-logo"
-                            />
-                        </button>
-                        <p className="py-6">{replaceInstallationName(t('INBOX_MGMT.ADD.FB.HELP'))}</p>
+                        <h6 className="text-2xl font-medium">{t('INBOX_MGMT.ADD.FB.CONNECT_YOUR_FACEBOOK_PAGE')}</h6>
+                        <p className="py-6 text-sm text-balance text-n-slate-11">
+                            {replaceInstallationName(t('INBOX_MGMT.ADD.FB.HELP'))}
+                        </p>
+                        <Button
+                            className="!rounded-full !px-6"
+                            slate
+                            outline
+                            lg
+                            icon={<img src={FACEBOOK_LOGO_URL} alt="" className="size-5" />}
+                            label={t('INBOX_MGMT.ADD.FB.CONTINUE_WITH_FACEBOOK')}
+                            onClick={() => void startLogin()}
+                        />
                     </div>
                 </div>
             </div>

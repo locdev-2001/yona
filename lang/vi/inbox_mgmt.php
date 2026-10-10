@@ -45,7 +45,9 @@ return [
             'PLACEHOLDER' => 'Ví dụ: Shop Hoa Mai',
         ],
         'FB' => [
-            'HELP' => 'Tái bút: Bằng cách đăng nhập, chúng tôi chỉ có quyền truy cập vào các tin nhắn trên Trang của bạn. {installationName} không bao giờ có thể truy cập tin nhắn riêng tư của bạn.',
+            'CONNECT_YOUR_FACEBOOK_PAGE' => 'Kết nối Fanpage Facebook',
+            'CONTINUE_WITH_FACEBOOK' => 'Tiếp tục với Facebook',
+            'HELP' => '{installationName} chỉ truy cập tin nhắn của Trang bạn chọn, không bao giờ đọc tin nhắn cá nhân của bạn.',
             'CHOOSE_PAGE' => 'Chọn trang',
             'CHOOSE_PLACEHOLDER' => 'Chọn một trang từ danh sách',
             'INBOX_NAME' => 'Tên hộp thư',

@@ -6570,7 +6570,9 @@ const messages: Record<string, unknown> = {
                 "PLACEHOLDER": "Enter your website name (eg: Acme Inc)"
             },
             "FB": {
-                "HELP": "PS: By signing in, we only get access to your Page's messages. Your private messages can never be accessed by {installationName}.",
+                "CONNECT_YOUR_FACEBOOK_PAGE": "Connect your Facebook Page",
+                "CONTINUE_WITH_FACEBOOK": "Continue with Facebook",
+                "HELP": "{installationName} only accesses messages of the Pages you choose and never reads your personal messages.",
                 "CHOOSE_PAGE": "Choose Page",
                 "CHOOSE_PLACEHOLDER": "Select a page from the list",
                 "INBOX_NAME": "Inbox Name",
