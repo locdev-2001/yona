@@ -42,28 +42,25 @@ import Sidebar from './Sidebar';
 
 function topRowControls(container: HTMLElement) {
     const bell = container.querySelector<HTMLElement>('[data-test-id="notification-bell"]');
-    const compose = container.querySelector('.i-lucide-pen-line')?.closest('button') ?? null;
     const search = container.querySelector<HTMLElement>('a[href$="/search"]');
 
-    return { bell, compose, search };
+    return { bell, search };
 }
 
 // jsdom không dàn trang, nên khoá hợp đồng co giãn bằng class: chỉ ô tìm kiếm được
-// co, hai nút hành động giữ cỡ cố định như nhau.
-describe('hàng đầu sidebar: tìm kiếm, chuông, soạn', () => {
+// co, chuông giữ cỡ cố định. Soạn hội thoại mới nằm cạnh ô tìm của danh sách hội thoại.
+describe('hàng đầu sidebar: tìm kiếm, chuông', () => {
     beforeEach(() => {
         pageProps.auth.user.ui_settings = {};
     });
 
-    it('sidebar mở rộng: chuông và nút soạn không co, cùng cỡ 32×28; ô tìm kiếm co thay', () => {
+    it('sidebar mở rộng: chuông không co, cỡ 32×28; ô tìm kiếm co thay; không còn nút soạn', () => {
         const { container } = render(<Sidebar onCloseMobileSidebar={() => undefined} />);
-        const { bell, compose, search } = topRowControls(container);
+        const { bell, search } = topRowControls(container);
 
         expect(bell?.className).toContain('flex-shrink-0');
         expect(bell?.className).toContain('h-7 w-8');
-        expect(compose?.className).toContain('flex-shrink-0');
-        expect(compose?.className).toContain('!h-7');
-        expect(compose?.className).toContain('w-8');
+        expect(container.querySelector('.i-lucide-pen-line')).toBeNull();
         expect(search?.className).toContain('min-w-0');
         expect(search?.className).not.toContain('flex-shrink-0');
     });
@@ -77,16 +74,14 @@ describe('hàng đầu sidebar: tìm kiếm, chuông, soạn', () => {
         expect(search?.parentElement?.className).toContain('min-w-0');
     });
 
-    it('sidebar thu gọn: chuông và nút soạn cùng cỡ 32×32, không co', () => {
+    it('sidebar thu gọn: chuông cỡ 32×32, không co', () => {
         pageProps.auth.user.ui_settings = { sidebar_width: 56 };
 
         const { container } = render(<Sidebar onCloseMobileSidebar={() => undefined} />);
-        const { bell, compose } = topRowControls(container);
+        const { bell } = topRowControls(container);
 
         expect(bell?.className).toContain('flex-shrink-0');
         expect(bell?.className).toContain('size-8');
-        expect(compose?.className).toContain('flex-shrink-0');
-        expect(compose?.className).toContain('!size-8');
     });
 });
 

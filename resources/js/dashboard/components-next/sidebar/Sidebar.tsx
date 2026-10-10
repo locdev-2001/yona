@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, usePage } from '@inertiajs/react';
 
 import { t } from '../../../i18n';
-import Button from 'dashboard/components-next/button/Button';
 import Logo from 'dashboard/components-next/icon/Logo';
 import SidebarGroup from './SidebarGroup';
 import SidebarProfileMenu from './SidebarProfileMenu';
@@ -20,8 +19,8 @@ import { accountScopedUrl } from 'dashboard/helper/URLHelper';
 import type { DashboardPageProps } from '../../types';
 
 // Port từ components-next/sidebar/Sidebar.vue
-// (ComposeConversation vào B3; ChangelogCard cloud-only bỏ; sort menu +
-// keyboard shortcuts vào sau; SidebarSortMenu chưa port)
+// (soạn hội thoại mới nằm cạnh ô tìm ở danh sách hội thoại; ChangelogCard
+// cloud-only bỏ; sort menu + keyboard shortcuts vào sau; SidebarSortMenu chưa port)
 export default function Sidebar({
     isMobileSidebarOpen = false,
     onCloseMobileSidebar,
@@ -233,17 +232,6 @@ export default function Sidebar({
                             </Link>
                         )}
                         <NotificationBell isCollapsed={isEffectivelyCollapsed} onNavigate={onCloseMobileSidebar} />
-                        <Button
-                            icon="i-lucide-pen-line"
-                            color="slate"
-                            size="sm"
-                            disabled
-                            className={`flex-shrink-0 ${
-                                isEffectivelyCollapsed
-                                    ? '!size-8 !text-n-slate-11'
-                                    : '!h-7 !text-n-slate-11'
-                            }`}
-                        />
                     </div>
                 </section>
                 <nav
