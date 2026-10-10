@@ -15,7 +15,7 @@ class FacebookGraphClient
     public function userProfile(string $userId): array
     {
         $response = Http::get($this->baseUri()."/{$userId}", [
-            'fields' => 'first_name,last_name,profile_pic',
+            'fields' => 'name,first_name,last_name,profile_pic',
             'access_token' => $this->channel->page_access_token,
         ]);
 

@@ -87,9 +87,22 @@ class MessageBuilder extends BaseMessageBuilder
         $profile = (new FacebookGraphClient($this->inbox->channel))->userProfile($this->senderId);
 
         return [
-            'name' => trim(($profile['first_name'] ?? 'John').' '.($profile['last_name'] ?? 'Doe')),
+            'name' => $this->displayName($profile),
             'account_id' => $this->inbox->account_id,
             'avatar_url' => $profile['profile_pic'] ?? null,
         ];
+    }
+
+    /**
+     * `name` là tên hiển thị theo đúng thứ tự chủ tài khoản đặt ("Nguyễn Phước Lộc");
+     * ghép first/last kiểu Tây sẽ đảo họ tên và rơi mất tên đệm.
+     *
+     * @param  array<string, mixed>  $profile
+     */
+    private function displayName(array $profile): string
+    {
+        $name = trim((string) ($profile['name'] ?? ''));
+
+        return $name !== '' ? $name : trim(($profile['first_name'] ?? 'John').' '.($profile['last_name'] ?? 'Doe'));
     }
 }

@@ -89,6 +89,8 @@
         "outbound_quick_reply",
         "outbound_buttons",
         "outbound_card",
+        "event_delivered",
+        "event_seen",
         "profile_name",
         "profile_avatar",
         "identity_stable_id",

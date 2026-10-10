@@ -4,6 +4,7 @@ namespace App\Services\Zalo;
 
 use App\Models\Inbox;
 use App\Models\Message;
+use App\Services\Messaging\MessageReceiptService;
 use Illuminate\Support\Facades\Cache;
 
 /**
@@ -18,9 +19,6 @@ use Illuminate\Support\Facades\Cache;
  */
 class MessageStateService
 {
-    /** Chỉ NÂNG trạng thái; biên nhận đến trễ/lặp không được kéo tick lùi. */
-    private const UPGRADABLE_STATUSES = [Message::STATUSES['sent'], Message::STATUSES['delivered']];
-
     /**
      * Khách gửi rồi thu hồi ngay: sự kiện `undo` có thể tới TRƯỚC tin nó nói đến
      * (hai đường HTTP khác nhau, hàng đợi khác nhau). Nhớ lại source_id đã bị thu
@@ -105,29 +103,14 @@ class MessageStateService
         return $applied;
     }
 
-    /**
-     * Biên nhận `seen`/`delivered` chỉ áp cho tin ĐI (tin đến không có tick), và
-     * mất một biên nhận không mất nghiệp vụ nên chỉ cập nhật những tin tìm được.
-     *
-     * @param  list<string>  $sourceIds
-     */
+    /** @param list<string> $sourceIds */
     public function applyReceipts(Inbox $inbox, array $sourceIds, string $kind): int
     {
-        $status = $kind === 'seen' ? Message::STATUSES['read'] : Message::STATUSES['delivered'];
-
-        $messages = Message::query()
-            ->where('inbox_id', $inbox->id)
-            ->where('message_type', Message::TYPE_OUTGOING)
-            ->whereIn('source_id', array_filter($sourceIds))
-            ->whereIn('status', self::UPGRADABLE_STATUSES)
-            ->where('status', '<', $status)
-            ->get();
-
-        foreach ($messages as $message) {
-            $message->update(['status' => $status]);
-        }
-
-        return $messages->count();
+        return app(MessageReceiptService::class)->applyToSourceIds(
+            $inbox,
+            $sourceIds,
+            $kind === 'seen' ? MessageReceiptService::READ : MessageReceiptService::DELIVERED,
+        );
     }
 
     /**

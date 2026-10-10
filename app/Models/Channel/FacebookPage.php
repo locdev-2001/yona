@@ -77,7 +77,6 @@ class FacebookPage extends Model implements DeclaresCapabilities, DeclaresConnec
             ->available(filled(config('services.facebook.app_id')) && filled(config('services.facebook.app_secret')));
     }
 
-    /** Messenger: biên nhận delivered/seen của Meta chưa được xử lý (nợ có tên). */
     public function capabilities(): CapabilitySet
     {
         return CapabilitySet::of(
@@ -97,6 +96,8 @@ class FacebookPage extends Model implements DeclaresCapabilities, DeclaresConnec
             Capability::OutboundQuickReply,
             Capability::OutboundButtons,
             Capability::OutboundCard,
+            Capability::EventDelivered,
+            Capability::EventSeen,
             Capability::ProfileName,
             Capability::ProfileAvatar,
             Capability::IdentityStableId,

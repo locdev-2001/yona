@@ -1,8 +1,10 @@
 <?php
 
+use App\Channels\Capability;
 use App\Models\Attachment;
 use App\Models\Inbox;
 use App\Models\Message;
+use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Testing\TestResponse;
@@ -54,6 +56,17 @@ it('tạo liên hệ, hội thoại và tin đến từ Messenger', function () 
         ->and($message->message_type)->toBe(Message::TYPE_INCOMING)
         ->and($message->conversation->contact->name)->toBe('Nguyễn An')
         ->and($message->conversation->contactInbox->source_id)->toBe('sender-psid');
+});
+
+it('đặt tên liên hệ theo tên hiển thị đầy đủ của Facebook, không ghép first/last kiểu Tây', function () {
+    Http::fake([
+        'graph.facebook.com/*' => Http::response(['name' => 'Nguyễn Phước Lộc', 'first_name' => 'Lộc', 'last_name' => 'Nguyễn']),
+    ]);
+
+    facebookPost(ChannelFixture::load('facebook_messaging'))->assertOk();
+
+    expect(Message::query()->latest('id')->first()->conversation->contact->name)->toBe('Nguyễn Phước Lộc');
+    Http::assertSent(fn ($request) => in_array('name', explode(',', (string) $request['fields']), true));
 });
 
 it('bỏ echo của chính tin hệ thống vừa gửi', function () {
@@ -166,3 +179,57 @@ it('đính kèm kiểu file lấy loại theo nội dung: mp4 thành video, pdf 
     'video mp4' => [ChannelFixture::mp4Bytes(), Attachment::FILE_TYPE_VIDEO],
     'tài liệu pdf' => [ChannelFixture::pdfBytes(), Attachment::FILE_TYPE_FILE],
 ]);
+
+/** @param array<string, mixed> $event */
+function facebookReceiptPost(array $event): TestResponse
+{
+    return facebookPost(['object' => 'page', 'entry' => [['id' => 'page-id', 'time' => 1, 'messaging' => [[
+        'sender' => ['id' => 'sender-psid'],
+        'recipient' => ['id' => 'page-id'],
+        ...$event,
+    ]]]]]);
+}
+
+function facebookOutgoingSentAt(string $mid, CarbonInterface $sentAt): Message
+{
+    $conversation = Message::query()->where('message_type', Message::TYPE_INCOMING)->latest('id')->first()->conversation;
+    $outgoing = $conversation->messages()->create([
+        'account_id' => $conversation->account_id,
+        'inbox_id' => $conversation->inbox_id,
+        'message_type' => Message::TYPE_OUTGOING,
+        'content' => 'Chào bạn',
+    ]);
+    $outgoing->forceFill(['source_id' => $mid, 'status' => Message::STATUSES['sent'], 'created_at' => $sentAt])->save();
+
+    return $outgoing;
+}
+
+it('biên nhận đã giao của Meta nâng tin đi từ đã gửi lên đã giao', function () {
+    Http::fake(['graph.facebook.com/*' => Http::response(['message_id' => 'mid.out'])]);
+    facebookPost(ChannelFixture::load('facebook_messaging'));
+    $outgoing = facebookOutgoingSentAt('mid.out.1', now()->subMinute());
+
+    facebookReceiptPost(['delivery' => ['mids' => ['mid.out.1'], 'watermark' => now()->getTimestampMs()]])->assertOk();
+
+    expect($outgoing->fresh()->status)->toBe(Message::STATUSES['delivered']);
+});
+
+it('biên nhận đã xem theo watermark chỉ đánh dấu tin đi gửi trước mốc đó', function () {
+    Http::fake(['graph.facebook.com/*' => Http::response(['message_id' => 'mid.out'])]);
+    facebookPost(ChannelFixture::load('facebook_messaging'));
+    $watermark = now()->subMinutes(5);
+    $before = facebookOutgoingSentAt('mid.out.before', $watermark->copy()->subMinute());
+    $after = facebookOutgoingSentAt('mid.out.after', $watermark->copy()->addMinute());
+
+    facebookReceiptPost(['read' => ['watermark' => $watermark->getTimestampMs()]])->assertOk();
+
+    expect($before->fresh()->status)->toBe(Message::STATUSES['read'])
+        ->and($after->fresh()->status)->toBe(Message::STATUSES['sent']);
+});
+
+it('kênh Messenger khai biên nhận đã giao và đã xem để giao diện hiện tick thay cho đồng hồ', function () {
+    $capabilities = $this->inbox->channel->capabilities();
+
+    expect($capabilities->has(Capability::EventDelivered))->toBeTrue()
+        ->and($capabilities->has(Capability::EventSeen))->toBeTrue();
+});
