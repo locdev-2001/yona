@@ -6,6 +6,9 @@ use App\Actions\ContactMergeAction;
 use App\Builders\ContactInboxBuilder;
 use App\Builders\ContactInboxWithContactBuilder;
 use App\Jobs\Avatar\AvatarFromUrlJob;
+use App\Messaging\Inbound\AttachmentKind;
+use App\Messaging\Inbound\InboundAttachment;
+use App\Messaging\Inbound\InboundAttachmentFactory;
 use App\Messaging\Stickers\StickerContent;
 use App\Messaging\Stickers\StickerMessage;
 use App\Models\Attachment;
@@ -16,7 +19,6 @@ use App\Models\Conversation;
 use App\Models\Inbox;
 use App\Models\Message;
 use App\Services\Channels\IncomingConversationResolver;
-use App\Services\Channels\RemoteAttachmentDownloader;
 use App\Services\Conversations\GroupMembersService;
 use App\Services\Messages\OutboundMentionsBuilder;
 use App\Services\Zalo\Exception\EchoAwaitingSourceIdException;
@@ -40,11 +42,11 @@ class IncomingMessageService
      *
      * @var array<string, int>
      */
-    private const ATTACHMENT_TYPES = [
-        'image' => Attachment::FILE_TYPE_IMAGE,
-        'gif' => Attachment::FILE_TYPE_IMAGE,
-        'video' => Attachment::FILE_TYPE_VIDEO,
-        'audio' => Attachment::FILE_TYPE_AUDIO,
+    private const ATTACHMENT_KINDS = [
+        'image' => AttachmentKind::Image,
+        'gif' => AttachmentKind::Gif,
+        'video' => AttachmentKind::Video,
+        'audio' => AttachmentKind::Audio,
     ];
 
     private const STICKER_KIND = 'sticker';
@@ -804,63 +806,48 @@ class IncomingMessageService
     /** @return list<Attachment> */
     private function buildAttachments(int $accountId): array
     {
-        // Sticker nền tảng và sticker tự tạo có WebP: ảnh do StickerMessage dựng từ
-        // URL CDN, không tải; chỉ sticker tự tạo chỉ có JPG đi tiếp đường tải bên dưới.
+        $spec = $this->attachmentSpec();
+
+        return $spec === null ? [] : [app(InboundAttachmentFactory::class)->build($spec, $accountId)];
+    }
+
+    /**
+     * Sticker nền tảng và sticker tự tạo có WebP: ảnh do StickerMessage dựng từ URL CDN,
+     * không tải; chỉ sticker tự tạo chỉ có JPG đi tiếp đường tải như ảnh thường.
+     *
+     * Vị trí vào contract đính kèm `location` của lõi. Xem trước liên kết KHÔNG đi
+     * đường đính kèm mà ở `content_attributes.link_preview` (một nguồn duy nhất).
+     *
+     * URL CDN Zalo có hạn dùng, lô lịch sử hay về sau khi token đã hết: tải hỏng thì
+     * lõi giữ fallback có liên kết để tự tải lại nền.
+     */
+    private function attachmentSpec(): ?InboundAttachment
+    {
         if ($this->sticker()?->imageUrl !== null) {
-            return [];
+            return null;
         }
 
         $kind = (string) ($this->params['inbound_kind'] ?? 'file');
 
-        // Vị trí có contract đính kèm sẵn trong lõi — map thẳng vào đó thay vì
-        // dựng bong bóng riêng cho Zalo. Xem trước liên kết KHÔNG đi đường đính
-        // kèm: docs/channel-capabilities.md §2.1 để nó ở
-        // `content_attributes.link_preview` (một nguồn duy nhất, khỏi lệch với
-        // fallback_title).
-        $mapped = match ($kind) {
-            self::LOCATION_KIND => $this->locationAttachment($accountId),
-            default => null,
-        };
-
-        if ($mapped !== null) {
-            return [$mapped];
+        if ($kind === self::LOCATION_KIND) {
+            return $this->locationSpec();
         }
 
         $url = $this->params['media_url'] ?? null;
 
         if (blank($url)) {
-            return [];
+            return null;
         }
 
-        $reportedFileType = self::ATTACHMENT_TYPES[$kind] ?? null;
-        $attributes = RemoteAttachmentDownloader::download(
-            url: (string) $url,
-            accountId: $accountId,
-            filename: $this->params['media_filename'] ?? null,
+        return InboundAttachment::download(
+            (string) $url,
+            self::ATTACHMENT_KINDS[$kind] ?? AttachmentKind::File,
+            $this->params['media_filename'] ?? null,
+            urlIsPublic: true,
         );
-
-        if ($attributes === null) {
-            // URL CDN Zalo có hạn dùng, lô lịch sử hay về sau khi token đã hết:
-            // lưu tin rỗng vô hình là mất hẳn dấu vết, nên rơi về contract
-            // `fallback` của lõi — vẫn còn đường mở tệp gốc, và lõi tự tải lại nền.
-            return [new Attachment(RemoteAttachmentDownloader::fallbackAttributes(
-                accountId: $accountId,
-                filename: $this->params['media_filename'] ?? null,
-                externalUrl: (string) $url,
-                reportedFileType: $reportedFileType,
-            ))];
-        }
-
-        $attributes['file_type'] = Attachment::fileTypeFromChannel($reportedFileType, $attributes['content_type']);
-
-        return [new Attachment($attributes)];
     }
 
-    /**
-     * Vị trí đi vào contract lõi `file_type: location` (`coordinates_lat/long`,
-     * `fallback_title`) y như WhatsApp — bong bóng bản đồ có sẵn dùng lại được.
-     */
-    private function locationAttachment(int $accountId): ?Attachment
+    private function locationSpec(): ?InboundAttachment
     {
         $location = is_array($this->params['location'] ?? null) ? $this->params['location'] : [];
         $latitude = $location['latitude'] ?? $location['lat'] ?? null;
@@ -875,13 +862,6 @@ class IncomingMessageService
             fn ($value) => filled($value),
         ));
 
-        return new Attachment([
-            'account_id' => $accountId,
-            'file_type' => Attachment::FILE_TYPE_LOCATION,
-            'coordinates_lat' => (float) $latitude,
-            'coordinates_long' => (float) $longitude,
-            'fallback_title' => $title === '' ? null : mb_substr($title, 0, 255),
-            'external_url' => $location['url'] ?? null,
-        ]);
+        return InboundAttachment::location((float) $latitude, (float) $longitude, $title === '' ? null : $title, $location['url'] ?? null);
     }
 }

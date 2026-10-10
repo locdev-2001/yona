@@ -2,6 +2,7 @@
 
 namespace App\Services\Zalo;
 
+use App\Messaging\Inbound\MessageEventService;
 use App\Models\Channel\Zalo;
 use App\Models\Inbox;
 use Illuminate\Support\Facades\Log;
@@ -14,7 +15,7 @@ use Illuminate\Support\Facades\Log;
 class BridgeEventService
 {
     public function __construct(
-        private readonly MessageStateService $messageState,
+        private readonly MessageEventService $messageEvents,
         private readonly TypingRelayService $typing,
     ) {}
 
@@ -50,7 +51,7 @@ class BridgeEventService
         (new IncomingMessageService($inbox, $payload))->perform();
 
         // Khách gửi rồi thu hồi ngay: sự kiện `undo` có thể tới TRƯỚC tin của nó.
-        $this->messageState->applyPendingRecall($inbox, isset($payload['source_id']) ? (string) $payload['source_id'] : null);
+        $this->messageEvents->applyPendingRecall($inbox, isset($payload['source_id']) ? (string) $payload['source_id'] : null);
     }
 
     /**
@@ -132,10 +133,7 @@ class BridgeEventService
         $args = is_array($payload['payload'] ?? null) ? $payload['payload'] : [];
 
         match ($eventType) {
-            'undo' => $this->messageState->applyRecall($inbox, RelayEventParser::recallSourceId($args)),
-            'reaction', 'old_reactions' => $this->messageState->applyReactions($inbox, RelayEventParser::reactions($args)),
-            'seen_messages' => $this->messageState->applyReceipts($inbox, RelayEventParser::receiptSourceIds($args), 'seen'),
-            'delivered_messages' => $this->messageState->applyReceipts($inbox, RelayEventParser::receiptSourceIds($args), 'delivered'),
+            'undo', 'reaction', 'old_reactions', 'seen_messages', 'delivered_messages' => $this->applyMessageEvents($inbox, $eventType, $args),
             // Gõ phím KHÔNG ghi vào tin nào, nhưng vẫn phải hiện: đẩy thẳng vào ống
             // "đang nhập…" của lõi (docs/channel-capabilities.md §2.3 `event_typing`).
             'typing' => $this->typing->handle($inbox, $args),
@@ -143,5 +141,13 @@ class BridgeEventService
             'connected', 'disconnected', 'upload_attachment' => null,
             default => Log::info('[ZALO] relay_event chưa có xử lý', ['event_type' => $eventType]),
         };
+    }
+
+    /** @param array<int|string, mixed> $args */
+    private function applyMessageEvents(Inbox $inbox, string $eventType, array $args): void
+    {
+        foreach (RelayEventParser::events($eventType, $args) as $event) {
+            $this->messageEvents->apply($inbox, $event);
+        }
     }
 }

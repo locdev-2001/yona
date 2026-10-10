@@ -2,6 +2,11 @@
 
 namespace App\Services\Zalo;
 
+use App\Messaging\Inbound\Events\InboundEvent;
+use App\Messaging\Inbound\Events\ReactionEvent;
+use App\Messaging\Inbound\Events\RecallEvent;
+use App\Messaging\Inbound\Events\ReceiptEvent;
+
 /**
  * Bóc tách envelope `relay_event` của bridge về dữ liệu trung tính cho lõi.
  *
@@ -9,10 +14,38 @@ namespace App\Services\Zalo;
  *   - reaction / undo / typing : `payload[0]` = `{data:{…}, threadId, isSelf}`
  *   - seen / delivered        : `payload[0]` = MẢNG các `{data:{msgId,…}}`
  * (xem `node_modules/zca-js/dist/apis/listen.d.ts` — `ListenerEvents`).
- * Mọi đặc thù hình dạng đó sống ở đây, MessageStateService chỉ nhận source_id.
+ * Mọi đặc thù hình dạng đó sống ở đây; lõi (MessageEventService) chỉ nhận sự kiện trung tính.
  */
 class RelayEventParser
 {
+    /**
+     * Một envelope relay → các sự kiện trung tính của lõi. Mã cảm xúc của Zalo đổi
+     * sang emoji ở đây; rỗng = gỡ.
+     *
+     * @param  array<int|string, mixed>  $payload
+     * @return list<InboundEvent>
+     */
+    public static function events(string $eventType, array $payload): array
+    {
+        return match ($eventType) {
+            'undo' => array_values(array_filter([
+                ($sourceId = self::recallSourceId($payload)) === null ? null : new RecallEvent($sourceId),
+            ])),
+            'reaction', 'old_reactions' => array_map(
+                fn (array $reaction) => new ReactionEvent(
+                    targetSourceId: $reaction['source_id'],
+                    emoji: $reaction['icon'] === '' ? null : ReactionIcons::emoji($reaction['icon']),
+                    actor: $reaction['by'] === '' ? null : $reaction['by'],
+                    isSelf: $reaction['is_self'],
+                ),
+                self::reactions($payload),
+            ),
+            'seen_messages' => [ReceiptEvent::read(self::receiptSourceIds($payload))],
+            'delivered_messages' => [ReceiptEvent::delivered(self::receiptSourceIds($payload))],
+            default => [],
+        };
+    }
+
     /**
      * Biên nhận seen/delivered — `msgId` của từng tin trong lô.
      *
