@@ -23,6 +23,7 @@ enum AttachmentKind: string
     case IgReel = 'ig_reel';
     case IgPost = 'ig_post';
     case IgStory = 'ig_story';
+    case Embed = 'embed';
 
     public function fileType(): int
     {
@@ -39,6 +40,7 @@ enum AttachmentKind: string
             self::IgReel => Attachment::FILE_TYPE_IG_REEL,
             self::IgPost => Attachment::FILE_TYPE_IG_POST,
             self::IgStory => Attachment::FILE_TYPE_IG_STORY,
+            self::Embed => Attachment::FILE_TYPE_EMBED,
         };
     }
 

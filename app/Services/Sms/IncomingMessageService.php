@@ -2,13 +2,14 @@
 
 namespace App\Services\Sms;
 
-use App\Builders\ContactInboxWithContactBuilder;
-use App\Models\Attachment;
+use App\Messaging\Inbound\InboundAttachment;
+use App\Messaging\Inbound\InboundMessage;
+use App\Messaging\Inbound\InboundMessageWriter;
+use App\Messaging\Inbound\InboundSender;
 use App\Models\Inbox;
 use App\Models\Message;
-use App\Services\Channels\IncomingConversationResolver;
-use App\Services\Channels\RemoteAttachmentDownloader;
 
+/** Webhook Bandwidth: một tin một lần gọi. */
 class IncomingMessageService
 {
     /** @param array<string, mixed> $params khối `message` của webhook Bandwidth. */
@@ -19,42 +20,26 @@ class IncomingMessageService
 
     public function perform(): ?Message
     {
-        $contactInbox = (new ContactInboxWithContactBuilder(
-            inbox: $this->inbox,
-            contactAttributes: [
-                'name' => $this->params['from'] ?? null,
-                'phone_number' => $this->params['from'] ?? null,
-            ],
-            sourceId: (string) ($this->params['from'] ?? ''),
-        ))->perform();
+        $from = (string) ($this->params['from'] ?? '');
 
-        if ($contactInbox === null) {
-            return null;
-        }
+        $sender = new InboundSender(sourceId: $from, name: $from ?: null, phoneNumber: $from ?: null);
 
-        $conversation = IncomingConversationResolver::resolve($contactInbox);
-
-        $message = $conversation->messages()->make([
-            'content' => $this->params['text'] ?? null,
-            'account_id' => $this->inbox->account_id,
-            'inbox_id' => $this->inbox->id,
-            'message_type' => Message::TYPE_INCOMING,
-            'source_id' => $this->params['id'] ?? null,
-        ]);
-        $message->sender()->associate($contactInbox->contact);
-
-        // Gốc: `attach_files` rồi `@message.save!`
-        // (sms/incoming_message_service.rb:17-18).
-        $this->attachFiles($message);
-
-        $message->save();
-
-        return $message;
+        return app(InboundMessageWriter::class)->write($this->inbox, $sender, new InboundMessage(
+            sourceId: isset($this->params['id']) ? (string) $this->params['id'] : null,
+            text: $this->params['text'] ?? null,
+            attachments: $this->attachments(),
+        ));
     }
 
-    private function attachFiles(Message $message): void
+    /**
+     * URL media của Bandwidth cần basic auth của kênh nên không đưa ra trình duyệt.
+     *
+     * @return list<InboundAttachment>
+     */
+    private function attachments(): array
     {
         $config = $this->inbox->channel->provider_config ?? [];
+        $specs = [];
 
         foreach ($this->params['media'] ?? [] as $mediaUrl) {
             // Bandwidth kèm file mô tả .smil/.xml — bản gốc không dùng.
@@ -62,20 +47,9 @@ class IncomingMessageService
                 continue;
             }
 
-            $attributes = RemoteAttachmentDownloader::download(
-                url: $mediaUrl,
-                accountId: $message->account_id,
-                basicAuth: [$config['api_key'] ?? '', $config['api_secret'] ?? ''],
-            );
-
-            // URL media của Bandwidth cần basic auth của kênh nên không đưa ra
-            // trình duyệt được; hỏng thì giữ dấu vết bằng fallback không liên kết.
-            $message->pendingAttachments[] = new Attachment(
-                $attributes ?? RemoteAttachmentDownloader::fallbackAttributes(
-                    $message->account_id,
-                    basename((string) parse_url((string) $mediaUrl, PHP_URL_PATH)) ?: null,
-                ),
-            );
+            $specs[] = InboundAttachment::download((string) $mediaUrl, basicAuth: [$config['api_key'] ?? '', $config['api_secret'] ?? '']);
         }
+
+        return $specs;
     }
 }

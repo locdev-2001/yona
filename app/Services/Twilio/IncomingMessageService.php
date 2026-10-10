@@ -2,13 +2,12 @@
 
 namespace App\Services\Twilio;
 
-use App\Builders\ContactInboxWithContactBuilder;
-use App\Models\Attachment;
+use App\Messaging\Inbound\InboundAttachment;
+use App\Messaging\Inbound\InboundMessage;
+use App\Messaging\Inbound\InboundMessageWriter;
+use App\Messaging\Inbound\InboundSender;
 use App\Models\Channel\TwilioSms;
-use App\Models\Contact;
 use App\Models\Message;
-use App\Services\Channels\IncomingConversationResolver;
-use App\Services\Channels\RemoteAttachmentDownloader;
 
 class IncomingMessageService
 {
@@ -23,44 +22,25 @@ class IncomingMessageService
             return null;
         }
 
-        $inbox = $channel->inbox;
         $sourceId = (string) ($this->params['From'] ?? '');
+        $phoneNumber = $this->phoneNumber($channel);
 
-        $contactInbox = (new ContactInboxWithContactBuilder(
-            inbox: $inbox,
-            contactAttributes: [
-                'name' => $this->params['ProfileName'] ?? $this->phoneNumber($channel) ?? $sourceId,
-                'phone_number' => $this->phoneNumber($channel),
-                'additional_attributes' => $this->additionalAttributes($channel),
-            ],
+        $sender = new InboundSender(
             sourceId: $sourceId,
-        ))->perform();
+            name: $this->params['ProfileName'] ?? $phoneNumber ?? $sourceId,
+            phoneNumber: $phoneNumber,
+            additionalAttributes: $this->additionalAttributes($channel),
+        );
 
-        if ($contactInbox === null) {
-            return null;
-        }
+        // Tên có thể tới ở tin sau, kể cả khi tin đó là webhook Twilio gửi lại (bị chống trùng).
+        $this->updateContactNameIfNeeded($channel, $sourceId);
 
-        $this->updateContactNameIfNeeded($contactInbox->contact, $channel);
-
-        $conversation = IncomingConversationResolver::resolve($contactInbox, $this->additionalAttributes($channel));
-
-        $message = $conversation->messages()->make([
-            'content' => str_replace("\0", '', (string) ($this->params['Body'] ?? '')),
-            'account_id' => $inbox->account_id,
-            'inbox_id' => $inbox->id,
-            'message_type' => Message::TYPE_INCOMING,
-            'source_id' => $this->params['SmsSid'] ?? null,
-        ]);
-        $message->sender()->associate($contactInbox->contact);
-
-        // Gốc: `attach_files` + `attach_location` rồi mới `@message.save!`
-        // (twilio/incoming_message_service.rb:22-24).
-        $this->attachFiles($message, $channel);
-        $this->attachLocation($message);
-
-        $message->save();
-
-        return $message;
+        return app(InboundMessageWriter::class)->write($channel->inbox, $sender, new InboundMessage(
+            sourceId: isset($this->params['SmsSid']) ? (string) $this->params['SmsSid'] : null,
+            text: str_replace("\0", '', (string) ($this->params['Body'] ?? '')),
+            attachments: [...$this->mediaAttachments($channel), ...$this->locationAttachment()],
+            conversationAttributes: $this->additionalAttributes($channel),
+        ));
     }
 
     private function findChannel(): ?TwilioSms
@@ -90,17 +70,18 @@ class IncomingMessageService
      * (update_contact_name_if_needed của bản gốc; nhánh so với số đã định dạng
      * quốc tế không port vì chưa có thư viện định dạng số.)
      */
-    private function updateContactNameIfNeeded(Contact $contact, TwilioSms $channel): void
+    private function updateContactNameIfNeeded(TwilioSms $channel, string $sourceId): void
     {
         $profileName = $this->params['ProfileName'] ?? null;
+        $phoneNumber = $this->phoneNumber($channel);
 
-        if (blank($profileName) || $contact->name === $profileName) {
+        if (blank($profileName) || blank($phoneNumber)) {
             return;
         }
 
-        $phoneNumber = $this->phoneNumber($channel);
+        $contact = $channel->inbox->contactInboxes()->where('source_id', $sourceId)->first()?->contact;
 
-        if (blank($phoneNumber) || $contact->name !== $phoneNumber) {
+        if ($contact === null || $contact->name !== $phoneNumber) {
             return;
         }
 
@@ -135,49 +116,34 @@ class IncomingMessageService
         ];
     }
 
-    private function attachFiles(Message $message, TwilioSms $channel): void
+    /**
+     * URL media của Twilio cần basic auth của kênh nên không đưa ra trình duyệt.
+     *
+     * @return list<InboundAttachment>
+     */
+    private function mediaAttachments(TwilioSms $channel): array
     {
-        $numMedia = (int) ($this->params['NumMedia'] ?? 0);
+        $specs = [];
 
-        for ($index = 0; $index < $numMedia; $index++) {
+        for ($index = 0, $count = (int) ($this->params['NumMedia'] ?? 0); $index < $count; $index++) {
             $mediaUrl = $this->params["MediaUrl{$index}"] ?? null;
 
-            if (blank($mediaUrl)) {
-                continue;
+            if (filled($mediaUrl)) {
+                $specs[] = InboundAttachment::download((string) $mediaUrl, basicAuth: [$channel->account_sid, $channel->auth_token]);
             }
-
-            $attributes = RemoteAttachmentDownloader::download(
-                url: $mediaUrl,
-                accountId: $message->account_id,
-                basicAuth: [$channel->account_sid, $channel->auth_token],
-            );
-
-            // MediaUrl của Twilio cần basic auth account_sid/auth_token nên
-            // không đưa ra trình duyệt được.
-            $message->pendingAttachments[] = new Attachment(
-                $attributes ?? RemoteAttachmentDownloader::fallbackAttributes(
-                    $message->account_id,
-                    basename((string) parse_url((string) $mediaUrl, PHP_URL_PATH)) ?: null,
-                ),
-            );
         }
+
+        return $specs;
     }
 
-    private function attachLocation(Message $message): void
+    /** @return list<InboundAttachment> */
+    private function locationAttachment(): array
     {
-        if (($this->params['MessageType'] ?? null) !== 'location') {
-            return;
+        if (($this->params['MessageType'] ?? null) !== 'location'
+            || blank($this->params['Latitude'] ?? null) || blank($this->params['Longitude'] ?? null)) {
+            return [];
         }
 
-        if (blank($this->params['Latitude'] ?? null) || blank($this->params['Longitude'] ?? null)) {
-            return;
-        }
-
-        $message->pendingAttachments[] = new Attachment([
-            'account_id' => $message->account_id,
-            'file_type' => Attachment::FILE_TYPE_LOCATION,
-            'coordinates_lat' => (float) $this->params['Latitude'],
-            'coordinates_long' => (float) $this->params['Longitude'],
-        ]);
+        return [InboundAttachment::location((float) $this->params['Latitude'], (float) $this->params['Longitude'])];
     }
 }

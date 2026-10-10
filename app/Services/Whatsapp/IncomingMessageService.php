@@ -2,29 +2,42 @@
 
 namespace App\Services\Whatsapp;
 
-use App\Builders\ContactInboxWithContactBuilder;
+use App\Messaging\Inbound\AttachmentKind;
+use App\Messaging\Inbound\Events\ReactionEvent;
+use App\Messaging\Inbound\Events\ReceiptEvent;
+use App\Messaging\Inbound\InboundAttachment;
+use App\Messaging\Inbound\InboundDirection;
+use App\Messaging\Inbound\InboundMessage;
+use App\Messaging\Inbound\InboundMessageWriter;
+use App\Messaging\Inbound\InboundSender;
+use App\Messaging\Inbound\MessageEventService;
+use App\Messaging\Inbound\ReplyReference;
 use App\Messaging\Stickers\StickerContent;
-use App\Messaging\Stickers\StickerMessage;
-use App\Models\Attachment;
 use App\Models\Inbox;
 use App\Models\Message;
 use App\Services\Channels\ChannelMessageStatus;
-use App\Services\Channels\IncomingConversationResolver;
-use App\Services\Channels\RemoteAttachmentDownloader;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 /**
- * (+ whatsapp_cloud_service). Cả hai nhà cung cấp dùng chung một lõi; khác biệt
- * duy nhất là chỗ bóc `value` khỏi payload — đưa vào processedParams().
+ * Cả hai nhà cung cấp (Cloud API, 360dialog) dùng chung một lõi; khác biệt duy nhất
+ * là chỗ bóc `value` khỏi payload — đưa vào processedParams().
  */
 class IncomingMessageService
 {
     /** @var list<string> Kiểu tin bị bỏ qua. */
-    private const UNPROCESSABLE_TYPES = ['reaction', 'ephemeral', 'request_welcome'];
+    private const UNPROCESSABLE_TYPES = ['ephemeral', 'request_welcome'];
 
-    /** @var list<string> Kiểu tin không mang tệp đính kèm. */
-    private const NON_ATTACHMENT_TYPES = ['text', 'button', 'interactive', 'location', 'contacts'];
+    /** @var array<string, string> kiểu tin mang tệp → loại đính kèm của lõi */
+    private const MEDIA_KINDS = [
+        'image' => 'image',
+        'sticker' => 'image',
+        'audio' => 'audio',
+        'voice' => 'voice',
+        'video' => 'video',
+        'document' => 'file',
+    ];
 
     /** @param array<string, mixed> $params */
     public function __construct(
@@ -38,7 +51,7 @@ class IncomingMessageService
         $value = $this->processedParams();
 
         if (filled($value['statuses'] ?? null)) {
-            $this->processStatuses($value['statuses'][0]);
+            $this->processStatus((array) $value['statuses'][0]);
 
             return null;
         }
@@ -49,7 +62,7 @@ class IncomingMessageService
             return null;
         }
 
-        return $this->processMessage($messages[0], $value);
+        return $this->processMessage((array) $messages[0], $value);
     }
 
     /** @return array<string, mixed> */
@@ -76,12 +89,13 @@ class IncomingMessageService
     {
         $type = $payload['type'] ?? null;
 
-        if (in_array($type, self::UNPROCESSABLE_TYPES, true)) {
+        if ($type === 'reaction') {
+            $this->applyReaction($payload);
+
             return null;
         }
 
-        // Meta gửi trùng webhook cho cùng một tin — source_id là khóa chống trùng.
-        if (Message::query()->where('source_id', $payload['id'] ?? '')->exists()) {
+        if (in_array($type, self::UNPROCESSABLE_TYPES, true)) {
             return null;
         }
 
@@ -95,53 +109,34 @@ class IncomingMessageService
             return null;
         }
 
-        $contactInbox = (new ContactInboxWithContactBuilder(
-            inbox: $this->inbox,
-            contactAttributes: [
-                'name' => data_get($value, 'contacts.0.profile.name') ?: '+'.$sourceIdentifier,
-                'phone_number' => '+'.$sourceIdentifier,
-            ],
+        $sender = new InboundSender(
             sourceId: (string) $sourceIdentifier,
-        ))->perform();
+            name: data_get($value, 'contacts.0.profile.name') ?: '+'.$sourceIdentifier,
+            phoneNumber: '+'.$sourceIdentifier,
+        );
 
-        if ($contactInbox === null) {
-            return null;
-        }
+        return app(InboundMessageWriter::class)->write($this->inbox, $sender, $this->inboundMessage($payload, $type));
+    }
 
-        $conversation = IncomingConversationResolver::resolve($contactInbox);
+    /** @param array<string, mixed> $payload */
+    private function inboundMessage(array $payload, ?string $type): InboundMessage
+    {
+        $attachmentPayload = (array) ($payload[$type] ?? []);
+        $replyExternalId = data_get($payload, 'context.id');
+        $timestamp = $payload['timestamp'] ?? null;
 
-        $message = $conversation->messages()->make([
-            'content' => $this->messageContent($payload),
-            'account_id' => $this->inbox->account_id,
-            'inbox_id' => $this->inbox->id,
-            'message_type' => $this->outgoingEcho ? Message::TYPE_OUTGOING : Message::TYPE_INCOMING,
-            // Echo đặt sẵn 'delivered' để SendReplyJob không gửi ngược ra ngoài.
-            'status' => $this->outgoingEcho ? Message::STATUSES['delivered'] : Message::STATUSES['sent'],
-            'source_id' => (string) $payload['id'],
-            'content_type' => Message::CONTENT_TYPES['text'],
-            'content_attributes' => $this->contentAttributes($payload),
-        ]);
-
-        if (! $this->outgoingEcho) {
-            $message->sender()->associate($contactInbox->contact);
-        }
-
-        // Gốc: `attach_files` / `attach_location` / `attach_contact` đều gọi
-        // `@message.attachments.new(...)` TRƯỚC `@message.save!`
-        // (incoming_message_base_service.rb:95-104).
-        $this->attachFiles($message, $payload, $type);
-        $this->attachLocation($message, $payload, $type);
-        $this->attachContacts($message, $payload, $type);
-
-        $sticker = $this->sticker($payload, $type);
-
-        if ($sticker !== null) {
-            StickerMessage::apply($message, $sticker, $message->pendingAttachments[0] ?? null);
-        }
-
-        $message->save();
-
-        return $message;
+        return new InboundMessage(
+            sourceId: (string) $payload['id'],
+            direction: $this->outgoingEcho ? InboundDirection::Echo : InboundDirection::Incoming,
+            text: $this->messageContent($payload) ?? ($attachmentPayload['caption'] ?? null),
+            sentAt: is_numeric($timestamp) ? Carbon::createFromTimestamp((int) $timestamp) : null,
+            sticker: $this->sticker($payload, $type),
+            attachments: $this->attachments($payload, $type),
+            replyTo: filled($replyExternalId) ? new ReplyReference((string) $replyExternalId) : null,
+            attributes: array_filter([
+                'referral' => ! $this->outgoingEcho && filled($payload['referral'] ?? null) ? $payload['referral'] : null,
+            ]),
+        );
     }
 
     /** @param array<string, mixed> $payload */
@@ -155,27 +150,8 @@ class IncomingMessageService
     }
 
     /**
-     * @param  array<string, mixed>  $payload
-     * @return array<string, mixed>
-     */
-    private function contentAttributes(array $payload): array
-    {
-        $attributes = $this->outgoingEcho ? ['external_echo' => true] : [];
-
-        if (filled(data_get($payload, 'context.id'))) {
-            $attributes['in_reply_to_external_id'] = data_get($payload, 'context.id');
-        }
-
-        if (filled($payload['referral'] ?? null) && ! $this->outgoingEcho) {
-            $attributes['referral'] = $payload['referral'];
-        }
-
-        return $attributes;
-    }
-
-    /**
      * WhatsApp chỉ trả media id (URL tải cần token) nên không có `url`: ảnh đi qua
-     * đính kèm đã tải về ở attachFiles.
+     * đính kèm đã tải về.
      *
      * @param  array<string, mixed>  $payload
      */
@@ -191,127 +167,120 @@ class IncomingMessageService
         );
     }
 
-    /** @param array<string, mixed> $payload */
-    private function attachFiles(Message $message, array $payload, ?string $type): void
+    /**
+     * @param  array<string, mixed>  $payload
+     * @return list<InboundAttachment>
+     */
+    private function attachments(array $payload, ?string $type): array
     {
-        if ($type === null || in_array($type, self::NON_ATTACHMENT_TYPES, true)) {
-            return;
+        if ($type === 'location') {
+            $location = (array) $payload['location'];
+            $title = filled($location['name'] ?? null) ? "{$location['name']}, ".($location['address'] ?? '') : null;
+
+            return [InboundAttachment::location((float) $location['latitude'], (float) $location['longitude'], $title, $location['url'] ?? null)];
         }
 
-        $attachmentPayload = (array) ($payload[$type] ?? []);
-
-        // `@message.content ||= attachment_payload[:caption]` — gán trước khi lưu.
-        if (blank($message->content) && filled($attachmentPayload['caption'] ?? null)) {
-            $message->content = $attachmentPayload['caption'];
+        if ($type === 'contacts') {
+            return $this->contactCards((array) ($payload['contacts'] ?? []));
         }
 
-        if (blank($attachmentPayload['id'] ?? null)) {
-            return;
+        $kind = self::MEDIA_KINDS[$type ?? ''] ?? null;
+        $media = (array) ($payload[$type] ?? []);
+
+        if ($kind === null || blank($media['id'] ?? null)) {
+            return [];
         }
 
-        $channel = $this->inbox->channel;
-        $mediaUrlResponse = Http::withHeaders($channel->apiHeaders())
-            ->get($channel->mediaUrl((string) $attachmentPayload['id']));
-
-        if (! $mediaUrlResponse->successful()) {
-            $message->pendingAttachments[] = new Attachment(
-                RemoteAttachmentDownloader::fallbackAttributes($message->account_id, $attachmentPayload['filename'] ?? null),
-            );
-
-            return;
-        }
-
-        $attributes = RemoteAttachmentDownloader::download(
-            url: (string) $mediaUrlResponse->json('url'),
-            accountId: $message->account_id,
-            filename: $attachmentPayload['filename'] ?? null,
-            headers: $channel->apiHeaders(),
-        );
-
-        if ($attributes === null) {
-            // URL media của Graph chỉ mở được kèm bearer token của kênh — không
-            // đưa ra trình duyệt; fallback giữ tên tệp để agent biết đã có tệp.
-            $message->pendingAttachments[] = new Attachment(
-                RemoteAttachmentDownloader::fallbackAttributes($message->account_id, $attachmentPayload['filename'] ?? null),
-            );
-
-            return;
-        }
-
-        $attributes['file_type'] = Attachment::fileTypeFromChannel(self::FILE_TYPES[$type] ?? null, $attributes['content_type']);
-        $message->pendingAttachments[] = new Attachment($attributes);
+        return [$this->mediaAttachment((string) $media['id'], AttachmentKind::from($kind), $media['filename'] ?? null)];
     }
 
-    /** @var array<string, int> Whatsapp::IncomingMessageServiceHelpers#file_content_type */
-    private const FILE_TYPES = [
-        'image' => Attachment::FILE_TYPE_IMAGE,
-        'sticker' => Attachment::FILE_TYPE_IMAGE,
-        'audio' => Attachment::FILE_TYPE_AUDIO,
-        'voice' => Attachment::FILE_TYPE_AUDIO,
-        'video' => Attachment::FILE_TYPE_VIDEO,
-        'location' => Attachment::FILE_TYPE_LOCATION,
-        'contacts' => Attachment::FILE_TYPE_CONTACT,
-    ];
-
-    /** @param array<string, mixed> $payload */
-    private function attachLocation(Message $message, array $payload, ?string $type): void
+    /**
+     * Mỗi số điện thoại một danh thiếp, như bản gốc.
+     *
+     * @param  list<array<string, mixed>>  $contacts
+     * @return list<InboundAttachment>
+     */
+    private function contactCards(array $contacts): array
     {
-        if ($type !== 'location') {
-            return;
-        }
+        $cards = [];
 
-        $location = (array) $payload['location'];
-        $name = filled($location['name'] ?? null) ? "{$location['name']}, ".($location['address'] ?? '') : '';
-
-        $message->pendingAttachments[] = new Attachment([
-            'account_id' => $message->account_id,
-            'file_type' => Attachment::FILE_TYPE_LOCATION,
-            'coordinates_lat' => $location['latitude'],
-            'coordinates_long' => $location['longitude'],
-            'fallback_title' => mb_substr($name, 0, 255),
-            'external_url' => $location['url'] ?? null,
-        ]);
-    }
-
-    /** @param array<string, mixed> $payload */
-    private function attachContacts(Message $message, array $payload, ?string $type): void
-    {
-        if ($type !== 'contacts') {
-            return;
-        }
-
-        foreach ($payload['contacts'] ?? [] as $contact) {
-            $phones = filled($contact['phones'] ?? null)
-                ? $contact['phones']
-                : [['phone' => 'Phone number is not available']];
+        foreach ($contacts as $contact) {
+            $phones = filled($contact['phones'] ?? null) ? $contact['phones'] : [['phone' => 'Phone number is not available']];
 
             foreach ($phones as $phone) {
-                $message->pendingAttachments[] = new Attachment([
-                    'account_id' => $message->account_id,
-                    'file_type' => Attachment::FILE_TYPE_CONTACT,
-                    'fallback_title' => (string) $phone['phone'],
-                    'meta' => array_filter([
-                        'firstName' => data_get($contact, 'name.first_name'),
-                        'lastName' => data_get($contact, 'name.last_name'),
-                    ]),
+                $cards[] = InboundAttachment::contactCard((string) $phone['phone'], [
+                    'firstName' => data_get($contact, 'name.first_name'),
+                    'lastName' => data_get($contact, 'name.last_name'),
                 ]);
             }
         }
+
+        return $cards;
     }
 
-    /** @param array<string, mixed> $status */
-    private function processStatuses(array $status): void
+    /**
+     * URL media của Graph chỉ mở được kèm bearer token của kênh — không đưa ra trình
+     * duyệt; không lấy được URL thì fallback giữ tên tệp để agent biết đã có tệp.
+     */
+    private function mediaAttachment(string $mediaId, AttachmentKind $kind, ?string $filename): InboundAttachment
     {
-        $message = Message::query()->where('source_id', $status['id'] ?? '')->first();
+        $channel = $this->inbox->channel;
+        $mediaUrlResponse = Http::withHeaders($channel->apiHeaders())->get($channel->mediaUrl($mediaId));
 
-        if ($message === null || ! array_key_exists($status['status'] ?? '', Message::STATUSES)) {
+        if (! $mediaUrlResponse->successful() || blank($mediaUrlResponse->json('url'))) {
+            return InboundAttachment::fallback($filename);
+        }
+
+        return InboundAttachment::download((string) $mediaUrlResponse->json('url'), $kind, $filename, headers: $channel->apiHeaders());
+    }
+
+    /** @param array<string, mixed> $payload */
+    private function applyReaction(array $payload): void
+    {
+        $targetSourceId = data_get($payload, 'reaction.message_id');
+
+        if (blank($targetSourceId) || blank($payload['from'] ?? null)) {
             return;
         }
 
-        $externalError = $status['status'] === 'failed' && filled($status['errors'] ?? null)
+        app(MessageEventService::class)->apply($this->inbox, new ReactionEvent(
+            targetSourceId: (string) $targetSourceId,
+            emoji: data_get($payload, 'reaction.emoji'),
+            actor: (string) $payload['from'],
+        ));
+    }
+
+    /**
+     * `delivered`/`read` là biên nhận của lõi; `failed` mang lỗi ngoài; `sent` không
+     * đổi gì vì tin đi đã ở trạng thái đó.
+     *
+     * @param  array<string, mixed>  $status
+     */
+    private function processStatus(array $status): void
+    {
+        $sourceId = (string) ($status['id'] ?? '');
+        $state = $status['status'] ?? '';
+
+        if ($sourceId === '' || ! array_key_exists($state, Message::STATUSES)) {
+            return;
+        }
+
+        if ($state === 'delivered' || $state === 'read') {
+            app(MessageEventService::class)->apply($this->inbox, $state === 'read' ? ReceiptEvent::read([$sourceId]) : ReceiptEvent::delivered([$sourceId]));
+
+            return;
+        }
+
+        $message = Message::query()->where('inbox_id', $this->inbox->id)->where('source_id', $sourceId)->first();
+
+        if ($message === null) {
+            return;
+        }
+
+        $externalError = $state === 'failed' && filled($status['errors'] ?? null)
             ? data_get($status, 'errors.0.code').': '.data_get($status, 'errors.0.title')
             : null;
 
-        ChannelMessageStatus::markStatus($message, $status['status'], $externalError);
+        ChannelMessageStatus::markStatus($message, $state, $externalError);
     }
 }

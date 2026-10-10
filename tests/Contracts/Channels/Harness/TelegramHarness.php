@@ -25,6 +25,8 @@ final class TelegramHarness implements ChannelHarness
 
     private ?Conversation $conversation = null;
 
+    private int $sequence = 0;
+
     public function __construct(private readonly Inbox $inbox)
     {
         $this->fakeBotApi();
@@ -58,9 +60,14 @@ final class TelegramHarness implements ChannelHarness
         $fixture = self::INBOUND_FIXTURES[$capability->value]
             ?? throw new LogicException("Telegram chưa có fixture cho {$capability->value}");
 
+        // Lõi chống trùng theo message_id: mỗi lượt nhận là một tin mới của Telegram.
+        $payload = ChannelFixture::load($fixture);
+        $payload['update_id'] = 900000 + ++$this->sequence;
+        $payload['message']['message_id'] = 900000 + $this->sequence;
+
         (new TelegramEventsJob([
             'bot_token' => $this->inbox->channel->bot_token,
-            'telegram' => ChannelFixture::load($fixture),
+            'telegram' => $payload,
         ]))->handle();
 
         return Message::query()->latest('id')->firstOrFail();

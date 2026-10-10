@@ -2,24 +2,24 @@
 
 namespace App\Services\Line;
 
-use App\Builders\ContactInboxWithContactBuilder;
+use App\Messaging\Inbound\AttachmentKind;
+use App\Messaging\Inbound\InboundAttachment;
+use App\Messaging\Inbound\InboundMessage;
+use App\Messaging\Inbound\InboundMessageWriter;
+use App\Messaging\Inbound\InboundSender;
 use App\Messaging\Stickers\StickerContent;
-use App\Messaging\Stickers\StickerMessage;
-use App\Models\Attachment;
 use App\Models\Inbox;
-use App\Models\Message;
-use App\Services\Channels\IncomingConversationResolver;
-use App\Services\Channels\RemoteAttachmentDownloader;
+use Illuminate\Support\Carbon;
 
 /**
- * LINE gửi nhiều event trong một webhook — duyệt lần lượt.
+ * LINE gửi nhiều event trong một webhook — duyệt lần lượt, mỗi event một tin qua lõi.
  */
 class IncomingMessageService
 {
     private const STICKER_IMAGE_URL = 'https://stickershop.line-scdn.net/stickershop/v1/sticker/%s/android/sticker.png';
 
-    /** @var list<string> Kiểu message của LINE cần tải nội dung nhị phân về. */
-    private const BINARY_TYPES = ['image', 'video', 'audio', 'file'];
+    /** @var array<string, string> kiểu message của LINE cần tải nội dung nhị phân về → loại của lõi */
+    private const BINARY_KINDS = ['image' => 'image', 'video' => 'video', 'audio' => 'audio', 'file' => 'file'];
 
     /** @param array<string, mixed> $params */
     public function __construct(
@@ -47,44 +47,14 @@ class IncomingMessageService
             return;
         }
 
-        $contactInbox = (new ContactInboxWithContactBuilder(
-            inbox: $this->inbox,
-            contactAttributes: [
-                'name' => $profile['displayName'] ?? null,
-                'avatar_url' => $profile['pictureUrl'] ?? null,
-                'additional_attributes' => ['social_line_user_id' => $profile['userId']],
-            ],
+        $sender = new InboundSender(
             sourceId: (string) $profile['userId'],
-        ))->perform();
+            name: $profile['displayName'] ?? null,
+            avatarUrl: $profile['pictureUrl'] ?? null,
+            additionalAttributes: ['social_line_user_id' => $profile['userId']],
+        );
 
-        if ($contactInbox === null) {
-            return;
-        }
-
-        $conversation = IncomingConversationResolver::resolve($contactInbox);
-
-        $message = $conversation->messages()->make([
-            'content' => $this->messageContent($event),
-            'account_id' => $this->inbox->account_id,
-            'inbox_id' => $this->inbox->id,
-            'content_type' => Message::CONTENT_TYPES['text'],
-            'message_type' => Message::TYPE_INCOMING,
-            'source_id' => (string) data_get($event, 'message.id'),
-        ]);
-        $message->sender()->associate($contactInbox->contact);
-
-        // Gốc: `attach_files event['message']` rồi mới `@message.save!`
-        // (incoming_message_service.rb:29-30) — đính kèm phải có mặt trong
-        // payload `message.created`.
-        $sticker = $this->sticker($event);
-
-        if ($sticker !== null) {
-            StickerMessage::apply($message, $sticker);
-        } else {
-            $this->attachFile($message, (array) ($event['message'] ?? []));
-        }
-
-        $message->save();
+        app(InboundMessageWriter::class)->write($this->inbox, $sender, $this->inboundMessage($event));
     }
 
     /** @return array<string, mixed> */
@@ -96,57 +66,61 @@ class IncomingMessageService
     }
 
     /** @param array<string, mixed> $event */
-    private function messageContent(array $event): ?string
+    private function inboundMessage(array $event): InboundMessage
     {
-        return match (data_get($event, 'message.type')) {
-            'text' => data_get($event, 'message.text'),
-            // Bản gốc chưa hiển thị sticker: nhúng ảnh sticker bằng markdown.
-            default => null,
-        };
+        $message = (array) ($event['message'] ?? []);
+        $timestamp = $event['timestamp'] ?? null;
+
+        return new InboundMessage(
+            sourceId: (string) ($message['id'] ?? ''),
+            text: ($message['type'] ?? null) === 'text' ? ($message['text'] ?? null) : null,
+            sentAt: is_numeric($timestamp) ? Carbon::createFromTimestampMs((int) $timestamp) : null,
+            sticker: $this->sticker($message),
+            attachments: $this->attachments($message),
+        );
     }
 
     /**
      * Ảnh sticker trỏ CDN LINE theo mã, không đổi nên khỏi tải về đĩa.
      *
-     * @param  array<string, mixed>  $event
+     * @param  array<string, mixed>  $message
      */
-    private function sticker(array $event): ?StickerContent
+    private function sticker(array $message): ?StickerContent
     {
-        $stickerId = data_get($event, 'message.stickerId');
+        $stickerId = $message['stickerId'] ?? null;
 
-        if (data_get($event, 'message.type') !== 'sticker' || blank($stickerId)) {
+        if (($message['type'] ?? null) !== 'sticker' || blank($stickerId)) {
             return null;
         }
 
         return new StickerContent(
             id: (string) $stickerId,
             imageUrl: sprintf(self::STICKER_IMAGE_URL, $stickerId),
-            packId: data_get($event, 'message.packageId'),
+            packId: $message['packageId'] ?? null,
         );
     }
 
-    /** @param array<string, mixed> $lineMessage */
-    private function attachFile(Message $message, array $lineMessage): void
+    /**
+     * API nội dung của LINE cần channel token nên URL không đưa ra ngoài được.
+     *
+     * @param  array<string, mixed>  $message
+     * @return list<InboundAttachment>
+     */
+    private function attachments(array $message): array
     {
-        if (! in_array($lineMessage['type'] ?? null, self::BINARY_TYPES, true)) {
-            return;
+        $kind = self::BINARY_KINDS[$message['type'] ?? ''] ?? null;
+
+        if ($kind === null) {
+            return [];
         }
 
         $client = new LineClient($this->inbox->channel);
-        $attributes = RemoteAttachmentDownloader::download(
-            url: $client->messageContentUrl((string) $lineMessage['id']),
-            accountId: $message->account_id,
-            filename: $lineMessage['fileName'] ?? null,
-            headers: $client->authHeaders(),
-        );
 
-        // API nội dung của LINE cần channel token nên URL không đưa ra ngoài
-        // được: fallback chỉ giữ tên tệp, tin vẫn tới tay agent.
-        $message->pendingAttachments[] = new Attachment(
-            $attributes ?? RemoteAttachmentDownloader::fallbackAttributes(
-                $message->account_id,
-                $lineMessage['fileName'] ?? null,
-            ),
-        );
+        return [InboundAttachment::download(
+            $client->messageContentUrl((string) $message['id']),
+            AttachmentKind::from($kind),
+            $message['fileName'] ?? null,
+            headers: $client->authHeaders(),
+        )];
     }
 }

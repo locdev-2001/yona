@@ -78,14 +78,22 @@ it('không tạo trùng khi cùng một tin tới hai lần', function () {
     expect(Message::query()->where('source_id', 'wamid.SGVsbG8=')->count())->toBe(1);
 });
 
-it('cập nhật trạng thái tin từ payload statuses', function () {
+it('biên nhận statuses nâng trạng thái tin ĐI, không đụng tin đến cùng id', function () {
     Http::fake();
     whatsappPost(ChannelFixture::load('whatsapp_cloud_text'));
-    $message = Message::query()->latest('id')->first();
+    $incoming = Message::query()->latest('id')->first();
+    $outgoing = $incoming->conversation->messages()->create([
+        'account_id' => $incoming->account_id,
+        'inbox_id' => $incoming->inbox_id,
+        'message_type' => Message::TYPE_OUTGOING,
+        'content' => 'Chào bạn',
+    ]);
+    $outgoing->forceFill(['source_id' => 'wamid.SGVsbG8=', 'status' => Message::STATUSES['sent']])->save();
 
     whatsappPost(ChannelFixture::load('whatsapp_cloud_status'))->assertOk();
 
-    expect($message->fresh()->status)->toBe(Message::STATUSES['delivered']);
+    expect($outgoing->fresh()->status)->toBe(Message::STATUSES['delivered'])
+        ->and($incoming->fresh()->status)->toBe(Message::STATUSES['sent']);
 });
 
 it('gửi tin đi qua Cloud API và lưu source_id', function () {

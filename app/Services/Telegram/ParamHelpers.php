@@ -2,7 +2,7 @@
 
 namespace App\Services\Telegram;
 
-use App\Services\Messages\Forwarding\MessageForwarder;
+use App\Messaging\Inbound\ForwardOrigin;
 
 /**
  * Bóc payload Telegram (message | business_message | callback_query) về cùng một hình dạng.
@@ -95,26 +95,12 @@ trait ParamHelpers
             : data_get($this->params, 'message.message_id');
     }
 
-    /** @return array<string, mixed> */
-    protected function contentAttributes(): array
-    {
-        $replyTo = data_get($this->params, 'message.reply_to_message.message_id');
-        $forwardedFrom = $this->forwardedFrom();
-
-        return array_filter([
-            'in_reply_to_external_id' => $replyTo ?: null,
-            'forwarded_from' => $forwardedFrom,
-        ], fn ($value) => $value !== null);
-    }
-
     /**
      * Tin khách chuyển tiếp từ nơi khác (docs `inbound_forward`). Bot API ≥ 7.0 ghi
      * `forward_origin`; bản cũ ghi `forward_from` / `forward_sender_name` /
      * `forward_from_chat`. Tên người gửi gốc là tuỳ chọn.
-     *
-     * @return array{origin: string, sender_name?: string}|null
      */
-    private function forwardedFrom(): ?array
+    protected function forwardedFrom(): ?ForwardOrigin
     {
         $message = (array) data_get($this->params, 'message', []);
         $origin = $message['forward_origin'] ?? null;
@@ -137,9 +123,6 @@ trait ParamHelpers
 
         $senderName = is_string($senderName) ? mb_substr(trim($senderName), 0, self::FORWARDED_SENDER_NAME_MAX) : '';
 
-        return array_filter(
-            ['origin' => MessageForwarder::ORIGIN_CHANNEL, 'sender_name' => $senderName],
-            fn (string $value) => $value !== '',
-        );
+        return new ForwardOrigin($senderName === '' ? null : $senderName);
     }
 }
