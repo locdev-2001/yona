@@ -223,3 +223,36 @@ it('bấm chip của câu đã trả lời trên Instagram thì tin khách vẫn
     expect($question->fresh()->content_attributes['submitted_values'])->toBe([['title' => 'Có', 'value' => 'yes']])
         ->and(Message::query()->where('source_id', 'mid.instagram.qr-late')->where('content', 'Không')->exists())->toBeTrue();
 });
+
+it('khách thu hồi tin trên Instagram thì tin bị đánh dấu xoá, không bị bỏ sót', function () {
+    Http::fake(['graph.instagram.com/*' => Http::response(['id' => 'ig-user-id', 'name' => 'Khách IG'])]);
+    instagramPost(ChannelFixture::load('instagram_messaging'))->assertOk();
+    $message = Message::query()->latest('id')->first();
+
+    $payload = ChannelFixture::load('instagram_messaging');
+    $payload['entry'][0]['messaging'][0]['message'] = ['mid' => 'mid.instagram.1', 'is_deleted' => true];
+    instagramPost($payload)->assertOk();
+
+    expect($message->fresh()->isDeleted())->toBeTrue()
+        ->and(Message::query()->count())->toBe(1);
+});
+
+it('cảm xúc của khách trên Instagram ghi vào tin đi', function () {
+    Http::fake(['graph.instagram.com/*' => Http::response(['id' => 'ig-user-id', 'name' => 'Khách IG', 'message_id' => 'mid.ig.out'])]);
+    instagramPost(ChannelFixture::load('instagram_messaging'))->assertOk();
+    $conversation = Message::query()->latest('id')->first()->conversation;
+    $outgoing = $conversation->messages()->create([
+        'account_id' => $conversation->account_id,
+        'inbox_id' => $conversation->inbox_id,
+        'message_type' => Message::TYPE_OUTGOING,
+        'content' => 'Chào bạn',
+    ]);
+    $outgoing->forceFill(['source_id' => 'mid.ig.out'])->save();
+
+    $payload = ChannelFixture::load('instagram_messaging');
+    unset($payload['entry'][0]['messaging'][0]['message']);
+    $payload['entry'][0]['messaging'][0]['reaction'] = ['mid' => 'mid.ig.out', 'action' => 'react', 'emoji' => '😍'];
+    instagramPost($payload)->assertOk();
+
+    expect($outgoing->fresh()->reactionList()[0]['emoji'])->toBe('😍');
+});

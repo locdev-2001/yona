@@ -2,9 +2,10 @@
 
 namespace App\Services\Instagram;
 
-use App\Builders\Messages\Instagram\MessageBuilder;
-use App\Jobs\Avatar\AvatarFromUrlJob;
 use App\Messaging\Delivery\ChoiceToken;
+use App\Messaging\Inbound\InboundMessageWriter;
+use App\Messaging\Inbound\InboundSender;
+use App\Messaging\Inbound\MessageEventService;
 use App\Models\Channel\FacebookPage;
 use App\Models\Channel\Instagram;
 use App\Models\Inbox;
@@ -13,19 +14,22 @@ use App\Services\Messaging\ChoiceCallbackService;
 use Illuminate\Support\Facades\Log;
 
 /**
- * webhooks_base_service}.rb — một đường cho cả kênh Instagram login trực tiếp
- * lẫn Instagram gắn qua trang Facebook (khác nhau ở nơi lấy hồ sơ người dùng).
+ * Một phần tử `messaging` của Instagram — một đường cho cả kênh Instagram login trực tiếp
+ * lẫn Instagram gắn qua trang Facebook (khác nhau ở nơi lấy hồ sơ người dùng). Sự kiện
+ * (thu hồi, cảm xúc, đã xem) và tin đến đều đi qua lõi.
  */
 class MessageTextService
 {
+    private readonly MessageParser $payload;
+
     /**
      * @param  array<string, mixed>  $messaging
      * @param  Instagram|FacebookPage  $channel
      */
-    public function __construct(
-        private readonly array $messaging,
-        private readonly object $channel,
-    ) {}
+    public function __construct(array $messaging, private readonly object $channel)
+    {
+        $this->payload = new MessageParser($messaging);
+    }
 
     public function perform(): ?Message
     {
@@ -35,85 +39,65 @@ class MessageTextService
             return null;
         }
 
-        if (filled(data_get($this->messaging, 'message.is_deleted'))) {
-            $this->unsendMessage($inbox);
+        foreach ($this->payload->events() as $event) {
+            app(MessageEventService::class)->apply($inbox, $event);
+        }
 
+        if (! $this->payload->hasMessage() || $this->payload->isDeleted()) {
             return null;
         }
 
-        $isEcho = filled(data_get($this->messaging, 'message.is_echo'));
-
-        if (! $isEcho && $this->handleQuickReply($inbox)) {
+        if (! $this->payload->isEcho() && $this->handleQuickReply($inbox)) {
             return null;
         }
 
-        $contactId = (string) ($isEcho
-            ? data_get($this->messaging, 'recipient.id')
-            : data_get($this->messaging, 'sender.id'));
+        $contactSourceId = $this->payload->contactSourceId();
 
-        if ($inbox->contactInboxes()->where('source_id', $contactId)->doesntExist()) {
-            $this->ensureContact($inbox, $contactId);
+        if ($contactSourceId === null) {
+            return null;
         }
 
-        return (new MessageBuilder($this->messaging, $inbox, outgoingEcho: $isEcho))->perform();
+        return app(InboundMessageWriter::class)->write($inbox, $this->sender($inbox, $contactSourceId), $this->payload->inboundMessage());
     }
 
     /**
      * Khách bấm chip do DeliveryPlanner vẽ (Renderers\InstagramRenderer): map thẳng về tin
      * gốc qua SubmissionService thay vì tạo tin đến mang payload thô. Payload không phải của
      * chúng ta, hoặc câu hỏi đã được trả lời rồi, thì để rơi xuống luồng tạo tin bình thường
-     * để chữ khách bấm vẫn tới nhân viên (App\Services\Facebook\MessageCreator làm y hệt).
+     * để chữ khách bấm vẫn tới nhân viên.
      */
     private function handleQuickReply(Inbox $inbox): bool
     {
-        $parsed = ChoiceToken::parseFacebook((string) data_get($this->messaging, 'message.quick_reply.payload'));
-        $senderId = data_get($this->messaging, 'sender.id');
+        $parsed = ChoiceToken::parseFacebook((string) $this->payload->quickReplyPayload());
+        $senderId = $this->payload->senderId();
 
         if ($parsed === null || $senderId === null) {
             return false;
         }
 
         return app(ChoiceCallbackService::class)
-            ->resolve($parsed['message_id'], $parsed['value'], null, $inbox->id, (string) $senderId) !== null;
+            ->resolve($parsed['message_id'], $parsed['value'], null, $inbox->id, $senderId) !== null;
     }
 
-    private function unsendMessage(Inbox $inbox): void
+    /** Hồ sơ Instagram chỉ tra khi khách chưa có trong hộp thư. */
+    private function sender(Inbox $inbox, string $contactSourceId): InboundSender
     {
-        $message = $inbox->messages()->where('source_id', data_get($this->messaging, 'message.mid'))->first();
-
-        if ($message === null) {
-            return;
+        if ($inbox->contactInboxes()->where('source_id', $contactSourceId)->exists()) {
+            return new InboundSender($contactSourceId);
         }
 
-        $message->attachments()->delete();
-        $message->update(['content' => __('conversations.messages.deleted'), 'deleted' => true]);
-    }
-
-    private function ensureContact(Inbox $inbox, string $contactId): void
-    {
-        $profile = (new InstagramProfileFetcher($this->channel))->fetch($contactId);
+        $profile = (new InstagramProfileFetcher($this->channel))->fetch($contactSourceId);
 
         if (blank($profile)) {
-            Log::warning("[INSTAGRAM] Không lấy được hồ sơ người dùng {$contactId} cho inbox {$inbox->id}");
-            $profile = ['id' => $contactId, 'name' => "Unknown (IG: {$contactId})"];
+            Log::warning("[INSTAGRAM] Không lấy được hồ sơ người dùng {$contactSourceId} cho inbox {$inbox->id}");
         }
 
-        $contactInbox = $this->channel->createContactInbox($contactId, $profile['name'] ?? null);
-
-        if ($contactInbox === null) {
-            return;
-        }
-
-        $contactInbox->contact->update([
-            'additional_attributes' => [
-                ...$contactInbox->contact->additional_attributes ?? [],
-                ...$this->instagramAttributes($profile),
-            ],
-        ]);
-
-        if (filled($profile['profile_pic'] ?? null)) {
-            AvatarFromUrlJob::dispatch($contactInbox->contact, $profile['profile_pic']);
-        }
+        return new InboundSender(
+            sourceId: $contactSourceId,
+            name: $profile['name'] ?? null,
+            avatarUrl: $profile['profile_pic'] ?? null,
+            additionalAttributes: $this->instagramAttributes($profile),
+        );
     }
 
     /**

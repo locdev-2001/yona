@@ -17,6 +17,13 @@ enum AttachmentKind: string
     case ContactCard = 'contact_card';
     case Fallback = 'fallback';
 
+    // Bài đăng/story của Meta: lõi đã có file_type riêng để giao diện vẽ đúng.
+    case Share = 'share';
+    case StoryMention = 'story_mention';
+    case IgReel = 'ig_reel';
+    case IgPost = 'ig_post';
+    case IgStory = 'ig_story';
+
     public function fileType(): int
     {
         return match ($this) {
@@ -27,6 +34,11 @@ enum AttachmentKind: string
             self::Location => Attachment::FILE_TYPE_LOCATION,
             self::ContactCard => Attachment::FILE_TYPE_CONTACT,
             self::Fallback => Attachment::FILE_TYPE_FALLBACK,
+            self::Share => Attachment::FILE_TYPE_SHARE,
+            self::StoryMention => Attachment::FILE_TYPE_STORY_MENTION,
+            self::IgReel => Attachment::FILE_TYPE_IG_REEL,
+            self::IgPost => Attachment::FILE_TYPE_IG_POST,
+            self::IgStory => Attachment::FILE_TYPE_IG_STORY,
         };
     }
 

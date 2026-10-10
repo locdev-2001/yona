@@ -2,38 +2,73 @@
 
 namespace App\Services\Facebook;
 
-use App\Builders\Messages\Facebook\MessageBuilder;
 use App\Messaging\Delivery\ChoiceToken;
+use App\Messaging\Inbound\InboundMessageWriter;
+use App\Messaging\Inbound\InboundSender;
 use App\Models\Channel\FacebookPage;
+use App\Models\Inbox;
 use App\Services\Messaging\ChoiceCallbackService;
 
+/** Một phần tử `messaging` có `message` → tin đến hoặc tin dội lại trên mọi trang khớp. */
 class MessageCreator
 {
     public function __construct(private readonly MessageParser $response) {}
 
     public function perform(): void
     {
-        // Echo của chính tin hệ thống vừa gửi — bỏ, nếu không sẽ nhân đôi.
         if ($this->response->isEcho() && $this->response->isSentFromOwnApp()) {
             return;
         }
 
-        $isEcho = $this->response->isEcho();
-
-        if (! $isEcho && $this->handleQuickReply()) {
+        if (! $this->response->isEcho() && $this->handleQuickReply()) {
             return;
         }
 
-        $pageId = $isEcho ? $this->response->senderId() : $this->response->recipientId();
+        $pageId = $this->response->isEcho() ? $this->response->senderId() : $this->response->recipientId();
+        $contactSourceId = $this->response->contactSourceId();
+
+        if ($contactSourceId === null) {
+            return;
+        }
 
         FacebookPage::query()->where('page_id', $pageId)->get()
-            ->each(function (FacebookPage $page) use ($isEcho) {
-                if ($page->inbox === null) {
-                    return;
-                }
-
-                (new MessageBuilder($this->response, $page->inbox, outgoingEcho: $isEcho))->perform();
+            ->filter(fn (FacebookPage $page) => $page->inbox !== null && ! $page->reauthorizationRequired())
+            ->each(function (FacebookPage $page) use ($contactSourceId) {
+                app(InboundMessageWriter::class)->write(
+                    $page->inbox,
+                    $this->sender($page, $contactSourceId),
+                    $this->response->inboundMessage(),
+                );
             });
+    }
+
+    /**
+     * Hồ sơ Graph chỉ tra khi khách chưa có trong hộp thư — tên hiển thị đầy đủ `name`
+     * đúng thứ tự chủ tài khoản đặt; ghép first/last kiểu Tây sẽ đảo họ tên.
+     */
+    private function sender(FacebookPage $page, string $contactSourceId): InboundSender
+    {
+        if ($this->contactKnown($page->inbox, $contactSourceId)) {
+            return new InboundSender($contactSourceId);
+        }
+
+        $profile = (new FacebookGraphClient($page))->userProfile($contactSourceId);
+        $name = trim((string) ($profile['name'] ?? ''));
+
+        if ($name === '') {
+            $name = trim(($profile['first_name'] ?? '').' '.($profile['last_name'] ?? ''));
+        }
+
+        return new InboundSender(
+            sourceId: $contactSourceId,
+            name: $name === '' ? null : $name,
+            avatarUrl: $profile['profile_pic'] ?? null,
+        );
+    }
+
+    private function contactKnown(Inbox $inbox, string $contactSourceId): bool
+    {
+        return $inbox->contactInboxes()->where('source_id', $contactSourceId)->exists();
     }
 
     // Khách bấm chip do DeliveryPlanner vẽ (Renderers\FacebookRenderer): map thẳng về tin gốc

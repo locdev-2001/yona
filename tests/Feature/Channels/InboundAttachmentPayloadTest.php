@@ -1,12 +1,12 @@
 <?php
 
-use App\Builders\Messages\Facebook\MessageBuilder;
 use App\Events\DomainEvent;
 use App\Events\EventType;
 use App\Http\Resources\MessageResource;
 use App\Models\Attachment;
 use App\Models\Inbox;
 use App\Models\Message;
+use App\Services\Facebook\MessageCreator;
 use App\Services\Facebook\MessageParser;
 use App\Services\Telegram\IncomingMessageService;
 use App\Services\Tiktok\MessageService;
@@ -154,11 +154,9 @@ it('WhatsApp: message.created mang theo đính kèm', function () {
 });
 
 it('Messenger: message.created phát sau commit nên đã có đính kèm', function () {
-    // Gốc gắn tệp SAU create! nhưng cả cụm nằm trong một transaction và sự kiện
-    // là after_create_commit — thứ tự đúng đến từ afterCommit chứ không phải từ
-    // việc đảo thứ tự gắn tệp (facebook/message_builder.rb:24-52).
+    // Lõi dựng đính kèm TRƯỚC khi lưu (InboundMessageWriter) nên payload realtime đã có tệp.
     Http::fake([
-        'graph.facebook.com/*' => Http::response(['first_name' => 'Khách', 'last_name' => 'FB']),
+        'graph.facebook.com/*' => Http::response(['name' => 'Khách FB']),
         'cdn.fbsbx.test/*' => Http::response(ChannelFixture::jpegBytes(), 200, ['Content-Type' => 'image/jpeg']),
     ]);
 
@@ -171,10 +169,7 @@ it('Messenger: message.created phát sau commit nên đã có đính kèm', func
     ];
     $messaging = $payload['entry'][0]['messaging'][0];
 
-    $payloads = capturedCreatedPayloads(fn () => (new MessageBuilder(
-        new MessageParser($messaging),
-        $inbox,
-    ))->perform());
+    $payloads = capturedCreatedPayloads(fn () => (new MessageCreator(new MessageParser($messaging)))->perform());
 
     expectSingleAttachmentInPayload($payloads, 'image');
 });

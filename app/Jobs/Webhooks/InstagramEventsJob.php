@@ -5,6 +5,7 @@ namespace App\Jobs\Webhooks;
 use App\Jobs\ApplicationJob;
 use App\Models\Channel\FacebookPage;
 use App\Models\Channel\Instagram;
+use App\Services\Instagram\MessageParser;
 use App\Services\Instagram\MessageTextService;
 
 class InstagramEventsJob extends ApplicationJob
@@ -28,13 +29,15 @@ class InstagramEventsJob extends ApplicationJob
             : ($entry['standby'] ?? array_filter(array_map(fn ($change) => $change['value'] ?? null, $entry['changes'] ?? [])));
 
         foreach ($messages as $messaging) {
-            if (blank($messaging['message'] ?? null)) {
+            $payload = new MessageParser($messaging);
+
+            if (! $payload->hasMessage() && ! $payload->hasEvents()) {
                 continue;
             }
 
-            $instagramId = filled(data_get($messaging, 'message.is_echo'))
-                ? data_get($messaging, 'sender.id')
-                : data_get($messaging, 'recipient.id');
+            // Tin dội lại do tài khoản kinh doanh gửi; mọi thứ khác (tin khách, cảm xúc,
+            // đã xem) trỏ tài khoản kinh doanh ở phía người nhận.
+            $instagramId = $payload->isEcho() ? $payload->senderId() : $payload->recipientId();
 
             $channel = $this->findChannel((string) $instagramId);
 

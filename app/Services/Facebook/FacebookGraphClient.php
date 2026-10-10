@@ -42,7 +42,7 @@ class FacebookGraphClient
     public function subscribe(): void
     {
         Http::post($this->baseUri()."/{$this->channel->page_id}/subscribed_apps", [
-            'subscribed_fields' => 'messages,message_deliveries,message_echoes,message_reads,standby,messaging_handovers',
+            'subscribed_fields' => 'messages,message_deliveries,message_echoes,message_reads,message_reactions,standby,messaging_handovers',
             'access_token' => $this->channel->page_access_token,
         ]);
     }

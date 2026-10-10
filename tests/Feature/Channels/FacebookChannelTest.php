@@ -252,3 +252,32 @@ it('sticker Messenger về đúng hình dạng sticker của lõi, Meta lặp đ
         ->and($message->attachments)->toHaveCount(1)
         ->and($message->attachments->first()->file_type)->toBe(Attachment::FILE_TYPE_IMAGE);
 });
+
+it('cảm xúc của khách trên Messenger ghi vào tin, gỡ thì xoá', function () {
+    Http::fake(['graph.facebook.com/*' => Http::response(['message_id' => 'mid.out'])]);
+    facebookPost(ChannelFixture::load('facebook_messaging'));
+    $outgoing = facebookOutgoingSentAt('mid.out.react', now()->subMinute());
+
+    facebookReceiptPost(['reaction' => ['mid' => 'mid.out.react', 'action' => 'react', 'emoji' => '❤️', 'reaction' => 'love']])->assertOk();
+    expect($outgoing->fresh()->reactionList()[0]['emoji'])->toBe('❤️')
+        ->and($outgoing->fresh()->reactionList()[0]['by'])->toBe('sender-psid');
+
+    facebookReceiptPost(['reaction' => ['mid' => 'mid.out.react', 'action' => 'unreact']])->assertOk();
+    expect($outgoing->fresh()->reactionList())->toBe([]);
+});
+
+it('tin Messenger giữ giờ nền tảng và trích dẫn theo mid', function () {
+    Http::fake(['graph.facebook.com/*' => Http::response(['name' => 'Nguyễn An'])]);
+    facebookPost(ChannelFixture::load('facebook_messaging'));
+    $quoted = Message::query()->latest('id')->first();
+
+    $payload = ChannelFixture::load('facebook_messaging');
+    $payload['entry'][0]['messaging'][0]['timestamp'] = now()->subHours(3)->getTimestampMs();
+    $payload['entry'][0]['messaging'][0]['message'] = ['mid' => 'mid.facebook.reply', 'text' => 'hỏi lại', 'reply_to' => ['mid' => 'mid.facebook.1']];
+    facebookPost($payload)->assertOk();
+
+    $reply = Message::query()->latest('id')->first();
+
+    expect($reply->content_attributes['in_reply_to'])->toBe($quoted->id)
+        ->and($reply->created_at->diffInHours(now()))->toBeGreaterThanOrEqual(2);
+});

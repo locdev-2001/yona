@@ -18,6 +18,7 @@ export const CHANNEL_CAPABILITIES = [
     'inbound_link_preview',
     'inbound_caption',
     'inbound_forward',
+    'inbound_reply_to',
     'outbound_text',
     'outbound_image',
     'outbound_gif',

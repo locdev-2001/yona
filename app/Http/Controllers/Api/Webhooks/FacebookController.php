@@ -5,8 +5,8 @@ namespace App\Http\Controllers\Api\Webhooks;
 use App\Http\Controllers\Api\Webhooks\Concerns\VerifiesMetaSignature;
 use App\Http\Controllers\Controller;
 use App\Jobs\Webhooks\FacebookEventsJob;
-use App\Jobs\Webhooks\FacebookReceiptsJob;
-use App\Services\Facebook\ReceiptRecorder;
+use App\Jobs\Webhooks\FacebookMessageEventsJob;
+use App\Services\Facebook\MessageParser;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
@@ -31,19 +31,20 @@ class FacebookController extends Controller
 
         foreach ((array) $request->input('entry', []) as $entry) {
             foreach ([...$entry['messaging'] ?? [], ...$entry['standby'] ?? []] as $messaging) {
-                if (ReceiptRecorder::handles($messaging)) {
-                    FacebookReceiptsJob::dispatch($messaging);
+                $payload = new MessageParser($messaging);
 
-                    continue;
+                if ($payload->hasEvents()) {
+                    FacebookMessageEventsJob::dispatch($messaging);
                 }
 
-                if (blank($messaging['message'] ?? null)) {
+                if (! $payload->hasMessage()) {
                     continue;
                 }
 
                 $job = FacebookEventsJob::dispatch($messaging);
 
-                if (filled(data_get($messaging, 'message.is_echo'))) {
+                // Echo tới trước khi Graph kịp trả message_id cho tin vừa gửi → hoãn một nhịp.
+                if ($payload->isEcho()) {
                     $job->delay(now()->addSeconds(2));
                 }
             }
