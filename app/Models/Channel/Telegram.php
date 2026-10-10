@@ -12,6 +12,7 @@ use App\Channels\DeclaresConnection;
 use App\Channels\DeclaresPlatform;
 use App\Channels\TextFormat;
 use App\Models\Channel\Concerns\Channelable;
+use App\Models\Conversation;
 use App\Models\Message;
 use Database\Factories\Channel\TelegramFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -98,9 +99,22 @@ class Telegram extends Model implements DeclaresCapabilities, DeclaresConnection
             ?? $message->conversation->contactInbox?->source_id;
     }
 
+    /**
+     * Hội thoại người trực tự mở chưa mang business_connection_id: lấy của hội thoại gần nhất
+     * cùng địa chỉ khách, vì khách nhắn tới tài khoản Business thì tin trả lời phải đi qua đó.
+     */
     public function businessConnectionId(Message $message): mixed
     {
-        return $message->conversation->additional_attributes['business_connection_id'] ?? null;
+        $conversation = $message->conversation;
+
+        return $conversation->additional_attributes['business_connection_id']
+            ?? ($conversation->contact_inbox_id === null ? null : Conversation::query()
+                ->where('contact_inbox_id', $conversation->contact_inbox_id)
+                ->whereKeyNot($conversation->id)
+                ->whereNotNull('additional_attributes->business_connection_id')
+                ->latest('id')
+                ->first()
+                ?->additional_attributes['business_connection_id']);
     }
 
     /** Khách tạo bot ở BotFather rồi dán token; token được kiểm bằng getMe khi lưu. */

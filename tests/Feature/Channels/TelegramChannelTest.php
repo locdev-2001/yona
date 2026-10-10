@@ -223,3 +223,35 @@ it('sticker vào contract lõi: content_type sticker, không còn là ảnh thư
         ->and($message->content_attributes['sticker']['pack_id'])->toBe('BoSticker')
         ->and($message->attachments)->toHaveCount(1);
 });
+
+it('hội thoại người trực tự mở gửi qua kết nối Business của hội thoại gần nhất cùng khách', function () {
+    fakeTelegramApi();
+    (new TelegramEventsJob([
+        'bot_token' => $this->channel->bot_token,
+        'telegram' => ChannelFixture::load('telegram_text'),
+    ]))->handle();
+    $previous = Conversation::query()->latest('id')->first();
+    $previous->update([
+        'status' => Conversation::STATUS_RESOLVED,
+        'additional_attributes' => [...$previous->additional_attributes ?? [], 'business_connection_id' => 'biz-conn-1'],
+    ]);
+    $this->inbox->update(['lock_to_single_conversation' => false]);
+
+    $conversation = Conversation::factory()->create([
+        'account_id' => $previous->account_id, 'inbox_id' => $previous->inbox_id,
+        'contact_id' => $previous->contact_id, 'contact_inbox_id' => $previous->contact_inbox_id,
+        'additional_attributes' => [],
+    ]);
+    $outgoing = $conversation->messages()->create([
+        'account_id' => $conversation->account_id,
+        'inbox_id' => $conversation->inbox_id,
+        'message_type' => Message::TYPE_OUTGOING,
+        'content' => 'Chào lại bạn',
+    ]);
+
+    (new SendOnTelegramService($outgoing))->perform();
+
+    Http::assertSent(fn ($request) => str_contains($request->url(), '/sendMessage')
+        && $request['text'] === 'Chào lại bạn'
+        && $request['business_connection_id'] === 'biz-conn-1');
+});
