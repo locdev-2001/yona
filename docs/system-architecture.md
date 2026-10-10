@@ -146,6 +146,16 @@ Tin sticker là `content_type: sticker` với payload ở `content_attributes.st
 nó **không** phải `StructuredType` (không đăng ký ở `config/messaging.php`), vì
 ra kênh ngoài là sticker gốc của nền tảng hoặc một ảnh, không cần hạ cấp.
 
+- **Một hình dạng cho mọi kênh:** `app/Messaging/Stickers/StickerMessage::apply()`
+  là nơi duy nhất ghi ba trường của tin sticker (`content_type`, `content` rỗng,
+  `content_attributes.sticker`) và đúng một đính kèm ảnh. Driver kênh chỉ bóc payload
+  của mình thành `StickerContent` (id, pack_id, url, animated, emoji + `extra` riêng
+  của kênh để danh mục gửi lại được) rồi gọi `apply`; ảnh trên CDN công khai đi
+  bằng `external_url`, ảnh có token/hết hạn (Telegram, WhatsApp, Messenger) kênh tải
+  về rồi đưa vào `apply`. Kho Yona (`StickerMessageBuilder`) cũng đi đường này.
+  Kênh khai `inbound_sticker` bị `InboundStickerContract` ép đúng hình dạng; thêm
+  kênh mới = viết `sticker(): ?StickerContent` trong driver, không sửa lõi.
+
 - **Danh mục ghép:** `app/Services/Channels/Stickers/StickerLibrary.php` là lõi
   trung tính, ghép `YonaStickerCatalog` (`app/Services/Stickers/`, kho của chính
   Yona) với danh mục của nền tảng tra qua `ChannelActionRegistry` (ví dụ

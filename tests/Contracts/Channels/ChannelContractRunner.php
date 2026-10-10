@@ -6,6 +6,7 @@ use Tests\Contracts\Channels\Contracts\ChannelContract;
 use Tests\Contracts\Channels\Contracts\EventSeenContract;
 use Tests\Contracts\Channels\Contracts\InboundForwardContract;
 use Tests\Contracts\Channels\Contracts\InboundImageContract;
+use Tests\Contracts\Channels\Contracts\InboundStickerContract;
 use Tests\Contracts\Channels\Contracts\MentionContract;
 use Tests\Contracts\Channels\Contracts\OutboundAttachmentsContract;
 use Tests\Contracts\Channels\Contracts\OutboundStickerContract;
@@ -24,6 +25,7 @@ final class ChannelContractRunner
 {
     public const CONTRACTS = [
         InboundImageContract::class,
+        InboundStickerContract::class,
         OutboundAttachmentsContract::class,
         ReplyToContract::class,
         MentionContract::class,

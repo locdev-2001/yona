@@ -4,9 +4,12 @@ namespace App\Builders\Messages\Facebook;
 
 use App\Builders\ContactInboxWithContactBuilder;
 use App\Builders\Messages\Messenger\BaseMessageBuilder;
+use App\Messaging\Stickers\StickerMessage;
+use App\Models\Attachment;
 use App\Models\Inbox;
 use App\Models\Message;
 use App\Services\Channels\IncomingConversationResolver;
+use App\Services\Channels\RemoteAttachmentDownloader;
 use App\Services\Facebook\FacebookGraphClient;
 use App\Services\Facebook\MessageParser;
 use Illuminate\Support\Facades\DB;
@@ -65,6 +68,15 @@ class MessageBuilder extends BaseMessageBuilder
                 $message->sender()->associate($contactInbox->contact);
             }
 
+            $sticker = $this->response->sticker();
+
+            if ($sticker !== null) {
+                StickerMessage::apply($message, $sticker, $this->downloadedStickerImage($message));
+                $message->save();
+
+                return $message;
+            }
+
             $message->save();
 
             foreach ($this->response->attachments() as $attachment) {
@@ -73,6 +85,19 @@ class MessageBuilder extends BaseMessageBuilder
 
             return $message;
         });
+    }
+
+    private function downloadedStickerImage(Message $message): ?Attachment
+    {
+        $url = $this->response->stickerImageUrl();
+
+        if (blank($url)) {
+            return null;
+        }
+
+        $attributes = RemoteAttachmentDownloader::download((string) $url, $message->account_id);
+
+        return $attributes === null ? null : new Attachment([...$attributes, 'file_type' => Attachment::FILE_TYPE_IMAGE]);
     }
 
     // Bài chia sẻ của Facebook trỏ tới trang web, không phải tệp tải được.

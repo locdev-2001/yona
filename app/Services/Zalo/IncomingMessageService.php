@@ -6,6 +6,8 @@ use App\Actions\ContactMergeAction;
 use App\Builders\ContactInboxBuilder;
 use App\Builders\ContactInboxWithContactBuilder;
 use App\Jobs\Avatar\AvatarFromUrlJob;
+use App\Messaging\Stickers\StickerContent;
+use App\Messaging\Stickers\StickerMessage;
 use App\Models\Attachment;
 use App\Models\Channel\Zalo;
 use App\Models\Contact;
@@ -176,7 +178,7 @@ class IncomingMessageService
             'content' => $this->content(),
             'account_id' => $this->inbox->account_id,
             'inbox_id' => $this->inbox->id,
-            'content_type' => $this->contentType(),
+            'content_type' => Message::CONTENT_TYPES['text'],
             'message_type' => match (true) {
                 $isChatTip => Message::TYPE_ACTIVITY,
                 $isOutgoing => Message::TYPE_OUTGOING,
@@ -195,6 +197,14 @@ class IncomingMessageService
         // `message.created` phát ra đã có đính kèm. Gắn sau khi lưu thì payload
         // realtime rỗng và bong bóng chỉ hiện lại sau khi tải lại trang.
         $message->pendingAttachments = $this->buildAttachments($message->account_id);
+
+        $sticker = $this->sticker();
+
+        if ($sticker !== null) {
+            // Sticker tự tạo ngoài kho Yona chỉ có ảnh JPG trên CDN Zalo (có hạn dùng):
+            // ảnh là bản đã tải về như ảnh thường; các sticker khác trỏ thẳng CDN.
+            StickerMessage::apply($message, $sticker, $sticker->imageUrl === null ? ($message->pendingAttachments[0] ?? null) : null);
+        }
 
         // Thứ tự tin theo giờ NỀN TẢNG chứ không theo giờ ghi vào CSDL: lô lịch
         // sử kéo về sau khi bridge nối lại phải nằm đúng chỗ cũ trong dòng hội
@@ -498,25 +508,36 @@ class IncomingMessageService
         return in_array($direction, ['in', 'out', 'echo'], true) ? $direction : 'in';
     }
 
-    // Sticker đi vào contract lõi (`content_type` sticker) thay vì
-    // chỉ nằm trong content_attributes — nhờ đó bong bóng và ô xem trước hiển thị
-    // như mọi kênh khác, lõi không cần biết kênh nào gửi.
-    private function contentType(): int
+    private function sticker(): ?StickerContent
     {
-        return $this->isSticker()
-            ? Message::CONTENT_TYPES['sticker']
-            : Message::CONTENT_TYPES['text'];
-    }
+        $customSticker = $this->customSticker();
 
-    private function isSticker(): bool
-    {
-        return $this->customSticker() !== null || $this->isPlatformSticker();
+        if ($customSticker !== null) {
+            return new StickerContent(
+                id: $customSticker->contentId ?? (string) $this->params['source_id'],
+                imageUrl: $customSticker->webpUrl,
+                extra: $customSticker->payload(),
+            );
+        }
+
+        if (! $this->isPlatformSticker()) {
+            return null;
+        }
+
+        $sticker = (array) $this->params['sticker'];
+
+        return new StickerContent(
+            id: $sticker['id'],
+            imageUrl: $this->firstFilled($sticker, self::STICKER_URL_KEYS),
+            packId: $sticker['catId'] ?? $sticker['cateId'] ?? null,
+            extra: $sticker,
+        );
     }
 
     private function isPlatformSticker(): bool
     {
         return ($this->params['inbound_kind'] ?? null) === self::STICKER_KIND
-            && filled($this->params['sticker'] ?? null);
+            && filled($this->params['sticker']['id'] ?? null);
     }
 
     private function customSticker(): ?ZaloCustomSticker
@@ -529,16 +550,19 @@ class IncomingMessageService
         return $this->customSticker;
     }
 
-    /** @return array<string, mixed>|null */
-    private function stickerPayload(): ?array
+    /**
+     * @param  array<string, mixed>  $values
+     * @param  list<string>  $keys
+     */
+    private function firstFilled(array $values, array $keys): ?string
     {
-        $customSticker = $this->customSticker();
-
-        if ($customSticker !== null) {
-            return $customSticker->payload();
+        foreach ($keys as $key) {
+            if (filled($values[$key] ?? null)) {
+                return (string) $values[$key];
+            }
         }
 
-        return filled($this->params['sticker'] ?? null) ? (array) $this->params['sticker'] : null;
+        return null;
     }
 
     /**
@@ -559,10 +583,6 @@ class IncomingMessageService
 
     private function content(): ?string
     {
-        if ($this->customSticker() !== null) {
-            return null;
-        }
-
         $content = $this->params['content'] ?? null;
         $card = $this->card();
 
@@ -582,12 +602,6 @@ class IncomingMessageService
     private function contentAttributes(Conversation $conversation): array
     {
         $attributes = [];
-
-        $sticker = $this->stickerPayload();
-
-        if ($sticker !== null) {
-            $attributes['sticker'] = $sticker;
-        }
 
         $card = $this->card();
 
@@ -790,12 +804,10 @@ class IncomingMessageService
     /** @return list<Attachment> */
     private function buildAttachments(int $accountId): array
     {
-        // Sticker tự tạo ngoài kho Yona chỉ có ảnh JPG trên CDN Zalo (có hạn
-        // dùng): đi tiếp đường tải tệp bên dưới như ảnh thường.
-        if ($this->isPlatformSticker() || $this->customSticker()?->webpUrl !== null) {
-            $sticker = $this->stickerAttachment($accountId);
-
-            return $sticker === null ? [] : [$sticker];
+        // Sticker nền tảng và sticker tự tạo có WebP: ảnh do StickerMessage dựng từ
+        // URL CDN, không tải; chỉ sticker tự tạo chỉ có JPG đi tiếp đường tải bên dưới.
+        if ($this->sticker()?->imageUrl !== null) {
+            return [];
         }
 
         $kind = (string) ($this->params['inbound_kind'] ?? 'file');
@@ -870,29 +882,6 @@ class IncomingMessageService
             'coordinates_long' => (float) $longitude,
             'fallback_title' => $title === '' ? null : mb_substr($title, 0, 255),
             'external_url' => $location['url'] ?? null,
-        ]);
-    }
-
-    /**
-     * Ảnh sticker nằm trên CDN Zalo và không đổi — trỏ thẳng bằng `external_url`
-     * như kênh Line, khỏi tải về đĩa.
-     */
-    private function stickerAttachment(int $accountId): ?Attachment
-    {
-        $sticker = $this->stickerPayload() ?? [];
-        $url = null;
-
-        foreach (self::STICKER_URL_KEYS as $key) {
-            if (filled($sticker[$key] ?? null)) {
-                $url = (string) $sticker[$key];
-                break;
-            }
-        }
-
-        return $url === null ? null : new Attachment([
-            'account_id' => $accountId,
-            'file_type' => Attachment::FILE_TYPE_IMAGE,
-            'external_url' => $url,
         ]);
     }
 }

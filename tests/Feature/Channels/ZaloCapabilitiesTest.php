@@ -13,7 +13,7 @@ it('Zalo qua đủ các contract của những năng lực nó khai báo', funct
 
     $executed = ChannelContractRunner::runDeclared($harness);
 
-    expect($executed)->toBe(['inbound_image', 'outbound_file', 'outbound_reply_to', 'outbound_mention', 'event_seen', 'outbound_sticker', 'settings_single_conversation']);
+    expect($executed)->toBe(['inbound_image', 'inbound_sticker', 'outbound_file', 'outbound_reply_to', 'outbound_mention', 'event_seen', 'outbound_sticker', 'settings_single_conversation']);
 });
 
 it('khai đúng những năng lực lô 3 và lô 4 vừa làm chạy được', function () {

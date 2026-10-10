@@ -79,6 +79,7 @@
         "inbound_video",
         "inbound_audio",
         "inbound_file",
+        "inbound_sticker",
         "inbound_caption",
         "outbound_text",
         "outbound_image",

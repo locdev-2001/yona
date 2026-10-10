@@ -4,6 +4,8 @@ namespace App\Services\Messages;
 
 use App\Channels\Capability;
 use App\Exceptions\MessageValidationException;
+use App\Messaging\Stickers\StickerContent;
+use App\Messaging\Stickers\StickerMessage;
 use App\Models\Inbox;
 use App\Models\Message;
 use App\Services\Channels\Stickers\StickerCatalogException;
@@ -13,9 +15,8 @@ use App\Services\Channels\Stickers\StickerLibrary;
  * Tin `content_type: sticker` do agent gửi, hoặc khách gửi từ bề mặt của kênh
  * khai `inbound_sticker` (widget website): client chỉ đưa `sticker_id`, máy chủ
  * tra danh mục sở hữu mã rồi tự dựng tin theo đúng hình dạng sticker nhận về —
- * `content` rỗng, `content_attributes.sticker` là payload của danh mục, một đính
- * kèm ảnh do chính danh mục dựng. Nhờ vậy bong bóng, ô xem trước, realtime,
- * webhook và đường gửi ảnh của mọi kênh dùng lại contract sẵn có.
+ * rồi ghi theo hình dạng chung của lõi (App\Messaging\Stickers\StickerMessage) với
+ * payload của danh mục và một đính kèm ảnh do chính danh mục dựng.
  *
  * Sticker đi một mình: không ghi chú riêng, không kèm tệp, không trích dẫn.
  */
@@ -45,9 +46,7 @@ final class StickerMessageBuilder
             throw new MessageValidationException($exception->getMessage());
         }
 
-        $this->message->content = null;
-        $this->message->content_attributes = ['sticker' => $sticker->payload];
-        $this->message->pendingAttachments = [$attachment];
+        StickerMessage::apply($this->message, StickerContent::fromPayload($sticker->payload), $attachment);
     }
 
     private function guardStandalone(): void

@@ -220,6 +220,6 @@ it('sticker vào contract lõi: content_type sticker, không còn là ảnh thư
 
     expect($message->content_type)->toBe(Message::CONTENT_TYPES['sticker'])
         ->and($message->content_attributes['sticker']['id'])->toBe('stk-uniq')
-        ->and($message->content_attributes['sticker']['cateId'])->toBe('BoSticker')
+        ->and($message->content_attributes['sticker']['pack_id'])->toBe('BoSticker')
         ->and($message->attachments)->toHaveCount(1);
 });

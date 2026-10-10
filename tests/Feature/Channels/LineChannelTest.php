@@ -113,6 +113,6 @@ it('sticker vào contract lõi: content_type sticker, ảnh là đính kèm ngo�
 
     expect($message->content)->toBeNull()
         ->and($message->content_type)->toBe(Message::CONTENT_TYPES['sticker'])
-        ->and($message->content_attributes['sticker'])->toBe(['id' => '52002734', 'cateId' => '11537', 'url' => $url, 'thumbnail' => $url])
+        ->and($message->content_attributes['sticker'])->toBe(['id' => '52002734', 'pack_id' => '11537', 'url' => $url])
         ->and($message->attachments()->first()->external_url)->toBe($url);
 });

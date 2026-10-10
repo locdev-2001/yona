@@ -5,6 +5,8 @@ namespace App\Services\Telegram;
 use App\Builders\ContactInboxWithContactBuilder;
 use App\Jobs\Avatar\AvatarFromUrlJob;
 use App\Messaging\Delivery\ChoiceToken;
+use App\Messaging\Stickers\StickerContent;
+use App\Messaging\Stickers\StickerMessage;
 use App\Models\Attachment;
 use App\Models\Contact;
 use App\Models\ContactInbox;
@@ -67,8 +69,8 @@ class IncomingMessageService
             'account_id' => $this->inbox->account_id,
             'inbox_id' => $this->inbox->id,
             'message_type' => $isOutgoing ? Message::TYPE_OUTGOING : Message::TYPE_INCOMING,
-            'content_type' => $this->isStickerMessage() ? Message::CONTENT_TYPES['sticker'] : Message::CONTENT_TYPES['text'],
-            'content_attributes' => [...$this->contentAttributes(), ...$this->stickerAttributes()],
+            'content_type' => Message::CONTENT_TYPES['text'],
+            'content_attributes' => $this->contentAttributes(),
             'source_id' => (string) $this->messageId(),
         ]);
 
@@ -82,6 +84,12 @@ class IncomingMessageService
         // bong bóng chỉ hiện lại sau khi tải lại trang.
         if ($this->hasMessageParams()) {
             $this->processMessageAttachments();
+        }
+
+        $sticker = $this->sticker();
+
+        if ($sticker !== null) {
+            StickerMessage::apply($this->message, $sticker, $this->message->pendingAttachments[0] ?? null);
         }
 
         $this->message->save();
@@ -244,25 +252,21 @@ class IncomingMessageService
         return $this->hasMessageParams() && filled(data_get($this->params, 'message.sticker'));
     }
 
-    /**
-     * Sticker vào contract lõi như Zalo (`content_type` sticker + `content_attributes.sticker`).
-     * Không có `url`: URL tệp Telegram nhúng bot token nên ảnh chỉ đi qua đính kèm đã tải về.
-     *
-     * @return array<string, array<string, mixed>>
-     */
-    private function stickerAttributes(): array
+    /** Không có `url`: URL tệp Telegram nhúng bot token nên ảnh chỉ đi qua đính kèm đã tải về. */
+    private function sticker(): ?StickerContent
     {
         if (! $this->isStickerMessage()) {
-            return [];
+            return null;
         }
 
         $sticker = (array) data_get($this->params, 'message.sticker');
 
-        return ['sticker' => array_filter([
-            'id' => $sticker['file_unique_id'] ?? $sticker['file_id'] ?? null,
-            'cateId' => $sticker['set_name'] ?? null,
-            'emoji' => $sticker['emoji'] ?? null,
-        ], fn ($value) => filled($value))];
+        return new StickerContent(
+            id: (string) ($sticker['file_unique_id'] ?? $sticker['file_id']),
+            packId: $sticker['set_name'] ?? null,
+            animated: isset($sticker['is_animated']) ? (bool) $sticker['is_animated'] : null,
+            emoji: $sticker['emoji'] ?? null,
+        );
     }
 
     private function isAudioMessage(): bool

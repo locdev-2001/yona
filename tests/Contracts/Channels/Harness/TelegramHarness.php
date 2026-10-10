@@ -19,6 +19,7 @@ final class TelegramHarness implements ChannelHarness
     private const INBOUND_FIXTURES = [
         Capability::InboundText->value => 'telegram_text',
         Capability::InboundImage->value => 'telegram_photo',
+        Capability::InboundSticker->value => 'telegram_sticker',
         Capability::InboundForward->value => 'telegram_forward',
     ];
 
@@ -35,7 +36,8 @@ final class TelegramHarness implements ChannelHarness
         Http::fake([
             'api.telegram.org/*getUserProfilePhotos*' => Http::response(['ok' => true, 'result' => ['photos' => []]]),
             'api.telegram.org/*getFile*' => Http::response(['ok' => true, 'result' => ['file_path' => 'photos/file_1.jpg']]),
-            'api.telegram.org/file/*' => Http::response('binary-image', 200, ['Content-Type' => 'image/jpeg']),
+            // Closure: mỗi lần tải một stream mới, không thì lần tải thứ hai (sticker sau ảnh) nhận stream đã cạn.
+            'api.telegram.org/file/*' => fn () => Http::response('binary-image', 200, ['Content-Type' => 'image/jpeg']),
             'api.telegram.org/*sendMediaGroup*' => Http::response(['ok' => true, 'result' => [['message_id' => 998]]]),
             'api.telegram.org/*' => Http::response(['ok' => true, 'result' => ['message_id' => 999]]),
         ]);

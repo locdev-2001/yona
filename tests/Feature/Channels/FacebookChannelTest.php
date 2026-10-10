@@ -1,6 +1,7 @@
 <?php
 
 use App\Channels\Capability;
+use App\Messaging\Stickers\StickerMessage;
 use App\Models\Attachment;
 use App\Models\Inbox;
 use App\Models\Message;
@@ -232,4 +233,22 @@ it('kênh Messenger khai biên nhận đã giao và đã xem để giao diện h
 
     expect($capabilities->has(Capability::EventDelivered))->toBeTrue()
         ->and($capabilities->has(Capability::EventSeen))->toBeTrue();
+});
+
+it('sticker Messenger về đúng hình dạng sticker của lõi, Meta lặp đính kèm vẫn chỉ một ảnh', function () {
+    Storage::fake('public');
+    Http::fake([
+        'cdn.messenger.test/*' => Http::response(ChannelFixture::jpegBytes(), 200, ['Content-Type' => 'image/webp']),
+        'graph.facebook.com/*' => Http::response(['name' => 'Nguyễn An']),
+    ]);
+
+    facebookPost(ChannelFixture::load('facebook_sticker'))->assertOk();
+
+    $message = Message::query()->latest('id')->first();
+
+    expect(StickerMessage::isSticker($message))->toBeTrue()
+        ->and($message->content)->toBeNull()
+        ->and($message->content_attributes['sticker'])->toBe(['id' => '369239263222822'])
+        ->and($message->attachments)->toHaveCount(1)
+        ->and($message->attachments->first()->file_type)->toBe(Attachment::FILE_TYPE_IMAGE);
 });

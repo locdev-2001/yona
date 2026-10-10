@@ -40,7 +40,7 @@ final class ZaloStickerCatalog implements StickerCatalog
     // Sticker nhận về ghi bộ là `catId`, danh mục ghi `cate_id`, bản lõi lưu `cateId`.
     private const STORED_ID_KEYS = ['id', 'sticker_id', 'stickerId', 'sid'];
 
-    private const STORED_PACK_KEYS = ['cateId', 'catId', 'cate_id'];
+    private const STORED_PACK_KEYS = ['pack_id', 'cateId', 'catId', 'cate_id'];
 
     private const STORED_URL_KEYS = ['url', 'stickerUrl', 'stickerWebpUrl', 'thumbnail'];
 

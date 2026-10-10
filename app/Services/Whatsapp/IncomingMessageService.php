@@ -3,6 +3,8 @@
 namespace App\Services\Whatsapp;
 
 use App\Builders\ContactInboxWithContactBuilder;
+use App\Messaging\Stickers\StickerContent;
+use App\Messaging\Stickers\StickerMessage;
 use App\Models\Attachment;
 use App\Models\Inbox;
 use App\Models\Message;
@@ -116,8 +118,8 @@ class IncomingMessageService
             // Echo đặt sẵn 'delivered' để SendReplyJob không gửi ngược ra ngoài.
             'status' => $this->outgoingEcho ? Message::STATUSES['delivered'] : Message::STATUSES['sent'],
             'source_id' => (string) $payload['id'],
-            'content_type' => $type === 'sticker' ? Message::CONTENT_TYPES['sticker'] : Message::CONTENT_TYPES['text'],
-            'content_attributes' => $this->contentAttributes($payload, $type),
+            'content_type' => Message::CONTENT_TYPES['text'],
+            'content_attributes' => $this->contentAttributes($payload),
         ]);
 
         if (! $this->outgoingEcho) {
@@ -130,6 +132,12 @@ class IncomingMessageService
         $this->attachFiles($message, $payload, $type);
         $this->attachLocation($message, $payload, $type);
         $this->attachContacts($message, $payload, $type);
+
+        $sticker = $this->sticker($payload, $type);
+
+        if ($sticker !== null) {
+            StickerMessage::apply($message, $sticker, $message->pendingAttachments[0] ?? null);
+        }
 
         $message->save();
 
@@ -150,18 +158,9 @@ class IncomingMessageService
      * @param  array<string, mixed>  $payload
      * @return array<string, mixed>
      */
-    private function contentAttributes(array $payload, ?string $type): array
+    private function contentAttributes(array $payload): array
     {
         $attributes = $this->outgoingEcho ? ['external_echo' => true] : [];
-
-        // Sticker vào contract lõi như Zalo. WhatsApp chỉ trả media id (URL tải cần
-        // token) nên không có `url`: ảnh đi qua đính kèm đã tải về.
-        if ($type === 'sticker' && filled(data_get($payload, 'sticker.id'))) {
-            $attributes['sticker'] = array_filter([
-                'id' => data_get($payload, 'sticker.id'),
-                'animated' => data_get($payload, 'sticker.animated'),
-            ], fn ($value) => $value !== null);
-        }
 
         if (filled(data_get($payload, 'context.id'))) {
             $attributes['in_reply_to_external_id'] = data_get($payload, 'context.id');
@@ -172,6 +171,24 @@ class IncomingMessageService
         }
 
         return $attributes;
+    }
+
+    /**
+     * WhatsApp chỉ trả media id (URL tải cần token) nên không có `url`: ảnh đi qua
+     * đính kèm đã tải về ở attachFiles.
+     *
+     * @param  array<string, mixed>  $payload
+     */
+    private function sticker(array $payload, ?string $type): ?StickerContent
+    {
+        if ($type !== 'sticker' || blank(data_get($payload, 'sticker.id'))) {
+            return null;
+        }
+
+        return new StickerContent(
+            id: (string) data_get($payload, 'sticker.id'),
+            animated: data_get($payload, 'sticker.animated') === null ? null : (bool) data_get($payload, 'sticker.animated'),
+        );
     }
 
     /** @param array<string, mixed> $payload */

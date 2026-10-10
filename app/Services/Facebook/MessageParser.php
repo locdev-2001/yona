@@ -2,6 +2,8 @@
 
 namespace App\Services\Facebook;
 
+use App\Messaging\Stickers\StickerContent;
+
 /**
  * Đọc một phần tử `messaging`/`standby` của webhook Messenger.
  */
@@ -41,6 +43,35 @@ class MessageParser
     public function attachments(): array
     {
         return (array) data_get($this->messaging, 'message.attachments', []);
+    }
+
+    /**
+     * Sticker của Messenger là đính kèm `image` mang `payload.sticker_id`. Meta hay lặp
+     * cùng một đính kèm hai lần trong mảng, nên chỉ lấy cái đầu. URL fbcdn có hạn
+     * dùng → không làm `external_url`, driver tải ảnh về.
+     */
+    public function sticker(): ?StickerContent
+    {
+        foreach ($this->attachments() as $attachment) {
+            $stickerId = data_get($attachment, 'payload.sticker_id');
+
+            if (filled($stickerId)) {
+                return new StickerContent(id: (string) $stickerId);
+            }
+        }
+
+        return null;
+    }
+
+    public function stickerImageUrl(): ?string
+    {
+        foreach ($this->attachments() as $attachment) {
+            if (filled(data_get($attachment, 'payload.sticker_id'))) {
+                return data_get($attachment, 'payload.url');
+            }
+        }
+
+        return null;
     }
 
     public function identifier(): ?string
