@@ -9,7 +9,8 @@ use Illuminate\Support\Facades\Log;
 
 /**
  * Thư trả về không mở hội thoại: tìm tin đi gốc trong hộp thư theo Message-ID rồi đánh
- * dấu gửi lỗi kèm lý do người trực đọc được. Không khớp tin nào thì bỏ qua êm.
+ * dấu gửi lỗi kèm lý do người trực đọc được khi chính khách của hội thoại không nhận được
+ * thư. Không khớp tin nào thì bỏ qua êm.
  */
 class EmailBounceHandler
 {
@@ -28,8 +29,16 @@ class EmailBounceHandler
             return null;
         }
 
-        $recipient = $report->failedRecipient() ?? $message->conversation->contactInbox?->source_id;
-        $diagnostic = $report->diagnostic();
+        $recipient = $this->failedConversationRecipient($report, $message);
+
+        if ($recipient === null) {
+            // Chỉ người CC/BCC bị trả thư: khách chính vẫn nhận được nên tin không tính là lỗi.
+            Log::info("[EMAIL BOUNCE] Người nhận lỗi không phải khách của hội thoại, tin {$message->id}");
+
+            return null;
+        }
+
+        $diagnostic = $report->diagnosticFor($recipient);
 
         $errorMessage = $message->conversation->inAccountLocale(fn () => $diagnostic === null
             ? __('errors.messages.email_bounced_without_reason', ['email' => $recipient])
@@ -38,6 +47,22 @@ class EmailBounceHandler
         ChannelMessageStatus::fail($message, ['code' => self::ERROR_CODE, 'message' => $errorMessage]);
 
         return $message;
+    }
+
+    private function failedConversationRecipient(BounceReport $report, Message $message): ?string
+    {
+        $conversationRecipients = array_map('strtolower', array_filter([
+            $message->conversation->contactInbox?->source_id,
+            $message->conversation->contact?->email,
+        ]));
+
+        foreach ($report->failedRecipients() as $failedRecipient) {
+            if (in_array(strtolower($failedRecipient), $conversationRecipients, true)) {
+                return $failedRecipient;
+            }
+        }
+
+        return null;
     }
 
     /** @param  list<string>  $messageIds */

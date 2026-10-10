@@ -90,11 +90,14 @@ PostgreSQL (`pg_trgm`) · Redis (cache, queue, session) · Laravel Reverb
   lưu ở `provider_config.push`. Webhook `POST /webhooks/gmail/push` kiểm OIDC token của
   Pub/Sub (`GooglePubSubTokenVerifier`) rồi xếp `FetchImapEmailsJob`; push chỉ là tín
   hiệu, đọc thư vẫn qua IMAP, quét mỗi phút giữ làm lưới an toàn.
-- **Thư trả về và lỗi gửi Email**: thư báo gửi không thành (DSN) khi đồng bộ IMAP
-  không mở hội thoại; `BounceReport` đọc Message-ID thư gốc (phần `message/rfc822`,
-  rồi `In-Reply-To`/`References`), người nhận lỗi và `Diagnostic-Code`;
-  `EmailBounceHandler` đánh dấu tin đi gốc `failed` qua `ChannelMessageStatus` với
-  `external_error {code: 'email_bounced', message}`. SMTP từ chối ngay khi gửi thì
+- **Thư trả về và lỗi gửi Email**: thư báo trạng thái gửi (DSN: người gửi phong bì
+  rỗng hoặc MAILER-DAEMON/postmaster, có phần `message/delivery-status`) khi đồng bộ IMAP
+  không mở hội thoại. Chỉ người nhận `Action: failed` (hoặc `Status: 5.x.x`) mới là thư
+  trả về; thư báo trì hoãn bỏ qua. `BounceReport` đọc Message-ID thư gốc CHỈ từ bản thư
+  gốc đính kèm (`message/rfc822`, `text/rfc822-headers`), người nhận lỗi và
+  `Diagnostic-Code` theo từng người; `EmailBounceHandler` chỉ đánh dấu tin đi gốc
+  `failed` khi người nhận lỗi là khách của hội thoại (CC bị trả thư thì thôi), qua
+  `ChannelMessageStatus` với `external_error {code: 'email_bounced', message}`. SMTP từ chối ngay khi gửi thì
   `SendOnEmailService` ghi `{code: 'email_send_failed', message}` mang lời máy chủ.
 - **Người trực mở hội thoại mới**: hai năng lực. `conversation_outbound_start` =
   kênh tự suy địa chỉ từ hồ sơ liên hệ (`AddressesContacts::contactSourceId`, hiện

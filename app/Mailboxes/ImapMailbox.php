@@ -50,10 +50,13 @@ class ImapMailbox
         Log::info('[IMAP] Processing email from '.$mail->originalSender().' : inbox '.$this->inbox->id
             .' : message_id '.$mail->messageId());
 
-        $bounce = BounceReport::from($mail);
+        if ($mail->isDeliveryStatusNotification()) {
+            // Thư báo trì hoãn hay đã chuyển không cần làm gì, cũng không mở hội thoại.
+            $bounce = BounceReport::from($mail);
 
-        if ($bounce !== null) {
-            app(EmailBounceHandler::class)->handle($bounce, $this->inbox);
+            if ($bounce !== null) {
+                app(EmailBounceHandler::class)->handle($bounce, $this->inbox);
+            }
 
             return;
         }

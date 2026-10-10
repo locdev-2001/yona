@@ -101,6 +101,13 @@ Content-ID: <icon.png>
 --00000000000093475906390e1e9b
 Content-Type: message/delivery-status
 
+Reporting-MTA: dns; googlemail.com
+Arrival-Date: Thu, 03 Jul 2025 15:44:24 -0700 (PDT)
+
+Final-Recipient: rfc822; alex.jones@fictionalcorp.com
+Action: failed
+Status: 5.1.1
+
 --00000000000093475906390e1e9b
 Content-Type: message/rfc822
 

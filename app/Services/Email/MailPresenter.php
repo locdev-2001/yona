@@ -17,6 +17,8 @@ use ZBateson\MailMimeParser\Message\IMessagePart;
  */
 class MailPresenter
 {
+    private const MAIL_SYSTEM_LOCAL_PARTS = ['mailer-daemon', 'postmaster'];
+
     public function __construct(
         private readonly IMessage $mail,
         private readonly ?Account $account = null,
@@ -248,12 +250,26 @@ class MailPresenter
         return (filled($autoSubmitted) && $autoSubmitted !== 'no') || $autoReply === 'yes';
     }
 
-    // Thư báo gửi không thành (DSN, RFC 3464): multipart/report; report-type=delivery-status.
-    public function isBounced(): bool
+    /**
+     * Thư báo trạng thái gửi (DSN, RFC 3464) do chính hệ thống thư phát ra: người gửi phong bì
+     * rỗng hoặc là MAILER-DAEMON/postmaster, và có phần message/delivery-status. Header như
+     * X-Failed-Recipients ai cũng tự đặt được nên không đủ để tin.
+     */
+    public function isDeliveryStatusNotification(): bool
     {
-        return filled($this->headerValue('X-Failed-Recipients'))
-            || strtolower((string) $this->mail->getHeaderParameter('Content-Type', 'report-type')) === 'delivery-status'
-            || str_contains(strtolower((string) $this->contentType()), 'delivery-status');
+        return $this->isFromMailSystem() && $this->partsOfType(['message/delivery-status']) !== [];
+    }
+
+    /**
+     * @param  list<string>  $types
+     * @return list<IMessagePart>
+     */
+    public function partsOfType(array $types): array
+    {
+        return array_values(array_filter(
+            $this->mail->getAllParts(),
+            static fn (IMessagePart $part) => in_array(strtolower((string) $part->getContentType()), $types, true),
+        ));
     }
 
     // Thư thông báo do chính hệ thống gửi đi thì không được biến thành hội thoại.
@@ -268,6 +284,17 @@ class MailPresenter
     public function account(): ?Account
     {
         return $this->account;
+    }
+
+    private function isFromMailSystem(): bool
+    {
+        if (trim((string) $this->mail->getHeader('Return-Path')?->getRawValue()) === '<>') {
+            return true;
+        }
+
+        $localPart = strtolower(strstr((string) ($this->addresses('From')[0] ?? ''), '@', true) ?: '');
+
+        return in_array($localPart, self::MAIL_SYSTEM_LOCAL_PARTS, true);
     }
 
     private function headerValue(string $name): ?string

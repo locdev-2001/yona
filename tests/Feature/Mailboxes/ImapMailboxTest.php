@@ -86,14 +86,14 @@ it('keeps the message of a mail that only has an html body', function () {
     expect($message?->content)->toContain('This is html only mail');
 });
 
-function bouncedOutgoingMessage($test, ?string $sourceId): Message
+function bouncedOutgoingMessage($test, ?string $sourceId, string $contactEmail = 'khach.khong.co@gmail.com'): Message
 {
     // Không để lõi tự gửi tin ra SMTP rồi ghi đè source_id.
     Queue::fake();
     $conversation = Conversation::factory()->create([
         'account_id' => $test->account->id,
         'inbox_id' => $test->inbox->id,
-        'contact_id' => Contact::factory()->create(['account_id' => $test->account->id, 'email' => 'khach.khong.co@gmail.com'])->id,
+        'contact_id' => Contact::factory()->create(['account_id' => $test->account->id, 'email' => $contactEmail])->id,
     ]);
 
     return Message::query()->create([
@@ -106,9 +106,9 @@ function bouncedOutgoingMessage($test, ?string $sourceId): Message
     ]);
 }
 
-function processBounce(Email $channel, string $originalMessageId): void
+function processBounce(Email $channel, string $originalMessageId, string $fixture = 'bounced_gmail_dsn.eml', array $replace = []): void
 {
-    $raw = str_replace('{{ORIGINAL_MESSAGE_ID}}', $originalMessageId, file_get_contents(base_path('tests/Fixtures/emails/bounced_gmail_dsn.eml')));
+    $raw = strtr(file_get_contents(base_path("tests/Fixtures/emails/{$fixture}")), ['{{ORIGINAL_MESSAGE_ID}}' => $originalMessageId, ...$replace]);
 
     (new ImapMailbox)->process(MailPresenter::fromRaw($raw, $channel->account), $channel);
 }
@@ -151,7 +151,7 @@ it('thư trả về không khớp tin nào thì bỏ qua êm', function () {
 });
 
 it('thư trả về của Gmail không kèm Diagnostic-Code vẫn lấy được lời máy chủ trong thân thư', function () {
-    $message = bouncedOutgoingMessage($this, 'conversation/93775311-9416-4428-964b-862001f8a8b2/messages/27855337@gmail.com');
+    $message = bouncedOutgoingMessage($this, 'conversation/93775311-9416-4428-964b-862001f8a8b2/messages/27855337@gmail.com', 'alex.jones@fictionalcorp.com');
 
     processImap($this->channel, 'bounced_gmail.eml');
 
@@ -159,4 +159,49 @@ it('thư trả về của Gmail không kèm Diagnostic-Code vẫn lấy được
         'email' => 'alex.jones@fictionalcorp.com',
         'reason' => '550 5.1.1 The email account that you tried to reach does not exist.',
     ]));
+});
+
+it('thư báo trì hoãn không đánh dấu tin lỗi và không mở hội thoại', function () {
+    $message = bouncedOutgoingMessage($this, 'goc-123@mail.gmail.com');
+
+    processBounce($this->channel, 'goc-123@mail.gmail.com', 'delayed_gmail_dsn.eml');
+
+    expect($message->fresh()->status)->toBe(Message::STATUSES['sent'])
+        ->and(Conversation::query()->count())->toBe(1);
+});
+
+it('chỉ người nhận phụ bị trả thư thì tin gửi khách không bị đánh dấu lỗi', function () {
+    $message = bouncedOutgoingMessage($this, 'goc-123@mail.gmail.com', 'khach.chinh@gmail.com');
+
+    processBounce($this->channel, 'goc-123@mail.gmail.com');
+
+    expect($message->fresh()->status)->toBe(Message::STATUSES['sent']);
+});
+
+it('người nhận lỗi khớp khách của hội thoại không phân biệt hoa thường', function () {
+    $message = bouncedOutgoingMessage($this, 'goc-123@mail.gmail.com', 'Khach.Khong.Co@Gmail.com');
+
+    processBounce($this->channel, 'goc-123@mail.gmail.com');
+
+    expect($message->fresh()->status)->toBe(Message::STATUSES['failed']);
+});
+
+it('thư thường mang X-Failed-Recipients và In-Reply-To trỏ tin Yona không đánh dấu tin lỗi', function () {
+    $message = bouncedOutgoingMessage($this, 'goc-123@mail.gmail.com');
+    $raw = <<<'EML'
+    From: Khach Lam Gia <attacker@example.net>
+    To: care@example.com
+    Subject: Re: Bao gia
+    Message-ID: <forged-2@example.net>
+    In-Reply-To: <goc-123@mail.gmail.com>
+    References: <goc-123@mail.gmail.com>
+    X-Failed-Recipients: khach.khong.co@gmail.com
+    Content-Type: text/plain; charset=UTF-8
+
+    Thu nay gia lam thu tra ve.
+    EML;
+
+    (new ImapMailbox)->process(MailPresenter::fromRaw($raw, $this->channel->account), $this->channel);
+
+    expect($message->fresh()->status)->toBe(Message::STATUSES['sent']);
 });

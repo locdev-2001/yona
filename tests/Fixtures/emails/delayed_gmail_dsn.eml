@@ -1,0 +1,48 @@
+Delivered-To: care@example.com
+Return-Path: <>
+From: Mail Delivery Subsystem <mailer-daemon@googlemail.com>
+To: care@example.com
+Auto-Submitted: auto-replied
+Subject: Delivery Status Notification (Delay)
+References: <{{ORIGINAL_MESSAGE_ID}}>
+In-Reply-To: <{{ORIGINAL_MESSAGE_ID}}>
+Message-ID: <6707c9a1.050a0220.dsn.0002.GMR@mx.google.com>
+Date: Sat, 10 Oct 2026 19:44:25 -0700 (PDT)
+Content-Type: multipart/report; boundary="000000000000dsnboundary02"; report-type=delivery-status
+
+--000000000000dsnboundary02
+Content-Type: text/plain; charset="UTF-8"
+
+
+** Delivery incomplete **
+
+There was a temporary problem delivering your message to khach.khong.co@gmail.com. Gmail will retry for 45 more hours. You'll be notified if the delivery fails permanently.
+
+The response from the remote server was:
+421 4.4.1 Connection timed out
+
+--000000000000dsnboundary02
+Content-Type: message/delivery-status
+
+Reporting-MTA: dns; googlemail.com
+Arrival-Date: Sat, 10 Oct 2026 15:44:24 -0700 (PDT)
+X-Original-Message-ID: <{{ORIGINAL_MESSAGE_ID}}>
+
+Final-Recipient: rfc822; khach.khong.co@gmail.com
+Action: delayed
+Status: 4.4.1
+Diagnostic-Code: smtp; 421 4.4.1 Connection timed out
+Last-Attempt-Date: Sat, 10 Oct 2026 19:44:25 -0700 (PDT)
+Will-Retry-Until: Mon, 12 Oct 2026 15:44:24 -0700 (PDT)
+
+--000000000000dsnboundary02
+Content-Type: text/rfc822-headers
+
+Return-Path: <care@example.com>
+Date: Sat, 10 Oct 2026 15:44:23 -0700
+From: Acme Support <care@example.com>
+To: khach.khong.co@gmail.com
+Message-ID: <{{ORIGINAL_MESSAGE_ID}}>
+Subject: =?UTF-8?B?QsOhbyBnacOh?=
+
+--000000000000dsnboundary02--
