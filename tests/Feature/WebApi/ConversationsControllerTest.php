@@ -14,6 +14,7 @@ use App\Models\Team;
 use App\Models\User;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Queue;
 
 // Port từ spec/controllers/api/v1/accounts/conversations_controller_spec.rb.
 // Bỏ: search/filter (E2/E1), transcript (F1), destroy (DeleteService),
@@ -327,6 +328,47 @@ describe('POST /api/v1/accounts/{id}/conversations', function () {
 
         expect(ContactInbox::query()->where('contact_id', $contact->id)->count())->toBe(2)
             ->and(Conversation::query()->count())->toBe(1);
+    });
+
+    it('opens an email conversation addressed to the contact email', function () {
+        Queue::fake();
+        $account = Account::factory()->create();
+        $inbox = Inbox::factory()->email()->create(['account_id' => $account->id]);
+        $contact = Contact::factory()->create(['account_id' => $account->id, 'email' => 'khach@example.com']);
+        $agent = conversationApiUserOf($account);
+        $inbox->addMembers([$agent->id]);
+
+        $response = $this->actingAs($agent)
+            ->postJson("/api/v1/accounts/{$account->id}/conversations", [
+                'contact_id' => $contact->id,
+                'inbox_id' => $inbox->id,
+                'message' => ['content' => 'Chào bạn'],
+                'additional_attributes' => ['mail_subject' => 'Báo giá'],
+            ])
+            ->assertOk();
+
+        $conversation = $account->conversations()->where('display_id', $response->json('id'))->firstOrFail();
+
+        expect($conversation->contactInbox->source_id)->toBe('khach@example.com')
+            ->and($conversation->messages()->outgoing()->first()->content)->toBe('Chào bạn');
+    });
+
+    it('refuses an email conversation for a contact without email', function () {
+        $account = Account::factory()->create();
+        $inbox = Inbox::factory()->email()->create(['account_id' => $account->id]);
+        $contact = Contact::factory()->create(['account_id' => $account->id, 'email' => null]);
+        $agent = conversationApiUserOf($account);
+        $inbox->addMembers([$agent->id]);
+
+        $this->actingAs($agent)
+            ->postJson("/api/v1/accounts/{$account->id}/conversations", [
+                'contact_id' => $contact->id,
+                'inbox_id' => $inbox->id,
+            ])
+            ->assertUnprocessable()
+            ->assertJson(['error' => __('errors.conversations.contact_unreachable')]);
+
+        expect(Conversation::query()->count())->toBe(0);
     });
 
     it('creates a resolved conversation for a blocked contact', function () {

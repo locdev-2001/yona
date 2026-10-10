@@ -1,5 +1,6 @@
 <?php
 
+use App\Channels\AddressesContacts;
 use App\Channels\Capability;
 use App\Channels\CapabilitySet;
 use App\Channels\DeclaresCapabilities;
@@ -34,6 +35,16 @@ it('khai báo chỉ chứa năng lực hợp lệ, không trùng, đúng thứ t
                 array_values(array_intersect(Capability::allValues(), $values)),
                 "{$type} trả năng lực sai thứ tự enum",
             );
+    }
+});
+
+// Khai "mở hội thoại chủ động" thì UI hiện hộp thư đó trong khung soạn tin mới, nên kênh
+// phải tự suy được địa chỉ liên hệ; thiếu thì người trực bấm gửi là lỗi.
+it('kênh khai mở hội thoại chủ động đều tự suy được địa chỉ liên hệ', function () {
+    foreach (ChannelCatalog::variants() as $type => $channel) {
+        if ($channel->capabilities()->has(Capability::ConversationOutboundStart)) {
+            expect($channel)->toBeInstanceOf(AddressesContacts::class, "{$type} khai conversation_outbound_start mà chưa implement AddressesContacts");
+        }
     }
 });
 

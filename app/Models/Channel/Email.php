@@ -3,6 +3,7 @@
 namespace App\Models\Channel;
 
 use App\Casts\EncryptedSecretsArray;
+use App\Channels\AddressesContacts;
 use App\Channels\Capability;
 use App\Channels\CapabilitySet;
 use App\Channels\ChannelConnection;
@@ -15,6 +16,7 @@ use App\Channels\LinksMessagesToSource;
 use App\Channels\TextFormat;
 use App\Models\Channel\Concerns\Channelable;
 use App\Models\Concerns\Reauthorizable;
+use App\Models\Contact;
 use App\Models\Message;
 use App\Services\Email\EmailProviderPresets;
 use App\Services\Email\MailServerException;
@@ -25,7 +27,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Cache;
 
-class Email extends Model implements DeclaresCapabilities, DeclaresConnection, DeclaresPlatform, LinksMessagesToSource
+class Email extends Model implements AddressesContacts, DeclaresCapabilities, DeclaresConnection, DeclaresPlatform, LinksMessagesToSource
 {
     /** @use HasFactory<EmailFactory> */
     use Channelable, HasFactory, Reauthorizable {
@@ -293,6 +295,12 @@ class Email extends Model implements DeclaresCapabilities, DeclaresConnection, D
         return $this->isGoogle() || $this->isMicrosoft();
     }
 
+    /** Cùng địa chỉ mà thư đến của liên hệ dùng làm source_id, nên thư gửi đi và thư trả lời về chung một hộp. */
+    public function contactSourceId(Contact $contact): ?string
+    {
+        return filled($contact->email) ? (string) $contact->email : null;
+    }
+
     /** Thư đến qua IMAP/mailbox: thân HTML thành markdown, tệp đính kèm giữ nguyên tên. */
     public function capabilities(): CapabilitySet
     {
@@ -315,6 +323,7 @@ class Email extends Model implements DeclaresCapabilities, DeclaresConnection, D
             Capability::ProfileEmail,
             Capability::IdentityStableId,
             Capability::ThreadingContinuous,
+            Capability::ConversationOutboundStart,
             Capability::SessionReauth,
             Capability::SettingsSenderName,
         )->withTextFormat(TextFormat::Html);

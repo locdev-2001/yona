@@ -2,6 +2,7 @@
 
 namespace App\Models\Channel;
 
+use App\Channels\AddressesContacts;
 use App\Channels\Capability;
 use App\Channels\CapabilitySet;
 use App\Channels\ChannelConnection;
@@ -12,11 +13,13 @@ use App\Channels\DeclaresConnection;
 use App\Channels\DeclaresPlatform;
 use App\Channels\TextFormat;
 use App\Models\Channel\Concerns\Channelable;
+use App\Models\Contact;
 use Database\Factories\Channel\ApiFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
-class Api extends Model implements DeclaresCapabilities, DeclaresConnection, DeclaresPlatform
+class Api extends Model implements AddressesContacts, DeclaresCapabilities, DeclaresConnection, DeclaresPlatform
 {
     /** @use HasFactory<ApiFactory> */
     use Channelable, HasFactory;
@@ -77,6 +80,12 @@ class Api extends Model implements DeclaresCapabilities, DeclaresConnection, Dec
         return ChannelConnection::of('api', ConnectionMethod::Form)->ordered(100);
     }
 
+    /** Hội thoại mở từ phía Yona mang một mã ngẫu nhiên; hệ ngoài nhận mã đó qua webhook. */
+    public function contactSourceId(Contact $contact): string
+    {
+        return (string) Str::uuid();
+    }
+
     /** Kênh API: hệ ngoài tự bơm tin vào và đọc tin ra, nội dung do bên tích hợp quyết. */
     public function capabilities(): CapabilitySet
     {
@@ -105,6 +114,7 @@ class Api extends Model implements DeclaresCapabilities, DeclaresConnection, Dec
             Capability::ProfileEmail,
             Capability::IdentityStableId,
             Capability::ThreadingContinuous,
+            Capability::ConversationOutboundStart,
             Capability::SettingsSingleConversation,
             Capability::SettingsWebhook,
             Capability::SettingsClientApi,

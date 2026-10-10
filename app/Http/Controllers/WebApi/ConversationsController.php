@@ -34,6 +34,7 @@ use App\Support\BooleanParam;
 use App\Support\DateRangeHelper;
 use Carbon\CarbonInterface;
 use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -637,6 +638,12 @@ class ConversationsController extends Controller
 
             if ($contactInbox !== null) {
                 return $contactInbox;
+            }
+
+            if (blank($request->input('source_id'))) {
+                throw new HttpResponseException(
+                    response()->json(['error' => __('errors.conversations.contact_unreachable')], 422)
+                );
             }
         }
 

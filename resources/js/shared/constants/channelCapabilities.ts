@@ -58,6 +58,7 @@ export const CHANNEL_CAPABILITIES = [
     'friend_request',
     'threading_continuous',
     'messaging_window',
+    'conversation_outbound_start',
     'session_qr',
     'session_token',
     'session_oauth',

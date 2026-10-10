@@ -80,6 +80,8 @@ enum Capability: string
     // §2.5 Hội thoại & phiên
     case ThreadingContinuous = 'threading_continuous';
     case MessagingWindow = 'messaging_window';
+    // Người trực chủ động mở hội thoại mới tới một liên hệ: kênh tự suy địa chỉ gửi từ hồ sơ liên hệ.
+    case ConversationOutboundStart = 'conversation_outbound_start';
     case SessionQr = 'session_qr';
     case SessionToken = 'session_token';
     case SessionOauth = 'session_oauth';

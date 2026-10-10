@@ -2,14 +2,13 @@
 
 namespace App\Builders;
 
+use App\Channels\AddressesContacts;
 use App\Models\Contact;
 use App\Models\ContactInbox;
 use App\Models\Inbox;
-use Illuminate\Support\Str;
 use RuntimeException;
 
-// B2 mới có kênh API — nhánh sinh source_id của Email/Sms/Twilio/Whatsapp
-// (kèm vá RecordNotUnique đổi source_id cũ) port cùng driver kênh đó.
+// source_id không truyền vào thì kênh tự suy từ hồ sơ liên hệ (AddressesContacts).
 class ContactInboxBuilder
 {
     public function __construct(
@@ -26,14 +25,15 @@ class ContactInboxBuilder
         return filled($this->sourceId) ? $this->createContactInbox() : null;
     }
 
-    private function generateSourceId(): string
+    private function generateSourceId(): ?string
     {
-        return match ($this->inbox->channel_type) {
-            'Channel::Api', 'Channel::WebWidget' => (string) Str::uuid(),
-            default => throw new RuntimeException(
-                "Unsupported operation for this channel: {$this->inbox->channel_type}"
-            ),
-        };
+        $channel = $this->inbox->channel;
+
+        if (! $channel instanceof AddressesContacts) {
+            throw new RuntimeException("Unsupported operation for this channel: {$this->inbox->channel_type}");
+        }
+
+        return $channel->contactSourceId($this->contact);
     }
 
     private function createContactInbox(): ContactInbox

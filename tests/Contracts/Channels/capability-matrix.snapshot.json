@@ -21,6 +21,7 @@
         "profile_email",
         "identity_stable_id",
         "threading_continuous",
+        "conversation_outbound_start",
         "settings_single_conversation",
         "settings_webhook",
         "settings_client_api"
@@ -44,6 +45,7 @@
         "profile_email",
         "identity_stable_id",
         "threading_continuous",
+        "conversation_outbound_start",
         "session_token",
         "session_reauth",
         "settings_sender_name",
@@ -68,6 +70,7 @@
         "profile_email",
         "identity_stable_id",
         "threading_continuous",
+        "conversation_outbound_start",
         "session_oauth",
         "session_reauth",
         "settings_sender_name"

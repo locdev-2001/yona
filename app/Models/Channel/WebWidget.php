@@ -2,6 +2,7 @@
 
 namespace App\Models\Channel;
 
+use App\Channels\AddressesContacts;
 use App\Channels\Capability;
 use App\Channels\CapabilitySet;
 use App\Channels\ChannelConnection;
@@ -12,6 +13,7 @@ use App\Channels\DeclaresConnection;
 use App\Channels\DeclaresPlatform;
 use App\Channels\TextFormat;
 use App\Models\Channel\Concerns\Channelable;
+use App\Models\Contact;
 use App\Support\FlagBitmask;
 use App\Support\Widget\WidgetSettings;
 use App\Support\WidgetEmbedScript;
@@ -22,8 +24,9 @@ use DateTimeInterface;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
-class WebWidget extends Model implements DeclaresCapabilities, DeclaresConnection, DeclaresPlatform
+class WebWidget extends Model implements AddressesContacts, DeclaresCapabilities, DeclaresConnection, DeclaresPlatform
 {
     /** @use HasFactory<WebWidgetFactory> */
     use Channelable, HasFactory;
@@ -277,6 +280,15 @@ class WebWidget extends Model implements DeclaresCapabilities, DeclaresConnectio
     public static function connection(): ChannelConnection
     {
         return ChannelConnection::of('website', ConnectionMethod::Form)->ordered(20);
+    }
+
+    /**
+     * Client API dựng phiên khách widget bằng một mã ngẫu nhiên. Không khai mở hội thoại
+     * chủ động: khách chỉ thấy tin trong phiên trình duyệt của chính họ.
+     */
+    public function contactSourceId(Contact $contact): string
+    {
+        return (string) Str::uuid();
     }
 
     /** Widget web: danh tính là token khách, hồ sơ đến từ form trước chat. */
