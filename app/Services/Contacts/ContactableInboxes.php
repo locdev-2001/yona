@@ -4,17 +4,22 @@ namespace App\Services\Contacts;
 
 use App\Channels\AddressesContacts;
 use App\Channels\Capability;
+use App\Channels\ChecksContactAddress;
+use App\Channels\LimitsMessagingWindow;
+use App\Channels\UndeliverableContactAddress;
 use App\Models\Contact;
 use App\Models\ContactInbox;
 use App\Models\Conversation;
 use App\Models\Inbox;
+use App\Support\PhoneNumber;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
 /**
  * Hộp thư mà người trực mở được hội thoại mới tới một liên hệ, kèm địa chỉ của khách ở
- * từng hộp. Lõi chỉ hỏi năng lực: kênh tự suy địa chỉ (conversation_outbound_start) hoặc
- * kênh nối lại địa chỉ khách đã có (conversation_outbound_resume).
+ * từng hộp. Lõi chỉ hỏi năng lực và contract kênh: kênh tự suy địa chỉ
+ * (conversation_outbound_start) hoặc nối lại địa chỉ khách đã có (conversation_outbound_resume),
+ * cửa sổ nhắn tin (LimitsMessagingWindow), địa chỉ gửi tới được (ChecksContactAddress).
  */
 class ContactableInboxes
 {
@@ -24,7 +29,7 @@ class ContactableInboxes
 
     /**
      * @param  Builder<Inbox>  $visibleInboxes
-     * @return list<array{inbox: Inbox, source_id: string, available: bool, reason: ?string}>
+     * @return list<array{inbox: Inbox, source_id: string, display_address: ?string, available: bool, reason: ?string}>
      */
     public function for(Contact $contact, Builder $visibleInboxes): array
     {
@@ -35,16 +40,18 @@ class ContactableInboxes
         $entries = [];
 
         foreach ($inboxes as $inbox) {
-            $sourceId = $this->sourceIdFor($inbox, $contact, $knownContactInboxes->get($inbox->id));
+            $known = $knownContactInboxes->get($inbox->id);
+            $sourceId = $this->sourceIdFor($inbox, $contact, $known);
 
             if ($sourceId === null) {
                 continue;
             }
 
-            $reason = $this->unavailableReason($inbox, $latestConversations->get($inbox->id));
+            $reason = $this->unavailableReason($inbox, $sourceId, $known);
             $entries[] = [
                 'inbox' => $inbox,
                 'source_id' => $sourceId,
+                'display_address' => $this->displayAddress($contact, $sourceId),
                 'available' => $reason === null,
                 'reason' => $reason,
                 'last_activity' => $latestConversations->get($inbox->id)?->last_activity_at?->getTimestamp() ?? 0,
@@ -79,17 +86,42 @@ class ContactableInboxes
         return null;
     }
 
-    private function unavailableReason(Inbox $inbox, ?Conversation $latest): ?string
+    private function unavailableReason(Inbox $inbox, string $sourceId, ?ContactInbox $known): ?string
     {
         if ($inbox->reauthorizationRequired()) {
             return self::REASON_REAUTHORIZATION_REQUIRED;
         }
 
-        if ($inbox->supports(Capability::MessagingWindow) && ! ($latest?->canReply() ?? false)) {
+        $channel = $inbox->channel;
+
+        if ($inbox->supports(Capability::MessagingWindow) && $channel instanceof LimitsMessagingWindow
+            && ($known === null || ! $channel->messagingWindowOpen($known))) {
             return self::REASON_MESSAGING_WINDOW_CLOSED;
         }
 
+        if ($channel instanceof ChecksContactAddress) {
+            try {
+                $channel->assertDeliverable($sourceId);
+            } catch (UndeliverableContactAddress $exception) {
+                return $exception->reason;
+            }
+        }
+
         return null;
+    }
+
+    /** Địa chỉ người dùng nhận ra được: chỉ khi source_id chính là email hay số điện thoại trong hồ sơ. */
+    private function displayAddress(Contact $contact, string $sourceId): ?string
+    {
+        if (filled($contact->email) && strcasecmp($sourceId, (string) $contact->email) === 0) {
+            return $sourceId;
+        }
+
+        $phone = PhoneNumber::normalize($contact->phone_number);
+
+        return $phone !== null && PhoneNumber::normalize($sourceId, acceptBareNationalNumber: false) === $phone
+            ? $sourceId
+            : null;
     }
 
     /** @return Collection<int, ContactInbox> inbox_id => contact_inbox mới nhất */

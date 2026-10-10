@@ -113,8 +113,13 @@ PostgreSQL (`pg_trgm`) · Redis (cache, queue, session) · Laravel Reverb
   mở không mang thuộc tính định tuyến của hội thoại cũ nên driver phải tự suy người
   nhận từ `contact_inbox` (contract `ConversationOutboundResumeContract`).
   `ContactInboxBuilder` chọn đường theo năng lực, `ContactableInboxes` liệt kê hộp
-  cho khung soạn (`GET contacts/{id}/contactable_inboxes`). Api và widget không khai
-  cả hai nên không bao giờ hiện trong khung soạn.
+  cho khung soạn (`GET contacts/{id}/contactable_inboxes`) kèm `display_address`
+  (chỉ khi địa chỉ là email/số điện thoại của hồ sơ) và lý do không chọn được
+  (`reauthorization_required`, `messaging_window_closed`, mã của
+  `UndeliverableContactAddress` như `email_undeliverable`). Cửa sổ nhắn tin do driver
+  tính (`LimitsMessagingWindow`; Meta dùng trait `CustomerServiceWindow`: 24 giờ từ tin
+  đến cuối trên `contact_inbox`). Api và widget không khai cả hai nên không bao giờ
+  hiện trong khung soạn.
 - Zalo cá nhân là một driver như mọi kênh khác (`Channel::Zalo`), nói chuyện với
   bridge Node qua `app/Services/Zalo/ZaloBridgeClient.php`.
 - Ghi âm ở ô soạn: bản ghi là đính kèm âm thanh mang `meta.is_voice_message`

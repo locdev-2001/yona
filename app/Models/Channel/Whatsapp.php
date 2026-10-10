@@ -10,8 +10,10 @@ use App\Channels\ConnectionMethod;
 use App\Channels\DeclaresCapabilities;
 use App\Channels\DeclaresConnection;
 use App\Channels\DeclaresPlatform;
+use App\Channels\LimitsMessagingWindow;
 use App\Channels\TextFormat;
 use App\Models\Channel\Concerns\Channelable;
+use App\Models\Channel\Concerns\CustomerServiceWindow;
 use App\Models\Concerns\Reauthorizable;
 use App\Services\Whatsapp\Providers\Whatsapp360DialogService;
 use App\Services\Whatsapp\Providers\WhatsappCloudService;
@@ -22,10 +24,10 @@ use Illuminate\Database\Eloquent\Model;
 
 // Mỗi nhà cung cấp là một
 // driver riêng (providerService), lõi kênh không biết chi tiết Cloud/360Dialog.
-class Whatsapp extends Model implements DeclaresCapabilities, DeclaresConnection, DeclaresPlatform
+class Whatsapp extends Model implements DeclaresCapabilities, DeclaresConnection, DeclaresPlatform, LimitsMessagingWindow
 {
     /** @use HasFactory<WhatsappFactory> */
-    use Channelable, HasFactory, Reauthorizable;
+    use Channelable, CustomerServiceWindow, HasFactory, Reauthorizable;
 
     public const AUTHORIZATION_ERROR_THRESHOLD = 10;
 
@@ -147,6 +149,7 @@ class Whatsapp extends Model implements DeclaresCapabilities, DeclaresConnection
             Capability::ProfilePhone,
             Capability::IdentityStableId,
             Capability::ThreadingContinuous,
+            Capability::MessagingWindow,
             Capability::ConversationOutboundResume,
             Capability::SessionToken,
             Capability::SessionReauth,

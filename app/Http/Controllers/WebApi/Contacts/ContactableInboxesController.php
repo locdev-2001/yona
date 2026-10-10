@@ -20,6 +20,7 @@ class ContactableInboxesController extends Controller
         $payload = array_map(static fn (array $entry) => [
             'inbox' => self::inboxPayload($entry['inbox']),
             'source_id' => $entry['source_id'],
+            'display_address' => $entry['display_address'],
             'available' => $entry['available'],
             'reason' => $entry['reason'],
         ], $contactableInboxes->for($contact, $visibleInboxes));

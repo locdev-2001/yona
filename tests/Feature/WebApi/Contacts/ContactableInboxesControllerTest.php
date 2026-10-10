@@ -7,7 +7,9 @@ use App\Models\Contact;
 use App\Models\ContactInbox;
 use App\Models\Conversation;
 use App\Models\Inbox;
+use App\Models\Message;
 use App\Models\User;
+use Tests\Fixtures\FakeMailDomainResolver;
 
 // Khung soạn hội thoại mới chỉ hiện hộp thư mở được hội thoại tới liên hệ, theo năng lực kênh.
 
@@ -40,6 +42,8 @@ it('liệt kê hộp Email theo email liên hệ, đúng hình dạng hợp đ�
 
     expect($payload)->toHaveCount(1)
         ->and($payload[0])->toMatchArray(['source_id' => 'khach@example.com', 'available' => true, 'reason' => null])
+        ->and(array_keys($payload[0]))->toBe(['inbox', 'source_id', 'display_address', 'available', 'reason'])
+        ->and($payload[0]['display_address'])->toBe('khach@example.com')
         ->and(array_keys($payload[0]['inbox']))->toBe(['id', 'name', 'channel_type', 'capabilities', 'platform', 'avatar_url'])
         ->and($payload[0]['inbox']['id'])->toBe($email->id)
         ->and($payload[0]['inbox']['channel_type'])->toBe('Channel::Email')
@@ -123,4 +127,54 @@ it('liên hệ của account khác thì 404', function () {
     $this->actingAs($this->agent)
         ->getJson("/api/v1/accounts/{$this->account->id}/contacts/{$other->id}/contactable_inboxes")
         ->assertNotFound();
+});
+
+it('hộp Email hiện nhưng không chọn được khi email liên hệ không nhận thư', function () {
+    FakeMailDomainResolver::bind();
+    memberInbox($this, Inbox::factory()->email()->create(['account_id' => $this->account->id]));
+
+    expect(contactableInboxesOf($this)[0])->toMatchArray([
+        'source_id' => 'khach@example.com',
+        'available' => false,
+        'reason' => 'email_undeliverable',
+    ]);
+});
+
+it('display_address chỉ hiện khi địa chỉ kênh là email hay số điện thoại của hồ sơ', function (string $sourceId, ?string $displayAddress) {
+    $this->contact->update(['email' => 'Khach@Example.com', 'phone_number' => '+84912345678']);
+    $zalo = memberInbox($this, Inbox::factory()->zalo()->create(['account_id' => $this->account->id]));
+    ContactInbox::factory()->create(['contact_id' => $this->contact->id, 'inbox_id' => $zalo->id, 'source_id' => $sourceId]);
+
+    expect(contactableInboxesOf($this)[0]['display_address'])->toBe($displayAddress);
+})->with([
+    'mã người dùng của kênh' => ['8455212345678901', null],
+    'email khác hoa thường' => ['khach@example.com', 'khach@example.com'],
+    'số điện thoại viết kiểu nội địa' => ['0912 345 678', '0912 345 678'],
+    'số điện thoại khác' => ['+84987654321', null],
+]);
+
+it('kênh có cửa sổ nhắn tin: khách nhắn trong 24 giờ thì mở, quá 24 giờ thì đóng', function (string $factoryState) {
+    $inbox = memberInbox($this, Inbox::factory()->{$factoryState}()->create(['account_id' => $this->account->id]));
+    $contactInbox = ContactInbox::factory()->create(['contact_id' => $this->contact->id, 'inbox_id' => $inbox->id, 'source_id' => 'khach-1']);
+    $old = Conversation::factory()->create([
+        'account_id' => $this->account->id, 'inbox_id' => $inbox->id, 'contact_id' => $this->contact->id,
+        'contact_inbox_id' => $contactInbox->id, 'status' => Conversation::STATUS_RESOLVED,
+    ]);
+    $incoming = Message::query()->create([
+        'account_id' => $this->account->id, 'inbox_id' => $inbox->id, 'conversation_id' => $old->id,
+        'message_type' => Message::TYPE_INCOMING, 'content' => 'cho mình hỏi',
+    ]);
+
+    expect(contactableInboxesOf($this)[0])->toMatchArray(['source_id' => 'khach-1', 'available' => true, 'reason' => null]);
+
+    $incoming->forceFill(['created_at' => now()->subHours(25)])->save();
+
+    expect(contactableInboxesOf($this)[0])->toMatchArray(['available' => false, 'reason' => 'messaging_window_closed']);
+})->with(['whatsapp', 'facebookPage', 'instagram']);
+
+it('kênh có cửa sổ nhắn tin mà khách chưa từng nhắn tới thì cửa sổ đóng', function () {
+    $inbox = memberInbox($this, Inbox::factory()->whatsapp()->create(['account_id' => $this->account->id]));
+    ContactInbox::factory()->create(['contact_id' => $this->contact->id, 'inbox_id' => $inbox->id, 'source_id' => '15557654321']);
+
+    expect(contactableInboxesOf($this)[0])->toMatchArray(['available' => false, 'reason' => 'messaging_window_closed']);
 });

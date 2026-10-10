@@ -10,18 +10,20 @@ use App\Channels\ConnectionMethod;
 use App\Channels\DeclaresCapabilities;
 use App\Channels\DeclaresConnection;
 use App\Channels\DeclaresPlatform;
+use App\Channels\LimitsMessagingWindow;
 use App\Channels\TextFormat;
 use App\Models\Channel\Concerns\Channelable;
+use App\Models\Channel\Concerns\CustomerServiceWindow;
 use App\Models\Concerns\Reauthorizable;
 use Database\Factories\Channel\FacebookPageFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 // Subscribe/unsubscribe (gem facebook-messenger) nằm ở App\Services\Facebook\PageSubscriptionService.
-class FacebookPage extends Model implements DeclaresCapabilities, DeclaresConnection, DeclaresPlatform
+class FacebookPage extends Model implements DeclaresCapabilities, DeclaresConnection, DeclaresPlatform, LimitsMessagingWindow
 {
     /** @use HasFactory<FacebookPageFactory> */
-    use Channelable, HasFactory, Reauthorizable;
+    use Channelable, CustomerServiceWindow, HasFactory, Reauthorizable;
 
     public const AUTHORIZATION_ERROR_THRESHOLD = 10;
 
@@ -94,6 +96,7 @@ class FacebookPage extends Model implements DeclaresCapabilities, DeclaresConnec
             Capability::ProfileAvatar,
             Capability::IdentityStableId,
             Capability::ThreadingContinuous,
+            Capability::MessagingWindow,
             Capability::ConversationOutboundResume,
             Capability::SessionOauth,
             Capability::SessionReauth,

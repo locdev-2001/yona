@@ -44,6 +44,9 @@ class Email extends Model implements AddressesContacts, ChecksContactAddress, De
 
     private const GMAIL_WEB_URL = 'https://mail.google.com/mail/';
 
+    // Mã lý do trong danh sách hộp thư nhắn được khi email liên hệ không nhận thư.
+    private const UNDELIVERABLE_REASON = 'email_undeliverable';
+
     protected $table = 'channel_email';
 
     /** @var list<string> EDITABLE_ATTRS — khối `channel` của inbox chỉ sửa được các cột này. */
@@ -311,7 +314,7 @@ class Email extends Model implements AddressesContacts, ChecksContactAddress, De
         $verification = app(EmailAddressVerifier::class)->verify($sourceId);
 
         if (! $verification->deliverable()) {
-            throw new UndeliverableContactAddress((string) $verification->message());
+            throw new UndeliverableContactAddress((string) $verification->message(), self::UNDELIVERABLE_REASON);
         }
     }
 

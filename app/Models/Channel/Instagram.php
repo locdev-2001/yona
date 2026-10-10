@@ -10,18 +10,20 @@ use App\Channels\ConnectionMethod;
 use App\Channels\DeclaresCapabilities;
 use App\Channels\DeclaresConnection;
 use App\Channels\DeclaresPlatform;
+use App\Channels\LimitsMessagingWindow;
 use App\Channels\TextFormat;
 use App\Models\Channel\Concerns\Channelable;
+use App\Models\Channel\Concerns\CustomerServiceWindow;
 use App\Models\Concerns\Reauthorizable;
 use Database\Factories\Channel\InstagramFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 // Kênh Instagram đăng nhập trực tiếp.
-class Instagram extends Model implements DeclaresCapabilities, DeclaresConnection, DeclaresPlatform
+class Instagram extends Model implements DeclaresCapabilities, DeclaresConnection, DeclaresPlatform, LimitsMessagingWindow
 {
     /** @use HasFactory<InstagramFactory> */
-    use Channelable, HasFactory, Reauthorizable;
+    use Channelable, CustomerServiceWindow, HasFactory, Reauthorizable;
 
     public const AUTHORIZATION_ERROR_THRESHOLD = 1;
 
@@ -98,6 +100,7 @@ class Instagram extends Model implements DeclaresCapabilities, DeclaresConnectio
             Capability::ProfileAvatar,
             Capability::IdentityStableId,
             Capability::ThreadingContinuous,
+            Capability::MessagingWindow,
             Capability::ConversationOutboundResume,
             Capability::SessionOauth,
             Capability::SessionReauth,

@@ -6,7 +6,8 @@ use App\Services\Email\Verification\MailDomainResolver;
 
 /**
  * DNS giả cho kiểm địa chỉ email: tên miền khai trong $mxHosts / $addressDomains, còn lại
- * coi như không tồn tại; $failingDomains mô phỏng tra cứu lỗi. Đếm số lần tra để kiểm cache.
+ * coi như không tồn tại (hoặc đều nhận thư khi $everyDomainReceivesMail); $failingDomains
+ * mô phỏng tra cứu lỗi. Đếm số lần tra để kiểm cache.
  */
 final class FakeMailDomainResolver implements MailDomainResolver
 {
@@ -21,7 +22,14 @@ final class FakeMailDomainResolver implements MailDomainResolver
         private readonly array $mxHosts = [],
         private readonly array $addressDomains = [],
         private readonly array $failingDomains = [],
+        private readonly bool $everyDomainReceivesMail = false,
     ) {}
+
+    /** Mặc định của mọi test (TestCase): tên miền nào cũng nhận thư, không ra mạng. */
+    public static function receivingEveryDomain(): self
+    {
+        return new self(everyDomainReceivesMail: true);
+    }
 
     public static function bind(array $mxHosts = [], array $addressDomains = [], array $failingDomains = []): self
     {
@@ -39,7 +47,7 @@ final class FakeMailDomainResolver implements MailDomainResolver
             return null;
         }
 
-        return $this->mxHosts[$domain] ?? [];
+        return $this->mxHosts[$domain] ?? ($this->everyDomainReceivesMail ? ['mx.'.$domain] : []);
     }
 
     public function hasAddressRecord(string $domain): ?bool

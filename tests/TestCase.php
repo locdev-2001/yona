@@ -3,10 +3,12 @@
 namespace Tests;
 
 use App\Services\Email\MailServerProbe;
+use App\Services\Email\Verification\MailDomainResolver;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Redis;
 use RuntimeException;
+use Tests\Fixtures\FakeMailDomainResolver;
 use Tests\Support\FakeMailServerProbe;
 use Tests\Support\SignsProtectedRequests;
 use Throwable;
@@ -53,6 +55,9 @@ abstract class TestCase extends BaseTestCase
         // IMAP/SMTP không đi qua Http nên phải chặn riêng: mặc định máy chủ thư giả nhận mọi đăng nhập.
         $this->mailServerProbe = new FakeMailServerProbe;
         $this->app->instance(MailServerProbe::class, $this->mailServerProbe);
+
+        // Kiểm email thật tra DNS: mặc định mọi tên miền nhận thư, test cần DNS khác thì tự bind.
+        $this->app->instance(MailDomainResolver::class, FakeMailDomainResolver::receivingEveryDomain());
 
         $this->withoutVite();
     }

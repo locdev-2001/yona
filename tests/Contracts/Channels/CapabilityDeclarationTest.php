@@ -4,6 +4,7 @@ use App\Channels\AddressesContacts;
 use App\Channels\Capability;
 use App\Channels\CapabilitySet;
 use App\Channels\DeclaresCapabilities;
+use App\Channels\LimitsMessagingWindow;
 use App\Channels\TextFormat;
 use App\Http\Resources\InboxResource;
 use App\Models\Account;
@@ -44,6 +45,15 @@ it('kênh khai mở hội thoại chủ động đều tự suy được địa 
     foreach (ChannelCatalog::variants() as $type => $channel) {
         if ($channel->capabilities()->has(Capability::ConversationOutboundStart)) {
             expect($channel)->toBeInstanceOf(AddressesContacts::class, "{$type} khai conversation_outbound_start mà chưa implement AddressesContacts");
+        }
+    }
+});
+
+// Khai cửa sổ nhắn tin thì khung soạn hỏi kênh cửa sổ còn mở không; kênh phải tự tính được.
+it('kênh khai cửa sổ nhắn tin đều tự tính được cửa sổ', function () {
+    foreach (ChannelCatalog::variants() as $type => $channel) {
+        if ($channel->capabilities()->has(Capability::MessagingWindow)) {
+            expect($channel)->toBeInstanceOf(LimitsMessagingWindow::class, "{$type} khai messaging_window mà chưa implement LimitsMessagingWindow");
         }
     }
 });
