@@ -1470,7 +1470,7 @@ return [
         ],
         'EMAIL' => [
             'CHOOSE_TITLE' => 'Bạn dùng hộp thư nào?',
-            'CHOOSE_DESC' => 'Chọn nhà cung cấp để Yona tự điền máy chủ thư. Không thấy nhà cung cấp của bạn thì chọn Khác.',
+            'CHOOSE_DESC' => 'Đăng nhập bằng tài khoản Google để nối Gmail hoặc Google Workspace, không cần mật khẩu. Các nhà cung cấp khác sắp ra mắt.',
             'GOOGLE' => ['TITLE' => 'Đăng nhập Google', 'DESCRIPTION' => 'Kết nối Gmail/Google Workspace bằng tài khoản Google, không cần mật khẩu'],
             'MICROSOFT' => ['TITLE' => 'Đăng nhập Microsoft', 'DESCRIPTION' => 'Kết nối Outlook/Microsoft 365 bằng tài khoản Microsoft, không cần mật khẩu'],
             'GMAIL' => ['TITLE' => 'Gmail', 'DESCRIPTION' => 'Gmail hoặc Google Workspace, dùng Mật khẩu ứng dụng'],

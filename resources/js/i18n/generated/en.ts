@@ -8045,7 +8045,7 @@ const messages: Record<string, unknown> = {
             },
             "EMAIL": {
                 "CHOOSE_TITLE": "Which mailbox do you use?",
-                "CHOOSE_DESC": "Pick your provider and Yona fills in the mail servers. Not listed? Choose Other.",
+                "CHOOSE_DESC": "Sign in with Google to connect Gmail or Google Workspace, no password needed. Other providers are coming soon.",
                 "GOOGLE": {
                     "TITLE": "Sign in with Google",
                     "DESCRIPTION": "Connect Gmail/Google Workspace with your Google account, no password needed"
