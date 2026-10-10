@@ -1326,7 +1326,9 @@ Gmail: dùng project Google Cloud của Yona, thêm scope `https://mail.google.c
 redirect URI `https://yona.vn/app/email/oauth/google/callback`, nộp thẩm định
 (restricted scope cần kiểm tra bảo mật). Duyệt xong mới đặt
 `GOOGLE_MAIL_OAUTH_ENABLED=true`. `GOOGLE_MAIL_CLIENT_ID/SECRET` trống thì dùng lại
-client đăng nhập Google.
+client đăng nhập Google, nên client đó phải khai thêm redirect URI này (thiếu là
+Google báo `redirect_uri_mismatch`). Máy dev thử thật thì thêm
+`http://localhost:8610/app/email/oauth/google/callback`.
 
 Redirect URI được ghép từ `APP_URL`, nên `APP_URL` phải là `https://yona.vn`.
 Token (access + refresh) lưu mã hoá trong `channel_email.provider_config`, làm mới
