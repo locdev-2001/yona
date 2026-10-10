@@ -29,6 +29,12 @@ return [
         'domain_not_found' => 'the domain does not exist',
         'domain_no_mail' => 'this domain does not accept email',
     ],
+    'messages' => [
+        'email_bounced' => 'The address :email cannot receive email: :reason',
+        'email_bounced_without_reason' => 'The address :email cannot receive email, the receiving server returned the message',
+        'email_send_failed' => 'The mail server refused to send: :reason',
+        'email_send_failed_unknown' => 'Could not send the email through this inbox mail server',
+    ],
     'custom_filters' => [
         'number_of_records' => 'Limit reached. The maximum number of allowed custom filters for a user per account is 1000.',
         'invalid_attribute' => 'Invalid attribute key - [:key]. The key should be one of [:allowed_keys] or a custom attribute defined in the account.',

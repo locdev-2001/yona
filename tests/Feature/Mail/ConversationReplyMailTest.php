@@ -14,6 +14,8 @@ use App\Models\User;
 use App\Services\Email\ChannelMailer;
 use App\Services\Email\SendOnEmailService;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Queue;
+use Symfony\Component\Mailer\Exception\UnexpectedResponseException;
 
 // Port từ spec/mailers/conversation_reply_mailer_spec.rb + spec/services/email/
 // send_on_email_service_spec.rb + spec/jobs/conversation_reply_email_job_spec.rb.
@@ -390,4 +392,26 @@ it('uses the provider smtp server for oauth channels', function () {
 
 it('has no smtp override for non email inboxes', function () {
     expect(ChannelMailer::smtpSettingsFor(Inbox::factory()->create()))->toBeNull();
+});
+
+it('máy chủ SMTP từ chối thì tin gửi lỗi kèm lời máy chủ trả về', function () {
+    Queue::fake();
+    $conversation = emailConversation();
+    $message = (new MessageBuilder(User::factory()->create(), $conversation, ['content' => 'Hello']))->perform();
+    $mailer = Mockery::mock();
+    $mailer->shouldReceive('send')->andThrow(new UnexpectedResponseException(
+        'Expected response code "250/251/252" but got code "550", with message "550 5.1.1 <customer@example.com>: Recipient address rejected: User unknown".'
+    ));
+    Mail::shouldReceive('purge');
+    Mail::shouldReceive('mailer')->andReturn($mailer);
+
+    (new SendOnEmailService($message))->perform();
+
+    expect($message->fresh()->status)->toBe(Message::STATUSES['failed'])
+        ->and($message->fresh()->content_attributes['external_error'])->toBe([
+            'code' => 'email_send_failed',
+            'message' => __('errors.messages.email_send_failed', [
+                'reason' => '550 5.1.1 <customer@example.com>: Recipient address rejected: User unknown',
+            ]),
+        ]);
 });

@@ -4966,6 +4966,12 @@ const messages: Record<string, unknown> = {
             "domain_not_found": "tên miền không tồn tại",
             "domain_no_mail": "tên miền này không nhận thư"
         },
+        "messages": {
+            "email_bounced": "Địa chỉ :email không nhận được thư: :reason",
+            "email_bounced_without_reason": "Địa chỉ :email không nhận được thư, máy chủ bên nhận đã trả thư về",
+            "email_send_failed": "Máy chủ thư từ chối gửi: :reason",
+            "email_send_failed_unknown": "Không gửi được thư qua máy chủ thư của hộp này"
+        },
         "custom_filters": {
             "number_of_records": "Đã đạt giới hạn. Số lượng tuỳ chọn lọc tối đa cho mỗi mỗi người dùng mỗi tài khoản là 1000.",
             "invalid_attribute": "Invalid attribute key - [{key}]. The key should be one of [{allowed_keys}] or a custom attribute defined in the account.",

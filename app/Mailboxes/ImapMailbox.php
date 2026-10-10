@@ -11,6 +11,8 @@ use App\Models\ContactInbox;
 use App\Models\Conversation;
 use App\Models\Inbox;
 use App\Models\Message;
+use App\Services\Email\Bounce\BounceReport;
+use App\Services\Email\Bounce\EmailBounceHandler;
 use App\Services\Email\MailPresenter;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -47,6 +49,14 @@ class ImapMailbox
 
         Log::info('[IMAP] Processing email from '.$mail->originalSender().' : inbox '.$this->inbox->id
             .' : message_id '.$mail->messageId());
+
+        $bounce = BounceReport::from($mail);
+
+        if ($bounce !== null) {
+            app(EmailBounceHandler::class)->handle($bounce, $this->inbox);
+
+            return;
+        }
 
         if (! $this->incomingEmailFromValidEmail()) {
             return;

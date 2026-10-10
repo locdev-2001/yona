@@ -84,6 +84,12 @@ PostgreSQL (`pg_trgm`) · Redis (cache, queue, session) · Laravel Reverb
   `channel_email.imap_sync_state`; chỉ checkpoint sau khi xử lý từng thư. Mỗi
   lượt tối đa 500 UID, dành tối đa 100 chỗ cho thư lỗi, phần còn lại nhận thư
   mới. UIDVALIDITY đổi thì quét lại INBOX, chống trùng bằng Message-ID.
+- **Thư trả về và lỗi gửi Email**: thư báo gửi không thành (DSN) khi đồng bộ IMAP
+  không mở hội thoại; `BounceReport` đọc Message-ID thư gốc (phần `message/rfc822`,
+  rồi `In-Reply-To`/`References`), người nhận lỗi và `Diagnostic-Code`;
+  `EmailBounceHandler` đánh dấu tin đi gốc `failed` qua `ChannelMessageStatus` với
+  `external_error {code: 'email_bounced', message}`. SMTP từ chối ngay khi gửi thì
+  `SendOnEmailService` ghi `{code: 'email_send_failed', message}` mang lời máy chủ.
 - **Người trực mở hội thoại mới**: hai năng lực. `conversation_outbound_start` =
   kênh tự suy địa chỉ từ hồ sơ liên hệ (`AddressesContacts::contactSourceId`, hiện
   chỉ Email); kênh nào cần chặn địa chỉ không gửi được thì implement thêm

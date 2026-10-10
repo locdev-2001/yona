@@ -248,9 +248,11 @@ class MailPresenter
         return (filled($autoSubmitted) && $autoSubmitted !== 'no') || $autoReply === 'yes';
     }
 
+    // Thư báo gửi không thành (DSN, RFC 3464): multipart/report; report-type=delivery-status.
     public function isBounced(): bool
     {
         return filled($this->headerValue('X-Failed-Recipients'))
+            || strtolower((string) $this->mail->getHeaderParameter('Content-Type', 'report-type')) === 'delivery-status'
             || str_contains(strtolower((string) $this->contentType()), 'delivery-status');
     }
 
