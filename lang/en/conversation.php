@@ -263,6 +263,7 @@ return [
             'bridge_unreachable' => 'The channel service could not be reached. Retry in a moment.',
             'secret_mismatch' => 'The channel is misconfigured. Ask an administrator to check it — retrying will not help.',
             'media_fetch_failed' => 'The attachment could not be read. Send the file again.',
+            'email_bounced' => 'The customer\'s address does not accept mail — retrying will not deliver it. Fix the customer\'s email, then send again.',
         ],
     ],
     'MESSAGE_SENDER' => [

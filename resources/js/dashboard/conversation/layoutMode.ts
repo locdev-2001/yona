@@ -27,12 +27,12 @@ export function isOnExpandedLayout(uiSettings: UISettings, viewportWidth: number
     return isSmallScreen(viewportWidth) || hasExpandedLayoutPreference(uiSettings);
 }
 
-/** Màn danh sách: luôn hiện ở bố cục ba cột, ẩn khi hai-màn đang mở hội thoại. */
-export function showConversationList(expandedLayout: boolean, conversationId: number): boolean {
-    return expandedLayout ? !conversationId : true;
+/** Màn danh sách: luôn hiện ở bố cục ba cột, ẩn khi hai-màn đang mở hội thoại hoặc bản nháp. */
+export function showConversationList(expandedLayout: boolean, hasOpenThread: boolean): boolean {
+    return expandedLayout ? !hasOpenThread : true;
 }
 
-/** Màn chat: ở bố cục hai-màn chỉ dựng khi đã chọn hội thoại. */
-export function showMessageView(expandedLayout: boolean, conversationId: number): boolean {
-    return conversationId ? true : !expandedLayout;
+/** Màn chat: ở bố cục hai-màn chỉ dựng khi đã mở hội thoại hoặc bản nháp. */
+export function showMessageView(expandedLayout: boolean, hasOpenThread: boolean): boolean {
+    return hasOpenThread ? true : !expandedLayout;
 }

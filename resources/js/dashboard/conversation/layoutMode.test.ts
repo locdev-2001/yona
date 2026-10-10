@@ -40,20 +40,20 @@ describe('chọn bố cục theo breakpoint', () => {
 
 describe('hai-màn: danh sách và khung chat không cùng lúc', () => {
     it('màn hẹp chưa chọn hội thoại thì chỉ có danh sách', () => {
-        expect(showConversationList(true, 0)).toBe(true);
-        expect(showMessageView(true, 0)).toBe(false);
+        expect(showConversationList(true, false)).toBe(true);
+        expect(showMessageView(true, false)).toBe(false);
     });
 
     it('màn hẹp đã chọn hội thoại thì chỉ có khung chat', () => {
-        expect(showConversationList(true, 27)).toBe(false);
-        expect(showMessageView(true, 27)).toBe(true);
+        expect(showConversationList(true, true)).toBe(false);
+        expect(showMessageView(true, true)).toBe(true);
     });
 
     it('ba cột giữ cả hai ở mọi trạng thái', () => {
-        expect(showConversationList(false, 0)).toBe(true);
-        expect(showMessageView(false, 0)).toBe(true);
-        expect(showConversationList(false, 27)).toBe(true);
-        expect(showMessageView(false, 27)).toBe(true);
+        expect(showConversationList(false, false)).toBe(true);
+        expect(showMessageView(false, false)).toBe(true);
+        expect(showConversationList(false, true)).toBe(true);
+        expect(showMessageView(false, true)).toBe(true);
     });
 });
 

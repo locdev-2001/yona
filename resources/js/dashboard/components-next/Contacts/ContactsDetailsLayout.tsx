@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
+import { router, usePage } from '@inertiajs/react';
 
+import { composeConversationUrl } from 'dashboard/helper/URLHelper';
+import type { DashboardPageProps } from 'dashboard/types';
 import { t } from '../../../i18n';
 import Button from 'dashboard/components-next/button/Button';
 import Breadcrumb from 'dashboard/components-next/breadcrumb/Breadcrumb';
@@ -8,7 +11,7 @@ import type { Contact } from 'dashboard/contacts/types';
 
 // Port từ dashboard/components-next/Contacts/ContactsDetailsLayout.vue.
 // Khác biệt cố ý: VoiceCallButton (voice = EE) không render — khớp oracle
-// khi không có voice inbox; nút "Send message" giữ chỗ (ComposeConversation B3).
+// khi không có voice inbox.
 interface ContactsDetailsLayoutProps {
     selectedContact?: Contact | null;
     isUpdating?: boolean;
@@ -28,6 +31,7 @@ export default function ContactsDetailsLayout({
     onGoToContactsList,
     onToggleBlock,
 }: ContactsDetailsLayoutProps) {
+    const { currentAccount } = usePage<DashboardPageProps>().props;
     const [isContactSidebarOpen, setContactSidebarOpen] = useState(false);
     const sidebarContentRef = useRef<HTMLDivElement>(null);
     const toggleRef = useRef<HTMLDivElement>(null);
@@ -73,7 +77,17 @@ export default function ContactsDetailsLayout({
                                     disabled={isUpdating}
                                     onClick={() => onToggleBlock(isContactBlocked)}
                                 />
-                                <Button label={t('CONTACTS_LAYOUT.HEADER.SEND_MESSAGE')} size="sm" />
+                                {selectedContact ? (
+                                    <Button
+                                        label={t('CONTACTS_LAYOUT.HEADER.SEND_MESSAGE')}
+                                        size="sm"
+                                        onClick={() =>
+                                            router.visit(
+                                                composeConversationUrl({ accountId: currentAccount.id, contactId: selectedContact.id }),
+                                            )
+                                        }
+                                    />
+                                ) : null}
                             </div>
                         </div>
                     </div>

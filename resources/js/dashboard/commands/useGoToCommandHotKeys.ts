@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { router, usePage } from '@inertiajs/react';
 
 import { accountScopedUrl } from 'dashboard/helper/URLHelper';
-import { ICON_BELL, ICON_USER_PEN, NAVIGATION_ICONS } from 'dashboard/helper/commandbar/icons';
+import { ICON_BELL, ICON_MESSAGE_CIRCLE, ICON_USER_PEN, NAVIGATION_ICONS } from 'dashboard/helper/commandbar/icons';
 import type { CommandBarAction } from 'dashboard/helper/commandbar/actions';
 import { buildMenuItems } from 'dashboard/components-next/sidebar/menuItems';
 import { filterMenuByRole } from 'dashboard/components-next/sidebar/permissions';
@@ -26,6 +26,7 @@ interface OffMenuDestination {
 
 const OFF_MENU_DESTINATIONS: OffMenuDestination[] = [
     { id: 'goto_my_inbox', title: 'COMMAND_BAR.COMMANDS.GO_TO_MY_INBOX', icon: ICON_BELL, path: 'inbox-view' },
+    { id: 'compose_conversation', title: 'COMMAND_BAR.COMMANDS.COMPOSE_CONVERSATION', icon: ICON_MESSAGE_CIRCLE, path: 'inbox/new' },
     {
         id: 'open_profile_settings',
         title: 'COMMAND_BAR.COMMANDS.GO_TO_SETTINGS_PROFILE',

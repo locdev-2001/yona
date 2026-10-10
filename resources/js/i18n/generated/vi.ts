@@ -2656,7 +2656,7 @@ const messages: Record<string, unknown> = {
         }
     },
     "CHANNEL_SELECTOR": {
-        "COMING_SOON": "Sắp có!"
+        "COMING_SOON": "Sắp ra mắt"
     },
     "CHAT_LIST": {
         "LOADING": "Đang tải các hội thoại",
@@ -2678,6 +2678,7 @@ const messages: Record<string, unknown> = {
             "INPUT": "Tìm kiếm",
             "LABEL": "Tìm hội thoại trong danh sách đang xem",
             "CLEAR": "Xoá từ khoá",
+            "COMPOSE": "Soạn tin nhắn mới",
             "NO_RESULTS": "Không có hội thoại nào khớp “{query}” trong danh sách đang xem.",
             "CONTACTS_HEADING": "Liên hệ",
             "CONVERSATIONS_HEADING": "Hội thoại"
@@ -2856,6 +2857,7 @@ const messages: Record<string, unknown> = {
         },
         "COMMANDS": {
             "GO_TO_MY_INBOX": "Mở trang thông báo",
+            "COMPOSE_CONVERSATION": "Soạn tin nhắn mới",
             "GO_TO_CONVERSATION_DASHBOARD": "Đi tới Trang tổng quan hội thoại",
             "GO_TO_CONTACTS_DASHBOARD": "Đi tới Trang tổng quan liên hệ",
             "GO_TO_CAPTAIN": "Mở Captain",
@@ -2966,6 +2968,38 @@ const messages: Record<string, unknown> = {
         "CONTACT_CREATE": {
             "ERROR_MESSAGE": "Chúng tôi không tạo được liên hệ. Bạn hãy thử lại."
         },
+        "DRAFT": {
+            "TITLE": "Tin nhắn mới",
+            "EMPTY": "Chưa có tin nhắn. Chọn người nhận và kênh gửi rồi soạn tin bên dưới.",
+            "SENDING": "Đang mở hội thoại và gửi tin…",
+            "COMPOSER_LOCKED": "Chọn người nhận và kênh gửi để bắt đầu soạn",
+            "SUBJECT_LABEL": "Chủ đề:",
+            "NEW_CONTACT_BADGE": "Liên hệ mới",
+            "CREATE_CONTACT": "Tạo liên hệ mới: {address}",
+            "CONTACT_LOAD_FAILED": "Không tải được liên hệ. Bạn hãy chọn lại người nhận.",
+            "LOADING_CHANNELS": "Đang tìm kênh gửi được tới người này…",
+            "LOAD_CHANNELS_FAILED": "Không tải được danh sách kênh gửi.",
+            "RETRY": "Thử lại",
+            "UNAVAILABLE": {
+                "MESSAGING_WINDOW_CLOSED": "Đã quá thời gian kênh cho phép nhắn kể từ tin cuối của khách",
+                "REAUTHORIZATION_REQUIRED": "Kênh đang mất kết nối, cần đăng nhập lại",
+                "OTHER": "Kênh này hiện không gửi được tới người này"
+            },
+            "EMAIL_CHECK": {
+                "CHECKING": "Đang kiểm tra địa chỉ email…",
+                "INVALID_SYNTAX": "Địa chỉ email sai định dạng — không gửi được.",
+                "DOMAIN_NOT_FOUND": "Tên miền của địa chỉ này không tồn tại — thư sẽ không tới được.",
+                "DOMAIN_NO_MAIL": "Tên miền của địa chỉ này không nhận thư — thư sẽ không tới được.",
+                "UNDELIVERABLE": "Địa chỉ email này không nhận được thư."
+            },
+            "ERRORS": {
+                "NO_RECIPIENT": "Chọn người nhận trước khi gửi.",
+                "NO_CHANNEL": "Chọn một kênh gửi được trước khi gửi.",
+                "EMAIL_CHECKING": "Đang kiểm tra địa chỉ email, bạn chờ một chút rồi gửi.",
+                "EMAIL_UNDELIVERABLE": "Địa chỉ email này không nhận được thư, hãy kiểm tra lại người nhận.",
+                "SUBJECT_REQUIRED": "Thư email cần có chủ đề."
+            }
+        },
         "FORM": {
             "GO_TO_CONVERSATION": "Xem",
             "SUCCESS_MESSAGE": "Đã gửi tin nhắn!",
@@ -2974,11 +3008,13 @@ const messages: Record<string, unknown> = {
             "CONTACT_SELECTOR": {
                 "LABEL": "Đến:",
                 "TAG_INPUT_PLACEHOLDER": "Nhập ít nhất 2 ký tự để tìm theo tên, email hoặc số điện thoại",
-                "CONTACT_CREATING": "Đang tạo liên hệ..."
+                "CONTACT_CREATING": "Đang tạo liên hệ...",
+                "NO_RESULTS": "Không tìm thấy liên hệ nào",
+                "CHANGE": "Đổi người nhận"
             },
             "INBOX_SELECTOR": {
-                "LABEL": "Via:",
-                "BUTTON": "Hiện danh sách hộp thư"
+                "LABEL": "Gửi qua:",
+                "PICK_CONTACT_FIRST": "Chọn người nhận để xem các hộp thư gửi được"
             },
             "EMAIL_OPTIONS": {
                 "SUBJECT_LABEL": "Chủ đề :",
@@ -3907,7 +3943,8 @@ const messages: Record<string, unknown> = {
                 "circuit_open": "Đang tạm dừng gửi vì lỗi liên tiếp. Bạn thử lại sau ít phút.",
                 "bridge_unreachable": "Không gọi được dịch vụ của kênh. Bạn thử lại sau giây lát.",
                 "secret_mismatch": "Kênh đang sai cấu hình. Bạn báo quản trị viên kiểm tra — thử lại cũng không gửi được.",
-                "media_fetch_failed": "Không đọc được tệp đính kèm. Bạn gửi lại tệp nhé."
+                "media_fetch_failed": "Không đọc được tệp đính kèm. Bạn gửi lại tệp nhé.",
+                "email_bounced": "Địa chỉ của khách không nhận thư — thử lại cũng không tới. Bạn sửa email của khách rồi gửi lại."
             }
         },
         "MESSAGE_SENDER": {

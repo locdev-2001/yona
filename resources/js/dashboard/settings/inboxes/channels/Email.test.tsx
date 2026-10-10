@@ -167,4 +167,23 @@ describe('form Email', () => {
         expect(window.location.href).toBe('/app/accounts/2/email/oauth/microsoft');
         expect(postJson).not.toHaveBeenCalled();
     });
+
+    it('nhà cung cấp sắp ra mắt hiện mờ kèm huy hiệu và không bấm được', () => {
+        render(
+            <EmailChannelForm
+                connection={connection([
+                    option('google', { method: 'oauth_redirect', start_url: '/oauth/google/start' }),
+                    option('microsoft', { method: 'oauth_redirect', coming_soon: true }),
+                    option('other', { coming_soon: true }),
+                ])}
+            />,
+        );
+
+        const other = screen.getByRole('button', { name: /Khác|Other/ }) as HTMLButtonElement;
+        expect(other.disabled).toBe(true);
+        expect(screen.getAllByText(/Sắp ra mắt|Coming soon/)).toHaveLength(2);
+        fireEvent.click(other);
+        expect(screen.queryByLabelText(/IMAP|Máy chủ/)).toBeNull();
+        expect(window.location.href).toBe('');
+    });
 });

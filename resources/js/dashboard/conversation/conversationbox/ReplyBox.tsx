@@ -42,6 +42,8 @@ import type { DashboardPageProps } from '../../types';
 import { useConversation } from '../ConversationContext';
 import { useGroupMembers } from '../groupMembersApi';
 import { canPickSticker, fetchStickerSuggestions, fetchStickers } from '../stickerApi';
+import type { StickerScope } from '../stickerApi';
+import { canComposeIn } from '../compose/composeDraft';
 import type { StickerItem } from '../stickerApi';
 import StickerSuggestions from 'shared/sticker/StickerSuggestions';
 import { stickerSuggestionQuery } from 'shared/sticker/stickerSuggestionQuery';
@@ -124,6 +126,8 @@ export default function ReplyBox({
         uiSettings,
         updateUISettings,
         toggleTypingStatus,
+        isComposing,
+        composeDraft,
     } = useConversation();
     const { auth, currentAccount, inboxes = [] } = usePage<DashboardPageProps>().props;
     const user = auth.user!;
@@ -135,19 +139,21 @@ export default function ReplyBox({
     // channelType gốc lấy từ getter inboxes/getInbox(inbox_id). Danh sách inbox
     // chia sẻ qua Inertia chỉ có id/name/channel_type, nên kênh email nạp thêm
     // bản đầy đủ (email + forward_to_email) để dựng danh sách người nhận.
-    const inbox = inboxes.find(item => item.id === selectedConversation?.inbox_id);
+    // Bản nháp chưa có hội thoại: hộp là kênh đang chọn ở "Gửi qua", nên thanh
+    // công cụ tự đổi theo năng lực kênh đó.
+    const composerInboxId = isComposing ? composeDraft.target?.inbox.id : selectedConversation?.inbox_id;
+    const inbox = inboxes.find(item => item.id === composerInboxId);
     const channelType = inbox?.channel_type ?? DEFAULT_CHANNEL_TYPE;
     const isAnEmailChannel = channelType === INBOX_TYPES.EMAIL;
     const [emailInbox, setEmailInbox] = useState<Inbox | null>(null);
 
     useEffect(() => {
-        const inboxId = selectedConversation?.inbox_id;
-        if (!isAnEmailChannel || !inboxId) {
+        if (!isAnEmailChannel || !composerInboxId) {
             setEmailInbox(null);
             return;
         }
-        void getJson<Inbox>(`/api/v1/accounts/${accountId}/inboxes/${inboxId}`).then(setEmailInbox);
-    }, [accountId, isAnEmailChannel, selectedConversation?.inbox_id]);
+        getJson<Inbox>(`/api/v1/accounts/${accountId}/inboxes/${composerInboxId}`).then(setEmailInbox, () => setEmailInbox(null));
+    }, [accountId, isAnEmailChannel, composerInboxId]);
 
     const [replyType, setReplyType] = useState<string>(REPLY_EDITOR_MODES.REPLY);
     const [ccEmails, setCcEmails] = useState('');
@@ -164,7 +170,7 @@ export default function ReplyBox({
     // Trả lời / Lưu ý riêng nằm ngay trên nó.
     const replyBoxRef = useRef<HTMLDivElement>(null);
 
-    const canReply = selectedConversation?.can_reply ?? false;
+    const canReply = isComposing ? canComposeIn(composeDraft) : (selectedConversation?.can_reply ?? false);
     // Bot đang giữ hội thoại pending: agent chỉ ghi được ghi chú riêng cho tới
     // khi bấm "Take over" (canSendPublicReply của ReplyBox.vue).
     const isBotOwnedPendingConversation =
@@ -190,12 +196,16 @@ export default function ReplyBox({
 
     // Sticker đi thẳng, không đụng bản nháp đang gõ hay tin đang trả lời.
     const canSendSticker = canPickSticker(inbox, { isOnPrivateNote, isEditorDisabled });
+    const stickerScope = useMemo<StickerScope>(
+        () => (isComposing ? { inboxId: composerInboxId ?? 0 } : { conversationId }),
+        [isComposing, composerInboxId, conversationId],
+    );
     const stickerPicker = useMemo<ReplyStickerPicker | null>(
         () =>
             canSendSticker
-                ? { loadStickers: params => fetchStickers(accountId, conversationId, params), onSelect: sendSticker }
+                ? { loadStickers: params => fetchStickers(accountId, stickerScope, params), onSelect: sendSticker }
                 : null,
-        [canSendSticker, accountId, conversationId, sendSticker],
+        [canSendSticker, accountId, stickerScope, sendSticker],
     );
 
     const sendWithSignature = Boolean(uiSettings[signatureFlagKey(channelType)]);
@@ -221,8 +231,8 @@ export default function ReplyBox({
     const stickerQuery = canSendSticker && !hasAttachments ? stickerSuggestionQuery(messageWithoutSignature) : null;
     const loadStickerSuggestions = useCallback(
         (query: string, signal: AbortSignal) =>
-            fetchStickerSuggestions(accountId, conversationId, query, signal).then(result => result.stickers),
-        [accountId, conversationId],
+            fetchStickerSuggestions(accountId, stickerScope, query, signal).then(result => result.stickers),
+        [accountId, stickerScope],
     );
     const { stickers: suggestedStickers, dismiss: dismissStickerSuggestions } = useStickerSuggestions(
         stickerQuery,
@@ -232,7 +242,7 @@ export default function ReplyBox({
     // Trên thiết bị cảm ứng, placeholder bỏ phần gợi ý phím tắt.
     const isTouchOnly = isTouchOnlyDevice();
     const messagePlaceHolder = isEditorDisabled
-        ? t('CONVERSATION.FOOTER.MESSAGING_RESTRICTED_API')
+        ? t(isComposing ? 'COMPOSE_NEW_CONVERSATION.DRAFT.COMPOSER_LOCKED' : 'CONVERSATION.FOOTER.MESSAGING_RESTRICTED_API')
         : isPrivate
           ? t(isTouchOnly ? 'CONVERSATION.FOOTER.PRIVATE_MSG_INPUT_TOUCH' : 'CONVERSATION.FOOTER.PRIVATE_MSG_INPUT')
           : t(isTouchOnly ? 'CONVERSATION.FOOTER.MSG_INPUT_TOUCH' : 'CONVERSATION.FOOTER.MSG_INPUT');
@@ -295,7 +305,9 @@ export default function ReplyBox({
             setBccEmails('');
             return;
         }
-        const conversationContact = selectedConversation?.meta?.sender?.email || '';
+        const conversationContact = isComposing
+            ? composeDraft.target?.source_id || ''
+            : selectedConversation?.meta?.sender?.email || '';
         const { cc, bcc, to } = getRecipients(
             lastEmail as unknown as Record<string, unknown> | null,
             conversationContact,
@@ -306,7 +318,7 @@ export default function ReplyBox({
         setCcEmails(cc.join(', '));
         setBccEmails(bcc.join(', '));
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [isAnEmailChannel, conversationId, lastEmail, emailInbox]);
+    }, [isAnEmailChannel, conversationId, lastEmail, emailInbox, composeDraft.target?.source_id]);
 
     // ---- Bản nháp (draftMessages) ----
     // messageRef để hàm debounce và switchDraftContext đọc giá trị mới nhất mà
@@ -505,6 +517,9 @@ export default function ReplyBox({
                 ...emailPayloadFields(),
             });
         }
+        // Bản nháp giữ nguyên nội dung tới khi hội thoại mới mở ra; máy chủ từ chối
+        // thì người dùng sửa và gửi lại mà không phải soạn lại.
+        if (isComposing) return;
         if (isReplyingToMessage) onClearReplyTarget?.();
         afterSent();
     };
@@ -619,6 +634,7 @@ export default function ReplyBox({
             <ComposerExpandableRegion isExpanded={isExpanded}>
             <ReplyTopPanel
                 mode={replyType}
+                allowPrivateNote={!isComposing}
                 isReplyRestricted={isBotOwnedPendingConversation}
                 isEditorDisabled={isEditorDisabled}
                 captainTasksEnabled={captainTasksEnabled}
@@ -749,7 +765,7 @@ export default function ReplyBox({
                         ? null
                         : {
                               accountId,
-                              conversationDisplayId: conversationId,
+                              conversationDisplayId: conversationId || null,
                               onSend: draft => sendStructured(draft.contentType, draft.contentAttributes, draft.content),
                               cannedCard,
                               onCannedCardConsumed: () => setCannedCard(null),

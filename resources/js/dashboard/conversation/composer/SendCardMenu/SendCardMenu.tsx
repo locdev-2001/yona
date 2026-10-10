@@ -269,7 +269,7 @@ export function useCannedCardPreview(accountId: number, cannedCard: CannedCardPa
  */
 export interface SendCardTarget {
     accountId: number;
-    conversationDisplayId: number;
+    conversationDisplayId: number | null;
     onSend: (draft: StructuredDraft) => void;
     // Chọn một câu trả lời mẫu mang thẻ trong ô soạn (xem Editor.tsx): mở sẵn
     // dialog này để nhân viên xem lại rồi bấm Gửi, không sửa từng trường.

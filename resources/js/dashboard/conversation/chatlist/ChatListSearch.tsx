@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
+import { router } from '@inertiajs/react';
 
+import { composeConversationUrl } from 'dashboard/helper/URLHelper';
 import { t } from '../../../i18n';
 import { useConversation } from '../ConversationContext';
 
@@ -9,7 +11,7 @@ const SEARCH_DEBOUNCE_MS = 300;
 // Ô tìm ngay trong cột danh sách: lọc tại chỗ danh sách đang xem (hộp thư, tab,
 // trạng thái, bộ lọc giữ nguyên). Tìm mọi thứ trong hệ thống là ô ở sidebar.
 export default function ChatListSearch() {
-    const { searchQuery, setSearchQuery } = useConversation();
+    const { accountId, searchQuery, setSearchQuery, isComposing } = useConversation();
     const [draft, setDraft] = useState(searchQuery);
 
     // Từ khoá đổi từ ngoài (điều hướng) thì ô theo; khoảng trắng đang gõ dở thì giữ.
@@ -30,8 +32,8 @@ export default function ChatListSearch() {
     };
 
     return (
-        <div className="px-3 pb-2">
-            <div className="field-surface flex items-center gap-2.5 h-10 px-3 rounded-xl">
+        <div className="flex items-center gap-2 px-3 pb-2">
+            <div className="field-surface flex flex-1 min-w-0 items-center gap-2.5 h-10 px-3 rounded-xl">
                 <span className="i-lucide-search size-[1.125rem] shrink-0 text-n-slate-10" aria-hidden="true" />
                 <input
                     type="search"
@@ -59,6 +61,20 @@ export default function ChatListSearch() {
                     </button>
                 ) : null}
             </div>
+            <button
+                type="button"
+                title={t('CHAT_LIST.SEARCH.COMPOSE')}
+                aria-label={t('CHAT_LIST.SEARCH.COMPOSE')}
+                aria-current={isComposing ? 'page' : undefined}
+                className={`field-surface grid place-content-center size-10 shrink-0 rounded-xl hover:text-n-slate-12 ${
+                    isComposing ? 'text-n-brand' : 'text-n-slate-11'
+                }`}
+                onClick={() =>
+                    router.visit(composeConversationUrl({ accountId }), { preserveState: true, preserveScroll: true })
+                }
+            >
+                <span className="i-lucide-square-pen size-[1.125rem]" aria-hidden="true" />
+            </button>
         </div>
     );
 }

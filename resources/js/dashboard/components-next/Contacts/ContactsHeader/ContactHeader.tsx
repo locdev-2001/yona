@@ -1,6 +1,9 @@
 import { isProductFeatureVisible } from 'shared/helpers/productVisibility';
 import type { ReactNode } from 'react';
+import { router, usePage } from '@inertiajs/react';
 
+import { composeConversationUrl } from 'dashboard/helper/URLHelper';
+import type { DashboardPageProps } from 'dashboard/types';
 import { t } from '../../../../i18n';
 import Button from 'dashboard/components-next/button/Button';
 import Input from 'dashboard/components-next/input/Input';
@@ -10,7 +13,6 @@ import type { SortState } from './components/ContactSortMenu';
 import ContactMoreActions from './components/ContactMoreActions';
 
 // Port từ dashboard/components-next/Contacts/ContactsHeader/ContactHeader.vue.
-// Khác biệt cố ý (ghi trong trace): nút "New message" giữ chỗ (ComposeConversation B3).
 interface ContactHeaderProps {
     showSearch?: boolean;
     searchValue?: string;
@@ -54,6 +56,9 @@ export default function ContactHeader({
     onCreateSegment,
     onDeleteSegment,
 }: ContactHeaderProps) {
+    const { currentAccount } = usePage<DashboardPageProps>().props;
+    const onCompose = () => router.visit(composeConversationUrl({ accountId: currentAccount.id }));
+
     return (
         <header className="sticky top-0 z-20 px-6">
             <div className="flex items-start sm:items-center justify-between w-full py-6 gap-2 mx-auto max-w-5xl">
@@ -123,7 +128,7 @@ export default function ContactHeader({
                             <ContactMoreActions onAdd={onAdd} onImport={onImport} onExport={onExport} />
                         </div>
                         <div className="w-px h-4 bg-n-strong" />
-                        <Button label={buttonLabel} size="sm" />
+                        <Button label={buttonLabel} size="sm" onClick={onCompose} />
                     </div>
                 </div>
             </div>

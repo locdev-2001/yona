@@ -33,6 +33,8 @@ vi.mock('dashboard/helper/apiClient', () => ({
 
 vi.mock('../ConversationContext', () => ({
     useConversation: () => ({
+        isComposing: false,
+        composeDraft: { recipient: null, target: null, subject: '', emailCheck: { status: 'idle' }, isSending: false, showErrors: false, error: null },
         selectedConversation: {
             id: 4,
             inbox_id: 1,

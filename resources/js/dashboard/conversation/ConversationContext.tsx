@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
-import { usePage } from '@inertiajs/react';
+import { router, usePage } from '@inertiajs/react';
 import { debounce } from '@ext/utils';
 
 import type { MessageAttachment } from 'dashboard/components-next/message/helpers/attachments';
@@ -23,6 +23,13 @@ import {
 } from 'dashboard/realtime/ReconnectService';
 import { t } from '../../i18n';
 import type { DashboardPageProps } from '../types';
+import { parseApiErrorMessage } from 'dashboard/helper/apiClient';
+import { conversationUrl } from 'dashboard/helper/URLHelper';
+import { REPLY_EDITOR_MODES } from 'dashboard/components/widgets/WootWriter/constants';
+import { draftKey, setDraft as saveReplyDraft } from './draftApi';
+import { createConversationFromDraft } from './compose/composeApi';
+import { EMPTY_COMPOSE_DRAFT, draftBlocker } from './compose/composeDraft';
+import type { ComposeDraft } from './compose/composeDraft';
 import {
     assignAgent as assignAgentRequest,
     assignTeam as assignTeamRequest,
@@ -209,6 +216,12 @@ interface ConversationContextValue {
     reorderPinnedConversations: (orderedIds: number[]) => Promise<void>;
     // updateCustomAttributes của store gốc — accordion Conversation Information.
     updateConversationCustomAttributes: (customAttributes: Record<string, unknown>) => Promise<void>;
+    // Bản nháp hội thoại mới (route /inbox/new): chưa có hội thoại, lần gửi đầu
+    // tiên tạo hội thoại rồi đi tiếp đường gửi chung.
+    isComposing: boolean;
+    composeContactId: number | null;
+    composeDraft: ComposeDraft;
+    updateComposeDraft: (patch: Partial<ComposeDraft> | ((draft: ComposeDraft) => Partial<ComposeDraft>)) => void;
 }
 
 export interface ToggleStatusPayload {
@@ -334,6 +347,8 @@ interface ProviderProps {
     // Trung tâm thông báo dùng lại toàn bộ phần hội thoại nhưng không có cột
     // ChatList — tắt hẳn truy vấn danh sách như InboxView.vue của bản gốc.
     withConversationList?: boolean;
+    isComposing?: boolean;
+    composeContactId?: number | null;
     children: ReactNode;
 }
 
@@ -346,6 +361,8 @@ export function ConversationProvider({
     label = '',
     conversationType = '',
     withConversationList = true,
+    isComposing = false,
+    composeContactId = null,
     children,
 }: ProviderProps) {
     const page = usePage<DashboardPageProps>();
@@ -983,18 +1000,20 @@ export function ConversationProvider({
     const deliverPendingMessage = useCallback(
         (targetConversationId: number, echoId: string) => {
             const payload = unsentPayloadsRef.current.get(echoId);
-            if (!payload) return;
+            if (!payload) return Promise.resolve(false);
 
-            sendMessage(accountId, targetConversationId, { ...payload, echo_id: echoId }).then(
+            return sendMessage(accountId, targetConversationId, { ...payload, echo_id: echoId }).then(
                 (message) => {
                     unsentPayloadsRef.current.delete(echoId);
                     addMessage(message);
+                    return true;
                 },
                 (error: unknown) => {
                     const body = (error as { body?: { error?: string } }).body;
                     const reason = body?.error || t('CONVERSATION.MESSAGE_ERROR');
                     setMessages((current) => markUnsentFailed(current, echoId, reason));
                     useAlert(reason);
+                    return false;
                 },
             );
         },
@@ -1005,17 +1024,20 @@ export function ConversationProvider({
     // bản server trả về; lỗi → tin tạm thành thất bại, giữ nội dung để gửi lại.
     // Mọi kiểu tin agent gửi từ khung soạn (chữ, tệp, sticker, thẻ) đi qua đây —
     // chỉ khác phần vá lên tin tạm.
-    const sendWithPendingMessage = useCallback(
-        (payload: Omit<SendMessagePayload, 'echo_id'>, pendingPatch: Partial<ConversationMessage> = {}) => {
-            if (!conversationId || !selectedConversation) return;
-
+    const enqueuePendingMessage = useCallback(
+        (
+            targetConversationId: number,
+            targetInboxId: number,
+            payload: Omit<SendMessagePayload, 'echo_id'>,
+            pendingPatch: Partial<ConversationMessage>,
+        ) => {
             pendingEchoCounter += 1;
             const echoId = `${Date.now()}-${pendingEchoCounter}`;
             const pending: ConversationMessage = {
                 id: -pendingEchoCounter,
                 content: payload.content || null,
-                inbox_id: selectedConversation.inbox_id,
-                conversation_id: conversationId,
+                inbox_id: targetInboxId,
+                conversation_id: targetConversationId,
                 message_type: MESSAGE_TYPES.OUTGOING,
                 content_type: 'text',
                 status: MESSAGE_STATUS.PROGRESS,
@@ -1034,9 +1056,94 @@ export function ConversationProvider({
             };
             setMessages((current) => [...current, pending]);
             unsentPayloadsRef.current.set(echoId, payload);
-            deliverPendingMessage(conversationId, echoId);
+            return deliverPendingMessage(targetConversationId, echoId);
         },
-        [conversationId, selectedConversation, currentUserId, user, deliverPendingMessage],
+        [currentUserId, user, deliverPendingMessage],
+    );
+
+    const [composeDraft, setComposeDraft] = useState<ComposeDraft>(EMPTY_COMPOSE_DRAFT);
+    const composeDraftRef = useRef(composeDraft);
+    composeDraftRef.current = composeDraft;
+    const updateComposeDraft = useCallback(
+        (patch: Partial<ComposeDraft> | ((draft: ComposeDraft) => Partial<ComposeDraft>)) => {
+            setComposeDraft((current) => {
+                const changes = typeof patch === 'function' ? patch(current) : patch;
+                const keys = Object.keys(changes) as (keyof ComposeDraft)[];
+                if (keys.every((key) => Object.is(changes[key], current[key]))) return current;
+                const next = { ...current, ...changes };
+                composeDraftRef.current = next;
+                return next;
+            });
+        },
+        [],
+    );
+    // Hội thoại tạo từ bản nháp — mọi kiểu gửi (chữ, tệp, sticker, thẻ) dùng chung một lần tạo.
+    const draftConversationRef = useRef<Promise<Conversation> | null>(null);
+
+    // Mỗi lần vào bản nháp (hoặc đổi người nhận điền sẵn) là một bản nháp mới. Đặt
+    // lại ngay trong lúc render để hiệu ứng của khung nháp không bị xoá sau khi chạy.
+    const composeSessionKey = `${isComposing}:${composeContactId ?? ''}`;
+    const [activeComposeSession, setActiveComposeSession] = useState(composeSessionKey);
+    if (activeComposeSession !== composeSessionKey) {
+        setActiveComposeSession(composeSessionKey);
+        setComposeDraft(EMPTY_COMPOSE_DRAFT);
+        composeDraftRef.current = EMPTY_COMPOSE_DRAFT;
+        draftConversationRef.current = null;
+    }
+
+    const ensureConversation = useCallback((): Promise<Conversation> => {
+        draftConversationRef.current ??= createConversationFromDraft(accountId, composeDraftRef.current, (contact) =>
+            updateComposeDraft({ recipient: { kind: 'contact', contact } }),
+        ).catch((error: unknown) => {
+            draftConversationRef.current = null;
+            throw error;
+        });
+        return draftConversationRef.current;
+    }, [accountId, updateComposeDraft]);
+
+    // Gửi từ bản nháp: tạo hội thoại, gửi tin vào đó qua đường chung, rồi mở hội
+    // thoại thật. Tin gửi hỏng vẫn còn trong ô soạn của hội thoại mới để gửi lại.
+    const sendFromDraft = useCallback(
+        async (payload: Omit<SendMessagePayload, 'echo_id'>, pendingPatch: Partial<ConversationMessage>) => {
+            const draft = composeDraftRef.current;
+            if (draft.isSending) return;
+            const blocker = draftBlocker(draft);
+            if (blocker) {
+                updateComposeDraft({ showErrors: true });
+                useAlert(t(blocker));
+                return;
+            }
+
+            updateComposeDraft({ isSending: true, error: null });
+            let conversation: Conversation;
+            try {
+                conversation = await ensureConversation();
+            } catch (error: unknown) {
+                const reason = parseApiErrorMessage(error) || t('COMPOSE_NEW_CONVERSATION.FORM.ERROR_MESSAGE');
+                updateComposeDraft({ isSending: false, error: reason });
+                useAlert(reason);
+                return;
+            }
+
+            setAllConversations((current) => applyConversationUpdate(current, conversation));
+            const delivered = await enqueuePendingMessage(conversation.id, conversation.inbox_id, payload, pendingPatch);
+            if (!delivered && payload.content) {
+                saveReplyDraft(draftKey(conversation.id, REPLY_EDITOR_MODES.REPLY), payload.content);
+            }
+            router.visit(conversationUrl({ accountId, id: conversation.id }), { preserveState: true, preserveScroll: true });
+        },
+        [accountId, ensureConversation, enqueuePendingMessage, updateComposeDraft],
+    );
+
+    const sendWithPendingMessage = useCallback(
+        (payload: Omit<SendMessagePayload, 'echo_id'>, pendingPatch: Partial<ConversationMessage> = {}) => {
+            if (conversationId && selectedConversation) {
+                void enqueuePendingMessage(conversationId, selectedConversation.inbox_id, payload, pendingPatch);
+                return;
+            }
+            if (isComposing) void sendFromDraft(payload, pendingPatch);
+        },
+        [conversationId, selectedConversation, isComposing, enqueuePendingMessage, sendFromDraft],
     );
 
     const sendReply = useCallback(
@@ -1472,6 +1579,10 @@ export function ConversationProvider({
             setConversationPinned,
             reorderPinnedConversations,
             updateConversationCustomAttributes,
+            isComposing,
+            composeContactId,
+            composeDraft,
+            updateComposeDraft,
         }),
         [
             accountId,
@@ -1531,6 +1642,10 @@ export function ConversationProvider({
             setConversationPinned,
             reorderPinnedConversations,
             updateConversationCustomAttributes,
+            isComposing,
+            composeContactId,
+            composeDraft,
+            updateComposeDraft,
         ],
     );
 

@@ -159,10 +159,6 @@ export default function ContactPanel() {
             <ContactInfo
                 contact={contact}
                 onContactChange={setContact}
-                uiSettings={uiSettings}
-                onToggleSignature={() =>
-                    updateUISettings({ channel_api_signature_enabled: !uiSettings.channel_api_signature_enabled })
-                }
                 onPanelClose={closeContactPanel}
             />
             <div className="px-2 pb-8 list-group">

@@ -45,6 +45,10 @@ export const conversationUrl = ({
     return accountScopedUrl(accountId, `conversations/${id}`);
 };
 
+// Bản nháp hội thoại mới trong khung Inbox, điền sẵn người nhận khi mở từ một liên hệ.
+export const composeConversationUrl = ({ accountId, contactId }: { accountId: number; contactId?: number | null }) =>
+    accountScopedUrl(accountId, contactId ? `inbox/new?contact_id=${contactId}` : 'inbox/new');
+
 // Port từ URLHelper.conversationListPageURL (label → team → inbox →
 // conversationType → mặc định dashboard; custom_view vào E1).
 export const conversationListPageURL = ({

@@ -2656,7 +2656,7 @@ const messages: Record<string, unknown> = {
         }
     },
     "CHANNEL_SELECTOR": {
-        "COMING_SOON": "Coming Soon!"
+        "COMING_SOON": "Coming soon"
     },
     "CHAT_LIST": {
         "LOADING": "Fetching conversations",
@@ -2678,6 +2678,7 @@ const messages: Record<string, unknown> = {
             "INPUT": "Search",
             "LABEL": "Search conversations in this list",
             "CLEAR": "Clear search",
+            "COMPOSE": "New message",
             "NO_RESULTS": "No conversation in this list matches “{query}”.",
             "CONTACTS_HEADING": "Contacts",
             "CONVERSATIONS_HEADING": "Conversations"
@@ -2856,6 +2857,7 @@ const messages: Record<string, unknown> = {
         },
         "COMMANDS": {
             "GO_TO_MY_INBOX": "Go to notifications",
+            "COMPOSE_CONVERSATION": "New message",
             "GO_TO_CONVERSATION_DASHBOARD": "Go to Conversation Dashboard",
             "GO_TO_CONTACTS_DASHBOARD": "Go to Contacts Dashboard",
             "GO_TO_CAPTAIN": "Go to Captain",
@@ -2966,6 +2968,38 @@ const messages: Record<string, unknown> = {
         "CONTACT_CREATE": {
             "ERROR_MESSAGE": "We couldn’t create the contact. Please try again."
         },
+        "DRAFT": {
+            "TITLE": "New message",
+            "EMPTY": "No messages yet. Pick a recipient and a channel, then write below.",
+            "SENDING": "Opening the conversation and sending…",
+            "COMPOSER_LOCKED": "Pick a recipient and a channel to start writing",
+            "SUBJECT_LABEL": "Subject:",
+            "NEW_CONTACT_BADGE": "New contact",
+            "CREATE_CONTACT": "Create new contact: {address}",
+            "CONTACT_LOAD_FAILED": "Could not load the contact. Please pick the recipient again.",
+            "LOADING_CHANNELS": "Finding channels that can reach this person…",
+            "LOAD_CHANNELS_FAILED": "Could not load the channels.",
+            "RETRY": "Retry",
+            "UNAVAILABLE": {
+                "MESSAGING_WINDOW_CLOSED": "The channel's reply window since the customer's last message has passed",
+                "REAUTHORIZATION_REQUIRED": "The channel is disconnected and needs to sign in again",
+                "OTHER": "This channel cannot reach this person right now"
+            },
+            "EMAIL_CHECK": {
+                "CHECKING": "Checking the email address…",
+                "INVALID_SYNTAX": "The email address is malformed — it cannot be sent to.",
+                "DOMAIN_NOT_FOUND": "This address's domain does not exist — mail will not arrive.",
+                "DOMAIN_NO_MAIL": "This address's domain does not accept mail — mail will not arrive.",
+                "UNDELIVERABLE": "This email address cannot receive mail."
+            },
+            "ERRORS": {
+                "NO_RECIPIENT": "Pick a recipient before sending.",
+                "NO_CHANNEL": "Pick a channel that can send before sending.",
+                "EMAIL_CHECKING": "Still checking the email address, please wait a moment.",
+                "EMAIL_UNDELIVERABLE": "This email address cannot receive mail, please check the recipient.",
+                "SUBJECT_REQUIRED": "An email needs a subject."
+            }
+        },
         "FORM": {
             "GO_TO_CONVERSATION": "View",
             "SUCCESS_MESSAGE": "The message was sent successfully!",
@@ -2974,11 +3008,13 @@ const messages: Record<string, unknown> = {
             "CONTACT_SELECTOR": {
                 "LABEL": "To:",
                 "TAG_INPUT_PLACEHOLDER": "Enter at least 2 characters to search by name, email, or phone number",
-                "CONTACT_CREATING": "Creating contact..."
+                "CONTACT_CREATING": "Creating contact...",
+                "NO_RESULTS": "No contacts found",
+                "CHANGE": "Change recipient"
             },
             "INBOX_SELECTOR": {
                 "LABEL": "Via:",
-                "BUTTON": "Show inboxes"
+                "PICK_CONTACT_FIRST": "Pick a recipient to see the inboxes that can reach them"
             },
             "EMAIL_OPTIONS": {
                 "SUBJECT_LABEL": "Subject :",
@@ -3907,7 +3943,8 @@ const messages: Record<string, unknown> = {
                 "circuit_open": "Sending is paused after repeated failures. Retry in a few minutes.",
                 "bridge_unreachable": "The channel service could not be reached. Retry in a moment.",
                 "secret_mismatch": "The channel is misconfigured. Ask an administrator to check it — retrying will not help.",
-                "media_fetch_failed": "The attachment could not be read. Send the file again."
+                "media_fetch_failed": "The attachment could not be read. Send the file again.",
+                "email_bounced": "The customer's address does not accept mail — retrying will not deliver it. Fix the customer's email, then send again."
             }
         },
         "MESSAGE_SENDER": {

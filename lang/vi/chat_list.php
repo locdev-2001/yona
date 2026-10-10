@@ -24,6 +24,7 @@ return [
         'INPUT' => 'Tìm kiếm',
         'LABEL' => 'Tìm hội thoại trong danh sách đang xem',
         'CLEAR' => 'Xoá từ khoá',
+        'COMPOSE' => 'Soạn tin nhắn mới',
         'NO_RESULTS' => 'Không có hội thoại nào khớp “{query}” trong danh sách đang xem.',
         'CONTACTS_HEADING' => 'Liên hệ',
         'CONVERSATIONS_HEADING' => 'Hội thoại',

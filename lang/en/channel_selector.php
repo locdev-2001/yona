@@ -1,5 +1,5 @@
 <?php
 
 return [
-    'COMING_SOON' => 'Coming Soon!',
+    'COMING_SOON' => 'Coming soon',
 ];

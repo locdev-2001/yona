@@ -34,7 +34,14 @@ export function readExternalError(value: unknown): MessageExternalError | null {
 }
 
 /** Mã lỗi mà bấm "Thử lại" chắc chắn vô ích (reports/zalo-lo3-notes.md). */
-const CODES_WITHOUT_RETRY = ['secret_mismatch'];
+const CODES_WITHOUT_RETRY = ['secret_mismatch', 'email_bounced'];
+
+/** Lỗi do chính địa chỉ người nhận: lý do phải đọc được ngay dưới bong bóng, không giấu trong tooltip. */
+const CODES_SHOWN_INLINE = ['email_bounced'];
+
+export function showsErrorInline(code?: string): boolean {
+    return Boolean(code && CODES_SHOWN_INLINE.includes(code));
+}
 
 export function canRetryMessage({
     status,

@@ -30,9 +30,19 @@ export interface StickerBrowseParams {
     pack?: string;
 }
 
+// Bảng sticker theo hội thoại đang mở, hoặc theo hộp thư khi đang soạn bản nháp
+// chưa có hội thoại — hai đường cùng hình dạng phản hồi.
+export type StickerScope = { conversationId: number } | { inboxId: number };
+
+function stickerScopePath(accountId: number, scope: StickerScope): string {
+    return 'inboxId' in scope
+        ? `/api/v1/accounts/${accountId}/inboxes/${scope.inboxId}/stickers`
+        : `/api/v1/accounts/${accountId}/conversations/${scope.conversationId}/stickers`;
+}
+
 export function fetchStickers(
     accountId: number,
-    conversationId: number,
+    scope: StickerScope,
     params: StickerBrowseParams = {},
 ): Promise<StickerBrowseResult> {
     const query = new URLSearchParams();
@@ -40,9 +50,7 @@ export function fetchStickers(
     if (params.pack) query.set('pack', params.pack);
     const suffix = query.toString();
 
-    return getJson<StickerBrowseResult>(
-        `/api/v1/accounts/${accountId}/conversations/${conversationId}/stickers${suffix ? `?${suffix}` : ''}`,
-    );
+    return getJson<StickerBrowseResult>(`${stickerScopePath(accountId, scope)}${suffix ? `?${suffix}` : ''}`);
 }
 
 export interface StickerSuggestionResult {
@@ -52,16 +60,15 @@ export interface StickerSuggestionResult {
 // Gợi ý khi gõ: tối đa 8 sticker khớp nhãn/từ khoá, image_url là ảnh sticker (WebP).
 export function fetchStickerSuggestions(
     accountId: number,
-    conversationId: number,
+    scope: StickerScope,
     query: string,
     signal?: AbortSignal,
 ): Promise<StickerSuggestionResult> {
     const search = new URLSearchParams({ q: query });
 
-    return getJson<StickerSuggestionResult>(
-        `/api/v1/accounts/${accountId}/conversations/${conversationId}/stickers/suggestions?${search.toString()}`,
-        { signal },
-    );
+    return getJson<StickerSuggestionResult>(`${stickerScopePath(accountId, scope)}/suggestions?${search.toString()}`, {
+        signal,
+    });
 }
 
 /**

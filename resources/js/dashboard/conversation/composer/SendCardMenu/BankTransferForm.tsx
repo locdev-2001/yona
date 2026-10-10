@@ -53,7 +53,7 @@ function NewPaymentAccount({
     onPreview,
 }: {
     accountId: number;
-    conversationDisplayId: number;
+    conversationDisplayId: number | null;
     amount: number | null;
     onCreated: (account: PaymentAccountOption) => void;
     onCancel?: () => void;
@@ -139,7 +139,7 @@ export default function BankTransferForm({
     onPreview,
 }: {
     accountId: number;
-    conversationDisplayId: number;
+    conversationDisplayId: number | null;
     draft: BankTransferDraft;
     onChange: (draft: BankTransferDraft) => void;
     onPreview: (preview: StructuredDraft | null) => void;

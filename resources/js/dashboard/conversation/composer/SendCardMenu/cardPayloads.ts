@@ -178,8 +178,9 @@ export interface BankTransferDraft {
 }
 
 /** Nội dung mặc định lấy từ mẫu của tài khoản, `{ma_hoi_thoai}` = số hội thoại (khớp máy chủ). */
-export const defaultMemo = (account: PaymentAccountOption | undefined, conversationDisplayId: number | string): string =>
-    (account?.memo_template ?? '').replace('{ma_hoi_thoai}', String(conversationDisplayId)).trim();
+// Bản nháp chưa có mã hội thoại thì bỏ trống chỗ mã trong nội dung chuyển khoản.
+export const defaultMemo = (account: PaymentAccountOption | undefined, conversationDisplayId: number | string | null): string =>
+    (account?.memo_template ?? '').replace('{ma_hoi_thoai}', conversationDisplayId === null ? '' : String(conversationDisplayId)).replace(/\s{2,}/g, ' ').trim();
 
 export function bankTransferError(draft: BankTransferDraft): string | null {
     if (!draft.paymentAccountId) return 'ACCOUNT_REQUIRED';

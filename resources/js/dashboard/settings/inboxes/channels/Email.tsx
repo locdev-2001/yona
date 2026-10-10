@@ -14,8 +14,8 @@ import { oauthErrorKey } from '../channelConnection';
 import type { ChannelConnection } from '../channelConnection';
 
 // Kênh Email: chọn nhà cung cấp trong các lối backend khai (`connection.options`).
-// Lối OAuth chuyển sang nhà cung cấp; lối có `preset` (Gmail, Outlook) chỉ hỏi địa chỉ +
-// App Password; "Khác" điền đủ máy chủ. Máy chủ thử đăng nhập IMAP/SMTP khi lưu.
+// Lối OAuth chuyển sang nhà cung cấp; lối có `preset` chỉ hỏi địa chỉ + App Password;
+// "Khác" điền đủ máy chủ. Lối `coming_soon` hiện mờ kèm "Sắp ra mắt", không bấm được.
 const FALLBACK_OPTIONS: ChannelConnection[] = [
     { key: 'other', method: 'form', available: true, preset: null, guide_url: null, start_url: null, logo_url: null, options: [] },
 ];
@@ -307,6 +307,7 @@ export default function EmailChannelForm({ connection = null }: ChannelFormProps
     });
 
     const choose = (option: ChannelConnection) => {
+        if (option.coming_soon) return;
         if (option.method === 'oauth_redirect' && option.start_url) {
             window.location.href = option.start_url;
 
@@ -334,6 +335,8 @@ export default function EmailChannelForm({ connection = null }: ChannelFormProps
                         description={optionText(option.key, 'DESCRIPTION')}
                         icon={ICONS.channelEmail}
                         logoUrl={option.logo_url}
+                        isComingSoon={Boolean(option.coming_soon)}
+                        disabled={Boolean(option.coming_soon)}
                         onClick={() => choose(option)}
                     />
                 ))}

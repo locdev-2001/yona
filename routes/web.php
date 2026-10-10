@@ -335,6 +335,7 @@ Route::middleware('auth')->group(function () {
         // + team_conversations.
         Route::get('/conversations/{conversationId}', [DashboardController::class, 'conversation'])
             ->whereNumber('conversationId')->name('inbox_conversation');
+        Route::get('/inbox/new', [DashboardController::class, 'compose'])->name('inbox_compose');
         Route::get('/inbox/{inboxId}', [DashboardController::class, 'inbox'])
             ->whereNumber('inboxId')->name('inbox_dashboard');
         Route::get('/inbox/{inboxId}/conversations/{conversationId}', [DashboardController::class, 'inbox'])

@@ -50,6 +50,17 @@ class DashboardController extends Controller
         ]);
     }
 
+    // Bản nháp hội thoại mới ngay trong khung Inbox; `contact_id` điền sẵn người nhận.
+    public function compose(Request $request, Account $account): Response
+    {
+        $contactId = filter_var($request->query('contact_id'), FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]]);
+
+        return Inertia::render('dashboard/conversation/ConversationView', [
+            'isComposing' => true,
+            'composeContactId' => $contactId === false ? null : $contactId,
+        ]);
+    }
+
     // Tương đương route team_conversations: /team/{team_id} (+ chọn conversation).
     public function team(Request $request, Account $account, int $teamId, ?int $conversationId = null): Response
     {

@@ -6,8 +6,10 @@ import ChatListSearch from './ChatListSearch';
 const setSearchQuery = vi.fn();
 let searchQuery = '';
 
+const visit = vi.hoisted(() => vi.fn());
+vi.mock('@inertiajs/react', () => ({ router: { visit } }));
 vi.mock('../ConversationContext', () => ({
-    useConversation: () => ({ searchQuery, setSearchQuery }),
+    useConversation: () => ({ accountId: 2, searchQuery, setSearchQuery, isComposing: false }),
 }));
 
 describe('ô tìm trong cột danh sách hội thoại', () => {
@@ -38,7 +40,7 @@ describe('ô tìm trong cột danh sách hội thoại', () => {
         const input = screen.getByRole('searchbox') as HTMLInputElement;
 
         expect(input.value).toBe('lan');
-        fireEvent.click(screen.getByRole('button'));
+        fireEvent.click(screen.getByRole('button', { name: /Xoá từ khoá|Clear search/ }));
 
         expect(input.value).toBe('');
         expect(setSearchQuery).toHaveBeenCalledWith('');
@@ -53,5 +55,12 @@ describe('ô tìm trong cột danh sách hội thoại', () => {
 
         expect(input.value).toBe('');
         expect(setSearchQuery).toHaveBeenCalledWith('');
+    });
+
+    it('nút soạn cạnh ô tìm mở bản nháp hội thoại ngay trong Inbox', () => {
+        render(<ChatListSearch />);
+        fireEvent.click(screen.getByRole('button', { name: /Soạn tin nhắn mới|New message/ }));
+
+        expect(visit).toHaveBeenCalledWith('/app/accounts/2/inbox/new', { preserveState: true, preserveScroll: true });
     });
 });

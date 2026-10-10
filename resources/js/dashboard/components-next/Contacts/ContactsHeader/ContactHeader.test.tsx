@@ -2,7 +2,11 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
-vi.mock('@inertiajs/react', () => ({ usePage: () => ({ props: { currentAccountUser: { role: 'administrator' } } }) }));
+const visit = vi.hoisted(() => vi.fn());
+vi.mock('@inertiajs/react', () => ({
+    router: { visit },
+    usePage: () => ({ props: { currentAccount: { id: 3 }, currentAccountUser: { role: 'administrator' } } }),
+}));
 vi.mock('dashboard/components-next/button/Button', () => ({
     default: ({ label, icon, children, onClick, id }: { label?: string; icon?: string; children?: ReactNode; onClick?: () => void; id?: string }) => (
         <button id={id} aria-label={label || icon} onClick={onClick}>{children}</button>
@@ -27,5 +31,11 @@ describe('Danh sách khách tinh gọn', () => {
         expect(onExport).toHaveBeenCalledOnce();
         fireEvent.click(screen.getByText(/Import contacts|Nhập liên hệ/));
         expect(onImport).toHaveBeenCalledOnce();
+    });
+
+    it('nút soạn tin mở bản nháp hội thoại trong Inbox', () => {
+        render(<ContactHeader headerTitle="Khách hàng" buttonLabel="Tin nhắn" onSearch={vi.fn()} onUpdateSort={vi.fn()} onAdd={vi.fn()} onImport={vi.fn()} onExport={vi.fn()} />);
+        fireEvent.click(screen.getByRole('button', { name: 'Tin nhắn' }));
+        expect(visit).toHaveBeenCalledWith('/app/accounts/3/inbox/new');
     });
 });

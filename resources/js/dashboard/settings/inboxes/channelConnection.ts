@@ -6,6 +6,8 @@ export interface ChannelConnection {
     key: string;
     method: ConnectionMethod;
     available: boolean;
+    // Lối đã lên kế hoạch nhưng chưa mở: hiện cho biết, không bấm được.
+    coming_soon?: boolean;
     preset: Record<string, string | number | boolean> | null;
     guide_url: string | null;
     logo_url: string | null;

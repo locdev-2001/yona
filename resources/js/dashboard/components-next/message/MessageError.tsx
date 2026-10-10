@@ -5,7 +5,7 @@ import Loader from 'shared/components/loader/Loader';
 import { t } from '../../../i18n';
 import { useMessageContext } from './provider';
 import { ORIENTATION } from './constants';
-import { canRetryMessage, readExternalError } from './helpers/retry';
+import { canRetryMessage, readExternalError, showsErrorInline } from './helpers/retry';
 import { isUnsentMessageId } from 'dashboard/conversation/pendingMessages';
 
 // Port từ components-next/message/MessageError.vue. Thêm so với gốc: gợi ý theo
@@ -54,7 +54,7 @@ export default function MessageError({
         }
     };
 
-    return (
+    const row = (
         <div className={`text-xs text-n-ruby-11 flex items-center gap-1.5 ${className}`.trim()}>
             <span>{t('CHAT_LIST.FAILED_TO_SEND')}</span>
             <div className="relative group">
@@ -99,6 +99,17 @@ export default function MessageError({
                     <span>{t('CONVERSATION.MESSAGE_ACTIONS.DELETE')}</span>
                 </button>
             ) : null}
+        </div>
+    );
+
+    if (!showsErrorInline(error.code)) return row;
+
+    return (
+        <div className="flex flex-col gap-1">
+            {row}
+            <p role="alert" className="text-xs text-n-ruby-11 max-w-xs break-words">
+                {detail}
+            </p>
         </div>
     );
 }

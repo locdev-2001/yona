@@ -41,6 +41,19 @@ describe('lý do lỗi và nút Thử lại trên tin thất bại', () => {
         expect(onRetry).toHaveBeenCalledTimes(1);
     });
 
+    it('thư bị trả về: lý do và cách xử lý hiện ngay dưới bong bóng, không mời thử lại vô ích', () => {
+        const message = 'Địa chỉ khach@ao.vn không nhận thư: 550 5.1.1 user unknown';
+        renderMessage(
+            failedMessage({ content_attributes: { external_error: { code: 'email_bounced', message } } }),
+            vi.fn(),
+        );
+
+        const alert = screen.getByRole('alert');
+        expect(alert.textContent).toContain(message);
+        expect(alert.textContent).toContain(t('CONVERSATION.MESSAGE_FAILURE.HINT.email_bounced'));
+        expect(screen.queryByRole('button', { name: RETRY_LABEL })).toBeNull();
+    });
+
     it('hiện lý do lỗi kênh trả về', () => {
         const container = renderMessage(failedMessage(), vi.fn());
 

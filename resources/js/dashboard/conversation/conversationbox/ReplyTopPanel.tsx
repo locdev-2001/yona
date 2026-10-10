@@ -16,6 +16,8 @@ import EditorModeToggle from './EditorModeToggle';
 
 interface ReplyTopPanelProps {
     mode: string;
+    // Bản nháp chưa có hội thoại thì chưa có chỗ để ghi chú riêng.
+    allowPrivateNote?: boolean;
     isReplyRestricted?: boolean;
     disabled?: boolean;
     isEditorDisabled?: boolean;
@@ -31,6 +33,7 @@ interface ReplyTopPanelProps {
 
 export default function ReplyTopPanel({
     mode,
+    allowPrivateNote = true,
     isReplyRestricted = false,
     disabled = false,
     isEditorDisabled = false,
@@ -75,12 +78,16 @@ export default function ReplyTopPanel({
 
     return (
         <div className="flex justify-between gap-2 h-[3.25rem] items-center ltr:pl-3 ltr:pr-2 rtl:pr-3 rtl:pl-2">
-            <EditorModeToggle
-                mode={mode}
-                disabled={disabled}
-                isReplyRestricted={isReplyRestricted}
-                onToggleMode={handleModeToggle}
-            />
+            {allowPrivateNote ? (
+                <EditorModeToggle
+                    mode={mode}
+                    disabled={disabled}
+                    isReplyRestricted={isReplyRestricted}
+                    onToggleMode={handleModeToggle}
+                />
+            ) : (
+                <span />
+            )}
             <div className="flex items-center mx-4 my-0">
                 {isMessageLengthReachingThreshold && (
                     <div className="text-xs">

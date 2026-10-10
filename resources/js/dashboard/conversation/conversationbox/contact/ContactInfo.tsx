@@ -7,14 +7,12 @@ import Avatar from 'dashboard/components-next/avatar/Avatar';
 import { avatarSeed } from 'shared/avatar/avatarSeed';
 import NextButton from 'dashboard/components-next/button/Button';
 import Flag from 'dashboard/components-next/flag/Flag';
-import ComposeConversation from 'dashboard/components-next/NewConversation/ComposeConversation';
 import ConfirmContactDeleteDialog from 'dashboard/components-next/Contacts/ContactsForm/ConfirmContactDeleteDialog';
 import type { ConfirmContactDeleteDialogHandle } from 'dashboard/components-next/Contacts/ContactsForm/ConfirmContactDeleteDialog';
 import { useAlert } from 'dashboard/composables/useAlert';
 import { patchJson, parseApiErrorMessage } from 'dashboard/helper/apiClient';
 import { dynamicTime } from 'shared/helpers/timeHelper';
-import { accountScopedUrl } from 'dashboard/helper/URLHelper';
-import type { UISettings } from 'dashboard/composables/useUISettings';
+import { accountScopedUrl, composeConversationUrl } from 'dashboard/helper/URLHelper';
 import { t } from '../../../../i18n';
 import type { DashboardPageProps } from '../../../types';
 import { useContactAvailabilityStatus } from 'dashboard/realtime/hooks';
@@ -27,14 +25,12 @@ import type { FullContact } from './useContactDetails';
 // đầy đủ qua GET /contacts/{id} (contacts/show gốc) để có created_at (tooltip ⓘ)
 // + country_code (cờ); avatar + tên + dòng email/phone/identifier/company/
 // location (copy + sửa inline qua PATCH /contacts/{id} của B2) + 4 nút: New
-// message (ComposeConversation, gửi thật), Edit (→ trang contact; EditContact
+// message (mở bản nháp hội thoại mới trong Inbox), Edit (→ trang contact; EditContact
 // modal nhóm sau), Merge (ContactMergeModal shell), Delete (dialog B2).
 // Bỏ: sửa tên inline, SocialIcons, mô tả, VoiceCallButton (EE).
 interface ContactInfoProps {
     contact: FullContact;
-    uiSettings: UISettings;
     onContactChange: Dispatch<SetStateAction<FullContact>>;
-    onToggleSignature: () => void;
     onPanelClose: () => void;
 }
 
@@ -42,9 +38,7 @@ type EditableField = 'email' | 'phone_number' | 'company_name';
 
 export default function ContactInfo({
     contact,
-    uiSettings,
     onContactChange: setContact,
-    onToggleSignature,
     onPanelClose,
 }: ContactInfoProps) {
     const { currentAccount, currentAccountUser } = usePage<DashboardPageProps>().props;
@@ -247,13 +241,18 @@ export default function ContactInfo({
                     </div>
                 </div>
                 <div className="flex items-center w-full mt-0.5 gap-2">
-                    <ComposeConversation
-                        contact={contact}
-                        uiSettings={uiSettings}
-                        onToggleSignature={onToggleSignature}
-                        trigger={() => (
-                            <NextButton title={t('CONTACT_PANEL.NEW_MESSAGE')} icon={ICONS.message} slate faded sm />
-                        )}
+                    <NextButton
+                        title={t('CONTACT_PANEL.NEW_MESSAGE')}
+                        icon={ICONS.message}
+                        slate
+                        faded
+                        sm
+                        onClick={() =>
+                            router.visit(composeConversationUrl({ accountId, contactId: contact.id }), {
+                                preserveState: true,
+                                preserveScroll: true,
+                            })
+                        }
                     />
                     <NextButton
                         title={t('EDIT_CONTACT.BUTTON_LABEL')}

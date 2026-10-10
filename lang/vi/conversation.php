@@ -264,6 +264,7 @@ return [
             'bridge_unreachable' => 'Không gọi được dịch vụ của kênh. Bạn thử lại sau giây lát.',
             'secret_mismatch' => 'Kênh đang sai cấu hình. Bạn báo quản trị viên kiểm tra — thử lại cũng không gửi được.',
             'media_fetch_failed' => 'Không đọc được tệp đính kèm. Bạn gửi lại tệp nhé.',
+            'email_bounced' => 'Địa chỉ của khách không nhận thư — thử lại cũng không tới. Bạn sửa email của khách rồi gửi lại.',
         ],
     ],
     'MESSAGE_SENDER' => [

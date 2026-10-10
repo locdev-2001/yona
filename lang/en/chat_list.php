@@ -22,6 +22,7 @@ return [
         'INPUT' => 'Search',
         'LABEL' => 'Search conversations in this list',
         'CLEAR' => 'Clear search',
+        'COMPOSE' => 'New message',
         'NO_RESULTS' => 'No conversation in this list matches “{query}”.',
         'CONTACTS_HEADING' => 'Contacts',
         'CONVERSATIONS_HEADING' => 'Conversations',
