@@ -84,6 +84,12 @@ PostgreSQL (`pg_trgm`) · Redis (cache, queue, session) · Laravel Reverb
   `channel_email.imap_sync_state`; chỉ checkpoint sau khi xử lý từng thư. Mỗi
   lượt tối đa 500 UID, dành tối đa 100 chỗ cho thư lỗi, phần còn lại nhận thư
   mới. UIDVALIDITY đổi thì quét lại INBOX, chống trùng bằng Message-ID.
+- **Báo thư mới (push)**: `MailboxPushSubscriptions` là sổ đăng ký trung tính theo nhà
+  cung cấp (`MailboxPushSubscriber`; hiện chỉ `GmailPushSubscriber` gọi `users.watch`),
+  đăng ký khi nối OAuth và gia hạn hằng ngày (`RenewMailboxPushSubscriptionsJob`), hạn
+  lưu ở `provider_config.push`. Webhook `POST /webhooks/gmail/push` kiểm OIDC token của
+  Pub/Sub (`GooglePubSubTokenVerifier`) rồi xếp `FetchImapEmailsJob`; push chỉ là tín
+  hiệu, đọc thư vẫn qua IMAP, quét mỗi phút giữ làm lưới an toàn.
 - **Thư trả về và lỗi gửi Email**: thư báo gửi không thành (DSN) khi đồng bộ IMAP
   không mở hội thoại; `BounceReport` đọc Message-ID thư gốc (phần `message/rfc822`,
   rồi `In-Reply-To`/`References`), người nhận lỗi và `Diagnostic-Code`;

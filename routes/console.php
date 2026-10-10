@@ -5,6 +5,7 @@ use App\Jobs\AutomationRules\TriggerPendingExecutionsJob;
 use App\Jobs\Conversations\ReopenSnoozedConversationsJob;
 use App\Jobs\Conversations\SweepOutboundOrderJob;
 use App\Jobs\Inboxes\FetchImapEmailInboxesJob;
+use App\Jobs\Inboxes\RenewMailboxPushSubscriptionsJob;
 use App\Jobs\Notification\RemoveOldNotificationJob;
 use App\Jobs\Notification\ReopenSnoozedNotificationsJob;
 use App\Jobs\Search\ProcessSearchOutboxJob;
@@ -29,6 +30,8 @@ Schedule::job(new ConversationsResolutionSchedulerJob)->cron('*/5 * * * *');
 Schedule::job(new TriggerPendingExecutionsJob)->cron('*/5 * * * *');
 // config/schedule.yml gốc: trigger_imap_email_inboxes_job cron '*/1 * * * *'.
 Schedule::job(new FetchImapEmailInboxesJob)->cron('*/1 * * * *');
+// Báo thư mới (Gmail push) hết hạn sau 7 ngày; gia hạn khi còn dưới 2 ngày.
+Schedule::job(new RenewMailboxPushSubscriptionsJob)->cron('20 3 * * *');
 // G1 Zalo: nhịp tim Laravel ↔ zalo-bridge. Không có nó, bridge chết là DB vẫn báo
 // "connected" và chủ shop không thấy gì (zalo-deep-audit 6.5).
 Schedule::job(new ZaloHealthSweepJob)->cron('*/1 * * * *')->withoutOverlapping();

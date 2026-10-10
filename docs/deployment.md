@@ -1302,11 +1302,12 @@ khoản trên production**: lượt đó tạo account thật.
 
 ### Kết nối hộp thư email bằng OAuth (Outlook, Gmail)
 
-Màn Thêm kênh → Email hiện thẻ "Đăng nhập Microsoft" khi `.env` có
-`MICROSOFT_MAIL_CLIENT_ID` + `MICROSOFT_MAIL_CLIENT_SECRET`; thẻ "Đăng nhập Google"
-chỉ hiện khi thêm `GOOGLE_MAIL_OAUTH_ENABLED=true` (để `false` tới khi Google duyệt
-scope nhạy cảm `https://mail.google.com/`). Thiếu cấu hình thì thẻ tự ẩn và route
-`/app/accounts/{id}/email/oauth/{provider}` trả 404; khách vẫn nối bằng App Password.
+Màn Thêm kênh → Email chỉ mở "Đăng nhập Google" (hiện khi `GOOGLE_MAIL_OAUTH_ENABLED=true`
+và có client id/secret). Outlook (OAuth lẫn mật khẩu ứng dụng) và "Khác" (IMAP/SMTP tự
+cấu hình) hiện "Sắp ra mắt": route `/app/accounts/{id}/email/oauth/microsoft` trả 404 cho
+hộp mới, nhưng hộp Outlook đã nối vẫn "Kết nối lại" được khi có
+`MICROSOFT_MAIL_CLIENT_ID` + `MICROSOFT_MAIL_CLIENT_SECRET`. Hộp đã nối bằng mật khẩu
+ứng dụng/IMAP giữ nguyên.
 
 Outlook (Azure / Microsoft Entra ID, **đứng tên Yona**):
 
@@ -1334,6 +1335,42 @@ Redirect URI được ghép từ `APP_URL`, nên `APP_URL` phải là `https://y
 Token (access + refresh) lưu mã hoá trong `channel_email.provider_config`, làm mới
 trước mỗi lần quét thư/gửi thư; refresh token bị thu hồi thì hộp thư hiện cảnh báo
 "Kết nối lại".
+
+### Gmail push (thư mới về ngay)
+
+Gmail báo thư mới vào Pub/Sub, Pub/Sub đẩy về `POST https://yona.vn/webhooks/gmail/push`
+kèm OIDC token; Yona kiểm token rồi quét IMAP hộp đó ngay. Lượt quét IMAP mỗi phút vẫn
+chạy làm lưới an toàn, nên push hỏng thì thư chỉ chậm tối đa một phút.
+
+Cấu hình đã dựng trên project Google Cloud `yona-511104`:
+
+- Topic `projects/yona-511104/topics/gmail-inbox`; `gmail-api-push@system.gserviceaccount.com`
+  có `roles/pubsub.publisher` trên topic.
+- Push subscription `gmail-inbox-push` → `https://yona.vn/webhooks/gmail/push`, bật
+  authentication bằng service account `pubsub-push@yona-511104.iam.gserviceaccount.com`,
+  audience `https://yona.vn/webhooks/gmail/push`, retry exponential backoff 10–600 giây,
+  không hết hạn.
+
+`.env` production:
+
+```
+GOOGLE_MAIL_PUBSUB_TOPIC=projects/yona-511104/topics/gmail-inbox
+GOOGLE_MAIL_PUBSUB_AUDIENCE=https://yona.vn/webhooks/gmail/push
+GOOGLE_MAIL_PUBSUB_SERVICE_ACCOUNT=pubsub-push@yona-511104.iam.gserviceaccount.com
+```
+
+rồi `php artisan config:clear`. Thiếu topic thì không đăng ký watch; thiếu audience hoặc
+service account thì webhook bỏ qua mọi thông báo (vẫn trả 204).
+
+Hộp Gmail đăng ký `users.watch` ngay khi nối/kết nối lại bằng OAuth; job
+`RenewMailboxPushSubscriptionsJob` chạy 03:20 hằng ngày gia hạn hộp còn dưới 2 ngày
+(watch sống 7 ngày) và đăng ký cho hộp chưa có. Hạn lưu ở
+`channel_email.provider_config.push`. Sau khi deploy lần đầu, hộp Gmail đã nối từ trước
+được đăng ký ở lượt chạy 03:20 kế tiếp; muốn ngay thì chạy
+`php artisan tinker --execute="dispatch_sync(new App\\Jobs\\Inboxes\\RenewMailboxPushSubscriptionsJob)"`.
+
+Nghiệm thu: gửi một thư tới hộp Gmail đã nối, thư hiện trong Inbox dưới 10 giây; log có
+dòng `[IMAP] Enqueuing`/`Processing email` ngay sau request `POST /webhooks/gmail/push`.
 
 ### Timezone của PHP phải là `Asia/Ho_Chi_Minh`
 

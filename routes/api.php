@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\Webhooks\FacebookController as FacebookWebhooksController;
+use App\Http\Controllers\Api\Webhooks\GmailPushController;
 use App\Http\Controllers\Api\Webhooks\InstagramController as InstagramWebhooksController;
 use App\Http\Controllers\Api\Webhooks\LineController as LineWebhooksController;
 use App\Http\Controllers\Api\Webhooks\SmsController as SmsWebhooksController;
@@ -149,6 +150,8 @@ Route::post('/webhooks/whatsapp/{phoneNumber}', [WhatsappWebhooksController::cla
 Route::get('/webhooks/instagram', [InstagramWebhooksController::class, 'verify']);
 Route::post('/webhooks/instagram', [InstagramWebhooksController::class, 'events']);
 Route::post('/webhooks/tiktok', [TiktokWebhooksController::class, 'events']);
+// Gmail push qua Pub/Sub: xác thực bằng OIDC token của service account trong header.
+Route::post('/webhooks/gmail/push', GmailPushController::class);
 Route::post('/twilio/callback', [TwilioWebhooksController::class, 'processPayload']);
 Route::post('/twilio/delivery_status', [TwilioWebhooksController::class, 'deliveryStatus'])->name('twilio.delivery_status');
 // F2-F5 webhooks — END

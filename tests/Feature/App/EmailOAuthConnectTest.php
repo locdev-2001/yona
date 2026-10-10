@@ -274,3 +274,24 @@ it('kết nối lại bằng tài khoản khác thì không ghi đè hộp thư 
 
     expect($inbox->channel->fresh()->provider_config['refresh_token'])->toBe('cu');
 });
+
+it('nối Gmail xong thì đăng ký báo thư mới khi đã cấu hình Pub/Sub', function () {
+    config(['services.google_mail.enabled' => true, 'services.google_mail.pubsub_topic' => 'projects/yona-511104/topics/gmail-inbox']);
+    Http::fake([
+        'oauth2.googleapis.com/*' => Http::response([
+            'access_token' => 'access-1',
+            'refresh_token' => 'refresh-1',
+            'expires_in' => 3600,
+            'id_token' => fakeIdToken('shop@gmail.com'),
+        ]),
+        'gmail.googleapis.com/*' => Http::response(['historyId' => '1', 'expiration' => (string) now()->addDays(7)->getTimestampMs()]),
+    ]);
+
+    $this->actingAs($this->admin)->withSession(oauthState(['provider' => 'google']))
+        ->get('/app/email/oauth/google/callback?code=code-1&state=state-123')
+        ->assertRedirect();
+
+    Http::assertSent(fn (HttpRequest $request) => $request->url() === 'https://gmail.googleapis.com/gmail/v1/users/me/watch'
+        && $request->hasHeader('Authorization', 'Bearer access-1'));
+    expect(Email::query()->where('email', 'shop@gmail.com')->firstOrFail()->provider_config['push']['cursor'])->toBe('1');
+});
