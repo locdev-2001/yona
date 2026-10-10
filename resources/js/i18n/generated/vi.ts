@@ -4957,7 +4957,8 @@ const messages: Record<string, unknown> = {
             "date_range_too_long": "Khoảng thời gian không được quá 6 tháng"
         },
         "conversations": {
-            "resolved": "Hội thoại đã kết thúc nên không nhận thêm tin nhắn"
+            "resolved": "Hội thoại đã kết thúc nên không nhận thêm tin nhắn",
+            "contact_unreachable": "Liên hệ chưa có địa chỉ để gửi qua hộp thư này"
         },
         "custom_filters": {
             "number_of_records": "Đã đạt giới hạn. Số lượng tuỳ chọn lọc tối đa cho mỗi mỗi người dùng mỗi tài khoản là 1000.",

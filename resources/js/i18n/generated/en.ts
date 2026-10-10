@@ -4957,7 +4957,8 @@ const messages: Record<string, unknown> = {
             "date_range_too_long": "Date range cannot exceed 6 months"
         },
         "conversations": {
-            "resolved": "Conversation is resolved and does not accept new messages"
+            "resolved": "Conversation is resolved and does not accept new messages",
+            "contact_unreachable": "This contact has no address this inbox can send to"
         },
         "custom_filters": {
             "number_of_records": "Limit reached. The maximum number of allowed custom filters for a user per account is 1000.",
