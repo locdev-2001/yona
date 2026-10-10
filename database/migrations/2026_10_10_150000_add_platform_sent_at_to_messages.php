@@ -13,7 +13,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('messages', function (Blueprint $table) {
-            $table->timestamp('platform_sent_at')->nullable();
+            $table->timestamp('platform_sent_at', 6)->nullable();
         });
 
         DB::statement('UPDATE messages SET platform_sent_at = created_at WHERE platform_sent_at IS NULL');
