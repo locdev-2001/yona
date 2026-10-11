@@ -39,6 +39,12 @@ class Instagram extends Model implements DeclaresCapabilities, DeclaresConnectio
         ];
     }
 
+    // Tin gửi ra luôn mang tag HUMAN_AGENT nên được trả lời tới 7 ngày sau tin cuối của khách.
+    public function messagingWindowHours(): int
+    {
+        return 7 * 24;
+    }
+
     public function name(): string
     {
         return 'Instagram';

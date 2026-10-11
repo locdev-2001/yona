@@ -153,7 +153,7 @@ it('display_address chỉ hiện khi địa chỉ kênh là email hay số đi�
     'số điện thoại khác' => ['+84987654321', null],
 ]);
 
-it('kênh có cửa sổ nhắn tin: khách nhắn trong 24 giờ thì mở, quá 24 giờ thì đóng', function (string $factoryState) {
+it('kênh có cửa sổ nhắn tin: khách nhắn trong cửa sổ của kênh thì mở, quá cửa sổ thì đóng', function (string $factoryState, int $windowHours) {
     $inbox = memberInbox($this, Inbox::factory()->{$factoryState}()->create(['account_id' => $this->account->id]));
     $contactInbox = ContactInbox::factory()->create(['contact_id' => $this->contact->id, 'inbox_id' => $inbox->id, 'source_id' => 'khach-1']);
     $old = Conversation::factory()->create([
@@ -165,12 +165,18 @@ it('kênh có cửa sổ nhắn tin: khách nhắn trong 24 giờ thì mở, qu�
         'message_type' => Message::TYPE_INCOMING, 'content' => 'cho mình hỏi',
     ]);
 
+    $incoming->forceFill(['created_at' => now()->subHours($windowHours - 1)])->save();
+
     expect(contactableInboxesOf($this)[0])->toMatchArray(['source_id' => 'khach-1', 'available' => true, 'reason' => null]);
 
-    $incoming->forceFill(['created_at' => now()->subHours(25)])->save();
+    $incoming->forceFill(['created_at' => now()->subHours($windowHours + 1)])->save();
 
     expect(contactableInboxesOf($this)[0])->toMatchArray(['available' => false, 'reason' => 'messaging_window_closed']);
-})->with(['whatsapp', 'facebookPage', 'instagram']);
+})->with([
+    'WhatsApp 24 giờ' => ['whatsapp', 24],
+    'Messenger 7 ngày' => ['facebookPage', 168],
+    'Instagram 7 ngày' => ['instagram', 168],
+]);
 
 it('kênh có cửa sổ nhắn tin mà khách chưa từng nhắn tới thì cửa sổ đóng', function () {
     $inbox = memberInbox($this, Inbox::factory()->whatsapp()->create(['account_id' => $this->account->id]));
