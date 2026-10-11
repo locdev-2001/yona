@@ -7,6 +7,7 @@ use App\Models\Attachment;
 use App\Models\Inbox;
 use App\Models\Message;
 use App\Models\User;
+use App\Services\Meta\MetaOutboundActions;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
@@ -345,4 +346,22 @@ it('Meta từ chối thì không lưu cảm xúc và trả lỗi có mã', funct
 
     expect($response->json('code'))->toBe('100')
         ->and($incoming->fresh()->reactionList())->toBe([]);
+});
+
+it('Meta báo #10 ngoài cửa sổ 24 giờ thì trả lời bằng lời giải thích cho nhân viên, không phải chữ của Meta', function () {
+    Http::fake([
+        'graph.facebook.com/*/me/messages' => Http::response(['error' => ['code' => 10, 'message' => '(#10) This message is sent outside of allowed window.']], 400),
+        'graph.facebook.com/*' => Http::response(['name' => 'Nguyễn An']),
+    ]);
+    facebookPost(ChannelFixture::load('facebook_messaging'));
+    $incoming = Message::query()->latest('id')->first();
+
+    $response = $this->actingAs(facebookAgentFor($this->inbox))->postJson(
+        "/api/v1/accounts/{$this->inbox->account_id}/conversations/{$incoming->conversation->display_id}/messages/{$incoming->id}/reactions",
+        ['emoji' => '❤️'],
+    )->assertStatus(422);
+
+    expect($response->json('code'))->toBe(MetaOutboundActions::ERROR_OUTSIDE_MESSAGING_WINDOW)
+        ->and($response->json('error'))->toBe(__('errors.meta.action.outside_messaging_window', [], $this->inbox->account->locale))
+        ->and($response->json('error'))->toContain('24');
 });

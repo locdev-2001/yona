@@ -76,6 +76,7 @@ return [
     'meta' => [
         'action' => [
             'missing_source_id' => 'This message has no Meta id yet, so a reaction cannot be sent.',
+            'outside_messaging_window' => 'The customer has not messaged in the last 24 hours, so Messenger does not allow reactions. Reply to them; once they message again you can react.',
         ],
     ],
     'zalo' => [

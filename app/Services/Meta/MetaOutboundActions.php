@@ -17,6 +17,11 @@ abstract class MetaOutboundActions implements ChannelOutboundActions
 {
     public const ERROR_MISSING_SOURCE_ID = 'missing_source_id';
 
+    /** Hành động trên tin không gắn được thẻ HUMAN_AGENT nên chỉ hợp lệ trong 24 giờ kể từ tin cuối của khách. */
+    public const ERROR_OUTSIDE_MESSAGING_WINDOW = 'outside_messaging_window';
+
+    private const META_ERROR_OUTSIDE_WINDOW = 10;
+
     public function reaction(Message $message, ?string $emoji): array
     {
         if (blank($message->source_id)) {
@@ -36,11 +41,13 @@ abstract class MetaOutboundActions implements ChannelOutboundActions
         ]);
 
         if (filled($response->json('error'))) {
-            return [
-                'ok' => false,
-                'code' => (string) $response->json('error.code'),
-                'message' => (string) $response->json('error.message'),
-            ];
+            return (int) $response->json('error.code') === self::META_ERROR_OUTSIDE_WINDOW
+                ? $this->failure(self::ERROR_OUTSIDE_MESSAGING_WINDOW, $message)
+                : [
+                    'ok' => false,
+                    'code' => (string) $response->json('error.code'),
+                    'message' => (string) $response->json('error.message'),
+                ];
         }
 
         return ['ok' => true];

@@ -5008,7 +5008,8 @@ const messages: Record<string, unknown> = {
         },
         "meta": {
             "action": {
-                "missing_source_id": "Tin này chưa có mã bên Meta nên chưa thả cảm xúc được."
+                "missing_source_id": "Tin này chưa có mã bên Meta nên chưa thả cảm xúc được.",
+                "outside_messaging_window": "Khách chưa nhắn gì trong 24 giờ qua nên Messenger không cho thả cảm xúc. Hãy trả lời khách, khi khách nhắn lại thì thả được."
             }
         },
         "zalo": {
