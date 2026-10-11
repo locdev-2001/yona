@@ -2,6 +2,7 @@
 
 use App\Http\Resources\InboxResource;
 use App\Jobs\Inboxes\SubscribeMailboxPushJob;
+use App\Jobs\Inboxes\SyncMailboxSenderNameJob;
 use App\Models\Account;
 use App\Models\AccountUser;
 use App\Models\Channel\Email;
@@ -129,12 +130,15 @@ it('Gmail OAuth (khi đã mở) xin scope https://mail.google.com/ kèm refresh 
 
 it('callback lưu token (mã hoá), tạo hộp thư Gmail rồi sang bước gán agent', function () {
     config(['services.google_mail.enabled' => true]);
-    Http::fake(['oauth2.googleapis.com/*' => Http::response([
-        'access_token' => 'access-1',
-        'refresh_token' => 'refresh-1',
-        'expires_in' => 3600,
-        'id_token' => fakeIdToken('Shop@Gmail.com'),
-    ])]);
+    Http::fake([
+        'oauth2.googleapis.com/*' => Http::response([
+            'access_token' => 'access-1',
+            'refresh_token' => 'refresh-1',
+            'expires_in' => 3600,
+            'id_token' => fakeIdToken('Shop@Gmail.com'),
+        ]),
+        'gmail.googleapis.com/*' => Http::response(['sendAs' => []]),
+    ]);
 
     $response = $this->actingAs($this->admin)->withSession(oauthState(['provider' => 'google']))
         ->get('/app/email/oauth/google/callback?code=code-1&state=state-123');
@@ -155,9 +159,48 @@ it('callback lưu token (mã hoá), tạo hộp thư Gmail rồi sang bước g�
     $raw = (string) DB::table('channel_email')->where('id', $channel->id)->value('provider_config');
     expect($raw)->not->toContain('refresh-1')->not->toContain('access-1');
 
-    Http::assertSent(fn (HttpRequest $request) => $request['grant_type'] === 'authorization_code'
+    Http::assertSent(fn (HttpRequest $request) => str_contains($request->url(), 'oauth2.googleapis.com')
+        && $request['grant_type'] === 'authorization_code'
         && $request['code'] === 'code-1'
         && str_ends_with($request['redirect_uri'], '/app/email/oauth/google/callback'));
+});
+
+it('hộp Gmail mới gửi thư dưới đúng tên đặt trong Gmail, không ghép tên nhân viên', function (array $sendAsResponse, int $status, ?string $expectedName) {
+    config(['services.google_mail.enabled' => true]);
+    Http::fake([
+        'oauth2.googleapis.com/*' => Http::response([
+            'access_token' => 'access-1', 'refresh_token' => 'refresh-1', 'expires_in' => 3600,
+            'id_token' => fakeIdToken('shop@gmail.com'),
+        ]),
+        'gmail.googleapis.com/gmail/v1/users/me/settings/sendAs' => Http::response($sendAsResponse, $status),
+        'gmail.googleapis.com/*' => Http::response([], 200),
+    ]);
+
+    $this->actingAs($this->admin)->withSession(oauthState(['provider' => 'google']))
+        ->get('/app/email/oauth/google/callback?code=code-1&state=state-123');
+
+    $inbox = Email::query()->where('email', 'shop@gmail.com')->firstOrFail()->inbox;
+
+    expect($inbox->sender_name_type)->toBe(Inbox::SENDER_NAME_TYPE_PROFESSIONAL)
+        ->and($inbox->business_name)->toBe($expectedName);
+})->with([
+    'lấy tên của địa chỉ chính' => [['sendAs' => [
+        ['sendAsEmail' => 'alias@shop.vn', 'displayName' => 'Bí danh', 'isPrimary' => false],
+        ['sendAsEmail' => 'shop@gmail.com', 'displayName' => 'Hoa Tươi Sài Gòn', 'isPrimary' => true],
+    ]], 200, 'Hoa Tươi Sài Gòn'],
+    'Gmail chưa đặt tên' => [['sendAs' => [['sendAsEmail' => 'shop@gmail.com', 'displayName' => '', 'isPrimary' => true]]], 200, null],
+    'Gmail API lỗi thì vẫn tạo hộp' => [[], 500, null],
+]);
+
+it('tên người gửi đã đặt trong Yona thì không bị tên Gmail ghi đè', function () {
+    Http::fake(['gmail.googleapis.com/*' => Http::response(['sendAs' => [['sendAsEmail' => 'shop@gmail.com', 'displayName' => 'Tên Gmail', 'isPrimary' => true]]])]);
+    $inbox = oauthEmailInbox($this->account, ['access_token' => 'access-1', 'refresh_token' => 'refresh-1', 'expires_at' => now()->addHour()->toIso8601String()]);
+    $inbox->update(['business_name' => 'Tên tự đặt']);
+
+    SyncMailboxSenderNameJob::dispatchSync($inbox->channel);
+
+    expect($inbox->fresh()->business_name)->toBe('Tên tự đặt');
+    Http::assertNothingSent();
 });
 
 it('callback tạo hộp mới của nhà cung cấp sắp ra mắt thì từ chối, không tạo gì', function () {
@@ -278,7 +321,7 @@ it('kết nối lại bằng tài khoản khác thì không ghi đè hộp thư 
 });
 
 it('nối Gmail xong thì xếp job đăng ký báo thư mới, không gọi Gmail trong request', function () {
-    Queue::fake([SubscribeMailboxPushJob::class]);
+    Queue::fake([SubscribeMailboxPushJob::class, SyncMailboxSenderNameJob::class]);
     config(['services.google_mail.enabled' => true, 'services.google_mail.pubsub_topic' => 'projects/yona-511104/topics/gmail-inbox']);
     Http::fake([
         'oauth2.googleapis.com/*' => Http::response([
@@ -296,4 +339,5 @@ it('nối Gmail xong thì xếp job đăng ký báo thư mới, không gọi Gma
 
     Http::assertNotSent(fn (HttpRequest $request) => str_contains($request->url(), 'gmail.googleapis.com'));
     Queue::assertPushed(SubscribeMailboxPushJob::class, fn (SubscribeMailboxPushJob $job) => $job->channel->email === 'shop@gmail.com');
+    Queue::assertPushed(SyncMailboxSenderNameJob::class, fn (SyncMailboxSenderNameJob $job) => $job->channel->email === 'shop@gmail.com');
 });

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\App;
 
 use App\Http\Controllers\Controller;
 use App\Jobs\Inboxes\SubscribeMailboxPushJob;
+use App\Jobs\Inboxes\SyncMailboxSenderNameJob;
 use App\Models\Account;
 use App\Models\AccountUser;
 use App\Models\Channel\Email;
@@ -104,6 +105,7 @@ class EmailOAuthController extends Controller
         SubscribeMailboxPushJob::dispatch($inbox->channel);
 
         if ($isNew) {
+            SyncMailboxSenderNameJob::dispatch($inbox->channel);
             app(ChannelSetupService::class)->register($inbox);
 
             return redirect("/app/accounts/{$account->id}/settings/inboxes/new/{$inbox->id}/agents");
@@ -137,10 +139,12 @@ class EmailOAuthController extends Controller
         $inbox = $channel->inbox;
 
         if ($inbox === null) {
+            // Thư gửi đi giữ đúng tên hộp mail như khi gửi thẳng từ nhà cung cấp, không ghép tên nhân viên.
             $inbox = $account->inboxes()->create([
                 'name' => $tokens->email,
                 'channel_id' => $channel->id,
                 'channel_type' => $channel->getMorphClass(),
+                'sender_name_type' => Inbox::SENDER_NAME_TYPE_PROFESSIONAL,
             ]);
         }
 

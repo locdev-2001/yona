@@ -2,6 +2,9 @@
 
 namespace App\Services\Email\OAuth;
 
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Support\Facades\Http;
+
 /** Gmail/Google Workspace qua OAuth — khoá bằng `services.google_mail.enabled` tới khi Google duyệt scope. */
 class GoogleMailOAuthProvider extends EmailOAuthProvider
 {
@@ -15,6 +18,26 @@ class GoogleMailOAuthProvider extends EmailOAuthProvider
         return (bool) config('services.google_mail.enabled')
             && filled($this->clientId())
             && filled($this->clientSecret());
+    }
+
+    private const SEND_AS_ENDPOINT = 'https://gmail.googleapis.com/gmail/v1/users/me/settings/sendAs';
+
+    // Tên ở mục "Gửi thư dưới tên" của Gmail (địa chỉ chính), đúng tên người nhận thấy khi gửi thẳng từ Gmail.
+    public function senderDisplayName(string $accessToken, string $email): ?string
+    {
+        try {
+            $response = Http::withToken($accessToken)->timeout(5)->get(self::SEND_AS_ENDPOINT);
+        } catch (ConnectionException) {
+            return null;
+        }
+
+        $aliases = collect($response->successful() ? $response->json('sendAs', []) : []);
+        $primary = $aliases->firstWhere('isPrimary', true)
+            ?? $aliases->first(fn ($alias) => strcasecmp((string) ($alias['sendAsEmail'] ?? ''), $email) === 0);
+
+        $name = trim((string) ($primary['displayName'] ?? ''));
+
+        return $name === '' ? null : $name;
     }
 
     public function scope(): string

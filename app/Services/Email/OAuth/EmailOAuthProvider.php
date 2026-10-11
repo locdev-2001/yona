@@ -45,6 +45,12 @@ abstract class EmailOAuthProvider
 
     abstract protected function configKey(): string;
 
+    /** Tên hiển thị chủ hộp thư đã đặt ở nhà cung cấp, để thư gửi đi giữ đúng tên đó. Không lấy được thì null. */
+    public function senderDisplayName(string $accessToken, string $email): ?string
+    {
+        return null;
+    }
+
     public function authorizationUrl(string $state, string $redirectUri): string
     {
         return $this->authorizeEndpoint().'?'.http_build_query([
