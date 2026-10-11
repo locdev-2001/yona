@@ -5006,6 +5006,11 @@ const messages: Record<string, unknown> = {
                 "success": "We will notify you once contacts export file is ready to view."
             }
         },
+        "meta": {
+            "action": {
+                "missing_source_id": "This message has no Meta id yet, so a reaction cannot be sent."
+            }
+        },
         "zalo": {
             "send": {
                 "circuit_open": "The Zalo connection keeps failing, sending is paused for a moment.",

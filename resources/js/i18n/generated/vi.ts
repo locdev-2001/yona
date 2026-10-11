@@ -5006,6 +5006,11 @@ const messages: Record<string, unknown> = {
                 "success": "Chúng tôi sẽ thông báo khi tệp xuất danh sách liên hệ đã sẵn sàng."
             }
         },
+        "meta": {
+            "action": {
+                "missing_source_id": "Tin này chưa có mã bên Meta nên chưa thả cảm xúc được."
+            }
+        },
         "zalo": {
             "send": {
                 "circuit_open": "Kết nối Zalo đang lỗi liên tục, tạm dừng gửi một lát.",

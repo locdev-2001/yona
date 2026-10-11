@@ -97,6 +97,7 @@ class Instagram extends Model implements DeclaresCapabilities, DeclaresConnectio
             Capability::OutboundAudio,
             Capability::OutboundFile,
             Capability::OutboundReplyTo,
+            Capability::OutboundReaction,
             Capability::OutboundQuickReply,
             Capability::InboundReplyTo,
             Capability::EventRecall,

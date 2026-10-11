@@ -2,9 +2,11 @@
 
 use App\Channels\Capability;
 use App\Messaging\Stickers\StickerMessage;
+use App\Models\AccountUser;
 use App\Models\Attachment;
 use App\Models\Inbox;
 use App\Models\Message;
+use App\Models\User;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
@@ -278,4 +280,69 @@ it('tin Messenger trích dẫn theo mid được lõi nối về tin gốc', fun
     $reply = Message::query()->latest('id')->first();
 
     expect($reply->content_attributes['in_reply_to'])->toBe($quoted->id);
+});
+
+function facebookAgentFor(Inbox $inbox): User
+{
+    $agent = User::factory()->create();
+    AccountUser::factory()->create([
+        'account_id' => $inbox->account_id,
+        'user_id' => $agent->id,
+        'role' => AccountUser::ROLE_ADMINISTRATOR,
+    ]);
+
+    return $agent;
+}
+
+function facebookAgentReaction(Inbox $inbox, string $method, ?string $emoji = null): TestResponse
+{
+    Http::fake([
+        'graph.facebook.com/*/me/messages' => Http::response(['recipient_id' => 'sender-psid']),
+        'graph.facebook.com/*' => Http::response(['name' => 'Nguyễn An']),
+    ]);
+    facebookPost(ChannelFixture::load('facebook_messaging'));
+    $incoming = Message::query()->latest('id')->first();
+    $agent = facebookAgentFor($inbox);
+    $url = "/api/v1/accounts/{$inbox->account_id}/conversations/{$incoming->conversation->display_id}/messages/{$incoming->id}/reactions";
+
+    return $method === 'post'
+        ? test()->actingAs($agent)->postJson($url, ['emoji' => $emoji])
+        : test()->actingAs($agent)->deleteJson($url);
+}
+
+it('agent thả cảm xúc lên tin Messenger: Send API nhận sender_action react kèm emoji', function () {
+    facebookAgentReaction($this->inbox, 'post', '❤️')->assertOk();
+
+    Http::assertSent(fn ($request) => str_contains($request->url(), '/me/messages')
+        && $request['sender_action'] === 'react'
+        && $request['recipient'] === ['id' => 'sender-psid']
+        && $request['payload'] === ['message_id' => 'mid.facebook.1', 'reaction' => '❤️']);
+
+    expect(Message::query()->where('source_id', 'mid.facebook.1')->first()->reactionList()[0]['emoji'])->toBe('❤️');
+});
+
+it('agent gỡ cảm xúc trên Messenger: sender_action unreact, payload chỉ còn message_id', function () {
+    facebookAgentReaction($this->inbox, 'delete')->assertOk();
+
+    Http::assertSent(fn ($request) => str_contains($request->url(), '/me/messages')
+        && $request['sender_action'] === 'unreact'
+        && $request['payload'] === ['message_id' => 'mid.facebook.1']);
+});
+
+it('Meta từ chối thì không lưu cảm xúc và trả lỗi có mã', function () {
+    Http::fake([
+        'graph.facebook.com/*/me/messages' => Http::response(['error' => ['code' => 100, 'message' => 'Invalid parameter']], 400),
+        'graph.facebook.com/*' => Http::response(['name' => 'Nguyễn An']),
+    ]);
+    facebookPost(ChannelFixture::load('facebook_messaging'));
+    $incoming = Message::query()->latest('id')->first();
+    $agent = facebookAgentFor($this->inbox);
+
+    $response = $this->actingAs($agent)->postJson(
+        "/api/v1/accounts/{$this->inbox->account_id}/conversations/{$incoming->conversation->display_id}/messages/{$incoming->id}/reactions",
+        ['emoji' => '👍'],
+    )->assertStatus(422);
+
+    expect($response->json('code'))->toBe('100')
+        ->and($incoming->fresh()->reactionList())->toBe([]);
 });

@@ -71,6 +71,11 @@ return [
     // Kênh Zalo cá nhân — lý do gửi hỏng, khớp `content_attributes.external_error.code`
     // (App\Services\Zalo\SendOnZaloService). FE dùng `code` để chọn hành động,
     // `message` để hiện cho agent.
+    'meta' => [
+        'action' => [
+            'missing_source_id' => 'Tin này chưa có mã bên Meta nên chưa thả cảm xúc được.',
+        ],
+    ],
     'zalo' => [
         'send' => [
             'circuit_open' => 'Kết nối Zalo đang lỗi liên tục, tạm dừng gửi một lát.',

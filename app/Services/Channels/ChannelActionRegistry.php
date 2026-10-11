@@ -4,6 +4,8 @@ namespace App\Services\Channels;
 
 use App\Models\Inbox;
 use App\Services\Channels\Stickers\StickerCatalog;
+use App\Services\Facebook\FacebookOutboundActions;
+use App\Services\Instagram\InstagramOutboundActions;
 use App\Services\Widget\WidgetOutboundActions;
 use App\Services\Zalo\ZaloGroupMembers;
 use App\Services\Zalo\ZaloOutboundActions;
@@ -19,6 +21,8 @@ class ChannelActionRegistry
     private const DRIVERS = [
         'Channel::Zalo' => ZaloOutboundActions::class,
         'Channel::WebWidget' => WidgetOutboundActions::class,
+        'Channel::FacebookPage' => FacebookOutboundActions::class,
+        'Channel::Instagram' => InstagramOutboundActions::class,
     ];
 
     /** @var array<string, class-string<ChannelGroupMembers>> */
