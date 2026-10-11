@@ -9399,7 +9399,7 @@ const messages: Record<string, unknown> = {
                         "sharing": "Yona không bán dữ liệu Gmail, không dùng để quảng cáo và không chuyển cho bên thứ ba, trừ khi bạn tự bật một công cụ nhận dữ liệu hội thoại (webhook, agent bot, tích hợp ở mục 7), khi cần để vận hành tính năng bạn đang dùng, hoặc khi pháp luật yêu cầu.",
                         "ai": "Yona không dùng dữ liệu Gmail để huấn luyện hay cải thiện mô hình trí tuệ nhân tạo hoặc máy học dùng chung.",
                         "people": "Đội vận hành Yona không đọc thư Gmail của bạn, trừ khi bạn yêu cầu hỗ trợ cho một việc cụ thể, khi cần điều tra sự cố bảo mật hoặc lạm dụng, hoặc khi pháp luật yêu cầu.",
-                        "disconnect": "Ngắt kết nối: xoá hộp thư Gmail trong phần cài đặt Hộp thư thì Yona xoá mã truy cập, dừng nhận thông báo từ Gmail và xoá các hội thoại của hộp thư đó. Tệp đính kèm của những hội thoại này hiện chưa tự xoá theo; nhắn cho chúng tôi theo mục Liên hệ để xoá hẳn. Bạn cũng thu hồi quyền của Yona bất cứ lúc nào tại https://myaccount.google.com/permissions.",
+                        "disconnect": "Ngắt kết nối: xoá hộp thư Gmail trong phần cài đặt Hộp thư thì Yona xoá mã truy cập, dừng nhận thông báo từ Gmail và xoá các hội thoại của hộp thư đó cùng tệp đính kèm. Bạn cũng thu hồi quyền của Yona bất cứ lúc nào tại https://myaccount.google.com/permissions.",
                         "limited_use": "Yona sử dụng và chuyển giao thông tin nhận được từ Google API theo đúng Chính sách dữ liệu người dùng của Google API Services (https://developers.google.com/terms/api-services-user-data-policy), bao gồm các yêu cầu về Giới hạn sử dụng (Limited Use)."
                     }
                 },
