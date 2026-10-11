@@ -17,6 +17,7 @@
         "meilisearch/meilisearch-php": "^1.17",
         "minishlink/web-push": "^11.0",
         "opcodesio/log-viewer": "^3.24",
+        "react/dns": "^1.14",
         "soundasleep/html2text": "^2.1",
         "spomky-labs/otphp": "^11.5",
         "webklex/php-imap": "^6.2",
