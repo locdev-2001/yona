@@ -16,7 +16,7 @@ function landingConfigOf(TestResponse $response): array
     return json_decode($khop[1] ?? 'null', true, flags: JSON_THROW_ON_ERROR) ?? [];
 }
 
-it('hiện trang điều khoản và trang chính sách riêng tư', function (string $path, string $page, string $title) {
+it('hiện trang điều khoản và trang chính sách riêng tư', function (string $path, string $page, string $title, string $updatedOn) {
     $response = $this->get("$path?locale=vi")
         ->assertOk()
         ->assertSee("<title>{$title}</title>", escape: false);
@@ -24,11 +24,24 @@ it('hiện trang điều khoản và trang chính sách riêng tư', function (s
     $config = landingConfigOf($response);
 
     expect($config['page'])->toBe($page)
-        ->and($config['legalDocument']['updated'])->toBe('Cập nhật lần cuối: 24/09/2026')
+        ->and($config['legalDocument']['updated'])->toBe("Cập nhật lần cuối: {$updatedOn}")
         ->and($config['legalDocument']['sections'])->not->toBeEmpty();
 })->with([
-    'điều khoản' => ['/dieu-khoan', 'terms', 'Điều khoản sử dụng · Yona'],
-    'chính sách riêng tư' => ['/chinh-sach-rieng-tu', 'privacy', 'Chính sách riêng tư · Yona'],
+    'điều khoản' => ['/dieu-khoan', 'terms', 'Điều khoản sử dụng · Yona', '24/09/2026'],
+    'chính sách riêng tư' => ['/chinh-sach-rieng-tu', 'privacy', 'Chính sách riêng tư · Yona', '11/10/2026'],
+]);
+
+// Google thẩm định quyền Gmail đối chiếu trang này: phải nói rõ dữ liệu Google dùng
+// vào đâu và cam kết Limited Use, ở cả bản tiếng Việt lẫn tiếng Anh.
+it('chính sách riêng tư có mục dữ liệu Google kèm cam kết Limited Use', function (string $locale, string $limitedUse) {
+    $google = landingConfigOf($this->get("/chinh-sach-rieng-tu?locale={$locale}")->assertOk())['legalDocument']['sections']['google_data'];
+
+    expect($google['points'])->toHaveKeys(['accessed', 'use', 'storage', 'sharing', 'ai', 'people', 'disconnect', 'limited_use'])
+        ->and($google['points']['limited_use'])->toContain($limitedUse)
+        ->and($google['points']['limited_use'])->toContain('https://developers.google.com/terms/api-services-user-data-policy');
+})->with([
+    'tiếng Việt' => ['vi', 'Giới hạn sử dụng (Limited Use)'],
+    'tiếng Anh' => ['en', 'Limited Use requirements'],
 ]);
 
 it('chuyển hướng vĩnh viễn URL cũ đã in dưới nút đăng ký', function (string $oldPath, string $newPath) {

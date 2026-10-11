@@ -9334,7 +9334,7 @@ const messages: Record<string, unknown> = {
                 "description": "What Yona stores, why, who can see it, which third parties take part and what rights you have over your data."
             },
             "title": "Privacy policy",
-            "updated_on": "24 September 2026",
+            "updated_on": "11 October 2026",
             "lead": "This policy explains what Yona stores, what it is used for, who can see it and what rights you have. Everything here describes how the software works today, including where it still falls short.",
             "sections": {
                 "roles": {
@@ -9353,7 +9353,7 @@ const messages: Record<string, unknown> = {
                         "conversations": "Conversations: the content of messages in both directions, attachments such as images, videos, voice notes and documents, plus private notes, labels and assignees.",
                         "contacts": "Contact records: name, phone number, email, avatar, custom attributes and notes entered by your team or sent in by a channel.",
                         "widget": "Visitors using the website chat: browser type and language, and the page they were on when the chat started.",
-                        "channels": "Channel connection details: the personal Zalo sign-in session (see section 5), the mailbox password of an email channel and access tokens of other channels. Email passwords and access tokens are stored encrypted, except the API keys of WhatsApp and SMS channels, which are not encrypted yet.",
+                        "channels": "Channel connection details: the personal Zalo sign-in session (see section 5), the mailbox password of an email channel, the Google tokens of a Gmail inbox (see section 6) and access tokens of other channels. Email passwords and access tokens are stored encrypted, except the API keys of WhatsApp and SMS channels, which are not encrypted yet.",
                         "public": "Yona's public pages: the name, phone number and note you send on the Book a demo page, and messages you send through the chat on yona.vn."
                     }
                 },
@@ -9386,21 +9386,39 @@ const messages: Record<string, unknown> = {
                         "transport": "Zalo messages travel through the unofficial open source library zca-js to Zalo's servers."
                     }
                 },
+                "google_data": {
+                    "heading": "6. Data from your Google account (Gmail)",
+                    "body": {
+                        "intro": "When you choose Sign in with Google to connect a Gmail or Google Workspace mailbox, Yona asks for access to Gmail (scope https://mail.google.com/) and the email address of that account. This section explains what Yona does with Google data."
+                    },
+                    "points": {
+                        "accessed": "Data Yona accesses: the messages in your inbox (sender, recipients, subject, body, attachments) and the email address of the Google account you connect. Yona reads mail over Gmail IMAP and sends mail over Gmail SMTP with the access token Google issues.",
+                        "use": "Sole purpose: bringing your customers' emails into your team's shared inbox on Yona, and sending the replies or new emails your team writes from your own address. Yona does not delete or move messages in Gmail; when Yona downloads a message, Gmail marks it as read.",
+                        "notifications": "To show new mail almost instantly, Yona subscribes to Gmail \"new mail\" notifications through Google Cloud Pub/Sub. A notification only carries the email address and a sequence number, never message content.",
+                        "storage": "Google access and refresh tokens are stored encrypted. Synced messages are stored on Yona's servers like every other conversation (section 2).",
+                        "sharing": "Yona does not sell Gmail data, does not use it for advertising and does not transfer it to third parties, except when you turn on a tool that receives conversation data yourself (webhooks, agent bots, integrations in section 7), when needed to run a feature you use, or when the law requires it.",
+                        "ai": "Yona does not use Gmail data to train or improve generalized artificial intelligence or machine learning models.",
+                        "people": "The Yona operations team does not read your Gmail messages, except when you ask for help with a specific issue, when needed to investigate security incidents or abuse, or when the law requires it.",
+                        "disconnect": "Disconnecting: deleting the Gmail inbox in Inbox settings makes Yona delete the tokens, stop Gmail notifications and delete that inbox's conversations. Attachments of those conversations are not removed automatically yet; contact us as described in the Contact section to have them deleted. You can also revoke Yona's access at any time at https://myaccount.google.com/permissions.",
+                        "limited_use": "Yona's use and transfer of information received from Google APIs adheres to the Google API Services User Data Policy (https://developers.google.com/terms/api-services-user-data-policy), including the Limited Use requirements."
+                    }
+                },
                 "third_parties": {
-                    "heading": "6. Third parties that take part",
+                    "heading": "7. Third parties that take part",
                     "points": {
                         "zalo": "Zalo: receives and sends messages for the personal Zalo channel.",
                         "other_channels": "Other messaging platforms you connect, such as Telegram, LINE, WhatsApp or an SMS provider: receive and send messages for that channel.",
                         "cloudflare": "Cloudflare: all traffic to yona.vn passes through Cloudflare's network. Cloudflare servers may be located outside Vietnam.",
                         "mail": "An email delivery provider: carries system email to your mailbox.",
                         "your_mailbox": "Your own mail server: when you connect an email channel, Yona reads and sends mail over IMAP/SMTP with the account you provide.",
+                        "google": "Google: a Gmail inbox connected with Sign in with Google is read and sent through Gmail servers, and new-mail notifications go through Google Cloud Pub/Sub (see section 6).",
                         "plausible": "Plausible: counts page views, without cookies.",
                         "push": "Your browser's push service: only if you turn on push notifications, the notification content passes through the push service of the browser you use.",
                         "your_tools": "Tools you connect yourself: webhooks, agent bots and the integrations you enable receive conversation data exactly as you configure them. You are responsible for those destinations."
                     }
                 },
                 "retention": {
-                    "heading": "7. Keeping and deleting data",
+                    "heading": "8. Keeping and deleting data",
                     "points": {
                         "kept": "Messages, contact records and files are kept until you delete them or ask for your account to be deleted. Yona does not yet delete conversations automatically after a set period.",
                         "notifications": "In-app notifications older than one month are cleaned up automatically.",
@@ -9409,17 +9427,17 @@ const messages: Record<string, unknown> = {
                     }
                 },
                 "security": {
-                    "heading": "8. Security",
+                    "heading": "9. Security",
                     "points": {
                         "https": "Connections to Yona use HTTPS.",
                         "passwords": "Passwords are stored as hashes. You can turn on two-factor authentication.",
-                        "secrets": "Email mailbox passwords and channel access tokens are stored encrypted, except the API keys of WhatsApp and SMS channels (not encrypted yet).",
+                        "secrets": "Email mailbox passwords, Google tokens and channel access tokens are stored encrypted, except the API keys of WhatsApp and SMS channels (not encrypted yet).",
                         "zalo": "The Zalo session is stored as an unencrypted file, protected only by read permissions (see section 5).",
                         "incident": "No system is perfectly secure. If we find an incident that exposes data, we tell the administrators of the affected accounts."
                     }
                 },
                 "rights": {
-                    "heading": "9. Your rights",
+                    "heading": "10. Your rights",
                     "body": {
                         "intro": "Under Vietnamese law on personal data protection, you have the right to:"
                     },
@@ -9434,7 +9452,7 @@ const messages: Record<string, unknown> = {
                     "note": "We answer through the same channel you used to reach us."
                 },
                 "cookies": {
-                    "heading": "10. Cookies",
+                    "heading": "11. Cookies",
                     "points": {
                         "session": "Session and request-forgery protection cookies: required to sign in.",
                         "locale": "Language cookie: remembers the language you chose.",
@@ -9443,13 +9461,13 @@ const messages: Record<string, unknown> = {
                     }
                 },
                 "changes": {
-                    "heading": "11. Changes to this policy",
+                    "heading": "12. Changes to this policy",
                     "body": {
                         "how": "When this policy changes, we update the date at the top of this page. Changes that affect your rights are announced in advance to account administrators."
                     }
                 },
                 "contact": {
-                    "heading": "12. Contact",
+                    "heading": "13. Contact",
                     "body": {
                         "how": "Message us through the chat in the bottom corner of any yona.vn page, or leave your phone number on the Book a demo page. Both go straight into the Yona team's inbox."
                     }

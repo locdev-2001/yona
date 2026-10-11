@@ -129,7 +129,7 @@ return [
             'description' => 'Yona lưu dữ liệu gì, dùng để làm gì, ai xem được, bên thứ ba nào tham gia xử lý và bạn có quyền gì với dữ liệu của mình.',
         ],
         'title' => 'Chính sách riêng tư',
-        'updated_on' => '24/09/2026',
+        'updated_on' => '11/10/2026',
         'lead' => 'Chính sách này nói Yona lưu dữ liệu gì, dùng để làm gì, ai xem được và bạn có quyền gì. Mỗi điều ở đây mô tả đúng cách phần mềm đang hoạt động hôm nay, kể cả những chỗ còn hạn chế.',
         'sections' => [
             'roles' => [
@@ -148,7 +148,7 @@ return [
                     'conversations' => 'Hội thoại: nội dung tin nhắn hai chiều, tệp đính kèm như ảnh, video, ghi âm, tài liệu, cùng ghi chú nội bộ, nhãn và người được giao.',
                     'contacts' => 'Hồ sơ liên hệ: tên, số điện thoại, email, ảnh đại diện, thuộc tính tuỳ biến và ghi chú do nhóm bạn nhập hoặc do kênh gửi về.',
                     'widget' => 'Khách nhắn qua khung chat trên website: loại và ngôn ngữ trình duyệt, cùng trang khách đang xem khi bắt đầu trò chuyện.',
-                    'channels' => 'Thông tin kết nối kênh: phiên đăng nhập Zalo cá nhân (xem mục 5), mật khẩu hộp thư của kênh email và mã truy cập các kênh khác. Mật khẩu email và mã truy cập được lưu mã hoá, trừ khoá API của kênh WhatsApp và SMS hiện còn lưu chưa mã hoá.',
+                    'channels' => 'Thông tin kết nối kênh: phiên đăng nhập Zalo cá nhân (xem mục 5), mật khẩu hộp thư của kênh email, mã truy cập Google của hộp Gmail (xem mục 6) và mã truy cập các kênh khác. Mật khẩu email và mã truy cập được lưu mã hoá, trừ khoá API của kênh WhatsApp và SMS hiện còn lưu chưa mã hoá.',
                     'public' => 'Trang công khai của Yona: tên, số điện thoại và ghi chú bạn gửi ở trang Đặt lịch demo, và tin bạn nhắn qua khung chat trên yona.vn.',
                 ],
             ],
@@ -181,21 +181,39 @@ return [
                     'transport' => 'Tin nhắn Zalo đi qua thư viện mã nguồn mở không chính thức zca-js tới máy chủ của Zalo.',
                 ],
             ],
+            'google_data' => [
+                'heading' => '6. Dữ liệu từ tài khoản Google (Gmail)',
+                'body' => [
+                    'intro' => 'Khi bạn chọn Đăng nhập Google để kết nối hộp thư Gmail hoặc Google Workspace, Yona xin quyền truy cập Gmail (phạm vi https://mail.google.com/) cùng địa chỉ email của tài khoản đó. Mục này nói rõ Yona làm gì với dữ liệu Google.',
+                ],
+                'points' => [
+                    'accessed' => 'Dữ liệu Yona truy cập: thư trong hộp thư đến (người gửi, người nhận, tiêu đề, nội dung, tệp đính kèm) và địa chỉ email của tài khoản Google bạn kết nối. Yona đọc thư qua IMAP và gửi thư qua SMTP của Gmail bằng mã truy cập do Google cấp.',
+                    'use' => 'Mục đích duy nhất: đưa thư của khách vào hộp thư chung của nhóm bạn trên Yona, và gửi thư trả lời hoặc thư mới do nhóm bạn soạn từ chính địa chỉ của bạn. Yona không xoá và không di chuyển thư trong Gmail; khi Yona tải thư về, Gmail đánh dấu thư đó là đã đọc.',
+                    'notifications' => 'Để thư mới hiện gần như ngay lập tức, Yona đăng ký nhận thông báo "có thư mới" của Gmail qua Google Cloud Pub/Sub. Thông báo chỉ chứa địa chỉ email và một mã thứ tự, không chứa nội dung thư.',
+                    'storage' => 'Mã truy cập và mã làm mới của Google được lưu mã hoá. Thư đã đồng bộ được lưu trên máy chủ của Yona như mọi hội thoại khác (mục 2).',
+                    'sharing' => 'Yona không bán dữ liệu Gmail, không dùng để quảng cáo và không chuyển cho bên thứ ba, trừ khi bạn tự bật một công cụ nhận dữ liệu hội thoại (webhook, agent bot, tích hợp ở mục 7), khi cần để vận hành tính năng bạn đang dùng, hoặc khi pháp luật yêu cầu.',
+                    'ai' => 'Yona không dùng dữ liệu Gmail để huấn luyện hay cải thiện mô hình trí tuệ nhân tạo hoặc máy học dùng chung.',
+                    'people' => 'Đội vận hành Yona không đọc thư Gmail của bạn, trừ khi bạn yêu cầu hỗ trợ cho một việc cụ thể, khi cần điều tra sự cố bảo mật hoặc lạm dụng, hoặc khi pháp luật yêu cầu.',
+                    'disconnect' => 'Ngắt kết nối: xoá hộp thư Gmail trong phần cài đặt Hộp thư thì Yona xoá mã truy cập, dừng nhận thông báo từ Gmail và xoá các hội thoại của hộp thư đó. Tệp đính kèm của những hội thoại này hiện chưa tự xoá theo; nhắn cho chúng tôi theo mục Liên hệ để xoá hẳn. Bạn cũng thu hồi quyền của Yona bất cứ lúc nào tại https://myaccount.google.com/permissions.',
+                    'limited_use' => 'Yona sử dụng và chuyển giao thông tin nhận được từ Google API theo đúng Chính sách dữ liệu người dùng của Google API Services (https://developers.google.com/terms/api-services-user-data-policy), bao gồm các yêu cầu về Giới hạn sử dụng (Limited Use).',
+                ],
+            ],
             'third_parties' => [
-                'heading' => '6. Bên thứ ba tham gia xử lý',
+                'heading' => '7. Bên thứ ba tham gia xử lý',
                 'points' => [
                     'zalo' => 'Zalo: nhận và gửi tin nhắn của kênh Zalo cá nhân.',
                     'other_channels' => 'Nền tảng nhắn tin khác bạn kết nối, như Telegram, LINE, WhatsApp hay nhà cung cấp SMS: nhận và gửi tin nhắn của kênh đó.',
                     'cloudflare' => 'Cloudflare: mọi truy cập tới yona.vn đi qua mạng phân phối của Cloudflare. Máy chủ của Cloudflare có thể đặt ngoài Việt Nam.',
                     'mail' => 'Nhà cung cấp dịch vụ gửi email: chuyển email hệ thống tới hộp thư của bạn.',
                     'your_mailbox' => 'Máy chủ email của chính bạn: khi bạn kết nối kênh email, Yona đọc và gửi thư qua IMAP/SMTP bằng tài khoản bạn cung cấp.',
+                    'google' => 'Google: hộp Gmail kết nối bằng Đăng nhập Google được đọc và gửi qua máy chủ Gmail, thông báo thư mới đi qua Google Cloud Pub/Sub (xem mục 6).',
                     'plausible' => 'Plausible: đếm lượt xem trang, không dùng cookie.',
                     'push' => 'Dịch vụ thông báo đẩy của trình duyệt: chỉ khi bạn bật thông báo đẩy, nội dung thông báo đi qua dịch vụ đẩy của trình duyệt bạn đang dùng.',
                     'your_tools' => 'Công cụ bạn tự nối vào: webhook, agent bot và các tích hợp bạn bật nhận dữ liệu hội thoại theo đúng cấu hình của bạn. Bạn chịu trách nhiệm với nơi nhận đó.',
                 ],
             ],
             'retention' => [
-                'heading' => '7. Lưu trữ và xoá',
+                'heading' => '8. Lưu trữ và xoá',
                 'points' => [
                     'kept' => 'Tin nhắn, hồ sơ liên hệ và tệp được giữ cho tới khi bạn xoá chúng hoặc yêu cầu xoá tài khoản. Hiện Yona chưa tự xoá hội thoại theo thời hạn.',
                     'notifications' => 'Thông báo trong ứng dụng cũ hơn một tháng được tự động dọn.',
@@ -204,17 +222,17 @@ return [
                 ],
             ],
             'security' => [
-                'heading' => '8. Bảo mật',
+                'heading' => '9. Bảo mật',
                 'points' => [
                     'https' => 'Kết nối tới Yona dùng HTTPS.',
                     'passwords' => 'Mật khẩu lưu dạng băm. Bạn bật được xác thực hai lớp.',
-                    'secrets' => 'Mật khẩu hộp thư email và mã truy cập kênh lưu mã hoá, trừ khoá API của kênh WhatsApp và SMS (hiện chưa mã hoá).',
+                    'secrets' => 'Mật khẩu hộp thư email, mã truy cập Google và mã truy cập kênh lưu mã hoá, trừ khoá API của kênh WhatsApp và SMS (hiện chưa mã hoá).',
                     'zalo' => 'Phiên Zalo lưu dạng tệp chưa mã hoá, chỉ giới hạn quyền đọc (xem mục 5).',
                     'incident' => 'Không hệ thống nào an toàn tuyệt đối. Nếu phát hiện sự cố làm lộ dữ liệu, chúng tôi báo cho quản trị viên các tài khoản bị ảnh hưởng.',
                 ],
             ],
             'rights' => [
-                'heading' => '9. Quyền của bạn',
+                'heading' => '10. Quyền của bạn',
                 'body' => [
                     'intro' => 'Theo pháp luật Việt Nam về bảo vệ dữ liệu cá nhân, bạn có quyền:',
                 ],
@@ -229,7 +247,7 @@ return [
                 'note' => 'Chúng tôi trả lời yêu cầu qua đúng kênh bạn đã gửi.',
             ],
             'cookies' => [
-                'heading' => '10. Cookie',
+                'heading' => '11. Cookie',
                 'points' => [
                     'session' => 'Cookie phiên đăng nhập và cookie chống giả mạo yêu cầu: bắt buộc để đăng nhập.',
                     'locale' => 'Cookie ngôn ngữ: nhớ ngôn ngữ bạn đã chọn.',
@@ -238,13 +256,13 @@ return [
                 ],
             ],
             'changes' => [
-                'heading' => '11. Thay đổi chính sách',
+                'heading' => '12. Thay đổi chính sách',
                 'body' => [
                     'how' => 'Khi chính sách thay đổi, chúng tôi cập nhật ngày ở đầu trang này. Thay đổi nào ảnh hưởng tới quyền của bạn thì chúng tôi báo trước cho quản trị viên các tài khoản.',
                 ],
             ],
             'contact' => [
-                'heading' => '12. Liên hệ',
+                'heading' => '13. Liên hệ',
                 'body' => [
                     'how' => 'Nhắn cho chúng tôi qua khung chat ở góc dưới các trang của yona.vn, hoặc để lại số điện thoại ở trang Đặt lịch demo. Cả hai đều vào thẳng hộp thư của đội Yona.',
                 ],
