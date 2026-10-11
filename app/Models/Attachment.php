@@ -170,6 +170,20 @@ class Attachment extends Model
         return $this->morphTo();
     }
 
+    /**
+     * Xoá hội thoại/tin nhắn bằng ràng buộc cascade của DB bỏ qua hook của Message, nên
+     * hàng cha (hộp thư, liên hệ) gọi hàm này trước khi tự xoá để tệp trên đĩa được dọn theo.
+     *
+     * @param  Builder<Message>  $messages
+     */
+    public static function purgeForMessages(Builder $messages): void
+    {
+        static::query()
+            ->whereMorphedTo('attachable', Message::class)
+            ->whereIn('attachable_id', $messages->select('messages.id'))
+            ->chunkById(200, fn ($attachments) => $attachments->each->delete());
+    }
+
     // Tài liệu tìm kiếm "tệp": tệp đính kèm tin nhắn thuộc loại tìm được theo tên.
     /**
      * @param  Builder<self>  $query

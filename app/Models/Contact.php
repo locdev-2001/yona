@@ -120,6 +120,10 @@ class Contact extends Model
             ]);
         });
 
+        static::deleting(function (Contact $contact) {
+            Attachment::purgeForMessages(Message::query()->whereIn('conversation_id', $contact->conversations()->select('id')));
+        });
+
         static::deleted(function (Contact $contact) {
             $contact->avatar?->delete();
 

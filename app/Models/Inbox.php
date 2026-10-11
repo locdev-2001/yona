@@ -102,6 +102,7 @@ class Inbox extends Model
         // Xóa kênh TRƯỚC hàng inbox: nếu bước này hỏng thì cả lệnh xóa dừng lại,
         // không để lại hàng channel_* mồ côi giữ ràng buộc unique (email, phone_number…).
         static::deleting(function (Inbox $inbox) {
+            Attachment::purgeForMessages($inbox->messages()->getQuery());
             $inbox->channel?->delete();
             $inbox->avatar?->delete();
         });

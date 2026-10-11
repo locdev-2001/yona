@@ -449,3 +449,32 @@ describe('copyStoredFile', function () {
         Storage::disk('public')->assertExists($original->path);
     });
 });
+
+// Hộp thư và liên hệ xoá hội thoại bằng cascade của DB: tệp trên đĩa phải đi theo,
+// không thì chính sách riêng tư hứa "xoá hộp thư là xoá dữ liệu" thành sai.
+describe('dọn tệp khi xoá hàng cha', function () {
+    it('xoá hộp thư dọn cả bản ghi lẫn tệp đính kèm của mọi tin trong hộp', function () {
+        $message = attachmentMessage();
+        $attachment = attachmentWithFile($message, UploadedFile::fake()->image('hoa-don.jpg'));
+        Storage::disk('public')->assertExists($attachment->path);
+
+        $message->inbox->delete();
+
+        expect(Attachment::query()->whereKey($attachment->id)->exists())->toBeFalse();
+        Storage::disk('public')->assertMissing($attachment->path);
+    });
+
+    it('xoá liên hệ dọn tệp đính kèm trong các hội thoại của liên hệ, không đụng liên hệ khác', function () {
+        $message = attachmentMessage();
+        $attachment = attachmentWithFile($message, UploadedFile::fake()->create('bao-gia.pdf', 10, 'application/pdf'));
+        $other = attachmentMessage();
+        $kept = attachmentWithFile($other, UploadedFile::fake()->create('giu-lai.pdf', 10, 'application/pdf'));
+
+        $message->conversation->contact->delete();
+
+        expect(Attachment::query()->whereKey($attachment->id)->exists())->toBeFalse()
+            ->and(Attachment::query()->whereKey($kept->id)->exists())->toBeTrue();
+        Storage::disk('public')->assertMissing($attachment->path);
+        Storage::disk('public')->assertExists($kept->path);
+    });
+});
