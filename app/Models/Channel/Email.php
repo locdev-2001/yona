@@ -261,7 +261,9 @@ class Email extends Model implements AddressesContacts, ChecksContactAddress, De
      */
     public static function connection(): ChannelConnection
     {
+        // Thẻ chọn kênh mang logo Gmail: hiện chỉ Đăng nhập Google là lối vào đang mở.
         return ChannelConnection::of('email', ConnectionMethod::Form)
+            ->withPlatform(self::gmailPlatform())
             ->ordered(30)
             ->withOptions(
                 self::oauthOption('google')->withPlatform(self::gmailPlatform()),

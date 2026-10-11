@@ -525,7 +525,7 @@ return [
                 ],
                 'EMAIL' => [
                     'TITLE' => 'Email',
-                    'DESCRIPTION' => 'Connect with Gmail, Outlook, or other providers',
+                    'DESCRIPTION' => 'Connect Gmail or Google Workspace with your Google account',
                 ],
                 'SMS' => [
                     'TITLE' => 'SMS',

@@ -7075,7 +7075,7 @@ const messages: Record<string, unknown> = {
                     },
                     "EMAIL": {
                         "TITLE": "Email",
-                        "DESCRIPTION": "Kết nối Gmail, Outlook hoặc nhà cung cấp khác"
+                        "DESCRIPTION": "Kết nối Gmail hoặc Google Workspace bằng tài khoản Google"
                     },
                     "SMS": {
                         "TITLE": "SMS",
