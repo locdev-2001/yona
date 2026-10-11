@@ -7,6 +7,7 @@ use App\Events\EventType;
 use App\Events\PreviousChanges;
 use App\Exceptions\MessageValidationException;
 use App\Messaging\Delivery\OutboundOrder;
+use App\Messaging\Reactions\ReactionEmoji;
 use App\Models\Concerns\IndexedForSearch;
 use App\Models\Concerns\SharesRequestModels;
 use App\Services\Messages\InReplyToMessageBuilder;
@@ -304,14 +305,14 @@ class Message extends Model
 
         foreach ($stored as $entry) {
             if (is_string($entry) && $entry !== '') {
-                $reactions[] = ['emoji' => $entry, 'by' => self::REACTION_BY_UNKNOWN, 'at' => 0];
+                $reactions[] = ['emoji' => ReactionEmoji::normalize($entry), 'by' => self::REACTION_BY_UNKNOWN, 'at' => 0];
 
                 continue;
             }
 
             if (is_array($entry) && filled($entry['emoji'] ?? null)) {
                 $reactions[] = [
-                    'emoji' => (string) $entry['emoji'],
+                    'emoji' => ReactionEmoji::normalize((string) $entry['emoji']),
                     'by' => (string) ($entry['by'] ?? self::REACTION_BY_UNKNOWN),
                     'at' => (int) ($entry['at'] ?? 0),
                 ];
@@ -329,6 +330,7 @@ class Message extends Model
      */
     public function setReaction(string $by, ?string $emoji): bool
     {
+        $emoji = ReactionEmoji::normalize($emoji);
         $current = $this->reactionList();
         $slot = self::reactionActorSlot($by);
         $held = null;
