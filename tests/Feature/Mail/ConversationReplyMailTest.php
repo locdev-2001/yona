@@ -415,3 +415,20 @@ it('máy chủ SMTP từ chối thì tin gửi lỗi kèm lời máy chủ trả
             ]),
         ]);
 });
+
+// Hộp Gmail nối bằng Đăng nhập Google mang tên là chính địa chỉ email: tên người gửi
+// không được ra kiểu "Robert Nguyen từ robertnguyenyona.vn" hay lặp "X từ X".
+it('đặt tên người gửi tự nhiên khi hộp thư chưa có tên doanh nghiệp', function (string $inboxName, ?string $businessName, string $accountName, string $agentName, string $expected) {
+    config(['mail.smtp_address' => 'smtp.acme.test']);
+    $conversation = emailConversation();
+    $conversation->inbox->update(['name' => $inboxName, 'business_name' => $businessName]);
+    $conversation->account->update(['name' => $accountName, 'locale' => 'vi']);
+    $reply = (new MessageBuilder(User::factory()->create(['name' => $agentName]), $conversation, ['content' => 'Chào bạn']))->perform();
+
+    expect(ConversationReplyMail::emailReply($reply->fresh())->envelope()->from->name)->toBe($expected);
+})->with([
+    'tên hộp là email, tài khoản trùng tên nhân viên' => ['robertnguyen@yona.vn', null, 'Robert Nguyen', 'Robert Nguyen', 'Robert Nguyen'],
+    'tên hộp là email, lấy tên tài khoản' => ['shop@hoa.vn', null, 'Shop Hoa', 'Lan', 'Lan từ Shop Hoa'],
+    'đã đặt tên doanh nghiệp' => ['shop@hoa.vn', 'Hoa Tươi Sài Gòn', 'Shop Hoa', 'Lan', 'Lan từ Hoa Tươi Sài Gòn'],
+    'tên hộp thường vẫn dùng như cũ' => ['Hỗ trợ khách', null, 'Shop Hoa', 'Lan', 'Lan từ Hỗ trợ khách'],
+]);

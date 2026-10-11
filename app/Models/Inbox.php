@@ -331,11 +331,19 @@ class Inbox extends Model
         return $sanitized === '' && $this->isEmail() ? $this->displayNameFromEmail() : $sanitized;
     }
 
+    // Chưa đặt tên doanh nghiệp thì lấy tên hộp; tên hộp là một địa chỉ email (hộp Gmail nối
+    // bằng Đăng nhập Google) thì lấy tên tài khoản, không để ra chuỗi kiểu "robertnguyenyona.vn".
     public function sanitizedBusinessName(): string
     {
         $sanitized = blank($this->business_name) ? '' : self::applySanitizationRules($this->business_name);
 
-        return $sanitized === '' ? $this->sanitizedName() : $sanitized;
+        if ($sanitized !== '') {
+            return $sanitized;
+        }
+
+        return filter_var($this->name, FILTER_VALIDATE_EMAIL) === false
+            ? $this->sanitizedName()
+            : self::applySanitizationRules((string) $this->account?->name);
     }
 
     private function displayNameFromEmail(): string

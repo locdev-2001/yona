@@ -12,6 +12,8 @@ class SenderNameBuilder
 {
     private const TRANSLATION_KEY = 'conversations.reply.email.header.friendly_name';
 
+    private const SENDER_ONLY_TRANSLATION_KEY = 'conversations.reply.email.header.sender_only_name';
+
     public function __construct(
         private readonly Account $account,
         private readonly mixed $sender,
@@ -41,11 +43,18 @@ class SenderNameBuilder
 
     private function localizedHeader(string $address): string
     {
-        return __(self::TRANSLATION_KEY, [
+        return __($this->repeatsSender() ? self::SENDER_ONLY_TRANSLATION_KEY : self::TRANSLATION_KEY, [
             'sender_name' => $this->senderName,
             'business_name' => (string) $this->businessName,
             'from_email' => $address,
         ], $this->senderLocale());
+    }
+
+    // "Robert Nguyen từ Robert Nguyen" khi tên doanh nghiệp trùng tên người gửi: chỉ giữ tên người gửi.
+    private function repeatsSender(): bool
+    {
+        return blank($this->businessName)
+            || mb_strtolower(trim($this->businessName)) === mb_strtolower(trim($this->senderName));
     }
 
     private function senderLocale(): string

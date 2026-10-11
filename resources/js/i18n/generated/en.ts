@@ -4519,6 +4519,7 @@ const messages: Record<string, unknown> = {
                     "from_with_name": "{assignee_name} from {inbox_name} <{from_email}>",
                     "reply_with_name": "{assignee_name} from {inbox_name} <reply+{reply_email}>",
                     "friendly_name": "{sender_name} from {business_name} <{from_email}>",
+                    "sender_only_name": "{sender_name} <{from_email}>",
                     "professional_name": "{business_name} <{from_email}>"
                 }
             },
