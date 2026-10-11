@@ -108,7 +108,7 @@ class MessageResource extends JsonResource
 
     /**
      * content_attributes cho bề mặt hiển thị (dashboard, widget, realtime): payload
-     * sticker lưu đường dẫn tệp, URL dựng lúc đọc.
+     * sticker lưu đường dẫn tệp, URL dựng lúc đọc; cảm xúc ở dạng chuẩn.
      *
      * @return array<string, mixed>
      */
@@ -118,6 +118,12 @@ class MessageResource extends JsonResource
 
         if (is_array($attributes['sticker'] ?? null)) {
             $attributes['sticker'] = app(StickerLibrary::class)->forReader($attributes['sticker']);
+        }
+
+        // Cảm xúc đi qua reactionList(): bản ghi cũ dạng phẳng được nâng cấp, emoji trần
+        // kênh gửi về (❤ không FE0F) được chuẩn hoá về dạng emoji trước khi tới giao diện.
+        if (array_key_exists('reactions', $attributes)) {
+            $attributes['reactions'] = $message->reactionList();
         }
 
         return $attributes;
