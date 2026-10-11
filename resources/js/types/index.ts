@@ -28,7 +28,7 @@ export interface GlobalConfig {
     // App id của Meta — kênh Facebook/Instagram chỉ bật khi cấu hình (như
     // biến cấu hình toàn cục fbAppId của bản trước).
     fbAppId?: string;
-    fbApiVersion?: string;
+    fbApiVersion: string;
     // Khoá công khai VAPID cho Web Push (thay biến cấu hình toàn cục vapidPublicKey
     // của bản gốc); null khi máy chủ không có khoá — giao diện ẩn phần đẩy.
     vapidPublicKey?: string | null;

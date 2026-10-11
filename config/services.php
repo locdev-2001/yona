@@ -36,18 +36,21 @@ return [
     ],
 
     // F2-F5 kênh ngoài — biến môi trường (GlobalConfigService) đặt ở đây.
+    // Một phiên bản Graph API cho mọi kênh Meta; driver đọc qua App\Services\Meta\GraphApi.
+    'meta' => [
+        'api_version' => env('META_API_VERSION', 'v26.0'),
+    ],
+
     'facebook' => [
         'app_id' => env('FB_APP_ID'),
         'app_secret' => env('FB_APP_SECRET'),
         'verify_token' => env('FB_VERIFY_TOKEN'),
-        'api_version' => env('FB_API_VERSION', 'v22.0'),
     ],
 
     'instagram' => [
         'app_secret' => env('INSTAGRAM_APP_SECRET'),
         'verify_token' => env('INSTAGRAM_VERIFY_TOKEN'),
         'ig_verify_token' => env('IG_VERIFY_TOKEN'),
-        'api_version' => env('INSTAGRAM_API_VERSION', 'v22.0'),
     ],
 
     'whatsapp_cloud' => [

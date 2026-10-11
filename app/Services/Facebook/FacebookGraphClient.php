@@ -3,6 +3,7 @@
 namespace App\Services\Facebook;
 
 use App\Models\Channel\FacebookPage;
+use App\Services\Meta\GraphApi;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 
@@ -56,6 +57,6 @@ class FacebookGraphClient
 
     private function baseUri(): string
     {
-        return 'https://graph.facebook.com/'.config('services.facebook.api_version', 'v22.0');
+        return GraphApi::baseUri();
     }
 }

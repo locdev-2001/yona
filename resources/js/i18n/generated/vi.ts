@@ -660,7 +660,7 @@ const messages: Record<string, unknown> = {
                 },
                 "INSTAGRAM_API_VERSION": {
                     "title": "Phiên bản Instagram API",
-                    "description": "Chỉ đổi khi cần dùng phiên bản khác, bắt đầu bằng chữ v (vd. v22.0)."
+                    "description": "Chỉ đổi khi cần dùng phiên bản khác, bắt đầu bằng chữ v (vd. v26.0)."
                 },
                 "TIKTOK_APP_ID": {
                     "title": "TikTok App ID",
@@ -688,7 +688,7 @@ const messages: Record<string, unknown> = {
                 },
                 "WHATSAPP_API_VERSION": {
                     "title": "Phiên bản WhatsApp API",
-                    "description": "Chỉ đổi khi cần dùng phiên bản khác, bắt đầu bằng chữ v (vd. v22.0)."
+                    "description": "Chỉ đổi khi cần dùng phiên bản khác, bắt đầu bằng chữ v (vd. v26.0)."
                 },
                 "GOOGLE_OAUTH_CLIENT_ID": {
                     "title": "Google OAuth Client ID",

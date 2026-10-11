@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Models\Sticker;
 use App\Services\Branding\BrandAssets;
+use App\Services\Meta\GraphApi;
 use App\Services\Notification\VapidService;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -41,7 +42,7 @@ class HandleInertiaRequests extends Middleware
                 'termsURL' => config('yona.terms_url'),
                 'privacyURL' => config('yona.privacy_url'),
                 'fbAppId' => config('services.facebook.app_id'),
-                'fbApiVersion' => config('services.facebook.api_version'),
+                'fbApiVersion' => GraphApi::version(),
                 // vapidPublicKey trong cấu hình client: có khoá mới hiện phần thông
                 // báo đẩy. Closure chỉ chạy khi render trang, và chỉ tra khoá cho
                 // người đã đăng nhập — trang công khai, request JSON không đụng tới.

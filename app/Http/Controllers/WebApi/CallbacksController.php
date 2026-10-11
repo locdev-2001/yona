@@ -9,6 +9,7 @@ use App\Models\Account;
 use App\Models\Channel\FacebookPage;
 use App\Models\Inbox;
 use App\Services\Channels\ChannelSetupService;
+use App\Services\Meta\GraphApi;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -154,6 +155,6 @@ class CallbacksController extends Controller
 
     private function baseUri(): string
     {
-        return 'https://graph.facebook.com/'.config('services.facebook.api_version', 'v22.0');
+        return GraphApi::baseUri();
     }
 }

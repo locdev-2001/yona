@@ -4,6 +4,7 @@ use App\Channels\Capability;
 use App\Models\Attachment;
 use App\Models\Inbox;
 use App\Models\Message;
+use App\Services\Meta\GraphApi;
 use App\Services\Whatsapp\Providers\Whatsapp360DialogService;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
@@ -110,7 +111,7 @@ it('gửi tin đi qua Cloud API và lưu source_id', function () {
         'content' => 'Chào bạn',
     ]);
 
-    Http::assertSent(fn ($request) => str_contains($request->url(), '/v13.0/123456/messages')
+    Http::assertSent(fn ($request) => str_contains($request->url(), '/'.GraphApi::version().'/123456/messages')
         && $request['to'] === '15557654321'
         && $request['text'] === ['body' => 'Chào bạn']);
 
@@ -137,7 +138,7 @@ it('tin có lựa chọn hạ xuống chữ kèm danh sách đánh số trước
         'content_attributes' => ['items' => [['title' => 'Có', 'value' => 'yes'], ['title' => 'Không', 'value' => 'no']]],
     ]);
 
-    Http::assertSent(fn ($request) => str_contains($request->url(), '/v13.0/123456/messages')
+    Http::assertSent(fn ($request) => str_contains($request->url(), '/'.GraphApi::version().'/123456/messages')
         && $request['text'] === ['body' => "Bạn có đồng ý không?\n\nNhắn số tương ứng để chọn:\n1. Có\n2. Không"]);
 
     expect($outgoing->fresh()->source_id)->toBe('wamid.OUT');

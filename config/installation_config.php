@@ -187,7 +187,7 @@ return [
         'name' => 'WHATSAPP_API_VERSION',
         'display_title' => 'WhatsApp API Version',
         'description' => 'Configure this if you want to use a different WhatsApp API version. Make sure its prefixed with `v`',
-        'value' => 'v22.0',
+        'value' => 'v26.0',
         'locked' => false,
     ],
     [
@@ -469,7 +469,7 @@ return [
         'name' => 'INSTAGRAM_API_VERSION',
         'display_title' => 'Instagram API Version',
         'description' => 'Configure this if you want to use a different Instagram API version. Make sure its prefixed with `v`',
-        'value' => 'v22.0',
+        'value' => 'v26.0',
         'locked' => true,
     ],
     [

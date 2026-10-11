@@ -4,6 +4,7 @@ namespace App\Services\Instagram;
 
 use App\Models\Channel\FacebookPage;
 use App\Models\Channel\Instagram;
+use App\Services\Meta\GraphApi;
 use Illuminate\Support\Facades\Http;
 
 /**
@@ -22,7 +23,7 @@ class InstagramProfileFetcher
     {
         [$url, $token] = $this->channel instanceof Instagram
             ? [$this->channel->baseUri()."/{$userId}", $this->channel->access_token]
-            : ['https://graph.facebook.com/'.config('services.facebook.api_version', 'v22.0')."/{$userId}", $this->channel->page_access_token];
+            : [GraphApi::baseUri()."/{$userId}", $this->channel->page_access_token];
 
         $response = Http::get($url, ['fields' => self::FIELDS, 'access_token' => $token]);
 

@@ -5,6 +5,7 @@ namespace App\Services\Whatsapp\Providers;
 use App\Channels\Capability;
 use App\Channels\CapabilitySet;
 use App\Models\Message;
+use App\Services\Meta\GraphApi;
 use Illuminate\Support\Facades\Http;
 
 // (đường gửi tin thường + đính kèm; sync template/CSAT/voice chưa port — xem note).
@@ -24,7 +25,7 @@ class WhatsappCloudService extends BaseWhatsappService
 
     public function mediaUrl(string $mediaId): string
     {
-        return $this->apiBasePath().'/v13.0/'.$mediaId;
+        return GraphApi::baseUri($this->apiBasePath()).'/'.$mediaId;
     }
 
     /** @return array<string, string> */
@@ -64,7 +65,7 @@ class WhatsappCloudService extends BaseWhatsappService
             $typeContent['filename'] = $attachment->filename;
         }
 
-        $response = Http::withHeaders($this->apiHeaders())->post($this->phoneIdPath('v24.0').'/messages', [
+        $response = Http::withHeaders($this->apiHeaders())->post($this->phoneIdPath().'/messages', [
             'messaging_product' => 'whatsapp',
             'to' => $phoneNumber,
             ...self::replyContext($message),
@@ -93,8 +94,8 @@ class WhatsappCloudService extends BaseWhatsappService
         return (string) config('services.whatsapp_cloud.base_url', 'https://graph.facebook.com');
     }
 
-    private function phoneIdPath(string $version = 'v13.0'): string
+    private function phoneIdPath(): string
     {
-        return $this->apiBasePath()."/{$version}/".($this->channel->provider_config['phone_number_id'] ?? '');
+        return GraphApi::baseUri($this->apiBasePath()).'/'.($this->channel->provider_config['phone_number_id'] ?? '');
     }
 }

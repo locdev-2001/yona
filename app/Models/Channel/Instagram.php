@@ -15,6 +15,7 @@ use App\Channels\TextFormat;
 use App\Models\Channel\Concerns\Channelable;
 use App\Models\Channel\Concerns\CustomerServiceWindow;
 use App\Models\Concerns\Reauthorizable;
+use App\Services\Meta\GraphApi;
 use Database\Factories\Channel\InstagramFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -66,12 +67,12 @@ class Instagram extends Model implements DeclaresCapabilities, DeclaresConnectio
 
     public static function apiVersion(): string
     {
-        return (string) config('services.instagram.api_version', 'v22.0');
+        return GraphApi::version();
     }
 
     public function baseUri(): string
     {
-        return 'https://graph.instagram.com/'.self::apiVersion();
+        return GraphApi::baseUri(GraphApi::INSTAGRAM_HOST);
     }
 
     /** Luồng ủy quyền Instagram chưa có ở backend nên chưa mở cho khách. */

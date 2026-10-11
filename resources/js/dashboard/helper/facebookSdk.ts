@@ -55,10 +55,10 @@ function loadFacebookSdk(): Promise<void> {
     });
 }
 
-function initializeFacebook(appId: string, apiVersion?: string): Promise<void> {
+function initializeFacebook(appId: string, apiVersion: string): Promise<void> {
     return new Promise(resolve => {
         const init = () => {
-            window.FB.init({ appId, autoLogAppEvents: true, xfbml: true, version: apiVersion || 'v22.0' });
+            window.FB.init({ appId, autoLogAppEvents: true, xfbml: true, version: apiVersion });
             resolve();
         };
 
@@ -67,7 +67,7 @@ function initializeFacebook(appId: string, apiVersion?: string): Promise<void> {
     });
 }
 
-export async function setupFacebookSdk(appId: string, apiVersion?: string): Promise<void> {
+export async function setupFacebookSdk(appId: string, apiVersion: string): Promise<void> {
     await loadFacebookSdk();
     await initializeFacebook(appId, apiVersion);
 }

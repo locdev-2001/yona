@@ -13,6 +13,7 @@ use App\Models\Channel\Whatsapp;
 use App\Models\Inbox;
 use App\Services\Facebook\FacebookGraphClient;
 use App\Services\Line\LineClient;
+use App\Services\Meta\GraphApi;
 use App\Services\Telegram\TelegramClient;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -181,7 +182,7 @@ class ChannelSetupService
         }
 
         $request = Http::withToken($config['api_key'])->asJson();
-        $baseUri = rtrim((string) config('services.whatsapp_cloud.base_url'), '/').'/v22.0';
+        $baseUri = GraphApi::baseUri((string) config('services.whatsapp_cloud.base_url'));
 
         // Meta bắt buộc đăng ký app với WABA trước khi ghi đè callback theo số.
         $request->post($baseUri.'/'.$businessAccountId.'/subscribed_apps', [
