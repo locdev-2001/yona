@@ -1,7 +1,9 @@
 import type { MessageAttachment } from 'dashboard/components-next/message/helpers/attachments';
 import { CONVERSATION_TYPE, MESSAGE_STATUS, MESSAGE_TYPES } from './constants';
 import type { ConversationType } from './constants';
+import { getLastMessage } from '../helper/conversationHelper';
 import { matchesLabels } from './labelHelpers';
+import { compareBySentAt } from './messageTime';
 import type { AssigneeTab, ContactMeta, Conversation, ConversationMessage } from './types';
 
 // Hàm thuần của store hội thoại (mutations ADD_MESSAGE /
@@ -38,11 +40,19 @@ export function applyIncomingMessage(
 // Phần ADD_MESSAGE tác động lên card trong list: timestamp + unread_count từ
 // conversation nhúng trong push_event_data; kèm last_non_activity_message để
 // preview card đổi (getLastMessage đọc từ messages[] + last_non_activity_message).
+// `message.updated` của một tin cũ (trạng thái, cảm xúc) cũng đi qua đây: chỉ tin mới
+// hơn hoặc chính tin cuối đang hiện mới được thay preview và giờ của thẻ.
 export function applyMessageToConversation(
     conversation: Conversation,
     message: ConversationMessage,
     unreadCount: number,
 ): Conversation {
+    const shown = getLastMessage(conversation);
+    const isLatest = !shown || shown.id === message.id || compareBySentAt(message, shown) >= 0;
+    if (!isLatest) {
+        return { ...conversation, unread_count: unreadCount };
+    }
+
     const lastNonActivity =
         message.message_type === MESSAGE_TYPES.ACTIVITY ? conversation.last_non_activity_message : message;
     return {

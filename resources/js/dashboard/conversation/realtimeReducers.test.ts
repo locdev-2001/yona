@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { getTypingUsersText } from '../helper/conversationHelper';
+import { getLastMessage, getTypingUsersText } from '../helper/conversationHelper';
 import {
     appendMessageAttachments,
     applyContactUpdate,
     applyConversationUpdate,
     applyIncomingMessage,
+    applyMessageToConversation,
     matchesConversationView,
     mergeFetchedConversations,
     selectVisibleConversations,
@@ -87,6 +88,34 @@ describe('applyIncomingMessage', () => {
 
         expect(result.appended).toBe(true);
         expect(result.messages.map((m) => m.id)).toEqual([1, 2]);
+    });
+});
+
+describe('applyMessageToConversation', () => {
+    const latest = buildMessage({ id: 20, content: 'ảnh mới', created_at: 500 });
+
+    it('tin mới hơn thành tin cuối của thẻ và đẩy giờ thẻ lên', () => {
+        const conversation = applyMessageToConversation(buildConversation(), latest, 1);
+
+        expect(getLastMessage(conversation)?.id).toBe(20);
+        expect(conversation.timestamp).toBe(500);
+    });
+
+    it('tin cũ được cập nhật (trạng thái, cảm xúc) không chiếm chỗ tin cuối, không kéo giờ thẻ lùi', () => {
+        const current = applyMessageToConversation(buildConversation(), latest, 0);
+        const olderUpdated = buildMessage({ id: 9, content: 'tin hai ngày trước', message_type: 1, created_at: 200 });
+
+        const conversation = applyMessageToConversation(current, olderUpdated, 0);
+
+        expect(getLastMessage(conversation)?.id).toBe(20);
+        expect(conversation.timestamp).toBe(500);
+    });
+
+    it('chính tin cuối được cập nhật thì thẻ hiện bản mới của nó', () => {
+        const current = applyMessageToConversation(buildConversation(), latest, 0);
+        const recalled = { ...latest, content: 'Tin nhắn đã thu hồi' };
+
+        expect(getLastMessage(applyMessageToConversation(current, recalled, 0))?.content).toBe('Tin nhắn đã thu hồi');
     });
 });
 
