@@ -48,7 +48,7 @@ Stack: PHP 8.3+ / Laravel 13 · Inertia + React 19 (TypeScript), Tailwind + Radi
 1. **Chống trùng:** một người từ nhiều nguồn gộp thành một hồ sơ — khóa chính = số điện thoại.
 2. **Phân biệt rõ:** người lạ = "Liên hệ nháp", không phải khách tiềm năng.
 3. **Ghi nguồn:** mỗi hồ sơ lưu rõ đến từ kênh nào.
-4. **Tôn trọng luật & nền tảng:** tin chủ động chỉ 7h–22h, ≤3 tin QC/số/ngày, luôn có opt-out, chỉ gửi khi còn trong cửa sổ cho phép của kênh.
+4. **Tôn trọng nền tảng:** chỉ gửi khi còn trong cửa sổ cho phép của kênh (vd 24h của Meta). Yona không tự chặn tin chủ động: cửa sổ 7h–22h và trần 3 tin/số/ngày đã gỡ ngày 07/09/2026, `SendRateLimiter` chỉ còn đếm.
 
 ## Quyết định đã chốt — đừng làm sai lại
 
