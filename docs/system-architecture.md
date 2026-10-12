@@ -89,7 +89,9 @@ PostgreSQL (`pg_trgm`) · Redis (cache, queue, session) · Laravel Reverb
   `GmailApiFetcher`: lần đầu hoặc khi `history.list` trả 404 thì lấy mốc `historyId` từ
   `profile` rồi nhập thư INBOX trong cửa sổ gần đây, các lượt sau chỉ hỏi `history.list`
   từ mốc đã lưu. Mốc và id thư cần thử lại nằm ở `imap_sync_state` (`driver: gmail_api`).
-  HTTP 401 là lỗi xác thực; 429, 5xx, hết giờ là lỗi kết nối. Bộ lọc thư đã có, đã xoá
+  HTTP 401 là lỗi xác thực; 429, 5xx, hết giờ là lỗi kết nối. Riêng bước tải từng thư,
+  lỗi tạm thời không làm hỏng cả lượt: thư đó cùng thư chưa kịp tải trong 60 giây nằm lại
+  `pending_ids` để lượt sau thử lại. Bộ lọc thư đã có, đã xoá
   hoặc tự gửi (`NewMailFilter`) dùng chung cho mọi driver. Gửi thư vẫn qua SMTP XOAUTH2.
 - **Báo thư mới (push)**: `MailboxPushSubscriptions` là sổ đăng ký trung tính theo nhà
   cung cấp (`MailboxPushSubscriber`; hiện chỉ `GmailPushSubscriber` gọi `users.watch`),

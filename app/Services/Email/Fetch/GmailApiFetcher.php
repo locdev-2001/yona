@@ -6,6 +6,7 @@ use App\Models\Channel\Email;
 use App\Services\Email\MailPresenter;
 use App\Services\Email\MailServerException;
 use App\Services\Email\OAuth\EmailOAuthTokenManager;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Pool;
 use Illuminate\Http\Client\Response;
@@ -37,6 +38,9 @@ final class GmailApiFetcher implements MailboxFetcher
 
     private const RETRIES_PER_SYNC = 100;
 
+    // Tải thư dừng sau mốc này, phần còn lại sang lượt sau: còn thời gian nhập thư trước khi job hết 120 giây.
+    private const DOWNLOAD_BUDGET_SECONDS = 60;
+
     private ?string $nextHistoryId = null;
 
     /** @var list<string> */
@@ -50,6 +54,11 @@ final class GmailApiFetcher implements MailboxFetcher
 
     /** @var array<int, string> spl_object_id của thư => id thư Gmail */
     private array $mailIds = [];
+
+    private ?CarbonImmutable $startedAt = null;
+
+    /** @var array{selected: int, downloaded: int, new: int} */
+    private array $counts = ['selected' => 0, 'downloaded' => 0, 'new' => 0];
 
     public function __construct(
         private readonly Email $channel,
@@ -65,6 +74,18 @@ final class GmailApiFetcher implements MailboxFetcher
     /** @return list<MailPresenter> */
     public function perform(): array
     {
+        $this->startedAt = CarbonImmutable::now();
+
+        try {
+            return $this->fetchNewMails();
+        } finally {
+            $this->reportSlowFetch();
+        }
+    }
+
+    /** @return list<MailPresenter> */
+    private function fetchNewMails(): array
+    {
         $candidateIds = array_values(array_unique([...$this->requestedRetries(), ...$this->newMessageIds()]));
         $this->selectedIds = array_slice($candidateIds, 0, self::MAX_MESSAGES_PER_SYNC);
         $this->deferredIds = array_slice($candidateIds, self::MAX_MESSAGES_PER_SYNC);
@@ -73,6 +94,7 @@ final class GmailApiFetcher implements MailboxFetcher
             fn (string $raw) => MailPresenter::fromRaw($raw, $this->channel->account),
             $this->rawMessages($this->selectedIds),
         );
+        $this->counts = ['selected' => count($this->selectedIds), 'downloaded' => count($mails), 'new' => 0];
 
         ['fresh' => $fresh, 'skipped' => $skipped] = (new NewMailFilter($this->channel))->split($mails);
 
@@ -83,6 +105,8 @@ final class GmailApiFetcher implements MailboxFetcher
         foreach ($fresh as $id => $mail) {
             $this->mailIds[spl_object_id($mail)] = (string) $id;
         }
+
+        $this->counts['new'] = count($fresh);
 
         if ($fresh !== []) {
             Log::info('[GMAIL API] Fetched '.count($fresh).' new emails for inbox '.$this->channel->inbox->id);
@@ -156,9 +180,7 @@ final class GmailApiFetcher implements MailboxFetcher
 
             foreach ((array) $response->json('history', []) as $record) {
                 foreach ((array) ($record['messagesAdded'] ?? []) as $added) {
-                    if (in_array('INBOX', (array) ($added['message']['labelIds'] ?? []), true)) {
-                        $ids[] = (string) $added['message']['id'];
-                    }
+                    $ids[] = (string) $added['message']['id'];
                 }
             }
 
@@ -185,14 +207,23 @@ final class GmailApiFetcher implements MailboxFetcher
     }
 
     /**
+     * Thư tải hỏng tạm thời (429, 5xx, hết giờ) hoặc chưa kịp tải trước DOWNLOAD_BUDGET_SECONDS
+     * không làm hỏng cả lượt: chúng không được đánh dấu xong nên sang lượt sau thử lại. Chỉ 401
+     * (quyền bị thu hồi) dừng cả lượt.
+     *
      * @param  list<string>  $ids
      * @return array<string, string> id thư => nội dung RFC822; thư đã bị xoá khỏi Gmail coi như xong
      */
     private function rawMessages(array $ids): array
     {
         $raws = [];
+        $failures = 0;
 
         foreach (array_chunk($ids, self::PARALLEL_DOWNLOADS) as $chunk) {
+            if ($this->startedAt?->diffInSeconds(CarbonImmutable::now()) >= self::DOWNLOAD_BUDGET_SECONDS) {
+                break;
+            }
+
             $token = $this->accessToken();
             $responses = Http::pool(fn (Pool $pool) => array_map(
                 fn (string $id) => $pool->as($id)->withToken($token)->timeout(self::TIMEOUT_SECONDS)
@@ -203,18 +234,20 @@ final class GmailApiFetcher implements MailboxFetcher
             foreach ($chunk as $id) {
                 $response = $responses[$id] ?? null;
 
-                if (! $response instanceof Response) {
-                    throw $this->failure(MailServerException::CONNECTION, $response instanceof Throwable ? $response : null);
-                }
-
-                if ($response->notFound()) {
+                if ($response instanceof Response && $response->notFound()) {
                     $this->completedIds[$id] = true;
-
-                    continue;
+                } elseif ($response instanceof Response && $response->successful()) {
+                    $raws[$id] = self::decodeBase64Url((string) $response->json('raw'));
+                } elseif ($response instanceof Response && $response->status() === 401) {
+                    $this->checked($response);
+                } else {
+                    $failures++;
                 }
-
-                $raws[$id] = self::decodeBase64Url((string) $this->checked($response)->json('raw'));
             }
+        }
+
+        if ($failures > 0) {
+            Log::warning("[GMAIL API] {$failures} emails failed to download for inbox {$this->channel->inbox->id}, retrying next sync");
         }
 
         return $raws;
@@ -242,6 +275,17 @@ final class GmailApiFetcher implements MailboxFetcher
 
         // 401 với access token vừa làm mới = quyền đã bị thu hồi; còn lại (429, 5xx...) là trục trặc tạm thời.
         throw $this->failure($response->status() === 401 ? MailServerException::AUTHENTICATION : MailServerException::CONNECTION, $cause);
+    }
+
+    private function reportSlowFetch(): void
+    {
+        $totalMs = (int) $this->startedAt?->diffInMilliseconds(CarbonImmutable::now());
+
+        if ($totalMs < config('mail.imap_slow_fetch_ms')) {
+            return;
+        }
+
+        Log::warning('[GMAIL API] Slow fetch for inbox '.$this->channel->inbox->id, ['total_ms' => $totalMs, ...$this->counts]);
     }
 
     private function accessToken(): string

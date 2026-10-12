@@ -1,6 +1,7 @@
 <?php
 
 use App\Jobs\Inboxes\FetchImapEmailsJob;
+use App\Mailboxes\ImapMailbox;
 use App\Models\Account;
 use App\Models\Channel\Email;
 use App\Models\Inbox;
@@ -23,7 +24,7 @@ beforeEach(function () {
         'provider_config' => ['access_token' => 'test-token', 'refresh_token' => 'test-refresh', 'expires_at' => now()->addHour()->toIso8601String()],
     ]);
     Inbox::factory()->create(['account_id' => $this->account->id, 'channel_id' => $this->channel->id, 'channel_type' => 'Channel::Email']);
-    $this->gmail = ['history' => [], 'messages' => [], 'historyStatus' => 200, 'failWith' => null];
+    $this->gmail = ['history' => [], 'historyPages' => null, 'messages' => [], 'historyStatus' => 200, 'failWith' => null, 'messageStatus' => [], 'onMessage' => null];
 });
 
 function gmailRawMail(string $id): string
@@ -46,16 +47,51 @@ function fakeGmailApi(object $test): void
 
         return match (true) {
             str_ends_with($path, '/profile') => Http::response(['historyId' => '100']),
-            str_ends_with($path, '/history') => $test->gmail['historyStatus'] === 404
-                ? Http::response(['error' => 'not found'], 404)
-                : Http::response(['historyId' => '200', 'history' => [['messagesAdded' => array_map(
-                    fn (string $id) => ['message' => ['id' => $id, 'labelIds' => ['INBOX', 'UNREAD']]],
-                    $test->gmail['history'],
-                )]]]),
+            str_ends_with($path, '/history') => gmailHistoryResponse($test->gmail, $query['pageToken'] ?? null),
             str_ends_with($path, '/messages') => Http::response(['messages' => array_map(fn (string $id) => ['id' => $id], $test->gmail['messages'])]),
-            default => Http::response(['id' => basename($path), 'raw' => gmailRawMail(basename($path))]),
+            default => gmailMessageResponse($test->gmail, basename($path)),
         };
     });
+}
+
+function gmailHistoryResponse(array $gmail, ?string $pageToken)
+{
+    if ($gmail['historyStatus'] === 404) {
+        return Http::response(['error' => 'not found'], 404);
+    }
+
+    $pages = $gmail['historyPages'] ?? [$gmail['history']];
+    $page = (int) ($pageToken ?? 0);
+    $added = array_map(fn (string $id) => ['message' => ['id' => $id]], $pages[$page]);
+
+    return Http::response(array_filter([
+        'historyId' => '200',
+        'history' => [['messagesAdded' => $added]],
+        'nextPageToken' => isset($pages[$page + 1]) ? (string) ($page + 1) : null,
+    ]));
+}
+
+function gmailMessageResponse(array $gmail, string $id)
+{
+    if ($gmail['onMessage'] !== null) {
+        ($gmail['onMessage'])($id);
+    }
+
+    return match ($gmail['messageStatus'][$id] ?? 200) {
+        200 => Http::response(['id' => $id, 'raw' => gmailRawMail($id)]),
+        'connection' => Http::failedConnection(),
+        default => Http::response(['error' => 'test'], $gmail['messageStatus'][$id]),
+    };
+}
+
+function gmailSyncState(Email $channel): array
+{
+    return $channel->fresh()->imap_sync_state;
+}
+
+function importedMailIds(Email $channel): array
+{
+    return $channel->inbox->messages()->pluck('source_id')->map(fn (string $id) => strstr($id, '@', true))->sort()->values()->all();
 }
 
 it('hộp Gmail kéo thư bằng Gmail API, hộp thư khác vẫn qua IMAP', function () {
@@ -113,3 +149,61 @@ it('Gmail API từ chối quyền thì đòi kết nối lại, trục trặc t�
     'quá hạn mức' => [429, false],
     'Google lỗi' => [503, false],
 ]);
+
+it('lịch sử nhiều trang được đọc hết trong một lượt', function () {
+    $this->channel->forceFill(['imap_sync_state' => ['driver' => 'gmail_api', 'history_id' => '100', 'pending_ids' => []]])->save();
+    $this->gmail['historyPages'] = [['p1'], ['p2']];
+    fakeGmailApi($this);
+
+    (new FetchImapEmailsJob($this->channel))->handle();
+
+    expect(importedMailIds($this->channel))->toBe(['p1', 'p2']);
+});
+
+it('thư tải hỏng tạm thời không chặn thư khác, được giữ lại và thử lại ở lượt sau; thư đã xoá khỏi Gmail thì bỏ', function (int|string $failure) {
+    $this->gmail['messages'] = ['ok', 'flaky', 'gone'];
+    $this->gmail['messageStatus'] = ['flaky' => $failure, 'gone' => 404];
+    fakeGmailApi($this);
+
+    (new FetchImapEmailsJob($this->channel))->handle();
+
+    expect(importedMailIds($this->channel))->toBe(['ok'])
+        ->and(gmailSyncState($this->channel)['pending_ids'])->toBe(['flaky'])
+        ->and($this->channel->fresh()->reauthorizationRequired())->toBeFalse();
+
+    $this->gmail['messageStatus'] = [];
+    (new FetchImapEmailsJob($this->channel->fresh()))->handle();
+
+    expect(importedMailIds($this->channel))->toBe(['flaky', 'ok'])
+        ->and(gmailSyncState($this->channel)['pending_ids'])->toBe([]);
+})->with([
+    'Gmail quá hạn mức' => [429],
+    'Gmail lỗi' => [503],
+    'đứt kết nối' => ['connection'],
+]);
+
+it('thư tải được mà nhập hỏng thì được thử lại ở lượt sau', function () {
+    $this->gmail['messages'] = ['m1'];
+    fakeGmailApi($this);
+    $this->mock(ImapMailbox::class, fn ($mock) => $mock->shouldReceive('process')->andThrow(new RuntimeException('hỏng tạm')));
+
+    (new FetchImapEmailsJob($this->channel))->handle();
+
+    expect(gmailSyncState($this->channel)['pending_ids'])->toBe(['m1']);
+});
+
+it('hết thời gian tải thì thư chưa tải dời sang lượt sau, không mất', function () {
+    $ids = array_map(fn (int $n) => "x{$n}", range(1, 25));
+    $this->gmail['messages'] = array_reverse($ids);
+    $this->gmail['onMessage'] = function (string $id) {
+        if ($id === 'x1') {
+            Carbon\Carbon::setTestNow(now()->addSeconds(61));
+        }
+    };
+    fakeGmailApi($this);
+
+    (new FetchImapEmailsJob($this->channel))->handle();
+
+    expect($this->channel->inbox->messages()->count())->toBe(10)
+        ->and(gmailSyncState($this->channel)['pending_ids'])->toBe(array_slice($ids, 10));
+});

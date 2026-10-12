@@ -13,7 +13,7 @@ DB cho thấy 0 hội thoại email, còn log mới chỉ ra gốc thật là m�
 
 | Nguồn | Lệnh | Dùng khi |
 |---|---|---|
-| Log ứng dụng có tìm kiếm | `.claude/skills/yona-debug/scripts/prod-logs.sh …` | Tìm exception, stack trace, chuỗi `[IMAP]`, `[Zalo]`… |
+| Log ứng dụng có tìm kiếm | `.claude/skills/yona-debug/scripts/prod-logs.sh …` | Tìm exception, stack trace, chuỗi `[EMAIL FETCH]`, `[GMAIL API]`, `[IMAP]`, `[Zalo]`… |
 | DB production | `.claude/skills/yona-issues/scripts/prod-db.sh "SELECT …"` | Đếm, đối chiếu dữ liệu, mốc thời gian (hướng dẫn chi tiết trong skill `yona-issues`) |
 | Đuôi log thô, trạng thái server | `.claude/skills/yona-deploy/scripts/remote.sh app-log 300` / `status` | Khi API log không dùng được, hoặc cần biết production đang chạy commit nào |
 
@@ -38,7 +38,7 @@ $S "https://yona.vn/logs?file=…&query=…"     # dán nguyên link founder g�
 
 1. **Đọc task / lời founder, tách "khách thấy gì" khỏi "người viết đoán gì".** Ghi lại các giả thuyết, chưa tin cái nào.
 2. **Đo hiện tượng trên production.** DB: dữ liệu có thật không, bao nhiêu, mốc giờ (DB lưu UTC, giờ VN = +7).
-   Log: tìm theo tiền tố của module (`[IMAP]`, tên job, tên class) quanh mốc giờ sự cố.
+   Log: tìm theo tiền tố của module (`[EMAIL FETCH]`, `[GMAIL API]`, `[IMAP]`, tên job, tên class) quanh mốc giờ sự cố.
    Khi UI hiện một thứ mà DB không có, nghi ngay hai chỗ: dữ liệu bị rollback sau khi realtime đã phát
    (`RealtimeBroadcast` là `ShouldBroadcastNow`), hoặc ảnh chụp từ môi trường khác.
 3. **Từ bằng chứng lần ngược vào code.** Đọc đúng dòng trong stack trace. Kiểm thứ log nói (class có tồn tại không,

@@ -21,7 +21,7 @@ class FetchImapEmailInboxesJob extends ApplicationJob
                         continue;
                     }
 
-                    Log::info('[IMAP] Enqueuing fetch job for inbox '.$inbox->id);
+                    Log::info('[EMAIL FETCH] Enqueuing fetch job for inbox '.$inbox->id);
                     FetchImapEmailsJob::dispatch($inbox->channel);
                 }
             });

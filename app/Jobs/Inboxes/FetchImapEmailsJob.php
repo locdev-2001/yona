@@ -53,7 +53,7 @@ class FetchImapEmailsJob extends ApplicationJob
     public function handle(): void
     {
         if (! $this->shouldFetchEmail()) {
-            Log::info('[IMAP] Skipping fetch for inbox '.$this->channel->inbox->id
+            Log::info('[EMAIL FETCH] Skipping fetch for inbox '.$this->channel->inbox->id
                 .' : imap_enabled: '.var_export($this->channel->imap_enabled, true)
                 .', reauthorization_required: '.var_export($this->channel->reauthorizationRequired(), true));
             $this->forgetFetchRequests();
@@ -73,7 +73,7 @@ class FetchImapEmailsJob extends ApplicationJob
 
         // Lượt quét trước của hộp thư này chưa xong: lượt đó sẽ quét lại theo cờ, không phải lỗi.
         if (! $lock->get()) {
-            Log::info('[IMAP] Previous fetch still running for inbox '.$this->channel->inbox->id.', rescan queued');
+            Log::info('[EMAIL FETCH] Previous fetch still running for inbox '.$this->channel->inbox->id.', rescan queued');
 
             return;
         }
@@ -115,16 +115,18 @@ class FetchImapEmailsJob extends ApplicationJob
 
     private function processEmailsForChannel(): void
     {
+        $fetcher = app(MailboxFetchers::class)->for($this->channel, $this->interval);
+        $via = ' via '.class_basename($fetcher);
+
         try {
-            $fetcher = app(MailboxFetchers::class)->for($this->channel, $this->interval);
             $emails = $fetcher->perform();
         } catch (MailServerException $exception) {
-            Log::warning('[IMAP] Connection failed for inbox '.$this->channel->inbox->id.' : '.$exception->getMessage());
+            Log::warning('[EMAIL FETCH] Connection failed for inbox '.$this->channel->inbox->id.$via.' : '.$exception->getMessage());
             $this->channel->recordConnectionFailure($exception);
 
             return;
         } catch (Throwable $exception) {
-            Log::error('[IMAP] Error for email channel - '.$this->channel->inbox->id.' : '.$exception->getMessage());
+            Log::error('[EMAIL FETCH] Error for inbox '.$this->channel->inbox->id.$via.' : '.$exception->getMessage());
 
             return;
         }
@@ -148,20 +150,20 @@ class FetchImapEmailsJob extends ApplicationJob
         $messageId = (string) $mail->messageId();
 
         if ($this->failureCount($messageId) >= self::MAX_FAILURES_PER_EMAIL) {
-            Log::warning('[IMAP] Skipping problematic email: '.$messageId);
+            Log::warning('[EMAIL FETCH] Skipping problematic email: '.$messageId);
 
             return false;
         }
 
         try {
-            (new ImapMailbox)->process($mail, $this->channel);
+            app(ImapMailbox::class)->process($mail, $this->channel);
 
             Cache::forget($this->failureKey($messageId));
 
             return true;
         } catch (Throwable $exception) {
             Cache::put($this->failureKey($messageId), $this->failureCount($messageId) + 1, now()->addHours(6));
-            Log::error('[IMAP] Failed to process email '.$messageId.': '.$exception->getMessage());
+            Log::error('[EMAIL FETCH] Failed to process email '.$messageId.': '.$exception->getMessage());
 
             return false;
         }
