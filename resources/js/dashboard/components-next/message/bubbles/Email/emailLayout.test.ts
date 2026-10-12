@@ -8,6 +8,7 @@ import {
     buildEmailFrameDocument,
     fitEmailToWidth,
     isBodyCollapsible,
+    proxiedEmailImageUrl,
     splitPlainTextQuote,
 } from './emailLayout';
 
@@ -91,5 +92,24 @@ describe('splitPlainTextQuote', () => {
         const text = 'On Wed, Oct 1, 2026 Shop wrote:\n> Đã xác nhận.';
 
         expect(splitPlainTextQuote(text)).toEqual({ reply: text, quoted: null });
+    });
+});
+
+describe('ảnh trong thư đi qua proxy', () => {
+    const appOrigin = 'https://yona.vn';
+
+    it('ảnh http(s) từ nơi khác đổi sang đường proxy, giữ nguyên URL gốc', () => {
+        expect(proxiedEmailImageUrl('https://claude.ai/images/email/logo.png?v=1&a=b', appOrigin)).toBe(
+            '/api/v1/email_image?url=https%3A%2F%2Fclaude.ai%2Fimages%2Femail%2Flogo.png%3Fv%3D1%26a%3Db',
+        );
+    });
+
+    it.each([
+        ['ảnh đã qua proxy', 'https://yona.vn/api/v1/email_image?url=x'],
+        ['ảnh nhúng data:', 'data:image/png;base64,AAAA'],
+        ['ảnh cid: của thư', 'cid:logo@mail'],
+        ['chuỗi không phải URL', 'không phải url'],
+    ])('%s thì không đổi', (_case, src) => {
+        expect(proxiedEmailImageUrl(src, appOrigin)).toBeNull();
     });
 });

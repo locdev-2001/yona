@@ -9,6 +9,7 @@ import {
     EMAIL_FRAME_SANDBOX,
     buildEmailFrameDocument,
     fitEmailToWidth,
+    proxiedEmailImageUrl,
 } from './emailLayout';
 
 // Thân thư HTML trong iframe sandbox: CSS của ứng dụng không chạm vào thư (thuộc
@@ -64,9 +65,21 @@ export default function EmailHtmlBody({ html }: { html: string }) {
             remainingFrames -= 1;
             if (!isLoaded && remainingFrames > 0) pendingFrame = requestAnimationFrame(fitUntilLoaded);
         };
+        // Lúc load mọi ảnh đã tải xong hoặc hỏng; ảnh hỏng thử lại qua proxy rồi đo lại.
+        const retryBrokenImagesThroughProxy = () => {
+            frame.contentDocument?.querySelectorAll('img').forEach(image => {
+                if (!image.complete || image.naturalWidth > 0) return;
+                const proxied = proxiedEmailImageUrl(image.currentSrc || image.src, window.location.origin);
+                if (!proxied) return;
+                image.addEventListener('load', fitToFrame, { once: true });
+                image.removeAttribute('srcset');
+                image.src = proxied;
+            });
+        };
         const onLoad = () => {
             cancelAnimationFrame(pendingFrame);
             fitToFrame();
+            retryBrokenImagesThroughProxy();
         };
 
         frame.addEventListener('load', onLoad);

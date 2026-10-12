@@ -16,6 +16,21 @@ const EMAIL_FRAME_BASE_CSS = [
     'a{color:#1a73e8}',
 ].join('');
 
+// Ảnh trong thư mà trình duyệt không tự tải được (máy chủ ảnh chặn trang khác nhúng)
+// thì đi qua proxy của Yona; chỉ ảnh http(s) từ nơi khác, ảnh đã qua proxy thì thôi.
+export const EMAIL_IMAGE_PROXY_PATH = '/api/v1/email_image';
+
+export function proxiedEmailImageUrl(src: string, appOrigin: string): string | null {
+    let url: URL;
+    try {
+        url = new URL(src);
+    } catch {
+        return null;
+    }
+    if (!['http:', 'https:'].includes(url.protocol) || url.origin === appOrigin) return null;
+    return `${EMAIL_IMAGE_PROXY_PATH}?url=${encodeURIComponent(url.href)}`;
+}
+
 /** Tài liệu HTML đầy đủ cho iframe thân thư, từ HTML ĐÃ lọc. */
 export function buildEmailFrameDocument(sanitizedHtml: string): string {
     return (

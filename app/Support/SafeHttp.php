@@ -2,6 +2,10 @@
 
 namespace App\Support;
 
+use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Support\Facades\Http;
+use Psr\Http\Message\UriInterface;
+
 // Cổng duy nhất kiểm tra URL do người dùng nhập trước khi máy chủ tự gọi ra ngoài
 // (webhook tài khoản/inbox/agent bot, avatar theo URL). Tương đương ssrf_filter mà
 // lib/safe_fetch.rb của bản gốc dùng: chặn loopback, mạng nội bộ, link-local
@@ -35,6 +39,27 @@ final class SafeHttp
                 throw new UnsafeUrlException("URL trỏ vào địa chỉ nội bộ: {$host} ({$address})");
             }
         }
+    }
+
+    /**
+     * Request đọc theo luồng, mỗi lần chuyển hướng cũng qua `assertPublicUrl`: máy chủ ngoài
+     * trả 302 về 169.254.169.254 thì hop đó bị chặn như URL gốc. Bên gọi vẫn phải tự
+     * `assertPublicUrl` URL đầu tiên.
+     */
+    public static function streamingRequest(int $connectTimeoutSeconds, int $timeoutSeconds, int $maxRedirects = 3): PendingRequest
+    {
+        return Http::connectTimeout($connectTimeoutSeconds)
+            ->timeout($timeoutSeconds)
+            ->withOptions([
+                'stream' => true,
+                'allow_redirects' => [
+                    'max' => $maxRedirects,
+                    'protocols' => self::ALLOWED_SCHEMES,
+                    'on_redirect' => static function ($request, $response, UriInterface $uri): void {
+                        self::assertPublicUrl((string) $uri);
+                    },
+                ],
+            ]);
     }
 
     public static function allowsPrivateNetworks(): bool

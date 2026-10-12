@@ -36,6 +36,7 @@ use App\Http\Controllers\WebApi\CustomFiltersController;
 use App\Http\Controllers\WebApi\DashboardAppsController;
 use App\Http\Controllers\WebApi\DataImportsController;
 use App\Http\Controllers\WebApi\EmailAddressesController;
+use App\Http\Controllers\WebApi\EmailImagesController;
 use App\Http\Controllers\WebApi\InboxesController;
 use App\Http\Controllers\WebApi\InboxMembersController;
 use App\Http\Controllers\WebApi\Integrations\AppsController as IntegrationAppsController;
@@ -93,6 +94,8 @@ Route::middleware('auth')->prefix('/api/v1')->group(function () {
     Route::get('/profile/sessions', [ProfileSessionsController::class, 'index']);
     Route::delete('/profile/sessions/{id}', [ProfileSessionsController::class, 'destroy'])->whereNumber('id');
     // F8 MFA + user sessions — END
+
+    Route::get('/email_image', [EmailImagesController::class, 'show'])->middleware('throttle:240,1');
 });
 
 // Kho sticker nền tảng (kho chung) trong Cài đặt của dashboard: chỉ người có

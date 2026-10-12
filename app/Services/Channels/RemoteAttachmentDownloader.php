@@ -8,9 +8,7 @@ use App\Support\MimeType;
 use App\Support\SafeHttp;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\Response;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Psr\Http\Message\UriInterface;
 use RuntimeException;
 use Throwable;
 
@@ -136,21 +134,8 @@ class RemoteAttachmentDownloader
      */
     private static function request(array $headers, ?array $basicAuth): PendingRequest
     {
-        $request = Http::withHeaders($headers)
-            ->connectTimeout(self::CONNECT_TIMEOUT_SECONDS)
-            ->timeout(self::READ_TIMEOUT_SECONDS)
-            ->withOptions([
-                'stream' => true,
-                'allow_redirects' => [
-                    'max' => self::MAX_REDIRECTS,
-                    'protocols' => ['http', 'https'],
-                    // Chặn SSRF hai nhịp: máy chủ ngoài trả 302 về 169.254.169.254
-                    // thì hop đó cũng phải qua cùng một cổng kiểm tra.
-                    'on_redirect' => static function ($request, $response, UriInterface $uri): void {
-                        SafeHttp::assertPublicUrl((string) $uri);
-                    },
-                ],
-            ]);
+        $request = SafeHttp::streamingRequest(self::CONNECT_TIMEOUT_SECONDS, self::READ_TIMEOUT_SECONDS, self::MAX_REDIRECTS)
+            ->withHeaders($headers);
 
         return $basicAuth === null ? $request : $request->withBasicAuth($basicAuth[0], $basicAuth[1]);
     }

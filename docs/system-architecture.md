@@ -93,6 +93,11 @@ PostgreSQL (`pg_trgm`) · Redis (cache, queue, session) · Laravel Reverb
   lỗi tạm thời không làm hỏng cả lượt: thư đó cùng thư chưa kịp tải trong 60 giây nằm lại
   `pending_ids` để lượt sau thử lại. Bộ lọc thư đã có, đã xoá
   hoặc tự gửi (`NewMailFilter`) dùng chung cho mọi driver. Gửi thư vẫn qua SMTP XOAUTH2.
+- **Ảnh trong thư**: thân thư HTML hiện trong iframe sandbox, ảnh tải thẳng từ máy chủ của
+  người gửi. Ảnh nào hỏng lúc khung tải xong (máy chủ ảnh đặt `Cross-Origin-Resource-Policy`)
+  thì FE đổi sang `GET /api/v1/email_image?url=` (`RemoteEmailImage`): chỉ người đã đăng nhập,
+  qua `SafeHttp` kể cả sau chuyển hướng, tối đa 5 MB, chỉ ảnh bitmap (không SVG), không lưu,
+  trình duyệt tự cache 7 ngày.
 - **Báo thư mới (push)**: `MailboxPushSubscriptions` là sổ đăng ký trung tính theo nhà
   cung cấp (`MailboxPushSubscriber`; hiện chỉ `GmailPushSubscriber` gọi `users.watch`),
   đăng ký bằng job khi nối OAuth (`SubscribeMailboxPushJob`), gia hạn hằng ngày
