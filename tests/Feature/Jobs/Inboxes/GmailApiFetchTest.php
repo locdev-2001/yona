@@ -204,6 +204,19 @@ it('hết thời gian tải thì thư chưa tải dời sang lượt sau, không
 
     (new FetchImapEmailsJob($this->channel))->handle();
 
-    expect($this->channel->inbox->messages()->count())->toBe(10)
-        ->and(gmailSyncState($this->channel)['pending_ids'])->toBe(array_slice($ids, 10));
+    expect($this->channel->inbox->messages()->count())->toBe(5)
+        ->and(gmailSyncState($this->channel)['pending_ids'])->toBe(array_slice($ids, 5));
+});
+
+it('Gmail báo quá tốc độ thì ngừng tải phần còn lại của lượt, thư chưa tải dời sang lượt sau', function () {
+    $ids = array_map(fn (int $n) => "r{$n}", range(1, 12));
+    $this->gmail['messages'] = array_reverse($ids);
+    $this->gmail['messageStatus'] = ['r1' => 403];
+    fakeGmailApi($this);
+
+    (new FetchImapEmailsJob($this->channel))->handle();
+
+    expect($this->channel->inbox->messages()->count())->toBe(4)
+        ->and(gmailSyncState($this->channel)['pending_ids'])->toBe(['r1', ...array_slice($ids, 5)]);
+    Http::assertSentCount(2 + 5);
 });

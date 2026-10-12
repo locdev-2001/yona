@@ -34,7 +34,10 @@ final class GmailApiFetcher implements MailboxFetcher
 
     private const TIMEOUT_SECONDS = 20;
 
-    private const PARALLEL_DOWNLOADS = 10;
+    // Gmail giới hạn 250 đơn vị/giây/người dùng, mỗi messages.get tốn 5: tải dồn dập là bị 403/429.
+    private const PARALLEL_DOWNLOADS = 5;
+
+    private const RATE_LIMIT_STATUSES = [403, 429];
 
     private const RETRIES_PER_SYNC = 100;
 
@@ -208,8 +211,8 @@ final class GmailApiFetcher implements MailboxFetcher
 
     /**
      * Thư tải hỏng tạm thời (429, 5xx, hết giờ) hoặc chưa kịp tải trước DOWNLOAD_BUDGET_SECONDS
-     * không làm hỏng cả lượt: chúng không được đánh dấu xong nên sang lượt sau thử lại. Chỉ 401
-     * (quyền bị thu hồi) dừng cả lượt.
+     * không làm hỏng cả lượt: chúng không được đánh dấu xong nên sang lượt sau thử lại. Gmail báo
+     * quá tốc độ thì ngừng tải các nhóm còn lại của lượt này. Chỉ 401 (quyền bị thu hồi) dừng cả lượt.
      *
      * @param  list<string>  $ids
      * @return array<string, string> id thư => nội dung RFC822; thư đã bị xoá khỏi Gmail coi như xong
@@ -219,8 +222,10 @@ final class GmailApiFetcher implements MailboxFetcher
         $raws = [];
         $failures = 0;
 
+        $rateLimited = false;
+
         foreach (array_chunk($ids, self::PARALLEL_DOWNLOADS) as $chunk) {
-            if ($this->startedAt?->diffInSeconds(CarbonImmutable::now()) >= self::DOWNLOAD_BUDGET_SECONDS) {
+            if ($rateLimited || $this->startedAt?->diffInSeconds(CarbonImmutable::now()) >= self::DOWNLOAD_BUDGET_SECONDS) {
                 break;
             }
 
@@ -242,12 +247,13 @@ final class GmailApiFetcher implements MailboxFetcher
                     $this->checked($response);
                 } else {
                     $failures++;
+                    $rateLimited = $rateLimited || ($response instanceof Response && in_array($response->status(), self::RATE_LIMIT_STATUSES, true));
                 }
             }
         }
 
         if ($failures > 0) {
-            Log::warning("[GMAIL API] {$failures} emails failed to download for inbox {$this->channel->inbox->id}, retrying next sync");
+            Log::warning("[GMAIL API] {$failures} emails failed to download for inbox {$this->channel->inbox->id}, retrying next sync", ['rate_limited' => $rateLimited]);
         }
 
         return $raws;
