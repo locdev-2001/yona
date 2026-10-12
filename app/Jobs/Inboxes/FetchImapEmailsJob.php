@@ -5,9 +5,9 @@ namespace App\Jobs\Inboxes;
 use App\Jobs\ApplicationJob;
 use App\Mailboxes\ImapMailbox;
 use App\Models\Channel\Email;
+use App\Services\Email\Fetch\MailboxFetchers;
 use App\Services\Email\MailPresenter;
 use App\Services\Email\MailServerException;
-use App\Services\Imap\FetchEmailService;
 use App\Services\ProductEvents\ProductEventHooks;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
@@ -116,7 +116,7 @@ class FetchImapEmailsJob extends ApplicationJob
     private function processEmailsForChannel(): void
     {
         try {
-            $fetcher = app(FetchEmailService::class, ['channel' => $this->channel, 'interval' => $this->interval]);
+            $fetcher = app(MailboxFetchers::class)->for($this->channel, $this->interval);
             $emails = $fetcher->perform();
         } catch (MailServerException $exception) {
             Log::warning('[IMAP] Connection failed for inbox '.$this->channel->inbox->id.' : '.$exception->getMessage());

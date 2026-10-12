@@ -1339,7 +1339,7 @@ trước mỗi lần quét thư/gửi thư; refresh token bị thu hồi thì h�
 ### Gmail push (thư mới về ngay)
 
 Gmail báo thư mới vào Pub/Sub, Pub/Sub đẩy về `POST https://yona.vn/webhooks/gmail/push`
-kèm OIDC token; Yona kiểm token rồi quét IMAP hộp đó ngay. Lượt quét IMAP mỗi phút vẫn
+kèm OIDC token; Yona kiểm token rồi kéo thư hộp đó ngay qua Gmail API. Lượt quét mỗi phút vẫn
 chạy làm lưới an toàn, nên push hỏng thì thư chỉ chậm tối đa một phút.
 
 Cấu hình đã dựng trên project Google Cloud `yona-511104`:

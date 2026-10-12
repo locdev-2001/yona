@@ -88,7 +88,7 @@ return [
         'client_secret' => env('GOOGLE_MAIL_CLIENT_SECRET') ?: env('GOOGLE_CLIENT_SECRET'),
         // Gmail push (Pub/Sub): Gmail báo thư mới vào topic, subscription đẩy về
         // POST /webhooks/gmail/push kèm OIDC token của service account. Thiếu topic =
-        // không đăng ký watch, hộp thư chỉ quét IMAP định kỳ như cũ.
+        // không đăng ký watch, hộp thư chỉ được quét định kỳ.
         'pubsub_topic' => env('GOOGLE_MAIL_PUBSUB_TOPIC'),
         'pubsub_audience' => env('GOOGLE_MAIL_PUBSUB_AUDIENCE'),
         'pubsub_service_account' => env('GOOGLE_MAIL_PUBSUB_SERVICE_ACCOUNT'),

@@ -3,6 +3,8 @@
 namespace App\Services\Imap;
 
 use App\Models\Channel\Email;
+use App\Services\Email\Fetch\MailboxFetcher;
+use App\Services\Email\Fetch\NewMailFilter;
 use App\Services\Email\MailPresenter;
 use App\Services\Email\MailServerException;
 use App\Services\Email\OAuth\EmailOAuthTokenManager;
@@ -18,7 +20,7 @@ use Webklex\PHPIMAP\IMAP;
  * Lấy thư mới của một kênh email qua IMAP và trả về danh sách đã parse.
  * Hộp thư nối OAuth (Google/Microsoft) đăng nhập XOAUTH2 bằng access token còn hạn.
  */
-class FetchEmailService
+class FetchEmailService implements MailboxFetcher
 {
     public const MAX_MESSAGES_PER_SYNC = 500;
 
@@ -43,6 +45,12 @@ class FetchEmailService
         private readonly int $interval = 1,
         private readonly ClientManager $clientManager = new ClientManager,
     ) {}
+
+    // Mặc định cho mọi hộp thư bật IMAP; driver riêng của nhà cung cấp đứng trước trong MailboxFetchers.
+    public static function supports(Email $channel): bool
+    {
+        return true;
+    }
 
     /** @return list<MailPresenter> */
     public function perform(): array
@@ -138,28 +146,14 @@ class FetchEmailService
      */
     private function headersOfNewMails(array $rawHeaders): array
     {
-        $tracker = new DeletedMessageTracker($this->channel->inbox);
         $presenters = array_map(fn (string $header) => MailPresenter::fromRaw($header, $this->channel->account), $rawHeaders);
-        $messageIds = array_filter(array_map(fn (MailPresenter $mail) => $mail->messageId(), $presenters));
-        $knownIds = $this->channel->inbox->messages()->whereIn('source_id', $messageIds)->pluck('source_id')->flip();
-        $deletedIds = array_fill_keys($tracker->deletedIds(array_values($messageIds)), true);
+        ['fresh' => $fresh, 'skipped' => $skipped] = (new NewMailFilter($this->channel))->split($presenters);
 
-        return array_filter($rawHeaders, function (string $rawHeader, int|string $uid) use ($deletedIds, $presenters, $knownIds) {
-            $headers = $presenters[$uid];
-            $messageId = $headers->messageId();
+        foreach ($skipped as $uid) {
+            $this->cursor?->completed((int) $uid);
+        }
 
-            if (blank($messageId)) {
-                return false;
-            }
-
-            if ($headers->isNotificationEmailFromSelf() || $knownIds->has($messageId) || isset($deletedIds[$messageId])) {
-                $this->cursor?->completed((int) $uid);
-
-                return false;
-            }
-
-            return true;
-        }, ARRAY_FILTER_USE_BOTH);
+        return array_intersect_key($rawHeaders, $fresh);
     }
 
     /**

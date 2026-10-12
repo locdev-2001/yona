@@ -84,6 +84,13 @@ PostgreSQL (`pg_trgm`) · Redis (cache, queue, session) · Laravel Reverb
   `channel_email.imap_sync_state`; chỉ checkpoint sau khi xử lý từng thư. Mỗi
   lượt tối đa 500 UID, dành tối đa 100 chỗ cho thư lỗi, phần còn lại nhận thư
   mới. UIDVALIDITY đổi thì quét lại INBOX, chống trùng bằng Message-ID.
+- **Cách kéo thư theo hộp**: `MailboxFetchers` chọn driver `MailboxFetcher` đầu tiên nhận
+  hộp thư; IMAP (`FetchEmailService`) đứng cuối làm mặc định. Hộp nối Google OAuth dùng
+  `GmailApiFetcher`: lần đầu hoặc khi `history.list` trả 404 thì lấy mốc `historyId` từ
+  `profile` rồi nhập thư INBOX trong cửa sổ gần đây, các lượt sau chỉ hỏi `history.list`
+  từ mốc đã lưu. Mốc và id thư cần thử lại nằm ở `imap_sync_state` (`driver: gmail_api`).
+  HTTP 401 là lỗi xác thực; 429, 5xx, hết giờ là lỗi kết nối. Bộ lọc thư đã có, đã xoá
+  hoặc tự gửi (`NewMailFilter`) dùng chung cho mọi driver. Gửi thư vẫn qua SMTP XOAUTH2.
 - **Báo thư mới (push)**: `MailboxPushSubscriptions` là sổ đăng ký trung tính theo nhà
   cung cấp (`MailboxPushSubscriber`; hiện chỉ `GmailPushSubscriber` gọi `users.watch`),
   đăng ký bằng job khi nối OAuth (`SubscribeMailboxPushJob`), gia hạn hằng ngày
@@ -92,8 +99,8 @@ PostgreSQL (`pg_trgm`) · Redis (cache, queue, session) · Laravel Reverb
   `POST /webhooks/gmail/push` (giới hạn 120 lần/phút/IP) lọc claims rồi mới kiểm chữ ký
   OIDC của Pub/Sub (`GooglePubSubTokenVerifier`, tải lại khoá tối đa 1 lần/phút) và gọi
   `FetchImapEmailsJob::requestFetch`: báo dồn dập gộp một lượt, báo tới lúc đang quét thì
-  quét xong xếp thêm một lượt cuối. Push chỉ là tín hiệu, đọc thư vẫn qua IMAP, quét mỗi
-  phút giữ làm lưới an toàn.
+  quét xong xếp thêm một lượt cuối. Push chỉ là tín hiệu, đọc thư qua driver của hộp
+  (Gmail API với hộp Google), quét mỗi phút giữ làm lưới an toàn.
 - **Thư trả về và lỗi gửi Email**: thư báo trạng thái gửi (DSN: người gửi phong bì
   rỗng hoặc MAILER-DAEMON/postmaster, có phần `message/delivery-status`) khi đồng bộ IMAP
   không mở hội thoại. Chỉ người nhận `Action: failed` (hoặc `Status: 5.x.x`) mới là thư

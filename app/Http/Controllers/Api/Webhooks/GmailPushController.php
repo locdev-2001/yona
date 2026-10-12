@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Log;
 
 /**
  * Pub/Sub đẩy báo "hộp Gmail có thư mới" ({emailAddress, historyId}); chỉ là tín hiệu để
- * quét IMAP ngay. Luôn trả 204: Pub/Sub thử lại khi non-2xx, mà báo sai hay không khớp
+ * quét hộp thư ngay. Luôn trả 204: Pub/Sub thử lại khi non-2xx, mà báo sai hay không khớp
  * hộp nào thì thử lại cũng vô ích. Báo dồn dập gộp lại, kèm một lượt quét cuối.
  */
 class GmailPushController extends Controller
