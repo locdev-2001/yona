@@ -26,6 +26,17 @@ it('EXAMINE bị treo được timeout và đóng socket ngay, không chờ logo
     });
 })->skip(! extension_loaded('pcntl'), 'Cần pcntl để dựng máy chủ socket local');
 
+it('máy chủ treo ở bước đăng nhập tới hết giờ là lỗi kết nối, không đòi kết nối lại hộp thư', function () {
+    runStalledImapSocket('LOGIN', function (Email $channel) {
+        try {
+            (new FetchEmailService($channel))->perform();
+            $this->fail('Phải ném MailServerException');
+        } catch (MailServerException $exception) {
+            expect($exception->isAuthentication())->toBeFalse();
+        }
+    });
+})->skip(! extension_loaded('pcntl'), 'Cần pcntl để dựng máy chủ socket local');
+
 function runStalledImapSocket(string $stallCommand, Closure $assertions): void
 {
     $server = stream_socket_server('tcp://127.0.0.1:0');

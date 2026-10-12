@@ -22,6 +22,12 @@ final class MailServerException extends RuntimeException
         'username and password not accepted', 'invalid_grant', '535',
     ];
 
+    // Đứt hoặc hết giờ giữa chừng: thư viện IMAP vẫn bọc thành "failed to authenticate"
+    // nếu xảy ra lúc đăng nhập, nên phải xét nguyên nhân trước khi tin nhãn xác thực.
+    private const TRANSPORT_HINTS = [
+        'could not be established', 'connection setup failed', 'empty response', 'failed to write',
+    ];
+
     public function __construct(
         public readonly string $reason,
         public readonly string $protocol,
@@ -39,6 +45,7 @@ final class MailServerException extends RuntimeException
         }
 
         $reason = match (true) {
+            self::isTransportFailure($exception) => self::CONNECTION,
             $exception instanceof AuthFailedException => self::AUTHENTICATION,
             $exception instanceof ConnectionFailedException => self::CONNECTION,
             self::mentionsAuthentication($exception) => self::AUTHENTICATION,
@@ -100,13 +107,20 @@ final class MailServerException extends RuntimeException
 
     private static function mentionsAuthentication(Throwable $exception): bool
     {
+        return ! self::isTransportFailure($exception) && self::mentionsAny($exception, self::AUTH_HINTS);
+    }
+
+    private static function isTransportFailure(Throwable $exception): bool
+    {
+        return self::mentionsAny($exception, self::TRANSPORT_HINTS);
+    }
+
+    /** @param  list<string>  $hints */
+    private static function mentionsAny(Throwable $exception, array $hints): bool
+    {
         $text = strtolower($exception->getMessage().' '.$exception->getPrevious()?->getMessage());
 
-        if (str_contains($text, 'could not be established') || str_contains($text, 'connection setup failed')) {
-            return false;
-        }
-
-        foreach (self::AUTH_HINTS as $hint) {
+        foreach ($hints as $hint) {
             if (str_contains($text, $hint)) {
                 return true;
             }
