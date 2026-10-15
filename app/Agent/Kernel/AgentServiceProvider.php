@@ -2,6 +2,8 @@
 
 namespace App\Agent\Kernel;
 
+use App\Agent\Boundary\Writers\ApiLogWriter;
+use App\Agent\Contracts\Ports\ApiCallLog;
 use App\Agent\Contracts\Ports\LanguageModel;
 use App\Agent\Inference\Gateway\ModelRouter;
 use App\Agent\Inference\Gateway\RouteTable;
@@ -18,6 +20,7 @@ final class AgentServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->registerModelGateway();
+        $this->app->bind(ApiCallLog::class, ApiLogWriter::class);
     }
 
     public function boot(): void

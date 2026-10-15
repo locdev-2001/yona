@@ -198,6 +198,19 @@ class Inbox extends Model
         return $this->hasMany(ContactInbox::class);
     }
 
+    // AI agent phụ trách inbox; gắn/gỡ chỉ qua AiAgentService::assignInbox.
+    public function aiAgent(): BelongsTo
+    {
+        return $this->belongsTo(AiAgent::class);
+    }
+
+    // Luật DUY NHẤT của "AI nào trả lời hội thoại tự động của inbox": AI của inbox, đang bật.
+    // Dịch vụ gọi ->first() để luôn đọc mới; resource dùng bản nạp sẵn cho cả trang.
+    public function replyingAiAgent(): BelongsTo
+    {
+        return $this->aiAgent()->where('enabled', true);
+    }
+
     public function members(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'inbox_members')->withTimestamps();

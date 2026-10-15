@@ -22,7 +22,13 @@ return [
     'inboxes' => [
         'connection_not_open' => 'Cách kết nối này chưa mở, hãy chọn cách kết nối khác',
     ],
+    'ai_agents' => [
+        'no_replying_ai_agent' => 'Hộp thư này chưa có AI agent đang bật. Hãy gắn AI agent cho hộp thư hoặc bật AI agent trước.',
+        'other_account' => 'AI agent này thuộc tài khoản khác.',
+        'invalid_name' => 'Tên AI agent không được trống và tối đa 255 ký tự.',
+    ],
     'conversations' => [
+        'floor_held' => 'AI agent đang trả lời khách. Chờ lượt này xong rồi gửi, hoặc viết ghi chú riêng.',
         'resolved' => 'Hội thoại đã kết thúc nên không nhận thêm tin nhắn',
         'contact_unreachable' => 'Liên hệ chưa có địa chỉ để gửi qua hộp thư này',
         'email_undeliverable' => 'Không gửi được thư tới :email: :reason',

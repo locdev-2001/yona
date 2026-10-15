@@ -12,6 +12,7 @@ use App\Messaging\Delivery\DeliveryPlanner;
 use App\Messaging\Structured\StructuredTypeRegistry;
 use App\Models\Account;
 use App\Models\AgentBot;
+use App\Models\AiAgent;
 use App\Models\Channel\Api;
 use App\Models\Channel\Email;
 use App\Models\Channel\FacebookPage;
@@ -149,6 +150,7 @@ class AppServiceProvider extends ServiceProvider
             'Message' => Message::class,
             'Conversation' => Conversation::class,
             'AgentBot' => AgentBot::class,
+            'AiAgent' => AiAgent::class,
             'Account' => Account::class,
             'PlatformApp' => PlatformApp::class,
         ]);

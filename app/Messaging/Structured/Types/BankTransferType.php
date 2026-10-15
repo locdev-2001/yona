@@ -7,8 +7,8 @@ use App\Messaging\Structured\InvalidStructuredPayload;
 use App\Messaging\Structured\Money;
 use App\Messaging\Structured\PayloadContext;
 use App\Models\AccountUser;
-use App\Models\AgentBot;
 use App\Models\PaymentAccount;
+use App\Models\User;
 use App\Support\VietQr\Payload;
 use App\Support\VietQr\VietQrBanks;
 
@@ -110,7 +110,9 @@ final class BankTransferType extends AbstractStructuredType
             return;
         }
 
-        if ($context->performedBy instanceof AgentBot) {
+        // Người gửi không phải nhân viên người (bot, AI agent) chỉ gửi được thẻ của tài
+        // khoản mở cho mọi nhân viên.
+        if (! $context->performedBy instanceof User) {
             throw InvalidStructuredPayload::because('payment_account_not_allowed');
         }
 

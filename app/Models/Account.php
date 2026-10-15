@@ -227,6 +227,11 @@ class Account extends Model
         return $this->hasMany(AgentBot::class);
     }
 
+    public function aiAgents(): HasMany
+    {
+        return $this->hasMany(AiAgent::class);
+    }
+
     public function dashboardApps(): HasMany
     {
         return $this->hasMany(DashboardApp::class);

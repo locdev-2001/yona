@@ -21,7 +21,7 @@ class ConversationResource extends JsonResource
     // Quan hệ thẻ hội thoại cần — nạp một lần cho cả trang thay vì từng thẻ.
     private const CARD_RELATIONS = [
         'account',
-        'inbox',
+        'inbox.replyingAiAgent',
         'assignee.avatar',
         'assignee.accountUsers',
         'assigneeAgentBot',
@@ -171,6 +171,12 @@ class ConversationResource extends JsonResource
             'priority' => $conversation->priorityName(),
             'waiting_since' => $conversation->waiting_since?->getTimestamp() ?? 0,
             'sla_policy_id' => null,
+            // Chế độ tự động: công tắc của hội thoại và AI trả lời của inbox (null khi chưa gắn hoặc đang tắt).
+            'auto_responder' => [
+                'enabled' => (bool) $conversation->ai_auto_reply,
+                'ai_agent' => self::replyingAiAgentPayload($conversation),
+            ],
+            'floor_held_until' => $conversation->floorHeldUntil()?->toISOString(),
             ...($this->knowsViewerPins ? ['pinned' => $this->viewerPinPosition !== null, 'pin_position' => $this->viewerPinPosition] : []),
         ];
     }
@@ -250,6 +256,14 @@ class ConversationResource extends JsonResource
         if ($message->inbox_id === $conversation->inbox_id) {
             $message->setRelation('inbox', $conversation->inbox);
         }
+    }
+
+    /** @return array{id: int, name: string}|null */
+    private static function replyingAiAgentPayload(Conversation $conversation): ?array
+    {
+        $aiAgent = $conversation->inbox->replyingAiAgent;
+
+        return $aiAgent === null ? null : ['id' => $aiAgent->id, 'name' => $aiAgent->name];
     }
 
     private function meta(Conversation $conversation): array

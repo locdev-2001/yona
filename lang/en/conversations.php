@@ -43,6 +43,17 @@ return [
         'agent_bot' => [
             'error_moved_to_open' => 'Conversation was marked open by system due to an error with the agent bot.',
         ],
+        'auto_responder' => [
+            'enabled' => '{user_name} turned on automatic replies by {agent_name}',
+            'enabled_by_system' => 'Automatic replies by {agent_name} turned on',
+            'stopped' => [
+                'manual' => '{user_name} turned off automatic replies',
+                'human_joined' => 'Switched to manual replies because {user_name} replied to the customer',
+                'human_joined_from_channel' => 'Switched to manual replies because someone replied from the channel app',
+                'handed_off' => '{agent_name} handed the conversation over to the team and stopped automatic replies',
+                'ai_agent_stopped' => '{agent_name} stopped automatic replies',
+            ],
+        ],
         'muted' => '{user_name} has muted the conversation',
         'unmuted' => '{user_name} has unmuted the conversation',
     ],

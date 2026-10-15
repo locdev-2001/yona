@@ -669,7 +669,8 @@ class Message extends Model
 
         $priorOutgoingCount = $this->conversation->messages()
             ->outgoing()
-            ->where(fn (Builder $query) => $query->whereNull('sender_type')->orWhere('sender_type', '!=', 'AgentBot'))
+            // Tin của bot và AI agent không phải phản hồi của người: không chặn phản hồi đầu của nhân viên.
+            ->where(fn (Builder $query) => $query->whereNull('sender_type')->orWhereNotIn('sender_type', ['AgentBot', 'AiAgent']))
             ->where('private', false)
             ->whereRaw("(additional_attributes->'campaign_id') is null")
             ->count();
@@ -677,7 +678,9 @@ class Message extends Model
         return $priorOutgoingCount <= 1;
     }
 
-    private function isHumanResponse(): bool
+    // Tin trả lời của người: nhân viên trong Yona hoặc echo từ ứng dụng của kênh. AI agent
+    // và automation không tính.
+    public function isHumanResponse(): bool
     {
         return $this->isOutgoing()
             && blank($this->content_attributes['automation_rule_id'] ?? null)

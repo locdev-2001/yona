@@ -22,7 +22,13 @@ return [
     'inboxes' => [
         'connection_not_open' => 'This connection method is not open yet, please choose another one',
     ],
+    'ai_agents' => [
+        'no_replying_ai_agent' => 'This inbox has no AI agent turned on. Assign an AI agent to the inbox or turn it on first.',
+        'other_account' => 'This AI agent belongs to another account.',
+        'invalid_name' => 'AI agent name is required and must be at most 255 characters.',
+    ],
     'conversations' => [
+        'floor_held' => 'The AI agent is replying to the customer. Wait for it to finish, or write a private note.',
         'resolved' => 'Conversation is resolved and does not accept new messages',
         'contact_unreachable' => 'This contact has no address this inbox can send to',
         'email_undeliverable' => 'Cannot send email to :email: :reason',

@@ -29,6 +29,8 @@ enum EventType: string
     case CONVERSATION_TYPING_ON = 'conversation.typing_on';
     case CONVERSATION_TYPING_OFF = 'conversation.typing_off';
     case CONVERSATION_MENTIONED = 'conversation.mentioned';
+    // AI agent giữ hoặc nhả quyền nói: chỉ realtime nghe, để khung soạn khoá/mở ngay.
+    case CONVERSATION_FLOOR_CHANGED = 'conversation.floor_changed';
 
     case MESSAGE_CREATED = 'message.created';
     case FIRST_REPLY_CREATED = 'first.reply.created';

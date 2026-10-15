@@ -6,11 +6,13 @@ use App\Exceptions\MessageValidationException;
 use App\Messaging\Structured\PayloadContext;
 use App\Messaging\Structured\StructuredTypeRegistry;
 use App\Models\AgentBot;
+use App\Models\AiAgent;
 use App\Models\Attachment;
 use App\Models\Contact;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\User;
+use App\Services\Conversations\ConversationFloor;
 use App\Services\Messages\StickerMessageBuilder;
 use App\Support\BooleanParam;
 use App\Support\EmailAddress;
@@ -44,7 +46,7 @@ class MessageBuilder
      * @param  array<string, mixed>  $trustedContentAttributes
      */
     public function __construct(
-        private readonly User|AgentBot|null $user,
+        private readonly User|AgentBot|AiAgent|null $user,
         private readonly Conversation $conversation,
         private readonly array $params,
         private readonly bool $incomingAllowed = false,
@@ -53,6 +55,8 @@ class MessageBuilder
 
     public function perform(): Message
     {
+        $this->guardConversationFloor();
+
         $this->message = new Message($this->messageParams());
         $this->message->echoId = isset($this->params['echo_id']) ? (string) $this->params['echo_id'] : null;
         $this->message->sender()->associate($this->sender());
@@ -72,6 +76,17 @@ class MessageBuilder
         $this->message->save();
 
         return $this->message;
+    }
+
+    // Chỗ chặn duy nhất của quyền nói: mọi đường gửi tin công khai (hộp thư, API token,
+    // macro, câu trả lời mẫu) đều đi qua builder này; ghi chú riêng luôn qua.
+    private function guardConversationFloor(): void
+    {
+        if ($this->messageType() !== Message::TYPE_OUTGOING || BooleanParam::from($this->params['private'] ?? null)) {
+            return;
+        }
+
+        app(ConversationFloor::class)->assertMaySpeak($this->conversation, $this->user);
     }
 
     private function applyTrustedContentAttributes(): void
@@ -295,7 +310,7 @@ class MessageBuilder
         return $messageType;
     }
 
-    private function sender(): User|Contact|AgentBot|null
+    private function sender(): User|Contact|AgentBot|AiAgent|null
     {
         return $this->messageType() === Message::TYPE_OUTGOING
             ? $this->user

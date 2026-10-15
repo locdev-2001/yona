@@ -51,7 +51,7 @@ final class AnthropicMessagesDriver implements ProtocolDriver
     public function body(Prompt $prompt, Route $route, string $cacheKey): array
     {
         $cache = $this->cachePlan->directives($prompt, $route, $cacheKey);
-        $body = ['model' => $route->model, 'max_tokens' => $route->maxOutputTokens];
+        $body = ['model' => $route->model, 'max_tokens' => $route->maxOutputTokens, ...$route->requestOptions];
 
         if ($prompt->system !== []) {
             $body['system'] = array_map(

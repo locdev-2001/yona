@@ -118,6 +118,11 @@ class ActionCableListener extends BaseListener
         $this->broadcastConversationToMembersAndContact($event, EventType::CONVERSATION_UPDATED);
     }
 
+    public function conversationFloorChanged(DomainEvent $event): void
+    {
+        $this->broadcastConversationToMembers($event, EventType::CONVERSATION_FLOOR_CHANGED);
+    }
+
     public function conversationTypingOn(DomainEvent $event): void
     {
         $this->broadcastTyping($event, EventType::CONVERSATION_TYPING_ON);

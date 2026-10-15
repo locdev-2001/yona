@@ -8,6 +8,7 @@ use App\Messaging\MessagePreview;
 use App\Messaging\Structured\LegacyWebhookAliases;
 use App\Models\Account;
 use App\Models\AgentBot;
+use App\Models\AiAgent;
 use App\Models\Attachment;
 use App\Models\Contact;
 use App\Models\Inbox;
@@ -31,6 +32,7 @@ class MessageResource extends JsonResource
     public const SENDER_RELATIONS = [
         User::class => ['accountUsers', 'avatar'],
         Contact::class => ['avatar'],
+        AiAgent::class => ['avatar'],
     ];
 
     /** @param iterable<Message> $messages */
@@ -208,11 +210,12 @@ class MessageResource extends JsonResource
     }
 
     // Message#merge_sender_attributes: sender là User hoặc Contact.
-    public static function senderPushEventData(User|Contact|AgentBot $sender, ?Account $account = null, ?Inbox $inbox = null): array
+    public static function senderPushEventData(User|Contact|AgentBot|AiAgent $sender, ?Account $account = null, ?Inbox $inbox = null): array
     {
         return match (true) {
             $sender instanceof User => UserResource::pushEventData($sender, $account),
             $sender instanceof AgentBot => $sender->pushEventData($inbox),
+            $sender instanceof AiAgent => $sender->pushEventData(),
             default => ContactResource::pushEventData($sender),
         };
     }
@@ -251,12 +254,13 @@ class MessageResource extends JsonResource
         return [...$data, ...self::attachmentsPayload($message)];
     }
 
-    private static function senderWebhookData(User|Contact|AgentBot|null $sender): ?array
+    private static function senderWebhookData(User|Contact|AgentBot|AiAgent|null $sender): ?array
     {
         return match (true) {
             $sender instanceof User => UserResource::webhookData($sender),
             $sender instanceof Contact => ContactResource::webhookData($sender),
             $sender instanceof AgentBot => $sender->webhookData(),
+            $sender instanceof AiAgent => $sender->webhookData(),
             default => null,
         };
     }

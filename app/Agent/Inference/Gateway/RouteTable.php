@@ -87,6 +87,13 @@ final class RouteTable
             throw new InvalidArgumentException("config agent.providers.{$providerName}.max_tokens_field must be one of ".implode(', ', Route::MAX_TOKENS_FIELDS).'.');
         }
 
+        $requestOptions = (array) ($routeConfig['request_options'] ?? []);
+        $reserved = array_intersect(array_keys($requestOptions), Route::RESERVED_REQUEST_KEYS);
+
+        if ($reserved !== []) {
+            throw new InvalidArgumentException("config agent.models.{$alias}.routes.{$position}.request_options must not set ".implode(', ', $reserved).'.');
+        }
+
         $apiKey = $provider['api_key'] ?? null;
         $baseUrl = $provider['base_url'] ?? null;
 
@@ -113,6 +120,7 @@ final class RouteTable
             timeoutSeconds: (int) ($provider['timeout_seconds'] ?? self::DEFAULT_TIMEOUT_SECONDS),
             headers: array_map('strval', array_filter((array) ($provider['headers'] ?? []), fn ($value) => $value !== null && $value !== '')),
             maxTokensField: $maxTokensField,
+            requestOptions: $requestOptions,
         );
     }
 }

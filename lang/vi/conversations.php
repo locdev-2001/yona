@@ -43,6 +43,17 @@ return [
         'agent_bot' => [
             'error_moved_to_open' => 'Hệ thống đánh dấu hội thoại là đang mở do bot nhân viên gặp lỗi.',
         ],
+        'auto_responder' => [
+            'enabled' => '{user_name} bật trả lời tự động bằng {agent_name}',
+            'enabled_by_system' => 'Đã bật trả lời tự động bằng {agent_name}',
+            'stopped' => [
+                'manual' => '{user_name} tắt trả lời tự động',
+                'human_joined' => 'Chuyển sang trả lời thủ công vì {user_name} đã trả lời khách',
+                'human_joined_from_channel' => 'Chuyển sang trả lời thủ công vì có người trả lời từ ứng dụng của kênh',
+                'handed_off' => '{agent_name} đã chuyển hội thoại cho nhân viên và thôi trả lời tự động',
+                'ai_agent_stopped' => '{agent_name} dừng trả lời tự động',
+            ],
+        ],
         'muted' => '{user_name} đã tắt tiếng hội thoại',
         'unmuted' => '{user_name} đã bật tiếng hội thoại',
     ],

@@ -21,6 +21,7 @@ use App\Http\Controllers\WebApi\Contacts\LabelsController as ContactLabelsContro
 use App\Http\Controllers\WebApi\Contacts\NotesController as ContactNotesController;
 use App\Http\Controllers\WebApi\ContactsController;
 use App\Http\Controllers\WebApi\Conversations\AssignmentsController;
+use App\Http\Controllers\WebApi\Conversations\AutoRespondersController;
 use App\Http\Controllers\WebApi\Conversations\DirectUploadsController;
 use App\Http\Controllers\WebApi\Conversations\DraftMessagesController;
 use App\Http\Controllers\WebApi\Conversations\GroupMembersController;
@@ -263,6 +264,8 @@ Route::middleware(['auth.api_token', 'auth', 'account.scope'])
         Route::post('/conversations/{conversationId}/pin', [ConversationsController::class, 'pin'])->whereNumber('conversationId');
         Route::delete('/conversations/{conversationId}/pin', [ConversationsController::class, 'unpin'])->whereNumber('conversationId');
         Route::post('/conversations/{conversationId}/assignments', [AssignmentsController::class, 'create'])->whereNumber('conversationId');
+        Route::post('/conversations/{conversationId}/auto_responder', [AutoRespondersController::class, 'store'])->whereNumber('conversationId');
+        Route::delete('/conversations/{conversationId}/auto_responder', [AutoRespondersController::class, 'destroy'])->whereNumber('conversationId');
         Route::post('/conversations/{conversationId}/mute', [ConversationsController::class, 'mute'])->whereNumber('conversationId');
         Route::post('/conversations/{conversationId}/unmute', [ConversationsController::class, 'unmute'])->whereNumber('conversationId');
         // resource :participants (singular) — user_ids nằm trong body.

@@ -104,3 +104,16 @@ it('never forces a tool and renders empty objects as JSON objects', function () 
         ->and($anthropic)->toContain('"input_schema":{"properties":{},"type":"object"}')
         ->and($openai)->toContain('"parameters":{"properties":{},"type":"object"}');
 });
+
+it('adds the route request options ahead of the conversation', function () {
+    config(['agent.models.anthropic_only.routes.0.request_options' => ['thinking' => ['type' => 'disabled']]]);
+
+    expect(gatewayRequestBody('anthropic_only'))
+        ->toStartWith('{"model":"claude-test","max_tokens":1024,"thinking":{"type":"disabled"},"system":');
+});
+
+it('refuses request options that would override what the driver builds', function () {
+    config(['agent.models.anthropic_only.routes.0.request_options' => ['messages' => []]]);
+
+    gatewayRequestBody('anthropic_only');
+})->throws(InvalidArgumentException::class, 'must not set messages');

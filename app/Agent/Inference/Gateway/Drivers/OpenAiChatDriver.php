@@ -52,7 +52,7 @@ final class OpenAiChatDriver implements ProtocolDriver
     public function body(Prompt $prompt, Route $route, string $cacheKey): array
     {
         $cache = $this->cachePlan->directives($prompt, $route, $cacheKey);
-        $body = ['model' => $route->model, $route->maxTokensField => $route->maxOutputTokens];
+        $body = ['model' => $route->model, $route->maxTokensField => $route->maxOutputTokens, ...$route->requestOptions];
 
         if ($cache->promptCacheKey !== null) {
             $body['prompt_cache_key'] = $cache->promptCacheKey;

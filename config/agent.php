@@ -50,7 +50,9 @@ return [
 
     // Alias mô hình => tuyến theo thứ tự ưu tiên; tuyến sau là dự phòng của tuyến trước.
     // price: USD mỗi triệu token (input, output, cache_read, cache_write); bỏ trống = 0,
-    // chi phí ghi 0. Mã mô hình và giá ở đây là chỗ giữ, chốt theo số đo (QĐ K10).
+    // chi phí ghi 0. request_options: tham số thêm vào thân request của tuyến, vd
+    // ['thinking' => ['type' => 'disabled']] với mô hình cho tắt thinking. Mã mô hình và
+    // giá ở đây là chỗ giữ, chốt theo số đo (QĐ K10).
     'models' => [
         'main' => [
             'routes' => [

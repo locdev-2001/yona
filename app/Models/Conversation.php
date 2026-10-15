@@ -16,6 +16,7 @@ use App\Models\Concerns\Reportable;
 use App\Models\Concerns\SharesRequestModels;
 use App\Support\CurrentContact;
 use App\Support\CurrentExecutedBy;
+use Carbon\Carbon;
 use Database\Factories\ConversationFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -55,7 +56,7 @@ class Conversation extends Model
     // này (list_of_keys) hoặc additional_attributes.conversation_language.
     public const UPDATED_EVENT_KEYS = [
         'team_id', 'assignee_id', 'assignee_agent_bot_id', 'status', 'snoozed_until', 'custom_attributes',
-        'label_list', 'waiting_since', 'first_reply_created_at', 'priority',
+        'label_list', 'waiting_since', 'first_reply_created_at', 'priority', 'ai_auto_reply',
     ];
 
     public const UPDATED_EVENT_ADDITIONAL_ATTRIBUTE_KEYS = ['conversation_language'];
@@ -90,6 +91,7 @@ class Conversation extends Model
     // Default DB chưa có trên model mới tạo — set sẵn cho hook/serializer.
     protected $attributes = [
         'status' => self::STATUS_OPEN,
+        'ai_auto_reply' => false,
     ];
 
     protected $fillable = [
@@ -137,6 +139,8 @@ class Conversation extends Model
             'waiting_since' => 'datetime',
             'last_activity_at' => 'datetime',
             'status_changed_at' => 'datetime',
+            'ai_auto_reply' => 'boolean',
+            'floor_held_until' => 'datetime',
         ];
     }
 
@@ -357,6 +361,17 @@ class Conversation extends Model
     public function assigneeAgentBot(): BelongsTo
     {
         return $this->belongsTo(AgentBot::class, 'assignee_agent_bot_id');
+    }
+
+    // AI đang giữ quyền nói tới mốc trả về; null là không ai giữ. Công tắc tự động do
+    // App\Services\Conversations\ConversationAutoResponder đổi, khoá do ConversationFloor.
+    public function floorHeldUntil(): ?Carbon
+    {
+        if (! $this->ai_auto_reply || $this->floor_held_until === null || $this->floor_held_until->isPast()) {
+            return null;
+        }
+
+        return $this->floor_held_until;
     }
 
     public function team(): BelongsTo

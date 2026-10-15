@@ -11,7 +11,13 @@ final readonly class Route
 {
     public const MAX_TOKENS_FIELDS = ['max_tokens', 'max_completion_tokens'];
 
-    /** @param array<string, string> $headers header phụ (không chứa khoá) */
+    // Khoá do driver dựng; tham số thêm của tuyến không được đè.
+    public const RESERVED_REQUEST_KEYS = ['model', 'max_tokens', 'max_completion_tokens', 'system', 'tools', 'tool_choice', 'messages', 'prompt_cache_key'];
+
+    /**
+     * @param  array<string, string>  $headers  header phụ (không chứa khoá)
+     * @param  array<string, mixed>  $requestOptions  tham số thêm vào thân request của tuyến (vd `thinking`)
+     */
     public function __construct(
         public string $provider,
         public Protocol $protocol,
@@ -24,6 +30,7 @@ final readonly class Route
         public int $timeoutSeconds,
         public array $headers = [],
         public string $maxTokensField = 'max_tokens',
+        public array $requestOptions = [],
     ) {}
 
     public function identity(): ModelRoute
