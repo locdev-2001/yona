@@ -23,12 +23,10 @@ final class TurnFailureHandler
         $aiAgentId = $this->reader->conversation($conversation)?->aiAgentId;
 
         $this->logger->warning('agent.turn.job_failed', ['conversation_id' => $order->conversationId, 'wake_message_id' => $order->wakeMessageId]);
+        $this->floor->release($conversation);
 
-        if ($aiAgentId === null) {
-            return;
+        if ($aiAgentId !== null) {
+            $this->dispositions->stopAfterFailure($conversation, $aiAgentId);
         }
-
-        $this->floor->release($conversation, $aiAgentId);
-        $this->dispositions->stopAfterFailure($conversation, $aiAgentId);
     }
 }

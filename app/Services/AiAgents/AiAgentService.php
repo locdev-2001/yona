@@ -6,15 +6,20 @@ use App\Models\Account;
 use App\Models\AiAgent;
 use App\Models\Conversation;
 use App\Models\Inbox;
+use App\Services\Conversations\ConversationFloor;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 // Chỗ duy nhất tạo, sửa, tắt, xoá AI agent và gắn AI agent cho inbox. Tắt hay gỡ AI khỏi
 // inbox không lật công tắc của hội thoại: chúng giữ `ai_auto_reply`, chỉ thôi có AI trả
 // lời (Inbox::replyingAiAgent rỗng) cho tới khi AI bật lại hoặc inbox gắn AI khác.
+// Mọi thay đổi làm inbox mất AI trả lời đang có thì nhả luôn quyền nói đang giữ trên
+// các hội thoại của inbox đó.
 final class AiAgentService
 {
     private const EDITABLE = ['name', 'persona', 'instructions', 'enabled'];
+
+    public function __construct(private readonly ConversationFloor $floor) {}
 
     /** @throws ValidationException */
     public function create(Account $account, string $name, ?string $persona = null, ?string $instructions = null): AiAgent
@@ -43,14 +48,22 @@ final class AiAgentService
 
         $aiAgent->update($attributes);
 
+        if ($aiAgent->wasChanged('enabled') && ! $aiAgent->enabled) {
+            $this->releaseFloorsOf($this->inboxIdsOf($aiAgent));
+        }
+
         return $aiAgent;
     }
 
     // Inbox đang gắn AI này tự về "chưa có AI" (FK ON DELETE SET NULL).
     public function delete(AiAgent $aiAgent): void
     {
+        $inboxIds = $this->inboxIdsOf($aiAgent);
+
         $aiAgent->removeAvatar();
         $aiAgent->delete();
+
+        $this->releaseFloorsOf($inboxIds);
     }
 
     /**
@@ -66,6 +79,10 @@ final class AiAgentService
 
         $inbox->forceFill(['ai_agent_id' => $aiAgent?->id])->save();
         $inbox->unsetRelation('aiAgent')->unsetRelation('replyingAiAgent');
+
+        if ($inbox->wasChanged('ai_agent_id')) {
+            $this->releaseFloorsOf([$inbox->id]);
+        }
     }
 
     /**
@@ -115,6 +132,20 @@ final class AiAgentService
             ->pluck('total', 'inbox_id')
             ->map(fn ($total) => (int) $total)
             ->all();
+    }
+
+    /** @return list<int> */
+    private function inboxIdsOf(AiAgent $aiAgent): array
+    {
+        return Inbox::query()->where('ai_agent_id', $aiAgent->id)->pluck('id')->map(fn ($id) => (int) $id)->all();
+    }
+
+    /** @param  list<int>  $inboxIds */
+    private function releaseFloorsOf(array $inboxIds): void
+    {
+        foreach ($inboxIds as $inboxId) {
+            $this->floor->releaseInbox($inboxId);
+        }
     }
 
     private function cleanName(string $name): string

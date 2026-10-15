@@ -92,7 +92,7 @@ final class TurnRunner
 
             return $end;
         } finally {
-            $this->floor->release($conversation, $decision->aiAgentId);
+            $this->floor->release($conversation);
         }
     }
 

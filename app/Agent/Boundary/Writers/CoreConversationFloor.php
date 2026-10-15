@@ -23,12 +23,12 @@ final class CoreConversationFloor implements FloorPort
         return $model !== null && $aiAgent !== null && $this->floor->acquire($model, $aiAgent, CarbonImmutable::instance($until));
     }
 
-    public function release(ConversationRef $conversation, int $aiAgentId): void
+    public function release(ConversationRef $conversation): void
     {
-        [$model, $aiAgent] = $this->locate($conversation, $aiAgentId);
+        $model = CoreRecords::conversation($conversation);
 
-        if ($model !== null && $aiAgent !== null) {
-            $this->floor->release($model, $aiAgent);
+        if ($model !== null) {
+            $this->floor->release($model);
         }
     }
 

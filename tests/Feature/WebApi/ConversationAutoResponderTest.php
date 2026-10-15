@@ -242,7 +242,7 @@ describe('quyền nói của AI', function () {
 
         match ($how) {
             'hết hạn' => $this->travel(61)->seconds(),
-            'nhả' => app(ConversationFloor::class)->release($conversation, $aiAgent),
+            'nhả' => app(ConversationFloor::class)->release($conversation),
         };
 
         $this->actingAs($agent)->postJson(autoResponderUrl($account, $conversation, 'messages'), ['content' => 'Chào chị'])
@@ -271,12 +271,47 @@ describe('quyền nói của AI', function () {
         $floor = app(ConversationFloor::class);
 
         $floor->acquire($conversation, $aiAgent, now()->addMinute());
-        $floor->release($conversation, $aiAgent);
-        $floor->release($conversation, $aiAgent);
+        $floor->release($conversation);
+        $floor->release($conversation);
 
         $types = collect(Event::dispatched(DomainEvent::class))->map(fn (array $call) => $call[0]->type)->all();
 
         expect($types)->toBe([EventType::CONVERSATION_FLOOR_CHANGED, EventType::CONVERSATION_FLOOR_CHANGED]);
+    });
+
+    it('tắt, xoá hay đổi AI của inbox thì nhả lượt của mọi hội thoại trong inbox và báo realtime', function (string $change) {
+        [$account, $inbox, $conversation] = autoResponderFixtures();
+        $aiAgent = inboxAiAgent($conversation);
+        holdFloor($conversation, $aiAgent);
+        $untouched = Conversation::factory()->create(['account_id' => $account->id, 'inbox_id' => $inbox->id]);
+        Event::fake([DomainEvent::class]);
+        $service = app(AiAgentService::class);
+
+        match ($change) {
+            'tắt' => $service->update($aiAgent, ['enabled' => false]),
+            'xoá' => $service->delete($aiAgent),
+            'đổi' => $service->assignInbox($inbox->fresh(), $service->create($account, 'Binh')),
+            'gỡ khỏi kênh' => $service->syncInboxes($aiAgent, []),
+        };
+
+        $floorEvents = collect(Event::dispatched(DomainEvent::class))
+            ->map(fn (array $call) => $call[0])
+            ->filter(fn (DomainEvent $event) => $event->type === EventType::CONVERSATION_FLOOR_CHANGED);
+
+        expect($conversation->refresh()->floor_held_until)->toBeNull()
+            ->and($floorEvents)->toHaveCount(1)
+            ->and($floorEvents->first()->data['conversation']->id)->toBe($conversation->id)
+            ->and($untouched->refresh()->floor_held_until)->toBeNull();
+    })->with(['tắt', 'xoá', 'đổi', 'gỡ khỏi kênh']);
+
+    it('sửa tên hay chỉ dẫn của AI thì không nhả lượt đang giữ', function () {
+        [, , $conversation] = autoResponderFixtures();
+        $aiAgent = inboxAiAgent($conversation);
+        holdFloor($conversation, $aiAgent);
+
+        app(AiAgentService::class)->update($aiAgent, ['name' => 'Lan Anh', 'instructions' => 'Mới', 'enabled' => true]);
+
+        expect($conversation->refresh()->floor_held_until)->not->toBeNull();
     });
 
     it('trả mốc giữ lượt trong payload hội thoại', function () {

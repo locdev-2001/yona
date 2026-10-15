@@ -16,6 +16,10 @@ use Illuminate\Support\Carbon;
 // (Inbox::replyingAiAgent) giữ được, tới một mốc; quá mốc là tự hết. Trong lúc giữ, tin
 // công khai của người bị chặn tại assertMaySpeak — chỗ chặn duy nhất, gọi từ
 // MessageBuilder. Tắt tự động (ConversationAutoResponder) xoá luôn mốc giữ.
+//
+// Nhả không hỏi ai đang giữ: mỗi hội thoại chỉ một lượt chạy một lúc và chỉ AI của inbox
+// giữ được, nên lượt kết thúc luôn nhả được, kể cả khi AI vừa bị tắt, xoá hay thay.
+// Inbox đổi AI trả lời thì releaseInbox nhả ngay mọi hội thoại của inbox.
 final class ConversationFloor
 {
     // Trần một lần giữ: người gọi xin dài hơn cũng chỉ được chừng này.
@@ -42,12 +46,8 @@ final class ConversationFloor
         return $held;
     }
 
-    public function release(Conversation $conversation, AiAgent $aiAgent): void
+    public function release(Conversation $conversation): void
     {
-        if (! $this->isReplyingAiAgent($conversation, $aiAgent)) {
-            return;
-        }
-
         $released = Conversation::query()
             ->whereKey($conversation->id)
             ->whereNotNull('floor_held_until')
@@ -57,6 +57,16 @@ final class ConversationFloor
         if ($released) {
             $this->announce($conversation, null);
         }
+    }
+
+    // Gọi SAU khi inbox đã đổi AI trả lời, để lượt cũ không giữ lại được.
+    public function releaseInbox(int $inboxId): void
+    {
+        Conversation::query()
+            ->where('inbox_id', $inboxId)
+            ->whereNotNull('floor_held_until')
+            ->get()
+            ->each(fn (Conversation $conversation) => $this->release($conversation));
     }
 
     /** @throws ConversationFloorHeld */

@@ -16,6 +16,7 @@ use App\Models\ApiLog;
 use App\Models\CannedResponse;
 use App\Models\Conversation;
 use App\Models\Message;
+use App\Services\AiAgents\AiAgentService;
 use App\Services\Conversations\AutoResponderStopReason;
 use App\Services\Conversations\ConversationAutoResponder;
 use Illuminate\Support\Facades\Http;
@@ -190,6 +191,39 @@ it('blocks public staff messages during the turn but lets private notes through,
         ->and($conversation->fresh()->floor_held_until)->toBeNull()
         ->and(conversationIsAuto($conversation))->toBeTrue();
 });
+
+it('frees the floor at once when the inbox AI is turned off, deleted or replaced mid-turn', function (string $change) {
+    ['conversation' => $conversation, 'staff' => $staff, 'aiAgent' => $aiAgent] = TurnKit::autoConversation();
+    $outcomes = [];
+    TurnKit::model([
+        function () use ($conversation, $staff, $aiAgent, $change, &$outcomes) {
+            $service = app(AiAgentService::class);
+            match ($change) {
+                'turned off' => $service->update($aiAgent, ['enabled' => false]),
+                'deleted' => $service->delete($aiAgent),
+                'replaced' => $service->assignInbox($conversation->inbox->fresh(), $service->create($conversation->account, 'Binh')),
+            };
+            $outcomes['held'] = $conversation->fresh()->floor_held_until !== null;
+
+            try {
+                TurnKit::staffSays($conversation, $staff, 'Để anh trả lời cho.');
+                $outcomes['public'] = 'sent';
+            } catch (HttpException $exception) {
+                $outcomes['public'] = $exception->getStatusCode();
+            }
+
+            return Model::call('reply', ['text' => 'Không được gửi.']);
+        },
+    ]);
+
+    TurnKit::customerSays($conversation, 'Shop ơi');
+    TurnKit::runPendingTurns();
+
+    expect($outcomes['held'])->toBeFalse()
+        ->and($outcomes['public'])->toBe('sent')
+        ->and(TurnKit::aiReplies($conversation))->toBeEmpty()
+        ->and($conversation->fresh()->floor_held_until)->toBeNull();
+})->with(['turned off', 'deleted', 'replaced']);
 
 it('cancels the turn without sending when the owner answers from the channel app mid-turn', function () {
     ['conversation' => $conversation] = TurnKit::autoConversation();
