@@ -95,6 +95,31 @@ final class RealtimePayload
         return ['id' => $conversation->display_id];
     }
 
+    /**
+     * Người gõ trong nhóm mang tên + ảnh của thành viên thay cho hồ sơ của cả nhóm;
+     * `external_id` để FE phân biệt nhiều thành viên cùng gõ trong một hội thoại.
+     *
+     * @param  array<string, mixed>  $contactPayload
+     * @param  array{external_id: string, name: string, avatar?: string|null}|null  $groupMember
+     * @return array<string, mixed>
+     */
+    public static function typingContact(array $contactPayload, ?array $groupMember): array
+    {
+        if ($groupMember === null) {
+            return $contactPayload;
+        }
+
+        $avatar = $groupMember['avatar'] ?? null;
+
+        return [
+            ...$contactPayload,
+            'name' => $groupMember['name'],
+            'external_id' => $groupMember['external_id'],
+            'avatar_url' => $avatar,
+            'thumbnail' => $avatar,
+        ];
+    }
+
     private static function truncate(?string $content): ?string
     {
         return $content === null ? null : Str::limit($content, self::CONTENT_PREVIEW_LIMIT, '…');

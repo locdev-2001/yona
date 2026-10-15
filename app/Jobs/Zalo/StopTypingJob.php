@@ -15,9 +15,11 @@ use Illuminate\Support\Facades\Cache;
  */
 class StopTypingJob extends ApplicationJob
 {
+    /** @param array{external_id: string, name: string, avatar: string|null}|null $groupMember */
     public function __construct(
         public readonly Conversation $conversation,
         public readonly string $stamp,
+        public readonly ?array $groupMember = null,
     ) {
         $this->onQueue('critical');
     }
@@ -25,11 +27,13 @@ class StopTypingJob extends ApplicationJob
     public function handle(TypingRelayService $typing): void
     {
         // Khách gõ tiếp sau khi job này được hẹn ⇒ đã có dấu mới hơn, để lượt sau tắt.
-        if (Cache::get(TypingRelayService::stampKey($this->conversation)) !== $this->stamp) {
+        $stampKey = TypingRelayService::stampKey($this->conversation, $this->groupMember);
+
+        if (Cache::get($stampKey) !== $this->stamp) {
             return;
         }
 
-        Cache::forget(TypingRelayService::stampKey($this->conversation));
-        $typing->toggle($this->conversation, 'off');
+        Cache::forget($stampKey);
+        $typing->toggle($this->conversation, 'off', $this->groupMember);
     }
 }

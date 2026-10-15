@@ -39,6 +39,26 @@ class GroupMembersService
         return array_values([...$recent, ...$this->sortedByName($directory)]);
     }
 
+    /**
+     * Một thành viên theo định danh trên kênh: tin gần đây trước (không gọi ra
+     * nhà cung cấp), hụt mới hỏi danh bạ nhóm. Null khi không phải nhóm hoặc
+     * không ai khớp.
+     *
+     * @return array{external_id: string, name: string, avatar: string|null}|null
+     */
+    public function find(Conversation $conversation, string $externalId): ?array
+    {
+        $driver = ChannelActionRegistry::groupMembersFor($conversation->inbox);
+
+        if ($driver === null || ! $driver->isGroup($conversation)) {
+            return null;
+        }
+
+        return $this->recentSenders($conversation)[$externalId]
+            ?? $this->keyedByExternalId($driver->members($conversation))[$externalId]
+            ?? null;
+    }
+
     /** @return array<string, array{external_id: string, name: string, avatar: string|null}> */
     private function recentSenders(Conversation $conversation): array
     {

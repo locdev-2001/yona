@@ -5,6 +5,7 @@ namespace App\Services\Zalo;
 use App\Jobs\Zalo\StopTypingJob;
 use App\Models\Conversation;
 use App\Models\Inbox;
+use App\Services\Conversations\GroupMembersService;
 use App\Services\Conversations\TypingStatusManager;
 use Illuminate\Support\Facades\Cache;
 
@@ -17,6 +18,10 @@ use Illuminate\Support\Facades\Cache;
  * thời gian rồi đẩy job tắt sau vài giây; job chỉ tắt khi dấu đó vẫn là dấu mới
  * nhất (khách gõ tiếp = dấu mới, job cũ tự bỏ) — nghĩa là mỗi sự kiện typing mới
  * tự GIA HẠN cửa sổ chờ thay vì cộng dồn job tắt.
+ *
+ * Trong nhóm, liên hệ của hội thoại là cả nhóm nên người gõ được tra theo `uid`
+ * thành viên; dấu thời gian cũng tách theo thành viên để hai người cùng gõ không
+ * nuốt lượt tắt của nhau.
  */
 class TypingRelayService
 {
@@ -24,6 +29,8 @@ class TypingRelayService
     public const DEFAULT_OFF_DELAY_SECONDS = 10;
 
     private const STAMP_TTL_MINUTES = 5;
+
+    public function __construct(private readonly GroupMembersService $groupMembers) {}
 
     /** @param array<int|string, mixed> $relayPayload */
     public function handle(Inbox $inbox, array $relayPayload): bool
@@ -35,11 +42,12 @@ class TypingRelayService
             return false;
         }
 
+        $groupMember = $this->groupMemberOf($conversation, RelayEventParser::typingGroupMemberId($relayPayload));
         $stamp = (string) now()->getPreciseTimestamp(3);
-        Cache::put(self::stampKey($conversation), $stamp, now()->addMinutes(self::STAMP_TTL_MINUTES));
+        Cache::put(self::stampKey($conversation, $groupMember), $stamp, now()->addMinutes(self::STAMP_TTL_MINUTES));
 
-        $this->toggle($conversation, 'on');
-        StopTypingJob::dispatch($conversation, $stamp)->delay(now()->addSeconds($this->offDelaySeconds()));
+        $this->toggle($conversation, 'on', $groupMember);
+        StopTypingJob::dispatch($conversation, $stamp, $groupMember)->delay(now()->addSeconds($this->offDelaySeconds()));
 
         return true;
     }
@@ -49,17 +57,32 @@ class TypingRelayService
         return (int) config('zalo.typing_off_delay', self::DEFAULT_OFF_DELAY_SECONDS);
     }
 
-    public static function stampKey(Conversation $conversation): string
+    /** @param array{external_id: string, name: string, avatar: string|null}|null $groupMember */
+    public static function stampKey(Conversation $conversation, ?array $groupMember = null): string
     {
-        return "zalo:typing-in:{$conversation->id}";
+        $memberSuffix = $groupMember === null ? '' : ":{$groupMember['external_id']}";
+
+        return "zalo:typing-in:{$conversation->id}{$memberSuffix}";
     }
 
-    public function toggle(Conversation $conversation, string $status): void
+    /** @param array{external_id: string, name: string, avatar: string|null}|null $groupMember */
+    public function toggle(Conversation $conversation, string $status, ?array $groupMember = null): void
     {
         // Người đang gõ là KHÁCH — cùng hình dạng payload widget gửi lên, nên FE
         // dashboard hiện bong bóng "đang nhập…" mà không cần biết đây là Zalo.
-        (new TypingStatusManager($conversation, $conversation->contact, ['typing_status' => $status]))
+        (new TypingStatusManager($conversation, $conversation->contact, ['typing_status' => $status], $groupMember))
             ->toggleTypingStatus();
+    }
+
+    /**
+     * Không tra được (danh bạ nhóm lỗi, người mới vào) thì rơi về hồ sơ của nhóm
+     * như trước — vẫn báo có người gõ, chỉ thiếu tên.
+     *
+     * @return array{external_id: string, name: string, avatar: string|null}|null
+     */
+    private function groupMemberOf(Conversation $conversation, ?string $memberId): ?array
+    {
+        return $memberId === null ? null : $this->groupMembers->find($conversation, $memberId);
     }
 
     /** Không tự tạo hội thoại: gõ mà chưa từng nhắn thì không có gì để hiện. */

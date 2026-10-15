@@ -1075,6 +1075,54 @@ it('job tắt đang-nhập bỏ qua khi khách vừa gõ tiếp', function () {
     );
 });
 
+function zaloGroupTyping(Zalo $channel, string $memberId): TestResponse
+{
+    return zaloWebhook([
+        'type' => 'relay_event',
+        'event_type' => 'typing',
+        'connection_id' => $channel->connectionId(),
+        'payload' => [['type' => 1, 'data' => ['uid' => $memberId, 'gid' => '7788', 'ts' => '1788715049561', 'isPC' => 0], 'threadId' => '7788', 'isSelf' => false]],
+    ]);
+}
+
+it('trong nhóm hiện đúng thành viên đang gõ, không phải tên nhóm', function () {
+    zaloWebhook(zaloPayload('zalo_inbound_group_text', $this->channel))->assertOk();
+    $conversation = Conversation::query()->latest('id')->first();
+    Queue::fake([StopTypingJob::class]);
+    Event::fake([DomainEvent::class]);
+
+    zaloGroupTyping($this->channel, '555000111')->assertOk();
+
+    $member = ['external_id' => '555000111', 'name' => 'Minh Anh', 'avatar' => 'https://cdn.zalo.test/minh-anh.jpg'];
+    Event::assertDispatched(
+        DomainEvent::class,
+        fn (DomainEvent $event) => $event->type === EventType::CONVERSATION_TYPING_ON
+            && $event->data['conversation']->id === $conversation->id
+            && $event->data['group_member'] === $member,
+    );
+    // Hai thành viên cùng gõ thì lượt gõ của người này không được nuốt lượt tắt của người kia.
+    Queue::assertPushed(StopTypingJob::class, fn (StopTypingJob $job) => $job->groupMember === $member);
+    expect(Cache::has(TypingRelayService::stampKey($conversation, $member)))->toBeTrue()
+        ->and(Cache::has(TypingRelayService::stampKey($conversation)))->toBeFalse();
+});
+
+it('thành viên nhóm chưa nhắn gần đây thì tra tên từ danh bạ nhóm', function () {
+    zaloWebhook(zaloPayload('zalo_inbound_group_text', $this->channel))->assertOk();
+    Cache::put("zalo:group-members:{$this->channel->connectionId()}:7788", [
+        ['external_id' => '555000333', 'name' => 'Chị Hoa', 'avatar' => 'https://cdn.zalo.test/hoa.jpg'],
+    ], now()->addMinute());
+    Queue::fake([StopTypingJob::class]);
+    Event::fake([DomainEvent::class]);
+
+    zaloGroupTyping($this->channel, '555000333')->assertOk();
+
+    Event::assertDispatched(
+        DomainEvent::class,
+        fn (DomainEvent $event) => $event->type === EventType::CONVERSATION_TYPING_ON
+            && ($event->data['group_member']['name'] ?? null) === 'Chị Hoa',
+    );
+});
+
 // ── Lô 2b: tin nhóm (Q3) · lời mời kết bạn (Q7) · nhắc hẹn tới giờ ────────────
 
 it('gom mọi tin của một nhóm vào MỘT hội thoại mang tên và ảnh nhóm', function () {

@@ -6,6 +6,7 @@ use App\Messaging\Inbound\Events\InboundEvent;
 use App\Messaging\Inbound\Events\ReactionEvent;
 use App\Messaging\Inbound\Events\RecallEvent;
 use App\Messaging\Inbound\Events\ReceiptEvent;
+use App\Models\Channel\Zalo;
 
 /**
  * Bóc tách envelope `relay_event` của bridge về dữ liệu trung tính cho lõi.
@@ -157,6 +158,22 @@ class RelayEventParser
         $threadId = $event['threadId'] ?? $data['gid'] ?? $data['uid'] ?? null;
 
         return filled($threadId) ? (string) $threadId : null;
+    }
+
+    /**
+     * Thành viên đang gõ trong NHÓM (`data.uid`, còn `threadId` là nhóm). Luồng
+     * 1-1 trả null vì người gõ chính là liên hệ của hội thoại.
+     *
+     * @param  array<int|string, mixed>  $payload
+     */
+    public static function typingGroupMemberId(array $payload): ?string
+    {
+        $event = is_array($payload[0] ?? null) ? $payload[0] : [];
+        $data = is_array($event['data'] ?? null) ? $event['data'] : [];
+        $isGroup = (int) ($event['type'] ?? 0) === Zalo::THREAD_TYPE_GROUP || filled($data['gid'] ?? null);
+        $memberId = $data['uid'] ?? null;
+
+        return $isGroup && is_scalar($memberId) && filled($memberId) ? (string) $memberId : null;
     }
 
     private static function recallSourceIdFromContent(mixed $content): ?string

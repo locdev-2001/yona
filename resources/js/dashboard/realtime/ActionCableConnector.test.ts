@@ -87,6 +87,18 @@ describe('ActionCableConnector', () => {
         expect(realtimeStore.getTypingUsers(4)).toEqual([]);
     });
 
+    it('mỗi thành viên nhóm đang gõ có hẹn giờ tắt riêng', () => {
+        const minhAnh = { ...TYPING_USER, external_id: '111', name: 'Minh Anh' };
+        const binh = { ...TYPING_USER, external_id: '222', name: 'Bình' };
+
+        connector.onReceived({ event: 'conversation.typing_on', data: { account_id: 2, conversation: { id: 4 }, user: minhAnh } });
+        vi.advanceTimersByTime(20000);
+        connector.onReceived({ event: 'conversation.typing_on', data: { account_id: 2, conversation: { id: 4 }, user: binh } });
+        vi.advanceTimersByTime(10000);
+
+        expect(realtimeStore.getTypingUsers(4)).toEqual([binh]);
+    });
+
     it('presence.update cập nhật agents/contacts/currentUser', () => {
         connector.onReceived({
             event: 'presence.update',

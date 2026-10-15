@@ -21,6 +21,18 @@ describe('realtimeStore', () => {
         expect(realtimeStore.getTypingUsers(99)).toEqual([]);
     });
 
+    it('nhiều thành viên cùng gõ trong một nhóm được giữ riêng theo external_id', () => {
+        const minhAnh: TypingUser = { id: 7, name: 'Minh Anh', type: 'contact', external_id: '111' };
+        const binh: TypingUser = { id: 7, name: 'Bình', type: 'contact', external_id: '222' };
+
+        realtimeStore.addTyping(4, minhAnh);
+        realtimeStore.addTyping(4, binh);
+        expect(realtimeStore.getTypingUsers(4)).toEqual([minhAnh, binh]);
+
+        realtimeStore.removeTyping(4, minhAnh);
+        expect(realtimeStore.getTypingUsers(4)).toEqual([binh]);
+    });
+
     it('presence map: key về number, agent vắng map là offline sau lần nhận đầu', () => {
         expect(realtimeStore.getState().hasReceivedPresence).toBe(false);
 

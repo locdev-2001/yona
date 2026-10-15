@@ -47,7 +47,9 @@ function toNumericKeys<V>(source: Record<string, V> | undefined): Record<number,
     return result;
 }
 
-const isSameTypingUser = (a: TypingUser, b: TypingUser) => a.id === b.id && a.type === b.type;
+export const typingUserKey = (user: TypingUser): string => [user.type, user.id, user.external_id ?? ''].join(':');
+
+const isSameTypingUser = (a: TypingUser, b: TypingUser) => typingUserKey(a) === typingUserKey(b);
 
 export const realtimeStore = {
     getState: (): RealtimeState => state,

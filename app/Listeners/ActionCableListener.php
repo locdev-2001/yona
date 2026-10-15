@@ -256,7 +256,7 @@ class ActionCableListener extends BaseListener
             'user' => match (true) {
                 $user instanceof User => UserResource::pushEventData($user, $account),
                 $user instanceof AgentBot => $user->pushEventData($conversation->inbox),
-                default => ContactResource::pushEventData($user),
+                default => RealtimePayload::typingContact(ContactResource::pushEventData($user), $event->data['group_member'] ?? null),
             },
             'is_private' => $event->data['is_private'] ?? false,
         ]);

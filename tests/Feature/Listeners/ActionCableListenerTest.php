@@ -174,6 +174,26 @@ describe('typing_on', function () {
         expect($job->members)->toEqualCanonicalizing([$admin->pubsub_token, $agent->pubsub_token])
             ->and($job->data['user'])->toEqual(ContactResource::pushEventData($conversation->contact));
     });
+
+    it('shows the group member who is typing instead of the group contact', function () {
+        [, , , , $conversation] = listenerSetup();
+        $member = ['external_id' => '555000111', 'name' => 'Minh Anh', 'avatar' => 'https://cdn.test/minh-anh.jpg'];
+
+        fire(EventType::CONVERSATION_TYPING_ON, [
+            'conversation' => $conversation,
+            'user' => $conversation->contact,
+            'is_private' => false,
+            'group_member' => $member,
+        ]);
+
+        expect(pushedBroadcast()->data['user'])->toMatchArray([
+            'id' => $conversation->contact_id,
+            'type' => 'contact',
+            'name' => 'Minh Anh',
+            'external_id' => '555000111',
+            'thumbnail' => 'https://cdn.test/minh-anh.jpg',
+        ]);
+    });
 });
 
 describe('typing_off', function () {

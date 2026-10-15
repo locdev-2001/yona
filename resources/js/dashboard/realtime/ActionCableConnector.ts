@@ -1,7 +1,7 @@
 import { logoutKeepingPushSubscription } from 'dashboard/helper/logout';
 import { BUS_EVENTS, emitter } from 'shared/helpers/emitter';
 import BaseActionCableConnector from './BaseActionCableConnector';
-import { realtimeStore } from './store';
+import { realtimeStore, typingUserKey } from './store';
 import type { PresenceUpdatePayload, RealtimeIdentity, TypingUser } from './types';
 
 // Port từ dashboard/helper/actionCable.js. Không có Vuex nên handler chỉ ghi vào
@@ -49,7 +49,8 @@ interface AccountScopedPayload {
 }
 
 class ActionCableConnector extends BaseActionCableConnector {
-    private cancelTyping: Record<number, ReturnType<typeof setTimeout> | null> = {};
+    // Một hẹn giờ cho mỗi người gõ: trong nhóm nhiều thành viên gõ cùng lúc trên một hội thoại.
+    private cancelTyping: Record<string, ReturnType<typeof setTimeout> | null> = {};
 
     constructor(identity: RealtimeIdentity, presenceInterval?: number) {
         super(identity, presenceInterval);
@@ -120,35 +121,32 @@ class ActionCableConnector extends BaseActionCableConnector {
     };
 
     onTypingOn = ({ conversation, user }: TypingPayload) => {
-        const conversationId = conversation.id;
-        this.clearTimer(conversationId);
-        realtimeStore.addTyping(conversationId, user);
-        this.initTimer({ conversation, user });
-    };
-
-    onTypingOff = ({ conversation, user }: Pick<TypingPayload, 'conversation' | 'user'>) => {
-        const conversationId = conversation.id;
-        this.clearTimer(conversationId);
-        realtimeStore.removeTyping(conversationId, user);
-    };
-
-    private clearTimer = (conversationId: number) => {
-        const timer = this.cancelTyping[conversationId];
-        if (timer) {
-            clearTimeout(timer);
-            this.cancelTyping[conversationId] = null;
-        }
-    };
-
-    // Tự tắt typing sau 30s nếu không nhận typing_off.
-    private initTimer = ({ conversation, user }: Pick<TypingPayload, 'conversation' | 'user'>) => {
-        this.cancelTyping[conversation.id] = setTimeout(() => {
+        const timerKey = this.typingTimerKey(conversation.id, user);
+        this.clearTimer(timerKey);
+        realtimeStore.addTyping(conversation.id, user);
+        // Tự tắt sau 30s nếu không nhận typing_off.
+        this.cancelTyping[timerKey] = setTimeout(() => {
             this.onTypingOff({ conversation, user });
         }, TYPING_TIMEOUT);
     };
 
+    onTypingOff = ({ conversation, user }: Pick<TypingPayload, 'conversation' | 'user'>) => {
+        this.clearTimer(this.typingTimerKey(conversation.id, user));
+        realtimeStore.removeTyping(conversation.id, user);
+    };
+
+    private typingTimerKey = (conversationId: number, user: TypingUser) => `${conversationId}:${typingUserKey(user)}`;
+
+    private clearTimer = (timerKey: string) => {
+        const timer = this.cancelTyping[timerKey];
+        if (timer) {
+            clearTimeout(timer);
+            this.cancelTyping[timerKey] = null;
+        }
+    };
+
     disconnect() {
-        Object.keys(this.cancelTyping).forEach(id => this.clearTimer(Number(id)));
+        Object.keys(this.cancelTyping).forEach(this.clearTimer);
         super.disconnect();
     }
 }

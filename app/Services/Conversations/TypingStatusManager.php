@@ -12,13 +12,19 @@ use App\Support\BooleanParam;
 
 class TypingStatusManager
 {
-    /** @param array<string, mixed> $params */
+    /**
+     * @param  array<string, mixed>  $params
+     * @param  array{external_id: string, name: string, avatar?: string|null}|null  $groupMember
+     */
     public function __construct(
         private readonly Conversation $conversation,
         // Widget bắn sự kiện gõ với sender là Contact (khách), dashboard là User,
         // Application API là AgentBot.
         private readonly User|Contact|AgentBot $user,
         private readonly array $params,
+        // Hội thoại nhóm: liên hệ của hội thoại là cả nhóm, người gõ thật là một
+        // thành viên — cùng hình dạng `content_attributes.sender` của tin nhóm.
+        private readonly ?array $groupMember = null,
     ) {}
 
     public function toggleTypingStatus(): void
@@ -36,6 +42,7 @@ class TypingStatusManager
             'conversation' => $this->conversation,
             'user' => $this->user,
             'is_private' => $this->isPrivate(),
+            'group_member' => $this->groupMember,
         ]);
     }
 
