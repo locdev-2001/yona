@@ -15,6 +15,7 @@ use App\Agent\ValueObjects\ModelErrorKind;
 use App\Agent\ValueObjects\ModelRequest;
 use App\Agent\ValueObjects\ModelResponse;
 use App\Agent\ValueObjects\ModelRoute;
+use App\Agent\ValueObjects\ProviderBlock;
 use App\Agent\ValueObjects\Usage;
 use GuzzleHttp\Exception\TransferException;
 use Illuminate\Http\Client\ConnectionException;
@@ -89,7 +90,7 @@ final class ModelRouter implements LanguageModel
                     return new ModelResponse(
                         $outcome->completion->content,
                         $outcome->completion->finishReason,
-                        $this->withCacheMissReason($usage, $position > 0 ? self::CACHE_MISS_ROUTE_CHANGED : null),
+                        $this->withCacheMissReason($usage, $position > 0 || $this->carriesForeignProviderBlocks($request, $route) ? self::CACHE_MISS_ROUTE_CHANGED : null),
                         $route->identity(),
                     );
                 }
@@ -144,7 +145,7 @@ final class ModelRouter implements LanguageModel
             $failure = $this->classifier->fromUnreadableResponse($status, 'body is not a JSON object');
         } else {
             try {
-                $completion = $driver->parse($decoded);
+                $completion = $driver->parse($decoded, $route);
                 $usage = $this->priced($completion->usage, $route, $latencyMs);
                 $this->recorder->record($request, $route, $status, null, $body, $logged, $usage);
 
@@ -215,6 +216,20 @@ final class ModelRouter implements LanguageModel
             $route->price->costMicroUsd($tokens),
             $latencyMs,
         );
+    }
+
+    // Khối mờ của tuyến khác bị driver bỏ đi, nên tiền tố đã cache của lượt không còn khớp.
+    private function carriesForeignProviderBlocks(ModelRequest $request, Route $route): bool
+    {
+        foreach ($request->prompt->messages as $message) {
+            foreach ($message->content as $block) {
+                if ($block instanceof ProviderBlock && ! $block->belongsTo($route->identity())) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 
     private function withCacheMissReason(Usage $usage, ?string $reason): Usage

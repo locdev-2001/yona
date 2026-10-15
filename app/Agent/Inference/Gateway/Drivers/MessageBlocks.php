@@ -4,6 +4,7 @@ namespace App\Agent\Inference\Gateway\Drivers;
 
 use App\Agent\ValueObjects\MessageRole;
 use App\Agent\ValueObjects\PromptMessage;
+use App\Agent\ValueObjects\ProviderBlock;
 use App\Agent\ValueObjects\TextBlock;
 use App\Agent\ValueObjects\ToolCall;
 use App\Agent\ValueObjects\ToolResultBlock;
@@ -12,7 +13,7 @@ use App\Agent\ValueObjects\ToolResultBlock;
 // tin user (giữ nguyên thứ tự tương đối), khối chữ rỗng bị bỏ vì nhà cung cấp từ chối.
 final class MessageBlocks
 {
-    /** @return list<TextBlock|ToolCall|ToolResultBlock> */
+    /** @return list<TextBlock|ToolCall|ToolResultBlock|ProviderBlock> */
     public static function inWireOrder(PromptMessage $message): array
     {
         $blocks = array_values(array_filter(

@@ -22,9 +22,10 @@ interface ProtocolDriver
 
     /**
      * @param  array<string, mixed>  $body  thân phản hồi HTTP 2xx đã giải JSON
+     * @param  Route  $route  tuyến đã phục vụ; khối mờ của nhà cung cấp mang tuyến này
      *
      * @throws ProviderErrorInBody nhà cung cấp báo lỗi trong thân 2xx
      * @throws UnreadableResponse thân không đúng hình dạng của giao thức
      */
-    public function parse(array $body): Completion;
+    public function parse(array $body, Route $route): Completion;
 }

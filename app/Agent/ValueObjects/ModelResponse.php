@@ -8,7 +8,7 @@ use InvalidArgumentException;
 // finishReason = Error kèm `error`.
 final readonly class ModelResponse
 {
-    /** @param list<TextBlock|ToolCall> $content theo đúng thứ tự mô hình phát */
+    /** @param list<TextBlock|ToolCall|ProviderBlock> $content theo đúng thứ tự mô hình phát */
     public function __construct(
         public array $content,
         public FinishReason $finishReason,
@@ -21,8 +21,8 @@ final readonly class ModelResponse
         }
 
         foreach ($content as $block) {
-            if (! $block instanceof TextBlock && ! $block instanceof ToolCall) {
-                throw new InvalidArgumentException('Response content holds only text blocks and tool calls.');
+            if (! $block instanceof TextBlock && ! $block instanceof ToolCall && ! $block instanceof ProviderBlock) {
+                throw new InvalidArgumentException('Response content holds only text blocks, tool calls and provider blocks.');
             }
         }
     }

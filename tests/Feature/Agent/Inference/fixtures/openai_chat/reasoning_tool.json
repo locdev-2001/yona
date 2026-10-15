@@ -1,0 +1,55 @@
+{
+  "id": "gen-1760500000-reasoning",
+  "object": "chat.completion",
+  "created": 1760500000,
+  "model": "anthropic/claude-opus-5.5",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": null,
+        "refusal": null,
+        "reasoning": "Need to look up stock first.",
+        "reasoning_details": [
+          {
+            "type": "reasoning.text",
+            "text": "Need to look up stock first.",
+            "signature": "EosnCkYICxIMReasoningSig==",
+            "id": "rs_01",
+            "format": "anthropic-claude-v1",
+            "index": 0
+          },
+          {
+            "type": "reasoning.encrypted",
+            "data": "gAAAAABoEncryptedPayload",
+            "id": "rs_02",
+            "format": "anthropic-claude-v1",
+            "index": 1
+          }
+        ],
+        "tool_calls": [
+          {
+            "id": "toolu_01A09q90qw90lq917835lq9",
+            "type": "function",
+            "function": {
+              "name": "search_knowledge",
+              "arguments": "{\"query\": \"áo size M\"}"
+            }
+          }
+        ]
+      },
+      "logprobs": null,
+      "finish_reason": "tool_calls"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 2020,
+    "completion_tokens": 30,
+    "total_tokens": 2050,
+    "prompt_tokens_details": {
+      "cached_tokens": 1500,
+      "cache_write_tokens": 400
+    }
+  }
+}

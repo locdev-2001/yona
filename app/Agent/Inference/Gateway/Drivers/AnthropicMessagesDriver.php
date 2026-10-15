@@ -8,6 +8,7 @@ use App\Agent\Inference\Gateway\Route;
 use App\Agent\ValueObjects\FinishReason;
 use App\Agent\ValueObjects\Prompt;
 use App\Agent\ValueObjects\PromptMessage;
+use App\Agent\ValueObjects\ProviderBlock;
 use App\Agent\ValueObjects\SystemBlock;
 use App\Agent\ValueObjects\TextBlock;
 use App\Agent\ValueObjects\ToolCall;
@@ -26,6 +27,9 @@ final class AnthropicMessagesDriver implements ProtocolDriver
     private const CACHE_CONTROL = ['type' => 'ephemeral'];
 
     private const TRUNCATED_STOP_REASONS = ['max_tokens', 'model_context_window_exceeded'];
+
+    // Khối suy luận có chữ ký: phải gửi lại nguyên văn, đúng thứ tự, trong lượt dùng công cụ.
+    private const PROVIDER_BLOCK_TYPES = ['thinking', 'redacted_thinking'];
 
     public function __construct(private readonly CachePlan $cachePlan) {}
 
@@ -72,7 +76,7 @@ final class AnthropicMessagesDriver implements ProtocolDriver
         }
 
         $body['messages'] = array_map(
-            fn (PromptMessage $message, int $index) => $this->message($message, $index === $cache->historyBreakpoint),
+            fn (PromptMessage $message, int $index) => $this->message($message, $route, $index === $cache->historyBreakpoint),
             $prompt->messages,
             array_keys($prompt->messages),
         );
@@ -80,7 +84,7 @@ final class AnthropicMessagesDriver implements ProtocolDriver
         return $body;
     }
 
-    public function parse(array $body): Completion
+    public function parse(array $body, Route $route): Completion
     {
         $blocks = $body['content'] ?? null;
         $stopReason = $body['stop_reason'] ?? null;
@@ -94,7 +98,9 @@ final class AnthropicMessagesDriver implements ProtocolDriver
         foreach ($blocks as $block) {
             $type = $block['type'] ?? null;
 
-            if ($type === 'text' && is_string($block['text'] ?? null) && $block['text'] !== '') {
+            if (in_array($type, self::PROVIDER_BLOCK_TYPES, true) && is_array($block)) {
+                $content[] = new ProviderBlock($type, $route->identity(), $block);
+            } elseif ($type === 'text' && is_string($block['text'] ?? null) && $block['text'] !== '') {
                 $content[] = new TextBlock($block['text']);
             } elseif ($type === 'tool_use') {
                 $content[] = new ToolCall(
@@ -114,27 +120,46 @@ final class AnthropicMessagesDriver implements ProtocolDriver
         return Completion::settle($content, $nativeReason, $this->usage((array) ($body['usage'] ?? [])));
     }
 
-    /** @return array<string, mixed> */
-    private function message(PromptMessage $message, bool $cacheBreakpoint): array
+    /**
+     * Khối mờ của tuyến khác bị bỏ (chữ ký không hợp lệ ở đó); điểm ngắt cache không đặt
+     * lên khối mờ vì nhà cung cấp không cho đánh dấu khối suy luận.
+     *
+     * @return array<string, mixed>
+     */
+    private function message(PromptMessage $message, Route $route, bool $cacheBreakpoint): array
     {
-        $blocks = array_map(fn (TextBlock|ToolCall|ToolResultBlock $block) => match (true) {
-            $block instanceof TextBlock => ['type' => 'text', 'text' => $block->text],
-            $block instanceof ToolCall => [
-                'type' => 'tool_use',
-                'id' => ToolCallId::normalize($block->id),
-                'name' => $block->name,
-                'input' => WireJson::object($block->args),
-            ],
-            $block instanceof ToolResultBlock => [
-                'type' => 'tool_result',
-                'tool_use_id' => ToolCallId::normalize($block->toolCallId),
-                'content' => $block->content,
-                ...($block->isError ? ['is_error' => true] : []),
-            ],
-        }, MessageBlocks::inWireOrder($message));
+        $blocks = [];
+        $lastMarkable = null;
 
-        if ($cacheBreakpoint && $blocks !== []) {
-            $blocks[array_key_last($blocks)]['cache_control'] = self::CACHE_CONTROL;
+        foreach (MessageBlocks::inWireOrder($message) as $block) {
+            if ($block instanceof ProviderBlock) {
+                if ($block->belongsTo($route->identity())) {
+                    $blocks[] = $block->payload;
+                }
+
+                continue;
+            }
+
+            $blocks[] = match (true) {
+                $block instanceof TextBlock => ['type' => 'text', 'text' => $block->text],
+                $block instanceof ToolCall => [
+                    'type' => 'tool_use',
+                    'id' => ToolCallId::normalize($block->id),
+                    'name' => $block->name,
+                    'input' => WireJson::object($block->args),
+                ],
+                $block instanceof ToolResultBlock => [
+                    'type' => 'tool_result',
+                    'tool_use_id' => ToolCallId::normalize($block->toolCallId),
+                    'content' => $block->content,
+                    ...($block->isError ? ['is_error' => true] : []),
+                ],
+            };
+            $lastMarkable = array_key_last($blocks);
+        }
+
+        if ($cacheBreakpoint && $lastMarkable !== null) {
+            $blocks[$lastMarkable]['cache_control'] = self::CACHE_CONTROL;
         }
 
         return ['role' => $message->role->value, 'content' => $blocks];

@@ -10,6 +10,7 @@ use App\Agent\ValueObjects\FinishReason;
 use App\Agent\ValueObjects\MessageRole;
 use App\Agent\ValueObjects\Prompt;
 use App\Agent\ValueObjects\PromptMessage;
+use App\Agent\ValueObjects\ProviderBlock;
 use App\Agent\ValueObjects\SystemBlock;
 use App\Agent\ValueObjects\TextBlock;
 use App\Agent\ValueObjects\ToolCall;
@@ -28,6 +29,9 @@ final class OpenAiChatDriver implements ProtocolDriver
     private const TRUNCATED_FINISH_REASONS = ['length'];
 
     private const REFUSAL_FINISH_REASONS = ['content_filter'];
+
+    // Khối suy luận của cổng trung gian nằm ở trường riêng của message, không trong content.
+    private const REASONING_DETAILS = 'reasoning_details';
 
     // Mã lỗi trong thân 2xx không phải mã HTTP thì coi như cổng trung gian hỏng.
     private const FALLBACK_ERROR_STATUS = 502;
@@ -82,7 +86,7 @@ final class OpenAiChatDriver implements ProtocolDriver
         }
 
         foreach ($prompt->messages as $index => $message) {
-            array_push($messages, ...$this->messages($message, $cache, $index === $cache->historyBreakpoint));
+            array_push($messages, ...$this->messages($message, $route, $cache, $index === $cache->historyBreakpoint));
         }
 
         // `messages` đứng cuối để lượt sau nối thêm mà không đổi byte phía trước.
@@ -91,7 +95,7 @@ final class OpenAiChatDriver implements ProtocolDriver
         return $body;
     }
 
-    public function parse(array $body): Completion
+    public function parse(array $body, Route $route): Completion
     {
         if (isset($body['error'])) {
             $code = is_array($body['error']) ? ($body['error']['code'] ?? null) : null;
@@ -116,6 +120,11 @@ final class OpenAiChatDriver implements ProtocolDriver
         $refusal = is_string($message['refusal'] ?? null) && trim($message['refusal']) !== '' ? $message['refusal'] : null;
         $text = $this->messageText($message['content'] ?? null);
         $content = [];
+        $reasoningDetails = $message[self::REASONING_DETAILS] ?? null;
+
+        if (is_array($reasoningDetails) && $reasoningDetails !== []) {
+            $content[] = new ProviderBlock(self::REASONING_DETAILS, $route->identity(), [self::REASONING_DETAILS => $reasoningDetails]);
+        }
 
         if ($text !== '' || $refusal !== null) {
             $content[] = new TextBlock($text !== '' ? $text : (string) $refusal);
@@ -139,13 +148,13 @@ final class OpenAiChatDriver implements ProtocolDriver
     }
 
     /** @return list<array<string, mixed>> một tin Prompt có thể thành nhiều tin wire */
-    private function messages(PromptMessage $message, CacheDirectives $cache, bool $cacheBreakpoint): array
+    private function messages(PromptMessage $message, Route $route, CacheDirectives $cache, bool $cacheBreakpoint): array
     {
         $blocks = MessageBlocks::inWireOrder($message);
         $explicitCache = $cache->usesBreakpoints();
 
         $wire = $message->role === MessageRole::Assistant
-            ? [$this->assistantMessage($blocks, $explicitCache)]
+            ? [$this->assistantMessage($blocks, $route, $explicitCache)]
             : $this->userMessages($blocks, $explicitCache);
 
         return $cacheBreakpoint ? $this->markLastPart($wire) : $wire;
@@ -153,12 +162,13 @@ final class OpenAiChatDriver implements ProtocolDriver
 
     /**
      * Khi dùng điểm ngắt tường minh, chữ luôn ở dạng mảng phần để điểm ngắt đặt được mà
-     * không đổi byte của tin giữa hai lượt.
+     * không đổi byte của tin giữa hai lượt. Khối suy luận cùng tuyến gắn lại nguyên văn
+     * vào trường riêng; của tuyến khác thì bỏ.
      *
-     * @param  list<TextBlock|ToolCall|ToolResultBlock>  $blocks
+     * @param  list<TextBlock|ToolCall|ToolResultBlock|ProviderBlock>  $blocks
      * @return array<string, mixed>
      */
-    private function assistantMessage(array $blocks, bool $explicitCache): array
+    private function assistantMessage(array $blocks, Route $route, bool $explicitCache): array
     {
         $texts = array_values(array_map(fn (TextBlock $block) => $block->text, array_filter($blocks, fn ($block) => $block instanceof TextBlock)));
         $calls = array_values(array_filter($blocks, fn ($block) => $block instanceof ToolCall));
@@ -177,6 +187,12 @@ final class OpenAiChatDriver implements ProtocolDriver
             ], $calls);
         }
 
+        foreach ($blocks as $block) {
+            if ($block instanceof ProviderBlock && $block->kind === self::REASONING_DETAILS && $block->belongsTo($route->identity())) {
+                $wire[self::REASONING_DETAILS] = $block->payload[self::REASONING_DETAILS];
+            }
+        }
+
         return $wire;
     }
 
@@ -184,7 +200,7 @@ final class OpenAiChatDriver implements ProtocolDriver
      * Mỗi kết quả công cụ một tin `tool`, chữ còn lại gom thành một tin `user` theo sau.
      * Khi dùng điểm ngắt tường minh, nội dung tin `tool` cũng ở dạng mảng phần.
      *
-     * @param  list<TextBlock|ToolCall|ToolResultBlock>  $blocks
+     * @param  list<TextBlock|ToolCall|ToolResultBlock|ProviderBlock>  $blocks
      * @return list<array<string, mixed>>
      */
     private function userMessages(array $blocks, bool $explicitCache): array
