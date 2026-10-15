@@ -32,4 +32,14 @@ final readonly class ToolResult
     {
         return new self(false, errorCode: $code, fix: $fix, retryable: $retryable);
     }
+
+    /** @return array<string, mixed> hình dạng mô hình nhận trong tool_result */
+    public function toArray(): array
+    {
+        if (! $this->ok) {
+            return ['ok' => false, 'error' => ['code' => $this->errorCode?->value, 'fix' => $this->fix, 'retryable' => $this->retryable]];
+        }
+
+        return ['ok' => true, 'data' => $this->data, ...($this->hint === null ? [] : ['hint' => $this->hint])];
+    }
 }

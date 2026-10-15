@@ -17,5 +17,7 @@ final readonly class CoreMessage
         public ?int $senderUserId = null,
         public ?int $senderAiAgentId = null,
         public array $attachmentTypes = [],
+        // Tên hiển thị của người gửi phía shop (nhân viên, AI agent); null với khách.
+        public ?string $senderName = null,
     ) {}
 }

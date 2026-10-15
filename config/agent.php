@@ -68,12 +68,41 @@ return [
     'agent_models' => [],
 
     'turn' => [
+        // Công tắc dừng toàn nền tảng: false thì không lượt nào chạy, lượt đang chạy dừng ở bước kế.
+        'enabled' => (bool) env('AGENT_TURNS_ENABLED', true),
+
         'queue' => 'ai',
 
-        // Bất biến: deadline_seconds < timeout của supervisor-ai (150s, config/horizon.php)
-        // < retry_after của Redis (180s, config/queue.php).
+        // Bất biến (test khoá): deadline_seconds + floor_grace_seconds <= job_timeout_seconds
+        // (= timeout của supervisor-ai, config/horizon.php) < lock_expire_seconds và
+        // job_timeout_seconds < retry_after của Redis (180s, config/queue.php).
         'deadline_seconds' => 120,
+        // Khoá lượt giữ tới deadline + chừng này giây; worker chết thì khoá tự hết.
+        'floor_grace_seconds' => 20,
+        'job_timeout_seconds' => 150,
+        // Hội thoại đang có lượt khác: nhả job lại sau chừng này giây.
+        'lock_release_seconds' => 5,
+        'lock_expire_seconds' => 180,
+        // Job chờ khoá tối đa chừng này giây (sau cửa sổ im lặng) rồi bỏ.
+        'max_wait_seconds' => 600,
 
+        // Số lần gọi mô hình tối đa của một lượt, thêm một bước ân hạn chỉ cho công cụ kết thúc. [NGƯỠNG]
         'max_steps' => 6,
+
+        // Cửa sổ im lặng theo loại kênh (giây): gom tin khách nhắn dồn thành một lượt.
+        'debounce_seconds' => [
+            'default' => 4,
+            'email' => 0,
+        ],
+
+        // Lịch sử đọc từ messages mỗi lượt: số tin gần nhất, trần token cứng, cắt tin cũ theo khúc.
+        'history' => [
+            'messages' => 60,
+            'max_tokens' => 12000,
+            'drop_chunk' => 10,
+        ],
+
+        // Trần chi phí mô hình mỗi account mỗi ngày (USD, theo api_logs); 0 = không giới hạn. [NGƯỠNG]
+        'daily_budget_usd' => (float) env('AGENT_DAILY_BUDGET_USD', 5),
     ],
 ];

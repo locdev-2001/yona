@@ -18,5 +18,9 @@ final readonly class ConversationSnapshot
         public bool $canReply,
         public bool $isGroup,
         public string $timezone,
+        // Loại kênh trung tính của inbox (vd `web_widget`, `zalo`, `email`).
+        public string $channel = 'unknown',
+        // Account đang hoạt động (không bị treo).
+        public bool $accountActive = true,
     ) {}
 }

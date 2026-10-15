@@ -2,26 +2,28 @@
 
 namespace App\Agent\Contracts\Ports;
 
+use App\Agent\ValueObjects\AgentNotice;
+use App\Agent\ValueObjects\AutoReplyStop;
 use App\Agent\ValueObjects\ConversationRef;
 use App\Agent\ValueObjects\DeliveryReceipt;
+use App\Agent\ValueObjects\Handover;
 
 // Mọi ghi vào hội thoại của lõi, đứng tên AI agent. Từ chối nghiệp vụ trả trong
-// DeliveryReceipt, không ném ngoại lệ.
+// DeliveryReceipt, không ném ngoại lệ. Chữ cố định (ghi chú hệ thống, câu giữ chân
+// chuẩn) do phía lõi dựng theo ngôn ngữ của account; ghi chú không nhắc tên ai.
 interface ConversationActionWriter
 {
+    // Tin công khai cho khách; chỉ AI trả lời của inbox, khi công tắc còn bật.
     public function sendReply(ConversationRef $conversation, int $aiAgentId, string $text): DeliveryReceipt;
 
-    /** @param list<int> $mentionUserIds nhân viên người được nhắc trong ghi chú */
-    public function postPrivateNote(ConversationRef $conversation, int $aiAgentId, string $text, array $mentionUserIds = []): DeliveryReceipt;
+    // Câu giữ chân chuẩn của shop, dùng khi mô hình không tự soạn được câu an toàn.
+    public function sendStandardHoldingReply(ConversationRef $conversation, int $aiAgentId): DeliveryReceipt;
 
-    /**
-     * Ghi chú bàn giao + tắt tự động (lý do: AI chuyển cho người); gán người phụ trách
-     * khi có $assigneeUserId, không thì giữ nguyên.
-     *
-     * @param  list<int>  $mentionUserIds
-     */
-    public function handoff(ConversationRef $conversation, int $aiAgentId, string $note, array $mentionUserIds = [], ?int $assigneeUserId = null): DeliveryReceipt;
+    // Ghi chú riêng cố định cho nhân viên (lượt lỗi, cửa sổ kênh đóng, hết ngân sách).
+    public function postNotice(ConversationRef $conversation, int $aiAgentId, AgentNotice $notice): DeliveryReceipt;
 
-    // Tắt tự động khi AI agent tự dừng (công tắc dừng, hết ngân sách).
-    public function disableAutoResponder(ConversationRef $conversation, int $aiAgentId): void;
+    // Ghi chú bàn giao + tắt tự động (AI chuyển cho người); giữ nguyên người phụ trách.
+    public function handOver(ConversationRef $conversation, int $aiAgentId, Handover $handover): DeliveryReceipt;
+
+    public function disableAutoResponder(ConversationRef $conversation, int $aiAgentId, AutoReplyStop $reason): void;
 }
