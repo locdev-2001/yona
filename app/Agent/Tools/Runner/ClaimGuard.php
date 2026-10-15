@@ -7,8 +7,8 @@ use App\Agent\ValueObjects\ToolResult;
 use App\Agent\ValueObjects\TurnEvidence;
 
 // Dữ liệu doanh nghiệp là nguồn chuẩn, lời khách chỉ là lời khai: số tiền hay phần trăm
-// trong câu gửi khách phải xuất hiện trong tool_result của chính lượt này. Tất định,
-// không hỏi mô hình.
+// trong câu gửi khách phải xuất hiện trong tool_result của chính lượt này hoặc trong
+// lời nhân viên người đã nói công khai với khách. Tất định, không hỏi mô hình.
 final class ClaimGuard
 {
     public function check(string $customerFacingText, TurnEvidence $evidence): ?ToolResult
@@ -19,7 +19,7 @@ final class ClaimGuard
             return null;
         }
 
-        $sourced = MoneyMentions::in(implode("\n", $evidence->toolResults), includeBareNumbers: true);
+        $sourced = MoneyMentions::in(implode("\n", $evidence->sources()), includeBareNumbers: true);
         $unsourced = array_values(array_diff($claimed, $sourced));
 
         if ($unsourced === []) {
@@ -28,7 +28,7 @@ final class ClaimGuard
 
         return ToolResult::failure(
             ToolErrorCode::UnsourcedClaim,
-            'These amounts are not in any tool result of this turn: '.implode(', ', array_map(self::readable(...), $unsourced))
+            'These amounts are not in any tool result of this turn or in what the staff told the customer: '.implode(', ', array_map(self::readable(...), $unsourced))
             .'. Do not state them. Look them up with search_knowledge, or, if the data has no answer, '
             .'use handoff_to_human with a short holding_reply that promises to check (no amounts).',
         );

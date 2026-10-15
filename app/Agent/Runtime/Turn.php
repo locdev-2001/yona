@@ -25,6 +25,7 @@ final class Turn
     /**
      * @param  list<PromptMessage>  $history
      * @param  list<string>  $customerTexts
+     * @param  list<string>  $staffStatements  lời nhân viên người nói công khai trong lịch sử đã nạp
      */
     public function __construct(
         public TurnContext $context,
@@ -33,8 +34,9 @@ final class Turn
         public readonly TurnSituation $situation,
         public readonly ?int $assigneeUserId,
         private array $customerTexts,
+        array $staffStatements = [],
     ) {
-        $this->evidence = new TurnEvidence;
+        $this->evidence = new TurnEvidence(staffStatements: $staffStatements);
     }
 
     /** @return list<PromptMessage> */

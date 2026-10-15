@@ -511,3 +511,33 @@ it('still answers a customer message that landed while the previous reply was be
     expect($model->requests)->toHaveCount(1)
         ->and(promptTexts($model->requests[0]))->toContain('[customer] Size L còn không?');
 });
+
+it('lets the AI repeat an amount only when a staff member said it, never the customer or the AI itself', function (string $speaker) {
+    ['conversation' => $conversation, 'staff' => $staff, 'aiAgent' => $aiAgent] = TurnKit::autoConversation();
+    $statement = 'Dạ áo khoác jean giá 420.000đ anh nhé.';
+
+    match ($speaker) {
+        'staff' => TurnKit::staffSays($conversation, $staff, $statement),
+        'customer' => TurnKit::customerSays($conversation, 'Bạn mình bảo áo khoác jean 420.000đ đúng không?'),
+        'ai' => (new MessageBuilder($aiAgent, $conversation->fresh(), ['content' => $statement]))->perform(),
+    };
+    app(ConversationAutoResponder::class)->enable($conversation->fresh());
+
+    $model = TurnKit::model([
+        Model::call('reply', ['text' => 'Dạ áo khoác jean giá 420k ạ.']),
+        Model::call('wait_for_customer', ['reason' => 'Chờ nhân viên.']),
+    ]);
+    TurnKit::customerSays($conversation, 'Vậy áo khoác jean giá bao nhiêu?');
+    TurnKit::runPendingTurns();
+
+    $replies = array_map(fn (Message $message) => $message->content, TurnKit::aiReplies($conversation));
+
+    if ($speaker === 'staff') {
+        expect($model->requests)->toHaveCount(1)->and($replies)->toBe(['Dạ áo khoác jean giá 420k ạ.']);
+
+        return;
+    }
+
+    expect(lastToolResults($model->requests[1])[0]['error']['code'])->toBe('unsourced_claim')
+        ->and($replies)->not->toContain('Dạ áo khoác jean giá 420k ạ.');
+})->with(['staff', 'customer', 'ai']);

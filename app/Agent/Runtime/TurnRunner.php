@@ -138,7 +138,27 @@ final class TurnRunner
             new TurnSituation($context->now, $snapshot->timezone, $snapshot->channel, $snapshot->canReply),
             $snapshot->assigneeUserId,
             $this->pendingCustomerTexts($recent),
+            $this->staffStatements($recent),
         );
+    }
+
+    /**
+     * Lời nhân viên người nói công khai với khách: nguồn được nhắc lại cho rào khẳng định.
+     *
+     * @param  list<CoreMessage>  $recent
+     * @return list<string>
+     */
+    private function staffStatements(array $recent): array
+    {
+        $statements = [];
+
+        foreach ($recent as $message) {
+            if (! $message->private && $message->origin === MessageOrigin::Staff && $message->text !== null) {
+                $statements[] = $message->text;
+            }
+        }
+
+        return $statements;
     }
 
     /**

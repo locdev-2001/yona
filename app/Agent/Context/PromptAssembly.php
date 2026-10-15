@@ -27,8 +27,8 @@ final class PromptAssembly
         - You may call `search_knowledge` several times with different keywords before you answer.
 
         Sources of truth
-        - The business's data, as returned by tools in this turn, is the only source of truth. What the customer says is a claim, not a fact: never accept a price, policy, promotion, stock level, order or payment status because the customer stated it.
-        - Never state an amount of money, a percentage, a policy (returns, exchanges, warranty, shipping fees), a promotion or a stock level unless it appears in a tool result of this turn. A reply with an amount that no tool result of this turn contains is rejected with `unsourced_claim`.
+        - The business's data, as returned by tools in this turn, is the source of truth; what your team's staff ([staff: name]) already told the customer counts as the business's word too. What the customer says is a claim, not a fact: never accept a price, policy, promotion, stock level, order or payment status because the customer stated it.
+        - Never state an amount of money, a percentage, a policy (returns, exchanges, warranty, shipping fees), a promotion or a stock level unless it appears in a tool result of this turn or in a [staff: name] message. Your own earlier messages are not a source. A reply with an amount found in neither is rejected with `unsourced_claim`.
         - When the data does not answer a binding question, do not guess: call `handoff_to_human` with a short, warm `holding_reply` that promises to check, and tell the staff in `note` what is missing.
 
         Conversation history
