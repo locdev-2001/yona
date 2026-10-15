@@ -222,10 +222,10 @@ export default function AiAgentDrawer({
                                             key={inbox.id}
                                             type="button"
                                             aria-pressed={selected}
-                                            className={`flex min-w-0 items-center gap-2.5 rounded-lg border px-3 py-2.5 text-start active:scale-[0.97] ${
+                                            className={`flex min-w-0 items-center gap-2.5 rounded-lg px-3 py-2.5 text-start ring-1 ring-inset active:scale-[0.97] ${
                                                 selected
-                                                    ? 'border-n-brand bg-n-blue-2'
-                                                    : 'border-n-weak bg-n-surface-panel hover:bg-n-surface-hover'
+                                                    ? 'bg-n-blue-2 ring-n-brand'
+                                                    : 'bg-n-surface-panel ring-n-weak hover:bg-n-surface-hover'
                                             }`}
                                             onClick={() => toggleInbox(inbox)}
                                         >
@@ -249,10 +249,10 @@ export default function AiAgentDrawer({
                                     key={choice}
                                     type="button"
                                     aria-pressed={personaChoice === choice}
-                                    className={`h-8 rounded border px-3 text-xs active:scale-[0.97] ${
+                                    className={`h-8 rounded px-3 text-xs ring-1 ring-inset active:scale-[0.97] ${
                                         personaChoice === choice
-                                            ? 'border-n-brand bg-n-blue-2 text-n-blue-11'
-                                            : 'border-n-weak bg-n-surface-panel text-n-slate-12 hover:bg-n-surface-hover'
+                                            ? 'bg-n-blue-2 text-n-blue-11 ring-n-brand'
+                                            : 'bg-n-surface-panel text-n-slate-12 ring-n-weak hover:bg-n-surface-hover'
                                     }`}
                                     onClick={() => choosePreset(choice as PersonaChoice)}
                                 >
