@@ -23,7 +23,7 @@
         </include>
     </source>
     <php>
-        <ini name="memory_limit" value="1G"/>
+        <ini name="memory_limit" value="2G"/>
         <env name="APP_ENV" value="testing"/>
         <!-- Bộ test khẳng định chuỗi tiếng Anh. Sản phẩm mặc định tiếng Việt
              (App\Http\Middleware\SetLocale), nên locale phải được ghim ở đây
