@@ -95,16 +95,16 @@ final class TurnRunner
     }
 
     /**
-     * Có tin khách mới hơn tin đánh thức (job của tin đó lo, gom luôn tin này) hoặc AI đã
-     * nói công khai sau tin này (lượt trước đã đưa tin này vào và trả lời).
+     * Có tin khách mới hơn tin đánh thức: job của tin đó lo và gom luôn tin này. Tin AI
+     * gửi sau tin đánh thức KHÔNG làm job thoát: tin khách tới đúng lúc lượt trước đang
+     * gửi sẽ bị bỏ rơi; lượt trước đã đưa tin này vào thì dấu `turn-handled` đã chặn.
      *
      * @param  list<CoreMessage>  $recent
      */
     private function isStale(array $recent, int $wakeMessageId): bool
     {
         foreach ($recent as $message) {
-            if ($message->id > $wakeMessageId && ! $message->private
-                && ($message->origin === MessageOrigin::Customer || $message->origin === MessageOrigin::AiAgent)) {
+            if ($message->id > $wakeMessageId && ! $message->private && $message->origin === MessageOrigin::Customer) {
                 return true;
             }
         }

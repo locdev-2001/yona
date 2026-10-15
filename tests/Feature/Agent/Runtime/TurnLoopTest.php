@@ -493,3 +493,21 @@ it('keeps the provider reasoning blocks of a step in the turn so the next step c
     expect($assistant->role)->toBe(MessageRole::Assistant)
         ->and($assistant->content[0])->toBe($thinking);
 });
+
+it('still answers a customer message that landed while the previous reply was being sent', function () {
+    ['conversation' => $conversation, 'aiAgent' => $aiAgent] = TurnKit::autoConversation();
+    $model = TurnKit::model([
+        Model::call('reply', ['text' => 'Dạ em chào anh ạ.']),
+        Model::call('reply', ['text' => 'Dạ size L vẫn còn ạ.']),
+    ]);
+    TurnKit::customerSays($conversation, 'Shop ơi');
+    TurnKit::customerSays($conversation, 'Size L còn không?');
+    $lateJob = TurnKit::pendingTurns()[1];
+
+    // Lượt đầu chạy với snapshot trước khi tin muộn tới: mô phỏng bằng cách gửi trả lời của AI sau tin muộn.
+    (new MessageBuilder($aiAgent, $conversation->fresh(), ['content' => 'Dạ em chào anh ạ.']))->perform();
+    app()->call([$lateJob, 'handle']);
+
+    expect($model->requests)->toHaveCount(1)
+        ->and(promptTexts($model->requests[0]))->toContain('[customer] Size L còn không?');
+});
