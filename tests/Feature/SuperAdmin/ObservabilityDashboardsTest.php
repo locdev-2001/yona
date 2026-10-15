@@ -81,9 +81,10 @@ it('giữ đúng thứ tự tier khi Horizon nuôi worker, tệp gửi ở pool 
     $tiers = require config_path('queue_tiers.php');
     $supervisors = config('horizon.defaults');
 
-    expect($supervisors['supervisor-1']['queue'])->toBe(array_values(array_diff($tiers, ['media'])))
+    expect($supervisors['supervisor-1']['queue'])->toBe(array_values(array_diff($tiers, ['media', 'ai'])))
         ->and($supervisors['supervisor-realtime']['queue'])->toBe(['critical'])
         ->and($supervisors['supervisor-media']['queue'])->toBe(['media'])
+        ->and($supervisors['supervisor-ai']['queue'])->toBe(['ai'])
         ->and(array_diff($tiers, ...array_column($supervisors, 'queue')))->toBeEmpty();
 
     foreach ($supervisors as $supervisor) {
@@ -97,7 +98,7 @@ it('giữ đúng thứ tự tier khi Horizon nuôi worker, tệp gửi ở pool 
 it('mọi pool worker production cố định số process', function () {
     $production = config('horizon.environments.production');
 
-    foreach (['supervisor-realtime', 'supervisor-1', 'supervisor-media'] as $name) {
+    foreach (['supervisor-realtime', 'supervisor-1', 'supervisor-media', 'supervisor-ai'] as $name) {
         expect($production[$name]['minProcesses'])->toBe($production[$name]['maxProcesses'])
             ->and($production[$name]['maxProcesses'])->toBeGreaterThanOrEqual(1);
     }

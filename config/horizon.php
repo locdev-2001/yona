@@ -240,7 +240,7 @@ return [
 
         'supervisor-1' => [
             'connection' => 'redis',
-            'queue' => array_values(array_diff($tiers, ['media'])),
+            'queue' => array_values(array_diff($tiers, ['media', 'ai'])),
             'balance' => false,
             'autoScalingStrategy' => 'time',
             'minProcesses' => 1,
@@ -259,6 +259,23 @@ return [
         'supervisor-media' => [
             'connection' => 'redis',
             'queue' => ['media'],
+            'balance' => false,
+            'minProcesses' => 1,
+            'maxProcesses' => 1,
+            'maxTime' => 3600,
+            'maxJobs' => 0,
+            'memory' => 256,
+            'tries' => 3,
+            'timeout' => 150,
+            'nice' => 0,
+        ],
+
+        // Lượt nhân viên AI: chuỗi deadline lượt (120s, config/agent.php) < timeout
+        // worker (150s) < retry_after của Redis (180s). Pool riêng để lượt dài không
+        // giữ worker của tin nhắn.
+        'supervisor-ai' => [
+            'connection' => 'redis',
+            'queue' => ['ai'],
             'balance' => false,
             'minProcesses' => 1,
             'maxProcesses' => 1,
@@ -299,6 +316,10 @@ return [
             'supervisor-media' => [
                 'minProcesses' => $mediaProcesses = max(1, (int) env('HORIZON_MEDIA_PROCESSES', 2)),
                 'maxProcesses' => $mediaProcesses,
+            ],
+            'supervisor-ai' => [
+                'minProcesses' => $aiProcesses = max(1, (int) env('HORIZON_AI_PROCESSES', 2)),
+                'maxProcesses' => $aiProcesses,
             ],
         ],
 
