@@ -94,9 +94,10 @@ describe('agent tạo tin', function () {
             'items' => [['title' => 'A']],
             'submitted_values' => [['title' => 'A', 'value' => 'A']],
             'in_reply_to_choice' => 1,
+            'ai_handoff' => ['reason' => 'handed_off'],
         ], 'Hỏi');
 
-        expect($message->content_attributes)->not->toHaveKeys(['submitted_values', 'in_reply_to_choice']);
+        expect($message->content_attributes)->not->toHaveKeys(['submitted_values', 'in_reply_to_choice', 'ai_handoff']);
     });
 });
 

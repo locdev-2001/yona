@@ -30,7 +30,7 @@ class MessageBuilder
      * Khoá chỉ server được ghi. `submitted_values` đi qua SubmissionService,
      * `in_reply_to_choice` do chính service đó gắn vào tin trả lời của khách.
      */
-    public const SERVER_OWNED_CONTENT_ATTRIBUTES = ['sticker', 'forwarded_from', 'submitted_values', 'in_reply_to_choice'];
+    public const SERVER_OWNED_CONTENT_ATTRIBUTES = ['sticker', 'forwarded_from', 'submitted_values', 'in_reply_to_choice', 'ai_handoff'];
 
     private ?Message $message = null;
 
