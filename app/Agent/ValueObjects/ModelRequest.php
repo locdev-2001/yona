@@ -17,6 +17,8 @@ final readonly class ModelRequest
         // null = cổng tự chọn: mô hình riêng của nhân viên AI, không có thì mặc định.
         public ?string $modelAlias = null,
         public ?int $aiAgentId = null,
+        // Hội thoại của lượt, để nhật ký gọi API gắn đúng hội thoại.
+        public ?int $conversationId = null,
     ) {
         if ($accountId <= 0 || $cacheKey === '') {
             throw new InvalidArgumentException('Model request needs an account and a cache key.');

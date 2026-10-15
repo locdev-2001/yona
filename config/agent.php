@@ -1,7 +1,7 @@
 <?php
 
 // Cấu hình nhân viên AI (App\Agent). Mọi khoá API đọc từ .env, không ghi ở đây.
-// Chủ từng khoá: `providers`, `models`, `default_model`, `member_models` thuộc cổng
+// Chủ từng khoá: `providers`, `models`, `default_model`, `agent_models` thuộc cổng
 // mô hình (Inference/Gateway); `turn` thuộc vòng lượt (Runtime). Giá trị mặc định ở
 // đây an toàn: không nhà cung cấp, không mô hình, nên chưa lượt nào gọi ra ngoài.
 return [
@@ -15,7 +15,7 @@ return [
     'default_model' => env('AGENT_DEFAULT_MODEL', 'main'),
 
     // ai_agent_id => alias: chỉ AI agent cần mô hình riêng mới khai ở đây.
-    'member_models' => [],
+    'agent_models' => [],
 
     'turn' => [
         'queue' => 'ai',
