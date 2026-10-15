@@ -26,6 +26,8 @@ final class TurnRunner
 {
     private const MARK_TTL_SECONDS = 86_400;
 
+    private const BUSINESS_VOICES = [MessageOrigin::Staff, MessageOrigin::ChannelEcho];
+
     public function __construct(
         private readonly ConversationReader $reader,
         private readonly AiAgentDirectory $agents,
@@ -143,7 +145,8 @@ final class TurnRunner
     }
 
     /**
-     * Lời nhân viên người nói công khai với khách: nguồn được nhắc lại cho rào khẳng định.
+     * Lời doanh nghiệp nói công khai với khách (nhân viên trong Yona, chủ shop trả lời
+     * thẳng trên ứng dụng kênh): nguồn được nhắc lại cho rào khẳng định.
      *
      * @param  list<CoreMessage>  $recent
      * @return list<string>
@@ -153,7 +156,7 @@ final class TurnRunner
         $statements = [];
 
         foreach ($recent as $message) {
-            if (! $message->private && $message->origin === MessageOrigin::Staff && $message->text !== null) {
+            if (! $message->private && in_array($message->origin, self::BUSINESS_VOICES, true) && $message->text !== null) {
                 $statements[] = $message->text;
             }
         }
