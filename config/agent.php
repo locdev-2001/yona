@@ -14,7 +14,7 @@ return [
 
     'default_model' => env('AGENT_DEFAULT_MODEL', 'main'),
 
-    // agent_member_id => alias: chỉ nhân viên AI cần mô hình riêng mới khai ở đây.
+    // ai_agent_id => alias: chỉ AI agent cần mô hình riêng mới khai ở đây.
     'member_models' => [],
 
     'turn' => [
