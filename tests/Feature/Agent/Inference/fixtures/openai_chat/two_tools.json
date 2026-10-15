@@ -1,0 +1,45 @@
+{
+  "id": "chatcmpl-B9MHDbslfkBeAs8l4bebGdFOJ6PeG",
+  "object": "chat.completion",
+  "created": 1760500000,
+  "model": "gpt-5",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "Em tra giúp anh nhé.",
+        "refusal": null,
+        "tool_calls": [
+          {
+            "id": "toolu_01A09q90qw90lq917835lq9",
+            "type": "function",
+            "function": {
+              "name": "search_knowledge",
+              "arguments": "{\"query\": \"áo size M\"}"
+            }
+          },
+          {
+            "id": "toolu_01B7xYzK9mN2pQ4rS6tU8vW0",
+            "type": "function",
+            "function": {
+              "name": "lookup_order",
+              "arguments": "{\"order_code\": \"DH1024\"}"
+            }
+          }
+        ]
+      },
+      "logprobs": null,
+      "finish_reason": "tool_calls"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 2020,
+    "completion_tokens": 30,
+    "total_tokens": 2050,
+    "prompt_tokens_details": {
+      "cached_tokens": 1500,
+      "cache_write_tokens": 400
+    }
+  }
+}

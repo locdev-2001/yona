@@ -1,0 +1,27 @@
+{
+  "id": "chatcmpl-B9MHDbslfkBeAs8l4bebGdFOJ6PeG",
+  "object": "chat.completion",
+  "created": 1760500000,
+  "model": "gpt-5",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "Dạ shop có nhiều mẫu",
+        "refusal": null
+      },
+      "logprobs": null,
+      "finish_reason": "length"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 2020,
+    "completion_tokens": 30,
+    "total_tokens": 2050,
+    "prompt_tokens_details": {
+      "cached_tokens": 1500,
+      "cache_write_tokens": 400
+    }
+  }
+}
