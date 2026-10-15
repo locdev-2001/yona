@@ -27,6 +27,7 @@ import ReplyBox from './ReplyBox';
 import ResizableEditorWrapper from './ResizableEditorWrapper';
 import type { ResizableEditorWrapperHandle } from './ResizableEditorWrapper';
 import { useMessageReply } from './useMessageReply';
+import { isFloorHeld, useFloorClock } from '../autoResponder';
 
 // Port từ dashboard/components/widgets/conversation/MessagesView.vue — rút về
 // kênh API. Bỏ: label suggestions (EE), referral bubble (WhatsApp), banner
@@ -78,6 +79,11 @@ export default function MessagesView() {
     const galleryAttachments = useMemo(() => collectMediaAttachments(messages), [messages]);
     const typingUsersList = useTypingUsers(currentChat.id);
     const isAnyoneTyping = typingUsersList.length !== 0;
+    const floorClock = useFloorClock(currentChat);
+    const replyingAiAgentName =
+        currentChat.auto_responder?.enabled && isFloorHeld(currentChat, floorClock)
+            ? currentChat.auto_responder.ai_agent?.name ?? null
+            : null;
     const typingUserNames = (() => {
         if (!isAnyoneTyping) return '';
         const [i18nKey, params] = getTypingUsersText(typingUsersList);
@@ -253,6 +259,22 @@ export default function MessagesView() {
             <div className="flex relative flex-col bg-n-surface-canvas pb-[env(safe-area-inset-bottom)]">
                 {scrollToLatest.isAwayFromLatest ? (
                     <ScrollToLatestButton unseenCount={scrollToLatest.unseenCount} onClick={scrollToLatest.jump} />
+                ) : null}
+                {replyingAiAgentName && !isAnyoneTyping ? (
+                    <div className="absolute flex w-full h-0 -top-7 justify-end pe-6">
+                        <div
+                            role="status"
+                            data-testid="ai-replying-indicator"
+                            className="flex items-center gap-2 my-2.5 px-3 py-1.5 overlay-surface rounded-full text-xs text-n-slate-11"
+                        >
+                            <span className="flex gap-0.5" aria-hidden>
+                                <span className="size-1.5 rounded-full bg-n-violet-9" />
+                                <span className="size-1.5 rounded-full bg-n-violet-7" />
+                                <span className="size-1.5 rounded-full bg-n-violet-5" />
+                            </span>
+                            {t('CONVERSATION.AUTO_RESPONDER.REPLYING', { name: replyingAiAgentName })}
+                        </div>
+                    </div>
                 ) : null}
                 {isAnyoneTyping && (
                     <div className="absolute flex items-center w-full h-0 -top-7">

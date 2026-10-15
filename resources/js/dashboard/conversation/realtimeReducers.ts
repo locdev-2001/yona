@@ -1,5 +1,6 @@
 import type { MessageAttachment } from 'dashboard/components-next/message/helpers/attachments';
-import { CONVERSATION_TYPE, MESSAGE_STATUS, MESSAGE_TYPES } from './constants';
+import { AI_QUICK_FILTER, CONVERSATION_TYPE, MESSAGE_STATUS, MESSAGE_TYPES } from './constants';
+import type { AiQuickFilter } from './constants';
 import type { ConversationType } from './constants';
 import { getLastMessage } from '../helper/conversationHelper';
 import { matchesLabels } from './labelHelpers';
@@ -178,6 +179,8 @@ export interface ConversationViewFilters {
     currentUserId: number;
     // filters.labels của applyPageFilters — trang /label/{title}.
     labels?: string[];
+    // Bộ lọc nhanh của AI: realtime đổi công tắc thì hội thoại tự vào/ra danh sách.
+    aiFilter?: AiQuickFilter;
 }
 
 // applyPageFilters + nhánh tab của getMineChats/getUnAssignedChats/getAllStatusChats.
@@ -192,6 +195,8 @@ export function matchesConversationView(conversation: Conversation, filters: Con
     if (inboxId && Number(inboxId) !== conversation.inbox_id) return false;
     if (teamId && Number(teamId) !== conversation.meta?.team?.id) return false;
     if (labels.length && !matchesLabels(conversation.labels, labels)) return false;
+    if (filters.aiFilter === AI_QUICK_FILTER.AUTO_REPLY && !conversation.auto_responder?.enabled) return false;
+    if (filters.aiFilter === AI_QUICK_FILTER.HANDED_OFF && !conversation.ai_handed_off_at) return false;
 
     return true;
 }

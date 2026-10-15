@@ -8,7 +8,7 @@ import type { ConversationSenderIdentity } from '../SenderIdentityContext';
 import { readGroupSender } from './groupSender';
 
 // Sender nào thuộc nhóm bot thì đứng bên phải như tin nhân viên và lấy ảnh theo avatar_url.
-export const BOT_SENDER_TYPES: string[] = [SENDER_TYPES.AGENT_BOT, SENDER_TYPES.CAPTAIN_ASSISTANT];
+export const BOT_SENDER_TYPES: string[] = [SENDER_TYPES.AGENT_BOT, SENDER_TYPES.CAPTAIN_ASSISTANT, SENDER_TYPES.AI_AGENT];
 
 export interface MessageSenderIdentity {
     name: string;

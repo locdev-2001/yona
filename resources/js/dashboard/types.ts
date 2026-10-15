@@ -39,6 +39,8 @@ export interface DashboardPageProps extends SharedPageProps {
         // Ảnh tài khoản kênh ('' khi chưa có) — tin gửi từ điện thoại mang ảnh này.
         avatar_url?: string;
         platform?: ChannelPlatform | null;
+        // AI agent gắn với kênh, kể cả khi đang tắt; null khi kênh chưa gắn AI.
+        ai_agent?: { id: number; name: string; enabled: boolean } | null;
     }[];
     // Nhóm Teams trên sidebar — chỉ team user là member (teams/getMyTeams).
     teams?: { id: number; name: string }[];

@@ -529,3 +529,10 @@ export function assignTeam(
 export function sendEmailTranscript(accountId: number, conversationId: number, email: string): Promise<void> {
     return postWithoutBody(`/api/v1/accounts/${accountId}/conversations/${conversationId}/transcript`, { email });
 }
+
+// Công tắc "AI tự động": bật/tắt trả về hội thoại đã cập nhật.
+export function setConversationAutoResponder(accountId: number, conversationId: number, enabled: boolean): Promise<Conversation> {
+    const url = `/api/v1/accounts/${accountId}/conversations/${conversationId}/auto_responder`;
+
+    return enabled ? postJson<Conversation>(url, {}) : deleteJson<Conversation>(url);
+}

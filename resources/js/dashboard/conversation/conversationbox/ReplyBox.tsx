@@ -68,6 +68,7 @@ import {
 } from './voiceRecorder/voiceRecording';
 import type { VoiceRecordingError } from './voiceRecorder/voiceRecording';
 import type { ReplyStickerPicker } from './ReplyBottomPanel';
+import { autoResponderView, useFloorClock } from '../autoResponder';
 import type { CannedCardPayload } from 'dashboard/conversation/composer/SendCardMenu/SendCardMenu';
 
 // Port từ dashboard/components/widgets/conversation/ReplyBox.vue — rút về kênh
@@ -130,6 +131,7 @@ export default function ReplyBox({
         composeDraft,
         registerDraftComposer,
         takeCarriedAttachments,
+        floorBlockedReply,
     } = useConversation();
     const { auth, currentAccount, inboxes = [] } = usePage<DashboardPageProps>().props;
     const user = auth.user!;
@@ -183,6 +185,14 @@ export default function ReplyBox({
     const isPrivate = isBotOwnedPendingConversation || replyType === REPLY_EDITOR_MODES.NOTE;
     const isOnPrivateNote = isPrivate;
     const isEditorDisabled = !isOnPrivateNote && !canReply;
+    // AI đang giữ lượt: vẫn gõ được, chỉ nút Gửi tin công khai khoá tới khi nhả lượt.
+    const floorClock = useFloorClock(isComposing ? null : selectedConversation);
+    const autoResponder =
+        !isComposing && selectedConversation
+            ? autoResponderView(selectedConversation, inbox?.ai_agent ?? null, floorClock)
+            : null;
+    const isFloorLocked = !isPrivate && autoResponder?.status === 'replying';
+    const showsManualHandoverHint = !isPrivate && autoResponder?.status === 'on';
     const showAudioRecorder =
         voiceRecorderEnabled &&
         !isOnPrivateNote &&
@@ -224,7 +234,7 @@ export default function ReplyBox({
     const pendingVoiceMessage = attachedFiles.find(attachment => attachment.isVoiceMessage) ?? null;
     // isReplyButtonDisabled gốc: có đính kèm thì gửi được dù chưa gõ chữ.
     const isReplyButtonDisabled =
-        isEditorDisabled || (!hasAttachments && (isMessageEmpty || message.length > maxLength));
+        isEditorDisabled || isFloorLocked || (!hasAttachments && (isMessageEmpty || message.length > maxLength));
     // hasMeaningfulEditorContent gốc: nội dung ngoài chữ ký.
     const messageWithoutSignature = removeSignature(message, messageSignature, channelType);
     const hasContent = !isMessageEmpty && messageWithoutSignature.trim() !== '';
@@ -250,6 +260,7 @@ export default function ReplyBox({
           : t(isTouchOnly ? 'CONVERSATION.FOOTER.MSG_INPUT_TOUCH' : 'CONVERSATION.FOOTER.MSG_INPUT');
 
     const replyButtonLabel = (() => {
+        if (isFloorLocked) return t('CONVERSATION.AUTO_RESPONDER.COMPOSER_WAIT', { name: autoResponder?.aiAgentName ?? '' });
         const sendMessageText = isPrivate ? t('CONVERSATION.REPLYBOX.CREATE') : t('CONVERSATION.REPLYBOX.SEND');
         if (isTouchOnly) return sendMessageText;
         const keyLabel = isEditorHotKeyEnabled(uiSettings, 'cmd_enter') ? `(${cmdEnterShortcutLabel()})` : '(↵)';
@@ -421,6 +432,17 @@ export default function ReplyBox({
         );
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isSignatureActive]);
+
+    // Máy chủ trả lại tin vì AI vừa giữ lượt (409): nạp lại chữ vào ô trả lời.
+    const restoredNonceRef = useRef<number | null>(null);
+    useEffect(() => {
+        if (!floorBlockedReply || floorBlockedReply.conversationId !== conversationId) return;
+        if (restoredNonceRef.current === floorBlockedReply.nonce) return;
+        restoredNonceRef.current = floorBlockedReply.nonce;
+        if (replyType !== REPLY_EDITOR_MODES.REPLY) setReplyType(REPLY_EDITOR_MODES.REPLY);
+        setMessage(current => (current.trim() === '' ? floorBlockedReply.content : `${floorBlockedReply.content}\n${current}`));
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [floorBlockedReply, conversationId]);
 
     // setReplyMode gốc: đổi giữa trả lời/ghi chú thì bỏ đính kèm đang chờ
     // (luật upload của hai chế độ khác nhau).
@@ -689,6 +711,15 @@ export default function ReplyBox({
                     />
                     </ComposerExpandableRegion>
                 ) : null}
+                {showsManualHandoverHint ? (
+                    <p
+                        data-testid="auto-responder-manual-hint"
+                        className="mx-3 mb-1 mt-2 flex items-center gap-2 text-xs text-n-slate-11"
+                    >
+                        <span className="i-lucide-info size-4 flex-shrink-0" aria-hidden />
+                        {t('CONVERSATION.AUTO_RESPONDER.COMPOSER_MANUAL_HINT', { name: autoResponder?.aiAgentName ?? '' })}
+                    </p>
+                ) : null}
                 <StickerSuggestions
                     stickers={suggestedStickers}
                     labels={{
@@ -771,6 +802,11 @@ export default function ReplyBox({
                 onStartAudioRecording={() => void voiceRecorder.start()}
                 isSendDisabled={isReplyButtonDisabled}
                 sendButtonText={replyButtonLabel}
+                sendHint={
+                    isFloorLocked
+                        ? t('CONVERSATION.AUTO_RESPONDER.COMPOSER_LOCKED_HINT', { name: autoResponder?.aiAgentName ?? '' })
+                        : null
+                }
                 sendWithSignature={sendWithSignature}
                 showQuotedReplyToggle={shouldShowQuotedReplyToggle}
                 quotedReplyEnabled={quotedReplyPreference}

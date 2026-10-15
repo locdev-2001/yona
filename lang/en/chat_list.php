@@ -169,4 +169,10 @@ return [
     'MESSAGE_READ' => 'Read',
     'SENDING' => 'Sending',
     'UNREAD_COUNT_OVERFLOW' => '9+',
+    'AI_FILTERS' => [
+        'LABEL' => 'Filter conversations by AI',
+        'ALL' => 'All',
+        'AUTO_REPLY' => 'AI auto-reply',
+        'HANDED_OFF' => 'Handed off by AI',
+    ],
 ];

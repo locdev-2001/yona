@@ -10,6 +10,7 @@ export const SENDER_TYPES = {
     USER: 'User',
     AGENT_BOT: 'agent_bot',
     CAPTAIN_ASSISTANT: 'captain_assistant',
+    AI_AGENT: 'ai_agent',
 } as const;
 
 export type MessageVariant = (typeof MESSAGE_VARIANTS)[keyof typeof MESSAGE_VARIANTS];

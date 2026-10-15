@@ -39,7 +39,7 @@ export interface TeamMeta {
 export interface MessageSender {
     id: number;
     name: string | null;
-    type: 'user' | 'contact' | 'agent_bot' | 'captain_assistant';
+    type: 'user' | 'contact' | 'agent_bot' | 'captain_assistant' | 'ai_agent';
     thumbnail?: string;
     available_name?: string;
     availability_status?: string;
@@ -90,6 +90,13 @@ export interface ConversationMeta {
 }
 
 export type ConversationStatus = 'open' | 'resolved' | 'pending' | 'snoozed';
+
+// Công tắc "AI tự động" của hội thoại; `ai_agent` là AI đang trả lời được (gắn với
+// kênh và đang bật), null khi kênh chưa gắn AI hoặc AI của kênh đang tắt.
+export interface ConversationAutoResponder {
+    enabled: boolean;
+    ai_agent: { id: number; name: string } | null;
+}
 export type ConversationPriority = 'low' | 'medium' | 'high' | 'urgent';
 
 export interface Conversation {
@@ -119,6 +126,12 @@ export interface Conversation {
     created_at: number;
     updated_at: number;
     sla_policy_id: number | null;
+    // Payload cũ (trước khi có AI agent) có thể thiếu ba khoá này.
+    auto_responder?: ConversationAutoResponder;
+    // AI đang giữ lượt nói tới mốc này (ISO); null khi không ai giữ.
+    floor_held_until?: string | null;
+    // AI đã chuyển hội thoại cho người và chưa ai tiếp nhận (ISO).
+    ai_handed_off_at?: string | null;
     // Cờ ghim của chính người xem; vắng mặt ở payload realtime (dựng chung cho cả account).
     pinned?: boolean;
     // Thứ tự trong nhóm ghim của người xem, nhỏ đứng trên; null khi chưa ghim.

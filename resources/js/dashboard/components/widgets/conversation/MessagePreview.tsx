@@ -5,6 +5,7 @@ import HighlightedText from 'dashboard/search/components/HighlightedText';
 import { MESSAGE_TYPES } from '../../../conversation/constants';
 import type { ConversationMessage } from '../../../conversation/types';
 import { ICONS } from 'dashboard/icons';
+import AiAgentBadge from 'dashboard/components-next/message/AiAgentBadge';
 
 // Trích ATTACHMENT_ICONS của shared/constants/messages.js.
 const ATTACHMENT_ICONS: Record<string, string> = {
@@ -35,6 +36,7 @@ export default function MessagePreview({
     const messageByAgent = message.message_type === MESSAGE_TYPES.OUTGOING;
     const isMessageAnActivity = message.message_type === MESSAGE_TYPES.ACTIVITY;
     const isMessagePrivate = message.private;
+    const isByAiAgent = message.sender?.type === 'ai_agent';
     const body = messagePreviewBody(message);
 
     const typeIconClass = '-mt-0.5 align-middle text-n-slate-11 inline-block';
@@ -44,6 +46,8 @@ export default function MessagePreview({
             {showMessageType ? (
                 isMessagePrivate ? (
                     <span className={`${ICONS.privateNote} size-4 ${typeIconClass}`} aria-hidden="true" />
+                ) : messageByAgent && isByAiAgent ? (
+                    <AiAgentBadge className="me-1.5 align-middle" />
                 ) : messageByAgent ? (
                     <span className={`${ICONS.reply} size-4 ${typeIconClass}`} aria-hidden="true" />
                 ) : isMessageAnActivity ? (

@@ -1589,6 +1589,25 @@ const messages: Record<string, unknown> = {
             "PLACEHOLDER": "Chọn phạm vi ngày"
         }
     },
+    "AI_AGENT_TURNS": {
+        "notices": {
+            "turn_failed": ":agent chưa xử lý được tin này nên đã chuyển hội thoại sang thủ công. Nhờ nhân viên trả lời khách.",
+            "window_closed": ":agent chưa gửi được trả lời vì cửa sổ trả lời của kênh đã đóng.",
+            "budget_exhausted": ":agent tạm ngưng trả lời tới hết hôm nay vì đã dùng hết ngân sách AI trong ngày. Nhờ nhân viên trả lời khách."
+        },
+        "handover": {
+            "title": ":agent chuyển hội thoại cho người (:reason)",
+            "reasons": {
+                "binding_info_missing": "thiếu thông tin chính xác",
+                "customer_requested_human": "khách muốn gặp nhân viên",
+                "complaint": "khách phàn nàn",
+                "out_of_scope": "ngoài phạm vi tư vấn",
+                "other": "lý do khác"
+            },
+            "default_note": "Khách hỏi điều cần thông tin chính xác (giá, chính sách, khuyến mãi, tồn kho) mà chưa tìm được nguồn trong dữ liệu của shop."
+        },
+        "holding_reply": "Dạ anh/chị chờ em một chút, em kiểm tra lại rồi báo mình ngay ạ."
+    },
     "AI_AGENTS": {
         "HEADER": "Nhân viên AI",
         "DESCRIPTION": "Tạo nhân viên AI rồi chọn AI cho từng kênh. Mỗi kênh một AI.",
@@ -2921,7 +2940,13 @@ const messages: Record<string, unknown> = {
         "SHOW_QUOTED_TEXT": "Hiện thư trích dẫn",
         "MESSAGE_READ": "Đọc",
         "SENDING": "Đang gửi",
-        "UNREAD_COUNT_OVERFLOW": "9+"
+        "UNREAD_COUNT_OVERFLOW": "9+",
+        "AI_FILTERS": {
+            "LABEL": "Lọc hội thoại theo AI",
+            "ALL": "Tất cả",
+            "AUTO_REPLY": "AI tự động",
+            "HANDED_OFF": "AI chuyển cho người"
+        }
     },
     "CHOICE_TOGGLE": {
         "YES": "Có",
@@ -4412,6 +4437,49 @@ const messages: Record<string, unknown> = {
             "UNMUTE": "Bật micro",
             "VIEW_CHAT_HISTORY": "Xem lịch sử chat",
             "GO_TO_CONVERSATION": "Mở hội thoại"
+        },
+        "AUTO_RESPONDER": {
+            "LABEL": "AI tự động",
+            "LABEL_WITH_AGENT": "AI tự động · {name}",
+            "LABEL_AGENT_OFF": "AI tự động · {name} (đang tắt)",
+            "REPLYING": "{name} đang trả lời…",
+            "TURN_ON": "Bật AI tự động",
+            "TURN_OFF": "Tắt AI tự động",
+            "TURNING_ON": "Đang bật…",
+            "TURNING_OFF": "Đang tắt…",
+            "UNAVAILABLE": "AI tự động, chưa dùng được",
+            "AGENT_OFF_ARIA": "AI tự động đang bật, nhân viên AI đang tắt",
+            "HINT_OFF": "Kênh có nhân viên AI. Bấm để {name} trả lời từ tin khách kế tiếp.",
+            "HINT_ON": "Mỗi tin khách đều được {name} trả lời.",
+            "HINT_REPLYING": "Khung trả lời khoá tới khi xong lượt. Tắt công tắc lúc này thì lượt dừng, không gửi gì thêm.",
+            "HINT_UNASSIGNED": "Kênh này chưa có nhân viên AI.",
+            "HINT_AGENT_OFF": "Công tắc vẫn bật nhưng {name} không trả lời tới khi được bật lại trong Cài đặt.",
+            "HINT_AGENT_OFF_IDLE": "{name} đang tắt trong Cài đặt nên chưa bật được AI tự động.",
+            "ASSIGN_LINK": "Gắn nhân viên AI",
+            "ENABLE_UNAVAILABLE": "Kênh này chưa có nhân viên AI nên chưa bật được \"AI tự động\".",
+            "TOGGLE_ERROR": "Không đổi được AI tự động. Thử lại.",
+            "FLOOR_HELD_ON_SEND": "{name} vừa bắt đầu trả lời khách. Tin của bạn chưa gửi, nội dung vẫn giữ trong khung soạn.",
+            "AI_FALLBACK_NAME": "Nhân viên AI",
+            "COMPOSER_WAIT": "Chờ {name} xong…",
+            "COMPOSER_LOCKED_HINT": "Cứ gõ trước. Nút Gửi mở ngay khi {name} xong lượt; gửi thì hội thoại chuyển thủ công.",
+            "COMPOSER_MANUAL_HINT": "Gửi tin sẽ chuyển hội thoại sang thủ công, {name} thôi trả lời. Bật lại \"AI tự động\" bất cứ lúc nào.",
+            "AI_BADGE": "AI",
+            "AI_BADGE_TITLE": "Tin do nhân viên AI gửi. Khách không thấy nhãn này.",
+            "RESUME": "Bật lại AI",
+            "HANDOFF": {
+                "TAKE_OVER": "Tiếp nhận hội thoại",
+                "TAKEN": "Bạn đang phụ trách",
+                "TAKEN_OVER": "Bạn đã tiếp nhận hội thoại",
+                "TAKE_OVER_ERROR": "Không tiếp nhận được hội thoại. Thử lại.",
+                "ADD_CANNED": "Thêm vào câu trả lời mẫu",
+                "REASONS": {
+                    "binding_info_missing": "Thiếu dữ liệu của shop",
+                    "customer_requested_human": "Khách muốn gặp nhân viên",
+                    "complaint": "Khách phàn nàn",
+                    "out_of_scope": "Ngoài phạm vi AI",
+                    "other": "AI chuyển cho người"
+                }
+            }
         }
     },
     "CONVERSATION_CUSTOM_ATTRIBUTES": {

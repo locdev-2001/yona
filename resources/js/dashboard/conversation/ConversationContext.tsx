@@ -24,7 +24,7 @@ import {
 } from 'dashboard/realtime/ReconnectService';
 import { t } from '../../i18n';
 import type { DashboardPageProps } from '../types';
-import { parseApiErrorMessage } from 'dashboard/helper/apiClient';
+import { ApiError, parseApiErrorMessage } from 'dashboard/helper/apiClient';
 import { conversationUrl } from 'dashboard/helper/URLHelper';
 import { REPLY_EDITOR_MODES } from 'dashboard/components/widgets/WootWriter/constants';
 import { draftKey, setDraft as saveReplyDraft } from './draftApi';
@@ -59,6 +59,7 @@ import {
     unmuteConversation as unmuteConversationRequest,
     setConversationPinned as setConversationPinnedRequest,
     reorderPinnedConversations as reorderPinnedConversationsRequest,
+    setConversationAutoResponder,
 } from './api';
 import type { SendMessagePayload } from './api';
 import type { StickerItem } from './stickerApi';
@@ -119,7 +120,7 @@ import {
     SORT_BY_TYPE,
     STATUS_TYPE,
 } from './constants';
-import type { ConversationType } from './constants';
+import type { AiQuickFilter, ConversationType } from './constants';
 import type {
     AgentMeta,
     AssigneeTab,
@@ -220,6 +221,14 @@ interface ConversationContextValue {
     reorderPinnedConversations: (orderedIds: number[]) => Promise<void>;
     // updateCustomAttributes của store gốc — accordion Conversation Information.
     updateConversationCustomAttributes: (customAttributes: Record<string, unknown>) => Promise<void>;
+    // Bộ lọc nhanh "AI tự động" / "AI chuyển cho người" trên danh sách thường.
+    aiFilter: AiQuickFilter;
+    setAiFilter: (filter: AiQuickFilter) => void;
+    // Bật/tắt "AI tự động" của hội thoại đang mở; máy chủ từ chối thì ném ApiError.
+    setAutoResponder: (enabled: boolean) => Promise<void>;
+    // Tin công khai bị máy chủ trả lại vì AI vừa giữ lượt (409 floor_held): khung soạn
+    // nạp lại nội dung này để người gửi không mất chữ.
+    floorBlockedReply: FloorBlockedReply | null;
     // Bản nháp hội thoại mới (route /inbox/new): chưa có hội thoại, lần gửi đầu
     // tiên tạo hội thoại rồi đi tiếp đường gửi chung.
     isComposing: boolean;
@@ -231,6 +240,13 @@ interface ConversationContextValue {
     registerDraftComposer: (readComposer: () => DraftComposerContent) => () => void;
     // Tệp đang chờ mang từ bản nháp sang hội thoại vừa tạo; lấy một lần.
     takeCarriedAttachments: (conversationId: number) => PendingAttachment[];
+}
+
+export interface FloorBlockedReply {
+    conversationId: number;
+    content: string;
+    // Mỗi lần bị trả lại một mã mới, để cùng nội dung bị trả hai lần vẫn nạp lại.
+    nonce: number;
 }
 
 export interface DraftComposerContent {
@@ -370,6 +386,11 @@ interface ProviderProps {
 
 let pendingEchoCounter = 0;
 
+// 409 của máy chủ khi AI đang giữ lượt nói (ConversationFloorHeld).
+function isFloorHeldError(error: unknown): error is ApiError & { body: { floor_held_until?: string | null } } {
+    return error instanceof ApiError && error.status === 409 && error.body?.error === 'floor_held';
+}
+
 export function ConversationProvider({
     conversationId = 0,
     inboxId = 0,
@@ -435,6 +456,8 @@ export function ConversationProvider({
     const appliedFiltersRef = useRef<ConversationFilterCondition[] | null>(null);
     appliedFiltersRef.current = appliedFilters;
     const [filteredConversations, setFilteredConversations] = useState<Conversation[]>([]);
+    const [aiFilter, setAiFilter] = useState<AiQuickFilter>('');
+    const [floorBlockedReply, setFloorBlockedReply] = useState<FloorBlockedReply | null>(null);
     const [searchQuery, setSearchQueryState] = useState(() => readListSearchQuery(window.location.search));
     const setSearchQuery = useCallback((query: string) => setSearchQueryState(query.trim()), []);
 
@@ -481,8 +504,8 @@ export function ConversationProvider({
     // conversationFilters.labels của ChatList.vue: URL /label/{title} = một nhãn.
     const labelFilters = useMemo(() => (label ? [label] : []), [label]);
     const viewFilters = useMemo(
-        () => ({ assigneeTab, status, inboxId, teamId, currentUserId, labels: labelFilters }),
-        [assigneeTab, status, inboxId, teamId, currentUserId, labelFilters],
+        () => ({ assigneeTab, status, inboxId, teamId, currentUserId, labels: labelFilters, aiFilter }),
+        [assigneeTab, status, inboxId, teamId, currentUserId, labelFilters, aiFilter],
     );
     const conversations = useMemo(
         () =>
@@ -507,9 +530,9 @@ export function ConversationProvider({
             inboxId: inboxId || undefined,
             teamId: teamId || undefined,
             labels: labelFilters.length ? labelFilters : undefined,
-            conversationType: conversationType || undefined,
+            conversationType: conversationType || aiFilter || undefined,
         }),
-        [accountId, assigneeTab, status, sortBy, inboxId, teamId, labelFilters, conversationType],
+        [accountId, assigneeTab, status, sortBy, inboxId, teamId, labelFilters, conversationType, aiFilter],
     );
 
     const fetchPage = useCallback(
@@ -942,6 +965,7 @@ export function ConversationProvider({
     });
     useRealtimeEvent<Conversation>('conversation.status_changed', updateConversation);
     useRealtimeEvent<Conversation>('conversation.updated', updateConversation);
+    useRealtimeEvent<Conversation>('conversation.floor_changed', updateConversation);
     useRealtimeEvent<Conversation>('assignee.changed', updateConversation);
     useRealtimeEvent<Conversation>('conversation.read', updateConversation);
     useRealtimeEvent<Conversation>('conversation.contact_changed', (conversation) => {
@@ -1027,6 +1051,28 @@ export function ConversationProvider({
                     return true;
                 },
                 (error: unknown) => {
+                    if (isFloorHeldError(error)) {
+                        // AI vừa giữ lượt nói: tin chưa đi đâu cả, bỏ bong bóng tạm và trả chữ
+                        // về khung soạn; khoá nút Gửi ngay theo mốc máy chủ báo.
+                        unsentPayloadsRef.current.delete(echoId);
+                        setMessages((current) => removeUnsent(current, echoId));
+                        const heldUntil = error.body?.floor_held_until ?? null;
+                        const conversation = allConversationsRef.current.find((item) => item.id === targetConversationId);
+                        if (heldUntil) {
+                            setAllConversations((current) =>
+                                current.map((item) => (item.id === targetConversationId ? { ...item, floor_held_until: heldUntil } : item)),
+                            );
+                        }
+                        if (typeof payload.content === 'string' && payload.content !== '') {
+                            setFloorBlockedReply({ conversationId: targetConversationId, content: payload.content, nonce: Date.now() });
+                        }
+                        useAlert(
+                            t('CONVERSATION.AUTO_RESPONDER.FLOOR_HELD_ON_SEND', {
+                                name: conversation?.auto_responder?.ai_agent?.name ?? t('CONVERSATION.AUTO_RESPONDER.AI_FALLBACK_NAME'),
+                            }),
+                        );
+                        return false;
+                    }
                     const body = (error as { body?: { error?: string } }).body;
                     const reason = body?.error || t('CONVERSATION.MESSAGE_ERROR');
                     setMessages((current) => markUnsentFailed(current, echoId, reason));
@@ -1610,6 +1656,14 @@ export function ConversationProvider({
         [accountId],
     );
 
+    const setAutoResponder = useCallback(
+        async (enabled: boolean) => {
+            if (!conversationId) return;
+            updateConversation(await setConversationAutoResponder(accountId, conversationId, enabled));
+        },
+        [accountId, conversationId, updateConversation],
+    );
+
     const value = useMemo<ConversationContextValue>(
         () => ({
             accountId,
@@ -1675,6 +1729,10 @@ export function ConversationProvider({
             updateComposeDraft,
             registerDraftComposer,
             takeCarriedAttachments,
+            aiFilter,
+            setAiFilter,
+            setAutoResponder,
+            floorBlockedReply,
         }),
         [
             accountId,
@@ -1740,6 +1798,9 @@ export function ConversationProvider({
             updateComposeDraft,
             registerDraftComposer,
             takeCarriedAttachments,
+            aiFilter,
+            setAutoResponder,
+            floorBlockedReply,
         ],
     );
 

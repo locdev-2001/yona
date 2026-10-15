@@ -91,4 +91,12 @@ export const CONVERSATION_TYPE = {
     UNATTENDED: 'unattended',
 } as const;
 
-export type ConversationType = (typeof CONVERSATION_TYPE)[keyof typeof CONVERSATION_TYPE] | '';
+// Bộ lọc nhanh của AI trên danh sách thường: đi chung tham số `conversation_type`.
+export const AI_QUICK_FILTER = {
+    AUTO_REPLY: 'ai_auto_reply',
+    HANDED_OFF: 'ai_handed_off',
+} as const;
+
+export type AiQuickFilter = (typeof AI_QUICK_FILTER)[keyof typeof AI_QUICK_FILTER] | '';
+
+export type ConversationType = (typeof CONVERSATION_TYPE)[keyof typeof CONVERSATION_TYPE] | AiQuickFilter;

@@ -173,4 +173,10 @@ return [
     'MESSAGE_READ' => 'Đọc',
     'SENDING' => 'Đang gửi',
     'UNREAD_COUNT_OVERFLOW' => '9+',
+    'AI_FILTERS' => [
+        'LABEL' => 'Lọc hội thoại theo AI',
+        'ALL' => 'Tất cả',
+        'AUTO_REPLY' => 'AI tự động',
+        'HANDED_OFF' => 'AI chuyển cho người',
+    ],
 ];

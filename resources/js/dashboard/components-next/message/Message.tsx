@@ -22,6 +22,8 @@ import {
     SENDER_TYPES,
 } from './constants';
 import type { MessageOrientation, MessageVariant } from './constants';
+import AiAgentBadge from './AiAgentBadge';
+import AiHandoffActions, { readAiHandoff } from './AiHandoffActions';
 import MessageActions from './MessageActions';
 import MessageError from './MessageError';
 import MessageMeta from './MessageMeta';
@@ -240,6 +242,10 @@ export default function Message({
     );
 
     const senderIdentity = resolveMessageSender(message, useSenderIdentityContext());
+    // Tin của nhân viên AI: tên + huy hiệu "AI" cho nhân viên người (khách không thấy).
+    const isAiAgentMessage =
+        messageType !== MESSAGE_TYPES.ACTIVITY && (sender?.type ?? senderType) === SENDER_TYPES.AI_AGENT;
+    const aiHandoff = isAiAgentMessage && isPrivate ? readAiHandoff(contentAttributes) : null;
 
     const contextValue: MessageContextValue = {
         id: message.id,
@@ -276,7 +282,14 @@ export default function Message({
 
     // Trạng thái gửi và khoá ghi chú chỉ ở tin cuối nhóm; email tự vẽ dòng giờ trong khung thư.
     const showsStatusRow = !shouldGroupWithNext && variant !== MESSAGE_VARIANTS.EMAIL;
-    const hasFooter = Boolean(contentAttributes.external_error) || isExternalEcho || showsStatusRow || Boolean(choiceOf);
+    const showsAiAgentLabel = isAiAgentMessage && !shouldGroupWithNext;
+    const hasFooter =
+        Boolean(contentAttributes.external_error) ||
+        isExternalEcho ||
+        showsStatusRow ||
+        Boolean(choiceOf) ||
+        showsAiAgentLabel ||
+        aiHandoff !== null;
 
     return (
         <MessageProvider value={contextValue}>
@@ -343,7 +356,25 @@ export default function Message({
                                     </div>
                                 ) : null}
                                 {choiceOf ? <ChoiceOfLabel question={choiceOf} onJump={onJumpToMessage} /> : null}
+                                {showsAiAgentLabel ? (
+                                    <span className="mt-1 flex items-center gap-1.5 text-xs text-n-slate-11" data-testid="ai-agent-sender">
+                                        <AiAgentBadge />
+                                        {sender?.name ?? ''}
+                                    </span>
+                                ) : null}
                                 {showsStatusRow ? <MessageMeta showTime={false} className="mt-1 text-n-slate-11" /> : null}
+                                {aiHandoff ? (
+                                    <div className="basis-full">
+                                        <AiHandoffActions
+                                            handoff={aiHandoff}
+                                            onCreateCannedResponse={
+                                                onCreateCannedResponse
+                                                    ? content => onCreateCannedResponse({ ...message, content })
+                                                    : undefined
+                                            }
+                                        />
+                                    </div>
+                                ) : null}
                             </div>
                         ) : null}
                     </div>

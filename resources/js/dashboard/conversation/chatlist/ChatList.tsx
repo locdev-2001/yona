@@ -32,6 +32,7 @@ import { emptyListHint } from './emptyListHint';
 import ChatListHeader from './ChatListHeader';
 import ChatListSearch from './ChatListSearch';
 import ChatTypeTabs from './ChatTypeTabs';
+import AiQuickFilters from './AiQuickFilters';
 import ConversationList from './ConversationList';
 import ListSearchHeader from './ListSearchHeader';
 import { useListSearchResults } from './useListSearchResults';
@@ -254,6 +255,7 @@ export default function ChatList({
                         />
                     </div>
                 </div>
+                {appliedFilters === null && !conversationType && !isSearching ? <AiQuickFilters /> : null}
                 {isSearching && !listSearch.loading && !listSearch.contacts.length && !listSearch.conversations.length ? (
                     <p className="px-4 py-6 mb-0 text-sm text-center break-words text-n-slate-11">
                         {t('CHAT_LIST.SEARCH.NO_RESULTS', { query: searchQuery })}

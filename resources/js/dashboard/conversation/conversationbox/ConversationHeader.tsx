@@ -17,6 +17,7 @@ import { STATUS_TYPE } from '../constants';
 import { useConversation } from '../ConversationContext';
 import { useContactAvailabilityStatus } from 'dashboard/realtime/hooks';
 import type { AvailabilityStatus } from 'dashboard/constants/globals';
+import AutoResponderToggle from './AutoResponderToggle';
 import MoreActions from './MoreActions';
 import SidepanelSwitch from './SidepanelSwitch';
 import ConversationSearchBar from './search/ConversationSearchBar';
@@ -122,6 +123,7 @@ export default function ConversationHeader({
                     </div>
                 </div>
                 <div className="flex flex-row items-center justify-end flex-shrink-0 gap-1 header-actions-wrap">
+                    <AutoResponderToggle compact />
                     {searchButton}
                     <SidepanelSwitch />
                     <MoreActions isCompact />
@@ -181,6 +183,7 @@ export default function ConversationHeader({
                 </div>
             ) : (
                 <div className="flex flex-row items-center justify-start xl:justify-end flex-shrink-0 gap-2 w-full xl:w-auto header-actions-wrap">
+                    <AutoResponderToggle />
                     {searchButton}
                     <MoreActions />
                     <SidepanelSwitch />

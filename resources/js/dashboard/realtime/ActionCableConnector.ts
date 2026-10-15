@@ -32,6 +32,7 @@ export const REALTIME_EVENTS = [
     'notification.updated',
     'conversation.read',
     'conversation.updated',
+    'conversation.floor_changed',
     'conversation.unread_count_changed',
     'account.cache_invalidated',
 ] as const;
@@ -74,6 +75,8 @@ class ActionCableConnector extends BaseActionCableConnector {
             'notification.updated': this.forward('notification.updated'),
             'conversation.read': this.forward('conversation.read'),
             'conversation.updated': this.forwardThenFetchStats('conversation.updated'),
+            // AI giữ/nhả lượt nói: khung soạn khoá/mở ngay ở mọi máy đang mở hội thoại.
+            'conversation.floor_changed': this.forward('conversation.floor_changed'),
             'conversation.unread_count_changed': this.forward('conversation.unread_count_changed'),
             'account.cache_invalidated': this.forward('account.cache_invalidated'),
         };

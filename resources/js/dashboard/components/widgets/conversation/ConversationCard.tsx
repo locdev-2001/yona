@@ -14,6 +14,8 @@ import type { AgentMeta, ContactMeta, Conversation, ConversationMessage } from '
 import InboxName from '../InboxName';
 import TimeAgo from '../../ui/TimeAgo';
 import MessagePreview from './MessagePreview';
+import AiAgentBadge from 'dashboard/components-next/message/AiAgentBadge';
+import { isFloorHeld, useFloorClock } from '../../../conversation/autoResponder';
 import CardLabels from './conversationCardComponents/CardLabels';
 import HighlightedText from 'dashboard/search/components/HighlightedText';
 import { useContactAvailabilityStatus } from 'dashboard/realtime/hooks';
@@ -128,6 +130,12 @@ export default function ConversationCard({
     );
     const hasUnread = unreadCount > 0;
     const lastMessageInChat = previewMessage ?? getLastMessage(chat);
+    // AI đang giữ lượt: dòng xem trước báo AI đang trả lời thay cho tin cuối.
+    const floorClock = useFloorClock(chat);
+    const replyingAiAgentName =
+        !previewMessage && chat.auto_responder?.enabled && isFloorHeld(chat, floorClock)
+            ? chat.auto_responder.ai_agent?.name ?? null
+            : null;
 
     const isPinned = Boolean(chat.pinned);
     // Hàng trên cùng luôn có thời gian tương tác cuối nên luôn hiện.
@@ -267,7 +275,15 @@ export default function ConversationCard({
                         </button>
                     ) : null}
                 </div>
-                {lastMessageInChat ? (
+                {replyingAiAgentName ? (
+                    <p
+                        data-testid="card-ai-replying"
+                        className="my-0 mx-2 flex h-6 min-w-0 items-center gap-1.5 text-sm leading-6 text-n-slate-11"
+                    >
+                        <AiAgentBadge />
+                        <span className="truncate">{t('CONVERSATION.AUTO_RESPONDER.REPLYING', { name: replyingAiAgentName })}</span>
+                    </p>
+                ) : lastMessageInChat ? (
                     <MessagePreview
                         key="message-preview"
                         message={lastMessageInChat}

@@ -38,6 +38,8 @@ interface ReplyBottomPanelProps {
     enableMultipleFileUpload?: boolean;
     isSendDisabled: boolean;
     sendButtonText: string;
+    // Dòng giải thích vì sao nút Gửi đang khoá, đứng ngay trước nút.
+    sendHint?: string | null;
     sendWithSignature: boolean;
     showQuotedReplyToggle?: boolean;
     quotedReplyEnabled?: boolean;
@@ -62,6 +64,7 @@ export default function ReplyBottomPanel({
     enableMultipleFileUpload = true,
     isSendDisabled,
     sendButtonText,
+    sendHint = null,
     sendWithSignature,
     showQuotedReplyToggle = false,
     quotedReplyEnabled = false,
@@ -196,7 +199,16 @@ export default function ReplyBottomPanel({
                     />
                 ) : null}
             </div>
-            <div className="flex">
+            <div className="flex min-w-0 items-center gap-2">
+                {sendHint ? (
+                    <span
+                        data-testid="send-lock-hint"
+                        className="hidden min-w-0 items-center gap-1.5 text-xs text-n-violet-11 md:flex"
+                    >
+                        <span className="i-lucide-lock size-4 flex-shrink-0" aria-hidden />
+                        <span className="line-clamp-2">{sendHint}</span>
+                    </span>
+                ) : null}
                 <NextButton
                     label={sendButtonText}
                     type="submit"

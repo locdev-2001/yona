@@ -1589,6 +1589,25 @@ const messages: Record<string, unknown> = {
             "PLACEHOLDER": "Select date range"
         }
     },
+    "AI_AGENT_TURNS": {
+        "notices": {
+            "turn_failed": ":agent could not handle this message and switched the conversation to manual. Please reply to the customer.",
+            "window_closed": ":agent could not send a reply because the channel reply window is closed.",
+            "budget_exhausted": ":agent paused replies for the rest of today because the daily AI budget is used up. Please reply to the customer."
+        },
+        "handover": {
+            "title": ":agent handed the conversation to a person (:reason)",
+            "reasons": {
+                "binding_info_missing": "exact information missing",
+                "customer_requested_human": "customer asked for a person",
+                "complaint": "complaint",
+                "out_of_scope": "out of scope",
+                "other": "other reason"
+            },
+            "default_note": "The customer asked for something that needs exact information (price, policy, promotion, stock) and no source was found in the shop data."
+        },
+        "holding_reply": "Please give me a moment, I will check and get right back to you."
+    },
     "AI_AGENTS": {
         "HEADER": "AI staff",
         "DESCRIPTION": "Create AI staff, then pick the AI for each channel. One AI per channel.",
@@ -2921,7 +2940,13 @@ const messages: Record<string, unknown> = {
         "SHOW_QUOTED_TEXT": "Show Quoted Text",
         "MESSAGE_READ": "Read",
         "SENDING": "Sending",
-        "UNREAD_COUNT_OVERFLOW": "9+"
+        "UNREAD_COUNT_OVERFLOW": "9+",
+        "AI_FILTERS": {
+            "LABEL": "Filter conversations by AI",
+            "ALL": "All",
+            "AUTO_REPLY": "AI auto-reply",
+            "HANDED_OFF": "Handed off by AI"
+        }
     },
     "CHOICE_TOGGLE": {
         "YES": "Yes",
@@ -4412,6 +4437,49 @@ const messages: Record<string, unknown> = {
             "UNMUTE": "Unmute mic",
             "VIEW_CHAT_HISTORY": "View chat history",
             "GO_TO_CONVERSATION": "Go to conversation thread"
+        },
+        "AUTO_RESPONDER": {
+            "LABEL": "AI auto-reply",
+            "LABEL_WITH_AGENT": "AI auto-reply · {name}",
+            "LABEL_AGENT_OFF": "AI auto-reply · {name} (off)",
+            "REPLYING": "{name} is replying…",
+            "TURN_ON": "Turn on AI auto-reply",
+            "TURN_OFF": "Turn off AI auto-reply",
+            "TURNING_ON": "Turning on…",
+            "TURNING_OFF": "Turning off…",
+            "UNAVAILABLE": "AI auto-reply, not available",
+            "AGENT_OFF_ARIA": "AI auto-reply is on, the AI staff is off",
+            "HINT_OFF": "This channel has AI staff. Turn on to let {name} answer from the next customer message.",
+            "HINT_ON": "{name} answers every customer message.",
+            "HINT_REPLYING": "The reply box is locked until the turn ends. Turning off now stops the turn and nothing more is sent.",
+            "HINT_UNASSIGNED": "This channel has no AI staff.",
+            "HINT_AGENT_OFF": "The switch stays on but {name} does not answer until it is turned back on in Settings.",
+            "HINT_AGENT_OFF_IDLE": "{name} is off in Settings, so AI auto-reply cannot be turned on.",
+            "ASSIGN_LINK": "Assign AI staff",
+            "ENABLE_UNAVAILABLE": "This channel has no AI staff, so \"AI auto-reply\" cannot be turned on.",
+            "TOGGLE_ERROR": "Could not change AI auto-reply. Try again.",
+            "FLOOR_HELD_ON_SEND": "{name} just started replying to the customer. Your message was not sent and is still in the reply box.",
+            "AI_FALLBACK_NAME": "AI staff",
+            "COMPOSER_WAIT": "Waiting for {name}…",
+            "COMPOSER_LOCKED_HINT": "Keep typing. Send unlocks when {name} finishes; sending switches the conversation to manual.",
+            "COMPOSER_MANUAL_HINT": "Sending switches the conversation to manual and {name} stops replying. Turn \"AI auto-reply\" back on any time.",
+            "AI_BADGE": "AI",
+            "AI_BADGE_TITLE": "Sent by AI staff. Customers do not see this label.",
+            "RESUME": "Turn AI back on",
+            "HANDOFF": {
+                "TAKE_OVER": "Take over conversation",
+                "TAKEN": "You are handling it",
+                "TAKEN_OVER": "You took over the conversation",
+                "TAKE_OVER_ERROR": "Could not take over the conversation. Try again.",
+                "ADD_CANNED": "Add to canned responses",
+                "REASONS": {
+                    "binding_info_missing": "Shop data missing",
+                    "customer_requested_human": "Customer asked for a person",
+                    "complaint": "Customer complaint",
+                    "out_of_scope": "Outside what the AI handles",
+                    "other": "Handed to a person"
+                }
+            }
         }
     },
     "CONVERSATION_CUSTOM_ATTRIBUTES": {
