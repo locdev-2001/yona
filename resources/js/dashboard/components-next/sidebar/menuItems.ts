@@ -340,6 +340,13 @@ export function buildMenuItems(
                     to: scoped('settings/automation/list'),
                 },
                 {
+                    name: 'Settings AI Agents',
+                    permissions: ['administrator'],
+                    label: t('AI_AGENTS.HEADER'),
+                    icon: 'i-lucide-bot-message-square',
+                    to: scoped('settings/ai-agents'),
+                },
+                {
                     name: 'Settings Agent Bots',
                     productFeature: 'agentBots',
                     permissions: ['administrator'],

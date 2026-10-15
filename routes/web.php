@@ -217,6 +217,9 @@ Route::middleware('auth')->group(function () {
             // hình tài khoản nhận tiền + mã QR VietQR.
             Route::get('/settings/payment-accounts', fn (Account $account) => Inertia::render('dashboard/settings/paymentAccounts/Index'))
                 ->name('settings_payment_accounts');
+            // Nhân viên AI: tạo AI, persona, chỉ dẫn và chọn AI cho từng kênh.
+            Route::get('/settings/ai-agents', fn (Account $account) => Inertia::render('dashboard/agent/Index'))
+                ->name('settings_ai_agents');
 
             Route::get('/settings/teams', fn (Account $account) => redirect("/app/accounts/{$account->id}/settings/teams/list"));
             Route::get('/settings/teams/list', [TeamsSettingsController::class, 'index'])->name('settings_teams_list');

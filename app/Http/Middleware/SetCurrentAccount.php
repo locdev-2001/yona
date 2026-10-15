@@ -81,8 +81,8 @@ class SetCurrentAccount
                 // `capabilities` — FE gate tính năng theo năng lực, không theo
                 // channel_type (docs/channel-capabilities.md §3). `avatar` nạp kèm
                 // cho danh tính tài khoản kênh (tin gửi từ điện thoại mang ảnh này).
-                ->with(['channel', 'avatar'])
-                ->get(['id', 'name', 'channel_type', 'channel_id'])
+                ->with(['channel', 'avatar', 'aiAgent:id,name,enabled'])
+                ->get(['id', 'name', 'channel_type', 'channel_id', 'ai_agent_id'])
                 ->map(fn ($inbox) => [
                     'id' => $inbox->id,
                     'name' => $inbox->name,
@@ -93,6 +93,13 @@ class SetCurrentAccount
                     // Icon cảnh báo mất phiên trên sidebar Kênh + thẻ hội thoại
                     // (ChannelLeaf.vue của gốc đọc `inbox.reauthorization_required`).
                     'reauthorization_required' => $inbox->reauthorizationRequired(),
+                    // AI agent gắn với kênh (kể cả khi đang tắt) để công tắc "AI tự động"
+                    // phân biệt "kênh chưa gắn AI" với "AI của kênh đang tắt".
+                    'ai_agent' => $inbox->aiAgent === null ? null : [
+                        'id' => $inbox->aiAgent->id,
+                        'name' => $inbox->aiAgent->name,
+                        'enabled' => $inbox->aiAgent->enabled,
+                    ],
                 ]),
             // Nhóm Teams trên sidebar (Sidebar.vue lấy từ getter teams/getMyTeams:
             // chỉ team user là member).

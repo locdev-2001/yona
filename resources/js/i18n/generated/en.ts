@@ -1589,6 +1589,104 @@ const messages: Record<string, unknown> = {
             "PLACEHOLDER": "Select date range"
         }
     },
+    "AI_AGENTS": {
+        "HEADER": "AI staff",
+        "DESCRIPTION": "Create AI staff, then pick the AI for each channel. One AI per channel.",
+        "ADD": "Add AI staff",
+        "LOADING": "Loading AI staff…",
+        "LOAD_ERROR": "Could not load AI staff.",
+        "RETRY": "Try again",
+        "EMPTY": {
+            "TITLE": "No AI staff yet",
+            "DESCRIPTION": "Create an AI staff member, set its persona and instructions, and assign it to channels. Then turn on \"AI auto-reply\" in a conversation to let the AI answer customers.",
+            "ACTION": "Create your first AI staff"
+        },
+        "CARD": {
+            "CHANNELS": "Channels it answers",
+            "NO_CHANNEL": "No channel assigned",
+            "EDIT": "Edit",
+            "TURN_ON": "Turn on {name}",
+            "TURN_OFF": "Turn off {name}",
+            "TURNED_ON": "{name} is on",
+            "TURNED_OFF": "{name} is off. Auto-reply conversations on its channels are paused."
+        },
+        "CHANNELS": {
+            "TITLE": "AI for each channel",
+            "HINT": "Pick right in the table, saved automatically",
+            "COLUMN_CHANNEL": "Channel",
+            "COLUMN_AI": "AI staff",
+            "NONE": "No AI",
+            "SELECT_LABEL": "AI staff for {name}",
+            "FOOTNOTE": "Changing the AI of a channel with auto-reply conversations asks for confirmation once. Choosing \"No AI\" stops the AI from answering those conversations.",
+            "SAVED": "Saved the AI staff for {name}",
+            "EMPTY": "This account has no channels yet. Add one in Settings › Inboxes."
+        },
+        "FORM": {
+            "CREATE_TITLE": "Create AI staff",
+            "EDIT_TITLE": "Edit AI staff",
+            "NAME": "Display name",
+            "AVATAR": "Change avatar",
+            "NAME_REQUIRED": "Enter a display name",
+            "CHANNELS": "Channels",
+            "CHANNELS_HINT": "Click to select. If a channel already has another AI, it is replaced after you confirm.",
+            "CHANNEL_TAKEN": "{platform} · currently {name}",
+            "NO_CHANNELS": "This account has no channels yet.",
+            "PERSONA": "Persona",
+            "PERSONA_CONTENT": "Persona text",
+            "PERSONA_PRESETS": "Persona templates",
+            "PERSONA_HINT": "A template fills the text in; you can keep editing it.",
+            "INSTRUCTIONS": "Shop instructions",
+            "INSTRUCTIONS_HINT": "What the shop sells, how it ships, what to say and what not to say. You can leave it empty and add it later.",
+            "INSTRUCTIONS_PLACEHOLDER": "Example: We sell women's dresses and ship nationwide in 2-4 days. Never promise discounts.",
+            "GROUNDING_NOTE": "Prices, policies and promotions always come from the shop's data. Without data the AI does not make claims and hands the conversation to a person.",
+            "DELETE": "Delete",
+            "CANCEL": "Cancel",
+            "CREATE": "Create and turn on",
+            "SAVE": "Save",
+            "CREATED": "Created and turned on {name}",
+            "SAVED": "Saved {name}",
+            "ERROR": "Could not save the AI staff. Try again.",
+            "AVATAR_ERROR": "Could not save the avatar. Try again."
+        },
+        "PRESETS": {
+            "FRIENDLY": {
+                "LABEL": "Friendly and warm",
+                "TEXT": "A sales assistant who is cheerful, answers briefly and asks again when the need is unclear."
+            },
+            "PROFESSIONAL": {
+                "LABEL": "Polite and professional",
+                "TEXT": "A sales assistant who is polite and clear, answers completely and to the point, and does not use emoji."
+            },
+            "YOUTHFUL": {
+                "LABEL": "Young and energetic",
+                "TEXT": "A sales assistant who is young and enthusiastic, uses short sentences and the occasional emoji."
+            },
+            "CUSTOM": {
+                "LABEL": "Write my own"
+            }
+        },
+        "REPLACE": {
+            "TITLE": "Replace {old} with {new} on {channel}?",
+            "DESCRIPTION": "Each channel has one AI staff. Once saved, {new} answers the auto-reply conversations on this channel, including the ones {old} is handling.",
+            "KEEP": "Keep {old}",
+            "CONFIRM": "Replace with {new}",
+            "NEW_AGENT": "this AI staff"
+        },
+        "REMOVE": {
+            "TITLE": "Remove {old} from {channel}?",
+            "DESCRIPTION": "This channel has {count} auto-reply conversations. After removing, the AI stops answering them until the channel gets another AI staff.",
+            "KEEP": "Keep {old}",
+            "CONFIRM": "No AI"
+        },
+        "DELETE": {
+            "TITLE": "Delete AI staff {name}?",
+            "DESCRIPTION": "{name} is assigned to {channels} channels and has {conversations} auto-reply conversations. After deleting, the AI stops answering them until the channel gets another AI staff. Messages {name} already sent stay as they are.",
+            "CONFIRM": "Delete {name}",
+            "CANCEL": "Cancel",
+            "DONE": "Deleted {name}",
+            "ERROR": "Could not delete the AI staff. Try again."
+        }
+    },
     "ALERT_SOUND": {
         "TONE_LABEL": "Sound",
         "PREVIEW": "Preview",

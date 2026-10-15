@@ -1589,6 +1589,104 @@ const messages: Record<string, unknown> = {
             "PLACEHOLDER": "Chọn phạm vi ngày"
         }
     },
+    "AI_AGENTS": {
+        "HEADER": "Nhân viên AI",
+        "DESCRIPTION": "Tạo nhân viên AI rồi chọn AI cho từng kênh. Mỗi kênh một AI.",
+        "ADD": "Thêm nhân viên AI",
+        "LOADING": "Đang tải nhân viên AI…",
+        "LOAD_ERROR": "Không tải được danh sách nhân viên AI.",
+        "RETRY": "Thử lại",
+        "EMPTY": {
+            "TITLE": "Chưa có nhân viên AI",
+            "DESCRIPTION": "Tạo một nhân viên AI, đặt persona và chỉ dẫn, gắn vào kênh. Sau đó bật \"AI tự động\" trên hội thoại để AI trả lời khách.",
+            "ACTION": "Tạo nhân viên AI đầu tiên"
+        },
+        "CARD": {
+            "CHANNELS": "Kênh đang trả lời",
+            "NO_CHANNEL": "Chưa gắn kênh nào",
+            "EDIT": "Sửa",
+            "TURN_ON": "Bật {name}",
+            "TURN_OFF": "Tắt {name}",
+            "TURNED_ON": "Đã bật {name}",
+            "TURNED_OFF": "Đã tắt {name}. Hội thoại đang tự động ở kênh của {name} tạm thôi được trả lời."
+        },
+        "CHANNELS": {
+            "TITLE": "AI của từng kênh",
+            "HINT": "Chọn ngay trong bảng, lưu tự động",
+            "COLUMN_CHANNEL": "Kênh",
+            "COLUMN_AI": "Nhân viên AI",
+            "NONE": "Không dùng AI",
+            "SELECT_LABEL": "Nhân viên AI cho {name}",
+            "FOOTNOTE": "Đổi AI ở kênh đang có hội thoại tự động thì hỏi xác nhận một lần. Chọn \"Không dùng AI\" thì các hội thoại đó thôi được AI trả lời.",
+            "SAVED": "Đã lưu nhân viên AI cho kênh {name}",
+            "EMPTY": "Tài khoản chưa có kênh nào. Thêm kênh ở Cài đặt › Hộp thư."
+        },
+        "FORM": {
+            "CREATE_TITLE": "Tạo nhân viên AI",
+            "EDIT_TITLE": "Sửa nhân viên AI",
+            "NAME": "Tên hiển thị",
+            "AVATAR": "Đổi ảnh đại diện",
+            "NAME_REQUIRED": "Nhập tên hiển thị",
+            "CHANNELS": "Kênh trả lời",
+            "CHANNELS_HINT": "Bấm để chọn. Kênh đang có AI khác thì AI đó được thay sau khi bạn xác nhận.",
+            "CHANNEL_TAKEN": "{platform} · đang là {name}",
+            "NO_CHANNELS": "Tài khoản chưa có kênh nào.",
+            "PERSONA": "Persona",
+            "PERSONA_CONTENT": "Nội dung persona",
+            "PERSONA_PRESETS": "Mẫu persona",
+            "PERSONA_HINT": "Chọn mẫu sẽ điền sẵn, sửa tiếp được.",
+            "INSTRUCTIONS": "Chỉ dẫn của shop",
+            "INSTRUCTIONS_HINT": "Shop bán gì, giao hàng thế nào, điều nên và không nên nói. Có thể để trống và thêm sau.",
+            "INSTRUCTIONS_PLACEHOLDER": "Ví dụ: Shop bán váy nữ, giao toàn quốc 2-4 ngày. Không hứa giảm giá.",
+            "GROUNDING_NOTE": "Giá, chính sách, khuyến mãi luôn lấy từ dữ liệu của shop. Không có dữ liệu thì AI không tự khẳng định mà chuyển hội thoại cho người.",
+            "DELETE": "Xoá",
+            "CANCEL": "Huỷ",
+            "CREATE": "Tạo và bật",
+            "SAVE": "Lưu",
+            "CREATED": "Đã tạo và bật {name}",
+            "SAVED": "Đã lưu {name}",
+            "ERROR": "Không lưu được nhân viên AI. Thử lại.",
+            "AVATAR_ERROR": "Không lưu được ảnh đại diện. Thử lại."
+        },
+        "PRESETS": {
+            "FRIENDLY": {
+                "LABEL": "Thân thiện, xưng em",
+                "TEXT": "Nhân viên tư vấn xưng \"em\", gọi khách \"anh/chị\". Vui vẻ, trả lời ngắn gọn, hỏi lại khi chưa rõ nhu cầu."
+            },
+            "PROFESSIONAL": {
+                "LABEL": "Lịch sự, chuyên nghiệp",
+                "TEXT": "Nhân viên tư vấn xưng \"em\", gọi khách \"quý khách\". Lịch sự, rõ ràng, trả lời đủ ý và đúng trọng tâm, không dùng biểu tượng cảm xúc."
+            },
+            "YOUTHFUL": {
+                "LABEL": "Trẻ trung, năng động",
+                "TEXT": "Nhân viên tư vấn xưng \"em\", gọi khách \"anh/chị\" hoặc \"bạn\" theo cách khách xưng. Trẻ trung, nhiệt tình, câu ngắn, thỉnh thoảng dùng biểu tượng cảm xúc."
+            },
+            "CUSTOM": {
+                "LABEL": "Tự viết"
+            }
+        },
+        "REPLACE": {
+            "TITLE": "Thay {old} bằng {new} ở kênh {channel}?",
+            "DESCRIPTION": "Mỗi kênh chỉ có một nhân viên AI. Từ khi lưu, {new} trả lời các hội thoại đang tự động ở kênh này, kể cả hội thoại {old} đang tiếp.",
+            "KEEP": "Giữ {old}",
+            "CONFIRM": "Thay bằng {new}",
+            "NEW_AGENT": "nhân viên AI này"
+        },
+        "REMOVE": {
+            "TITLE": "Bỏ {old} khỏi kênh {channel}?",
+            "DESCRIPTION": "Kênh này có {count} hội thoại đang tự động. Sau khi bỏ, các hội thoại đó thôi được AI trả lời cho tới khi kênh gắn nhân viên AI khác.",
+            "KEEP": "Giữ {old}",
+            "CONFIRM": "Không dùng AI"
+        },
+        "DELETE": {
+            "TITLE": "Xoá nhân viên AI {name}?",
+            "DESCRIPTION": "{name} đang gắn {channels} kênh và có {conversations} hội thoại đang tự động. Sau khi xoá, các hội thoại này thôi được AI trả lời cho tới khi kênh gắn nhân viên AI khác. Tin {name} đã gửi vẫn giữ nguyên.",
+            "CONFIRM": "Xoá {name}",
+            "CANCEL": "Huỷ",
+            "DONE": "Đã xoá {name}",
+            "ERROR": "Không xoá được nhân viên AI. Thử lại."
+        }
+    },
     "ALERT_SOUND": {
         "TONE_LABEL": "Âm báo",
         "PREVIEW": "Nghe thử",

@@ -4,7 +4,9 @@ namespace App\Services\AiAgents;
 
 use App\Models\Account;
 use App\Models\AiAgent;
+use App\Models\Conversation;
 use App\Models\Inbox;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 // Chỗ duy nhất tạo, sửa, tắt, xoá AI agent và gắn AI agent cho inbox. Tắt hay gỡ AI khỏi
@@ -64,6 +66,55 @@ final class AiAgentService
 
         $inbox->forceFill(['ai_agent_id' => $aiAgent?->id])->save();
         $inbox->unsetRelation('aiAgent')->unsetRelation('replyingAiAgent');
+    }
+
+    /**
+     * Đặt đúng tập kênh AI agent phụ trách: inbox trong danh sách chuyển sang AI này (thay AI
+     * cũ của kênh), inbox đang gắn AI này mà không còn trong danh sách thì về "chưa có AI".
+     *
+     * @param  list<int>  $inboxIds
+     *
+     * @throws ValidationException
+     */
+    public function syncInboxes(AiAgent $aiAgent, array $inboxIds): void
+    {
+        $inboxIds = array_values(array_unique(array_map('intval', $inboxIds)));
+        $selected = Inbox::query()->where('account_id', $aiAgent->account_id)->whereKey($inboxIds)->get();
+
+        if ($selected->count() !== count($inboxIds)) {
+            throw ValidationException::withMessages(['inbox_ids' => __('errors.ai_agents.unknown_inbox')]);
+        }
+
+        DB::transaction(function () use ($aiAgent, $selected, $inboxIds) {
+            $released = Inbox::query()->where('ai_agent_id', $aiAgent->id)->whereKeyNot($inboxIds)->get();
+
+            foreach ($released as $inbox) {
+                $this->assignInbox($inbox, null);
+            }
+
+            foreach ($selected as $inbox) {
+                if ($inbox->ai_agent_id !== $aiAgent->id) {
+                    $this->assignInbox($inbox, $aiAgent);
+                }
+            }
+        });
+    }
+
+    /**
+     * Số hội thoại đang bật trả lời tự động theo từng inbox của account.
+     *
+     * @return array<int, int> inbox_id => số hội thoại
+     */
+    public function autoReplyCountsByInbox(Account $account): array
+    {
+        return Conversation::query()
+            ->where('account_id', $account->id)
+            ->where('ai_auto_reply', true)
+            ->groupBy('inbox_id')
+            ->selectRaw('inbox_id, count(*) as total')
+            ->pluck('total', 'inbox_id')
+            ->map(fn ($total) => (int) $total)
+            ->all();
     }
 
     private function cleanName(string $name): string

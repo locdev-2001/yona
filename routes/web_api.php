@@ -6,6 +6,7 @@ use App\Http\Controllers\WebApi\AccountsController;
 use App\Http\Controllers\WebApi\Actions\ContactMergesController;
 use App\Http\Controllers\WebApi\AgentBotsController;
 use App\Http\Controllers\WebApi\AgentsController;
+use App\Http\Controllers\WebApi\AiAgentsController;
 use App\Http\Controllers\WebApi\Articles\BulkActionsController as ArticleBulkActionsController;
 use App\Http\Controllers\WebApi\ArticlesController;
 use App\Http\Controllers\WebApi\AutomationRulesController;
@@ -325,6 +326,15 @@ Route::middleware(['auth.api_token', 'auth', 'account.scope'])
         Route::match(['put', 'patch'], '/payment_accounts/{paymentAccountId}', [PaymentAccountsController::class, 'update'])->whereNumber('paymentAccountId');
         Route::delete('/payment_accounts/{paymentAccountId}', [PaymentAccountsController::class, 'destroy'])->whereNumber('paymentAccountId');
         Route::get('/payment_accounts/{paymentAccountId}/preview', [PaymentAccountsController::class, 'preview'])->whereNumber('paymentAccountId');
+
+        // Cài đặt › Nhân viên AI (quản trị viên): CRUD, ảnh đại diện, AI của từng kênh.
+        Route::get('/ai_agents', [AiAgentsController::class, 'index']);
+        Route::post('/ai_agents', [AiAgentsController::class, 'store']);
+        Route::match(['put', 'patch'], '/ai_agents/{aiAgentId}', [AiAgentsController::class, 'update'])->whereNumber('aiAgentId');
+        Route::delete('/ai_agents/{aiAgentId}', [AiAgentsController::class, 'destroy'])->whereNumber('aiAgentId');
+        Route::post('/ai_agents/{aiAgentId}/avatar', [AiAgentsController::class, 'storeAvatar'])->whereNumber('aiAgentId');
+        Route::delete('/ai_agents/{aiAgentId}/avatar', [AiAgentsController::class, 'destroyAvatar'])->whereNumber('aiAgentId');
+        Route::put('/inboxes/{inboxId}/ai_agent', [AiAgentsController::class, 'assignInbox'])->whereNumber('inboxId');
 
         Route::get('/canned_responses', [CannedResponsesController::class, 'index']);
         Route::post('/canned_responses', [CannedResponsesController::class, 'store']);

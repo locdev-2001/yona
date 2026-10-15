@@ -8,6 +8,7 @@ const pages = import.meta.glob([
     './dashboard/*.tsx',
     './dashboard/onboarding/*.tsx',
     './dashboard/settings/**/*.tsx',
+    './dashboard/agent/*.tsx',
     './dashboard/campaigns/*.tsx',
     './dashboard/contacts/*.tsx',
     './dashboard/helpcenter/pages/*.tsx',

@@ -114,6 +114,8 @@ export const ICON_NEWSPAPER = `<svg role="img" class="ninja-icon" width="18" hei
 
 export const ICON_LANDMARK = `<svg role="img" class="ninja-icon" width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 18v-7m1.119-8.795a2 2 0 0 1 1.762 0l7.84 3.846A.5.5 0 0 1 20.5 7h-17a.5.5 0 0 1-.22-.949zM14 18v-7m4 7v-7M3 22h18M6 18v-7"/></svg>`;
 
+export const ICON_BOT_MESSAGE_SQUARE = `<svg role="img" class="ninja-icon" width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V2H8m7 9v2M2 12h2m16 0h2m-2 4a2 2 0 0 1-2 2H8.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 4 20.286V8a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2zM9 11v2"/></svg>`;
+
 export const ICON_STICKER = `<svg role="img" class="ninja-icon" width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><path d="M21 9a2.4 2.4 0 0 0-.706-1.706l-3.588-3.588A2.4 2.4 0 0 0 15 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2z"/><path d="M15 3v5a1 1 0 0 0 1 1h5M8 13h.01M16 13h.01M10 16s.8 1 2 1c1.3 0 2-1 2-1"/></g></svg>`;
 
 export const ICON_WORKFLOW = `<svg role="img" class="ninja-icon" width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><g fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"><rect width="8" height="8" x="3" y="3" rx="2"/><path d="M7 11v4a2 2 0 0 0 2 2h4"/><rect width="8" height="8" x="13" y="13" rx="2"/></g></svg>`;
@@ -146,6 +148,7 @@ export const NAVIGATION_ICONS: Record<string, string> = {
     'i-lucide-code': ICON_CODE,
     'i-lucide-repeat': ICON_REPEAT,
     'i-lucide-bot': ICON_BOT,
+    'i-lucide-bot-message-square': ICON_BOT_MESSAGE_SQUARE,
     'i-lucide-toy-brick': ICON_TOY_BRICK,
     'i-lucide-message-square-quote': ICON_MESSAGE_QUOTE,
     'i-lucide-blocks': ICON_BLOCKS,
