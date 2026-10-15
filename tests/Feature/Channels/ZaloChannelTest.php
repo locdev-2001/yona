@@ -1106,6 +1106,25 @@ it('trong nhóm hiện đúng thành viên đang gõ, không phải tên nhóm',
         ->and(Cache::has(TypingRelayService::stampKey($conversation)))->toBeFalse();
 });
 
+it('tài khoản shop tự gõ trong nhóm không bật đang-nhập', function () {
+    zaloWebhook(zaloPayload('zalo_inbound_group_text', $this->channel))->assertOk();
+    Event::fake([DomainEvent::class]);
+
+    zaloGroupTyping($this->channel, (string) $this->channel->zalo_uid)->assertOk();
+
+    Event::assertNotDispatched(
+        DomainEvent::class,
+        fn (DomainEvent $event) => $event->type === EventType::CONVERSATION_TYPING_ON,
+    );
+});
+
+it('job tắt đang-nhập xếp hàng từ bản trước (chưa có thành viên) vẫn đọc được thành viên', function () {
+    // unserialize dựng job không qua constructor, chỉ gán khoá có trong payload cũ.
+    $queuedBeforeDeploy = (new ReflectionClass(StopTypingJob::class))->newInstanceWithoutConstructor();
+
+    expect($queuedBeforeDeploy->groupMember)->toBeNull();
+});
+
 it('thành viên nhóm chưa nhắn gần đây thì tra tên từ danh bạ nhóm', function () {
     zaloWebhook(zaloPayload('zalo_inbound_group_text', $this->channel))->assertOk();
     Cache::put("zalo:group-members:{$this->channel->connectionId()}:7788", [

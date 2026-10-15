@@ -42,7 +42,14 @@ class TypingRelayService
             return false;
         }
 
-        $groupMember = $this->groupMemberOf($conversation, RelayEventParser::typingGroupMemberId($relayPayload));
+        $memberId = RelayEventParser::typingGroupMemberId($relayPayload);
+
+        // Chính tài khoản shop gõ trong nhóm (từ điện thoại) không phải khách đang gõ.
+        if ($memberId !== null && $memberId === (string) $inbox->channel?->zalo_uid) {
+            return false;
+        }
+
+        $groupMember = $this->groupMemberOf($conversation, $memberId);
         $stamp = (string) now()->getPreciseTimestamp(3);
         Cache::put(self::stampKey($conversation, $groupMember), $stamp, now()->addMinutes(self::STAMP_TTL_MINUTES));
 

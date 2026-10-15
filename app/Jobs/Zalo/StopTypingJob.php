@@ -15,12 +15,21 @@ use Illuminate\Support\Facades\Cache;
  */
 class StopTypingJob extends ApplicationJob
 {
+    /**
+     * Không promote/readonly: job xếp hàng từ bản trước chưa có khoá này, unserialize
+     * phải rơi về mặc định null thay vì để thuộc tính chưa khởi tạo.
+     *
+     * @var array{external_id: string, name: string, avatar: string|null}|null
+     */
+    public ?array $groupMember = null;
+
     /** @param array{external_id: string, name: string, avatar: string|null}|null $groupMember */
     public function __construct(
         public readonly Conversation $conversation,
         public readonly string $stamp,
-        public readonly ?array $groupMember = null,
+        ?array $groupMember = null,
     ) {
+        $this->groupMember = $groupMember;
         $this->onQueue('critical');
     }
 
