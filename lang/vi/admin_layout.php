@@ -131,6 +131,7 @@ return [
         'instance_status' => 'Trạng thái hệ thống',
         'alerts' => 'Cảnh báo',
         'feature_usage' => 'Mức dùng tính năng',
+        'ai_logs' => 'Nhật ký AI',
         'data' => 'Trình duyệt dữ liệu',
         'sticker_packs' => 'Kho sticker',
         'agent_bots' => 'Agent bot',
