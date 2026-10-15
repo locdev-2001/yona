@@ -12,10 +12,6 @@
         <testsuite name="Contracts">
             <directory>tests/Contracts</directory>
         </testsuite>
-        <!-- Luật import giữa lõi và nhân viên AI (App\Agent); không cần app hay DB. -->
-        <testsuite name="Architecture">
-            <directory>tests/Architecture</directory>
-        </testsuite>
     </testsuites>
     <source>
         <include>

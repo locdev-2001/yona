@@ -10,15 +10,12 @@
 //
 // `media` là tin gửi kèm tệp (SendReplyJob::queueFor): production có supervisor
 // riêng cho nó (config/horizon.php), dev vẫn chạy chung một worker theo thứ tự này.
-// `ai` là lượt của nhân viên AI (mỗi lượt tới 120s): production cũng có supervisor
-// riêng, để lượt dài không giữ worker của tin nhắn và realtime.
 return [
     'critical',
     'high',
     'media',
     'medium',
     'default',
-    'ai',
     'mailers',
     'low',
     'scheduled_jobs',
