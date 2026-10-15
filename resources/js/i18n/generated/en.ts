@@ -4517,7 +4517,8 @@ const messages: Record<string, unknown> = {
                     "human_joined": "Switched to manual replies because {user_name} replied to the customer",
                     "human_joined_from_channel": "Switched to manual replies because someone replied from the channel app",
                     "handed_off": "{agent_name} handed the conversation over to the team and stopped automatic replies",
-                    "ai_agent_stopped": "{agent_name} stopped automatic replies"
+                    "ai_agent_stopped": "{agent_name} stopped automatic replies",
+                    "ai_turn_failed": "{agent_name} could not handle this message, the conversation is waiting for a person"
                 }
             },
             "muted": "{user_name} has muted the conversation",
@@ -4975,7 +4976,8 @@ const messages: Record<string, unknown> = {
         "ai_agents": {
             "no_replying_ai_agent": "This inbox has no AI agent turned on. Assign an AI agent to the inbox or turn it on first.",
             "other_account": "This AI agent belongs to another account.",
-            "invalid_name": "AI agent name is required and must be at most 255 characters."
+            "invalid_name": "AI agent name is required and must be at most 255 characters.",
+            "unknown_inbox": "One of the selected channels does not exist in this account."
         },
         "conversations": {
             "floor_held": "The AI agent is replying to the customer. Wait for it to finish, or write a private note.",

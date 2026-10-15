@@ -177,6 +177,8 @@ class ConversationResource extends JsonResource
                 'ai_agent' => self::replyingAiAgentPayload($conversation),
             ],
             'floor_held_until' => $conversation->floorHeldUntil()?->toISOString(),
+            // AI đã chuyển hội thoại cho người và chưa ai tiếp nhận.
+            'ai_handed_off_at' => $conversation->ai_handed_off_at?->toISOString(),
             ...($this->knowsViewerPins ? ['pinned' => $this->viewerPinPosition !== null, 'pin_position' => $this->viewerPinPosition] : []),
         ];
     }

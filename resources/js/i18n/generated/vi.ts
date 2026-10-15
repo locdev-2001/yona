@@ -4510,14 +4510,15 @@ const messages: Record<string, unknown> = {
                 "error_moved_to_open": "Hệ thống đánh dấu hội thoại là đang mở do bot nhân viên gặp lỗi."
             },
             "auto_responder": {
-                "enabled": "{user_name} bật trả lời tự động bằng {agent_name}",
-                "enabled_by_system": "Đã bật trả lời tự động bằng {agent_name}",
+                "enabled": "{user_name} đã bật AI tự động · {agent_name} trả lời",
+                "enabled_by_system": "Đã bật AI tự động · {agent_name} trả lời",
                 "stopped": {
-                    "manual": "{user_name} tắt trả lời tự động",
-                    "human_joined": "Chuyển sang trả lời thủ công vì {user_name} đã trả lời khách",
-                    "human_joined_from_channel": "Chuyển sang trả lời thủ công vì có người trả lời từ ứng dụng của kênh",
-                    "handed_off": "{agent_name} đã chuyển hội thoại cho nhân viên và thôi trả lời tự động",
-                    "ai_agent_stopped": "{agent_name} dừng trả lời tự động"
+                    "manual": "{user_name} đã tắt AI tự động",
+                    "human_joined": "Đã chuyển sang thủ công vì {user_name} tham gia trả lời",
+                    "human_joined_from_channel": "Đã chuyển sang thủ công vì có tin trả lời trực tiếp trên ứng dụng của kênh",
+                    "handed_off": "AI tự động đã tắt: {agent_name} chuyển hội thoại cho người",
+                    "ai_agent_stopped": "AI tự động đã tắt: {agent_name} dừng trả lời",
+                    "ai_turn_failed": "{agent_name} chưa xử lý được tin này, hội thoại chờ người trả lời"
                 }
             },
             "muted": "{user_name} đã tắt tiếng hội thoại",
@@ -4975,7 +4976,8 @@ const messages: Record<string, unknown> = {
         "ai_agents": {
             "no_replying_ai_agent": "Hộp thư này chưa có AI agent đang bật. Hãy gắn AI agent cho hộp thư hoặc bật AI agent trước.",
             "other_account": "AI agent này thuộc tài khoản khác.",
-            "invalid_name": "Tên AI agent không được trống và tối đa 255 ký tự."
+            "invalid_name": "Tên AI agent không được trống và tối đa 255 ký tự.",
+            "unknown_inbox": "Có kênh đã chọn không thuộc tài khoản này."
         },
         "conversations": {
             "floor_held": "AI agent đang trả lời khách. Chờ lượt này xong rồi gửi, hoặc viết ghi chú riêng.",

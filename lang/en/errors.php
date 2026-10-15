@@ -26,6 +26,7 @@ return [
         'no_replying_ai_agent' => 'This inbox has no AI agent turned on. Assign an AI agent to the inbox or turn it on first.',
         'other_account' => 'This AI agent belongs to another account.',
         'invalid_name' => 'AI agent name is required and must be at most 255 characters.',
+        'unknown_inbox' => 'One of the selected channels does not exist in this account.',
     ],
     'conversations' => [
         'floor_held' => 'The AI agent is replying to the customer. Wait for it to finish, or write a private note.',

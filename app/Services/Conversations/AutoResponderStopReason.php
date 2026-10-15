@@ -13,4 +13,12 @@ enum AutoResponderStopReason: string
     case HandedOff = 'handed_off';
     // AI agent tự dừng (hết ngân sách, công tắc dừng của nó).
     case AiAgentStopped = 'ai_agent_stopped';
+    // Lượt của AI lỗi, hội thoại chờ người trả lời.
+    case AiTurnFailed = 'ai_turn_failed';
+
+    // AI bỏ hội thoại lại cho người: hội thoại vào danh sách "AI chuyển cho người".
+    public function handsOverToHuman(): bool
+    {
+        return $this === self::HandedOff || $this === self::AiTurnFailed;
+    }
 }

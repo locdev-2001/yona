@@ -13,7 +13,8 @@ use Illuminate\Support\Facades\DB;
 // Chỗ DUY NHẤT bật/tắt trả lời tự động của hội thoại. AI trả lời là AI agent của inbox,
 // đang bật (Inbox::replyingAiAgent). Đổi cột qua model nên `conversation.updated` (realtime,
 // webhook, automation) phát với changed_attributes có `ai_auto_reply`. Tắt thì nhả
-// luôn quyền nói đang giữ.
+// luôn quyền nói đang giữ. Cũng là chỗ duy nhất ghi/xoá `ai_handed_off_at`: AI chuyển cho
+// người (hoặc lượt lỗi) thì ghi, bật lại AI hoặc gán cho một nhân viên thì xoá.
 final class ConversationAutoResponder
 {
     /** @throws AutoResponderUnavailable */
@@ -21,14 +22,16 @@ final class ConversationAutoResponder
     {
         $aiAgent = $conversation->inbox->replyingAiAgent()->first() ?? throw AutoResponderUnavailable::noReplyingAiAgent();
 
-        if ($this->switchTo($conversation, true)) {
+        if ($this->switchTo($conversation, true, ['ai_handed_off_at' => null])) {
             $this->recordActivity($conversation, $actor === null ? 'enabled_by_system' : 'enabled', $actor, $aiAgent);
         }
     }
 
     public function disable(Conversation $conversation, AutoResponderStopReason $reason, ?User $actor = null): void
     {
-        if (! $this->switchTo($conversation, false)) {
+        $handedOffAt = $reason->handsOverToHuman() ? ['ai_handed_off_at' => now()] : [];
+
+        if (! $this->switchTo($conversation, false, $handedOffAt)) {
             return;
         }
 
@@ -51,16 +54,30 @@ final class ConversationAutoResponder
         $this->disable($conversation, AutoResponderStopReason::HumanJoined, $message->sender instanceof User ? $message->sender : null);
     }
 
-    private function switchTo(Conversation $conversation, bool $enabled): bool
+    // Có nhân viên nhận hội thoại thì nó thôi chờ người. Ghi thẳng bằng query builder vì
+    // lời gọi đến từ giữa hook `updated` của lần gán: lưu lại qua model sẽ ghi đè
+    // wasChanged('assignee_id') mà các bước sau của lần gán còn đọc.
+    public function humanTookOver(Conversation $conversation): void
     {
-        return DB::transaction(function () use ($conversation, $enabled) {
+        if ($conversation->assignee_id === null || $conversation->ai_handed_off_at === null) {
+            return;
+        }
+
+        $conversation->newModelQuery()->whereKey($conversation->id)->toBase()->update(['ai_handed_off_at' => null]);
+        $conversation->setAttribute('ai_handed_off_at', null)->syncOriginalAttribute('ai_handed_off_at');
+    }
+
+    /** @param  array<string, mixed>  $extra */
+    private function switchTo(Conversation $conversation, bool $enabled, array $extra = []): bool
+    {
+        return DB::transaction(function () use ($conversation, $enabled, $extra) {
             $locked = Conversation::query()->whereKey($conversation->id)->lockForUpdate()->firstOrFail();
 
             if ($locked->ai_auto_reply === $enabled) {
                 return false;
             }
 
-            $locked->forceFill(['ai_auto_reply' => $enabled, 'floor_held_until' => null])->save();
+            $locked->forceFill(['ai_auto_reply' => $enabled, 'floor_held_until' => null, ...$extra])->save();
             $conversation->setRawAttributes($locked->getAttributes(), true);
 
             return true;

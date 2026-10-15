@@ -52,6 +52,7 @@ return [
                 'human_joined_from_channel' => 'Switched to manual replies because someone replied from the channel app',
                 'handed_off' => '{agent_name} handed the conversation over to the team and stopped automatic replies',
                 'ai_agent_stopped' => '{agent_name} stopped automatic replies',
+                'ai_turn_failed' => '{agent_name} could not handle this message, the conversation is waiting for a person',
             ],
         ],
         'muted' => '{user_name} has muted the conversation',

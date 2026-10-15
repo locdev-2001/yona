@@ -141,6 +141,7 @@ class Conversation extends Model
             'status_changed_at' => 'datetime',
             'ai_auto_reply' => 'boolean',
             'floor_held_until' => 'datetime',
+            'ai_handed_off_at' => 'datetime',
         ];
     }
 

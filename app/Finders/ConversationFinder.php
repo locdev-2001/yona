@@ -259,6 +259,8 @@ class ConversationFinder
                     ->where('user_id', $this->currentUser->id)
                     ->select('conversation_id')
             ),
+            'ai_auto_reply' => $this->conversations->where('conversations.ai_auto_reply', true),
+            'ai_handed_off' => $this->conversations->whereNotNull('conversations.ai_handed_off_at'),
             default => $this->conversations,
         };
     }

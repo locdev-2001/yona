@@ -26,6 +26,7 @@ return [
         'no_replying_ai_agent' => 'Hộp thư này chưa có AI agent đang bật. Hãy gắn AI agent cho hộp thư hoặc bật AI agent trước.',
         'other_account' => 'AI agent này thuộc tài khoản khác.',
         'invalid_name' => 'Tên AI agent không được trống và tối đa 255 ký tự.',
+        'unknown_inbox' => 'Có kênh đã chọn không thuộc tài khoản này.',
     ],
     'conversations' => [
         'floor_held' => 'AI agent đang trả lời khách. Chờ lượt này xong rồi gửi, hoặc viết ghi chú riêng.',
