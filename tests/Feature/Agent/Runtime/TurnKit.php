@@ -4,6 +4,7 @@ namespace Tests\Feature\Agent\Runtime;
 
 use App\Agent\Contracts\Ports\LanguageModel;
 use App\Agent\Runtime\Jobs\RunTurnJob;
+use App\Agent\Runtime\TurnSettings;
 use App\Builders\Messages\MessageBuilder;
 use App\Models\Account;
 use App\Models\AccountUser;
@@ -27,9 +28,12 @@ final class TurnKit
     /** @var array<int, true> */
     private static array $ran = [];
 
+    // Bật lượt tường minh: .env của máy dev có thể tắt lượt AI cho các test khác.
     public static function boot(): void
     {
         self::$ran = [];
+        config(['agent.turn.enabled' => true]);
+        app()->forgetInstance(TurnSettings::class);
         Bus::fake([RunTurnJob::class]);
     }
 
