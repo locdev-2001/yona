@@ -90,7 +90,7 @@ export default function AssigneeAction({ isCompact = false, isStretched = false 
                 data-testid="conversation-assignee-button"
                 className={`!outline-0 max-md:h-11 ${
                     isCompact
-                        ? `!px-0 w-8 max-md:w-11 justify-center ${kind === 'none' ? 'text-n-amber-11' : ''}`
+                        ? `!px-0 w-8 max-md:w-11 justify-center`
                         : isStretched
                           ? 'w-full justify-center'
                           : 'max-w-[16rem]'
