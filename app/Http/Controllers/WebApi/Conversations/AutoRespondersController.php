@@ -10,7 +10,7 @@ use App\Services\Conversations\ConversationAutoResponder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-// Công tắc "AI tự động" của một hội thoại (AI mặc định của account trả lời). Cùng nhóm
+// Công tắc "AI tự động" của một hội thoại (AI trả lời của inbox, Inbox::replyingAiAgent). Cùng nhóm
 // route nhận cả phiên dashboard lẫn api_access_token, nên giao diện và API token đi chung
 // một đường.
 class AutoRespondersController extends Controller
