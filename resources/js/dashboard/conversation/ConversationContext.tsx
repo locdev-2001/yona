@@ -754,8 +754,8 @@ export function ConversationProvider({
 
     const conversationTypeRef = useRef<ConversationType>(conversationType);
     conversationTypeRef.current = conversationType;
-    const inboxIdRef = useRef(inboxId);
-    inboxIdRef.current = inboxId;
+    const inboxIdsRef = useRef(inboxIds);
+    inboxIdsRef.current = inboxIds;
 
     const updateConversation = useCallback((incoming: Conversation) => {
         if (!incoming?.id) return;
@@ -865,7 +865,7 @@ export function ConversationProvider({
             unloadedFetchesRef.current.add(targetId);
             fetchConversation(accountId, targetId)
                 .then((fetched) => {
-                    if (!shouldAddConversationToList(fetched, inboxIdRef.current, conversationTypeRef.current)) return;
+                    if (!shouldAddConversationToList(fetched, inboxIdsRef.current, conversationTypeRef.current)) return;
                     setAllConversations((current) => applyConversationUpdate(current, fetched));
                 }, () => undefined)
                 .finally(() => unloadedFetchesRef.current.delete(targetId));
