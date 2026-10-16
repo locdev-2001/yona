@@ -2688,6 +2688,33 @@ const messages: Record<string, unknown> = {
             "START": "Chọn nhiều hội thoại",
             "EXIT": "Thoát chọn nhiều"
         },
+        "MORE_ACTIONS": "Thêm thao tác",
+        "FILTER_PANEL": {
+            "BUTTON": "Lọc hội thoại",
+            "BUTTON_ACTIVE": "Lọc hội thoại, {count} bộ lọc đang bật",
+            "TITLE": "Lọc hội thoại",
+            "ACTIVE": "Bộ lọc đang bật",
+            "REMOVE": "Bỏ lọc {name}",
+            "UNREAD": "{count} hội thoại chưa đọc",
+            "STATUS": "Trạng thái",
+            "CHANNEL": "Kênh",
+            "LABEL": "Nhãn",
+            "SORT": "Sắp xếp",
+            "ADVANCED": "Lọc nâng cao",
+            "CLEAR": "Xoá lọc",
+            "STATUS_ITEMS": {
+                "open": "Đang mở",
+                "pending": "Chờ xử lý",
+                "snoozed": "Báo lại",
+                "resolved": "Đã giải quyết",
+                "all": "Tất cả"
+            },
+            "SORT_ITEMS": {
+                "last_activity_at_desc": "Mới nhất",
+                "waiting_since_asc": "Chờ lâu nhất",
+                "unread": "Chưa đọc nhiều"
+            }
+        },
         "ASSIGNEE_TYPE_TABS": {
             "me": "Của tôi",
             "unassigned": "Chưa gán",
@@ -2711,12 +2738,6 @@ const messages: Record<string, unknown> = {
             }
         },
         "VIEW_FILTER": "Xem",
-        "SORT_TOOLTIP_LABEL": "Sắp xếp hội thoại",
-        "STATUS_FILTER_TOOLTIP_LABEL": "Lọc theo trạng thái",
-        "CHAT_SORT": {
-            "STATUS": "Trạng thái",
-            "ORDER_BY": "Sắp xếp theo"
-        },
         "CHAT_TIME_STAMP": {
             "CREATED": {
                 "LATEST": "Đã tạo",

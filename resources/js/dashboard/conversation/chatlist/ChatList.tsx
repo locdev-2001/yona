@@ -29,8 +29,8 @@ import { appliedLabelsForSelection } from '../labelHelpers';
 import type { AssigneeTab } from '../types';
 import NextButton from 'dashboard/components-next/button/Button';
 import { emptyListHint } from './emptyListHint';
+import ActiveFilterChips from './ActiveFilterChips';
 import ChatListHeader from './ChatListHeader';
-import ChatListSearch from './ChatListSearch';
 import ChatTypeTabs from './ChatTypeTabs';
 import ConversationList from './ConversationList';
 import ListSearchHeader from './ListSearchHeader';
@@ -99,7 +99,6 @@ export default function ChatList({
 
     const folders = useCustomViews(accountId, 'conversation');
     const activeFolder = foldersId ? folders.find(view => view.id === foldersId) : undefined;
-    const hasActiveFolders = Boolean(activeFolder);
     const activeFolderQuery = activeFolder ? JSON.stringify(activeFolder.query?.payload ?? []) : '';
 
     useEffect(() => {
@@ -220,44 +219,24 @@ export default function ChatList({
             >
                 <ChatListHeader
                     pageTitle={pageTitle}
-                    activeStatus={status}
                     isOnExpandedLayout={isOnExpandedLayout}
                     onFiltersModal={onToggleAdvanceFiltersModal}
                     hasAppliedFilters={appliedFilters !== null}
-                    hasActiveFolders={hasActiveFolders}
+                    activeFolderName={activeFolder?.name}
                     allCount={tabMeta.all_count || 0}
                     isListLoading={isSearching ? listSearch.loading : listLoading}
+                    isSelecting={isSelecting}
+                    onToggleSelection={toggleSelectionMode}
                     onResetFilters={clearConversationFilters}
                     onAddFolders={() => setShowSaveFilterModal(true)}
                     onDeleteFolders={() => setShowDeleteFolderModal(true)}
                 />
-                <ChatListSearch />
-                <div className="flex items-center min-w-0">
-                    <div className="flex-1 min-w-0">
-                        {appliedFilters === null ? (
-                            <ChatTypeTabs
-                                items={assigneeTabItems}
-                                activeTab={assigneeTab}
-                                onChatTabChange={setAssigneeTab}
-                            />
-                        ) : null}
-                    </div>
-                    {/* Thẳng cột với nút "…" của thẻ: cùng khe thanh cuộn (scrollbar-gutter) với
-                        danh sách, rồi lùi đúng px-2 của danh sách + px-3 của thẻ, trừ -me-1 của nút "…". */}
-                    <div className="flex flex-shrink-0 py-1 pe-4 overflow-hidden [scrollbar-gutter:stable]">
-                        <NextButton
-                            xs
-                            ghost
-                            slate={!isSelecting}
-                            icon={isSelecting ? 'i-lucide-x' : 'i-lucide-list-checks'}
-                            title={t(isSelecting ? 'CHAT_LIST.SELECTION_MODE.EXIT' : 'CHAT_LIST.SELECTION_MODE.START')}
-                            aria-label={t(isSelecting ? 'CHAT_LIST.SELECTION_MODE.EXIT' : 'CHAT_LIST.SELECTION_MODE.START')}
-                            aria-pressed={isSelecting}
-                            className="flex-shrink-0"
-                            onClick={toggleSelectionMode}
-                        />
-                    </div>
-                </div>
+                {appliedFilters === null ? (
+                    <>
+                        <ChatTypeTabs items={assigneeTabItems} activeTab={assigneeTab} onChatTabChange={setAssigneeTab} />
+                        <ActiveFilterChips />
+                    </>
+                ) : null}
                 {isSearching && !listSearch.loading && !listSearch.contacts.length && !listSearch.conversations.length ? (
                     <p className="px-4 py-6 mb-0 text-sm text-center break-words text-n-slate-11">
                         {t('CHAT_LIST.SEARCH.NO_RESULTS', { query: searchQuery })}

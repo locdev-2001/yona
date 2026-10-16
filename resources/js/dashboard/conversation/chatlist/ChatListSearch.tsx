@@ -1,16 +1,19 @@
 import { useEffect, useState } from 'react';
+import type { ReactNode } from 'react';
 import { router } from '@inertiajs/react';
 
 import { composeConversationUrl } from 'dashboard/helper/URLHelper';
 import { t } from '../../../i18n';
 import { useConversation } from '../ConversationContext';
+import ListHeaderButton from './ListHeaderButton';
 
 // Gõ xong mới hỏi máy chủ — mỗi phím không bắn một truy vấn.
 const SEARCH_DEBOUNCE_MS = 300;
 
 // Ô tìm ngay trong cột danh sách: lọc tại chỗ danh sách đang xem (hộp thư, tab,
 // trạng thái, bộ lọc giữ nguyên). Tìm mọi thứ trong hệ thống là ô ở sidebar.
-export default function ChatListSearch() {
+// `actions` là các nút của cột (Lọc, Chọn nhiều) chen giữa ô tìm và nút Soạn tin.
+export default function ChatListSearch({ actions, trailing }: { actions?: ReactNode; trailing?: ReactNode }) {
     const { accountId, listFilters, teamId, searchQuery, setSearchQuery, isComposing } = useConversation();
     const [draft, setDraft] = useState(searchQuery);
 
@@ -32,8 +35,8 @@ export default function ChatListSearch() {
     };
 
     return (
-        <div className="flex items-center gap-2 px-3 pb-2">
-            <div className="field-surface flex flex-1 min-w-0 items-center gap-2.5 h-10 px-3 rounded-xl">
+        <div className="flex items-center gap-1.5 min-w-0">
+            <div className="field-surface flex flex-1 min-w-0 items-center gap-2 h-9 max-md:h-11 px-2.5 rounded-lg">
                 <span className="i-lucide-search size-[1.125rem] shrink-0 text-n-slate-10" aria-hidden="true" />
                 <input
                     type="search"
@@ -61,23 +64,20 @@ export default function ChatListSearch() {
                     </button>
                 ) : null}
             </div>
-            <button
-                type="button"
-                title={t('CHAT_LIST.SEARCH.COMPOSE')}
-                aria-label={t('CHAT_LIST.SEARCH.COMPOSE')}
+            {actions}
+            <ListHeaderButton
+                icon="i-lucide-square-pen"
+                label={t('CHAT_LIST.SEARCH.COMPOSE')}
+                isActive={isComposing}
                 aria-current={isComposing ? 'page' : undefined}
-                className={`field-surface grid place-content-center size-10 shrink-0 rounded-xl hover:text-n-slate-12 ${
-                    isComposing ? 'text-n-brand' : 'text-n-slate-11'
-                }`}
                 onClick={() =>
                     router.visit(composeConversationUrl({ accountId, filters: listFilters, teamId }), {
                         preserveState: true,
                         preserveScroll: true,
                     })
                 }
-            >
-                <span className="i-lucide-square-pen size-[1.125rem]" aria-hidden="true" />
-            </button>
+            />
+            {trailing}
         </div>
     );
 }

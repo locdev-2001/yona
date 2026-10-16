@@ -2688,6 +2688,33 @@ const messages: Record<string, unknown> = {
             "START": "Select conversations",
             "EXIT": "Exit selection"
         },
+        "MORE_ACTIONS": "More actions",
+        "FILTER_PANEL": {
+            "BUTTON": "Filter conversations",
+            "BUTTON_ACTIVE": "Filter conversations, {count} filters on",
+            "TITLE": "Filter conversations",
+            "ACTIVE": "Active filters",
+            "REMOVE": "Remove filter {name}",
+            "UNREAD": "{count} unread conversations",
+            "STATUS": "Status",
+            "CHANNEL": "Channel",
+            "LABEL": "Label",
+            "SORT": "Sort",
+            "ADVANCED": "Advanced filters",
+            "CLEAR": "Clear filters",
+            "STATUS_ITEMS": {
+                "open": "Open",
+                "pending": "Pending",
+                "snoozed": "Snoozed",
+                "resolved": "Resolved",
+                "all": "All"
+            },
+            "SORT_ITEMS": {
+                "last_activity_at_desc": "Newest",
+                "waiting_since_asc": "Waiting longest",
+                "unread": "Most unread"
+            }
+        },
         "ASSIGNEE_TYPE_TABS": {
             "me": "Mine",
             "unassigned": "Unassigned",
@@ -2711,12 +2738,6 @@ const messages: Record<string, unknown> = {
             }
         },
         "VIEW_FILTER": "View",
-        "SORT_TOOLTIP_LABEL": "Sort conversations",
-        "STATUS_FILTER_TOOLTIP_LABEL": "Filter by status",
-        "CHAT_SORT": {
-            "STATUS": "Status",
-            "ORDER_BY": "Order by"
-        },
         "CHAT_TIME_STAMP": {
             "CREATED": {
                 "LATEST": "Created",
