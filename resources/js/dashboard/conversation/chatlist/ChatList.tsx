@@ -47,9 +47,9 @@ const ASSIGNEE_TAB_KEYS: {
     countKey: 'mine_count' | 'unassigned_count' | 'all_count';
     badgeTone?: 'warning';
 }[] = [
+    { key: ASSIGNEE_TYPE.ALL, countKey: 'all_count' },
     { key: ASSIGNEE_TYPE.ME, countKey: 'mine_count' },
     { key: ASSIGNEE_TYPE.UNASSIGNED, countKey: 'unassigned_count', badgeTone: 'warning' },
-    { key: ASSIGNEE_TYPE.ALL, countKey: 'all_count' },
 ];
 
 export default function ChatList({
