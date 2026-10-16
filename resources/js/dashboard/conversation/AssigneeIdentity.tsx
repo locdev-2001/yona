@@ -105,7 +105,7 @@ function AssigneePill({ assignee, isAgentBot, kind, className = '' }: AssigneePi
             className={`flex items-center gap-1 min-w-0 text-xs font-medium leading-4 ${className}`}
         >
             <Icon icon="i-lucide-handshake" className="size-3.5 flex-shrink-0 text-n-slate-10" />
-            <span className={`inline-flex items-center gap-1 min-w-0 rounded-full border border-n-slate-6 p-0.5 pe-2 text-n-slate-12 ${PILL_BORDER[kind]}`}>
+            <span className={`inline-flex items-center gap-1 min-w-0 rounded-full border border-n-slate-6 py-0.5 px-1 text-n-slate-12 ${PILL_BORDER[kind]}`}>
                 <AssigneeAvatar assignee={assignee} isAgentBot={isAgentBot} size={16} />
                 <span className="truncate">{assigneeShortName(kind, name)}</span>
             </span>

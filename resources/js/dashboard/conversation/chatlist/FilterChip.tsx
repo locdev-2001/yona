@@ -1,6 +1,6 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 
-// Chip lọc dùng chung cho bảng Lọc và hàng chip đang bật: bo 4px, chạm 44px dưới 768px.
+// Chip lọc dùng chung (bảng Lọc, lọc nâng cao, hàng kênh, chip đang bật): dạng viên thuốc, chạm 44px dưới 768px.
 interface FilterChipProps extends ButtonHTMLAttributes<HTMLButtonElement> {
     isSelected?: boolean;
     children: ReactNode;
@@ -11,7 +11,7 @@ export default function FilterChip({ isSelected = false, className = '', childre
         <button
             type="button"
             className={[
-                'inline-flex items-center gap-1.5 h-11 md:h-7 max-w-full px-2.5 rounded text-sm md:text-xs whitespace-nowrap',
+                'inline-flex items-center gap-1.5 h-11 md:h-7 max-w-full px-3 rounded-full text-sm md:text-xs whitespace-nowrap',
                 'outline outline-1 -outline-offset-1 transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-n-brand',
                 isSelected
                     ? 'bg-n-blue-3 text-n-blue-11 outline-n-blue-7'
