@@ -5,6 +5,7 @@ return [
     // Yona: the sidebar box searches everything, unlike the conversation list search box.
     'GLOBAL_SEARCH' => 'Search',
     'GLOBAL_SEARCH_HINT' => 'Search conversations, messages, contacts and files across the workspace',
+    'UNREAD_GROUP_LABEL' => '{label}, {count} unread',
     'CURRENTLY_VIEWING_ACCOUNT' => 'Currently viewing:',
     'SWITCH' => 'Switch',
     'INBOX_VIEW' => 'Inbox View',

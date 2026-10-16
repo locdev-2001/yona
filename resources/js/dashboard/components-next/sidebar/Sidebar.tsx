@@ -8,9 +8,13 @@ import SidebarProfileMenu from './SidebarProfileMenu';
 import SidebarAccountSwitcher from './SidebarAccountSwitcher';
 import { buildMenuItems } from './menuItems';
 import { useCustomViews } from 'dashboard/composables/useCustomViews';
-import { useLabelsList } from 'dashboard/composables/useLabelsList';
-import { labelsOnSidebar } from 'dashboard/conversation/labelHelpers';
-import { SidebarContextProvider, useSidebarResize, COLLAPSED_THRESHOLD, MOBILE_DRAWER_WIDTH } from './provider';
+import {
+    SidebarContextProvider,
+    useSidebarResize,
+    COLLAPSED_THRESHOLD,
+    MIN_WIDTH,
+    MOBILE_DRAWER_WIDTH,
+} from './provider';
 import { filterMenuByRole } from './permissions';
 import { useConversationUnreadCounts } from './useConversationUnreadCounts';
 import { useNotificationsUnreadInboxCounts } from 'dashboard/notifications/useUnreadCount';
@@ -18,9 +22,11 @@ import NotificationBell from 'dashboard/notifications/components/NotificationBel
 import { accountScopedUrl } from 'dashboard/helper/URLHelper';
 import type { DashboardPageProps } from '../../types';
 
-// Port từ components-next/sidebar/Sidebar.vue
-// (soạn hội thoại mới nằm cạnh ô tìm ở danh sách hội thoại; ChangelogCard
-// cloud-only bỏ; sort menu + keyboard shortcuts vào sau; SidebarSortMenu chưa port)
+const SETTINGS_GROUP_NAME = 'Settings';
+
+// Từ 768px sidebar là rail icon cố định; chỉ trang Cài đặt mở rộng thành cây menu con
+// và kéo giãn được (Cài đặt không có điều hướng riêng trong trang). Dưới 768px là
+// ngăn kéo như cũ.
 export default function Sidebar({
     isMobileSidebarOpen = false,
     onCloseMobileSidebar,
@@ -28,12 +34,11 @@ export default function Sidebar({
     isMobileSidebarOpen?: boolean;
     onCloseMobileSidebar: () => void;
 }) {
-    const { currentAccount, currentAccountUser, inboxes = [], teams = [] } = usePage<DashboardPageProps>().props;
+    const { url, props } = usePage<DashboardPageProps>();
+    const { currentAccount, currentAccountUser, inboxes = [], teams = [] } = props;
     const accountId = currentAccount.id;
     const role = currentAccountUser.role;
     const features = currentAccount.features ?? {};
-    // Sidebar.vue dispatch `labels/get` khi mount; nhóm Labels đọc getLabelsOnSidebar.
-    const accountLabels = useLabelsList(accountId);
     const conversationCustomViews = useCustomViews(accountId, 'conversation');
     const contactCustomViews = useCustomViews(accountId, 'contact');
     // watch([accountId, hasConversationUnreadCounts], fetchConversationUnreadCounts) của Sidebar.vue.
@@ -55,7 +60,11 @@ export default function Sidebar({
     const { sidebarWidth, widthRef, isCollapsed, setSidebarWidth, saveWidth, snapToCollapsed, snapToExpanded } =
         useSidebarResize();
 
-    const isEffectivelyCollapsed = !isMobile && isCollapsed;
+    const settingsPath = accountScopedUrl(accountId, 'settings');
+    const currentPath = url.split('?')[0];
+    const isSettingsPage = currentPath === settingsPath || currentPath.startsWith(`${settingsPath}/`);
+    const isRail = !isMobile && (!isSettingsPage || isCollapsed);
+    const effectiveWidth = isMobile ? MOBILE_DRAWER_WIDTH : isRail ? MIN_WIDTH : sidebarWidth;
 
     const [isResizing, setResizing] = useState(false);
     const resizeState = useRef({ startX: 0, startWidth: 0 });
@@ -130,7 +139,7 @@ export default function Sidebar({
                     accountId,
                     inboxes,
                     teams,
-                    labelsOnSidebar(accountLabels),
+                    [],
                     unreadCounts,
                     conversationCustomViews,
                     contactCustomViews,
@@ -142,7 +151,6 @@ export default function Sidebar({
             accountId,
             inboxes,
             teams,
-            accountLabels,
             unreadCounts,
             conversationCustomViews,
             contactCustomViews,
@@ -150,6 +158,9 @@ export default function Sidebar({
             features,
         ],
     );
+
+    const navGroups = isRail ? menuItems.filter(item => item.name !== SETTINGS_GROUP_NAME) : menuItems;
+    const settingsGroup = isRail ? menuItems.find(item => item.name === SETTINGS_GROUP_NAME) : undefined;
 
     const asideRef = useRef<HTMLElement>(null);
 
@@ -171,10 +182,10 @@ export default function Sidebar({
             value={{
                 expandedItem,
                 setExpandedItem,
-                isCollapsed: isEffectivelyCollapsed,
+                isCollapsed: isRail,
                 opensFirstChildOnExpand: !isMobile,
                 isResizing,
-                sidebarWidth,
+                sidebarWidth: effectiveWidth,
                 activePopover,
                 setActivePopover,
                 scheduleClose,
@@ -184,21 +195,22 @@ export default function Sidebar({
             <aside
                 ref={asideRef}
                 className={[
-                    'bg-n-surface-sidebar flex flex-col text-sm pb-px fixed top-0 ltr:left-0 rtl:right-0 h-full max-md:h-dvh z-40 md:relative md:flex-shrink-0 md:ltr:translate-x-0 md:rtl:translate-x-0',
+                    isRail ? 'bg-n-surface-rail sidebar-rail' : 'bg-n-surface-sidebar',
+                    'flex flex-col text-sm pb-px fixed top-0 ltr:left-0 rtl:right-0 h-full max-md:h-dvh z-40 md:relative md:flex-shrink-0 md:ltr:translate-x-0 md:rtl:translate-x-0',
                     isMobileSidebarOpen ? 'shadow-overlay md:shadow-none' : 'ltr:-translate-x-full rtl:translate-x-full',
                     !isResizing ? 'transition-transform duration-200 ease-out md:transition-[width]' : '',
                 ]
                     .filter(Boolean)
                     .join(' ')}
-                style={{ width: `${isMobile ? MOBILE_DRAWER_WIDTH : sidebarWidth}px` }}
+                style={{ width: `${effectiveWidth}px` }}
             >
-                <section className={`grid ${isEffectivelyCollapsed ? 'mt-3 mb-6 gap-4' : 'mt-1 mb-4 gap-2'}`}>
+                <section className={`grid ${isRail ? 'mt-3 mb-6 gap-4' : 'mt-1 mb-4 gap-2'}`}>
                     <div
                         className={`flex gap-2 items-center min-w-0 ${
-                            isEffectivelyCollapsed ? 'justify-center px-1' : 'px-2'
+                            isRail ? 'justify-center px-1' : 'px-2'
                         }`}
                     >
-                        {isEffectivelyCollapsed ? (
+                        {isRail ? (
                             <SidebarAccountSwitcher isCollapsed />
                         ) : (
                             <>
@@ -210,8 +222,8 @@ export default function Sidebar({
                             </>
                         )}
                     </div>
-                    <div className={`flex gap-2 min-w-0 ${isEffectivelyCollapsed ? 'flex-col items-center' : 'px-2'}`}>
-                        {!isEffectivelyCollapsed ? (
+                    <div className={`flex gap-2 min-w-0 ${isRail ? 'flex-col items-center' : 'px-2'}`}>
+                        {!isRail ? (
                             <Link
                                 href={accountScopedUrl(accountId, 'search')}
                                 title={t('SIDEBAR.GLOBAL_SEARCH_HINT')}
@@ -225,58 +237,68 @@ export default function Sidebar({
                         ) : (
                             <Link
                                 href={accountScopedUrl(accountId, 'search')}
-                                className="flex items-center justify-center size-8 rounded-lg bg-n-surface-field hover:bg-n-surface-field-hover transition-colors duration-100 ease-out"
+                                className="flex items-center justify-center size-10 rounded text-n-slate-11 hover:bg-n-surface-hover hover:text-n-slate-12 transition-colors duration-100 ease-out"
                                 title={t('SIDEBAR.GLOBAL_SEARCH_HINT')}
                             >
-                                <span className="i-lucide-search size-4 text-n-slate-11" />
+                                <span className="i-lucide-search size-[18px]" />
                             </Link>
                         )}
-                        <NotificationBell isCollapsed={isEffectivelyCollapsed} onNavigate={onCloseMobileSidebar} />
+                        <NotificationBell isCollapsed={isRail} onNavigate={onCloseMobileSidebar} />
                     </div>
                 </section>
                 <nav
                     className={`grid overflow-y-scroll flex-grow gap-2 pb-5 no-scrollbar min-w-0 ${
-                        isEffectivelyCollapsed ? 'px-1' : 'px-2'
+                        isRail ? 'px-1' : 'px-2'
                     }`}
                 >
                     <ul
                         className={`flex flex-col gap-1 m-0 list-none min-w-0 ${
-                            isEffectivelyCollapsed ? 'items-center' : ''
+                            isRail ? 'items-center' : ''
                         }`}
                     >
-                        {menuItems.map(item => (
+                        {navGroups.map(item => (
                             <SidebarGroup key={item.name} accountId={accountId} {...item} />
                         ))}
                     </ul>
                 </nav>
                 <section className="flex relative flex-col flex-shrink-0 gap-1 justify-between items-center pb-[env(safe-area-inset-bottom)]">
-                    <div className="pointer-events-none absolute inset-x-0 -top-[1.938rem] h-8 bg-gradient-to-t from-n-surface-sidebar to-transparent" />
                     <div
-                        className={`px-1 py-1.5 flex-shrink-0 flex w-full z-50 gap-2 items-center ${
-                            isEffectivelyCollapsed ? 'justify-center' : 'justify-between'
-                        }`}
-                    >
-                        <SidebarProfileMenu isCollapsed={isEffectivelyCollapsed} />
-                    </div>
-                </section>
-                {/* Resize Handle (desktop only) */}
-                <div
-                    className="hidden md:block absolute top-0 h-full w-1 cursor-col-resize z-40 ltr:right-0 rtl:left-0 group"
-                    onMouseDown={event => {
-                        event.preventDefault();
-                        onResizeStart(event.clientX);
-                    }}
-                    onTouchStart={event => {
-                        onResizeStart(event.touches[0].clientX);
-                    }}
-                    onDoubleClick={() => (isCollapsed ? snapToExpanded() : snapToCollapsed())}
-                >
-                    <div
-                        className={`absolute top-0 h-full w-px ltr:right-0 rtl:left-0 bg-transparent group-hover:bg-n-brand transition-colors ${
-                            isResizing ? 'bg-n-brand' : ''
+                        className={`pointer-events-none absolute inset-x-0 -top-[1.938rem] h-8 bg-gradient-to-t to-transparent ${
+                            isRail ? 'from-n-surface-rail' : 'from-n-surface-sidebar'
                         }`}
                     />
-                </div>
+                    {settingsGroup ? (
+                        <ul className="flex flex-col items-center m-0 list-none w-full">
+                            <SidebarGroup accountId={accountId} {...settingsGroup} />
+                        </ul>
+                    ) : null}
+                    <div
+                        className={`px-1 py-1.5 flex-shrink-0 flex w-full z-50 gap-2 items-center ${
+                            isRail ? 'justify-center' : 'justify-between'
+                        }`}
+                    >
+                        <SidebarProfileMenu isCollapsed={isRail} />
+                    </div>
+                </section>
+                {!isMobile && isSettingsPage ? (
+                    <div
+                        className="absolute top-0 h-full w-1 cursor-col-resize z-40 ltr:right-0 rtl:left-0 group"
+                        onMouseDown={event => {
+                            event.preventDefault();
+                            onResizeStart(event.clientX);
+                        }}
+                        onTouchStart={event => {
+                            onResizeStart(event.touches[0].clientX);
+                        }}
+                        onDoubleClick={() => (isCollapsed ? snapToExpanded() : snapToCollapsed())}
+                    >
+                        <div
+                            className={`absolute top-0 h-full w-px ltr:right-0 rtl:left-0 bg-transparent group-hover:bg-n-brand transition-colors ${
+                                isResizing ? 'bg-n-brand' : ''
+                            }`}
+                        />
+                    </div>
+                ) : null}
             </aside>
         </SidebarContextProvider>
     );

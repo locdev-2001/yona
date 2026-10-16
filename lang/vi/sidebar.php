@@ -8,6 +8,7 @@ return [
     // Chữ gợi ý phải ngắn để hiện trọn trong hàng đầu sidebar; phạm vi nằm ở HINT.
     'GLOBAL_SEARCH' => 'Tìm kiếm',
     'GLOBAL_SEARCH_HINT' => 'Tìm hội thoại, tin nhắn, liên hệ, tệp trong toàn hệ thống',
+    'UNREAD_GROUP_LABEL' => '{label}, {count} chưa đọc',
     'CURRENTLY_VIEWING_ACCOUNT' => 'Hiện đang xem:',
     'SWITCH' => 'Chuyển',
     'INBOX_VIEW' => 'Khung nhìn hộp thư',
@@ -16,7 +17,7 @@ return [
     'CONVERSATIONS' => 'Hội thoại',
     'INBOX' => 'Hộp thư của tôi',
     'ALL_CONVERSATIONS' => 'Tất cả hội thoại',
-    'MENTIONED_CONVERSATIONS' => 'Nhắn đến',
+    'MENTIONED_CONVERSATIONS' => 'Nhắc đến',
     'PARTICIPATING_CONVERSATIONS' => 'Đang tham gia',
     'UNATTENDED_CONVERSATIONS' => 'Không giám sát',
     'REPORTS' => 'Báo cáo',
