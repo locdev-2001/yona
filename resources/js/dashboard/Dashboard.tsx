@@ -5,7 +5,9 @@ import { usePage } from '@inertiajs/react';
 import { applyFontSizeToDOM } from 'dashboard/composables/useFontSize';
 import { applyColorScheme, useColorScheme } from 'dashboard/composables/useColorScheme';
 import Sidebar from 'dashboard/components-next/sidebar/Sidebar';
-import MobileSidebarLauncher from 'dashboard/components-next/sidebar/MobileSidebarLauncher';
+import MobileTabBar from 'dashboard/components-next/sidebar/MobileTabBar';
+import { useViewportWidth } from 'dashboard/composables/useViewportWidth';
+import { isThreadOpen, showMobileTabBar } from 'dashboard/conversation/layoutMode';
 import SnackbarContainer from 'v3/components/SnackBar/Container';
 import RealtimeProvider from 'dashboard/realtime/RealtimeProvider';
 import CommandBar from 'dashboard/commands/CommandBar';
@@ -19,7 +21,11 @@ import type { DashboardPageProps } from './types';
 // Copilot/UpgradePage/KeyShortcutModal: EE hoặc vào nhóm sau. CommandBar: khung + snooze (B5), phần còn lại B10.
 export default function Dashboard({ children }: { children: ReactNode }) {
     const [isMobileSidebarOpen, setMobileSidebarOpen] = useState(false);
-    const { auth, currentAccount, stickerDisplaySize } = usePage<DashboardPageProps>().props;
+    const { auth, currentAccount, stickerDisplaySize, conversationId, isComposing } = usePage<
+        DashboardPageProps & { conversationId?: number | null; isComposing?: boolean }
+    >().props;
+    const viewportWidth = useViewportWidth();
+    const hasMobileTabBar = showMobileTabBar(viewportWidth, isThreadOpen(conversationId, isComposing));
     const fontSize = auth.user?.ui_settings?.font_size as string | undefined;
 
     const { colorScheme } = useColorScheme();
@@ -50,16 +56,19 @@ export default function Dashboard({ children }: { children: ReactNode }) {
                     />
                     <main className="flex flex-1 h-full w-full min-h-0 px-0 overflow-hidden bg-n-surface-canvas">
                         {children}
-                        <MobileSidebarLauncher
-                            isMobileSidebarOpen={isMobileSidebarOpen}
-                            onToggle={() => setMobileSidebarOpen(open => !open)}
-                        />
                         <CommandBar />
                     </main>
                     <SnackbarContainer />
                     <RealtimeProvider />
                     <UnreadTitleSync />
                 </div>
+                {/* Trong luồng, không nổi: cột trên co lại nên thẻ cuối danh sách không bị che. */}
+                {hasMobileTabBar ? (
+                    <MobileTabBar
+                        isMobileSidebarOpen={isMobileSidebarOpen}
+                        onToggleSidebar={() => setMobileSidebarOpen(open => !open)}
+                    />
+                ) : null}
             </div>
         </StickerDisplaySizeProvider>
     );

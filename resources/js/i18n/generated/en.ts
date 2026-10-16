@@ -2698,6 +2698,7 @@ const messages: Record<string, unknown> = {
             "UNREAD": "{count} unread conversations",
             "STATUS": "Status",
             "CHANNEL": "Channel",
+            "ALL_CHANNELS": "All channels",
             "LABEL": "Label",
             "SORT": "Sort",
             "ADVANCED": "Advanced filters",
@@ -6589,8 +6590,7 @@ const messages: Record<string, unknown> = {
             "VIEW_ALL": "View all notifications",
             "TAB_UNREAD": "Unread",
             "TAB_ALL": "All",
-            "EMPTY_UNREAD": "You are all caught up",
-            "LAUNCHER_UNREAD": "You have unread notifications"
+            "EMPTY_UNREAD": "You are all caught up"
         }
     },
     "INBOX_MGMT": {
@@ -9933,6 +9933,12 @@ const messages: Record<string, unknown> = {
             "CONTACT_DESC_SELF_HOSTED": "If you've lost access to both your authenticator app and backup codes, please contact your administrator for assistance."
         },
         "VERIFICATION_FAILED": "Verification failed. Please try again."
+    },
+    "MOBILE_TAB_BAR": {
+        "LABEL": "Main navigation",
+        "MORE": "More",
+        "CLOSE_MENU": "Close",
+        "UNREAD": "{count} unread conversations"
     },
     "NETWORK": {
         "NOTIFICATION": {

@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react';
 import { usePage } from '@inertiajs/react';
 
-import ChannelIcon from 'dashboard/components-next/icon/ChannelIcon';
 import { useLabelsList } from 'dashboard/composables/useLabelsList';
 import { useNotificationsUnreadInboxCounts } from 'dashboard/notifications/useUnreadCount';
 import { t } from '../../../i18n';
@@ -9,6 +8,7 @@ import type { DashboardPageProps } from '../../types';
 import { useConversation } from '../ConversationContext';
 import { countActiveListFilters } from '../listFilters';
 import FilterChip from './FilterChip';
+import InboxFilterChip from './InboxFilterChip';
 import {
     CLEARED_LIST_FILTERS,
     QUICK_STATUS_VALUES,
@@ -57,28 +57,15 @@ export default function ListFilterPanel({ onOpenAdvancedFilters }: ListFilterPan
             </FilterGroup>
             {inboxes.length ? (
                 <FilterGroup title={t('CHAT_LIST.FILTER_PANEL.CHANNEL')}>
-                    {inboxes.map(inbox => {
-                        const isSelected = listFilters.inboxIds.includes(inbox.id);
-                        const unreadCount = inboxUnreadCounts[String(inbox.id)] ?? 0;
-
-                        return (
-                            <FilterChip
-                                key={inbox.id}
-                                isSelected={isSelected}
-                                aria-pressed={isSelected}
-                                title={inbox.name}
-                                onClick={() => setListFilters({ inboxIds: toggledInboxIds(listFilters.inboxIds, inbox.id) })}
-                            >
-                                <ChannelIcon inbox={inbox} className="size-3.5 shrink-0" />
-                                <span className="truncate max-w-[10rem]">{inbox.name}</span>
-                                {unreadCount > 0 ? (
-                                    <span className="tabular-nums text-n-slate-10" aria-label={t('CHAT_LIST.FILTER_PANEL.UNREAD', { count: unreadCount })}>
-                                        {unreadCount}
-                                    </span>
-                                ) : null}
-                            </FilterChip>
-                        );
-                    })}
+                    {inboxes.map(inbox => (
+                        <InboxFilterChip
+                            key={inbox.id}
+                            inbox={inbox}
+                            isSelected={listFilters.inboxIds.includes(inbox.id)}
+                            unreadCount={inboxUnreadCounts[String(inbox.id)] ?? 0}
+                            onToggle={() => setListFilters({ inboxIds: toggledInboxIds(listFilters.inboxIds, inbox.id) })}
+                        />
+                    ))}
                 </FilterGroup>
             ) : null}
             {accountLabels.length ? (

@@ -18,11 +18,18 @@ interface TabsProps {
     items: TabItem[];
     index: number;
     isCompact?: boolean;
+    // Dưới 768px thành thanh chia đều bề ngang, mỗi ô cao 44px (đích chạm điện thoại).
+    isStretchedBelowMd?: boolean;
     className?: string;
     onChange: (index: number) => void;
 }
 
-export default function Tabs({ items, index, isCompact = false, className = '', onChange }: TabsProps) {
+const STRETCHED_LIST = 'max-md:w-full max-md:gap-0.5 max-md:!p-0.5 max-md:rounded max-md:bg-n-surface-field';
+const STRETCHED_ITEM = 'max-md:flex-1 max-md:!m-0';
+const STRETCHED_TAB = 'max-md:h-11 max-md:!py-0 max-md:justify-center max-md:rounded max-md:after:hidden';
+const STRETCHED_TAB_ACTIVE = 'max-md:bg-n-surface-raised max-md:!text-n-slate-12';
+
+export default function Tabs({ items, index, isCompact = false, isStretchedBelowMd = false, className = '', onChange }: TabsProps) {
     const listRef = useRef<HTMLUListElement>(null);
     const [hasScroll, setHasScroll] = useState(false);
 
@@ -62,7 +69,7 @@ export default function Tabs({ items, index, isCompact = false, className = '', 
                 ref={listRef}
                 className={`flex min-w-[6.25rem] py-0 px-4 list-none mb-0 ${
                     hasScroll ? 'overflow-hidden py-0 px-1 max-w-[calc(100%-64px)]' : ''
-                }`}
+                } ${isStretchedBelowMd ? STRETCHED_LIST : ''}`}
             >
                 {items.map((item, itemIndex) => {
                     const active = itemIndex === index;
@@ -76,7 +83,9 @@ export default function Tabs({ items, index, isCompact = false, className = '', 
                     return (
                         <li
                             key={item.key}
-                            className="flex-shrink-0 my-0 mx-2 ltr:first:ml-0 rtl:first:mr-0 ltr:last:mr-0 rtl:last:ml-0 hover:text-n-slate-12"
+                            className={`flex-shrink-0 my-0 mx-2 ltr:first:ml-0 rtl:first:mr-0 ltr:last:mr-0 rtl:last:ml-0 hover:text-n-slate-12 ${
+                                isStretchedBelowMd ? STRETCHED_ITEM : ''
+                            }`}
                         >
                             <a
                                 className={[
@@ -85,6 +94,8 @@ export default function Tabs({ items, index, isCompact = false, className = '', 
                                         ? 'text-n-blue-11 after:bg-n-brand after:opacity-100'
                                         : 'text-n-slate-11 after:bg-transparent after:opacity-0',
                                     isCompact ? 'py-2.5' : '!text-base py-3',
+                                    isStretchedBelowMd ? STRETCHED_TAB : '',
+                                    isStretchedBelowMd && active ? STRETCHED_TAB_ACTIVE : '',
                                 ].join(' ')}
                                 onClick={event => {
                                     event.preventDefault();

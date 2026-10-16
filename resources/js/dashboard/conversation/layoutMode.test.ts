@@ -1,13 +1,15 @@
 import { describe, expect, it } from 'vitest';
 
-import { LARGE_SCREEN_BREAKPOINT, SMALL_SCREEN_BREAKPOINT } from 'dashboard/constants/globals';
+import { LARGE_SCREEN_BREAKPOINT, PHONE_SCREEN_BREAKPOINT, SMALL_SCREEN_BREAKPOINT } from 'dashboard/constants/globals';
 import { isContactPanelOpen, isContactPanelOverlay } from './contactPanelVisibility';
 import { LAYOUT_TYPES } from './constants';
 import {
     hasExpandedLayoutPreference,
     isOnExpandedLayout,
+    isThreadOpen,
     showConversationList,
     showMessageView,
+    showMobileTabBar,
 } from './layoutMode';
 
 const CONDENSED = { conversation_display_type: LAYOUT_TYPES.CONDENSED };
@@ -79,5 +81,24 @@ describe('ba mức bố cục theo bề rộng', () => {
         expect(isContactPanelOverlay(LARGE_SCREEN_BREAKPOINT)).toBe(false);
         expect(isContactPanelOpen({}, LARGE_SCREEN_BREAKPOINT)).toBe(true);
         expect(isContactPanelOpen({ is_contact_sidebar_open: false }, 1440)).toBe(false);
+    });
+});
+
+describe('thanh tab dưới trên điện thoại', () => {
+    it('chỉ hiện dưới 768px và khi chưa mở hội thoại', () => {
+        expect(showMobileTabBar(375, false)).toBe(true);
+        expect(showMobileTabBar(PHONE_SCREEN_BREAKPOINT - 1, false)).toBe(true);
+        expect(showMobileTabBar(PHONE_SCREEN_BREAKPOINT, false)).toBe(false);
+        expect(showMobileTabBar(1440, false)).toBe(false);
+    });
+
+    it('ẩn khi đang trong hội thoại hoặc bản nháp để nhường chỗ ô soạn tin', () => {
+        expect(showMobileTabBar(375, isThreadOpen(42, false))).toBe(false);
+        expect(showMobileTabBar(375, isThreadOpen(0, true))).toBe(false);
+        expect(showMobileTabBar(375, isThreadOpen(null, undefined))).toBe(true);
+    });
+
+    it('bề rộng chưa đo được (SSR) thì không dựng thanh tab', () => {
+        expect(showMobileTabBar(0, false)).toBe(false);
     });
 });

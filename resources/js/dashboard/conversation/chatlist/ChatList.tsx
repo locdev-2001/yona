@@ -30,6 +30,7 @@ import type { AssigneeTab } from '../types';
 import NextButton from 'dashboard/components-next/button/Button';
 import { emptyListHint } from './emptyListHint';
 import ActiveFilterChips from './ActiveFilterChips';
+import ChannelChipRow, { hasChannelChipRow } from './ChannelChipRow';
 import ChatListHeader from './ChatListHeader';
 import ChatTypeTabs from './ChatTypeTabs';
 import ConversationList from './ConversationList';
@@ -234,7 +235,8 @@ export default function ChatList({
                 {appliedFilters === null ? (
                     <>
                         <ChatTypeTabs items={assigneeTabItems} activeTab={assigneeTab} onChatTabChange={setAssigneeTab} />
-                        <ActiveFilterChips />
+                        <ChannelChipRow />
+                        <ActiveFilterChips hidesInboxChipsBelowMd={hasChannelChipRow(inboxes.length)} />
                     </>
                 ) : null}
                 {isSearching && !listSearch.loading && !listSearch.contacts.length && !listSearch.conversations.length ? (

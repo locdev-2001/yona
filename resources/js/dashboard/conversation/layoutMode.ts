@@ -1,4 +1,4 @@
-import { isSmallScreen } from 'dashboard/composables/useViewportWidth';
+import { isPhoneScreen, isSmallScreen } from 'dashboard/composables/useViewportWidth';
 import type { UISettings } from 'dashboard/composables/useUISettings';
 import { LAYOUT_TYPES } from './constants';
 
@@ -35,4 +35,14 @@ export function showConversationList(expandedLayout: boolean, hasOpenThread: boo
 /** Màn chat: ở bố cục hai-màn chỉ dựng khi đã mở hội thoại hoặc bản nháp. */
 export function showMessageView(expandedLayout: boolean, hasOpenThread: boolean): boolean {
     return hasOpenThread ? true : !expandedLayout;
+}
+
+/** Đang mở một hội thoại hoặc bản nháp hội thoại mới (route /inbox/new). */
+export function isThreadOpen(conversationId: number | null | undefined, isComposing: boolean | undefined): boolean {
+    return Boolean(conversationId) || Boolean(isComposing);
+}
+
+/** Thanh tab dưới chỉ có trên điện thoại và nhường chỗ cho ô soạn tin khi đang ở trong hội thoại. */
+export function showMobileTabBar(viewportWidth: number, hasOpenThread: boolean): boolean {
+    return isPhoneScreen(viewportWidth) && !hasOpenThread;
 }

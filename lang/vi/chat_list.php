@@ -47,6 +47,7 @@ return [
         'UNREAD' => '{count} hội thoại chưa đọc',
         'STATUS' => 'Trạng thái',
         'CHANNEL' => 'Kênh',
+        'ALL_CHANNELS' => 'Mọi kênh',
         'LABEL' => 'Nhãn',
         'SORT' => 'Sắp xếp',
         'ADVANCED' => 'Lọc nâng cao',

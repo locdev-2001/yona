@@ -10,13 +10,18 @@ import { activeFilterChips, statusLabelKey } from './listFilterOptions';
 import type { ActiveFilterChip } from './listFilterOptions';
 
 // Hàng chip dưới tab: bộ lọc nào đang thu hẹp danh sách thì hiện ở đây, bấm là bỏ.
-export default function ActiveFilterChips() {
+// `hidesInboxChipsBelowMd`: điện thoại đã có hàng chip kênh ngay trên, chip kênh đang
+// bật không lặp lại ở đây.
+export default function ActiveFilterChips({ hidesInboxChipsBelowMd = false }: { hidesInboxChipsBelowMd?: boolean } = {}) {
     const { accountId, listFilters, setListFilters } = useConversation();
     const { inboxes = [] } = usePage<DashboardPageProps>().props;
     const accountLabels = useLabelsList(accountId);
     const chips = activeFilterChips(listFilters);
 
     if (!chips.length) return null;
+
+    const isHiddenBelowMd = (chip: ActiveFilterChip) => hidesInboxChipsBelowMd && chip.kind === 'inbox';
+    const isEveryChipHiddenBelowMd = chips.every(isHiddenBelowMd);
 
     const renderContent = (chip: ActiveFilterChip) => {
         if (chip.kind === 'inbox') {
@@ -53,12 +58,14 @@ export default function ActiveFilterChips() {
     };
 
     return (
-        <ul className="flex flex-wrap gap-1.5 m-0 px-3 pt-1 pb-2 list-none" aria-label={t('CHAT_LIST.FILTER_PANEL.ACTIVE')}>
+        <ul
+            className={`flex flex-wrap gap-1.5 m-0 px-3 pt-1 pb-2 list-none ${isEveryChipHiddenBelowMd ? 'max-md:hidden' : ''}`}
+            aria-label={t('CHAT_LIST.FILTER_PANEL.ACTIVE')}>
             {chips.map(chip => {
                 const { name, content } = renderContent(chip);
 
                 return (
-                    <li key={chip.key} className="min-w-0 max-w-full">
+                    <li key={chip.key} className={`min-w-0 max-w-full ${isHiddenBelowMd(chip) ? 'max-md:hidden' : ''}`}>
                         <FilterChip
                             isSelected
                             className="max-w-[14rem]"

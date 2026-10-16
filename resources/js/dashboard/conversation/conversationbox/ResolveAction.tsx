@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import NextButton from 'dashboard/components-next/button/Button';
-import DropdownMenu from 'dashboard/components-next/dropdown-menu/DropdownMenu';
 import type { DropdownMenuItem } from 'dashboard/components-next/dropdown-menu/DropdownMenu';
 import { openCommandBar } from 'dashboard/commands/commandBarStore';
 import { useAlert } from 'dashboard/composables/useAlert';
 import { useClickAway } from 'dashboard/composables/useClickAway';
 import { useKeyboardEvents } from 'dashboard/composables/useKeyboardEvents';
+import { useIsPhoneScreen } from 'dashboard/composables/useViewportWidth';
 import { CMD_REOPEN_CONVERSATION, CMD_RESOLVE_CONVERSATION } from 'dashboard/helper/commandbar/events';
 import { emitter } from 'shared/helpers/emitter';
 import { isTouchOnlyDevice, shortcutLabel } from 'shared/helpers/kbd';
@@ -16,11 +16,13 @@ import { useConversation } from '../ConversationContext';
 import { statusDotColor } from '../statusAppearance';
 import type { ConversationStatus } from '../types';
 import { useMarkUnreadAndLeave } from '../useMarkUnreadAndLeave';
+import HeaderActionMenu from './HeaderActionMenu';
 import { buildStatusMenuSections } from './statusMenu';
 import type { StatusMenuAction } from './statusMenu';
 
 // Nút hiện trạng thái hiện tại của hội thoại, bấm mở menu đổi trạng thái.
 // `isCompact` (dưới ngưỡng ba cột): chỉ còn chấm màu để mũ khung chat gọn một dòng.
+// `isStretched`: nút chiếm nửa dải hành động dưới mũ trên điện thoại.
 const getConversationParams = () => {
     const allConversations = document.querySelectorAll<HTMLElement>('.conversations-list .conversation');
     const activeConversation = document.querySelector('div.conversations-list div.conversation.active');
@@ -33,15 +35,22 @@ const getConversationParams = () => {
     };
 };
 
-export default function ResolveAction({ isCompact = false }: { isCompact?: boolean } = {}) {
+interface ResolveActionProps {
+    isCompact?: boolean;
+    isStretched?: boolean;
+}
+
+export default function ResolveAction({ isCompact = false, isStretched = false }: ResolveActionProps = {}) {
     const { selectedConversation, toggleStatus: toggleStatusRequest } = useConversation();
     const markUnreadAndLeave = useMarkUnreadAndLeave();
     const [isLoading, setIsLoading] = useState(false);
     const [isMenuOpen, setMenuOpen] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
+    const isPhone = useIsPhoneScreen();
 
     const closeMenu = useCallback(() => setMenuOpen(false), []);
-    useClickAway(containerRef, closeMenu, isMenuOpen);
+    // Bottom sheet nằm ngoài khung nút (portal) và tự đóng khi chạm nền mờ.
+    useClickAway(containerRef, closeMenu, isMenuOpen && !isPhone);
 
     const toggleStatus = useCallback(
         (nextStatus: ConversationStatus, snoozedUntil: number | null = null) => {
@@ -135,7 +144,7 @@ export default function ResolveAction({ isCompact = false }: { isCompact?: boole
     return (
         <div
             ref={containerRef}
-            className="relative flex items-center flex-shrink-0 resolve-actions"
+            className={`relative flex items-center resolve-actions ${isStretched ? 'flex-1 min-w-0' : 'flex-shrink-0'}`}
             onKeyDown={event => {
                 if (event.key === 'Escape') closeMenu();
             }}
@@ -151,7 +160,9 @@ export default function ResolveAction({ isCompact = false }: { isCompact?: boole
                 aria-haspopup="menu"
                 aria-expanded={isMenuOpen}
                 data-testid="conversation-status-button"
-                className={`!outline-0 max-md:h-11 ${isCompact ? '!px-0 w-8 max-md:w-11 justify-center' : ''}`}
+                className={`!outline-0 max-md:h-11 ${isCompact ? '!px-0 w-8 max-md:w-11 justify-center' : ''} ${
+                    isStretched ? 'w-full justify-center' : ''
+                }`}
                 isLoading={isLoading}
                 disabled={isLoading}
                 onClick={() => setMenuOpen(open => !open)}
@@ -162,15 +173,17 @@ export default function ResolveAction({ isCompact = false }: { isCompact?: boole
                     {isCompact ? null : <span className="whitespace-nowrap font-medium">{statusLabel}</span>}
                 </span>
             </NextButton>
-            {isMenuOpen ? (
-                <DropdownMenu
-                    menuSections={menuSections}
-                    className="top-full mt-1 end-0 w-max min-w-[13rem]"
-                    itemClassName="max-md:h-11"
-                    renderTrailingIcon={renderShortcut}
-                    onAction={item => runAction[item.action as StatusMenuAction]()}
-                />
-            ) : null}
+            <HeaderActionMenu
+                isOpen={isMenuOpen}
+                asSheet={isPhone}
+                title={t('CONVERSATION.RESOLVE_DROPDOWN.CHANGE_STATUS')}
+                menuSections={menuSections}
+                popoverClassName="top-full mt-1 end-0 w-max min-w-[13rem]"
+                itemClassName="max-md:h-11"
+                renderTrailingIcon={renderShortcut}
+                onAction={item => runAction[item.action as StatusMenuAction]()}
+                onClose={closeMenu}
+            />
         </div>
     );
 }
