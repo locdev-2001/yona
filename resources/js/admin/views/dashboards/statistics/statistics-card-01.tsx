@@ -20,18 +20,23 @@ export type StatisticsCardProps = {
   // Chênh lệch đã định dạng ("+12,5%"); có thì dòng cuối là chip chênh lệch + `comparisonText`.
   changePercentage?: string | null
   trend?: 'up' | 'down' | 'flat'
+  // Chiều nào là tin tốt: chi phí, lượt lỗi… tăng là xấu nên chip tăng tô đỏ.
+  goodWhen?: 'up' | 'down'
   comparisonText?: string
+  // Dòng phụ ngay dưới số (đơn vị, mẫu số…), hiện cùng dòng chênh lệch.
+  caption?: ReactNode
   // Dòng cuối khi không có chênh lệch (kỳ trước, phạm vi tính…).
   note?: ReactNode
   className?: string
 }
 
-// Chênh lệch tăng xanh, giảm đỏ, đứng yên xám; mũi tên đi kèm nên không chỉ dựa vào màu.
-const TREND_CHIP = {
-  up: 'bg-success-tint text-success',
-  down: 'bg-danger-tint text-danger',
-  flat: 'bg-neutral-100 text-neutral-700'
-} as const
+// Chênh lệch theo chiều tốt xanh, chiều xấu đỏ, đứng yên xám; mũi tên đi kèm nên không chỉ dựa vào màu.
+const GOOD_CHIP = 'bg-success-tint text-success'
+const BAD_CHIP = 'bg-danger-tint text-danger'
+const FLAT_CHIP = 'bg-neutral-100 text-neutral-700'
+
+const trendChip = (trend: 'up' | 'down' | 'flat', goodWhen: 'up' | 'down') =>
+  trend === 'flat' ? FLAT_CHIP : trend === goodWhen ? GOOD_CHIP : BAD_CHIP
 
 // Thẻ chỉ số DUY NHẤT của console (Tổng quan, hồ sơ tài khoản, Sức khoẻ kênh, Cảnh báo):
 // nhãn xám nhỏ trên cùng + ô biểu tượng góc phải, số lớn màu mực, rồi một dòng phụ.
@@ -42,7 +47,9 @@ const StatisticsCard = ({
   tone = 'neutral',
   changePercentage = null,
   trend = 'flat',
+  goodWhen = 'up',
   comparisonText,
+  caption,
   note,
   className
 }: StatisticsCardProps) => {
@@ -61,10 +68,11 @@ const StatisticsCard = ({
             {icon}
           </span>
         </div>
+        {caption ? <p className='min-w-0 truncate text-xs text-neutral-500'>{caption}</p> : null}
         {changePercentage !== null ? (
           // Ô hẹp: "Kỳ trước: N" xuống dòng dưới chip thay vì bị cắt.
           <p className='flex min-w-0 flex-wrap items-center gap-x-1 gap-y-1 text-xs text-neutral-500'>
-            <span className={cn('font-num flex items-center gap-0.5 rounded-sm px-1 py-0.5', TREND_CHIP[trend])}>
+            <span className={cn('font-num flex items-center gap-0.5 rounded-sm px-1 py-0.5', trendChip(trend, goodWhen))}>
               {trend === 'up' ? <ChevronUpIcon className='size-3.5' aria-hidden='true' /> : null}
               {trend === 'down' ? <ChevronDownIcon className='size-3.5' aria-hidden='true' /> : null}
               {changePercentage}

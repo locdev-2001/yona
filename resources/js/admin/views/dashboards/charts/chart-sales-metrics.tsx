@@ -53,6 +53,10 @@ type Props = {
   dateLabel: string
   formatDate: (date: string) => string
   formatValue: (value: number) => string
+  // Nhãn trục ngang gọn hơn nhãn trong chú thích (vd chỉ giờ); bỏ trống thì dùng formatDate.
+  formatTick?: (date: string) => string
+  // Cột chồng lên nhau theo thứ tự chuỗi (chỉ với variant 'bar'); không có nhãn số trên từng đoạn.
+  stacked?: boolean
 }
 
 // Biểu đồ theo ngày (đường hoặc cột). Trình đọc màn hình đọc câu tóm tắt và bảng số ẩn.
@@ -64,7 +68,9 @@ const TimeSeriesChart = ({
   summary,
   dateLabel,
   formatDate,
-  formatValue
+  formatValue,
+  formatTick = formatDate,
+  stacked = false
 }: Props) => {
   const summaryId = useId()
 
@@ -88,7 +94,7 @@ const TimeSeriesChart = ({
         axisLine={false}
         tickMargin={8}
         minTickGap={24}
-        tickFormatter={(value: string) => formatDate(value)}
+        tickFormatter={(value: string) => formatTick(value)}
       />
       <YAxis
         tickLine={false}
@@ -98,7 +104,20 @@ const TimeSeriesChart = ({
         tickFormatter={(value: number) => formatValue(value)}
       />
       <ChartTooltip
-        content={<ChartTooltipContent labelFormatter={value => formatDate(String(value))} />}
+        content={
+          <ChartTooltipContent
+            labelFormatter={value => formatDate(String(value))}
+            formatter={(value, name) => (
+              <div className='flex flex-1 items-center justify-between gap-4 leading-none'>
+                <span className='flex items-center gap-2 text-muted-foreground'>
+                  <span aria-hidden='true' className='size-2.5 shrink-0 rounded-xs' style={{ background: `var(--color-${name})` }} />
+                  {chartConfig[String(name)]?.label ?? name}
+                </span>
+                <span className='font-num font-medium text-foreground'>{typeof value === 'number' ? formatValue(value) : String(value)}</span>
+              </div>
+            )}
+          />
+        }
         cursor={variant === 'bar' ? undefined : false}
       />
     </>
@@ -118,17 +137,20 @@ const TimeSeriesChart = ({
                 key={item.key}
                 dataKey={item.key}
                 fill={`var(--color-${item.key})`}
-                radius={[4, 4, 0, 0]}
+                stackId={stacked ? 'stack' : undefined}
+                radius={stacked ? 0 : [4, 4, 0, 0]}
                 animationDuration={300}
               >
-                {/* Nhãn số trực tiếp trên cột có giá trị: đọc được không qua màu. */}
-                <LabelList
-                  dataKey={item.key}
-                  position='top'
-                  offset={6}
-                  className='fill-neutral-700 font-num text-xs'
-                  formatter={(value: unknown) => (typeof value === 'number' && value > 0 ? formatValue(value) : '')}
-                />
+                {/* Nhãn số trực tiếp trên cột có giá trị: đọc được không qua màu. Cột chồng đọc qua chú giải và chú thích. */}
+                {stacked ? null : (
+                  <LabelList
+                    dataKey={item.key}
+                    position='top'
+                    offset={6}
+                    className='fill-neutral-700 font-num text-xs'
+                    formatter={(value: unknown) => (typeof value === 'number' && value > 0 ? formatValue(value) : '')}
+                  />
+                )}
               </Bar>
             ))}
           </BarChart>
