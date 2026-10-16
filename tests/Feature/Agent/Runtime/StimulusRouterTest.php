@@ -5,8 +5,11 @@ use App\Agent\Runtime\TurnSettings;
 use App\Agent\ValueObjects\ConversationRef;
 use App\Agent\ValueObjects\ConversationSnapshot;
 use App\Agent\ValueObjects\StimulusDecisionKind;
+use App\Models\ApiLog;
 use App\Models\Message;
+use Tests\Feature\Agent\Runtime\ScriptedLanguageModel as Model;
 use Tests\Feature\Agent\Runtime\TurnKit;
+use Tests\Support\QueryCounter;
 
 beforeEach(fn () => TurnKit::boot());
 
@@ -56,4 +59,51 @@ it('only forwards public customer messages of an auto-reply conversation', funct
 
     TurnKit::customerSays($conversation, 'Shop ơi');
     expect(TurnKit::pendingTurns())->toHaveCount(1);
+});
+
+function spendQueries(QueryCounter $counter): int
+{
+    return count(array_filter($counter->statements(), fn (string $sql) => str_contains($sql, 'sum(') && str_contains($sql, 'api_logs')));
+}
+
+function spendOf(int $accountId, int $microUsd): void
+{
+    ApiLog::query()->create(['account_id' => $accountId, 'provider' => 'anthropic', 'model' => 'claude-test', 'request' => [], 'cost_micro_usd' => $microUsd]);
+}
+
+it('sums the day\'s model spend once per customer message, not again when the turn wakes', function () {
+    config(['agent.turn.daily_budget_usd' => 1]);
+    app()->forgetInstance(TurnSettings::class);
+    ['conversation' => $conversation] = TurnKit::autoConversation();
+    TurnKit::model([Model::call('wait_for_customer', ['reason' => 'Sticker.'])]);
+
+    $counter = QueryCounter::measure(function () use ($conversation) {
+        TurnKit::customerSays($conversation, 'Shop ơi');
+        TurnKit::runPendingTurns();
+    });
+
+    expect(spendQueries($counter))->toBe(1);
+});
+
+it('sees the budget run out once the short spend cache expires, and stays paused after', function () {
+    config(['agent.turn.daily_budget_usd' => 1]);
+    app()->forgetInstance(TurnSettings::class);
+    ['conversation' => $conversation] = TurnKit::autoConversation();
+    TurnKit::model([]);
+
+    TurnKit::customerSays($conversation, 'Shop ơi');
+    spendOf($conversation->account_id, 1_000_000);
+    TurnKit::customerSays($conversation, 'Có ai không?');
+    $beforeExpiry = count(TurnKit::pendingTurns());
+
+    $this->travel(31)->seconds();
+    TurnKit::customerSays($conversation, 'Alo shop');
+    $afterExpiry = count(TurnKit::pendingTurns());
+    $counter = QueryCounter::measure(fn () => TurnKit::customerSays($conversation, 'Shop ơi trả lời đi'));
+
+    expect($beforeExpiry)->toBe(2)
+        ->and($afterExpiry)->toBe(2)
+        ->and(count(TurnKit::pendingTurns()))->toBe(2)
+        ->and(spendQueries($counter))->toBe(0)
+        ->and(TurnKit::aiNotes($conversation))->toHaveCount(1);
 });

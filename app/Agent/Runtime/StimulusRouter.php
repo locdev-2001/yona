@@ -3,6 +3,7 @@
 namespace App\Agent\Runtime;
 
 use App\Agent\Contracts\Ports\ConversationReader;
+use App\Agent\Contracts\Ports\EphemeralStore;
 use App\Agent\Contracts\Ports\ModelSpend;
 use App\Agent\Contracts\Ports\StimulusSink;
 use App\Agent\ValueObjects\AgentNotice;
@@ -18,9 +19,14 @@ use Carbon\CarbonImmutable;
 // quyết định lúc xếp hàng.
 final class StimulusRouter implements StimulusSink
 {
+    // Chi phí trong ngày đọc lại sau chừng này giây. Chi phí chỉ tăng trong ngày nên số đã
+    // vượt ngưỡng vẫn đúng khi lấy từ cache; số dưới ngưỡng trễ tối đa chừng này giây.
+    private const SPEND_CACHE_SECONDS = 30;
+
     public function __construct(
         private readonly ConversationReader $reader,
         private readonly ModelSpend $spend,
+        private readonly EphemeralStore $store,
         private readonly DailyNotice $dailyNotice,
         private readonly TurnScheduler $scheduler,
         private readonly TurnSettings $settings,
@@ -56,15 +62,29 @@ final class StimulusRouter implements StimulusSink
             return false;
         }
 
-        $now = CarbonImmutable::now($snapshot->timezone);
-        $spent = $this->spend->costMicroUsd($snapshot->ref->accountId, $now->startOfDay()->toDateTimeImmutable(), $now->toDateTimeImmutable());
-
-        if ($spent < $this->settings->dailyBudgetMicroUsd) {
+        if ($this->spentToday($snapshot) < $this->settings->dailyBudgetMicroUsd) {
             return false;
         }
 
         $this->dailyNotice->post($snapshot->ref, (int) $snapshot->aiAgentId, AgentNotice::BudgetExhausted, $snapshot->timezone);
 
         return true;
+    }
+
+    // Router chạy hai lần mỗi tin khách (lúc nhận và lúc job tỉnh dậy): cache ngắn theo account.
+    private function spentToday(ConversationSnapshot $snapshot): int
+    {
+        $now = CarbonImmutable::now($snapshot->timezone);
+        $key = "spend:{$snapshot->ref->accountId}:{$snapshot->timezone}:{$now->format('Y-m-d')}";
+        $cached = $this->store->get($key);
+
+        if ($cached !== null) {
+            return $cached;
+        }
+
+        $spent = $this->spend->costMicroUsd($snapshot->ref->accountId, $now->startOfDay()->toDateTimeImmutable(), $now->toDateTimeImmutable());
+        $this->store->put($key, $spent, self::SPEND_CACHE_SECONDS);
+
+        return $spent;
     }
 }
