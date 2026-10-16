@@ -31,6 +31,8 @@ use App\Agent\Contracts\Ports\UnitOfWork;
 use App\Agent\Contracts\Ports\UsageMeter;
 use App\Agent\Inference\Gateway\ModelRouter;
 use App\Agent\Inference\Gateway\RouteTable;
+use App\Agent\Kernel\Commands\EvalCommand;
+use App\Agent\Kernel\Commands\EvalSeedCommand;
 use App\Agent\Kernel\Commands\ModelPingCommand;
 use App\Agent\Persistence\CacheEphemeralStore;
 use App\Agent\Persistence\DatabaseUnitOfWork;
@@ -71,7 +73,7 @@ final class AgentServiceProvider extends ServiceProvider
         RunTurnJob::handleFailuresWith(fn (TurnOrder $order, string $jobKey) => $this->app->make(TurnFailureHandler::class)->handle($order, $jobKey));
 
         if ($this->app->runningInConsole()) {
-            $this->commands([ModelPingCommand::class]);
+            $this->commands([ModelPingCommand::class, EvalCommand::class, EvalSeedCommand::class]);
         }
     }
 
