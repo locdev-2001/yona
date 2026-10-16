@@ -7,14 +7,17 @@ use App\Agent\ValueObjects\KnowledgeHit;
 use App\Agent\ValueObjects\Provenance;
 use App\Models\Article;
 use App\Models\CannedResponse;
-use Illuminate\Support\Str;
 
 // Tri thức bản mỏng: bài Help Center đã xuất bản (tìm toàn văn) và câu trả lời mẫu của
 // account. Câu hỏi của khách thường dài, nên bài khớp BẤT KỲ từ nào rồi xếp theo hạng;
-// câu trả lời mẫu khớp cả cụm trước, thiếu thì khớp từng từ.
+// câu trả lời mẫu khớp cả cụm trước, thiếu thì khớp từng từ. Trích đoạn quanh từ khoá
+// của truy vấn; cả lần tra nằm trong một trần ký tự (khoảng 2k token) chia đều cho các kết quả.
+/** @phpstan-type KnowledgeSource array{ref: string, kind: string, title: string, text: string} */
 final class CoreKnowledgeReader implements KnowledgeReader
 {
-    private const EXCERPT_CHARACTERS = 600;
+    private const EXCERPT_CHARACTERS = 1_200;
+
+    private const RESULT_CHARACTERS = 6_000;
 
     // Từ ngắn hơn chừng này (kể cả dấu) khớp quá rộng khi tìm câu trả lời mẫu theo từng từ.
     private const MIN_WORD_CHARACTERS = 2;
@@ -30,10 +33,19 @@ final class CoreKnowledgeReader implements KnowledgeReader
         $articles = $this->articles($accountId, $query, $limit);
         $cannedResponses = $this->cannedResponses($accountId, $query, $limit);
 
-        return array_slice($this->interleave($articles, $cannedResponses), 0, $limit);
+        $sources = array_slice($this->interleave($articles, $cannedResponses), 0, $limit);
+        $perSource = $sources === [] ? 0 : min(self::EXCERPT_CHARACTERS, intdiv(self::RESULT_CHARACTERS, count($sources)));
+
+        return array_map(fn (array $source) => new KnowledgeHit(
+            ref: $source['ref'],
+            kind: $source['kind'],
+            title: $source['title'],
+            excerpt: KnowledgeExcerpt::of($source['text'], $query, $perSource),
+            provenance: Provenance::Business,
+        ), $sources);
     }
 
-    /** @return list<KnowledgeHit> */
+    /** @return list<KnowledgeSource> */
     private function articles(int $accountId, string $query, int $limit): array
     {
         $tsQuery = str_replace(' & ', ' | ', Article::toTsQuery($query));
@@ -52,17 +64,16 @@ final class CoreKnowledgeReader implements KnowledgeReader
             ->orderBy('articles.id')
             ->limit($limit)
             ->get(['articles.id', 'articles.title', 'articles.description', 'articles.content'])
-            ->map(fn (Article $article) => new KnowledgeHit(
-                ref: "article:{$article->id}",
-                kind: 'article',
-                title: (string) $article->title,
-                excerpt: $this->excerpt(trim($article->description."\n".$article->content)),
-                provenance: Provenance::Business,
-            ))
+            ->map(fn (Article $article) => [
+                'ref' => "article:{$article->id}",
+                'kind' => 'article',
+                'title' => (string) $article->title,
+                'text' => trim($article->description."\n".$article->content),
+            ])
             ->all();
     }
 
-    /** @return list<KnowledgeHit> */
+    /** @return list<KnowledgeSource> */
     private function cannedResponses(int $accountId, string $query, int $limit): array
     {
         $scoped = fn () => CannedResponse::query()->where('account_id', $accountId);
@@ -91,21 +102,20 @@ final class CoreKnowledgeReader implements KnowledgeReader
         }
 
         return $matches
-            ->map(fn (CannedResponse $response) => new KnowledgeHit(
-                ref: "canned_response:{$response->id}",
-                kind: 'canned_response',
-                title: (string) $response->short_code,
-                excerpt: $this->excerpt((string) $response->content),
-                provenance: Provenance::Business,
-            ))
+            ->map(fn (CannedResponse $response) => [
+                'ref' => "canned_response:{$response->id}",
+                'kind' => 'canned_response',
+                'title' => (string) $response->short_code,
+                'text' => (string) $response->content,
+            ])
             ->values()
             ->all();
     }
 
     /**
-     * @param  list<KnowledgeHit>  $first
-     * @param  list<KnowledgeHit>  $second
-     * @return list<KnowledgeHit>
+     * @param  list<KnowledgeSource>  $first
+     * @param  list<KnowledgeSource>  $second
+     * @return list<KnowledgeSource>
      */
     private function interleave(array $first, array $second): array
     {
@@ -116,12 +126,5 @@ final class CoreKnowledgeReader implements KnowledgeReader
         }
 
         return $merged;
-    }
-
-    private function excerpt(string $text): string
-    {
-        $plain = trim((string) preg_replace('/\s+/u', ' ', strip_tags($text)));
-
-        return Str::limit($plain, self::EXCERPT_CHARACTERS, '…');
     }
 }
