@@ -49,8 +49,9 @@ export const createTemporaryMessage = ({
 
 // Quy tin widget về dạng của luật gộp nhóm dùng chung: cùng chiều tin + cùng người
 // gửi; tin có khung riêng (khảo sát, biểu mẫu, carousel…) luôn đứng một mình.
+// Id người gửi chỉ duy nhất trong từng kiểu (nhân viên #1 khác AI #1), nên khoá phải mang kiểu.
 const toGroupableMessage = (message: WidgetMessage): GroupableMessage => ({
-    senderKey: `${message.message_type}:${message.sender?.id ?? message.sender?.name ?? ''}`,
+    senderKey: `${message.message_type}:${message.sender?.type ?? ''}:${message.sender?.id ?? message.sender?.name ?? ''}`,
     createdAt: message.created_at,
     standalone:
         isASubmittedFormMessage(message) ||

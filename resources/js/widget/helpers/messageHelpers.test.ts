@@ -129,6 +129,25 @@ describe('groupMessagesByDate', () => {
         expect(days[0].groups).toHaveLength(2);
     });
 
+    it('nhân viên và AI trùng id nhưng khác kiểu người gửi không chung nhóm', () => {
+        const days = groupMessagesByDate([
+            message({ id: 1, created_at: 1758000000, message_type: MESSAGE_TYPE.OUTGOING, sender: { id: 1, name: 'Linh', type: 'ai_agent' } }),
+            message({ id: 2, created_at: 1758000054, message_type: MESSAGE_TYPE.OUTGOING, sender: { id: 1, name: 'John', type: 'user' } }),
+            message({ id: 3, created_at: 1758000060, message_type: MESSAGE_TYPE.OUTGOING, sender: { id: 1, name: 'John', type: 'user' } }),
+        ]);
+
+        expect(days[0].groups.map(group => group.map(item => item.message.id))).toStrictEqual([[1], [2, 3]]);
+    });
+
+    it('tin không có người gửi vẫn gộp với tin kề cùng chiều', () => {
+        const days = groupMessagesByDate([
+            message({ id: 1, created_at: 1758000000, message_type: MESSAGE_TYPE.OUTGOING }),
+            message({ id: 2, created_at: 1758000010, message_type: MESSAGE_TYPE.OUTGOING }),
+        ]);
+
+        expect(days[0].groups.map(group => group.map(item => item.message.id))).toStrictEqual([[1, 2]]);
+    });
+
     it('mỗi tin mang vị trí trong nhóm theo luật dùng chung', () => {
         const days = groupMessagesByDate([
             message({ id: 1, created_at: 1758000000, message_type: MESSAGE_TYPE.OUTGOING, sender: agent }),
