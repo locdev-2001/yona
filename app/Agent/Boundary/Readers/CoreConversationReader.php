@@ -11,17 +11,20 @@ use App\Agent\ValueObjects\MessageOrigin;
 use App\Models\AgentBot;
 use App\Models\AiAgent;
 use App\Models\Attachment;
+use App\Models\Conversation;
+use App\Models\Label;
 use App\Models\Message;
 use App\Models\User;
 use App\Services\Channels\ChannelActionRegistry;
 use DateTimeImmutable;
-use Illuminate\Support\Str;
 
 // Đọc hội thoại và tin của lõi thành ảnh chụp trung tính. Mọi truy vấn khoá theo
 // account_id của ConversationRef: hội thoại account khác coi như không tồn tại.
 final class CoreConversationReader implements ConversationReader
 {
     private const TEXT_CONTENT_TYPE = 'text';
+
+    public function __construct(private readonly MessageText $messageText) {}
 
     public function conversation(ConversationRef $conversation): ?ConversationSnapshot
     {
@@ -45,7 +48,7 @@ final class CoreConversationReader implements ConversationReader
             canReply: $model->canReply(),
             isGroup: ChannelActionRegistry::groupMembersFor($inbox)?->isGroup($model) ?? false,
             timezone: (string) ($inbox->timezone ?: config('app.timezone')),
-            channel: Str::snake(Str::afterLast((string) $inbox->channel_type, ':')),
+            channel: CoreRecords::channel($inbox),
             accountActive: $model->account->isActive(),
         );
     }
@@ -62,10 +65,15 @@ final class CoreConversationReader implements ConversationReader
             ? $model->messagesNewestFirst()->with(['sender', 'attachments'])->limit($limit)->get()->reverse()
             : $model->messages()->with(['sender', 'attachments'])->where('id', '>', $afterMessageId)->limit($limit)->get();
 
-        return $messages->map(fn (Message $message) => $this->snapshot($message))->values()->all();
+        return $messages->map(fn (Message $message) => $this->snapshot($message, $model))->values()->all();
     }
 
-    private function snapshot(Message $message): CoreMessage
+    public function labels(int $accountId): array
+    {
+        return Label::query()->where('account_id', $accountId)->pluck('title')->all();
+    }
+
+    private function snapshot(Message $message, Conversation $conversation): CoreMessage
     {
         $sender = $message->sender;
         $attachmentTypes = $message->attachments->map(fn (Attachment $attachment) => $attachment->fileTypeName())->all();
@@ -78,7 +86,7 @@ final class CoreConversationReader implements ConversationReader
         return new CoreMessage(
             id: $message->id,
             origin: $this->origin($message),
-            text: blank($message->content) ? null : (string) $message->content,
+            text: $this->messageText->of($message, $conversation),
             private: (bool) $message->private,
             createdAt: DateTimeImmutable::createFromInterface($message->created_at),
             senderUserId: $sender instanceof User ? $sender->id : null,

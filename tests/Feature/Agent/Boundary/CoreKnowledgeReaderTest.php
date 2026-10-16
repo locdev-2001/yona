@@ -6,6 +6,7 @@ use App\Models\Account;
 use App\Models\Article;
 use App\Models\CannedResponse;
 use App\Models\Portal;
+use Tests\Feature\Agent\Runtime\TurnKit;
 
 /** @param  array<string, mixed>  $attributes */
 function helpArticle(Account $account, array $attributes): Article
@@ -61,4 +62,21 @@ it('keeps all results of one search within a fixed character budget', function (
 
     expect($hits)->toHaveCount(10)
         ->and($total)->toBeLessThanOrEqual(6_000);
+});
+
+it('gives a saved product card its price, sizes and product id instead of an empty text', function () {
+    $account = Account::factory()->create();
+    $cards = TurnKit::productCards($account->id, 'ao-polo', [[
+        'id' => 'polo',
+        'title' => 'Áo polo nam',
+        'price' => ['amount' => 250000],
+        'variants' => [['name' => 'Màu', 'options' => [['value' => 'Xanh'], ['value' => 'Đỏ', 'disabled' => true]]]],
+        'actions' => [['kind' => 'order', 'label' => 'Đặt mua']],
+    ]]);
+
+    $hits = app(KnowledgeReader::class)->search($account->id, 'polo', 5);
+
+    expect($hits)->toHaveCount(1)
+        ->and($hits[0]->ref)->toBe("canned_response:{$cards->id}")
+        ->and($hits[0]->excerpt)->toBe("Áo polo nam · 250.000đ · Màu: Xanh, Đỏ (out of stock: Đỏ) · product id {$cards->id}:polo");
 });

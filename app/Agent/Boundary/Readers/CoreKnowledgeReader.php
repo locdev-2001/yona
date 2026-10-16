@@ -2,6 +2,7 @@
 
 namespace App\Agent\Boundary\Readers;
 
+use App\Agent\Boundary\CoreProducts;
 use App\Agent\Contracts\Ports\KnowledgeReader;
 use App\Agent\ValueObjects\KnowledgeHit;
 use App\Agent\ValueObjects\Provenance;
@@ -10,7 +11,8 @@ use App\Models\CannedResponse;
 
 // Tri thức bản mỏng: bài Help Center đã xuất bản (tìm toàn văn) và câu trả lời mẫu của
 // account. Câu hỏi của khách thường dài, nên bài khớp BẤT KỲ từ nào rồi xếp theo hạng;
-// câu trả lời mẫu khớp cả cụm trước, thiếu thì khớp từng từ. Trích đoạn quanh từ khoá
+// câu trả lời mẫu khớp cả cụm trước, thiếu thì khớp từng từ. Câu trả lời mẫu dạng thẻ sản
+// phẩm mang theo chữ tả từng thẻ (giá, biến thể, id để gửi thẻ). Trích đoạn quanh từ khoá
 // của truy vấn; cả lần tra nằm trong một trần ký tự (khoảng 2k token) chia đều cho các kết quả.
 /** @phpstan-type KnowledgeSource array{ref: string, kind: string, title: string, text: string} */
 final class CoreKnowledgeReader implements KnowledgeReader
@@ -91,7 +93,9 @@ final class CoreKnowledgeReader implements KnowledgeReader
                     ->where(function ($any) use ($words) {
                         foreach ($words as $word) {
                             $contains = '%'.str_replace(['\\', '%', '_', "\0"], ['\\\\', '\%', '\_', ''], $word).'%';
-                            $any->orWhere('short_code', 'ILIKE', $contains)->orWhere('content', 'ILIKE', $contains);
+                            $any->orWhere('short_code', 'ILIKE', $contains)
+                                ->orWhere('content', 'ILIKE', $contains)
+                                ->orWhereRaw('content_attributes::text ILIKE ?', [$contains]);
                         }
                     })
                     ->orderBy('id')
@@ -106,10 +110,24 @@ final class CoreKnowledgeReader implements KnowledgeReader
                 'ref' => "canned_response:{$response->id}",
                 'kind' => 'canned_response',
                 'title' => (string) $response->short_code,
-                'text' => (string) $response->content,
+                'text' => $this->cannedText($response),
             ])
             ->values()
             ->all();
+    }
+
+    private function cannedText(CannedResponse $response): string
+    {
+        if ($response->content_type !== CoreProducts::CARDS_CONTENT_TYPE) {
+            return (string) $response->content;
+        }
+
+        $cards = array_map(
+            fn (array $item) => CoreProducts::describe(CoreProducts::product($response, $item)),
+            CoreProducts::itemsOf($response),
+        );
+
+        return trim($response->content."\n".implode("\n", $cards));
     }
 
     /**

@@ -18,4 +18,7 @@ interface ConversationReader
      * @return list<CoreMessage>
      */
     public function messagesAfter(ConversationRef $conversation, ?int $afterMessageId, int $limit): array;
+
+    /** @return list<string> tên các nhãn của account, theo thứ tự hiển thị */
+    public function labels(int $accountId): array;
 }

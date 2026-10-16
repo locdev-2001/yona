@@ -6,9 +6,12 @@ use App\Agent\Contracts\Ports\LanguageModel;
 use App\Agent\Runtime\Jobs\RunTurnJob;
 use App\Agent\Runtime\TurnSettings;
 use App\Builders\Messages\MessageBuilder;
+use App\Messaging\Structured\PayloadContext;
+use App\Messaging\Structured\StructuredTypeRegistry;
 use App\Models\Account;
 use App\Models\AccountUser;
 use App\Models\AiAgent;
+use App\Models\CannedResponse;
 use App\Models\Contact;
 use App\Models\ContactInbox;
 use App\Models\Conversation;
@@ -100,6 +103,24 @@ final class TurnKit
             'message_type' => Message::TYPE_OUTGOING,
             'content' => $text,
             'content_attributes' => ['external_echo' => true],
+        ]);
+    }
+
+    /**
+     * Thẻ sản phẩm shop lưu thành câu trả lời mẫu, chuẩn hoá đúng như màn câu trả lời mẫu lưu.
+     *
+     * @param  list<array<string, mixed>>  $items
+     */
+    public static function productCards(int $accountId, string $shortCode, array $items, ?string $content = null): CannedResponse
+    {
+        $context = new PayloadContext(new Conversation(['account_id' => $accountId]), Message::TYPE_OUTGOING);
+
+        return CannedResponse::query()->create([
+            'account_id' => $accountId,
+            'short_code' => $shortCode,
+            'content' => $content,
+            'content_type' => 'cards',
+            'content_attributes' => app(StructuredTypeRegistry::class)->for('cards')->normalize(['items' => $items], $context),
         ]);
     }
 
