@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, router, usePage } from '@inertiajs/react';
 
+import { t } from '../../../i18n';
 import Icon from 'dashboard/components-next/icon/Icon';
 import SidebarGroupHeader from './SidebarGroupHeader';
 import SidebarGroupLeaf from './SidebarGroupLeaf';
@@ -48,6 +49,7 @@ export default function SidebarGroup({
     to,
     activeOn = [],
     children,
+    badgeCount = 0,
     getterKeys = {},
     accountId,
 }: SidebarMenuItem & { accountId: number }) {
@@ -118,11 +120,24 @@ export default function SidebarGroup({
         visibleChildren[visibleChildren.length - 1] === child;
 
     if (isCollapsed) {
-        const collapsedClasses = `flex items-center justify-center size-10 rounded-lg ${
+        const collapsedClasses = `relative flex items-center justify-center size-10 rounded transition-colors duration-100 ease-out ${
             isActive || hasActiveChild
                 ? 'text-n-slate-12 bg-n-surface-selected'
-                : 'text-n-slate-11 hover:bg-n-surface-hover'
+                : 'text-n-slate-11 hover:bg-n-surface-hover hover:text-n-slate-12'
         }`;
+        const hasUnread = badgeCount > 0;
+        const collapsedTitle = hasUnread ? t('SIDEBAR.UNREAD_GROUP_LABEL', { label, count: badgeCount }) : label;
+        const collapsedContent = (
+            <>
+                {icon ? <Icon icon={icon} className="size-[18px]" /> : null}
+                {hasUnread ? (
+                    <span
+                        data-test-id="sidebar-rail-unread"
+                        className="absolute top-[7px] ltr:right-[7px] rtl:left-[7px] size-[7px] rounded-full bg-n-surface-rail-unread"
+                    />
+                ) : null}
+            </>
+        );
 
         return (
             <li className="grid gap-1 text-sm cursor-pointer select-none min-w-0">
@@ -140,17 +155,25 @@ export default function SidebarGroup({
                 >
                     <div ref={triggerRef}>
                         {to && !hasChildren ? (
-                            <Link href={to} className={collapsedClasses} title={label}>
-                                {icon ? <Icon icon={icon} className="size-4" /> : null}
+                            <Link href={to} className={collapsedClasses} title={collapsedTitle} aria-label={collapsedTitle}>
+                                {collapsedContent}
                             </Link>
                         ) : (
                             <button
                                 type="button"
                                 className={collapsedClasses}
-                                title={label}
+                                title={collapsedTitle}
+                                aria-label={collapsedTitle}
+                                aria-haspopup={hasChildren ? 'menu' : undefined}
+                                aria-expanded={hasChildren ? isPopoverOpen : undefined}
                                 onClick={hasChildren ? handleCollapsedClick : undefined}
+                                onFocus={() => {
+                                    if (!hasChildren) return;
+                                    cancelClose();
+                                    openPopover();
+                                }}
                             >
-                                {icon ? <Icon icon={icon} className="size-4" /> : null}
+                                {collapsedContent}
                             </button>
                         )}
                     </div>

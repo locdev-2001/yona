@@ -1,10 +1,7 @@
 import type { ReactNode } from 'react';
 import { Link } from '@inertiajs/react';
 
-import { t } from '../../../i18n';
 import Icon from 'dashboard/components-next/icon/Icon';
-import ChannelIcon from 'dashboard/components-next/icon/ChannelIcon';
-import type { ChannelIconInbox } from 'dashboard/components-next/icon/ChannelIcon';
 import SidebarUnreadBadge from './SidebarUnreadBadge';
 
 // Port từ sidebar/SidebarGroupLeaf.vue — tree-line connector giữ nguyên chuỗi class
@@ -21,39 +18,6 @@ interface SidebarGroupLeafProps {
     thinTreeLine?: boolean;
     hidden?: boolean;
     component?: (props: { label: string; active: boolean; badgeCount?: number }) => ReactNode;
-}
-
-// Port từ sidebar/ChannelLeaf.vue — nội dung mục Channels: icon kênh + nhãn +
-// huy hiệu chưa đọc + cảnh báo mất phiên xác thực (Zalo/Facebook/…). Dùng qua
-// prop `component` của SidebarGroupLeaf: SidebarSubGroup (mục lồng như Channels)
-// chỉ chuyển tiếp `component`, không có field riêng cho danh tính kênh, nên
-// menuItems.ts truyền dữ liệu inbox trực tiếp qua đây thay vì qua props phẳng.
-export function SidebarChannelLeafContent({
-    label,
-    badgeCount = 0,
-    inbox,
-}: {
-    label: string;
-    badgeCount?: number;
-    inbox: ChannelIconInbox & { reauthorization_required?: boolean };
-}) {
-    return (
-        <>
-            <span className="size-4 grid place-content-center rounded-full">
-                <ChannelIcon inbox={inbox} className="size-4" />
-            </span>
-            <div className="flex-1 truncate min-w-0 text-sm">{label}</div>
-            <SidebarUnreadBadge count={badgeCount} />
-            {inbox.reauthorization_required ? (
-                <span
-                    title={t('SIDEBAR.REAUTHORIZE')}
-                    className="grid place-content-center size-5 rounded-full bg-n-ruby-5/60 shrink-0"
-                >
-                    <Icon icon="i-lucide-triangle-alert" className="size-3 text-n-ruby-9" />
-                </span>
-            ) : null}
-        </>
-    );
 }
 
 export default function SidebarGroupLeaf({

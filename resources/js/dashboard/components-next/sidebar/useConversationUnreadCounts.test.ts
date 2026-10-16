@@ -41,23 +41,21 @@ describe('buildMenuItems badgeCount', () => {
     it('cờ tắt (bộ đếm rỗng) thì mọi badge = 0 như oracle', () => {
         const items = buildMenuItems(2, inboxes, teams, labels, EMPTY_UNREAD_COUNTS);
 
+        expect(findLeaf(items, ['Conversation'])?.badgeCount).toBe(0);
         expect(findLeaf(items, ['Conversation', 'All'])?.badgeCount).toBe(0);
-        expect(findLeaf(items, ['Conversation', 'Channels', 'api-test-1'])?.badgeCount).toBe(0);
         expect(findLeaf(items, ['Conversation', 'Teams', 'Sales-7'])?.badgeCount).toBe(0);
-        expect(findLeaf(items, ['Conversation', 'Labels', 'billing-5'])?.badgeCount).toBe(0);
     });
 
-    it('đổ bộ đếm theo id inbox/team/nhãn', () => {
+    it('Hộp thư cộng số chưa đọc mọi kênh; team đổ theo id', () => {
         const items = buildMenuItems(2, inboxes, teams, labels, {
             allCount: 12,
-            inboxes: { '1': 4 },
+            inboxes: { '1': 4, '3': 2 },
             labels: { '5': 2 },
             teams: { '7': 9 },
         });
 
+        expect(findLeaf(items, ['Conversation'])?.badgeCount).toBe(6);
         expect(findLeaf(items, ['Conversation', 'All'])?.badgeCount).toBe(12);
-        expect(findLeaf(items, ['Conversation', 'Channels', 'api-test-1'])?.badgeCount).toBe(4);
         expect(findLeaf(items, ['Conversation', 'Teams', 'Sales-7'])?.badgeCount).toBe(9);
-        expect(findLeaf(items, ['Conversation', 'Labels', 'billing-5'])?.badgeCount).toBe(2);
     });
 });
