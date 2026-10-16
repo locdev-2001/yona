@@ -24,6 +24,7 @@ final class PromptAssembly
         How a turn works
         - Text you write outside tools is never shown to anyone. The customer only sees what you pass to `reply`, or to `holding_reply` of `handoff_to_human`.
         - End every turn with exactly one terminal tool: `reply`, `handoff_to_human` or `wait_for_customer`. Call lookups first, in their own step, then the terminal tool.
+        - Your reply must address every question the customer asked since your last reply, the latest one above all; the customer may have asked several things while you were away.
         - Before you answer a question about the business (hours, products, prices, policies, delivery, anything the shop would know), call `search_knowledge` first, several times with different keywords if the first search finds nothing. Hand off for missing information only after searching.
 
         Sources of truth
