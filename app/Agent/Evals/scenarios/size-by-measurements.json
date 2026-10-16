@@ -1,0 +1,36 @@
+{
+  "id": "size-by-measurements",
+  "title": "Chọn size theo số đo",
+  "tags": [
+    "size"
+  ],
+  "customer": {
+    "name": "Lê Hoài An",
+    "goal": "Muốn mua đầm suông công sở màu đen, cần shop chọn giúp size phù hợp với số đo của mình rồi mới quyết định.",
+    "personality": "Lo mặc không vừa, hỏi kỹ, cần được trấn an.",
+    "style": "Nhắn có dấu, câu đầy đủ, lịch sự.",
+    "facts": {
+      "chiều cao": "1m58",
+      "cân nặng": "50kg",
+      "vòng ngực": "86cm",
+      "vòng eo": "68cm",
+      "vòng mông": "92cm"
+    }
+  },
+  "opening": "Chào shop, mình muốn lấy đầm suông công sở màu đen mà không biết mặc size nào. Mình cao 1m58 nặng 50kg, tư vấn giúp mình với.",
+  "max_turns": 5,
+  "criteria": [
+    {
+      "id": "recommends-m",
+      "text": "Tư vấn size M (theo bảng size: 46-52kg, eo 66-70cm, ngực 84-88cm, mông 90-94cm)."
+    },
+    {
+      "id": "uses-size-chart",
+      "text": "Lập luận size dựa trên bảng size của shop (cân nặng/số đo), không đoán mò."
+    },
+    {
+      "id": "states-price",
+      "text": "Nếu nhắc giá thì đúng 429.000đ."
+    }
+  ]
+}

@@ -67,6 +67,31 @@ return [
                 ['provider' => 'openrouter', 'model' => 'anthropic/claude-sonnet-5', 'max_output' => 2048],
             ],
         ],
+
+        // Bộ chấm hội thoại (agent:eval): khách giả đóng vai khách, giám khảo chấm điểm.
+        // Giám khảo dùng mô hình mạnh hơn mô hình đang được đo.
+        'eval_customer' => [
+            'routes' => [
+                [
+                    'provider' => 'openai',
+                    'model' => env('AGENT_EVAL_CUSTOMER_MODEL', 'gpt-6-luna'),
+                    'max_output' => 1024,
+                    'price' => ['input' => 0.10, 'output' => 0.50, 'cache_read' => 0.01, 'cache_write' => 0.10],
+                    'request_options' => ['reasoning_effort' => 'low', 'response_format' => ['type' => 'json_object']],
+                ],
+            ],
+        ],
+        'eval_judge' => [
+            'routes' => [
+                [
+                    'provider' => 'openai',
+                    'model' => env('AGENT_EVAL_JUDGE_MODEL', 'gpt-5.5'),
+                    'max_output' => 12000,
+                    'price' => ['input' => 5.00, 'output' => 30.00, 'cache_read' => 0.50, 'cache_write' => 5.00],
+                    'request_options' => ['reasoning_effort' => 'medium', 'response_format' => ['type' => 'json_object']],
+                ],
+            ],
+        ],
     ],
 
     'default_model' => env('AGENT_DEFAULT_MODEL', 'main'),

@@ -1,0 +1,33 @@
+{
+  "id": "not-sold-here",
+  "title": "Hỏi sản phẩm shop không bán",
+  "tags": [
+    "grounding",
+    "unknown"
+  ],
+  "customer": {
+    "name": "Tạ Minh Khoa",
+    "goal": "Là nam, muốn mua áo sơ mi nam và đôi giày; nếu shop không bán thì hỏi có gì làm quà cho mẹ không.",
+    "personality": "Lịch sự, ít nói.",
+    "style": "Nhắn có dấu, ngắn.",
+    "facts": {
+      "giới tính": "nam"
+    }
+  },
+  "opening": "Shop có bán áo sơ mi nam với giày không ạ?",
+  "max_turns": 4,
+  "criteria": [
+    {
+      "id": "says-not-sold",
+      "text": "Nói rõ shop chỉ bán quần áo nữ, không bán đồ nam và giày; không bịa có hàng."
+    },
+    {
+      "id": "redirects",
+      "text": "Khéo léo gợi ý sản phẩm có thật phù hợp làm quà (nếu khách hỏi) với giá đúng."
+    },
+    {
+      "id": "addresses-male",
+      "text": "Xưng hô phù hợp với khách nam (anh)."
+    }
+  ]
+}

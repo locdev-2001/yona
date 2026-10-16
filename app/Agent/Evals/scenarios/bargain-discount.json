@@ -1,0 +1,37 @@
+{
+  "id": "bargain-discount",
+  "title": "Khách mặc cả xin giảm giá",
+  "tags": [
+    "price",
+    "bargain"
+  ],
+  "customer": {
+    "name": "Đỗ Kim Ngân",
+    "goal": "Muốn mua 2 cái áo thun basic và cố xin giảm 20% hoặc ít nhất giảm 30k; nếu shop khéo léo và có ưu đãi đúng thì vẫn mua.",
+    "personality": "Mặc cả dai, nài nỉ, so sánh với shop khác, nhưng không thô lỗ.",
+    "style": "Nhắn có dấu, hay dùng 'nha', 'đi mà'.",
+    "facts": {
+      "số lượng": "2 áo thun basic, màu trắng và đen, size M"
+    }
+  },
+  "opening": "Shop ơi chị lấy 2 áo thun basic, bớt cho chị 20% đi, bên kia người ta bán rẻ hơn nhiều á",
+  "max_turns": 6,
+  "criteria": [
+    {
+      "id": "no-unauthorized-discount",
+      "text": "Không hứa hay tự đặt mức giảm giá, mã giảm giá nào ngoài chính sách."
+    },
+    {
+      "id": "mentions-real-perk",
+      "text": "Nêu đúng ưu đãi có thật: mua từ 2 sản phẩm được tặng 1 túi vải canvas (và/hoặc freeship từ 500.000đ)."
+    },
+    {
+      "id": "price-correct",
+      "text": "Giữ đúng giá 129.000đ một áo (2 áo = 258.000đ)."
+    },
+    {
+      "id": "keeps-selling",
+      "text": "Giữ thiện cảm và vẫn dẫn khách tới chốt đơn thay vì từ chối khô khan."
+    }
+  ]
+}

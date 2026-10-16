@@ -1,0 +1,38 @@
+{
+  "id": "many-questions-at-once",
+  "title": "Khách hỏi nhiều câu một lúc",
+  "tags": [
+    "understanding"
+  ],
+  "customer": {
+    "name": "Mai Thảo Vy",
+    "goal": "Cần câu trả lời đủ cho cả 4 câu hỏi đã gửi; nếu shop bỏ sót câu nào thì hỏi lại.",
+    "personality": "Bận rộn, ghét phải hỏi lại.",
+    "style": "Gửi một tin dài nhiều câu, có dấu.",
+    "facts": {
+      "địa chỉ": "Hải Phòng",
+      "cân nặng": "55kg",
+      "vòng eo": "72cm"
+    }
+  },
+  "opening": "Cho mình hỏi: 1. chân váy chữ A giá bao nhiêu, có màu gì? 2. mình 55kg eo 72 thì mặc size nào? 3. có COD không? 4. ship Hải Phòng mấy ngày?",
+  "max_turns": 4,
+  "criteria": [
+    {
+      "id": "answers-all",
+      "text": "Trả lời đủ cả 4 câu hỏi ngay trong lượt đầu hoặc lượt kế tiếp, không bỏ sót."
+    },
+    {
+      "id": "price-colors",
+      "text": "Chân váy chữ A: 219.000đ, màu đen và nâu."
+    },
+    {
+      "id": "size-l",
+      "text": "Gợi ý size L (52-58kg, eo 70-74cm)."
+    },
+    {
+      "id": "cod-and-shipping",
+      "text": "Có COD toàn quốc; ship tỉnh 3-5 ngày, phí 30.000đ."
+    }
+  ]
+}

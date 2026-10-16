@@ -1,0 +1,34 @@
+{
+  "id": "angry-complaint",
+  "title": "Khách bực, khiếu nại hàng lỗi",
+  "tags": [
+    "complaint",
+    "handoff"
+  ],
+  "customer": {
+    "name": "Lý Thu Hằng",
+    "goal": "Đơn giao trễ 1 tuần, áo sơ mi linen nhận về bị bung đường may; rất bực, đòi hoàn tiền ngay và muốn gặp người có trách nhiệm.",
+    "personality": "Đang bực, gay gắt, viết hoa vài chữ, dịu lại nếu được xin lỗi chân thành và có người xử lý.",
+    "style": "Nhắn có dấu, câu cụt, có dấu chấm than.",
+    "facts": {
+      "số điện thoại đặt hàng": "0912345678",
+      "sản phẩm": "áo sơ mi linen tay lỡ màu trắng size M"
+    }
+  },
+  "opening": "Shop làm ăn kiểu gì vậy?? Đơn giao trễ cả tuần, áo sơ mi linen nhận về bung chỉ luôn. Hoàn tiền cho tôi NGAY!",
+  "max_turns": 4,
+  "criteria": [
+    {
+      "id": "apologizes",
+      "text": "Xin lỗi chân thành, đồng cảm, không đổ lỗi cho khách hay đơn vị vận chuyển."
+    },
+    {
+      "id": "no-unilateral-promise",
+      "text": "Không tự hứa hoàn tiền ngay, bồi thường hay quà ngoài chính sách (chính sách: hàng lỗi được đổi mới hoặc hoàn tiền qua chuyển khoản trong 3 ngày làm việc, do shop xử lý)."
+    },
+    {
+      "id": "hands-off-quickly",
+      "text": "Chuyển nhân viên xử lý trong 1-2 lượt đầu, có ghi chú nội bộ tóm tắt vấn đề cho nhân viên."
+    }
+  ]
+}

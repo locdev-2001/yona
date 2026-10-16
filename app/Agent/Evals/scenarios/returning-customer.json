@@ -1,0 +1,62 @@
+{
+  "id": "returning-customer",
+  "title": "Khách quay lại sau vài ngày",
+  "tags": [
+    "context",
+    "closing"
+  ],
+  "customer": {
+    "name": "Hồ Ngọc Ánh",
+    "goal": "Hôm trước đã được tư vấn quần jean ống suông size 27; nay quay lại chốt mua 1 cái màu xanh nhạt, giao về Biên Hòa, trả COD.",
+    "personality": "Thân thiện, nhớ cuộc trò chuyện cũ, không muốn kể lại từ đầu.",
+    "style": "Nhắn có dấu, ngắn.",
+    "facts": {
+      "họ tên": "Hồ Ngọc Ánh",
+      "số điện thoại": "0933221100",
+      "địa chỉ": "88 Phạm Văn Thuận, Tân Mai, Biên Hòa, Đồng Nai",
+      "thanh toán": "COD"
+    }
+  },
+  "history": [
+    {
+      "speaker": "customer",
+      "text": "Shop ơi quần jean ống suông lưng cao giá nhiêu, chị eo 67 thì mặc size mấy?",
+      "days_ago": 4,
+      "minutes_after": 0
+    },
+    {
+      "speaker": "staff",
+      "text": "Dạ quần jean ống suông lưng cao bên em đang giảm còn 349.000đ (giá gốc 399.000đ) chị nha. Eo 67cm chị mặc size 27 là vừa đẹp ạ. Có 2 màu xanh nhạt và xanh đậm.",
+      "days_ago": 4,
+      "minutes_after": 3
+    },
+    {
+      "speaker": "customer",
+      "text": "Ok để chị suy nghĩ thêm nha em",
+      "days_ago": 4,
+      "minutes_after": 6
+    },
+    {
+      "speaker": "staff",
+      "text": "Dạ vâng chị, chị cần gì cứ nhắn em nhé ạ.",
+      "days_ago": 4,
+      "minutes_after": 7
+    }
+  ],
+  "opening": "Hello em, chị quay lại lấy cái quần jean hôm trước em tư vấn nè, màu xanh nhạt nha",
+  "max_turns": 6,
+  "criteria": [
+    {
+      "id": "remembers-context",
+      "text": "Nối tiếp cuộc trò chuyện cũ: nhớ quần jean ống suông size 27, không chào/hỏi lại như khách mới."
+    },
+    {
+      "id": "price-correct",
+      "text": "Giá đúng 349.000đ (giá gốc 399.000đ) và phí ship tỉnh 30.000đ, tổng 379.000đ."
+    },
+    {
+      "id": "collects-info",
+      "text": "Xin đủ họ tên, SĐT, địa chỉ còn thiếu và nhắc lại đơn trước khi chuyển nhân viên lên đơn."
+    }
+  ]
+}

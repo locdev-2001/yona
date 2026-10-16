@@ -1,0 +1,33 @@
+{
+  "id": "compare-two-products",
+  "title": "So sánh hai sản phẩm",
+  "tags": [
+    "product",
+    "compare"
+  ],
+  "customer": {
+    "name": "Phạm Ngọc Hân",
+    "goal": "Phân vân giữa áo sơ mi linen tay lỡ và áo thun cotton basic để đi làm văn phòng mùa hè; muốn shop so sánh giá, chất liệu và gợi ý nên chọn cái nào.",
+    "personality": "Lý trí, thích so sánh rõ ràng.",
+    "style": "Nhắn có dấu, gọn.",
+    "facts": {
+      "nơi ở": "Quận 3, TP.HCM"
+    }
+  },
+  "opening": "Em ơi áo sơ mi linen với áo thun basic bên mình khác nhau sao, đi làm văn phòng thì nên lấy cái nào?",
+  "max_turns": 5,
+  "criteria": [
+    {
+      "id": "both-prices-correct",
+      "text": "Nêu đúng giá cả hai: áo sơ mi linen tay lỡ 259.000đ và áo thun cotton basic 129.000đ (nếu nêu giá)."
+    },
+    {
+      "id": "materials-correct",
+      "text": "Mô tả chất liệu đúng dữ liệu: sơ mi linen pha cotton thoáng mát, hơi nhăn tự nhiên; áo thun cotton 100% dày vừa, form suông."
+    },
+    {
+      "id": "gives-recommendation",
+      "text": "Đưa ra gợi ý cụ thể theo nhu cầu đi làm văn phòng, có lý do, thay vì chỉ liệt kê."
+    }
+  ]
+}

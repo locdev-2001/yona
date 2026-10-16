@@ -1,0 +1,200 @@
+{
+  "marker": "agent_eval_shop",
+  "account": {
+    "name": "Shop mẫu Eval",
+    "locale": "vi",
+    "timezone": "Asia/Ho_Chi_Minh"
+  },
+  "admin": {
+    "name": "Chủ shop Eval",
+    "email": "eval-shop@yona.test",
+    "password": "EvalShop@2026"
+  },
+  "inbox": {
+    "name": "Website Mộc Lan",
+    "website_url": "https://moclan-eval.test"
+  },
+  "ai_agent": {
+    "name": "Mai",
+    "persona": "Mai, nhân viên tư vấn của shop thời trang nữ Mộc Lan. Xưng \"em\", gọi khách là \"chị\" (khách tự nhận là nam thì gọi \"anh\"). Nhẹ nhàng, nhanh nhẹn, nhiệt tình, dùng \"dạ\", \"ạ\" vừa phải, câu ngắn gọn như nhắn tin thật, emoji tiết chế.",
+    "instructions": "Shop tên là Mộc Lan, bán thời trang nữ online qua website và có một cửa hàng ở TP.HCM.\nMục tiêu: hiểu đúng nhu cầu, tư vấn sản phẩm phù hợp và giúp khách chốt đơn.\n- Khách hỏi chung chung thì hỏi lại dịp mặc, dáng người hoặc số đo, ngân sách trước khi gợi ý.\n- Chọn size theo bảng size của shop; thiếu số đo thì hỏi chiều cao, cân nặng hoặc số đo 3 vòng.\n- Khi khách muốn mua: hỏi đủ sản phẩm, size, màu, số lượng, họ tên, số điện thoại, địa chỉ nhận hàng; nhắc lại đơn và tổng tiền (tiền hàng + phí ship); rồi chuyển cho nhân viên lên đơn, ghi chú đầy đủ thông tin đơn.\n- Không tự giảm giá, tặng quà hay tạo khuyến mãi ngoài chính sách của shop.\n- Khiếu nại về đơn hàng, giao trễ, hàng lỗi, đòi hoàn tiền: xin lỗi, ghi nhận và chuyển nhân viên xử lý."
+  },
+  "payment_account": {
+    "bank_bin": "970436",
+    "bank_code": "VCB",
+    "account_number": "1023456789",
+    "account_name": "CONG TY TNHH MOC LAN EVAL",
+    "memo_template": "{ma_hoi_thoai}"
+  },
+  "help_center": {
+    "portal": {
+      "name": "Trợ giúp Mộc Lan",
+      "slug": "moc-lan-eval"
+    },
+    "articles": [
+      {
+        "slug": "huong-dan-chon-size",
+        "title": "Hướng dẫn chọn size quần áo Mộc Lan",
+        "description": "Cách đo và chọn size áo, váy, đầm, quần jean theo số đo cơ thể.",
+        "content": "Cách đo: vòng ngực đo chỗ nở nhất, vòng eo đo chỗ nhỏ nhất, vòng mông đo chỗ nở nhất.\n\nBảng size áo, váy, đầm, chân váy:\n- Size S: ngực 80-84cm, eo 62-66cm, mông 86-90cm, cân nặng 40-46kg, chiều cao 150-158cm.\n- Size M: ngực 84-88cm, eo 66-70cm, mông 90-94cm, cân nặng 46-52kg, chiều cao 155-163cm.\n- Size L: ngực 88-92cm, eo 70-74cm, mông 94-98cm, cân nặng 52-58kg, chiều cao 158-166cm.\n- Size XL: ngực 92-96cm, eo 74-78cm, mông 98-102cm, cân nặng 58-64kg, chiều cao 160-168cm.\n\nBảng size quần jean (theo vòng eo): 26 = eo 64cm, 27 = eo 67cm, 28 = eo 70cm, 29 = eo 73cm, 30 = eo 76cm, 31 = eo 79cm.\n\nSố đo nằm giữa hai size: thích mặc ôm thì chọn size nhỏ, thích mặc thoải mái thì chọn size lớn. Áo khoác cardigan là freesize, vừa người 40-60kg."
+      },
+      {
+        "slug": "chinh-sach-doi-tra",
+        "title": "Chính sách đổi trả và bảo hành của Mộc Lan",
+        "description": "Điều kiện đổi size, đổi mẫu, hàng lỗi và hoàn tiền.",
+        "content": "Đổi size hoặc đổi mẫu trong 7 ngày kể từ ngày nhận hàng, sản phẩm còn nguyên tem mác, chưa giặt, chưa qua sử dụng.\nKhách đổi ý (đổi size, đổi mẫu): khách chịu phí ship hai chiều 30.000đ.\nHàng lỗi do nhà sản xuất hoặc shop giao nhầm: shop chịu toàn bộ phí ship, đổi sản phẩm mới hoặc hoàn tiền qua chuyển khoản trong 3 ngày làm việc.\nKhông hoàn tiền khi khách đổi ý, chỉ đổi sang sản phẩm khác.\nĐồ ngủ và sản phẩm đang giảm giá không áp dụng đổi trả, trừ khi bị lỗi."
+      }
+    ]
+  },
+  "canned_responses": [
+    {
+      "short_code": "gio-mo-cua",
+      "content": "Giờ mở cửa: cửa hàng Mộc Lan tại số 25 đường Hoa Sữa, phường Bến Nghé, Quận 1, TP.HCM mở cửa 9h00-21h30 tất cả các ngày trong tuần. Tư vấn online 8h00-22h00 hằng ngày, đơn đặt ngoài giờ được xử lý vào sáng hôm sau. Mộc Lan chỉ có một cửa hàng duy nhất tại TP.HCM, không có chi nhánh ở tỉnh khác."
+    },
+    {
+      "short_code": "doi-tra",
+      "content": "Chính sách đổi trả: đổi size hoặc đổi mẫu trong 7 ngày kể từ khi nhận hàng, sản phẩm còn tem mác, chưa giặt. Khách đổi ý chịu phí ship hai chiều 30.000đ. Hàng lỗi hoặc giao nhầm: shop chịu phí ship, đổi mới hoặc hoàn tiền qua chuyển khoản trong 3 ngày làm việc. Không hoàn tiền khi khách đổi ý. Đồ ngủ và hàng đang giảm giá không đổi trả, trừ khi lỗi."
+    },
+    {
+      "short_code": "giao-hang",
+      "content": "Giao hàng và phí ship: nội thành TP.HCM giao 1-2 ngày, phí ship 20.000đ. Các tỉnh thành khác giao 3-5 ngày, phí ship 30.000đ. Miễn phí ship cho đơn từ 500.000đ trở lên (tính tiền hàng). Giao qua Giao Hàng Nhanh, khách được kiểm tra hàng trước khi nhận."
+    },
+    {
+      "short_code": "thanh-toan",
+      "content": "Thanh toán: nhận COD (trả tiền mặt khi nhận hàng) toàn quốc, hoặc chuyển khoản trước vào tài khoản Vietcombank số 1023456789, chủ tài khoản CONG TY TNHH MOC LAN EVAL, nội dung ghi số điện thoại đặt hàng. Chuyển khoản trước không được giảm thêm. Shop xác nhận đã nhận tiền sau khi kiểm tra tài khoản."
+    },
+    {
+      "short_code": "bang-size",
+      "content": "Bảng size áo, váy, đầm: S ngực 80-84, eo 62-66, mông 86-90, 40-46kg. M ngực 84-88, eo 66-70, mông 90-94, 46-52kg. L ngực 88-92, eo 70-74, mông 94-98, 52-58kg. XL ngực 92-96, eo 74-78, mông 98-102, 58-64kg. Quần jean theo vòng eo: 26 = 64cm, 27 = 67cm, 28 = 70cm, 29 = 73cm, 30 = 76cm, 31 = 79cm. Cardigan freesize 40-60kg."
+    },
+    {
+      "short_code": "khuyen-mai",
+      "content": "Khuyến mãi hiện tại: mua từ 2 sản phẩm trở lên được tặng 1 túi vải canvas Mộc Lan. Miễn phí ship cho đơn từ 500.000đ. Shop không có mã giảm giá chung và không giảm giá thêm theo yêu cầu; nhân viên tư vấn không có quyền tự giảm giá."
+    },
+    {
+      "short_code": "san-pham-shop-ban",
+      "content": "Mộc Lan chỉ bán quần áo nữ: váy, đầm, áo sơ mi, áo thun, quần jean, chân váy, áo khoác cardigan và đồ ngủ. Shop không bán đồ nam, giày dép, túi xách hay phụ kiện."
+    }
+  ],
+  "products": [
+    {
+      "short_code": "sp-vay-hoa-nhi",
+      "content": "Váy hoa nhí cổ vuông - giá 189.000đ. Size S, M, L, XL. Màu xanh, hồng, vàng. Chất voan có lớp lót lụa, dài qua gối, tay phồng, hợp đi chơi, đi biển.",
+      "card": {
+        "id": "vay-hoa-nhi",
+        "title": "Váy hoa nhí cổ vuông",
+        "description": "Voan lót lụa, dài qua gối, tay phồng. Hợp đi chơi, đi biển.",
+        "price": { "amount": 189000, "currency": "VND" },
+        "variants": [
+          { "name": "Size", "options": [{ "value": "S" }, { "value": "M" }, { "value": "L" }, { "value": "XL" }] },
+          { "name": "Màu", "options": [{ "value": "Xanh" }, { "value": "Hồng" }, { "value": "Vàng" }] }
+        ],
+        "actions": [{ "kind": "order", "label": "Đặt mua" }]
+      }
+    },
+    {
+      "short_code": "sp-so-mi-linen",
+      "content": "Áo sơ mi linen tay lỡ - giá 259.000đ. Size S, M, L. Màu trắng, be, xanh rêu. Chất linen pha cotton thoáng mát, hơi nhăn tự nhiên, hợp đi làm và đi chơi.",
+      "card": {
+        "id": "so-mi-linen",
+        "title": "Áo sơ mi linen tay lỡ",
+        "description": "Linen pha cotton thoáng mát, hơi nhăn tự nhiên. Hợp đi làm, đi chơi.",
+        "price": { "amount": 259000, "currency": "VND" },
+        "variants": [
+          { "name": "Size", "options": [{ "value": "S" }, { "value": "M" }, { "value": "L" }] },
+          { "name": "Màu", "options": [{ "value": "Trắng" }, { "value": "Be" }, { "value": "Xanh rêu" }] }
+        ],
+        "actions": [{ "kind": "order", "label": "Đặt mua" }]
+      }
+    },
+    {
+      "short_code": "sp-quan-jean-ong-suong",
+      "content": "Quần jean ống suông lưng cao - giá 349.000đ (giá gốc 399.000đ, đang giảm). Size 26, 27, 28, 29, 30, 31. Màu xanh nhạt, xanh đậm. Jean cotton co giãn nhẹ, lưng cao tôn dáng.",
+      "card": {
+        "id": "quan-jean-ong-suong",
+        "title": "Quần jean ống suông lưng cao",
+        "description": "Jean cotton co giãn nhẹ, lưng cao tôn dáng.",
+        "price": { "amount": 349000, "compare_at": 399000, "currency": "VND" },
+        "variants": [
+          { "name": "Size", "options": [{ "value": "26" }, { "value": "27" }, { "value": "28" }, { "value": "29" }, { "value": "30" }, { "value": "31" }] },
+          { "name": "Màu", "options": [{ "value": "Xanh nhạt" }, { "value": "Xanh đậm" }] }
+        ],
+        "actions": [{ "kind": "order", "label": "Đặt mua" }]
+      }
+    },
+    {
+      "short_code": "sp-dam-suong-cong-so",
+      "content": "Đầm suông công sở - giá 429.000đ. Size S, M, L, XL. Màu đen, đỏ đô. Chất tuyết mưa dày dặn, không nhăn, dài ngang gối, hợp đi làm, đi tiệc nhẹ, đám cưới.",
+      "card": {
+        "id": "dam-suong-cong-so",
+        "title": "Đầm suông công sở",
+        "description": "Tuyết mưa dày dặn, không nhăn, dài ngang gối. Đi làm, tiệc nhẹ, đám cưới.",
+        "price": { "amount": 429000, "currency": "VND" },
+        "variants": [
+          { "name": "Size", "options": [{ "value": "S" }, { "value": "M" }, { "value": "L" }, { "value": "XL" }] },
+          { "name": "Màu", "options": [{ "value": "Đen" }, { "value": "Đỏ đô" }] }
+        ],
+        "actions": [{ "kind": "order", "label": "Đặt mua" }]
+      }
+    },
+    {
+      "short_code": "sp-ao-thun-basic",
+      "content": "Áo thun cotton basic cổ tròn - giá 129.000đ. Size S, M, L, XL. Màu trắng, đen, xám, hồng pastel. Cotton 100% dày vừa, form suông, mặc hằng ngày.",
+      "card": {
+        "id": "ao-thun-basic",
+        "title": "Áo thun cotton basic cổ tròn",
+        "description": "Cotton 100% dày vừa, form suông, mặc hằng ngày.",
+        "price": { "amount": 129000, "currency": "VND" },
+        "variants": [
+          { "name": "Size", "options": [{ "value": "S" }, { "value": "M" }, { "value": "L" }, { "value": "XL" }] },
+          { "name": "Màu", "options": [{ "value": "Trắng" }, { "value": "Đen" }, { "value": "Xám" }, { "value": "Hồng pastel" }] }
+        ],
+        "actions": [{ "kind": "order", "label": "Đặt mua" }]
+      }
+    },
+    {
+      "short_code": "sp-chan-vay-chu-a",
+      "content": "Chân váy chữ A dáng dài - giá 219.000đ. Size S, M, L. Màu đen, nâu. Chất kaki mềm, dài qua bắp chân, lưng thun sau.",
+      "card": {
+        "id": "chan-vay-chu-a",
+        "title": "Chân váy chữ A dáng dài",
+        "description": "Kaki mềm, dài qua bắp chân, lưng thun sau.",
+        "price": { "amount": 219000, "currency": "VND" },
+        "variants": [
+          { "name": "Size", "options": [{ "value": "S" }, { "value": "M" }, { "value": "L" }] },
+          { "name": "Màu", "options": [{ "value": "Đen" }, { "value": "Nâu" }] }
+        ],
+        "actions": [{ "kind": "order", "label": "Đặt mua" }]
+      }
+    },
+    {
+      "short_code": "sp-cardigan-len",
+      "content": "Áo khoác cardigan len mỏng - giá 299.000đ. Freesize (40-60kg). Màu kem, xám, nâu. Len mỏng mềm, không xù, khoác máy lạnh hoặc đi chơi buổi tối.",
+      "card": {
+        "id": "cardigan-len",
+        "title": "Áo khoác cardigan len mỏng",
+        "description": "Len mỏng mềm, không xù. Freesize 40-60kg.",
+        "price": { "amount": 299000, "currency": "VND" },
+        "variants": [
+          { "name": "Màu", "options": [{ "value": "Kem" }, { "value": "Xám" }, { "value": "Nâu" }] }
+        ],
+        "actions": [{ "kind": "order", "label": "Đặt mua" }]
+      }
+    },
+    {
+      "short_code": "sp-do-ngu-lua",
+      "content": "Set đồ ngủ lụa tay ngắn quần dài - giá 279.000đ. Size M, L. Màu hồng, xanh than. Lụa satin mềm mát. Đồ ngủ không áp dụng đổi trả trừ khi lỗi.",
+      "card": {
+        "id": "do-ngu-lua",
+        "title": "Set đồ ngủ lụa",
+        "description": "Lụa satin mềm mát, tay ngắn quần dài.",
+        "price": { "amount": 279000, "currency": "VND" },
+        "variants": [
+          { "name": "Size", "options": [{ "value": "M" }, { "value": "L" }] },
+          { "name": "Màu", "options": [{ "value": "Hồng" }, { "value": "Xanh than" }] }
+        ],
+        "actions": [{ "kind": "order", "label": "Đặt mua" }]
+      }
+    }
+  ]
+}

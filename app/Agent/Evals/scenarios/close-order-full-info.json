@@ -1,0 +1,40 @@
+{
+  "id": "close-order-full-info",
+  "title": "Khách chốt đơn, đưa thông tin giao hàng",
+  "tags": [
+    "order",
+    "closing"
+  ],
+  "customer": {
+    "name": "Huỳnh Bảo Châu",
+    "goal": "Mua 1 áo khoác cardigan len mỏng màu kem, giao về nhà ở TP.HCM, trả COD; đưa đủ tên, SĐT, địa chỉ khi shop hỏi và muốn shop xác nhận tổng tiền.",
+    "personality": "Quyết đoán, muốn nhanh gọn.",
+    "style": "Nhắn có dấu, ngắn.",
+    "facts": {
+      "họ tên": "Huỳnh Bảo Châu",
+      "số điện thoại": "0901234567",
+      "địa chỉ": "45 Lê Văn Sỹ, Phường 13, Quận 3, TP.HCM",
+      "thanh toán": "COD"
+    }
+  },
+  "opening": "Lấy cho chị 1 cardigan len màu kem nha em, ship về Q3",
+  "max_turns": 6,
+  "criteria": [
+    {
+      "id": "collects-info",
+      "text": "Hỏi và ghi nhận đủ họ tên, số điện thoại, địa chỉ nhận hàng."
+    },
+    {
+      "id": "confirms-order",
+      "text": "Nhắc lại đơn: cardigan len mỏng, màu kem, số lượng 1, freesize."
+    },
+    {
+      "id": "total-correct",
+      "text": "Tổng tiền đúng: 299.000đ + phí ship nội thành 20.000đ = 319.000đ."
+    },
+    {
+      "id": "hands-to-staff",
+      "text": "Theo chỉ dẫn của shop, chuyển cho nhân viên lên đơn kèm ghi chú đủ thông tin đơn; không khẳng định đơn đã được tạo trên hệ thống khi chưa có người xác nhận."
+    }
+  ]
+}

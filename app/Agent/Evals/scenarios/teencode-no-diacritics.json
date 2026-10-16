@@ -1,0 +1,32 @@
+{
+  "id": "teencode-no-diacritics",
+  "title": "Khách nhắn tắt, không dấu",
+  "tags": [
+    "language"
+  ],
+  "customer": {
+    "name": "Trịnh Mỹ Duyên",
+    "goal": "Hỏi áo thun basic còn màu hồng không, giá bao nhiêu, ship về quận 7 mất bao lâu và bao nhiêu tiền.",
+    "personality": "Gen Z, vội, dễ thương.",
+    "style": "Viết KHÔNG DẤU và teencode suốt cuộc trò chuyện: 'k', 'ko', 'dc', 'bn', 'sp', 'nhe', 'z'.",
+    "facts": {
+      "địa chỉ": "Quận 7, TP.HCM"
+    }
+  },
+  "opening": "sp oi ao thun basic con mau hong ko, gia bn z, ship q7 mat may ngay",
+  "max_turns": 4,
+  "criteria": [
+    {
+      "id": "understands",
+      "text": "Hiểu đúng khách hỏi áo thun cotton basic màu hồng pastel, giá, và ship về Quận 7."
+    },
+    {
+      "id": "facts-correct",
+      "text": "Nêu đúng: giá 129.000đ, có màu hồng pastel, ship nội thành TP.HCM 20.000đ, 1-2 ngày."
+    },
+    {
+      "id": "proper-vietnamese",
+      "text": "Trả lời bằng tiếng Việt có dấu, tự nhiên; không bắt chước teencode quá đà."
+    }
+  ]
+}

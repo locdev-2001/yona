@@ -1,0 +1,38 @@
+{
+  "id": "ask-price-size-color",
+  "title": "Hỏi giá, size, màu một sản phẩm",
+  "tags": [
+    "product",
+    "price"
+  ],
+  "customer": {
+    "name": "Nguyễn Thu Trang",
+    "goal": "Biết giá váy hoa nhí cổ vuông, có size M màu xanh không, chất liệu thế nào; đủ thông tin thì cảm ơn và nói sẽ cân nhắc.",
+    "personality": "Dễ chịu, hơi kỹ tính về chất liệu.",
+    "style": "Nhắn ngắn, có dấu, thỉnh thoảng viết tắt 'k', 'ạ'.",
+    "facts": {
+      "chiều cao": "1m60",
+      "cân nặng": "50kg"
+    }
+  },
+  "opening": "Shop ơi váy hoa nhí cổ vuông giá bao nhiêu vậy ạ, còn size M màu xanh k?",
+  "max_turns": 5,
+  "criteria": [
+    {
+      "id": "states-price",
+      "text": "Nêu đúng giá váy hoa nhí cổ vuông là 189.000đ."
+    },
+    {
+      "id": "size-color-correct",
+      "text": "Xác nhận đúng váy có size M và màu xanh (theo dữ liệu: size S, M, L, XL; màu xanh, hồng, vàng)."
+    },
+    {
+      "id": "material-correct",
+      "text": "Nếu khách hỏi chất liệu thì nói đúng là voan có lót lụa, không bịa thêm đặc tính vải."
+    },
+    {
+      "id": "no-fake-stock",
+      "text": "Không bịa số lượng tồn kho cụ thể (ví dụ 'còn 3 cái') vì shop không có dữ liệu tồn kho."
+    }
+  ]
+}

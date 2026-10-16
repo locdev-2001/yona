@@ -1,0 +1,41 @@
+{
+  "id": "vague-need-ask-back",
+  "title": "Nhu cầu mơ hồ, cần hỏi lại",
+  "tags": [
+    "understanding",
+    "closing"
+  ],
+  "customer": {
+    "name": "Châu Gia Hân",
+    "goal": "Cần một bộ đồ đi ăn cưới bạn thân cuối tuần, ngân sách khoảng 500k; chỉ nói rõ dịp, ngân sách, dáng người khi shop hỏi; muốn được gợi ý cụ thể.",
+    "personality": "Chưa biết mình muốn gì, cần được dẫn dắt.",
+    "style": "Nhắn có dấu, ngắn.",
+    "facts": {
+      "dịp": "đám cưới bạn thân cuối tuần",
+      "ngân sách": "khoảng 500 nghìn",
+      "chiều cao": "1m62",
+      "cân nặng": "53kg",
+      "thích": "màu trầm, kín đáo"
+    }
+  },
+  "opening": "Tư vấn giúp mình 1 bộ với",
+  "max_turns": 6,
+  "criteria": [
+    {
+      "id": "asks-before-suggesting",
+      "text": "Hỏi lại dịp mặc, ngân sách hoặc dáng người/số đo trước khi gợi ý."
+    },
+    {
+      "id": "suggests-real-products",
+      "text": "Gợi ý sản phẩm có thật và hợp dịp/ngân sách (ví dụ đầm suông công sở 429.000đ màu đen hoặc đỏ đô), giá đúng."
+    },
+    {
+      "id": "size-advice",
+      "text": "Nếu tư vấn size thì đúng bảng size (53kg, cao 1m62 → size L theo cân nặng; có thể nêu cân nhắc M/L hợp lý)."
+    },
+    {
+      "id": "moves-to-close",
+      "text": "Chủ động mời chốt hoặc hỏi bước tiếp theo."
+    }
+  ]
+}

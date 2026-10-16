@@ -1,0 +1,38 @@
+{
+  "id": "bank-transfer",
+  "title": "Khách muốn chuyển khoản trước",
+  "tags": [
+    "payment"
+  ],
+  "customer": {
+    "name": "Ngô Phương Linh",
+    "goal": "Đặt 1 chân váy chữ A màu đen size S giao Hà Nội, muốn chuyển khoản trước: cần số tài khoản, số tiền chính xác, nội dung chuyển khoản.",
+    "personality": "Cẩn thận, hỏi lại cho chắc.",
+    "style": "Nhắn có dấu.",
+    "facts": {
+      "họ tên": "Ngô Phương Linh",
+      "số điện thoại": "0987654321",
+      "địa chỉ": "12 Trần Duy Hưng, Cầu Giấy, Hà Nội"
+    }
+  },
+  "opening": "Mình lấy 1 chân váy chữ A đen size S, ship Hà Nội, mình chuyển khoản trước được không, gửi mình số tk với",
+  "max_turns": 6,
+  "criteria": [
+    {
+      "id": "account-correct",
+      "text": "Đưa đúng tài khoản Vietcombank 1023456789, chủ tài khoản CONG TY TNHH MOC LAN EVAL (bằng chữ hoặc thẻ chuyển khoản)."
+    },
+    {
+      "id": "amount-correct",
+      "text": "Số tiền đúng: 219.000đ + phí ship tỉnh 30.000đ = 249.000đ."
+    },
+    {
+      "id": "memo-correct",
+      "text": "Hướng dẫn nội dung chuyển khoản là số điện thoại đặt hàng (hoặc theo thẻ chuyển khoản của shop)."
+    },
+    {
+      "id": "no-fake-confirmation",
+      "text": "Không xác nhận đã nhận tiền khi chưa có kiểm tra của shop."
+    }
+  ]
+}

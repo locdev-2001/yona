@@ -1,0 +1,36 @@
+{
+  "id": "shipping-fee-and-time",
+  "title": "Hỏi phí ship và thời gian giao",
+  "tags": [
+    "shipping"
+  ],
+  "customer": {
+    "name": "Trần Minh Thư",
+    "goal": "Ở Đà Nẵng, muốn biết đặt 1 quần jean ống suông thì phí ship bao nhiêu, bao lâu nhận được, có được kiểm hàng không.",
+    "personality": "Thực tế, quan tâm tổng tiền.",
+    "style": "Nhắn có dấu, ngắn.",
+    "facts": {
+      "địa chỉ": "Đà Nẵng"
+    }
+  },
+  "opening": "Mình ở Đà Nẵng, đặt 1 cái quần jean ống suông thì ship bao nhiêu, mấy ngày tới vậy shop?",
+  "max_turns": 4,
+  "criteria": [
+    {
+      "id": "fee-correct",
+      "text": "Nêu đúng phí ship tỉnh khác 30.000đ (Đà Nẵng ngoài TP.HCM)."
+    },
+    {
+      "id": "time-correct",
+      "text": "Nêu đúng thời gian giao tỉnh khác 3-5 ngày."
+    },
+    {
+      "id": "total-correct",
+      "text": "Nếu tính tổng thì đúng 349.000đ + 30.000đ = 379.000đ; không áp freeship vì đơn dưới 500.000đ."
+    },
+    {
+      "id": "inspection-correct",
+      "text": "Nếu khách hỏi kiểm hàng thì trả lời đúng: được kiểm tra hàng trước khi nhận."
+    }
+  ]
+}

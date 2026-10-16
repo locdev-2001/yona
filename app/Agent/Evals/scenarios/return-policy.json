@@ -1,0 +1,34 @@
+{
+  "id": "return-policy",
+  "title": "Hỏi đổi trả khi mặc không vừa",
+  "tags": [
+    "policy",
+    "returns"
+  ],
+  "customer": {
+    "name": "Võ Thanh Tâm",
+    "goal": "Đã mua váy hoa nhí size S cách đây 3 ngày, mặc hơi chật, chưa giặt, còn tem; muốn biết có đổi sang size M được không, tốn phí gì, làm thế nào.",
+    "personality": "Hơi lo, nhưng lịch sự.",
+    "style": "Nhắn có dấu, kể chuyện hơi dài.",
+    "facts": {
+      "ngày nhận hàng": "3 ngày trước",
+      "tình trạng": "chưa giặt, còn tem mác"
+    }
+  },
+  "opening": "Chị mua váy hoa nhí size S bên em hôm kia, mặc hơi chật, chưa giặt còn tem, đổi sang M được không em?",
+  "max_turns": 5,
+  "criteria": [
+    {
+      "id": "allows-exchange",
+      "text": "Xác nhận được đổi size vì còn trong 7 ngày, còn tem mác, chưa giặt."
+    },
+    {
+      "id": "fee-correct",
+      "text": "Nêu đúng khách đổi ý chịu phí ship hai chiều 30.000đ (không nói miễn phí)."
+    },
+    {
+      "id": "no-refund-promise",
+      "text": "Không hứa hoàn tiền mặt cho trường hợp đổi ý."
+    }
+  ]
+}
