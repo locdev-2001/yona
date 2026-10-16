@@ -8,7 +8,7 @@
         {
             "name": "search_knowledge",
             "kind": "read",
-            "description": "Search the business data (help center articles and saved replies) for facts: prices, policies, promotions, stock, shipping, product details. Use short keyword queries in the customer's language; search again with other keywords if nothing relevant comes back. Results are the only source you may quote for binding information.",
+            "description": "Search the business data (help center articles and saved replies) for facts: prices, policies, promotions, stock, shipping, product details. Use short keyword queries in the customer's language; search again with other keywords if nothing relevant comes back. Together with what the staff or shop owner already told the customer, results are the only source for binding information.",
             "schema": {
                 "type": "object",
                 "properties": {
@@ -34,7 +34,7 @@
         {
             "name": "reply",
             "kind": "terminal",
-            "description": "Send your message to the customer and end the turn. The text is sent exactly as written, so write it as the shop's staff member, in the customer's language. Any amount of money or percentage in it must come from a tool result of this turn.",
+            "description": "Send your message to the customer and end the turn. The text is sent exactly as written, so write it as the shop's staff member, in the customer's language. Any amount of money or percentage in it must come from the business's word (a tool result of this turn or a staff or shop owner message in the history), or be calculated from it.",
             "schema": {
                 "type": "object",
                 "properties": {

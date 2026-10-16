@@ -76,7 +76,8 @@ final class Registry
         return [
             new ToolSpec(self::REPLY, 'Send your message to the customer and end the turn. The text is sent exactly as written, '
                 .'so write it as the shop\'s staff member, in the customer\'s language. Any amount of money or percentage in it '
-                .'must come from a tool result of this turn.', [
+                .'must come from the business\'s word (a tool result of this turn or a staff or shop owner message in the history), '
+                .'or be calculated from it.', [
                     'type' => 'object',
                     'properties' => [
                         'text' => ['type' => 'string', 'minLength' => 1, 'maxLength' => self::REPLY_MAX_CHARACTERS, 'description' => 'The message the customer will read.'],

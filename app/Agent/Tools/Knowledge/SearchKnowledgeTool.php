@@ -32,8 +32,8 @@ final class SearchKnowledgeTool implements Tool
             self::NAME,
             'Search the business data (help center articles and saved replies) for facts: prices, policies, '
             .'promotions, stock, shipping, product details. Use short keyword queries in the customer\'s language; '
-            .'search again with other keywords if nothing relevant comes back. Results are the only source you may '
-            .'quote for binding information.',
+            .'search again with other keywords if nothing relevant comes back. Together with what the staff or shop owner '
+            .'already told the customer, results are the only source for binding information.',
             [
                 'type' => 'object',
                 'properties' => [
