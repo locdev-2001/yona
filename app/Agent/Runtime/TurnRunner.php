@@ -81,8 +81,10 @@ final class TurnRunner
         }
 
         try {
-            $end = $this->tallied($turn, $this->loop->run($turn));
+            $end = $this->loop->run($turn);
+            // Ghi dấu trước khi đếm: ghi dấu ném lỗi thì job hỏng và TurnFailureHandler đếm lượt này, không đếm hai lần.
             $this->store->put($this->handledKey($order), $turn->context->snapshotMessageId, self::MARK_TTL_SECONDS);
+            $this->tallied($turn, $end);
             $this->logger->info('agent.turn.ended', [
                 'conversation_id' => $order->conversationId,
                 'end' => $end->value,

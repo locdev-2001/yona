@@ -1,5 +1,7 @@
 <?php
 
+use App\Agent\Contracts\Ports\EphemeralStore;
+use App\Agent\Persistence\CacheEphemeralStore;
 use App\Models\AiAgent;
 use App\Models\AiUsageAnalytic;
 use App\Models\Message;
@@ -78,4 +80,37 @@ it('counts nothing for a turn that never started', function () {
     TurnKit::runPendingTurns();
 
     expect(AiUsageAnalytic::query()->where('ai_agent_id', $aiAgent->id)->exists())->toBeFalse();
+});
+
+it('counts a turn once when marking the handled message fails after the turn ended', function () {
+    ['conversation' => $conversation, 'aiAgent' => $aiAgent] = TurnKit::autoConversation();
+    app()->instance(EphemeralStore::class, new class(app(CacheEphemeralStore::class)) implements EphemeralStore
+    {
+        public function __construct(private readonly EphemeralStore $inner) {}
+
+        public function add(string $key, int $value, int $ttlSeconds): bool
+        {
+            return $this->inner->add($key, $value, $ttlSeconds);
+        }
+
+        public function put(string $key, int $value, int $ttlSeconds): void
+        {
+            if (str_starts_with($key, 'turn-handled:')) {
+                throw new RuntimeException('store unavailable');
+            }
+
+            $this->inner->put($key, $value, $ttlSeconds);
+        }
+
+        public function get(string $key): ?int
+        {
+            return $this->inner->get($key);
+        }
+    });
+    TurnKit::model([Model::call('reply', ['text' => 'Dạ áo còn ạ.'])]);
+
+    TurnKit::customerSays($conversation, 'Shop ơi áo còn không?');
+    TurnKit::runPendingTurns();
+
+    expect(turnUsage($aiAgent))->toBe(expectedTurnUsage(['turns' => 1, 'failed_turns' => 1]));
 });
