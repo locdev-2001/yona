@@ -1,3 +1,11 @@
+import {
+    EMPTY_LIST_FILTER_QUERY,
+    hasListFilterQuery,
+    normalizeListFilterQuery,
+    withListFilterQuery,
+} from 'dashboard/conversation/listFilters';
+import type { ListFilterQuery } from 'dashboard/conversation/listFilters';
+
 // Tương đương dashboard/helper/URLHelper.js frontendURL + useAccount().accountScopedRoute
 // (Inertia dùng URL trực tiếp thay route name của vue-router).
 export const frontendURL = (path: string) => `/app/${path}`;
@@ -13,85 +21,64 @@ const CONVERSATION_TYPE_PATHS: Record<string, string> = {
     unattended: 'unattended/conversations',
 };
 
-// Port từ URLHelper.conversationUrl — thứ tự ưu tiên inbox → label → team →
-// conversationType như gốc (custom_view vào E1).
+// Kênh + nhãn đang lọc đi theo query string của mọi đường dẫn hội thoại (listFilters.ts);
+// nhóm và màn lọc sẵn (mentions…) vẫn nằm trên path.
+type ConversationRouteScope = {
+    accountId: number;
+    filters?: Partial<ListFilterQuery>;
+    teamId?: number;
+    conversationType?: string;
+};
+
 export const conversationUrl = ({
     accountId,
-    inboxId = 0,
+    filters = EMPTY_LIST_FILTER_QUERY,
     teamId = 0,
-    label = '',
     conversationType = '',
     id,
-}: {
-    accountId: number;
-    inboxId?: number;
-    teamId?: number;
-    label?: string;
-    conversationType?: string;
-    id: number;
-}) => {
-    if (inboxId) {
-        return accountScopedUrl(accountId, `inbox/${inboxId}/conversations/${id}`);
-    }
-    if (label) {
-        return accountScopedUrl(accountId, `label/${encodeURIComponent(label)}/conversations/${id}`);
-    }
+}: ConversationRouteScope & { id: number }) => {
+    let path = `conversations/${id}`;
     if (teamId) {
-        return accountScopedUrl(accountId, `team/${teamId}/conversations/${id}`);
+        path = `team/${teamId}/conversations/${id}`;
+    } else if (CONVERSATION_TYPE_PATHS[conversationType]) {
+        path = `${CONVERSATION_TYPE_PATHS[conversationType]}/${id}`;
     }
-    if (CONVERSATION_TYPE_PATHS[conversationType]) {
-        return accountScopedUrl(accountId, `${CONVERSATION_TYPE_PATHS[conversationType]}/${id}`);
-    }
-    return accountScopedUrl(accountId, `conversations/${id}`);
+    return withListFilterQuery(accountScopedUrl(accountId, path), filters);
 };
 
 // Bản nháp hội thoại mới trong khung Inbox, điền sẵn người nhận khi mở từ một liên hệ.
-// Bản nháp mang theo bộ lọc cột danh sách đang xem (hộp thư / nhãn / nhóm) để
+// Bản nháp mang theo bộ lọc cột danh sách đang xem (kênh / nhãn / nhóm) để
 // soạn xong vẫn đứng ở đúng danh sách đó.
 export const composeConversationUrl = ({
     accountId,
     contactId = null,
-    inboxId = 0,
+    filters = EMPTY_LIST_FILTER_QUERY,
     teamId = 0,
-    label = '',
-}: {
-    accountId: number;
-    contactId?: number | null;
-    inboxId?: number;
-    teamId?: number;
-    label?: string;
-}) => {
+}: Omit<ConversationRouteScope, 'conversationType'> & { contactId?: number | null }) => {
     const query = new URLSearchParams();
     if (contactId) query.set('contact_id', String(contactId));
-    if (inboxId) query.set('inbox_id', String(inboxId));
     if (teamId) query.set('team_id', String(teamId));
-    if (label) query.set('label', label);
     const search = query.toString();
-    return accountScopedUrl(accountId, search ? `inbox/new?${search}` : 'inbox/new');
+    return withListFilterQuery(accountScopedUrl(accountId, search ? `inbox/new?${search}` : 'inbox/new'), filters);
 };
 
-// Port từ URLHelper.conversationListPageURL (label → team → inbox →
-// conversationType → mặc định dashboard; custom_view vào E1).
+// Port từ URLHelper.conversationListPageURL: nhóm → màn lọc sẵn → danh sách có
+// bộ lọc kênh/nhãn → mặc định dashboard (custom_view vào E1).
 export const conversationListPageURL = ({
     accountId,
-    inboxId = 0,
+    filters = EMPTY_LIST_FILTER_QUERY,
     teamId = 0,
-    label = '',
     conversationType = '',
-}: {
-    accountId: number;
-    inboxId?: number;
-    teamId?: number;
-    label?: string;
-    conversationType?: string;
-}) => {
-    if (label) return accountScopedUrl(accountId, `label/${encodeURIComponent(label)}`);
-    if (teamId) return accountScopedUrl(accountId, `team/${teamId}`);
-    if (inboxId) return accountScopedUrl(accountId, `inbox/${inboxId}`);
-    if (CONVERSATION_TYPE_PATHS[conversationType]) {
-        return accountScopedUrl(accountId, CONVERSATION_TYPE_PATHS[conversationType]);
+}: ConversationRouteScope) => {
+    let path = 'dashboard';
+    if (teamId) {
+        path = `team/${teamId}`;
+    } else if (CONVERSATION_TYPE_PATHS[conversationType]) {
+        path = CONVERSATION_TYPE_PATHS[conversationType];
+    } else if (hasListFilterQuery(normalizeListFilterQuery(filters))) {
+        path = 'conversations';
     }
-    return accountScopedUrl(accountId, 'dashboard');
+    return withListFilterQuery(accountScopedUrl(accountId, path), filters);
 };
 
 // Port từ URLHelper.sanitizeAllowedDomains — gộp xuống dòng thành dấu phẩy,

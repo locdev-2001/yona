@@ -21,7 +21,7 @@ import { useChannelOptions } from './useChannelOptions';
 // là ô soạn chung của Inbox chạy theo năng lực kênh đã chọn. Lần gửi đầu tiên
 // tạo hội thoại rồi mở hội thoại đó.
 export default function ComposeDraftPane() {
-    const { accountId, inboxId, teamId, label, isOnExpandedLayout, composeContactId, composeDraft, updateComposeDraft } =
+    const { accountId, listFilters, teamId, isOnExpandedLayout, composeContactId, composeDraft, updateComposeDraft } =
         useConversation();
     const { inboxes = [] } = usePage<DashboardPageProps>().props;
     const { recipient, target, subject, emailCheck, showErrors, isSending, error } = composeDraft;
@@ -90,7 +90,7 @@ export default function ComposeDraftPane() {
     };
 
     const needsSubject = inboxNeedsSubject(target?.inbox);
-    const backUrl = conversationListPageURL({ accountId, inboxId, teamId, label });
+    const backUrl = conversationListPageURL({ accountId, filters: listFilters, teamId });
 
     return (
         <div

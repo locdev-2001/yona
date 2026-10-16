@@ -64,9 +64,8 @@ export default function ChatList({
         status,
         sortBy,
         appliedFilters,
-        inboxId,
+        listFilters,
         teamId,
-        label,
         conversationType,
         searchQuery,
         isOnExpandedLayout,
@@ -118,7 +117,7 @@ export default function ChatList({
     // resetBulkActions của gốc: đổi tab, đổi bộ lọc cơ bản (status/sort), đổi inbox/team.
     useEffect(() => {
         resetBulkActions();
-    }, [assigneeTab, status, sortBy, inboxId, teamId, label, resetBulkActions]);
+    }, [assigneeTab, status, sortBy, listFilters.inboxIds, teamId, listFilters.labels, resetBulkActions]);
 
     const closeAdvanceFiltersModal = useCallback(() => setShowAdvancedFilters(false), []);
 
@@ -184,13 +183,13 @@ export default function ChatList({
     };
 
     // pageTitle gốc: inbox.name → activeTeam.name → #label → conversationType → mặc định.
-    const activeInbox = inboxId ? inboxes.find(item => item.id === inboxId) : undefined;
+    const activeInbox = inboxes.find(item => listFilters.inboxIds.includes(item.id));
     const activeTeam = teamId ? teams.find(item => item.id === teamId) : undefined;
     const pageTitle =
         activeFolder?.name ||
         activeInbox?.name ||
         activeTeam?.name ||
-        (label ? `#${label}` : '') ||
+        listFilters.labels.map(label => `#${label}`).join(' ') ||
         (conversationType === CONVERSATION_TYPE.MENTION ? t('CHAT_LIST.MENTION_HEADING') : '') ||
         t('CHAT_LIST.TAB_HEADING');
 

@@ -23,7 +23,7 @@ interface ContactConversationsProps {
 }
 
 export default function ContactConversations({ contactId }: ContactConversationsProps) {
-    const { accountId, inboxId, teamId, label, conversationId, conversationType } = useConversation();
+    const { accountId, listFilters, teamId, conversationId, conversationType } = useConversation();
     const { inboxes = [] } = usePage<DashboardPageProps>().props;
     const [conversations, setConversations] = useState<Conversation[]>([]);
     const [isFetching, setIsFetching] = useState(true);
@@ -65,7 +65,7 @@ export default function ContactConversations({ contactId }: ContactConversations
     }
 
     const onCardClick = (conversation: Conversation, event: MouseEvent<HTMLDivElement>) => {
-        const path = conversationUrl({ accountId, inboxId, teamId, label, conversationType, id: conversation.id });
+        const path = conversationUrl({ accountId, filters: listFilters, teamId, conversationType, id: conversation.id });
         if (event.metaKey || event.ctrlKey) {
             event.preventDefault();
             window.open(path, '_blank', 'noopener,noreferrer');
@@ -90,7 +90,7 @@ export default function ContactConversations({ contactId }: ContactConversations
                             }
                         }
                         isActiveChat={conversationId === conversation.id}
-                        showInboxName={shouldShowInboxName(inboxId, inboxes.length)}
+                        showInboxName={shouldShowInboxName(listFilters.inboxIds[0] ?? 0, inboxes.length)}
                         showStatus
                         hideThumbnail
                         compact

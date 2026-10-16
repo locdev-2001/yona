@@ -62,9 +62,8 @@ export default function ConversationList({
 }: ConversationListProps) {
     const {
         accountId,
-        inboxId,
+        listFilters,
         teamId,
-        label,
         conversationId,
         searchQuery,
         markMessagesRead,
@@ -133,7 +132,7 @@ export default function ConversationList({
             key={chat.id}
             source={chat}
             inbox={inboxes.find(item => item.id === chat.inbox_id)}
-            conversationPath={conversationUrl({ accountId, inboxId, teamId, label, conversationType, id: chat.id })}
+            conversationPath={conversationUrl({ accountId, filters: listFilters, teamId, conversationType, id: chat.id })}
             actions={itemActions}
             isActiveChat={conversationId === chat.id}
             isSelecting={isSelecting}

@@ -14,7 +14,7 @@ vi.mock('@inertiajs/react', () => ({
 }));
 vi.mock('dashboard/components-next/icon/Icon', () => ({ default: () => null }));
 
-import SidebarGroup from './SidebarGroup';
+import SidebarGroup, { findActiveChild } from './SidebarGroup';
 import { SidebarContextProvider } from './provider';
 
 const settingsGroup = {
@@ -72,5 +72,27 @@ describe('bấm tiêu đề nhóm có menu con', () => {
         fireEvent.click(screen.getByTitle('Cài đặt'));
 
         expect(visit).toHaveBeenCalledWith('/app/accounts/2/settings/agents/list');
+    });
+});
+
+describe('findActiveChild — mục kênh/nhãn theo query', () => {
+    const base = '/app/accounts/2';
+    const conversationChildren = [
+        { name: 'All', label: 'Tất cả', to: `${base}/dashboard`, activeOn: [`${base}/conversations`] },
+        { name: 'Zalo-5', label: 'Zalo', to: `${base}/conversations?inbox=5` },
+        { name: 'Web-6', label: 'Web', to: `${base}/conversations?inbox=6` },
+        { name: 'vip-1', label: 'vip', to: `${base}/conversations?label=vip` },
+    ];
+
+    it.each([
+        { url: `${base}/dashboard`, expected: 'All' },
+        { url: `${base}/conversations/540`, expected: 'All' },
+        { url: `${base}/conversations?inbox=5`, expected: 'Zalo-5' },
+        { url: `${base}/conversations/540?inbox=6&q=an`, expected: 'Web-6' },
+        { url: `${base}/conversations?label=vip`, expected: 'vip-1' },
+        { url: `${base}/conversations?inbox=99`, expected: 'All' },
+        { url: `${base}/settings/agents/list`, expected: undefined },
+    ])('$url → $expected', ({ url, expected }) => {
+        expect(findActiveChild(conversationChildren, url)?.name).toBe(expected);
     });
 });

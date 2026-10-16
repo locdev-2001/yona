@@ -39,7 +39,7 @@ describe('menu tinh gọn', () => {
         const labels = [{ id: 9, title: 'Khách mới', color: '#000000' }];
         const conversationMenu = filterMenuByRole(buildMenuItems(2, inboxes, [], labels), 'agent')[0];
         expect(conversationMenu.children?.map(item => item.name)).toEqual(['All', 'Channels', 'Labels']);
-        expect(destinationUrls([conversationMenu])).toContain('/app/accounts/2/inbox/8');
+        expect(destinationUrls([conversationMenu])).toContain('/app/accounts/2/conversations?inbox=8');
         expect(filterMenuByRole(buildMenuItems(2), 'agent')[0].children?.map(item => item.name)).toEqual(['All']);
     });
 

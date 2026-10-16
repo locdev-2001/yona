@@ -18,9 +18,7 @@ import { showConversationList as computeShowList, showMessageView as computeShow
 // Bỏ ở B3: ConversationSidebar/SidepanelSwitch (B11).
 interface Props {
     conversationId?: number;
-    inboxId?: number;
     teamId?: number;
-    label?: string;
     // prop route conversation_mentions / conversation_through_mentions.
     conversationType?: ConversationType;
     // prop route folder_conversations / conversations_through_folders (E1).
@@ -66,9 +64,7 @@ function ConversationLayout({ conversationId, foldersId }: { conversationId: num
 
 export default function ConversationView({
     conversationId = 0,
-    inboxId = 0,
     teamId = 0,
-    label = '',
     conversationType = '',
     foldersId = 0,
     isComposing = false,
@@ -78,9 +74,7 @@ export default function ConversationView({
         <Dashboard>
             <ConversationProvider
                 conversationId={conversationId}
-                inboxId={inboxId}
                 teamId={teamId}
-                label={label}
                 conversationType={conversationType}
                 isComposing={isComposing}
                 composeContactId={composeContactId}

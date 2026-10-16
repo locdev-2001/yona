@@ -4,7 +4,7 @@ import { fromUnixTime } from 'date-fns';
 
 import Icon from 'dashboard/components-next/icon/Icon';
 import TimeAgo from 'dashboard/components/ui/TimeAgo';
-import { conversationUrl, frontendURL } from 'dashboard/helper/URLHelper';
+import { conversationListPageURL, conversationUrl, frontendURL } from 'dashboard/helper/URLHelper';
 import { formatInLocale, shortTimestamp } from 'shared/helpers/timeHelper';
 import { t } from '../../../i18n';
 import type { DashboardPageProps } from '../../types';
@@ -61,7 +61,7 @@ export default function ReportDrilldownCard({ record }: { record: DrilldownRecor
             key: 'inbox',
             icon: 'i-lucide-inbox',
             label: conversation.inbox_name || t('REPORT.DRILLDOWN.UNKNOWN_INBOX'),
-            path: conversation.inbox_id ? frontendURL(`accounts/${accountId}/inbox/${conversation.inbox_id}`) : '',
+            path: conversation.inbox_id ? conversationListPageURL({ accountId, filters: { inboxIds: [conversation.inbox_id] } }) : '',
         },
         {
             key: 'agent',

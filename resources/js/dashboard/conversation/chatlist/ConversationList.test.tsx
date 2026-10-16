@@ -10,9 +10,8 @@ let isSelecting = false;
 vi.mock('../ConversationContext', () => ({
     useConversation: () => ({
         accountId: 1,
-        inboxId: 0,
+        listFilters: { inboxIds: [], labels: [], status: 'open', sortBy: 'last_activity_at_desc' },
         teamId: 0,
-        label: '',
         conversationId: 0,
         searchQuery: '',
         focusMessage: vi.fn(),

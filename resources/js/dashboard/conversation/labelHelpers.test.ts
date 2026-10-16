@@ -100,9 +100,11 @@ describe('labelHelpers — thanh bulk', () => {
 });
 
 describe('labelHelpers — lọc danh sách theo nhãn', () => {
-    it('hội thoại phải mang đủ mọi nhãn đang lọc', () => {
+    it('hội thoại mang bất kỳ nhãn nào đang lọc là khớp, như API danh sách', () => {
         expect(matchesLabels(['billing', 'vip'], ['vip'])).toBe(true);
-        expect(matchesLabels(['billing'], ['billing', 'vip'])).toBe(false);
+        expect(matchesLabels(['billing'], ['billing', 'vip'])).toBe(true);
+        expect(matchesLabels(['support'], ['billing', 'vip'])).toBe(false);
+        expect(matchesLabels(undefined, ['vip'])).toBe(false);
     });
 
     it('không lọc gì khi danh sách nhãn rỗng', () => {

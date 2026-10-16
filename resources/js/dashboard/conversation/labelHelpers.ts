@@ -67,7 +67,10 @@ export function appliedLabelsForSelection(
     return Array.from(applied);
 }
 
-// helpers.js#filterByLabel của applyPageFilters — hội thoại phải mang ĐỦ các nhãn đang lọc.
+// Cùng ngữ nghĩa với ConversationFinder::filterByLabels: mang BẤT KỲ nhãn nào đang lọc
+// là khớp — realtime phải đưa vào danh sách đúng những hội thoại API trả về.
 export function matchesLabels(conversationLabels: string[] | undefined, labels: string[]): boolean {
-    return labels.every(label => (conversationLabels ?? []).includes(label));
+    if (!labels.length) return true;
+
+    return labels.some(label => (conversationLabels ?? []).includes(label));
 }

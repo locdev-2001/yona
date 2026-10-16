@@ -331,8 +331,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/settings/canned-response/list', fn (Account $account) => Inertia::render('dashboard/settings/canned/Index'))
             ->name('settings_canned_list');
 
-        // Tương đương conversation.routes.js: home + inbox_conversation + inbox_dashboard
-        // + team_conversations.
+        // Danh sách hội thoại lọc theo kênh/nhãn bằng query: /conversations?inbox=5&label=a.
+        // /inbox/{id} và /label/{label} cũ chuyển hướng về đây.
+        Route::get('/conversations', [DashboardController::class, 'show'])->name('conversations');
         Route::get('/conversations/{conversationId}', [DashboardController::class, 'conversation'])
             ->whereNumber('conversationId')->name('inbox_conversation');
         Route::get('/inbox/new', [DashboardController::class, 'compose'])->name('inbox_compose');

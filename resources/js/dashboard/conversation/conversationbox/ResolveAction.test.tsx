@@ -21,9 +21,8 @@ vi.mock('../ConversationContext', () => ({
         toggleStatus,
         markMessagesUnread,
         accountId: 2,
-        inboxId: null,
+        listFilters: { inboxIds: [], labels: [], status: 'open', sortBy: 'last_activity_at_desc' },
         teamId: null,
-        label: '',
     }),
 }));
 
