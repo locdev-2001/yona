@@ -9,12 +9,14 @@ use App\Agent\ValueObjects\ConversationRef;
 use App\Agent\ValueObjects\ConversationSnapshot;
 use App\Agent\ValueObjects\CoreMessage;
 use App\Agent\ValueObjects\MessageOrigin;
+use App\Channels\Capability;
 use App\Models\AgentBot;
 use App\Models\AiAgent;
 use App\Models\Attachment;
 use App\Models\Conversation;
 use App\Models\Label;
 use App\Models\Message;
+use App\Models\PaymentAccount;
 use App\Models\User;
 use App\Services\Channels\ChannelActionRegistry;
 use DateTimeImmutable;
@@ -24,6 +26,8 @@ use DateTimeImmutable;
 final class CoreConversationReader implements ConversationReader
 {
     private const TEXT_CONTENT_TYPE = 'text';
+
+    private const BANK_TRANSFER_CONTENT_TYPE = 'bank_transfer';
 
     public function __construct(private readonly MessageText $messageText) {}
 
@@ -91,6 +95,35 @@ final class CoreConversationReader implements ConversationReader
             fn (array $sent) => ($sent['title'] ?? null) === $product['item']['title']
                 && (($sent['id'] ?? null) === $product['item']['id'] || str_starts_with((string) ($sent['id'] ?? ''), $product['item']['id'].'-')),
         ))));
+    }
+
+    public function paymentNumbersRequiringCard(ConversationRef $conversation): array
+    {
+        $model = CoreRecords::conversation($conversation);
+
+        if ($model === null || ! $model->inbox->capabilities()->has(Capability::OutboundCard)) {
+            return [];
+        }
+
+        $cardSent = $model->messages()
+            ->where('content_type', Message::CONTENT_TYPES[self::BANK_TRANSFER_CONTENT_TYPE])
+            ->whereIn('message_type', [Message::TYPE_OUTGOING, Message::TYPE_TEMPLATE])
+            ->where('private', false)
+            ->exists();
+
+        if ($cardSent) {
+            return [];
+        }
+
+        return PaymentAccount::query()
+            ->where('account_id', $conversation->accountId)
+            ->where('allow_all_agents', true)
+            ->pluck('account_number')
+            ->map(fn (mixed $number) => (string) preg_replace('/\D/', '', (string) $number))
+            ->filter(fn (string $digits) => $digits !== '')
+            ->unique()
+            ->values()
+            ->all();
     }
 
     public function labels(int $accountId): array

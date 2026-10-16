@@ -21,6 +21,9 @@ final class Registry
 
     public const REPLY_MAX_CHARACTERS = 2000;
 
+    // Tham số của công cụ kết thúc mà khách đọc nguyên văn.
+    public const CUSTOMER_TEXT_ARGUMENTS = [self::REPLY => 'text', self::HANDOFF_TO_HUMAN => 'holding_reply'];
+
     public const HOLDING_REPLY_MAX_CHARACTERS = 1000;
 
     /** @var array<string, Tool> */

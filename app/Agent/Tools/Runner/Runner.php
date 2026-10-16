@@ -2,6 +2,8 @@
 
 namespace App\Agent\Tools\Runner;
 
+use App\Agent\Contracts\Ports\ConversationReader;
+use App\Agent\ValueObjects\ConversationRef;
 use App\Agent\ValueObjects\ToolCall;
 use App\Agent\ValueObjects\ToolErrorCode;
 use App\Agent\ValueObjects\ToolKind;
@@ -15,8 +17,12 @@ use Throwable;
 // chữa ở bước sau; không bao giờ ném ngoại lệ ra vòng lặp.
 final class Runner
 {
+    // Ngắn hơn chừng này thì không coi là số tài khoản (tránh trùng giá tiền, số lượng).
+    private const MIN_GUARDED_ACCOUNT_DIGITS = 6;
+
     public function __construct(
         private readonly Registry $registry,
+        private readonly ConversationReader $conversations,
         private readonly LoggerInterface $logger,
     ) {}
 
@@ -31,7 +37,7 @@ final class Runner
     }
 
     // null = lời gọi hợp lệ; ngược lại là kết quả lỗi gửi lại mô hình.
-    public function validate(ToolCall $call, TurnEvidence $evidence): ?ToolResult
+    public function validate(ToolCall $call, TurnEvidence $evidence, ConversationRef $conversation): ?ToolResult
     {
         $spec = $this->registry->spec($call->name);
 
@@ -47,7 +53,8 @@ final class Runner
             return ToolResult::failure(ToolErrorCode::InvalidArgs, "{$violation} Fix the arguments and call `{$call->name}` again.");
         }
 
-        return $call->name === Registry::REPLY ? $this->unknownSource($call, $evidence) : null;
+        return ($call->name === Registry::REPLY ? $this->unknownSource($call, $evidence) : null)
+            ?? $this->typedPaymentNumber($call, $conversation);
     }
 
     // Chạy phần thân của công cụ đọc hoặc hành động; lỗi bất ngờ thành tool_result lỗi.
@@ -68,6 +75,28 @@ final class Runner
                 ? ToolResult::failure(ToolErrorCode::SourceUnavailable, 'This action failed and nothing was done; do not claim it was done. Continue without it or use handoff_to_human.')
                 : ToolResult::failure(ToolErrorCode::SourceUnavailable, 'This lookup failed; do not guess, use handoff_to_human for binding claims.', retryable: true);
         }
+    }
+
+    // Số tài khoản của shop tới khách bằng thẻ chuyển khoản (QR, số tiền, nội dung đúng mẫu),
+    // không gõ tay ra chữ; thẻ đã gửi trong hội thoại rồi thì nhắc lại bằng chữ được. So theo
+    // chữ số sau khi bỏ khoảng trắng, dấu chấm, dấu gạch.
+    private function typedPaymentNumber(ToolCall $call, ConversationRef $conversation): ?ToolResult
+    {
+        $argument = Registry::CUSTOMER_TEXT_ARGUMENTS[$call->name] ?? null;
+        $text = $argument === null ? '' : (string) ($call->args[$argument] ?? '');
+        $compact = (string) preg_replace('/[\s.\-]+/u', '', $text);
+
+        if (preg_match('/\d{'.self::MIN_GUARDED_ACCOUNT_DIGITS.',}/', $compact) !== 1) {
+            return null;
+        }
+
+        foreach ($this->conversations->paymentNumbersRequiringCard($conversation) as $number) {
+            if (strlen($number) >= self::MIN_GUARDED_ACCOUNT_DIGITS && str_contains($compact, $number)) {
+                return ToolResult::failure(ToolErrorCode::NotAllowedThisTurn, "Not sent: do not type the shop's bank account number. Call send_bank_transfer first (the card shows the bank, account, amount, transfer note and QR), then call `{$call->name}` again without the account number.");
+            }
+        }
+
+        return null;
     }
 
     private function unknownSource(ToolCall $call, TurnEvidence $evidence): ?ToolResult

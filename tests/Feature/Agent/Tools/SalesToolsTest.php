@@ -283,6 +283,39 @@ it('sends a QR to the default account open to the AI with the amount and the sho
         ]);
 });
 
+it('makes the AI send the transfer card instead of typing the account number, then lets it repeat the number', function () {
+    ['conversation' => $conversation] = TurnKit::autoConversation(webWidget: true);
+    PaymentAccount::factory()->create(['account_id' => $conversation->account_id, 'is_default' => true, 'allow_all_agents' => true, 'account_number' => '1023456789']);
+    $model = TurnKit::model([
+        Model::call('reply', ['text' => 'Dạ chị chuyển khoản vào Vietcombank 1023 456 789 giúp em ạ.']),
+        Model::call('handoff_to_human', ['reason' => 'other', 'note' => 'x', 'holding_reply' => 'STK 102.345.6789 ạ']),
+        Model::call('send_bank_transfer', ['amount' => 249000]),
+        Model::call('reply', ['text' => 'Dạ em gửi thẻ rồi ạ, STK 1023456789, tổng 249.000đ.']),
+    ]);
+
+    TurnKit::customerSays($conversation, 'Gửi mình số tk với');
+    TurnKit::runPendingTurns();
+
+    $replies = TurnKit::aiReplies($conversation);
+
+    expect(salesToolResult($model, 1)['error'])->toMatchArray(['code' => 'not_allowed_this_turn'])
+        ->and(salesToolResult($model, 1)['error']['fix'])->toContain('send_bank_transfer')
+        ->and(salesToolResult($model, 2)['error']['code'])->toBe('not_allowed_this_turn')
+        ->and(array_map(fn (Message $message) => $message->contentTypeName(), $replies))->toBe(['bank_transfer', 'text'])
+        ->and($replies[1]->content)->toContain('1023456789');
+});
+
+it('lets the AI type the account number on a channel that cannot show the transfer card', function () {
+    ['conversation' => $conversation] = TurnKit::autoConversation();
+    PaymentAccount::factory()->create(['account_id' => $conversation->account_id, 'allow_all_agents' => true, 'account_number' => '1023456789']);
+    TurnKit::model([Model::call('reply', ['text' => 'Dạ STK 1023456789 ạ.'])]);
+
+    TurnKit::customerSays($conversation, 'Gửi mình số tk với');
+    TurnKit::runPendingTurns();
+
+    expect(array_map(fn (Message $message) => $message->content, TurnKit::aiReplies($conversation)))->toBe(['Dạ STK 1023456789 ạ.']);
+});
+
 it('tells the model to hand over when no bank account is open to the AI', function () {
     ['conversation' => $conversation] = TurnKit::autoConversation();
     PaymentAccount::factory()->create(['account_id' => $conversation->account_id, 'is_default' => true, 'allow_all_agents' => false]);

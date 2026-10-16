@@ -3,6 +3,7 @@
 use App\Agent\Contracts\Ports\KnowledgeReader;
 use App\Agent\Tools\Runner\Registry;
 use App\Agent\Tools\Runner\Runner;
+use App\Agent\ValueObjects\ConversationRef;
 use App\Agent\ValueObjects\ToolCall;
 use App\Agent\ValueObjects\ToolKind;
 use App\Agent\ValueObjects\TurnEvidence;
@@ -27,7 +28,7 @@ it('declares the lookups, the actions and the three terminal tools named by the 
 });
 
 it('turns a bad call into a tool result the model can fix', function (ToolCall $call, string $code, string $hint) {
-    $result = app(Runner::class)->validate($call, new TurnEvidence);
+    $result = app(Runner::class)->validate($call, new TurnEvidence, new ConversationRef(1, 1));
 
     expect($result?->toArray()['error']['code'])->toBe($code)
         ->and($result->fix)->toContain($hint);
@@ -49,5 +50,5 @@ it('turns a bad call into a tool result the model can fix', function (ToolCall $
 it('accepts a reply citing a ref returned in this turn', function () {
     $evidence = new TurnEvidence(['{"ok":true,"data":[{"ref":"article:9","excerpt":"Ship toàn quốc 30.000đ"}]}']);
 
-    expect(app(Runner::class)->validate(new ToolCall('c1', 'reply', ['text' => 'Dạ ship 30k ạ', 'sources' => ['article:9']]), $evidence))->toBeNull();
+    expect(app(Runner::class)->validate(new ToolCall('c1', 'reply', ['text' => 'Dạ ship 30k ạ', 'sources' => ['article:9']]), $evidence, new ConversationRef(1, 1)))->toBeNull();
 });

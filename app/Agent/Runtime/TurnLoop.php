@@ -215,7 +215,7 @@ final class TurnLoop
                 return ToolResult::failure(ToolErrorCode::NotAllowedThisTurn, 'The step budget is used up; end the turn now with reply, handoff_to_human or wait_for_customer.');
             }
 
-            return $this->runner->validate($call, $turn->evidence())
+            return $this->runner->validate($call, $turn->evidence(), $turn->context->conversation)
                 ?? ($kind === ToolKind::Action ? $this->act($turn, $call) : $this->runner->run($call, $turn->context));
         }
 
@@ -227,7 +227,7 @@ final class TurnLoop
             return ToolResult::failure(ToolErrorCode::Deferred, "Not executed: read the results of the other tools first, then call `{$call->name}` again in its own response.");
         }
 
-        return $this->runner->validate($call, $turn->evidence());
+        return $this->runner->validate($call, $turn->evidence(), $turn->context->conversation);
     }
 
     /**

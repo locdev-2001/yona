@@ -49,10 +49,12 @@ final class TurnKit
     }
 
     /** @return array{conversation: Conversation, aiAgent: AiAgent, staff: User, contact: Contact} */
-    public static function autoConversation(?Account $account = null, string $agentName = 'Lan', ?string $persona = 'Xưng em, gọi khách là anh/chị.', ?string $instructions = 'Shop Áo Đẹp bán áo thun.'): array
+    // Mặc định kênh API (chỉ chữ); $webWidget = kênh website hiển thị được thẻ.
+    public static function autoConversation(?Account $account = null, string $agentName = 'Lan', ?string $persona = 'Xưng em, gọi khách là anh/chị.', ?string $instructions = 'Shop Áo Đẹp bán áo thun.', bool $webWidget = false): array
     {
         $account ??= Account::factory()->create();
-        $inbox = Inbox::factory()->create(['account_id' => $account->id]);
+        $inboxes = Inbox::factory();
+        $inbox = ($webWidget ? $inboxes->webWidget() : $inboxes)->create(['account_id' => $account->id]);
         $contact = Contact::factory()->create(['account_id' => $account->id]);
         $contactInbox = ContactInbox::factory()->create(['contact_id' => $contact->id, 'inbox_id' => $inbox->id]);
         $conversation = Conversation::factory()->create([

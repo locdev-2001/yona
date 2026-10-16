@@ -28,6 +28,15 @@ interface ConversationReader
      */
     public function shownProducts(ConversationRef $conversation, array $productIds): array;
 
+    /**
+     * Số tài khoản nhận tiền (chỉ chữ số) AI phải gửi bằng thẻ chuyển khoản chứ không gõ ra
+     * chữ: tài khoản shop mở cho AI, khi kênh hiển thị được thẻ và hội thoại chưa có thẻ
+     * chuyển khoản nào. Rỗng = không có gì phải chặn.
+     *
+     * @return list<string>
+     */
+    public function paymentNumbersRequiringCard(ConversationRef $conversation): array;
+
     /** @return list<string> tên các nhãn của account, theo thứ tự hiển thị */
     public function labels(int $accountId): array;
 }
