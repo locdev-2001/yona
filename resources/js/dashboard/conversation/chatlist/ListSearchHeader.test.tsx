@@ -5,7 +5,7 @@ import ListSearchHeader from './ListSearchHeader';
 import type { Conversation } from '../types';
 
 vi.mock('../ConversationContext', () => ({
-    useConversation: () => ({ accountId: 1, inboxId: 0, teamId: 0, label: '', conversationId: 0, searchQuery: 'an' }),
+    useConversation: () => ({ accountId: 1, listFilters: { inboxIds: [], labels: [], status: 'open', sortBy: 'last_activity_at_desc' }, teamId: 0, conversationId: 0, searchQuery: 'an' }),
 }));
 
 vi.mock('@inertiajs/react', () => ({

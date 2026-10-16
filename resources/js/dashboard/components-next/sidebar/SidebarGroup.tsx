@@ -17,11 +17,28 @@ function currentPath(url: string): string {
     return url.split('?')[0];
 }
 
-function matchesChild(child: SidebarMenuChild, path: string): boolean {
-    if (!child.to) return false;
-    const childPath = currentPath(child.to);
+function queryPairs(url: string): [string, string][] {
+    return [...new URLSearchParams(url.split('?')[1] ?? '')];
+}
+
+function matchesPath(child: SidebarMenuChild, path: string): boolean {
+    const childPath = currentPath(child.to!);
     if (path === childPath || path.startsWith(`${childPath}/`)) return true;
     return (child.activeOn ?? []).some(prefix => path === prefix || path.startsWith(`${prefix}/`));
+}
+
+// Mục mang query (kênh/nhãn đang lọc) cụ thể hơn mục cùng đường dẫn không query,
+// nên được ưu tiên; nó chỉ khớp khi URL hiện tại có đủ mọi cặp khoá–giá trị của nó.
+export function findActiveChild(children: SidebarMenuChild[], url: string): SidebarMenuChild | undefined {
+    const path = currentPath(url);
+    const current = new URLSearchParams(url.split('?')[1] ?? '');
+    const routable = children.filter(child => child.to && matchesPath(child, path));
+    const withQuery = routable.filter(child => queryPairs(child.to!).length > 0);
+
+    return (
+        withQuery.find(child => queryPairs(child.to!).every(([key, value]) => current.getAll(key).includes(value))) ??
+        routable.find(child => queryPairs(child.to!).length === 0)
+    );
 }
 
 export default function SidebarGroup({
@@ -63,7 +80,7 @@ export default function SidebarGroup({
 
     const isActive = to ? path === currentPath(to) || activeOn.some(prefix => path.startsWith(prefix)) : false;
 
-    const activeChild = navigableChildren.find(child => matchesChild(child, path));
+    const activeChild = findActiveChild(navigableChildren, url);
     const hasActiveChild = activeChild !== undefined;
 
     const isPopoverOpen = activePopover === name;

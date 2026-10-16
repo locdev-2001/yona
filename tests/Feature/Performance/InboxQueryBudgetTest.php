@@ -34,7 +34,7 @@ function inboxFlowQueries(InboxWorkload $load, string $flow): QueryCounter
     $conversationApi = "/api/v1/accounts/{$account->id}/conversations/{$conversation->display_id}";
 
     return match ($flow) {
-        'inbox page' => QueryCounter::measure(fn () => $test->get("/app/accounts/{$account->id}/inbox/{$load->inbox->id}")->assertOk()),
+        'inbox page' => QueryCounter::measure(fn () => $test->get("/app/accounts/{$account->id}/conversations?inbox={$load->inbox->id}")->assertOk()),
         'conversation page' => QueryCounter::measure(fn () => $test->get("/app/accounts/{$account->id}/conversations/{$conversation->display_id}")->assertOk()),
         'conversation list' => QueryCounter::measure(fn () => $test->getJson("/api/v1/accounts/{$account->id}/conversations?status=open&assignee_type=all")->assertOk()),
         'conversation detail' => QueryCounter::measure(fn () => $test->getJson($conversationApi)->assertOk()),

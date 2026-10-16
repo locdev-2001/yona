@@ -41,27 +41,21 @@ class DashboardController extends Controller
         ]);
     }
 
-    // Tương đương route inbox_dashboard: /inbox/{inbox_id} (+ chọn conversation).
-    public function inbox(Request $request, Account $account, int $inboxId, ?int $conversationId = null): Response
+    // Link cũ /inbox/{id}[/conversations/{id}]: kênh chuyển lên query string.
+    public function inbox(Request $request, Account $account, int $inboxId, ?int $conversationId = null): RedirectResponse
     {
-        return Inertia::render('dashboard/conversation/ConversationView', [
-            'inboxId' => $inboxId,
-            'conversationId' => $conversationId,
-        ]);
+        return $this->redirectToFilteredList($request, $account, $conversationId, ['inbox' => $inboxId]);
     }
 
     // Bản nháp hội thoại mới ngay trong khung Inbox; `contact_id` điền sẵn người nhận,
-    // `inbox_id` / `team_id` / `label` giữ bộ lọc cột danh sách đang xem lúc bấm soạn.
+    // `team_id` giữ nhóm đang xem; kênh/nhãn đang lọc đi theo query `inbox`/`label`
+    // và do trình duyệt đọc.
     public function compose(Request $request, Account $account): Response
     {
-        $label = $request->query('label');
-
         return Inertia::render('dashboard/conversation/ConversationView', [
             'isComposing' => true,
             'composeContactId' => $this->positiveIntQuery($request, 'contact_id'),
-            'inboxId' => $this->positiveIntQuery($request, 'inbox_id') ?? 0,
             'teamId' => $this->positiveIntQuery($request, 'team_id') ?? 0,
-            'label' => is_string($label) ? $label : '',
         ]);
     }
 
@@ -81,13 +75,20 @@ class DashboardController extends Controller
         ]);
     }
 
-    // Tương đương route label_conversations: /label/{label} (+ chọn conversation).
-    public function label(Request $request, Account $account, string $label, ?int $conversationId = null): Response
+    // Link cũ /label/{label}[/conversations/{id}]: nhãn chuyển lên query string.
+    public function label(Request $request, Account $account, string $label, ?int $conversationId = null): RedirectResponse
     {
-        return Inertia::render('dashboard/conversation/ConversationView', [
-            'label' => $label,
-            'conversationId' => $conversationId,
-        ]);
+        return $this->redirectToFilteredList($request, $account, $conversationId, ['label' => $label]);
+    }
+
+    // Query đến (`messageId` của link thông báo…) đi theo; khoá bộ lọc của route thắng.
+    // Trình duyệt đọc kênh/nhãn từ query (listFilters.ts), server chỉ ghi.
+    private function redirectToFilteredList(Request $request, Account $account, ?int $conversationId, array $filterQuery): RedirectResponse
+    {
+        $path = $conversationId === null ? 'conversations' : "conversations/{$conversationId}";
+        $query = http_build_query(array_merge($request->query(), $filterQuery), '', '&', PHP_QUERY_RFC1738);
+
+        return redirect("/app/accounts/{$account->id}/{$path}?{$query}");
     }
 
     public function placeholder(Request $request, Account $account, string $view): Response

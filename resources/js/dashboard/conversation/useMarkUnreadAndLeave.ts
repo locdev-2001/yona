@@ -6,14 +6,14 @@ import { useConversation } from './ConversationContext';
 
 // Đánh dấu chưa đọc rồi quay về danh sách: ở lại hội thoại thì nó bị đánh dấu đã đọc ngay.
 export function useMarkUnreadAndLeave(conversationType = '') {
-    const { accountId, inboxId, teamId, label, markMessagesUnread } = useConversation();
+    const { accountId, listFilters, teamId, markMessagesUnread } = useConversation();
 
     return useCallback(
         (conversationId: number) =>
             markMessagesUnread(conversationId).then(
-                () => router.visit(conversationListPageURL({ accountId, inboxId, teamId, label, conversationType })),
+                () => router.visit(conversationListPageURL({ accountId, filters: listFilters, teamId, conversationType })),
                 () => undefined,
             ),
-        [accountId, inboxId, teamId, label, conversationType, markMessagesUnread],
+        [accountId, listFilters, teamId, conversationType, markMessagesUnread],
     );
 }

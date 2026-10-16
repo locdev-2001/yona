@@ -18,14 +18,14 @@ interface ContactMatchItemProps {
 
 // Một dòng ở mục "Liên hệ" của ô tìm: avatar, tên (tô phần khớp), kênh của hội thoại.
 export default function ContactMatchItem({ conversation, conversationType = '' }: ContactMatchItemProps) {
-    const { accountId, inboxId, teamId, label, conversationId, searchQuery } = useConversation();
+    const { accountId, listFilters, teamId, conversationId, searchQuery } = useConversation();
     const { inboxes = [] } = usePage<DashboardPageProps>().props;
 
     const contact: ContactMeta = conversation.meta?.sender ?? { id: 0, name: null };
     const contactName = contact.name ?? '';
     const inbox = inboxes.find(item => item.id === conversation.inbox_id);
     const isActiveChat = conversationId === conversation.id;
-    const conversationPath = conversationUrl({ accountId, inboxId, teamId, label, conversationType, id: conversation.id });
+    const conversationPath = conversationUrl({ accountId, filters: listFilters, teamId, conversationType, id: conversation.id });
 
     const onClick = (event: MouseEvent<HTMLAnchorElement>) => {
         if (event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return;

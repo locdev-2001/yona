@@ -140,7 +140,7 @@ describe('applyConversationUpdate', () => {
         const target = buildConversation({ id: 2, updated_at: 100 });
 
         const next = applyConversationUpdate([untouched, target], buildConversation({ id: 2, updated_at: 200, priority: 'high' }));
-        const visible = selectVisibleConversations(next, { assigneeTab: 'all', status: 'open', inboxId: 0, teamId: 0, currentUserId: 0, labels: [] }, 'last_activity_at_desc');
+        const visible = selectVisibleConversations(next, { assigneeTab: 'all', status: 'open', inboxIds: [], teamId: 0, currentUserId: 0, labels: [] }, 'last_activity_at_desc');
 
         expect(next[0]).toBe(untouched);
         expect(next[1]).not.toBe(target);
@@ -222,14 +222,14 @@ describe('appendMessageAttachments', () => {
 
 describe('shouldAddConversationToList / matchesConversationView', () => {
     it('đang xem inbox khác thì không thêm', () => {
-        expect(shouldAddConversationToList(buildConversation({ inbox_id: 1 }), 2)).toBe(false);
-        expect(shouldAddConversationToList(buildConversation({ inbox_id: 1 }), 1)).toBe(true);
-        expect(shouldAddConversationToList(buildConversation({ inbox_id: 1 }), 0)).toBe(true);
+        expect(shouldAddConversationToList(buildConversation({ inbox_id: 1 }), [2])).toBe(false);
+        expect(shouldAddConversationToList(buildConversation({ inbox_id: 1 }), [1])).toBe(true);
+        expect(shouldAddConversationToList(buildConversation({ inbox_id: 1 }), [])).toBe(true);
     });
 
     it('màn lọc ở server không tự thêm hội thoại mới', () => {
-        expect(shouldAddConversationToList(buildConversation({ inbox_id: 1 }), 0, 'mention')).toBe(false);
-        expect(shouldAddConversationToList(buildConversation({ inbox_id: 1 }), 0, 'unattended')).toBe(false);
+        expect(shouldAddConversationToList(buildConversation({ inbox_id: 1 }), [], 'mention')).toBe(false);
+        expect(shouldAddConversationToList(buildConversation({ inbox_id: 1 }), [], 'unattended')).toBe(false);
     });
 
     it('conversation không khớp tab/status không hiện trong list', () => {
@@ -244,7 +244,7 @@ describe('shouldAddConversationToList / matchesConversationView', () => {
             meta: { sender: { id: 3, name: null }, channel: null, assignee: { id: 7, name: 'Me' } },
         });
 
-        const filters = { assigneeTab: 'me' as const, status: 'open', inboxId: 0, teamId: 0, currentUserId: 7 };
+        const filters = { assigneeTab: 'me' as const, status: 'open', inboxIds: [], teamId: 0, currentUserId: 7 };
         expect(matchesConversationView(unassignedOpen, filters)).toBe(false);
         expect(matchesConversationView(mineResolved, filters)).toBe(false);
         expect(matchesConversationView(mineOpen, filters)).toBe(true);
@@ -253,10 +253,24 @@ describe('shouldAddConversationToList / matchesConversationView', () => {
         expect(visible.map((c) => c.id)).toEqual([3]);
     });
 
+    // Cùng ngữ nghĩa ConversationFinder: đúng kênh VÀ mang bất kỳ nhãn nào đang lọc.
+    it.each([
+        { name: 'đúng kênh, có một nhãn đang lọc', overrides: { inbox_id: 5, labels: ['vip'] }, expected: true },
+        { name: 'đúng kênh, có nhãn khác trong danh sách lọc', overrides: { inbox_id: 5, labels: ['yona', 'khac'] }, expected: true },
+        { name: 'đúng kênh, không mang nhãn nào đang lọc', overrides: { inbox_id: 5, labels: ['khac'] }, expected: false },
+        { name: 'sai kênh dù có nhãn', overrides: { inbox_id: 6, labels: ['vip'] }, expected: false },
+    ])('kênh + nhãn: $name', ({ overrides, expected }) => {
+        const filters = { assigneeTab: 'all' as const, status: 'open', inboxIds: [5], teamId: 0, currentUserId: 7, labels: ['vip', 'yona'] };
+        const conversation = buildConversation(overrides);
+
+        expect(matchesConversationView(conversation, filters)).toBe(expected);
+        expect(selectVisibleConversations([conversation], filters, 'last_activity_at_desc')).toHaveLength(expected ? 1 : 0);
+    });
+
     it('sort theo last_activity_at desc', () => {
         const older = buildConversation({ id: 1, last_activity_at: 10 });
         const newer = buildConversation({ id: 2, last_activity_at: 20 });
-        const filters = { assigneeTab: 'all' as const, status: 'all', inboxId: 0, teamId: 0, currentUserId: 7 };
+        const filters = { assigneeTab: 'all' as const, status: 'all', inboxIds: [], teamId: 0, currentUserId: 7 };
 
         expect(selectVisibleConversations([older, newer], filters, 'last_activity_at_desc').map((c) => c.id)).toEqual([2, 1]);
     });
@@ -264,13 +278,13 @@ describe('shouldAddConversationToList / matchesConversationView', () => {
     it.each(['last_activity_at_desc', 'created_at_asc', 'priority_desc'])('hội thoại đã ghim luôn đứng đầu (%s)', (sortKey) => {
         const pinnedOld = buildConversation({ id: 1, last_activity_at: 10, created_at: 30, pinned: true });
         const newer = buildConversation({ id: 2, last_activity_at: 20, created_at: 5, priority: 'urgent' });
-        const filters = { assigneeTab: 'all' as const, status: 'all', inboxId: 0, teamId: 0, currentUserId: 7 };
+        const filters = { assigneeTab: 'all' as const, status: 'all', inboxIds: [], teamId: 0, currentUserId: 7 };
 
         expect(selectVisibleConversations([newer, pinnedOld], filters, sortKey).map((c) => c.id)).toEqual([1, 2]);
     });
 
     it('nhóm ghim xếp theo pin_position, bất kể thứ tự sắp xếp danh sách', () => {
-        const filters = { assigneeTab: 'all' as const, status: 'all', inboxId: 0, teamId: 0, currentUserId: 7 };
+        const filters = { assigneeTab: 'all' as const, status: 'all', inboxIds: [], teamId: 0, currentUserId: 7 };
         const list = [
             buildConversation({ id: 1, last_activity_at: 30, pinned: true, pin_position: 2 }),
             buildConversation({ id: 2, last_activity_at: 10, pinned: true, pin_position: -1 }),

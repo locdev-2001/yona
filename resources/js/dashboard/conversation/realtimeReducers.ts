@@ -110,12 +110,16 @@ export function applyConversationUpdate(
 // (mention/participating/unattended) không tự thêm hội thoại mới.
 export function shouldAddConversationToList(
     conversation: Conversation,
-    currentInboxId: number,
+    inboxIds: number[],
     conversationType: ConversationType = '',
 ): boolean {
     if (conversationType) return false;
 
-    return !currentInboxId || Number(currentInboxId) === conversation.inbox_id;
+    return matchesInboxes(conversation, inboxIds);
+}
+
+function matchesInboxes(conversation: Conversation, inboxIds: number[]): boolean {
+    return !inboxIds.length || inboxIds.includes(conversation.inbox_id);
 }
 
 export function applyConversationAdded(conversations: Conversation[], conversation: Conversation): Conversation[] {
@@ -173,23 +177,22 @@ export function applyContactUpdate(conversations: Conversation[], contact: Conta
 export interface ConversationViewFilters {
     assigneeTab: AssigneeTab;
     status: string;
-    inboxId: number;
+    inboxIds: number[];
     teamId: number;
     currentUserId: number;
-    // filters.labels của applyPageFilters — trang /label/{title}.
     labels?: string[];
 }
 
 // applyPageFilters + nhánh tab của getMineChats/getUnAssignedChats/getAllStatusChats.
 export function matchesConversationView(conversation: Conversation, filters: ConversationViewFilters): boolean {
-    const { assigneeTab, status, inboxId, teamId, currentUserId, labels = [] } = filters;
+    const { assigneeTab, status, inboxIds, teamId, currentUserId, labels = [] } = filters;
     const assignee = conversation.meta?.assignee;
 
     if (assigneeTab === 'me' && !(assignee && assignee.id === currentUserId)) return false;
     if (assigneeTab === 'unassigned' && assignee) return false;
 
     if (status !== 'all' && conversation.status !== status) return false;
-    if (inboxId && Number(inboxId) !== conversation.inbox_id) return false;
+    if (!matchesInboxes(conversation, inboxIds)) return false;
     if (teamId && Number(teamId) !== conversation.meta?.team?.id) return false;
     if (labels.length && !matchesLabels(conversation.labels, labels)) return false;
 

@@ -30,25 +30,15 @@ describe('compose conversation draft page', function () {
         'số âm' => ['contact_id=-3', null],
     ]);
 
-    it('keeps the list filter the draft was opened from', function (string $query, array $expected) {
+    it('keeps the team the draft was opened from', function (string $query, int $expected) {
         $this->actingAs($this->user)->get("/app/accounts/{$this->account->id}/inbox/new?{$query}")
             ->assertOk()
-            ->assertInertia(fn ($page) => $page
-                ->where('inboxId', $expected['inboxId'])
-                ->where('teamId', $expected['teamId'])
-                ->where('label', $expected['label']));
+            ->assertInertia(fn ($page) => $page->where('teamId', $expected)->missing('inboxId')->missing('label'));
     })->with([
-        'hộp thư' => ['inbox_id=16', ['inboxId' => 16, 'teamId' => 0, 'label' => '']],
-        'nhóm + người nhận' => ['team_id=4&contact_id=9', ['inboxId' => 0, 'teamId' => 4, 'label' => '']],
-        'nhãn' => ['label=khach-vip', ['inboxId' => 0, 'teamId' => 0, 'label' => 'khach-vip']],
-        'rác' => ['inbox_id=abc&label[]=x', ['inboxId' => 0, 'teamId' => 0, 'label' => '']],
+        'nhóm + người nhận' => ['team_id=4&contact_id=9', 4],
+        'kênh/nhãn ở query do trình duyệt đọc' => ['inbox=16&label=khach-vip', 0],
+        'rác' => ['team_id=abc', 0],
     ]);
-
-    it('keeps numeric inbox routes working', function () {
-        $this->actingAs($this->user)->get("/app/accounts/{$this->account->id}/inbox/5")
-            ->assertOk()
-            ->assertInertia(fn ($page) => $page->where('inboxId', 5)->missing('isComposing'));
-    });
 
     it('requires authentication', function () {
         $this->get("/app/accounts/{$this->account->id}/inbox/new")->assertRedirect();

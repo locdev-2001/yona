@@ -43,7 +43,7 @@ export default function ConversationHeader({
     className?: string;
     showBackButton?: boolean;
 }) {
-    const { selectedConversation, accountId, inboxId, teamId, label } = useConversation();
+    const { selectedConversation, accountId, listFilters, teamId } = useConversation();
     const { inboxes = [] } = usePage<DashboardPageProps>().props;
     const isWideLayout = useIsLargeScreen();
     const [isSearchOpen, setSearchOpen] = useState(false);
@@ -109,7 +109,7 @@ export default function ConversationHeader({
             >
                 <div className="flex items-center justify-start min-w-0 flex-1 gap-2">
                     {showBackButton ? (
-                        <BackButton backUrl={conversationListPageURL({ accountId, inboxId, teamId, label })} />
+                        <BackButton backUrl={conversationListPageURL({ accountId, filters: listFilters, teamId })} />
                     ) : null}
                     <Avatar
                         name={currentContact.name ?? ''}
@@ -148,7 +148,7 @@ export default function ConversationHeader({
         >
             <div className="flex items-center justify-start w-full xl:w-auto max-w-full min-w-0 xl:flex-1">
                 {showBackButton ? (
-                    <BackButton backUrl={conversationListPageURL({ accountId, inboxId, teamId, label })} className="me-2" />
+                    <BackButton backUrl={conversationListPageURL({ accountId, filters: listFilters, teamId })} className="me-2" />
                 ) : null}
                 <Avatar
                     name={currentContact.name ?? ''}

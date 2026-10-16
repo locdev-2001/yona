@@ -2,7 +2,7 @@ import { createElement } from 'react';
 
 import { t } from '../../../i18n';
 import { COMPACT_INTERFACE } from 'shared/helpers/productVisibility';
-import { accountScopedUrl } from 'dashboard/helper/URLHelper';
+import { accountScopedUrl, conversationListPageURL } from 'dashboard/helper/URLHelper';
 import { SidebarChannelLeafContent } from './SidebarGroupLeaf';
 import type { SidebarMenuItem } from './provider';
 import { EMPTY_UNREAD_COUNTS } from './useConversationUnreadCounts';
@@ -61,6 +61,7 @@ export function buildMenuItems(
     contactCustomViews: SidebarCustomView[] = [],
 ): SidebarMenuItem[] {
     const scoped = (path: string) => accountScopedUrl(accountId, path);
+    const filteredList = (filters: { inboxIds?: number[]; labels?: string[] }) => conversationListPageURL({ accountId, filters });
 
     return [
         {
@@ -138,7 +139,7 @@ export function buildMenuItems(
                         name: `${inbox.name}-${inbox.id}`,
                         label: inbox.name,
                         badgeCount: unreadCounts.inboxes[String(inbox.id)] ?? 0,
-                        to: scoped(`inbox/${inbox.id}`),
+                        to: filteredList({ inboxIds: [inbox.id] }),
                         component: ({ label, badgeCount }: { label: string; active: boolean; badgeCount?: number }) =>
                             createElement(SidebarChannelLeafContent, { label, badgeCount, inbox }),
                     })),
@@ -147,7 +148,6 @@ export function buildMenuItems(
                     name: 'Labels',
                     label: t('SIDEBAR.LABELS'),
                     icon: 'i-lucide-tag',
-                    activeOn: [scoped('label')],
                     collapsible: true,
                     showTreeLine: true,
                     children: labels.map(label => ({
@@ -158,7 +158,7 @@ export function buildMenuItems(
                             style: { backgroundColor: label.color },
                         }),
                         badgeCount: unreadCounts.labels[String(label.id)] ?? 0,
-                        to: scoped(`label/${encodeURIComponent(label.title)}`),
+                        to: filteredList({ labels: [label.title] }),
                     })),
                 },
             ],

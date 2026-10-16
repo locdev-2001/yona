@@ -109,17 +109,16 @@ import {
     sortComparator,
 } from './realtimeReducers';
 import {
-    ASSIGNEE_TAB_VALUES,
-    ASSIGNEE_TYPE,
     CONVERSATION_TYPE,
     CONVERSATIONS_PER_PAGE,
     LAYOUT_TYPES,
     MESSAGE_STATUS,
     MESSAGE_TYPES,
     SORT_BY_TYPE,
-    STATUS_TYPE,
 } from './constants';
 import type { ConversationType } from './constants';
+import type { ConversationListFilters } from './listFilters';
+import { useConversationListFilters } from './useConversationListFilters';
 import type {
     AgentMeta,
     AssigneeTab,
@@ -142,9 +141,10 @@ import type {
 interface ConversationContextValue {
     accountId: number;
     currentUserId: number;
-    inboxId: number;
+    // Kênh, nhãn, trạng thái, sắp xếp — đọc/ghi qua useConversationListFilters.
+    listFilters: ConversationListFilters;
+    setListFilters: (patch: Partial<ConversationListFilters>) => void;
     teamId: number;
-    label: string;
     conversationType: ConversationType;
     conversationId: number;
     conversations: Conversation[];
@@ -356,9 +356,7 @@ const EMPTY_META: ConversationListMeta = {
 
 interface ProviderProps {
     conversationId?: number;
-    inboxId?: number;
     teamId?: number;
-    label?: string;
     conversationType?: ConversationType;
     // Trung tâm thông báo dùng lại toàn bộ phần hội thoại nhưng không có cột
     // ChatList — tắt hẳn truy vấn danh sách như InboxView.vue của bản gốc.
@@ -372,9 +370,7 @@ let pendingEchoCounter = 0;
 
 export function ConversationProvider({
     conversationId = 0,
-    inboxId = 0,
     teamId = 0,
-    label = '',
     conversationType = '',
     withConversationList = true,
     isComposing = false,
@@ -407,30 +403,13 @@ export function ConversationProvider({
         });
     }, [uiSettings, updateUISettings]);
 
-    // Bộ lọc cơ bản của danh sách hội thoại nằm chung một khoá `ui_settings`.
-    // Yona thêm `assignee_type` vào cụm này (xem reports/ux-deviations.md #1).
-    const filterSettings = (user.ui_settings?.conversations_filter_by ?? {}) as {
-        status?: string;
-        order_by?: string;
-        assignee_type?: string;
-    };
-
-    // Lệch có chủ đích: mặc định là "Tất cả", không phải "Của tôi" —
-    // chủ shop một người mở inbox lần đầu phải thấy khách đang chờ, không phải một
-    // cột trống. Người dùng đổi tab thì lựa chọn được nhớ lại.
-    const [assigneeTab, setAssigneeTabState] = useState<AssigneeTab>(
-        ASSIGNEE_TAB_VALUES.includes(filterSettings.assignee_type as AssigneeTab)
-            ? (filterSettings.assignee_type as AssigneeTab)
-            : ASSIGNEE_TYPE.ALL,
-    );
-    const [status, setStatus] = useState<ConversationStatusFilter>(
-        (filterSettings.status as ConversationStatusFilter) || STATUS_TYPE.OPEN,
-    );
-    const [sortBy, setSortBy] = useState<string>(
-        Object.values(SORT_BY_TYPE).includes(filterSettings.order_by as never)
-            ? (filterSettings.order_by as string)
-            : SORT_BY_TYPE.LAST_ACTIVITY_AT_DESC,
-    );
+    const {
+        filters: listFilters,
+        assigneeTab,
+        setFilters: setListFilters,
+        setAssigneeTab,
+    } = useConversationListFilters(updateUISettings);
+    const { inboxIds, labels: labelFilters, status, sortBy } = listFilters;
     const [appliedFilters, setAppliedFilters] = useState<ConversationFilterCondition[] | null>(null);
     const appliedFiltersRef = useRef<ConversationFilterCondition[] | null>(null);
     appliedFiltersRef.current = appliedFilters;
@@ -478,11 +457,9 @@ export function ConversationProvider({
     // SET_LAST_MESSAGE_ID_IN_SYNC_CONVERSATION: mốc tin cuối lúc mất kết nối.
     const lastMessageIdBeforeDisconnectRef = useRef<number | null>(null);
 
-    // conversationFilters.labels của ChatList.vue: URL /label/{title} = một nhãn.
-    const labelFilters = useMemo(() => (label ? [label] : []), [label]);
     const viewFilters = useMemo(
-        () => ({ assigneeTab, status, inboxId, teamId, currentUserId, labels: labelFilters }),
-        [assigneeTab, status, inboxId, teamId, currentUserId, labelFilters],
+        () => ({ assigneeTab, status, inboxIds, teamId, currentUserId, labels: labelFilters }),
+        [assigneeTab, status, inboxIds, teamId, currentUserId, labelFilters],
     );
     const conversations = useMemo(
         () =>
@@ -504,12 +481,13 @@ export function ConversationProvider({
             assigneeType: assigneeTab,
             status,
             sortBy,
-            inboxId: inboxId || undefined,
+            // API danh sách nhận một inbox_id (MAX_INBOX_FILTERS).
+            inboxId: inboxIds[0],
             teamId: teamId || undefined,
             labels: labelFilters.length ? labelFilters : undefined,
             conversationType: conversationType || undefined,
         }),
-        [accountId, assigneeTab, status, sortBy, inboxId, teamId, labelFilters, conversationType],
+        [accountId, assigneeTab, status, sortBy, inboxIds, teamId, labelFilters, conversationType],
     );
 
     const fetchPage = useCallback(
@@ -600,46 +578,12 @@ export function ConversationProvider({
         void fetchPage(pageRef.current + 1, true);
     }, [endReached, listLoading, fetchPage]);
 
-    // Một điểm ghi duy nhất cho cả cụm `conversations_filter_by`: server merge NÔNG
-    // (array_merge ở ProfilesController) nên mỗi lần lưu phải gửi đủ ba khoá, nếu
-    // không khoá không gửi sẽ bị xoá mất.
-    const persistConversationFilters = useCallback(
-        (patch: { status?: string; order_by?: string; assignee_type?: AssigneeTab }) => {
-            updateUISettings({
-                conversations_filter_by: {
-                    status,
-                    order_by: sortBy,
-                    assignee_type: assigneeTab,
-                    ...patch,
-                },
-            });
-        },
-        [assigneeTab, sortBy, status, updateUISettings],
-    );
-
-    const setAssigneeTab = useCallback(
-        (tab: AssigneeTab) => {
-            setAssigneeTabState(tab);
-            persistConversationFilters({ assignee_type: tab });
-        },
-        [persistConversationFilters],
-    );
-
     const setStatusFilter = useCallback(
-        (value: ConversationStatusFilter) => {
-            setStatus(value);
-            persistConversationFilters({ status: value });
-        },
-        [persistConversationFilters],
+        (value: ConversationStatusFilter) => setListFilters({ status: value }),
+        [setListFilters],
     );
 
-    const setSortFilter = useCallback(
-        (value: string) => {
-            setSortBy(value);
-            persistConversationFilters({ order_by: value });
-        },
-        [persistConversationFilters],
-    );
+    const setSortFilter = useCallback((value: string) => setListFilters({ sortBy: value }), [setListFilters]);
 
     const applyConversationFilters = useCallback((filters: ConversationFilterCondition[]) => {
         const nextFilters = filters.map(filter => ({ ...filter }));
@@ -953,7 +897,7 @@ export function ConversationProvider({
     // Counts: ActionCableConnector emit 'fetch_conversation_stats' sau các event
     // created/status_changed/assignee.changed/updated/contact.deleted như gốc.
     useRealtimeEvent<Conversation>('conversation.created', (conversation) => {
-        if (shouldAddConversationToList(conversation, inboxId, conversationType)) {
+        if (shouldAddConversationToList(conversation, inboxIds, conversationType)) {
             setAllConversations((current) => applyConversationAdded(current, conversation));
         }
     });
@@ -1208,7 +1152,7 @@ export function ConversationProvider({
             }
 
             setAllConversations((current) => applyConversationUpdate(current, conversation));
-            const targetUrl = conversationUrl({ accountId, inboxId, teamId, label, id: conversation.id });
+            const targetUrl = conversationUrl({ accountId, filters: listFilters, teamId, id: conversation.id });
             const isOnDraftAtCreation = isStillOnDraft();
             if (isOnDraftAtCreation && !sentFromComposer) carryDraftComposer(conversation.id);
 
@@ -1238,7 +1182,7 @@ export function ConversationProvider({
                 onFinish: releaseSending,
             });
         },
-        [accountId, inboxId, teamId, label, ensureConversation, enqueuePendingMessage, carryDraftComposer, updateComposeDraft],
+        [accountId, listFilters, teamId, ensureConversation, enqueuePendingMessage, carryDraftComposer, updateComposeDraft],
     );
 
     const sendWithPendingMessage = useCallback(
@@ -1635,9 +1579,9 @@ export function ConversationProvider({
         () => ({
             accountId,
             currentUserId,
-            inboxId,
+            listFilters,
+            setListFilters,
             teamId,
-            label,
             conversationType,
             conversationId,
             conversations,
@@ -1700,9 +1644,9 @@ export function ConversationProvider({
         [
             accountId,
             currentUserId,
-            inboxId,
+            listFilters,
+            setListFilters,
             teamId,
-            label,
             conversationType,
             conversationId,
             conversations,
