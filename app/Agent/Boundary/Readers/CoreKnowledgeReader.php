@@ -3,17 +3,19 @@
 namespace App\Agent\Boundary\Readers;
 
 use App\Agent\Boundary\CoreProducts;
+use App\Agent\Boundary\TextMatch;
 use App\Agent\Contracts\Ports\KnowledgeReader;
 use App\Agent\ValueObjects\KnowledgeHit;
 use App\Agent\ValueObjects\Provenance;
 use App\Models\Article;
 use App\Models\CannedResponse;
 
-// Tri thức bản mỏng: bài Help Center đã xuất bản (tìm toàn văn) và câu trả lời mẫu của
-// account. Câu hỏi của khách thường dài, nên bài khớp BẤT KỲ từ nào rồi xếp theo hạng;
-// câu trả lời mẫu khớp cả cụm trước, thiếu thì khớp từng từ. Câu trả lời mẫu dạng thẻ sản
-// phẩm mang theo chữ tả từng thẻ (giá, biến thể, id để gửi thẻ). Trích đoạn quanh từ khoá
-// của truy vấn; cả lần tra nằm trong một trần ký tự (khoảng 2k token) chia đều cho các kết quả.
+// Tri thức bản mỏng: bài Help Center đã xuất bản và câu trả lời mẫu của account, xếp hạng
+// chung bằng TextMatch (không phân biệt dấu, từ hiếm nặng hơn, tên nặng hơn nội dung) để
+// câu trả lời mẫu đúng ý không bị đẩy ra ngoài vì thứ tự tạo. Câu trả lời mẫu dạng thẻ sản
+// phẩm mang theo chữ tả từng thẻ (giá, biến thể, id để gửi thẻ), không đem JSON của thẻ đi
+// so khớp. Trích đoạn quanh từ khoá; cả lần tra nằm trong một trần ký tự (khoảng 2k token)
+// chia đều cho các kết quả.
 /** @phpstan-type KnowledgeSource array{ref: string, kind: string, title: string, text: string} */
 final class CoreKnowledgeReader implements KnowledgeReader
 {
@@ -21,8 +23,12 @@ final class CoreKnowledgeReader implements KnowledgeReader
 
     private const RESULT_CHARACTERS = 6_000;
 
-    // Từ ngắn hơn chừng này (kể cả dấu) khớp quá rộng khi tìm câu trả lời mẫu theo từng từ.
-    private const MIN_WORD_CHARACTERS = 2;
+    // Help Center và câu trả lời mẫu cỡ SME; quá trần thì xếp hạng trên phần mới nhất.
+    private const MAX_ARTICLES = 200;
+
+    private const MAX_CANNED_RESPONSES = 500;
+
+    private const TITLE_WEIGHT = 2.0;
 
     public function search(int $accountId, string $query, int $limit): array
     {
@@ -32,11 +38,10 @@ final class CoreKnowledgeReader implements KnowledgeReader
             return [];
         }
 
-        $articles = $this->articles($accountId, $query, $limit);
-        $cannedResponses = $this->cannedResponses($accountId, $query, $limit);
-
-        $sources = array_slice($this->interleave($articles, $cannedResponses), 0, $limit);
-        $perSource = $sources === [] ? 0 : min(self::EXCERPT_CHARACTERS, intdiv(self::RESULT_CHARACTERS, count($sources)));
+        $sources = [...$this->articles($accountId), ...$this->cannedResponses($accountId)];
+        $documents = array_map(fn (array $source) => [[$source['title'], self::TITLE_WEIGHT], [$source['text'], 1.0]], $sources);
+        $ranked = array_map(fn (int $index) => $sources[$index], array_slice(TextMatch::rank($query, $documents), 0, $limit));
+        $perSource = $ranked === [] ? 0 : min(self::EXCERPT_CHARACTERS, intdiv(self::RESULT_CHARACTERS, count($ranked)));
 
         return array_map(fn (array $source) => new KnowledgeHit(
             ref: $source['ref'],
@@ -44,27 +49,17 @@ final class CoreKnowledgeReader implements KnowledgeReader
             title: $source['title'],
             excerpt: KnowledgeExcerpt::of($source['text'], $query, $perSource),
             provenance: Provenance::Business,
-        ), $sources);
+        ), $ranked);
     }
 
     /** @return list<KnowledgeSource> */
-    private function articles(int $accountId, string $query, int $limit): array
+    private function articles(int $accountId): array
     {
-        $tsQuery = str_replace(' & ', ' | ', Article::toTsQuery($query));
-
-        if ($tsQuery === '') {
-            return [];
-        }
-
-        $vector = Article::SEARCH_VECTOR;
-
         return Article::query()
             ->where('articles.account_id', $accountId)
             ->published()
-            ->whereRaw("({$vector}) @@ to_tsquery('simple', ?)", [$tsQuery])
-            ->orderByRaw("ts_rank(({$vector}), to_tsquery('simple', ?), 2) DESC", [$tsQuery])
-            ->orderBy('articles.id')
-            ->limit($limit)
+            ->orderByDesc('articles.id')
+            ->limit(self::MAX_ARTICLES)
             ->get(['articles.id', 'articles.title', 'articles.description', 'articles.content'])
             ->map(fn (Article $article) => [
                 'ref' => "article:{$article->id}",
@@ -76,43 +71,19 @@ final class CoreKnowledgeReader implements KnowledgeReader
     }
 
     /** @return list<KnowledgeSource> */
-    private function cannedResponses(int $accountId, string $query, int $limit): array
+    private function cannedResponses(int $accountId): array
     {
-        $scoped = fn () => CannedResponse::query()->where('account_id', $accountId);
-        $matches = $scoped()->search($query)->limit($limit)->get();
-
-        if ($matches->count() < $limit) {
-            $words = array_values(array_filter(
-                preg_split('/\s+/u', $query) ?: [],
-                fn (string $word) => mb_strlen($word) >= self::MIN_WORD_CHARACTERS,
-            ));
-
-            if ($words !== []) {
-                $byWord = $scoped()
-                    ->whereNotIn('id', $matches->modelKeys())
-                    ->where(function ($any) use ($words) {
-                        foreach ($words as $word) {
-                            $contains = '%'.str_replace(['\\', '%', '_', "\0"], ['\\\\', '\%', '\_', ''], $word).'%';
-                            $any->orWhere('short_code', 'ILIKE', $contains)
-                                ->orWhere('content', 'ILIKE', $contains)
-                                ->orWhereRaw('content_attributes::text ILIKE ?', [$contains]);
-                        }
-                    })
-                    ->orderBy('id')
-                    ->limit($limit - $matches->count())
-                    ->get();
-                $matches = $matches->concat($byWord);
-            }
-        }
-
-        return $matches
+        return CannedResponse::query()
+            ->where('account_id', $accountId)
+            ->orderByDesc('id')
+            ->limit(self::MAX_CANNED_RESPONSES)
+            ->get()
             ->map(fn (CannedResponse $response) => [
                 'ref' => "canned_response:{$response->id}",
                 'kind' => 'canned_response',
                 'title' => (string) $response->short_code,
                 'text' => $this->cannedText($response),
             ])
-            ->values()
             ->all();
     }
 
@@ -128,21 +99,5 @@ final class CoreKnowledgeReader implements KnowledgeReader
         );
 
         return trim($response->content."\n".implode("\n", $cards));
-    }
-
-    /**
-     * @param  list<KnowledgeSource>  $first
-     * @param  list<KnowledgeSource>  $second
-     * @return list<KnowledgeSource>
-     */
-    private function interleave(array $first, array $second): array
-    {
-        $merged = [];
-
-        for ($index = 0; $index < max(count($first), count($second)); $index++) {
-            array_push($merged, ...array_filter([$first[$index] ?? null, $second[$index] ?? null]));
-        }
-
-        return $merged;
     }
 }

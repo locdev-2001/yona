@@ -80,3 +80,25 @@ it('gives a saved product card its price, sizes and product id instead of an emp
         ->and($hits[0]->ref)->toBe("canned_response:{$cards->id}")
         ->and($hits[0]->excerpt)->toBe("Áo polo nam · 250.000đ · Màu: Xanh, Đỏ (out of stock: Đỏ) · product id {$cards->id}:polo");
 });
+
+it('ranks the saved reply that answers the question first, whatever order the replies were created in', function () {
+    $account = Account::factory()->create();
+    helpArticle($account, ['title' => 'Hướng dẫn chọn size quần áo', 'description' => 'Bảng size áo và váy', 'content' => 'Shop có bảng size cho áo, váy, đầm.']);
+
+    foreach (['gio-mo-cua' => 'Shop mở cửa 9h-21h, có bán online.', 'giao-hang' => 'Shop giao hàng toàn quốc, có ship COD.', 'doi-tra' => 'Shop có đổi size trong 7 ngày.'] as $code => $content) {
+        CannedResponse::query()->create(['account_id' => $account->id, 'short_code' => $code, 'content' => $content]);
+    }
+
+    $answer = CannedResponse::query()->create(['account_id' => $account->id, 'short_code' => 'san-pham-shop-ban', 'content' => 'Shop chỉ bán quần áo nữ, không bán đồ nam, giày dép.']);
+
+    $hits = app(KnowledgeReader::class)->search($account->id, 'shop co ban ao so mi nam voi giay khong', 2);
+
+    expect($hits[0]->ref)->toBe("canned_response:{$answer->id}");
+});
+
+it('does not match a product card by the keys of its stored data', function () {
+    $account = Account::factory()->create();
+    TurnKit::productCards($account->id, 'ao-polo', [['id' => 'polo', 'title' => 'Áo polo nam', 'price' => ['amount' => 250000]]]);
+
+    expect(app(KnowledgeReader::class)->search($account->id, 'currency amount items', 5))->toBe([]);
+});

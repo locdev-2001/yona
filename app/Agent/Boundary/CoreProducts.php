@@ -5,7 +5,6 @@ namespace App\Agent\Boundary;
 use App\Agent\ValueObjects\Product;
 use App\Messaging\Structured\Money;
 use App\Models\CannedResponse;
-use Illuminate\Support\Str;
 
 // Sản phẩm của shop = từng thẻ trong câu trả lời mẫu loại `cards` (một câu trả lời mẫu
 // có thể chứa nhiều thẻ). Nguồn duy nhất cho đọc danh mục, tra tri thức và gửi thẻ: id
@@ -19,9 +18,7 @@ final class CoreProducts
     // SME khai vài chục tới vài trăm sản phẩm; quá trần này thì đọc phần mới nhất.
     private const MAX_SOURCES = 500;
 
-    private const MIN_TERM_CHARACTERS = 2;
-
-    private const TITLE_WEIGHT = 3;
+    private const TITLE_WEIGHT = 3.0;
 
     /** @return list<array{source: CannedResponse, item: array<string, mixed>}> */
     public static function items(int $accountId): array
@@ -96,36 +93,21 @@ final class CoreProducts
      */
     public static function rank(array $items, ?string $query): array
     {
-        $terms = self::terms((string) $query);
-
-        if ($terms === []) {
+        if (TextMatch::terms((string) $query) === []) {
             return $items;
         }
 
-        $scored = [];
-
-        foreach ($items as $index => $entry) {
-            $title = self::fold((string) $entry['item']['title']);
-            $rest = self::fold(implode(' ', [
+        $documents = array_map(fn (array $entry) => [
+            [(string) $entry['item']['title'], self::TITLE_WEIGHT],
+            [implode(' ', [
                 $entry['item']['description'] ?? '',
                 $entry['source']->short_code,
                 $entry['source']->content ?? '',
                 ...array_map(fn (array $variant) => $variant['name'].' '.implode(' ', array_column($variant['options'], 'label')), $entry['item']['variants'] ?? []),
-            ]));
-            $score = 0;
+            ]), 1.0],
+        ], $items);
 
-            foreach ($terms as $term) {
-                $score += str_contains($title, $term) ? self::TITLE_WEIGHT : (str_contains($rest, $term) ? 1 : 0);
-            }
-
-            if ($score > 0) {
-                $scored[] = ['score' => $score, 'index' => $index, 'entry' => $entry];
-            }
-        }
-
-        usort($scored, fn (array $left, array $right) => [$right['score'], $left['index']] <=> [$left['score'], $right['index']]);
-
-        return array_column($scored, 'entry');
+        return array_map(fn (int $index) => $items[$index], TextMatch::rank((string) $query, $documents));
     }
 
     /** @param array<string, mixed> $item */
@@ -195,19 +177,5 @@ final class CoreProducts
         return array_values(array_filter($items, fn (mixed $item) => is_array($item)
             && is_string($item['id'] ?? null) && $item['id'] !== ''
             && is_string($item['title'] ?? null) && $item['title'] !== ''));
-    }
-
-    /** @return list<string> */
-    private static function terms(string $query): array
-    {
-        $words = preg_split('/[^\p{L}\p{N}]+/u', self::fold($query)) ?: [];
-
-        return array_values(array_unique(array_filter($words, fn (string $word) => mb_strlen($word) >= self::MIN_TERM_CHARACTERS)));
-    }
-
-    // Chữ thường, bỏ dấu: khách gõ "ao thun" vẫn khớp "Áo thun".
-    private static function fold(string $text): string
-    {
-        return mb_strtolower(Str::ascii($text));
     }
 }
