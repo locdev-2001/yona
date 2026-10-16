@@ -35,16 +35,20 @@ it('ignores numbers that are not money', function (string $text) {
     'no numbers' => ['Dạ em chào anh ạ'],
 ]);
 
-it('reads a tail of two or three digits after triệu/tỷ as ambiguous, never as one amount', function (string $text, string $fragment, array $readings) {
+it('reads a two-digit tail after triệu/tỷ as ambiguous, never as one amount', function (string $text, string $fragment, array $readings) {
     expect(MoneyMentions::in($text))->toBe([])
         ->and(MoneyMentions::ambiguous($text))->toBe([$fragment])
         ->and(MoneyMentions::sourced($text))->toEqualCanonicalizing($readings);
 })->with([
     'two digits after triệu' => ['giá 1 triệu 50 ạ', '1 triệu 50', ['VND:1500000', 'VND:1050000']],
     'two digits after tr' => ['combo 1tr50', '1tr50', ['VND:1500000', 'VND:1050000']],
-    'three digits after triệu' => ['1 triệu 250', '1 triệu 250', ['VND:1250000']],
     'two digits after tỷ' => ['căn hộ 2 tỷ 50', '2 tỷ 50', ['VND:2500000000', 'VND:2050000000']],
 ]);
+
+it('reads a three-digit tail after triệu as one amount', function () {
+    expect(MoneyMentions::in('1 triệu 250'))->toBe(['VND:1250000'])
+        ->and(MoneyMentions::ambiguous('1 triệu 250'))->toBe([]);
+});
 
 it('lets a reply state only amounts found in this turn\'s tool results', function (string $reply, string $evidence, bool $allowed) {
     $result = (new ClaimGuard)->check($reply, new TurnEvidence([$evidence]));

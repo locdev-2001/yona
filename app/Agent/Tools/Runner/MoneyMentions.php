@@ -27,7 +27,8 @@ final class MoneyMentions
     // Dấu chấm, phẩy cuối câu sau đuôi vẫn tính; "1tr 250.000" thì không phải đuôi.
     private const TRAILING_DIGITS = '(\d{1,3})(?!\d|[.,]\d)';
 
-    // Đuôi dài từ chừng này chữ số trở lên thì không còn chắc là phần lẻ.
+    // Đuôi đúng chừng này chữ số là mơ hồ: "1 triệu 50" có thể là 1.500.000 hay 1.050.000.
+    // Đuôi 1 chữ số luôn là phần lẻ ("1tr2"); đuôi 3 chữ số hai cách đọc ra cùng một số.
     private const AMBIGUOUS_TAIL_DIGITS = 2;
 
     // Trong nguồn, các đoạn này là định danh chứ không phải số tiền: trường `ref` của
@@ -76,7 +77,7 @@ final class MoneyMentions
         $patterns = [
             // 1tr2, 1 triệu 250, 2 tỷ 5
             "/(?<![\\p{L}\\d])({$number})\\s*(tỷ|tỉ|ty|triệu|trieu|tr)\\s*".self::TRAILING_DIGITS.'(?!\s*(?:'.$units.'))/u' => function (array $m) use ($asSource, &$ambiguous) {
-                if (strlen($m[3]) < self::AMBIGUOUS_TAIL_DIGITS) {
+                if (strlen($m[3]) !== self::AMBIGUOUS_TAIL_DIGITS) {
                     return [self::scaled($m[1], $m[2], $m[3])];
                 }
 
