@@ -83,6 +83,5 @@ return [
         'TAB_UNREAD' => 'Unread',
         'TAB_ALL' => 'All',
         'EMPTY_UNREAD' => 'You are all caught up',
-        'LAUNCHER_UNREAD' => 'You have unread notifications',
     ],
 ];

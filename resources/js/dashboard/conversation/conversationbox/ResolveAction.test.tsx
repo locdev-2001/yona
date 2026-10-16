@@ -107,4 +107,40 @@ describe('nút trạng thái hội thoại', () => {
         expect(button.textContent).toBe('');
         expect(button.title).toContain('Đang mở');
     });
+
+    describe('điện thoại', () => {
+        const desktopWidth = window.innerWidth;
+        beforeEach(() => {
+            window.innerWidth = 375;
+        });
+        afterEach(() => {
+            window.innerWidth = desktopWidth;
+        });
+
+        it('menu mở thành bottom sheet, mục cao 48px, chạm Giải quyết là xong', async () => {
+            conversation.status = 'open';
+            const { getByTestId, getByRole } = render(<ResolveAction isStretched />);
+            fireEvent.click(getByTestId('conversation-status-button'));
+
+            const sheet = getByRole('dialog', { name: 'Đổi trạng thái hội thoại' });
+            const resolveItem = [...sheet.querySelectorAll('button')].find(button => button.textContent?.startsWith('Giải quyết'))!;
+            expect(resolveItem.className).toContain('!h-12');
+
+            await act(async () => {
+                fireEvent.mouseDown(resolveItem);
+                fireEvent.click(resolveItem);
+            });
+
+            expect(toggleStatus).toHaveBeenCalledWith({ status: 'resolved', snoozedUntil: null });
+        });
+
+        it('nút chiếm nửa dải dưới mũ và giữ nhãn trạng thái', () => {
+            conversation.status = 'open';
+            const { getByTestId } = render(<ResolveAction isStretched />);
+            const button = getByTestId('conversation-status-button');
+
+            expect(button.textContent).toBe('Đang mở');
+            expect(button.className).toContain('w-full');
+        });
+    });
 });

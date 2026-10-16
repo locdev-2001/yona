@@ -16,8 +16,15 @@ import ResolveAction from './ResolveAction';
 
 // Port từ widgets/conversation/MoreActions.vue: ResolveAction + menu ⋮ (mute/unmute
 // theo currentChat.muted, send transcript) + EmailTranscriptModal; cùng nhận lệnh
-// từ command bar qua emitter.
-export default function MoreActions({ isCompact = false }: { isCompact?: boolean } = {}) {
+// từ command bar qua emitter. Điện thoại đặt ResolveAction ở dải riêng dưới mũ nên
+// tắt `showResolveAction` để phím tắt và lệnh trạng thái không đăng ký hai lần.
+interface MoreActionsProps {
+    isCompact?: boolean;
+    showResolveAction?: boolean;
+    triggerClassName?: string;
+}
+
+export default function MoreActions({ isCompact = false, showResolveAction = true, triggerClassName = '' }: MoreActionsProps = {}) {
     const { selectedConversation, accountId, muteConversation, unmuteConversation } = useConversation();
     const [showEmailActionsModal, setShowEmailActionsModal] = useState(false);
     const [showActionsDropdown, setShowActionsDropdown] = useState(false);
@@ -82,7 +89,7 @@ export default function MoreActions({ isCompact = false }: { isCompact?: boolean
 
     return (
         <div className={`relative flex items-center actions--container ${isCompact ? 'gap-1' : 'gap-2'}`}>
-            <ResolveAction isCompact={isCompact} />
+            {showResolveAction ? <ResolveAction isCompact={isCompact} /> : null}
             <div ref={actionsRef} className="relative flex items-center group">
                 <NextButton
                     title={t('CONVERSATION.HEADER.MORE_ACTIONS')}
@@ -90,7 +97,7 @@ export default function MoreActions({ isCompact = false }: { isCompact?: boolean
                     ghost
                     slate
                     icon="i-lucide-ellipsis-vertical"
-                    className="rounded-md group-hover:bg-n-alpha-2"
+                    className={`rounded-md group-hover:bg-n-alpha-2 ${triggerClassName}`}
                     onClick={() => setShowActionsDropdown(open => !open)}
                 />
                 {showActionsDropdown ? (

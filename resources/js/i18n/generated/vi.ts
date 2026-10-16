@@ -2698,6 +2698,7 @@ const messages: Record<string, unknown> = {
             "UNREAD": "{count} hội thoại chưa đọc",
             "STATUS": "Trạng thái",
             "CHANNEL": "Kênh",
+            "ALL_CHANNELS": "Mọi kênh",
             "LABEL": "Nhãn",
             "SORT": "Sắp xếp",
             "ADVANCED": "Lọc nâng cao",
@@ -6589,8 +6590,7 @@ const messages: Record<string, unknown> = {
             "VIEW_ALL": "Xem tất cả thông báo",
             "TAB_UNREAD": "Chưa đọc",
             "TAB_ALL": "Tất cả",
-            "EMPTY_UNREAD": "Đã đọc hết thông báo",
-            "LAUNCHER_UNREAD": "Có thông báo chưa đọc"
+            "EMPTY_UNREAD": "Đã đọc hết thông báo"
         }
     },
     "INBOX_MGMT": {
@@ -9933,6 +9933,12 @@ const messages: Record<string, unknown> = {
             "CONTACT_DESC_SELF_HOSTED": "Nếu bạn mất cả ứng dụng xác thực lẫn mã dự phòng, hãy liên hệ quản trị viên của bạn."
         },
         "VERIFICATION_FAILED": "Xác minh thất bại. Bạn hãy thử lại."
+    },
+    "MOBILE_TAB_BAR": {
+        "LABEL": "Điều hướng chính",
+        "MORE": "Thêm",
+        "CLOSE_MENU": "Đóng",
+        "UNREAD": "{count} hội thoại chưa đọc"
     },
     "NETWORK": {
         "NOTIFICATION": {

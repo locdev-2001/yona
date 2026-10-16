@@ -39,6 +39,8 @@ interface DropdownMenuProps {
     thumbnailSize?: number;
     isLoading?: boolean;
     showSearch?: boolean;
+    // Bottom sheet điện thoại tắt đi để bàn phím ảo không bật lên che menu.
+    autoFocusSearch?: boolean;
     searchPlaceholder?: string;
     className?: string;
     itemClassName?: string;
@@ -59,6 +61,7 @@ export default function DropdownMenu({
     thumbnailSize = 20,
     isLoading = false,
     showSearch = false,
+    autoFocusSearch = true,
     searchPlaceholder = '',
     className = '',
     itemClassName = '',
@@ -71,8 +74,8 @@ export default function DropdownMenu({
     const searchInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
-        if (showSearch) searchInputRef.current?.focus();
-    }, [showSearch]);
+        if (showSearch && autoFocusSearch) searchInputRef.current?.focus();
+    }, [showSearch, autoFocusSearch]);
 
     const hasSections = Boolean(menuSections?.length);
 

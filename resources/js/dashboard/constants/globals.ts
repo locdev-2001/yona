@@ -13,6 +13,9 @@ export const SMALL_SCREEN_BREAKPOINT = 1024;
 
 export const LARGE_SCREEN_BREAKPOINT = 1280;
 
+// Dưới `md` (768px) là điện thoại: thanh tab dưới thay ngăn kéo, menu mở dạng bottom sheet.
+export const PHONE_SCREEN_BREAKPOINT = 768;
+
 export const SNOOZE_OPTIONS = {
     UNTIL_NEXT_REPLY: 'until_next_reply',
     AN_HOUR_FROM_NOW: 'an_hour_from_now',

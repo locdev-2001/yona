@@ -1,14 +1,17 @@
 import { useRef, useState } from 'react';
 
+import BottomSheet from 'dashboard/components-next/BottomSheet';
 import { useClickAway } from 'dashboard/composables/useClickAway';
+import { useIsPhoneScreen } from 'dashboard/composables/useViewportWidth';
 import { t } from '../../../i18n';
 import { useConversation } from '../ConversationContext';
 import { countActiveListFilters } from '../listFilters';
 import ListFilterPanel from './ListFilterPanel';
 import ListHeaderButton from './ListHeaderButton';
 
-// Vỏ popover của bảng Lọc trên máy tính. Bảng neo theo hàng đầu cột danh sách
-// (phần tử `relative` gần nhất), không theo nút, để vừa bề rộng cột 340px.
+// Vỏ của bảng Lọc: popover trên máy tính, bottom sheet trên điện thoại; nội dung là
+// một `ListFilterPanel`. Popover neo theo hàng đầu cột danh sách (phần tử `relative`
+// gần nhất), không theo nút, để vừa bề rộng cột 340px.
 interface ListFilterButtonProps {
     isOnExpandedLayout: boolean;
     // Đang dùng lọc nâng cao/view đã lưu: chip nhanh không áp lên danh sách đó, nút mở thẳng trình dựng.
@@ -20,7 +23,9 @@ export default function ListFilterButton({ isOnExpandedLayout, isAdvancedActive,
     const { listFilters } = useConversation();
     const [isOpen, setOpen] = useState(false);
     const rootRef = useRef<HTMLSpanElement>(null);
-    useClickAway(rootRef, () => setOpen(false), isOpen);
+    const isPhone = useIsPhoneScreen();
+    // Bottom sheet nằm ngoài nút (portal) và tự đóng khi chạm nền mờ.
+    useClickAway(rootRef, () => setOpen(false), isOpen && !isPhone);
 
     const activeCount = isAdvancedActive ? 0 : countActiveListFilters(listFilters);
     const label =
@@ -62,7 +67,11 @@ export default function ListFilterButton({ isOnExpandedLayout, isAdvancedActive,
                 }
                 onClick={() => (isAdvancedActive ? onOpenAdvancedFilters() : setOpen(open => !open))}
             />
-            {isOpen ? (
+            {isPhone ? (
+                <BottomSheet isOpen={isOpen} title={t('CHAT_LIST.FILTER_PANEL.TITLE')} onClose={() => setOpen(false)}>
+                    <ListFilterPanel onOpenAdvancedFilters={openAdvancedFilters} />
+                </BottomSheet>
+            ) : isOpen ? (
                 <div
                     role="dialog"
                     aria-label={t('CHAT_LIST.FILTER_PANEL.TITLE')}

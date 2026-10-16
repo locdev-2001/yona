@@ -1,28 +1,37 @@
 import { useCallback, useRef, useState } from 'react';
 
 import NextButton from 'dashboard/components-next/button/Button';
-import DropdownMenu from 'dashboard/components-next/dropdown-menu/DropdownMenu';
 import type { DropdownMenuItem, DropdownMenuSection } from 'dashboard/components-next/dropdown-menu/DropdownMenu';
 import Icon from 'dashboard/components-next/icon/Icon';
 import type { AssignableAgent } from 'dashboard/composables/useAgentsList';
 import { useClickAway } from 'dashboard/composables/useClickAway';
+import { useIsPhoneScreen } from 'dashboard/composables/useViewportWidth';
 import { t } from '../../../i18n';
 import { AssigneeAvatar, assigneeLabel, assigneeName } from '../AssigneeIdentity';
 import type { AssigneeKind } from '../AssigneeIdentity';
 import { agentOptionAvatarSeed } from './contact/assignmentOptions';
+import HeaderActionMenu from './HeaderActionMenu';
 import { useConversationAssignment } from './useConversationAssignment';
 
 // Người phụ trách ở mũ khung chat: thấy ngay ai đang xử lý, bấm là đổi người
 // mà không phải mở panel phải. `isCompact`: chỉ còn avatar để mũ gọn một dòng.
+// `isStretched`: nút chiếm nửa dải hành động dưới mũ trên điện thoại.
 const SEARCH_THRESHOLD = 6;
 
-export default function AssigneeAction({ isCompact = false }: { isCompact?: boolean } = {}) {
+interface AssigneeActionProps {
+    isCompact?: boolean;
+    isStretched?: boolean;
+}
+
+export default function AssigneeAction({ isCompact = false, isStretched = false }: AssigneeActionProps = {}) {
     const { agentsList, assignedAgent, isAssignedToMe, selfAssign, toggleAgent, unassign } = useConversationAssignment();
     const [isMenuOpen, setMenuOpen] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
+    const isPhone = useIsPhoneScreen();
 
     const closeMenu = useCallback(() => setMenuOpen(false), []);
-    useClickAway(containerRef, closeMenu, isMenuOpen);
+    // Bottom sheet nằm ngoài khung nút (portal) và tự đóng khi chạm nền mờ.
+    useClickAway(containerRef, closeMenu, isMenuOpen && !isPhone);
 
     const isAgentBot = assignedAgent?.assignee_type === 'AgentBot';
     const kind: AssigneeKind = !assignedAgent ? 'none' : isAssignedToMe ? 'me' : 'other';
@@ -63,7 +72,7 @@ export default function AssigneeAction({ isCompact = false }: { isCompact?: bool
     return (
         <div
             ref={containerRef}
-            className="relative flex items-center flex-shrink-0"
+            className={`relative flex items-center ${isStretched ? 'flex-1 min-w-0' : 'flex-shrink-0'}`}
             onKeyDown={event => {
                 if (event.key === 'Escape') closeMenu();
             }}
@@ -79,7 +88,13 @@ export default function AssigneeAction({ isCompact = false }: { isCompact?: bool
                 aria-haspopup="menu"
                 aria-expanded={isMenuOpen}
                 data-testid="conversation-assignee-button"
-                className={`!outline-0 max-md:h-11 ${isCompact ? `!px-0 w-8 max-md:w-11 justify-center ${kind === 'none' ? 'text-n-amber-11' : ''}` : 'max-w-[16rem]'}`}
+                className={`!outline-0 max-md:h-11 ${
+                    isCompact
+                        ? `!px-0 w-8 max-md:w-11 justify-center ${kind === 'none' ? 'text-n-amber-11' : ''}`
+                        : isStretched
+                          ? 'w-full justify-center'
+                          : 'max-w-[16rem]'
+                }`}
                 onClick={() => setMenuOpen(open => !open)}
             >
                 {isCompact ? (
@@ -94,18 +109,20 @@ export default function AssigneeAction({ isCompact = false }: { isCompact?: bool
                     </span>
                 )}
             </NextButton>
-            {isMenuOpen ? (
-                <DropdownMenu
-                    menuSections={menuSections}
-                    showSearch={agentsList.length > SEARCH_THRESHOLD}
-                    className="top-full mt-1 end-0 w-max min-w-[14rem] max-w-[min(20rem,calc(100vw-1rem))] max-h-[60vh]"
-                    itemClassName="max-md:h-11"
-                    renderTrailingIcon={item =>
-                        item.isSelected ? <Icon icon="i-lucide-check" className="ms-auto flex-shrink-0 size-4 text-n-blue-11" /> : null
-                    }
-                    onAction={onAction}
-                />
-            ) : null}
+            <HeaderActionMenu
+                isOpen={isMenuOpen}
+                asSheet={isPhone}
+                title={t('CONVERSATION.ASSIGNEE.CHANGE')}
+                menuSections={menuSections}
+                showSearch={agentsList.length > SEARCH_THRESHOLD}
+                popoverClassName="top-full mt-1 end-0 w-max min-w-[14rem] max-w-[min(20rem,calc(100vw-1rem))] max-h-[60vh]"
+                itemClassName="max-md:h-11"
+                renderTrailingIcon={item =>
+                    item.isSelected ? <Icon icon="i-lucide-check" className="ms-auto flex-shrink-0 size-4 text-n-blue-11" /> : null
+                }
+                onAction={onAction}
+                onClose={closeMenu}
+            />
         </div>
     );
 }

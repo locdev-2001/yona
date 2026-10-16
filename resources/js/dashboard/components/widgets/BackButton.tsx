@@ -7,10 +7,18 @@ interface BackButtonProps {
     backUrl?: string;
     buttonLabel?: string;
     compact?: boolean;
+    // Điện thoại: chỉ còn mũi tên trong ô chạm 44px, chữ vẫn đọc được bằng trình đọc màn hình.
+    isIconOnlyBelowMd?: boolean;
     className?: string;
 }
 
-export default function BackButton({ backUrl = '', buttonLabel = '', compact = false, className = '' }: BackButtonProps) {
+export default function BackButton({
+    backUrl = '',
+    buttonLabel = '',
+    compact = false,
+    isIconOnlyBelowMd = false,
+    className = '',
+}: BackButtonProps) {
     const goBack = () => {
         if (backUrl !== '') {
             router.visit(backUrl);
@@ -22,11 +30,13 @@ export default function BackButton({ backUrl = '', buttonLabel = '', compact = f
     return (
         <button
             type="button"
-            className={`flex items-center p-0 font-normal cursor-pointer text-n-slate-11 ${compact ? 'text-sm' : 'text-base'} ${className}`}
+            className={`flex items-center p-0 font-normal cursor-pointer text-n-slate-11 ${compact ? 'text-sm' : 'text-base'} ${
+                isIconOnlyBelowMd ? 'max-md:justify-center max-md:size-11 max-md:shrink-0' : ''
+            } ${className}`}
             onClickCapture={goBack}
         >
-            <i className="i-lucide-chevron-left -ml-1 text-lg" />
-            {buttonLabel || t('GENERAL_SETTINGS.BACK')}
+            <i className={`i-lucide-chevron-left -ml-1 text-lg ${isIconOnlyBelowMd ? 'max-md:ml-0 max-md:text-xl' : ''}`} />
+            <span className={isIconOnlyBelowMd ? 'max-md:sr-only' : ''}>{buttonLabel || t('GENERAL_SETTINGS.BACK')}</span>
         </button>
     );
 }

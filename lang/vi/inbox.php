@@ -83,6 +83,5 @@ return [
         'TAB_UNREAD' => 'Chưa đọc',
         'TAB_ALL' => 'Tất cả',
         'EMPTY_UNREAD' => 'Đã đọc hết thông báo',
-        'LAUNCHER_UNREAD' => 'Có thông báo chưa đọc',
     ],
 ];

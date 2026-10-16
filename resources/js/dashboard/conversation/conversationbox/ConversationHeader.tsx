@@ -10,7 +10,7 @@ import ChannelIcon from 'dashboard/components-next/icon/ChannelIcon';
 import { useAlert } from 'dashboard/composables/useAlert';
 import { copyTextToClipboard } from 'shared/helpers/clipboard';
 import { snoozedReopenTime } from 'dashboard/helper/snoozeHelpers';
-import { useIsLargeScreen } from 'dashboard/composables/useViewportWidth';
+import { useIsLargeScreen, useIsPhoneScreen } from 'dashboard/composables/useViewportWidth';
 import { useObservedWidth } from 'dashboard/composables/useObservedWidth';
 import { t } from '../../../i18n';
 import type { DashboardPageProps } from '../../types';
@@ -20,6 +20,7 @@ import { useContactAvailabilityStatus } from 'dashboard/realtime/hooks';
 import type { AvailabilityStatus } from 'dashboard/constants/globals';
 import AssigneeAction from './AssigneeAction';
 import MoreActions from './MoreActions';
+import ResolveAction from './ResolveAction';
 import SidepanelSwitch from './SidepanelSwitch';
 import ConversationSearchBar from './search/ConversationSearchBar';
 
@@ -31,6 +32,9 @@ import ConversationSearchBar from './search/ConversationSearchBar';
 // (LARGE_SCREEN_BREAKPOINT) mũ khung chat gom về MỘT dòng thay vì hai — nền tảng
 // nằm ở badge của avatar, hành động thu thành nút icon, mã hội thoại nhường chỗ.
 // Từ 1280px trở lên giữ nguyên bản gốc từng pixel.
+//
+// Điện thoại (< 768px): người phụ trách và trạng thái xuống một dải hai nút 44px dưới
+// mũ, có nhãn đầy đủ, menu mở dạng bottom sheet; mũ nhường chỗ cho tên khách.
 //
 // Ba cột + panel phải mở thì mũ còn ~460px dù khung nhìn rộng: dưới ngưỡng này nút
 // phụ trách và trạng thái thu về avatar/chấm màu để tên khách không bị ép mất.
@@ -46,6 +50,7 @@ export default function ConversationHeader({
     const { selectedConversation, accountId, listFilters, teamId } = useConversation();
     const { inboxes = [] } = usePage<DashboardPageProps>().props;
     const isWideLayout = useIsLargeScreen();
+    const isPhone = useIsPhoneScreen();
     const [isSearchOpen, setSearchOpen] = useState(false);
     const [wideHeaderRef, wideHeaderWidth] = useObservedWidth<HTMLDivElement>();
     const isActionsCompact = wideHeaderWidth > 0 && wideHeaderWidth < FULL_ACTION_LABELS_MIN_WIDTH;
@@ -63,7 +68,7 @@ export default function ConversationHeader({
             sm
             icon="i-lucide-search"
             title={t('CONVERSATION.SEARCH_IN_CONVERSATION.OPEN')}
-            className="!rounded-full"
+            className="!rounded-full max-md:!size-11"
             onClick={() => setSearchOpen(true)}
         />
     );
@@ -90,26 +95,25 @@ export default function ConversationHeader({
         }
     };
 
-    if (!isWideLayout && isSearchOpen) {
-        return (
+    if (!isWideLayout) {
+        const headerRow = isSearchOpen ? (
             <div
                 data-testid="conversation-header"
-                className={`flex flex-row items-center flex-1 w-full min-w-0 px-2 h-12 ${className}`}
+                className={`flex flex-row items-center flex-1 w-full min-w-0 px-2 h-12 max-md:h-14 ${className}`}
             >
                 <ConversationSearchBar onClose={closeSearch} />
             </div>
-        );
-    }
-
-    if (!isWideLayout) {
-        return (
+        ) : (
             <div
                 data-testid="conversation-header"
-                className={`flex flex-row items-center justify-between gap-2 flex-1 w-full min-w-0 px-2 h-12 ${className}`}
+                className={`flex flex-row items-center justify-between gap-2 flex-1 w-full min-w-0 px-2 h-12 max-md:h-14 ${className}`}
             >
                 <div className="flex items-center justify-start min-w-0 flex-1 gap-2">
                     {showBackButton ? (
-                        <BackButton backUrl={conversationListPageURL({ accountId, filters: listFilters, teamId })} />
+                        <BackButton
+                            backUrl={conversationListPageURL({ accountId, filters: listFilters, teamId })}
+                            isIconOnlyBelowMd
+                        />
                     ) : null}
                     <Avatar
                         name={currentContact.name ?? ''}
@@ -130,11 +134,23 @@ export default function ConversationHeader({
                         ) : null}
                     </div>
                 </div>
-                <div className="flex flex-row items-center justify-end flex-shrink-0 gap-1 header-actions-wrap">
+                <div className="flex flex-row items-center justify-end flex-shrink-0 gap-1 header-actions-wrap max-md:[&_[data-testid=sidepanel-switch]_button]:!size-11">
                     {searchButton}
                     <SidepanelSwitch />
-                    <AssigneeAction isCompact />
-                    <MoreActions isCompact />
+                    {isPhone ? null : <AssigneeAction isCompact />}
+                    <MoreActions isCompact showResolveAction={!isPhone} triggerClassName="max-md:!size-11" />
+                </div>
+            </div>
+        );
+
+        if (!isPhone) return headerRow;
+
+        return (
+            <div className="flex flex-col flex-none w-full min-w-0 border-b border-n-weak bg-n-surface-panel">
+                {headerRow}
+                <div data-testid="conversation-action-strip" className="flex gap-2 px-3 pb-2">
+                    <AssigneeAction isStretched />
+                    <ResolveAction isStretched />
                 </div>
             </div>
         );

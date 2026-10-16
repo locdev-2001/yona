@@ -43,6 +43,7 @@ return [
         'UNREAD' => '{count} unread conversations',
         'STATUS' => 'Status',
         'CHANNEL' => 'Channel',
+        'ALL_CHANNELS' => 'All channels',
         'LABEL' => 'Label',
         'SORT' => 'Sort',
         'ADVANCED' => 'Advanced filters',

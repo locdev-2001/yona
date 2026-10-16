@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-import { LARGE_SCREEN_BREAKPOINT, SMALL_SCREEN_BREAKPOINT } from 'dashboard/constants/globals';
+import { LARGE_SCREEN_BREAKPOINT, PHONE_SCREEN_BREAKPOINT, SMALL_SCREEN_BREAKPOINT } from 'dashboard/constants/globals';
 
 // Nguồn duy nhất cho "màn hình rộng bao nhiêu" ở phía dashboard — thay cho
 // `useWindowSize()` của @vueuse. Mọi quyết định bố cục theo
@@ -21,6 +21,15 @@ export function useViewportWidth(): number {
     }, []);
 
     return width;
+}
+
+/** Hẹp hơn `md` (768px) — điện thoại. */
+export function isPhoneScreen(viewportWidth: number): boolean {
+    return viewportWidth > 0 && viewportWidth < PHONE_SCREEN_BREAKPOINT;
+}
+
+export function useIsPhoneScreen(): boolean {
+    return isPhoneScreen(useViewportWidth());
 }
 
 /** Hẹp hơn `lg` (1024px) — điện thoại và tablet dọc: bố cục hai-màn. */

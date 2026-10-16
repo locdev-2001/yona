@@ -10,7 +10,7 @@ import ConversationBox from './conversationbox/ConversationBox';
 import ConversationSidebar from './conversationbox/ConversationSidebar';
 import OnboardingView from './conversationbox/OnboardingView';
 import { useShowAdminOnboarding } from './conversationbox/useShowAdminOnboarding';
-import { showConversationList as computeShowList, showMessageView as computeShowMessageView } from './layoutMode';
+import { isThreadOpen, showConversationList as computeShowList, showMessageView as computeShowMessageView } from './layoutMode';
 
 // Port từ routes/dashboard/conversation/ConversationView.vue — trang 3 cột
 // (Sidebar shell + ChatList + ConversationBox). Layout expanded (⇥) như gốc:
@@ -30,7 +30,7 @@ interface Props {
 
 function ConversationLayout({ conversationId, foldersId }: { conversationId: number; foldersId: number }) {
     const { isOnExpandedLayout, selectedConversation, isComposing } = useConversation();
-    const hasOpenThread = Boolean(conversationId) || isComposing;
+    const hasOpenThread = isThreadOpen(conversationId, isComposing);
     const showConversationList = computeShowList(isOnExpandedLayout, hasOpenThread);
     const showMessageView = computeShowMessageView(isOnExpandedLayout, hasOpenThread);
     // Cột phải luôn dựng khi có hội thoại: mở thì là panel Liên hệ, đóng thì
