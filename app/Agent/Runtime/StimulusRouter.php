@@ -2,9 +2,7 @@
 
 namespace App\Agent\Runtime;
 
-use App\Agent\Contracts\Ports\ConversationActionWriter;
 use App\Agent\Contracts\Ports\ConversationReader;
-use App\Agent\Contracts\Ports\EphemeralStore;
 use App\Agent\Contracts\Ports\ModelSpend;
 use App\Agent\Contracts\Ports\StimulusSink;
 use App\Agent\ValueObjects\AgentNotice;
@@ -20,13 +18,10 @@ use Carbon\CarbonImmutable;
 // quyết định lúc xếp hàng.
 final class StimulusRouter implements StimulusSink
 {
-    private const NOTICE_TTL_SECONDS = 2 * 86_400;
-
     public function __construct(
         private readonly ConversationReader $reader,
         private readonly ModelSpend $spend,
-        private readonly ConversationActionWriter $writer,
-        private readonly EphemeralStore $store,
+        private readonly DailyNotice $dailyNotice,
         private readonly TurnScheduler $scheduler,
         private readonly TurnSettings $settings,
     ) {}
@@ -68,11 +63,7 @@ final class StimulusRouter implements StimulusSink
             return false;
         }
 
-        $noticeKey = "budget-notice:{$snapshot->ref->conversationId}:{$now->format('Y-m-d')}";
-
-        if ($this->store->add($noticeKey, 1, self::NOTICE_TTL_SECONDS)) {
-            $this->writer->postNotice($snapshot->ref, (int) $snapshot->aiAgentId, AgentNotice::BudgetExhausted);
-        }
+        $this->dailyNotice->post($snapshot->ref, (int) $snapshot->aiAgentId, AgentNotice::BudgetExhausted, $snapshot->timezone);
 
         return true;
     }

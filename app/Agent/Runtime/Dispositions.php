@@ -15,7 +15,7 @@ use Psr\Log\LoggerInterface;
 // Bảng ánh xạ DUY NHẤT từ lý do sang đường lui; thành phần khác chỉ trả lý do.
 //   LoopCap, TurnFailed, ModelRefused, TextOnly → ghi chú riêng + chuyển thủ công (lượt lỗi)
 //   GuardFailed (hoặc lượt lỗi sau khi rào luật 19 đã từ chối) → câu giữ chân chuẩn + bàn giao
-//   WindowClosed → ghi chú riêng
+//   WindowClosed → ghi chú riêng, tối đa một lần mỗi ngày (DailyNotice)
 // Ghi chú không nhắc tên ai.
 final class Dispositions
 {
@@ -24,20 +24,24 @@ final class Dispositions
     public function __construct(
         private readonly ConversationActionWriter $writer,
         private readonly UnitOfWork $unitOfWork,
+        private readonly DailyNotice $dailyNotice,
         private readonly LoggerInterface $logger,
     ) {}
 
-    public function fallBack(FallbackReason $reason, ConversationRef $conversation, int $aiAgentId, ?string $customerQuestion, bool $sawUnsourcedClaim): TurnEnd
+    public function fallBack(FallbackReason $reason, Turn $turn): TurnEnd
     {
-        $effective = $sawUnsourcedClaim && in_array($reason, [FallbackReason::LoopCap, FallbackReason::TextOnly], true)
+        $context = $turn->context;
+        $conversation = $context->conversation;
+        $aiAgentId = $context->aiAgentId;
+        $effective = $turn->sawUnsourcedClaim() && in_array($reason, [FallbackReason::LoopCap, FallbackReason::TextOnly], true)
             ? FallbackReason::GuardFailed
             : $reason;
 
         $this->logger->info('agent.turn.fallback', ['reason' => $effective->value, 'conversation_id' => $conversation->conversationId]);
 
         match ($effective) {
-            FallbackReason::WindowClosed => $this->writer->postNotice($conversation, $aiAgentId, AgentNotice::WindowClosed),
-            FallbackReason::GuardFailed => $this->holdAndHandOver($conversation, $aiAgentId, $customerQuestion),
+            FallbackReason::WindowClosed => $this->dailyNotice->post($conversation, $aiAgentId, AgentNotice::WindowClosed, $context->timezone),
+            FallbackReason::GuardFailed => $this->holdAndHandOver($conversation, $aiAgentId, $turn->customerQuestion()),
             FallbackReason::LoopCap, FallbackReason::TurnFailed, FallbackReason::ModelRefused, FallbackReason::TextOnly => $this->stopAfterFailure($conversation, $aiAgentId),
         };
 

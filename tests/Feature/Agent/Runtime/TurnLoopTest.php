@@ -509,6 +509,25 @@ it('skips the model when the channel window is already closed at wake-up', funct
         ->and(TurnKit::aiNotes($conversation))->toHaveCount(1);
 });
 
+it('leaves at most one closed-window note per conversation per day however often the turn wakes', function () {
+    ['conversation' => $conversation] = TurnKit::autoConversation();
+    $conversation->inbox->channel->forceFill(['additional_attributes' => ['agent_reply_time_window' => 1]])->save();
+    $model = TurnKit::model([]);
+    $wake = function (string $text) use ($conversation) {
+        TurnKit::customerSays($conversation, $text);
+        Message::query()->where('conversation_id', $conversation->id)->update(['created_at' => now()->subHours(2)]);
+        TurnKit::runPendingTurns();
+    };
+
+    $wake('Shop ơi');
+    $wake('Có ai không?');
+    $this->travel(1)->days();
+    $wake('Shop ơi còn bán không?');
+
+    expect($model->requests)->toBeEmpty()
+        ->and(TurnKit::aiNotes($conversation))->toHaveCount(2);
+});
+
 it('schedules the turn on the ai queue after the channel quiet window', function () {
     ['conversation' => $conversation] = TurnKit::autoConversation();
 

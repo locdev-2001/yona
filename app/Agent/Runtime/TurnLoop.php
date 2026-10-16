@@ -307,13 +307,7 @@ final class TurnLoop
 
     private function fallBack(FallbackReason $reason, Turn $turn): TurnEnd
     {
-        return $this->dispositions->fallBack(
-            $reason,
-            $turn->context->conversation,
-            $turn->context->aiAgentId,
-            $turn->customerQuestion(),
-            $turn->sawUnsourcedClaim(),
-        );
+        return $this->dispositions->fallBack($reason, $turn);
     }
 
     private function secondsLeft(Turn $turn): int

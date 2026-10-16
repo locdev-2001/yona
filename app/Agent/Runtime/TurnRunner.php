@@ -72,7 +72,7 @@ final class TurnRunner
         $turn = $this->turn($order, $snapshot, $decision->aiAgentId, $agent, $recent, $now);
 
         if (! $snapshot->canReply) {
-            return $this->dispositions->fallBack(FallbackReason::WindowClosed, $conversation, $decision->aiAgentId, $turn->customerQuestion(), false);
+            return $this->dispositions->fallBack(FallbackReason::WindowClosed, $turn);
         }
 
         $until = $now->addSeconds($this->settings->deadlineSeconds + $this->settings->floorGraceSeconds)->toDateTimeImmutable();
