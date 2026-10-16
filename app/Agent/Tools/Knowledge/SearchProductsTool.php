@@ -30,8 +30,8 @@ final class SearchProductsTool implements Tool
     {
         return new ToolSpec(
             self::NAME,
-            'Find the shop\'s products: name, price, old price, sizes/colours and which are out of stock, stock note, '
-            .'and the product id needed by send_product_card. Use it whenever the customer asks about a product, wants '
+            'Find the shop\'s products: name, price, old price, sizes/colours (`available` ones can be ordered now, '
+            .'`out_of_stock` ones cannot), stock note, and the product id needed by send_product_card. Use it whenever the customer asks about a product, wants '
             .'suggestions, or before quoting a price. Keywords match without Vietnamese accents; leave query out to list '
             .'the catalogue. Prices are integers in the smallest currency unit (VND). Only these results, search_knowledge '
             .'results and staff messages are a source for prices and stock.',
@@ -74,7 +74,7 @@ final class SearchProductsTool implements Tool
             'max_quantity' => $product->maxQuantity,
             'variants' => $product->variants === [] ? null : array_map(fn (array $variant) => array_filter([
                 'name' => $variant['name'],
-                'options' => $variant['options'],
+                'available' => array_values(array_diff($variant['options'], $variant['unavailable'])),
                 'out_of_stock' => $variant['unavailable'] === [] ? null : $variant['unavailable'],
             ], fn (mixed $value) => $value !== null), $product->variants),
             'description' => $product->description,

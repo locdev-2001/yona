@@ -26,8 +26,9 @@ final class SendProductCardTool implements Tool
             self::NAME,
             'Show the customer the shop\'s own product card(s): photo, price, sizes/colours and an order button, exactly as the '
             .'shop made them. Use it when you suggest or the customer asks about specific products, 1 to '.self::MAX_PRODUCTS.' at a '
-            .'time, with ids from search_products or search_knowledge. It does not end the turn: afterwards end it with one short '
-            .'reply (do not repeat the card\'s details) or wait_for_customer.',
+            .'time, with ids from search_products or search_knowledge. Show a product\'s card once per conversation: for a product '
+            .'already shown, just reply. It does not end the turn: afterwards end it with one short reply that does not repeat '
+            .'the card or its caption, or wait_for_customer.',
             [
                 'type' => 'object',
                 'properties' => [

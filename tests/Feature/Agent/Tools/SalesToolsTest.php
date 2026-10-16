@@ -79,7 +79,7 @@ it('finds products without accents and shows prices, sizes out of stock and the 
             'stock' => 'Còn hàng',
             'orderable_in_card' => true,
         ])
-        ->and($found[0]['variants'])->toBe([['name' => 'Size', 'options' => ['M', 'L', 'XL'], 'out_of_stock' => ['XL']]]);
+        ->and($found[0]['variants'])->toBe([['name' => 'Size', 'available' => ['M', 'L'], 'out_of_stock' => ['XL']]]);
 });
 
 it('sends the shop\'s own card, then a short reply citing the product source', function () {
