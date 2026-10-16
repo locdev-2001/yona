@@ -123,3 +123,30 @@ export function messageSenderKey(message: ConversationMessage): string | number 
 
     return message.sender_id ?? message.sender?.id;
 }
+
+/**
+ * Tên đứng trước dòng xem trước tin cuối ở danh sách hội thoại. Tin của chính
+ * người đang xem là "Bạn"; tin khách 1-1 không cần tên vì tiêu đề thẻ đã là khách;
+ * tin hoạt động không có người gửi.
+ */
+export function previewSenderLabel(
+    message: ConversationMessage,
+    viewer: { currentUserId: number | null; channelAccountName: string },
+): string | null {
+    if (message.message_type === MESSAGE_TYPES.ACTIVITY) return null;
+
+    const sender = message.sender ?? null;
+    if (sender?.type === 'user' && sender.id === viewer.currentUserId) return t('CHAT_LIST.SENDER_YOU');
+
+    const isIncoming = message.message_type === MESSAGE_TYPES.INCOMING;
+    if (isIncoming && !readGroupSender(message.content_attributes ?? {})) return null;
+
+    const identity: ConversationSenderIdentity = {
+        channelAccount: viewer.channelAccountName
+            ? { name: viewer.channelAccountName, avatarUrl: '', platform: null }
+            : null,
+        installation: null,
+    };
+
+    return resolveMessageSender(message, identity).name || null;
+}

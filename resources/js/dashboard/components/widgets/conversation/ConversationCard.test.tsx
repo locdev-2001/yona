@@ -5,6 +5,8 @@ import { setLocale } from '../../../../i18n';
 import ConversationCard from './ConversationCard';
 import type { ContactMeta, Conversation } from '../../../conversation/types';
 
+vi.mock('@inertiajs/react', () => ({ usePage: () => ({ props: { auth: { user: { id: 2 } } } }) }));
+
 vi.mock('dashboard/realtime/hooks', () => ({
     useContactAvailabilityStatus: () => 'offline',
 }));
@@ -112,6 +114,33 @@ describe('thẻ hội thoại trong danh sách', () => {
         const marks = [...container.querySelectorAll('mark')].map(mark => mark.textContent);
 
         expect(marks).toEqual(['Nguyen', 'Nguyên']);
+    });
+
+    it.each([
+        { case: 'tin của chính mình mở đầu bằng "You:", bỏ icon trả lời', last: { message_type: 1, sender: { id: 2, name: 'Robert Nguyen', type: 'user' } }, prefix: 'You: ' },
+        { case: 'tin nhóm mở đầu bằng tên thành viên', last: { message_type: 0, content_attributes: { sender: { external_id: 'u9', name: 'Kha Phan' } } }, prefix: 'Kha Phan: ' },
+    ])('dòng xem trước: $case', ({ last, prefix }) => {
+        const chat = {
+            ...CONVERSATION,
+            last_non_activity_message: { id: 1, content: 'Chào chị', attachments: [], content_attributes: {}, ...last },
+        } as unknown as Conversation;
+
+        const { getByTestId } = render(<ConversationCard chat={chat} currentContact={CONTACT} inbox={ZALO_INBOX} />);
+        const sender = getByTestId('preview-sender');
+
+        expect(sender.textContent).toBe(prefix);
+        expect(sender.parentElement?.textContent?.trim()).toBe(`${prefix}Chào chị`);
+    });
+
+    it('tin khách 1-1 không mang tên người gửi', () => {
+        const chat = {
+            ...CONVERSATION,
+            last_non_activity_message: { id: 1, content: 'Chào shop', message_type: 0, attachments: [], content_attributes: {} },
+        } as unknown as Conversation;
+
+        const { queryByTestId } = render(<ConversationCard chat={chat} currentContact={CONTACT} />);
+
+        expect(queryByTestId('preview-sender')).toBeNull();
     });
 
     it('không tìm thì không tô gì', () => {

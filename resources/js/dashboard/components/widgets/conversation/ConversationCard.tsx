@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { MouseEvent } from 'react';
+import { usePage } from '@inertiajs/react';
 
 import { t } from '../../../../i18n';
 import Avatar from 'dashboard/components-next/avatar/Avatar';
@@ -10,6 +11,8 @@ import type { ChannelIconInbox } from 'dashboard/components-next/icon/ChannelIco
 import CardPriorityIcon from 'dashboard/components-next/Conversation/ConversationCard/CardPriorityIcon';
 import UnreadBadge from 'dashboard/components-next/Conversation/ConversationCard/UnreadBadge';
 import { getLastMessage } from '../../../helper/conversationHelper';
+import { previewSenderLabel } from 'dashboard/components-next/message/helpers/senderIdentity';
+import type { DashboardPageProps } from '../../../types';
 import type { AgentMeta, ContactMeta, Conversation, ConversationMessage } from '../../../conversation/types';
 import InboxName from '../InboxName';
 import TimeAgo from '../../ui/TimeAgo';
@@ -128,6 +131,10 @@ export default function ConversationCard({
     );
     const hasUnread = unreadCount > 0;
     const lastMessageInChat = previewMessage ?? getLastMessage(chat);
+    const currentUserId = usePage<DashboardPageProps>().props.auth?.user?.id ?? null;
+    const lastMessageSender = lastMessageInChat
+        ? previewSenderLabel(lastMessageInChat, { currentUserId, channelAccountName: inbox.name })
+        : null;
 
     const isPinned = Boolean(chat.pinned);
     // Hàng trên cùng luôn có thời gian tương tác cuối nên luôn hiện.
@@ -271,6 +278,7 @@ export default function ConversationCard({
                     <MessagePreview
                         key="message-preview"
                         message={lastMessageInChat}
+                        senderLabel={lastMessageSender}
                         highlightQuery={previewHighlightQuery ?? highlightQuery}
                         className={`my-0 mx-2 leading-6 h-6 flex-1 min-w-0 text-sm ${messagePreviewClass}`.trim()}
                     />

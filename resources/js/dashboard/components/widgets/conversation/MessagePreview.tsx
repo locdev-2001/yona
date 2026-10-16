@@ -23,6 +23,8 @@ interface MessagePreviewProps {
     defaultEmptyMessage?: string;
     className?: string;
     highlightQuery?: string;
+    // Tên người gửi đứng trước nội dung ("Bạn", thành viên nhóm, nhân viên khác).
+    senderLabel?: string | null;
 }
 
 export default function MessagePreview({
@@ -31,6 +33,7 @@ export default function MessagePreview({
     defaultEmptyMessage = '',
     className = '',
     highlightQuery = '',
+    senderLabel = null,
 }: MessagePreviewProps) {
     const messageByAgent = message.message_type === MESSAGE_TYPES.OUTGOING;
     const isMessageAnActivity = message.message_type === MESSAGE_TYPES.ACTIVITY;
@@ -44,12 +47,13 @@ export default function MessagePreview({
             {showMessageType ? (
                 isMessagePrivate ? (
                     <span className={`${ICONS.privateNote} size-4 ${typeIconClass}`} aria-hidden="true" />
-                ) : messageByAgent ? (
+                ) : messageByAgent && !senderLabel ? (
                     <span className={`${ICONS.reply} size-4 ${typeIconClass}`} aria-hidden="true" />
                 ) : isMessageAnActivity ? (
                     <span className={`${ICONS.info} size-4 ${typeIconClass}`} aria-hidden="true" />
                 ) : null
             ) : null}
+            {senderLabel ? <span data-testid="preview-sender">{`${senderLabel}: `}</span> : null}
             {body.kind === 'sticker' ? (
                 <span>
                     <Icon icon={ICONS.sticker} className="-mt-0.5 align-middle inline-block text-n-slate-11 size-4" />{' '}

@@ -2817,6 +2817,7 @@ const messages: Record<string, unknown> = {
         "READ": "Read successfully",
         "DELIVERED": "Delivered successfully",
         "NO_MESSAGES": "No Messages",
+        "SENDER_YOU": "You",
         "NO_CONTENT": "No content available",
         "FRIEND_REQUEST": "[Friend request]",
         "HIDE_QUOTED_TEXT": "Hide Quoted Text",

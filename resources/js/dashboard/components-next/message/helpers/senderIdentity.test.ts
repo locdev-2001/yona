@@ -4,7 +4,7 @@ import type { ConversationMessage } from 'dashboard/conversation/types';
 import type { ChannelPlatform } from 'shared/constants/channelPlatform';
 import { t } from '../../../../i18n';
 import type { ConversationSenderIdentity } from '../SenderIdentityContext';
-import { externalEchoCopy, messageSenderKey, resolveMessageSender } from './senderIdentity';
+import { externalEchoCopy, messageSenderKey, previewSenderLabel, resolveMessageSender } from './senderIdentity';
 
 const ZALO: ChannelPlatform = { key: 'zalo', name: 'Zalo', logo_url: '/brand-assets/platforms/zalo.webp' };
 const YONA: ChannelPlatform = { key: 'installation', name: 'Yona', logo_url: '/brand-assets/logo_thumbnail.png' };
@@ -184,5 +184,23 @@ describe('khoá người gửi để gộp tin', () => {
         expect(messageSenderKey(message({ sender: AGENT, sender_id: 2 }))).toBe(2);
         expect(messageSenderKey(message({ sender: AGENT }))).toBe(2);
         expect(messageSenderKey(message({ sender_id: null }))).toBeUndefined();
+    });
+});
+
+describe('tên người gửi trước dòng xem trước ở danh sách hội thoại', () => {
+    const VIEWER = { currentUserId: 2, channelAccountName: 'Nguyễn Phước Lộc' };
+    const GROUP_MEMBER = { sender: { external_id: 'u9', name: 'Kha Phan', avatar: '' } };
+
+    it.each([
+        { case: 'tin của chính mình là Bạn', msg: { message_type: 1, sender: AGENT }, label: t('CHAT_LIST.SENDER_YOU') },
+        { case: 'ghi chú riêng của chính mình là Bạn', msg: { message_type: 1, private: true, sender: AGENT }, label: t('CHAT_LIST.SENDER_YOU') },
+        { case: 'nhân viên khác đứng tên', msg: { message_type: 1, sender: { ...AGENT, id: 3, name: 'Huy' } }, label: 'Huy' },
+        { case: 'bot đứng tên', msg: { message_type: 1, sender: BOT }, label: 'Bot Trợ Lý' },
+        { case: 'tin gửi từ ứng dụng kênh đứng tên tài khoản kênh', msg: { message_type: 1, content_attributes: { external_echo: true } }, label: 'Nguyễn Phước Lộc' },
+        { case: 'thành viên nhóm đứng tên', msg: { message_type: 0, sender: CONTACT, content_attributes: GROUP_MEMBER }, label: 'Kha Phan' },
+        { case: 'khách 1-1 không cần tên', msg: { message_type: 0, sender: CONTACT }, label: null },
+        { case: 'tin hoạt động không có tên', msg: { message_type: 2 }, label: null },
+    ])('$case', ({ msg, label }) => {
+        expect(previewSenderLabel(message(msg as Partial<ConversationMessage>), VIEWER)).toBe(label);
     });
 });

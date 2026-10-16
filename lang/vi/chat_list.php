@@ -165,6 +165,7 @@ return [
     'READ' => 'Đọc thành công',
     'DELIVERED' => 'Đã gửi thành công',
     'NO_MESSAGES' => 'Không có tin nhắn',
+    'SENDER_YOU' => 'Bạn',
     'NO_CONTENT' => 'Không có nội dung',
     // Mở rộng của Yona: nhãn thẻ hội thoại cho năng lực `friend_request`.
     'FRIEND_REQUEST' => '[Lời mời kết bạn]',

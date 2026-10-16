@@ -2817,6 +2817,7 @@ const messages: Record<string, unknown> = {
         "READ": "Đọc thành công",
         "DELIVERED": "Đã gửi thành công",
         "NO_MESSAGES": "Không có tin nhắn",
+        "SENDER_YOU": "Bạn",
         "NO_CONTENT": "Không có nội dung",
         "FRIEND_REQUEST": "[Lời mời kết bạn]",
         "HIDE_QUOTED_TEXT": "Ẩn thư trích dẫn",
