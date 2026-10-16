@@ -1,74 +1,76 @@
-import { useEffect, useMemo, useState } from 'react';
+import { memo, useEffect, useMemo, useState } from 'react';
 import type { MouseEvent } from 'react';
-import { router, usePage } from '@inertiajs/react';
+import { router } from '@inertiajs/react';
 
 import ConversationCard from '../../components/widgets/conversation/ConversationCard';
 import ConversationContextMenu from '../../components/widgets/conversation/conversationCardComponents/ConversationContextMenu';
-import type {
-    PinMoveActions,
-    PinMoveDirection,
-} from '../../components/widgets/conversation/conversationCardComponents/ConversationContextMenu';
-import { useBulkSelection } from 'dashboard/composables/useBulkActions';
-import { conversationUrl } from 'dashboard/helper/URLHelper';
+import type { PinMoveDirection } from '../../components/widgets/conversation/conversationCardComponents/ConversationContextMenu';
 import type { DashboardPageProps } from '../../types';
-import { useConversation } from '../ConversationContext';
-import { useMarkUnreadAndLeave } from '../useMarkUnreadAndLeave';
 import type { Conversation, ConversationMessage } from '../types';
 import { matchedMessagePreview, withFocusMessage } from './listSearch';
 
+type DashboardInbox = NonNullable<DashboardPageProps['inboxes']>[number];
+
+// Thao tác dùng chung cho mọi thẻ, ConversationList giữ ổn định tham chiếu.
+export interface ConversationItemActions {
+    markMessagesRead: (conversationId: number) => unknown;
+    markUnreadAndLeave: (conversationId: number) => unknown;
+    setConversationPinned: (conversationId: number, pinned: boolean) => unknown;
+    focusMessage: (messageId: number) => unknown;
+    movePin: (conversationId: number, direction: PinMoveDirection) => void;
+    selectConversation?: (conversationId: number, inboxId: number) => void;
+    deSelectConversation?: (conversationId: number, inboxId: number) => void;
+}
+
 // Port từ dashboard/components/ConversationItem.vue — cắt: expanded layout.
-// Bulk select đọc qua BulkSelectionContext (thay inject
-// 'isConversationSelected'/'selectConversation' của ChatList.vue). Menu thao tác
-// mở bằng chuột phải hoặc nút "…" trên thẻ — cùng một menu.
+// Thẻ không đọc context: mọi dữ liệu đến qua props giá trị nguyên thuỷ hoặc tham
+// chiếu ổn định, để `memo` chỉ vẽ lại thẻ có hội thoại thật sự đổi khi danh sách
+// nhận cập nhật realtime. Menu thao tác mở bằng chuột phải hoặc nút "…" trên thẻ.
 interface ConversationItemProps {
     source: Conversation;
+    inbox?: DashboardInbox;
+    // URL mở hội thoại theo bộ lọc đang xem của danh sách.
+    conversationPath: string;
+    actions: ConversationItemActions;
+    isActiveChat?: boolean;
+    isSelecting?: boolean;
+    isSelected?: boolean;
     showAssignee?: boolean;
-    // Tab hội thoại lọc sẵn đang mở (mention…) — quyết định URL của thẻ như gốc.
-    conversationType?: string;
+    searchQuery?: string;
     // Mục "Hội thoại" của ô tìm: dòng xem trước là tin khớp, bấm thẻ nhảy tới tin đó.
     matchedMessage?: ConversationMessage | null;
     // Thẻ đã ghim trong danh sách xếp được: các mục đổi chỗ trong nhóm ghim.
-    pinMoves?: PinMoveActions | null;
+    isSortablePin?: boolean;
+    canMovePinUp?: boolean;
+    canMovePinDown?: boolean;
 }
 
-export default function ConversationItem({
+function ConversationItem({
     source,
+    inbox: knownInbox,
+    conversationPath: listConversationPath,
+    actions,
+    isActiveChat = false,
+    isSelecting = false,
+    isSelected = false,
     showAssignee = false,
-    conversationType = '',
+    searchQuery = '',
     matchedMessage = null,
-    pinMoves = null,
+    isSortablePin = false,
+    canMovePinUp = false,
+    canMovePinDown = false,
 }: ConversationItemProps) {
-    const {
-        accountId,
-        inboxId,
-        teamId,
-        label,
-        conversationId,
-        searchQuery,
-        markMessagesRead,
-        setConversationPinned,
-        focusMessage,
-    } = useConversation();
-    const markUnreadAndLeave = useMarkUnreadAndLeave(conversationType);
-    const bulkSelection = useBulkSelection();
-    const isSelecting = bulkSelection?.isSelecting ?? false;
-    const isSelected = bulkSelection?.isConversationSelected(source.id) ?? false;
-    const { inboxes = [] } = usePage<DashboardPageProps>().props;
-
     const chatMetadata = source.meta || {};
     const assignee = chatMetadata.assignee || {};
     const currentContact = chatMetadata.sender || { id: 0, name: null };
 
-    const isActiveChat = conversationId === source.id;
-    const inbox = inboxes.find(item => item.id === source.inbox_id) ?? {
-        id: source.inbox_id,
-        name: '',
-        channel_type: '',
-    };
+    const inbox = useMemo(
+        () => knownInbox ?? { id: source.inbox_id, name: '', channel_type: '' },
+        [knownInbox, source.inbox_id],
+    );
     // Dòng trên của thẻ luôn là nền tảng + hộp thư, kể cả khi account chỉ có một hộp thư.
     const showInboxName = Boolean(inbox.name);
 
-    const listConversationPath = conversationUrl({ accountId, inboxId, teamId, label, conversationType, id: source.id });
     const conversationPath = matchedMessage ? withFocusMessage(listConversationPath, matchedMessage.id) : listConversationPath;
     const previewMessage = useMemo(
         () => (matchedMessage ? matchedMessagePreview(matchedMessage, searchQuery) : undefined),
@@ -86,34 +88,35 @@ export default function ConversationItem({
     const closeContextMenu = () => setContextMenu(null);
 
     const onTogglePin = () => {
-        void setConversationPinned(source.id, !source.pinned);
+        void actions.setConversationPinned(source.id, !source.pinned);
         closeContextMenu();
     };
 
-    const contextMenuPinMoves = pinMoves
+    const contextMenuPinMoves = isSortablePin
         ? {
-              ...pinMoves,
+              canMoveUp: canMovePinUp,
+              canMoveDown: canMovePinDown,
               onMove: (direction: PinMoveDirection) => {
-                  pinMoves.onMove(direction);
+                  actions.movePin(source.id, direction);
                   closeContextMenu();
               },
           }
         : null;
 
     const onMarkAsRead = () => {
-        void markMessagesRead(source.id);
+        void actions.markMessagesRead(source.id);
         closeContextMenu();
     };
 
     const onMarkAsUnread = () => {
-        void markUnreadAndLeave(source.id);
+        void actions.markUnreadAndLeave(source.id);
         closeContextMenu();
     };
 
     const onCardClick = (event: MouseEvent<HTMLDivElement>) => {
         if (isSelecting) {
-            if (isSelected) bulkSelection?.deSelectConversation(source.id, source.inbox_id);
-            else bulkSelection?.selectConversation(source.id, source.inbox_id);
+            if (isSelected) actions.deSelectConversation?.(source.id, source.inbox_id);
+            else actions.selectConversation?.(source.id, source.inbox_id);
             return;
         }
 
@@ -124,7 +127,7 @@ export default function ConversationItem({
         }
 
         if (isActiveChat) {
-            if (matchedMessage) void focusMessage(matchedMessage.id);
+            if (matchedMessage) void actions.focusMessage(matchedMessage.id);
             return;
         }
         router.visit(conversationPath, { preserveState: true, preserveScroll: true });
@@ -149,8 +152,8 @@ export default function ConversationItem({
                 onClick={onCardClick}
                 onContextMenu={openContextMenu}
                 onOpenActions={setContextMenu}
-                onSelectConversation={bulkSelection?.selectConversation}
-                onDeSelectConversation={bulkSelection?.deSelectConversation}
+                onSelectConversation={actions.selectConversation}
+                onDeSelectConversation={actions.deSelectConversation}
             />
             {contextMenu ? (
                 <ConversationContextMenu
@@ -168,3 +171,5 @@ export default function ConversationItem({
         </>
     );
 }
+
+export default memo(ConversationItem);
