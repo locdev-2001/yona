@@ -41,10 +41,14 @@ import { useListSearchResults } from './useListSearchResults';
 // server (ConversationContext) và tiêu đề trang.
 // Advanced filter: modal mở/đóng + validate như gốc (teleport vào
 // #conversationFilterTeleportTarget), Apply gọi endpoint filter riêng.
-const ASSIGNEE_TAB_KEYS: { key: AssigneeTab; countKey: 'mine_count' | 'unassigned_count' | 'all_count' }[] = [
-    { key: ASSIGNEE_TYPE.ALL, countKey: 'all_count' },
+const ASSIGNEE_TAB_KEYS: {
+    key: AssigneeTab;
+    countKey: 'mine_count' | 'unassigned_count' | 'all_count';
+    badgeTone?: 'warning';
+}[] = [
     { key: ASSIGNEE_TYPE.ME, countKey: 'mine_count' },
-    { key: ASSIGNEE_TYPE.UNASSIGNED, countKey: 'unassigned_count' },
+    { key: ASSIGNEE_TYPE.UNASSIGNED, countKey: 'unassigned_count', badgeTone: 'warning' },
+    { key: ASSIGNEE_TYPE.ALL, countKey: 'all_count' },
 ];
 
 export default function ChatList({
@@ -193,8 +197,9 @@ export default function ChatList({
         (conversationType === CONVERSATION_TYPE.MENTION ? t('CHAT_LIST.MENTION_HEADING') : '') ||
         t('CHAT_LIST.TAB_HEADING');
 
-    const assigneeTabItems = ASSIGNEE_TAB_KEYS.map(({ key, countKey }) => ({
+    const assigneeTabItems = ASSIGNEE_TAB_KEYS.map(({ key, countKey, badgeTone }) => ({
         key,
+        badgeTone,
         name: t(`CHAT_LIST.ASSIGNEE_TYPE_TABS.${key}`),
         count: tabMeta[countKey] || 0,
     }));

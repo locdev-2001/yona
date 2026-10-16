@@ -3,7 +3,7 @@ import { router, usePage } from '@inertiajs/react';
 import type { UISettings } from 'dashboard/composables/useUISettings';
 import { filteredListPathname } from 'dashboard/helper/URLHelper';
 import type { DashboardPageProps } from '../types';
-import { ASSIGNEE_TAB_VALUES, ASSIGNEE_TYPE } from './constants';
+import { defaultAssigneeTab } from './defaultAssigneeTab';
 import { readListFilterQuery, readPersistedListFilters, withListFilterQuery } from './listFilters';
 import type { ConversationListFilters, ListFilterQuery, PersistedListFilters } from './listFilters';
 import type { AssigneeTab } from './types';
@@ -25,12 +25,8 @@ export function useConversationListFilters(updateUISettings: (patch: UISettings)
     const accountId = page.props.currentAccount?.id;
     const savedSettings = (page.props.auth?.user?.ui_settings?.conversations_filter_by ?? {}) as PersistedFilterSettings;
 
-    // Lệch có chủ đích: mặc định là "Tất cả", không phải "Của tôi" — chủ shop một
-    // người mở inbox lần đầu phải thấy khách đang chờ, không phải một cột trống.
     const [assigneeTab, setAssigneeTabState] = useState<AssigneeTab>(() =>
-        ASSIGNEE_TAB_VALUES.includes(savedSettings.assignee_type as AssigneeTab)
-            ? (savedSettings.assignee_type as AssigneeTab)
-            : ASSIGNEE_TYPE.ALL,
+        defaultAssigneeTab(savedSettings.assignee_type, page.props.currentAccount?.member_count),
     );
     const [persistedFilters, setPersistedFilters] = useState<PersistedListFilters>(() => readPersistedListFilters(savedSettings));
 

@@ -6,6 +6,7 @@ export interface ChatTypeTabItem {
     key: AssigneeTab;
     name: string;
     count: number;
+    badgeTone?: 'neutral' | 'warning';
 }
 
 interface ChatTypeTabsProps {
@@ -28,7 +29,7 @@ export default function ChatTypeTabs({ items, activeTab, onChatTabChange }: Chat
 
     return (
         <Tabs
-            items={items.map(item => ({ key: item.key, name: item.name, count: item.count, showBadge: true }))}
+            items={items.map(item => ({ ...item, showBadge: true }))}
             index={activeTabIndex}
             isCompact
             className="w-full ps-3 pe-0 -mt-1 py-0 [&_ul]:p-0 h-10 text-sm [&_a]:font-medium"

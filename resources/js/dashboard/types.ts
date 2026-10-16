@@ -9,6 +9,7 @@ export interface CurrentAccount {
     status: number;
     // enabled_features: chỉ chứa feature đang bật ({tên: true}).
     features: Record<string, boolean>;
+    member_count: number;
 }
 
 export interface CurrentAccountUser {
