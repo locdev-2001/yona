@@ -34,15 +34,13 @@ describe('menu tinh gọn', () => {
         expect(visible.find(item => item.name === 'Reports')?.children).toBeUndefined();
     });
 
-    it('Hộp thư chỉ còn Tất cả và Nhắc đến: kênh và nhãn lọc ở bảng Lọc, không còn là mục điều hướng', () => {
+    it('không vẽ nhóm rỗng nhưng vẫn giữ kênh đã nối và nhãn được ghim', () => {
         const inboxes = [{ id: 8, name: 'Kênh đang dùng', channel_type: 'Channel::Api' }];
         const labels = [{ id: 9, title: 'Khách mới', color: '#000000' }];
         const conversationMenu = filterMenuByRole(buildMenuItems(2, inboxes, [], labels), 'agent')[0];
-        expect(conversationMenu.children?.map(item => item.name)).toEqual(['All', 'Mentions']);
-        expect(destinationUrls([conversationMenu])).toEqual([
-            '/app/accounts/2/dashboard',
-            '/app/accounts/2/mentions/conversations',
-        ]);
+        expect(conversationMenu.children?.map(item => item.name)).toEqual(['All', 'Channels', 'Labels']);
+        expect(destinationUrls([conversationMenu])).toContain('/app/accounts/2/conversations?inbox=8');
+        expect(filterMenuByRole(buildMenuItems(2), 'agent')[0].children?.map(item => item.name)).toEqual(['All']);
     });
 
     it('nhân viên vẫn có sticker và câu trả lời mẫu, không thấy quản trị hoặc báo cáo', () => {

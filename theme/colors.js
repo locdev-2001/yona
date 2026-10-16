@@ -238,8 +238,6 @@ export const colors = {
       active: 'rgb(var(--surface-active) / <alpha-value>)',
       app: 'rgb(var(--surface-app) / <alpha-value>)',
       sidebar: 'rgb(var(--surface-sidebar) / <alpha-value>)',
-      rail: 'rgb(var(--surface-rail) / <alpha-value>)',
-      'rail-unread': 'rgb(var(--surface-rail-unread) / <alpha-value>)',
       list: 'rgb(var(--surface-list) / <alpha-value>)',
       canvas: 'rgb(var(--surface-canvas) / <alpha-value>)',
       panel: 'rgb(var(--surface-panel) / <alpha-value>)',

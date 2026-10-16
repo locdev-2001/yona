@@ -160,8 +160,6 @@
     // Bề mặt theo vai: nền khung nội dung tối nhất, cột và thẻ sáng dần lên một bậc.
     --surface-app: 24 25 27;
     --surface-sidebar: var(--surface-app);
-    --surface-rail: 1 23 64;
-    --surface-rail-unread: 0 186 253;
     --surface-list: 28 29 32;
     --surface-canvas: 17 17 19;
     --surface-panel: 28 29 32;
@@ -177,8 +175,7 @@
 
 // Logo mark lấy từ cấu hình thương hiệu (màu tối, không có bản cho nền tối): đặt trên
 // ô sáng như icon ứng dụng để không chìm.
-.dark .brand-mark,
-.sidebar-rail .brand-mark {
+.dark .brand-mark {
   background-color: rgb(255 255 255 / 0.92);
   padding: 1px;
 }

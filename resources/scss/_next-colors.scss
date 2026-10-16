@@ -138,8 +138,6 @@
     // đúng một bậc đậm hơn nền đó.
     --surface-app: 255 255 255;
     --surface-sidebar: var(--surface-app);
-    --surface-rail: 1 23 64;
-    --surface-rail-unread: 0 186 253;
     --surface-list: 255 255 255;
     --surface-canvas: 248 250 253;
     --surface-panel: 255 255 255;
@@ -175,37 +173,5 @@
     --call-widget-sub-text: 173, 177, 184, 1;
   }
 
-  // Rail điều hướng là một đảo nền navy: chữ, hover, đang chọn của mọi nút bên trong
-  // đổi sang thang sáng. Lớp phủ mở từ rail (menu, popover) lấy lại thang của trang
-  // nhờ bản lưu trên chính rail, nên chạy đúng cả giao diện sáng lẫn tối.
-  .sidebar-rail {
-    --page-slate-10: var(--slate-10);
-    --page-slate-11: var(--slate-11);
-    --page-slate-12: var(--slate-12);
-    --page-surface-hover: var(--surface-hover);
-    --page-surface-selected: var(--surface-selected);
-    --page-surface-field: var(--surface-field);
-    --page-surface-field-hover: var(--surface-field-hover);
-  }
-
-  .sidebar-rail > * {
-    --slate-10: 175 192 218;
-    --slate-11: 175 192 218;
-    --slate-12: 255 255 255;
-    --surface-hover: 255, 255, 255, 0.08;
-    --surface-selected: 255, 255, 255, 0.12;
-    --surface-field: 255, 255, 255, 0.08;
-    --surface-field-hover: 255, 255, 255, 0.14;
-  }
-
-  .sidebar-rail .overlay-surface {
-    --slate-10: var(--page-slate-10);
-    --slate-11: var(--page-slate-11);
-    --slate-12: var(--page-slate-12);
-    --surface-hover: var(--page-surface-hover);
-    --surface-selected: var(--page-surface-selected);
-    --surface-field: var(--page-surface-field);
-    --surface-field-hover: var(--page-surface-field-hover);
-  }
 }
 // NEXT COLORS END
