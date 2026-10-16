@@ -14,6 +14,7 @@ use App\Models\CannedResponse;
 use App\Models\Channel\WebWidget;
 use App\Models\Conversation;
 use App\Models\Inbox;
+use App\Models\Label;
 use App\Models\Message;
 use App\Models\PaymentAccount;
 use App\Models\Portal;
@@ -61,6 +62,7 @@ final class EvalShopSeeder
             $this->syncCannedResponses($account, $fixture);
             $this->syncHelpCenter($account, $admin, $fixture);
             $this->ensurePaymentAccount($account, $fixture);
+            $this->ensureLabels($account, $fixture);
 
             return new EvalShop($account->id, $inbox->id, $aiAgent->id, $admin->id);
         });
@@ -222,6 +224,16 @@ final class EvalShopSeeder
                     'locale' => $locale,
                     'status' => 'published',
                 ],
+            );
+        }
+    }
+
+    private function ensureLabels(Account $account, ShopFixture $fixture): void
+    {
+        foreach ($fixture->labels as $label) {
+            Label::query()->updateOrCreate(
+                ['account_id' => $account->id, 'title' => Label::normalizeTitle($label['title'])],
+                ['description' => $label['description'], 'color' => $label['color'], 'show_on_sidebar' => true],
             );
         }
     }

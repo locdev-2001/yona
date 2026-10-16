@@ -22,6 +22,7 @@ final readonly class ShopFixture
      * @param  array{name: string, website_url: string}  $inbox
      * @param  array{name: string, persona: string, instructions: string}  $aiAgent
      * @param  array<string, string>  $paymentAccount
+     * @param  list<array{title: string, description: string, color: string}>  $labels
      * @param  array{name: string, slug: string}  $portal
      * @param  list<Article>  $articles
      * @param  list<Snippet>  $cannedResponses
@@ -34,6 +35,7 @@ final readonly class ShopFixture
         public array $inbox,
         public array $aiAgent,
         public array $paymentAccount,
+        public array $labels,
         public array $portal,
         public array $articles,
         public array $cannedResponses,
@@ -77,6 +79,7 @@ final readonly class ShopFixture
             inbox: self::strings(self::section($raw, 'inbox'), ['name', 'website_url']),
             aiAgent: self::strings(self::section($raw, 'ai_agent'), ['name', 'persona', 'instructions']),
             paymentAccount: self::strings(self::section($raw, 'payment_account'), ['bank_bin', 'bank_code', 'account_number', 'account_name', 'memo_template']),
+            labels: array_map(fn (mixed $label) => self::strings(self::asArray($label, 'labels'), ['title', 'description', 'color']), self::list($raw, 'labels')),
             portal: self::strings(self::section($helpCenter, 'portal'), ['name', 'slug']),
             articles: array_map(fn (mixed $article) => self::strings(self::asArray($article, 'help_center.articles'), ['slug', 'title', 'description', 'content']), self::list($helpCenter, 'articles')),
             cannedResponses: array_map(fn (mixed $snippet) => self::strings(self::asArray($snippet, 'canned_responses'), ['short_code', 'content']), self::list($raw, 'canned_responses')),
@@ -105,7 +108,8 @@ final readonly class ShopFixture
             $lines[] = "### {$article['title']}\n{$article['description']}\n{$article['content']}";
         }
 
-        $lines = [...$lines, '', '## Tài khoản nhận chuyển khoản', "Ngân hàng {$this->paymentAccount['bank_code']}, số tài khoản {$this->paymentAccount['account_number']}, chủ tài khoản {$this->paymentAccount['account_name']}."];
+        $lines = [...$lines, '', '## Tài khoản nhận chuyển khoản', "Ngân hàng {$this->paymentAccount['bank_code']}, số tài khoản {$this->paymentAccount['account_number']}, chủ tài khoản {$this->paymentAccount['account_name']}. Thẻ chuyển khoản AI gửi trong chat ghi nội dung chuyển khoản là mã hội thoại."];
+        $lines = [...$lines, '', '## Nhãn hội thoại', ...array_map(fn (array $label) => "- {$label['title']}: {$label['description']}", $this->labels)];
 
         return implode("\n", $lines);
     }

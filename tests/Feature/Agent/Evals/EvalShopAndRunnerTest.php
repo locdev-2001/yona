@@ -21,6 +21,7 @@ use App\Models\Article;
 use App\Models\CannedResponse;
 use App\Models\Conversation;
 use App\Models\Inbox;
+use App\Models\Label;
 use App\Models\Message;
 use App\Models\PaymentAccount;
 use Tests\Feature\Agent\Evals\EvalFixtures;
@@ -41,7 +42,8 @@ test('dựng shop mẫu chạy lại không nhân đôi và đúng dữ liệu t
         ->and(AiAgent::query()->find($first->aiAgentId)->instructions)->toBe($fixture->aiAgent['instructions'])
         ->and(CannedResponse::query()->where('account_id', $first->accountId)->count())->toBe(count($fixture->cannedResponses) + count($fixture->products))
         ->and(Article::query()->where('account_id', $first->accountId)->published()->count())->toBe(count($fixture->articles))
-        ->and(PaymentAccount::query()->where('account_id', $first->accountId)->where('is_default', true)->where('allow_all_agents', true)->count())->toBe(1);
+        ->and(PaymentAccount::query()->where('account_id', $first->accountId)->where('is_default', true)->where('allow_all_agents', true)->count())->toBe(1)
+        ->and(Label::query()->where('account_id', $first->accountId)->pluck('title')->all())->toEqualCanonicalizing(array_column($fixture->labels, 'title'));
 
     $card = CannedResponse::query()->where('account_id', $first->accountId)->where('short_code', 'sp-vay-hoa-nhi')->first();
     expect($card->content_type)->toBe('cards')

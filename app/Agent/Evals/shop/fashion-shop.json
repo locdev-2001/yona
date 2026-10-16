@@ -26,6 +26,11 @@
     "account_name": "CONG TY TNHH MOC LAN EVAL",
     "memo_template": "{ma_hoi_thoai}"
   },
+  "labels": [
+    { "title": "Chốt đơn", "description": "Khách đã chốt đơn, chờ nhân viên lên đơn và giao hàng.", "color": "#16a34a" },
+    { "title": "Chờ chuyển khoản", "description": "Khách chọn chuyển khoản, chờ shop xác nhận đã nhận tiền.", "color": "#2563eb" },
+    { "title": "Khiếu nại", "description": "Khách phàn nàn về đơn hàng, giao hàng hoặc sản phẩm.", "color": "#dc2626" }
+  ],
   "help_center": {
     "portal": {
       "name": "Trợ giúp Mộc Lan",
@@ -61,7 +66,7 @@
     },
     {
       "short_code": "thanh-toan",
-      "content": "Thanh toán: nhận COD (trả tiền mặt khi nhận hàng) toàn quốc, hoặc chuyển khoản trước vào tài khoản Vietcombank số 1023456789, chủ tài khoản CONG TY TNHH MOC LAN EVAL, nội dung ghi số điện thoại đặt hàng. Chuyển khoản trước không được giảm thêm. Shop xác nhận đã nhận tiền sau khi kiểm tra tài khoản."
+      "content": "Thanh toán: nhận COD (trả tiền mặt khi nhận hàng) toàn quốc, hoặc chuyển khoản trước vào tài khoản Vietcombank số 1023456789, chủ tài khoản CONG TY TNHH MOC LAN EVAL, nội dung chuyển khoản ghi đúng mã đơn in trên thẻ chuyển khoản shop gửi trong chat (thẻ có sẵn mã QR, số tiền và nội dung). Chuyển khoản trước không được giảm thêm. Shop xác nhận đã nhận tiền sau khi kiểm tra tài khoản."
     },
     {
       "short_code": "bang-size",
