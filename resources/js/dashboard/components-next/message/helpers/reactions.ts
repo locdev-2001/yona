@@ -3,6 +3,7 @@
 // `external_id` của khách với phần còn lại. Bản ghi cũ là mảng emoji phẳng —
 // backend nâng cấp lúc đọc, FE vẫn đọc phòng thủ cả hai.
 
+import type { GroupMember } from 'dashboard/conversation/groupMembersApi';
 import type { ConversationMessage } from 'dashboard/conversation/types';
 import { MESSAGE_TYPES } from '../constants';
 import { readGroupSender } from './groupSender';
@@ -77,12 +78,16 @@ export function summarizeReactions(groups: ReactionGroup[]): ReactionSummary {
 }
 
 /**
- * Tên người thả cảm xúc phía khách: tin nhóm mang người gửi thật (`external_id`
- * trùng với `by`); hội thoại một-một chỉ có một người phía khách nên lấy tên
- * liên hệ. Không đoán được thì trả null — danh sách chỉ hiện emoji và số.
+ * Tên người thả cảm xúc phía khách: nhóm tra theo `external_id` trùng với `by`,
+ * từ danh bạ nhóm (người chỉ thả cảm xúc, chưa nhắn gì) rồi đè bằng người gửi
+ * thật trên các tin đã tải; hội thoại một-một chỉ có một người phía khách nên
+ * lấy tên liên hệ. Không đoán được thì trả null — danh sách chỉ hiện emoji và số.
  */
-export function createReactorNameResolver(messages: readonly ConversationMessage[]): (by: string) => string | null {
-    const groupMemberNames = new Map<string, string>();
+export function createReactorNameResolver(
+    messages: readonly ConversationMessage[],
+    groupMembers: readonly GroupMember[] = [],
+): (by: string) => string | null {
+    const groupMemberNames = new Map<string, string>(groupMembers.map(member => [member.external_id, member.name]));
     let contactName: string | null = null;
 
     messages.forEach(message => {

@@ -3,6 +3,7 @@ import { messageSentAt } from 'dashboard/conversation/messageTime';
 import type { ReactNode, UIEventHandler } from 'react';
 import { fromUnixTime, isToday } from 'date-fns';
 
+import type { GroupMember } from 'dashboard/conversation/groupMembersApi';
 import type { ConversationMessage } from 'dashboard/conversation/types';
 import { needsTimeDivider, resolveGroupPositions } from 'shared/helpers/messageGrouping';
 import type { GroupableMessage } from 'shared/helpers/messageGrouping';
@@ -43,7 +44,11 @@ interface MessageListProps {
     onCreateCannedResponse?: (message: ConversationMessage) => void;
     onTranslate?: (message: ConversationMessage) => void;
     onJumpToMessage?: (messageId: number) => void;
+    // Danh bạ hội thoại nhóm: đặt tên cho người thả cảm xúc chưa từng nhắn tin.
+    groupMembers?: readonly GroupMember[];
 }
+
+const NO_GROUP_MEMBERS: readonly GroupMember[] = [];
 
 const NO_REPLY_TARGETS: ReadonlyMap<number, ConversationMessage | null> = new Map();
 
@@ -107,11 +112,15 @@ const MessageList = forwardRef<HTMLUListElement, MessageListProps>(function Mess
         onCreateCannedResponse,
         onTranslate,
         onJumpToMessage,
+        groupMembers = NO_GROUP_MEMBERS,
     },
     ref,
 ) {
     const groupPositions = useMemo(() => resolveGroupPositions(messages.map(toGroupableMessage)), [messages]);
-    const resolveReactorName = useMemo(() => createReactorNameResolver(messages), [messages]);
+    const resolveReactorName = useMemo(
+        () => createReactorNameResolver(messages, groupMembers),
+        [messages, groupMembers],
+    );
 
     return (
         <ul ref={ref} className={`px-4 bg-n-surface-1 ${className}`} onScroll={onScroll}>

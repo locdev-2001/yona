@@ -15,6 +15,7 @@ import { inboxSupports } from 'shared/composables/useInboxCapabilities';
 import { t } from '../../../i18n';
 import type { DashboardPageProps } from '../../types';
 import { useConversation } from '../ConversationContext';
+import { useGroupMembers } from '../groupMembersApi';
 import type { ConversationMessage } from '../types';
 import { useFocusMessageScroll } from './useFocusMessageScroll';
 import { useScrollToLatest } from './useScrollToLatest';
@@ -96,6 +97,8 @@ export default function MessagesView() {
               };
           }
         | undefined;
+    // Một lần nạp cho cả hai nơi: tên người thả cảm xúc và gợi ý nhắc tên khi trả lời.
+    const { members: groupMembers } = useGroupMembers(accountId, currentChat.id, inboxSupports(inbox, 'group_threads'));
 
     const { replyTarget, startReply, clearReply, replyTargets } = useMessageReply({
         accountId,
@@ -237,6 +240,7 @@ export default function MessagesView() {
                 onCreateCannedResponse={setCannedSourceMessage}
                 onTranslate={isTranslationEnabled ? setTranslatingMessage : undefined}
                 onJumpToMessage={focusMessage}
+                groupMembers={groupMembers}
                 beforeAll={
                     <li className="min-h-[4rem] flex flex-shrink-0 flex-grow-0 items-center flex-auto justify-center max-w-full mt-0 mr-0 mb-1 ml-0 relative first:mt-auto last:mb-0">
                         {shouldShowSpinner && <Loader className="text-n-brand" />}
@@ -276,6 +280,7 @@ export default function MessagesView() {
                             onMessageSent={() => resizableEditorWrapperRef.current?.scheduleResetAfterSend()}
                             replyTarget={replyTarget}
                             onClearReplyTarget={clearReply}
+                            groupMembers={groupMembers}
                         />
                     </ResizableEditorWrapper>
                 </div>

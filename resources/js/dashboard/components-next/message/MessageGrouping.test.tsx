@@ -157,6 +157,21 @@ describe('viên cảm xúc dưới bong bóng', () => {
         expect(onToggleReaction).toHaveBeenCalledWith(expect.objectContaining({ id: 1 }), '👍');
     });
 
+    it('thành viên nhóm chưa nhắn tin nào vẫn hiện tên nhờ danh bạ nhóm', () => {
+        const container = render(
+            <MessageList
+                messages={[groupMessage(1, 'uid-lan', 'Lan', { reactions: [{ emoji: '👍', by: 'uid-dung' }] })]}
+                channelType="Channel::Zalo"
+                inboxCapabilities={RECEIPTS}
+                groupMembers={[{ external_id: 'uid-dung', name: 'Dung' }]}
+            />,
+        ).container;
+
+        fireEvent.click(container.querySelector('#message1 [data-yona-reactions]') as HTMLElement);
+
+        expect(screen.getAllByTestId('reaction-row').map(row => row.textContent)).toEqual(['👍Dung1']);
+    });
+
     it('hội thoại một-một: người thả phía khách là liên hệ; bản ghi cũ không rõ người thả chỉ hiện số', () => {
         const container = renderList([
             incoming(1, T0, { content_attributes: { reactions: [{ emoji: '❤️', by: 'uid-trang' }, '😮'] } }),

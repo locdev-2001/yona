@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ConversationMessage } from '../types';
@@ -97,6 +97,7 @@ import ReplyBox from './ReplyBox';
 
 const BINH_MARKDOWN = '[@Bình](mention://member/555/B%C3%ACnh) xem giúp đơn 123';
 const BINH_MENTION = { external_id: '555', name: 'Bình', offset: 0, length: 5 };
+const GROUP_MEMBERS = [{ external_id: '555', name: 'Bình', avatar: null }];
 
 function quotedMessage(): ConversationMessage {
     return {
@@ -125,19 +126,14 @@ describe('ReplyBox nhắc tên thành viên nhóm', () => {
         sendReplySpy.mockReset();
         sendMessageSpy.mockReset();
         getJsonSpy.mockReset();
-        getJsonSpy.mockImplementation((url: string) =>
-            url.endsWith('/group_members')
-                ? Promise.resolve({ payload: [{ external_id: '555', name: 'Bình', avatar: null }] })
-                : new Promise(() => undefined),
-        );
+        getJsonSpy.mockImplementation(() => new Promise(() => undefined));
         inboxCapabilities.current = ['outbound_reply_to', 'outbound_mention'];
     });
 
-    it('nạp thành viên của hội thoại và đưa cho ô soạn', async () => {
-        render(<ReplyBox />);
+    it('đưa danh bạ nhóm nhận từ khung hội thoại cho ô soạn', () => {
+        render(<ReplyBox groupMembers={GROUP_MEMBERS} />);
 
-        await waitFor(() => expect(screen.getByLabelText('members-stub').textContent).toBe('Bình'));
-        expect(getJsonSpy).toHaveBeenCalledWith('/api/v1/accounts/2/conversations/4/group_members');
+        expect(screen.getByLabelText('members-stub').textContent).toBe('Bình');
     });
 
     it('gửi chữ @Tên kèm content_attributes.mentions thay cho link mention', () => {
@@ -175,11 +171,10 @@ describe('ReplyBox nhắc tên thành viên nhóm', () => {
         );
     });
 
-    it('kênh không khai outbound_mention thì không hỏi danh sách thành viên', () => {
+    it('kênh không khai outbound_mention thì ô soạn không gợi ý thành viên', () => {
         inboxCapabilities.current = ['outbound_reply_to'];
-        render(<ReplyBox />);
+        render(<ReplyBox groupMembers={GROUP_MEMBERS} />);
 
-        expect(getJsonSpy).not.toHaveBeenCalledWith(expect.stringContaining('/group_members'));
         expect(screen.getByLabelText('members-stub').textContent).toBe('');
     });
 });

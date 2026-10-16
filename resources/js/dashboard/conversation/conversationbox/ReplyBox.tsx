@@ -40,7 +40,7 @@ import { draftKey, getDraft, removeDraft, setDraft } from '../draftApi';
 import type { Inbox } from 'dashboard/settings/inboxes/types';
 import type { DashboardPageProps } from '../../types';
 import { useConversation } from '../ConversationContext';
-import { useGroupMembers } from '../groupMembersApi';
+import type { GroupMember } from '../groupMembersApi';
 import { canPickSticker, fetchStickerSuggestions, fetchStickers } from '../stickerApi';
 import type { StickerScope } from '../stickerApi';
 import { canComposeIn } from '../compose/composeDraft';
@@ -107,13 +107,18 @@ interface ReplyBoxProps {
     // Tin đang được trả lời trích dẫn (null khi kênh không khai `outbound_reply_to`).
     replyTarget?: ConversationMessage | null;
     onClearReplyTarget?: () => void;
+    // Danh bạ hội thoại nhóm do khung hội thoại nạp một lần, dùng chung với danh sách tin.
+    groupMembers?: GroupMember[];
 }
+
+const NO_GROUP_MEMBERS: GroupMember[] = [];
 
 export default function ReplyBox({
     onToggleEditorSize,
     onMessageSent,
     replyTarget = null,
     onClearReplyTarget,
+    groupMembers = NO_GROUP_MEMBERS,
 }: ReplyBoxProps) {
     const {
         selectedConversation,
@@ -189,12 +194,8 @@ export default function ReplyBox({
         inboxSupports(inbox, 'outbound_audio') &&
         isVoiceRecordingSupported();
 
-    // Editor chỉ mở bảng thành viên ở chế độ Trả lời; nạp sẵn để đổi tab không phải chờ.
-    const { members: groupMembers } = useGroupMembers(
-        accountId,
-        conversationId,
-        inboxSupports(inbox, 'outbound_mention'),
-    );
+    // Editor chỉ mở bảng thành viên ở chế độ Trả lời, và chỉ khi kênh gửi được nhắc tên.
+    const mentionableMembers = inboxSupports(inbox, 'outbound_mention') ? groupMembers : NO_GROUP_MEMBERS;
 
     // Sticker đi thẳng, không đụng bản nháp đang gõ hay tin đang trả lời.
     const canSendSticker = canPickSticker(inbox, { isOnPrivateNote, isEditorDisabled });
@@ -712,7 +713,7 @@ export default function ReplyBox({
                     isPrivate={isOnPrivateNote}
                     channelType={channelType}
                     uiSettings={uiSettings}
-                    groupMembers={groupMembers}
+                    groupMembers={mentionableMembers}
                     onChange={setMessage}
                     onFocus={() => setIsFocused(true)}
                     onBlur={() => setIsFocused(false)}
