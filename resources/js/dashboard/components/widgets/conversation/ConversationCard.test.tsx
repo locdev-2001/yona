@@ -151,6 +151,7 @@ describe('thẻ hội thoại trong danh sách', () => {
 
     describe('dòng trên và góc phải dưới', () => {
         const ASSIGNEE = { id: 7, name: 'Robert Nguyen', available_name: 'Robert Nguyen', thumbnail: '' };
+        afterEach(() => setLocale('en'));
 
         it('dòng trên là logo nền tảng và tên hộp thư', () => {
             const { container, getByText } = render(
@@ -163,7 +164,7 @@ describe('thẻ hội thoại trong danh sách', () => {
             );
         });
 
-        it('người được giao hiện ở góc phải dưới kèm avatar, không còn ở dòng trên', () => {
+        it('người khác phụ trách thì hiện avatar và tên ở góc phải dưới, không còn ở dòng trên', () => {
             const { getByTestId } = render(
                 <ConversationCard
                     chat={CONVERSATION}
@@ -176,15 +177,35 @@ describe('thẻ hội thoại trong danh sách', () => {
             );
             const assignee = getByTestId('card-assignee');
 
+            expect(assignee.dataset.assignee).toBe('other');
             expect(assignee.textContent).toBe('Robert Nguyen');
             expect(assignee.title).toBe('Robert Nguyen');
             expect(assignee.querySelector('[data-generated-avatar], img')).not.toBeNull();
         });
 
-        it('chưa giao ai thì góc phải dưới để trống', () => {
-            const { queryByTestId } = render(
-                <ConversationCard chat={CONVERSATION} currentContact={CONTACT} inbox={ZALO_INBOX} showInboxName showAssignee />,
+        // Người dùng đang đăng nhập có id 2 (mock usePage).
+        it.each([
+            { variant: 'me', assignee: { id: 2, name: 'Tôi' }, assigneeType: 'User', text: 'Tôi phụ trách' },
+            { variant: 'other', assignee: { id: 2, name: 'Bot trả lời' }, assigneeType: 'AgentBot', text: 'Bot trả lời' },
+            { variant: 'none', assignee: {}, assigneeType: undefined, text: 'Chưa gán' },
+        ])('nhãn phụ trách theo người nhận: $variant', ({ variant, assignee, assigneeType, text }) => {
+            setLocale('vi');
+            const { getByTestId } = render(
+                <ConversationCard
+                    chat={{ ...CONVERSATION, meta: { ...CONVERSATION.meta, assignee_type: assigneeType } }}
+                    currentContact={CONTACT}
+                    assignee={assignee}
+                    showAssignee
+                />,
             );
+            const badge = getByTestId('card-assignee');
+
+            expect(badge.dataset.assignee).toBe(variant);
+            expect(badge.textContent).toBe(text);
+        });
+
+        it('tab không hiện người phụ trách thì không có nhãn', () => {
+            const { queryByTestId } = render(<ConversationCard chat={CONVERSATION} currentContact={CONTACT} assignee={ASSIGNEE} />);
 
             expect(queryByTestId('card-assignee')).toBeNull();
         });

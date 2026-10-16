@@ -3116,6 +3116,9 @@ const messages: Record<string, unknown> = {
         "IP_ADDRESS": "Địa chỉ IP",
         "CREATED_AT_LABEL": "Đã tạo",
         "NEW_MESSAGE": "Tin nhắn mới",
+        "START_NEW_CONVERSATION": "Bắt đầu hội thoại mới",
+        "DELETE_CONTACT": "Xoá liên hệ",
+        "MORE_ACTIONS": "Thao tác khác",
         "CALL": "Gọi",
         "CALL_INITIATED": "Đang gọi cho liên hệ…",
         "CALL_FAILED": "Không bắt đầu được cuộc gọi. Bạn hãy thử lại.",
@@ -4013,9 +4016,26 @@ const messages: Record<string, unknown> = {
                 "DUE": "quá hạn"
             }
         },
+        "ASSIGNEE": {
+            "LABEL": "Phụ trách",
+            "MINE": "Tôi phụ trách",
+            "UNASSIGNED": "Chưa gán",
+            "CHANGE": "Đổi người phụ trách",
+            "ASSIGN_TO": "Giao cho",
+            "ASSIGN_TO_ME": "Giao cho tôi",
+            "UNASSIGN": "Bỏ giao"
+        },
         "RESOLVE_DROPDOWN": {
-            "MARK_PENDING": "Đánh dấu chưa giải quyết",
-            "SNOOZE_UNTIL": "Báo lại",
+            "MARK_PENDING": "Chờ xử lý",
+            "SNOOZE_UNTIL": "Báo lại…",
+            "MARK_UNREAD": "Đánh dấu chưa đọc",
+            "CHANGE_STATUS": "Đổi trạng thái hội thoại",
+            "CURRENT_STATUS": {
+                "open": "Đang mở",
+                "resolved": "Đã giải quyết",
+                "pending": "Chờ xử lý",
+                "snoozed": "Báo lại"
+            },
             "SNOOZE": {
                 "TITLE": "Tạm dừng đến khi",
                 "NEXT_REPLY": "Phản hồi kế tiếp",

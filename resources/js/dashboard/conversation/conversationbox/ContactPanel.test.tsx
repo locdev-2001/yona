@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react';
+import { fireEvent, render } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
 // ContactPanel gốc: accordion ĐÓNG khi ui_settings thiếu key `is_*_open`.
@@ -59,5 +59,22 @@ describe('ContactPanel accordions', () => {
         const openHeaders = headers.filter(header => header.getAttribute('aria-expanded') === 'true');
 
         expect(openHeaders.map(header => header.textContent)).toEqual(['Previous Conversations']);
+    });
+
+    // Đang ở ngay trong hội thoại với khách nên "tin nhắn mới" không đứng ở hàng nút;
+    // nó và nút xoá vào menu ⋯, xoá ở cuối và đi qua dialog xác nhận.
+    it('keeps edit and merge in the action row and moves compose and delete into the more menu', () => {
+        const { container, getByTitle, queryByTitle } = render(<ContactPanel />);
+
+        expect(queryByTitle('New message')).toBeNull();
+        expect(queryByTitle('Delete Contact')).toBeNull();
+        expect(getByTitle('Edit Contact')).toBeTruthy();
+
+        fireEvent.click(getByTitle('More actions'));
+        const menuLabels = [...container.querySelectorAll('.overlay-surface button span.truncate')].map(
+            label => label.textContent,
+        );
+
+        expect(menuLabels).toEqual(['Start a new conversation', 'Delete contact']);
     });
 });

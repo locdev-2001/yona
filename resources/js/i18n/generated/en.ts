@@ -3116,6 +3116,9 @@ const messages: Record<string, unknown> = {
         "IP_ADDRESS": "IP Address",
         "CREATED_AT_LABEL": "Created",
         "NEW_MESSAGE": "New message",
+        "START_NEW_CONVERSATION": "Start a new conversation",
+        "DELETE_CONTACT": "Delete contact",
+        "MORE_ACTIONS": "More actions",
         "CALL": "Call",
         "CALL_INITIATED": "Calling the contact…",
         "CALL_FAILED": "Unable to start the call. Please try again.",
@@ -4013,9 +4016,26 @@ const messages: Record<string, unknown> = {
                 "DUE": "due"
             }
         },
+        "ASSIGNEE": {
+            "LABEL": "Assignee",
+            "MINE": "Assigned to me",
+            "UNASSIGNED": "Unassigned",
+            "CHANGE": "Change assignee",
+            "ASSIGN_TO": "Assign to",
+            "ASSIGN_TO_ME": "Assign to me",
+            "UNASSIGN": "Unassign"
+        },
         "RESOLVE_DROPDOWN": {
             "MARK_PENDING": "Mark as pending",
-            "SNOOZE_UNTIL": "Snooze",
+            "SNOOZE_UNTIL": "Snooze…",
+            "MARK_UNREAD": "Mark as unread",
+            "CHANGE_STATUS": "Change conversation status",
+            "CURRENT_STATUS": {
+                "open": "Open",
+                "resolved": "Resolved",
+                "pending": "Pending",
+                "snoozed": "Snoozed"
+            },
             "SNOOZE": {
                 "TITLE": "Snooze until",
                 "NEXT_REPLY": "Next reply",

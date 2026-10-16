@@ -1,28 +1,26 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import NextButton from 'dashboard/components-next/button/Button';
+import DropdownMenu from 'dashboard/components-next/dropdown-menu/DropdownMenu';
+import type { DropdownMenuItem } from 'dashboard/components-next/dropdown-menu/DropdownMenu';
 import { openCommandBar } from 'dashboard/commands/commandBarStore';
 import { useAlert } from 'dashboard/composables/useAlert';
+import { useClickAway } from 'dashboard/composables/useClickAway';
 import { useKeyboardEvents } from 'dashboard/composables/useKeyboardEvents';
 import { CMD_REOPEN_CONVERSATION, CMD_RESOLVE_CONVERSATION } from 'dashboard/helper/commandbar/events';
 import { emitter } from 'shared/helpers/emitter';
+import { isTouchOnlyDevice, shortcutLabel } from 'shared/helpers/kbd';
 import { t } from '../../../i18n';
 import { STATUS_TYPE } from '../constants';
 import { useConversation } from '../ConversationContext';
+import { statusDotColor } from '../statusAppearance';
 import type { ConversationStatus } from '../types';
+import { useMarkUnreadAndLeave } from '../useMarkUnreadAndLeave';
+import { buildStatusMenuSections } from './statusMenu';
+import type { StatusMenuAction } from './statusMenu';
 
-// Port từ components/buttons/ResolveAction.vue. Bỏ: ConversationResolveAttributesModal +
-// useConversationRequiredAttributes (EE). ButtonGroup gốc = div bọc 2 nút. Bấm Snooze gốc
-// KHÔNG đóng dropdown (chỉ mở command bar) — giữ y vậy để pixel khớp.
-//
-// `isCompact` (dưới ngưỡng ba cột): nhãn nhường chỗ cho icon để mũ khung chat gọn
-// trong một dòng; hành động và phím tắt không đổi.
-const COMPACT_ICONS = {
-    resolve: 'i-lucide-check',
-    reopen: 'i-lucide-rotate-ccw',
-    open: 'i-lucide-rotate-ccw',
-} as const;
-
+// Nút hiện trạng thái hiện tại của hội thoại, bấm mở menu đổi trạng thái.
+// `isCompact` (dưới ngưỡng ba cột): chỉ còn chấm màu để mũ khung chat gọn một dòng.
 const getConversationParams = () => {
     const allConversations = document.querySelectorAll<HTMLElement>('.conversations-list .conversation');
     const activeConversation = document.querySelector('div.conversations-list div.conversation.active');
@@ -37,42 +35,24 @@ const getConversationParams = () => {
 
 export default function ResolveAction({ isCompact = false }: { isCompact?: boolean } = {}) {
     const { selectedConversation, toggleStatus: toggleStatusRequest } = useConversation();
+    const markUnreadAndLeave = useMarkUnreadAndLeave();
     const [isLoading, setIsLoading] = useState(false);
-    const [showActionsDropdown, setShowActionsDropdown] = useState(false);
-    const dropdownRef = useRef<HTMLDivElement>(null);
+    const [isMenuOpen, setMenuOpen] = useState(false);
+    const containerRef = useRef<HTMLDivElement>(null);
 
-    const status = selectedConversation?.status;
-    const isOpen = status === STATUS_TYPE.OPEN;
-    const isPending = status === STATUS_TYPE.PENDING;
-    const isResolved = status === STATUS_TYPE.RESOLVED;
-    const isSnoozed = status === STATUS_TYPE.SNOOZED;
-    const showAdditionalActions = !isPending && !isSnoozed;
-    const showOpenButton = isPending || isSnoozed;
-
-    const closeDropdown = useCallback(() => setShowActionsDropdown(false), []);
-    const openDropdown = useCallback(() => setShowActionsDropdown(true), []);
-
-    useEffect(() => {
-        if (!showActionsDropdown) return undefined;
-        const handleClickAway = (event: globalThis.MouseEvent) => {
-            if (!dropdownRef.current?.contains(event.target as Node)) closeDropdown();
-        };
-        document.addEventListener('mousedown', handleClickAway);
-        return () => document.removeEventListener('mousedown', handleClickAway);
-    }, [showActionsDropdown, closeDropdown]);
-
-    const openSnoozeModal = () => openCommandBar({ parent: 'snooze_conversation' });
+    const closeMenu = useCallback(() => setMenuOpen(false), []);
+    useClickAway(containerRef, closeMenu, isMenuOpen);
 
     const toggleStatus = useCallback(
         (nextStatus: ConversationStatus, snoozedUntil: number | null = null) => {
-            closeDropdown();
+            closeMenu();
             setIsLoading(true);
             toggleStatusRequest({ status: nextStatus, snoozedUntil }).then(() => {
                 useAlert(t('CONVERSATION.CHANGE_STATUS'));
                 setIsLoading(false);
             });
         },
-        [closeDropdown, toggleStatusRequest],
+        [closeMenu, toggleStatusRequest],
     );
 
     const onCmdOpenConversation = useCallback(() => toggleStatus(STATUS_TYPE.OPEN), [toggleStatus]);
@@ -90,7 +70,7 @@ export default function ResolveAction({ isCompact = false }: { isCompact?: boole
     useKeyboardEvents({
         'Alt+KeyM': {
             action: () => {
-                if (showAdditionalActions && !isLoading) openDropdown();
+                if (!isLoading) setMenuOpen(true);
             },
             allowOnFocusedInput: true,
         },
@@ -120,100 +100,70 @@ export default function ResolveAction({ isCompact = false }: { isCompact?: boole
 
     if (!selectedConversation) return null;
 
+    const status = selectedConversation.status;
+    const statusLabel = t(`CONVERSATION.RESOLVE_DROPDOWN.CURRENT_STATUS.${status}`);
+    const showShortcuts = !isTouchOnlyDevice();
+    const menuSections = buildStatusMenuSections(status).map(entries => ({
+        items: entries.map(entry => ({
+            label: t(entry.labelKey),
+            value: entry.action,
+            action: entry.action,
+            icon: entry.icon,
+            shortcut: entry.shortcut,
+        })),
+    }));
+
+    const runAction: Record<StatusMenuAction, () => void> = {
+        open: onCmdOpenConversation,
+        resolve: onCmdResolveConversation,
+        pending: () => toggleStatus(STATUS_TYPE.PENDING),
+        snooze: () => {
+            closeMenu();
+            openCommandBar({ parent: 'snooze_conversation' });
+        },
+        unread: () => {
+            closeMenu();
+            void markUnreadAndLeave(selectedConversation.id);
+        },
+    };
+
+    const renderShortcut = (item: DropdownMenuItem) =>
+        showShortcuts && Array.isArray(item.shortcut) ? (
+            <kbd className="ms-auto ps-4 font-sans text-xs text-n-slate-10">{shortcutLabel(item.shortcut as string[])}</kbd>
+        ) : null;
+
     return (
-        <div className="flex relative justify-end items-center resolve-actions">
-            <div
-                className="flex-shrink-0 rounded-lg"
+        <div ref={containerRef} className="relative flex items-center flex-shrink-0 resolve-actions">
+            <NextButton
+                sm
+                slate
+                noAnimation
+                trailingIcon={!isCompact}
+                icon={isCompact ? undefined : 'i-lucide-chevron-down'}
+                title={`${t('CONVERSATION.RESOLVE_DROPDOWN.CHANGE_STATUS')}: ${statusLabel}`}
+                aria-label={`${t('CONVERSATION.RESOLVE_DROPDOWN.CHANGE_STATUS')}: ${statusLabel}`}
+                aria-haspopup="menu"
+                aria-expanded={isMenuOpen}
+                data-testid="conversation-status-button"
+                className={`!outline-0 max-md:h-11 ${isCompact ? '!px-0 w-8 max-md:w-11 justify-center' : ''}`}
+                isLoading={isLoading}
+                disabled={isLoading}
+                onClick={() => setMenuOpen(open => !open)}
             >
-                {isOpen ? (
-                    <NextButton
-                        label={isCompact ? undefined : t('CONVERSATION.HEADER.RESOLVE_ACTION')}
-                        title={t('CONVERSATION.HEADER.RESOLVE_ACTION')}
-                        icon={isCompact ? COMPACT_ICONS.resolve : undefined}
-                        sm
-                        slate
-                        noAnimation
-                        className="ltr:rounded-r-none rtl:rounded-l-none !outline-0"
-                        isLoading={isLoading}
-                        onClick={onCmdResolveConversation}
-                    />
-                ) : isResolved ? (
-                    <NextButton
-                        label={isCompact ? undefined : t('CONVERSATION.HEADER.REOPEN_ACTION')}
-                        title={t('CONVERSATION.HEADER.REOPEN_ACTION')}
-                        icon={isCompact ? COMPACT_ICONS.reopen : undefined}
-                        sm
-                        slate
-                        noAnimation
-                        className="ltr:rounded-r-none rtl:rounded-l-none !outline-0"
-                        isLoading={isLoading}
-                        onClick={onCmdOpenConversation}
-                    />
-                ) : showOpenButton ? (
-                    <NextButton
-                        label={isCompact ? undefined : t('CONVERSATION.HEADER.OPEN_ACTION')}
-                        title={t('CONVERSATION.HEADER.OPEN_ACTION')}
-                        icon={isCompact ? COMPACT_ICONS.open : undefined}
-                        sm
-                        slate
-                        noAnimation
-                        isLoading={isLoading}
-                        onClick={onCmdOpenConversation}
-                    />
-                ) : null}
-                {showAdditionalActions ? (
-                    <NextButton
-                        icon="i-lucide-chevron-down"
-                        disabled={isLoading}
-                        sm
-                        noAnimation
-                        className="ltr:rounded-l-none rtl:rounded-r-none !outline-0"
-                        slate
-                        trailingIcon
-                        onClick={openDropdown}
-                    />
-                ) : null}
-            </div>
-            {showActionsDropdown ? (
-                <div
-                    ref={dropdownRef}
-                    className={`rounded-lg overlay-surface box-content p-2 w-fit z-10 absolute block left-auto top-full mt-0.5 max-w-[12.5rem] min-w-[9.75rem] [&_ul>li]:mb-0 ${
-                        // Nút gọn nằm sát mép phải màn hẹp: neo start-0 như gốc thì
-                        // menu 156px tràn ra ngoài khung nhìn.
-                        isCompact ? 'end-0' : 'start-0 xl:start-auto xl:end-0'
-                    }`}
-                >
-                    <ul className="mb-0 list-none m-0 p-0">
-                        {!isPending ? (
-                            <li>
-                                <NextButton
-                                    label={t('CONVERSATION.RESOLVE_DROPDOWN.SNOOZE_UNTIL')}
-                                    ghost
-                                    slate
-                                    sm
-                                    start
-                                    icon="i-lucide-alarm-clock-minus"
-                                    className="w-full"
-                                    onClick={openSnoozeModal}
-                                />
-                            </li>
-                        ) : null}
-                        {!isPending ? (
-                            <li>
-                                <NextButton
-                                    label={t('CONVERSATION.RESOLVE_DROPDOWN.MARK_PENDING')}
-                                    ghost
-                                    slate
-                                    sm
-                                    start
-                                    icon="i-lucide-circle-dot-dashed"
-                                    className="w-full"
-                                    onClick={() => toggleStatus(STATUS_TYPE.PENDING)}
-                                />
-                            </li>
-                        ) : null}
-                    </ul>
-                </div>
+                {/* Một khối duy nhất: trailingIcon đảo chiều hàng, khối giữ chấm đứng trước nhãn. */}
+                <span className="flex items-center gap-1.5">
+                    <span className={`size-2 flex-shrink-0 rounded-full ${statusDotColor(status)}`} aria-hidden="true" />
+                    {isCompact ? null : <span className="whitespace-nowrap font-medium">{statusLabel}</span>}
+                </span>
+            </NextButton>
+            {isMenuOpen ? (
+                <DropdownMenu
+                    menuSections={menuSections}
+                    className="top-full mt-1 end-0 w-max min-w-[13rem]"
+                    itemClassName="max-md:h-11"
+                    renderTrailingIcon={renderShortcut}
+                    onAction={item => runAction[item.action as StatusMenuAction]()}
+                />
             ) : null}
         </div>
     );

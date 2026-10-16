@@ -22,35 +22,54 @@ import HighlightedText from 'dashboard/search/components/HighlightedText';
 import { useContactAvailabilityStatus } from 'dashboard/realtime/hooks';
 import type { AvailabilityStatus } from 'dashboard/constants/globals';
 import { ICONS } from 'dashboard/icons';
-
-const STATUS_DOT_COLOR: Record<string, string> = {
-    open: 'bg-n-teal-10',
-    pending: 'bg-n-amber-10',
-    snoozed: 'bg-n-slate-9',
-    resolved: 'bg-n-slate-9',
-};
+import { statusDotColor } from '../../../conversation/statusAppearance';
 
 function ConversationStatusChip({ status }: { status: string }) {
     if (!status) return null;
 
     return (
         <span className="inline-flex items-center gap-1 flex-shrink-0 text-xs font-medium leading-3 text-n-slate-11">
-            <span className={`size-1.5 rounded-full ${STATUS_DOT_COLOR[status] ?? 'bg-n-slate-9'}`} aria-hidden="true" />
+            <span className={`size-1.5 rounded-full ${statusDotColor(status)}`} aria-hidden="true" />
             <span className="truncate">{t(`CHAT_LIST.CHAT_STATUS_FILTER_ITEMS.${status}.TEXT`)}</span>
         </span>
     );
 }
 
-// Người được giao ở góc phải dưới thẻ, ngang hàng dòng nhãn; tên dài cắt "…".
-function CardAssignee({ assignee, isAgentBot }: { assignee: Partial<AgentMeta>; isAgentBot: boolean }) {
+// Người phụ trách ở góc phải dưới thẻ, ngang hàng dòng nhãn; tên dài cắt "…".
+// Ba biến thể để nhìn lướt là biết việc của ai: của tôi, của người khác, chưa ai nhận.
+function CardAssignee({
+    assignee,
+    isAgentBot,
+    currentUserId,
+}: {
+    assignee: Partial<AgentMeta>;
+    isAgentBot: boolean;
+    currentUserId: number | null;
+}) {
     const name = assignee.available_name || assignee.name || '';
+    const baseClass =
+        'flex items-center gap-1 min-w-0 max-w-[45%] ltr:ml-auto rtl:mr-auto px-1 rounded text-xs font-medium leading-4';
+
+    if (!name) {
+        return (
+            <span data-testid="card-assignee" data-assignee="none" className={`${baseClass} bg-n-amber-3 text-n-amber-11`}>
+                <Icon icon="i-lucide-user-x" className="flex-shrink-0 size-3.5" />
+                <span className="truncate">{t('CONVERSATION.ASSIGNEE.UNASSIGNED')}</span>
+            </span>
+        );
+    }
+
+    if (!isAgentBot && assignee.id === currentUserId) {
+        return (
+            <span data-testid="card-assignee" data-assignee="me" title={name} className={`${baseClass} bg-n-blue-3 text-n-blue-11`}>
+                <Icon icon="i-lucide-user-check" className="flex-shrink-0 size-3.5" />
+                <span className="truncate">{t('CONVERSATION.ASSIGNEE.MINE')}</span>
+            </span>
+        );
+    }
 
     return (
-        <span
-            data-testid="card-assignee"
-            title={name}
-            className="flex items-center gap-1 min-w-0 max-w-[45%] ltr:ml-auto rtl:mr-auto text-xs font-medium leading-4 text-n-slate-11"
-        >
+        <span data-testid="card-assignee" data-assignee="other" title={name} className={`${baseClass} text-n-slate-11`}>
             <Avatar
                 seed={avatarSeed(isAgentBot ? 'agent_bot' : 'user', assignee.id)}
                 name={name}
@@ -70,7 +89,7 @@ function CardAssignee({ assignee, isAgentBot }: { assignee: Partial<AgentMeta>; 
 // Checkbox chọn hàng loạt phủ lên avatar chỉ khi đang ở chế độ chọn nhiều (bật từ
 // thanh tab), không hiện khi rê chuột — xem docs/ux-decisions.md.
 // Bố cục: dòng trên = logo nền tảng + tên hộp thư; góc phải trên = thời gian tin
-// mới nhất; góc phải dưới = người được giao (chưa giao thì để trống).
+// mới nhất; góc phải dưới = người phụ trách (chưa giao thì nhãn "Chưa gán").
 interface ConversationCardProps {
     chat: Conversation;
     currentContact: ContactMeta;
@@ -140,7 +159,7 @@ export default function ConversationCard({
     // Hàng trên cùng luôn có thời gian tương tác cuối nên luôn hiện.
     const showMetaSection = true;
     const showLabelsSection = (chat.labels?.length ?? 0) > 0;
-    const showAssigneeSection = showAssignee && Boolean(assignee.name);
+    const showAssigneeSection = showAssignee;
     const isAgentBotAssignee = chat.meta?.assignee_type === 'AgentBot';
 
     const openActionsFromButton = (event: MouseEvent<HTMLButtonElement>) => {
@@ -302,7 +321,7 @@ export default function ConversationCard({
                         {showLabelsSection ? (
                             <CardLabels conversationLabels={chat.labels ?? []} className="flex-1 min-w-0 my-0" />
                         ) : null}
-                        {showAssigneeSection ? <CardAssignee assignee={assignee} isAgentBot={isAgentBotAssignee} /> : null}
+                        {showAssigneeSection ? <CardAssignee assignee={assignee} isAgentBot={isAgentBotAssignee} currentUserId={currentUserId} /> : null}
                     </div>
                 ) : null}
             </div>

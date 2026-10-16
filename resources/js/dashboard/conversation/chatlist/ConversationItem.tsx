@@ -9,9 +9,10 @@ import type {
     PinMoveDirection,
 } from '../../components/widgets/conversation/conversationCardComponents/ConversationContextMenu';
 import { useBulkSelection } from 'dashboard/composables/useBulkActions';
-import { conversationListPageURL, conversationUrl } from 'dashboard/helper/URLHelper';
+import { conversationUrl } from 'dashboard/helper/URLHelper';
 import type { DashboardPageProps } from '../../types';
 import { useConversation } from '../ConversationContext';
+import { useMarkUnreadAndLeave } from '../useMarkUnreadAndLeave';
 import type { Conversation, ConversationMessage } from '../types';
 import { matchedMessagePreview, withFocusMessage } from './listSearch';
 
@@ -45,10 +46,10 @@ export default function ConversationItem({
         conversationId,
         searchQuery,
         markMessagesRead,
-        markMessagesUnread,
         setConversationPinned,
         focusMessage,
     } = useConversation();
+    const markUnreadAndLeave = useMarkUnreadAndLeave(conversationType);
     const bulkSelection = useBulkSelection();
     const isSelecting = bulkSelection?.isSelecting ?? false;
     const isSelected = bulkSelection?.isConversationSelected(source.id) ?? false;
@@ -104,12 +105,8 @@ export default function ConversationItem({
         closeContextMenu();
     };
 
-    // markAsUnread gốc quay về danh sách — ở lại hội thoại thì nó bị đánh dấu đã đọc ngay.
     const onMarkAsUnread = () => {
-        markMessagesUnread(source.id).then(
-            () => router.visit(conversationListPageURL({ accountId, inboxId, teamId, label, conversationType })),
-            () => undefined,
-        );
+        void markUnreadAndLeave(source.id);
         closeContextMenu();
     };
 

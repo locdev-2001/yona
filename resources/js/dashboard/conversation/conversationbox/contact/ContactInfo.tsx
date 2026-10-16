@@ -6,10 +6,13 @@ import { ICONS } from 'dashboard/icons';
 import Avatar from 'dashboard/components-next/avatar/Avatar';
 import { avatarSeed } from 'shared/avatar/avatarSeed';
 import NextButton from 'dashboard/components-next/button/Button';
+import DropdownMenu from 'dashboard/components-next/dropdown-menu/DropdownMenu';
+import type { DropdownMenuItem } from 'dashboard/components-next/dropdown-menu/DropdownMenu';
 import Flag from 'dashboard/components-next/flag/Flag';
 import ConfirmContactDeleteDialog from 'dashboard/components-next/Contacts/ContactsForm/ConfirmContactDeleteDialog';
 import type { ConfirmContactDeleteDialogHandle } from 'dashboard/components-next/Contacts/ContactsForm/ConfirmContactDeleteDialog';
 import { useAlert } from 'dashboard/composables/useAlert';
+import { useClickAway } from 'dashboard/composables/useClickAway';
 import { patchJson, parseApiErrorMessage } from 'dashboard/helper/apiClient';
 import { dynamicTime } from 'shared/helpers/timeHelper';
 import { accountScopedUrl, composeConversationUrl } from 'dashboard/helper/URLHelper';
@@ -24,9 +27,9 @@ import type { FullContact } from './useContactDetails';
 // Port từ routes/dashboard/conversation/contact/ContactInfo.vue — nạp contact
 // đầy đủ qua GET /contacts/{id} (contacts/show gốc) để có created_at (tooltip ⓘ)
 // + country_code (cờ); avatar + tên + dòng email/phone/identifier/company/
-// location (copy + sửa inline qua PATCH /contacts/{id} của B2) + 4 nút: New
-// message (mở bản nháp hội thoại mới trong Inbox), Edit (→ trang contact; EditContact
-// modal nhóm sau), Merge (ContactMergeModal shell), Delete (dialog B2).
+// location (copy + sửa inline qua PATCH /contacts/{id} của B2) + nút Sửa (→ trang
+// contact), Gộp (ContactMergeModal) và menu ⋯: bắt đầu hội thoại mới (ít dùng khi
+// đang ở ngay trong hội thoại với khách) và xoá liên hệ (cuối menu, có xác nhận).
 // Bỏ: sửa tên inline, SocialIcons, mô tả, VoiceCallButton (EE).
 interface ContactInfoProps {
     contact: FullContact;
@@ -52,6 +55,9 @@ export default function ContactInfo({
     const [isEditingName, setIsEditingName] = useState(false);
     const [editName, setEditName] = useState('');
     const nameInputRef = useRef<HTMLInputElement>(null);
+    const [isMoreActionsOpen, setMoreActionsOpen] = useState(false);
+    const moreActionsRef = useRef<HTMLDivElement>(null);
+    useClickAway(moreActionsRef, () => setMoreActionsOpen(false), isMoreActionsOpen);
 
     useEffect(() => {
         if (isEditingName) nameInputRef.current?.focus();
@@ -60,6 +66,24 @@ export default function ContactInfo({
     const additionalAttributes = (contact.additional_attributes ?? {}) as Record<string, string | undefined>;
     const cityAndCountry = [additionalAttributes.city, additionalAttributes.country].filter(Boolean).join(', ');
     const contactProfileLink = accountScopedUrl(accountId, `contacts/${contact.id}`);
+
+    const moreActionItems: DropdownMenuItem[] = [
+        { label: t('CONTACT_PANEL.START_NEW_CONVERSATION'), value: 'compose', action: 'compose', icon: ICONS.message },
+        // action 'delete' tô đỏ trong DropdownMenu; xoá luôn qua dialog xác nhận.
+        ...(isAdmin ? [{ label: t('CONTACT_PANEL.DELETE_CONTACT'), value: 'delete', action: 'delete', icon: ICONS.delete }] : []),
+    ];
+
+    const onMoreAction = ({ action }: DropdownMenuItem) => {
+        setMoreActionsOpen(false);
+        if (action === 'delete') {
+            deleteDialogRef.current?.open();
+            return;
+        }
+        router.visit(composeConversationUrl({ accountId, contactId: contact.id }), {
+            preserveState: true,
+            preserveScroll: true,
+        });
+    };
 
     // startEditingName/saveNameEdit gốc: click tên hoặc ✎ → sửa inline, Enter/blur lưu, Esc hủy.
     const startEditingName = () => {
@@ -242,42 +266,42 @@ export default function ContactInfo({
                 </div>
                 <div className="flex items-center w-full mt-0.5 gap-2">
                     <NextButton
-                        title={t('CONTACT_PANEL.NEW_MESSAGE')}
-                        icon={ICONS.message}
-                        slate
-                        faded
-                        sm
-                        onClick={() =>
-                            router.visit(composeConversationUrl({ accountId, contactId: contact.id }), {
-                                preserveState: true,
-                                preserveScroll: true,
-                            })
-                        }
-                    />
-                    <NextButton
                         title={t('EDIT_CONTACT.BUTTON_LABEL')}
                         icon={ICONS.edit}
                         slate
                         faded
                         sm
+                        className="max-md:size-11"
                         onClick={() => router.visit(contactProfileLink)}
                     />
                     <ContactMergeModal
                         primaryContact={contact}
                         onMerged={mergedContact => setContact(mergedContact as FullContact)}
-                        trigger={() => <NextButton title={t('CONTACT_PANEL.MERGE_CONTACT')} icon={ICONS.merge} slate faded sm />}
+                        trigger={() => (
+                            <NextButton title={t('CONTACT_PANEL.MERGE_CONTACT')} icon={ICONS.merge} slate faded sm className="max-md:size-11" />
+                        )}
                     />
-                    {isAdmin ? (
+                    <div ref={moreActionsRef} className="relative flex items-center">
                         <NextButton
-                            title={t('DELETE_CONTACT.BUTTON_LABEL')}
-                            icon={ICONS.delete}
+                            title={t('CONTACT_PANEL.MORE_ACTIONS')}
+                            aria-haspopup="menu"
+                            aria-expanded={isMoreActionsOpen}
+                            icon={ICONS.moreActions}
                             slate
                             faded
                             sm
-                            ruby
-                            onClick={() => deleteDialogRef.current?.open()}
+                            className="max-md:size-11"
+                            onClick={() => setMoreActionsOpen(open => !open)}
                         />
-                    ) : null}
+                        {isMoreActionsOpen ? (
+                            <DropdownMenu
+                                menuItems={moreActionItems}
+                                className="top-full mt-1 start-0 w-max min-w-[13rem]"
+                                itemClassName="max-md:h-11"
+                                onAction={onMoreAction}
+                            />
+                        ) : null}
+                    </div>
                 </div>
                 {isAdmin ? (
                     <ConfirmContactDeleteDialog
