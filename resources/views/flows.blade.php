@@ -14,6 +14,7 @@
         </script>
         @include('partials.favicon')
         @include('partials.analytics')
+        @viteReactRefresh
         @vite(['resources/scss/flows.scss', 'resources/js/flows/main.tsx'])
     </head>
     <body class="h-full">

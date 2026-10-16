@@ -13,6 +13,7 @@
         </script>
         @include('partials.favicon')
         @include('partials.analytics')
+        @viteReactRefresh
         @vite(['resources/scss/survey.scss', 'resources/js/survey/main.tsx'])
     </head>
     <body class="h-full">
