@@ -52,6 +52,9 @@ abstract class TestCase extends BaseTestCase
         // treo theo DNS/timeout của máy chạy (zalo-deep-audit lô 7, mục 2).
         Http::preventStrayRequests();
 
+        // Máy đang chạy Vite dev có `public/hot` thì Inertia gọi SSR qua HTTP và bị chặn ở trên.
+        config(['inertia.ssr.enabled' => false]);
+
         // IMAP/SMTP không đi qua Http nên phải chặn riêng: mặc định máy chủ thư giả nhận mọi đăng nhập.
         $this->mailServerProbe = new FakeMailServerProbe;
         $this->app->instance(MailServerProbe::class, $this->mailServerProbe);
