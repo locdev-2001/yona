@@ -102,12 +102,17 @@ export default function ConversationList({
         [reorderPinnedConversations],
     );
 
+    // focusMessage đổi theo hội thoại đang mở; đọc qua ref để chuyển hội thoại không vẽ lại cả danh sách.
+    const focusMessageRef = useRef(focusMessage);
+    focusMessageRef.current = focusMessage;
+    const focusMatchedMessage = useCallback((messageId: number) => focusMessageRef.current(messageId), []);
+
     const itemActions = useMemo<ConversationItemActions>(
         () => ({
             markMessagesRead,
             markUnreadAndLeave,
             setConversationPinned,
-            focusMessage,
+            focusMessage: focusMatchedMessage,
             movePin,
             selectConversation: bulkSelection?.selectConversation,
             deSelectConversation: bulkSelection?.deSelectConversation,
@@ -116,7 +121,7 @@ export default function ConversationList({
             markMessagesRead,
             markUnreadAndLeave,
             setConversationPinned,
-            focusMessage,
+            focusMatchedMessage,
             movePin,
             bulkSelection?.selectConversation,
             bulkSelection?.deSelectConversation,
