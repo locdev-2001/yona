@@ -21,7 +21,6 @@ return new class extends Migration
             $table->bigInteger('replies')->default(0);
             $table->bigInteger('handoffs')->default(0);
             $table->bigInteger('failed_turns')->default(0);
-            $table->bigInteger('unsourced_blocks')->default(0);
             $table->bigInteger('model_calls')->default(0);
             $table->bigInteger('failed_calls')->default(0);
             $table->bigInteger('route_changes')->default(0);
