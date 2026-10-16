@@ -60,6 +60,12 @@ it('lets a reply state only amounts found in this turn\'s tool results', functio
     'no evidence' => ['Phí ship 30k ạ', '', false],
     'source written with a short tail' => ['Dạ combo giá 1.050.000đ ạ', '{"ok":true,"data":[{"excerpt":"Combo 1 triệu 50."}]}', true],
     'source with a one-digit tail' => ['Dạ combo giá 1.200.000đ ạ', '{"ok":true,"data":[{"excerpt":"Combo 1tr2."}]}', true],
+    'id of a saved reply is not a price' => ['Dạ áo giá 2.500đ ạ', '{"ok":true,"data":[{"ref":"canned_response:2500","kind":"canned_response","excerpt":"Áo thun trắng còn size M."}]}', false],
+    'id inside the text is not a price' => ['Dạ phí 3.100đ ạ', 'Xem bài article:3100 nhé', false],
+    'a year is not a price' => ['Dạ áo giá 2.026đ ạ', '{"ok":true,"data":[{"excerpt":"Bộ sưu tập thu đông 2026."}]}', false],
+    'a price glued to its label' => ['Dạ áo giá 450.000đ ạ', 'Áo thun Giá:450000', true],
+    'a four digit price still counts' => ['Dạ phí gói 2.500đ ạ', '{"ok":true,"data":[{"price":2500}]}', true],
+    'a price written with its unit, even in a year range' => ['Dạ áo giá 2.000đ ạ', '{"ok":true,"data":[{"excerpt":"Giá 2000đ."}]}', true],
     'reply with an ambiguous tail, even if sourced' => ['Dạ combo giá 1 triệu 50 ạ', '{"ok":true,"data":[{"excerpt":"Combo 1.050.000đ."}]}', false],
 ]);
 

@@ -10,6 +10,7 @@ namespace App\Agent\Tools\Runner;
 // Đuôi sau "triệu/tr/tỷ": một chữ số là phần lẻ ("1tr2" = 1.200.000). Hai, ba chữ số là
 // cách viết mơ hồ ("1 triệu 50" đọc được 1.050.000 lẫn 1.500.000): trong nguồn thì sinh
 // mọi cách đọc, trong câu gửi khách thì trả về ở ambiguous() để rào bắt viết đủ số.
+// Nguồn còn tính cả số trần từ 4 chữ số (giá trong JSON), trừ định danh và năm.
 final class MoneyMentions
 {
     // [đơn vị => hệ số], đơn vị dài đứng trước để "triệu" không khớp nhầm "tr".
@@ -28,6 +29,17 @@ final class MoneyMentions
 
     // Đuôi dài từ chừng này chữ số trở lên thì không còn chắc là phần lẻ.
     private const AMBIGUOUS_TAIL_DIGITS = 2;
+
+    // Trong nguồn, các đoạn này là định danh chứ không phải số tiền: trường `ref` của
+    // tool_result và mọi tham chiếu dạng `canned_response:2500` (tên máy, không dấu, nên
+    // "Giá:450000" vẫn là giá).
+    private const SOURCE_IDENTIFIERS = [
+        '/"ref"\s*:\s*(?:"[^"]*"|\d+)/u',
+        '/(?<![\p{L}\d_])[a-z][a-z0-9_]*:\d+/u',
+    ];
+
+    // Số trần 4 chữ số trong khoảng này là năm, không phải giá.
+    private const YEAR_RANGE = [1900, 2100];
 
     /** @return list<string> khoá số tiền trong câu gửi khách, không trùng, giữ thứ tự xuất hiện */
     public static function in(string $text): array
@@ -51,6 +63,11 @@ final class MoneyMentions
     private static function scan(string $text, bool $asSource): array
     {
         $text = mb_strtolower($text);
+
+        if ($asSource) {
+            $text = (string) preg_replace_callback(self::SOURCE_IDENTIFIERS, fn (array $match) => str_repeat(' ', mb_strlen($match[0])), $text);
+        }
+
         $amounts = [];
         $ambiguous = [];
         $units = implode('|', array_map(fn (string $unit) => preg_quote($unit, '/'), array_keys(self::SCALED_UNITS)));
@@ -84,7 +101,7 @@ final class MoneyMentions
         ];
 
         if ($asSource) {
-            $patterns['/(?<![\p{L}\d.,])(\d{4,})(?![\d])/u'] = fn (array $m) => ['VND:'.self::plain($m[1])];
+            $patterns['/(?<![\p{L}\d.,])(\d{4,})(?![\d])/u'] = fn (array $m) => self::isYear($m[1]) ? [] : ['VND:'.self::plain($m[1])];
         }
 
         foreach ($patterns as $pattern => $toKeys) {
@@ -109,6 +126,11 @@ final class MoneyMentions
         }
 
         return 'VND:'.self::canonical($value);
+    }
+
+    private static function isYear(string $digits): bool
+    {
+        return strlen($digits) === 4 && (int) $digits >= self::YEAR_RANGE[0] && (int) $digits <= self::YEAR_RANGE[1];
     }
 
     private static function plain(string $number): string
