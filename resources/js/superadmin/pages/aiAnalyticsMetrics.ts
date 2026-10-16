@@ -168,6 +168,11 @@ export function formatHourWithDay(iso: string): string {
     return `${weekdayLabel(parts.weekday)} ${parts.day}/${parts.month} ${parts.hour}:${parts.minute}`;
 }
 
+// Các giờ (ISO UTC) rơi vào 00:00 giờ Việt Nam: mốc đầu ngày cho trục của chuỗi theo giờ.
+export function dayStarts(hours: string[]): string[] {
+    return hours.filter(iso => vnParts(new Date(iso)).hour === '00');
+}
+
 // "T5 15/10" của một giờ (ISO UTC) theo giờ Việt Nam.
 export function formatHourAsDay(iso: string): string {
     const parts = vnParts(new Date(iso));

@@ -33,6 +33,7 @@ import { t } from '../../i18n';
 import {
     averageLatencySeconds,
     cacheHitRatio,
+    dayStarts,
     formatCompact,
     formatCount,
     formatDayKey,
@@ -54,10 +55,9 @@ import { visitWithParams } from './operationsFormat';
 
 export const PAGE_URL = '/admin/ai_analytics';
 
-const LAST_DAY = '24h';
-
 // Nhãn trục dọc dài ("$0.105", "300K") cần cột rộng hơn mặc định.
 const AXIS_WIDTH = 64;
+
 const CUSTOM = 'custom';
 
 type Option = { value: string; label: string };
@@ -556,7 +556,8 @@ export default function AiAnalytics(props: AiAnalyticsProps) {
                             summary={summaryOf(costSeries, formatUsd)}
                             dateLabel={label('CHARTS.TIME')}
                             formatDate={formatHourWithDay}
-                            formatTick={window.preset === LAST_DAY ? formatHourKey : formatHourAsDay}
+                            formatTick={unit === 'hour' ? formatHourKey : formatHourAsDay}
+                            ticks={unit === 'hour' ? undefined : dayStarts(hourlyCost.map(point => point.at))}
                             formatValue={formatUsd}
                             yAxisWidth={AXIS_WIDTH}
                         />

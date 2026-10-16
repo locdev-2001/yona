@@ -13,7 +13,7 @@ vi.mock('@inertiajs/react', () => ({
 
 import { setLocale } from '../../i18n';
 import AiAnalytics, { type AiAnalyticsProps } from './AiAnalytics';
-import { cacheHitRatio, formatHourWithDay, formatUsd, pointChange, relativeChange, sortAccounts } from './aiAnalyticsMetrics';
+import { cacheHitRatio, dayStarts, formatHourWithDay, formatUsd, pointChange, relativeChange, sortAccounts } from './aiAnalyticsMetrics';
 
 const zero = {
     turns: 0,
@@ -166,6 +166,10 @@ describe('aiAnalyticsMetrics', () => {
 
     it('hiện giờ theo giờ Việt Nam, không theo múi giờ trình duyệt', () => {
         expect(formatHourWithDay('2026-10-15T17:00:00Z')).toBe('T6 16/10 00:00');
+    });
+
+    it('lấy mốc đầu ngày theo giờ Việt Nam cho trục của chuỗi theo giờ', () => {
+        expect(dayStarts(['2026-10-15T16:00:00Z', '2026-10-15T17:00:00Z', '2026-10-15T18:00:00Z'])).toEqual(['2026-10-15T17:00:00Z']);
     });
 
     it('tính trúng cache trên cả token vào, đọc và ghi cache', () => {

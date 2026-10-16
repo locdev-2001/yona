@@ -59,6 +59,8 @@ type Props = {
   stacked?: boolean
   // Bề rộng cột nhãn trục dọc (px); tăng khi nhãn dài như "$0.105" hay "300K".
   yAxisWidth?: number
+  // Chỉ đặt vạch trục ngang tại các mốc này (vd đầu mỗi ngày của chuỗi theo giờ).
+  ticks?: string[]
 }
 
 // Biểu đồ theo ngày (đường hoặc cột). Trình đọc màn hình đọc câu tóm tắt và bảng số ẩn.
@@ -73,7 +75,8 @@ const TimeSeriesChart = ({
   formatValue,
   formatTick = formatDate,
   stacked = false,
-  yAxisWidth = 40
+  yAxisWidth = 40,
+  ticks
 }: Props) => {
   const summaryId = useId()
 
@@ -97,6 +100,7 @@ const TimeSeriesChart = ({
         axisLine={false}
         tickMargin={8}
         minTickGap={24}
+        ticks={ticks}
         tickFormatter={(value: string) => formatTick(value)}
       />
       <YAxis
