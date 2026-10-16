@@ -117,9 +117,16 @@ export function resolveMessageSender(
  * Khoá người gửi để gộp tin liền nhau. Tin nhóm cùng `sender_id` (hồ sơ của nhóm)
  * nhưng khác thành viên thì phải tách cụm, nên ưu tiên người gửi thật trong nhóm.
  */
-export function messageSenderKey(message: ConversationMessage): string | number | null | undefined {
+export function messageSenderKey(message: ConversationMessage): string | null | undefined {
     const groupSender = readGroupSender(message.content_attributes ?? {});
     if (groupSender) return `group:${groupSender.externalId || groupSender.name}`;
 
-    return message.sender_id ?? message.sender?.id;
+    const senderId = message.sender_id ?? message.sender?.id;
+    if (senderId === null || senderId === undefined) return senderId;
+
+    // Id chỉ duy nhất trong từng loại người gửi (AI id 1 khác nhân viên id 1). Tin tải về
+    // mang `sender_type` dạng `AiAgent`, sự kiện realtime mang `sender.type` dạng `ai_agent`.
+    const senderType = (message.sender_type ?? message.sender?.type ?? '').replace(/_/g, '').toLowerCase();
+
+    return `${senderType}:${senderId}`;
 }

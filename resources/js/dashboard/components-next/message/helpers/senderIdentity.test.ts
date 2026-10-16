@@ -180,9 +180,23 @@ describe('khoá người gửi để gộp tin', () => {
         expect(messageSenderKey(groupMessage('1', 'Bình'))).toBe(messageSenderKey(groupMessage('1', 'Bình')));
     });
 
-    it('tin thường giữ khoá theo sender_id như cũ', () => {
-        expect(messageSenderKey(message({ sender: AGENT, sender_id: 2 }))).toBe(2);
-        expect(messageSenderKey(message({ sender: AGENT }))).toBe(2);
+    it('tin thường khoá theo loại và id người gửi', () => {
+        expect(messageSenderKey(message({ sender: AGENT, sender_id: 2 }))).toBe('user:2');
+        expect(messageSenderKey(message({ sender: AGENT }))).toBe('user:2');
         expect(messageSenderKey(message({ sender_id: null }))).toBeUndefined();
+    });
+
+    it('AI và nhân viên trùng id thì khác khoá', () => {
+        const staff = message({ sender: { ...AGENT, id: 1 }, sender_id: 1, sender_type: 'User' });
+        const aiAgent = message({ sender: { id: 1, name: 'Linh', type: 'ai_agent' as const }, sender_id: 1, sender_type: 'AiAgent' });
+
+        expect(messageSenderKey(staff)).not.toBe(messageSenderKey(aiAgent));
+    });
+
+    it('tin tải về và sự kiện realtime của cùng người gửi thì cùng khoá', () => {
+        const loaded = message({ sender: AGENT, sender_id: 2, sender_type: 'User' });
+        const realtime = message({ sender: AGENT, sender_id: 2, sender_type: null });
+
+        expect(messageSenderKey(loaded)).toBe(messageSenderKey(realtime));
     });
 });
