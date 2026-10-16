@@ -6,7 +6,7 @@ namespace App\Agent\Evals;
 final readonly class Comparison
 {
     /**
-     * @param  list<array{label: string, previous: ?float, current: ?float}>  $metrics
+     * @param  list<array{label: string, previous: ?float, current: ?float, decimals: int}>  $metrics
      * @param  list<array{scenario: string, previous: ?float, current: ?float, previous_pass: ?float, current_pass: ?float}>  $scenarios
      */
     public function __construct(
@@ -22,7 +22,7 @@ final readonly class Comparison
     public static function between(array $current, array $previous, string $previousLabel): self
     {
         $metrics = [
-            ['label' => 'Điểm trung bình chung', 'previous' => self::number($previous['overall_mean'] ?? null), 'current' => self::number($current['overall_mean'] ?? null)],
+            ['label' => 'Điểm trung bình chung', 'previous' => self::number($previous['overall_mean'] ?? null), 'current' => self::number($current['overall_mean'] ?? null), 'decimals' => 2],
         ];
 
         foreach (Rubric::dimensionIds() as $dimension) {
@@ -30,12 +30,13 @@ final readonly class Comparison
                 'label' => Rubric::label($dimension),
                 'previous' => self::number($previous['dimension_means'][$dimension] ?? null),
                 'current' => self::number($current['dimension_means'][$dimension] ?? null),
+                'decimals' => 2,
             ];
         }
 
-        $metrics[] = ['label' => 'Tỉ lệ đạt tiêu chí riêng (%)', 'previous' => self::percent($previous['criteria_pass_rate'] ?? null), 'current' => self::percent($current['criteria_pass_rate'] ?? null)];
-        $metrics[] = ['label' => 'Độ trễ trung bình mỗi lượt (giây)', 'previous' => self::seconds($previous['average_turn_latency_ms'] ?? null), 'current' => self::seconds($current['average_turn_latency_ms'] ?? null)];
-        $metrics[] = ['label' => 'Chi phí AI (USD)', 'previous' => self::usd($previous['ai_cost_micro_usd'] ?? null), 'current' => self::usd($current['ai_cost_micro_usd'] ?? null)];
+        $metrics[] = ['label' => 'Tỉ lệ đạt tiêu chí riêng (%)', 'previous' => self::percent($previous['criteria_pass_rate'] ?? null), 'current' => self::percent($current['criteria_pass_rate'] ?? null), 'decimals' => 1];
+        $metrics[] = ['label' => 'Độ trễ trung bình mỗi lượt (giây)', 'previous' => self::seconds($previous['average_turn_latency_ms'] ?? null), 'current' => self::seconds($current['average_turn_latency_ms'] ?? null), 'decimals' => 1];
+        $metrics[] = ['label' => 'Chi phí AI (USD)', 'previous' => self::usd($previous['ai_cost_micro_usd'] ?? null), 'current' => self::usd($current['ai_cost_micro_usd'] ?? null), 'decimals' => 4];
 
         $scenarios = [];
         $previousScenarios = (array) ($previous['scenarios'] ?? []);

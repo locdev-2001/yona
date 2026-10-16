@@ -149,7 +149,8 @@ final class ReportWriter
         $rows = ["## So với vòng trước ({$comparison->previousLabel})", '', '| Chỉ số | Trước | Nay | Chênh |', '|---|---|---|---|'];
 
         foreach ($comparison->metrics as $metric) {
-            $rows[] = "| {$metric['label']} | ".self::number($metric['previous']).' | '.self::number($metric['current']).' | '.self::signed(Comparison::delta($metric['previous'], $metric['current'])).' |';
+            $rows[] = "| {$metric['label']} | ".self::number($metric['previous'], $metric['decimals']).' | '.self::number($metric['current'], $metric['decimals'])
+                .' | '.self::signed(Comparison::delta($metric['previous'], $metric['current']), $metric['decimals']).' |';
         }
 
         $rows = [...$rows, '', '| Kịch bản | TB trước | TB nay | Chênh | Tiêu chí riêng trước (%) | nay (%) |', '|---|---|---|---|---|---|'];
@@ -246,14 +247,14 @@ final class ReportWriter
         return $value === null ? '—' : number_format($value, 2);
     }
 
-    private static function number(?float $value): string
+    private static function number(?float $value, int $decimals = 2): string
     {
-        return $value === null ? '—' : number_format($value, 2);
+        return $value === null ? '—' : number_format($value, $decimals);
     }
 
-    private static function signed(?float $value): string
+    private static function signed(?float $value, int $decimals = 2): string
     {
-        return $value === null ? '—' : ($value >= 0 ? '+' : '').number_format($value, 2);
+        return $value === null ? '—' : ($value >= 0 ? '+' : '').number_format($value, $decimals);
     }
 
     private static function percent(?float $ratio): string

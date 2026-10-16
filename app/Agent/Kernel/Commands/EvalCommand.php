@@ -333,7 +333,7 @@ final class EvalCommand extends Command
 
         foreach ($comparison === null ? [] : $comparison->metrics as $metric) {
             $delta = Comparison::delta($metric['previous'], $metric['current']);
-            $this->components->twoColumnDetail("Δ {$metric['label']}", $delta === null ? '—' : sprintf('%+.2f', $delta));
+            $this->components->twoColumnDetail("Δ {$metric['label']}", $delta === null ? '—' : sprintf("%+.{$metric['decimals']}f", $delta));
         }
 
         $this->components->info("Report: {$directory}/".ReportWriter::REPORT_FILE);
