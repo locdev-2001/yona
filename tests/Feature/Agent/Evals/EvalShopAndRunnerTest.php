@@ -14,6 +14,7 @@ use App\Agent\Evals\TurnPump;
 use App\Agent\Runtime\TurnSettings;
 use App\Agent\Tools\Runner\Registry;
 use App\Agent\ValueObjects\ModelRequest;
+use App\Builders\Messages\MessageBuilder;
 use App\Models\Account;
 use App\Models\AiAgent;
 use App\Models\Article;
@@ -134,4 +135,24 @@ test('bộ chấm hỏng giữa chừng thành một lần chạy lỗi, vẫn g
         ->and($run->verdict)->toBeNull()
         ->and($run->error)->toContain('eval_customer failed')
         ->and(array_map(fn ($line) => $line->speaker, $run->transcript))->toContain(Speaker::Ai);
+});
+
+test('thẻ sản phẩm AI gửi đọc thành chữ theo ngôn ngữ của account, không theo ngôn ngữ của CLI', function () {
+    app()->setLocale('en');
+    $shop = app(EvalShopSeeder::class)->seed(ShopFixture::fromFile());
+    $conversations = app(EvalConversations::class);
+    $conversationId = $conversations->open($shop, 'ask-price', 'Thu Trang', []);
+    $card = CannedResponse::query()->where('account_id', $shop->accountId)->where('short_code', 'sp-quan-jean-ong-suong')->first();
+
+    (new MessageBuilder(AiAgent::query()->find($shop->aiAgentId), Conversation::query()->find($conversationId), [
+        'content' => 'Mẫu quần chị hỏi ạ',
+        'content_type' => 'cards',
+        'content_attributes' => $card->content_attributes,
+        'private' => true,
+    ]))->perform();
+
+    $line = collect($conversations->linesAfter($shop, $conversationId, 0))->last();
+
+    expect($line->text)->toContain('giá cũ 399.000đ')
+        ->and($line->text)->not->toContain('was ');
 });

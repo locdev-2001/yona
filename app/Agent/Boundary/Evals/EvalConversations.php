@@ -87,7 +87,7 @@ final class EvalConversations
         $lines = [];
         $messages = $this->conversation($shop, $conversationId)
             ->messages()
-            ->with('sender')
+            ->with(['sender', 'conversation.account'])
             ->where('id', '>', $afterMessageId)
             ->reorder()
             ->orderBy('id')
@@ -157,7 +157,7 @@ final class EvalConversations
     {
         $contactInbox = (new ContactInboxWithContactBuilder(
             inbox: $inbox,
-            contactAttributes: ['name' => "{$customerName} · eval {$scenarioId}"],
+            contactAttributes: ['name' => $customerName],
             sourceId: (string) Str::uuid(),
         ))->perform() ?? throw new RuntimeException('Could not create the eval contact.');
 
@@ -227,7 +227,10 @@ final class EvalConversations
         }
 
         try {
-            return "[tin dạng {$contentType}] ".trim($type->plainText($message->content, $message->content_attributes ?? []));
+            // Dựng chữ theo ngôn ngữ của account như khi gửi ra kênh, không theo ngôn ngữ của CLI.
+            $plain = $message->conversation->inAccountLocale(fn () => $type->plainText($message->content, $message->content_attributes ?? []));
+
+            return "[tin dạng {$contentType}] ".trim((string) $plain);
         } catch (Throwable) {
             return "[tin dạng {$contentType}] {$text}";
         }

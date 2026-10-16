@@ -9,12 +9,12 @@
     "name": "Tạ Minh Khoa",
     "goal": "Là nam, muốn mua áo sơ mi nam và đôi giày; nếu shop không bán thì hỏi có gì làm quà cho mẹ không.",
     "personality": "Lịch sự, ít nói.",
-    "style": "Nhắn có dấu, ngắn.",
+    "style": "Nhắn có dấu, ngắn, tự xưng \"anh\" với shop.",
     "facts": {
       "giới tính": "nam"
     }
   },
-  "opening": "Shop có bán áo sơ mi nam với giày không ạ?",
+  "opening": "Shop có bán áo sơ mi nam với giày không em, anh tìm mua.",
   "max_turns": 4,
   "criteria": [
     {

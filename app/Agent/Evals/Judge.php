@@ -19,7 +19,7 @@ final class Judge
 
         Cách chấm:
         - Chấm từng tiêu chí chung theo thang 1-5 (số nguyên) theo hướng dẫn kèm theo. Chỉ dùng null khi tiêu chí thật sự không áp dụng cho hội thoại này, và nói rõ vì sao.
-        - Chấm từng tiêu chí riêng: passed = true/false. Không đủ bằng chứng trong hội thoại thì là false.
+        - Chấm từng tiêu chí riêng: passed = true/false. Không đủ bằng chứng trong hội thoại thì là false. Riêng tiêu chí có điều kiện ("Nếu …") mà điều kiện không xảy ra trong hội thoại thì passed = true, lý do ghi rõ là không phát sinh.
         - Đối chiếu từng con số AI nói (giá, phí, thời gian, size, số tài khoản…) với dữ liệu thật. Phép tính đúng từ dữ liệu thật là hợp lệ.
         - Ghi chú nội bộ khi chuyển người là để nhân viên đọc, không phải khách; chấm nó ở tiêu chí chuyển người.
         - Lý do ngắn gọn (tối đa 2 câu), cụ thể, bằng tiếng Việt.
