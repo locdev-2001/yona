@@ -79,7 +79,7 @@ it('finds products without accents and shows prices, sizes out of stock and the 
             'stock' => 'Còn hàng',
             'orderable_in_card' => true,
         ])
-        ->and($found[0]['variants'])->toBe([['name' => 'Size', 'available' => ['M', 'L'], 'out_of_stock' => ['XL']]]);
+        ->and($found[0]['variants'])->toBe([['name' => 'Size', 'offered' => ['M', 'L'], 'out_of_stock' => ['XL']]]);
 });
 
 it('sends the shop\'s own card, then a short reply citing the product source', function () {
@@ -135,6 +135,31 @@ it('does the same action only once per turn however often the model repeats it',
 
     expect(cardMessages($conversation))->toHaveCount(1)
         ->and(salesToolResult($model, 1, 1)['error']['code'])->toBe('duplicate');
+});
+
+it('does not send again a card the customer already saw in an earlier turn, and sends only the new ones', function () {
+    ['conversation' => $conversation] = TurnKit::autoConversation();
+    $cards = teeCards($conversation->account_id);
+    $white = "{$cards->id}:tee-white";
+    $black = "{$cards->id}:tee-black";
+    $model = TurnKit::model([
+        Model::call('send_product_card', ['product_ids' => [$white]]),
+        Model::call('wait_for_customer', ['reason' => 'x']),
+        Model::call('send_product_card', ['product_ids' => [$white]]),
+        Model::call('send_product_card', ['product_ids' => [$white, $black]]),
+        Model::call('wait_for_customer', ['reason' => 'x']),
+    ]);
+
+    TurnKit::customerSays($conversation, 'Áo trắng?');
+    TurnKit::runPendingTurns();
+    TurnKit::customerSays($conversation, 'Cho xem lại với mẫu đen');
+    TurnKit::runPendingTurns();
+
+    $sent = cardMessages($conversation);
+
+    expect(salesToolResult($model, 3)['error']['code'])->toBe('duplicate')
+        ->and(salesToolResult($model, 4)['data'])->toMatchArray(['product_ids' => [$black], 'already_shown_not_resent' => [$white]])
+        ->and(array_map(fn (Message $message) => $message->content_attributes['items'][0]['id'], $sent))->toBe(['tee-white', 'tee-black']);
 });
 
 it('holds an action when the customer writes right before it, then does it after re-planning', function () {

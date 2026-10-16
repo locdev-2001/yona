@@ -2,6 +2,7 @@
 
 namespace App\Agent\Boundary\Readers;
 
+use App\Agent\Boundary\CoreProducts;
 use App\Agent\Boundary\CoreRecords;
 use App\Agent\Contracts\Ports\ConversationReader;
 use App\Agent\ValueObjects\ConversationRef;
@@ -66,6 +67,30 @@ final class CoreConversationReader implements ConversationReader
             : $model->messages()->with(['sender', 'attachments'])->where('id', '>', $afterMessageId)->limit($limit)->get();
 
         return $messages->map(fn (Message $message) => $this->snapshot($message, $model))->values()->all();
+    }
+
+    public function shownProducts(ConversationRef $conversation, array $productIds): array
+    {
+        $model = CoreRecords::conversation($conversation);
+        $products = CoreProducts::find($conversation->accountId, $productIds);
+
+        if ($model === null || $products === []) {
+            return [];
+        }
+
+        $sentItems = $model->messages()
+            ->where('content_type', Message::CONTENT_TYPES[CoreProducts::CARDS_CONTENT_TYPE])
+            ->whereIn('message_type', [Message::TYPE_OUTGOING, Message::TYPE_TEMPLATE])
+            ->where('private', false)
+            ->get(['id', 'content_attributes'])
+            ->flatMap(fn (Message $message) => (array) ($message->content_attributes['items'] ?? []))
+            ->filter(fn (mixed $item) => is_array($item));
+
+        return array_values(array_keys(array_filter($products, fn (array $product) => $sentItems->contains(
+            // Thẻ gửi cùng thẻ trùng id có thể mang hậu tố `-n`; tên phải trùng.
+            fn (array $sent) => ($sent['title'] ?? null) === $product['item']['title']
+                && (($sent['id'] ?? null) === $product['item']['id'] || str_starts_with((string) ($sent['id'] ?? ''), $product['item']['id'].'-')),
+        ))));
     }
 
     public function labels(int $accountId): array

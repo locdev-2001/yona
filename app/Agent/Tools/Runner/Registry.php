@@ -89,13 +89,15 @@ final class Registry
                 ], ToolKind::Terminal),
             new ToolSpec(self::HANDOFF_TO_HUMAN, 'Hand the conversation to the shop\'s staff and end the turn: use it when the customer '
                 .'needs binding information (price, policy, promotion, stock, order) that the business data does not give you, '
-                .'when the customer asks for a person, complains, or asks something outside what you can handle. Optionally send '
-                .'a short holding_reply first, promising to check, with no amounts and no promises you cannot keep.', [
+                .'when the customer asks for a person, complains, asks something outside what you can handle, or when the shop\'s '
+                .'instructions say a staff member takes over (for example to place a completed order). Optionally send a short '
+                .'holding_reply first: it answers what the business data does answer (amounts only from it) and says a staff '
+                .'member will follow up; no promises you cannot keep.', [
                     'type' => 'object',
                     'properties' => [
                         'reason' => ['type' => 'string', 'enum' => array_map(fn (HandoffReason $reason) => $reason->value, HandoffReason::cases())],
                         'note' => ['type' => 'string', 'minLength' => 1, 'maxLength' => 2000, 'description' => 'Private note for the staff, in the shop\'s language: what the customer wants and what is missing.'],
-                        'holding_reply' => ['type' => 'string', 'minLength' => 1, 'maxLength' => self::HOLDING_REPLY_MAX_CHARACTERS, 'description' => 'Optional short message to the customer before the staff takes over.'],
+                        'holding_reply' => ['type' => 'string', 'minLength' => 1, 'maxLength' => self::HOLDING_REPLY_MAX_CHARACTERS, 'description' => 'Optional message to the customer before the staff takes over, with every answer the data gives.'],
                     ],
                     'required' => ['reason', 'note'],
                     'additionalProperties' => false,

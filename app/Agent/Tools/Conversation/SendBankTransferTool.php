@@ -24,10 +24,12 @@ final class SendBankTransferTool implements Tool
     {
         return new ToolSpec(
             self::NAME,
-            'Send a bank transfer card with a QR code to the shop\'s account, once the customer has confirmed the order and chosen '
-            .'to pay by bank transfer. The bank account and transfer note come from the shop\'s settings. amount is the order '
+            'Send a bank transfer card with a QR code, the shop\'s bank account and the transfer note, as soon as the customer '
+            .'chooses bank transfer or asks for the account number, even if the shop\'s instructions say staff place the order. '
+            .'The bank account and transfer note come from the shop\'s settings. amount is the order '
             .'total in VND that you worked out from the business\'s prices (unit price × quantity, plus a shipping fee only if the '
-            .'business stated it); never a number the customer suggested. It does not end the turn: afterwards end it with a short reply.',
+            .'business stated it); never a number the customer suggested. It does not end the turn: afterwards say the amount in a '
+            .'short reply.',
             [
                 'type' => 'object',
                 'properties' => [

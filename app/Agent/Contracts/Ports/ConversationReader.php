@@ -19,6 +19,15 @@ interface ConversationReader
      */
     public function messagesAfter(ConversationRef $conversation, ?int $afterMessageId, int $limit): array;
 
+    /**
+     * Trong các sản phẩm này (id từ ProductCatalog), những cái thẻ đã được gửi trong hội
+     * thoại (bởi AI hay nhân viên).
+     *
+     * @param  list<string>  $productIds
+     * @return list<string>
+     */
+    public function shownProducts(ConversationRef $conversation, array $productIds): array;
+
     /** @return list<string> tên các nhãn của account, theo thứ tự hiển thị */
     public function labels(int $accountId): array;
 }
