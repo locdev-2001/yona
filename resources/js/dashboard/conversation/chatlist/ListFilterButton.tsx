@@ -43,6 +43,8 @@ export default function ListFilterButton({ isOnExpandedLayout, isAdvancedActive,
             }}
         >
             <ListHeaderButton
+                // Trình dựng lọc nâng cao bỏ qua cú bấm vào nút có id này khi xét "bấm ra ngoài".
+                id="toggleConversationFilterButton"
                 icon="i-lucide-list-filter"
                 label={label}
                 isActive={isOpen || activeCount > 0 || isAdvancedActive}
