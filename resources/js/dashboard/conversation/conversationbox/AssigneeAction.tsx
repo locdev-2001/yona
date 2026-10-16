@@ -74,7 +74,13 @@ export default function AssigneeAction({ isCompact = false }: { isCompact?: bool
     );
 
     return (
-        <div ref={containerRef} className="relative flex items-center flex-shrink-0">
+        <div
+            ref={containerRef}
+            className="relative flex items-center flex-shrink-0"
+            onKeyDown={event => {
+                if (event.key === 'Escape') closeMenu();
+            }}
+        >
             <NextButton
                 sm
                 slate

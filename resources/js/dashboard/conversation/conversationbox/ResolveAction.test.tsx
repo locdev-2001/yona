@@ -93,6 +93,13 @@ describe('nút trạng thái hội thoại', () => {
         expect(visit).toHaveBeenCalledTimes(1);
     });
 
+    it('Escape đóng menu', () => {
+        const { container, getByTestId } = openMenu('open');
+        fireEvent.keyDown(getByTestId('conversation-status-button'), { key: 'Escape' });
+
+        expect(container.querySelector('.overlay-surface')).toBeNull();
+    });
+
     it('chế độ gọn chỉ còn chấm màu, nhãn nằm ở title', () => {
         conversation.status = 'open';
         const { getByTestId } = render(<ResolveAction isCompact />);

@@ -133,7 +133,13 @@ export default function ResolveAction({ isCompact = false }: { isCompact?: boole
         ) : null;
 
     return (
-        <div ref={containerRef} className="relative flex items-center flex-shrink-0 resolve-actions">
+        <div
+            ref={containerRef}
+            className="relative flex items-center flex-shrink-0 resolve-actions"
+            onKeyDown={event => {
+                if (event.key === 'Escape') closeMenu();
+            }}
+        >
             <NextButton
                 sm
                 slate

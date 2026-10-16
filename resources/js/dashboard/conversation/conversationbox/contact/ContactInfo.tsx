@@ -281,7 +281,13 @@ export default function ContactInfo({
                             <NextButton title={t('CONTACT_PANEL.MERGE_CONTACT')} icon={ICONS.merge} slate faded sm className="max-md:size-11" />
                         )}
                     />
-                    <div ref={moreActionsRef} className="relative flex items-center">
+                    <div
+                        ref={moreActionsRef}
+                        className="relative flex items-center"
+                        onKeyDown={event => {
+                            if (event.key === 'Escape') setMoreActionsOpen(false);
+                        }}
+                    >
                         <NextButton
                             title={t('CONTACT_PANEL.MORE_ACTIONS')}
                             aria-haspopup="menu"
