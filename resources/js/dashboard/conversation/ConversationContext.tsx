@@ -810,6 +810,8 @@ export function ConversationProvider({
 
     const conversationTypeRef = useRef<ConversationType>(conversationType);
     conversationTypeRef.current = conversationType;
+    const inboxIdRef = useRef(inboxId);
+    inboxIdRef.current = inboxId;
 
     const updateConversation = useCallback((incoming: Conversation) => {
         if (!incoming?.id) return;
@@ -909,8 +911,27 @@ export function ConversationProvider({
         return () => setViewedConversation(0);
     }, [conversationId]);
 
+    // Tin vào hội thoại chưa nạp (nằm ngoài các trang đã tải) không kèm sự kiện hội thoại nào
+    // khi waiting_since không đổi, nên phải tự kéo hội thoại về để thẻ hiện lên đầu danh sách.
+    const unloadedFetchesRef = useRef(new Set<number>());
+    const pullUnloadedConversation = useCallback(
+        (targetId: number) => {
+            if (allConversationsRef.current.some((item) => item.id === targetId)) return;
+            if (unloadedFetchesRef.current.has(targetId)) return;
+            unloadedFetchesRef.current.add(targetId);
+            fetchConversation(accountId, targetId)
+                .then((fetched) => {
+                    if (!shouldAddConversationToList(fetched, inboxIdRef.current, conversationTypeRef.current)) return;
+                    setAllConversations((current) => applyConversationUpdate(current, fetched));
+                }, () => undefined)
+                .finally(() => unloadedFetchesRef.current.delete(targetId));
+        },
+        [accountId],
+    );
+
     // Realtime → store: các event conversation/message.
     useRealtimeEvent<MessageEventPayload>('message.created', (message) => {
+        pullUnloadedConversation(message.conversation_id);
         addMessage(message);
         const lastActivityAt = message.conversation?.last_activity_at;
         if (lastActivityAt) {

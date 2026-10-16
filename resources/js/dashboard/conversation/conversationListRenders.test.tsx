@@ -147,4 +147,32 @@ describe('danh sách hội thoại khi có cập nhật realtime', () => {
 
         expect(redrawnCardIds()).toEqual([TARGET_ID]);
     });
+
+    it('tin mới vào hội thoại chưa nạp trong danh sách thì kéo hội thoại đó về và hiện thẻ', async () => {
+        const unloadedId = LIST_SIZE + 400;
+        getJson.mockImplementation((url: string) =>
+            url.endsWith(`/conversations/${unloadedId}`)
+                ? Promise.resolve({ ...conversation(unloadedId), last_activity_at: 200_000, timestamp: 200_000 })
+                : routeGet(url),
+        );
+        await renderLoadedList();
+
+        const message = {
+            conversation_id: unloadedId,
+            content: 'Nhóm cũ có tin mới',
+            message_type: 0,
+            content_type: 'text',
+            status: 'sent',
+            created_at: 200_000,
+            sender: { id: unloadedId, name: `Khách ${unloadedId}`, type: 'contact' },
+            attachments: [],
+        };
+        act(() => {
+            emitter.emit('message.created', { ...message, id: 9101 });
+            emitter.emit('message.created', { ...message, id: 9102 });
+        });
+
+        expect(await screen.findByText(`Khách ${unloadedId}`)).toBeTruthy();
+        expect(getJson.mock.calls.filter(([url]) => url.endsWith(`/conversations/${unloadedId}`))).toHaveLength(1);
+    });
 });
