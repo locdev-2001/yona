@@ -26,9 +26,9 @@ use Psr\Log\LoggerInterface;
 use Throwable;
 
 // Cổng mô hình: alias → các tuyến theo thứ tự ưu tiên. Lỗi tạm thời thử lại cùng tuyến
-// tối đa một lần khi còn kịp trước deadline rồi sang tuyến kế; lỗi khoá sang tuyến kế;
-// request sai hay vượt ngữ cảnh thì dừng. Không ném lỗi nhà cung cấp hay mạng: thất bại
-// cuối cùng là ModelResponse::failed.
+// tối đa một lần khi còn kịp trước deadline rồi sang tuyến kế; lỗi khoá mở mạch của tuyến
+// ngay rồi sang tuyến kế; request sai hay vượt ngữ cảnh thì dừng. Không ném lỗi nhà cung
+// cấp hay mạng: thất bại cuối cùng là ModelResponse::failed.
 final class ModelRouter implements LanguageModel
 {
     public const CACHE_MISS_ROUTE_CHANGED = 'route_changed';
@@ -187,7 +187,9 @@ final class ModelRouter implements LanguageModel
 
     private function noteFailure(string $alias, Route $route, Failure $failure, int $attempt): void
     {
-        if ($failure->countsAgainstRoute()) {
+        if ($failure->disablesRoute()) {
+            $this->breaker->open($route);
+        } elseif ($failure->countsAgainstRoute()) {
             $this->breaker->recordFailure($route);
         }
 

@@ -8,8 +8,9 @@ use Psr\Log\LoggerInterface;
 use Throwable;
 
 // Ngắt mạch theo tuyến (nhà cung cấp + mô hình), trạng thái trong cache dùng chung các
-// worker. Đủ FAILURE_THRESHOLD lỗi trong FAILURE_WINDOW_SECONDS thì bỏ qua tuyến
-// OPEN_SECONDS giây. Cache hỏng thì coi như mạch đóng: ngắt mạch chỉ để tiết kiệm.
+// worker. Đủ FAILURE_THRESHOLD lỗi trong FAILURE_WINDOW_SECONDS, hoặc open() gọi thẳng,
+// thì bỏ qua tuyến OPEN_SECONDS giây. Cache hỏng thì coi như mạch đóng: ngắt mạch chỉ để
+// tiết kiệm.
 final class CircuitBreaker
 {
     private const FAILURE_THRESHOLD = 3;
@@ -36,12 +37,17 @@ final class CircuitBreaker
             $failuresKey = $this->key($route, 'failures');
             $this->cache->add($failuresKey, 0, self::FAILURE_WINDOW_SECONDS);
 
-            if ((int) $this->cache->increment($failuresKey) < self::FAILURE_THRESHOLD) {
-                return;
+            if ((int) $this->cache->increment($failuresKey) >= self::FAILURE_THRESHOLD) {
+                $this->open($route);
             }
+        }, null);
+    }
 
+    public function open(Route $route): void
+    {
+        $this->guard(function () use ($route) {
             $this->cache->put($this->key($route, 'open'), true, self::OPEN_SECONDS);
-            $this->cache->forget($failuresKey);
+            $this->cache->forget($this->key($route, 'failures'));
             $this->logger->warning('agent.gateway.circuit_opened', [
                 'provider' => $route->provider,
                 'model' => $route->model,

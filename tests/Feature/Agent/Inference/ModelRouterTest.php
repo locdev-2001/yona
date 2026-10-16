@@ -141,6 +141,21 @@ it('moves to the next route on an authentication failure without retrying', func
     Sleep::assertNeverSlept();
 });
 
+it('opens the circuit on the first authentication failure so the next call skips the route', function () {
+    GatewayTestKit::useApiCallLog();
+    Http::fake([
+        GatewayTestKit::ANTHROPIC_HOST.'/*' => Http::response(['type' => 'error', 'error' => ['type' => 'authentication_error', 'message' => 'invalid x-api-key']], 401),
+        GatewayTestKit::OPENROUTER_HOST.'/*' => Http::response(routerOk()),
+    ]);
+
+    GatewayTestKit::model()->complete(GatewayTestKit::request());
+    $second = GatewayTestKit::model()->complete(GatewayTestKit::request());
+
+    expect($second->route->provider)->toBe('openrouter')
+        ->and(sentTo(GatewayTestKit::ANTHROPIC_HOST))->toBe(1)
+        ->and(sentTo(GatewayTestKit::OPENROUTER_HOST))->toBe(2);
+});
+
 it('treats dropped connections and garbage bodies as temporary failures', function (Closure $firstRoute) {
     $log = GatewayTestKit::useApiCallLog();
     Http::fake([

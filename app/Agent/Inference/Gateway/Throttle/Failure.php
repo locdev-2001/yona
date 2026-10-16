@@ -30,4 +30,10 @@ final readonly class Failure
     {
         return $this->movesToNextRoute();
     }
+
+    // Khoá bị từ chối không tự lành: mở mạch ngay, không đợi đủ ngưỡng lỗi.
+    public function disablesRoute(): bool
+    {
+        return $this->error->kind === ModelErrorKind::Auth;
+    }
 }
