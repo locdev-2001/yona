@@ -9,6 +9,8 @@ export interface TabItem {
     name: string;
     count?: number;
     showBadge?: boolean;
+    // Số đếm là việc đang chờ người nhận (vd hội thoại chưa gán): tô amber khi > 0.
+    badgeTone?: 'neutral' | 'warning';
     disabled?: boolean;
 }
 
@@ -64,6 +66,12 @@ export default function Tabs({ items, index, isCompact = false, className = '', 
             >
                 {items.map((item, itemIndex) => {
                     const active = itemIndex === index;
+                    const isWarning = item.badgeTone === 'warning' && (item.count ?? 0) > 0;
+                    const badgeColor = isWarning
+                        ? 'bg-n-amber-3 text-n-amber-11'
+                        : active
+                          ? 'bg-n-blue-3 text-n-blue-11'
+                          : 'bg-n-alpha-1 text-n-slate-10';
 
                     return (
                         <li
@@ -88,7 +96,7 @@ export default function Tabs({ items, index, isCompact = false, className = '', 
                                     <div
                                         className={[
                                             'rounded-full h-5 flex items-center justify-center text-xs font-medium my-0 ltr:ml-1 rtl:mr-1 px-1.5 py-0 min-w-[20px]',
-                                            active ? 'bg-n-blue-3 text-n-blue-11' : 'bg-n-alpha-1 text-n-slate-10',
+                                            badgeColor,
                                         ].join(' ')}
                                     >
                                         <span>{item.count ?? 0}</span>

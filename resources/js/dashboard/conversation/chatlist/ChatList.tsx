@@ -29,8 +29,8 @@ import { appliedLabelsForSelection } from '../labelHelpers';
 import type { AssigneeTab } from '../types';
 import NextButton from 'dashboard/components-next/button/Button';
 import { emptyListHint } from './emptyListHint';
+import ActiveFilterChips from './ActiveFilterChips';
 import ChatListHeader from './ChatListHeader';
-import ChatListSearch from './ChatListSearch';
 import ChatTypeTabs from './ChatTypeTabs';
 import ConversationList from './ConversationList';
 import ListSearchHeader from './ListSearchHeader';
@@ -41,10 +41,14 @@ import { useListSearchResults } from './useListSearchResults';
 // server (ConversationContext) và tiêu đề trang.
 // Advanced filter: modal mở/đóng + validate như gốc (teleport vào
 // #conversationFilterTeleportTarget), Apply gọi endpoint filter riêng.
-const ASSIGNEE_TAB_KEYS: { key: AssigneeTab; countKey: 'mine_count' | 'unassigned_count' | 'all_count' }[] = [
-    { key: ASSIGNEE_TYPE.ALL, countKey: 'all_count' },
+const ASSIGNEE_TAB_KEYS: {
+    key: AssigneeTab;
+    countKey: 'mine_count' | 'unassigned_count' | 'all_count';
+    badgeTone?: 'warning';
+}[] = [
     { key: ASSIGNEE_TYPE.ME, countKey: 'mine_count' },
-    { key: ASSIGNEE_TYPE.UNASSIGNED, countKey: 'unassigned_count' },
+    { key: ASSIGNEE_TYPE.UNASSIGNED, countKey: 'unassigned_count', badgeTone: 'warning' },
+    { key: ASSIGNEE_TYPE.ALL, countKey: 'all_count' },
 ];
 
 export default function ChatList({
@@ -95,7 +99,6 @@ export default function ChatList({
 
     const folders = useCustomViews(accountId, 'conversation');
     const activeFolder = foldersId ? folders.find(view => view.id === foldersId) : undefined;
-    const hasActiveFolders = Boolean(activeFolder);
     const activeFolderQuery = activeFolder ? JSON.stringify(activeFolder.query?.payload ?? []) : '';
 
     useEffect(() => {
@@ -193,8 +196,9 @@ export default function ChatList({
         (conversationType === CONVERSATION_TYPE.MENTION ? t('CHAT_LIST.MENTION_HEADING') : '') ||
         t('CHAT_LIST.TAB_HEADING');
 
-    const assigneeTabItems = ASSIGNEE_TAB_KEYS.map(({ key, countKey }) => ({
+    const assigneeTabItems = ASSIGNEE_TAB_KEYS.map(({ key, countKey, badgeTone }) => ({
         key,
+        badgeTone,
         name: t(`CHAT_LIST.ASSIGNEE_TYPE_TABS.${key}`),
         count: tabMeta[countKey] || 0,
     }));
@@ -215,44 +219,24 @@ export default function ChatList({
             >
                 <ChatListHeader
                     pageTitle={pageTitle}
-                    activeStatus={status}
                     isOnExpandedLayout={isOnExpandedLayout}
                     onFiltersModal={onToggleAdvanceFiltersModal}
                     hasAppliedFilters={appliedFilters !== null}
-                    hasActiveFolders={hasActiveFolders}
+                    activeFolderName={activeFolder?.name}
                     allCount={tabMeta.all_count || 0}
                     isListLoading={isSearching ? listSearch.loading : listLoading}
+                    isSelecting={isSelecting}
+                    onToggleSelection={toggleSelectionMode}
                     onResetFilters={clearConversationFilters}
                     onAddFolders={() => setShowSaveFilterModal(true)}
                     onDeleteFolders={() => setShowDeleteFolderModal(true)}
                 />
-                <ChatListSearch />
-                <div className="flex items-center min-w-0">
-                    <div className="flex-1 min-w-0">
-                        {appliedFilters === null ? (
-                            <ChatTypeTabs
-                                items={assigneeTabItems}
-                                activeTab={assigneeTab}
-                                onChatTabChange={setAssigneeTab}
-                            />
-                        ) : null}
-                    </div>
-                    {/* Thẳng cột với nút "…" của thẻ: cùng khe thanh cuộn (scrollbar-gutter) với
-                        danh sách, rồi lùi đúng px-2 của danh sách + px-3 của thẻ, trừ -me-1 của nút "…". */}
-                    <div className="flex flex-shrink-0 py-1 pe-4 overflow-hidden [scrollbar-gutter:stable]">
-                        <NextButton
-                            xs
-                            ghost
-                            slate={!isSelecting}
-                            icon={isSelecting ? 'i-lucide-x' : 'i-lucide-list-checks'}
-                            title={t(isSelecting ? 'CHAT_LIST.SELECTION_MODE.EXIT' : 'CHAT_LIST.SELECTION_MODE.START')}
-                            aria-label={t(isSelecting ? 'CHAT_LIST.SELECTION_MODE.EXIT' : 'CHAT_LIST.SELECTION_MODE.START')}
-                            aria-pressed={isSelecting}
-                            className="flex-shrink-0"
-                            onClick={toggleSelectionMode}
-                        />
-                    </div>
-                </div>
+                {appliedFilters === null ? (
+                    <>
+                        <ChatTypeTabs items={assigneeTabItems} activeTab={assigneeTab} onChatTabChange={setAssigneeTab} />
+                        <ActiveFilterChips />
+                    </>
+                ) : null}
                 {isSearching && !listSearch.loading && !listSearch.contacts.length && !listSearch.conversations.length ? (
                     <p className="px-4 py-6 mb-0 text-sm text-center break-words text-n-slate-11">
                         {t('CHAT_LIST.SEARCH.NO_RESULTS', { query: searchQuery })}

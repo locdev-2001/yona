@@ -24,8 +24,20 @@ describe('account scoping', function () {
             ->assertInertia(fn ($page) => $page
                 ->component('dashboard/conversation/ConversationView')
                 ->where('currentAccount.id', $account->id)
+                ->where('currentAccount.member_count', 1)
                 ->where('currentAccountUser.role', 'administrator')
                 ->has('userAccounts', 1));
+    });
+
+    it('counts only members of the current account', function () {
+        $user = User::factory()->create();
+        $account = Account::factory()->create();
+        AccountUser::factory()->administrator()->create(['account_id' => $account->id, 'user_id' => $user->id]);
+        AccountUser::factory()->create(['account_id' => $account->id]);
+        AccountUser::factory()->create();
+
+        $this->actingAs($user)->get("/app/accounts/{$account->id}/dashboard")
+            ->assertInertia(fn ($page) => $page->where('currentAccount.member_count', 2));
     });
 
     it('renders the conversation view with the mention type for the mentions routes', function () {

@@ -66,6 +66,8 @@ class SetCurrentAccount
                 'status' => $account->status,
                 // json.features của _account.json.jbuilder (enabled_features).
                 'features' => $account->enabledFeatures(),
+                // Tab người phụ trách mặc định theo quy mô đội (defaultAssigneeTab.ts).
+                'member_count' => $account->accountUsers()->count(),
             ],
             'currentAccountUser' => fn () => [
                 'role' => $accountUser->roleName(),

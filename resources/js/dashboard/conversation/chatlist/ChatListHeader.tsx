@@ -4,160 +4,180 @@ import { formatNumber } from '@ext/utils';
 
 import { t } from '../../../i18n';
 import NextButton from 'dashboard/components-next/button/Button';
-import type { ConversationStatusFilter } from '../types';
+import DropdownMenu from 'dashboard/components-next/dropdown-menu/DropdownMenu';
+import { useClickAway } from 'dashboard/composables/useClickAway';
 import { useConversation } from '../ConversationContext';
-import ConversationBasicFilter from './ConversationBasicFilter';
-import SwitchLayout from './SwitchLayout';
+import ChatListSearch from './ChatListSearch';
+import ListFilterButton from './ListFilterButton';
+import ListHeaderButton from './ListHeaderButton';
 
-// Port từ dashboard/components/ChatListHeader.vue.
+// Hàng đầu cột danh sách: Tìm · Lọc · Chọn nhiều · Soạn tin · ⋯. Lưu/sửa/xoá view
+// chỉ hiện ở dải riêng khi đang dùng lọc nâng cao hoặc mở một view đã lưu.
 interface ChatListHeaderProps {
     pageTitle: string;
-    activeStatus: ConversationStatusFilter;
     isOnExpandedLayout: boolean;
     hasAppliedFilters: boolean;
-    hasActiveFolders: boolean;
+    activeFolderName?: string;
     allCount: number;
     isListLoading: boolean;
+    isSelecting: boolean;
+    onToggleSelection: () => void;
     onFiltersModal: () => void;
     onResetFilters: () => void;
     onAddFolders: () => void;
     onDeleteFolders: () => void;
 }
 
+const TOGGLE_LAYOUT_ACTION = 'toggle_layout';
+
+function ListMoreMenu({ isOnExpandedLayout }: { isOnExpandedLayout: boolean }) {
+    const { toggleConversationLayout } = useConversation();
+    const [isOpen, setOpen] = useState(false);
+    const rootRef = useRef<HTMLDivElement>(null);
+    useClickAway(rootRef, () => setOpen(false), isOpen);
+
+    return (
+        // Đổi bố cục chỉ có nghĩa trên màn rộng; điện thoại luôn một cột.
+        <div
+            ref={rootRef}
+            className="relative max-md:hidden"
+            onKeyDown={event => {
+                if (event.key === 'Escape') setOpen(false);
+            }}
+        >
+            <ListHeaderButton
+                icon="i-lucide-ellipsis"
+                label={t('CHAT_LIST.MORE_ACTIONS')}
+                isActive={isOpen}
+                aria-haspopup="menu"
+                aria-expanded={isOpen}
+                onClick={() => setOpen(open => !open)}
+            />
+            {isOpen ? (
+                <DropdownMenu
+                    menuItems={[
+                        {
+                            label: t('CONVERSATION.SWITCH_VIEW_LAYOUT'),
+                            value: TOGGLE_LAYOUT_ACTION,
+                            action: TOGGLE_LAYOUT_ACTION,
+                            icon: isOnExpandedLayout ? 'i-lucide-arrow-left-to-line' : 'i-lucide-arrow-right-to-line',
+                        },
+                    ]}
+                    className="top-full mt-1 end-0 w-max"
+                    onAction={() => {
+                        setOpen(false);
+                        toggleConversationLayout();
+                    }}
+                />
+            ) : null}
+        </div>
+    );
+}
+
 export default function ChatListHeader({
     pageTitle,
-    activeStatus,
     isOnExpandedLayout,
     hasAppliedFilters,
-    hasActiveFolders,
+    activeFolderName,
     allCount,
     isListLoading,
+    isSelecting,
+    onToggleSelection,
     onFiltersModal,
     onResetFilters,
     onAddFolders,
     onDeleteFolders,
 }: ChatListHeaderProps) {
-    const { toggleConversationLayout } = useConversation();
-    const hasAppliedFiltersOrActiveFolders = hasAppliedFilters || hasActiveFolders;
-    // QUYẾT ĐỊNH UX CÓ CHỦ ĐÍCH: pill trạng thái cạnh tiêu đề là nhãn tĩnh
-    // ở gốc, ở đây nó mở luôn bảng lọc trạng thái (xem reports/ux-deviations.md).
-    const [isStatusFilterOpen, setStatusFilterOpen] = useState(false);
-    const headerRef = useRef<HTMLDivElement>(null);
-
-    const filterTeleportTarget = (
-        <div
-            id="conversationFilterTeleportTarget"
-            className={`absolute z-50 mt-2 ${isOnExpandedLayout ? 'ltr:right-0 rtl:left-0' : ''}`}
-        />
-    );
+    const hasActiveFolder = Boolean(activeFolderName);
+    const isAdvancedActive = hasAppliedFilters || hasActiveFolder;
+    const canManageViews = isProductFeatureVisible('conversationViews');
+    const anchorSide = isOnExpandedLayout ? 'end-3' : 'start-3';
 
     return (
-        <div
-            ref={headerRef}
-            className="flex items-center justify-between gap-2 px-3 h-[3.25rem]"
-        >
-            <div className="flex items-center justify-center min-w-0">
-                <h1 className="text-base font-medium truncate text-n-slate-12" title={pageTitle}>
-                    {pageTitle}
-                </h1>
-                {allCount > 0 && hasAppliedFiltersOrActiveFolders && !isListLoading ? (
-                    <span
-                        className="px-2 py-1 my-0.5 mx-1 rounded-md capitalize bg-n-slate-3 text-xxs text-n-slate-12 shrink-0"
-                        title={String(allCount)}
-                    >
-                        {formatNumber(allCount)}
-                    </span>
-                ) : null}
-                {!hasAppliedFiltersOrActiveFolders ? (
-                    <button
-                        type="button"
-                        title={t('CHAT_LIST.STATUS_FILTER_TOOLTIP_LABEL')}
-                        aria-label={t('CHAT_LIST.STATUS_FILTER_TOOLTIP_LABEL')}
-                        aria-expanded={isStatusFilterOpen}
-                        className="flex items-center gap-1 px-2 py-1 my-0.5 mx-1 rounded-md capitalize bg-n-slate-3 hover:bg-n-slate-4 text-xxs text-n-slate-12 shrink-0 cursor-pointer transition-colors duration-150"
-                        onClick={() => setStatusFilterOpen(open => !open)}
-                    >
-                        {t(`CHAT_LIST.CHAT_STATUS_FILTER_ITEMS.${activeStatus}.TEXT`)}
-                        <span className="i-lucide-chevron-down size-3 shrink-0" aria-hidden="true" />
-                    </button>
-                ) : null}
+        <>
+            <div className="relative px-3 pt-3 pb-2">
+                <h1 className="sr-only">{pageTitle}</h1>
+                <ChatListSearch
+                    actions={
+                        <>
+                            <ListFilterButton
+                                isOnExpandedLayout={isOnExpandedLayout}
+                                isAdvancedActive={isAdvancedActive}
+                                onOpenAdvancedFilters={onFiltersModal}
+                            />
+                            <ListHeaderButton
+                                icon={isSelecting ? 'i-lucide-x' : 'i-lucide-list-checks'}
+                                label={t(isSelecting ? 'CHAT_LIST.SELECTION_MODE.EXIT' : 'CHAT_LIST.SELECTION_MODE.START')}
+                                isActive={isSelecting}
+                                aria-pressed={isSelecting}
+                                onClick={onToggleSelection}
+                            />
+                        </>
+                    }
+                    trailing={<ListMoreMenu isOnExpandedLayout={isOnExpandedLayout} />}
+                />
+                <div id="conversationFilterTeleportTarget" className={`absolute top-full z-50 ${anchorSide}`} />
             </div>
-            <div className="flex items-center gap-1">
-                {hasAppliedFilters && !hasActiveFolders ? (
-                    <>
-                        {isProductFeatureVisible('conversationViews') ? (
-                            <div className="relative">
+            {isAdvancedActive ? (
+                <div className="relative flex items-center gap-1 min-w-0 px-3 pb-2">
+                    <p className="flex-1 min-w-0 m-0 text-sm font-medium truncate text-n-slate-12" title={activeFolderName}>
+                        {activeFolderName || t('CHAT_LIST.FILTER_PANEL.ADVANCED')}
+                    </p>
+                    {allCount > 0 && !isListLoading ? (
+                        <span className="px-1.5 rounded bg-n-slate-3 text-xs tabular-nums text-n-slate-12 shrink-0" title={String(allCount)}>
+                            {formatNumber(allCount)}
+                        </span>
+                    ) : null}
+                    {hasActiveFolder ? (
+                        canManageViews ? (
+                            <>
+                                <NextButton
+                                    title={t('FILTER.CUSTOM_VIEWS.EDIT.EDIT_BUTTON')}
+                                    icon="i-lucide-pen-line"
+                                    slate
+                                    xs
+                                    faded
+                                    className="max-md:!size-11"
+                                    onClick={onFiltersModal}
+                                />
+                                <NextButton
+                                    title={t('FILTER.CUSTOM_VIEWS.DELETE.DELETE_BUTTON')}
+                                    icon="i-lucide-trash-2"
+                                    ruby
+                                    xs
+                                    faded
+                                    className="max-md:!size-11"
+                                    onClick={onDeleteFolders}
+                                />
+                            </>
+                        ) : null
+                    ) : (
+                        <>
+                            {canManageViews ? (
                                 <NextButton
                                     title={t('FILTER.CUSTOM_VIEWS.ADD.SAVE_BUTTON')}
                                     icon="i-lucide-save"
                                     slate
                                     xs
                                     faded
+                                    className="max-md:!size-11"
                                     onClick={onAddFolders}
                                 />
-                                <div
-                                    id="saveFilterTeleportTarget"
-                                    className={`absolute z-50 mt-2 ${isOnExpandedLayout ? 'ltr:right-0 rtl:left-0' : ''}`}
-                                />
-                            </div>
-                        ) : null}
-                        <NextButton
-                            title={t('FILTER.CLEAR_BUTTON_LABEL')}
-                            icon="i-lucide-circle-x"
-                            ruby
-                            faded
-                            xs
-                            onClick={onResetFilters}
-                        />
-                    </>
-                ) : null}
-                {hasActiveFolders && isProductFeatureVisible('conversationViews') ? (
-                    <>
-                        <div className="relative">
+                            ) : null}
                             <NextButton
-                                id="toggleConversationFilterButton"
-                                title={t('FILTER.CUSTOM_VIEWS.EDIT.EDIT_BUTTON')}
-                                icon="i-lucide-pen-line"
-                                slate
-                                xs
+                                title={t('FILTER.CLEAR_BUTTON_LABEL')}
+                                icon="i-lucide-circle-x"
+                                ruby
                                 faded
-                                onClick={onFiltersModal}
+                                xs
+                                className="max-md:!size-11"
+                                onClick={onResetFilters}
                             />
-                            {filterTeleportTarget}
-                        </div>
-                        <NextButton
-                            id="toggleConversationFilterButton"
-                            title={t('FILTER.CUSTOM_VIEWS.DELETE.DELETE_BUTTON')}
-                            icon="i-lucide-trash-2"
-                            ruby
-                            xs
-                            faded
-                            onClick={onDeleteFolders}
-                        />
-                    </>
-                ) : (
-                    <div className="relative">
-                        <NextButton
-                            id="toggleConversationFilterButton"
-                            title={t('FILTER.TOOLTIP_LABEL')}
-                            icon="i-lucide-list-filter"
-                            slate
-                            xs
-                            faded
-                            onClick={onFiltersModal}
-                        />
-                        {filterTeleportTarget}
-                    </div>
-                )}
-                {!hasAppliedFiltersOrActiveFolders ? (
-                    <ConversationBasicFilter
-                        isOpen={isStatusFilterOpen}
-                        onOpenChange={setStatusFilterOpen}
-                        dismissBoundaryRef={headerRef}
-                    />
-                ) : null}
-                <SwitchLayout isOnExpandedLayout={isOnExpandedLayout} onToggle={toggleConversationLayout} />
-            </div>
-        </div>
+                        </>
+                    )}
+                    <div id="saveFilterTeleportTarget" className={`absolute top-full z-50 ${anchorSide}`} />
+                </div>
+            ) : null}
+        </>
     );
 }
