@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { router, usePage } from '@inertiajs/react';
 import type { UISettings } from 'dashboard/composables/useUISettings';
+import { filteredListPathname } from 'dashboard/helper/URLHelper';
 import type { DashboardPageProps } from '../types';
 import { ASSIGNEE_TAB_VALUES, ASSIGNEE_TYPE } from './constants';
 import { readListFilterQuery, readPersistedListFilters, withListFilterQuery } from './listFilters';
@@ -21,6 +22,7 @@ const LIST_FILTER_VISIT_OPTIONS = { preserveState: true, preserveScroll: true, r
 // trạng thái + sắp xếp + tab người phụ trách nhớ ở `ui_settings.conversations_filter_by`.
 export function useConversationListFilters(updateUISettings: (patch: UISettings) => void) {
     const page = usePage<DashboardPageProps>();
+    const accountId = page.props.currentAccount?.id;
     const savedSettings = (page.props.auth?.user?.ui_settings?.conversations_filter_by ?? {}) as PersistedFilterSettings;
 
     // Lệch có chủ đích: mặc định là "Tất cả", không phải "Của tôi" — chủ shop một
@@ -64,11 +66,14 @@ export function useConversationListFilters(updateUISettings: (patch: UISettings)
                 const nextQuery: ListFilterQuery = { ...queryRef.current, ...(inboxIds && { inboxIds }), ...(labels && { labels }) };
                 // window.location giữ `?q=` mà ô tìm ghi thẳng bằng history.replaceState.
                 const current = `${window.location.pathname}${window.location.search}`;
-                const next = withListFilterQuery(current, nextQuery);
+                const next = withListFilterQuery(
+                    `${filteredListPathname(accountId, window.location.pathname)}${window.location.search}`,
+                    nextQuery,
+                );
                 if (next !== current) router.get(next, {}, LIST_FILTER_VISIT_OPTIONS);
             }
         },
-        [assigneeTab, persist, persistedFilters],
+        [accountId, assigneeTab, persist, persistedFilters],
     );
 
     const setAssigneeTab = useCallback(

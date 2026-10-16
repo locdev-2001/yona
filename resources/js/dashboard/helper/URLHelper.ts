@@ -62,6 +62,14 @@ export const composeConversationUrl = ({
     return withListFilterQuery(accountScopedUrl(accountId, search ? `inbox/new?${search}` : 'inbox/new'), filters);
 };
 
+const DEFAULT_LIST_PATH = 'dashboard';
+const FILTERED_LIST_PATH = 'conversations';
+
+// Danh sách mặc định có thêm kênh/nhãn thì chuyển sang đường dẫn danh sách có lọc,
+// để một trạng thái lọc chỉ có một URL (sidebar so mục đang chọn theo URL này).
+export const filteredListPathname = (accountId: number, pathname: string) =>
+    pathname === accountScopedUrl(accountId, DEFAULT_LIST_PATH) ? accountScopedUrl(accountId, FILTERED_LIST_PATH) : pathname;
+
 // Port từ URLHelper.conversationListPageURL: nhóm → màn lọc sẵn → danh sách có
 // bộ lọc kênh/nhãn → mặc định dashboard (custom_view vào E1).
 export const conversationListPageURL = ({
@@ -70,13 +78,13 @@ export const conversationListPageURL = ({
     teamId = 0,
     conversationType = '',
 }: ConversationRouteScope) => {
-    let path = 'dashboard';
+    let path = DEFAULT_LIST_PATH;
     if (teamId) {
         path = `team/${teamId}`;
     } else if (CONVERSATION_TYPE_PATHS[conversationType]) {
         path = CONVERSATION_TYPE_PATHS[conversationType];
     } else if (hasListFilterQuery(normalizeListFilterQuery(filters))) {
-        path = 'conversations';
+        path = FILTERED_LIST_PATH;
     }
     return withListFilterQuery(accountScopedUrl(accountId, path), filters);
 };

@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const page = vi.hoisted(() => ({
     url: '/app/accounts/2/conversations?inbox=5&label=a',
-    props: { auth: { user: { ui_settings: { conversations_filter_by: { status: 'resolved', order_by: 'priority_desc', assignee_type: 'me' } } } } },
+    props: { currentAccount: { id: 2 }, auth: { user: { ui_settings: { conversations_filter_by: { status: 'resolved', order_by: 'priority_desc', assignee_type: 'me' } } } } },
 }));
 const get = vi.hoisted(() => vi.fn());
 vi.mock('@inertiajs/react', () => ({ usePage: () => page, router: { get } }));
@@ -35,6 +35,15 @@ describe('useConversationListFilters', () => {
             { preserveState: true, preserveScroll: true, replace: true },
         );
         expect(updateUISettings).not.toHaveBeenCalled();
+    });
+
+    it('đứng ở danh sách mặc định mà thêm kênh thì sang đường dẫn danh sách có lọc', () => {
+        window.history.replaceState(null, '', '/app/accounts/2/dashboard?q=an');
+        const { result } = renderHook(() => useConversationListFilters(vi.fn()));
+
+        act(() => result.current.setFilters({ inboxIds: [5], labels: [] }));
+
+        expect(get).toHaveBeenCalledWith('/app/accounts/2/conversations?q=an&inbox=5', {}, expect.any(Object));
     });
 
     it('đổi trạng thái = lưu đủ cụm ui_settings, không điều hướng', () => {
