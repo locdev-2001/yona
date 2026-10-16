@@ -8,18 +8,29 @@ use App\Agent\ValueObjects\TurnEvidence;
 
 // Dữ liệu doanh nghiệp là nguồn chuẩn, lời khách chỉ là lời khai: số tiền hay phần trăm
 // trong câu gửi khách phải xuất hiện trong tool_result của chính lượt này hoặc trong
-// lời nhân viên người đã nói công khai với khách. Tất định, không hỏi mô hình.
+// lời nhân viên người đã nói công khai với khách. Số viết mơ hồ ("1 triệu 50") bị trả
+// lại để viết đủ số, khách không hiểu nhầm. Tất định, không hỏi mô hình.
 final class ClaimGuard
 {
     public function check(string $customerFacingText, TurnEvidence $evidence): ?ToolResult
     {
+        $ambiguous = MoneyMentions::ambiguous($customerFacingText);
+
+        if ($ambiguous !== []) {
+            return ToolResult::failure(
+                ToolErrorCode::InvalidArgs,
+                'These amounts can be read two ways by the customer: '.implode(', ', $ambiguous)
+                .'. Write every amount in full digits, e.g. 1.050.000đ, then call the tool again.',
+            );
+        }
+
         $claimed = MoneyMentions::in($customerFacingText);
 
         if ($claimed === []) {
             return null;
         }
 
-        $sourced = MoneyMentions::in(implode("\n", $evidence->sources()), includeBareNumbers: true);
+        $sourced = MoneyMentions::sourced(implode("\n", $evidence->sources()));
         $unsourced = array_values(array_diff($claimed, $sourced));
 
         if ($unsourced === []) {

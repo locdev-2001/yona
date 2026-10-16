@@ -13,7 +13,6 @@ it('reads every common way of writing an amount', function (string $text, array 
     'comma thousands and VND' => ['1,250,000 VND', ['VND:1250000']],
     'currency symbol' => ['450.000 ₫', ['VND:450000']],
     'short million' => ['combo 1tr2 nhé', ['VND:1200000']],
-    'million with tail' => ['1 triệu 250', ['VND:1250000']],
     'decimal million' => ['1,5 triệu', ['VND:1500000']],
     'plain million' => ['2tr', ['VND:2000000']],
     'thousand word' => ['450 nghìn', ['VND:450000']],
@@ -36,6 +35,17 @@ it('ignores numbers that are not money', function (string $text) {
     'no numbers' => ['Dạ em chào anh ạ'],
 ]);
 
+it('reads a tail of two or three digits after triệu/tỷ as ambiguous, never as one amount', function (string $text, string $fragment, array $readings) {
+    expect(MoneyMentions::in($text))->toBe([])
+        ->and(MoneyMentions::ambiguous($text))->toBe([$fragment])
+        ->and(MoneyMentions::sourced($text))->toEqualCanonicalizing($readings);
+})->with([
+    'two digits after triệu' => ['giá 1 triệu 50 ạ', '1 triệu 50', ['VND:1500000', 'VND:1050000']],
+    'two digits after tr' => ['combo 1tr50', '1tr50', ['VND:1500000', 'VND:1050000']],
+    'three digits after triệu' => ['1 triệu 250', '1 triệu 250', ['VND:1250000']],
+    'two digits after tỷ' => ['căn hộ 2 tỷ 50', '2 tỷ 50', ['VND:2500000000', 'VND:2050000000']],
+]);
+
 it('lets a reply state only amounts found in this turn\'s tool results', function (string $reply, string $evidence, bool $allowed) {
     $result = (new ClaimGuard)->check($reply, new TurnEvidence([$evidence]));
 
@@ -48,7 +58,18 @@ it('lets a reply state only amounts found in this turn\'s tool results', functio
     'amount not in data' => ['Dạ áo giá 450k ạ', '{"ok":true,"data":[{"excerpt":"Áo thun trắng giá 150.000đ."}]}', false],
     'one of two amounts missing' => ['Áo 150k, quần 300k', '{"ok":true,"data":[{"excerpt":"Áo 150.000đ"}]}', false],
     'no evidence' => ['Phí ship 30k ạ', '', false],
+    'source written with a short tail' => ['Dạ combo giá 1.050.000đ ạ', '{"ok":true,"data":[{"excerpt":"Combo 1 triệu 50."}]}', true],
+    'source with a one-digit tail' => ['Dạ combo giá 1.200.000đ ạ', '{"ok":true,"data":[{"excerpt":"Combo 1tr2."}]}', true],
+    'reply with an ambiguous tail, even if sourced' => ['Dạ combo giá 1 triệu 50 ạ', '{"ok":true,"data":[{"excerpt":"Combo 1.050.000đ."}]}', false],
 ]);
+
+it('asks for the full amount when the reply writes one ambiguously', function () {
+    $result = (new ClaimGuard)->check('Dạ combo giá 1tr50 ạ', new TurnEvidence(['{"ok":true,"data":[{"excerpt":"Combo 1.050.000đ."}]}']));
+
+    expect($result->toArray()['error']['code'])->toBe('invalid_args')
+        ->and($result->fix)->toContain('1tr50')
+        ->and($result->fix)->toContain('1.050.000đ');
+});
 
 it('explains the refusal with the code, the amounts and how to recover', function () {
     $result = (new ClaimGuard)->check('Dạ áo giá 450k, giảm 10% ạ', new TurnEvidence);
