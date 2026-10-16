@@ -139,6 +139,32 @@ describe('công tắc tự động trả lời', function () {
             "{$agent->name} turned off automatic replies",
         ]);
     });
+
+    it('ghi dòng hoạt động ngay trong lượt bấm công tắc, không chờ hàng đợi', function () {
+        [$account, , $conversation, $agent] = autoResponderFixtures();
+        inboxAiAgent($conversation, 'Lan');
+        // Hàng đợi mặc định nuốt job: chỉ thứ chạy đồng bộ trong lượt bấm mới để lại dấu vết.
+        config(['queue.connections.discard' => ['driver' => 'null'], 'queue.default' => 'discard']);
+
+        $this->actingAs($agent)->postJson(autoResponderUrl($account, $conversation))->assertOk();
+        $contactMessage = Message::factory()->create([
+            'account_id' => $account->id,
+            'inbox_id' => $conversation->inbox_id,
+            'conversation_id' => $conversation->id,
+            'message_type' => Message::TYPE_INCOMING,
+        ]);
+        $this->actingAs($agent)->deleteJson(autoResponderUrl($account, $conversation))->assertOk();
+
+        $timeline = $conversation->messages()->reorder('id')->get(['id', 'message_type', 'content'])
+            ->map(fn (Message $message) => $message->id === $contactMessage->id ? 'contact' : $message->content)
+            ->all();
+
+        expect($timeline)->toBe([
+            "{$agent->name} turned on automatic replies by Lan",
+            'contact',
+            "{$agent->name} turned off automatic replies",
+        ]);
+    });
 });
 
 describe('AI agent của inbox', function () {

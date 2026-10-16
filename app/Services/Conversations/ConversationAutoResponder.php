@@ -84,6 +84,8 @@ final class ConversationAutoResponder
         });
     }
 
+    // Ghi ngay trong lượt thao tác, không qua hàng đợi: trễ hàng đợi làm dòng hoạt động đứng
+    // sau tin khách tới ngay sau lúc bấm công tắc.
     private function recordActivity(Conversation $conversation, string $key, ?User $actor, ?AiAgent $aiAgent): void
     {
         $content = $conversation->inAccountLocale(fn () => __("conversations.activity.auto_responder.{$key}", [
@@ -91,7 +93,7 @@ final class ConversationAutoResponder
             'agent_name' => $aiAgent?->name ?? 'AI',
         ]));
 
-        ActivityMessageJob::dispatch($conversation, $conversation->activityMessageParams($content, [
+        ActivityMessageJob::dispatchSync($conversation, $conversation->activityMessageParams($content, [
             'activity' => ['type' => 'auto_responder_changed', 'ai_auto_reply' => $conversation->ai_auto_reply],
         ]));
     }
