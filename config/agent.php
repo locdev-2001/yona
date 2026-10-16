@@ -56,6 +56,13 @@ return [
     'models' => [
         'main' => [
             'routes' => [
+                [
+                    'provider' => 'openai',
+                    'model' => 'gpt-6-luna',
+                    'max_output' => 2048,
+                    'price' => ['input' => 0.10, 'output' => 0.50, 'cache_read' => 0.01, 'cache_write' => 0.10],
+                    'request_options' => ['reasoning_effort' => 'none', 'prompt_cache_retention' => '24h'],
+                ],
                 ['provider' => 'anthropic', 'model' => 'claude-sonnet-5', 'max_output' => 2048],
                 ['provider' => 'openrouter', 'model' => 'anthropic/claude-sonnet-5', 'max_output' => 2048],
             ],
