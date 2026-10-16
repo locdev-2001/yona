@@ -6,7 +6,8 @@
 > - **Việc đang mở theo dõi ở Công việc của dash.yona.vn** qua MCP `yona-dash` (skill `yona-issues`), không phải trong file này và không tạo GitHub issue nữa: `list_tasks` với `tag: "P0"`.
 > - Thư mục `refs/` (không theo dõi trong git) chứa mã tham khảo bên ngoài: chỉ đọc lấy ý tưởng, **CẤM** mở mọi thư mục `enterprise/` trong đó (giấy phép thương mại). Code, comment, copy, commit, task không nhắc tên nguồn; nghĩa vụ giấy phép nằm ở `THIRD_PARTY_NOTICES.md`.
 > - **Làm UI bề mặt công khai:** gọi skill `yona-ui` (`.claude/skills/yona-ui/`). Nghiệm thu bằng `npm run check:ui`, không phải bằng mắt mình.
-> - **DoD:** Pest + vitest + tsc + pint + build xanh, bảng đối chiếu hành vi khi dựng tính năng từ mã tham khảo trong `refs/` (ghi ở báo cáo, không vào code), nghiệm thu trên trình duyệt như người dùng cuối. Thiếu 1 = chưa done.
+> - **KHÔNG viết test tự động, dưới mọi hình thức** (Pest, vitest, `node --test`, e2e, snapshot): không tạo tệp `*.test.*`, không tạo lại `tests/`. Founder chốt 16/10/2026: test case không nói lên vấn đề gì. **Nghiệm thu = dùng thật trên UI** như người dùng cuối (máy tính và 375px khi đụng giao diện), **có ảnh chụp trước/sau làm bằng chứng** đính kèm vào báo cáo và việc trên dash.yona.vn. Chưa có ảnh = chưa xong.
+> - **DoD:** tsc + pint + i18n-check + build xanh, ảnh chụp nghiệm thu trên UI, bảng đối chiếu hành vi khi dựng tính năng từ mã tham khảo trong `refs/` (ghi ở báo cáo, không vào code), nghiệm thu trên trình duyệt như người dùng cuối. Thiếu 1 = chưa done.
 > - DB dev = `yona_rw`. **Cấm** `migrate:fresh/refresh/wipe`. Cổng dev lấy từ `.env`: app **8610**, Reverb **8611**, Zalo bridge **8612**.
 > - **Cấm tạo tài khoản thử trên production.** Thử luồng khách thì làm ở local (xem README, mục Chạy local).
 
@@ -18,14 +19,14 @@
 
 ## Sản phẩm hôm nay thực sự là gì (20/09/2026)
 
-Production chạy tại https://yona.vn. Tiếng Việt đầy đủ, ~2.2k Pest + ~800 vitest xanh.
+Production chạy tại https://yona.vn. Tiếng Việt đầy đủ. Repo không còn test tự động (gỡ 16/10/2026); nghiệm thu bằng UI có ảnh.
 
 **Có thật:** hộp thư đa kênh realtime · Zalo cá nhân (QR, thu hồi hai chiều, cảm xúc, tin nhóm) · widget website + SDK · email IMAP/SMTP · nhãn, ghi chú, mention, gán việc · automation rules + macro + câu trả lời mẫu · webhook + agent bot · liên hệ, thuộc tính tùy biến, bộ lọc, import/export CSV · báo cáo + CSAT · Help Center · chiến dịch live chat · thông báo đẩy trình duyệt (Web Push, VAPID tự sinh) · 2FA, RBAC, Platform API, Super Admin.
 
 **Widget mới và tin có cấu trúc** (26/09/2026, nhánh `feat/widget-revamp`, chờ deploy): widget có Home + 4 tab (Tin nhắn nhiều hội thoại, Trợ giúp, Cập nhật), phóng to hai cột, khách thả cảm xúc · tin có cấu trúc một lõi (`app/Messaging/Structured`, `shared/messaging`): trả lời nhanh, thẻ sản phẩm + đặt mua chọn biến thể, chọn lịch, form, tra đơn, **thẻ chuyển khoản VietQR** + đánh dấu đã nhận · kênh không có nút gốc tự hạ cấp (Zalo nhận ảnh thẻ + chữ + danh sách số, khách **trả lời bằng số**) · trang công khai theo token `/m/{token}` hạn 14 ngày · lời mời chủ động có chip · màn cấu hình Widget chat xem trước bằng widget thật. Kiến trúc: `docs/system-architecture.md` §3.
 
 **KHÔNG có trong code — đừng viết marketing hay code dựa trên chúng:**
-- **Lead, Pipeline, Deal, Task, Project** — không một bảng nào. Landing đã sửa ngày 24/09 để không hứa nữa; `tests/Feature/Public/LandingClaimsTest.php` chặn tái phát.
+- **Lead, Pipeline, Deal, Task, Project** — không một bảng nào. Landing đã sửa ngày 24/09 để không hứa nữa; sửa landing thì đọc lại toàn trang để chắc không hứa lại.
 - **Gói cước, thanh toán, entitlements** — chưa có gì (thẻ chuyển khoản VietQR là khách trả tiền cho shop, không phải Yona thu tiền).
 - **Trợ lý AI trong widget** — chưa có bộ não; tab Trợ lý AI ở màn cấu hình chỉ ghi "Sắp ra mắt".
 - **Bộ đếm hội thoại (metering)** — `MeteringService` đã bỏ khi viết lại; chỉ còn số đếm của báo cáo.
@@ -62,7 +63,7 @@ Stack: PHP 8.3+ / Laravel 13 · Inertia + React 19 (TypeScript), Tailwind + Radi
 
 ## Nhánh mới = worktree mới (bắt buộc với mọi phiên AI)
 
-Nhiều phiên AI chạy song song trên cùng một checkout. Đổi nhánh trong `~/Documents/GitHub/yona` là kéo nhánh dưới chân phiên khác: cây làm việc đổi, commit bị rebase mất SHA, test đang chạy đọc nhầm mã. **Đã xảy ra thật 20/09/2026.**
+Nhiều phiên AI chạy song song trên cùng một checkout. Đổi nhánh trong `~/Documents/GitHub/yona` là kéo nhánh dưới chân phiên khác: cây làm việc đổi, commit bị rebase mất SHA, tiến trình đang chạy đọc nhầm mã. **Đã xảy ra thật 20/09/2026.**
 
 Luật: **phiên AI nào cần nhánh mới để code thì tạo worktree, không `git checkout -b` trong checkout chính.**
 

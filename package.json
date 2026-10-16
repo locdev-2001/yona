@@ -10,7 +10,6 @@
         "tsc": "tsc --noEmit",
         "check:css": "node scripts/check-css-surfaces.mjs",
         "check:brand": "node scripts/check-brand-leak.mjs",
-        "test": "vitest run",
         "check:ui": "python3 scripts/check-ui.py --url http://127.0.0.1:8610/?locale=vi",
         "check:ui:self": "python3 scripts/check-ui.py --self-test"
     },
@@ -71,20 +70,16 @@
         "@iconify-json/simple-icons": "^1.2.96",
         "@radix-ui/colors": "^3.0.0",
         "@tailwindcss/typography": "^0.5.19",
-        "@testing-library/jest-dom": "^7.0.1",
-        "@testing-library/react": "^16.3.3",
         "@types/markdown-it": "^14.2.0",
         "@types/react": "^19.0.0",
         "@types/react-dom": "^19.0.0",
         "@vitejs/plugin-react": "^6.1.1",
         "autoprefixer": "^10.4.20",
-        "jsdom": "^30.0.1",
         "laravel-vite-plugin": "^3.1",
         "postcss": "^8.5.23",
         "sass": "^1.80.0",
         "tailwindcss": "^3.4.19",
         "typescript": "^5.7.2",
-        "vite": "^8.2.2",
-        "vitest": "4.1.11"
+        "vite": "^8.2.2"
     }
 }

@@ -458,6 +458,3 @@ trong JS nên chỉ làm khó; lớp chặn thật là giới hạn nhịp.
   nằm trong danh sách ưu tiên, nên khoá của widget/Platform API đọc thẳng từ token.
 - **Cấu hình một chỗ**: `config/request_protection.php`. `REQUEST_SIGNING_ENABLED=false`
   là rollback tức thì không cần deploy mã (chạy `php artisan config:cache` lại).
-- Test: request tới route được bảo vệ trong Pest tự ký qua `Tests\Support\SignsProtectedRequests`
-  (dùng trong `TestCase`); cần request trơn thì `withoutRequestSigning()`. Vitest mặc
-  định tắt ký (`import.meta.env.MODE === 'test'`).

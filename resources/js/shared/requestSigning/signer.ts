@@ -48,14 +48,6 @@ type SigningSession =
     | { enabled: false }
     | { enabled: true; keyId: string; keys: SessionKeys; clockOffsetSeconds: number; routes: ProtectedRoute[] };
 
-// Test giao diện giả fetch, không có máy chủ cấp khoá: mặc định tắt khi chạy vitest (kể cả sau
-// vi.resetModules), test của chính lớp ký tự bật lại.
-let signingEnabled = import.meta.env.MODE !== 'test';
-
-export function setRequestSigningEnabled(enabled: boolean): void {
-    signingEnabled = enabled;
-}
-
 async function toSession(grant: KeyGrant | null): Promise<SigningSession> {
     if (!grant?.enabled || !grant.key_id || !grant.encryption_key || !grant.signing_key || !globalThis.crypto?.subtle) {
         return { enabled: false };
@@ -128,13 +120,12 @@ export class RequestSigner {
 
     // Xin khoá sẵn ở nền (vd ngay khi widget có phiên khách) để request nhắn tin đầu tiên không phải chờ.
     warmUp(): void {
-        if (signingEnabled) void this.loadSession();
+        void this.loadSession();
     }
 
     // Chưa từng xin khoá thì không chặn request: xin ở nền và gửi thường. Nếu route cần ký,
     // máy chủ trả 428 và send() gửi lại sau khi có khoá; request không cần ký không phải chờ gì.
     async prepare(request: OutgoingRequest): Promise<PreparedRequest> {
-        if (!signingEnabled) return { headers: {}, body: request.body };
         if (!this.session) {
             this.warmUp();
             return { headers: {}, body: request.body };
@@ -173,7 +164,7 @@ export class RequestSigner {
     // Điểm duy nhất client gửi request có thể phải ký: chuẩn bị, gửi, và tự phục hồi một lần khi 428.
     async send(request: OutgoingRequest, transport: (prepared: PreparedRequest) => Promise<Response>): Promise<Response> {
         const response = await transport(await this.prepare(request));
-        if (response.status !== KEY_REQUIRED_STATUS || !signingEnabled) return response;
+        if (response.status !== KEY_REQUIRED_STATUS) return response;
 
         this.invalidate();
         await this.loadSession();

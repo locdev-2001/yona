@@ -37,11 +37,11 @@ Việc cổng không làm được → đưa lệnh cho founder tự chạy.
 1. **Code đã lên `origin/main`:** `git fetch origin && git status -sb` — `main` sạch, không ahead/behind.
    Server deploy `origin/main`, không phải máy local; commit chưa push sẽ không lên.
 2. **Gate theo người ra lệnh:**
-   - **Founder nói "deploy" trong hội thoại:** deploy nhanh, KHÔNG chạy full gate. Đủ là test vùng đã sửa đã xanh
-     trong lúc làm (Pest/vitest đúng tệp, tsc nếu đụng FE, pint tệp đã sửa); thiếu thì chạy đúng phần thiếu đó.
+   - **Founder nói "deploy" trong hội thoại:** deploy nhanh, KHÔNG chạy full gate. Đủ là vùng đã sửa đã được nghiệm thu
+     trên UI có ảnh trong lúc làm (tsc nếu đụng FE, pint tệp đã sửa); thiếu thì làm đúng phần thiếu đó.
      Server tự chạy i18n check và build frontend khi deploy, hỏng là deploy dừng ở bước đó.
    - **AI deploy mà founder không trực tiếp ra lệnh** (khi founder đã cho phép trường hợp đó): bắt buộc full gate
-     `make check` (pint + i18n-check + Pest + tsc + vite build) và `npm test` (vitest) trên đúng commit. Đỏ thì dừng,
+     `make check` (pint + i18n-check + tsc + vite build) trên đúng commit, kèm ảnh nghiệm thu UI của thay đổi. Đỏ thì dừng,
      báo lỗi.
 3. **`plan`:** đọc danh sách commit sẽ lên và migration mới. Báo founder một dòng tóm tắt trước khi chạy.
    Server có commit lạ không nằm trong `origin/main` → dừng, hỏi founder (deploy.sh chỉ fast-forward).

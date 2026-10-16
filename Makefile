@@ -1,15 +1,15 @@
 # Yona — dev shortcuts.
-# Yêu cầu PHP 8.4 + Postgres + Redis local. DB dev = yona_rw, test = yona_rw_test.
+# Yêu cầu PHP 8.4 + Postgres + Redis local. DB dev = yona_rw.
 
 PHP      := php
 ARTISAN  := $(PHP) artisan
 # Chạy composer bằng đúng PHP của artisan: shebang của composer có thể trỏ PHP hệ
-# thống khác phiên bản (tzdata hệ thống thiếu tên múi giờ cũ, Pest đỏ giả).
+# thống khác phiên bản (tzdata hệ thống thiếu tên múi giờ cũ).
 COMPOSER := $(PHP) $(shell command -v composer)
 PSQL     := psql -h 127.0.0.1 -U postgres
 
 .DEFAULT_GOAL := help
-.PHONY: help setup dev serve worker reverb migrate seed test format stan check build i18n i18n-check tinker \
+.PHONY: help setup dev serve worker reverb migrate seed format stan check build i18n i18n-check tinker \
 	up down status
 
 help: ## Show this help
@@ -22,9 +22,7 @@ setup: ## First-time: deps + env + key + DB + migrate + assets
 	@test -f .env || cp .env.example .env
 	@grep -q "APP_KEY=base64:" .env || $(ARTISAN) key:generate
 	@$(PSQL) -d postgres -tc "SELECT 1 FROM pg_database WHERE datname='yona_rw'" | grep -q 1 || $(PSQL) -d postgres -c "CREATE DATABASE yona_rw OWNER yona_owner"
-	@$(PSQL) -d postgres -tc "SELECT 1 FROM pg_database WHERE datname='yona_rw_test'" | grep -q 1 || $(PSQL) -d postgres -c "CREATE DATABASE yona_rw_test OWNER yona_owner"
 	$(PSQL) -d yona_rw -c "CREATE EXTENSION IF NOT EXISTS pg_trgm"
-	$(PSQL) -d yona_rw_test -c "CREATE EXTENSION IF NOT EXISTS pg_trgm"
 	$(ARTISAN) migrate --force
 	$(ARTISAN) db:seed --force
 	$(ARTISAN) i18n:generate
@@ -42,9 +40,6 @@ migrate: ## Run migrations (yona_rw)
 seed: ## Seed dev data
 	$(ARTISAN) db:seed
 
-test: ## Pest suite (yona_rw_test)
-	$(COMPOSER) test
-
 format: ## Pint
 	vendor/bin/pint
 
@@ -57,7 +52,7 @@ i18n-check: ## Bundle i18n đã commit phải khớp lang/ (gate CI)
 build: i18n ## i18n:generate + tsc + vite build
 	pnpm tsc && pnpm build
 
-check: format i18n-check test build ## Full gate: pint + i18n-check + pest + tsc + vite build
+check: format i18n-check build ## Gate máy: pint + i18n-check + tsc + vite build; nghiệm thu thật bằng UI
 
 tinker: ## artisan tinker
 	$(ARTISAN) tinker

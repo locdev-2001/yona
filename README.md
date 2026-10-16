@@ -15,8 +15,8 @@ merge vào `main` (08/09/2026). Mốc quay lại bản cũ: tag `main-truoc-rewr
 
 ## Trạng thái (20/09/2026)
 
-Production đang chạy tại **https://yona.vn**. Tiếng Việt đầy đủ, ~2.2k test Pest
-+ ~800 test vitest xanh.
+Production đang chạy tại **https://yona.vn**. Tiếng Việt đầy đủ. Không dùng test tự động:
+nghiệm thu bằng thao tác thật trên UI, có ảnh chụp làm bằng chứng.
 
 Nhưng **khách lạ chưa tự đi hết được từ trang chủ tới hộp thư**. Bốn nút chặn,
 theo đúng thứ tự khách gặp:
@@ -91,11 +91,11 @@ php artisan super-admin:create ban@yona.vn --name="Tên" --password='<mật kh�
 ## Gate chất lượng
 
 ```bash
-make check     # pint + i18n-check + pest + tsc + vite build
+make check     # pint + i18n-check + tsc + vite build
 ```
 
-Tách lẻ khi cần: `make format` (Pint) · `make test` (Pest, DB `yona_rw_test`) ·
-`make i18n-check` · `make build` (tsc + vite) · `pnpm test` (vitest).
+Tách lẻ khi cần: `make format` (Pint) · `make i18n-check` · `make build` (tsc + vite).
+Repo không viết test tự động; nghiệm thu bằng UI kèm ảnh chụp trước/sau.
 
 **i18n có một nguồn duy nhất:** `lang/{locale}/*.php`. Sửa chuỗi xong phải chạy
 `make i18n` và commit `resources/js/i18n/generated/*`, nếu không deploy sẽ dừng ở
@@ -118,7 +118,6 @@ routes/                web.php · web_api.php · api.php · api_public.php · ch
 resources/js/          dashboard · widget · survey · portal · superadmin · landing · sdk · v3 · shared
 lang/{en,vi}/          Nguồn i18n duy nhất
 services/zalo-bridge/  Bridge Node cho Zalo cá nhân
-tests/                 Pest — Feature, Unit, Contracts
 plans/                 Kế hoạch + báo cáo theo phiên
 ```
 

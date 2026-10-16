@@ -11,8 +11,7 @@
         "node": "^18.17.0 || ^20.3.0 || >=21.0.0"
     },
     "scripts": {
-        "render": "node src/render.mjs",
-        "test": "node --test"
+        "render": "node src/render.mjs"
     },
     "dependencies": {
         "sharp": "^0.34.5"
