@@ -5,7 +5,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
 // Nhật ký mỗi lần gọi API nhà cung cấp mô hình: để soi lỗi, đo token và chi phí.
-// Chứa nội dung hội thoại nên chỉ giữ 30 ngày (ApiLog::prunable).
+// Giữ vĩnh viễn để đối chiếu; số liệu tổng kết nằm ở ai_usage_analytics.
 return new class extends Migration
 {
     public function up(): void

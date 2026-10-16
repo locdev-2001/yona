@@ -10,7 +10,6 @@ use App\Jobs\Notification\RemoveOldNotificationJob;
 use App\Jobs\Notification\ReopenSnoozedNotificationsJob;
 use App\Jobs\Search\ProcessSearchOutboxJob;
 use App\Jobs\Zalo\ZaloHealthSweepJob;
-use App\Models\ApiLog;
 use App\Models\UserSession;
 use App\Search\SearchOutbox;
 use Illuminate\Foundation\Inspiring;
@@ -55,8 +54,7 @@ Schedule::command('stickers:prune-orphan-files')->weeklyOn(0, '03:50');
 Schedule::command('messages:create-partitions', ['--months' => 3])->dailyAt('03:20')->onOneServer();
 // Dòng user_sessions của phiên đã hết hạn tự nhiên không ai xoá; để lại thì
 // chạm trần số phiên dù người dùng không còn phiên nào sống.
-// api_logs chứa nội dung hội thoại gửi nhà cung cấp mô hình: chỉ giữ ApiLog::RETENTION_DAYS ngày.
-Schedule::command('model:prune', ['--model' => [UserSession::class, ApiLog::class]])->dailyAt('03:10');
+Schedule::command('model:prune', ['--model' => [UserSession::class]])->dailyAt('03:10');
 
 // Cảnh báo khi Horizon/Reverb/zalo-bridge đổi trạng thái, không phải mỗi phút.
 Schedule::command('monitor:check')

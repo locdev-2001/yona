@@ -4,7 +4,7 @@ namespace App\Agent\ValueObjects;
 
 use InvalidArgumentException;
 
-// Một lần gọi API nhà cung cấp mô hình, để ghi nhật ký (lõi giữ 30 ngày). Trường khớp
+// Một lần gọi API nhà cung cấp mô hình, để ghi nhật ký (lõi giữ vĩnh viễn). Trường khớp
 // một-một với cột của bảng api_logs.
 final readonly class ApiCallRecord
 {

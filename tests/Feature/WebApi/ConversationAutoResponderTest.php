@@ -23,6 +23,8 @@ use App\Services\ConversationActions\ActionExecutor;
 use App\Services\Conversations\AutoResponderStopReason;
 use App\Services\Conversations\ConversationAutoResponder;
 use App\Services\Conversations\ConversationFloor;
+use Illuminate\Database\Eloquent\MassPrunable;
+use Illuminate\Database\Eloquent\Prunable;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
@@ -399,7 +401,7 @@ describe('AI là người gửi tin', function () {
     });
 });
 
-it('ghi nhật ký gọi API mô hình qua Port, và xoá dòng quá 30 ngày', function () {
+it('ghi nhật ký gọi API mô hình qua Port và giữ vĩnh viễn', function () {
     [$account, , $conversation] = autoResponderFixtures();
     $aiAgent = inboxAiAgent($conversation);
     $record = fn () => app(ApiCallLog::class)->record(new ApiCallRecord(
@@ -408,16 +410,17 @@ it('ghi nhật ký gọi API mô hình qua Port, và xoá dòng quá 30 ngày', 
         inputTokens: 1200, outputTokens: 80, cacheReadTokens: 1000, costMicroUsd: 950, latencyMs: 1400,
     ));
 
-    $this->travel(-31)->days();
+    $this->travel(-400)->days();
     $record();
     $this->travelBack();
     $record();
 
-    expect(ApiLog::query()->count())->toBe(2);
+    $this->artisan('model:prune')->assertSuccessful();
 
-    $this->artisan('model:prune', ['--model' => [ApiLog::class]])->assertSuccessful();
+    expect(class_uses_recursive(ApiLog::class))->not->toHaveKey(MassPrunable::class)->not->toHaveKey(Prunable::class)
+        ->and(ApiLog::query()->count())->toBe(2);
 
-    $kept = ApiLog::query()->sole();
+    $kept = ApiLog::query()->latest('id')->first();
 
     expect($kept->only(['account_id', 'conversation_id', 'ai_agent_id', 'provider', 'input_tokens', 'cost_micro_usd', 'latency_ms']))
         ->toBe(['account_id' => $account->id, 'conversation_id' => $conversation->id, 'ai_agent_id' => $aiAgent->id, 'provider' => 'anthropic', 'input_tokens' => 1200, 'cost_micro_usd' => 950, 'latency_ms' => 1400])

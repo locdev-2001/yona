@@ -2,19 +2,13 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\MassPrunable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-// Một lần gọi API nhà cung cấp mô hình. Chứa nội dung hội thoại nên chỉ giữ
-// RETENTION_DAYS ngày (model:prune hằng ngày, routes/console.php).
+// Một lần gọi API nhà cung cấp mô hình, giữ vĩnh viễn để đối chiếu. Số liệu tổng kết
+// (trang Phân tích AI) đọc ai_usage_analytics, không đọc bảng này.
 class ApiLog extends Model
 {
-    use MassPrunable;
-
-    public const RETENTION_DAYS = 30;
-
     public const UPDATED_AT = null;
 
     protected $fillable = [
@@ -41,12 +35,6 @@ class ApiLog extends Model
             'request' => 'array',
             'response' => 'array',
         ];
-    }
-
-    /** @return Builder<ApiLog> */
-    public function prunable(): Builder
-    {
-        return static::query()->where('created_at', '<', now()->subDays(self::RETENTION_DAYS));
     }
 
     public function account(): BelongsTo
