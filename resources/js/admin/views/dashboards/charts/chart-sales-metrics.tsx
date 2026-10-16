@@ -57,6 +57,8 @@ type Props = {
   formatTick?: (date: string) => string
   // Cột chồng lên nhau theo thứ tự chuỗi (chỉ với variant 'bar'); không có nhãn số trên từng đoạn.
   stacked?: boolean
+  // Bề rộng cột nhãn trục dọc (px); tăng khi nhãn dài như "$0.105" hay "300K".
+  yAxisWidth?: number
 }
 
 // Biểu đồ theo ngày (đường hoặc cột). Trình đọc màn hình đọc câu tóm tắt và bảng số ẩn.
@@ -70,7 +72,8 @@ const TimeSeriesChart = ({
   formatDate,
   formatValue,
   formatTick = formatDate,
-  stacked = false
+  stacked = false,
+  yAxisWidth = 40
 }: Props) => {
   const summaryId = useId()
 
@@ -99,7 +102,7 @@ const TimeSeriesChart = ({
       <YAxis
         tickLine={false}
         axisLine={false}
-        width={40}
+        width={yAxisWidth}
         allowDecimals={false}
         tickFormatter={(value: number) => formatValue(value)}
       />
@@ -176,33 +179,36 @@ const TimeSeriesChart = ({
         )}
       </ChartContainer>
       {series.length > 1 ? <SeriesLegend series={series} colorOf={colorOf} /> : null}
-      <table className='sr-only'>
-        <caption>{title}</caption>
-        <thead>
-          <tr>
-            <th scope='col' className='font-normal'>
-              {dateLabel}
-            </th>
-            {series.map(item => (
-              <th scope='col' key={item.key} className='font-normal'>
-                {item.label}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {dates.map((date, index) => (
-            <tr key={date}>
-              <th scope='row' className='font-normal'>
-                {formatDate(date)}
+      {/* Bọc trong khối sr-only: bảng tự giãn theo số dòng (không co về 1px), để trần thì dài thêm cả trang. */}
+      <div className='sr-only'>
+        <table>
+          <caption>{title}</caption>
+          <thead>
+            <tr>
+              <th scope='col' className='font-normal'>
+                {dateLabel}
               </th>
               {series.map(item => (
-                <td key={item.key}>{item.values[index] ?? 0}</td>
+                <th scope='col' key={item.key} className='font-normal'>
+                  {item.label}
+                </th>
               ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {dates.map((date, index) => (
+              <tr key={date}>
+                <th scope='row' className='font-normal'>
+                  {formatDate(date)}
+                </th>
+                {series.map(item => (
+                  <td key={item.key}>{item.values[index] ?? 0}</td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </figure>
   )
 }

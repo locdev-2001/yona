@@ -55,6 +55,9 @@ import { visitWithParams } from './operationsFormat';
 export const PAGE_URL = '/admin/ai_analytics';
 
 const LAST_DAY = '24h';
+
+// Nhãn trục dọc dài ("$0.105", "300K") cần cột rộng hơn mặc định.
+const AXIS_WIDTH = 64;
 const CUSTOM = 'custom';
 
 type Option = { value: string; label: string };
@@ -196,7 +199,7 @@ function kpis(current: UsageTotals, previous: UsageTotals): Kpi[] {
 
 function KpiCards({ current, previous }: { current: UsageTotals; previous: UsageTotals }) {
     return (
-        <section aria-label={label('KPI.LABEL')} className="grid grid-cols-2 gap-3 md:grid-cols-4 xl:grid-cols-7">
+        <section aria-label={label('KPI.LABEL')} className="grid grid-cols-2 gap-3 md:grid-cols-4 2xl:grid-cols-7">
             {kpis(current, previous).map(kpi => (
                 <StatisticsCard
                     key={kpi.key}
@@ -253,6 +256,7 @@ function BucketChart({
     variant,
     stacked = false,
     formatValue = formatCount,
+    yAxisWidth,
 }: {
     title: string;
     buckets: Bucket[];
@@ -261,6 +265,7 @@ function BucketChart({
     variant: 'line' | 'bar';
     stacked?: boolean;
     formatValue?: (value: number) => string;
+    yAxisWidth?: number;
 }) {
     return (
         <TimeSeriesChart
@@ -274,6 +279,7 @@ function BucketChart({
             formatDate={unit === 'hour' ? formatHourWithDay : formatDayKey}
             formatTick={unit === 'hour' ? formatHourKey : formatDayKey}
             formatValue={formatValue}
+            yAxisWidth={yAxisWidth}
         />
     );
 }
@@ -499,7 +505,7 @@ export default function AiAnalytics(props: AiAnalyticsProps) {
             <Head title={label('TITLE')} />
             <PageHeader
                 eyebrow={<span className="text-xs text-neutral-500">{label('EYEBROW')}</span>}
-                title={label('TITLE')}
+                title={<span className="whitespace-nowrap">{label('TITLE')}</span>}
                 className="mb-0 md:mb-0"
                 actions={
                     <>
@@ -552,6 +558,7 @@ export default function AiAnalytics(props: AiAnalyticsProps) {
                             formatDate={formatHourWithDay}
                             formatTick={window.preset === LAST_DAY ? formatHourKey : formatHourAsDay}
                             formatValue={formatUsd}
+                            yAxisWidth={AXIS_WIDTH}
                         />
                     </ChartCard>
 
@@ -574,6 +581,7 @@ export default function AiAnalytics(props: AiAnalyticsProps) {
                                 series={tokenSeries}
                                 variant="line"
                                 formatValue={formatCompact}
+                                yAxisWidth={AXIS_WIDTH}
                             />
                         </ChartCard>
                         <ChartCard
