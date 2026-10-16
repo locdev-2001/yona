@@ -29,7 +29,7 @@ export default function AccordionItem({
             <button
                 type="button"
                 aria-expanded={isOpen}
-                className="flex items-center select-none w-full rounded-lg bg-transparent hover:bg-n-surface-hover m-0 cursor-grab justify-between py-2 px-4 drag-handle"
+                className="flex items-center select-none w-full rounded-lg bg-transparent hover:bg-n-surface-hover m-0 cursor-grab justify-between py-2 px-2 drag-handle"
                 onClick={event => {
                     event.stopPropagation();
                     onToggle();

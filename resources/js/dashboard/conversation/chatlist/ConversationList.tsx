@@ -5,19 +5,21 @@ import { CSS } from '@dnd-kit/utilities';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { ReactNode } from 'react';
+import { usePage } from '@inertiajs/react';
 
 import { t } from '../../../i18n';
 import Loader from 'shared/components/loader/Loader';
-import type {
-    PinMoveActions,
-    PinMoveDirection,
-} from 'dashboard/components/widgets/conversation/conversationCardComponents/ConversationContextMenu';
+import type { PinMoveDirection } from 'dashboard/components/widgets/conversation/conversationCardComponents/ConversationContextMenu';
 import { useBulkSelection } from 'dashboard/composables/useBulkActions';
+import { conversationUrl } from 'dashboard/helper/URLHelper';
 import { ICONS } from 'dashboard/icons';
+import type { DashboardPageProps } from '../../types';
 import { useConversation } from '../ConversationContext';
 import { moveId } from '../lifecycleReducers';
 import type { Conversation, ConversationMessage } from '../types';
+import { useMarkUnreadAndLeave } from '../useMarkUnreadAndLeave';
 import ConversationItem from './ConversationItem';
+import type { ConversationItemActions } from './ConversationItem';
 import { closestPinInsideGroup } from './pinDragCollision';
 
 // Kéo thả cả thẻ ghim, chỉ bằng chuột (MouseSensor): màn cảm
@@ -58,8 +60,22 @@ export default function ConversationList({
     sortablePins = false,
     onLoadMore,
 }: ConversationListProps) {
-    const { reorderPinnedConversations } = useConversation();
-    const isSelecting = useBulkSelection()?.isSelecting ?? false;
+    const {
+        accountId,
+        inboxId,
+        teamId,
+        label,
+        conversationId,
+        searchQuery,
+        markMessagesRead,
+        setConversationPinned,
+        focusMessage,
+        reorderPinnedConversations,
+    } = useConversation();
+    const markUnreadAndLeave = useMarkUnreadAndLeave(conversationType);
+    const bulkSelection = useBulkSelection();
+    const isSelecting = bulkSelection?.isSelecting ?? false;
+    const { inboxes = [] } = usePage<DashboardPageProps>().props;
     const sensors = useSensors(useSensor(MouseSensor, { activationConstraint: { distance: DRAG_ACTIVATION_DISTANCE } }));
 
     // Danh sách xếp được luôn đưa nhóm ghim lên đầu (sortComparator), nên tách ra hai
@@ -72,24 +88,62 @@ export default function ConversationList({
         [conversationList, sortablePins],
     );
     const pinnedIds = useMemo(() => pinnedConversations.map(chat => chat.id), [pinnedConversations]);
+    // Mỗi tin realtime tạo mảng ghim mới; movePin đọc qua ref để thao tác của thẻ giữ nguyên tham chiếu.
+    const pinnedIdsRef = useRef(pinnedIds);
+    pinnedIdsRef.current = pinnedIds;
 
     const movePin = useCallback(
-        (conversationId: number, direction: PinMoveDirection) => {
-            const index = pinnedIds.indexOf(conversationId);
+        (pinnedConversationId: number, direction: PinMoveDirection) => {
+            const currentPinnedIds = pinnedIdsRef.current;
+            const index = currentPinnedIds.indexOf(pinnedConversationId);
             const targetIndex = direction === 'top' ? 0 : direction === 'up' ? index - 1 : index + 1;
-            void reorderPinnedConversations(moveId(pinnedIds, conversationId, targetIndex));
+            void reorderPinnedConversations(moveId(currentPinnedIds, pinnedConversationId, targetIndex));
         },
-        [pinnedIds, reorderPinnedConversations],
+        [reorderPinnedConversations],
     );
 
-    const renderItem = (chat: ListedConversation, pinMoves: PinMoveActions | null) => (
+    // focusMessage đổi theo hội thoại đang mở; đọc qua ref để chuyển hội thoại không vẽ lại cả danh sách.
+    const focusMessageRef = useRef(focusMessage);
+    focusMessageRef.current = focusMessage;
+    const focusMatchedMessage = useCallback((messageId: number) => focusMessageRef.current(messageId), []);
+
+    const itemActions = useMemo<ConversationItemActions>(
+        () => ({
+            markMessagesRead,
+            markUnreadAndLeave,
+            setConversationPinned,
+            focusMessage: focusMatchedMessage,
+            movePin,
+            selectConversation: bulkSelection?.selectConversation,
+            deSelectConversation: bulkSelection?.deSelectConversation,
+        }),
+        [
+            markMessagesRead,
+            markUnreadAndLeave,
+            setConversationPinned,
+            focusMatchedMessage,
+            movePin,
+            bulkSelection?.selectConversation,
+            bulkSelection?.deSelectConversation,
+        ],
+    );
+
+    const renderItem = (chat: ListedConversation, pinIndex: number | null) => (
         <ConversationItem
             key={chat.id}
             source={chat}
+            inbox={inboxes.find(item => item.id === chat.inbox_id)}
+            conversationPath={conversationUrl({ accountId, inboxId, teamId, label, conversationType, id: chat.id })}
+            actions={itemActions}
+            isActiveChat={conversationId === chat.id}
+            isSelecting={isSelecting}
+            isSelected={bulkSelection?.isConversationSelected(chat.id) ?? false}
             showAssignee={showAssignee}
-            conversationType={conversationType}
+            searchQuery={searchQuery}
             matchedMessage={chat.matched_message}
-            pinMoves={pinMoves}
+            isSortablePin={pinIndex !== null}
+            canMovePinUp={pinIndex !== null && pinIndex > 0}
+            canMovePinDown={pinIndex !== null && pinIndex < pinnedIds.length - 1}
         />
     );
 
@@ -150,11 +204,7 @@ export default function ConversationList({
                             <div data-pinned-group className="flex flex-col gap-0.5">
                                 {pinnedConversations.map((chat, pinIndex) => (
                                     <SortablePinnedRow key={chat.id} conversationId={chat.id}>
-                                        {renderItem(chat, {
-                                            canMoveUp: pinIndex > 0,
-                                            canMoveDown: pinIndex < pinnedIds.length - 1,
-                                            onMove: direction => movePin(chat.id, direction),
-                                        })}
+                                        {renderItem(chat, pinIndex)}
                                     </SortablePinnedRow>
                                 ))}
                             </div>

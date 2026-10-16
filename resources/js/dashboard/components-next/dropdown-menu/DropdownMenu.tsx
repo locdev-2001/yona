@@ -41,6 +41,7 @@ interface DropdownMenuProps {
     showSearch?: boolean;
     searchPlaceholder?: string;
     className?: string;
+    itemClassName?: string;
     // Slot `footer` của bản gốc (BulkAgentActions/BulkTeamActions dùng làm khối xác nhận).
     footer?: ReactNode;
     // Slot `thumbnail` / `trailing-icon` của bản gốc (BulkLabelActions: ô màu + dấu tích).
@@ -60,6 +61,7 @@ export default function DropdownMenu({
     showSearch = false,
     searchPlaceholder = '',
     className = '',
+    itemClassName = '',
     footer,
     renderThumbnail,
     renderTrailingIcon,
@@ -96,6 +98,7 @@ export default function DropdownMenu({
                 'inline-flex items-center justify-start w-full h-8 min-w-0 gap-2 px-2 py-1.5 transition-all duration-200 ease-in-out border-0 rounded-lg z-60 hover:bg-n-surface-hover disabled:cursor-not-allowed disabled:pointer-events-none disabled:opacity-50',
                 item.isSelected ? 'bg-n-alpha-1' : '',
                 item.action === 'delete' ? 'text-n-ruby-11' : 'text-n-slate-12',
+                itemClassName,
             ].join(' ')}
             disabled={item.disabled}
             onClick={() => onAction(item)}

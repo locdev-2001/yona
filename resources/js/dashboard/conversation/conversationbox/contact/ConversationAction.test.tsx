@@ -14,13 +14,13 @@ vi.mock('shared/components/ui/MultiselectDropdown', () => ({ default: ({ selecte
 import ConversationAction from './ConversationAction';
 
 describe('Tác vụ hội thoại tinh gọn', () => {
-    it('giữ bot đang gán và nhãn, ẩn team/priority và mục Không có mà không thay đổi giá trị lưu', () => {
+    // Người phụ trách đã ở mũ khung chat nên panel không lặp lại ô giao người.
+    it('chỉ còn nhãn, không lặp ô người phụ trách, ẩn team/priority mà không thay đổi giá trị lưu', () => {
         render(<ConversationAction />);
-        expect(screen.getAllByTestId('assignee')).toHaveLength(1);
-        expect(screen.getByText('Bot đang xử lý')).toBeTruthy();
+        expect(screen.queryAllByTestId('assignee')).toHaveLength(0);
+        expect(screen.queryByText('Bot đang xử lý')).toBeNull();
         expect(screen.getByText('Nhãn')).toBeTruthy();
         expect(screen.queryByText('Đội bán hàng')).toBeNull();
-        expect(assignment.useAgentsList).toHaveBeenCalledWith(false, { includeAgentBots: false });
         expect(assignment.assignAgent).not.toHaveBeenCalled();
         expect(assignment.assignTeam).not.toHaveBeenCalled();
         expect(assignment.togglePriority).not.toHaveBeenCalled();

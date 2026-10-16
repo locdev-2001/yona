@@ -226,6 +226,7 @@ export function SharedContentTabs({ onJumped }: { onJumped?: () => void }) {
                 items={SHARED_CONTENT_TABS.map(tab => ({ key: tab, name: t(TAB_LABEL_KEYS[tab]) }))}
                 index={activeIndex}
                 isCompact
+                className="[&>ul]:px-0"
                 onChange={setActiveIndex}
             />
             <div data-testid={`shared-content-${activeTab}`}>
@@ -262,7 +263,7 @@ export default function SharedContent() {
                 ghost
                 slate
                 sm
-                className="w-full !justify-between"
+                className="w-full !justify-between !px-0 max-md:h-11"
                 label={t('CONVERSATION_SIDEBAR.SHARED_FILES.OPEN_SCREEN')}
                 trailingIcon
                 icon="i-lucide-chevron-right"

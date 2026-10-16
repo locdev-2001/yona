@@ -134,6 +134,19 @@ describe('applyConversationUpdate', () => {
         expect(fresh[0].messages).toHaveLength(1);
     });
 
+    // Thẻ danh sách memo theo tham chiếu: hội thoại không bị đổi phải giữ nguyên object.
+    it('giữ nguyên tham chiếu các hội thoại khác, kể cả sau khi lọc và sắp xếp', () => {
+        const untouched = buildConversation({ id: 1, updated_at: 100 });
+        const target = buildConversation({ id: 2, updated_at: 100 });
+
+        const next = applyConversationUpdate([untouched, target], buildConversation({ id: 2, updated_at: 200, priority: 'high' }));
+        const visible = selectVisibleConversations(next, { assigneeTab: 'all', status: 'open', inboxId: 0, teamId: 0, currentUserId: 0, labels: [] }, 'last_activity_at_desc');
+
+        expect(next[0]).toBe(untouched);
+        expect(next[1]).not.toBe(target);
+        expect(visible).toContain(untouched);
+    });
+
     it('thêm conversation chưa có trong list', () => {
         expect(applyConversationUpdate([], buildConversation({ id: 9 }))).toHaveLength(1);
     });

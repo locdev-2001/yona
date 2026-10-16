@@ -11,12 +11,14 @@ import { useAlert } from 'dashboard/composables/useAlert';
 import { copyTextToClipboard } from 'shared/helpers/clipboard';
 import { snoozedReopenTime } from 'dashboard/helper/snoozeHelpers';
 import { useIsLargeScreen } from 'dashboard/composables/useViewportWidth';
+import { useObservedWidth } from 'dashboard/composables/useObservedWidth';
 import { t } from '../../../i18n';
 import type { DashboardPageProps } from '../../types';
 import { STATUS_TYPE } from '../constants';
 import { useConversation } from '../ConversationContext';
 import { useContactAvailabilityStatus } from 'dashboard/realtime/hooks';
 import type { AvailabilityStatus } from 'dashboard/constants/globals';
+import AssigneeAction from './AssigneeAction';
 import MoreActions from './MoreActions';
 import SidepanelSwitch from './SidepanelSwitch';
 import ConversationSearchBar from './search/ConversationSearchBar';
@@ -29,6 +31,11 @@ import ConversationSearchBar from './search/ConversationSearchBar';
 // (LARGE_SCREEN_BREAKPOINT) mũ khung chat gom về MỘT dòng thay vì hai — nền tảng
 // nằm ở badge của avatar, hành động thu thành nút icon, mã hội thoại nhường chỗ.
 // Từ 1280px trở lên giữ nguyên bản gốc từng pixel.
+//
+// Ba cột + panel phải mở thì mũ còn ~460px dù khung nhìn rộng: dưới ngưỡng này nút
+// phụ trách và trạng thái thu về avatar/chấm màu để tên khách không bị ép mất.
+const FULL_ACTION_LABELS_MIN_WIDTH = 640;
+
 export default function ConversationHeader({
     className = '',
     showBackButton = false,
@@ -40,6 +47,8 @@ export default function ConversationHeader({
     const { inboxes = [] } = usePage<DashboardPageProps>().props;
     const isWideLayout = useIsLargeScreen();
     const [isSearchOpen, setSearchOpen] = useState(false);
+    const [wideHeaderRef, wideHeaderWidth] = useObservedWidth<HTMLDivElement>();
+    const isActionsCompact = wideHeaderWidth > 0 && wideHeaderWidth < FULL_ACTION_LABELS_MIN_WIDTH;
     const selectedConversationId = selectedConversation?.id;
 
     useEffect(() => setSearchOpen(false), [selectedConversationId]);
@@ -124,6 +133,7 @@ export default function ConversationHeader({
                 <div className="flex flex-row items-center justify-end flex-shrink-0 gap-1 header-actions-wrap">
                     {searchButton}
                     <SidepanelSwitch />
+                    <AssigneeAction isCompact />
                     <MoreActions isCompact />
                 </div>
             </div>
@@ -132,6 +142,7 @@ export default function ConversationHeader({
 
     return (
         <div
+            ref={wideHeaderRef}
             data-testid="conversation-header"
             className={`relative z-10 flex flex-none flex-col gap-3 items-center justify-between w-full min-w-0 xl:flex-row px-4 py-3 h-28 xl:h-16 xl:py-0 bg-n-surface-panel shadow-bar ${className}`}
         >
@@ -182,7 +193,8 @@ export default function ConversationHeader({
             ) : (
                 <div className="flex flex-row items-center justify-start xl:justify-end flex-shrink-0 gap-2 w-full xl:w-auto header-actions-wrap">
                     {searchButton}
-                    <MoreActions />
+                    <AssigneeAction isCompact={isActionsCompact} />
+                    <MoreActions isCompact={isActionsCompact} />
                     <SidepanelSwitch />
                 </div>
             )}
