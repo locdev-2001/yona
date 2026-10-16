@@ -99,7 +99,7 @@ final class Registry
                     'type' => 'object',
                     'properties' => [
                         'reason' => ['type' => 'string', 'enum' => array_map(fn (HandoffReason $reason) => $reason->value, HandoffReason::cases())],
-                        'note' => ['type' => 'string', 'minLength' => 1, 'maxLength' => 2000, 'description' => 'Private note for the staff, in the shop\'s language: what the customer wants and what is missing.'],
+                        'note' => ['type' => 'string', 'minLength' => 1, 'maxLength' => 2000, 'description' => 'Private note for the staff, in the shop\'s language: what the customer wants and what is missing. For an order, every detail an add_private_note order note lists.'],
                         'holding_reply' => ['type' => 'string', 'minLength' => 1, 'maxLength' => self::HOLDING_REPLY_MAX_CHARACTERS, 'description' => 'Optional message to the customer before the staff takes over, with every answer the data gives.'],
                     ],
                     'required' => ['reason', 'note'],

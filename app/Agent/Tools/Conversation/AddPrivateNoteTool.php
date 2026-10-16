@@ -22,9 +22,11 @@ final class AddPrivateNoteTool implements Tool
         return new ToolSpec(
             self::NAME,
             'Leave a private note for the shop\'s staff in this conversation; the customer never sees it. Use it when the customer '
-            .'confirms an order (products, size/colour, quantity, total, payment method, name, phone, delivery address) so the '
-            .'staff can process and ship it, and for details save_customer_info could not store. Write it in the shop\'s '
-            .'language. It does not end the turn and does not hand the conversation over.',
+            .'confirms an order, so the staff can process and ship it, and for details save_customer_info could not store. An '
+            .'order note lists: each item with its size and colour, quantity and unit price; the shipping fee and the total; '
+            .'the payment method; the customer\'s name, phone number and full delivery address. Write "missing" for any detail '
+            .'the customer has not given. Write it in the shop\'s language. It does not end the turn and does not hand the '
+            .'conversation over.',
             [
                 'type' => 'object',
                 'properties' => [
