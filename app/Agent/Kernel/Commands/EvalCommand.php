@@ -82,13 +82,15 @@ final class EvalCommand extends Command
         }
 
         $startedAt = CarbonImmutable::now();
+        // Ghi mã nguồn lúc bắt đầu: worktree dùng chung có thể đổi trong lúc chạy.
+        $commit = $this->commit();
         $plan = $this->plan($scenarios, $repeat);
         $runs = $concurrency > 1 ? $this->runInChildren($plan, $concurrency) : $this->runHere($plan, $fixture, $shop);
 
         $scorecard = Scorecard::of($runs);
         $comparison = $previous === null ? null : Comparison::between($scorecard->toArray(), $previous['scorecard'], (string) ($previous['meta']['started_at'] ?? $this->option('compare')));
         $directory = filled($this->option('output')) ? (string) $this->option('output') : storage_path(self::OUTPUT_ROOT.'/'.$startedAt->format('Ymd-His'));
-        $writer->write($directory, $this->meta($shop, $startedAt, count($scenarios), $repeat, $concurrency), $scorecard, $runs, $comparison);
+        $writer->write($directory, $this->meta($shop, $startedAt, $commit, count($scenarios), $repeat, $concurrency), $scorecard, $runs, $comparison);
 
         $this->summary($scorecard, $runs, $comparison, $directory);
 
@@ -271,14 +273,14 @@ final class EvalCommand extends Command
     }
 
     /** @return array<string, mixed> */
-    private function meta(EvalShop $shop, CarbonImmutable $startedAt, int $scenarioCount, int $repeat, int $concurrency): array
+    private function meta(EvalShop $shop, CarbonImmutable $startedAt, string $commit, int $scenarioCount, int $repeat, int $concurrency): array
     {
         $aiAlias = (string) (config("agent.agent_models.{$shop->aiAgentId}") ?? config('agent.default_model'));
 
         return [
             'started_at' => $startedAt->toIso8601String(),
             'finished_at' => CarbonImmutable::now()->toIso8601String(),
-            'commit' => $this->commit(),
+            'commit' => $commit,
             'account_id' => $shop->accountId,
             'ai_agent_id' => $shop->aiAgentId,
             'scenarios' => $scenarioCount,
@@ -299,15 +301,21 @@ final class EvalCommand extends Command
         return isset($route['provider'], $route['model']) ? "{$alias} → {$route['provider']}/{$route['model']}" : $alias;
     }
 
+    // Mã commit, thêm "+dirty" khi app/ hoặc config/ có thay đổi chưa commit lúc bắt đầu chạy.
     private function commit(): string
     {
         try {
-            $result = Process::path(base_path())->run(['git', 'rev-parse', '--short', 'HEAD']);
+            $head = Process::path(base_path())->run(['git', 'rev-parse', '--short', 'HEAD']);
+            $dirty = Process::path(base_path())->run(['git', 'status', '--porcelain', '--', 'app', 'config']);
         } catch (Throwable) {
             return '?';
         }
 
-        return $result->successful() ? trim($result->output()) : '?';
+        if (! $head->successful()) {
+            return '?';
+        }
+
+        return trim($head->output()).($dirty->successful() && trim($dirty->output()) !== '' ? '+dirty' : '');
     }
 
     /** @param list<ScenarioRun> $runs */
@@ -336,6 +344,6 @@ final class EvalCommand extends Command
             $this->components->twoColumnDetail("Δ {$metric['label']}", $delta === null ? '—' : sprintf("%+.{$metric['decimals']}f", $delta));
         }
 
-        $this->components->info("Report: {$directory}/".ReportWriter::REPORT_FILE);
+        $this->components->info('Report: '.(realpath($directory) ?: $directory).'/'.ReportWriter::REPORT_FILE);
     }
 }
