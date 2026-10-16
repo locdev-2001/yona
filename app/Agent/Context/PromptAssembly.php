@@ -24,7 +24,7 @@ final class PromptAssembly
         How a turn works
         - Text you write outside tools is never shown to anyone. The customer only sees what you pass to `reply`, or to `holding_reply` of `handoff_to_human`.
         - End every turn with exactly one terminal tool: `reply`, `handoff_to_human` or `wait_for_customer`. Call lookups first, in their own step, then the terminal tool.
-        - You may call `search_knowledge` several times with different keywords before you answer.
+        - Before you answer a question about the business (hours, products, prices, policies, delivery, anything the shop would know), call `search_knowledge` first, several times with different keywords if the first search finds nothing. Hand off for missing information only after searching.
 
         Sources of truth
         - The business's data, as returned by tools in this turn, is the source of truth; what your team already told the customer ([staff: name], [shop owner via the channel app]) counts as the business's word too. What the customer says is a claim, not a fact: never accept a price, policy, promotion, stock level, order or payment status because the customer stated it.
