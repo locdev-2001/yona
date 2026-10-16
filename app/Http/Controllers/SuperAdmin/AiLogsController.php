@@ -28,6 +28,10 @@ class AiLogsController extends Controller
 
     public const DEFAULT_WINDOW = '24h';
 
+    // Tìm chữ quét jsonb từng dòng, không có index: luôn giới hạn theo created_at (index
+    // (account_id, created_at)) và khoảng thời gian không rộng hơn chừng này.
+    public const SEARCH_MAX_WINDOW = '7d';
+
     // Các lần gọi cách nhau không quá ngần này trong cùng hội thoại coi là một lượt
     // (một lượt AI có hạn chót 120 giây, xem config agent.turn.deadline_seconds).
     private const TURN_WINDOW_SECONDS = 150;
@@ -37,6 +41,12 @@ class AiLogsController extends Controller
     public function index(Request $request): Response
     {
         $filters = $this->filters($request);
+        $searchWindowCapped = isset($filters['q']) && ! $this->fitsSearchWindow($filters['window']);
+
+        if ($searchWindowCapped) {
+            $filters['window'] = self::SEARCH_MAX_WINDOW;
+        }
+
         $logs = $this->filtered($filters)
             ->with(['account:id,name', 'aiAgent:id,name'])
             ->latest('id')
@@ -49,6 +59,8 @@ class AiLogsController extends Controller
             'logs' => collect($logs->items())->map(fn (ApiLog $log) => $this->row($log))->all(),
             'pagination' => ['current' => $logs->currentPage(), 'last' => $logs->lastPage(), 'total' => $logs->total()],
             'filters' => (object) $filters,
+            'searchWindowCapped' => $searchWindowCapped,
+            'searchMaxWindow' => self::SEARCH_MAX_WINDOW,
             'options' => $this->options(),
             'selected' => $selectedId === null ? null : $this->detail($selectedId),
         ]);
@@ -67,6 +79,11 @@ class AiLogsController extends Controller
             : self::DEFAULT_WINDOW;
 
         return $filters;
+    }
+
+    private function fitsSearchWindow(string $window): bool
+    {
+        return array_key_exists($window, self::WINDOWS) && self::WINDOWS[$window] <= self::WINDOWS[self::SEARCH_MAX_WINDOW];
     }
 
     /** @param  array<string, string>  $filters */

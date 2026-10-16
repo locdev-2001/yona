@@ -66,6 +66,8 @@ type Props = {
     filters: Filters;
     options: { accounts: Option[]; aiAgents: Option[]; routes: Option[] };
     selected: AiLogDetail | null;
+    searchWindowCapped: boolean;
+    searchMaxWindow: (typeof WINDOW_KEYS)[number];
 };
 
 const PAGE_URL = '/admin/ai_logs';
@@ -295,7 +297,7 @@ function Detail({ log, hrefForLog, onClose }: { log: AiLogDetail; hrefForLog: (i
 }
 
 // Bảng `api_logs` cho dev: lọc ở máy chủ, bấm mã một dòng mở chi tiết bên dưới.
-export default function AiLogs({ logs, pagination, filters, options, selected }: Props) {
+export default function AiLogs({ logs, pagination, filters, options, selected, searchWindowCapped, searchMaxWindow }: Props) {
     const [draft, setDraft] = useState<Filters>(filters);
     const ids = { q: useId(), account: useId(), conversation: useId(), agent: useId(), route: useId(), result: useId(), window: useId() };
     const selectedId = selected?.id ?? null;
@@ -372,6 +374,14 @@ export default function AiLogs({ logs, pagination, filters, options, selected }:
                 <span className="text-muted-foreground text-xs">{label('EYEBROW')}</span>
                 <PageHeader title={label('TITLE')} description={label('DESCRIPTION')} className="mb-0 md:mb-0" />
             </div>
+
+            {filters.q ? (
+                <p role="status" className="text-muted-foreground text-xs">
+                    {label(searchWindowCapped ? 'FILTERS.SEARCH_WINDOW_CAPPED' : 'FILTERS.SEARCH_WINDOW_NOTE', {
+                        window: label(`FILTERS.WINDOWS.${searchMaxWindow}`).toLowerCase(),
+                    })}
+                </p>
+            ) : null}
 
             <ListCard
                 toolbar={

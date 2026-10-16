@@ -20,6 +20,8 @@ return [
         'RESULT_ERROR' => 'Lỗi',
         'SEARCH' => 'Tìm trong request/response',
         'SEARCH_PLACEHOLDER' => 'vd: unsourced_claim',
+        'SEARCH_WINDOW_NOTE' => 'Tìm chữ chỉ quét trong {window}.',
+        'SEARCH_WINDOW_CAPPED' => 'Tìm chữ chỉ quét trong {window}, nên khoảng thời gian đã thu về {window}.',
         'WINDOW' => 'Thời gian',
         'WINDOWS' => [
             '24h' => '24 giờ qua',

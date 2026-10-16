@@ -20,6 +20,8 @@ return [
         'RESULT_ERROR' => 'Error',
         'SEARCH' => 'Search request/response',
         'SEARCH_PLACEHOLDER' => 'e.g. unsourced_claim',
+        'SEARCH_WINDOW_NOTE' => 'Text search only scans the {window}.',
+        'SEARCH_WINDOW_CAPPED' => 'Text search only scans the {window}, so the time range was narrowed to the {window}.',
         'WINDOW' => 'Time',
         'WINDOWS' => [
             '24h' => 'Last 24 hours',

@@ -95,6 +95,40 @@ describe('bảng và chi tiết', function () {
             ->and($ids('window=all'))->toEqualCanonicalizing([$recent->id, $old->id]);
     });
 
+    it('tìm chữ chỉ quét tối đa 7 ngày gần nhất và báo cho giao diện khi đã thu khoảng thời gian', function (string $window, string $effective, bool $capped) {
+        $account = Account::factory()->create();
+        $needle = ['request' => ['messages' => [['role' => 'user', 'content' => 'unsourced_claim ở đây']]]];
+        $recent = aiLog($account, $needle);
+        $lastWeek = aiLog($account, $needle);
+        $lastWeek->forceFill(['created_at' => now()->subDays(5)])->save();
+        $old = aiLog($account, $needle);
+        $old->forceFill(['created_at' => now()->subDays(10)])->save();
+
+        $props = $this->get("/admin/ai_logs?q=unsourced_claim&window={$window}")->assertOk()->viewData('page')['props'];
+        $expected = $effective === '24h' ? [$recent->id] : [$recent->id, $lastWeek->id];
+
+        expect(collect($props['logs'])->pluck('id')->all())->toEqualCanonicalizing($expected)
+            ->and($props['filters']->window)->toBe($effective)
+            ->and($props['searchWindowCapped'])->toBe($capped);
+    })->with([
+        'tất cả' => ['all', '7d', true],
+        '30 ngày' => ['30d', '7d', true],
+        '7 ngày' => ['7d', '7d', false],
+        '24 giờ' => ['24h', '24h', false],
+    ]);
+
+    it('không tìm chữ thì vẫn xem được 30 ngày và tất cả', function () {
+        $account = Account::factory()->create();
+        $old = aiLog($account);
+        $old->forceFill(['created_at' => now()->subDays(10)])->save();
+
+        $props = $this->get('/admin/ai_logs?window=30d')->assertOk()->viewData('page')['props'];
+
+        expect(collect($props['logs'])->pluck('id')->all())->toBe([$old->id])
+            ->and($props['filters']->window)->toBe('30d')
+            ->and($props['searchWindowCapped'])->toBeFalse();
+    });
+
     it('chi tiết có lời gọi công cụ kèm kết quả, các lần gọi cùng lượt, cURL không chứa khoá', function () {
         config(['agent.providers.anthropic.api_key' => 'sk-ant-secret-123']);
         $account = Account::factory()->create();
