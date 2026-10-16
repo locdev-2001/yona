@@ -55,15 +55,6 @@ final class CoreConversationActionWriter implements ConversationActionWriter
         }
     }
 
-    public function sendStandardHoldingReply(ConversationRef $conversation, int $aiAgentId): DeliveryReceipt
-    {
-        $model = CoreRecords::conversation($conversation);
-
-        return $model === null
-            ? DeliveryReceipt::failed(DeliveryFailure::Rejected)
-            : $this->sendReply($conversation, $aiAgentId, $model->inAccountLocale(fn () => __(self::LANG.'.holding_reply')));
-    }
-
     public function postNotice(ConversationRef $conversation, int $aiAgentId, AgentNotice $notice): DeliveryReceipt
     {
         [$model, $aiAgent] = $this->locate($conversation, $aiAgentId);

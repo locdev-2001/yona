@@ -66,10 +66,10 @@ it('giới hạn id lời gọi công cụ 64 ký tự', function () {
 })->throws(InvalidArgumentException::class);
 
 it('bắt kết quả lỗi của công cụ luôn có hướng sửa', function () {
-    $failure = ToolResult::failure(ToolErrorCode::UnsourcedClaim, 'Use consult_staff.');
+    $failure = ToolResult::failure(ToolErrorCode::SourceUnavailable, 'Use consult_staff.');
 
     expect($failure->ok)->toBeFalse()
-        ->and($failure->errorCode)->toBe(ToolErrorCode::UnsourcedClaim)
+        ->and($failure->errorCode)->toBe(ToolErrorCode::SourceUnavailable)
         ->and(ToolResult::success([], 'nothing found; use consult_staff')->ok)->toBeTrue();
 
     ToolResult::failure(ToolErrorCode::InvalidArgs, '  ');

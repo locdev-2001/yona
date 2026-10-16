@@ -1,7 +1,7 @@
 <?php
 
 // Chữ cố định nhân viên AI để lại trong hội thoại: ghi chú riêng cho nhân viên (không
-// nhắc tên ai) và câu giữ chân chuẩn gửi khách. Câu gửi khách viết như nhân viên người.
+// nhắc tên ai).
 return [
     'notices' => [
         'turn_failed' => ':agent chưa xử lý được tin này nên đã chuyển hội thoại sang thủ công. Nhờ nhân viên trả lời khách.',
@@ -19,5 +19,4 @@ return [
         ],
         'default_note' => 'Khách hỏi điều cần thông tin chính xác (giá, chính sách, khuyến mãi, tồn kho) mà chưa tìm được nguồn trong dữ liệu của shop.',
     ],
-    'holding_reply' => 'Dạ anh/chị chờ em một chút, em kiểm tra lại rồi báo mình ngay ạ.',
 ];

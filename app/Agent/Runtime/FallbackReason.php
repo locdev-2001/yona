@@ -10,7 +10,5 @@ enum FallbackReason: string
     case ModelRefused = 'model_refused';
     // Mô hình chỉ trả chữ cả sau lời nhắc.
     case TextOnly = 'text_only';
-    // Mô hình cứ khẳng định điều không có nguồn.
-    case GuardFailed = 'guard_failed';
     case WindowClosed = 'window_closed';
 }

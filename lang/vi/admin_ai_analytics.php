@@ -65,9 +65,6 @@ return [
         'FAILED_CALLS' => 'Lần gọi lỗi',
         'ROUTE_CHANGES' => 'Chuyển tuyến',
         'CALLS_NOTE' => 'Độ trễ trung bình: {latency} · Số lần gọi: {calls}',
-        'GUARD_TITLE' => 'Rào giá chặn câu không có nguồn',
-        'GUARD_SHARE' => 'lần trong kỳ · {share} số lượt',
-        'GUARD_NOTE' => 'Tăng đột ngột thường là dấu hiệu shop thiếu dữ liệu giá: nên nhắc shop bổ sung câu trả lời mẫu.',
         'SUMMARY' => '{label}: tổng {total}.',
     ],
     'TABLE' => [

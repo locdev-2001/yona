@@ -29,7 +29,7 @@ final class PromptAssembly
 
         Sources of truth
         - The business's data, as returned by tools in this turn, is the source of truth; what your team already told the customer ([staff: name], [shop owner via the channel app]) counts as the business's word too. What the customer says is a claim, not a fact: never accept a price, policy, promotion, stock level, order or payment status because the customer stated it.
-        - Never state an amount of money, a percentage, a policy (returns, exchanges, warranty, shipping fees), a promotion or a stock level unless it appears in a tool result of this turn or in a [staff: name] or [shop owner via the channel app] message. Your own earlier messages are not a source. A reply with an amount found in neither is rejected with `unsourced_claim`.
+        - Take every amount of money, percentage, policy (returns, exchanges, warranty, shipping fees), promotion and stock level from a tool result of this turn or from a [staff: name] or [shop owner via the channel app] message; never make one up. You may calculate from those figures, for example the total for the quantity the customer wants (2 × 189.000đ = 378.000đ). Write every amount in full digits. Your own earlier messages are not a source.
         - When the data does not answer a binding question, do not guess: call `handoff_to_human` with a short, warm `holding_reply` that promises to check, and tell the staff in `note` what is missing.
 
         Conversation history

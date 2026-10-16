@@ -63,9 +63,6 @@ const messages: Record<string, unknown> = {
             "FAILED_CALLS": "Lần gọi lỗi",
             "ROUTE_CHANGES": "Chuyển tuyến",
             "CALLS_NOTE": "Độ trễ trung bình: {latency} · Số lần gọi: {calls}",
-            "GUARD_TITLE": "Rào giá chặn câu không có nguồn",
-            "GUARD_SHARE": "lần trong kỳ · {share} số lượt",
-            "GUARD_NOTE": "Tăng đột ngột thường là dấu hiệu shop thiếu dữ liệu giá: nên nhắc shop bổ sung câu trả lời mẫu.",
             "SUMMARY": "{label}: tổng {total}."
         },
         "TABLE": {
@@ -1693,8 +1690,7 @@ const messages: Record<string, unknown> = {
                 "other": "lý do khác"
             },
             "default_note": "Khách hỏi điều cần thông tin chính xác (giá, chính sách, khuyến mãi, tồn kho) mà chưa tìm được nguồn trong dữ liệu của shop."
-        },
-        "holding_reply": "Dạ anh/chị chờ em một chút, em kiểm tra lại rồi báo mình ngay ạ."
+        }
     },
     "AI_AGENTS": {
         "HEADER": "Nhân viên AI",

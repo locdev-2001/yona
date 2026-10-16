@@ -65,9 +65,6 @@ return [
         'FAILED_CALLS' => 'Failed calls',
         'ROUTE_CHANGES' => 'Route changes',
         'CALLS_NOTE' => 'Average latency: {latency} · Calls: {calls}',
-        'GUARD_TITLE' => 'Price guard blocks without a source',
-        'GUARD_SHARE' => 'times in the period · {share} of turns',
-        'GUARD_NOTE' => 'A sudden rise usually means the shop is missing price data: remind them to add canned responses.',
         'SUMMARY' => '{label}: total {total}.',
     ],
     'TABLE' => [

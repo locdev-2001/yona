@@ -3,7 +3,6 @@
 namespace App\Agent\Runtime;
 
 use App\Agent\Contracts\Ports\UsageMeter;
-use App\Agent\ValueObjects\TurnContext;
 use App\Agent\ValueObjects\UsageIncrement;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -11,7 +10,7 @@ use Throwable;
 // Bảng ánh xạ DUY NHẤT từ kết cục lượt sang số liệu tổng kết. Mỗi lượt đã bắt đầu
 // cộng một `turns`, thêm đúng một trong ba kết quả hoặc không gì cả:
 //   Replied                                        → replies
-//   HandedOff, đường lui GuardFailed               → handoffs (câu giữ chân + chuyển người)
+//   HandedOff                                      → handoffs
 //   đường lui LoopCap/TurnFailed/ModelRefused/TextOnly, job lượt hỏng → failed_turns
 //   Waited, Interrupted, đường lui WindowClosed    → chỉ turns
 // Ghi số liệu hỏng chỉ cảnh báo, không bao giờ làm hỏng lượt.
@@ -27,7 +26,6 @@ final class TurnTally
     public function ended(Turn $turn, TurnEnd $end): void
     {
         $fallback = $end === TurnEnd::FellBack ? $turn->fallbackReason() : null;
-        $handedOff = $end === TurnEnd::HandedOff || $fallback === FallbackReason::GuardFailed;
         $failed = in_array($fallback, self::FAILED_FALLBACKS, true);
 
         $this->add(fn () => new UsageIncrement(
@@ -35,7 +33,7 @@ final class TurnTally
             $turn->context->aiAgentId,
             turns: 1,
             replies: $end === TurnEnd::Replied ? 1 : 0,
-            handoffs: $handedOff ? 1 : 0,
+            handoffs: $end === TurnEnd::HandedOff ? 1 : 0,
             failedTurns: $failed ? 1 : 0,
         ));
     }
@@ -44,11 +42,6 @@ final class TurnTally
     public function crashed(int $accountId, int $aiAgentId): void
     {
         $this->add(fn () => new UsageIncrement($accountId, $aiAgentId, turns: 1, failedTurns: 1));
-    }
-
-    public function claimBlocked(TurnContext $context): void
-    {
-        $this->add(fn () => new UsageIncrement($context->conversation->accountId, $context->aiAgentId, unsourcedBlocks: 1));
     }
 
     /** @param  callable(): UsageIncrement  $increment */

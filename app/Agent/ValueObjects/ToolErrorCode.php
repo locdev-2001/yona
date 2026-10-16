@@ -13,6 +13,4 @@ enum ToolErrorCode: string
     case Duplicate = 'duplicate';
     case SourceUnavailable = 'source_unavailable';
     case Deferred = 'deferred';
-    // Câu trả lời khẳng định điều cần nguồn (giá, chính sách…) mà lượt chưa tra ra.
-    case UnsourcedClaim = 'unsourced_claim';
 }

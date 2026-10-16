@@ -9,15 +9,12 @@ use App\Agent\ValueObjects\DeliveryReceipt;
 use App\Agent\ValueObjects\Handover;
 
 // Mọi ghi vào hội thoại của lõi, đứng tên AI agent. Từ chối nghiệp vụ trả trong
-// DeliveryReceipt, không ném ngoại lệ. Chữ cố định (ghi chú hệ thống, câu giữ chân
-// chuẩn) do phía lõi dựng theo ngôn ngữ của account; ghi chú không nhắc tên ai.
+// DeliveryReceipt, không ném ngoại lệ. Chữ cố định (ghi chú hệ thống) do phía lõi dựng
+// theo ngôn ngữ của account; ghi chú không nhắc tên ai.
 interface ConversationActionWriter
 {
     // Tin công khai cho khách; chỉ AI trả lời của inbox, khi công tắc còn bật.
     public function sendReply(ConversationRef $conversation, int $aiAgentId, string $text): DeliveryReceipt;
-
-    // Câu giữ chân chuẩn của shop, dùng khi mô hình không tự soạn được câu an toàn.
-    public function sendStandardHoldingReply(ConversationRef $conversation, int $aiAgentId): DeliveryReceipt;
 
     // Ghi chú riêng cố định cho nhân viên (lượt lỗi, cửa sổ kênh đóng, hết ngân sách).
     public function postNotice(ConversationRef $conversation, int $aiAgentId, AgentNotice $notice): DeliveryReceipt;

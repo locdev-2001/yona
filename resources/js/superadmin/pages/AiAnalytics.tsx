@@ -225,9 +225,9 @@ function KpiCards({ current, previous }: { current: UsageTotals; previous: Usage
     );
 }
 
-function ChartCard({ title, children, footer }: { title: string; children: ReactNode; footer?: ReactNode }) {
+function ChartCard({ title, children, footer, className }: { title: string; children: ReactNode; footer?: ReactNode; className?: string }) {
     return (
-        <Card className="min-w-0">
+        <Card className={cn('min-w-0', className)}>
             <CardHeader>
                 <CardTitle role="heading" aria-level={2} className="text-sm font-medium">
                     {title}
@@ -586,6 +586,7 @@ export default function AiAnalytics(props: AiAnalyticsProps) {
                             />
                         </ChartCard>
                         <ChartCard
+                            className="lg:col-span-2"
                             title={label('CHARTS.CALLS_TITLE')}
                             footer={label('CHARTS.CALLS_NOTE', {
                                 latency: formatSeconds(averageLatencySeconds(totals)),
@@ -593,14 +594,6 @@ export default function AiAnalytics(props: AiAnalyticsProps) {
                             })}
                         >
                             <BucketChart title={label('CHARTS.CALLS_TITLE')} buckets={buckets} unit={unit} series={callSeries} variant="line" />
-                        </ChartCard>
-                        <ChartCard title={label('CHARTS.GUARD_TITLE')} footer={label('CHARTS.GUARD_NOTE')}>
-                            <div className="flex items-baseline gap-2">
-                                <span className="font-num text-2xl font-medium text-neutral-900">{formatCount(totals.unsourced_blocks)}</span>
-                                <span className="text-xs text-neutral-500">
-                                    {label('CHARTS.GUARD_SHARE', { share: formatPercent(ratio(totals.unsourced_blocks, totals.turns)) })}
-                                </span>
-                            </div>
                         </ChartCard>
                     </div>
 

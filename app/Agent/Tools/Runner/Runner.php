@@ -17,7 +17,6 @@ final class Runner
 {
     public function __construct(
         private readonly Registry $registry,
-        private readonly ClaimGuard $claimGuard,
         private readonly LoggerInterface $logger,
     ) {}
 
@@ -48,13 +47,7 @@ final class Runner
             return ToolResult::failure(ToolErrorCode::InvalidArgs, "{$violation} Fix the arguments and call `{$call->name}` again.");
         }
 
-        return match ($call->name) {
-            Registry::REPLY => $this->unknownSource($call, $evidence) ?? $this->claimGuard->check((string) $call->args['text'], $evidence),
-            Registry::HANDOFF_TO_HUMAN => isset($call->args['holding_reply'])
-                ? $this->claimGuard->check((string) $call->args['holding_reply'], $evidence)
-                : null,
-            default => null,
-        };
+        return $call->name === Registry::REPLY ? $this->unknownSource($call, $evidence) : null;
     }
 
     public function runRead(ToolCall $call, TurnContext $context): ToolResult

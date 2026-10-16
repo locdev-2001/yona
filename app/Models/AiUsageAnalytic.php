@@ -23,7 +23,6 @@ class AiUsageAnalytic extends Model
         'replies',
         'handoffs',
         'failed_turns',
-        'unsourced_blocks',
         'model_calls',
         'failed_calls',
         'route_changes',

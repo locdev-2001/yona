@@ -38,7 +38,6 @@ it('turns a bad call into a tool result the model can fix', function (ToolCall $
     'reason outside the closed set' => [new ToolCall('c5', 'handoff_to_human', ['reason' => 'tired', 'note' => 'x']), 'invalid_args', 'binding_info_missing'],
     'too long reply' => [new ToolCall('c6', 'reply', ['text' => str_repeat('a', 2001)]), 'invalid_args', 'at most 2000'],
     'source not looked up' => [new ToolCall('c7', 'reply', ['text' => 'Dạ còn ạ', 'sources' => ['article:9']]), 'unknown_ref', 'article:9'],
-    'holding reply with an amount' => [new ToolCall('c8', 'handoff_to_human', ['reason' => 'binding_info_missing', 'note' => 'n', 'holding_reply' => 'Dạ ship 30k ạ']), 'unsourced_claim', '30000 VND'],
 ]);
 
 it('accepts a reply citing a ref returned in this turn', function () {

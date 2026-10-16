@@ -5,7 +5,7 @@ namespace App\Agent\ValueObjects;
 use InvalidArgumentException;
 
 // Phần cộng thêm vào số liệu tổng kết của một nhân viên AI tại lúc ghi: một lần gọi mô
-// hình, một lượt kết thúc, hoặc một lần rào khẳng định chặn câu không có nguồn.
+// hình hoặc một lượt kết thúc.
 final readonly class UsageIncrement
 {
     public function __construct(
@@ -15,7 +15,6 @@ final readonly class UsageIncrement
         public int $replies = 0,
         public int $handoffs = 0,
         public int $failedTurns = 0,
-        public int $unsourcedBlocks = 0,
         public int $modelCalls = 0,
         public int $failedCalls = 0,
         public int $routeChanges = 0,
@@ -30,7 +29,7 @@ final readonly class UsageIncrement
             throw new InvalidArgumentException('Usage increment needs an account and an AI agent.');
         }
 
-        foreach ([$turns, $replies, $handoffs, $failedTurns, $unsourcedBlocks, $modelCalls, $failedCalls, $routeChanges,
+        foreach ([$turns, $replies, $handoffs, $failedTurns, $modelCalls, $failedCalls, $routeChanges,
             $latencyMs, $inputTokens, $outputTokens, $cacheReadTokens, $cacheWriteTokens, $costMicroUsd] as $value) {
             if ($value < 0) {
                 throw new InvalidArgumentException('Usage increments must not be negative.');

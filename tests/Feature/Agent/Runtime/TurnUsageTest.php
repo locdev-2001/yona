@@ -1,6 +1,5 @@
 <?php
 
-use App\Agent\Runtime\TurnSettings;
 use App\Models\AiAgent;
 use App\Models\AiUsageAnalytic;
 use App\Models\Message;
@@ -16,7 +15,7 @@ beforeEach(function () {
     Http::preventStrayRequests();
 });
 
-const TURN_COUNTERS = ['turns', 'replies', 'handoffs', 'failed_turns', 'unsourced_blocks'];
+const TURN_COUNTERS = ['turns', 'replies', 'handoffs', 'failed_turns'];
 
 /** @return array<string, int> */
 function turnUsage(AiAgent $aiAgent): array
@@ -43,10 +42,6 @@ it('counts each turn end once with its outcome', function (Closure $script, arra
 })->with([
     'replied' => [fn () => [Model::call('reply', ['text' => 'Dạ áo còn ạ.'])], ['turns' => 1, 'replies' => 1]],
     'handed off' => [fn () => [Model::call('handoff_to_human', ['reason' => 'complaint', 'note' => 'Khách phàn nàn giao chậm.'])], ['turns' => 1, 'handoffs' => 1]],
-    'unsourced price refused, then handed off' => [fn () => [
-        Model::call('reply', ['text' => 'Dạ áo này giá 450k ạ.']),
-        Model::call('handoff_to_human', ['reason' => 'binding_info_missing', 'note' => 'Chưa có giá.', 'holding_reply' => 'Dạ anh chờ em kiểm tra giá nhé.']),
-    ], ['turns' => 1, 'handoffs' => 1, 'unsourced_blocks' => 1]],
     'waited for the customer' => [fn () => [Model::call('wait_for_customer', ['reason' => 'Khách cảm ơn.'])], ['turns' => 1]],
     'interrupted by the owner on the channel app' => [fn ($conversation) => [
         function () use ($conversation) {
@@ -61,21 +56,6 @@ it('counts each turn end once with its outcome', function (Closure $script, arra
     'model refused' => [fn () => [Model::refusal()], ['turns' => 1, 'failed_turns' => 1]],
     'turn job crashed' => [fn () => [fn () => throw new RuntimeException('worker blew up')], ['turns' => 1, 'failed_turns' => 1]],
 ]);
-
-it('counts a hand-over when the model keeps stating unsourced amounts until the step budget runs out', function () {
-    config(['agent.turn.max_steps' => 1]);
-    app()->forgetInstance(TurnSettings::class);
-    ['conversation' => $conversation, 'aiAgent' => $aiAgent] = TurnKit::autoConversation();
-    TurnKit::model([
-        Model::call('reply', ['text' => 'Dạ giá 450k ạ.']),
-        Model::call('reply', ['text' => 'Dạ giá 450.000đ ạ.']),
-    ]);
-
-    TurnKit::customerSays($conversation, 'Giá bao nhiêu?');
-    TurnKit::runPendingTurns();
-
-    expect(turnUsage($aiAgent))->toBe(expectedTurnUsage(['turns' => 1, 'handoffs' => 1, 'unsourced_blocks' => 2]));
-});
 
 it('counts a turn without an outcome when the channel window is already closed at wake-up', function () {
     ['conversation' => $conversation, 'aiAgent' => $aiAgent] = TurnKit::autoConversation();

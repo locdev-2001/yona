@@ -19,7 +19,6 @@ final class UsageAnalyticsWriter implements UsageMeter
                 'replies' => $increment->replies,
                 'handoffs' => $increment->handoffs,
                 'failed_turns' => $increment->failedTurns,
-                'unsourced_blocks' => $increment->unsourcedBlocks,
                 'model_calls' => $increment->modelCalls,
                 'failed_calls' => $increment->failedCalls,
                 'route_changes' => $increment->routeChanges,

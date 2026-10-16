@@ -20,14 +20,11 @@ final class Turn
 
     private TurnEvidence $evidence;
 
-    private bool $unsourcedClaimSeen = false;
-
     private ?FallbackReason $fallbackReason = null;
 
     /**
      * @param  list<PromptMessage>  $history
      * @param  list<string>  $customerTexts
-     * @param  list<string>  $staffStatements  lời nhân viên người nói công khai trong lịch sử đã nạp
      */
     public function __construct(
         public TurnContext $context,
@@ -36,9 +33,8 @@ final class Turn
         public readonly TurnSituation $situation,
         public readonly ?int $assigneeUserId,
         private array $customerTexts,
-        array $staffStatements = [],
     ) {
-        $this->evidence = new TurnEvidence(staffStatements: $staffStatements);
+        $this->evidence = new TurnEvidence;
     }
 
     /** @return list<PromptMessage> */
@@ -57,17 +53,7 @@ final class Turn
         $this->evidence = $this->evidence->with($toolResult);
     }
 
-    public function noteUnsourcedClaim(): void
-    {
-        $this->unsourcedClaimSeen = true;
-    }
-
-    public function sawUnsourcedClaim(): bool
-    {
-        return $this->unsourcedClaimSeen;
-    }
-
-    // Đường lui Dispositions đã chọn (sau khi đổi lý do theo rào khẳng định).
+    // Đường lui Dispositions đã chọn.
     public function fellBack(FallbackReason $reason): void
     {
         $this->fallbackReason = $reason;

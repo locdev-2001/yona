@@ -26,8 +26,6 @@ final class TurnRunner
 {
     private const MARK_TTL_SECONDS = 86_400;
 
-    private const BUSINESS_VOICES = [MessageOrigin::Staff, MessageOrigin::ChannelEcho];
-
     public function __construct(
         private readonly ConversationReader $reader,
         private readonly AiAgentDirectory $agents,
@@ -141,28 +139,7 @@ final class TurnRunner
             new TurnSituation($context->now, $snapshot->timezone, $snapshot->channel, $snapshot->canReply),
             $snapshot->assigneeUserId,
             $this->pendingCustomerTexts($recent),
-            $this->staffStatements($recent),
         );
-    }
-
-    /**
-     * Lời doanh nghiệp nói công khai với khách (nhân viên trong Yona, chủ shop trả lời
-     * thẳng trên ứng dụng kênh): nguồn được nhắc lại cho rào khẳng định.
-     *
-     * @param  list<CoreMessage>  $recent
-     * @return list<string>
-     */
-    private function staffStatements(array $recent): array
-    {
-        $statements = [];
-
-        foreach ($recent as $message) {
-            if (! $message->private && in_array($message->origin, self::BUSINESS_VOICES, true) && $message->text !== null) {
-                $statements[] = $message->text;
-            }
-        }
-
-        return $statements;
     }
 
     /**

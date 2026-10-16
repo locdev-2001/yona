@@ -20,7 +20,6 @@ const zero = {
     replies: 0,
     handoffs: 0,
     failed_turns: 0,
-    unsourced_blocks: 0,
     model_calls: 0,
     failed_calls: 0,
     route_changes: 0,
@@ -57,7 +56,6 @@ const props = (overrides: Partial<AiAnalyticsProps> = {}): AiAnalyticsProps => (
         replies: 8,
         handoffs: 1,
         failed_turns: 1,
-        unsourced_blocks: 2,
         model_calls: 20,
         latency_ms_total: 30_000,
         input_tokens: 1000,
@@ -119,7 +117,6 @@ describe('AiAnalytics', () => {
         expect(kpis.getByText('75%')).toBeInTheDocument();
         expect(kpis.getByText('1,5 giây')).toBeInTheDocument();
         expect(kpis.getAllByText('kỳ trước chưa có số liệu').length).toBeGreaterThan(0);
-        expect(screen.getByText('lần trong kỳ · 20% số lượt')).toBeInTheDocument();
     });
 
     it('sắp xếp bảng theo cột và bấm một account thì lọc cả trang', () => {

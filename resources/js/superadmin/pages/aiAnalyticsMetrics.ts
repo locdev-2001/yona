@@ -9,7 +9,6 @@ export type UsageTotals = {
     replies: number;
     handoffs: number;
     failed_turns: number;
-    unsourced_blocks: number;
     model_calls: number;
     failed_calls: number;
     route_changes: number;

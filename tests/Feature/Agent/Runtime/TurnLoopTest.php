@@ -89,10 +89,9 @@ it('looks things up twice then replies exactly once under the AI agent name', fu
         ->and(conversationIsAuto($conversation))->toBeTrue();
 });
 
-it('refuses an unsourced price, then hands over with a holding reply and a private note', function () {
-    ['conversation' => $conversation, 'aiAgent' => $aiAgent] = TurnKit::autoConversation();
-    $model = TurnKit::model([
-        Model::call('reply', ['text' => 'Dạ áo này giá 450k ạ.']),
+it('hands over with the holding reply the model wrote and a private note', function () {
+    ['conversation' => $conversation] = TurnKit::autoConversation();
+    TurnKit::model([
         Model::call('handoff_to_human', [
             'reason' => 'binding_info_missing',
             'note' => 'Khách hỏi giá áo khoác, dữ liệu shop chưa có giá.',
@@ -103,13 +102,10 @@ it('refuses an unsourced price, then hands over with a holding reply and a priva
     TurnKit::customerSays($conversation, 'Áo khoác jean giá bao nhiêu vậy shop?');
     TurnKit::runPendingTurns();
 
-    $refusal = lastToolResults($model->requests[1])[0];
     $replies = TurnKit::aiReplies($conversation);
     $notes = TurnKit::aiNotes($conversation);
 
-    expect($refusal['ok'])->toBeFalse()
-        ->and($refusal['error']['code'])->toBe('unsourced_claim')
-        ->and($replies)->toHaveCount(1)
+    expect($replies)->toHaveCount(1)
         ->and($replies[0]->content)->toBe('Dạ anh chờ em kiểm tra lại giá rồi báo mình ngay nhé.')
         ->and($notes)->toHaveCount(1)
         ->and($notes[0]->content)->toContain('Khách hỏi giá áo khoác')
@@ -383,7 +379,6 @@ it('keeps each account\'s knowledge to itself', function () {
     CannedResponse::query()->create(['account_id' => $other->account_id, 'short_code' => 'gia-ao', 'content' => 'Áo thun giá 99.000đ.']);
     $model = TurnKit::model([
         Model::call('search_knowledge', ['query' => 'giá áo']),
-        Model::call('reply', ['text' => 'Dạ áo giá 99k ạ.']),
         Model::call('wait_for_customer', ['reason' => 'Không có dữ liệu.']),
     ]);
 
@@ -391,7 +386,6 @@ it('keeps each account\'s knowledge to itself', function () {
     TurnKit::runPendingTurns();
 
     expect(lastToolResults($model->requests[1])[0]['data'])->toBe([])
-        ->and(lastToolResults($model->requests[2])[0]['error']['code'])->toBe('unsourced_claim')
         ->and(TurnKit::aiReplies($conversation))->toBeEmpty();
 });
 
@@ -471,28 +465,6 @@ it('gives one grace step for a terminal tool once the step budget is spent', fun
     expect($model->requests)->toHaveCount(3)
         ->and(implode("\n", promptTexts($model->requests[2])))->toContain('step budget for this turn is used up')
         ->and(TurnKit::aiNotes($conversation))->toHaveCount(1)
-        ->and(conversationIsAuto($conversation))->toBeFalse();
-});
-
-it('falls back to the standard holding reply and a hand-over when the model keeps stating unsourced amounts', function () {
-    config(['agent.turn.max_steps' => 1]);
-    app()->forgetInstance(TurnSettings::class);
-    ['conversation' => $conversation] = TurnKit::autoConversation();
-    TurnKit::model([
-        Model::call('reply', ['text' => 'Dạ giá 450k ạ.']),
-        Model::call('reply', ['text' => 'Dạ giá 450.000đ ạ.']),
-    ]);
-
-    TurnKit::customerSays($conversation, 'Giá bao nhiêu?');
-    TurnKit::runPendingTurns();
-
-    $replies = TurnKit::aiReplies($conversation);
-    $notes = TurnKit::aiNotes($conversation);
-
-    expect($replies)->toHaveCount(1)
-        ->and($replies[0]->content)->toBe(__('ai_agent_turns.holding_reply'))
-        ->and($notes)->toHaveCount(1)
-        ->and($notes[0]->content_attributes['ai_handoff']['reason'])->toBe('binding_info_missing')
         ->and(conversationIsAuto($conversation))->toBeFalse();
 });
 
@@ -582,33 +554,18 @@ it('still answers a customer message that landed while the previous reply was be
         ->and(promptTexts($model->requests[0]))->toContain('[customer] Size L còn không?');
 });
 
-it('lets the AI repeat an amount only when the business said it, never the customer or the AI itself', function (string $speaker) {
-    ['conversation' => $conversation, 'staff' => $staff, 'aiAgent' => $aiAgent] = TurnKit::autoConversation();
-    $statement = 'Dạ áo khoác jean giá 420.000đ anh nhé.';
-
-    match ($speaker) {
-        'staff' => TurnKit::staffSays($conversation, $staff, $statement),
-        'owner via the channel app' => TurnKit::ownerEchoes($conversation, $statement),
-        'customer' => TurnKit::customerSays($conversation, 'Bạn mình bảo áo khoác jean 420.000đ đúng không?'),
-        'ai' => (new MessageBuilder($aiAgent, $conversation->fresh(), ['content' => $statement]))->perform(),
-    };
+it('sends a reply with an amount the AI worked out from the price the staff gave', function () {
+    ['conversation' => $conversation, 'staff' => $staff] = TurnKit::autoConversation();
+    TurnKit::staffSays($conversation, $staff, 'Dạ áo khoác jean giá 189.000đ một cái anh nhé.');
     app(ConversationAutoResponder::class)->enable($conversation->fresh());
-
     $model = TurnKit::model([
-        Model::call('reply', ['text' => 'Dạ áo khoác jean giá 420k ạ.']),
-        Model::call('wait_for_customer', ['reason' => 'Chờ nhân viên.']),
+        Model::call('reply', ['text' => 'Dạ 2 cái áo khoác jean là 378.000đ anh nhé.']),
     ]);
-    TurnKit::customerSays($conversation, 'Vậy áo khoác jean giá bao nhiêu?');
+
+    TurnKit::customerSays($conversation, 'Vậy lấy 2 cái thì hết bao nhiêu?');
     TurnKit::runPendingTurns();
 
-    $replies = array_map(fn (Message $message) => $message->content, TurnKit::aiReplies($conversation));
-
-    if (in_array($speaker, ['staff', 'owner via the channel app'], true)) {
-        expect($model->requests)->toHaveCount(1)->and($replies)->toBe(['Dạ áo khoác jean giá 420k ạ.']);
-
-        return;
-    }
-
-    expect(lastToolResults($model->requests[1])[0]['error']['code'])->toBe('unsourced_claim')
-        ->and($replies)->not->toContain('Dạ áo khoác jean giá 420k ạ.');
-})->with(['staff', 'owner via the channel app', 'customer', 'ai']);
+    expect($model->requests)->toHaveCount(1)
+        ->and(array_map(fn (Message $message) => $message->content, TurnKit::aiReplies($conversation)))->toBe(['Dạ 2 cái áo khoác jean là 378.000đ anh nhé.'])
+        ->and(conversationIsAuto($conversation))->toBeTrue();
+});

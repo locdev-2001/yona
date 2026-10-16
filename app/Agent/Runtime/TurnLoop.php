@@ -55,7 +55,6 @@ final class TurnLoop
         private readonly ConversationActionWriter $writer,
         private readonly UnitOfWork $unitOfWork,
         private readonly TurnSettings $settings,
-        private readonly TurnTally $tally,
     ) {}
 
     public function run(Turn $turn): TurnEnd
@@ -227,11 +226,6 @@ final class TurnLoop
 
         if ($result->ok && $this->runner->kindOf($call->name) === ToolKind::Read) {
             $turn->addEvidence($encoded);
-        }
-
-        if ($result->errorCode === ToolErrorCode::UnsourcedClaim) {
-            $turn->noteUnsourcedClaim();
-            $this->tally->claimBlocked($turn->context);
         }
 
         $guard->observe($call, $encoded);
