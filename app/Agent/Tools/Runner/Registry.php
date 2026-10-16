@@ -8,9 +8,9 @@ use App\Agent\ValueObjects\ToolKind;
 use App\Agent\ValueObjects\ToolSpec;
 use InvalidArgumentException;
 
-// Nguồn duy nhất của tên và khai báo công cụ. Công cụ đọc do Kernel đăng ký (hiện
-// thực Contracts\Extensions\Tool); công cụ kết thúc khai ở đây vì Runtime tự giao kết
-// quả của chúng (lối ra duy nhất), không có phần thân chạy riêng.
+// Nguồn duy nhất của tên và khai báo công cụ. Công cụ đọc và công cụ hành động do Kernel
+// đăng ký (hiện thực Contracts\Extensions\Tool); công cụ kết thúc khai ở đây vì Runtime
+// tự giao kết quả của chúng (lối ra duy nhất), không có phần thân chạy riêng.
 final class Registry
 {
     public const REPLY = 'reply';
@@ -24,22 +24,22 @@ final class Registry
     public const HOLDING_REPLY_MAX_CHARACTERS = 1000;
 
     /** @var array<string, Tool> */
-    private array $readTools = [];
+    private array $tools = [];
 
     /** @var array<string, ToolSpec> */
     private array $specs = [];
 
-    /** @param iterable<Tool> $readTools */
-    public function __construct(iterable $readTools)
+    /** @param iterable<Tool> $tools công cụ đọc và công cụ hành động */
+    public function __construct(iterable $tools)
     {
-        foreach ($readTools as $tool) {
+        foreach ($tools as $tool) {
             $spec = $tool->spec();
 
-            if ($spec->kind !== ToolKind::Read || isset($this->specs[$spec->name])) {
-                throw new InvalidArgumentException("Tool `{$spec->name}` must be a uniquely named read tool.");
+            if ($spec->kind === ToolKind::Terminal || isset($this->specs[$spec->name])) {
+                throw new InvalidArgumentException("Tool `{$spec->name}` must be a uniquely named read or action tool.");
             }
 
-            $this->readTools[$spec->name] = $tool;
+            $this->tools[$spec->name] = $tool;
             $this->specs[$spec->name] = $spec;
         }
 
@@ -59,9 +59,10 @@ final class Registry
         return $this->specs[$name] ?? null;
     }
 
-    public function readTool(string $name): ?Tool
+    // Phần thân chạy được của một công cụ đọc hoặc hành động; null với công cụ kết thúc.
+    public function tool(string $name): ?Tool
     {
-        return $this->readTools[$name] ?? null;
+        return $this->tools[$name] ?? null;
     }
 
     /** @return list<string> */
@@ -99,8 +100,9 @@ final class Registry
                     'required' => ['reason', 'note'],
                     'additionalProperties' => false,
                 ], ToolKind::Terminal),
-            new ToolSpec(self::WAIT_FOR_CUSTOMER, 'End the turn without sending anything. Use it only when the customer\'s latest '
-                .'message needs no answer (a sticker, "ok", "thanks" after the matter is settled).', [
+            new ToolSpec(self::WAIT_FOR_CUSTOMER, 'End the turn without sending anything more. Use it only when the customer\'s latest '
+                .'message needs no answer (a sticker, "ok", "thanks" after the matter is settled), or when what you sent earlier in '
+                .'this turn (a question with options, a card) already says everything.', [
                     'type' => 'object',
                     'properties' => [
                         'reason' => ['type' => 'string', 'minLength' => 1, 'maxLength' => 300, 'description' => 'Why no answer is needed.'],

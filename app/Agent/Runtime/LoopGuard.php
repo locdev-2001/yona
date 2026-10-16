@@ -43,9 +43,15 @@ final class LoopGuard
         $this->steps++;
     }
 
+    // Khoá (công cụ, tham số đã sắp khoá) của một lời gọi, bất kể thứ tự khoá mô hình phát.
+    public static function fingerprint(ToolCall $call): string
+    {
+        return $call->name."\n".self::canonical($call->args);
+    }
+
     public function observe(ToolCall $call, string $result): void
     {
-        $this->history[] = hash('sha256', $call->name."\n".self::canonical($call->args)."\n".$result);
+        $this->history[] = hash('sha256', self::fingerprint($call)."\n".$result);
 
         if ($this->identicalStreak() >= self::IDENTICAL_CALL_THRESHOLD || $this->repeatingCycle()) {
             $this->halted = true;

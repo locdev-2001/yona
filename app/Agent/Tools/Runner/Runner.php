@@ -50,12 +50,13 @@ final class Runner
         return $call->name === Registry::REPLY ? $this->unknownSource($call, $evidence) : null;
     }
 
-    public function runRead(ToolCall $call, TurnContext $context): ToolResult
+    // Chạy phần thân của công cụ đọc hoặc hành động; lỗi bất ngờ thành tool_result lỗi.
+    public function run(ToolCall $call, TurnContext $context): ToolResult
     {
-        $tool = $this->registry->readTool($call->name);
+        $tool = $this->registry->tool($call->name);
 
         if ($tool === null) {
-            return ToolResult::failure(ToolErrorCode::InvalidArgs, "`{$call->name}` is not a lookup tool.");
+            return ToolResult::failure(ToolErrorCode::InvalidArgs, "`{$call->name}` ends the turn and must be called on its own.");
         }
 
         try {
@@ -63,7 +64,9 @@ final class Runner
         } catch (Throwable $exception) {
             $this->logger->warning('agent.tool.failed', ['tool' => $call->name, 'exception' => $exception::class]);
 
-            return ToolResult::failure(ToolErrorCode::SourceUnavailable, 'This lookup failed; do not guess, use handoff_to_human for binding claims.', retryable: true);
+            return $tool->spec()->kind === ToolKind::Action
+                ? ToolResult::failure(ToolErrorCode::SourceUnavailable, 'This action failed and nothing was done; do not claim it was done. Continue without it or use handoff_to_human.')
+                : ToolResult::failure(ToolErrorCode::SourceUnavailable, 'This lookup failed; do not guess, use handoff_to_human for binding claims.', retryable: true);
         }
     }
 

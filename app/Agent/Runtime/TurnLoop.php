@@ -30,8 +30,9 @@ use Carbon\CarbonImmutable;
 use DateTimeImmutable;
 
 // Vòng một lượt: kiểm cổng → đưa tin chen ngang vào → ráp prompt → gọi mô hình → chạy
-// công cụ đọc theo đúng thứ tự mô hình phát → lặp, tới khi có MỘT công cụ kết thúc hợp
-// lệ. Chữ trơn của mô hình không bao giờ tới khách. `deliver` là lối ra duy nhất.
+// công cụ đọc và hành động theo đúng thứ tự mô hình phát → lặp, tới khi có MỘT công cụ
+// kết thúc hợp lệ. Chữ trơn của mô hình không bao giờ tới khách. Hành động (gửi thẻ, gắn
+// nhãn…) qua cùng cổng gửi như `deliver` trước khi chạy, mỗi bộ tham số một lần mỗi lượt.
 final class TurnLoop
 {
     // Không mở lời gọi mô hình mới khi còn ít hơn chừng này giây tới deadline của lượt.
@@ -41,7 +42,7 @@ final class TurnLoop
 
     private const TEXT_ONLY_NOTE = '[runtime note] Text outside tools is never shown to the customer. End this turn now by calling exactly one of: reply, handoff_to_human, wait_for_customer.';
 
-    private const GRACE_NOTE = '[runtime note] The step budget for this turn is used up. Lookups are no longer available: end the turn now with reply, handoff_to_human or wait_for_customer.';
+    private const GRACE_NOTE = '[runtime note] The step budget for this turn is used up. Lookups and actions are no longer available: end the turn now with reply, handoff_to_human or wait_for_customer.';
 
     private const STEER_NOTE = '[runtime note] New messages arrived while you were working; take them into account:';
 
@@ -180,11 +181,11 @@ final class TurnLoop
     private function runCalls(Turn $turn, array $calls, LoopGuard $guard, bool $grace): ?ToolCall
     {
         $terminalCalls = array_filter($calls, fn (ToolCall $call) => $this->runner->kindOf($call->name) === ToolKind::Terminal);
-        $hasReads = count($terminalCalls) < count($calls);
+        $hasOthers = count($terminalCalls) < count($calls);
         $terminal = null;
 
         foreach ($calls as $call) {
-            $result = $this->resultFor($turn, $call, $terminalCalls, $hasReads, $grace);
+            $result = $this->resultFor($turn, $call, $terminalCalls, $hasOthers, $grace);
 
             if ($result === null) {
                 $terminal = $call;
@@ -198,33 +199,74 @@ final class TurnLoop
         return $terminal;
     }
 
-    /** @param array<int, ToolCall> $terminalCalls */
-    private function resultFor(Turn $turn, ToolCall $call, array $terminalCalls, bool $hasReads, bool $grace): ?ToolResult
+    /**
+     * Công cụ kết thúc đi cùng công cụ khác trong một phản hồi thì hoãn: mô hình phải thấy
+     * kết quả (thẻ đã gửi hay bị từ chối) rồi mới nói với khách, không bao giờ "em gửi rồi
+     * ạ" khi chưa gửi được.
+     *
+     * @param  array<int, ToolCall>  $terminalCalls
+     */
+    private function resultFor(Turn $turn, ToolCall $call, array $terminalCalls, bool $hasOthers, bool $grace): ?ToolResult
     {
-        if ($this->runner->kindOf($call->name) !== ToolKind::Terminal) {
-            if ($grace && $this->runner->kindOf($call->name) === ToolKind::Read) {
+        $kind = $this->runner->kindOf($call->name);
+
+        if ($kind !== ToolKind::Terminal) {
+            if ($grace && $kind !== null) {
                 return ToolResult::failure(ToolErrorCode::NotAllowedThisTurn, 'The step budget is used up; end the turn now with reply, handoff_to_human or wait_for_customer.');
             }
 
-            return $this->runner->validate($call, $turn->evidence()) ?? $this->runner->runRead($call, $turn->context);
+            return $this->runner->validate($call, $turn->evidence())
+                ?? ($kind === ToolKind::Action ? $this->act($turn, $call) : $this->runner->run($call, $turn->context));
         }
 
         if (count($terminalCalls) > 1) {
             return ToolResult::failure(ToolErrorCode::NotAllowedThisTurn, 'Call exactly one terminal tool (reply, handoff_to_human or wait_for_customer) per response.');
         }
 
-        if ($hasReads) {
-            return ToolResult::failure(ToolErrorCode::Deferred, "Not executed: read the lookup results first, then call `{$call->name}` again in its own response.");
+        if ($hasOthers) {
+            return ToolResult::failure(ToolErrorCode::Deferred, "Not executed: read the results of the other tools first, then call `{$call->name}` again in its own response.");
         }
 
         return $this->runner->validate($call, $turn->evidence());
+    }
+
+    /**
+     * Hành động qua cùng cổng như lúc gửi trả lời: khách vừa nhắn thì hoãn để lập lại kế
+     * hoạch; lượt không còn quyền thì không làm (vòng kế tiếp tự dừng lượt). Cửa sổ kênh
+     * đóng vẫn chạy: công cụ gửi tin tự nhận từ chối của kênh, việc nội bộ vẫn làm được.
+     */
+    private function act(Turn $turn, ToolCall $call): ToolResult
+    {
+        $fingerprint = LoopGuard::fingerprint($call);
+
+        if ($turn->actionDone($fingerprint)) {
+            return ToolResult::failure(ToolErrorCode::Duplicate, "Already done in this turn with the same arguments; do not repeat `{$call->name}`, go on with the next step.");
+        }
+
+        $check = $this->gate->checkSend($turn, $this->now());
+
+        if ($check->block === BlockReason::NewMessages) {
+            return ToolResult::failure(ToolErrorCode::Deferred, 'Not done: the customer just wrote again (see below). Re-plan with the new messages first.');
+        }
+
+        if ($check->block?->interrupts()) {
+            return ToolResult::failure(ToolErrorCode::NotAllowedThisTurn, 'Not done: you no longer handle this conversation in this turn.');
+        }
+
+        $result = $this->runner->run($call, $turn->context);
+
+        if ($result->ok) {
+            $turn->recordAction($fingerprint);
+        }
+
+        return $result;
     }
 
     private function answer(Turn $turn, ToolCall $call, ToolResult $result, LoopGuard $guard): void
     {
         $encoded = (string) json_encode($result->toArray(), self::JSON_FLAGS);
 
-        if ($result->ok && $this->runner->kindOf($call->name) === ToolKind::Read) {
+        if ($result->ok && in_array($this->runner->kindOf($call->name), [ToolKind::Read, ToolKind::Action], true)) {
             $turn->addEvidence($encoded);
         }
 
@@ -297,7 +339,7 @@ final class TurnLoop
             null => $success,
             DeliveryFailure::FloorLost, DeliveryFailure::AutoResponderOff => TurnEnd::Interrupted,
             DeliveryFailure::WindowClosed => $this->fallBack(FallbackReason::WindowClosed, $turn),
-            DeliveryFailure::Rejected => $this->fallBack(FallbackReason::TurnFailed, $turn),
+            DeliveryFailure::Rejected, DeliveryFailure::NotFound, DeliveryFailure::NotPermitted => $this->fallBack(FallbackReason::TurnFailed, $turn),
         };
     }
 

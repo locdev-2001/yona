@@ -3,8 +3,9 @@
 namespace App\Agent\Tools\Runner;
 
 // Kiểm tham số lời gọi công cụ theo đúng tập con JSON Schema các công cụ khai: object với
-// properties, required, additionalProperties: false; string (minLength, maxLength, enum);
-// integer (minimum, maximum); array chuỗi (maxItems). Trả câu mô tả lỗi đầu tiên.
+// properties, required, additionalProperties: false (kể cả object lồng); string (minLength,
+// maxLength, enum); integer (minimum, maximum); array (minItems, maxItems, uniqueItems,
+// items theo đúng các luật trên). Trả câu mô tả lỗi đầu tiên.
 final class ArgumentCheck
 {
     /**
@@ -51,6 +52,7 @@ final class ArgumentCheck
             'string' => self::stringViolation($rule, $value),
             'integer' => self::integerViolation($rule, $value),
             'array' => self::arrayViolation($rule, $value),
+            'object' => self::objectViolation($rule, $value),
             default => null,
         };
     }
@@ -93,16 +95,38 @@ final class ArgumentCheck
             return 'must be a list.';
         }
 
+        if (isset($rule['minItems']) && count($value) < $rule['minItems']) {
+            return "must have at least {$rule['minItems']} items.";
+        }
+
         if (isset($rule['maxItems']) && count($value) > $rule['maxItems']) {
             return "must have at most {$rule['maxItems']} items.";
         }
 
-        foreach ($value as $item) {
-            if (($rule['items']['type'] ?? null) === 'string' && ! is_string($item)) {
-                return 'must contain only strings.';
+        if (($rule['uniqueItems'] ?? false) && count(array_unique(array_map(fn (mixed $item) => json_encode($item), $value))) < count($value)) {
+            return 'must not repeat an item.';
+        }
+
+        foreach ($value as $index => $item) {
+            $problem = isset($rule['items']) ? self::valueViolation((array) $rule['items'], $item) : null;
+
+            if ($problem !== null) {
+                return 'item '.($index + 1)." {$problem}";
             }
         }
 
         return null;
+    }
+
+    /** @param array<string, mixed> $rule */
+    private static function objectViolation(array $rule, mixed $value): ?string
+    {
+        if (! is_array($value) || ($value !== [] && array_is_list($value))) {
+            return 'must be an object.';
+        }
+
+        $problem = self::violation($rule, $value);
+
+        return $problem === null ? null : "→ {$problem}";
     }
 }

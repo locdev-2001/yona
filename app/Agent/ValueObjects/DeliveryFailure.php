@@ -12,4 +12,8 @@ enum DeliveryFailure: string
     case WindowClosed = 'window_closed';
     // Lõi từ chối nội dung (quá dài, sai định dạng…).
     case Rejected = 'rejected';
+    // Thứ được nhắc tới (sản phẩm, nhãn…) không có trong account.
+    case NotFound = 'not_found';
+    // Shop chưa cho AI dùng thứ đó (vd không tài khoản nhận tiền nào mở cho AI).
+    case NotPermitted = 'not_permitted';
 }

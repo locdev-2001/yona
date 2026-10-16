@@ -12,13 +12,17 @@ use App\Agent\ValueObjects\TurnEvidence;
 use App\Agent\ValueObjects\TurnSituation;
 
 // Trạng thái một lượt, chỉ sống trong bộ nhớ job: các bước mô hình ↔ công cụ chỉ ghi
-// thêm theo đúng thứ tự, bằng chứng của lượt, các câu khách hỏi trong lượt.
+// thêm theo đúng thứ tự, bằng chứng của lượt, các câu khách hỏi trong lượt, các hành
+// động đã làm (để không làm lại khi mô hình gọi lại y hệt).
 final class Turn
 {
     /** @var list<PromptMessage> */
     private array $steps = [];
 
     private TurnEvidence $evidence;
+
+    /** @var array<string, true> khoá các hành động đã làm xong trong lượt */
+    private array $actionsDone = [];
 
     private ?FallbackReason $fallbackReason = null;
 
@@ -51,6 +55,16 @@ final class Turn
     public function addEvidence(string $toolResult): void
     {
         $this->evidence = $this->evidence->with($toolResult);
+    }
+
+    public function actionDone(string $fingerprint): bool
+    {
+        return isset($this->actionsDone[$fingerprint]);
+    }
+
+    public function recordAction(string $fingerprint): void
+    {
+        $this->actionsDone[$fingerprint] = true;
     }
 
     // Đường lui Dispositions đã chọn.
