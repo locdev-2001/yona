@@ -4,6 +4,7 @@ namespace Tests\Feature\Agent\Inference;
 
 use App\Agent\Contracts\Ports\ApiCallLog;
 use App\Agent\Contracts\Ports\LanguageModel;
+use App\Agent\Contracts\Ports\UsageMeter;
 use App\Agent\ValueObjects\MessageRole;
 use App\Agent\ValueObjects\ModelRequest;
 use App\Agent\ValueObjects\Prompt;
@@ -92,6 +93,13 @@ final class GatewayTestKit
         app()->instance(ApiCallLog::class, $log);
 
         return $log;
+    }
+
+    public static function useUsageMeter(RecordingUsageMeter $meter = new RecordingUsageMeter): RecordingUsageMeter
+    {
+        app()->instance(UsageMeter::class, $meter);
+
+        return $meter;
     }
 
     public static function model(): LanguageModel

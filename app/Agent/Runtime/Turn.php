@@ -22,6 +22,8 @@ final class Turn
 
     private bool $unsourcedClaimSeen = false;
 
+    private ?FallbackReason $fallbackReason = null;
+
     /**
      * @param  list<PromptMessage>  $history
      * @param  list<string>  $customerTexts
@@ -63,6 +65,17 @@ final class Turn
     public function sawUnsourcedClaim(): bool
     {
         return $this->unsourcedClaimSeen;
+    }
+
+    // Đường lui Dispositions đã chọn (sau khi đổi lý do theo rào khẳng định).
+    public function fellBack(FallbackReason $reason): void
+    {
+        $this->fallbackReason = $reason;
+    }
+
+    public function fallbackReason(): ?FallbackReason
+    {
+        return $this->fallbackReason;
     }
 
     public function appendAssistant(PromptMessage $message): void

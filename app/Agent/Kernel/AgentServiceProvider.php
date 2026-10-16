@@ -10,6 +10,7 @@ use App\Agent\Boundary\Readers\CoreKnowledgeReader;
 use App\Agent\Boundary\Writers\ApiLogWriter;
 use App\Agent\Boundary\Writers\CoreConversationActionWriter;
 use App\Agent\Boundary\Writers\CoreConversationFloor;
+use App\Agent\Boundary\Writers\UsageAnalyticsWriter;
 use App\Agent\Contracts\Ports\AiAgentDirectory;
 use App\Agent\Contracts\Ports\ApiCallLog;
 use App\Agent\Contracts\Ports\ConversationActionWriter;
@@ -21,6 +22,7 @@ use App\Agent\Contracts\Ports\LanguageModel;
 use App\Agent\Contracts\Ports\ModelSpend;
 use App\Agent\Contracts\Ports\StimulusSink;
 use App\Agent\Contracts\Ports\UnitOfWork;
+use App\Agent\Contracts\Ports\UsageMeter;
 use App\Agent\Inference\Gateway\ModelRouter;
 use App\Agent\Inference\Gateway\RouteTable;
 use App\Agent\Kernel\Commands\ModelPingCommand;
@@ -46,6 +48,7 @@ final class AgentServiceProvider extends ServiceProvider
     {
         $this->registerModelGateway();
         $this->app->bind(ApiCallLog::class, ApiLogWriter::class);
+        $this->app->bind(UsageMeter::class, UsageAnalyticsWriter::class);
         $this->registerTurnRuntime();
     }
 

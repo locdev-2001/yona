@@ -38,6 +38,7 @@ final class TurnRunner
         private readonly History $history,
         private readonly TurnLoop $loop,
         private readonly Dispositions $dispositions,
+        private readonly TurnTally $tally,
         private readonly TurnSettings $settings,
         private readonly LoggerInterface $logger,
     ) {}
@@ -72,7 +73,7 @@ final class TurnRunner
         $turn = $this->turn($order, $snapshot, $decision->aiAgentId, $agent, $recent, $now);
 
         if (! $snapshot->canReply) {
-            return $this->dispositions->fallBack(FallbackReason::WindowClosed, $turn);
+            return $this->tallied($turn, $this->dispositions->fallBack(FallbackReason::WindowClosed, $turn));
         }
 
         $until = $now->addSeconds($this->settings->deadlineSeconds + $this->settings->floorGraceSeconds)->toDateTimeImmutable();
@@ -82,7 +83,7 @@ final class TurnRunner
         }
 
         try {
-            $end = $this->loop->run($turn);
+            $end = $this->tallied($turn, $this->loop->run($turn));
             $this->store->put($this->handledKey($order), $turn->context->snapshotMessageId, self::MARK_TTL_SECONDS);
             $this->logger->info('agent.turn.ended', [
                 'conversation_id' => $order->conversationId,
@@ -189,6 +190,13 @@ final class TurnRunner
         }
 
         return $texts;
+    }
+
+    private function tallied(Turn $turn, TurnEnd $end): TurnEnd
+    {
+        $this->tally->ended($turn, $end);
+
+        return $end;
     }
 
     private function handledKey(TurnOrder $order): string

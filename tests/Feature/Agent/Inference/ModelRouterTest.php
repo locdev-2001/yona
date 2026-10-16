@@ -4,8 +4,14 @@ use App\Agent\Inference\Gateway\ModelRouter;
 use App\Agent\Inference\Gateway\RouteTable;
 use App\Agent\Inference\Gateway\Throttle\CircuitBreaker;
 use App\Agent\ValueObjects\FinishReason;
+use App\Agent\ValueObjects\MessageRole;
 use App\Agent\ValueObjects\ModelErrorKind;
 use App\Agent\ValueObjects\ModelRoute;
+use App\Agent\ValueObjects\Prompt;
+use App\Agent\ValueObjects\PromptMessage;
+use App\Agent\ValueObjects\ProviderBlock;
+use App\Agent\ValueObjects\ToolCall;
+use App\Agent\ValueObjects\ToolResultBlock;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Carbon;
@@ -13,6 +19,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Sleep;
 use Tests\Feature\Agent\Inference\GatewayTestKit;
 use Tests\Feature\Agent\Inference\RecordingApiCallLog;
+use Tests\Feature\Agent\Inference\RecordingUsageMeter;
 
 beforeEach(function () {
     Carbon::setTestNow('2026-10-15 09:00:00');
@@ -274,8 +281,64 @@ it('uses the model configured for a special AI agent and the default for the oth
         ->and($explicit->route)->toEqual(new ModelRoute('anthropic', 'claude-test'));
 });
 
-it('keeps the turn going when writing the API log fails', function () {
+it('adds every HTTP call to the AI agent usage: failed calls, calls on a fallback route, tokens and cost', function () {
+    $meter = GatewayTestKit::useUsageMeter();
+    Http::fake([
+        GatewayTestKit::ANTHROPIC_HOST.'/*' => Http::response(['type' => 'error', 'error' => ['type' => 'rate_limit_error', 'message' => 'Rate limited']], 429),
+        GatewayTestKit::OPENROUTER_HOST.'/*' => Http::response(routerOk()),
+    ]);
+
+    GatewayTestKit::model()->complete(GatewayTestKit::request());
+
+    expect(array_map(fn ($increment) => [$increment->modelCalls, $increment->failedCalls, $increment->routeChanges], $meter->increments))->toBe([
+        [1, 1, 0],
+        [1, 1, 0],
+        [1, 0, 1],
+    ]);
+    $fallback = $meter->increments[2];
+    expect($fallback->accountId)->toBe(GatewayTestKit::ACCOUNT_ID)
+        ->and($fallback->aiAgentId)->toBe(GatewayTestKit::AI_AGENT_ID)
+        ->and($fallback->inputTokens)->toBe(120)
+        ->and($fallback->cacheReadTokens)->toBe(1500)
+        ->and($fallback->costMicroUsd)->toBeGreaterThan(0)
+        ->and($fallback->turns)->toBe(0);
+});
+
+it('counts a call on the main route as a route change when the turn carries blocks of another route', function () {
+    $meter = GatewayTestKit::useUsageMeter();
+    Http::fake([GatewayTestKit::ANTHROPIC_HOST.'/*' => Http::response(anthropicOk())]);
+
+    $first = GatewayTestKit::turnPrompt();
+    $prompt = new Prompt($first->system, $first->tools, [
+        ...$first->messages,
+        new PromptMessage(MessageRole::Assistant, [
+            new ProviderBlock('reasoning_details', new ModelRoute('openrouter', 'anthropic/claude-test'), ['reasoning_details' => [['type' => 'reasoning.text', 'text' => '...']]]),
+            new ToolCall('toolu_02', 'search_knowledge', ['query' => 'size M']),
+        ]),
+        new PromptMessage(MessageRole::User, [new ToolResultBlock('toolu_02', '{"ok":true}')]),
+    ]);
+
+    $response = GatewayTestKit::model()->complete(GatewayTestKit::request(prompt: $prompt));
+
+    expect($response->usage->cacheMissReason)->toBe(ModelRouter::CACHE_MISS_ROUTE_CHANGED)
+        ->and($meter->increments)->toHaveCount(1)
+        ->and($meter->increments[0]->routeChanges)->toBe(1);
+});
+
+it('leaves calls without an AI agent out of the usage', function () {
+    $meter = GatewayTestKit::useUsageMeter();
+    $log = GatewayTestKit::useApiCallLog();
+    Http::fake([GatewayTestKit::ANTHROPIC_HOST.'/*' => Http::response(anthropicOk())]);
+
+    GatewayTestKit::model()->complete(GatewayTestKit::request(aiAgentId: null));
+
+    expect($meter->increments)->toBe([])
+        ->and($log->records)->toHaveCount(1);
+});
+
+it('keeps the turn going when writing the API log or the usage fails', function () {
     GatewayTestKit::useApiCallLog(new RecordingApiCallLog(fails: true));
+    GatewayTestKit::useUsageMeter(new RecordingUsageMeter(fails: true));
     Http::fake([GatewayTestKit::ANTHROPIC_HOST.'/*' => Http::response(anthropicOk())]);
 
     $response = GatewayTestKit::model()->complete(GatewayTestKit::request());

@@ -37,6 +37,7 @@ final class Dispositions
             ? FallbackReason::GuardFailed
             : $reason;
 
+        $turn->fellBack($effective);
         $this->logger->info('agent.turn.fallback', ['reason' => $effective->value, 'conversation_id' => $conversation->conversationId]);
 
         match ($effective) {

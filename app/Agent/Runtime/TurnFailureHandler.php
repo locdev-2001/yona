@@ -16,6 +16,7 @@ final class TurnFailureHandler
         private readonly ConversationFloor $floor,
         private readonly TurnJobMark $jobMark,
         private readonly Dispositions $dispositions,
+        private readonly TurnTally $tally,
         private readonly LoggerInterface $logger,
     ) {}
 
@@ -38,6 +39,7 @@ final class TurnFailureHandler
         $this->floor->release($conversation);
 
         if ($aiAgentId !== null) {
+            $this->tally->crashed($conversation->accountId, $aiAgentId);
             $this->dispositions->stopAfterFailure($conversation, $aiAgentId);
         }
     }

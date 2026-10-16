@@ -75,13 +75,16 @@ final class ModelRouter implements LanguageModel
                 continue;
             }
 
+            // Tuyến dự phòng, hoặc lượt mang khối mờ của tuyến khác: tiền tố đã cache không còn khớp.
+            $routeChanged = $position > 0 || $this->carriesForeignProviderBlocks($request, $route);
+
             for ($attempt = 1; $attempt <= self::MAX_ATTEMPTS_PER_ROUTE; $attempt++) {
                 if ($this->secondsLeft($request) < self::MIN_CALL_SECONDS) {
                     return $this->exhausted($alias, $lastFailure, $usage, $lastRoute, 'Deadline reached before a provider answered.');
                 }
 
                 $lastRoute = $route->identity();
-                $outcome = $this->call($request, $route);
+                $outcome = $this->call($request, $route, $routeChanged);
                 $usage = $usage->plus($outcome->usage);
 
                 if ($outcome->completion !== null) {
@@ -90,7 +93,7 @@ final class ModelRouter implements LanguageModel
                     return new ModelResponse(
                         $outcome->completion->content,
                         $outcome->completion->finishReason,
-                        $this->withCacheMissReason($usage, $position > 0 || $this->carriesForeignProviderBlocks($request, $route) ? self::CACHE_MISS_ROUTE_CHANGED : null),
+                        $this->withCacheMissReason($usage, $routeChanged ? self::CACHE_MISS_ROUTE_CHANGED : null),
                         $route->identity(),
                     );
                 }
@@ -111,7 +114,7 @@ final class ModelRouter implements LanguageModel
         return $this->exhausted($alias, $lastFailure, $usage, $lastRoute, "Every route for model alias `{$alias}` is circuit-open.");
     }
 
-    private function call(ModelRequest $request, Route $route): CallOutcome
+    private function call(ModelRequest $request, Route $route, bool $routeChanged): CallOutcome
     {
         $driver = $this->drivers->for($route->protocol);
         $body = $driver->body($request->prompt, $route, $request->cacheKey);
@@ -128,7 +131,7 @@ final class ModelRouter implements LanguageModel
         } catch (ConnectionException|TransferException $exception) {
             $failure = $this->classifier->fromTransport($exception);
             $usage = new Usage(latencyMs: $this->elapsedMs($startedAt));
-            $this->recorder->record($request, $route, null, $failure->error, $body, null, $usage);
+            $this->recorder->record($request, $route, null, $failure->error, $body, null, $usage, $routeChanged);
 
             return CallOutcome::failed($failure, $usage);
         }
@@ -147,7 +150,7 @@ final class ModelRouter implements LanguageModel
             try {
                 $completion = $driver->parse($decoded, $route);
                 $usage = $this->priced($completion->usage, $route, $latencyMs);
-                $this->recorder->record($request, $route, $status, null, $body, $logged, $usage);
+                $this->recorder->record($request, $route, $status, null, $body, $logged, $usage, $routeChanged);
 
                 return CallOutcome::succeeded($completion, $usage);
             } catch (ProviderErrorInBody $exception) {
@@ -158,7 +161,7 @@ final class ModelRouter implements LanguageModel
         }
 
         $usage = new Usage(latencyMs: $latencyMs);
-        $this->recorder->record($request, $route, $status, $failure->error, $body, $logged, $usage);
+        $this->recorder->record($request, $route, $status, $failure->error, $body, $logged, $usage, $routeChanged);
 
         return CallOutcome::failed($failure, $usage);
     }
