@@ -34,10 +34,12 @@ describe('legacy inbox and label conversation routes', function () {
                 ->missing('inboxId'));
     });
 
-    it('renders the filtered list page', function () {
-        $this->actingAs($this->user)->get("{$this->base}/conversations?inbox=5&label=a&label=b")
+    it('keeps repeated label keys in the page url', function () {
+        $url = "{$this->base}/conversations?inbox=5&label=a&label=c%E1%BB%B1c+d%C3%A0ng";
+
+        $this->actingAs($this->user)->get($url)
             ->assertOk()
-            ->assertInertia(fn ($page) => $page->component('dashboard/conversation/ConversationView'));
+            ->assertInertia(fn ($page) => $page->component('dashboard/conversation/ConversationView')->url($url));
     });
 
     it('requires authentication', function () {

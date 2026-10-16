@@ -6,12 +6,21 @@ use App\Models\Sticker;
 use App\Services\Branding\BrandAssets;
 use App\Services\Meta\GraphApi;
 use App\Services\Notification\VapidService;
+use Closure;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
 {
     protected $rootView = 'app';
+
+    // URL của trang giữ nguyên query trình duyệt gửi: mặc định đi qua fullUrl(), bị PHP
+    // parse nên khoá lặp (`?label=a&label=b` của bộ lọc hội thoại) chỉ còn giá trị cuối,
+    // rồi Inertia ghi đè thanh địa chỉ bằng URL đã mất bộ lọc.
+    public function urlResolver(): Closure
+    {
+        return fn (Request $request) => $request->getRequestUri();
+    }
 
     public function share(Request $request): array
     {
