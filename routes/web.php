@@ -591,7 +591,6 @@ Route::prefix(SuperAdminArea::PREFIX)->middleware(SuperAdminInertia::class)->gro
         require __DIR__.'/admin/operations.php';
         require __DIR__.'/admin/events.php';
         require __DIR__.'/admin/alerts.php';
-        require __DIR__.'/admin/ai_logs.php';
 
         // Nhật ký đăng nhập hộ — chỉ đọc, không CRUD như các resource khác.
         Route::get('/impersonations', [SuperAdminImpersonationsController::class, 'index']);

@@ -130,7 +130,6 @@ return [
         'instance_status' => 'Instance status',
         'alerts' => 'Alerts',
         'feature_usage' => 'Feature usage',
-        'ai_logs' => 'AI logs',
         'data' => 'Data browser',
         'sticker_packs' => 'Sticker library',
         'agent_bots' => 'Agent bots',
