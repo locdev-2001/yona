@@ -1,13 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 
-import Button from 'dashboard/components-next/button/Button';
+import BottomSheet from 'dashboard/components-next/BottomSheet';
+import { useIsPhoneScreen } from 'dashboard/composables/useViewportWidth';
 import { t } from '../../../i18n';
-import ConditionRow from './ConditionRow';
+import FilterComposer from './FilterComposer';
 import type { ConversationFilterCondition, FilterSelectOption, FilterType } from './helper/filterHelper';
-import { validateSingleFilter } from './helper/validations';
 
-// Port từ components-next/filter/ConversationFilter.vue (nhánh isFolderView =
-// custom views E1 bỏ). Apply: validate mọi dòng rồi emit lên ChatList.
 export const DEFAULT_FILTER: ConversationFilterCondition = {
     attributeKey: 'status',
     filterOperator: 'equal_to',
@@ -23,18 +21,13 @@ interface ConversationFilterProps {
     onClose: () => void;
 }
 
-export default function ConversationFilter({
-    filters,
-    attributeFilterTypes,
-    onChange,
-    onApplyFilter,
-    onClose,
-}: ConversationFilterProps) {
-    const [showErrors, setShowErrors] = useState(false);
+// Lọc nâng cao: cùng một nội dung, máy tính là popover hẹp cạnh nút Lọc, điện thoại là bottom sheet.
+export default function ConversationFilter({ filters, attributeFilterTypes, onChange, onApplyFilter, onClose }: ConversationFilterProps) {
+    const isPhone = useIsPhoneScreen();
     const rootRef = useRef<HTMLDivElement>(null);
 
-    // v-on-click-outside với ignore nút toggle (#toggleConversationFilterButton).
     useEffect(() => {
+        if (isPhone) return undefined;
         const onMouseDown = (event: MouseEvent) => {
             const target = event.target as HTMLElement;
             if (rootRef.current?.contains(target)) return;
@@ -43,69 +36,28 @@ export default function ConversationFilter({
         };
         document.addEventListener('mousedown', onMouseDown);
         return () => document.removeEventListener('mousedown', onMouseDown);
-    }, [onClose]);
+    }, [isPhone, onClose]);
 
-    useEffect(() => {
-        setShowErrors(false);
-    }, [filters]);
-
-    const resetFilter = () => onChange([{ ...DEFAULT_FILTER }]);
-
-    const removeFilter = (index: number) => {
-        if (filters.length === 1) {
-            resetFilter();
-        } else {
-            onChange(filters.filter((_, filterIndex) => filterIndex !== index));
-        }
+    const apply = (conditions: ConversationFilterCondition[]) => {
+        onChange(conditions.length ? conditions : [{ ...DEFAULT_FILTER }]);
+        onApplyFilter(conditions);
     };
 
-    const addFilter = () => onChange([...filters, { ...DEFAULT_FILTER }]);
+    const composer = (
+        <FilterComposer filters={filters} filterTypes={attributeFilterTypes} isSheet={isPhone} onApply={apply} onClose={onClose} />
+    );
 
-    const updateFilter = (index: number, condition: ConversationFilterCondition) =>
-        onChange(filters.map((filter, filterIndex) => (filterIndex === index ? condition : filter)));
-
-    const validateAndSubmit = () => {
-        setShowErrors(true);
-        if (filters.some(filter => validateSingleFilter(filter))) return;
-        onApplyFilter(filters);
-    };
+    if (isPhone) {
+        return (
+            <BottomSheet isOpen focusesSheetOnOpen title={t('FILTER.COMPOSER.TITLE')} onClose={onClose}>
+                {composer}
+            </BottomSheet>
+        );
+    }
 
     return (
-        <div
-            ref={rootRef}
-            className="z-40 max-w-3xl lg:w-[750px] overflow-visible w-full overlay-surface rounded-xl p-6 grid gap-6"
-        >
-            <h3 className="text-base font-medium leading-6 text-n-slate-12">{t('FILTER.TITLE')}</h3>
-            <ul className="grid gap-4 list-none">
-                {filters.map((filter, index) => (
-                    <ConditionRow
-                        key={`filter-${filter.attributeKey}-${index}`}
-                        condition={filter}
-                        filterTypes={attributeFilterTypes}
-                        showQueryOperator={index > 0}
-                        previousQueryOperator={index > 0 ? filters[index - 1].queryOperator : undefined}
-                        showErrors={showErrors}
-                        onChange={condition => updateFilter(index, condition)}
-                        onQueryOperatorChange={queryOperator =>
-                            updateFilter(index - 1, { ...filters[index - 1], queryOperator })
-                        }
-                        onRemove={() => removeFilter(index)}
-                    />
-                ))}
-            </ul>
-            <div className="flex gap-2 justify-between">
-                <Button sm ghost blue onClick={addFilter}>
-                    {t('FILTER.ADD_NEW_FILTER')}
-                </Button>
-                <div className="flex gap-2">
-                    <Button sm faded slate onClick={resetFilter}>
-                        {t('FILTER.CLEAR_BUTTON_LABEL')}
-                    </Button>
-                    <Button sm solid blue onClick={validateAndSubmit}>
-                        {t('FILTER.SUBMIT_BUTTON_LABEL')}
-                    </Button>
-                </div>
-            </div>
+        <div ref={rootRef} className="z-40 w-[22rem] max-w-[calc(100vw-2rem)] max-h-[min(36rem,80vh)] flex flex-col overlay-surface rounded-xl">
+            {composer}
         </div>
     );
 }

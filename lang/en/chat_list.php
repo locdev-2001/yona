@@ -44,6 +44,8 @@ return [
         'STATUS' => 'Status',
         'CHANNEL' => 'Channel',
         'ALL_CHANNELS' => 'All channels',
+        'SHOW_ALL_CHANNELS' => 'Show all channels',
+        'COLLAPSE_CHANNELS' => 'Collapse channel list',
         'LABEL' => 'Label',
         'SORT' => 'Sort',
         'ADVANCED' => 'Advanced filters',

@@ -1,4 +1,5 @@
 import { Dialog } from '@base-ui/react/dialog';
+import { useRef } from 'react';
 import type { ReactNode } from 'react';
 
 // Vỏ lớp phủ của điện thoại: bảng trượt lên từ mép dưới, ngón cái với tới được.
@@ -10,9 +11,13 @@ interface BottomSheetProps {
     onClose: () => void;
     children: ReactNode;
     contentClassName?: string;
+    // Nội dung có ô nhập: focus vào chính bảng thay vì ô đầu tiên để bàn phím không bật lên che bảng.
+    focusesSheetOnOpen?: boolean;
 }
 
-export default function BottomSheet({ isOpen, title, onClose, children, contentClassName = '' }: BottomSheetProps) {
+export default function BottomSheet({ isOpen, title, onClose, children, contentClassName = '', focusesSheetOnOpen = false }: BottomSheetProps) {
+    const popupRef = useRef<HTMLDivElement>(null);
+
     return (
         <Dialog.Root
             open={isOpen}
@@ -26,6 +31,8 @@ export default function BottomSheet({ isOpen, title, onClose, children, contentC
                     className="fixed inset-0 z-50 bg-n-alpha-black2 transition-opacity duration-200 data-[starting-style]:opacity-0 data-[ending-style]:opacity-0 motion-reduce:transition-none"
                 />
                 <Dialog.Popup
+                    ref={popupRef}
+                    initialFocus={focusesSheetOnOpen ? popupRef : true}
                     data-bottom-sheet
                     className="overlay-surface fixed inset-x-0 bottom-0 z-50 flex flex-col max-h-[85dvh] rounded-t-xl pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] outline-none transition-[transform,opacity] duration-200 ease-out data-[starting-style]:translate-y-8 data-[starting-style]:opacity-0 data-[ending-style]:translate-y-8 data-[ending-style]:opacity-0 motion-reduce:transition-none"
                 >

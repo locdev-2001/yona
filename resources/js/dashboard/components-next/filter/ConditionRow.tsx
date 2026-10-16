@@ -25,13 +25,13 @@ interface ConditionRowProps {
     onRemove: () => void;
 }
 
-const getFilterFromFilterTypes = (filterTypes: (FilterType | FilterSelectOption)[], key: string): FilterType | undefined =>
+export const getFilterFromFilterTypes = (filterTypes: (FilterType | FilterSelectOption)[], key: string): FilterType | undefined =>
     filterTypes.find((filterType): filterType is FilterType => 'attributeKey' in filterType && filterType.attributeKey === key);
 
-const getOperator = (filter: FilterType | undefined, selectedOperator: string): FilterOperator | undefined =>
+export const getOperator = (filter: FilterType | undefined, selectedOperator: string): FilterOperator | undefined =>
     filter?.filterOperators?.find(operator => operator.value === selectedOperator) ?? filter?.filterOperators?.[0];
 
-const getInputType = (operator: FilterOperator | undefined, filter: FilterType | undefined): string =>
+export const getInputType = (operator: FilterOperator | undefined, filter: FilterType | undefined): string =>
     operator?.inputOverride ?? filter?.inputType ?? 'plainText';
 
 export function emptyValueFor(inputType: string): FilterValue {

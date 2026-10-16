@@ -127,9 +127,10 @@ export default function ChatList({
 
     const onApplyFilter = useCallback((filters: ConversationFilterCondition[]) => {
         resetBulkActions();
-        applyConversationFilters(filters);
+        if (filters.length) applyConversationFilters(filters);
+        else clearConversationFilters();
         closeAdvanceFiltersModal();
-    }, [resetBulkActions, applyConversationFilters, closeAdvanceFiltersModal]);
+    }, [resetBulkActions, applyConversationFilters, clearConversationFilters, closeAdvanceFiltersModal]);
 
     const allConversationsSelected = isEveryConversationSelected(conversations, selection.ids);
     const appliedLabels = useMemo(

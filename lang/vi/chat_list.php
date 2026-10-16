@@ -48,6 +48,8 @@ return [
         'STATUS' => 'Trạng thái',
         'CHANNEL' => 'Kênh',
         'ALL_CHANNELS' => 'Mọi kênh',
+        'SHOW_ALL_CHANNELS' => 'Xem hết kênh',
+        'COLLAPSE_CHANNELS' => 'Thu gọn danh sách kênh',
         'LABEL' => 'Nhãn',
         'SORT' => 'Sắp xếp',
         'ADVANCED' => 'Lọc nâng cao',
