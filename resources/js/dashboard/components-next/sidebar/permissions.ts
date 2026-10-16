@@ -27,7 +27,7 @@ function filterChildren<T extends SidebarMenuChild>(
         if (item.children.length > 0 && children.length === 0) continue;
 
         if (COMPACT_INTERFACE && item.collapseSingleChild && children.length === 1 && children[0].to) {
-            allowed.push({ ...item, to: children[0].to, children: undefined });
+            allowed.push({ ...item, to: children[0].to, badgeCount: item.badgeCount ?? children[0].badgeCount, children: undefined });
             continue;
         }
 

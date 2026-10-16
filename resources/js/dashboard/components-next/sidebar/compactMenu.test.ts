@@ -34,13 +34,12 @@ describe('menu tinh gọn', () => {
         expect(visible.find(item => item.name === 'Reports')?.children).toBeUndefined();
     });
 
-    it('không vẽ nhóm rỗng nhưng vẫn giữ kênh đã nối và nhãn được ghim', () => {
-        const inboxes = [{ id: 8, name: 'Kênh đang dùng', channel_type: 'Channel::Api' }];
-        const labels = [{ id: 9, title: 'Khách mới', color: '#000000' }];
-        const conversationMenu = filterMenuByRole(buildMenuItems(2, inboxes, [], labels), 'agent')[0];
-        expect(conversationMenu.children?.map(item => item.name)).toEqual(['All', 'Channels', 'Labels']);
-        expect(destinationUrls([conversationMenu])).toContain('/app/accounts/2/conversations?inbox=8');
-        expect(filterMenuByRole(buildMenuItems(2), 'agent')[0].children?.map(item => item.name)).toEqual(['All']);
+    it('Hộp thư là một mục bấm thẳng, không có cây kênh hay nhãn, vẫn giữ số chưa đọc', () => {
+        const unreadCounts = { allCount: 7, inboxes: {}, labels: {}, teams: {} };
+        const conversationMenu = filterMenuByRole(buildMenuItems(2, [], unreadCounts), 'agent')[0];
+        expect(conversationMenu.children).toBeUndefined();
+        expect(conversationMenu.to).toBe('/app/accounts/2/dashboard');
+        expect(conversationMenu.badgeCount).toBe(7);
     });
 
     it('nhân viên vẫn có sticker và câu trả lời mẫu, không thấy quản trị hoặc báo cáo', () => {

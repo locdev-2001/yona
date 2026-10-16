@@ -6,10 +6,8 @@ const pageProps = vi.hoisted(() => ({
     auth: { user: { id: 1, ui_settings: {} as Record<string, unknown> } },
     currentAccount: { id: 2, features: {} },
     currentAccountUser: { role: 'administrator' },
-    inboxes: [] as Array<{ id: number; name: string; channel_type: string }>,
     teams: [],
 }));
-const inboxUnreadCounts = vi.hoisted(() => ({ current: {} as Record<string, number> }));
 const renderedGroups = vi.hoisted(() => [] as Array<{ name: string; children?: unknown[] }>);
 vi.mock('@inertiajs/react', () => ({
     usePage: () => ({ props: pageProps }),
@@ -19,14 +17,9 @@ vi.mock('@inertiajs/react', () => ({
         </a>
     ),
 }));
-vi.mock('dashboard/composables/useLabelsList', () => ({ useLabelsList: () => [] }));
 vi.mock('dashboard/composables/useCustomViews', () => ({ useCustomViews: () => [] }));
 vi.mock('./useConversationUnreadCounts', () => ({
     useConversationUnreadCounts: () => ({ allCount: 0, inboxes: {}, labels: {}, teams: {} }),
-}));
-vi.mock('dashboard/notifications/useUnreadCount', async importOriginal => ({
-    ...(await importOriginal<typeof import('dashboard/notifications/useUnreadCount')>()),
-    useNotificationsUnreadInboxCounts: () => inboxUnreadCounts.current,
 }));
 vi.mock('./SidebarGroup', () => ({
     default: (props: { name: string; children?: unknown[] }) => {
@@ -82,30 +75,5 @@ describe('hàng đầu sidebar: tìm kiếm, chuông', () => {
 
         expect(bell?.className).toContain('flex-shrink-0');
         expect(bell?.className).toContain('size-8');
-    });
-});
-
-type MenuNode = { name: string; badgeCount?: number; children?: MenuNode[] };
-
-describe('badge từng kênh', () => {
-    it('là số trên chuông chia theo kênh, kể cả khi cờ bộ đếm sidebar đang tắt', () => {
-        pageProps.inboxes = [
-            { id: 7, name: 'Zalo A', channel_type: 'Channel::ZaloPersonal' },
-            { id: 8, name: 'Zalo B', channel_type: 'Channel::ZaloPersonal' },
-        ];
-        inboxUnreadCounts.current = { '8': 3 };
-        renderedGroups.length = 0;
-
-        render(<Sidebar onCloseMobileSidebar={() => undefined} />);
-
-        const conversation = renderedGroups.find(group => group.name === 'Conversation') as MenuNode | undefined;
-        const channels = conversation?.children?.find(child => child.name === 'Channels');
-        expect(channels?.children?.map(child => [child.name, child.badgeCount])).toEqual([
-            ['Zalo A-7', 0],
-            ['Zalo B-8', 3],
-        ]);
-
-        pageProps.inboxes = [];
-        inboxUnreadCounts.current = {};
     });
 });

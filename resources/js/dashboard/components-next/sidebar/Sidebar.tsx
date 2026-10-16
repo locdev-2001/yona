@@ -8,12 +8,9 @@ import SidebarProfileMenu from './SidebarProfileMenu';
 import SidebarAccountSwitcher from './SidebarAccountSwitcher';
 import { buildMenuItems } from './menuItems';
 import { useCustomViews } from 'dashboard/composables/useCustomViews';
-import { useLabelsList } from 'dashboard/composables/useLabelsList';
-import { labelsOnSidebar } from 'dashboard/conversation/labelHelpers';
 import { SidebarContextProvider, useSidebarResize, COLLAPSED_THRESHOLD, MOBILE_DRAWER_WIDTH } from './provider';
 import { filterMenuByRole } from './permissions';
 import { useConversationUnreadCounts } from './useConversationUnreadCounts';
-import { useNotificationsUnreadInboxCounts } from 'dashboard/notifications/useUnreadCount';
 import NotificationBell from 'dashboard/notifications/components/NotificationBell';
 import { accountScopedUrl } from 'dashboard/helper/URLHelper';
 import type { DashboardPageProps } from '../../types';
@@ -28,22 +25,14 @@ export default function Sidebar({
     isMobileSidebarOpen?: boolean;
     onCloseMobileSidebar: () => void;
 }) {
-    const { currentAccount, currentAccountUser, inboxes = [], teams = [] } = usePage<DashboardPageProps>().props;
+    const { currentAccount, currentAccountUser, teams = [] } = usePage<DashboardPageProps>().props;
     const accountId = currentAccount.id;
     const role = currentAccountUser.role;
     const features = currentAccount.features ?? {};
-    // Sidebar.vue dispatch `labels/get` khi mount; nhóm Labels đọc getLabelsOnSidebar.
-    const accountLabels = useLabelsList(accountId);
     const conversationCustomViews = useCustomViews(accountId, 'conversation');
     const contactCustomViews = useCustomViews(accountId, 'contact');
     // watch([accountId, hasConversationUnreadCounts], fetchConversationUnreadCounts) của Sidebar.vue.
-    const conversationUnreadCounts = useConversationUnreadCounts();
-    // Badge từng kênh đếm y như số trên chuông, chỉ chia theo kênh — không theo cờ tính năng.
-    const inboxUnreadCounts = useNotificationsUnreadInboxCounts();
-    const unreadCounts = useMemo(
-        () => ({ ...conversationUnreadCounts, inboxes: inboxUnreadCounts }),
-        [conversationUnreadCounts, inboxUnreadCounts],
-    );
+    const unreadCounts = useConversationUnreadCounts();
 
     const [windowWidth, setWindowWidth] = useState(() => window.innerWidth);
     const isMobile = windowWidth < 768;
@@ -128,9 +117,7 @@ export default function Sidebar({
             filterMenuByRole(
                 buildMenuItems(
                     accountId,
-                    inboxes,
                     teams,
-                    labelsOnSidebar(accountLabels),
                     unreadCounts,
                     conversationCustomViews,
                     contactCustomViews,
@@ -140,9 +127,7 @@ export default function Sidebar({
             ),
         [
             accountId,
-            inboxes,
             teams,
-            accountLabels,
             unreadCounts,
             conversationCustomViews,
             contactCustomViews,

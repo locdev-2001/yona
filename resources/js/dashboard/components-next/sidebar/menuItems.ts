@@ -1,36 +1,16 @@
-import { createElement } from 'react';
 
 import { t } from '../../../i18n';
 import { COMPACT_INTERFACE } from 'shared/helpers/productVisibility';
-import { accountScopedUrl, conversationListPageURL } from 'dashboard/helper/URLHelper';
-import { SidebarChannelLeafContent } from './SidebarGroupLeaf';
+import { accountScopedUrl } from 'dashboard/helper/URLHelper';
 import type { SidebarMenuItem } from './provider';
 import { EMPTY_UNREAD_COUNTS } from './useConversationUnreadCounts';
 import type { SidebarUnreadCounts } from './useConversationUnreadCounts';
 import type { ChannelPlatform } from 'shared/constants/channelPlatform';
 
-// Inbox rút gọn share từ SetCurrentAccount cho nhóm Channels.
-export interface SidebarInbox {
-    id: number;
-    name: string;
-    channel_type: string;
-    // Kênh mất phiên xác thực (Zalo mất phiên, Facebook/Instagram bị Meta thu hồi
-    // quyền, …) — cảnh báo icon cạnh mục Channels như bản gốc ChannelLeaf.vue.
-    reauthorization_required?: boolean;
-    platform?: ChannelPlatform | null;
-}
-
 // Team của user (teams/getMyTeams) cho nhóm Teams.
 export interface SidebarTeam {
     id: number;
     name: string;
-}
-
-// Nhãn bật `show_on_sidebar` (labels/getLabelsOnSidebar) cho nhóm Labels.
-export interface SidebarLabel {
-    id: number;
-    title: string;
-    color: string;
 }
 
 // Port từ menuItems computed trong sidebar/Sidebar.vue.
@@ -41,10 +21,11 @@ export interface SidebarLabel {
 // Folders (custom view hội thoại) và Segments (custom view liên hệ) đọc store
 // composables/useCustomViews (E1); nhóm "Tagged With" vẫn rỗng (route liên hệ
 // theo nhãn chưa port).
-// badgeCount nhãn/team lấy từ store conversationUnreadCounts — rỗng khi account chưa
-// bật cờ `conversation_unread_counts`. Badge từng kênh là số trên chuông chia theo
-// kênh (Sidebar.tsx ghép vào `inboxes`), luôn bật. Trung tâm thông báo không
-// còn là mục menu: mở từ chuông ở hàng đầu sidebar (NotificationBell).
+// Kênh và nhãn không nằm trong menu: lọc theo kênh/nhãn ở bảng Lọc của danh sách
+// hội thoại, nên Hộp thư gộp về một mục khi chỉ còn "Tất cả hội thoại".
+// badgeCount team lấy từ store conversationUnreadCounts — rỗng khi account chưa
+// bật cờ `conversation_unread_counts`. Trung tâm thông báo không còn là mục menu:
+// mở từ chuông ở hàng đầu sidebar (NotificationBell).
 // Custom view rút gọn cho hai nhóm Folders/Segments.
 export interface SidebarCustomView {
     id: number;
@@ -53,21 +34,20 @@ export interface SidebarCustomView {
 
 export function buildMenuItems(
     accountId: number,
-    inboxes: SidebarInbox[] = [],
     teams: SidebarTeam[] = [],
-    labels: SidebarLabel[] = [],
     unreadCounts: SidebarUnreadCounts = EMPTY_UNREAD_COUNTS,
     conversationCustomViews: SidebarCustomView[] = [],
     contactCustomViews: SidebarCustomView[] = [],
 ): SidebarMenuItem[] {
     const scoped = (path: string) => accountScopedUrl(accountId, path);
-    const filteredList = (filters: { inboxIds?: number[]; labels?: string[] }) => conversationListPageURL({ accountId, filters });
 
     return [
         {
             name: 'Conversation',
             label: t(COMPACT_INTERFACE ? 'SIDEBAR.COMPACT_INBOX' : 'SIDEBAR.CONVERSATIONS'),
             icon: 'i-lucide-message-circle',
+            collapseSingleChild: true,
+            activeOn: [scoped('dashboard'), scoped('conversations')],
             children: [
                 {
                     name: 'All',
@@ -127,38 +107,6 @@ export function buildMenuItems(
                         label: team.name,
                         badgeCount: unreadCounts.teams[String(team.id)] ?? 0,
                         to: scoped(`team/${team.id}`),
-                    })),
-                },
-                {
-                    name: 'Channels',
-                    label: t('SIDEBAR.CHANNELS'),
-                    icon: 'i-lucide-mailbox',
-                    collapsible: true,
-                    showTreeLine: true,
-                    children: inboxes.map(inbox => ({
-                        name: `${inbox.name}-${inbox.id}`,
-                        label: inbox.name,
-                        badgeCount: unreadCounts.inboxes[String(inbox.id)] ?? 0,
-                        to: filteredList({ inboxIds: [inbox.id] }),
-                        component: ({ label, badgeCount }: { label: string; active: boolean; badgeCount?: number }) =>
-                            createElement(SidebarChannelLeafContent, { label, badgeCount, inbox }),
-                    })),
-                },
-                {
-                    name: 'Labels',
-                    label: t('SIDEBAR.LABELS'),
-                    icon: 'i-lucide-tag',
-                    collapsible: true,
-                    showTreeLine: true,
-                    children: labels.map(label => ({
-                        name: `${label.title}-${label.id}`,
-                        label: label.title,
-                        icon: createElement('span', {
-                            className: 'size-[8px] rounded-sm',
-                            style: { backgroundColor: label.color },
-                        }),
-                        badgeCount: unreadCounts.labels[String(label.id)] ?? 0,
-                        to: filteredList({ labels: [label.title] }),
                     })),
                 },
             ],
