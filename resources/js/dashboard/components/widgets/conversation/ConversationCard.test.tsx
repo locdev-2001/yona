@@ -178,16 +178,16 @@ describe('thẻ hội thoại trong danh sách', () => {
             const assignee = getByTestId('card-assignee');
 
             expect(assignee.dataset.assignee).toBe('other');
-            expect(assignee.textContent).toBe('Robert Nguyen');
-            expect(assignee.title).toBe('Robert Nguyen');
+            expect(assignee.textContent).toBe('Assignee: Robert Nguyen');
+            expect(assignee.title).toBe('Assignee: Robert Nguyen');
             expect(assignee.querySelector('[data-generated-avatar], img')).not.toBeNull();
         });
 
         // Người dùng đang đăng nhập có id 2 (mock usePage).
         it.each([
-            { variant: 'me', assignee: { id: 2, name: 'Tôi' }, assigneeType: 'User', text: 'Tôi phụ trách' },
-            { variant: 'other', assignee: { id: 2, name: 'Bot trả lời' }, assigneeType: 'AgentBot', text: 'Bot trả lời' },
-            { variant: 'none', assignee: {}, assigneeType: undefined, text: 'Chưa gán' },
+            { variant: 'me', assignee: { id: 2, name: 'Tôi' }, assigneeType: 'User', text: 'Phụ trách: Bạn' },
+            { variant: 'other', assignee: { id: 2, name: 'Bot trả lời' }, assigneeType: 'AgentBot', text: 'Phụ trách: Bot trả lời' },
+            { variant: 'none', assignee: {}, assigneeType: undefined, text: 'Chưa gán người phụ trách' },
         ])('nhãn phụ trách theo người nhận: $variant', ({ variant, assignee, assigneeType, text }) => {
             setLocale('vi');
             const { getByTestId } = render(
@@ -202,6 +202,8 @@ describe('thẻ hội thoại trong danh sách', () => {
 
             expect(badge.dataset.assignee).toBe(variant);
             expect(badge.textContent).toBe(text);
+            // Mọi biến thể đều có ô avatar cùng cỡ ở đầu để chữ các thẻ thẳng hàng.
+            expect(badge.firstElementChild?.matches('[data-testid="assignee-avatar-empty"]') || badge.querySelector('[data-generated-avatar], img') !== null).toBe(true);
         });
 
         it('tab không hiện người phụ trách thì không có nhãn', () => {

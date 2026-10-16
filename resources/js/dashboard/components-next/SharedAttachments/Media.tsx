@@ -25,6 +25,9 @@ interface MediaProps {
     onJumpToMessage?: (attachment: MessageAttachment) => void;
 }
 
+// Ô lưới vuông; khai sẵn kích thước để trình duyệt giữ chỗ trước khi ảnh về.
+const THUMBNAIL_SIZE = 96;
+
 const isVideoType = (fileType: string): boolean =>
     [ATTACHMENT_TYPES.VIDEO, ATTACHMENT_TYPES.IG_REEL].includes(fileType as never);
 const isAudioType = (fileType: string): boolean => fileType === ATTACHMENT_TYPES.AUDIO;
@@ -68,8 +71,13 @@ export default function Media({
     };
 
     const onPreviewError = (attachment: MessageAttachment) => {
+        // Máy chủ hiện trả thumb_url trùng data_url: thử lại cùng địa chỉ không phát lỗi lần hai
+        // nên ô kẹt ở ảnh vỡ. Chỉ thử bản gốc khi nó thật sự là địa chỉ khác.
         const canRetryWithFull =
-            Boolean(attachment.thumb_url) && !failedThumbs.includes(attachment.id) && Boolean(attachment.data_url);
+            Boolean(attachment.thumb_url) &&
+            !failedThumbs.includes(attachment.id) &&
+            Boolean(attachment.data_url) &&
+            attachment.data_url !== attachment.thumb_url;
         if (
             canRetryWithFull &&
             (attachment.file_type === ATTACHMENT_TYPES.IMAGE || isVideoType(attachment.file_type))
@@ -131,7 +139,7 @@ export default function Media({
 
     return (
         <section className="flex flex-col gap-2.5">
-            <header className="flex items-center justify-between px-0.5">
+            <header className="flex items-center justify-between">
                 <h4 className="text-xs font-semibold tracking-wider uppercase text-n-slate-11">
                     {t('CONVERSATION_SIDEBAR.SHARED_FILES.MEDIA_HEADING')}
                     <span className="ms-1 font-medium tracking-normal normal-case text-n-slate-10">
@@ -183,6 +191,9 @@ export default function Media({
                                         src={imagePreviewSrc(attachment) ?? undefined}
                                         className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-110"
                                         loading="lazy"
+                                        decoding="async"
+                                        width={THUMBNAIL_SIZE}
+                                        height={THUMBNAIL_SIZE}
                                         alt={fileNameFromUrl(attachment.data_url)}
                                         onError={() => onPreviewError(attachment)}
                                     />

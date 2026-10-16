@@ -4,28 +4,25 @@ import { usePage } from '@inertiajs/react';
 
 import MultiselectDropdown from 'shared/components/ui/MultiselectDropdown';
 import type { MultiselectOption } from 'shared/components/ui/MultiselectDropdown';
-import NextButton from 'dashboard/components-next/button/Button';
 import { useAlert } from 'dashboard/composables/useAlert';
-import type { AssignableAgent } from 'dashboard/composables/useAgentsList';
 import { t } from '../../../../i18n';
 import type { DashboardPageProps } from '../../../types';
 import { useConversation } from '../../ConversationContext';
 import type { TeamMeta } from '../../types';
 import ContactDetailsItem from './ContactDetailsItem';
 import LabelBox from './LabelBox';
-import { agentOptionAvatarSeed, buildTeamsList, resolveTeamSelection, teamOptionAvatarSeed } from './assignmentOptions';
+import { buildTeamsList, resolveTeamSelection, teamOptionAvatarSeed } from './assignmentOptions';
 import { buildPriorityOptions, findPriorityOption, resolvePrioritySelection } from './priorityOptions';
 import type { PriorityOption } from './priorityOptions';
-import { useConversationAssignment } from './useConversationAssignment';
 import { useTeamsList } from './useTeamsList';
 
-// Port từ routes/dashboard/conversation/ConversationAction.vue — khối Assignee /
-// Team / Priority / Conversation Labels, đúng thứ tự bản gốc.
+// Port từ routes/dashboard/conversation/ConversationAction.vue — khối Team / Priority /
+// Conversation Labels. Người phụ trách đã nằm ở mũ khung chat (AssigneeAction) nên
+// không lặp lại ở đây.
 // Không gửi analytics theo dõi thao tác.
 export default function ConversationAction() {
     const { currentAccount } = usePage<DashboardPageProps>().props;
     const { selectedConversation, assignTeam, togglePriority } = useConversation();
-    const { agentsList, assignedAgent, isAssignedToMe, selfAssign, toggleAgent } = useConversationAssignment();
     const teams = useTeamsList(currentAccount.id);
 
     const priorityOptions = useMemo(() => buildPriorityOptions(), []);
@@ -63,34 +60,6 @@ export default function ConversationAction() {
 
     return (
         <div>
-            <div>
-                <ContactDetailsItem
-                    compact
-                    title={t('CONVERSATION_SIDEBAR.ASSIGNEE_LABEL')}
-                    button={
-                        !isAssignedToMe ? (
-                            <NextButton
-                                link
-                                xs
-                                icon="i-lucide-arrow-right"
-                                className="!gap-1"
-                                label={t('CONVERSATION_SIDEBAR.SELF_ASSIGN')}
-                                onClick={selfAssign}
-                            />
-                        ) : null
-                    }
-                />
-                <MultiselectDropdown
-                    options={agentsList}
-                    selectedItem={assignedAgent}
-                    avatarSeedOf={agentOptionAvatarSeed}
-                    multiselectorTitle={t('AGENT_MGMT.MULTI_SELECTOR.TITLE.AGENT')}
-                    multiselectorPlaceholder={t('AGENT_MGMT.MULTI_SELECTOR.PLACEHOLDER')}
-                    noSearchResult={t('AGENT_MGMT.MULTI_SELECTOR.SEARCH.NO_RESULTS.AGENT')}
-                    inputPlaceholder={t('AGENT_MGMT.MULTI_SELECTOR.SEARCH.PLACEHOLDER.AGENT')}
-                    onSelect={selectedItem => toggleAgent(selectedItem as AssignableAgent)}
-                />
-            </div>
             {isProductFeatureVisible('teams') ? (
                 <div>
                     <ContactDetailsItem compact title={t('CONVERSATION_SIDEBAR.TEAM_LABEL')} />

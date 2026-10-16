@@ -4017,9 +4017,9 @@ const messages: Record<string, unknown> = {
             }
         },
         "ASSIGNEE": {
-            "LABEL": "Phụ trách",
-            "MINE": "Tôi phụ trách",
-            "UNASSIGNED": "Chưa gán",
+            "OWNED_BY_ME": "Phụ trách: Bạn",
+            "OWNED_BY": "Phụ trách: {name}",
+            "UNASSIGNED": "Chưa gán người phụ trách",
             "CHANGE": "Đổi người phụ trách",
             "ASSIGN_TO": "Giao cho",
             "ASSIGN_TO_ME": "Giao cho tôi",

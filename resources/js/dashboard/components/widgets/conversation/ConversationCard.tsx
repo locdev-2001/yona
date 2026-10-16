@@ -23,6 +23,8 @@ import { useContactAvailabilityStatus } from 'dashboard/realtime/hooks';
 import type { AvailabilityStatus } from 'dashboard/constants/globals';
 import { ICONS } from 'dashboard/icons';
 import { statusDotColor } from '../../../conversation/statusAppearance';
+import { AssigneeAvatar, assigneeKind, assigneeLabel, assigneeName } from '../../../conversation/AssigneeIdentity';
+import type { AssigneeKind } from '../../../conversation/AssigneeIdentity';
 
 function ConversationStatusChip({ status }: { status: string }) {
     if (!status) return null;
@@ -37,48 +39,35 @@ function ConversationStatusChip({ status }: { status: string }) {
 
 // Người phụ trách ở góc phải dưới thẻ, ngang hàng dòng nhãn; tên dài cắt "…".
 // Ba biến thể để nhìn lướt là biết việc của ai: của tôi, của người khác, chưa ai nhận.
+const ASSIGNEE_TONE: Record<AssigneeKind, string> = {
+    me: 'bg-n-blue-3 text-n-blue-11',
+    other: 'text-n-slate-11',
+    none: 'bg-n-amber-3 text-n-amber-11',
+};
+
 function CardAssignee({
     assignee,
     isAgentBot,
     currentUserId,
+    sharesRowWithLabels,
 }: {
     assignee: Partial<AgentMeta>;
     isAgentBot: boolean;
     currentUserId: number | null;
+    sharesRowWithLabels: boolean;
 }) {
-    const name = assignee.available_name || assignee.name || '';
-    const baseClass =
-        'flex items-center gap-1 min-w-0 max-w-[45%] ltr:ml-auto rtl:mr-auto px-1 rounded text-xs font-medium leading-4';
-
-    if (!name) {
-        return (
-            <span data-testid="card-assignee" data-assignee="none" className={`${baseClass} bg-n-amber-3 text-n-amber-11`}>
-                <Icon icon="i-lucide-user-x" className="flex-shrink-0 size-3.5" />
-                <span className="truncate">{t('CONVERSATION.ASSIGNEE.UNASSIGNED')}</span>
-            </span>
-        );
-    }
-
-    if (!isAgentBot && assignee.id === currentUserId) {
-        return (
-            <span data-testid="card-assignee" data-assignee="me" title={name} className={`${baseClass} bg-n-blue-3 text-n-blue-11`}>
-                <Icon icon="i-lucide-user-check" className="flex-shrink-0 size-3.5" />
-                <span className="truncate">{t('CONVERSATION.ASSIGNEE.MINE')}</span>
-            </span>
-        );
-    }
+    const kind = assigneeKind(assignee, isAgentBot, currentUserId);
+    const label = assigneeLabel(kind, assigneeName(assignee));
 
     return (
-        <span data-testid="card-assignee" data-assignee="other" title={name} className={`${baseClass} text-n-slate-11`}>
-            <Avatar
-                seed={avatarSeed(isAgentBot ? 'agent_bot' : 'user', assignee.id)}
-                name={name}
-                src={assignee.thumbnail || assignee.avatar_url}
-                size={16}
-                roundedFull
-                className="flex-shrink-0"
-            />
-            <span className="truncate">{name}</span>
+        <span
+            data-testid="card-assignee"
+            data-assignee={kind}
+            title={label}
+            className={`flex items-center gap-1 min-w-0 ${sharesRowWithLabels ? 'max-w-[55%]' : 'max-w-full'} ltr:ml-auto rtl:mr-auto px-1 rounded text-xs font-medium leading-4 ${ASSIGNEE_TONE[kind]}`}
+        >
+            <AssigneeAvatar assignee={assignee} isAgentBot={isAgentBot} size={16} />
+            <span className="truncate">{label}</span>
         </span>
     );
 }
@@ -89,7 +78,7 @@ function CardAssignee({
 // Checkbox chọn hàng loạt phủ lên avatar chỉ khi đang ở chế độ chọn nhiều (bật từ
 // thanh tab), không hiện khi rê chuột — xem docs/ux-decisions.md.
 // Bố cục: dòng trên = logo nền tảng + tên hộp thư; góc phải trên = thời gian tin
-// mới nhất; góc phải dưới = người phụ trách (chưa giao thì nhãn "Chưa gán").
+// mới nhất; góc phải dưới = người phụ trách ("Phụ trách: Bạn/<tên>", chưa giao thì cảnh báo).
 interface ConversationCardProps {
     chat: Conversation;
     currentContact: ContactMeta;
@@ -321,7 +310,12 @@ export default function ConversationCard({
                         {showLabelsSection ? (
                             <CardLabels conversationLabels={chat.labels ?? []} className="flex-1 min-w-0 my-0" />
                         ) : null}
-                        {showAssigneeSection ? <CardAssignee assignee={assignee} isAgentBot={isAgentBotAssignee} currentUserId={currentUserId} /> : null}
+                        {showAssigneeSection ? <CardAssignee
+                                assignee={assignee}
+                                isAgentBot={isAgentBotAssignee}
+                                currentUserId={currentUserId}
+                                sharesRowWithLabels={showLabelsSection}
+                            /> : null}
                     </div>
                 ) : null}
             </div>

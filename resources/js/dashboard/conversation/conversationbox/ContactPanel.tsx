@@ -161,7 +161,8 @@ export default function ContactPanel() {
                 onContactChange={setContact}
                 onPanelClose={closeContactPanel}
             />
-            <div className="px-2 pb-8 list-group">
+            {/* Lề chữ của mọi mục = lề 16px của khối liên hệ phía trên: 7px + viền 1px + lề trong 8px. */}
+            <div className="px-[7px] pb-8 list-group">
                 <div className="flex flex-col gap-3">
                     {orderedSections.map(section => (
                         <div

@@ -1,6 +1,5 @@
 import { useCallback, useRef, useState } from 'react';
 
-import Avatar from 'dashboard/components-next/avatar/Avatar';
 import NextButton from 'dashboard/components-next/button/Button';
 import DropdownMenu from 'dashboard/components-next/dropdown-menu/DropdownMenu';
 import type { DropdownMenuItem, DropdownMenuSection } from 'dashboard/components-next/dropdown-menu/DropdownMenu';
@@ -8,14 +7,14 @@ import Icon from 'dashboard/components-next/icon/Icon';
 import type { AssignableAgent } from 'dashboard/composables/useAgentsList';
 import { useClickAway } from 'dashboard/composables/useClickAway';
 import { t } from '../../../i18n';
+import { AssigneeAvatar, assigneeLabel, assigneeName } from '../AssigneeIdentity';
+import type { AssigneeKind } from '../AssigneeIdentity';
 import { agentOptionAvatarSeed } from './contact/assignmentOptions';
-import { useConversationAssignment } from './contact/useConversationAssignment';
+import { useConversationAssignment } from './useConversationAssignment';
 
 // Người phụ trách ở mũ khung chat: thấy ngay ai đang xử lý, bấm là đổi người
 // mà không phải mở panel phải. `isCompact`: chỉ còn avatar để mũ gọn một dòng.
 const SEARCH_THRESHOLD = 6;
-
-const agentName = (agent: Pick<AssignableAgent, 'available_name' | 'name'>) => agent.available_name || agent.name || '';
 
 export default function AssigneeAction({ isCompact = false }: { isCompact?: boolean } = {}) {
     const { agentsList, assignedAgent, isAssignedToMe, selfAssign, toggleAgent, unassign } = useConversationAssignment();
@@ -25,10 +24,9 @@ export default function AssigneeAction({ isCompact = false }: { isCompact?: bool
     const closeMenu = useCallback(() => setMenuOpen(false), []);
     useClickAway(containerRef, closeMenu, isMenuOpen);
 
-    const assignedName = assignedAgent ? agentName(assignedAgent) : '';
-    const triggerTitle = assignedAgent
-        ? `${t('CONVERSATION.ASSIGNEE.LABEL')}: ${assignedName}`
-        : t('CONVERSATION.ASSIGNEE.UNASSIGNED');
+    const isAgentBot = assignedAgent?.assignee_type === 'AgentBot';
+    const kind: AssigneeKind = !assignedAgent ? 'none' : isAssignedToMe ? 'me' : 'other';
+    const triggerTitle = assigneeLabel(kind, assignedAgent ? assigneeName(assignedAgent) : '');
 
     const quickActions: DropdownMenuItem[] = [
         ...(!isAssignedToMe
@@ -43,12 +41,12 @@ export default function AssigneeAction({ isCompact = false }: { isCompact?: bool
         {
             title: t('CONVERSATION.ASSIGNEE.ASSIGN_TO'),
             items: agentsList.map(agent => ({
-                label: agentName(agent),
+                label: assigneeName(agent),
                 value: `${agent.assignee_type ?? 'User'}:${agent.id}`,
                 action: 'assign',
                 agent,
                 isSelected: assignedAgent?.id === agent.id && assignedAgent?.assignee_type === (agent.assignee_type ?? 'User'),
-                thumbnail: { name: agentName(agent), src: agent.thumbnail ?? '', seed: agentOptionAvatarSeed(agent) },
+                thumbnail: { name: assigneeName(agent), src: agent.thumbnail ?? '', seed: agentOptionAvatarSeed(agent) },
             })),
         },
     ];
@@ -60,18 +58,7 @@ export default function AssigneeAction({ isCompact = false }: { isCompact?: bool
         else toggleAgent(item.agent as AssignableAgent);
     };
 
-    const assigneeAvatar = assignedAgent ? (
-        <Avatar
-            name={assignedName}
-            src={assignedAgent.thumbnail}
-            seed={agentOptionAvatarSeed(assignedAgent)}
-            size={isCompact ? 20 : 16}
-            roundedFull
-            className="flex-shrink-0"
-        />
-    ) : (
-        <Icon icon="i-lucide-user-x" className="flex-shrink-0 size-4 text-n-amber-11" />
-    );
+    const assigneeAvatar = <AssigneeAvatar assignee={assignedAgent} isAgentBot={isAgentBot} size={isCompact ? 20 : 16} />;
 
     return (
         <div
@@ -92,21 +79,18 @@ export default function AssigneeAction({ isCompact = false }: { isCompact?: bool
                 aria-haspopup="menu"
                 aria-expanded={isMenuOpen}
                 data-testid="conversation-assignee-button"
-                className={`!outline-0 max-md:h-11 ${isCompact ? '!px-0 w-8 max-md:w-11 justify-center' : 'max-w-[15rem]'}`}
+                className={`!outline-0 max-md:h-11 ${isCompact ? `!px-0 w-8 max-md:w-11 justify-center ${kind === 'none' ? 'text-n-amber-11' : ''}` : 'max-w-[16rem]'}`}
                 onClick={() => setMenuOpen(open => !open)}
             >
                 {isCompact ? (
                     assigneeAvatar
                 ) : (
                     // Một khối duy nhất: trailingIcon đảo chiều hàng, khối giữ đúng thứ tự bên trong.
-                    <span className="flex items-center min-w-0 gap-1.5">
-                        <span className="text-xs text-n-slate-11 whitespace-nowrap">{t('CONVERSATION.ASSIGNEE.LABEL')}</span>
+                    <span
+                        className={`flex items-center min-w-0 gap-1.5 ${kind === 'none' ? 'text-n-amber-11' : 'text-n-slate-12'}`}
+                    >
                         {assigneeAvatar}
-                        <span
-                            className={`min-w-0 truncate font-medium ${assignedAgent ? 'text-n-slate-12' : 'text-n-amber-11'}`}
-                        >
-                            {assignedAgent ? assignedName : t('CONVERSATION.ASSIGNEE.UNASSIGNED')}
-                        </span>
+                        <span className="min-w-0 truncate font-medium">{triggerTitle}</span>
                     </span>
                 )}
             </NextButton>

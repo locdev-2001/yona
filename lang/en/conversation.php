@@ -368,9 +368,9 @@ return [
         ],
     ],
     'ASSIGNEE' => [
-        'LABEL' => 'Assignee',
-        'MINE' => 'Assigned to me',
-        'UNASSIGNED' => 'Unassigned',
+        'OWNED_BY_ME' => 'Assignee: You',
+        'OWNED_BY' => 'Assignee: {name}',
+        'UNASSIGNED' => 'No assignee',
         'CHANGE' => 'Change assignee',
         'ASSIGN_TO' => 'Assign to',
         'ASSIGN_TO_ME' => 'Assign to me',

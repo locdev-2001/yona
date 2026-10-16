@@ -5,12 +5,12 @@ import { usePage } from '@inertiajs/react';
 import { useAlert } from 'dashboard/composables/useAlert';
 import { useAgentsList } from 'dashboard/composables/useAgentsList';
 import type { AssignableAgent } from 'dashboard/composables/useAgentsList';
-import { t } from '../../../../i18n';
-import type { DashboardPageProps } from '../../../types';
-import { useConversation } from '../../ConversationContext';
-import { DEFAULT_ASSIGNEE_TYPE, resolveAgentSelection, resolveAssignedAgent, shouldShowSelfAssign } from './assignmentOptions';
+import { t } from '../../../i18n';
+import type { DashboardPageProps } from '../../types';
+import { useConversation } from '../ConversationContext';
+import { DEFAULT_ASSIGNEE_TYPE, resolveAgentSelection, resolveAssignedAgent, shouldShowSelfAssign } from './contact/assignmentOptions';
 
-// Giao người phụ trách hội thoại đang mở: panel phải và mũ khung chat cùng đi qua đây.
+// Giao người phụ trách cho hội thoại đang mở (nút Phụ trách ở mũ khung chat).
 export function useConversationAssignment() {
     const { auth, currentAccount, currentAccountUser } = usePage<DashboardPageProps>().props;
     const { selectedConversation, assignAgent } = useConversation();
