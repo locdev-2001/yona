@@ -33,6 +33,7 @@ final class TurnRunner
         private readonly AiAgentDirectory $agents,
         private readonly ConversationFloor $floor,
         private readonly EphemeralStore $store,
+        private readonly TurnJobMark $jobMark,
         private readonly StimulusRouter $router,
         private readonly History $history,
         private readonly TurnLoop $loop,
@@ -63,8 +64,7 @@ final class TurnRunner
 
         $agent = $this->agents->profile($order->accountId, $decision->aiAgentId);
 
-        // Dấu theo job: worker chết rồi job được nhặt lại thì không gọi mô hình lần hai.
-        if ($agent === null || ! $this->store->add("turn-job:{$jobKey}", 1, self::MARK_TTL_SECONDS)) {
+        if ($agent === null || ! $this->jobMark->claim($jobKey)) {
             return null;
         }
 

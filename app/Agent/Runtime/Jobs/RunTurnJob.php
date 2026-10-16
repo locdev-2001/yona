@@ -24,7 +24,7 @@ final class RunTurnJob implements ShouldQueue
 
     public bool $failOnTimeout = true;
 
-    /** @var (Closure(TurnOrder): void)|null Kernel gắn: failed() không được tiêm phụ thuộc */
+    /** @var (Closure(TurnOrder, string): void)|null Kernel gắn: failed() không được tiêm phụ thuộc */
     private static ?Closure $failureHandler = null;
 
     public function __construct(
@@ -35,7 +35,7 @@ final class RunTurnJob implements ShouldQueue
         public readonly int $waitUntil,
     ) {}
 
-    /** @param (Closure(TurnOrder): void)|null $handler */
+    /** @param (Closure(TurnOrder, string): void)|null $handler */
     public static function handleFailuresWith(?Closure $handler): void
     {
         self::$failureHandler = $handler;
@@ -58,13 +58,19 @@ final class RunTurnJob implements ShouldQueue
 
     public function handle(TurnRunner $runner): void
     {
-        $runner->run($this->order, $this->job?->uuid() ?? "{$this->order->conversationId}:{$this->order->wakeMessageId}");
+        $runner->run($this->order, $this->turnKey());
     }
 
     public function failed(?Throwable $exception): void
     {
         if (self::$failureHandler !== null) {
-            (self::$failureHandler)($this->order);
+            (self::$failureHandler)($this->order, $this->turnKey());
         }
+    }
+
+    // Bền qua các lần nhả lại và cả lúc failed() (worker gắn lại job trước khi gọi).
+    private function turnKey(): string
+    {
+        return $this->job?->uuid() ?? "{$this->order->conversationId}:{$this->order->wakeMessageId}";
     }
 }

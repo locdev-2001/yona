@@ -19,6 +19,8 @@ use App\Models\Message;
 use App\Services\AiAgents\AiAgentService;
 use App\Services\Conversations\AutoResponderStopReason;
 use App\Services\Conversations\ConversationAutoResponder;
+use App\Services\Conversations\ConversationFloor;
+use Illuminate\Queue\MaxAttemptsExceededException;
 use Illuminate\Support\Facades\Http;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Tests\Feature\Agent\Runtime\ScriptedLanguageModel as Model;
@@ -343,6 +345,21 @@ it('releases the floor and leaves a note when the turn job crashes', function ()
         ->and(TurnKit::aiNotes($conversation))->toHaveCount(1)
         ->and($conversation->floor_held_until)->toBeNull()
         ->and($conversation->ai_auto_reply)->toBeFalse();
+});
+
+it('only logs a turn job that gave up waiting for the conversation lock before it started', function () {
+    ['conversation' => $conversation, 'aiAgent' => $aiAgent] = TurnKit::autoConversation();
+    $model = TurnKit::model([]);
+
+    TurnKit::customerSays($conversation, 'Shop ơi');
+    $job = TurnKit::pendingTurns()[0];
+    app(ConversationFloor::class)->acquire($conversation->fresh(), $aiAgent, now()->addMinute());
+    $job->failed(new MaxAttemptsExceededException('Waited too long for the conversation lock.'));
+
+    expect($model->requests)->toBeEmpty()
+        ->and(TurnKit::aiNotes($conversation))->toBeEmpty()
+        ->and(conversationIsAuto($conversation))->toBeTrue()
+        ->and($conversation->fresh()->floor_held_until)->not->toBeNull();
 });
 
 it('never runs a turn twice once the model has been called', function () {

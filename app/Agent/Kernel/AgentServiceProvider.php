@@ -51,7 +51,7 @@ final class AgentServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        RunTurnJob::handleFailuresWith(fn (TurnOrder $order) => $this->app->make(TurnFailureHandler::class)->handle($order));
+        RunTurnJob::handleFailuresWith(fn (TurnOrder $order, string $jobKey) => $this->app->make(TurnFailureHandler::class)->handle($order, $jobKey));
 
         if ($this->app->runningInConsole()) {
             $this->commands([ModelPingCommand::class]);
