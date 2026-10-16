@@ -7,7 +7,7 @@ import type { AssignableAgent } from 'dashboard/composables/useAgentsList';
 import { useClickAway } from 'dashboard/composables/useClickAway';
 import { useIsPhoneScreen } from 'dashboard/composables/useViewportWidth';
 import { t } from '../../../i18n';
-import { AssigneeAvatar, assigneeLabel, assigneeName } from '../AssigneeIdentity';
+import { AssigneeAvatar, AssigneePill, assigneeLabel, assigneeName } from '../AssigneeIdentity';
 import type { AssigneeKind } from '../AssigneeIdentity';
 import { agentOptionAvatarSeed } from './contact/assignmentOptions';
 import HeaderActionMenu from './HeaderActionMenu';
@@ -101,12 +101,7 @@ export default function AssigneeAction({ isCompact = false, isStretched = false 
                     assigneeAvatar
                 ) : (
                     // Một khối duy nhất: trailingIcon đảo chiều hàng, khối giữ đúng thứ tự bên trong.
-                    <span
-                        className={`flex items-center min-w-0 gap-1.5 ${kind === 'none' ? 'text-n-amber-11' : 'text-n-slate-12'}`}
-                    >
-                        {assigneeAvatar}
-                        <span className="min-w-0 truncate font-medium">{triggerTitle}</span>
-                    </span>
+                    <AssigneePill assignee={assignedAgent} isAgentBot={isAgentBot} kind={kind} />
                 )}
             </NextButton>
             <HeaderActionMenu

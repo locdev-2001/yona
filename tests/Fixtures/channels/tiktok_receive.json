@@ -1,5 +1,0 @@
-{
-  "event": "im_receive_msg",
-  "user_openid": "business-open-id",
-  "content": "{\"conversation_id\":\"conv-1\",\"message_id\":\"msg-1\",\"timestamp\":1727000000000,\"type\":\"text\",\"text\":{\"body\":\"Xin chào từ TikTok\"},\"from\":\"khach_tiktok\",\"from_user\":{\"id\":\"user-open-id\"},\"to\":\"shop\",\"to_user\":{\"id\":\"business-open-id\"}}"
-}

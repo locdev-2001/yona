@@ -4042,6 +4042,8 @@ const messages: Record<string, unknown> = {
             "OWNED_BY_ME": "Phụ trách: Bạn",
             "OWNED_BY": "Phụ trách: {name}",
             "UNASSIGNED": "Chưa gán người phụ trách",
+            "YOU": "Bạn",
+            "UNASSIGNED_SHORT": "Chưa gán",
             "CHANGE": "Đổi người phụ trách",
             "ASSIGN_TO": "Giao cho",
             "ASSIGN_TO_ME": "Giao cho tôi",

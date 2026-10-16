@@ -4042,6 +4042,8 @@ const messages: Record<string, unknown> = {
             "OWNED_BY_ME": "Assignee: You",
             "OWNED_BY": "Assignee: {name}",
             "UNASSIGNED": "No assignee",
+            "YOU": "You",
+            "UNASSIGNED_SHORT": "Unassigned",
             "CHANGE": "Change assignee",
             "ASSIGN_TO": "Assign to",
             "ASSIGN_TO_ME": "Assign to me",

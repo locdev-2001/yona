@@ -22,6 +22,13 @@ export function assigneeKind(
     return !isAgentBot && assignee?.id === currentUserId ? 'me' : 'other';
 }
 
+// Tên ngắn trong viên: câu đầy đủ ("Phụ trách: …") nằm ở title cho trình đọc màn hình.
+export function assigneeShortName(kind: AssigneeKind, name: string): string {
+    if (kind === 'none') return t('CONVERSATION.ASSIGNEE.UNASSIGNED_SHORT');
+    if (kind === 'me') return t('CONVERSATION.ASSIGNEE.YOU');
+    return name;
+}
+
 export function assigneeLabel(kind: AssigneeKind, name: string): string {
     if (kind === 'none') return t('CONVERSATION.ASSIGNEE.UNASSIGNED');
     if (kind === 'me') return t('CONVERSATION.ASSIGNEE.OWNED_BY_ME');
@@ -73,4 +80,36 @@ function isSameAvatar(previous: AssigneeAvatarProps, next: AssigneeAvatarProps):
     );
 }
 
-export { AssigneeAvatar };
+const PILL_TONE: Record<AssigneeKind, string> = {
+    me: 'border-n-blue-7 bg-n-blue-2 text-n-blue-11',
+    other: 'border-n-slate-6 bg-n-solid-1 text-n-slate-12',
+    none: 'border-dashed border-n-amber-7 bg-n-amber-2 text-n-amber-11',
+};
+
+interface AssigneePillProps {
+    assignee: Partial<AgentMeta> | null | undefined;
+    isAgentBot: boolean;
+    kind: AssigneeKind;
+    className?: string;
+}
+
+// Một kiểu hiển thị người phụ trách cho mọi nơi: icon bắt tay rồi viên bo tròn (avatar + tên).
+function AssigneePill({ assignee, isAgentBot, kind, className = '' }: AssigneePillProps) {
+    const name = assigneeName(assignee);
+
+    return (
+        <span
+            data-assignee={kind}
+            title={assigneeLabel(kind, name)}
+            className={`flex items-center gap-1 min-w-0 text-xs font-medium leading-4 ${className}`}
+        >
+            <Icon icon="i-lucide-handshake" className="size-3.5 flex-shrink-0 text-n-slate-10" />
+            <span className={`inline-flex items-center gap-1.5 min-w-0 rounded-full border py-0.5 ps-0.5 pe-2.5 ${PILL_TONE[kind]}`}>
+                <AssigneeAvatar assignee={assignee} isAgentBot={isAgentBot} size={16} />
+                <span className="truncate">{assigneeShortName(kind, name)}</span>
+            </span>
+        </span>
+    );
+}
+
+export { AssigneeAvatar, AssigneePill };

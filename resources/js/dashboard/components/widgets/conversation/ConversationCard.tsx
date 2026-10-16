@@ -23,8 +23,7 @@ import { useContactAvailabilityStatus } from 'dashboard/realtime/hooks';
 import type { AvailabilityStatus } from 'dashboard/constants/globals';
 import { ICONS } from 'dashboard/icons';
 import { statusDotColor } from '../../../conversation/statusAppearance';
-import { AssigneeAvatar, assigneeKind, assigneeLabel, assigneeName } from '../../../conversation/AssigneeIdentity';
-import type { AssigneeKind } from '../../../conversation/AssigneeIdentity';
+import { AssigneePill, assigneeKind } from '../../../conversation/AssigneeIdentity';
 
 function ConversationStatusChip({ status }: { status: string }) {
     if (!status) return null;
@@ -38,13 +37,6 @@ function ConversationStatusChip({ status }: { status: string }) {
 }
 
 // Người phụ trách ở góc phải dưới thẻ, ngang hàng dòng nhãn; tên dài cắt "…".
-// Ba biến thể để nhìn lướt là biết việc của ai: của tôi, của người khác, chưa ai nhận.
-const ASSIGNEE_TONE: Record<AssigneeKind, string> = {
-    me: 'bg-n-blue-3 text-n-blue-11',
-    other: 'text-n-slate-11',
-    none: 'bg-n-amber-3 text-n-amber-11',
-};
-
 function CardAssignee({
     assignee,
     isAgentBot,
@@ -56,19 +48,13 @@ function CardAssignee({
     currentUserId: number | null;
     sharesRowWithLabels: boolean;
 }) {
-    const kind = assigneeKind(assignee, isAgentBot, currentUserId);
-    const label = assigneeLabel(kind, assigneeName(assignee));
-
     return (
-        <span
-            data-testid="card-assignee"
-            data-assignee={kind}
-            title={label}
-            className={`flex items-center gap-1 min-w-0 ${sharesRowWithLabels ? 'max-w-[55%]' : 'max-w-full'} ltr:ml-auto rtl:mr-auto px-1 rounded text-xs font-medium leading-4 ${ASSIGNEE_TONE[kind]}`}
-        >
-            <AssigneeAvatar assignee={assignee} isAgentBot={isAgentBot} size={16} />
-            <span className="truncate">{label}</span>
-        </span>
+        <AssigneePill
+            assignee={assignee}
+            isAgentBot={isAgentBot}
+            kind={assigneeKind(assignee, isAgentBot, currentUserId)}
+            className={`${sharesRowWithLabels ? 'max-w-[55%]' : 'max-w-full'} ltr:ml-auto rtl:mr-auto`}
+        />
     );
 }
 
