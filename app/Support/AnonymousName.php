@@ -30,6 +30,30 @@ class AnonymousName
         return (new self($account))->generate();
     }
 
+    // Tên này có phải do chính lớp này sinh ra (khách chưa khai tên thật) hay không.
+    public static function isGenerated(Account $account, string $name): bool
+    {
+        return (new self($account))->matches($name);
+    }
+
+    public function matches(string $name): bool
+    {
+        $numberPlaceholder = '#NUMBER#';
+
+        foreach ($this->animals() as $animal) {
+            $numbered = str_replace(preg_quote($numberPlaceholder, '/'), '\\d+', preg_quote(
+                __('contacts.anonymous.name_numbered', ['animal' => $animal, 'number' => $numberPlaceholder], $this->locale()),
+                '/',
+            ));
+
+            if ($name === $this->format($animal, 1) || preg_match('/^'.$numbered.'$/u', $name) === 1) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public function generate(): string
     {
         $animals = $this->animals();

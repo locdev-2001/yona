@@ -92,3 +92,14 @@ it('tên mới luôn bắt đầu bằng chữ cái để avatar chữ cái có 
 
     expect(preg_match('/^\p{Lu}/u', $name))->toBe(1);
 });
+
+it('nhận ra tên do chính nó sinh, kể cả có hậu tố số, và không nhầm tên thật', function (string $name, bool $generated) {
+    $account = Account::factory()->create(['locale' => 'vi']);
+
+    expect(AnonymousName::isGenerated($account, str_replace('{animal}', animalsOf('vi')[0], $name)))->toBe($generated);
+})->with([
+    'tên trần' => ['{animal} ẩn danh', true],
+    'tên có số' => ['{animal} ẩn danh 12', true],
+    'tên thật' => ['Nguyễn Thị Lan', false],
+    'chỉ giống một phần' => ['{animal} ẩn danh nhà bên', false],
+]);

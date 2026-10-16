@@ -2,6 +2,7 @@
 
 namespace App\Agent\Boundary\Writers;
 
+use App\Agent\Boundary\CoreProducts;
 use App\Agent\Boundary\CoreRecords;
 use App\Agent\Contracts\Ports\ConversationActionWriter;
 use App\Agent\ValueObjects\AgentNotice;
@@ -15,12 +16,14 @@ use App\Exceptions\Conversations\ConversationFloorHeld;
 use App\Exceptions\RecordInvalidException;
 use App\Models\AiAgent;
 use App\Models\Conversation;
+use App\Models\PaymentAccount;
 use App\Services\Conversations\AutoResponderStopReason;
 use App\Services\Conversations\ConversationAutoResponder;
 
 // Ghi vào hội thoại của lõi đứng tên AI agent, qua đúng một đường tạo tin của lõi
-// (MessageBuilder). Lõi chỉ chặn tin công khai khi người khác giữ lượt; AI nói khi
-// công tắc đã tắt hay khi không còn là AI của inbox thì phải chặn ở đây.
+// (MessageBuilder) — chữ, thẻ sản phẩm, trả lời nhanh, chuyển khoản đều đi qua `send`.
+// Lõi chỉ chặn tin công khai khi người khác giữ lượt; AI nói khi công tắc đã tắt hay khi
+// không còn là AI của inbox thì phải chặn ở đây.
 final class CoreConversationActionWriter implements ConversationActionWriter
 {
     private const LANG = 'ai_agent_turns';
@@ -28,31 +31,89 @@ final class CoreConversationActionWriter implements ConversationActionWriter
     // Khoá giao diện đọc để hiện ghi chú bàn giao (nút tiếp nhận, thêm câu trả lời mẫu).
     private const HANDOFF_ATTRIBUTE = 'ai_handoff';
 
+    private const QUICK_REPLIES_CONTENT_TYPE = 'input_select';
+
+    private const BANK_TRANSFER_CONTENT_TYPE = 'bank_transfer';
+
     public function __construct(private readonly ConversationAutoResponder $autoResponder) {}
 
     public function sendReply(ConversationRef $conversation, int $aiAgentId, string $text): DeliveryReceipt
     {
+        return $this->send($conversation, $aiAgentId, ['content' => $text]);
+    }
+
+    public function sendProductCards(ConversationRef $conversation, int $aiAgentId, array $productIds, ?string $caption): DeliveryReceipt
+    {
+        $found = CoreProducts::find($conversation->accountId, $productIds);
+
+        if ($productIds === [] || count($found) !== count(array_unique($productIds))) {
+            return DeliveryReceipt::failed(DeliveryFailure::NotFound);
+        }
+
+        $items = [];
+
+        foreach (array_column($found, 'item') as $item) {
+            // Hai câu trả lời mẫu có thể cùng đặt id thẻ (`item-1`): id phải duy nhất trong một tin.
+            $item['id'] = in_array($item['id'], array_column($items, 'id'), true) ? $item['id'].'-'.(count($items) + 1) : $item['id'];
+            $items[] = $item;
+        }
+
+        return $this->send($conversation, $aiAgentId, [
+            'content_type' => CoreProducts::CARDS_CONTENT_TYPE,
+            'content' => $caption,
+            'content_attributes' => ['items' => $items],
+        ]);
+    }
+
+    public function sendQuickReplies(ConversationRef $conversation, int $aiAgentId, string $question, array $options): DeliveryReceipt
+    {
+        return $this->send($conversation, $aiAgentId, [
+            'content_type' => self::QUICK_REPLIES_CONTENT_TYPE,
+            'content' => $question,
+            'content_attributes' => ['items' => array_map(fn (string $option) => ['title' => $option], $options)],
+        ]);
+    }
+
+    public function sendPaymentRequest(ConversationRef $conversation, int $aiAgentId, int $amount, ?string $caption): DeliveryReceipt
+    {
+        // Chỉ tài khoản shop mở cho mọi nhân viên: lõi từ chối người gửi không phải người
+        // với tài khoản còn lại. Ưu tiên tài khoản mặc định.
+        $paymentAccountId = PaymentAccount::query()
+            ->where('account_id', $conversation->accountId)
+            ->where('allow_all_agents', true)
+            ->orderByDesc('is_default')
+            ->orderBy('id')
+            ->value('id');
+
+        if ($paymentAccountId === null) {
+            return DeliveryReceipt::failed(DeliveryFailure::NotPermitted);
+        }
+
+        return $this->send($conversation, $aiAgentId, [
+            'content_type' => self::BANK_TRANSFER_CONTENT_TYPE,
+            'content' => $caption,
+            'content_attributes' => ['payment_account_id' => $paymentAccountId, 'amount' => $amount],
+        ]);
+    }
+
+    public function addNote(ConversationRef $conversation, int $aiAgentId, string $text): DeliveryReceipt
+    {
         [$model, $aiAgent] = $this->locate($conversation, $aiAgentId);
 
-        if ($model === null || $aiAgent === null) {
-            return DeliveryReceipt::failed(DeliveryFailure::Rejected);
+        return $model === null ? DeliveryReceipt::failed(DeliveryFailure::Rejected) : $this->privateNote($model, $aiAgent, $text);
+    }
+
+    public function addLabels(ConversationRef $conversation, array $labels): ?array
+    {
+        $model = CoreRecords::conversation($conversation);
+
+        if ($model === null) {
+            return null;
         }
 
-        if (! $model->ai_auto_reply || $model->inbox->replyingAiAgent()->value('id') !== $aiAgent->id) {
-            return DeliveryReceipt::failed(DeliveryFailure::AutoResponderOff);
-        }
+        $model->addLabels($labels);
 
-        if (! $model->canReply()) {
-            return DeliveryReceipt::failed(DeliveryFailure::WindowClosed);
-        }
-
-        try {
-            return DeliveryReceipt::delivered((new MessageBuilder($aiAgent, $model, ['content' => $text]))->perform()->id);
-        } catch (ConversationFloorHeld) {
-            return DeliveryReceipt::failed(DeliveryFailure::FloorLost);
-        } catch (RecordInvalidException) {
-            return DeliveryReceipt::failed(DeliveryFailure::Rejected);
-        }
+        return $model->labelList();
     }
 
     public function postNotice(ConversationRef $conversation, int $aiAgentId, AgentNotice $notice): DeliveryReceipt
@@ -108,6 +169,37 @@ final class CoreConversationActionWriter implements ConversationActionWriter
             AutoReplyStop::TurnFailed => AutoResponderStopReason::AiTurnFailed,
             AutoReplyStop::AgentStopped => AutoResponderStopReason::AiAgentStopped,
         });
+    }
+
+    /**
+     * Tin công khai cho khách; chỉ AI trả lời của inbox, khi công tắc còn bật, cửa sổ
+     * kênh còn mở và lượt còn giữ quyền nói.
+     *
+     * @param  array<string, mixed>  $params
+     */
+    private function send(ConversationRef $conversation, int $aiAgentId, array $params): DeliveryReceipt
+    {
+        [$model, $aiAgent] = $this->locate($conversation, $aiAgentId);
+
+        if ($model === null || $aiAgent === null) {
+            return DeliveryReceipt::failed(DeliveryFailure::Rejected);
+        }
+
+        if (! $model->ai_auto_reply || $model->inbox->replyingAiAgent()->value('id') !== $aiAgent->id) {
+            return DeliveryReceipt::failed(DeliveryFailure::AutoResponderOff);
+        }
+
+        if (! $model->canReply()) {
+            return DeliveryReceipt::failed(DeliveryFailure::WindowClosed);
+        }
+
+        try {
+            return DeliveryReceipt::delivered((new MessageBuilder($aiAgent, $model, $params))->perform()->id);
+        } catch (ConversationFloorHeld) {
+            return DeliveryReceipt::failed(DeliveryFailure::FloorLost);
+        } catch (RecordInvalidException) {
+            return DeliveryReceipt::failed(DeliveryFailure::Rejected);
+        }
     }
 
     /** @param array<string, mixed> $trustedAttributes */

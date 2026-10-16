@@ -16,6 +16,36 @@ interface ConversationActionWriter
     // Tin công khai cho khách; chỉ AI trả lời của inbox, khi công tắc còn bật.
     public function sendReply(ConversationRef $conversation, int $aiAgentId, string $text): DeliveryReceipt;
 
+    /**
+     * Gửi nguyên thẻ của shop cho các sản phẩm (id từ ProductCatalog), gộp thành một tin.
+     *
+     * @param  list<string>  $productIds
+     */
+    public function sendProductCards(ConversationRef $conversation, int $aiAgentId, array $productIds, ?string $caption): DeliveryReceipt;
+
+    /**
+     * Câu hỏi kèm các lựa chọn ngắn khách bấm để trả lời.
+     *
+     * @param  list<string>  $options
+     */
+    public function sendQuickReplies(ConversationRef $conversation, int $aiAgentId, string $question, array $options): DeliveryReceipt;
+
+    // Thẻ chuyển khoản (mã QR) tới tài khoản nhận tiền shop mở cho AI; nội dung chuyển
+    // khoản theo mẫu của tài khoản đó.
+    public function sendPaymentRequest(ConversationRef $conversation, int $aiAgentId, int $amount, ?string $caption): DeliveryReceipt;
+
+    // Ghi chú riêng AI viết cho nhân viên (tóm tắt đơn, việc cần làm).
+    public function addNote(ConversationRef $conversation, int $aiAgentId, string $text): DeliveryReceipt;
+
+    /**
+     * Gắn thêm nhãn đã có của account vào hội thoại; trả các nhãn hội thoại đang mang,
+     * null khi hội thoại không tồn tại.
+     *
+     * @param  list<string>  $labels
+     * @return list<string>|null
+     */
+    public function addLabels(ConversationRef $conversation, array $labels): ?array;
+
     // Ghi chú riêng cố định cho nhân viên (lượt lỗi, cửa sổ kênh đóng, hết ngân sách).
     public function postNotice(ConversationRef $conversation, int $aiAgentId, AgentNotice $notice): DeliveryReceipt;
 
