@@ -92,6 +92,9 @@ readonly DEFAULT_BRIDGE_PORT=8612
 
 readonly VITE_MANIFEST='public/build/manifest.json'
 readonly SDK_BUNDLE='public/packs/js/sdk.js'
+# Revision mà bundle hiện tại được build từ; so với nó (không so với lần deploy
+# trước) để một lần bỏ sót build không kéo dài sang các lần sau.
+readonly FRONTEND_BUILT_MARKER='public/build/.built-revision'
 # Dấu trên <body> của trang 404 do Laravel render (resources/views/errors/404.blade.php).
 # Thấy nó nghĩa là phản hồi đi từ Laravel ra, không bị nginx thay bằng trang của nó.
 readonly NOT_FOUND_PAGE_MARKER='data-page="not_found"'
@@ -538,15 +541,23 @@ changed_matching() {
         return 0
     fi
 
-    printf '%s\n' "$CHANGED_FILES" | grep -qE "$1"
+    # Không dùng pipe: grep -q thoát sớm làm printf dính SIGPIPE, với pipefail cả
+    # pipeline thành "không khớp" khi danh sách file dài.
+    grep -qE "$1" <<<"$CHANGED_FILES"
 }
 
 # Bundle thiếu thì phải build lại bất kể git nói gì: lần deploy trước có thể
 # chết giữa chừng và để lại public/build dở dang.
 frontend_build_needed() {
-    [[ -f "$APP_DIR/$VITE_MANIFEST" && -f "$APP_DIR/$SDK_BUNDLE" ]] || return 0
+    local built_revision
 
-    changed_matching "$FRONTEND_INPUT_PATTERN"
+    [[ -f "$APP_DIR/$VITE_MANIFEST" && -f "$APP_DIR/$SDK_BUNDLE" && -f "$APP_DIR/$FRONTEND_BUILT_MARKER" ]] || return 0
+    [[ "$CHANGED_FILES" == '__all__' ]] && return 0
+
+    built_revision="$(<"$APP_DIR/$FRONTEND_BUILT_MARKER")"
+    git -C "$APP_DIR" cat-file -e "${built_revision}^{commit}" 2>/dev/null || return 0
+
+    grep -qE "$FRONTEND_INPUT_PATTERN" <<<"$(git -C "$APP_DIR" diff --name-only "$built_revision" HEAD)"
 }
 
 install_dependencies() {
@@ -590,6 +601,10 @@ build_frontend() {
 
     log 'Build frontend (dashboard, widget, survey, portal, superadmin, landing, SDK)'
     run_pnpm run build
+
+    if ! is_enabled "$DEPLOY_DRY_RUN"; then
+        git -C "$APP_DIR" rev-parse HEAD >"$APP_DIR/$FRONTEND_BUILT_MARKER"
+    fi
 }
 
 # Migration tạo index trgm (gin_trgm_ops) nên thiếu extension là chết giữa
