@@ -62,7 +62,3 @@ export interface StickerLibraryListing {
         max_pack_name_length?: number;
     };
 }
-
-export interface StickerLibraryAccess {
-    platformLibrary: boolean;
-}

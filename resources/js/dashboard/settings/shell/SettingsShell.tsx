@@ -35,10 +35,17 @@ const isTypingTarget = (target: EventTarget | null) =>
 // điện thoại. Cột trái gồm hồ sơ, trạng thái và danh mục trang cài đặt; bên phải là
 // trang đang mở. ✕ hoặc ESC quay về trang trước khi vào Cài đặt. Giao diện, ngôn ngữ,
 // cỡ chữ nằm ở trang Hồ sơ của tôi nên không lặp lại ở cột trái.
-export default function SettingsShell({ children }: { children: ReactNode }) {
+interface SettingsShellProps {
+    children: ReactNode;
+    // Lớp Cài đặt nổi truyền trang đang mở và cách đóng; mở thẳng trang Cài đặt thì lấy từ Inertia.
+    currentUrl?: string;
+    onClose?: () => void;
+}
+
+export default function SettingsShell({ children, currentUrl: overlayUrl, onClose }: SettingsShellProps) {
     const page = usePage<DashboardPageProps>();
     const { auth, currentAccount } = page.props;
-    const currentUrl = page.url;
+    const currentUrl = overlayUrl ?? page.url;
     const user = auth.user!;
     const accountId = currentAccount.id;
     const availability = useCurrentUserAvailability();
@@ -88,12 +95,14 @@ export default function SettingsShell({ children }: { children: ReactNode }) {
     };
     const currentLink = groups.flatMap(group => group.links).find(isCurrent);
 
-    const close = () => router.visit(readLastAppUrl() ?? accountScopedUrl(accountId, 'dashboard'));
+    const close = onClose ?? (() => router.visit(readLastAppUrl() ?? accountScopedUrl(accountId, 'dashboard')));
 
     useEffect(() => {
         const onKeyDown = (event: KeyboardEvent) => {
             if (event.key !== 'Escape' || isTypingTarget(event.target)) return;
             if (document.querySelector('dialog[open]')) return;
+            // Hồ sơ mở đè lên Cài đặt: Esc đóng hồ sơ trước.
+            if (document.querySelectorAll('[role=dialog][aria-modal=true]').length > 1) return;
             close();
         };
         window.addEventListener('keydown', onKeyDown);

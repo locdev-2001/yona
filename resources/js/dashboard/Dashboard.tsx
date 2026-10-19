@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { usePage } from '@inertiajs/react';
 
@@ -17,12 +17,18 @@ import UnreadTitleSync from 'dashboard/notifications/components/UnreadTitleSync'
 import PushSubscriptionSync from 'dashboard/notifications/components/PushSubscriptionSync';
 import { StickerDisplaySizeProvider } from 'shared/sticker/stickerDisplaySize';
 import SettingsShell from 'dashboard/settings/shell/SettingsShell';
+import { InsideSettingsOverlay, SettingsOverlay } from 'dashboard/settings/shell/settingsOverlay';
 import { isSettingsPath, rememberAppUrl } from 'dashboard/settings/shell/settingsPages';
 import type { DashboardPageProps } from './types';
 
 // Port từ dashboard/routes/dashboard/Dashboard.vue (shell)
 // Copilot/UpgradePage/KeyShortcutModal: EE hoặc vào nhóm sau. CommandBar: khung + snooze (B5), phần còn lại B10.
 export default function Dashboard({ children }: { children: ReactNode }) {
+    // Trang Cài đặt mở trong lớp nổi: khung app là của trang phía sau, ở đây chỉ còn nội dung.
+    return useContext(InsideSettingsOverlay) ? <>{children}</> : <DashboardFrame>{children}</DashboardFrame>;
+}
+
+function DashboardFrame({ children }: { children: ReactNode }) {
     const [isMobileSidebarOpen, setMobileSidebarOpen] = useState(false);
     const page = usePage<DashboardPageProps & { conversationId?: number | null; isComposing?: boolean }>();
     const { auth, currentAccount, stickerDisplaySize, conversationId, isComposing } = page.props;
@@ -65,6 +71,7 @@ export default function Dashboard({ children }: { children: ReactNode }) {
                         {isSettingsScreen ? <SettingsShell>{children}</SettingsShell> : children}
                         <CommandBar />
                         <ProfileOverlay />
+                        <SettingsOverlay />
                     </main>
                     <SnackbarContainer />
                     <RealtimeProvider />

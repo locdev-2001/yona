@@ -6,6 +6,7 @@ use App\Models\Sticker;
 use App\Services\Branding\BrandAssets;
 use App\Services\Meta\GraphApi;
 use App\Services\Notification\VapidService;
+use App\Services\Stickers\StickerLibraryAccess;
 use Closure;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
@@ -36,6 +37,8 @@ class HandleInertiaRequests extends Middleware
                     // Trình duyệt mất đăng ký đẩy (xoá dữ liệu trang khi đóng) vẫn biết
                     // người này từng bật để tự đăng ký lại.
                     'has_push_subscription' => fn () => $request->user()->browserPushSubscriptions()->exists(),
+                    // Chung cho mọi trang để Kho sticker mở được trong lớp Cài đặt nổi.
+                    'can_manage_platform_stickers' => fn () => app(StickerLibraryAccess::class)->canManagePlatformLibrary($request->user()),
                 ] : null,
             ],
             'globalConfig' => [

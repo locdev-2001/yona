@@ -11,6 +11,7 @@ export interface AuthUser {
     message_signature: string | null;
     pubsub_token: string;
     has_push_subscription?: boolean;
+    can_manage_platform_stickers?: boolean;
 }
 
 export interface AvailableLocale {

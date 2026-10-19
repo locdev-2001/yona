@@ -13,7 +13,6 @@ import { accountStickerLibraryBase, createStickerLibraryApi, createStickerPackMo
 import type { StickerLibraryApi, StickerLibraryKind } from './stickerLibraryApi';
 import type { DashboardPageProps } from '../../types';
 import { currentQuery, replaceQuery } from '../../reports/helpers/urlQuery';
-import type { StickerLibraryAccess } from './types';
 
 export const PLATFORM_STICKER_LIBRARY_API_BASE = '/api/v1/platform_sticker_library';
 
@@ -21,14 +20,11 @@ export const TAB_QUERY_KEY = 'tab';
 const DEFAULT_TAB: StickerLibraryKind = 'account';
 const OTHER_LIBRARY: Record<StickerLibraryKind, StickerLibraryKind> = { account: 'platform', platform: 'account' };
 
-interface CustomStickersPageProps extends DashboardPageProps {
-    stickerLibraryAccess: StickerLibraryAccess;
-}
-
 // Cài đặt / Kho sticker: kho riêng mở cho mọi quản trị viên; kho nền tảng chỉ
-// hiện khi máy chủ báo có quyền hệ thống (StickerLibraryAccess).
+// hiện khi máy chủ báo có quyền hệ thống (auth.user.can_manage_platform_stickers).
 export default function CustomStickersIndex() {
-    const { currentAccount, stickerLibraryAccess } = usePage<CustomStickersPageProps>().props;
+    const { currentAccount, auth } = usePage<DashboardPageProps>().props;
+    const canManagePlatformLibrary = Boolean(auth.user?.can_manage_platform_stickers);
     const accountId = currentAccount!.id;
     const accountApi = useMemo(() => createStickerLibraryApi(accountStickerLibraryBase(accountId)), [accountId]);
     const platformApi = useMemo(() => createStickerLibraryApi(PLATFORM_STICKER_LIBRARY_API_BASE), []);
@@ -36,7 +32,7 @@ export default function CustomStickersIndex() {
 
     const tabs = [
         { label: t('STICKER_LIBRARY.TABS.ACCOUNT'), value: 'account' },
-        ...(stickerLibraryAccess.platformLibrary ? [{ label: t('STICKER_LIBRARY.TABS.PLATFORM'), value: 'platform' }] : []),
+        ...(canManagePlatformLibrary ? [{ label: t('STICKER_LIBRARY.TABS.PLATFORM'), value: 'platform' }] : []),
     ];
     const [activeTab, setActiveTab] = useState<StickerLibraryKind>(() => {
         const requested = currentQuery()[TAB_QUERY_KEY];
@@ -54,7 +50,7 @@ export default function CustomStickersIndex() {
 
     // Kho còn lại chỉ mở được khi có quyền kho nền tảng (máy chủ còn đòi thêm vai trò quản trị viên account).
     const packTransferFrom = (library: StickerLibraryKind): PackTransfer | undefined => {
-        if (!stickerLibraryAccess.platformLibrary) return undefined;
+        if (!canManagePlatformLibrary) return undefined;
         const destination = OTHER_LIBRARY[library];
 
         return {
@@ -91,7 +87,7 @@ export default function CustomStickersIndex() {
                         />
                     ) : null}
                     {activeTab === 'account' ? manager(accountApi, 'account') : null}
-                    {activeTab === 'platform' && stickerLibraryAccess.platformLibrary ? manager(platformApi, 'platform') : null}
+                    {activeTab === 'platform' && canManagePlatformLibrary ? manager(platformApi, 'platform') : null}
                 </div>
             </SettingsWrapper>
         </Dashboard>
