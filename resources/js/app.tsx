@@ -1,6 +1,7 @@
 import { createInertiaApp } from '@inertiajs/react';
 import { createRoot } from 'react-dom/client';
 
+import { SERVICE_WORKER_URL } from './dashboard/helper/pushHelper';
 import { documentTitle } from './documentTitle';
 
 const pages = import.meta.glob([
@@ -36,3 +37,11 @@ createInertiaApp({
         color: '#2781F6',
     },
 });
+
+// Đăng ký service worker ngay khi vào app để trình duyệt cho cài như ứng dụng
+// (PWA); cùng tệp phục vụ Web Push nên đăng ký lặp lại không tạo bản thứ hai.
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register(SERVICE_WORKER_URL).catch(() => undefined);
+    });
+}

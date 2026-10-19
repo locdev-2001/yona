@@ -109,7 +109,7 @@ Route::get('/sitemap.xml', SitemapController::class)->name('sitemap');
 Route::get('/site.webmanifest', fn () => response()->json([
     'name' => config('yona.branding.installation_name'),
     'short_name' => config('yona.branding.brand_name'),
-    'start_url' => '/app',
+    'start_url' => '/chat',
     'scope' => '/',
     'display' => 'standalone',
     'theme_color' => config('yona.branding.theme_color'),

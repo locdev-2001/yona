@@ -11,6 +11,10 @@
         <meta name="viewport" content="width=device-width, initial-scale=1, interactive-widget=resizes-content">
         <title inertia>{{ config('app.name', 'Yona') }}</title>
         @include('partials.favicon')
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-title" content="{{ config('yona.branding.brand_name') }}">
+        <meta name="apple-mobile-web-app-status-bar-style" content="default">
         @include('partials.analytics')
         @viteReactRefresh
         @vite([$isAuthPage ? 'resources/scss/v3.scss' : 'resources/scss/app.scss', 'resources/js/app.tsx'])

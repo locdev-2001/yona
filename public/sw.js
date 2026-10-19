@@ -1,6 +1,7 @@
 /* globals clients */
-// Service worker chỉ lo thông báo đẩy, không chặn request nào (không có handler
-// fetch). Payload do PushNotificationService gửi:
+// Service worker lo thông báo đẩy và điều kiện cài đặt PWA. Handler fetch chỉ
+// chặn điều hướng trang (network-first, mất mạng thì trả trang offline dựng sẵn);
+// không cache gì, API và tài nguyên tĩnh đi thẳng mạng. Payload push do PushNotificationService gửi:
 // { title, body, tag, url, icon, badge_count, data }. `tag` gom thông báo theo hội
 // thoại; `data` chuyển nguyên vào thông báo để tab Yona tìm và đóng đúng cái khi
 // hội thoại đã được đọc; SW không cần biết nghĩa từng trường.
@@ -10,6 +11,27 @@ self.addEventListener('install', () => self.skipWaiting());
 // Nhận quyền điều khiển các tab dashboard đang mở ngay khi kích hoạt, để bấm
 // thông báo có thể đưa đúng tab đó tới hội thoại.
 self.addEventListener('activate', event => event.waitUntil(self.clients.claim()));
+
+const OFFLINE_PAGE = `<!doctype html><html lang="vi"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1"><title>Yona</title>
+<style>body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;
+font-family:system-ui,sans-serif;background:#fff;color:#041738;text-align:center;padding:16px}
+button{margin-top:16px;padding:10px 20px;border:0;border-radius:8px;background:#041738;color:#fff;font-size:15px}</style>
+</head><body><div><h1 style="font-size:20px">Bạn đang ngoại tuyến</h1>
+<p>Kiểm tra kết nối mạng rồi thử lại.</p>
+<button onclick="location.reload()">Thử lại</button></div></body></html>`;
+
+self.addEventListener('fetch', event => {
+    const { request } = event;
+    if (request.mode !== 'navigate' || request.method !== 'GET') return;
+    if (new URL(request.url).pathname.startsWith('/api/')) return;
+
+    event.respondWith(
+        fetch(request).catch(
+            () => new Response(OFFLINE_PAGE, { headers: { 'Content-Type': 'text/html; charset=utf-8' } }),
+        ),
+    );
+});
 
 self.addEventListener('push', event => {
     const notification = event.data ? event.data.json() : null;
