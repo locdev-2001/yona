@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { Link, router, usePage } from '@inertiajs/react';
@@ -6,10 +6,8 @@ import { Link, router, usePage } from '@inertiajs/react';
 import { t } from '../../../i18n';
 import Avatar from 'dashboard/components-next/avatar/Avatar';
 import Icon from 'dashboard/components-next/icon/Icon';
-import { DropdownInlineList, DropdownItem, DropdownSeparator } from 'dashboard/components-next/dropdown-menu/base';
+import { DropdownInlineList, DropdownItem } from 'dashboard/components-next/dropdown-menu/base';
 import SidebarProfileMenuStatus from 'dashboard/components-next/sidebar/SidebarProfileMenuStatus';
-import SidebarProfileMenuLanguage from 'dashboard/components-next/sidebar/SidebarProfileMenuLanguage';
-import SidebarProfileMenuAppearance from 'dashboard/components-next/sidebar/SidebarProfileMenuAppearance';
 import KeyShortcutModal from 'dashboard/commands/KeyShortcutModal';
 import { logout } from 'dashboard/helper/logout';
 import { accountScopedUrl } from 'dashboard/helper/URLHelper';
@@ -25,12 +23,16 @@ interface NavLink {
     to: string;
 }
 
+// Cú bấm thứ hai của một lần bấm đúp bánh răng rơi xuống nền mờ: bỏ qua trong khoảng này.
+const BACKDROP_CLOSE_GRACE_MS = 600;
+
 const isTypingTarget = (target: EventTarget | null) =>
     target instanceof HTMLElement && (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName));
 
-// Màn Cài đặt toàn khung: cột trái gồm hồ sơ, tuỳ chọn nhanh (trạng thái, ngôn ngữ,
-// giao diện) và danh mục trang cài đặt; bên phải là trang đang mở. ✕ hoặc ESC quay
-// về trang trước khi vào Cài đặt.
+// Màn Cài đặt: cửa sổ nổi giữa màn trên máy tính (bấm nền mờ để đóng), toàn màn trên
+// điện thoại. Cột trái gồm hồ sơ, trạng thái và danh mục trang cài đặt; bên phải là
+// trang đang mở. ✕ hoặc ESC quay về trang trước khi vào Cài đặt. Giao diện, ngôn ngữ,
+// cỡ chữ nằm ở trang Hồ sơ của tôi nên không lặp lại ở cột trái.
 export default function SettingsShell({ children }: { children: ReactNode }) {
     const page = usePage<DashboardPageProps>();
     const { auth, currentAccount } = page.props;
@@ -43,6 +45,7 @@ export default function SettingsShell({ children }: { children: ReactNode }) {
     const [query, setQuery] = useState('');
     const [isNavOpen, setNavOpen] = useState(false);
     const [showShortcuts, setShowShortcuts] = useState(false);
+    const openedAt = useRef(Date.now());
 
     const groups: { title: string; links: NavLink[] }[] = [
         {
@@ -88,7 +91,7 @@ export default function SettingsShell({ children }: { children: ReactNode }) {
     useEffect(() => {
         const onKeyDown = (event: KeyboardEvent) => {
             if (event.key !== 'Escape' || isTypingTarget(event.target)) return;
-            if (document.querySelector('dialog[open], [role="dialog"]')) return;
+            if (document.querySelector('dialog[open]')) return;
             close();
         };
         window.addEventListener('keydown', onKeyDown);
@@ -99,7 +102,20 @@ export default function SettingsShell({ children }: { children: ReactNode }) {
     useEffect(() => setNavOpen(false), [currentUrl]);
 
     return (
-        <div className="flex flex-1 h-full min-w-0 overflow-hidden bg-n-surface-1">
+        <div
+            className="fixed inset-0 z-40 flex md:items-center md:justify-center md:p-8 md:bg-n-alpha-black1 md:backdrop-blur-[2px]"
+            onClick={event => {
+                if (event.target !== event.currentTarget) return;
+                if (Date.now() - openedAt.current < BACKDROP_CLOSE_GRACE_MS) return;
+                close();
+            }}
+        >
+        <div
+            role="dialog"
+            aria-modal="true"
+            aria-label={t('SIDEBAR_ITEMS.SETTINGS_SCREEN.TITLE')}
+            className="flex w-full h-full min-w-0 overflow-hidden bg-n-surface-1 md:max-w-6xl md:max-h-[860px] md:rounded-2xl md:border md:border-n-weak md:shadow-2xl"
+        >
             <aside
                 aria-label={t('SIDEBAR_ITEMS.SETTINGS_SCREEN.MENU')}
                 className={`flex-col w-72 shrink-0 gap-3 p-3 overflow-y-auto border-e border-n-weak bg-n-surface-sidebar max-md:fixed max-md:inset-0 max-md:z-50 max-md:w-full ${
@@ -140,17 +156,9 @@ export default function SettingsShell({ children }: { children: ReactNode }) {
                 </label>
 
                 {normalizedQuery ? null : (
-                    <section className="rounded-xl border border-n-weak bg-n-surface-1 p-1">
-                        <h3 className="px-2 pt-1.5 pb-1 m-0 text-xs font-medium text-n-slate-11">
-                            {t('SIDEBAR_ITEMS.SETTINGS_SCREEN.PREFERENCES')}
-                        </h3>
-                        <DropdownInlineList className="!gap-0">
-                            <SidebarProfileMenuStatus />
-                            <DropdownSeparator />
-                            <SidebarProfileMenuLanguage />
-                            <SidebarProfileMenuAppearance />
-                        </DropdownInlineList>
-                    </section>
+                    <DropdownInlineList className="!gap-0 rounded-xl border border-n-weak bg-n-surface-1 p-1">
+                        <SidebarProfileMenuStatus />
+                    </DropdownInlineList>
                 )}
 
                 <nav className="flex flex-col gap-3">
@@ -183,7 +191,7 @@ export default function SettingsShell({ children }: { children: ReactNode }) {
                 </nav>
 
                 {normalizedQuery ? null : (
-                    <DropdownInlineList className="pt-2 mt-auto border-t border-n-weak">
+                    <DropdownInlineList className="pt-2 border-t border-n-weak">
                         <DropdownItem
                             label={t('SIDEBAR_ITEMS.KEYBOARD_SHORTCUTS')}
                             icon="i-lucide-keyboard"
@@ -237,6 +245,7 @@ export default function SettingsShell({ children }: { children: ReactNode }) {
                 <div className="flex flex-1 min-h-0 overflow-hidden">{children}</div>
             </section>
             {createPortal(<KeyShortcutModal show={showShortcuts} onClose={() => setShowShortcuts(false)} />, document.body)}
+        </div>
         </div>
     );
 }
