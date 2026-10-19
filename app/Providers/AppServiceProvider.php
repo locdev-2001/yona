@@ -38,7 +38,6 @@ use App\Services\Email\MailServerProbe;
 use App\Services\Email\SocketMailServerProbe;
 use App\Services\Email\Verification\MailDomainResolver;
 use App\Services\Email\Verification\TimeLimitedMailDomainResolver;
-use App\Services\Messaging\PublicFlowService;
 use App\Services\Stickers\StickerLibraryManager;
 use App\Support\Queue\SlowJobBreakdown;
 use App\Support\SharedModels;
@@ -74,12 +73,6 @@ class AppServiceProvider extends ServiceProvider
     // lượt đổi mã lấy token.
     public const OAUTH_SIGN_IN_REQUESTS_PER_MINUTE = 30;
 
-    // Trang công khai theo token không đăng nhập — hạn theo cả token (khách bấm
-    // nhầm nhiều lần) lẫn IP (một máy dò nhiều token) để không chặn nhầm khách thật.
-    private const PUBLIC_FLOW_SUBMITS_PER_MINUTE_BY_TOKEN = 5;
-
-    private const PUBLIC_FLOW_SUBMITS_PER_MINUTE_BY_IP = 20;
-
     /**
      * Register any application services.
      */
@@ -100,7 +93,6 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(DeliveryPlanner::class, fn ($app) => new DeliveryPlanner(
             $app->make(StructuredTypeRegistry::class),
             collect(config('messaging.delivery_renderers'))->map(fn (string $renderer) => $app->make($renderer))->all(),
-            $app->make(PublicFlowService::class),
         ));
 
         $this->app->bind(MailServerProbe::class, SocketMailServerProbe::class);
@@ -209,11 +201,6 @@ class AppServiceProvider extends ServiceProvider
             'oauth-sign-in',
             fn (Request $request) => Limit::perMinute(self::OAUTH_SIGN_IN_REQUESTS_PER_MINUTE)->by($request->ip()),
         );
-
-        RateLimiter::for('public-flow-submit', fn (Request $request) => [
-            Limit::perMinute(self::PUBLIC_FLOW_SUBMITS_PER_MINUTE_BY_TOKEN)->by('token:'.$request->route('token')),
-            Limit::perMinute(self::PUBLIC_FLOW_SUBMITS_PER_MINUTE_BY_IP)->by('ip:'.$request->ip()),
-        ]);
 
         // Khoá theo kho: kho riêng theo account, kho nền tảng theo người quản trị:
         // một bên không làm nghẽn hàng đợi render của cả hệ thống. Chỉ lượt đẩy

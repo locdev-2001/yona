@@ -15,8 +15,6 @@ export default defineConfig({
                 'resources/js/widget/main.tsx',
                 'resources/scss/survey.scss',
                 'resources/js/survey/main.tsx',
-                'resources/scss/flows.scss',
-                'resources/js/flows/main.tsx',
                 'resources/scss/portal.scss',
                 'resources/js/portal/main.ts',
                 'resources/css/admin/app.css',

@@ -19,7 +19,6 @@ use App\Http\Controllers\Chat\WelcomeController;
 use App\Http\Controllers\DemoRequestsController;
 use App\Http\Controllers\LandingController;
 use App\Http\Controllers\LegalPagesController;
-use App\Http\Controllers\Public\FlowsController;
 use App\Http\Controllers\Public\Portals\ArticlesController as PublicArticlesController;
 use App\Http\Controllers\Public\Portals\CategoriesController as PublicCategoriesController;
 use App\Http\Controllers\Public\Portals\PortalsController as PublicPortalsController;
@@ -109,7 +108,7 @@ Route::get('/sitemap.xml', SitemapController::class)->name('sitemap');
 Route::get('/site.webmanifest', fn () => response()->json([
     'name' => config('yona.branding.installation_name'),
     'short_name' => config('yona.branding.brand_name'),
-    'start_url' => '/app',
+    'start_url' => '/chat',
     'scope' => '/',
     'display' => 'standalone',
     'theme_color' => config('yona.branding.theme_color'),
@@ -134,11 +133,6 @@ Route::get('/survey/responses/{uuid}', fn () => view('survey', ['globalConfig' =
     'WIDGET_BRAND_URL' => config('yona.branding.widget_brand_url'),
     'INSTALLATION_NAME' => config('yona.branding.installation_name'),
 ]]))->name('survey_response');
-
-// Trang công khai theo token (`/m/{token}`, phase-05 §C) — link Yona gửi kèm tin
-// Zalo/SMS khi kênh không vẽ được thẻ gốc (schedule, form dài, theo dõi đơn,
-// chuyển khoản, chi tiết sản phẩm). Token sai/hết hạn/đã dùng: 404 ở FlowsController.
-Route::get('/m/{token}', [FlowsController::class, 'page'])->where('token', '[0-9A-Za-z]+')->name('flows.page');
 
 Route::middleware('guest')->group(function () {
     Route::get('/app/login', [SessionsController::class, 'create'])->name('login');

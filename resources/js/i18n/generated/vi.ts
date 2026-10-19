@@ -5461,63 +5461,6 @@ const messages: Record<string, unknown> = {
             }
         }
     },
-    "FLOWS": {
-        "not_found": "Liên kết không hợp lệ hoặc đã hết hạn.",
-        "loading": "Đang tải…",
-        "send_failed": "Chưa gửi được, thử lại nhé.",
-        "submitted_title": "Đã ghi nhận",
-        "submitted_body": "Cảm ơn bạn, shop đã nhận được thông tin.",
-        "close": "Đóng",
-        "you_can_close_tab": "Bạn có thể đóng trang này.",
-        "open_in_new_tab": "Mở trong tab mới",
-        "schedule": {
-            "day_section": "Ngày",
-            "time_section": "Khung giờ",
-            "full_note": "Khung gạch ngang đã hết chỗ.",
-            "no_slots": "Hiện chưa có khung giờ nào trống.",
-            "confirm": "Xác nhận {day}, {time}",
-            "choose_slot": "Chọn một khung giờ"
-        },
-        "form": {
-            "submit": "Gửi thông tin",
-            "check_field": "Kiểm tra lại {field}"
-        },
-        "order_tracking": {
-            "ref": "Đơn #{ref}",
-            "eta": "Dự kiến nhận {date}",
-            "fee_included": "Đã gồm phí giao",
-            "total": "Tổng tiền",
-            "track_order": "Theo dõi trên website",
-            "statuses": {
-                "placed": "Đã đặt",
-                "confirmed": "Đã xác nhận",
-                "shipped": "Đã gửi hàng",
-                "delivering": "Đang giao",
-                "delivered": "Đã nhận hàng",
-                "cancelled": "Đã huỷ"
-            }
-        },
-        "bank_transfer": {
-            "copy": "Chép",
-            "copied": "Đã chép",
-            "bank_name": "Ngân hàng",
-            "account_number": "Số tài khoản",
-            "account_name": "Chủ tài khoản",
-            "amount": "Số tiền",
-            "transfer_note": "Nội dung chuyển khoản",
-            "instructions": "Hướng dẫn"
-        },
-        "product": {
-            "variant": "Phân loại",
-            "quantity": "Số lượng",
-            "max_quantity": "Tối đa {max}",
-            "note_label": "Ghi chú cho shop",
-            "note_placeholder": "Không bắt buộc",
-            "subtotal": "Tạm tính",
-            "submit": "Gửi yêu cầu đặt hàng",
-            "select_variant": "Chọn đủ phân loại trước khi đặt"
-        }
-    },
     "GALLERY_VIEW": {
         "ERROR_DOWNLOADING": "Không tải được tệp đính kèm. Bạn hãy thử lại",
         "VIEW_AVATAR": "Xem ảnh đại diện {name}",
@@ -9897,20 +9840,10 @@ const messages: Record<string, unknown> = {
             "not_answerable": "Tin :type không nhận câu trả lời.",
             "unknown_choice": "Lựa chọn không có trong tin.",
             "already_submitted": "Tin này đã được trả lời.",
-            "duplicate_choice": "Các lựa chọn phải khác nhau.",
-            "duplicate_item": "Mã thẻ bị trùng.",
             "invalid_action": "Nút không hợp lệ.",
             "invalid_url": "Đường dẫn phải bắt đầu bằng http:// hoặc https://.",
             "invalid_phone": "Số điện thoại không hợp lệ.",
             "invalid_price": "Giá không hợp lệ.",
-            "variants_without_order": "Thẻ có biến thể phải có nút Đặt mua.",
-            "unknown_item": "Không tìm thấy sản phẩm để đặt.",
-            "invalid_selection": "Lựa chọn :name không hợp lệ hoặc đã hết.",
-            "quantity_exceeded": "Số lượng vượt quá mức cho phép.",
-            "field_required": "Cần điền :field.",
-            "field_invalid": ":field không hợp lệ.",
-            "empty_submission": "Chưa có thông tin nào được gửi.",
-            "payload_too_large": "Dữ liệu kèm trang quá lớn.",
             "unknown_payment_account": "Không tìm thấy tài khoản nhận tiền.",
             "payment_account_not_allowed": "Bạn không được gửi thẻ chuyển khoản bằng tài khoản này.",
             "duplicate_payment_account": "Ngân hàng và số tài khoản này đã được thêm."
@@ -9928,29 +9861,6 @@ const messages: Record<string, unknown> = {
         "delivery": {
             "numbered_prompt": "Nhắn số tương ứng để chọn:"
         },
-        "cards": {
-            "preview_many": ":title và :count sản phẩm khác",
-            "compare_at": "giá cũ :price, -:percent%"
-        },
-        "order_status": {
-            "preview": "Đơn #:ref · :status",
-            "eta": "Dự kiến nhận :date",
-            "total": "Tổng :amount",
-            "tracking": "Theo dõi: :url",
-            "statuses": {
-                "placed": "Đã đặt",
-                "confirmed": "Đã xác nhận",
-                "shipped": "Đã gửi",
-                "delivering": "Đang giao",
-                "delivered": "Đã nhận",
-                "cancelled": "Đã huỷ"
-            }
-        },
-        "order_request": {
-            "preview": "Yêu cầu đặt hàng: :title",
-            "line": "Yêu cầu đặt hàng: :title:selection × :quantity",
-            "note": "Ghi chú: :note"
-        },
         "bank_transfer": {
             "preview": "Chuyển khoản qua :bank",
             "bank_line": "Ngân hàng :bank, số TK :account",
@@ -9959,34 +9869,9 @@ const messages: Record<string, unknown> = {
             "memo": "Nội dung: :memo"
         },
         "kit": {
-            "item_position": "Sản phẩm {current} trên {total}",
-            "previous_item": "Sản phẩm trước",
-            "next_item": "Sản phẩm sau",
             "copied": "Đã chép",
             "copy": "Chép {label}",
-            "submit_field": "Gửi {field}",
-            "submit": "Gửi",
-            "selected": "Khách đã chọn: {value}",
-            "form_received": "Đã nhận thông tin",
-            "form_open": "Điền thông tin",
-            "order_request": "Yêu cầu đặt hàng",
-            "note": "Ghi chú: {note}",
-            "order_ref": "Đơn #{ref}",
-            "eta": "Dự kiến nhận {date}",
-            "fee_included": "Đã gồm phí giao",
-            "total": "Tổng",
-            "track_order": "Theo dõi đơn",
-            "help_article": "Trợ giúp",
-            "more": "+{count}",
             "read_only": "Khách bấm được trong widget",
-            "check_field": "Kiểm tra lại {field}",
-            "send_failed": "Chưa gửi được, thử lại nhé",
-            "steps": {
-                "placed": "Đã đặt",
-                "shipped": "Đã gửi",
-                "delivering": "Đang giao",
-                "delivered": "Đã nhận"
-            },
             "bank_transfer_title": "Chuyển khoản ngân hàng",
             "show_qr": "Hiện mã QR để quét",
             "bank_transfer_qr_alt": "Mã QR chuyển khoản",
@@ -12141,27 +12026,6 @@ const messages: Record<string, unknown> = {
             "MORE": "Thêm",
             "RECALL": "Thu hồi",
             "COPY": "Sao chép"
-        },
-        "ORDER_SHEET": {
-            "CLOSE": "Đóng",
-            "MAX": "Tối đa {count}",
-            "QUANTITY": "Số lượng",
-            "DECREASE": "Bớt một",
-            "INCREASE": "Thêm một",
-            "NOTE": "Ghi chú cho shop",
-            "OPTIONAL": "Không bắt buộc",
-            "NOTE_PLACEHOLDER": "Ví dụ: gói quà giúp mình",
-            "SUBTOTAL": "Tạm tính",
-            "SHIPPING_HINT": "Phí giao shop báo trong chat",
-            "SUBMIT": "Gửi yêu cầu đặt hàng",
-            "VIEW_SITE": "Xem trên website của shop",
-            "SOLD_OUT": "{option}, hết hàng",
-            "FAILED": "Chưa gửi được yêu cầu, thử lại nhé."
-        },
-        "WEBVIEW_SHEET": {
-            "OPEN_TAB": "Mở trong tab mới",
-            "CLOSE": "Đóng",
-            "FAILED": "Chưa mở được trang, thử lại nhé."
         },
         "REACTIONS": {
             "COUNT": "{count} người thả {emoji}",

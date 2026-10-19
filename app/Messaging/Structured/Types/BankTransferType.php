@@ -78,7 +78,7 @@ final class BankTransferType extends AbstractStructuredType
         ], fn (mixed $value) => $value !== null);
     }
 
-    public function plainText(?string $content, array $attributes, ?string $pageUrl = null): string
+    public function plainText(?string $content, array $attributes): string
     {
         $amount = $attributes['amount'] ?? null;
 
@@ -88,20 +88,12 @@ final class BankTransferType extends AbstractStructuredType
             __('messaging.bank_transfer.holder', ['name' => $attributes['account_name']]),
             $amount === null ? null : __('messaging.bank_transfer.amount', ['amount' => Money::format($amount['amount'], $amount['currency'])]),
             isset($attributes['memo']) ? __('messaging.bank_transfer.memo', ['memo' => $attributes['memo']]) : null,
-            $pageUrl,
         ]);
     }
 
     public function previewText(?string $content, array $attributes): string
     {
         return filled($content) ? trim((string) $content) : __('messaging.bank_transfer.preview', ['bank' => $attributes['bank_name']]);
-    }
-
-    // Kênh không vẽ được thẻ (SMS, tin nhắn nhóm…) cần một trang công khai để
-    // khách vẫn thấy QR — trang `bank_transfer` dùng chung cơ chế của WebviewType.
-    public function needsPublicPage(array $attributes): bool
-    {
-        return true;
     }
 
     private function authorizeSender(PaymentAccount $account, PayloadContext $context): void
