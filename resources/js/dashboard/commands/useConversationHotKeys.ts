@@ -106,7 +106,9 @@ export function useConversationHotKeys(): void {
         }
 
         let statusActions: CommandBarAction[] = [];
-        if (status === STATUS_TYPE.OPEN) {
+        if (!isProductFeatureVisible('conversationStatus')) {
+            statusActions = [];
+        } else if (status === STATUS_TYPE.OPEN) {
             statusActions = [...OPEN_CONVERSATION_ACTIONS, ...SNOOZE_CONVERSATION_ACTIONS];
         } else if (status === STATUS_TYPE.RESOLVED || status === STATUS_TYPE.SNOOZED) {
             statusActions = RESOLVED_CONVERSATION_ACTIONS;
@@ -203,12 +205,12 @@ export function useConversationHotKeys(): void {
 
         setCommandBarActions(SOURCE, [
             ...prepareActions([...statusActions, ...additionalActions]),
-            ...buildParentAction(
+            ...(isProductFeatureVisible('conversationAssignment') ? buildParentAction(
                 'assign_an_agent',
                 'COMMAND_BAR.COMMANDS.ASSIGN_AN_AGENT',
                 ICON_ASSIGN_AGENT,
                 agentOptions,
-            ),
+            ) : []),
             ...(isProductFeatureVisible('teams') ? buildParentAction(
                 'assign_a_team',
                 'COMMAND_BAR.COMMANDS.ASSIGN_A_TEAM',
