@@ -9,6 +9,7 @@ import Icon from 'dashboard/components-next/icon/Icon';
 import { DropdownInlineList, DropdownItem } from 'dashboard/components-next/dropdown-menu/base';
 import SidebarProfileMenuStatus from 'dashboard/components-next/sidebar/SidebarProfileMenuStatus';
 import KeyShortcutModal from 'dashboard/commands/KeyShortcutModal';
+import SearchField from 'dashboard/components-next/search-field/SearchField';
 import { logout } from 'dashboard/helper/logout';
 import { accountScopedUrl } from 'dashboard/helper/URLHelper';
 import { useCurrentUserAvailability } from 'dashboard/realtime/hooks';
@@ -144,16 +145,12 @@ export default function SettingsShell({ children }: { children: ReactNode }) {
                     </button>
                 </div>
 
-                <label className="flex items-center gap-2 h-9 px-2.5 rounded-lg border border-n-weak bg-n-surface-1 focus-within:border-n-brand">
-                    <Icon icon="i-lucide-search" className="size-4 shrink-0 text-n-slate-11" />
-                    <input
-                        type="search"
-                        value={query}
-                        placeholder={t('SIDEBAR_ITEMS.SETTINGS_SCREEN.SEARCH')}
-                        className="flex-1 min-w-0 !m-0 !p-0 !h-auto !border-0 !bg-transparent !shadow-none text-sm text-n-slate-12 placeholder:text-n-slate-10 focus:!ring-0"
-                        onChange={event => setQuery(event.target.value)}
-                    />
-                </label>
+                <SearchField
+                    value={query}
+                    placeholder={t('SIDEBAR_ITEMS.SETTINGS_SCREEN.SEARCH')}
+                    className="shrink-0"
+                    onChange={setQuery}
+                />
 
                 {normalizedQuery ? null : (
                     <DropdownInlineList className="!gap-0 rounded-xl border border-n-weak bg-n-surface-1 p-1">

@@ -12,6 +12,7 @@ import { fetchActiveContacts, fetchContacts, searchContacts } from 'dashboard/co
 import { mergeContactUpdateIntoList, useContactUpdates } from 'dashboard/contacts/contactUpdates';
 import type { Contact, ContactsMeta } from 'dashboard/contacts/types';
 import FriendRow from './components/FriendRow';
+import SearchField from 'dashboard/components-next/search-field/SearchField';
 import { usePage } from '@inertiajs/react';
 import type { DashboardPageProps } from '../types';
 
@@ -131,16 +132,12 @@ export default function FriendsIndex({ isActiveView = false }: FriendsIndexProps
                 </header>
 
                 <main className="flex-1 overflow-y-auto px-4 sm:px-7">
-                    <label className="flex items-center gap-2 h-10 px-3 mt-4 rounded-lg border border-n-weak bg-n-surface-2 focus-within:border-n-brand">
-                        <span className="i-lucide-search size-4 shrink-0 text-n-slate-11" />
-                        <input
-                            type="search"
-                            value={searchValue}
-                            placeholder={t('CONTACTS_LAYOUT.FRIENDS.SEARCH_PLACEHOLDER')}
-                            className="flex-1 min-w-0 !m-0 !p-0 !h-auto !border-0 !bg-transparent !shadow-none text-sm text-n-slate-12 placeholder:text-n-slate-10 focus:!ring-0"
-                            onChange={event => setSearchValue(event.target.value)}
-                        />
-                    </label>
+                    <SearchField
+                        value={searchValue}
+                        placeholder={t('CONTACTS_LAYOUT.FRIENDS.SEARCH_PLACEHOLDER')}
+                        className="mt-4"
+                        onChange={setSearchValue}
+                    />
 
                     <h2 className="mt-6 mb-2 text-xs font-semibold text-n-slate-11">
                         {t('CONTACTS_LAYOUT.FRIENDS.SECTION', { label: sectionLabel, count: meta.count })}
