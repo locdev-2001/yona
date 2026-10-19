@@ -7,14 +7,14 @@ use App\Exceptions\Account\UserExists;
 use App\Exceptions\Auth\OAuthSignInRefused;
 use App\Models\SuperAdmin;
 use App\Models\User;
-use App\Services\AccountSignUpService;
+use App\Services\Users\PersonalSignUpService;
 
 // Lõi đăng nhập bằng nhà cung cấp OAuth, không biết nhà cung cấp nào: nhận danh
 // tính đã xác thực, trả về người dùng để đăng nhập. Email đã có tài khoản thì
 // vào đúng tài khoản đó, email mới thì đăng ký qua đường đăng ký chung.
 class OAuthSignInService
 {
-    public function __construct(private readonly AccountSignUpService $signUp) {}
+    public function __construct(private readonly PersonalSignUpService $signUp) {}
 
     /** @throws OAuthSignInRefused */
     public function resolveUser(OAuthIdentity $identity): User
@@ -43,14 +43,11 @@ class OAuthSignInService
 
     private function register(OAuthIdentity $identity): User
     {
-        $name = filled($identity->name) ? $identity->name : null;
-
         try {
             return $this->signUp->signUp(
                 email: $identity->email,
                 password: null,
-                accountName: $name,
-                userFullName: $name,
+                name: filled($identity->name) ? $identity->name : null,
                 emailVerified: true,
             );
         } catch (InvalidEmail|UserExists $exception) {

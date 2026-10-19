@@ -14,6 +14,8 @@ use App\Http\Controllers\Auth\OAuthController;
 use App\Http\Controllers\Auth\PasswordsController;
 use App\Http\Controllers\Auth\RegistrationsController;
 use App\Http\Controllers\Auth\SessionsController;
+use App\Http\Controllers\Chat\ChatPagesController;
+use App\Http\Controllers\Chat\WelcomeController;
 use App\Http\Controllers\DemoRequestsController;
 use App\Http\Controllers\LandingController;
 use App\Http\Controllers\LegalPagesController;
@@ -39,6 +41,7 @@ use App\Http\Controllers\SuperAdmin\SessionsController as SuperAdminSessionsCont
 use App\Http\Controllers\SuperAdmin\SettingsController as SuperAdminSettingsController;
 use App\Http\Controllers\SuperAdmin\StickerPacksController as SuperAdminStickerPacksController;
 use App\Http\Controllers\SuperAdmin\UsersController as SuperAdminUsersController;
+use App\Http\Middleware\EnsureUsername;
 use App\Http\Middleware\ExpireIdleSuperAdminSession;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\RecordSuperAdminAudit;
@@ -183,6 +186,15 @@ Route::middleware('auth')->group(function () {
     Route::post('/app/logout', [SessionsController::class, 'destroy'])->name('logout');
 
     Route::get('/app', [DashboardController::class, 'index'])->name('dashboard');
+
+    Route::get('/chat/welcome', [WelcomeController::class, 'show'])->name('chat.welcome');
+    Route::post('/chat/welcome', [WelcomeController::class, 'store']);
+
+    Route::middleware(EnsureUsername::class)->group(function () {
+        Route::get('/chat', [ChatPagesController::class, 'index'])->name('chat');
+        Route::get('/chat/profile', [ChatPagesController::class, 'profile'])->name('chat.profile');
+    });
+
     Route::get('/app/email/oauth/{provider}/callback', [EmailOAuthController::class, 'callback'])
         ->where('provider', '[a-z]+')->name('email_oauth.callback');
 

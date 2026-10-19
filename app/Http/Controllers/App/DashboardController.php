@@ -11,15 +11,9 @@ use Inertia\Response;
 
 class DashboardController extends Controller
 {
-    public function index(Request $request): RedirectResponse|Response
+    public function index(): RedirectResponse
     {
-        $account = $request->user()->accounts()->orderBy('accounts.id')->first();
-
-        if (! $account) {
-            return Inertia::render('dashboard/NoAccounts');
-        }
-
-        return redirect("/app/accounts/{$account->id}/dashboard");
+        return redirect()->route('chat');
     }
 
     public function show(Request $request, Account $account): RedirectResponse|Response

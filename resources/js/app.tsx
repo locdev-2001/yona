@@ -5,6 +5,7 @@ import { documentTitle } from './documentTitle';
 
 const pages = import.meta.glob([
     './v3/views/**/*.tsx',
+    './chat/*.tsx',
     './dashboard/*.tsx',
     './dashboard/onboarding/*.tsx',
     './dashboard/settings/**/*.tsx',

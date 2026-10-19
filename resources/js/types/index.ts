@@ -2,6 +2,7 @@ export interface AuthUser {
     id: number;
     name: string;
     display_name: string | null;
+    username: string | null;
     email: string;
     availability: number;
     ui_settings: Record<string, unknown>;

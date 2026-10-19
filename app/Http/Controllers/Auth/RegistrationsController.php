@@ -6,8 +6,8 @@ use App\Exceptions\Account\InvalidEmail;
 use App\Exceptions\Account\UserExists;
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use App\Services\AccountSignUpService;
 use App\Services\OAuth\OAuthProviders;
+use App\Services\Users\PersonalSignUpService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
@@ -23,21 +23,19 @@ class RegistrationsController extends Controller
         ]);
     }
 
-    public function store(Request $request, AccountSignUpService $signUp): RedirectResponse
+    public function store(Request $request, PersonalSignUpService $signUp): RedirectResponse
     {
         $credentials = $request->validate([
             'email' => ['required', 'string', 'email'],
             'password' => User::passwordRules(),
-            'account_name' => ['nullable', 'string'],
-            'user_full_name' => ['nullable', 'string'],
+            'user_full_name' => ['nullable', 'string', 'max:255'],
         ]);
 
         try {
             $user = $signUp->signUp(
                 email: $credentials['email'],
                 password: $credentials['password'],
-                accountName: $credentials['account_name'] ?? null,
-                userFullName: $credentials['user_full_name'] ?? null,
+                name: $credentials['user_full_name'] ?? null,
                 emailVerified: false,
             );
         } catch (InvalidEmail|UserExists $exception) {

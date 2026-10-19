@@ -65,6 +65,7 @@ use App\Http\Controllers\WebApi\Settings\PlatformStickerPacksController;
 use App\Http\Controllers\WebApi\TeamMembersController;
 use App\Http\Controllers\WebApi\TeamsController;
 use App\Http\Controllers\WebApi\UploadController;
+use App\Http\Controllers\WebApi\UsersController;
 use App\Http\Controllers\WebApi\WebhooksController;
 use App\Http\Controllers\WebApi\WidgetUpdatesController;
 use App\Http\Controllers\WebApi\ZaloConnectionsController;
@@ -126,6 +127,8 @@ Route::middleware(['auth', EnsureStickerLibraryAccess::class.':'.EnsureStickerLi
 // resource :notification_subscriptions (số ít, không gắn account). Nhận cả phiên
 // lẫn header api_access_token như Api::BaseController của bản gốc.
 Route::middleware(['auth.api_token', 'auth'])->prefix('/api/v1')->group(function () {
+    Route::get('/users/search', [UsersController::class, 'search'])->middleware('throttle:60,1');
+    Route::get('/usernames/availability', [UsersController::class, 'usernameAvailability'])->middleware('throttle:60,1');
     Route::post('/notification_subscriptions', [NotificationSubscriptionsController::class, 'store']);
     Route::delete('/notification_subscriptions', [NotificationSubscriptionsController::class, 'destroy']);
 });

@@ -5,6 +5,8 @@ namespace App\Http\Controllers\WebApi;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Notifications\ConfirmationInstructions;
+use App\Services\Users\PrivacySettings;
+use App\Services\Users\Username;
 use App\Support\AlertSound\AgentAlertPreference;
 use App\Support\Appearance\ColorScheme;
 use Illuminate\Http\JsonResponse;
@@ -36,7 +38,14 @@ class ProfilesController extends Controller
             $user->password = $request->input('password');
         }
 
+        if ($request->has('username')) {
+            $request->merge(['username' => Username::normalize($request->input('username'))]);
+        }
+
         $data = $request->validate([
+            'username' => ['sometimes', ...Username::rules($user)],
+            'bio' => ['sometimes', 'nullable', 'string', 'max:160'],
+            ...PrivacySettings::rules(),
             'name' => ['sometimes', 'string', 'max:255'],
             'display_name' => ['sometimes', 'nullable', 'string', 'max:255'],
             'email' => ['sometimes', 'string', 'email'],
@@ -44,9 +53,14 @@ class ProfilesController extends Controller
             'ui_settings' => ['sometimes', 'array'],
             'phone_number' => ['sometimes', 'nullable', 'string'],
             'avatar' => ['sometimes', 'file', 'mimes:jpg,jpeg,png,gif,webp', 'max:15360'],
-        ]);
+        ], Username::messages());
 
         $user->fill(collect($data)->only(['name', 'display_name', 'message_signature'])->all());
+        $user->forceFill(collect($data)->only(['username', 'bio'])->all());
+
+        if (array_key_exists('privacy', $data)) {
+            $user->privacy = PrivacySettings::resolve([...PrivacySettings::resolve($user->privacy), ...$data['privacy']]);
+        }
 
         if (array_key_exists('ui_settings', $data)) {
             // Kiểm riêng: luật lồng trong cùng validate() làm validated() bỏ mất các khoá ui_settings khác.
@@ -110,6 +124,9 @@ class ProfilesController extends Controller
             'name' => $user->name,
             'display_name' => $user->display_name,
             'available_name' => $user->availableName(),
+            'username' => $user->username,
+            'bio' => $user->bio,
+            'privacy' => PrivacySettings::resolve($user->privacy),
             'email' => $user->email,
             'unconfirmed_email' => $user->unconfirmed_email,
             'avatar_url' => $user->avatarUrl(),
