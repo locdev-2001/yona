@@ -1,13 +1,11 @@
 import type { DialogHandle } from 'dashboard/components-next/dialog/Dialog';
 import NewYonaChatDialog from '../people/NewYonaChatDialog';
-import { useRef, useState } from 'react';
+import { useRef } from 'react';
 import { isProductFeatureVisible } from 'shared/helpers/productVisibility';
 import { formatNumber } from '@ext/utils';
 
 import { t } from '../../../i18n';
 import NextButton from 'dashboard/components-next/button/Button';
-import DropdownMenu from 'dashboard/components-next/dropdown-menu/DropdownMenu';
-import { useClickAway } from 'dashboard/composables/useClickAway';
 import { useConversation } from '../ConversationContext';
 import ChatListSearch from './ChatListSearch';
 import ListFilterButton from './ListFilterButton';
@@ -22,58 +20,10 @@ interface ChatListHeaderProps {
     activeFolderName?: string;
     allCount: number;
     isListLoading: boolean;
-    isSelecting: boolean;
-    onToggleSelection: () => void;
     onFiltersModal: () => void;
     onResetFilters: () => void;
     onAddFolders: () => void;
     onDeleteFolders: () => void;
-}
-
-const TOGGLE_LAYOUT_ACTION = 'toggle_layout';
-
-function ListMoreMenu({ isOnExpandedLayout }: { isOnExpandedLayout: boolean }) {
-    const { toggleConversationLayout } = useConversation();
-    const [isOpen, setOpen] = useState(false);
-    const rootRef = useRef<HTMLDivElement>(null);
-    useClickAway(rootRef, () => setOpen(false), isOpen);
-
-    return (
-        // Đổi bố cục chỉ có nghĩa trên màn rộng; điện thoại luôn một cột.
-        <div
-            ref={rootRef}
-            className="relative max-md:hidden"
-            onKeyDown={event => {
-                if (event.key === 'Escape') setOpen(false);
-            }}
-        >
-            <ListHeaderButton
-                icon="i-lucide-ellipsis"
-                label={t('CHAT_LIST.MORE_ACTIONS')}
-                isActive={isOpen}
-                aria-haspopup="menu"
-                aria-expanded={isOpen}
-                onClick={() => setOpen(open => !open)}
-            />
-            {isOpen ? (
-                <DropdownMenu
-                    menuItems={[
-                        {
-                            label: t('CONVERSATION.SWITCH_VIEW_LAYOUT'),
-                            value: TOGGLE_LAYOUT_ACTION,
-                            action: TOGGLE_LAYOUT_ACTION,
-                            icon: isOnExpandedLayout ? 'i-lucide-arrow-left-to-line' : 'i-lucide-arrow-right-to-line',
-                        },
-                    ]}
-                    className="top-full mt-1 end-0 w-max"
-                    onAction={() => {
-                        setOpen(false);
-                        toggleConversationLayout();
-                    }}
-                />
-            ) : null}
-        </div>
-    );
 }
 
 export default function ChatListHeader({
@@ -83,8 +33,6 @@ export default function ChatListHeader({
     activeFolderName,
     allCount,
     isListLoading,
-    isSelecting,
-    onToggleSelection,
     onFiltersModal,
     onResetFilters,
     onAddFolders,
@@ -95,6 +43,7 @@ export default function ChatListHeader({
     const canManageViews = isProductFeatureVisible('conversationViews');
     const anchorSide = isOnExpandedLayout ? 'end-3' : 'start-3';
     const newYonaChatRef = useRef<DialogHandle>(null);
+    const { toggleConversationLayout } = useConversation();
 
     return (
         <>
@@ -103,25 +52,23 @@ export default function ChatListHeader({
                     <h1 className="m-0 text-base font-medium truncate text-n-slate-12" title={pageTitle}>
                         {pageTitle}
                     </h1>
-                    <div className="flex items-center gap-0.5 shrink-0">
+                    <div className="flex items-center gap-1.5 shrink-0">
+                        <ListHeaderButton
+                            icon="i-lucide-user-plus"
+                            label={t('CHAT.NEW.TITLE')}
+                            onClick={() => newYonaChatRef.current?.open()}
+                        />
                         <ListFilterButton
                             isOnExpandedLayout={isOnExpandedLayout}
                             isAdvancedActive={isAdvancedActive}
                             onOpenAdvancedFilters={onFiltersModal}
                         />
                         <ListHeaderButton
-                            icon="i-lucide-user-plus"
-                            label={t('CHAT.NEW.TITLE')}
-                            onClick={() => newYonaChatRef.current?.open()}
+                            icon={isOnExpandedLayout ? 'i-lucide-arrow-left-to-line' : 'i-lucide-arrow-right-to-line'}
+                            label={t('CONVERSATION.SWITCH_VIEW_LAYOUT')}
+                            className="max-md:hidden rtl:rotate-180"
+                            onClick={toggleConversationLayout}
                         />
-                        <ListHeaderButton
-                            icon={isSelecting ? 'i-lucide-x' : 'i-lucide-list-checks'}
-                            label={t(isSelecting ? 'CHAT_LIST.SELECTION_MODE.EXIT' : 'CHAT_LIST.SELECTION_MODE.START')}
-                            isActive={isSelecting}
-                            aria-pressed={isSelecting}
-                            onClick={onToggleSelection}
-                        />
-                        <ListMoreMenu isOnExpandedLayout={isOnExpandedLayout} />
                     </div>
                 </div>
                 <ChatListSearch />

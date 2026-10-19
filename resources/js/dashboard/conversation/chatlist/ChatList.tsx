@@ -229,17 +229,35 @@ export default function ChatList({
                     activeFolderName={activeFolder?.name}
                     allCount={tabMeta.all_count || 0}
                     isListLoading={isSearching ? listSearch.loading : listLoading}
-                    isSelecting={isSelecting}
-                    onToggleSelection={toggleSelectionMode}
                     onResetFilters={clearConversationFilters}
                     onAddFolders={() => setShowSaveFilterModal(true)}
                     onDeleteFolders={() => setShowDeleteFolderModal(true)}
                 />
                 {appliedFilters === null ? (
                     <>
-                        {isAssignmentVisible ? (
-                            <ChatTypeTabs items={assigneeTabItems} activeTab={assigneeTab} onChatTabChange={setAssigneeTab} />
-                        ) : null}
+                        <div className="flex items-center min-w-0">
+                            <div className="flex-1 min-w-0">
+                                <ChatTypeTabs
+                                    items={isAssignmentVisible ? assigneeTabItems : assigneeTabItems.filter(item => item.key === ASSIGNEE_TYPE.ALL)}
+                                    activeTab={assigneeTab}
+                                    onChatTabChange={setAssigneeTab}
+                                />
+                            </div>
+                            {/* Thẳng cột với nút "…" của thẻ hội thoại. */}
+                            <div className="flex flex-shrink-0 py-1 pe-4 overflow-hidden [scrollbar-gutter:stable]">
+                                <NextButton
+                                    xs
+                                    ghost
+                                    slate={!isSelecting}
+                                    icon={isSelecting ? 'i-lucide-x' : 'i-lucide-list-checks'}
+                                    title={t(isSelecting ? 'CHAT_LIST.SELECTION_MODE.EXIT' : 'CHAT_LIST.SELECTION_MODE.START')}
+                                    aria-label={t(isSelecting ? 'CHAT_LIST.SELECTION_MODE.EXIT' : 'CHAT_LIST.SELECTION_MODE.START')}
+                                    aria-pressed={isSelecting}
+                                    className="flex-shrink-0 max-md:!size-11"
+                                    onClick={toggleSelectionMode}
+                                />
+                            </div>
+                        </div>
                         <ChannelChipRow />
                         <ActiveFilterChips hidesInboxChipsBelowMd={hasChannelChipRow(inboxes.length)} />
                     </>

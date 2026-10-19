@@ -13,12 +13,12 @@ interface ListHeaderButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> 
 }
 
 const VARIANT_CLASSES = {
-    icon: 'size-7 max-md:size-11 rounded hover:bg-n-alpha-2',
-    field: 'field-surface size-9 max-md:size-11 rounded',
+    icon: 'size-6 max-md:size-11 rounded-lg bg-n-slate-9/10 hover:bg-n-slate-9/20 active:scale-[0.97]',
+    field: 'field-surface size-9 max-md:size-11 rounded-lg',
 } as const;
 
 const ICON_SIZE_CLASSES = {
-    icon: 'size-4',
+    icon: 'size-3.5',
     field: 'size-[1.125rem]',
 } as const;
 
@@ -36,7 +36,7 @@ const ListHeaderButton = forwardRef<HTMLButtonElement, ListHeaderButtonProps>(fu
                 'relative grid place-content-center shrink-0',
                 VARIANT_CLASSES[variant],
                 'transition-colors duration-150 hover:text-n-slate-12 focus-visible:outline-2 focus-visible:outline-n-brand',
-                isActive ? 'text-n-blue-11 !bg-n-blue-3' : 'text-n-slate-11',
+                isActive ? 'text-n-blue-11 !bg-n-blue-3' : 'text-n-slate-12',
                 className,
             ].join(' ')}
             {...buttonProps}
