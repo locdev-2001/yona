@@ -14,6 +14,7 @@ import type { DashboardPageProps } from '../types';
 import {
     acceptChat,
     blockUser,
+    createGroup as createGroupRequest,
     fetchChat,
     fetchChats,
     fetchMessages,
@@ -26,6 +27,7 @@ import {
     unblockUser,
 } from './api';
 import type { AbuseReason } from './api';
+import { useGroupMembers } from './groupMembersApi';
 import { LAYOUT_TYPES, MESSAGE_STATUS, MESSAGE_TYPES } from './constants';
 import { isOnExpandedLayout as computeExpandedLayout } from './layoutMode';
 import { readFocusMessageId } from './messageFocus';
@@ -39,7 +41,8 @@ import {
     toViewerMessage,
     upsertConversation,
 } from './realtimeReducers';
-import type { ChatListTab, Conversation, ConversationListMeta, ConversationMessage } from './types';
+import type { OutgoingMention } from 'dashboard/components/widgets/WootWriter/groupMemberMentions';
+import type { ChatListTab, Conversation, ConversationListMeta, ConversationMessage, GroupMemberPerson } from './types';
 
 // Nguồn dữ liệu của màn nhắn tin: danh sách hội thoại (hai tab Tất cả / Tin chờ),
 // hội thoại đang mở, tin nhắn, gửi tin (tin tạm → đã gửi/lỗi) và realtime theo
@@ -82,6 +85,10 @@ interface ConversationContextValue {
     toggleTypingStatus: (typingStatus: 'on' | 'off') => void;
     markMessagesRead: (conversationId: number) => Promise<void>;
     openDirectChat: (userId: number) => Promise<void>;
+    createGroup: (input: { title: string; userIds: number[]; avatar?: File | null }) => Promise<void>;
+    // Nạp lại hội thoại (và thành viên nhóm) sau một thao tác quản lý nhóm.
+    refreshConversation: (conversationId: number) => Promise<Conversation | null>;
+    groupMembers: GroupMemberPerson[];
     acceptRequest: () => Promise<void>;
     removeConversation: (conversationId: number) => Promise<void>;
     setCounterpartBlocked: (blocked: boolean) => Promise<void>;
@@ -294,6 +301,7 @@ export function ConversationProvider({ conversationId = 0, children }: { convers
                         content: pending.content ?? '',
                         echoId: pending.echo_id!,
                         inReplyTo: (pending.content_attributes.in_reply_to as number | undefined) ?? null,
+                        mentions: pending.content_attributes.mentions as OutgoingMention[] | undefined,
                     }),
                     currentUserId,
                 );
@@ -360,9 +368,21 @@ export function ConversationProvider({ conversationId = 0, children }: { convers
     );
 
     // ---- Hành động trên hội thoại ----
+    const [groupRevision, setGroupRevision] = useState(0);
+    const isGroupOpen = selectedConversation?.kind === 'group';
+    const { members: groupMembers } = useGroupMembers(conversationId, isGroupOpen, groupRevision);
+
     const refreshConversation = useCallback(
-        async (chatId: number) => {
-            const chat = toViewerConversation(await fetchChat(chatId), currentUserId);
+        async (chatId: number): Promise<Conversation | null> => {
+            if (chatId === conversationIdRef.current) setGroupRevision(revision => revision + 1);
+            let chat: Conversation;
+            try {
+                chat = toViewerConversation(await fetchChat(chatId), currentUserId);
+            } catch {
+                setAllConversations(current => current.filter(item => item.id !== chatId));
+                if (conversationIdRef.current === chatId) router.visit(CHAT_PATH);
+                return null;
+            }
             const belongsToTab = (chat.member_status === 'pending') === (tabRef.current === 'requests');
             setAllConversations(current =>
                 belongsToTab ? upsertConversation(current, chat) : current.filter(item => item.id !== chatId),
@@ -381,6 +401,17 @@ export function ConversationProvider({ conversationId = 0, children }: { convers
             useAlert(parseApiErrorMessage(error) || t('PEOPLE.CHAT.OPEN_ERROR'));
         }
     }, []);
+
+    const createGroup = useCallback(async (input: { title: string; userIds: number[]; avatar?: File | null }) => {
+        try {
+            const chat = toViewerConversation(await createGroupRequest(input), currentUserId);
+            setAllConversations(current => (tabRef.current === 'all' ? upsertConversation(current, chat) : current));
+            router.visit(chatUrl(chat.id));
+        } catch (error) {
+            useAlert(parseApiErrorMessage(error) || t('CONVERSATION.MESSAGE_ERROR'));
+            throw error;
+        }
+    }, [currentUserId]);
 
     const acceptRequest = useCallback(async () => {
         if (!conversationId) return;
@@ -409,12 +440,16 @@ export function ConversationProvider({ conversationId = 0, children }: { convers
 
     const reportConversation = useCallback(
         async (reason: AbuseReason, note?: string) => {
-            const counterpartId = selectedConversation?.meta.sender.id;
-            if (!counterpartId) return;
-            await reportAbuse({ type: 'user', id: counterpartId, reason, note });
+            if (!selectedConversation) return;
+            const target =
+                selectedConversation.kind === 'group'
+                    ? { type: 'chat' as const, id: selectedConversation.id }
+                    : { type: 'user' as const, id: selectedConversation.meta.sender.id };
+            if (!target.id) return;
+            await reportAbuse({ ...target, reason, note });
             useAlert(t('CHAT.REPORT.SENT'));
         },
-        [selectedConversation?.meta.sender.id],
+        [selectedConversation],
     );
 
     // ---- Realtime ----
@@ -437,7 +472,7 @@ export function ConversationProvider({ conversationId = 0, children }: { convers
             );
         } else {
             void refreshConversation(chatId).then(chat => {
-                if (chat.member_status === 'pending' && tabRef.current !== 'requests') {
+                if (chat?.member_status === 'pending' && tabRef.current !== 'requests') {
                     setListMeta(current => ({ ...current, request_count: current.request_count + 1 }));
                 }
             });
@@ -452,6 +487,7 @@ export function ConversationProvider({ conversationId = 0, children }: { convers
     useRealtimeEvent<{ chat_id: number; removed?: boolean }>('chat.updated', ({ chat_id: chatId, removed }) => {
         if (removed) {
             setAllConversations(current => current.filter(item => item.id !== chatId));
+            if (conversationIdRef.current === chatId) router.visit(CHAT_PATH);
             return;
         }
         void refreshConversation(chatId);
@@ -500,6 +536,9 @@ export function ConversationProvider({ conversationId = 0, children }: { convers
             toggleTypingStatus,
             markMessagesRead,
             openDirectChat,
+            createGroup,
+            refreshConversation,
+            groupMembers,
             acceptRequest,
             removeConversation,
             setCounterpartBlocked,
@@ -533,6 +572,9 @@ export function ConversationProvider({ conversationId = 0, children }: { convers
             toggleTypingStatus,
             markMessagesRead,
             openDirectChat,
+            createGroup,
+            refreshConversation,
+            groupMembers,
             acceptRequest,
             removeConversation,
             setCounterpartBlocked,

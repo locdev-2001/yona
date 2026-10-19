@@ -195,6 +195,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/chat', [ChatPagesController::class, 'index'])->name('chat');
         Route::get('/chat/c/{chat}', [ChatPagesController::class, 'index'])->whereNumber('chat')->name('chat.show');
         Route::get('/chat/profile', [ChatPagesController::class, 'profile'])->name('chat.profile');
+        Route::get('/chat/join/{token}', [ChatPagesController::class, 'join'])->name('chat.join');
     });
 
     Route::get('/app/email/oauth/{provider}/callback', [EmailOAuthController::class, 'callback'])

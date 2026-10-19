@@ -14,6 +14,12 @@ class ChatMember extends Model
 
     public const ROLE_OWNER = 3;
 
+    public const ROLE_NAMES = [
+        self::ROLE_MEMBER => 'member',
+        self::ROLE_ADMIN => 'admin',
+        self::ROLE_OWNER => 'owner',
+    ];
+
     public const STATUS_ACTIVE = 1;
 
     // Tin từ người lạ: nằm ở hộp tin chờ tới khi người nhận trả lời hoặc chấp nhận.
@@ -66,6 +72,21 @@ class ChatMember extends Model
     public function isPending(): bool
     {
         return $this->status === self::STATUS_PENDING;
+    }
+
+    public function isOwner(): bool
+    {
+        return $this->role === self::ROLE_OWNER;
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->role === self::ROLE_ADMIN;
+    }
+
+    public function roleName(): string
+    {
+        return self::ROLE_NAMES[$this->role] ?? 'member';
     }
 
     public function isMuted(): bool

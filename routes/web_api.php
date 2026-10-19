@@ -40,6 +40,7 @@ use App\Http\Controllers\WebApi\DashboardAppsController;
 use App\Http\Controllers\WebApi\DataImportsController;
 use App\Http\Controllers\WebApi\EmailAddressesController;
 use App\Http\Controllers\WebApi\EmailImagesController;
+use App\Http\Controllers\WebApi\GroupChatsController;
 use App\Http\Controllers\WebApi\InboxesController;
 use App\Http\Controllers\WebApi\InboxMembersController;
 use App\Http\Controllers\WebApi\Integrations\AppsController as IntegrationAppsController;
@@ -136,6 +137,7 @@ Route::middleware(['auth.api_token', 'auth'])->prefix('/api/v1')->group(function
 
     Route::get('/chats', [ChatsController::class, 'index']);
     Route::post('/chats/direct', [ChatsController::class, 'storeDirect'])->middleware('throttle:60,1');
+    Route::post('/chats/groups', [GroupChatsController::class, 'store'])->middleware('throttle:20,1');
     Route::prefix('/chats/{chat}')->whereNumber('chat')->group(function () {
         Route::get('', [ChatsController::class, 'show']);
         Route::delete('', [ChatsController::class, 'destroy']);
@@ -144,6 +146,15 @@ Route::middleware(['auth.api_token', 'auth'])->prefix('/api/v1')->group(function
         Route::post('/typing', [ChatsController::class, 'typing'])->middleware('throttle:120,1');
         Route::get('/messages', [ChatMessagesController::class, 'index']);
         Route::post('/messages', [ChatMessagesController::class, 'store'])->middleware('throttle:120,1');
+        Route::post('/group', [GroupChatsController::class, 'update']);
+        Route::post('/dissolve', [GroupChatsController::class, 'dissolve']);
+        Route::get('/members', [GroupChatsController::class, 'members']);
+        Route::post('/members', [GroupChatsController::class, 'addMembers'])->middleware('throttle:60,1');
+        Route::delete('/members/{user}', [GroupChatsController::class, 'removeMember'])->whereNumber('user');
+        Route::patch('/members/{user}', [GroupChatsController::class, 'changeRole'])->whereNumber('user');
+        Route::get('/invite_link', [GroupChatsController::class, 'inviteLink']);
+        Route::post('/invite_link', [GroupChatsController::class, 'rotateInviteLink']);
+        Route::delete('/invite_link', [GroupChatsController::class, 'revokeInviteLink']);
     });
     Route::post('/blocks', [UserBlocksController::class, 'store']);
     Route::delete('/blocks/{user}', [UserBlocksController::class, 'destroy'])->whereNumber('user');

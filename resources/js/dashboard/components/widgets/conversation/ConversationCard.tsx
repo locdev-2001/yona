@@ -59,7 +59,7 @@ export default function ConversationCard({
         >
             <div className="relative">
                 <Avatar
-                    seed={avatarSeed('user', currentContact.id)}
+                    seed={chat.kind === 'group' ? avatarSeed('chat', chat.id) : avatarSeed('user', currentContact.id)}
                     animated={isPointerInside}
                     name={currentContact.name ?? ''}
                     src={currentContact.thumbnail}

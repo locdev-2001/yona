@@ -34,7 +34,9 @@ class ChatMessageNotification extends Notification implements ShouldQueue
     public function toWebPush(object $notifiable): array
     {
         return [
-            'title' => $this->sender->availableName(),
+            'title' => $this->chat->isGroup()
+                ? $this->sender->availableName().' · '.$this->chat->title
+                : $this->sender->availableName(),
             'body' => Str::limit(app(ChatPresenter::class)->preview($this->message), 120),
             'tag' => 'chat-'.$this->chat->id,
             'url' => route('chat.show', $this->chat),

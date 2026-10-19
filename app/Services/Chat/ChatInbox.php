@@ -28,7 +28,15 @@ class ChatInbox
             ->whereIn('id', ChatMember::query()->where('user_id', $user->getKey())->where('status', $status)->select('conversation_id'))
             ->when($tab === self::TAB_REQUESTS, fn ($query) => $query->whereNotNull('last_message_id'))
             ->when($beforeActivity, fn ($query, $before) => $query->where('last_activity_at', '<', now()->setTimestamp($before)))
-            ->with(['members.user', 'lastMessage.sender'])
+            ->with([
+                // Nhóm tới 500 người: danh sách chỉ cần hàng của chính mình; 1-1 cần cả người kia.
+                'members' => fn ($members) => $members->where(fn ($scope) => $scope
+                    ->where('conversation_members.user_id', $user->getKey())
+                    ->orWhereIn('conversation_members.conversation_id', Chat::query()->where('kind', Chat::KIND_DIRECT)->select('id'))),
+                'members.user.avatar',
+                'lastMessage.sender',
+                'avatar',
+            ])
             ->orderByDesc('last_activity_at')
             ->orderByDesc('id')
             ->limit(self::PAGE_SIZE)

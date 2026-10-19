@@ -28,7 +28,7 @@ class ChatMessagesController extends Controller
         $messages = $inbox->messages($chat, $before);
 
         return response()->json([
-            'payload' => $messages->map(fn (ChatMessage $message) => $this->presenter->message($message, $readUpTo))->values(),
+            'payload' => $messages->map(fn (ChatMessage $message) => $this->presenter->message($message, $readUpTo, $chat->isGroup()))->values(),
             'meta' => ['has_more' => $messages->count() === ChatInbox::MESSAGES_PAGE_SIZE],
         ]);
     }
@@ -39,10 +39,19 @@ class ChatMessagesController extends Controller
             'content' => ['required', 'string', 'max:10000'],
             'echo_id' => ['sometimes', 'nullable', 'uuid'],
             'in_reply_to' => ['sometimes', 'nullable', 'integer'],
+            'mentions' => ['sometimes', 'array', 'max:50'],
+            'mentions.*' => ['array'],
         ]);
 
-        $message = $sender->sendText($request->user(), $chat, $data['content'], $data['echo_id'] ?? null, $data['in_reply_to'] ?? null);
+        $message = $sender->sendText(
+            $request->user(),
+            $chat,
+            $data['content'],
+            $data['echo_id'] ?? null,
+            $data['in_reply_to'] ?? null,
+            $data['mentions'] ?? [],
+        );
 
-        return response()->json($this->presenter->message($message));
+        return response()->json($this->presenter->message($message, inGroup: $chat->isGroup()));
     }
 }

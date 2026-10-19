@@ -22,7 +22,12 @@ class ChatMessageSender
     ) {}
 
     /** @throws ChatActionRefused */
-    public function sendText(User $sender, Chat $chat, string $content, ?string $clientId = null, ?int $replyToId = null): ChatMessage
+    /**
+     * @param  list<array{external_id: string|int, name: string, offset: int, length: int}>  $mentions
+     *
+     * @throws ChatActionRefused
+     */
+    public function sendText(User $sender, Chat $chat, string $content, ?string $clientId = null, ?int $replyToId = null, array $mentions = []): ChatMessage
     {
         $content = trim($content);
 
@@ -31,6 +36,11 @@ class ChatMessageSender
         }
 
         $attributes = $replyToId !== null && $this->belongsToChat($chat, $replyToId) ? ['in_reply_to' => $replyToId] : [];
+        $mentions = $this->memberMentions($chat, $mentions);
+
+        if ($mentions !== []) {
+            $attributes['mentions'] = $mentions;
+        }
 
         return $this->send($sender, $chat, [
             'content' => $content,
@@ -83,17 +93,67 @@ class ChatMessageSender
         });
 
         $message->setRelation('sender', $sender);
-        $this->broadcaster->toMembers($chat, ChatBroadcaster::MESSAGE_CREATED, ['message' => $this->presenter->message($message)]);
+        $this->broadcaster->toMembers($chat, ChatBroadcaster::MESSAGE_CREATED, ['message' => $this->presenter->message($message, inGroup: $chat->isGroup())]);
         $this->notifyRecipients($chat, $sender, $message);
 
         return $message;
     }
 
+    // Tin hệ thống của nhóm ("A đã thêm B"): không người gửi, không thông báo đẩy.
+    /** @param array<string, mixed> $attributes */
+    public function sendSystem(Chat $chat, string $content, array $attributes = []): ChatMessage
+    {
+        $message = DB::transaction(function () use ($chat, $content, $attributes) {
+            $message = $chat->messages()->create([
+                'content' => $content,
+                'content_type' => Message::CONTENT_TYPES['text'],
+                'content_attributes' => $attributes,
+                'message_type' => ChatMessage::TYPE_SYSTEM,
+            ]);
+
+            $chat->update(['last_message_id' => $message->getKey(), 'last_activity_at' => $message->created_at]);
+
+            return $message;
+        });
+
+        $this->broadcaster->toMembers($chat, ChatBroadcaster::MESSAGE_CREATED, ['message' => $this->presenter->message($message)]);
+
+        return $message;
+    }
+
+    // Người được @ vẫn nhận thông báo dù đã tắt thông báo nhóm.
     private function notifyRecipients(Chat $chat, User $sender, ChatMessage $message): void
     {
+        $mentionedIds = collect($message->content_attributes['mentions'] ?? [])->pluck('external_id')->map(fn ($id) => (int) $id);
+
         $chat->members
-            ->filter(fn (ChatMember $member) => $member->user_id !== $sender->getKey() && $member->isActive() && ! $member->isMuted())
+            ->filter(fn (ChatMember $member) => $member->user_id !== $sender->getKey() && $member->isActive())
+            ->filter(fn (ChatMember $member) => ! $member->isMuted() || $mentionedIds->contains($member->user_id))
             ->each(fn (ChatMember $member) => $member->user?->notify(new ChatMessageNotification($chat, $sender, $message)));
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $mentions
+     * @return list<array{external_id: string, name: string, offset: int, length: int}>
+     */
+    private function memberMentions(Chat $chat, array $mentions): array
+    {
+        if (! $chat->isGroup() || $mentions === []) {
+            return [];
+        }
+
+        $memberIds = $chat->members()->where('status', ChatMember::STATUS_ACTIVE)->pluck('user_id')->map(fn ($id) => (string) $id);
+
+        return collect($mentions)
+            ->filter(fn ($mention) => is_array($mention) && $memberIds->contains((string) ($mention['external_id'] ?? '')))
+            ->map(fn ($mention) => [
+                'external_id' => (string) $mention['external_id'],
+                'name' => (string) ($mention['name'] ?? ''),
+                'offset' => (int) ($mention['offset'] ?? 0),
+                'length' => (int) ($mention['length'] ?? 0),
+            ])
+            ->values()
+            ->all();
     }
 
     private function belongsToChat(Chat $chat, int $messageId): bool

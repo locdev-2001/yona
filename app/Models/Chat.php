@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Avatarable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -13,7 +14,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 // automation, báo cáo), vốn đều giả định có account/inbox/contact.
 class Chat extends Model
 {
-    use SoftDeletes;
+    use Avatarable, SoftDeletes;
 
     public const KIND_DIRECT = 1;
 
@@ -54,6 +55,21 @@ class Chat extends Model
     public function isDirect(): bool
     {
         return $this->kind === self::KIND_DIRECT;
+    }
+
+    public function isGroup(): bool
+    {
+        return $this->kind === self::KIND_GROUP;
+    }
+
+    public function activeMembers(): HasMany
+    {
+        return $this->members()->where('status', ChatMember::STATUS_ACTIVE);
+    }
+
+    public function inviteLinks(): HasMany
+    {
+        return $this->hasMany(ChatInviteLink::class, 'conversation_id');
     }
 
     public function members(): HasMany

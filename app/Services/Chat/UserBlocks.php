@@ -28,6 +28,20 @@ class UserBlocks
         return UserBlock::query()->where(['blocker_id' => $blocker->getKey(), 'blocked_id' => $blocked->getKey()])->exists();
     }
 
+    /** @return array{blocked_by_me: bool, blocked_either: bool} một truy vấn cho cả hai chiều */
+    public function relation(User $viewer, User $other): array
+    {
+        $blockerIds = UserBlock::query()
+            ->where(fn ($pair) => $pair->where(['blocker_id' => $viewer->getKey(), 'blocked_id' => $other->getKey()]))
+            ->orWhere(fn ($pair) => $pair->where(['blocker_id' => $other->getKey(), 'blocked_id' => $viewer->getKey()]))
+            ->pluck('blocker_id');
+
+        return [
+            'blocked_by_me' => $blockerIds->contains($viewer->getKey()),
+            'blocked_either' => $blockerIds->isNotEmpty(),
+        ];
+    }
+
     public function isBlockedBetween(User $first, User $second): bool
     {
         return UserBlock::query()

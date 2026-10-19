@@ -9,6 +9,7 @@ use App\Services\Chat\ChatInbox;
 use App\Services\Chat\ChatMemberships;
 use App\Services\Chat\ChatPresenter;
 use App\Services\Chat\DirectChats;
+use App\Services\Chat\GroupChats;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -63,9 +64,12 @@ class ChatsController extends Controller
         return response()->json($this->presenter->chat($chat->refresh(), $request->user(), $this->memberships));
     }
 
-    public function destroy(Request $request, Chat $chat): Response
+    // 1-1: ẩn khỏi danh sách của mình. Nhóm: rời nhóm.
+    public function destroy(Request $request, Chat $chat, GroupChats $groups): Response
     {
-        $this->memberships->remove($request->user(), $chat);
+        $chat->isGroup()
+            ? $groups->leave($request->user(), $chat)
+            : $this->memberships->remove($request->user(), $chat);
 
         return response()->noContent();
     }

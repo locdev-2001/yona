@@ -24,6 +24,31 @@ class ChatActionRefused extends RuntimeException
         return new self(__('chat.ERRORS.SELF'));
     }
 
+    public static function notAllowed(): self
+    {
+        return new self(__('chat.ERRORS.NOT_ALLOWED'));
+    }
+
+    public static function groupFull(int $limit): self
+    {
+        return new self(__('chat.ERRORS.GROUP_FULL', ['limit' => $limit]));
+    }
+
+    public static function groupTooSmall(int $minimum): self
+    {
+        return new self(__('chat.ERRORS.GROUP_TOO_SMALL', ['count' => $minimum]));
+    }
+
+    public static function inviteLinkInvalid(): self
+    {
+        return new self(__('chat.ERRORS.INVITE_INVALID'));
+    }
+
+    public static function messageNotEditable(): self
+    {
+        return new self(__('chat.ERRORS.NOT_EDITABLE'));
+    }
+
     public function render(): JsonResponse
     {
         return response()->json(['message' => $this->getMessage()], 422);

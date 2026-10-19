@@ -5,6 +5,7 @@ import { isTouchOnlyDevice, shortcutLabel } from 'shared/helpers/kbd';
 import Editor from 'dashboard/components/widgets/WootWriter/Editor';
 import type { EditorHandle } from 'dashboard/components/widgets/WootWriter/Editor';
 import { REPLY_EDITOR_MODES } from 'dashboard/components/widgets/WootWriter/constants';
+import { extractMemberMentions } from 'dashboard/components/widgets/WootWriter/groupMemberMentions';
 import { isEditorHotKeyEnabled } from 'dashboard/composables/useUISettings';
 import { MESSAGE_MAX_LENGTH } from 'dashboard/conversation/constants';
 import { useKeyboardEvents } from 'dashboard/composables/useKeyboardEvents';
@@ -13,6 +14,7 @@ import { openCommandBar } from 'dashboard/commands/commandBarStore';
 import { t } from '../../../i18n';
 import { draftKey, getDraft, removeDraft, setDraft } from '../draftApi';
 import { useConversation } from '../ConversationContext';
+import { toMentionable } from '../groupMembersApi';
 import type { ConversationMessage } from '../types';
 import { buildOutgoingContentAttributes } from './outgoingContentAttributes';
 import ReplyToMessage from './ReplyToMessage';
@@ -36,7 +38,11 @@ interface ReplyBoxProps {
 }
 
 export default function ReplyBox({ onMessageSent, replyTarget = null, onClearReplyTarget }: ReplyBoxProps) {
-    const { selectedConversation, conversationId, sendReply, uiSettings, toggleTypingStatus } = useConversation();
+    const { selectedConversation, conversationId, sendReply, uiSettings, toggleTypingStatus, groupMembers, currentUserId } = useConversation();
+    const mentionableMembers = useMemo(
+        () => groupMembers.filter(member => member.id !== currentUserId).map(toMentionable),
+        [groupMembers, currentUserId],
+    );
 
     const [message, setMessage] = useState('');
     const [isFocused, setIsFocused] = useState(false);
@@ -112,8 +118,9 @@ export default function ReplyBox({ onMessageSent, replyTarget = null, onClearRep
 
     const onSendReply = () => {
         if (isReplyButtonDisabled) return;
-        const contentAttributes = buildOutgoingContentAttributes({ inReplyTo: replyTarget?.id, mentions: [] });
-        sendReply({ content: message, contentAttributes });
+        const { content, mentions } = extractMemberMentions(message);
+        const contentAttributes = buildOutgoingContentAttributes({ inReplyTo: replyTarget?.id, mentions });
+        sendReply({ content, contentAttributes });
         if (contentAttributes?.in_reply_to) onClearReplyTarget?.();
         if (draftConversationRef.current) removeDraft(draftKey(draftConversationRef.current, REPLY_EDITOR_MODES.REPLY));
         setMessage('');
@@ -148,6 +155,7 @@ export default function ReplyBox({ onMessageSent, replyTarget = null, onClearRep
                     disabled={isEditorDisabled}
                     uiSettings={uiSettings}
                     enableCannedResponses={false}
+                    groupMembers={mentionableMembers}
                     onChange={setMessage}
                     onFocus={() => setIsFocused(true)}
                     onBlur={() => setIsFocused(false)}

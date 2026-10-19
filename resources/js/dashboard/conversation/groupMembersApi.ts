@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
-import { getJson } from 'dashboard/helper/apiClient';
+import { fetchGroupMembers } from './api';
+import type { GroupMemberPerson } from './types';
 
-// Thành viên của hội thoại nhóm trên kênh (không phải nhân viên) — nguồn gợi ý khi
-// agent gõ `@` ở chế độ Trả lời. Không cache ở FE: máy chủ đã cache danh bạ nhóm,
-// còn "người vừa nhắn" phải tươi mỗi lần mở hội thoại.
+// Thành viên nhóm đang mở: nguồn cho danh sách thành viên và gợi ý khi gõ `@`.
+// `external_id` là id người dùng dạng chuỗi, đúng khoá mà Editor ghi vào mentions.
 
 export interface GroupMember {
     external_id: string;
@@ -12,42 +12,31 @@ export interface GroupMember {
     avatar?: string | null;
 }
 
-interface GroupMembersResponse {
-    payload?: GroupMember[];
+export function toMentionable(member: GroupMemberPerson): GroupMember {
+    return { external_id: String(member.id), name: member.name, avatar: member.thumbnail };
 }
 
-export function useGroupMembers(
-    accountId: number,
-    conversationId: number,
-    enabled: boolean,
-): { members: GroupMember[]; isLoading: boolean } {
-    const [members, setMembers] = useState<GroupMember[]>([]);
-    const [isLoading, setIsLoading] = useState(false);
+export function useGroupMembers(chatId: number, enabled: boolean, revision = 0): { members: GroupMemberPerson[]; reload: () => void } {
+    const [members, setMembers] = useState<GroupMemberPerson[]>([]);
+    const [reloadKey, setReloadKey] = useState(0);
+    const reload = useCallback(() => setReloadKey(key => key + 1), []);
 
     useEffect(() => {
         setMembers([]);
-        if (!enabled || !conversationId) {
-            setIsLoading(false);
-            return undefined;
-        }
+        if (!enabled || !chatId) return undefined;
 
         let cancelled = false;
-        setIsLoading(true);
-        getJson<GroupMembersResponse>(`/api/v1/accounts/${accountId}/conversations/${conversationId}/group_members`)
-            .then(
-                response => {
-                    if (!cancelled) setMembers(Array.isArray(response?.payload) ? response.payload : []);
-                },
-                () => undefined,
-            )
-            .finally(() => {
-                if (!cancelled) setIsLoading(false);
-            });
+        fetchGroupMembers(chatId).then(
+            response => {
+                if (!cancelled) setMembers(response.payload);
+            },
+            () => undefined,
+        );
 
         return () => {
             cancelled = true;
         };
-    }, [accountId, conversationId, enabled]);
+    }, [chatId, enabled, revision, reloadKey]);
 
-    return { members, isLoading };
+    return { members, reload };
 }

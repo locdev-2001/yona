@@ -91,12 +91,36 @@ export type ChatListTab = 'all' | 'requests';
 // Tình trạng của chính người xem trong hội thoại.
 export type ChatMemberStatus = 'active' | 'pending';
 
+export type GroupRole = 'owner' | 'admin' | 'member';
+
+// Việc người xem được làm trong nhóm, máy chủ tính theo vai trò (GroupPolicy).
+export interface GroupAbilities {
+    edit_info: boolean;
+    add_members: boolean;
+    manage_invite_link: boolean;
+    change_roles: boolean;
+    remove_members: boolean;
+    dissolve: boolean;
+}
+
+export interface GroupMemberPerson {
+    id: number;
+    name: string;
+    username: string | null;
+    thumbnail: string;
+    role: GroupRole;
+}
+
 export interface Conversation {
     id: number;
     uuid: string;
     kind: 'direct' | 'group';
     title: string | null;
+    description?: string | null;
     meta: ConversationMeta;
+    member_count: number;
+    my_role: GroupRole | null;
+    abilities: GroupAbilities | null;
     member_status: ChatMemberStatus;
     can_reply: boolean;
     blocked_by_me: boolean;

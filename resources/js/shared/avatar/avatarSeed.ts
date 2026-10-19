@@ -1,7 +1,7 @@
 // Chuỗi dựng avatar hình khối phải bền theo danh tính, không theo tên hiển thị:
 // đổi tên không được đổi hình, và cùng một người ra cùng một hình ở mọi màn.
 // `group_member`: người trong nhóm chat của kênh, định danh theo mã ngoài của nền tảng.
-export type AvatarSubject = 'contact' | 'user' | 'agent_bot' | 'inbox' | 'account' | 'team' | 'group_member';
+export type AvatarSubject = 'contact' | 'user' | 'agent_bot' | 'inbox' | 'account' | 'team' | 'group_member' | 'chat';
 
 type AvatarSubjectId = number | string | null | undefined;
 

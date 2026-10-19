@@ -10,7 +10,13 @@ import ReportDialog from './ReportDialog';
 
 // Menu ⋮ của mũ khung chat: chặn / bỏ chặn người bên kia, báo cáo vi phạm, xoá
 // cuộc trò chuyện khỏi danh sách của mình.
-export default function ChatActionsMenu({ triggerClassName = '' }: { triggerClassName?: string }) {
+export default function ChatActionsMenu({
+    triggerClassName = '',
+    onOpenGroupInfo,
+}: {
+    triggerClassName?: string;
+    onOpenGroupInfo?: () => void;
+}) {
     const { selectedConversation, setCounterpartBlocked } = useConversation();
     const [isOpen, setOpen] = useState(false);
     const actionsRef = useRef<HTMLDivElement>(null);
@@ -29,7 +35,11 @@ export default function ChatActionsMenu({ triggerClassName = '' }: { triggerClas
     if (!selectedConversation) return null;
 
     const isBlocked = selectedConversation.blocked_by_me;
-    const menuItems = [
+    const menuItems = selectedConversation.kind === 'group' ? [
+        { icon: 'i-lucide-info', label: t('CHAT.GROUP.INFO'), action: 'info', value: 'info' },
+        { icon: 'i-lucide-flag', label: t('CHAT.ACTIONS.REPORT'), action: 'report', value: 'report' },
+        { icon: 'i-lucide-log-out', label: t('CHAT.GROUP.LEAVE'), action: 'info', value: 'leave' },
+    ] : [
         isBlocked
             ? { icon: 'i-lucide-circle-check', label: t('CHAT.ACTIONS.UNBLOCK'), action: 'unblock', value: 'unblock' }
             : { icon: 'i-lucide-ban', label: t('CHAT.ACTIONS.BLOCK'), action: 'block', value: 'block' },
@@ -40,6 +50,7 @@ export default function ChatActionsMenu({ triggerClassName = '' }: { triggerClas
     const handleAction = ({ action }: { action: string }) => {
         setOpen(false);
         if (action === 'block' || action === 'unblock') void setCounterpartBlocked(action === 'block');
+        if (action === 'info') onOpenGroupInfo?.();
         if (action === 'report') reportDialogRef.current?.open();
         if (action === 'delete') deleteDialogRef.current?.open();
     };

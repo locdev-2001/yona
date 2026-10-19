@@ -18,6 +18,7 @@ import ReplyBox from './ReplyBox';
 import ResizableEditorWrapper from './ResizableEditorWrapper';
 import type { ResizableEditorWrapperHandle } from './ResizableEditorWrapper';
 import { useMessageReply } from './useMessageReply';
+import { toMentionable } from '../groupMembersApi';
 
 // Năng lực của cuộc trò chuyện giữa người dùng mà bong bóng tin hỏi tới: dấu đã xem
 // và trả lời trích dẫn. Cảm xúc, thu hồi bật khi máy chủ có đường cho chúng.
@@ -37,7 +38,9 @@ export default function MessagesView() {
         focusedMessageId,
         clearFocusedMessage,
         focusMessage,
+        groupMembers,
     } = useConversation();
+    const mentionableMembers = useMemo(() => groupMembers.map(toMentionable), [groupMembers]);
 
     const conversationPanelRef = useRef<HTMLUListElement>(null);
     const messagesViewRef = useRef<HTMLDivElement>(null);
@@ -150,6 +153,7 @@ export default function MessagesView() {
                 messages={messages}
                 channelType={null}
                 inboxCapabilities={CHAT_CAPABILITIES}
+                groupMembers={mentionableMembers}
                 chatAttachments={galleryAttachments}
                 firstUnreadId={null}
                 onScroll={handleScroll}

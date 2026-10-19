@@ -1,5 +1,6 @@
-import { deleteJson, getJson, postJson } from 'dashboard/helper/apiClient';
-import type { ChatListTab, Conversation, ConversationListMeta, ConversationMessage } from './types';
+import { deleteJson, getJson, patchJson, postForm, postJson } from 'dashboard/helper/apiClient';
+import type { OutgoingMention } from 'dashboard/components/widgets/WootWriter/groupMemberMentions';
+import type { ChatListTab, Conversation, ConversationListMeta, ConversationMessage, GroupMemberPerson, GroupRole } from './types';
 
 // Một chỗ duy nhất gọi API nhắn tin (/api/v1/chats…). Giao diện không tự dựng URL.
 const CHATS = '/api/v1/chats';
@@ -18,6 +19,7 @@ export interface SendMessagePayload {
     content: string;
     echoId: string;
     inReplyTo?: number | null;
+    mentions?: OutgoingMention[];
 }
 
 export type AbuseReason = 'spam' | 'harassment' | 'inappropriate' | 'scam' | 'other';
@@ -39,11 +41,12 @@ export function fetchMessages(chatId: number, before?: number): Promise<MessageP
     return getJson<MessagePageResponse>(`${CHATS}/${chatId}/messages${before ? `?before=${before}` : ''}`);
 }
 
-export function sendMessage(chatId: number, { content, echoId, inReplyTo }: SendMessagePayload): Promise<ConversationMessage> {
+export function sendMessage(chatId: number, { content, echoId, inReplyTo, mentions }: SendMessagePayload): Promise<ConversationMessage> {
     return postJson<ConversationMessage>(`${CHATS}/${chatId}/messages`, {
         content,
         echo_id: echoId,
         ...(inReplyTo ? { in_reply_to: inReplyTo } : {}),
+        ...(mentions?.length ? { mentions } : {}),
     });
 }
 
@@ -73,4 +76,52 @@ export function unblockUser(userId: number): Promise<void> {
 
 export function reportAbuse(report: { type: 'user' | 'chat' | 'message'; id: number; reason: AbuseReason; note?: string }): Promise<void> {
     return postJson<void>('/api/v1/abuse_reports', report);
+}
+
+export function createGroup({ title, userIds, avatar }: { title: string; userIds: number[]; avatar?: File | null }): Promise<Conversation> {
+    const form = new FormData();
+    form.set('title', title);
+    userIds.forEach(id => form.append('user_ids[]', String(id)));
+    if (avatar) form.set('avatar', avatar);
+    return postForm<Conversation>(`${CHATS}/groups`, form);
+}
+
+export function updateGroup(chatId: number, changes: { title?: string; avatar?: File | null; removeAvatar?: boolean }): Promise<Conversation> {
+    const form = new FormData();
+    if (changes.title !== undefined) form.set('title', changes.title);
+    if (changes.avatar) form.set('avatar', changes.avatar);
+    if (changes.removeAvatar) form.set('remove_avatar', '1');
+    return postForm<Conversation>(`${CHATS}/${chatId}/group`, form);
+}
+
+export function fetchGroupMembers(chatId: number): Promise<{ payload: GroupMemberPerson[] }> {
+    return getJson<{ payload: GroupMemberPerson[] }>(`${CHATS}/${chatId}/members`);
+}
+
+export function addGroupMembers(chatId: number, userIds: number[]): Promise<{ skipped_count: number }> {
+    return postJson<{ skipped_count: number }>(`${CHATS}/${chatId}/members`, { user_ids: userIds });
+}
+
+export function removeGroupMember(chatId: number, userId: number): Promise<void> {
+    return deleteJson<void>(`${CHATS}/${chatId}/members/${userId}`);
+}
+
+export function changeGroupRole(chatId: number, userId: number, role: GroupRole): Promise<void> {
+    return patchJson<void>(`${CHATS}/${chatId}/members/${userId}`, { role });
+}
+
+export function dissolveGroup(chatId: number): Promise<void> {
+    return postJson<void>(`${CHATS}/${chatId}/dissolve`, {});
+}
+
+export function fetchInviteLink(chatId: number): Promise<{ url: string | null }> {
+    return getJson<{ url: string | null }>(`${CHATS}/${chatId}/invite_link`);
+}
+
+export function rotateInviteLink(chatId: number): Promise<{ url: string }> {
+    return postJson<{ url: string }>(`${CHATS}/${chatId}/invite_link`, {});
+}
+
+export function revokeInviteLink(chatId: number): Promise<void> {
+    return deleteJson<void>(`${CHATS}/${chatId}/invite_link`);
 }
