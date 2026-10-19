@@ -26,7 +26,7 @@ return [
         'CLEAR' => 'Xoá từ khoá',
         'COMPOSE' => 'Soạn tin nhắn mới',
         'NO_RESULTS' => 'Không có hội thoại nào khớp “{query}” trong danh sách đang xem.',
-        'CONTACTS_HEADING' => 'Liên hệ',
+        'CONTACTS_HEADING' => 'Mọi người',
         'CONVERSATIONS_HEADING' => 'Hội thoại',
     ],
     'FILTER_ALL' => 'Tất cả',
@@ -155,7 +155,7 @@ return [
             'CONTENT' => 'có một đường dẫn chia sẻ',
         ],
         'contact' => [
-            'CONTENT' => 'Liên hệ được chia sẻ',
+            'CONTENT' => 'Danh thiếp được chia sẻ',
         ],
         'embed' => [
             'CONTENT' => 'Nội dung nhúng',

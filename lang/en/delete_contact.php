@@ -1,9 +1,9 @@
 <?php
 
 return [
-    'BUTTON_LABEL' => 'Delete Contact',
-    'TITLE' => 'Delete contact',
-    'DESC' => 'Delete contact details',
+    'BUTTON_LABEL' => 'Remove from list',
+    'TITLE' => 'Remove from list',
+    'DESC' => 'Remove this person from your list',
     'CONFIRM' => [
         'TITLE' => 'Confirm Deletion',
         'MESSAGE' => 'Are you sure to delete ',
@@ -11,7 +11,7 @@ return [
         'NO' => 'No, Keep',
     ],
     'API' => [
-        'SUCCESS_MESSAGE' => 'Contact deleted successfully',
-        'ERROR_MESSAGE' => 'Could not delete contact. Please try again later.',
+        'SUCCESS_MESSAGE' => 'Removed from your list',
+        'ERROR_MESSAGE' => 'Could not remove. Please try again later.',
     ],
 ];

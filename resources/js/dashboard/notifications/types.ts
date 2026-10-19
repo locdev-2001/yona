@@ -9,7 +9,9 @@ export type NotificationType =
     | 'participating_conversation_new_message'
     | 'sla_missed_first_response'
     | 'sla_missed_next_response'
-    | 'sla_missed_resolution';
+    | 'sla_missed_resolution'
+    | 'friend_request'
+    | 'friend_request_accepted';
 
 export interface NotificationRecord {
     id: number;
@@ -18,6 +20,7 @@ export interface NotificationRecord {
     push_message_body: string;
     primary_actor_type: string;
     primary_actor_id: number;
+    // Thông báo kết bạn (primary_actor_type 'Friendship') chỉ mang id và meta.sender.
     primary_actor: Conversation | null;
     read_at: string | null;
     secondary_actor: ConversationMessage | null;

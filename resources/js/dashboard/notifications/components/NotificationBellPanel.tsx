@@ -3,10 +3,11 @@ import { Link, router, usePage } from '@inertiajs/react';
 import Button from 'dashboard/components-next/button/Button';
 import Loader from 'shared/components/loader/Loader';
 import TabBar from 'dashboard/components-next/tabbar/TabBar';
-import { accountScopedUrl, conversationUrl } from 'dashboard/helper/URLHelper';
+import { accountScopedUrl } from 'dashboard/helper/URLHelper';
 import { t } from '../../../i18n';
 import type { DashboardPageProps } from '../../types';
 import { useNotifications } from '../NotificationsContext';
+import { notificationTargetUrl } from '../helpers';
 import type { NotificationRecord } from '../types';
 import { useNotificationsUnreadCount } from '../useUnreadCount';
 import InboxCard from './InboxCard';
@@ -32,11 +33,11 @@ export default function NotificationBellPanel({ activeTab, onTabChange, onNaviga
 
     // Mở ở màn Hội thoại chính, không mở trong trang thông báo.
     const openConversation = (notification: NotificationRecord) => {
-        const displayId = notification.primary_actor?.id;
-        if (!displayId) return;
+        const targetUrl = notificationTargetUrl(accountId, notification);
+        if (!targetUrl) return;
 
         void openNotification(notification);
-        router.visit(conversationUrl({ accountId, id: displayId }));
+        router.visit(targetUrl);
         onNavigate();
     };
 

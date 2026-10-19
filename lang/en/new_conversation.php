@@ -4,7 +4,7 @@ return [
     'BUTTON_LABEL' => 'Start conversation',
     'TITLE' => 'New conversation',
     'DESC' => 'Start a new conversation by sending a new message.',
-    'NO_INBOX' => 'Couldn\'t find an inbox to initiate a new conversation with this contact.',
+    'NO_INBOX' => 'Couldn\'t find an inbox to start a new conversation with this person.',
     'FORM' => [
         'TO' => [
             'LABEL' => 'To',

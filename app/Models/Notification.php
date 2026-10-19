@@ -33,10 +33,9 @@ class Notification extends Model
         'sla_missed_first_response' => 6,
         'sla_missed_next_response' => 7,
         'sla_missed_resolution' => 8,
+        'friend_request' => 9,
+        'friend_request_accepted' => 10,
     ];
-
-    // PRIMARY_ACTORS — read_all chỉ nhận đúng danh sách này.
-    public const PRIMARY_ACTORS = ['Conversation'];
 
     // Số từ giữ lại trong nội dung xem trước (content.truncate_words(10)).
     private const PREVIEW_WORD_LIMIT = 10;
@@ -185,7 +184,9 @@ class Notification extends Model
 
         return [
             ...$payload,
-            'primary_actor' => RealtimePayload::notificationPrimaryActor($primaryActor),
+            'primary_actor' => $primaryActor instanceof Friendship
+                ? RealtimePayload::notificationFriendshipActor($primaryActor, $this->friendshipCounterpart())
+                : RealtimePayload::notificationPrimaryActor($primaryActor),
             // TODO gốc: "Rename push_message_title to push_message_body" — hai khóa
             // cùng nội dung, FE đọc push_message_body.
             'push_message_title' => $this->pushMessageBody(),
@@ -216,6 +217,10 @@ class Notification extends Model
             'sla_missed_resolution' => __("notifications.notification_title.$type", [
                 'display_id' => $conversation?->display_id,
             ]),
+            'friend_request',
+            'friend_request_accepted' => __("notifications.notification_title.$type", [
+                'name' => $this->friendshipCounterpart()?->availableName(),
+            ]),
             default => '',
         };
     }
@@ -233,8 +238,18 @@ class Notification extends Model
             'conversation_assignment',
             'sla_missed_next_response',
             'sla_missed_resolution' => $this->messageBody($this->lastIncomingOrOutgoingMessage($conversation)),
+            'friend_request',
+            'friend_request_accepted' => $this->friendshipCounterpart()?->availableName().': '.__("notifications.friendship.{$this->typeName()}"),
             default => '',
         };
+    }
+
+    // Người còn lại của lời mời kết bạn (secondary_actor).
+    public function friendshipCounterpart(): ?User
+    {
+        $actor = $this->secondaryActor;
+
+        return $actor instanceof User ? $actor : null;
     }
 
     private function lastIncomingOrOutgoingMessage(?Conversation $conversation): ?Message

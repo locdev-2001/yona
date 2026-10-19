@@ -1,8 +1,8 @@
 <?php
 
 return [
-    'TITLE' => 'Filter Contacts',
-    'SUBTITLE' => "Add filters below and hit 'Submit' to filter contacts.",
+    'TITLE' => 'Filter list',
+    'SUBTITLE' => "Add filters below and hit 'Submit' to filter the list.",
     'EDIT_CUSTOM_SEGMENT' => 'Edit Segment',
     'CUSTOM_VIEWS_SUBTITLE' => 'Add or remove filters and update your segment.',
     'ADD_NEW_FILTER' => 'Add Filter',
@@ -15,7 +15,7 @@ return [
     'EMPTY_VALUE_ERROR' => 'Value is required',
     'SEGMENT_LABEL' => 'Segment Name',
     'SEGMENT_QUERY_LABEL' => 'Segment Query',
-    'TOOLTIP_LABEL' => 'Filter contacts',
+    'TOOLTIP_LABEL' => 'Filter list',
     'QUERY_DROPDOWN_LABELS' => [
         'AND' => 'AND',
         'OR' => 'OR',

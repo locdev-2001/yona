@@ -37,6 +37,7 @@ use App\Http\Controllers\WebApi\DashboardAppsController;
 use App\Http\Controllers\WebApi\DataImportsController;
 use App\Http\Controllers\WebApi\EmailAddressesController;
 use App\Http\Controllers\WebApi\EmailImagesController;
+use App\Http\Controllers\WebApi\FriendshipsController;
 use App\Http\Controllers\WebApi\InboxesController;
 use App\Http\Controllers\WebApi\InboxMembersController;
 use App\Http\Controllers\WebApi\Integrations\AppsController as IntegrationAppsController;
@@ -130,6 +131,12 @@ Route::middleware(['auth', EnsureStickerLibraryAccess::class.':'.EnsureStickerLi
 Route::middleware(['auth.api_token', 'auth'])->prefix('/api/v1')->group(function () {
     Route::get('/users/search', [UsersController::class, 'search'])->middleware('throttle:60,1');
     Route::get('/usernames/availability', [UsersController::class, 'usernameAvailability'])->middleware('throttle:60,1');
+
+    Route::get('/friendships', [FriendshipsController::class, 'index']);
+    Route::get('/friendships/with/{userId}', [FriendshipsController::class, 'show'])->whereNumber('userId');
+    Route::post('/friendships', [FriendshipsController::class, 'store'])->middleware('throttle:60,1');
+    Route::post('/friendships/{friendshipId}/accept', [FriendshipsController::class, 'accept'])->whereNumber('friendshipId');
+    Route::delete('/friendships/{friendshipId}', [FriendshipsController::class, 'destroy'])->whereNumber('friendshipId');
 
     Route::post('/notification_subscriptions', [NotificationSubscriptionsController::class, 'store']);
     Route::delete('/notification_subscriptions', [NotificationSubscriptionsController::class, 'destroy']);

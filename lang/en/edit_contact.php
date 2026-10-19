@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'BUTTON_LABEL' => 'Edit Contact',
-    'TITLE' => 'Edit contact',
-    'DESC' => 'Edit contact details',
+    'BUTTON_LABEL' => 'Edit',
+    'TITLE' => 'Edit profile',
+    'DESC' => 'Personal info',
 ];

@@ -39,6 +39,8 @@ return [
         'SLA_MISSED_RESOLUTION' => 'Trễ SLA',
         'PARTICIPATING_CONVERSATION_NEW_MESSAGE' => 'Tin nhắn mới',
         'ASSIGNED_CONVERSATION_NEW_MESSAGE' => 'Tin nhắn mới',
+        'FRIEND_REQUEST' => 'Lời mời kết bạn',
+        'FRIEND_REQUEST_ACCEPTED' => 'Đã thành bạn bè',
         'SNOOZED_UNTIL' => 'Tạm ẩn {time}',
         'SNOOZED_ENDS' => 'Đã hết thời gian tạm ẩn',
     ],

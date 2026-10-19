@@ -129,7 +129,7 @@ export default function InboxCard({
         >
             <div className="flex items-start gap-2">
                 <Avatar
-                    seed={avatarSeed('contact', assigneeMeta?.id)}
+                    seed={avatarSeed(inboxItem.primary_actor_type === 'Friendship' ? 'user' : 'contact', assigneeMeta?.id)}
                     name={assigneeMeta?.name ?? ''}
                     src={assigneeMeta?.thumbnail}
                     size={20}

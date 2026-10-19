@@ -52,7 +52,10 @@ function toClientPage(response: RawListResponse): ContactsPage {
     };
 }
 
-// Danh sách Bạn bè kèm contact_inboxes để mỗi dòng hiện logo kênh của người đó.
+// Danh sách Bạn bè kèm contact_inboxes để mỗi dòng hiện logo kênh của người đó;
+// friendsOnly chỉ lấy người dùng Yona đã kết bạn.
+const friendsParam = (friendsOnly: boolean) => (friendsOnly ? '&friends=true' : '');
+
 const identificationParam = (filter: ContactIdentificationFilter) =>
     filter === 'all' ? '' : `&identified=${filter === 'identified'}`;
 
@@ -61,9 +64,10 @@ export async function fetchContacts(
     page: number,
     sortAttr: string,
     identification: ContactIdentificationFilter = 'all',
+    friendsOnly = false,
 ): Promise<ContactsPage> {
     const response = await getJson<RawListResponse>(
-        `${contactsUrl(accountId)}?include_contact_inboxes=true&page=${page}&sort=${encodeURIComponent(sortAttr)}${identificationParam(identification)}`,
+        `${contactsUrl(accountId)}?include_contact_inboxes=true&page=${page}&sort=${encodeURIComponent(sortAttr)}${identificationParam(identification)}${friendsParam(friendsOnly)}`,
     );
 
     return toClientPage(response);
@@ -75,9 +79,10 @@ export async function searchContacts(
     search: string,
     page: number,
     sortAttr: string,
+    friendsOnly = false,
 ): Promise<ContactsPage> {
     const response = await getJson<RawListResponse>(
-        `${contactsUrl(accountId)}/search?include_contact_inboxes=true&page=${page}&sort=${encodeURIComponent(sortAttr)}&q=${encodeURIComponent(search)}`,
+        `${contactsUrl(accountId)}/search?include_contact_inboxes=true&page=${page}&sort=${encodeURIComponent(sortAttr)}&q=${encodeURIComponent(search)}${friendsParam(friendsOnly)}`,
     );
 
     return toClientPage(response);
@@ -170,9 +175,14 @@ export async function deleteContactCustomAttributes(
 }
 
 // ContactAPI.active — GET /contacts/active (liên hệ đang online).
-export async function fetchActiveContacts(accountId: number, page: number, sortAttr: string): Promise<ContactsPage> {
+export async function fetchActiveContacts(
+    accountId: number,
+    page: number,
+    sortAttr: string,
+    friendsOnly = false,
+): Promise<ContactsPage> {
     const response = await getJson<RawListResponse>(
-        `${contactsUrl(accountId)}/active?include_contact_inboxes=true&page=${page}&sort=${encodeURIComponent(sortAttr)}`,
+        `${contactsUrl(accountId)}/active?include_contact_inboxes=true&page=${page}&sort=${encodeURIComponent(sortAttr)}${friendsParam(friendsOnly)}`,
     );
 
     return toClientPage(response);

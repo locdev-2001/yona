@@ -2832,7 +2832,7 @@ const messages: Record<string, unknown> = {
             "CLEAR": "Xoá từ khoá",
             "COMPOSE": "Soạn tin nhắn mới",
             "NO_RESULTS": "Không có hội thoại nào khớp “{query}” trong danh sách đang xem.",
-            "CONTACTS_HEADING": "Liên hệ",
+            "CONTACTS_HEADING": "Mọi người",
             "CONVERSATIONS_HEADING": "Hội thoại"
         },
         "FILTER_ALL": "Tất cả",
@@ -2958,7 +2958,7 @@ const messages: Record<string, unknown> = {
                 "CONTENT": "có một đường dẫn chia sẻ"
             },
             "contact": {
-                "CONTENT": "Liên hệ được chia sẻ"
+                "CONTENT": "Danh thiếp được chia sẻ"
             },
             "embed": {
                 "CONTENT": "Nội dung nhúng"
@@ -3036,7 +3036,7 @@ const messages: Record<string, unknown> = {
             "GO_TO_MY_INBOX": "Mở trang thông báo",
             "COMPOSE_CONVERSATION": "Soạn tin nhắn mới",
             "GO_TO_CONVERSATION_DASHBOARD": "Đi tới Trang tổng quan hội thoại",
-            "GO_TO_CONTACTS_DASHBOARD": "Đi tới Trang tổng quan liên hệ",
+            "GO_TO_CONTACTS_DASHBOARD": "Đi tới Bạn bè",
             "GO_TO_CAPTAIN": "Mở Captain",
             "GO_TO_CALLS_DASHBOARD": "Mở bảng điều khiển cuộc gọi",
             "GO_TO_CAMPAIGNS": "Mở chiến dịch",
@@ -3148,9 +3148,9 @@ const messages: Record<string, unknown> = {
             "SENDING": "Đang mở hội thoại và gửi tin…",
             "COMPOSER_LOCKED": "Chọn người nhận và kênh gửi để bắt đầu soạn",
             "SUBJECT_LABEL": "Chủ đề:",
-            "NEW_CONTACT_BADGE": "Liên hệ mới",
-            "CREATE_CONTACT": "Tạo liên hệ mới: {address}",
-            "CONTACT_LOAD_FAILED": "Không tải được liên hệ. Bạn hãy chọn lại người nhận.",
+            "NEW_CONTACT_BADGE": "Người mới",
+            "CREATE_CONTACT": "Thêm người mới: {address}",
+            "CONTACT_LOAD_FAILED": "Không tải được người nhận. Bạn hãy chọn lại.",
             "LOADING_CHANNELS": "Đang tìm kênh gửi được tới người này…",
             "LOAD_CHANNELS_FAILED": "Không tải được danh sách kênh gửi.",
             "CREATED_ELSEWHERE": "Đã tạo hội thoại mới từ bản nháp.",
@@ -3159,7 +3159,7 @@ const messages: Record<string, unknown> = {
             "UNAVAILABLE": {
                 "MESSAGING_WINDOW_CLOSED": "Đã quá thời gian kênh cho phép nhắn kể từ tin cuối của khách",
                 "REAUTHORIZATION_REQUIRED": "Kênh đang mất kết nối, cần đăng nhập lại",
-                "EMAIL_UNDELIVERABLE": "Email của liên hệ này không nhận được thư",
+                "EMAIL_UNDELIVERABLE": "Email của người này không nhận được thư",
                 "OTHER": "Kênh này hiện không gửi được tới người này"
             },
             "EMAIL_CHECK": {
@@ -3179,11 +3179,11 @@ const messages: Record<string, unknown> = {
         },
         "FORM": {
             "ERROR_MESSAGE": "Có lỗi khi tạo hội thoại. Bạn hãy thử lại sau.",
-            "NO_INBOX_ALERT": "Không có hộp thư nào để bắt đầu hội thoại với liên hệ này.",
+            "NO_INBOX_ALERT": "Không có hộp thư nào để bắt đầu hội thoại với người này.",
             "CONTACT_SELECTOR": {
                 "LABEL": "Đến:",
                 "TAG_INPUT_PLACEHOLDER": "Nhập ít nhất 2 ký tự để tìm theo tên, email hoặc số điện thoại",
-                "NO_RESULTS": "Không tìm thấy liên hệ nào",
+                "NO_RESULTS": "Không tìm thấy ai",
                 "CHANGE": "Đổi người nhận"
             },
             "INBOX_SELECTOR": {
@@ -3200,32 +3200,32 @@ const messages: Record<string, unknown> = {
             "SUBMIT": "Gửi",
             "CANCEL": "Huỷ",
             "AVATAR": {
-                "LABEL": "Avatar của liên hệ"
+                "LABEL": "Ảnh đại diện"
             },
             "NAME": {
-                "PLACEHOLDER": "Nhập tên đầy đủ của liên hệ",
+                "PLACEHOLDER": "Nhập họ tên đầy đủ",
                 "LABEL": "Tên đầy đủ"
             },
             "BIO": {
-                "PLACEHOLDER": "Nhập tiểu sử của liên hệ",
+                "PLACEHOLDER": "Nhập vài dòng giới thiệu",
                 "LABEL": "Tiểu sử"
             },
             "EMAIL_ADDRESS": {
-                "PLACEHOLDER": "Nhập địa chỉ email của liên hệ",
+                "PLACEHOLDER": "Nhập địa chỉ email",
                 "LABEL": "Email",
-                "DUPLICATE": "Địa chỉ email này đang được sử dụng cho một liên hệ khác.",
+                "DUPLICATE": "Email này đã có ở một hồ sơ khác.",
                 "ERROR": "Vui lòng nhập một địa chỉ email hợp lệ."
             },
             "PHONE_NUMBER": {
-                "PLACEHOLDER": "Nhập số điện thoại của liên hệ",
+                "PLACEHOLDER": "Nhập số điện thoại",
                 "LABEL": "Số điện thoại",
                 "HELP": "Số điện thoại phải theo chuẩn E.164, ví dụ: +84912345678 [+][mã quốc gia][mã vùng][số điện thoại]. Bạn có thể chọn mã quốc gia trong danh sách.",
                 "ERROR": "Số điện thoại nên rỗng hoặc thuộc định dạng E.164",
                 "DIAL_CODE_ERROR": "Bạn hãy chọn mã quốc gia trong danh sách",
-                "DUPLICATE": "Số điện thoại này đang được dùng cho một liên hệ khác."
+                "DUPLICATE": "Số điện thoại này đã có ở một hồ sơ khác."
             },
             "LOCATION": {
-                "PLACEHOLDER": "Nhập vị trí của liên hệ",
+                "PLACEHOLDER": "Nhập nơi ở",
                 "LABEL": "Địa điểm"
             },
             "COMPANY_NAME": {
@@ -3264,11 +3264,11 @@ const messages: Record<string, unknown> = {
         },
         "DELETE_AVATAR": {
             "API": {
-                "SUCCESS_MESSAGE": "Hình đại diện liên hệ đã được xóa thành công",
-                "ERROR_MESSAGE": "Không thể xóa hình đại diện liên hệ. Vui lòng thử lại sau."
+                "SUCCESS_MESSAGE": "Đã xoá ảnh đại diện",
+                "ERROR_MESSAGE": "Chưa xoá được ảnh đại diện. Bạn hãy thử lại sau."
             }
         },
-        "SUCCESS_MESSAGE": "Liên hệ được lưu thành công",
+        "SUCCESS_MESSAGE": "Đã lưu",
         "ERROR_MESSAGE": "Đã có lỗi, vui lòng thử lại"
     },
     "CONTACT_PANEL": {
@@ -3293,24 +3293,24 @@ const messages: Record<string, unknown> = {
         "CREATED_AT_LABEL": "Đã tạo",
         "NEW_MESSAGE": "Tin nhắn mới",
         "START_NEW_CONVERSATION": "Bắt đầu hội thoại mới",
-        "DELETE_CONTACT": "Xoá liên hệ",
+        "DELETE_CONTACT": "Xoá khỏi danh sách",
         "MORE_ACTIONS": "Thao tác khác",
         "CALL": "Gọi",
-        "CALL_INITIATED": "Đang gọi cho liên hệ…",
+        "CALL_INITIATED": "Đang gọi cho người này…",
         "CALL_FAILED": "Không bắt đầu được cuộc gọi. Bạn hãy thử lại.",
-        "WHATSAPP_CALL_PERMISSION_REQUESTED": "Đã gửi yêu cầu xin phép gọi tới liên hệ. Hãy thử lại sau khi họ đồng ý.",
-        "WHATSAPP_CALL_PERMISSION_PENDING": "Vừa gửi yêu cầu xin phép gọi rồi. Hãy thử lại sau khi liên hệ đồng ý.",
+        "WHATSAPP_CALL_PERMISSION_REQUESTED": "Đã gửi yêu cầu xin phép gọi tới người này. Hãy thử lại sau khi họ đồng ý.",
+        "WHATSAPP_CALL_PERMISSION_PENDING": "Vừa gửi yêu cầu xin phép gọi rồi. Hãy thử lại sau khi người này đồng ý.",
         "CLICK_TO_EDIT": "Bấm để sửa",
         "VOICE_INBOX_PICKER": {
             "TITLE": "Chọn hộp thư thoại"
         },
         "CONVERSATIONS": {
-            "NO_RECORDS_FOUND": "Không có hội thoại trước đó được liên kết với liên hệ này.",
+            "NO_RECORDS_FOUND": "Chưa có hội thoại nào trước đây với người này.",
             "TITLE": "Hội thoại trước đó"
         },
         "LABELS": {
             "CONTACT": {
-                "TITLE": "Nhãn danh bạ",
+                "TITLE": "Nhãn hồ sơ",
                 "ERROR": "Không thể sửa nhãn"
             },
             "CONVERSATION": {
@@ -3326,17 +3326,17 @@ const messages: Record<string, unknown> = {
                 "CUSTOMIZE": "Tùy chỉnh"
             }
         },
-        "MERGE_CONTACT": "Hợp nhất liên hệ",
-        "CONTACT_ACTIONS": "Hành động với liên hệ",
-        "MUTE_CONTACT": "Chặn liên hệ",
-        "UNMUTE_CONTACT": "Bỏ chặn liên hệ",
-        "MUTED_SUCCESS": "Đã chặn liên hệ này. Bạn sẽ không nhận thông báo về các hội thoại sau này.",
-        "UNMUTED_SUCCESS": "Đã bỏ chặn liên hệ này.",
+        "MERGE_CONTACT": "Gộp hồ sơ",
+        "CONTACT_ACTIONS": "Tuỳ chọn",
+        "MUTE_CONTACT": "Chặn",
+        "UNMUTE_CONTACT": "Bỏ chặn",
+        "MUTED_SUCCESS": "Đã chặn người này. Bạn sẽ không nhận thông báo về các hội thoại sau này.",
+        "UNMUTED_SUCCESS": "Đã bỏ chặn người này.",
         "SEND_TRANSCRIPT": "Gửi bản ghi",
         "EDIT_LABEL": "Chỉnh sửa",
         "SIDEBAR_SECTIONS": {
             "CUSTOM_ATTRIBUTES": "Thuộc tính tùy chỉnh",
-            "CONTACT_LABELS": "Nhãn danh bạ",
+            "CONTACT_LABELS": "Nhãn hồ sơ",
             "PREVIOUS_CONVERSATIONS": "Hội thoại trước đó",
             "NO_RECORDS_FOUND": "Không có thuộc tính nào được tìm thấy"
         }
@@ -3448,26 +3448,26 @@ const messages: Record<string, unknown> = {
         "ASSIGN_LABELS_FAILED": "Gắn nhãn thất bại",
         "REMOVE_LABELS_SUCCESS": "Đã gỡ nhãn.",
         "REMOVE_LABELS_FAILED": "Gỡ nhãn thất bại",
-        "DESCRIPTION": "Chọn nhãn bạn muốn gắn cho các liên hệ đã chọn.",
+        "DESCRIPTION": "Chọn nhãn bạn muốn gắn cho những người đã chọn.",
         "NO_LABELS_FOUND": "Chưa có nhãn nào.",
         "SELECTED_COUNT": "Đã chọn {count}",
         "CLEAR_SELECTION": "Bỏ chọn",
         "SELECT_ALL": "Chọn tất cả ({count})",
         "DELETE_CONTACTS": "Xoá",
-        "DELETE_SUCCESS": "Đã xóa liên hệ.",
-        "DELETE_FAILED": "Xóa liên hệ thất bại.",
+        "DELETE_SUCCESS": "Đã xoá khỏi danh sách.",
+        "DELETE_FAILED": "Chưa xoá được. Bạn hãy thử lại.",
         "DELETE_DIALOG": {
-            "TITLE": "Xóa các liên hệ đã chọn",
-            "SINGULAR_TITLE": "Xóa liên hệ đã chọn",
-            "DESCRIPTION": "Thao tác này sẽ xóa vĩnh viễn {count} liên hệ đã chọn. Không thể hoàn tác.",
-            "SINGULAR_DESCRIPTION": "Thao tác này sẽ xóa vĩnh viễn liên hệ đã chọn. Không thể hoàn tác.",
-            "CONFIRM_MULTIPLE": "Xóa liên hệ",
-            "CONFIRM_SINGLE": "Xoá liên hệ"
+            "TITLE": "Xoá những người đã chọn",
+            "SINGULAR_TITLE": "Xoá người đã chọn",
+            "DESCRIPTION": "Thao tác này sẽ xoá vĩnh viễn {count} người đã chọn khỏi danh sách. Không thể hoàn tác.",
+            "SINGULAR_DESCRIPTION": "Thao tác này sẽ xoá vĩnh viễn người đã chọn khỏi danh sách. Không thể hoàn tác.",
+            "CONFIRM_MULTIPLE": "Xoá khỏi danh sách",
+            "CONFIRM_SINGLE": "Xoá khỏi danh sách"
         }
     },
     "CONTACTS_FILTER": {
-        "TITLE": "Lọc liên hệ",
-        "SUBTITLE": "Thêm bộ lọc bên dưới và ấn 'áp dụng bộ lọc' để lọc liên hệ.",
+        "TITLE": "Lọc danh sách",
+        "SUBTITLE": "Thêm bộ lọc bên dưới và ấn 'áp dụng bộ lọc' để lọc danh sách.",
         "EDIT_CUSTOM_SEGMENT": "Sửa nhóm khách",
         "CUSTOM_VIEWS_SUBTITLE": "Thêm hoặc bớt bộ lọc rồi cập nhật nhóm khách của bạn.",
         "ADD_NEW_FILTER": "Thêm Bộ lọc",
@@ -3480,7 +3480,7 @@ const messages: Record<string, unknown> = {
         "EMPTY_VALUE_ERROR": "Giá trị bắt buộc có",
         "SEGMENT_LABEL": "Tên nhóm khách",
         "SEGMENT_QUERY_LABEL": "Điều kiện nhóm khách",
-        "TOOLTIP_LABEL": "Lọc liên hệ",
+        "TOOLTIP_LABEL": "Lọc danh sách",
         "QUERY_DROPDOWN_LABELS": {
             "AND": "VÀ",
             "OR": "HOẶC"
@@ -3525,35 +3525,35 @@ const messages: Record<string, unknown> = {
     },
     "CONTACTS_LAYOUT": {
         "HEADER": {
-            "TITLE": "Liên hệ",
-            "SEARCH_TITLE": "Tìm kiếm liên hệ",
-            "ACTIVE_TITLE": "Liên hệ đang hoạt động",
+            "TITLE": "Bạn bè",
+            "SEARCH_TITLE": "Tìm người",
+            "ACTIVE_TITLE": "Đang hoạt động",
             "SEARCH_PLACEHOLDER": "Tìm kiếm...",
             "MESSAGE_BUTTON": "Tin nhắn",
             "SEND_MESSAGE": "Gửi tin nhắn",
-            "BLOCK_CONTACT": "Chặn liên hệ",
-            "UNBLOCK_CONTACT": "Bỏ chặn liên hệ",
+            "BLOCK_CONTACT": "Chặn",
+            "UNBLOCK_CONTACT": "Bỏ chặn",
             "BREADCRUMB": {
-                "CONTACTS": "Liên hệ"
+                "CONTACTS": "Bạn bè"
             },
             "ACTIONS": {
                 "CONTACT_CREATION": {
-                    "ADD_CONTACT": "Thêm liên hệ",
-                    "EXPORT_CONTACT": "Xuất liên hệ",
-                    "IMPORT_CONTACT": "Nhập liên hệ",
-                    "SAVE_CONTACT": "Lưu liên hệ",
-                    "EMAIL_ADDRESS_DUPLICATE": "Địa chỉ email này đang được sử dụng cho một liên hệ khác.",
-                    "PHONE_NUMBER_DUPLICATE": "Số điện thoại này đang được dùng cho một liên hệ khác.",
-                    "SUCCESS_MESSAGE": "Liên hệ được lưu thành công",
-                    "ERROR_MESSAGE": "Không lưu được liên hệ. Bạn hãy thử lại sau."
+                    "ADD_CONTACT": "Thêm người",
+                    "EXPORT_CONTACT": "Xuất danh sách",
+                    "IMPORT_CONTACT": "Nhập danh sách",
+                    "SAVE_CONTACT": "Lưu",
+                    "EMAIL_ADDRESS_DUPLICATE": "Email này đã có ở một hồ sơ khác.",
+                    "PHONE_NUMBER_DUPLICATE": "Số điện thoại này đã có ở một hồ sơ khác.",
+                    "SUCCESS_MESSAGE": "Đã lưu",
+                    "ERROR_MESSAGE": "Chưa lưu được. Bạn hãy thử lại sau."
                 },
-                "BLOCK_SUCCESS_MESSAGE": "Đã chặn liên hệ này",
-                "BLOCK_ERROR_MESSAGE": "Không chặn được liên hệ. Bạn hãy thử lại sau.",
-                "UNBLOCK_SUCCESS_MESSAGE": "Đã bỏ chặn liên hệ này",
-                "UNBLOCK_ERROR_MESSAGE": "Không bỏ chặn được liên hệ. Bạn hãy thử lại sau.",
+                "BLOCK_SUCCESS_MESSAGE": "Đã chặn người này",
+                "BLOCK_ERROR_MESSAGE": "Chưa chặn được. Bạn hãy thử lại sau.",
+                "UNBLOCK_SUCCESS_MESSAGE": "Đã bỏ chặn người này",
+                "UNBLOCK_ERROR_MESSAGE": "Chưa bỏ chặn được. Bạn hãy thử lại sau.",
                 "IMPORT_CONTACT": {
-                    "TITLE": "Nhập liên hệ",
-                    "DESCRIPTION": "Nhập liên hệ bằng một file CSV.",
+                    "TITLE": "Nhập danh sách",
+                    "DESCRIPTION": "Nhập danh sách từ một tệp CSV.",
                     "DOWNLOAD_LABEL": "Tải xuống tệp CSV mẫu.",
                     "LABEL": "Tệp CSV:",
                     "CHOOSE_FILE": "Chọn tệp",
@@ -3564,17 +3564,17 @@ const messages: Record<string, unknown> = {
                     "ERROR_MESSAGE": "Đã có lỗi, vui lòng thử lại",
                     "STATUS": {
                         "PENDING": "Đang chờ tới lượt nhập...",
-                        "PROCESSING": "Đang nhập liên hệ...",
+                        "PROCESSING": "Đang nhập danh sách...",
                         "COMPLETED": "Đã nhập {processed} trên {total} dòng.",
-                        "FAILED": "Nhập liên hệ thất bại."
+                        "FAILED": "Nhập danh sách thất bại."
                     },
                     "DOWNLOAD_FAILED_RECORDS": "Tải về những dòng không nhập được"
                 },
                 "EXPORT_CONTACT": {
-                    "TITLE": "Xuất liên hệ",
-                    "DESCRIPTION": "Xuất nhanh một tệp csv chứa đầy đủ thông tin liên hệ của bạn",
+                    "TITLE": "Xuất danh sách",
+                    "DESCRIPTION": "Xuất nhanh một tệp CSV gồm đầy đủ thông tin những người trong danh sách của bạn",
                     "CONFIRM": "Xuất",
-                    "SUCCESS_MESSAGE": "Đang xuất danh sách liên hệ. Khi tệp sẵn sàng, chúng tôi sẽ gửi email kèm đường dẫn tải về cho bạn.",
+                    "SUCCESS_MESSAGE": "Đang xuất danh sách. Khi tệp sẵn sàng, chúng tôi sẽ gửi email kèm đường dẫn tải về cho bạn.",
                     "ERROR_MESSAGE": "Đã có lỗi, vui lòng thử lại"
                 },
                 "SORT_BY": {
@@ -3619,7 +3619,7 @@ const messages: Record<string, unknown> = {
             }
         },
         "PAGINATION_FOOTER": {
-            "SHOWING": "Đang hiển thị {startItem} - {endItem} trong {totalItems} liên hệ"
+            "SHOWING": "Đang hiển thị {startItem} - {endItem} trong {totalItems} người"
         },
         "FILTER": {
             "NAME": "Tên",
@@ -3641,7 +3641,7 @@ const messages: Record<string, unknown> = {
                 "APPLY_FILTERS": "Áp dụng bộ lọc",
                 "ADD_FILTER": "Thêm bộ lọc"
             },
-            "TITLE": "Lọc liên hệ",
+            "TITLE": "Lọc danh sách",
             "EDIT_SEGMENT": "Sửa bộ lọc",
             "SEGMENT": {
                 "LABEL": "Tên nhóm khách",
@@ -3686,7 +3686,7 @@ const messages: Record<string, unknown> = {
             "UNIDENTIFIED_HINT": "Chưa có email, số điện thoại hay mã định danh — hiện chỉ biết khách qua kênh nhắn tin.",
             "VIEW_DETAILS": "Xem chi tiết",
             "EDIT_DETAILS_FORM": {
-                "TITLE": "Chỉnh sửa liên hệ chi tiết",
+                "TITLE": "Thông tin cá nhân",
                 "FORM": {
                     "FIRST_NAME": {
                         "PLACEHOLDER": "Nhập tên"
@@ -3696,11 +3696,11 @@ const messages: Record<string, unknown> = {
                     },
                     "EMAIL_ADDRESS": {
                         "PLACEHOLDER": "Nhập địa chỉ email",
-                        "DUPLICATE": "Địa chỉ email này đang được sử dụng cho một liên hệ khác."
+                        "DUPLICATE": "Email này đã có ở một hồ sơ khác."
                     },
                     "PHONE_NUMBER": {
                         "PLACEHOLDER": "Nhập số điện thoại",
-                        "DUPLICATE": "Số điện thoại này đang được dùng cho một liên hệ khác."
+                        "DUPLICATE": "Số điện thoại này đã có ở một hồ sơ khác."
                     },
                     "CITY": {
                         "PLACEHOLDER": "Nhập tên thành phố"
@@ -3715,9 +3715,9 @@ const messages: Record<string, unknown> = {
                         "PLACEHOLDER": "Nhập tên công ty"
                     }
                 },
-                "UPDATE_BUTTON": "Cập nhật liên hệ",
-                "SUCCESS_MESSAGE": "Đã cập nhật liên hệ",
-                "ERROR_MESSAGE": "Không cập nhật được liên hệ. Bạn hãy thử lại sau."
+                "UPDATE_BUTTON": "Lưu thay đổi",
+                "SUCCESS_MESSAGE": "Đã lưu thay đổi",
+                "ERROR_MESSAGE": "Chưa lưu được thay đổi. Bạn hãy thử lại sau."
             },
             "SOCIAL_MEDIA": {
                 "TITLE": "Sửa liên kết mạng xã hội",
@@ -3753,15 +3753,15 @@ const messages: Record<string, unknown> = {
         "DETAILS": {
             "CREATED_AT": "Tạo {date}",
             "LAST_ACTIVITY": "Hoạt động lần cuối {date}",
-            "DELETE_CONTACT_DESCRIPTION": "Xóa vĩnh viễn liên hệ này. Không thể hoàn tác",
-            "DELETE_CONTACT": "Xoá liên hệ",
+            "DELETE_CONTACT_DESCRIPTION": "Xoá vĩnh viễn người này khỏi danh sách. Không thể hoàn tác.",
+            "DELETE_CONTACT": "Xoá khỏi danh sách",
             "DELETE_DIALOG": {
                 "TITLE": "Xác nhận xoá",
-                "DESCRIPTION": "Bạn chắc chắn muốn xóa liên hệ này?",
+                "DESCRIPTION": "Bạn chắc chắn muốn xoá người này khỏi danh sách?",
                 "CONFIRM": "Có, Xoá",
                 "API": {
-                    "SUCCESS_MESSAGE": "Liên hệ đã được xóa thành công",
-                    "ERROR_MESSAGE": "Không thể xoá liên hệ. Vui lòng thử lại sau."
+                    "SUCCESS_MESSAGE": "Đã xoá khỏi danh sách",
+                    "ERROR_MESSAGE": "Chưa xoá được. Bạn hãy thử lại sau."
                 }
             },
             "AVATAR": {
@@ -3781,15 +3781,15 @@ const messages: Record<string, unknown> = {
                 "HISTORY": "Lịch sử",
                 "NOTES": "Ghi chú",
                 "MEDIA": "Tệp đính kèm",
-                "MERGE": "Gộp"
+                "MERGE": "Gộp hồ sơ"
             },
             "HISTORY": {
-                "EMPTY_STATE": "Không có hội thoại trước đó được liên kết với liên hệ này"
+                "EMPTY_STATE": "Chưa có hội thoại nào trước đây với người này"
             },
             "ATTRIBUTES": {
                 "SEARCH_PLACEHOLDER": "Tìm thuộc tính",
                 "UNUSED_ATTRIBUTES": "{count} thuộc tính đang dùng | {count} thuộc tính chưa dùng",
-                "EMPTY_STATE": "Tài khoản này chưa có thuộc tính tùy chỉnh nào cho liên hệ. Bạn có thể tạo trong phần cài đặt.",
+                "EMPTY_STATE": "Chưa có thuộc tính tuỳ chỉnh nào. Bạn có thể tạo trong phần cài đặt.",
                 "YES": "Có",
                 "NO": "Không",
                 "TRIGGER": {
@@ -3812,23 +3812,23 @@ const messages: Record<string, unknown> = {
                 }
             },
             "MERGE": {
-                "TITLE": "Hợp nhất liên hệ",
-                "DESCRIPTION": "Gộp hai hồ sơ thành một, gồm mọi thuộc tính và hội thoại. Nếu có xung đột, thuộc tính của liên hệ chính được ưu tiên.",
-                "PRIMARY": "Liên hệ chính",
+                "TITLE": "Gộp hồ sơ",
+                "DESCRIPTION": "Gộp hai hồ sơ thành một, gồm mọi thuộc tính và hội thoại. Nếu có xung đột, thuộc tính của hồ sơ chính được ưu tiên.",
+                "PRIMARY": "Hồ sơ chính",
                 "PRIMARY_HELP_LABEL": "Sẽ được giữ lại",
-                "PRIMARY_REQUIRED_ERROR": "Bạn hãy chọn một liên hệ để gộp trước khi tiếp tục",
+                "PRIMARY_REQUIRED_ERROR": "Bạn hãy chọn một hồ sơ để gộp trước khi tiếp tục",
                 "PARENT": "Sẽ được gộp vào",
                 "PARENT_HELP_LABEL": "Sẽ được xoá",
-                "EMPTY_STATE": "Không tìm thấy liên hệ nào",
-                "PLACEHOLDER": "Tìm liên hệ chính",
-                "SEARCH_PLACEHOLDER": "Tìm kiếm liên hệ",
-                "SEARCH_ERROR_MESSAGE": "Không tìm được liên hệ. Bạn hãy thử lại sau.",
-                "SUCCESS_MESSAGE": "Liên hệ được gộp thành công",
-                "ERROR_MESSAGE": "Không thể hợp nhất liên lạc, thử lại!",
+                "EMPTY_STATE": "Không tìm thấy ai",
+                "PLACEHOLDER": "Tìm hồ sơ chính",
+                "SEARCH_PLACEHOLDER": "Tìm hồ sơ",
+                "SEARCH_ERROR_MESSAGE": "Chưa tìm được. Bạn hãy thử lại sau.",
+                "SUCCESS_MESSAGE": "Đã gộp hồ sơ",
+                "ERROR_MESSAGE": "Chưa gộp được hồ sơ, bạn hãy thử lại!",
                 "IS_SEARCHING": "Đang tìm kiếm...",
                 "BUTTONS": {
                     "CANCEL": "Huỷ",
-                    "CONFIRM": "Hợp nhất liên hệ"
+                    "CONFIRM": "Gộp hồ sơ"
                 }
             },
             "NOTES": {
@@ -3836,21 +3836,21 @@ const messages: Record<string, unknown> = {
                 "WROTE": "đã viết",
                 "YOU": "Bạn",
                 "SAVE": "Lưu ghi chú",
-                "ADD_NOTE": "Thêm ghi chú cho liên hệ",
+                "ADD_NOTE": "Thêm ghi chú cho người này",
                 "EXPAND": "Mở rộng",
                 "COLLAPSE": "Thu gọn",
-                "NO_NOTES": "Chưa có ghi chú nào, bạn có thể thêm ghi chú ở trang chi tiết liên hệ.",
-                "EMPTY_STATE": "Liên hệ này chưa có ghi chú nào. Bạn có thể thêm ghi chú bằng ô bên trên.",
+                "NO_NOTES": "Chưa có ghi chú nào, bạn có thể thêm ghi chú ở trang hồ sơ.",
+                "EMPTY_STATE": "Người này chưa có ghi chú nào. Bạn có thể thêm ghi chú bằng ô bên trên.",
                 "CONVERSATION_EMPTY_STATE": "Chưa có ghi chú nào. Dùng nút Thêm ghi chú để tạo."
             }
         },
         "EMPTY_STATE": {
-            "TITLE": "Tài khoản này chưa có liên hệ nào",
-            "SUBTITLE": "Bấm nút bên dưới để bắt đầu thêm liên hệ mới",
-            "BUTTON_LABEL": "Thêm liên hệ",
-            "SEARCH_EMPTY_STATE_TITLE": "Không có liên hệ nào khớp với tìm kiếm của bạn 🔍",
-            "LIST_EMPTY_STATE_TITLE": "Không có liên hệ nào trong khung nhìn này 📋",
-            "ACTIVE_EMPTY_STATE_TITLE": "Hiện chưa có liên hệ nào đang hoạt động 🌙"
+            "TITLE": "Danh sách của bạn đang trống",
+            "SUBTITLE": "Bấm nút bên dưới để thêm người đầu tiên",
+            "BUTTON_LABEL": "Thêm người",
+            "SEARCH_EMPTY_STATE_TITLE": "Không tìm thấy ai khớp với tìm kiếm 🔍",
+            "LIST_EMPTY_STATE_TITLE": "Chưa có ai trong danh sách này 📋",
+            "ACTIVE_EMPTY_STATE_TITLE": "Hiện chưa có ai đang hoạt động 🌙"
         },
         "LOAD_MORE": "Tải thêm"
     },
@@ -4587,12 +4587,12 @@ const messages: Record<string, unknown> = {
             "PLACEHOLDER": "Không có"
         },
         "ACCORDION": {
-            "CONTACT_DETAILS": "Chi tiết liên hệ",
+            "CONTACT_DETAILS": "Thông tin",
             "CONVERSATION_ACTIONS": "Hành động của hội thoại",
             "CONVERSATION_LABELS": "Nhãn hội thoại",
             "CONVERSATION_INFO": "Thông tin hội thoại",
-            "CONTACT_NOTES": "Ghi chú liên hệ",
-            "CONTACT_ATTRIBUTES": "Thuộc tính của liên hệ",
+            "CONTACT_NOTES": "Ghi chú",
+            "CONTACT_ATTRIBUTES": "Thuộc tính",
             "PREVIOUS_CONVERSATION": "Hội thoại trước đó",
             "MACROS": "Macro",
             "LINEAR_ISSUES": "Issue Linear đã gắn",
@@ -5061,9 +5061,9 @@ const messages: Record<string, unknown> = {
         "SATURDAY": "Thứ bảy"
     },
     "DELETE_CONTACT": {
-        "BUTTON_LABEL": "Xoá liên lạc",
-        "TITLE": "Xoá liên hệ",
-        "DESC": "Xoá chi tiết liên hệ",
+        "BUTTON_LABEL": "Xoá khỏi danh sách",
+        "TITLE": "Xoá khỏi danh sách",
+        "DESC": "Xoá người này khỏi danh sách",
         "CONFIRM": {
             "TITLE": "Xác nhận xoá",
             "MESSAGE": "Bạn có muốn xoá? ",
@@ -5071,8 +5071,8 @@ const messages: Record<string, unknown> = {
             "NO": "Không, giữ"
         },
         "API": {
-            "SUCCESS_MESSAGE": "Liên hệ đã được xóa thành công",
-            "ERROR_MESSAGE": "Không thể xoá liên hệ. Vui lòng thử lại sau."
+            "SUCCESS_MESSAGE": "Đã xoá khỏi danh sách",
+            "ERROR_MESSAGE": "Chưa xoá được. Bạn hãy thử lại sau."
         }
     },
     "DIALOG": {
@@ -5093,9 +5093,9 @@ const messages: Record<string, unknown> = {
         "PLACEHOLDER": "Nhập khoảng thời gian"
     },
     "EDIT_CONTACT": {
-        "BUTTON_LABEL": "Chỉnh sửa liên hệ",
-        "TITLE": "Chỉnh sửa liên hệ",
-        "DESC": "Chỉnh sửa liên hệ chi tiết"
+        "BUTTON_LABEL": "Chỉnh sửa",
+        "TITLE": "Chỉnh sửa hồ sơ",
+        "DESC": "Thông tin cá nhân"
     },
     "EMAIL_HEADER": {
         "FROM": "Từ",
@@ -5481,6 +5481,61 @@ const messages: Record<string, unknown> = {
                     "SUCCESS_MESSAGE": "Phân khúc được xoá thành công.",
                     "ERROR_MESSAGE": "Có lỗi xảy ra lúc xoá phân khúc."
                 }
+            }
+        }
+    },
+    "FRIENDS": {
+        "ERRORS": {
+            "SELF": "Bạn không thể kết bạn với chính mình",
+            "NO_USERNAME": "Cả hai người cần có @username mới kết bạn được"
+        },
+        "ADD": {
+            "TITLE": "Thêm bạn",
+            "DESCRIPTION": "Tìm theo @username hoặc tên rồi gửi lời mời kết bạn.",
+            "SENT": "Đã gửi lời mời kết bạn tới {name}",
+            "ALREADY_FRIENDS": "Bạn và {name} đã là bạn bè",
+            "ERROR": "Chưa gửi được lời mời. Bạn hãy thử lại."
+        },
+        "REQUESTS": {
+            "INCOMING": "Lời mời đã nhận — {count}",
+            "OUTGOING": "Lời mời đã gửi — {count}",
+            "INCOMING_HINT": "Muốn kết bạn với bạn",
+            "OUTGOING_HINT": "Đang chờ trả lời",
+            "ACCEPT": "Chấp nhận",
+            "DECLINE": "Từ chối",
+            "CANCEL": "Huỷ lời mời",
+            "ACCEPTED": "Bạn và {name} đã là bạn bè",
+            "DECLINED": "Đã từ chối lời mời của {name}",
+            "CANCELLED": "Đã huỷ lời mời gửi {name}",
+            "EMPTY": "Không có lời mời nào đang chờ.",
+            "ERROR": "Chưa làm được. Bạn hãy thử lại."
+        },
+        "PROFILE": {
+            "CLOSE": "Đóng",
+            "MESSAGE": "Nhắn tin",
+            "MORE": "Thêm",
+            "ADD_FRIEND": "Kết bạn",
+            "REQUEST_SENT": "Đã gửi lời mời",
+            "ACCEPT": "Chấp nhận kết bạn",
+            "DECLINE": "Từ chối lời mời",
+            "CANCEL_REQUEST": "Huỷ lời mời",
+            "UNFRIEND": "Huỷ kết bạn",
+            "UNFRIENDED": "Đã huỷ kết bạn với {name}",
+            "FRIEND": "Bạn bè",
+            "STRANGER": "Người lạ",
+            "ABOUT": "Giới thiệu",
+            "JOINED": "Tham gia Yona từ",
+            "FRIENDS_SINCE": "Bạn bè từ",
+            "FIRST_SEEN": "Nhắn lần đầu",
+            "LABELS": "Nhãn",
+            "CONNECTIONS": "Kết nối",
+            "NO_CONNECTIONS": "Chưa có kết nối nào.",
+            "TABS": {
+                "ACTIVITY": "Hoạt động",
+                "NOTES": "Ghi chú",
+                "MEDIA": "Tệp",
+                "INFO": "Thông tin",
+                "ATTRIBUTES": "Thuộc tính"
             }
         }
     },
@@ -6690,6 +6745,8 @@ const messages: Record<string, unknown> = {
             "SLA_MISSED_RESOLUTION": "Trễ SLA",
             "PARTICIPATING_CONVERSATION_NEW_MESSAGE": "Tin nhắn mới",
             "ASSIGNED_CONVERSATION_NEW_MESSAGE": "Tin nhắn mới",
+            "FRIEND_REQUEST": "Lời mời kết bạn",
+            "FRIEND_REQUEST_ACCEPTED": "Đã thành bạn bè",
             "SNOOZED_UNTIL": "Tạm ẩn {time}",
             "SNOOZED_ENDS": "Đã hết thời gian tạm ẩn"
         },
@@ -9526,33 +9583,33 @@ const messages: Record<string, unknown> = {
         }
     },
     "MERGE_CONTACTS": {
-        "TITLE": "Hợp nhất các liên hệ",
-        "DESCRIPTION": "Hợp nhất các liên hệ để kết hợp hai hồ sơ thành một, bao gồm tất cả các thuộc tính và hội thoại. Trong trường hợp xung đột, các thuộc tính của liên hệ Chính sẽ được ưu tiên.",
+        "TITLE": "Gộp hồ sơ",
+        "DESCRIPTION": "Gộp hai hồ sơ thành một, gồm mọi thuộc tính và hội thoại. Nếu có xung đột, thuộc tính của hồ sơ chính được ưu tiên.",
         "PRIMARY": {
-            "TITLE": "Liên hệ chính",
+            "TITLE": "Hồ sơ chính",
             "HELP_LABEL": "Sẽ được xoá"
         },
         "PARENT": {
-            "TITLE": "Liên hệ cần gộp",
-            "PLACEHOLDER": "Tìm kiếm liên hệ",
+            "TITLE": "Hồ sơ cần gộp",
+            "PLACEHOLDER": "Tìm hồ sơ",
             "HELP_LABEL": "Được giữ"
         },
         "SUMMARY": {
             "TITLE": "Tóm tắt",
-            "DELETE_WARNING": "Liên hệ của <strong>{primaryContactName}</strong> sẽ bị xoá.",
-            "ATTRIBUTE_WARNING": "Chi tiết liên hệ của <strong>{primaryContactName}</strong> sẽ được sao chép đến <strong>{parentContactName}</strong>."
+            "DELETE_WARNING": "Hồ sơ của <strong>{primaryContactName}</strong> sẽ bị xoá.",
+            "ATTRIBUTE_WARNING": "Thông tin của <strong>{primaryContactName}</strong> sẽ được chép sang <strong>{parentContactName}</strong>."
         },
         "SEARCH": {
             "ERROR_MESSAGE": "Có lỗi xảy ra. Bạn hãy thử lại sau."
         },
         "FORM": {
-            "SUBMIT": " Hợp nhất các liên hệ",
+            "SUBMIT": " Gộp hồ sơ",
             "CANCEL": "Huỷ",
             "CHILD_CONTACT": {
-                "ERROR": "Chọn một liên hệ con để gộp"
+                "ERROR": "Chọn một hồ sơ để gộp"
             },
-            "SUCCESS_MESSAGE": "Liên hệ được gộp thành công",
-            "ERROR_MESSAGE": "Không thể hợp nhất liên lạc, thử lại!"
+            "SUCCESS_MESSAGE": "Đã gộp hồ sơ",
+            "ERROR_MESSAGE": "Chưa gộp được hồ sơ, bạn hãy thử lại!"
         },
         "DROPDOWN_ITEM": {
             "ID": "(ID: {identifier})"
@@ -9740,7 +9797,7 @@ const messages: Record<string, unknown> = {
         "BUTTON_LABEL": "Bắt đầu hội thoại",
         "TITLE": "Tạo mới hội thoại",
         "DESC": "Bắt đầu một hội thoại mới bằng cách thêm tin nhắn.",
-        "NO_INBOX": "Không tìm thấy kênh để bắt đầu hội thoại với liên hệ này.",
+        "NO_INBOX": "Không tìm thấy kênh để bắt đầu hội thoại với người này.",
         "FORM": {
             "TO": {
                 "LABEL": "Đến"
@@ -9779,7 +9836,13 @@ const messages: Record<string, unknown> = {
             "conversation_mention": "Bạn được nhắc tên trong hội thoại (#{display_id})",
             "sla_missed_first_response": "Hội thoại (#{display_id}) đã trễ SLA phản hồi đầu tiên",
             "sla_missed_next_response": "Hội thoại (#{display_id}) đã trễ SLA phản hồi kế tiếp",
-            "sla_missed_resolution": "Hội thoại (#{display_id}) đã trễ SLA xử lý xong"
+            "sla_missed_resolution": "Hội thoại (#{display_id}) đã trễ SLA xử lý xong",
+            "friend_request": "{name} đã gửi lời mời kết bạn",
+            "friend_request_accepted": "{name} đã chấp nhận lời mời kết bạn"
+        },
+        "friendship": {
+            "friend_request": "đã gửi lời mời kết bạn",
+            "friend_request_accepted": "đã chấp nhận lời mời kết bạn của bạn"
         },
         "attachment": "Tệp đính kèm",
         "no_content": "Không có nội dung",
@@ -10734,14 +10797,14 @@ const messages: Record<string, unknown> = {
     "SEARCH": {
         "TABS": {
             "ALL": "Tất cả kết quả",
-            "CONTACTS": "Danh bạ",
+            "CONTACTS": "Mọi người",
             "CONVERSATIONS": "Các hội thoại",
             "MESSAGES": "Tin nhắn",
             "FILES": "Tệp",
             "ARTICLES": "Bài viết"
         },
         "SECTION": {
-            "CONTACTS": "Danh bạ",
+            "CONTACTS": "Mọi người",
             "CONVERSATIONS": "Các hội thoại",
             "MESSAGES": "Tin nhắn",
             "FILES": "Tệp",
@@ -10795,7 +10858,7 @@ const messages: Record<string, unknown> = {
             "FROM": "Người gửi",
             "IN": "Hộp thư",
             "AGENTS": "Nhân viên",
-            "CONTACTS": "Liên hệ",
+            "CONTACTS": "Mọi người",
             "INBOXES": "Hộp thư",
             "NO_AGENTS": "Không tìm thấy nhà cung cấp",
             "NO_CONTACTS": "Hãy tìm kiếm để thấy kết quả",
@@ -10919,7 +10982,7 @@ const messages: Record<string, unknown> = {
     "SIDEBAR": {
         "NO_ITEMS": "Không có mục nào",
         "GLOBAL_SEARCH": "Tìm kiếm",
-        "GLOBAL_SEARCH_HINT": "Tìm hội thoại, tin nhắn, liên hệ, tệp trong toàn hệ thống",
+        "GLOBAL_SEARCH_HINT": "Tìm hội thoại, tin nhắn, mọi người và tệp trong toàn hệ thống",
         "CURRENTLY_VIEWING_ACCOUNT": "Hiện đang xem:",
         "SWITCH": "Chuyển",
         "INBOX_VIEW": "Khung nhìn hộp thư",
@@ -10933,7 +10996,7 @@ const messages: Record<string, unknown> = {
         "UNATTENDED_CONVERSATIONS": "Không giám sát",
         "REPORTS": "Báo cáo",
         "SETTINGS": "Cài đặt",
-        "CONTACTS": "Liên hệ",
+        "CONTACTS": "Bạn bè",
         "ACTIVE": "Đang hoạt động",
         "COMPANIES": "Công ty",
         "ALL_COMPANIES": "Tất cả công ty",
@@ -10971,7 +11034,7 @@ const messages: Record<string, unknown> = {
         "BILLING": "Phí",
         "CUSTOM_VIEWS_FOLDER": "Thư mục",
         "CUSTOM_VIEWS_SEGMENTS": "Phân khúc",
-        "ALL_CONTACTS": "Tất cả liên lạc",
+        "ALL_CONTACTS": "Tất cả bạn bè",
         "TAGGED_WITH": "Được gắn thẻ với",
         "NEW_LABEL": "Nhãn mới",
         "NEW_TEAM": "Nhóm mới",

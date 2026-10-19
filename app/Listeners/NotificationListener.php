@@ -2,6 +2,7 @@
 
 namespace App\Listeners;
 
+use App\Builders\FriendshipNotificationBuilder;
 use App\Builders\NotificationBuilder;
 use App\Events\DomainEvent;
 use App\Models\Account;
@@ -75,6 +76,22 @@ class NotificationListener extends BaseListener
             ->where('primary_actor_id', $conversation->id);
 
         return $assigneeNotifications->exists() && ! $assigneeNotifications->clone()->whereNull('read_at')->exists();
+    }
+
+    public function friendshipRequested(DomainEvent $event): void
+    {
+        $friendship = $event->data['friendship'];
+
+        (new FriendshipNotificationBuilder('friend_request', $friendship->addressee, $friendship))->perform();
+    }
+
+    // Lời mời đã trả lời xong: thông báo mời của người nhận thành đã đọc, người gửi được báo lại.
+    public function friendshipAccepted(DomainEvent $event): void
+    {
+        $friendship = $event->data['friendship'];
+
+        Notification::markAllRead($friendship->notifications()->getQuery()->where('user_id', $friendship->addressee_id));
+        (new FriendshipNotificationBuilder('friend_request_accepted', $friendship->requester, $friendship))->perform();
     }
 
     public function messageCreated(DomainEvent $event): void

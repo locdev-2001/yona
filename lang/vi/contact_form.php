@@ -7,32 +7,32 @@ return [
         'SUBMIT' => 'Gửi',
         'CANCEL' => 'Huỷ',
         'AVATAR' => [
-            'LABEL' => 'Avatar của liên hệ',
+            'LABEL' => 'Ảnh đại diện',
         ],
         'NAME' => [
-            'PLACEHOLDER' => 'Nhập tên đầy đủ của liên hệ',
+            'PLACEHOLDER' => 'Nhập họ tên đầy đủ',
             'LABEL' => 'Tên đầy đủ',
         ],
         'BIO' => [
-            'PLACEHOLDER' => 'Nhập tiểu sử của liên hệ',
+            'PLACEHOLDER' => 'Nhập vài dòng giới thiệu',
             'LABEL' => 'Tiểu sử',
         ],
         'EMAIL_ADDRESS' => [
-            'PLACEHOLDER' => 'Nhập địa chỉ email của liên hệ',
+            'PLACEHOLDER' => 'Nhập địa chỉ email',
             'LABEL' => 'Email',
-            'DUPLICATE' => 'Địa chỉ email này đang được sử dụng cho một liên hệ khác.',
+            'DUPLICATE' => 'Email này đã có ở một hồ sơ khác.',
             'ERROR' => 'Vui lòng nhập một địa chỉ email hợp lệ.',
         ],
         'PHONE_NUMBER' => [
-            'PLACEHOLDER' => 'Nhập số điện thoại của liên hệ',
+            'PLACEHOLDER' => 'Nhập số điện thoại',
             'LABEL' => 'Số điện thoại',
             'HELP' => 'Số điện thoại phải theo chuẩn E.164, ví dụ: +84912345678 [+][mã quốc gia][mã vùng][số điện thoại]. Bạn có thể chọn mã quốc gia trong danh sách.',
             'ERROR' => 'Số điện thoại nên rỗng hoặc thuộc định dạng E.164',
             'DIAL_CODE_ERROR' => 'Bạn hãy chọn mã quốc gia trong danh sách',
-            'DUPLICATE' => 'Số điện thoại này đang được dùng cho một liên hệ khác.',
+            'DUPLICATE' => 'Số điện thoại này đã có ở một hồ sơ khác.',
         ],
         'LOCATION' => [
-            'PLACEHOLDER' => 'Nhập vị trí của liên hệ',
+            'PLACEHOLDER' => 'Nhập nơi ở',
             'LABEL' => 'Địa điểm',
         ],
         'COMPANY_NAME' => [
@@ -71,10 +71,10 @@ return [
     ],
     'DELETE_AVATAR' => [
         'API' => [
-            'SUCCESS_MESSAGE' => 'Hình đại diện liên hệ đã được xóa thành công',
-            'ERROR_MESSAGE' => 'Không thể xóa hình đại diện liên hệ. Vui lòng thử lại sau.',
+            'SUCCESS_MESSAGE' => 'Đã xoá ảnh đại diện',
+            'ERROR_MESSAGE' => 'Chưa xoá được ảnh đại diện. Bạn hãy thử lại sau.',
         ],
     ],
-    'SUCCESS_MESSAGE' => 'Liên hệ được lưu thành công',
+    'SUCCESS_MESSAGE' => 'Đã lưu',
     'ERROR_MESSAGE' => 'Đã có lỗi, vui lòng thử lại',
 ];

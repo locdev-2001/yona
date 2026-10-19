@@ -23,6 +23,7 @@ class RemoveDuplicateNotificationJob extends ApplicationJob
 
         $duplicates = Notification::query()
             ->where('user_id', $notification->user_id)
+            ->where('primary_actor_type', $notification->primary_actor_type)
             ->where('primary_actor_id', $notification->primary_actor_id)
             ->orderBy('created_at', 'desc')
             ->orderBy('id', 'desc')

@@ -24,7 +24,7 @@ return [
         'CLEAR' => 'Clear search',
         'COMPOSE' => 'New message',
         'NO_RESULTS' => 'No conversation in this list matches “{query}”.',
-        'CONTACTS_HEADING' => 'Contacts',
+        'CONTACTS_HEADING' => 'People',
         'CONVERSATIONS_HEADING' => 'Conversations',
     ],
     'FILTER_ALL' => 'All',
@@ -151,7 +151,7 @@ return [
             'CONTENT' => 'has shared a url',
         ],
         'contact' => [
-            'CONTENT' => 'Shared contact',
+            'CONTENT' => 'Shared contact card',
         ],
         'embed' => [
             'CONTENT' => 'Embedded content',

@@ -3,8 +3,10 @@
 namespace App\Http\Resources;
 
 use App\Models\Conversation;
+use App\Models\Friendship;
 use App\Models\Message;
 use App\Models\Notification;
+use App\Support\RealtimePayload;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -74,7 +76,11 @@ class NotificationResource extends JsonResource
             'push_message_body' => $notification->pushMessageBody(),
             'primary_actor_type' => $notification->primary_actor_type,
             'primary_actor_id' => $notification->primary_actor_id,
-            'primary_actor' => $primaryActor === null ? null : ConversationResource::pushEventData($primaryActor),
+            'primary_actor' => match (true) {
+                $primaryActor instanceof Friendship => RealtimePayload::notificationFriendshipActor($primaryActor, $notification->friendshipCounterpart()),
+                $primaryActor === null => null,
+                default => ConversationResource::pushEventData($primaryActor),
+            },
             'read_at' => $notification->read_at?->toISOString(),
             'secondary_actor' => $secondaryActor instanceof Message ? MessageResource::pushEventData($secondaryActor) : null,
             'user' => $notification->user === null ? null : UserResource::pushEventData($notification->user, $notification->account),

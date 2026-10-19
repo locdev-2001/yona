@@ -7,7 +7,7 @@ return [
     // Ô tìm ở sidebar tìm khắp hệ thống, khác ô tìm lọc tại chỗ của cột hội thoại.
     // Chữ gợi ý phải ngắn để hiện trọn trong hàng đầu sidebar; phạm vi nằm ở HINT.
     'GLOBAL_SEARCH' => 'Tìm kiếm',
-    'GLOBAL_SEARCH_HINT' => 'Tìm hội thoại, tin nhắn, liên hệ, tệp trong toàn hệ thống',
+    'GLOBAL_SEARCH_HINT' => 'Tìm hội thoại, tin nhắn, mọi người và tệp trong toàn hệ thống',
     'CURRENTLY_VIEWING_ACCOUNT' => 'Hiện đang xem:',
     'SWITCH' => 'Chuyển',
     'INBOX_VIEW' => 'Khung nhìn hộp thư',
@@ -21,7 +21,7 @@ return [
     'UNATTENDED_CONVERSATIONS' => 'Không giám sát',
     'REPORTS' => 'Báo cáo',
     'SETTINGS' => 'Cài đặt',
-    'CONTACTS' => 'Liên hệ',
+    'CONTACTS' => 'Bạn bè',
     'ACTIVE' => 'Đang hoạt động',
     'COMPANIES' => 'Công ty',
     'ALL_COMPANIES' => 'Tất cả công ty',
@@ -59,7 +59,7 @@ return [
     'BILLING' => 'Phí',
     'CUSTOM_VIEWS_FOLDER' => 'Thư mục',
     'CUSTOM_VIEWS_SEGMENTS' => 'Phân khúc',
-    'ALL_CONTACTS' => 'Tất cả liên lạc',
+    'ALL_CONTACTS' => 'Tất cả bạn bè',
     'TAGGED_WITH' => 'Được gắn thẻ với',
     'NEW_LABEL' => 'Nhãn mới',
     'NEW_TEAM' => 'Nhóm mới',

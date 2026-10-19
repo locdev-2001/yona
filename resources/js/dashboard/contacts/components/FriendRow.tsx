@@ -7,10 +7,10 @@ import ChannelIcon from 'dashboard/components-next/icon/ChannelIcon';
 import DropdownMenu from 'dashboard/components-next/dropdown-menu/DropdownMenu';
 import ConfirmContactDeleteDialog from 'dashboard/components-next/Contacts/ContactsForm/ConfirmContactDeleteDialog';
 import type { ConfirmContactDeleteDialogHandle } from 'dashboard/components-next/Contacts/ContactsForm/ConfirmContactDeleteDialog';
-import { fetchContactConversations } from 'dashboard/conversation/panelApi';
-import { composeConversationUrl, conversationUrl } from 'dashboard/helper/URLHelper';
+import { openContactChat } from 'dashboard/contacts/openContactChat';
 import { avatarSeed } from 'shared/avatar/avatarSeed';
 import type { Contact } from 'dashboard/contacts/types';
+import { uniqueChannels } from 'dashboard/contacts/contactChannels';
 import type { DashboardPageProps } from '../../types';
 
 const ROUND_ACTION_CLASS =
@@ -44,15 +44,6 @@ export default function FriendRow({ contact, onRemoved }: FriendRowProps) {
 
     const viewProfile = () => router.visit(`/app/accounts/${accountId}/contacts/${contact.id}`);
 
-    const openChat = async () => {
-        const conversations = await fetchContactConversations(accountId, contact.id).catch(() => []);
-        const latest = conversations[0];
-        router.visit(
-            latest
-                ? conversationUrl({ accountId, id: latest.id })
-                : composeConversationUrl({ accountId, contactId: contact.id }),
-        );
-    };
 
     const menuItems = [
         { label: t('CONTACTS_LAYOUT.FRIENDS.VIEW_PROFILE'), action: 'profile', value: 'profile', icon: 'i-lucide-user-round' },
@@ -93,7 +84,7 @@ export default function FriendRow({ contact, onRemoved }: FriendRowProps) {
                     className={ROUND_ACTION_CLASS}
                     title={t('CONTACTS_LAYOUT.FRIENDS.MESSAGE')}
                     aria-label={t('CONTACTS_LAYOUT.FRIENDS.MESSAGE')}
-                    onClick={() => void openChat()}
+                    onClick={() => void openContactChat(accountId, contact.id)}
                 >
                     <span className="i-lucide-message-circle size-[18px]" />
                 </button>
@@ -131,12 +122,4 @@ export default function FriendRow({ contact, onRemoved }: FriendRowProps) {
             ) : null}
         </li>
     );
-}
-
-function uniqueChannels(contact: Contact) {
-    const byType = new Map<string, { channel_type: string; name: string }>();
-    (contact.contactInboxes ?? []).forEach(({ inbox }) => {
-        if (!byType.has(inbox.channelType)) byType.set(inbox.channelType, { channel_type: inbox.channelType, name: inbox.name });
-    });
-    return [...byType.values()];
 }

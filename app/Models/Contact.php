@@ -264,6 +264,12 @@ class Contact extends Model
             : $query;
     }
 
+    /** @param  list<string>  $sourceIds */
+    public function scopeWithContactSourceIds(Builder $query, array $sourceIds): Builder
+    {
+        return $query->whereHas('contactInboxes', fn (Builder $contactInboxes) => $contactInboxes->whereIn('source_id', $sourceIds));
+    }
+
     public function scopeIdentified(Builder $query, bool $identified = true): Builder
     {
         return $query->whereRaw(($identified ? '' : 'NOT ').self::IDENTIFIED_SQL);

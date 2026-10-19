@@ -16,6 +16,7 @@ use App\Messaging\Stickers\StickerContent;
 use App\Models\Account;
 use App\Models\Attachment;
 use App\Models\Channel\Yona;
+use App\Models\ContactInbox;
 use App\Models\Conversation;
 use App\Models\Inbox;
 use App\Models\Message;
@@ -59,13 +60,17 @@ class YonaRelay
     // Mở (hoặc lấy lại) hội thoại với một người dùng Yona trong hộp thư Yona của mình.
     public function openWith(Account $account, User $recipient): Conversation
     {
-        $contactInbox = (new ContactInboxWithContactBuilder(
-            inbox: $this->inboxes->ensureForAccount($account),
-            contactAttributes: $this->senderOf($recipient)->contactAttributes(),
-            sourceId: Yona::contactSourceIdFor($recipient->id),
-        ))->perform();
+        return IncomingConversationResolver::resolve($this->contactFor($account, $recipient));
+    }
 
-        return IncomingConversationResolver::resolve($contactInbox);
+    // Người dùng Yona trong hộp thư Yona của account, chưa có thì thêm (chưa mở hội thoại).
+    public function contactFor(Account $account, User $person): ?ContactInbox
+    {
+        return (new ContactInboxWithContactBuilder(
+            inbox: $this->inboxes->ensureForAccount($account),
+            contactAttributes: $this->senderOf($person)->contactAttributes(),
+            sourceId: Yona::contactSourceIdFor($person->id),
+        ))->perform();
     }
 
     public function react(Message $message, ?string $emoji): void

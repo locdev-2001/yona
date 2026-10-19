@@ -6,7 +6,7 @@ return [
     'BUTTON_LABEL' => 'Bắt đầu hội thoại',
     'TITLE' => 'Tạo mới hội thoại',
     'DESC' => 'Bắt đầu một hội thoại mới bằng cách thêm tin nhắn.',
-    'NO_INBOX' => 'Không tìm thấy kênh để bắt đầu hội thoại với liên hệ này.',
+    'NO_INBOX' => 'Không tìm thấy kênh để bắt đầu hội thoại với người này.',
     'FORM' => [
         'TO' => [
             'LABEL' => 'Đến',

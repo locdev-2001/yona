@@ -111,6 +111,7 @@ export const ICONS = {
     // Kênh không mang thương hiệu
     channelDefault: 'i-lucide-message-circle',
     channelWebsite: 'i-lucide-globe',
+    channelYona: 'i-lucide-message-circle',
     channelEmail: 'i-lucide-mail',
     channelSms: 'i-lucide-message-square-text',
     channelApi: 'i-lucide-braces',

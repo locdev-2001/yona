@@ -2832,7 +2832,7 @@ const messages: Record<string, unknown> = {
             "CLEAR": "Clear search",
             "COMPOSE": "New message",
             "NO_RESULTS": "No conversation in this list matches “{query}”.",
-            "CONTACTS_HEADING": "Contacts",
+            "CONTACTS_HEADING": "People",
             "CONVERSATIONS_HEADING": "Conversations"
         },
         "FILTER_ALL": "All",
@@ -2958,7 +2958,7 @@ const messages: Record<string, unknown> = {
                 "CONTENT": "has shared a url"
             },
             "contact": {
-                "CONTENT": "Shared contact"
+                "CONTENT": "Shared contact card"
             },
             "embed": {
                 "CONTENT": "Embedded content"
@@ -3036,7 +3036,7 @@ const messages: Record<string, unknown> = {
             "GO_TO_MY_INBOX": "Go to notifications",
             "COMPOSE_CONVERSATION": "New message",
             "GO_TO_CONVERSATION_DASHBOARD": "Go to Conversation Dashboard",
-            "GO_TO_CONTACTS_DASHBOARD": "Go to Contacts Dashboard",
+            "GO_TO_CONTACTS_DASHBOARD": "Go to Friends",
             "GO_TO_CAPTAIN": "Go to Captain",
             "GO_TO_CALLS_DASHBOARD": "Go to Calls Dashboard",
             "GO_TO_CAMPAIGNS": "Go to Campaigns",
@@ -3148,9 +3148,9 @@ const messages: Record<string, unknown> = {
             "SENDING": "Opening the conversation and sending…",
             "COMPOSER_LOCKED": "Pick a recipient and a channel to start writing",
             "SUBJECT_LABEL": "Subject:",
-            "NEW_CONTACT_BADGE": "New contact",
-            "CREATE_CONTACT": "Create new contact: {address}",
-            "CONTACT_LOAD_FAILED": "Could not load the contact. Please pick the recipient again.",
+            "NEW_CONTACT_BADGE": "New person",
+            "CREATE_CONTACT": "Add new person: {address}",
+            "CONTACT_LOAD_FAILED": "Could not load the recipient. Please pick them again.",
             "LOADING_CHANNELS": "Finding channels that can reach this person…",
             "LOAD_CHANNELS_FAILED": "Could not load the channels.",
             "CREATED_ELSEWHERE": "The conversation from your draft has been created.",
@@ -3159,7 +3159,7 @@ const messages: Record<string, unknown> = {
             "UNAVAILABLE": {
                 "MESSAGING_WINDOW_CLOSED": "The channel's reply window since the customer's last message has passed",
                 "REAUTHORIZATION_REQUIRED": "The channel is disconnected and needs to sign in again",
-                "EMAIL_UNDELIVERABLE": "This contact's email address cannot receive mail",
+                "EMAIL_UNDELIVERABLE": "This person's email address cannot receive mail",
                 "OTHER": "This channel cannot reach this person right now"
             },
             "EMAIL_CHECK": {
@@ -3179,11 +3179,11 @@ const messages: Record<string, unknown> = {
         },
         "FORM": {
             "ERROR_MESSAGE": "An error occurred while creating the conversation. Please try again later.",
-            "NO_INBOX_ALERT": "There are no available inboxes to start a conversation with this contact.",
+            "NO_INBOX_ALERT": "There are no available inboxes to start a conversation with this person.",
             "CONTACT_SELECTOR": {
                 "LABEL": "To:",
                 "TAG_INPUT_PLACEHOLDER": "Enter at least 2 characters to search by name, email, or phone number",
-                "NO_RESULTS": "No contacts found",
+                "NO_RESULTS": "No one found",
                 "CHANGE": "Change recipient"
             },
             "INBOX_SELECTOR": {
@@ -3200,32 +3200,32 @@ const messages: Record<string, unknown> = {
             "SUBMIT": "Submit",
             "CANCEL": "Cancel",
             "AVATAR": {
-                "LABEL": "Contact Avatar"
+                "LABEL": "Avatar"
             },
             "NAME": {
-                "PLACEHOLDER": "Enter the full name of the contact",
+                "PLACEHOLDER": "Enter the full name",
                 "LABEL": "Full Name"
             },
             "BIO": {
-                "PLACEHOLDER": "Enter the bio of the contact",
+                "PLACEHOLDER": "Enter a short bio",
                 "LABEL": "Bio"
             },
             "EMAIL_ADDRESS": {
-                "PLACEHOLDER": "Enter the email address of the contact",
+                "PLACEHOLDER": "Enter the email address",
                 "LABEL": "Email Address",
-                "DUPLICATE": "This email address is in use for another contact.",
+                "DUPLICATE": "This email address already belongs to another profile.",
                 "ERROR": "Please enter a valid email address."
             },
             "PHONE_NUMBER": {
-                "PLACEHOLDER": "Enter the phone number of the contact",
+                "PLACEHOLDER": "Enter the phone number",
                 "LABEL": "Phone Number",
                 "HELP": "Phone number should be of E.164 format eg: +1415555555 [+][country code][area code][local phone number]. You can select the dial code from the dropdown.",
                 "ERROR": "Phone number should be either empty or of E.164 format",
                 "DIAL_CODE_ERROR": "Please select a dial code from the list",
-                "DUPLICATE": "This phone number is in use for another contact."
+                "DUPLICATE": "This phone number already belongs to another profile."
             },
             "LOCATION": {
-                "PLACEHOLDER": "Enter the location of the contact",
+                "PLACEHOLDER": "Enter the location",
                 "LABEL": "Location"
             },
             "COMPANY_NAME": {
@@ -3264,11 +3264,11 @@ const messages: Record<string, unknown> = {
         },
         "DELETE_AVATAR": {
             "API": {
-                "SUCCESS_MESSAGE": "Contact avatar deleted successfully",
-                "ERROR_MESSAGE": "Could not delete the contact avatar. Please try again later."
+                "SUCCESS_MESSAGE": "Avatar deleted",
+                "ERROR_MESSAGE": "Could not delete the avatar. Please try again later."
             }
         },
-        "SUCCESS_MESSAGE": "Contact saved successfully",
+        "SUCCESS_MESSAGE": "Saved successfully",
         "ERROR_MESSAGE": "There was an error, please try again"
     },
     "CONTACT_PANEL": {
@@ -3293,24 +3293,24 @@ const messages: Record<string, unknown> = {
         "CREATED_AT_LABEL": "Created",
         "NEW_MESSAGE": "New message",
         "START_NEW_CONVERSATION": "Start a new conversation",
-        "DELETE_CONTACT": "Delete contact",
+        "DELETE_CONTACT": "Remove from list",
         "MORE_ACTIONS": "More actions",
         "CALL": "Call",
-        "CALL_INITIATED": "Calling the contact…",
+        "CALL_INITIATED": "Calling this person…",
         "CALL_FAILED": "Unable to start the call. Please try again.",
-        "WHATSAPP_CALL_PERMISSION_REQUESTED": "Sent a call permission request to the contact. Try again once they accept.",
-        "WHATSAPP_CALL_PERMISSION_PENDING": "Call permission request already sent recently. Try again once the contact accepts.",
+        "WHATSAPP_CALL_PERMISSION_REQUESTED": "Sent a call permission request to this person. Try again once they accept.",
+        "WHATSAPP_CALL_PERMISSION_PENDING": "Call permission request already sent recently. Try again once they accept.",
         "CLICK_TO_EDIT": "Click to edit",
         "VOICE_INBOX_PICKER": {
             "TITLE": "Choose a voice inbox"
         },
         "CONVERSATIONS": {
-            "NO_RECORDS_FOUND": "There are no previous conversations associated to this contact.",
+            "NO_RECORDS_FOUND": "No previous conversations with this person.",
             "TITLE": "Previous Conversations"
         },
         "LABELS": {
             "CONTACT": {
-                "TITLE": "Contact Labels",
+                "TITLE": "Profile labels",
                 "ERROR": "Couldn't update labels"
             },
             "CONVERSATION": {
@@ -3326,17 +3326,17 @@ const messages: Record<string, unknown> = {
                 "CUSTOMIZE": "Customize"
             }
         },
-        "MERGE_CONTACT": "Merge contact",
-        "CONTACT_ACTIONS": "Contact actions",
-        "MUTE_CONTACT": "Block Contact",
-        "UNMUTE_CONTACT": "Unblock Contact",
-        "MUTED_SUCCESS": "This contact is blocked successfully. You will not be notified of any future conversations.",
-        "UNMUTED_SUCCESS": "This contact is unblocked successfully.",
+        "MERGE_CONTACT": "Merge profiles",
+        "CONTACT_ACTIONS": "Options",
+        "MUTE_CONTACT": "Block",
+        "UNMUTE_CONTACT": "Unblock",
+        "MUTED_SUCCESS": "This person is blocked. You will not be notified of any future conversations.",
+        "UNMUTED_SUCCESS": "This person is unblocked.",
         "SEND_TRANSCRIPT": "Send Transcript",
         "EDIT_LABEL": "Edit",
         "SIDEBAR_SECTIONS": {
             "CUSTOM_ATTRIBUTES": "Custom Attributes",
-            "CONTACT_LABELS": "Contact Labels",
+            "CONTACT_LABELS": "Profile labels",
             "PREVIOUS_CONVERSATIONS": "Previous Conversations",
             "NO_RECORDS_FOUND": "No attributes found"
         }
@@ -3448,26 +3448,26 @@ const messages: Record<string, unknown> = {
         "ASSIGN_LABELS_FAILED": "Failed to assign labels",
         "REMOVE_LABELS_SUCCESS": "Labels removed successfully.",
         "REMOVE_LABELS_FAILED": "Failed to remove labels",
-        "DESCRIPTION": "Select the labels you want to add to the selected contacts.",
+        "DESCRIPTION": "Select the labels you want to add to the selected people.",
         "NO_LABELS_FOUND": "No labels available yet.",
         "SELECTED_COUNT": "{count} selected",
         "CLEAR_SELECTION": "Clear selection",
         "SELECT_ALL": "Select all ({count})",
         "DELETE_CONTACTS": "Delete",
-        "DELETE_SUCCESS": "Contacts deleted successfully.",
-        "DELETE_FAILED": "Failed to delete contacts.",
+        "DELETE_SUCCESS": "Removed from your list.",
+        "DELETE_FAILED": "Could not remove. Please try again.",
         "DELETE_DIALOG": {
-            "TITLE": "Delete selected contacts",
-            "SINGULAR_TITLE": "Delete selected contact",
-            "DESCRIPTION": "This will permanently delete {count} selected contacts. This action cannot be undone.",
-            "SINGULAR_DESCRIPTION": "This will permanently delete the selected contact. This action cannot be undone.",
-            "CONFIRM_MULTIPLE": "Delete contacts",
-            "CONFIRM_SINGLE": "Delete contact"
+            "TITLE": "Remove selected people",
+            "SINGULAR_TITLE": "Remove selected person",
+            "DESCRIPTION": "This will permanently remove {count} selected people from your list. This action cannot be undone.",
+            "SINGULAR_DESCRIPTION": "This will permanently remove the selected person from your list. This action cannot be undone.",
+            "CONFIRM_MULTIPLE": "Remove from list",
+            "CONFIRM_SINGLE": "Remove from list"
         }
     },
     "CONTACTS_FILTER": {
-        "TITLE": "Filter Contacts",
-        "SUBTITLE": "Add filters below and hit 'Submit' to filter contacts.",
+        "TITLE": "Filter list",
+        "SUBTITLE": "Add filters below and hit 'Submit' to filter the list.",
         "EDIT_CUSTOM_SEGMENT": "Edit Segment",
         "CUSTOM_VIEWS_SUBTITLE": "Add or remove filters and update your segment.",
         "ADD_NEW_FILTER": "Add Filter",
@@ -3480,7 +3480,7 @@ const messages: Record<string, unknown> = {
         "EMPTY_VALUE_ERROR": "Value is required",
         "SEGMENT_LABEL": "Segment Name",
         "SEGMENT_QUERY_LABEL": "Segment Query",
-        "TOOLTIP_LABEL": "Filter contacts",
+        "TOOLTIP_LABEL": "Filter list",
         "QUERY_DROPDOWN_LABELS": {
             "AND": "AND",
             "OR": "OR"
@@ -3525,35 +3525,35 @@ const messages: Record<string, unknown> = {
     },
     "CONTACTS_LAYOUT": {
         "HEADER": {
-            "TITLE": "Contacts",
-            "SEARCH_TITLE": "Search contacts",
-            "ACTIVE_TITLE": "Active contacts",
+            "TITLE": "Friends",
+            "SEARCH_TITLE": "Search people",
+            "ACTIVE_TITLE": "Active now",
             "SEARCH_PLACEHOLDER": "Search...",
             "MESSAGE_BUTTON": "Message",
             "SEND_MESSAGE": "Send message",
-            "BLOCK_CONTACT": "Block contact",
-            "UNBLOCK_CONTACT": "Unblock contact",
+            "BLOCK_CONTACT": "Block",
+            "UNBLOCK_CONTACT": "Unblock",
             "BREADCRUMB": {
-                "CONTACTS": "Contacts"
+                "CONTACTS": "Friends"
             },
             "ACTIONS": {
                 "CONTACT_CREATION": {
-                    "ADD_CONTACT": "Add contact",
-                    "EXPORT_CONTACT": "Export contacts",
-                    "IMPORT_CONTACT": "Import contacts",
-                    "SAVE_CONTACT": "Save contact",
-                    "EMAIL_ADDRESS_DUPLICATE": "This email address is in use for another contact.",
-                    "PHONE_NUMBER_DUPLICATE": "This phone number is in use for another contact.",
-                    "SUCCESS_MESSAGE": "Contact saved successfully",
-                    "ERROR_MESSAGE": "Unable to save contact. Please try again later."
+                    "ADD_CONTACT": "Add person",
+                    "EXPORT_CONTACT": "Export list",
+                    "IMPORT_CONTACT": "Import list",
+                    "SAVE_CONTACT": "Save",
+                    "EMAIL_ADDRESS_DUPLICATE": "This email address already belongs to another profile.",
+                    "PHONE_NUMBER_DUPLICATE": "This phone number already belongs to another profile.",
+                    "SUCCESS_MESSAGE": "Saved successfully",
+                    "ERROR_MESSAGE": "Unable to save. Please try again later."
                 },
-                "BLOCK_SUCCESS_MESSAGE": "This contact is blocked successfully",
-                "BLOCK_ERROR_MESSAGE": "Unable to block contact. Please try again later.",
-                "UNBLOCK_SUCCESS_MESSAGE": "This contact is unblocked successfully",
-                "UNBLOCK_ERROR_MESSAGE": "Unable to unblock contact. Please try again later.",
+                "BLOCK_SUCCESS_MESSAGE": "This person is blocked",
+                "BLOCK_ERROR_MESSAGE": "Unable to block. Please try again later.",
+                "UNBLOCK_SUCCESS_MESSAGE": "This person is unblocked",
+                "UNBLOCK_ERROR_MESSAGE": "Unable to unblock. Please try again later.",
                 "IMPORT_CONTACT": {
-                    "TITLE": "Import contacts",
-                    "DESCRIPTION": "Import contacts through a CSV file.",
+                    "TITLE": "Import list",
+                    "DESCRIPTION": "Import a list from a CSV file.",
                     "DOWNLOAD_LABEL": "Download a sample csv.",
                     "LABEL": "CSV File:",
                     "CHOOSE_FILE": "Choose file",
@@ -3564,15 +3564,15 @@ const messages: Record<string, unknown> = {
                     "ERROR_MESSAGE": "There was an error, please try again",
                     "STATUS": {
                         "PENDING": "Import queued...",
-                        "PROCESSING": "Importing contacts...",
+                        "PROCESSING": "Importing list...",
                         "COMPLETED": "Imported {processed} of {total} rows.",
                         "FAILED": "The import failed."
                     },
                     "DOWNLOAD_FAILED_RECORDS": "Download the rows that could not be imported"
                 },
                 "EXPORT_CONTACT": {
-                    "TITLE": "Export contacts",
-                    "DESCRIPTION": "Quickly export a csv file with comprehensive details of your contacts",
+                    "TITLE": "Export list",
+                    "DESCRIPTION": "Quickly export a CSV file with full details of everyone on your list",
                     "CONFIRM": "Export",
                     "SUCCESS_MESSAGE": "Export is in progress. We will email you a download link when the export file is ready.",
                     "ERROR_MESSAGE": "There was an error, please try again"
@@ -3619,7 +3619,7 @@ const messages: Record<string, unknown> = {
             }
         },
         "PAGINATION_FOOTER": {
-            "SHOWING": "Showing {startItem} - {endItem} of {totalItems} contact | Showing {startItem} - {endItem} of {totalItems} contacts"
+            "SHOWING": "Showing {startItem} - {endItem} of {totalItems} person | Showing {startItem} - {endItem} of {totalItems} people"
         },
         "FILTER": {
             "NAME": "Name",
@@ -3641,7 +3641,7 @@ const messages: Record<string, unknown> = {
                 "APPLY_FILTERS": "Apply filters",
                 "ADD_FILTER": "Add filter"
             },
-            "TITLE": "Filter contacts",
+            "TITLE": "Filter list",
             "EDIT_SEGMENT": "Edit segment",
             "SEGMENT": {
                 "LABEL": "Segment name",
@@ -3686,7 +3686,7 @@ const messages: Record<string, unknown> = {
             "UNIDENTIFIED_HINT": "No email, phone number or identifier yet — known only through the messaging channel.",
             "VIEW_DETAILS": "View details",
             "EDIT_DETAILS_FORM": {
-                "TITLE": "Edit contact details",
+                "TITLE": "Personal info",
                 "FORM": {
                     "FIRST_NAME": {
                         "PLACEHOLDER": "Enter the first name"
@@ -3696,11 +3696,11 @@ const messages: Record<string, unknown> = {
                     },
                     "EMAIL_ADDRESS": {
                         "PLACEHOLDER": "Enter the email address",
-                        "DUPLICATE": "This email address is in use for another contact."
+                        "DUPLICATE": "This email address already belongs to another profile."
                     },
                     "PHONE_NUMBER": {
                         "PLACEHOLDER": "Enter the phone number",
-                        "DUPLICATE": "This phone number is in use for another contact."
+                        "DUPLICATE": "This phone number already belongs to another profile."
                     },
                     "CITY": {
                         "PLACEHOLDER": "Enter the city name"
@@ -3715,9 +3715,9 @@ const messages: Record<string, unknown> = {
                         "PLACEHOLDER": "Enter the company name"
                     }
                 },
-                "UPDATE_BUTTON": "Update contact",
-                "SUCCESS_MESSAGE": "Contact updated successfully",
-                "ERROR_MESSAGE": "Unable to update contact. Please try again later."
+                "UPDATE_BUTTON": "Save changes",
+                "SUCCESS_MESSAGE": "Changes saved",
+                "ERROR_MESSAGE": "Unable to save changes. Please try again later."
             },
             "SOCIAL_MEDIA": {
                 "TITLE": "Edit social links",
@@ -3753,15 +3753,15 @@ const messages: Record<string, unknown> = {
         "DETAILS": {
             "CREATED_AT": "Created {date}",
             "LAST_ACTIVITY": "Last active {date}",
-            "DELETE_CONTACT_DESCRIPTION": "Permanently delete this contact. This action is irreversible",
-            "DELETE_CONTACT": "Delete contact",
+            "DELETE_CONTACT_DESCRIPTION": "Permanently remove this person from your list. This action is irreversible.",
+            "DELETE_CONTACT": "Remove from list",
             "DELETE_DIALOG": {
                 "TITLE": "Confirm Deletion",
-                "DESCRIPTION": "Are you sure you want to delete this contact?",
+                "DESCRIPTION": "Are you sure you want to remove this person from your list?",
                 "CONFIRM": "Yes, Delete",
                 "API": {
-                    "SUCCESS_MESSAGE": "Contact deleted successfully",
-                    "ERROR_MESSAGE": "Could not delete contact. Please try again later."
+                    "SUCCESS_MESSAGE": "Removed from your list",
+                    "ERROR_MESSAGE": "Could not remove. Please try again later."
                 }
             },
             "AVATAR": {
@@ -3781,15 +3781,15 @@ const messages: Record<string, unknown> = {
                 "HISTORY": "History",
                 "NOTES": "Notes",
                 "MEDIA": "Media",
-                "MERGE": "Merge"
+                "MERGE": "Merge profiles"
             },
             "HISTORY": {
-                "EMPTY_STATE": "There are no previous conversations associated to this contact"
+                "EMPTY_STATE": "No previous conversations with this person"
             },
             "ATTRIBUTES": {
                 "SEARCH_PLACEHOLDER": "Search for attributes",
                 "UNUSED_ATTRIBUTES": "{count} Used attribute | {count} Unused attributes",
-                "EMPTY_STATE": "There are no contact custom attributes available in this account. You can create a custom attribute in settings.",
+                "EMPTY_STATE": "There are no custom attributes yet. You can create one in settings.",
                 "YES": "Yes",
                 "NO": "No",
                 "TRIGGER": {
@@ -3812,23 +3812,23 @@ const messages: Record<string, unknown> = {
                 }
             },
             "MERGE": {
-                "TITLE": "Merge contact",
-                "DESCRIPTION": "Combine two profiles into one, including all attributes and conversations. In case of conflict, the primary contact’s attributes will take precedence.",
-                "PRIMARY": "Primary contact",
+                "TITLE": "Merge profiles",
+                "DESCRIPTION": "Combine two profiles into one, including all attributes and conversations. In case of conflict, the primary profile’s attributes will take precedence.",
+                "PRIMARY": "Primary profile",
                 "PRIMARY_HELP_LABEL": "To be saved",
-                "PRIMARY_REQUIRED_ERROR": "Please select a contact to merge with before proceeding",
+                "PRIMARY_REQUIRED_ERROR": "Please select a profile to merge with before proceeding",
                 "PARENT": "To be merged",
                 "PARENT_HELP_LABEL": "To be deleted",
-                "EMPTY_STATE": "No contacts found",
-                "PLACEHOLDER": "Search for primary contact",
-                "SEARCH_PLACEHOLDER": "Search for a contact",
-                "SEARCH_ERROR_MESSAGE": "Could not search for contacts. Please try again later.",
-                "SUCCESS_MESSAGE": "Contact merged successfully",
-                "ERROR_MESSAGE": "Could not merge contacts, try again!",
+                "EMPTY_STATE": "No one found",
+                "PLACEHOLDER": "Search for the primary profile",
+                "SEARCH_PLACEHOLDER": "Search for a profile",
+                "SEARCH_ERROR_MESSAGE": "Could not search. Please try again later.",
+                "SUCCESS_MESSAGE": "Profiles merged",
+                "ERROR_MESSAGE": "Could not merge profiles, try again!",
                 "IS_SEARCHING": "Searching...",
                 "BUTTONS": {
                     "CANCEL": "Cancel",
-                    "CONFIRM": "Merge contact"
+                    "CONFIRM": "Merge profiles"
                 }
             },
             "NOTES": {
@@ -3836,21 +3836,21 @@ const messages: Record<string, unknown> = {
                 "WROTE": "wrote",
                 "YOU": "You",
                 "SAVE": "Save note",
-                "ADD_NOTE": "Add contact note",
+                "ADD_NOTE": "Add a note for this person",
                 "EXPAND": "Expand",
                 "COLLAPSE": "Collapse",
-                "NO_NOTES": "No notes, you can add notes from the contact details page.",
-                "EMPTY_STATE": "There are no notes associated to this contact. You can add a note by typing in the box above.",
+                "NO_NOTES": "No notes, you can add notes from the profile page.",
+                "EMPTY_STATE": "This person has no notes yet. You can add a note by typing in the box above.",
                 "CONVERSATION_EMPTY_STATE": "There are no notes yet. Use the Add note button to create one."
             }
         },
         "EMPTY_STATE": {
-            "TITLE": "No contacts found in this account",
-            "SUBTITLE": "Start adding new contacts by clicking on the button below",
-            "BUTTON_LABEL": "Add contact",
-            "SEARCH_EMPTY_STATE_TITLE": "No contacts matches your search 🔍",
-            "LIST_EMPTY_STATE_TITLE": "No contacts available in this view 📋",
-            "ACTIVE_EMPTY_STATE_TITLE": "No contacts are active at the moment 🌙"
+            "TITLE": "Your list is empty",
+            "SUBTITLE": "Click the button below to add your first person",
+            "BUTTON_LABEL": "Add person",
+            "SEARCH_EMPTY_STATE_TITLE": "No one matches your search 🔍",
+            "LIST_EMPTY_STATE_TITLE": "No one in this list yet 📋",
+            "ACTIVE_EMPTY_STATE_TITLE": "No one is active at the moment 🌙"
         },
         "LOAD_MORE": "Load more"
     },
@@ -4587,12 +4587,12 @@ const messages: Record<string, unknown> = {
             "PLACEHOLDER": "None"
         },
         "ACCORDION": {
-            "CONTACT_DETAILS": "Contact Details",
+            "CONTACT_DETAILS": "Details",
             "CONVERSATION_ACTIONS": "Conversation Actions",
             "CONVERSATION_LABELS": "Conversation Labels",
             "CONVERSATION_INFO": "Conversation Information",
-            "CONTACT_NOTES": "Contact Notes",
-            "CONTACT_ATTRIBUTES": "Contact Attributes",
+            "CONTACT_NOTES": "Notes",
+            "CONTACT_ATTRIBUTES": "Attributes",
             "PREVIOUS_CONVERSATION": "Previous Conversations",
             "MACROS": "Macros",
             "LINEAR_ISSUES": "Linked Linear Issues",
@@ -5061,9 +5061,9 @@ const messages: Record<string, unknown> = {
         "SATURDAY": "Saturday"
     },
     "DELETE_CONTACT": {
-        "BUTTON_LABEL": "Delete Contact",
-        "TITLE": "Delete contact",
-        "DESC": "Delete contact details",
+        "BUTTON_LABEL": "Remove from list",
+        "TITLE": "Remove from list",
+        "DESC": "Remove this person from your list",
         "CONFIRM": {
             "TITLE": "Confirm Deletion",
             "MESSAGE": "Are you sure to delete ",
@@ -5071,8 +5071,8 @@ const messages: Record<string, unknown> = {
             "NO": "No, Keep"
         },
         "API": {
-            "SUCCESS_MESSAGE": "Contact deleted successfully",
-            "ERROR_MESSAGE": "Could not delete contact. Please try again later."
+            "SUCCESS_MESSAGE": "Removed from your list",
+            "ERROR_MESSAGE": "Could not remove. Please try again later."
         }
     },
     "DIALOG": {
@@ -5093,9 +5093,9 @@ const messages: Record<string, unknown> = {
         "PLACEHOLDER": "Enter duration"
     },
     "EDIT_CONTACT": {
-        "BUTTON_LABEL": "Edit Contact",
-        "TITLE": "Edit contact",
-        "DESC": "Edit contact details"
+        "BUTTON_LABEL": "Edit",
+        "TITLE": "Edit profile",
+        "DESC": "Personal info"
     },
     "EMAIL_HEADER": {
         "FROM": "From",
@@ -5481,6 +5481,61 @@ const messages: Record<string, unknown> = {
                     "SUCCESS_MESSAGE": "Segment deleted successfully.",
                     "ERROR_MESSAGE": "Error while deleting segment."
                 }
+            }
+        }
+    },
+    "FRIENDS": {
+        "ERRORS": {
+            "SELF": "You cannot add yourself as a friend",
+            "NO_USERNAME": "Both people need a @username to become friends"
+        },
+        "ADD": {
+            "TITLE": "Add friend",
+            "DESCRIPTION": "Search by @username or name, then send a friend request.",
+            "SENT": "Friend request sent to {name}",
+            "ALREADY_FRIENDS": "You and {name} are already friends",
+            "ERROR": "Could not send the request. Please try again."
+        },
+        "REQUESTS": {
+            "INCOMING": "Received — {count}",
+            "OUTGOING": "Sent — {count}",
+            "INCOMING_HINT": "Wants to be your friend",
+            "OUTGOING_HINT": "Waiting for a reply",
+            "ACCEPT": "Accept",
+            "DECLINE": "Decline",
+            "CANCEL": "Cancel request",
+            "ACCEPTED": "You and {name} are now friends",
+            "DECLINED": "Declined the request from {name}",
+            "CANCELLED": "Cancelled the request to {name}",
+            "EMPTY": "No pending requests.",
+            "ERROR": "Something went wrong. Please try again."
+        },
+        "PROFILE": {
+            "CLOSE": "Close",
+            "MESSAGE": "Message",
+            "MORE": "More",
+            "ADD_FRIEND": "Add friend",
+            "REQUEST_SENT": "Request sent",
+            "ACCEPT": "Accept request",
+            "DECLINE": "Decline request",
+            "CANCEL_REQUEST": "Cancel request",
+            "UNFRIEND": "Remove friend",
+            "UNFRIENDED": "You are no longer friends with {name}",
+            "FRIEND": "Friend",
+            "STRANGER": "Stranger",
+            "ABOUT": "About",
+            "JOINED": "Member since",
+            "FRIENDS_SINCE": "Friends since",
+            "FIRST_SEEN": "First message",
+            "LABELS": "Labels",
+            "CONNECTIONS": "Connections",
+            "NO_CONNECTIONS": "No connections yet.",
+            "TABS": {
+                "ACTIVITY": "Activity",
+                "NOTES": "Notes",
+                "MEDIA": "Files",
+                "INFO": "Info",
+                "ATTRIBUTES": "Attributes"
             }
         }
     },
@@ -6690,6 +6745,8 @@ const messages: Record<string, unknown> = {
             "SLA_MISSED_RESOLUTION": "SLA breach",
             "PARTICIPATING_CONVERSATION_NEW_MESSAGE": "New message",
             "ASSIGNED_CONVERSATION_NEW_MESSAGE": "New message",
+            "FRIEND_REQUEST": "Friend request",
+            "FRIEND_REQUEST_ACCEPTED": "New friend",
             "SNOOZED_UNTIL": "Snoozed for {time}",
             "SNOOZED_ENDS": "Snooze ended"
         },
@@ -9526,33 +9583,33 @@ const messages: Record<string, unknown> = {
         }
     },
     "MERGE_CONTACTS": {
-        "TITLE": "Merge contacts",
-        "DESCRIPTION": "Merge contacts to combine two profiles into one, including all attributes and conversations. In case of conflict, the Primary contact’s attributes will take precedence.",
+        "TITLE": "Merge profiles",
+        "DESCRIPTION": "Combine two profiles into one, including all attributes and conversations. In case of conflict, the primary profile’s attributes will take precedence.",
         "PRIMARY": {
-            "TITLE": "Primary contact",
+            "TITLE": "Primary profile",
             "HELP_LABEL": "To be deleted"
         },
         "PARENT": {
-            "TITLE": "Contact to merge",
-            "PLACEHOLDER": "Search for a contact",
+            "TITLE": "Profile to merge",
+            "PLACEHOLDER": "Search for a profile",
             "HELP_LABEL": "To be kept"
         },
         "SUMMARY": {
             "TITLE": "Summary",
-            "DELETE_WARNING": "Contact of <strong>{primaryContactName}</strong> will be deleted.",
-            "ATTRIBUTE_WARNING": "Contact details of <strong>{primaryContactName}</strong> will be copied to <strong>{parentContactName}</strong>."
+            "DELETE_WARNING": "The profile of <strong>{primaryContactName}</strong> will be deleted.",
+            "ATTRIBUTE_WARNING": "Details of <strong>{primaryContactName}</strong> will be copied to <strong>{parentContactName}</strong>."
         },
         "SEARCH": {
             "ERROR_MESSAGE": "Something went wrong. Please try again later."
         },
         "FORM": {
-            "SUBMIT": " Merge contacts",
+            "SUBMIT": " Merge profiles",
             "CANCEL": "Cancel",
             "CHILD_CONTACT": {
-                "ERROR": "Select a child contact to merge"
+                "ERROR": "Select a profile to merge"
             },
-            "SUCCESS_MESSAGE": "Contact merged successfully",
-            "ERROR_MESSAGE": "Could not merge contacts, try again!"
+            "SUCCESS_MESSAGE": "Profiles merged",
+            "ERROR_MESSAGE": "Could not merge profiles, try again!"
         },
         "DROPDOWN_ITEM": {
             "ID": "(ID: {identifier})"
@@ -9740,7 +9797,7 @@ const messages: Record<string, unknown> = {
         "BUTTON_LABEL": "Start conversation",
         "TITLE": "New conversation",
         "DESC": "Start a new conversation by sending a new message.",
-        "NO_INBOX": "Couldn't find an inbox to initiate a new conversation with this contact.",
+        "NO_INBOX": "Couldn't find an inbox to start a new conversation with this person.",
         "FORM": {
             "TO": {
                 "LABEL": "To"
@@ -9779,7 +9836,13 @@ const messages: Record<string, unknown> = {
             "conversation_mention": "You have been mentioned in conversation (#{display_id})",
             "sla_missed_first_response": "SLA target first response missed for conversation (#{display_id})",
             "sla_missed_next_response": "SLA target next response missed for conversation (#{display_id})",
-            "sla_missed_resolution": "SLA target resolution missed for conversation (#{display_id})"
+            "sla_missed_resolution": "SLA target resolution missed for conversation (#{display_id})",
+            "friend_request": "{name} sent you a friend request",
+            "friend_request_accepted": "{name} accepted your friend request"
+        },
+        "friendship": {
+            "friend_request": "sent you a friend request",
+            "friend_request_accepted": "accepted your friend request"
         },
         "attachment": "Attachment",
         "no_content": "No content",
@@ -10734,14 +10797,14 @@ const messages: Record<string, unknown> = {
     "SEARCH": {
         "TABS": {
             "ALL": "All results",
-            "CONTACTS": "Contacts",
+            "CONTACTS": "People",
             "CONVERSATIONS": "Conversations",
             "MESSAGES": "Messages",
             "FILES": "Files",
             "ARTICLES": "Articles"
         },
         "SECTION": {
-            "CONTACTS": "Contacts",
+            "CONTACTS": "People",
             "CONVERSATIONS": "Conversations",
             "MESSAGES": "Messages",
             "FILES": "Files",
@@ -10795,7 +10858,7 @@ const messages: Record<string, unknown> = {
             "FROM": "Sender",
             "IN": "Inbox",
             "AGENTS": "Agents",
-            "CONTACTS": "Contacts",
+            "CONTACTS": "People",
             "INBOXES": "Inboxes",
             "NO_AGENTS": "No agents found",
             "NO_CONTACTS": "Start by searching to see results",
@@ -10919,7 +10982,7 @@ const messages: Record<string, unknown> = {
     "SIDEBAR": {
         "NO_ITEMS": "No items",
         "GLOBAL_SEARCH": "Search",
-        "GLOBAL_SEARCH_HINT": "Search conversations, messages, contacts and files across the workspace",
+        "GLOBAL_SEARCH_HINT": "Search conversations, messages, people and files across the workspace",
         "CURRENTLY_VIEWING_ACCOUNT": "Currently viewing:",
         "SWITCH": "Switch",
         "INBOX_VIEW": "Inbox View",
@@ -10933,7 +10996,7 @@ const messages: Record<string, unknown> = {
         "UNATTENDED_CONVERSATIONS": "Unattended",
         "REPORTS": "Reports",
         "SETTINGS": "Settings",
-        "CONTACTS": "Contacts",
+        "CONTACTS": "Friends",
         "ACTIVE": "Active",
         "COMPANIES": "Companies",
         "ALL_COMPANIES": "All Companies",
@@ -10971,7 +11034,7 @@ const messages: Record<string, unknown> = {
         "BILLING": "Billing",
         "CUSTOM_VIEWS_FOLDER": "Folders",
         "CUSTOM_VIEWS_SEGMENTS": "Segments",
-        "ALL_CONTACTS": "All Contacts",
+        "ALL_CONTACTS": "All friends",
         "TAGGED_WITH": "Tagged with",
         "NEW_LABEL": "New label",
         "NEW_TEAM": "New team",

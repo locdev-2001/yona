@@ -8,6 +8,7 @@ use App\Http\Resources\NotificationResource;
 use App\Jobs\Notification\DeleteNotificationJob;
 use App\Models\Account;
 use App\Models\Conversation;
+use App\Models\Friendship;
 use App\Models\Notification;
 use App\Services\Conversations\UnreadCounts\AttentionCounter;
 use App\Services\Conversations\UnreadCounts\UnreadConversations;
@@ -126,15 +127,16 @@ class NotificationsController extends Controller
             ->where('account_id', $account->id);
     }
 
-    private function primaryActor(Request $request, Account $account): ?Conversation
+    private function primaryActor(Request $request, Account $account): Conversation|Friendship|null
     {
         $type = $request->input('primary_actor_type');
+        $actorId = $request->input('primary_actor_id');
 
-        if (! in_array($type, Notification::PRIMARY_ACTORS, true)) {
-            return null;
-        }
-
-        return $account->conversations()->find($request->input('primary_actor_id'));
+        return match ($type) {
+            'Conversation' => $account->conversations()->find($actorId),
+            'Friendship' => Friendship::query()->involving($request->user()->id)->find($actorId),
+            default => null,
+        };
     }
 
     private function finder(Request $request, Account $account): NotificationFinder

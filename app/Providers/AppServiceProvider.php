@@ -28,6 +28,7 @@ use App\Models\Channel\Yona;
 use App\Models\Channel\Zalo;
 use App\Models\Contact;
 use App\Models\Conversation;
+use App\Models\Friendship;
 use App\Models\Inbox;
 use App\Models\Message;
 use App\Models\PlatformApp;
@@ -142,6 +143,7 @@ class AppServiceProvider extends ServiceProvider
             'Inbox' => Inbox::class,
             'Message' => Message::class,
             'Conversation' => Conversation::class,
+            'Friendship' => Friendship::class,
             'AgentBot' => AgentBot::class,
             'Account' => Account::class,
             'PlatformApp' => PlatformApp::class,

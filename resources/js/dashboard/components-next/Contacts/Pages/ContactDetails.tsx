@@ -23,12 +23,15 @@ interface ContactDetailsProps {
     selectedContact: Contact;
     onContactUpdated: (contact: Contact) => void;
     onGoToContactsList: () => void;
+    // Hồ sơ đã hiện ảnh, tên và nhãn ở thẻ bên trái thì không lặp lại ở đây.
+    showHeader?: boolean;
 }
 
 export default function ContactDetails({
     selectedContact,
     onContactUpdated,
     onGoToContactsList,
+    showHeader = true,
 }: ContactDetailsProps) {
     const { currentAccount, currentAccountUser } = usePage<DashboardPageProps>().props;
     const confirmDeleteContactDialogRef = useRef<ConfirmContactDeleteDialogHandle>(null);
@@ -82,37 +85,39 @@ export default function ContactDetails({
 
     return (
         <div className="flex flex-col items-start gap-8 pb-6">
-            <div className="flex flex-col items-start gap-3">
-                <Avatar
-                    seed={avatarSeed('contact', selectedContact.id)}
-                    src={avatarSrc}
-                    name={selectedContact.name || ''}
-                    size={72}
-                    allowUpload
-                    onUpload={handleAvatarUpload}
-                    onDelete={handleAvatarDelete}
-                />
-                <div className="flex flex-col gap-1">
-                    <h3 className="text-base font-medium text-n-slate-12">{selectedContact.name}</h3>
-                    <div className="flex flex-col gap-1.5">
-                        {selectedContact.identifier ? (
-                            <span className="inline-flex items-center gap-1 text-sm text-n-slate-11">
-                                <span className={`${ICONS.contactIdentifier} text-n-slate-10 size-4`} />
-                                {selectedContact.identifier}
-                            </span>
-                        ) : null}
-                        <span className="inline-flex items-center gap-1 text-sm text-n-slate-11">
+            {showHeader ? (
+                <div className="flex flex-col items-start gap-3">
+                    <Avatar
+                        seed={avatarSeed('contact', selectedContact.id)}
+                        src={avatarSrc}
+                        name={selectedContact.name || ''}
+                        size={72}
+                        allowUpload
+                        onUpload={handleAvatarUpload}
+                        onDelete={handleAvatarDelete}
+                    />
+                    <div className="flex flex-col gap-1">
+                        <h3 className="text-base font-medium text-n-slate-12">{selectedContact.name}</h3>
+                        <div className="flex flex-col gap-1.5">
                             {selectedContact.identifier ? (
-                                <span className={`${ICONS.activity} text-n-slate-10 size-4`} />
+                                <span className="inline-flex items-center gap-1 text-sm text-n-slate-11">
+                                    <span className={`${ICONS.contactIdentifier} text-n-slate-10 size-4`} />
+                                    {selectedContact.identifier}
+                                </span>
                             ) : null}
-                            {t('CONTACTS_LAYOUT.DETAILS.CREATED_AT', { date: createdAt })}
-                            {' • '}
-                            {t('CONTACTS_LAYOUT.DETAILS.LAST_ACTIVITY', { date: lastActivityAt })}
-                        </span>
+                            <span className="inline-flex items-center gap-1 text-sm text-n-slate-11">
+                                {selectedContact.identifier ? (
+                                    <span className={`${ICONS.activity} text-n-slate-10 size-4`} />
+                                ) : null}
+                                {t('CONTACTS_LAYOUT.DETAILS.CREATED_AT', { date: createdAt })}
+                                {' • '}
+                                {t('CONTACTS_LAYOUT.DETAILS.LAST_ACTIVITY', { date: lastActivityAt })}
+                            </span>
+                        </div>
                     </div>
+                    <ContactLabels contactId={selectedContact.id} />
                 </div>
-                <ContactLabels contactId={selectedContact.id} />
-            </div>
+            ) : null}
             <div className="flex flex-col items-start gap-6">
                 <ContactsForm
                     ref={contactsFormRef}

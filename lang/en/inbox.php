@@ -39,6 +39,8 @@ return [
         'SLA_MISSED_RESOLUTION' => 'SLA breach',
         'PARTICIPATING_CONVERSATION_NEW_MESSAGE' => 'New message',
         'ASSIGNED_CONVERSATION_NEW_MESSAGE' => 'New message',
+        'FRIEND_REQUEST' => 'Friend request',
+        'FRIEND_REQUEST_ACCEPTED' => 'New friend',
         'SNOOZED_UNTIL' => 'Snoozed for {time}',
         'SNOOZED_ENDS' => 'Snooze ended',
     ],

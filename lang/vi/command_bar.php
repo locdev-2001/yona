@@ -25,7 +25,7 @@ return [
         'GO_TO_MY_INBOX' => 'Mở trang thông báo',
         'COMPOSE_CONVERSATION' => 'Soạn tin nhắn mới',
         'GO_TO_CONVERSATION_DASHBOARD' => 'Đi tới Trang tổng quan hội thoại',
-        'GO_TO_CONTACTS_DASHBOARD' => 'Đi tới Trang tổng quan liên hệ',
+        'GO_TO_CONTACTS_DASHBOARD' => 'Đi tới Bạn bè',
         'GO_TO_CAPTAIN' => 'Mở Captain',
         'GO_TO_CALLS_DASHBOARD' => 'Mở bảng điều khiển cuộc gọi',
         'GO_TO_CAMPAIGNS' => 'Mở chiến dịch',

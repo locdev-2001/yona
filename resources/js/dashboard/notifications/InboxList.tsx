@@ -15,6 +15,7 @@ import InboxEmptyState from './InboxEmptyState';
 import InboxListHeader from './components/InboxListHeader';
 import InboxView from './InboxView';
 import { NotificationsProvider, useNotifications } from './NotificationsContext';
+import { notificationTargetUrl } from './helpers';
 import type { NotificationRecord } from './types';
 
 // Port từ routes/dashboard/inbox/InboxList.vue — cột trái (danh sách thông báo)
@@ -63,6 +64,12 @@ function InboxLayout({ conversationId }: { conversationId: number }) {
     };
 
     const openConversation = (notification: NotificationRecord) => {
+        const friendsUrl = notification.primary_actor_type === 'Friendship' ? notificationTargetUrl(accountId, notification) : null;
+        if (friendsUrl) {
+            void openNotification(notification).then(() => router.visit(friendsUrl));
+            return;
+        }
+
         const targetId = notification.primary_actor?.id;
         if (!targetId || targetId === conversationId) return;
 

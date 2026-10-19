@@ -40,6 +40,9 @@ enum EventType: string
     case CONTACT_MERGED = 'contact.merged';
     case CONTACT_DELETED = 'contact.deleted';
 
+    case FRIENDSHIP_REQUESTED = 'friendship.requested';
+    case FRIENDSHIP_ACCEPTED = 'friendship.accepted';
+
     case INBOX_CREATED = 'inbox.created';
     case INBOX_UPDATED = 'inbox.updated';
 

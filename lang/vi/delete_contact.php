@@ -3,9 +3,9 @@
 // Bản dịch tiếng Việt của lang/en/delete_contact.php.
 
 return [
-    'BUTTON_LABEL' => 'Xoá liên lạc',
-    'TITLE' => 'Xoá liên hệ',
-    'DESC' => 'Xoá chi tiết liên hệ',
+    'BUTTON_LABEL' => 'Xoá khỏi danh sách',
+    'TITLE' => 'Xoá khỏi danh sách',
+    'DESC' => 'Xoá người này khỏi danh sách',
     'CONFIRM' => [
         'TITLE' => 'Xác nhận xoá',
         'MESSAGE' => 'Bạn có muốn xoá? ',
@@ -13,7 +13,7 @@ return [
         'NO' => 'Không, giữ',
     ],
     'API' => [
-        'SUCCESS_MESSAGE' => 'Liên hệ đã được xóa thành công',
-        'ERROR_MESSAGE' => 'Không thể xoá liên hệ. Vui lòng thử lại sau.',
+        'SUCCESS_MESSAGE' => 'Đã xoá khỏi danh sách',
+        'ERROR_MESSAGE' => 'Chưa xoá được. Bạn hãy thử lại sau.',
     ],
 ];

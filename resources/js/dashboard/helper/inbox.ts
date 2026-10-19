@@ -30,6 +30,7 @@ const INBOX_ICON_MAP_LINE: Record<string, string> = {
     [INBOX_TYPES.INSTAGRAM]: 'i-yona-instagram',
     [INBOX_TYPES.TIKTOK]: 'i-yona-tiktok',
     [INBOX_TYPES.ZALO]: 'i-yona-zalo',
+    [INBOX_TYPES.YONA]: ICONS.channelYona,
     [INBOX_TYPES.SMS]: ICONS.channelSms,
     [INBOX_TYPES.TWILIO]: ICONS.channelSms,
 };
@@ -49,6 +50,7 @@ const INBOX_ICON_MAP_FILL: Record<string, string> = {
     [INBOX_TYPES.INSTAGRAM]: BRAND_ICONS.instagram,
     [INBOX_TYPES.TIKTOK]: BRAND_ICONS.tiktok,
     [INBOX_TYPES.ZALO]: 'i-yona-zalo',
+    [INBOX_TYPES.YONA]: ICONS.channelYona,
     [INBOX_TYPES.SMS]: ICONS.channelSms,
     [INBOX_TYPES.TWILIO]: ICONS.channelSms,
 };

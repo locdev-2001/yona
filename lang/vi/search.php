@@ -5,14 +5,14 @@
 return [
     'TABS' => [
         'ALL' => 'Tất cả kết quả',
-        'CONTACTS' => 'Danh bạ',
+        'CONTACTS' => 'Mọi người',
         'CONVERSATIONS' => 'Các hội thoại',
         'MESSAGES' => 'Tin nhắn',
         'FILES' => 'Tệp',
         'ARTICLES' => 'Bài viết',
     ],
     'SECTION' => [
-        'CONTACTS' => 'Danh bạ',
+        'CONTACTS' => 'Mọi người',
         'CONVERSATIONS' => 'Các hội thoại',
         'MESSAGES' => 'Tin nhắn',
         'FILES' => 'Tệp',
@@ -66,7 +66,7 @@ return [
         'FROM' => 'Người gửi',
         'IN' => 'Hộp thư',
         'AGENTS' => 'Nhân viên',
-        'CONTACTS' => 'Liên hệ',
+        'CONTACTS' => 'Mọi người',
         'INBOXES' => 'Hộp thư',
         'NO_AGENTS' => 'Không tìm thấy nhà cung cấp',
         'NO_CONTACTS' => 'Hãy tìm kiếm để thấy kết quả',

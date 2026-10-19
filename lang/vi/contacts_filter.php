@@ -3,8 +3,8 @@
 // Bản dịch tiếng Việt của lang/en/contacts_filter.php.
 
 return [
-    'TITLE' => 'Lọc liên hệ',
-    'SUBTITLE' => 'Thêm bộ lọc bên dưới và ấn \'áp dụng bộ lọc\' để lọc liên hệ.',
+    'TITLE' => 'Lọc danh sách',
+    'SUBTITLE' => 'Thêm bộ lọc bên dưới và ấn \'áp dụng bộ lọc\' để lọc danh sách.',
     'EDIT_CUSTOM_SEGMENT' => 'Sửa nhóm khách',
     'CUSTOM_VIEWS_SUBTITLE' => 'Thêm hoặc bớt bộ lọc rồi cập nhật nhóm khách của bạn.',
     'ADD_NEW_FILTER' => 'Thêm Bộ lọc',
@@ -17,7 +17,7 @@ return [
     'EMPTY_VALUE_ERROR' => 'Giá trị bắt buộc có',
     'SEGMENT_LABEL' => 'Tên nhóm khách',
     'SEGMENT_QUERY_LABEL' => 'Điều kiện nhóm khách',
-    'TOOLTIP_LABEL' => 'Lọc liên hệ',
+    'TOOLTIP_LABEL' => 'Lọc danh sách',
     'QUERY_DROPDOWN_LABELS' => [
         'AND' => 'VÀ',
         'OR' => 'HOẶC',

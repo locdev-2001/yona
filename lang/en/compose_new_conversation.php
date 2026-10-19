@@ -10,9 +10,9 @@ return [
         'SENDING' => 'Opening the conversation and sending…',
         'COMPOSER_LOCKED' => 'Pick a recipient and a channel to start writing',
         'SUBJECT_LABEL' => 'Subject:',
-        'NEW_CONTACT_BADGE' => 'New contact',
-        'CREATE_CONTACT' => 'Create new contact: {address}',
-        'CONTACT_LOAD_FAILED' => 'Could not load the contact. Please pick the recipient again.',
+        'NEW_CONTACT_BADGE' => 'New person',
+        'CREATE_CONTACT' => 'Add new person: {address}',
+        'CONTACT_LOAD_FAILED' => 'Could not load the recipient. Please pick them again.',
         'LOADING_CHANNELS' => 'Finding channels that can reach this person…',
         'LOAD_CHANNELS_FAILED' => 'Could not load the channels.',
         'CREATED_ELSEWHERE' => 'The conversation from your draft has been created.',
@@ -21,7 +21,7 @@ return [
         'UNAVAILABLE' => [
             'MESSAGING_WINDOW_CLOSED' => 'The channel\'s reply window since the customer\'s last message has passed',
             'REAUTHORIZATION_REQUIRED' => 'The channel is disconnected and needs to sign in again',
-            'EMAIL_UNDELIVERABLE' => 'This contact\'s email address cannot receive mail',
+            'EMAIL_UNDELIVERABLE' => 'This person\'s email address cannot receive mail',
             'OTHER' => 'This channel cannot reach this person right now',
         ],
         'EMAIL_CHECK' => [
@@ -41,11 +41,11 @@ return [
     ],
     'FORM' => [
         'ERROR_MESSAGE' => 'An error occurred while creating the conversation. Please try again later.',
-        'NO_INBOX_ALERT' => 'There are no available inboxes to start a conversation with this contact.',
+        'NO_INBOX_ALERT' => 'There are no available inboxes to start a conversation with this person.',
         'CONTACT_SELECTOR' => [
             'LABEL' => 'To:',
             'TAG_INPUT_PLACEHOLDER' => 'Enter at least 2 characters to search by name, email, or phone number',
-            'NO_RESULTS' => 'No contacts found',
+            'NO_RESULTS' => 'No one found',
             'CHANGE' => 'Change recipient',
         ],
         'INBOX_SELECTOR' => [

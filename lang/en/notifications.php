@@ -11,6 +11,12 @@ return [
         'sla_missed_first_response' => 'SLA target first response missed for conversation (#{display_id})',
         'sla_missed_next_response' => 'SLA target next response missed for conversation (#{display_id})',
         'sla_missed_resolution' => 'SLA target resolution missed for conversation (#{display_id})',
+        'friend_request' => '{name} sent you a friend request',
+        'friend_request_accepted' => '{name} accepted your friend request',
+    ],
+    'friendship' => [
+        'friend_request' => 'sent you a friend request',
+        'friend_request_accepted' => 'accepted your friend request',
     ],
     'attachment' => 'Attachment',
     'no_content' => 'No content',

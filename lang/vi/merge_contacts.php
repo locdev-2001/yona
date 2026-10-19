@@ -3,33 +3,33 @@
 // Bản dịch tiếng Việt của lang/en/merge_contacts.php.
 
 return [
-    'TITLE' => 'Hợp nhất các liên hệ',
-    'DESCRIPTION' => 'Hợp nhất các liên hệ để kết hợp hai hồ sơ thành một, bao gồm tất cả các thuộc tính và hội thoại. Trong trường hợp xung đột, các thuộc tính của liên hệ Chính sẽ được ưu tiên.',
+    'TITLE' => 'Gộp hồ sơ',
+    'DESCRIPTION' => 'Gộp hai hồ sơ thành một, gồm mọi thuộc tính và hội thoại. Nếu có xung đột, thuộc tính của hồ sơ chính được ưu tiên.',
     'PRIMARY' => [
-        'TITLE' => 'Liên hệ chính',
+        'TITLE' => 'Hồ sơ chính',
         'HELP_LABEL' => 'Sẽ được xoá',
     ],
     'PARENT' => [
-        'TITLE' => 'Liên hệ cần gộp',
-        'PLACEHOLDER' => 'Tìm kiếm liên hệ',
+        'TITLE' => 'Hồ sơ cần gộp',
+        'PLACEHOLDER' => 'Tìm hồ sơ',
         'HELP_LABEL' => 'Được giữ',
     ],
     'SUMMARY' => [
         'TITLE' => 'Tóm tắt',
-        'DELETE_WARNING' => 'Liên hệ của <strong>{primaryContactName}</strong> sẽ bị xoá.',
-        'ATTRIBUTE_WARNING' => 'Chi tiết liên hệ của <strong>{primaryContactName}</strong> sẽ được sao chép đến <strong>{parentContactName}</strong>.',
+        'DELETE_WARNING' => 'Hồ sơ của <strong>{primaryContactName}</strong> sẽ bị xoá.',
+        'ATTRIBUTE_WARNING' => 'Thông tin của <strong>{primaryContactName}</strong> sẽ được chép sang <strong>{parentContactName}</strong>.',
     ],
     'SEARCH' => [
         'ERROR_MESSAGE' => 'Có lỗi xảy ra. Bạn hãy thử lại sau.',
     ],
     'FORM' => [
-        'SUBMIT' => ' Hợp nhất các liên hệ',
+        'SUBMIT' => ' Gộp hồ sơ',
         'CANCEL' => 'Huỷ',
         'CHILD_CONTACT' => [
-            'ERROR' => 'Chọn một liên hệ con để gộp',
+            'ERROR' => 'Chọn một hồ sơ để gộp',
         ],
-        'SUCCESS_MESSAGE' => 'Liên hệ được gộp thành công',
-        'ERROR_MESSAGE' => 'Không thể hợp nhất liên lạc, thử lại!',
+        'SUCCESS_MESSAGE' => 'Đã gộp hồ sơ',
+        'ERROR_MESSAGE' => 'Chưa gộp được hồ sơ, bạn hãy thử lại!',
     ],
     'DROPDOWN_ITEM' => [
         'ID' => '(ID: {identifier})',

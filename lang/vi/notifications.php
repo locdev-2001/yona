@@ -11,6 +11,12 @@ return [
         'sla_missed_first_response' => 'Hội thoại (#{display_id}) đã trễ SLA phản hồi đầu tiên',
         'sla_missed_next_response' => 'Hội thoại (#{display_id}) đã trễ SLA phản hồi kế tiếp',
         'sla_missed_resolution' => 'Hội thoại (#{display_id}) đã trễ SLA xử lý xong',
+        'friend_request' => '{name} đã gửi lời mời kết bạn',
+        'friend_request_accepted' => '{name} đã chấp nhận lời mời kết bạn',
+    ],
+    'friendship' => [
+        'friend_request' => 'đã gửi lời mời kết bạn',
+        'friend_request_accepted' => 'đã chấp nhận lời mời kết bạn của bạn',
     ],
     'attachment' => 'Tệp đính kèm',
     'no_content' => 'Không có nội dung',

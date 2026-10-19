@@ -10,6 +10,7 @@ use App\Jobs\Account\ContactsExportJob;
 use App\Jobs\Avatar\AvatarFromUrlJob;
 use App\Models\Account;
 use App\Models\Attachment;
+use App\Models\Channel\Yona;
 use App\Models\Contact;
 use App\Models\Conversation;
 use App\Models\Message;
@@ -17,6 +18,7 @@ use App\Services\Contacts\FilterService;
 use App\Services\DataImports\ContactsImportService;
 use App\Services\ProductEvents\ProductEventName;
 use App\Services\ProductEvents\ProductEventRecorder;
+use App\Services\Users\Friendships;
 use App\Support\OnlineStatusTracker;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
@@ -46,9 +48,9 @@ class ContactsController extends Controller
 
     public function index(Request $request, Account $account): JsonResponse
     {
-        $query = Contact::query()
+        $query = $this->onlyFriendsWhenAsked($request, Contact::query()
             ->where('account_id', $account->id)
-            ->listableContacts(useCrmV2: $account->featureEnabled('crm_v2'));
+            ->listableContacts(useCrmV2: $account->featureEnabled('crm_v2')));
 
         $labels = array_filter((array) $request->query('labels', []));
 
@@ -171,6 +173,7 @@ class ContactsController extends Controller
                 // identifier so khớp LIKE (phân biệt hoa thường) — đúng bản gốc.
                 ->orWhere('contacts.identifier', 'LIKE', $like);
         });
+        $this->onlyFriendsWhenAsked($request, $query);
 
         // fetch_contacts_with_has_more: lấy dư 1 bản ghi để biết còn trang sau.
         $offset = ($this->currentPage($request) - 1) * self::RESULTS_PER_PAGE;
@@ -199,6 +202,7 @@ class ContactsController extends Controller
         $query = Contact::query()
             ->where('account_id', $account->id)
             ->whereIn('id', OnlineStatusTracker::getAvailableContactIds($account->id));
+        $this->onlyFriendsWhenAsked($request, $query);
 
         return $this->paginatedContacts($request, $query);
     }
@@ -332,6 +336,18 @@ class ContactsController extends Controller
             ],
             'payload' => ContactResource::collectionFor($paginated->items(), $this->includeContactInboxes($request)),
         ]);
+    }
+
+    // ?friends=true: chỉ người dùng Yona đã là bạn bè của người đang xem (trang Bạn bè).
+    private function onlyFriendsWhenAsked(Request $request, Builder $query): Builder
+    {
+        if (! $request->boolean('friends')) {
+            return $query;
+        }
+
+        $friendSourceIds = array_map(Yona::contactSourceIdFor(...), app(Friendships::class)->friendIds($request->user()));
+
+        return $query->withContactSourceIds($friendSourceIds);
     }
 
     private function fetchContact(Account $account, int $contactId): Contact

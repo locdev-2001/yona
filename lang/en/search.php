@@ -3,14 +3,14 @@
 return [
     'TABS' => [
         'ALL' => 'All results',
-        'CONTACTS' => 'Contacts',
+        'CONTACTS' => 'People',
         'CONVERSATIONS' => 'Conversations',
         'MESSAGES' => 'Messages',
         'FILES' => 'Files',
         'ARTICLES' => 'Articles',
     ],
     'SECTION' => [
-        'CONTACTS' => 'Contacts',
+        'CONTACTS' => 'People',
         'CONVERSATIONS' => 'Conversations',
         'MESSAGES' => 'Messages',
         'FILES' => 'Files',
@@ -64,7 +64,7 @@ return [
         'FROM' => 'Sender',
         'IN' => 'Inbox',
         'AGENTS' => 'Agents',
-        'CONTACTS' => 'Contacts',
+        'CONTACTS' => 'People',
         'INBOXES' => 'Inboxes',
         'NO_AGENTS' => 'No agents found',
         'NO_CONTACTS' => 'Start by searching to see results',

@@ -5,7 +5,11 @@ import Dashboard from '../Dashboard';
 import Loader from 'shared/components/loader/Loader';
 import PaginationFooter from 'dashboard/components-next/pagination/PaginationFooter';
 import type { DialogHandle } from 'dashboard/components-next/dialog/Dialog';
-import NewYonaChatDialog from 'dashboard/conversation/people/NewYonaChatDialog';
+import AddFriendDialog from 'dashboard/friends/AddFriendDialog';
+import FriendRequestList from 'dashboard/friends/FriendRequestList';
+import { fetchPendingFriendRequests } from 'dashboard/friends/api';
+import type { PendingFriendRequests } from 'dashboard/friends/api';
+import { useFriendshipChanges } from 'dashboard/friends/useFriendshipChanges';
 import { mergeContactPresence } from 'dashboard/components-next/Contacts/Pages/ContactsList';
 import { useContactPresenceOverlay } from 'dashboard/components-next/avatar/presence';
 import { fetchActiveContacts, fetchContacts, searchContacts } from 'dashboard/contacts/api';
@@ -20,7 +24,8 @@ const SORT_BY_LAST_ACTIVITY = '-last_activity_at';
 const SEARCH_DEBOUNCE_MS = 300;
 const PAGE_SIZE = 15;
 
-// "Đang chờ xử lý" = người mới nhắn tới, chưa định danh (liên hệ nháp); xem docs/ux-decisions.md.
+// Trực tuyến / Tất cả chỉ gồm người đã chấp nhận kết bạn; "Đang chờ xử lý" là lời mời
+// đã nhận và đã gửi. Người lạ vẫn ở Hộp thư, không hiện ở đây (docs/ux-decisions.md).
 const FRIEND_TABS = ['online', 'all', 'pending'] as const;
 type FriendTab = (typeof FRIEND_TABS)[number];
 
@@ -36,26 +41,37 @@ const EMPTY_KEYS: Record<FriendTab, string> = {
     pending: 'CONTACTS_LAYOUT.FRIENDS.EMPTY.PENDING',
 };
 
-function fetchTab(accountId: number, tab: FriendTab, page: number) {
-    if (tab === 'online') return fetchActiveContacts(accountId, page, SORT_BY_LAST_ACTIVITY);
-    return fetchContacts(accountId, page, SORT_BY_LAST_ACTIVITY, tab === 'pending' ? 'unidentified' : 'all');
+// ?tab=pending (từ thông báo lời mời kết bạn) mở thẳng tab Đang chờ xử lý.
+function initialTab(isActiveView: boolean): FriendTab {
+    const requested = new URLSearchParams(window.location.search).get('tab');
+    if (FRIEND_TABS.includes(requested as FriendTab)) return requested as FriendTab;
+    return isActiveView ? 'online' : 'all';
+}
+
+const EMPTY_REQUESTS: PendingFriendRequests = { incoming: [], outgoing: [] };
+
+function fetchFriends(accountId: number, tab: FriendTab, page: number) {
+    return tab === 'online'
+        ? fetchActiveContacts(accountId, page, SORT_BY_LAST_ACTIVITY, true)
+        : fetchContacts(accountId, page, SORT_BY_LAST_ACTIVITY, 'all', true);
 }
 
 interface FriendsIndexProps {
     isActiveView?: boolean;
 }
 
-// Trang Bạn bè: tab Trực tuyến / Tất cả / Đang chờ xử lý, tìm theo tên, Thêm Bạn
-// mở hộp tìm người dùng Yona theo @username (dùng chung với danh sách hội thoại).
+// Trang Bạn bè: tab Trực tuyến / Tất cả / Đang chờ xử lý, tìm bạn theo tên, Thêm Bạn
+// tìm người dùng Yona theo @username rồi gửi lời mời kết bạn.
 export default function FriendsIndex({ isActiveView = false }: FriendsIndexProps) {
     const accountId = usePage<DashboardPageProps>().props.currentAccount.id;
-    const [activeTab, setActiveTab] = useState<FriendTab>(isActiveView ? 'online' : 'all');
+    const [activeTab, setActiveTab] = useState<FriendTab>(() => initialTab(isActiveView));
     const [searchValue, setSearchValue] = useState('');
     const [contacts, setContacts] = useState<Contact[]>([]);
     const [meta, setMeta] = useState<ContactsMeta>({ count: 0, currentPage: 1 });
     const [isFetching, setFetching] = useState(true);
     const requestSeq = useRef(0);
     const addFriendDialogRef = useRef<DialogHandle>(null);
+    const [requests, setRequests] = useState<PendingFriendRequests>(EMPTY_REQUESTS);
     const { presenceMap, hasReceivedPresence } = useContactPresenceOverlay();
 
     const load = useCallback(
@@ -64,8 +80,8 @@ export default function FriendsIndex({ isActiveView = false }: FriendsIndexProps
             setFetching(true);
             try {
                 const result = search
-                    ? await searchContacts(accountId, search, page, SORT_BY_LAST_ACTIVITY)
-                    : await fetchTab(accountId, tab, page);
+                    ? await searchContacts(accountId, search, page, SORT_BY_LAST_ACTIVITY, true)
+                    : await fetchFriends(accountId, tab, page);
                 if (seq !== requestSeq.current) return;
                 setContacts(result.contacts);
                 setMeta(result.meta);
@@ -76,10 +92,25 @@ export default function FriendsIndex({ isActiveView = false }: FriendsIndexProps
         [accountId],
     );
 
+    const loadRequests = useCallback(() => {
+        fetchPendingFriendRequests().then(setRequests, () => undefined);
+    }, []);
+
+    useEffect(loadRequests, [loadRequests]);
+
     useEffect(() => {
+        if (activeTab === 'pending' && !searchValue) {
+            setFetching(false);
+            return undefined;
+        }
         const timer = setTimeout(() => void load(activeTab, searchValue.trim(), 1), searchValue ? SEARCH_DEBOUNCE_MS : 0);
         return () => clearTimeout(timer);
     }, [load, activeTab, searchValue]);
+
+    useFriendshipChanges(() => {
+        loadRequests();
+        if (activeTab !== 'pending') void load(activeTab, searchValue.trim(), meta.currentPage || 1);
+    });
 
     useContactUpdates(update => setContacts(current => mergeContactUpdateIntoList(current, update)));
 
@@ -88,6 +119,8 @@ export default function FriendsIndex({ isActiveView = false }: FriendsIndexProps
     const sectionLabel = isSearching ? t('CONTACTS_LAYOUT.HEADER.SEARCH_TITLE') : t(TAB_LABEL_KEYS[activeTab]);
     const emptyMessage = isSearching ? t('CONTACTS_LAYOUT.FRIENDS.EMPTY.SEARCH') : t(EMPTY_KEYS[activeTab]);
     const reload = () => void load(activeTab, searchValue.trim(), meta.currentPage || 1);
+    const isRequestsView = activeTab === 'pending' && !isSearching;
+    const incomingCount = requests.incoming.length;
 
     return (
         <Dashboard>
@@ -118,6 +151,11 @@ export default function FriendsIndex({ isActiveView = false }: FriendsIndexProps
                                     }}
                                 >
                                     {t(TAB_LABEL_KEYS[tab])}
+                                    {tab === 'pending' && incomingCount > 0 ? (
+                                        <span className="ms-1.5 inline-grid place-content-center min-w-5 h-5 px-1 rounded-full bg-n-ruby-9 text-white text-xs font-semibold">
+                                            {incomingCount}
+                                        </span>
+                                    ) : null}
                                 </button>
                             );
                         })}
@@ -139,26 +177,34 @@ export default function FriendsIndex({ isActiveView = false }: FriendsIndexProps
                         onChange={setSearchValue}
                     />
 
-                    <h2 className="mt-6 mb-2 text-xs font-semibold text-n-slate-11">
-                        {t('CONTACTS_LAYOUT.FRIENDS.SECTION', { label: sectionLabel, count: meta.count })}
-                    </h2>
-
-                    {isFetching && contacts.length === 0 ? (
-                        <div className="flex justify-center py-10 text-n-slate-11">
-                            <Loader />
+                    {isRequestsView ? (
+                        <div className="mt-6">
+                            <FriendRequestList requests={requests} onChanged={loadRequests} />
                         </div>
-                    ) : visibleContacts.length === 0 ? (
-                        <p className="py-10 text-sm text-center text-n-slate-11">{emptyMessage}</p>
                     ) : (
-                        <ul className={`m-0 p-0 list-none pb-6 ${isFetching ? 'opacity-60' : ''}`}>
-                            {visibleContacts.map(contact => (
-                                <FriendRow key={contact.id} contact={contact} onRemoved={reload} />
-                            ))}
-                        </ul>
+                        <>
+                            <h2 className="mt-6 mb-2 text-xs font-semibold text-n-slate-11">
+                                {t('CONTACTS_LAYOUT.FRIENDS.SECTION', { label: sectionLabel, count: meta.count })}
+                            </h2>
+
+                            {isFetching && contacts.length === 0 ? (
+                                <div className="flex justify-center py-10 text-n-slate-11">
+                                    <Loader />
+                                </div>
+                            ) : visibleContacts.length === 0 ? (
+                                <p className="py-10 text-sm text-center text-n-slate-11">{emptyMessage}</p>
+                            ) : (
+                                <ul className={`m-0 p-0 list-none pb-6 ${isFetching ? 'opacity-60' : ''}`}>
+                                    {visibleContacts.map(contact => (
+                                        <FriendRow key={contact.id} contact={contact} onRemoved={reload} />
+                                    ))}
+                                </ul>
+                            )}
+                        </>
                     )}
                 </main>
 
-                {meta.count > PAGE_SIZE ? (
+                {!isRequestsView && meta.count > PAGE_SIZE ? (
                     <footer className="sticky bottom-0 z-0">
                         <PaginationFooter
                             currentPageInfo="CONTACTS_LAYOUT.PAGINATION_FOOTER.SHOWING"
@@ -170,7 +216,7 @@ export default function FriendsIndex({ isActiveView = false }: FriendsIndexProps
                     </footer>
                 ) : null}
             </section>
-            <NewYonaChatDialog ref={addFriendDialogRef} />
+            <AddFriendDialog ref={addFriendDialogRef} onSent={loadRequests} />
         </Dashboard>
     );
 }

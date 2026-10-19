@@ -4,7 +4,9 @@ namespace App\Support;
 
 use App\Http\Resources\ConversationResource;
 use App\Models\Conversation;
+use App\Models\Friendship;
 use App\Models\Message;
+use App\Models\User;
 use Illuminate\Support\Str;
 
 // Bản rút gọn của conversation/message dùng RIÊNG cho payload đẩy qua Reverb
@@ -76,6 +78,23 @@ final class RealtimePayload
                 'sender' => [
                     'name' => $contact?->name,
                     'thumbnail' => $contact?->avatarUrl(),
+                ],
+            ],
+        ];
+    }
+
+    // notification.primary_actor của lời mời kết bạn: cùng khuôn meta.sender với hội thoại
+    // để thẻ thông báo hiện ảnh và tên người còn lại.
+    public static function notificationFriendshipActor(Friendship $friendship, ?User $counterpart): array
+    {
+        return [
+            'id' => $friendship->id,
+            'status' => $friendship->status,
+            'meta' => [
+                'sender' => [
+                    'id' => $counterpart?->id,
+                    'name' => $counterpart?->availableName(),
+                    'thumbnail' => $counterpart?->avatarUrl() ?: null,
                 ],
             ],
         ];

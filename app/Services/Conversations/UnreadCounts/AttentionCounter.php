@@ -5,6 +5,7 @@ namespace App\Services\Conversations\UnreadCounts;
 use App\Models\Account;
 use App\Models\AccountUser;
 use App\Models\Conversation;
+use App\Models\Friendship;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 
@@ -12,6 +13,7 @@ use Illuminate\Support\Facades\DB;
  * Số trên chuông: số hội thoại cần người dùng để mắt — có tin chưa đọc (chấm ở
  * danh sách) hoặc còn thông báo chưa đọc của chính họ (được giao, được nhắc tên…).
  * Một hội thoại thuộc cả hai nhóm chỉ tính một lần, nên mở nó là chuông giảm đúng một.
+ * Lời mời kết bạn chưa đọc cộng thêm vào số trên chuông.
  */
 final class AttentionCounter
 {
@@ -22,7 +24,18 @@ final class AttentionCounter
 
     public function count(): int
     {
-        return array_sum($this->countByInbox());
+        return array_sum($this->countByInbox()) + $this->unreadFriendshipCount();
+    }
+
+    // Lời mời kết bạn chưa đọc cũng cần để mắt, nhưng không thuộc kênh nào.
+    private function unreadFriendshipCount(): int
+    {
+        return DB::table('notifications')
+            ->where('user_id', $this->user->id)
+            ->where('account_id', $this->account->id)
+            ->whereNull('read_at')
+            ->where('primary_actor_type', (new Friendship)->getMorphClass())
+            ->count();
     }
 
     /**
@@ -36,7 +49,7 @@ final class AttentionCounter
         $byInbox = $this->countByInbox();
 
         return [
-            'unread_count' => array_sum($byInbox),
+            'unread_count' => array_sum($byInbox) + $this->unreadFriendshipCount(),
             'unread_inbox_counts' => (object) $byInbox,
         ];
     }
