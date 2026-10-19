@@ -22,12 +22,14 @@ use App\Models\Inbox;
 use App\Models\Message;
 use App\Models\User;
 use App\Services\Channels\IncomingConversationResolver;
+use App\Services\Messaging\MessageReceiptService;
 use App\Services\Users\Friendships;
 
 // Chuyển tin giữa hai hộp thư Yona: tin người A gửi trong hội thoại với B thành tin
 // đến trong hộp thư Yona của B. Hai bản tin mang chung source_id "yona-msg:{id}" nên
 // trả lời, cảm xúc, thu hồi tra được tin tương ứng ở bên kia. Người chưa là bạn bè
-// thì tin mở hội thoại chờ ở bên nhận; người nhận đã chặn thì tin không được giao.
+// thì tin mở hội thoại chờ ở bên nhận; người nhận đã chặn thì tin không được giao (giữ
+// trạng thái `sent`, không lên `delivered`).
 class YonaRelay
 {
     public function __construct(
@@ -35,6 +37,7 @@ class YonaRelay
         private readonly InboundMessageWriter $writer,
         private readonly MessageEventService $events,
         private readonly Friendships $friendships,
+        private readonly MessageReceiptService $receipts,
     ) {}
 
     public function deliver(Message $message): void
@@ -65,6 +68,8 @@ class YonaRelay
         ));
 
         $message->update(['source_id' => $sourceId]);
+        // Bản tin đã nằm trong hộp thư người nhận: đây là biên nhận "đã giao" chắc chắn của kênh.
+        $this->receipts->applyToSourceIds($message->inbox, [$sourceId], MessageReceiptService::DELIVERED);
     }
 
     // Mở (hoặc lấy lại) hội thoại với một người dùng Yona trong hộp thư Yona của mình.

@@ -96,6 +96,7 @@ class Yona extends Model implements AddressesContacts, DeclaresCapabilities, Dec
             Capability::OutboundReaction,
             Capability::OutboundRecall,
             Capability::OutboundReplyTo,
+            Capability::EventDelivered,
             Capability::EventReaction,
             Capability::EventRecall,
             Capability::ConversationOutboundStart,
