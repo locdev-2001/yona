@@ -98,32 +98,33 @@ export default function ChatListHeader({
 
     return (
         <>
-            <div className="relative px-3 pt-3 pb-2">
-                <h1 className="sr-only">{pageTitle}</h1>
-                <ChatListSearch
-                    actions={
-                        <>
-                            <ListFilterButton
-                                isOnExpandedLayout={isOnExpandedLayout}
-                                isAdvancedActive={isAdvancedActive}
-                                onOpenAdvancedFilters={onFiltersModal}
-                            />
-                            <ListHeaderButton
-                                icon="i-lucide-user-plus"
-                                label={t('CHAT.NEW.TITLE')}
-                                onClick={() => newYonaChatRef.current?.open()}
-                            />
-                            <ListHeaderButton
-                                icon={isSelecting ? 'i-lucide-x' : 'i-lucide-list-checks'}
-                                label={t(isSelecting ? 'CHAT_LIST.SELECTION_MODE.EXIT' : 'CHAT_LIST.SELECTION_MODE.START')}
-                                isActive={isSelecting}
-                                aria-pressed={isSelecting}
-                                onClick={onToggleSelection}
-                            />
-                        </>
-                    }
-                    trailing={<ListMoreMenu isOnExpandedLayout={isOnExpandedLayout} />}
-                />
+            <div className="relative px-3 pt-2 pb-2">
+                <div className="flex items-center justify-between gap-2 min-h-9 mb-1">
+                    <h1 className="m-0 text-base font-medium truncate text-n-slate-12" title={pageTitle}>
+                        {pageTitle}
+                    </h1>
+                    <div className="flex items-center gap-0.5 shrink-0">
+                        <ListFilterButton
+                            isOnExpandedLayout={isOnExpandedLayout}
+                            isAdvancedActive={isAdvancedActive}
+                            onOpenAdvancedFilters={onFiltersModal}
+                        />
+                        <ListHeaderButton
+                            icon="i-lucide-user-plus"
+                            label={t('CHAT.NEW.TITLE')}
+                            onClick={() => newYonaChatRef.current?.open()}
+                        />
+                        <ListHeaderButton
+                            icon={isSelecting ? 'i-lucide-x' : 'i-lucide-list-checks'}
+                            label={t(isSelecting ? 'CHAT_LIST.SELECTION_MODE.EXIT' : 'CHAT_LIST.SELECTION_MODE.START')}
+                            isActive={isSelecting}
+                            aria-pressed={isSelecting}
+                            onClick={onToggleSelection}
+                        />
+                        <ListMoreMenu isOnExpandedLayout={isOnExpandedLayout} />
+                    </div>
+                </div>
+                <ChatListSearch />
                 <NewYonaChatDialog ref={newYonaChatRef} />
                 <div id="conversationFilterTeleportTarget" className={`absolute top-full z-50 ${anchorSide}`} />
             </div>

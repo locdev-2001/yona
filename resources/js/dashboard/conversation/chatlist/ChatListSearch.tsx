@@ -66,6 +66,7 @@ export default function ChatListSearch({ actions, trailing }: { actions?: ReactN
             </div>
             {actions}
             <ListHeaderButton
+                variant="field"
                 icon="i-lucide-square-pen"
                 label={t('CHAT_LIST.SEARCH.COMPOSE')}
                 isActive={isComposing}
