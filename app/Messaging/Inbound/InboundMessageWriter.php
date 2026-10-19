@@ -46,7 +46,7 @@ class InboundMessageWriter
         }
 
         return DB::transaction(function () use ($inbox, $contactInbox, $inbound) {
-            $conversation = IncomingConversationResolver::resolve($contactInbox, $inbound->conversationAttributes);
+            $conversation = IncomingConversationResolver::resolve($contactInbox, $inbound->conversationAttributes, $inbound->awaitsAcceptance);
 
             $message = $conversation->messages()->make([
                 'account_id' => $inbox->account_id,

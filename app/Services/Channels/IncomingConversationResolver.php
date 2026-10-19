@@ -22,15 +22,18 @@ class IncomingConversationResolver
 
     private const LOCK_WAIT_SECONDS = 10;
 
-    /** @param array<string, mixed> $additionalAttributes */
-    public static function resolve(ContactInbox $contactInbox, array $additionalAttributes = []): Conversation
+    /**
+     * @param  array<string, mixed>  $additionalAttributes
+     * @param  bool  $awaitsAcceptance  hội thoại mới mở ra ở trạng thái chờ; hội thoại đang mở thì giữ nguyên
+     */
+    public static function resolve(ContactInbox $contactInbox, array $additionalAttributes = [], bool $awaitsAcceptance = false): Conversation
     {
         $lock = Cache::lock('incoming-conversation:contact-inbox:'.$contactInbox->id, self::LOCK_SECONDS);
         $lock->block(self::LOCK_WAIT_SECONDS);
 
         try {
             return self::findReusableConversation($contactInbox)
-                ?? self::createConversation($contactInbox, $additionalAttributes);
+                ?? self::createConversation($contactInbox, $additionalAttributes, $awaitsAcceptance);
         } finally {
             self::releaseOnceCommitted($lock);
         }
@@ -44,7 +47,7 @@ class IncomingConversationResolver
     }
 
     /** @param array<string, mixed> $additionalAttributes */
-    private static function createConversation(ContactInbox $contactInbox, array $additionalAttributes): Conversation
+    private static function createConversation(ContactInbox $contactInbox, array $additionalAttributes, bool $awaitsAcceptance): Conversation
     {
         return Conversation::query()->create([
             'account_id' => $contactInbox->inbox->account_id,
@@ -52,6 +55,7 @@ class IncomingConversationResolver
             'contact_id' => $contactInbox->contact_id,
             'contact_inbox_id' => $contactInbox->id,
             'additional_attributes' => $additionalAttributes,
+            ...($awaitsAcceptance ? ['status' => Conversation::STATUS_PENDING] : []),
         ]);
     }
 

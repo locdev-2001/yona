@@ -3,6 +3,7 @@ import { CONVERSATION_TYPE, MESSAGE_STATUS, MESSAGE_TYPES } from './constants';
 import type { ConversationType } from './constants';
 import { getLastMessage } from '../helper/conversationHelper';
 import { matchesLabels } from './labelHelpers';
+import { matchesStatusFilter } from './listFilters';
 import { compareBySentAt } from './messageTime';
 import type { AssigneeTab, ContactMeta, Conversation, ConversationMessage } from './types';
 
@@ -191,7 +192,7 @@ export function matchesConversationView(conversation: Conversation, filters: Con
     if (assigneeTab === 'me' && !(assignee && assignee.id === currentUserId)) return false;
     if (assigneeTab === 'unassigned' && assignee) return false;
 
-    if (status !== 'all' && conversation.status !== status) return false;
+    if (!matchesStatusFilter(status, conversation.status)) return false;
     if (!matchesInboxes(conversation, inboxIds)) return false;
     if (teamId && Number(teamId) !== conversation.meta?.team?.id) return false;
     if (labels.length && !matchesLabels(conversation.labels, labels)) return false;

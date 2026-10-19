@@ -309,6 +309,17 @@ class Conversation extends Model
         $this->createMuteChangeActivity('unmuted');
     }
 
+    // Người nhận không muốn nghe hội thoại đang chờ: xoá khỏi hộp thư, người gửi không
+    // được báo, nhắn lại thì mở hội thoại chờ mới.
+    public function decline(): void
+    {
+        DB::transaction(function () {
+            $this->notifications()->get()->each->delete();
+            $this->messages()->get()->each->delete();
+            $this->delete();
+        });
+    }
+
     public function isMuted(): bool
     {
         return (bool) $this->contact?->blocked;

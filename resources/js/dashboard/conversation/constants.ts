@@ -14,6 +14,8 @@ export const STATUS_TYPE = {
     PENDING: 'pending',
     SNOOZED: 'snoozed',
     ALL: 'all',
+    // Mọi hội thoại trừ hội thoại đang chờ người nhận chấp nhận.
+    NOT_PENDING: 'not_pending',
 } as const;
 
 // meta.assignee_type của jbuilder khi hội thoại do agent bot giữ.

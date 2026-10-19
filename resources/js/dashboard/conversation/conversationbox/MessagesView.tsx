@@ -16,6 +16,7 @@ import { t } from '../../../i18n';
 import type { DashboardPageProps } from '../../types';
 import { useConversation } from '../ConversationContext';
 import { useGroupMembers } from '../groupMembersApi';
+import { AGENT_BOT_ASSIGNEE_TYPE, STATUS_TYPE } from '../constants';
 import type { ConversationMessage } from '../types';
 import { useFocusMessageScroll } from './useFocusMessageScroll';
 import { useScrollToLatest } from './useScrollToLatest';
@@ -24,6 +25,7 @@ import { firstUnreadMessageId, unreadCountToShow, unreadMessageLabelParts, unrea
 import Banner from './Banner';
 import ForwardMessageDialog from './ForwardMessageDialog';
 import MessageTranslationDialog from './MessageTranslationDialog';
+import MessageRequestCard from './MessageRequestCard';
 import ReplyBox from './ReplyBox';
 import ResizableEditorWrapper from './ResizableEditorWrapper';
 import type { ResizableEditorWrapperHandle } from './ResizableEditorWrapper';
@@ -76,6 +78,9 @@ export default function MessagesView() {
     const scrolledConversationRef = useRef<number | null>(null);
 
     const currentChat = selectedConversation!;
+    // Hội thoại chờ do bot giữ đã có băng bàn giao riêng ở khung trả lời.
+    const awaitsAcceptance =
+        currentChat.status === STATUS_TYPE.PENDING && currentChat.meta.assignee_type !== AGENT_BOT_ASSIGNEE_TYPE;
     const galleryAttachments = useMemo(() => collectMediaAttachments(messages), [messages]);
     const typingUsersList = useTypingUsers(currentChat.id);
     const isAnyoneTyping = typingUsersList.length !== 0;
@@ -270,20 +275,24 @@ export default function MessagesView() {
                         </div>
                     </div>
                 )}
-                <div className="contents" onFocusCapture={readOnComposerFocus}>
-                    <ResizableEditorWrapper
-                        ref={resizableEditorWrapperRef}
-                        containerHeight={Math.max(0, containerHeight - topBannerHeight)}
-                    >
-                        <ReplyBox
-                            onToggleEditorSize={() => resizableEditorWrapperRef.current?.toggleEditorExpand()}
-                            onMessageSent={() => resizableEditorWrapperRef.current?.scheduleResetAfterSend()}
-                            replyTarget={replyTarget}
-                            onClearReplyTarget={clearReply}
-                            groupMembers={groupMembers}
-                        />
-                    </ResizableEditorWrapper>
-                </div>
+                {awaitsAcceptance ? (
+                    <MessageRequestCard />
+                ) : (
+                    <div className="contents" onFocusCapture={readOnComposerFocus}>
+                        <ResizableEditorWrapper
+                            ref={resizableEditorWrapperRef}
+                            containerHeight={Math.max(0, containerHeight - topBannerHeight)}
+                        >
+                            <ReplyBox
+                                onToggleEditorSize={() => resizableEditorWrapperRef.current?.toggleEditorExpand()}
+                                onMessageSent={() => resizableEditorWrapperRef.current?.scheduleResetAfterSend()}
+                                replyTarget={replyTarget}
+                                onClearReplyTarget={clearReply}
+                                groupMembers={groupMembers}
+                            />
+                        </ResizableEditorWrapper>
+                    </div>
+                )}
             </div>
             <Modal show={cannedSourceMessage !== null} onClose={() => setCannedSourceMessage(null)}>
                 {cannedSourceMessage && (

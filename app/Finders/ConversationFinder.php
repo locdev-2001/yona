@@ -23,6 +23,9 @@ class ConversationFinder
 
     private const DEFAULT_STATUS = 'open';
 
+    // Mọi hội thoại trừ những hội thoại đang chờ người nhận chấp nhận.
+    private const NOT_PENDING_STATUS = 'not_pending';
+
     // Bảng SORT_OPTIONS: tham số sort_by → [scope, hướng, cột con trỏ]. Cột con trỏ
     // null: sort theo biểu thức (priority, waiting_since, số chưa đọc) chỉ phân
     // trang bằng `page`; sort theo một cột thời gian phân trang được bằng `cursor`.
@@ -193,6 +196,12 @@ class ConversationFinder
         $status = $this->params['status'] ?? self::DEFAULT_STATUS;
 
         if ($status === 'all') {
+            return;
+        }
+
+        if ($status === self::NOT_PENDING_STATUS) {
+            $this->conversations->where('status', '!=', Conversation::STATUS_PENDING);
+
             return;
         }
 

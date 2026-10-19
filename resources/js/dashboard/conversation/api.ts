@@ -477,6 +477,11 @@ export function unmuteConversation(accountId: number, conversationId: number): P
     return postWithoutBody(`/api/v1/accounts/${accountId}/conversations/${conversationId}/unmute`);
 }
 
+// Từ chối hội thoại đang chờ: máy chủ xoá hội thoại, trả 204.
+export function declineConversation(accountId: number, conversationId: number): Promise<void> {
+    return postWithoutBody(`/api/v1/accounts/${accountId}/conversations/${conversationId}/decline`);
+}
+
 // Ghim là của riêng người đang đăng nhập; máy chủ trả 204.
 export function setConversationPinned(accountId: number, conversationId: number, pinned: boolean): Promise<void> {
     const url = `/api/v1/accounts/${accountId}/conversations/${conversationId}/pin`;

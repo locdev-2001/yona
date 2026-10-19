@@ -2667,7 +2667,7 @@ const messages: Record<string, unknown> = {
         },
         "TABS": {
             "ALL": "Tất cả",
-            "REQUESTS": "Tin chờ"
+            "REQUESTS": "Đang chờ"
         },
         "NEW": {
             "TITLE": "Nhắn tin mới",
@@ -2676,7 +2676,7 @@ const messages: Record<string, unknown> = {
         },
         "EMPTY": {
             "ALL": "Chưa có cuộc trò chuyện nào. Bấm nút bút để nhắn tin mới.",
-            "REQUESTS": "Không có tin chờ nào.",
+            "REQUESTS": "Không có tin nhắn nào đang chờ.",
             "START": "Chọn một cuộc trò chuyện hoặc bắt đầu nhắn tin mới"
         },
         "REQUEST": {
@@ -2684,7 +2684,12 @@ const messages: Record<string, unknown> = {
             "BODY": "Người này chưa biết bạn đã xem tin cho tới khi bạn chấp nhận.",
             "ACCEPT": "Chấp nhận",
             "DELETE": "Xoá",
-            "BLOCK": "Chặn"
+            "IGNORE": "Bỏ qua",
+            "BLOCK": "Chặn",
+            "ACCEPTED": "Đã chuyển vào hộp thư",
+            "IGNORED": "Đã bỏ qua tin nhắn",
+            "BLOCKED_BODY": "Bạn đã chặn người này. Tin mới của họ không tới hộp thư của bạn.",
+            "FAILED": "Chưa làm được, thử lại sau"
         },
         "ACTIONS": {
             "PIN": "Ghim cuộc trò chuyện",

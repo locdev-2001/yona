@@ -1,22 +1,21 @@
 import Tabs from '../../components/ui/Tabs';
-import type { AssigneeTab } from '../types';
 
 // Port từ dashboard/components/widgets/ChatTypeTabs.vue — bỏ phím tắt Alt+N (B3).
 // Cùng một thanh tab cho mọi cỡ màn; dưới 768px thành thanh chia đều, ô cao 44px.
-export interface ChatTypeTabItem {
-    key: AssigneeTab;
+export interface ChatTypeTabItem<Key extends string = string> {
+    key: Key;
     name: string;
     count: number;
     badgeTone?: 'neutral' | 'warning';
 }
 
-interface ChatTypeTabsProps {
-    items: ChatTypeTabItem[];
-    activeTab: AssigneeTab;
-    onChatTabChange: (tab: AssigneeTab) => void;
+interface ChatTypeTabsProps<Key extends string> {
+    items: ChatTypeTabItem<Key>[];
+    activeTab: Key;
+    onChatTabChange: (tab: Key) => void;
 }
 
-export default function ChatTypeTabs({ items, activeTab, onChatTabChange }: ChatTypeTabsProps) {
+export default function ChatTypeTabs<Key extends string>({ items, activeTab, onChatTabChange }: ChatTypeTabsProps<Key>) {
     const activeTabIndex = items.findIndex(item => item.key === activeTab);
 
     const onTabChange = (selectedTabIndex: number) => {

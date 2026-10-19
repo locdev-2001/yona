@@ -25,7 +25,7 @@ import {
 import { t } from '../../i18n';
 import type { DashboardPageProps } from '../types';
 import { parseApiErrorMessage } from 'dashboard/helper/apiClient';
-import { conversationUrl } from 'dashboard/helper/URLHelper';
+import { conversationListPageURL, conversationUrl } from 'dashboard/helper/URLHelper';
 import { REPLY_EDITOR_MODES } from 'dashboard/components/widgets/WootWriter/constants';
 import { draftKey, setDraft as saveReplyDraft } from './draftApi';
 import { createConversationFromDraft } from './compose/composeApi';
@@ -46,6 +46,7 @@ import {
     markMessagesRead as markMessagesReadRequest,
     markMessagesUnread as markMessagesUnreadRequest,
     muteConversation as muteConversationRequest,
+    declineConversation as declineConversationRequest,
     sendMessage,
     retryMessage,
     addMessageReaction,
@@ -212,6 +213,8 @@ interface ConversationContextValue {
     assignTeam: (team: TeamMeta | null) => Promise<void>;
     muteConversation: () => Promise<void>;
     unmuteConversation: () => Promise<void>;
+    // Bỏ qua hội thoại đang chờ: xoá khỏi hộp thư rồi quay về danh sách.
+    declineConversation: () => Promise<void>;
     markMessagesRead: (conversationId: number, seenThrough?: number) => Promise<void>;
     markMessagesUnread: (conversationId: number) => Promise<void>;
     // Ghim của riêng người xem: cập nhật ngay trên danh sách, lỗi thì trả lại như cũ.
@@ -1533,6 +1536,13 @@ export function ConversationProvider({
     const muteConversation = useCallback(() => setMuted(true), [setMuted]);
     const unmuteConversation = useCallback(() => setMuted(false), [setMuted]);
 
+    const declineConversation = useCallback(async () => {
+        if (!conversationId) return;
+        await declineConversationRequest(accountId, conversationId);
+        setAllConversations(current => current.filter(item => item.id !== conversationId));
+        router.visit(conversationListPageURL({ accountId, filters: listFilters, teamId }), { preserveState: true });
+    }, [accountId, conversationId, listFilters, teamId]);
+
     const setConversationPinned = useCallback(
         async (targetId: number, pinned: boolean) => {
             const previous = visibleConversationsRef.current.find(item => item.id === targetId)
@@ -1629,6 +1639,7 @@ export function ConversationProvider({
             assignTeam,
             muteConversation,
             unmuteConversation,
+            declineConversation,
             markMessagesRead,
             markMessagesUnread,
             setConversationPinned,
@@ -1694,6 +1705,7 @@ export function ConversationProvider({
             assignTeam,
             muteConversation,
             unmuteConversation,
+            declineConversation,
             markMessagesRead,
             markMessagesUnread,
             setConversationPinned,

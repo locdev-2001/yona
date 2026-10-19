@@ -280,6 +280,7 @@ Route::middleware(['auth.api_token', 'auth', 'account.scope'])
         Route::post('/conversations/{conversationId}/assignments', [AssignmentsController::class, 'create'])->whereNumber('conversationId');
         Route::post('/conversations/{conversationId}/mute', [ConversationsController::class, 'mute'])->whereNumber('conversationId');
         Route::post('/conversations/{conversationId}/unmute', [ConversationsController::class, 'unmute'])->whereNumber('conversationId');
+        Route::post('/conversations/{conversationId}/decline', [ConversationsController::class, 'decline'])->whereNumber('conversationId');
         // resource :participants (singular) — user_ids nằm trong body.
         Route::get('/conversations/{conversationId}/participants', [ParticipantsController::class, 'show'])->whereNumber('conversationId');
         Route::post('/conversations/{conversationId}/participants', [ParticipantsController::class, 'store'])->whereNumber('conversationId');

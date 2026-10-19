@@ -32,6 +32,8 @@ final class InboundMessage
         public readonly ?ForwardOrigin $forwardedFrom = null,
         public readonly array $attributes = [],
         public readonly array $conversationAttributes = [],
+        /** Người nhận chưa đồng ý nghe người gửi: hội thoại mới mở ra ở trạng thái chờ. */
+        public readonly bool $awaitsAcceptance = false,
     ) {}
 
     public function isEcho(): bool

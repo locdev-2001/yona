@@ -24,7 +24,7 @@ export const MAX_INBOX_FILTERS = 1;
 
 export const DEFAULT_LIST_STATUS: ConversationStatusFilter = isProductFeatureVisible('conversationStatus')
     ? STATUS_TYPE.OPEN
-    : STATUS_TYPE.ALL;
+    : STATUS_TYPE.NOT_PENDING;
 export const DEFAULT_LIST_SORT: string = SORT_BY_TYPE.LAST_ACTIVITY_AT_DESC;
 
 export const EMPTY_LIST_FILTER_QUERY: ListFilterQuery = { inboxIds: [], labels: [] };
@@ -95,8 +95,21 @@ export function readPersistedListFilters(settings: { status?: unknown; order_by?
     };
 }
 
+// Khi ẩn trạng thái hội thoại, trạng thái chỉ còn đổi qua lối vào Tin nhắn chờ, không
+// tính là một bộ lọc.
+export function narrowsByStatus(status: ConversationStatusFilter): boolean {
+    return isProductFeatureVisible('conversationStatus') && status !== DEFAULT_LIST_STATUS;
+}
+
+export function matchesStatusFilter(filter: string, status: string): boolean {
+    if (filter === STATUS_TYPE.ALL) return true;
+    if (filter === STATUS_TYPE.NOT_PENDING) return status !== STATUS_TYPE.PENDING;
+
+    return status === filter;
+}
+
 // Số bộ lọc đang thu hẹp danh sách: mỗi kênh, mỗi nhãn, trạng thái khác mặc định.
 // Sắp xếp không thu hẹp danh sách nên không tính.
 export function countActiveListFilters(filters: ConversationListFilters): number {
-    return filters.inboxIds.length + filters.labels.length + (filters.status === DEFAULT_LIST_STATUS ? 0 : 1);
+    return filters.inboxIds.length + filters.labels.length + (narrowsByStatus(filters.status) ? 1 : 0);
 }

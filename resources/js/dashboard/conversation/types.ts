@@ -133,4 +133,4 @@ export interface ConversationListMeta {
 }
 
 export type AssigneeTab = 'me' | 'unassigned' | 'all';
-export type ConversationStatusFilter = 'open' | 'resolved' | 'pending' | 'snoozed' | 'all';
+export type ConversationStatusFilter = 'open' | 'resolved' | 'pending' | 'snoozed' | 'all' | 'not_pending';

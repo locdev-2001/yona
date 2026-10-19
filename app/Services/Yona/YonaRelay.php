@@ -22,25 +22,34 @@ use App\Models\Inbox;
 use App\Models\Message;
 use App\Models\User;
 use App\Services\Channels\IncomingConversationResolver;
+use App\Services\Users\Friendships;
 
 // Chuyển tin giữa hai hộp thư Yona: tin người A gửi trong hội thoại với B thành tin
 // đến trong hộp thư Yona của B. Hai bản tin mang chung source_id "yona-msg:{id}" nên
-// trả lời, cảm xúc, thu hồi tra được tin tương ứng ở bên kia.
+// trả lời, cảm xúc, thu hồi tra được tin tương ứng ở bên kia. Người chưa là bạn bè
+// thì tin mở hội thoại chờ ở bên nhận; người nhận đã chặn thì tin không được giao.
 class YonaRelay
 {
     public function __construct(
         private readonly YonaInboxes $inboxes,
         private readonly InboundMessageWriter $writer,
         private readonly MessageEventService $events,
+        private readonly Friendships $friendships,
     ) {}
 
     public function deliver(Message $message): void
     {
         $conversation = $message->conversation;
-        $recipientInbox = $this->counterpartInbox($conversation);
+        $recipient = $this->counterpartOf($conversation);
         $sender = $this->inboxes->ownerOf($conversation->inbox);
 
-        if ($recipientInbox === null || $sender === null) {
+        if ($recipient === null || $sender === null) {
+            return;
+        }
+
+        $recipientInbox = $this->inboxes->ensureFor($recipient);
+
+        if ($this->hasBlocked($recipientInbox, $sender)) {
             return;
         }
 
@@ -52,6 +61,7 @@ class YonaRelay
             sticker: isset($message->content_attributes['sticker']) ? StickerContent::fromPayload($message->content_attributes['sticker']) : null,
             attachments: $message->attachments->map(fn (Attachment $attachment) => $this->attachmentOf($attachment))->filter()->values()->all(),
             replyTo: $this->replyOf($message),
+            awaitsAcceptance: ! $this->friendships->areFriends($sender, $recipient->id),
         ));
 
         $message->update(['source_id' => $sourceId]);
@@ -87,11 +97,34 @@ class YonaRelay
         $this->relayEvent($message, fn () => new RecallEvent((string) $message->source_id));
     }
 
+    // Hai người vừa thành bạn bè: hội thoại người kia đang chờ trong hộp thư mình được mở.
+    public function acceptPendingFrom(Account $account, User $person): void
+    {
+        $this->contactFor($account, $person)?->conversations()
+            ->where('status', Conversation::STATUS_PENDING)
+            ->get()
+            ->each(fn (Conversation $conversation) => $conversation->update(['status' => Conversation::STATUS_OPEN]));
+    }
+
     public function counterpartInbox(Conversation $conversation): ?Inbox
     {
-        $recipient = User::query()->find(Yona::userIdFromSourceId($conversation->contactInbox?->source_id));
+        $recipient = $this->counterpartOf($conversation);
 
         return $recipient === null ? null : $this->inboxes->ensureFor($recipient);
+    }
+
+    private function counterpartOf(Conversation $conversation): ?User
+    {
+        return User::query()->find(Yona::userIdFromSourceId($conversation->contactInbox?->source_id));
+    }
+
+    private function hasBlocked(Inbox $recipientInbox, User $sender): bool
+    {
+        return ContactInbox::query()
+            ->where('inbox_id', $recipientInbox->id)
+            ->where('source_id', Yona::contactSourceIdFor($sender->id))
+            ->whereHas('contact', fn ($contact) => $contact->where('blocked', true))
+            ->exists();
     }
 
     public function senderOf(User $user): InboundSender

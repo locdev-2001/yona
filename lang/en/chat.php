@@ -16,7 +16,7 @@ return [
     ],
     'EMPTY' => [
         'ALL' => 'No conversations yet. Tap the pen button to start one.',
-        'REQUESTS' => 'No message requests.',
+        'REQUESTS' => 'No message requests waiting.',
         'START' => 'Pick a conversation or start a new one',
     ],
     'REQUEST' => [
@@ -24,7 +24,12 @@ return [
         'BODY' => "They won't know you've seen their messages until you accept.",
         'ACCEPT' => 'Accept',
         'DELETE' => 'Delete',
+        'IGNORE' => 'Ignore',
         'BLOCK' => 'Block',
+        'ACCEPTED' => 'Moved to your inbox',
+        'IGNORED' => 'Request ignored',
+        'BLOCKED_BODY' => "You blocked this person. Their new messages won't reach your inbox.",
+        'FAILED' => 'Something went wrong, try again later',
     ],
     'ACTIONS' => [
         'PIN' => 'Pin chat',

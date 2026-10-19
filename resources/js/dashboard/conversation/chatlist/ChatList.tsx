@@ -27,7 +27,8 @@ import type { DashboardPageProps } from '../../types';
 import { ASSIGNEE_TYPE, CONVERSATION_TYPE, STATUS_TYPE } from '../constants';
 import { useConversation } from '../ConversationContext';
 import { appliedLabelsForSelection } from '../labelHelpers';
-import type { AssigneeTab } from '../types';
+import { DEFAULT_LIST_STATUS } from '../listFilters';
+import type { AssigneeTab, ConversationStatusFilter } from '../types';
 import NextButton from 'dashboard/components-next/button/Button';
 import { emptyListHint } from './emptyListHint';
 import ActiveFilterChips from './ActiveFilterChips';
@@ -36,6 +37,7 @@ import ChatListHeader from './ChatListHeader';
 import ChatTypeTabs from './ChatTypeTabs';
 import ConversationList from './ConversationList';
 import ListSearchHeader from './ListSearchHeader';
+import { useConversationCount } from './useConversationCount';
 import { useListSearchResults } from './useListSearchResults';
 
 // Port từ dashboard/components/ChatList.vue — cắt: participating/unattended view. Tab Mentions dùng chung màn này
@@ -52,6 +54,12 @@ const ASSIGNEE_TAB_KEYS: {
     { key: ASSIGNEE_TYPE.ME, countKey: 'mine_count' },
     { key: ASSIGNEE_TYPE.UNASSIGNED, countKey: 'unassigned_count', badgeTone: 'warning' },
 ];
+
+// Khi ẩn trạng thái hội thoại, hội thoại chờ người nhận chấp nhận có tab riêng cạnh "Tất cả".
+const PENDING_TAB = STATUS_TYPE.PENDING;
+const hasPendingTab = !isProductFeatureVisible('conversationStatus');
+
+type ChatListTab = AssigneeTab | typeof PENDING_TAB;
 
 export default function ChatList({
     showConversationList = true,
@@ -76,6 +84,7 @@ export default function ChatList({
         searchQuery,
         isOnExpandedLayout,
         setAssigneeTab,
+        setStatusFilter,
         applyConversationFilters,
         clearConversationFilters,
         loadMoreConversations,
@@ -199,16 +208,43 @@ export default function ChatList({
         (conversationType === CONVERSATION_TYPE.MENTION ? t('CHAT_LIST.MENTION_HEADING') : '') ||
         t('CHAT_LIST.TAB_HEADING');
 
-    const assigneeTabItems = ASSIGNEE_TAB_KEYS.map(({ key, countKey, badgeTone }) => ({
-        key,
-        badgeTone,
-        name: t(`CHAT_LIST.ASSIGNEE_TYPE_TABS.${key}`),
-        count: tabMeta[countKey] || 0,
-    }));
+    const isViewingPending = status === PENDING_TAB;
+    const otherStatus: ConversationStatusFilter = isViewingPending ? DEFAULT_LIST_STATUS : PENDING_TAB;
+    const otherStatusCount = useConversationCount(otherStatus);
+
+    const isAssignmentVisible = isProductFeatureVisible('conversationAssignment');
+    const assigneeTabItems = ASSIGNEE_TAB_KEYS.filter(({ key }) => isAssignmentVisible || key === ASSIGNEE_TYPE.ALL).map(
+        ({ key, countKey, badgeTone }) => ({
+            key: key as ChatListTab,
+            badgeTone,
+            name: t(`CHAT_LIST.ASSIGNEE_TYPE_TABS.${key}`),
+            count: isViewingPending ? (key === ASSIGNEE_TYPE.ALL ? otherStatusCount : 0) : tabMeta[countKey] || 0,
+        }),
+    );
+    const chatTabItems = hasPendingTab
+        ? [
+              ...assigneeTabItems,
+              {
+                  key: PENDING_TAB as ChatListTab,
+                  name: t('CHAT.TABS.REQUESTS'),
+                  count: isViewingPending ? tabMeta.all_count || 0 : otherStatusCount,
+              },
+          ]
+        : assigneeTabItems;
+    const activeChatTab: ChatListTab = isViewingPending ? PENDING_TAB : assigneeTab;
+
+    const onChatTabChange = (tab: ChatListTab) => {
+        if (tab === PENDING_TAB) {
+            setStatusFilter(PENDING_TAB);
+
+            return;
+        }
+        if (isViewingPending) setStatusFilter(DEFAULT_LIST_STATUS);
+        if (tab !== assigneeTab) setAssigneeTab(tab);
+    };
 
     const emptyHint = emptyListHint(assigneeTab, listMeta, appliedFilters !== null);
 
-    const isAssignmentVisible = isProductFeatureVisible('conversationAssignment');
     const showAssigneeInConversationCard = isAssignmentVisible && (appliedFilters !== null || assigneeTab === ASSIGNEE_TYPE.ALL);
     const showEndOfListMessage = conversations.length > 0 && endReached && !listLoading;
 
@@ -235,14 +271,10 @@ export default function ChatList({
                 />
                 {appliedFilters === null ? (
                     <>
-                        {/* Điện thoại chỉ có một tab "Tất cả" nên bỏ cả hàng, dải kênh bên dưới đủ để lọc. */}
-                        <div className="flex items-center min-w-0 max-md:hidden">
+                        {/* Điện thoại chỉ có một tab "Tất cả" thì bỏ cả hàng, dải kênh bên dưới đủ để lọc. */}
+                        <div className={`flex items-center min-w-0 ${chatTabItems.length > 1 ? '' : 'max-md:hidden'}`}>
                             <div className="flex-1 min-w-0">
-                                <ChatTypeTabs
-                                    items={isAssignmentVisible ? assigneeTabItems : assigneeTabItems.filter(item => item.key === ASSIGNEE_TYPE.ALL)}
-                                    activeTab={assigneeTab}
-                                    onChatTabChange={setAssigneeTab}
-                                />
+                                <ChatTypeTabs items={chatTabItems} activeTab={activeChatTab} onChatTabChange={onChatTabChange} />
                             </div>
                             {/* Thẳng cột với nút "…" của thẻ hội thoại. */}
                             <div className="flex flex-shrink-0 py-1 pe-4 overflow-hidden [scrollbar-gutter:stable]">
@@ -270,8 +302,8 @@ export default function ChatList({
                 ) : null}
                 {!isSearching && !listLoading && !conversations.length ? (
                     <div className="flex flex-col gap-2 items-center px-4 py-6 text-center">
-                        <p className="mb-0 text-sm text-n-slate-11">{t(emptyHint.messageKey)}</p>
-                        {emptyHint.action ? (
+                        <p className="mb-0 text-sm text-n-slate-11">{t(isViewingPending ? 'CHAT.EMPTY.REQUESTS' : emptyHint.messageKey)}</p>
+                        {emptyHint.action && !isViewingPending ? (
                             <NextButton
                                 sm
                                 slate

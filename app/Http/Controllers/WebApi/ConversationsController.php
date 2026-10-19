@@ -336,6 +336,15 @@ class ConversationsController extends Controller
         return response()->noContent(200);
     }
 
+    public function decline(Request $request, Account $account, int $conversationId): Response
+    {
+        $conversation = $this->fetchConversationForUser($request, $account, $conversationId);
+        abort_unless($conversation->status === Conversation::STATUS_PENDING, 422);
+        $conversation->decline();
+
+        return response()->noContent();
+    }
+
     public function unmute(Request $request, Account $account, int $conversationId): Response
     {
         $this->fetchConversationForUser($request, $account, $conversationId)->unmute();

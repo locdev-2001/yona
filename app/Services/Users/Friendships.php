@@ -95,6 +95,11 @@ class Friendships
         return Friendship::query()->between($user->id, $otherUserId)->first();
     }
 
+    public function areFriends(User $user, int $otherUserId): bool
+    {
+        return $this->between($user, $otherUserId)?->isAccepted() ?? false;
+    }
+
     /** @return list<int> */
     public function friendIds(User $user): array
     {

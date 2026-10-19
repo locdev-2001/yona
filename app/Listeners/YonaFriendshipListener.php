@@ -9,7 +9,8 @@ use App\Services\Users\PersonalAccounts;
 use App\Services\Yona\YonaRelay;
 
 // Hai người vừa thành bạn bè: mỗi bên có người kia trong hộp thư Yona của mình, để
-// danh sách Bạn bè hiện ngay mà không cần ai nhắn trước.
+// danh sách Bạn bè hiện ngay mà không cần ai nhắn trước, và tin đang chờ giữa hai
+// người chuyển vào danh sách chính.
 class YonaFriendshipListener
 {
     public function __construct(
@@ -27,7 +28,7 @@ class YonaFriendshipListener
         $friendship = $event->data['friendship'];
         [$requester, $addressee] = [$friendship->requester, $friendship->addressee];
 
-        $this->relay->contactFor($this->accounts->ensureFor($requester), $addressee);
-        $this->relay->contactFor($this->accounts->ensureFor($addressee), $requester);
+        $this->relay->acceptPendingFrom($this->accounts->ensureFor($requester), $addressee);
+        $this->relay->acceptPendingFrom($this->accounts->ensureFor($addressee), $requester);
     }
 }

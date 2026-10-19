@@ -1,5 +1,5 @@
 import { SORT_BY_TYPE, STATUS_TYPE } from '../constants';
-import { DEFAULT_LIST_STATUS, MAX_INBOX_FILTERS } from '../listFilters';
+import { DEFAULT_LIST_STATUS, MAX_INBOX_FILTERS, narrowsByStatus } from '../listFilters';
 import type { ConversationListFilters } from '../listFilters';
 import type { ConversationStatusFilter } from '../types';
 
@@ -62,7 +62,7 @@ export interface ActiveFilterChip {
 }
 
 // Bộ lọc đang thu hẹp danh sách, theo thứ tự kênh → nhãn → trạng thái.
-// Trạng thái mặc định (Đang mở) không thành chip; sắp xếp không thu hẹp nên không có chip.
+// Trạng thái mặc định (Đang mở) và trạng thái khi ẩn trạng thái hội thoại không thành chip; sắp xếp không thu hẹp nên không có chip.
 export function activeFilterChips(filters: ConversationListFilters): ActiveFilterChip[] {
     const inboxChips = filters.inboxIds.map<ActiveFilterChip>(inboxId => ({
         key: `inbox:${inboxId}`,
@@ -76,10 +76,9 @@ export function activeFilterChips(filters: ConversationListFilters): ActiveFilte
         label,
         removal: { labels: filters.labels.filter(title => title !== label) },
     }));
-    const statusChips: ActiveFilterChip[] =
-        filters.status === DEFAULT_LIST_STATUS
-            ? []
-            : [{ key: `status:${filters.status}`, kind: 'status', status: filters.status, removal: { status: DEFAULT_LIST_STATUS } }];
+    const statusChips: ActiveFilterChip[] = narrowsByStatus(filters.status)
+        ? [{ key: `status:${filters.status}`, kind: 'status', status: filters.status, removal: { status: DEFAULT_LIST_STATUS } }]
+        : [];
 
     return [...inboxChips, ...labelChips, ...statusChips];
 }
