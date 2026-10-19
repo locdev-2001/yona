@@ -23,6 +23,7 @@ final class ConsoleNavigation
             'customers' => [
                 self::item('accounts', SuperAdminArea::url('accounts')),
                 self::item('users', SuperAdminArea::url('users')),
+                self::item('abuse_reports', SuperAdminArea::url('abuse_reports')),
             ],
             'channels' => [
                 self::item('channel_health', SuperAdminArea::url('channel_health')),

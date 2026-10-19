@@ -420,6 +420,7 @@ const messages: Record<string, unknown> = {
             "resource_description_agent_bots": "Bots that receive and answer messages for agents through a webhook.",
             "resource_description_platform_apps": "Apps that call the Platform API to manage accounts and users.",
             "resource_description_account_users": "Members of each account and their roles.",
+            "resource_description_abuse_reports": "People, messages or conversations reported by users. Change the status once handled.",
             "resource_description_impersonations": "Each time a super admin signed in as a user, with the reason.",
             "records_total": "{total} records",
             "search_records": "Search {resource}…",
@@ -504,6 +505,7 @@ const messages: Record<string, unknown> = {
             "installation_configs": "Installation configs",
             "settings": "Settings",
             "audit_logs": "Audit log",
+            "abuse_reports": "Abuse reports",
             "impersonations": "Impersonations",
             "horizon": "Queues (Horizon)",
             "pulse": "Performance (Pulse)",
@@ -2657,6 +2659,19 @@ const messages: Record<string, unknown> = {
     },
     "CHANNEL_SELECTOR": {
         "COMING_SOON": "Coming soon"
+    },
+    "CHAT": {
+        "PREVIEW": {
+            "RECALLED": "Message unsent",
+            "STICKER": "Sent a sticker",
+            "BANK_TRANSFER": "Sent bank transfer details"
+        },
+        "ERRORS": {
+            "BLOCKED": "Can't send because one of you has blocked the other",
+            "NOT_MEMBER": "You're no longer in this conversation",
+            "SELF": "You can't message yourself",
+            "EMPTY": "The message is empty"
+        }
     },
     "CHAT_LIST": {
         "LOADING": "Fetching conversations",

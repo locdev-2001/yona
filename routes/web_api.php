@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\Integrations\WebhooksController as SlackEventsWebhooksController;
 use App\Http\Controllers\RequestSigningKeysController;
+use App\Http\Controllers\WebApi\AbuseReportsController;
 use App\Http\Controllers\WebApi\AccountsController;
 use App\Http\Controllers\WebApi\Actions\ContactMergesController;
 use App\Http\Controllers\WebApi\AgentBotsController;
@@ -14,6 +15,8 @@ use App\Http\Controllers\WebApi\CallbacksController;
 use App\Http\Controllers\WebApi\CampaignsController;
 use App\Http\Controllers\WebApi\CannedResponsesController;
 use App\Http\Controllers\WebApi\CategoriesController;
+use App\Http\Controllers\WebApi\ChatMessagesController;
+use App\Http\Controllers\WebApi\ChatsController;
 use App\Http\Controllers\WebApi\Contacts\ContactableInboxesController;
 use App\Http\Controllers\WebApi\Contacts\ContactInboxesController;
 use App\Http\Controllers\WebApi\Contacts\ConversationsController as ContactConversationsController;
@@ -65,6 +68,7 @@ use App\Http\Controllers\WebApi\Settings\PlatformStickerPacksController;
 use App\Http\Controllers\WebApi\TeamMembersController;
 use App\Http\Controllers\WebApi\TeamsController;
 use App\Http\Controllers\WebApi\UploadController;
+use App\Http\Controllers\WebApi\UserBlocksController;
 use App\Http\Controllers\WebApi\UsersController;
 use App\Http\Controllers\WebApi\WebhooksController;
 use App\Http\Controllers\WebApi\WidgetUpdatesController;
@@ -129,6 +133,21 @@ Route::middleware(['auth', EnsureStickerLibraryAccess::class.':'.EnsureStickerLi
 Route::middleware(['auth.api_token', 'auth'])->prefix('/api/v1')->group(function () {
     Route::get('/users/search', [UsersController::class, 'search'])->middleware('throttle:60,1');
     Route::get('/usernames/availability', [UsersController::class, 'usernameAvailability'])->middleware('throttle:60,1');
+
+    Route::get('/chats', [ChatsController::class, 'index']);
+    Route::post('/chats/direct', [ChatsController::class, 'storeDirect'])->middleware('throttle:60,1');
+    Route::prefix('/chats/{chat}')->whereNumber('chat')->group(function () {
+        Route::get('', [ChatsController::class, 'show']);
+        Route::delete('', [ChatsController::class, 'destroy']);
+        Route::post('/accept', [ChatsController::class, 'accept']);
+        Route::post('/read', [ChatsController::class, 'read']);
+        Route::post('/typing', [ChatsController::class, 'typing'])->middleware('throttle:120,1');
+        Route::get('/messages', [ChatMessagesController::class, 'index']);
+        Route::post('/messages', [ChatMessagesController::class, 'store'])->middleware('throttle:120,1');
+    });
+    Route::post('/blocks', [UserBlocksController::class, 'store']);
+    Route::delete('/blocks/{user}', [UserBlocksController::class, 'destroy'])->whereNumber('user');
+    Route::post('/abuse_reports', [AbuseReportsController::class, 'store'])->middleware('throttle:20,1');
     Route::post('/notification_subscriptions', [NotificationSubscriptionsController::class, 'store']);
     Route::delete('/notification_subscriptions', [NotificationSubscriptionsController::class, 'destroy']);
 });

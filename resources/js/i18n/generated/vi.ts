@@ -420,6 +420,7 @@ const messages: Record<string, unknown> = {
             "resource_description_agent_bots": "Bot nhận và trả lời tin thay nhân viên qua webhook.",
             "resource_description_platform_apps": "Ứng dụng gọi Platform API để quản lý tài khoản và người dùng.",
             "resource_description_account_users": "Thành viên của từng tài khoản và vai trò của họ.",
+            "resource_description_abuse_reports": "Người dùng báo cáo người, tin nhắn hoặc cuộc trò chuyện vi phạm. Đổi trạng thái khi đã xử lý.",
             "resource_description_impersonations": "Mỗi lần super admin đăng nhập hộ một người dùng, kèm lý do.",
             "records_total": "{total} bản ghi",
             "search_records": "Tìm trong {resource}…",
@@ -504,6 +505,7 @@ const messages: Record<string, unknown> = {
             "installation_configs": "Biến cấu hình hệ thống",
             "settings": "Cài đặt",
             "audit_logs": "Nhật ký thao tác",
+            "abuse_reports": "Báo cáo vi phạm",
             "impersonations": "Đăng nhập hộ",
             "horizon": "Hàng đợi (Horizon)",
             "pulse": "Hiệu năng (Pulse)",
@@ -2657,6 +2659,19 @@ const messages: Record<string, unknown> = {
     },
     "CHANNEL_SELECTOR": {
         "COMING_SOON": "Sắp ra mắt"
+    },
+    "CHAT": {
+        "PREVIEW": {
+            "RECALLED": "Tin nhắn đã được thu hồi",
+            "STICKER": "Đã gửi một nhãn dán",
+            "BANK_TRANSFER": "Đã gửi thông tin chuyển khoản"
+        },
+        "ERRORS": {
+            "BLOCKED": "Không gửi được tin vì một trong hai người đã chặn người kia",
+            "NOT_MEMBER": "Bạn không còn ở trong cuộc trò chuyện này",
+            "SELF": "Bạn không thể nhắn cho chính mình",
+            "EMPTY": "Tin nhắn đang trống"
+        }
     },
     "CHAT_LIST": {
         "LOADING": "Đang tải các hội thoại",
