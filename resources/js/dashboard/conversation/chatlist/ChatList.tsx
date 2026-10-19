@@ -28,7 +28,7 @@ import { ASSIGNEE_TYPE, CONVERSATION_TYPE, STATUS_TYPE } from '../constants';
 import { useConversation } from '../ConversationContext';
 import { appliedLabelsForSelection } from '../labelHelpers';
 import { DEFAULT_LIST_STATUS } from '../listFilters';
-import type { AssigneeTab, ConversationStatusFilter } from '../types';
+import type { AssigneeTab } from '../types';
 import NextButton from 'dashboard/components-next/button/Button';
 import { emptyListHint } from './emptyListHint';
 import ActiveFilterChips from './ActiveFilterChips';
@@ -209,8 +209,8 @@ export default function ChatList({
         t('CHAT_LIST.TAB_HEADING');
 
     const isViewingPending = status === PENDING_TAB;
-    const otherStatus: ConversationStatusFilter = isViewingPending ? DEFAULT_LIST_STATUS : PENDING_TAB;
-    const otherStatusCount = useConversationCount(otherStatus);
+    const mainCount = useConversationCount(DEFAULT_LIST_STATUS);
+    const pendingCount = useConversationCount(PENDING_TAB);
 
     const isAssignmentVisible = isProductFeatureVisible('conversationAssignment');
     const assigneeTabItems = ASSIGNEE_TAB_KEYS.filter(({ key }) => isAssignmentVisible || key === ASSIGNEE_TYPE.ALL).map(
@@ -218,7 +218,7 @@ export default function ChatList({
             key: key as ChatListTab,
             badgeTone,
             name: t(`CHAT_LIST.ASSIGNEE_TYPE_TABS.${key}`),
-            count: isViewingPending ? (key === ASSIGNEE_TYPE.ALL ? otherStatusCount : 0) : tabMeta[countKey] || 0,
+            count: hasPendingTab && key === ASSIGNEE_TYPE.ALL ? mainCount : tabMeta[countKey] || 0,
         }),
     );
     const chatTabItems = hasPendingTab
@@ -227,7 +227,7 @@ export default function ChatList({
               {
                   key: PENDING_TAB as ChatListTab,
                   name: t('CHAT.TABS.REQUESTS'),
-                  count: isViewingPending ? tabMeta.all_count || 0 : otherStatusCount,
+                  count: pendingCount,
               },
           ]
         : assigneeTabItems;
