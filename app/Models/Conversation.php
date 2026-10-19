@@ -14,6 +14,7 @@ use App\Models\Concerns\IndexedForSearch;
 use App\Models\Concerns\Labelable;
 use App\Models\Concerns\Reportable;
 use App\Models\Concerns\SharesRequestModels;
+use App\Models\Concerns\SharesThread;
 use App\Support\CurrentContact;
 use App\Support\CurrentExecutedBy;
 use Database\Factories\ConversationFactory;
@@ -34,7 +35,7 @@ use Illuminate\Support\Traits\Localizable;
 class Conversation extends Model
 {
     /** @use HasFactory<ConversationFactory> */
-    use AssignmentHandler, AutoAssignmentHandler, HasFactory, IndexedForSearch, Labelable, Localizable, Reportable, SharesRequestModels;
+    use AssignmentHandler, AutoAssignmentHandler, HasFactory, IndexedForSearch, Labelable, Localizable, Reportable, SharesRequestModels, SharesThread;
 
     public const STATUS_OPEN = 0;
 
@@ -389,11 +390,11 @@ class Conversation extends Model
      * Tin mới nhất đứng trước. `latest()`/`orderByDesc()` nối sau `messages()` chỉ
      * thành khoá sắp xếp phụ sau thứ tự tăng dần, nên vẫn ra tin cũ nhất.
      *
-     * @return HasMany<Message, $this>
+     * @return Builder<Message>
      */
-    public function messagesNewestFirst(): HasMany
+    public function messagesNewestFirst(): Builder
     {
-        return $this->messages()->reorder('platform_sent_at', 'desc')->orderByDesc('id');
+        return $this->visibleMessages()->reorder('platform_sent_at', 'desc')->orderByDesc('id');
     }
 
     // Tin đầu tiên theo thứ tự của messages(), nạp gộp được cho cả trang thông báo.
@@ -559,20 +560,20 @@ class Conversation extends Model
         return now()->lt($lastIncoming->created_at->addHours((int) $windowHours));
     }
 
-    /** @return HasMany<Message, $this> */
-    public function unreadMessages(): HasMany
+    /** @return Builder<Message> */
+    public function unreadMessages(): Builder
     {
         return $this->agent_last_seen_at !== null
-            ? $this->messages()->where('created_at', '>', $this->agent_last_seen_at)
-            : $this->messages();
+            ? $this->visibleMessages()->where('created_at', '>', $this->agent_last_seen_at)
+            : $this->visibleMessages();
     }
 
-    /** @return HasMany<Message, $this> */
-    public function assigneeUnreadMessages(): HasMany
+    /** @return Builder<Message> */
+    public function assigneeUnreadMessages(): Builder
     {
         return $this->assignee_last_seen_at !== null
-            ? $this->messages()->where('created_at', '>', $this->assignee_last_seen_at)
-            : $this->messages();
+            ? $this->visibleMessages()->where('created_at', '>', $this->assignee_last_seen_at)
+            : $this->visibleMessages();
     }
 
     /** @return Collection<int, Message> */
@@ -604,17 +605,10 @@ class Conversation extends Model
             return;
         }
 
-        $countsByConversation = DB::table('messages')
-            ->join('conversations', 'conversations.id', '=', 'messages.conversation_id')
-            ->whereIn('messages.conversation_id', $conversations->modelKeys())
-            ->whereColumn('messages.account_id', 'conversations.account_id')
-            ->where('messages.message_type', Message::TYPE_INCOMING)
-            ->where(fn ($unread) => $unread
-                ->whereNull('conversations.agent_last_seen_at')
-                ->orWhereColumn('messages.created_at', '>', 'conversations.agent_last_seen_at'))
-            ->groupBy('messages.conversation_id')
-            ->selectRaw('messages.conversation_id, COUNT(*) AS unread_count')
-            ->pluck('unread_count', 'conversation_id');
+        $countsByConversation = DB::table('conversations')
+            ->whereIn('id', $conversations->modelKeys())
+            ->selectRaw('id, '.self::unreadMessagesCountSql().' AS unread_count')
+            ->pluck('unread_count', 'id');
 
         foreach ($conversations as $conversation) {
             $conversation->preloadedUnreadIncomingMessagesCount = min(
@@ -624,20 +618,47 @@ class Conversation extends Model
         }
     }
 
-    /** @return HasMany<Message, $this> */
-    private function unreadIncomingMessagesQuery(): HasMany
+    /**
+     * Cùng luật với unreadMessagesCountSql(): ở dòng của luồng dùng chung, tin chưa đọc
+     * là tin gửi đi của người khác, không phải tin của chính người xem.
+     *
+     * @return Builder<Message>
+     */
+    private function unreadIncomingMessagesQuery(): Builder
     {
-        return $this->unreadMessages()
-            ->where('account_id', $this->account_id)
-            ->where('message_type', Message::TYPE_INCOMING);
+        return $this->incomingForViewer($this->unreadMessages());
+    }
+
+    // Tin đến mới nhất theo góc nhìn người xem (nút "Đánh dấu chưa đọc" lùi mốc về trước tin này).
+    public function lastIncomingForViewer(): ?Message
+    {
+        return $this->incomingForViewer($this->visibleMessages())->reorder('id', 'desc')->first();
+    }
+
+    /**
+     * @param  Builder<Message>  $query
+     * @return Builder<Message>
+     */
+    private function incomingForViewer(Builder $query): Builder
+    {
+        $query->where('private', false);
+
+        if (! $this->isThreadView()) {
+            return $query->where('message_type', Message::TYPE_INCOMING);
+        }
+
+        return $query
+            ->whereIn('message_type', [Message::TYPE_INCOMING, Message::TYPE_OUTGOING])
+            ->whereRaw('(sender_type IS DISTINCT FROM ? OR sender_id IS DISTINCT FROM ?)', [(new User)->getMorphClass(), $this->threadViewerId()]);
     }
 
     public function lastNonActivityMessage(): ?Message
     {
-        return $this->messagesNewestFirst()
-            ->where('account_id', $this->account_id)
+        $message = $this->messagesNewestFirst()
             ->where('message_type', '!=', Message::TYPE_ACTIVITY)
             ->first();
+
+        return $message === null ? null : $this->presentMessage($message);
     }
 
     // Bản gốc để acts_as_taggable_on ghi cached_label_list ngay trong lượt save
@@ -746,14 +767,31 @@ class Conversation extends Model
     // conversation.rb#unread_messages_count_arel — subquery tương quan đếm tin
     // incoming chưa đọc theo mốc agent_last_seen_at. Nguồn duy nhất của điều kiện
     // "chưa đọc" phía SQL (sort unread + bộ đếm sidebar dùng chung).
+    /**
+     * Định nghĩa SQL DUY NHẤT của số tin chưa đọc một dòng hội thoại. Hội thoại thường:
+     * tin đến sau mốc đã xem. Dòng của luồng dùng chung: tin trong hội thoại gốc do người
+     * khác gửi, sau mốc đã xem, trước lúc người xem rời nhóm. Viết `= ANY` và
+     * `> COALESCE` để index `(conversation_id, account_id, message_type, created_at)`
+     * dùng được cả mốc đã xem.
+     */
     public static function unreadMessagesCountSql(string $conversationsTable = 'conversations'): string
     {
+        $t = $conversationsTable;
+        $incoming = Message::TYPE_INCOMING;
+        $outgoing = Message::TYPE_OUTGOING;
+        $userType = (new User)->getMorphClass();
+
         return '(SELECT COUNT(messages.id) FROM messages'
-            ." WHERE messages.conversation_id = $conversationsTable.id"
-            ." AND messages.account_id = $conversationsTable.account_id"
-            .' AND messages.message_type = '.Message::TYPE_INCOMING
-            ." AND ($conversationsTable.agent_last_seen_at IS NULL"
-            ." OR messages.created_at > $conversationsTable.agent_last_seen_at))";
+            ." JOIN conversations AS unread_thread ON unread_thread.id = COALESCE($t.thread_conversation_id, $t.id)"
+            ." LEFT JOIN yona_group_members AS unread_member ON $t.thread_conversation_id IS NOT NULL AND unread_member.conversation_id = $t.id"
+            .' WHERE messages.conversation_id = unread_thread.id'
+            .' AND messages.account_id = unread_thread.account_id'
+            ." AND messages.message_type = ANY (CASE WHEN $t.thread_conversation_id IS NULL THEN ARRAY[$incoming] ELSE ARRAY[$incoming, $outgoing] END)"
+            .' AND messages.private = false'
+            ." AND messages.created_at > COALESCE($t.agent_last_seen_at, '-infinity')"
+            .' AND (unread_member.id IS NULL'
+            ." OR ((messages.sender_type IS DISTINCT FROM '$userType' OR messages.sender_id IS DISTINCT FROM unread_member.user_id)"
+            .' AND (unread_member.left_at IS NULL OR messages.created_at <= unread_member.left_at))))';
     }
 
     public function scopeSortOnLastActivityAt(Builder $query, string $direction = 'desc'): Builder
@@ -1040,7 +1078,6 @@ class Conversation extends Model
     public function webhookData(): array
     {
         $lastChatMessage = $this->messagesNewestFirst()
-            ->where('account_id', $this->account_id)
             ->chat()
             ->first();
 

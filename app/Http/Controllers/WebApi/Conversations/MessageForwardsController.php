@@ -28,7 +28,7 @@ class MessageForwardsController extends Controller
     public function targets(Request $request, Account $account, int $conversationId, int $messageId): JsonResponse
     {
         $conversation = $this->fetchConversationForUser($request, $account, $conversationId);
-        $source = $conversation->messages()->findOrFail($messageId);
+        $source = $conversation->visibleMessages()->findOrFail($messageId);
         $user = $request->user();
         $accountUser = $request->attributes->get('currentAccountUser');
 
@@ -59,7 +59,7 @@ class MessageForwardsController extends Controller
     public function store(Request $request, Account $account, int $conversationId, int $messageId, MessageForwarder $forwarder): JsonResponse
     {
         $conversation = $this->fetchConversationForUser($request, $account, $conversationId);
-        $source = $conversation->messages()->findOrFail($messageId);
+        $source = $conversation->visibleMessages()->findOrFail($messageId);
         $targetIds = $this->targetIds($request->input('conversation_ids'), $account->locale);
 
         if ($targetIds instanceof ForwardBlock) {

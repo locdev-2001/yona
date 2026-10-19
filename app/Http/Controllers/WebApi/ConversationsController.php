@@ -163,7 +163,7 @@ class ConversationsController extends Controller
 
         $attachments = Attachment::query()
             ->whereMorphedTo('attachable', Message::class)
-            ->whereIn('attachable_id', $conversation->messages()->select('id'))
+            ->whereIn('attachable_id', $conversation->visibleMessages()->select('messages.id'))
             ->excludingStickers()
             ->when($kindFileTypes !== null, fn ($query) => $query->whereIn('file_type', $kindFileTypes))
             ->with('attachable')
@@ -485,10 +485,7 @@ class ConversationsController extends Controller
     public function unread(Request $request, Account $account, int $conversationId): Response
     {
         $conversation = $this->fetchConversationForUser($request, $account, $conversationId);
-        $lastIncoming = $conversation->messages()
-            ->where('message_type', Message::TYPE_INCOMING)
-            ->reorder('id', 'desc')
-            ->first();
+        $lastIncoming = $conversation->lastIncomingForViewer();
 
         $this->markSeenAt($conversation, $lastIncoming?->created_at->copy()->subSecond(), true);
 

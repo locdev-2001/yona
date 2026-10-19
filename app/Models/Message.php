@@ -95,6 +95,9 @@ class Message extends Model
     /** @var list<Attachment> */
     public array $pendingAttachments = [];
 
+    // Có giá trị khi đây là bản trình bày (seenFrom) của tin luồng dùng chung, không lưu được.
+    public ?Conversation $presentedIn = null;
+
     // Default DB chưa có trên model mới tạo — set sẵn cho serializer.
     protected $attributes = [
         'status' => 0,
@@ -131,6 +134,37 @@ class Message extends Model
         ];
     }
 
+    /**
+     * Tin của hội thoại gốc nhìn từ dòng riêng của một thành viên: mang id hội thoại,
+     * account, hộp thư của dòng đó, và tin người khác gửi đi thành tin đến với người xem.
+     */
+    public function seenFrom(Conversation $view, ?int $viewerId): self
+    {
+        $sentByViewer = $this->sender_type === (new User)->getMorphClass() && (int) $this->sender_id === $viewerId;
+
+        $copy = clone $this;
+        $copy->presentedIn = $view;
+        $copy->setRawAttributes([
+            ...$this->getAttributes(),
+            'account_id' => $view->account_id,
+            'inbox_id' => $view->inbox_id,
+            'conversation_id' => $view->id,
+            'message_type' => $this->message_type === self::TYPE_OUTGOING && ! $sentByViewer ? self::TYPE_INCOMING : $this->message_type,
+        ], true);
+        $copy->setRelation('conversation', $view);
+        $copy->unsetRelation('account');
+        $copy->unsetRelation('inbox');
+
+        return $copy;
+    }
+
+    private function assertNotPresentation(): void
+    {
+        if ($this->presentedIn !== null) {
+            throw new \LogicException('A presented thread message is read-only; change the stored message instead.');
+        }
+    }
+
     public static function typeName(int $messageType): string
     {
         return array_flip(self::MESSAGE_TYPES)[$messageType];
@@ -161,12 +195,14 @@ class Message extends Model
         });
 
         static::saving(function (Message $message) {
+            $message->assertNotPresentation();
             $message->validateContentLength();
             $message->ensureInReplyTo();
             $message->ensureProcessedMessageContent();
         });
 
         static::deleting(function (Message $message) {
+            $message->assertNotPresentation();
             // has_many :attachments, dependent: :destroy — xóa từng bản ghi để
             // hook deleted của Attachment dọn luôn tệp trên đĩa.
             $message->attachments->each->delete();
@@ -612,11 +648,15 @@ class Message extends Model
             return;
         }
 
-        // update_columns: không chạy hook, updated_at đổi theo thời điểm hiện tại.
-        $this->conversation->newModelQuery()->whereKey($this->conversation_id)->toBase()->update([
-            'last_activity_at' => $this->created_at,
-            'updated_at' => now(),
-        ]);
+        // update_columns: không chạy hook, updated_at đổi theo thời điểm hiện tại. Dòng riêng
+        // của mọi thành viên luồng dùng chung nhảy lên đầu danh sách cùng lúc.
+        $this->conversation->newModelQuery()
+            ->where(fn (Builder $rows) => $rows->whereKey($this->conversation_id)->orWhere('thread_conversation_id', $this->conversation_id))
+            ->toBase()
+            ->update([
+                'last_activity_at' => $this->created_at,
+                'updated_at' => now(),
+            ]);
         $this->conversation->setAttribute('last_activity_at', $this->created_at);
         $this->conversation->syncOriginalAttribute('last_activity_at');
     }

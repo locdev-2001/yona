@@ -70,6 +70,9 @@ use App\Http\Controllers\WebApi\UsersController;
 use App\Http\Controllers\WebApi\WebhooksController;
 use App\Http\Controllers\WebApi\WidgetUpdatesController;
 use App\Http\Controllers\WebApi\YonaContactsController;
+use App\Http\Controllers\WebApi\YonaGroupInvitesController;
+use App\Http\Controllers\WebApi\YonaGroupMembersController;
+use App\Http\Controllers\WebApi\YonaGroupsController;
 use App\Http\Controllers\WebApi\ZaloConnectionsController;
 use App\Http\Middleware\EnsureStickerLibraryAccess;
 use App\Http\RateLimiting\MessagingRateLimiters;
@@ -137,6 +140,9 @@ Route::middleware(['auth.api_token', 'auth'])->prefix('/api/v1')->group(function
     Route::post('/friendships', [FriendshipsController::class, 'store'])->middleware('throttle:60,1');
     Route::post('/friendships/{friendshipId}/accept', [FriendshipsController::class, 'accept'])->whereNumber('friendshipId');
     Route::delete('/friendships/{friendshipId}', [FriendshipsController::class, 'destroy'])->whereNumber('friendshipId');
+
+    Route::get('/group_invites/{token}', [YonaGroupInvitesController::class, 'preview'])->middleware('throttle:60,1');
+    Route::post('/group_invites/{token}/accept', [YonaGroupInvitesController::class, 'accept'])->middleware('throttle:30,1');
 
     Route::post('/notification_subscriptions', [NotificationSubscriptionsController::class, 'store']);
     Route::delete('/notification_subscriptions', [NotificationSubscriptionsController::class, 'destroy']);
@@ -219,6 +225,15 @@ Route::middleware(['auth.api_token', 'auth', 'account.scope'])
 
         Route::get('/yona/contacts', [YonaContactsController::class, 'index']);
         Route::post('/yona/contacts', [YonaContactsController::class, 'store'])->middleware('throttle:60,1');
+        Route::post('/yona/groups', [YonaGroupsController::class, 'store'])->middleware('throttle:30,1');
+        Route::get('/yona/groups/{groupId}', [YonaGroupsController::class, 'show'])->whereNumber('groupId');
+        Route::patch('/yona/groups/{groupId}', [YonaGroupsController::class, 'update'])->whereNumber('groupId');
+        Route::post('/yona/groups/{groupId}/members', [YonaGroupMembersController::class, 'store'])->whereNumber('groupId')->middleware('throttle:60,1');
+        Route::patch('/yona/groups/{groupId}/members/{userId}', [YonaGroupMembersController::class, 'update'])->whereNumber(['groupId', 'userId']);
+        Route::delete('/yona/groups/{groupId}/members/{userId}', [YonaGroupMembersController::class, 'destroy'])->whereNumber(['groupId', 'userId']);
+        Route::get('/yona/groups/{groupId}/invite_links', [YonaGroupInvitesController::class, 'index'])->whereNumber('groupId');
+        Route::post('/yona/groups/{groupId}/invite_links', [YonaGroupInvitesController::class, 'store'])->whereNumber('groupId')->middleware('throttle:30,1');
+        Route::delete('/yona/groups/{groupId}/invite_links/{linkId}', [YonaGroupInvitesController::class, 'destroy'])->whereNumber(['groupId', 'linkId']);
         Route::get('/conversations', [ConversationsController::class, 'index']);
         Route::post('/conversations', [ConversationsController::class, 'store']);
         Route::post('/conversations/filter', [ConversationsController::class, 'filter']);

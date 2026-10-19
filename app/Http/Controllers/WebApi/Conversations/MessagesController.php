@@ -4,6 +4,7 @@ namespace App\Http\Controllers\WebApi\Conversations;
 
 use App\Builders\Messages\MessageBuilder;
 use App\Channels\Capability;
+use App\Exceptions\GroupActionRejected;
 use App\Exceptions\MessageValidationException;
 use App\Finders\MessageFinder;
 use App\Http\Controllers\Controller;
@@ -57,7 +58,7 @@ class MessagesController extends Controller
             return response()->json(['error' => $exception->getMessage()], 422);
         }
 
-        return response()->json((new MessageResource($message))->toArray($request));
+        return response()->json((new MessageResource($conversation->presentMessage($message)))->toArray($request));
     }
 
     // messages#translate — Integrations::GoogleTranslate::ProcessorService.
@@ -67,7 +68,7 @@ class MessagesController extends Controller
     public function translate(Request $request, Account $account, int $conversationId, int $messageId): JsonResponse|Response
     {
         $conversation = $this->fetchConversationForUser($request, $account, $conversationId);
-        $message = $conversation->messages()->findOrFail($messageId);
+        $message = $conversation->visibleMessages()->findOrFail($messageId);
         $targetLanguage = (string) $request->input('target_language');
 
         if ($this->alreadyTranslated($message, $targetLanguage)) {
@@ -96,14 +97,14 @@ class MessagesController extends Controller
     public function retry(Request $request, Account $account, int $conversationId, int $messageId): JsonResponse
     {
         $conversation = $this->fetchConversationForUser($request, $account, $conversationId);
-        $message = $conversation->messages()->findOrFail($messageId);
+        $message = $conversation->visibleMessages()->findOrFail($messageId);
 
         if ($this->claimMessageRetry($conversation, $message)) {
             $message->refresh();
             app(OutboundOrder::class)->dispatch($message);
         }
 
-        return response()->json((new MessageResource($message))->toArray($request));
+        return response()->json((new MessageResource($conversation->presentMessage($message)))->toArray($request));
     }
 
     /**
@@ -116,10 +117,14 @@ class MessagesController extends Controller
     public function destroy(Request $request, Account $account, int $conversationId, int $messageId): JsonResponse
     {
         $conversation = $this->fetchConversationForUser($request, $account, $conversationId);
-        $message = $conversation->messages()->findOrFail($messageId);
+        $message = $conversation->visibleMessages()->findOrFail($messageId);
 
         if ($message->isDeleted()) {
-            return response()->json((new MessageResource($message))->toArray($request));
+            return response()->json((new MessageResource($conversation->presentMessage($message)))->toArray($request));
+        }
+
+        if (! $conversation->mayRemoveMessage($request->user(), $message)) {
+            throw GroupActionRejected::forbidden('MESSAGE_NOT_YOURS');
         }
 
         $failure = $this->recallOnChannel($conversation, $message);
@@ -130,7 +135,7 @@ class MessagesController extends Controller
 
         $message->markDeleted($account->locale);
 
-        return response()->json((new MessageResource($message->fresh()))->toArray($request));
+        return response()->json((new MessageResource($conversation->presentMessage($message->fresh())))->toArray($request));
     }
 
     /**
@@ -144,7 +149,7 @@ class MessagesController extends Controller
     public function markBankTransferPaid(Request $request, Account $account, int $conversationId, int $messageId): JsonResponse
     {
         $conversation = $this->fetchConversationForUser($request, $account, $conversationId);
-        $message = $conversation->messages()->findOrFail($messageId);
+        $message = $conversation->visibleMessages()->findOrFail($messageId);
 
         abort_unless($message->contentTypeName() === 'bank_transfer', 422, 'not_a_bank_transfer_card');
 
@@ -156,7 +161,7 @@ class MessagesController extends Controller
             ]]);
         }
 
-        return response()->json((new MessageResource($message->fresh()))->toArray($request));
+        return response()->json((new MessageResource($conversation->presentMessage($message->fresh())))->toArray($request));
     }
 
     public function storeReaction(Request $request, Account $account, int $conversationId, int $messageId): JsonResponse
@@ -178,7 +183,11 @@ class MessagesController extends Controller
     private function applyReaction(Request $request, Account $account, int $conversationId, int $messageId, ?string $emoji): JsonResponse
     {
         $conversation = $this->fetchConversationForUser($request, $account, $conversationId);
-        $message = $conversation->messages()->findOrFail($messageId);
+        if ($conversation->hasLeftThread()) {
+            throw GroupActionRejected::forbidden('NOT_A_MEMBER');
+        }
+
+        $message = $conversation->visibleMessages()->findOrFail($messageId);
         $driver = $this->channelDriver($conversation, Capability::OutboundReaction);
 
         $outcome = $driver->reaction($message, $emoji);
@@ -189,7 +198,7 @@ class MessagesController extends Controller
 
         $message->setReaction(Message::REACTION_BY_AGENT_PREFIX.$request->user()->id, $emoji);
 
-        return response()->json((new MessageResource($message->fresh()))->toArray($request));
+        return response()->json((new MessageResource($conversation->presentMessage($message->fresh())))->toArray($request));
     }
 
     /** @return array{ok: bool, code?: string, message?: string}|null */

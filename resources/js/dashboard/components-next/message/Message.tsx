@@ -186,6 +186,8 @@ export default function Message({
 
     const isBotOrAgentMessage = (() => {
         if (messageType === MESSAGE_TYPES.ACTIVITY) return false;
+        // Tin người khác gửi trong nhóm cũng có người gửi là người dùng Yona, nhưng với người xem là tin đến.
+        if (messageType === MESSAGE_TYPES.INCOMING) return false;
         if (status === MESSAGE_STATUS.PROGRESS && messageType === MESSAGE_TYPES.OUTGOING) return true;
 
         const senderId = message.sender_id ?? sender?.id;

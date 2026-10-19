@@ -1,0 +1,62 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
+// Nhóm giữa người dùng Yona. Tin của nhóm lưu một bản trong hội thoại gốc thuộc account
+// ẩn của nhóm (account không có ai làm quản trị nên không ai mở được); mỗi thành viên có
+// một dòng hội thoại trong hộp thư Yona của mình trỏ tới hội thoại gốc.
+class YonaGroup extends Model
+{
+    public const MAX_MEMBERS = 500;
+
+    public const CONTACT_SOURCE_PREFIX = 'yona-group:';
+
+    protected $fillable = ['account_id', 'conversation_id', 'name', 'avatar_path', 'description', 'created_by_id', 'member_count'];
+
+    public static function contactSourceIdFor(int $groupId): string
+    {
+        return self::CONTACT_SOURCE_PREFIX.$groupId;
+    }
+
+    public function account(): BelongsTo
+    {
+        return $this->belongsTo(Account::class);
+    }
+
+    public function conversation(): BelongsTo
+    {
+        return $this->belongsTo(Conversation::class);
+    }
+
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by_id');
+    }
+
+    /** @return HasMany<YonaGroupMember, $this> */
+    public function members(): HasMany
+    {
+        return $this->hasMany(YonaGroupMember::class);
+    }
+
+    /** @return HasMany<YonaGroupMember, $this> */
+    public function activeMembers(): HasMany
+    {
+        return $this->members()->whereNull('left_at');
+    }
+
+    /** @return HasMany<YonaGroupInviteLink, $this> */
+    public function inviteLinks(): HasMany
+    {
+        return $this->hasMany(YonaGroupInviteLink::class);
+    }
+
+    public function activeMemberFor(User $user): ?YonaGroupMember
+    {
+        return $this->activeMembers()->where('user_id', $user->id)->first();
+    }
+}

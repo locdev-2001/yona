@@ -530,10 +530,51 @@ Còn lại (danh sách hội thoại, gửi tin, cảm xúc, thu hồi, đính k
 hộp thư sẵn có. Giao diện mở hội thoại mới:
 `resources/js/dashboard/conversation/people/NewYonaChatDialog.tsx`.
 
+### Nhóm giữa người dùng Yona (luồng dùng chung)
+
+- **Lưu:** mỗi nhóm có một account ẩn (`yona_groups.account_id`, không ai làm quản
+  trị nên `SetCurrentAccount` không mở được) với hộp thư Yona và **một hội thoại gốc**
+  (`yona_groups.conversation_id`) giữ mọi tin của nhóm. Mỗi thành viên có một dòng
+  hội thoại trong hộp thư Yona của mình (`yona_group_members.conversation_id`,
+  `conversations.thread_conversation_id` trỏ về gốc). Liên hệ đại diện nhóm có
+  `source_id` = `yona-group:{id}` ở mọi account; `Yona::userIdFromSourceId` chỉ nhận
+  tiền tố `yona:` nên không nhầm nhóm thành người.
+- **Luật đọc ở một chỗ:** `App\Models\Concerns\SharesThread` (trait của
+  `Conversation`). `visibleMessages()` = tin của dòng mình (ghi chú riêng, hoạt động)
+  UNION ALL tin của hội thoại gốc tới `left_at`; `messagesNewestFirst`,
+  `unreadMessages`, `lastNonActivityMessage`, `MessageFinder` đều đi qua đây.
+  `presentMessage()` → `Message::seenFrom()` dựng bản trình bày mang hội thoại,
+  account, hộp thư của dòng người xem, và tin người khác gửi thành `incoming`. Bản
+  trình bày không lưu được (`presentedIn`).
+- **Chưa đọc:** `Conversation::unreadMessagesCountSql()` là SQL duy nhất; với dòng nhóm
+  đếm tin gửi đi của người khác trong hội thoại gốc sau `agent_last_seen_at` của dòng
+  đó. `preloadUnreadIncomingMessagesCounts` dùng lại chính SQL này.
+- **Ghi:** `MessageBuilder` gọi `messageTargetFor()`: tin riêng tư ở lại dòng mình, tin
+  gửi đi vào hội thoại gốc; người đã rời bị từ chối. Tin mới đẩy `last_activity_at`
+  của gốc và mọi dòng thành viên trong một câu UPDATE (`Message::setConversationActivity`).
+- **Realtime:** `ActionCableListener` phát như thường cho hội thoại gốc rồi đẩy
+  `SharedThreadBroadcastJob` (queue `critical`): mỗi thành viên còn trong nhóm nhận
+  `message.created/updated` với payload theo dòng của họ.
+- **Nghiệp vụ:** `App\Services\Groups\GroupService` (tạo, thêm, rời, đưa ra, vai trò,
+  đổi tên, link mời) + `GroupPermissions` (thành viên, quản trị, ai thu hồi được tin
+  chung). Lỗi trả `GroupActionRejected` → `{error, code}`. Mỗi thay đổi thành viên để
+  lại tin hoạt động trong hội thoại gốc. Trần `YonaGroup::MAX_MEMBERS` = 500. Link mời
+  dùng chung trait `InviteToken` với `AccountInviteLink`.
+- **Danh bạ nhóm:** `YonaGroupMembers` đăng ký ở `ChannelActionRegistry::GROUP_MEMBER_DRIVERS`.
+
+| Route | Ghi chú |
+|---|---|
+| `POST /api/v1/accounts/{account}/yona/groups` (`name`, `user_ids[]`) | Tạo nhóm; trả nhóm theo góc nhìn người tạo, `conversation_id` là dòng của họ |
+| `GET/PATCH /api/v1/accounts/{account}/yona/groups/{id}` | Xem kèm thành viên · đổi tên (quản trị) |
+| `POST /…/yona/groups/{id}/members` · `PATCH/DELETE /…/members/{userId}` | Thêm bạn bè · đổi vai trò · đưa ra (xoá chính mình = rời) |
+| `GET/POST /…/yona/groups/{id}/invite_links` · `DELETE /…/invite_links/{linkId}` | Link mời (quản trị); token chỉ trả lúc tạo |
+| `GET /api/v1/group_invites/{token}` · `POST /api/v1/group_invites/{token}/accept` | Xem trước · tham gia bằng link |
+
 ### Chưa có
 
-- **Nhóm chat giữa người dùng Yona:** chưa chốt cách lưu (mỗi tin nhóm chép vào
-  hộp thư từng thành viên); chưa có code.
+- **Giao diện nhóm** (tạo nhóm, panel thông tin nhóm, trang mở link mời `/g/{token}`):
+  chưa có; lõi và API ở mục "Nhóm giữa người dùng Yona" bên trên đã chạy.
+- **Gọi thoại/video, chia sẻ màn hình:** chưa có code, kế hoạch đã duyệt schema.
 - **Tin chờ và chặn cho người lạ** trên kênh Yona: chưa có; ai biết username đều
   mở được hội thoại.
 - **Đang gõ, đã xem** giữa hai hộp thư Yona: `YonaOutboundActions::typing()` rỗng,

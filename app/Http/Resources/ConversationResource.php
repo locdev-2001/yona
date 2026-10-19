@@ -109,12 +109,56 @@ class ConversationResource extends JsonResource
             'latestNonActivityMessage.sender' => $withSenderRelations,
         ]);
         Conversation::preloadUnreadIncomingMessagesCounts($conversations);
+        self::preloadThreadLastMessages($conversations, $withSenderRelations);
 
         foreach ($conversations as $conversation) {
             $conversation->contact?->setRelation('account', $conversation->account);
 
             foreach ([$conversation->latestMessage, $conversation->latestNonActivityMessage] as $message) {
                 self::shareParentRelations($message, $conversation);
+            }
+        }
+    }
+
+    /**
+     * Dòng riêng của luồng dùng chung không có tin của chính nó: tin cuối lấy từ hội thoại
+     * gốc, nạp một lượt cho mọi dòng trong trang. Người đã rời nhóm thì đọc tới mốc rời.
+     *
+     * @param  EloquentCollection<int, Conversation>  $conversations
+     */
+    private static function preloadThreadLastMessages(EloquentCollection $conversations, \Closure $withSenderRelations): void
+    {
+        $views = $conversations->filter(fn (Conversation $conversation) => $conversation->isThreadView());
+
+        if ($views->isEmpty()) {
+            return;
+        }
+
+        $views->loadMissing('threadMembership');
+        $threads = Conversation::query()
+            ->whereIn('id', $views->pluck('thread_conversation_id')->unique())
+            ->with([
+                'latestMessage.attachments',
+                'latestNonActivityMessage.attachments',
+                'latestMessage.sender' => $withSenderRelations,
+                'latestNonActivityMessage.sender' => $withSenderRelations,
+            ])
+            ->get()
+            ->keyBy('id');
+
+        foreach ($views as $view) {
+            if ($view->threadMembership?->left_at !== null) {
+                $view->setRelation('latestMessage', $view->messagesNewestFirst()->first());
+                $view->setRelation('latestNonActivityMessage', $view->lastNonActivityMessage());
+            } else {
+                $thread = $threads[$view->thread_conversation_id] ?? null;
+                $view->setRelation('latestMessage', $thread?->latestMessage);
+                $view->setRelation('latestNonActivityMessage', $thread?->latestNonActivityMessage);
+            }
+
+            foreach (['latestMessage', 'latestNonActivityMessage'] as $relation) {
+                $message = $view->getRelation($relation);
+                $view->setRelation($relation, $message === null ? null : $view->presentMessage($message));
             }
         }
     }
@@ -209,7 +253,8 @@ class ConversationResource extends JsonResource
             return [$conversation->latestMessage, $conversation->latestNonActivityMessage];
         }
 
-        $lastMessage = $conversation->messagesNewestFirst()->first();
+        $newest = $conversation->messagesNewestFirst()->first();
+        $lastMessage = $newest === null ? null : $conversation->presentMessage($newest);
         // Tin mới nhất đã không phải hoạt động thì chính nó là tin cuối không-hoạt-động.
         $lastNonActivityMessage = $lastMessage !== null
             && $lastMessage->message_type !== Message::TYPE_ACTIVITY

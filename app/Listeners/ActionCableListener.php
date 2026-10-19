@@ -9,6 +9,7 @@ use App\Http\Resources\ContactResource;
 use App\Http\Resources\MessageResource;
 use App\Http\Resources\UserResource;
 use App\Jobs\ActionCableBroadcastJob;
+use App\Jobs\Conversations\SharedThreadBroadcastJob;
 use App\Models\Account;
 use App\Models\AccountUser;
 use App\Models\AgentBot;
@@ -55,6 +56,7 @@ class ActionCableListener extends BaseListener
         ];
 
         $this->broadcast($account, $tokens, EventType::MESSAGE_CREATED, MessageResource::pushEventData($message));
+        $this->broadcastToThreadViews($message, EventType::MESSAGE_CREATED);
     }
 
     public function messageUpdated(DomainEvent $event): void
@@ -70,6 +72,17 @@ class ActionCableListener extends BaseListener
             ...MessageResource::pushEventData($message),
             'previous_changes' => $event->data['previous_changes'] ?? null,
         ]);
+        $this->broadcastToThreadViews($message, EventType::MESSAGE_UPDATED, $event->data['previous_changes'] ?? null);
+    }
+
+    // Tin của hội thoại gốc còn phải tới dòng riêng của từng thành viên luồng dùng chung.
+    private function broadcastToThreadViews(Message $message, EventType $type, mixed $previousChanges = null): void
+    {
+        if ($message->private || ! $message->conversation->threadViews()->exists()) {
+            return;
+        }
+
+        SharedThreadBroadcastJob::dispatch($message->id, $type->value, is_array($previousChanges) ? $previousChanges : null);
     }
 
     public function firstReplyCreated(DomainEvent $event): void

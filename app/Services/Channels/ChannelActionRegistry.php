@@ -7,6 +7,7 @@ use App\Services\Channels\Stickers\StickerCatalog;
 use App\Services\Facebook\FacebookOutboundActions;
 use App\Services\Instagram\InstagramOutboundActions;
 use App\Services\Widget\WidgetOutboundActions;
+use App\Services\Yona\YonaGroupMembers;
 use App\Services\Yona\YonaOutboundActions;
 use App\Services\Zalo\ZaloGroupMembers;
 use App\Services\Zalo\ZaloOutboundActions;
@@ -30,6 +31,7 @@ class ChannelActionRegistry
     /** @var array<string, class-string<ChannelGroupMembers>> */
     private const GROUP_MEMBER_DRIVERS = [
         'Channel::Zalo' => ZaloGroupMembers::class,
+        'Channel::Yona' => YonaGroupMembers::class,
     ];
 
     /** Sticker gốc của nền tảng. Kho Yona không theo kênh nên không nằm ở đây (xem StickerLibrary). @var array<string, class-string<StickerCatalog>> */

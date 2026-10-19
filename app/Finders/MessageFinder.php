@@ -22,6 +22,12 @@ class MessageFinder
     /** @return Collection<int, Message> */
     public function perform(): Collection
     {
+        return $this->find()->map(fn (Message $message) => $this->conversation->presentMessage($message));
+    }
+
+    /** @return Collection<int, Message> */
+    private function find(): Collection
+    {
         $after = $this->params['after'] ?? null;
         $before = $this->params['before'] ?? null;
 
@@ -47,7 +53,7 @@ class MessageFinder
     /** @return Builder<Message> */
     private function messages(): Builder
     {
-        $query = $this->conversation->messages()->getQuery()->with([
+        $query = $this->conversation->visibleMessages()->with([
             'sender' => fn (MorphTo $sender) => $sender->morphWith([User::class => ['accountUsers']]),
             'sender.avatar',
         ]);

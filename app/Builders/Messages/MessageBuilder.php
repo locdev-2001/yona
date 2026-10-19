@@ -32,6 +32,9 @@ class MessageBuilder
 
     private ?Message $message = null;
 
+    // Hội thoại thật sự nhận tin: dòng riêng của luồng dùng chung chuyển tin gửi đi về hội thoại gốc.
+    private readonly Conversation $conversation;
+
     /**
      * $incomingAllowed: người gửi CHÍNH LÀ khách (widget website). Bản gốc bỏ
      * qua builder cho luồng đó và tạo message trực tiếp; ở đây giữ một đường
@@ -45,11 +48,13 @@ class MessageBuilder
      */
     public function __construct(
         private readonly User|AgentBot|null $user,
-        private readonly Conversation $conversation,
+        Conversation $conversation,
         private readonly array $params,
         private readonly bool $incomingAllowed = false,
         private readonly array $trustedContentAttributes = [],
-    ) {}
+    ) {
+        $this->conversation = $conversation->messageTargetFor(BooleanParam::from($params['private'] ?? null));
+    }
 
     public function perform(): Message
     {
