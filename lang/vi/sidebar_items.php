@@ -18,4 +18,16 @@ return [
     'DOCS' => 'Đọc tài liệu',
     'CHANGELOG' => 'Nhật ký thay đổi',
     'LOGOUT' => 'Đăng xuất',
+    'SETTINGS_SCREEN' => [
+        'TITLE' => 'Cài đặt',
+        'EDIT_PROFILE' => 'Sửa hồ sơ',
+        'SEARCH' => 'Tìm kiếm',
+        'PREFERENCES' => 'Tuỳ chọn',
+        'ACCOUNT_GROUP' => 'Tài khoản',
+        'MY_PROFILE' => 'Hồ sơ của tôi',
+        'INBOX_GROUP' => 'Hộp thư',
+        'CLOSE' => 'Đóng',
+        'MENU' => 'Danh mục cài đặt',
+        'NO_MATCH' => 'Không có mục nào khớp.',
+    ],
 ];

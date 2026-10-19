@@ -11045,7 +11045,19 @@ const messages: Record<string, unknown> = {
         "SUPER_ADMIN_CONSOLE": "SuperAdmin console",
         "DOCS": "Read documentation",
         "CHANGELOG": "Changelog",
-        "LOGOUT": "Log out"
+        "LOGOUT": "Log out",
+        "SETTINGS_SCREEN": {
+            "TITLE": "Settings",
+            "EDIT_PROFILE": "Edit profile",
+            "SEARCH": "Search",
+            "PREFERENCES": "Preferences",
+            "ACCOUNT_GROUP": "Account",
+            "MY_PROFILE": "My profile",
+            "INBOX_GROUP": "Inbox",
+            "CLOSE": "Close",
+            "MENU": "Settings menu",
+            "NO_MATCH": "Nothing matches."
+        }
     },
     "SLACK_UNFURL": {
         "fields": {

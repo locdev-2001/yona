@@ -16,4 +16,16 @@ return [
     'DOCS' => 'Read documentation',
     'CHANGELOG' => 'Changelog',
     'LOGOUT' => 'Log out',
+    'SETTINGS_SCREEN' => [
+        'TITLE' => 'Settings',
+        'EDIT_PROFILE' => 'Edit profile',
+        'SEARCH' => 'Search',
+        'PREFERENCES' => 'Preferences',
+        'ACCOUNT_GROUP' => 'Account',
+        'MY_PROFILE' => 'My profile',
+        'INBOX_GROUP' => 'Inbox',
+        'CLOSE' => 'Close',
+        'MENU' => 'Settings menu',
+        'NO_MATCH' => 'Nothing matches.',
+    ],
 ];

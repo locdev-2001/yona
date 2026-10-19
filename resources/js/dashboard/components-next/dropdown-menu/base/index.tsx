@@ -39,6 +39,17 @@ function DropdownFloating({ getTrigger, children }: { getTrigger: () => Element 
     );
 }
 
+const STATIC_DROPDOWN_CONTEXT: DropdownContextValue = { isOpen: true, toggle: () => {}, closeMenu: () => {} };
+
+// Danh sách luôn mở: đặt các DropdownItem thẳng trên một màn (màn Cài đặt) thay vì trong menu bật lên.
+export function DropdownInlineList({ className = '', children }: { className?: string; children: ReactNode }) {
+    return (
+        <DropdownContext.Provider value={STATIC_DROPDOWN_CONTEXT}>
+            <ul className={`flex flex-col gap-1 m-0 p-0 list-none ${className}`}>{children}</ul>
+        </DropdownContext.Provider>
+    );
+}
+
 export function useDropdownContext(): DropdownContextValue {
     const context = useContext(DropdownContext);
     if (!context) throw new Error('Component is missing a parent <DropdownContainer /> component.');

@@ -1,104 +1,62 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
-import { usePage } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 
 import { t } from '../../../i18n';
-import { logout } from 'dashboard/helper/logout';
 import Avatar from 'dashboard/components-next/avatar/Avatar';
 import { avatarSeed } from 'shared/avatar/avatarSeed';
 import KeyShortcutModal from 'dashboard/commands/KeyShortcutModal';
-import SidebarProfileMenuStatus from './SidebarProfileMenuStatus';
-import SidebarProfileMenuLanguage from './SidebarProfileMenuLanguage';
-import SidebarProfileMenuAppearance from './SidebarProfileMenuAppearance';
 import { useSidebarKeyboardShortcuts } from 'dashboard/composables/useSidebarKeyboardShortcuts';
-import { accountScopedUrl } from 'dashboard/helper/URLHelper';
 import { useCurrentUserAvailability } from 'dashboard/realtime/hooks';
-import {
-    DropdownBody,
-    DropdownContainer,
-    DropdownItem,
-    DropdownSeparator,
-} from 'dashboard/components-next/dropdown-menu/base';
+import { settingsHomeUrl } from 'dashboard/settings/shell/settingsPages';
 import type { DashboardPageProps } from '../../types';
 
-// Port từ sidebar/SidebarProfileMenu.vue
-// Khác gốc: Ngôn ngữ và Giao diện chọn thẳng trong menu (gốc mở ninja-keys);
-// Contact support / Docs / Changelog (link ra site ngoài) bỏ theo branding;
-// Keyboard shortcuts vào B10.
+// Chân sidebar: hồ sơ và bánh răng là một nút, mở màn Cài đặt (nơi gộp trạng thái,
+// ngôn ngữ, giao diện, phím tắt, đăng xuất và các trang cài đặt).
 export default function SidebarProfileMenu({ isCollapsed = false }: { isCollapsed?: boolean }) {
     const { auth, currentAccount } = usePage<DashboardPageProps>().props;
     const user = auth.user!;
     const availability = useCurrentUserAvailability();
     const availableName = user.display_name || user.name;
     const [showShortcutModal, setShowShortcutModal] = useState(false);
+    const settingsLabel = t('SIDEBAR_ITEMS.SETTINGS_SCREEN.TITLE');
 
-    // Sidebar.vue gốc gắn phím tắt $mod+Slash / Alt+C,V,R,S; ở đây gắn cùng chỗ
-    // với mục menu mở modal để không đụng Sidebar.tsx của tính năng khác.
     useSidebarKeyboardShortcuts(currentAccount.id, setShowShortcutModal);
-
-
-    const menu = (
-        <DropdownBody className="bottom-12 z-50 mb-2 w-80 ltr:left-0 rtl:right-0">
-            <SidebarProfileMenuStatus />
-            <DropdownSeparator />
-            <SidebarProfileMenuLanguage />
-            <SidebarProfileMenuAppearance />
-            <DropdownItem
-                label={t('SIDEBAR_ITEMS.KEYBOARD_SHORTCUTS')}
-                icon="i-lucide-keyboard"
-                onClick={() => setShowShortcutModal(true)}
-            />
-            <DropdownItem
-                label={t('SIDEBAR_ITEMS.PROFILE_SETTINGS')}
-                icon="i-lucide-user-pen"
-                link={accountScopedUrl(currentAccount.id, 'profile/settings')}
-            />
-            {user.type === 'SuperAdmin' ? (
-                <DropdownItem
-                    label={t('SIDEBAR_ITEMS.SUPER_ADMIN_CONSOLE')}
-                    icon="i-lucide-castle"
-                    link="/admin"
-                    nativeLink
-                    target="_blank"
-                />
-            ) : null}
-            <DropdownItem label={t('SIDEBAR_ITEMS.LOGOUT')} icon="i-lucide-power" onClick={logout} />
-        </DropdownBody>
-    );
 
     return (
         <>
-        <DropdownContainer className={`relative min-w-0 ${isCollapsed ? 'w-auto' : 'w-full'}`} menu={menu}>
-            {({ toggle, isOpen }) => (
-                <button
-                    className={`flex gap-2 items-center p-1 text-left rounded-lg cursor-pointer hover:bg-n-surface-hover ${
-                        isOpen ? 'bg-n-surface-hover' : ''
-                    } ${isCollapsed ? 'justify-center' : 'w-full'}`}
-                    title={isCollapsed ? availableName : undefined}
-                    onClick={toggle}
-                >
-                    <Avatar
-                        seed={avatarSeed('user', user.id)}
-                        size={32}
-                        src={user.avatar_url}
-                        name={availableName}
-                        status={availability}
-                    />
-                    {!isCollapsed ? (
-                        <div className="min-w-0">
+            <Link
+                href={settingsHomeUrl(currentAccount.id)}
+                title={settingsLabel}
+                aria-label={`${availableName} · ${settingsLabel}`}
+                className={`group flex gap-2 items-center p-1 rounded-lg hover:bg-n-surface-hover ${
+                    isCollapsed ? 'justify-center' : 'w-full min-w-0'
+                }`}
+            >
+                <Avatar
+                    seed={avatarSeed('user', user.id)}
+                    size={32}
+                    src={user.avatar_url}
+                    name={availableName}
+                    status={availability}
+                />
+                {!isCollapsed ? (
+                    <>
+                        <div className="flex-1 min-w-0">
                             <div className="text-sm font-medium leading-4 truncate text-n-slate-12">{availableName}</div>
                             <div className="text-xs truncate text-n-slate-11">{user.email}</div>
                         </div>
-                    ) : null}
-                </button>
+                        <span className="grid place-content-center size-8 shrink-0 rounded-lg text-n-slate-11 group-hover:text-n-slate-12">
+                            <span className="i-lucide-settings size-[18px]" aria-hidden="true" />
+                        </span>
+                    </>
+                ) : null}
+            </Link>
+            {/* Sidebar có transform nên `position: fixed` bị neo vào sidebar → đưa modal ra body. */}
+            {createPortal(
+                <KeyShortcutModal show={showShortcutModal} onClose={() => setShowShortcutModal(false)} />,
+                document.body,
             )}
-        </DropdownContainer>
-        {/* Gốc mount modal ở Dashboard.vue; sidebar của bản port có transform nên
-            `position: fixed` bị neo vào sidebar → đưa ra body để rộng đúng viewport. */}
-        {createPortal(
-            <KeyShortcutModal show={showShortcutModal} onClose={() => setShowShortcutModal(false)} />,
-            document.body,
-        )}
         </>
     );
 }

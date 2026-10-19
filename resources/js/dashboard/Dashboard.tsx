@@ -15,15 +15,16 @@ import { bindUnreadIndicators } from 'dashboard/notifications/unreadIndicators';
 import UnreadTitleSync from 'dashboard/notifications/components/UnreadTitleSync';
 import PushSubscriptionSync from 'dashboard/notifications/components/PushSubscriptionSync';
 import { StickerDisplaySizeProvider } from 'shared/sticker/stickerDisplaySize';
+import SettingsShell from 'dashboard/settings/shell/SettingsShell';
+import { isSettingsPath, rememberAppUrl } from 'dashboard/settings/shell/settingsPages';
 import type { DashboardPageProps } from './types';
 
 // Port từ dashboard/routes/dashboard/Dashboard.vue (shell)
 // Copilot/UpgradePage/KeyShortcutModal: EE hoặc vào nhóm sau. CommandBar: khung + snooze (B5), phần còn lại B10.
 export default function Dashboard({ children }: { children: ReactNode }) {
     const [isMobileSidebarOpen, setMobileSidebarOpen] = useState(false);
-    const { auth, currentAccount, stickerDisplaySize, conversationId, isComposing } = usePage<
-        DashboardPageProps & { conversationId?: number | null; isComposing?: boolean }
-    >().props;
+    const page = usePage<DashboardPageProps & { conversationId?: number | null; isComposing?: boolean }>();
+    const { auth, currentAccount, stickerDisplaySize, conversationId, isComposing } = page.props;
     const viewportWidth = useViewportWidth();
     const hasMobileTabBar = showMobileTabBar(viewportWidth, isThreadOpen(conversationId, isComposing));
     const fontSize = auth.user?.ui_settings?.font_size as string | undefined;
@@ -39,6 +40,11 @@ export default function Dashboard({ children }: { children: ReactNode }) {
     }, [colorScheme]);
 
     const accountId = currentAccount?.id ?? 0;
+    const isSettingsScreen = isSettingsPath(accountId, page.url);
+
+    useEffect(() => {
+        if (!isSettingsScreen) rememberAppUrl(page.url);
+    }, [isSettingsScreen, page.url]);
 
     useEffect(() => {
         bindUnreadIndicators(accountId);
@@ -50,12 +56,14 @@ export default function Dashboard({ children }: { children: ReactNode }) {
             <div className="flex flex-col h-screen supports-[height:100dvh]:h-dvh w-full">
                 <PushSubscriptionSync />
                 <div className="flex flex-grow overflow-hidden text-n-slate-12 min-h-0 w-full">
-                    <Sidebar
-                        isMobileSidebarOpen={isMobileSidebarOpen}
-                        onCloseMobileSidebar={() => setMobileSidebarOpen(false)}
-                    />
+                    {isSettingsScreen ? null : (
+                        <Sidebar
+                            isMobileSidebarOpen={isMobileSidebarOpen}
+                            onCloseMobileSidebar={() => setMobileSidebarOpen(false)}
+                        />
+                    )}
                     <main className="flex flex-1 h-full w-full min-h-0 px-0 overflow-hidden bg-n-surface-canvas">
-                        {children}
+                        {isSettingsScreen ? <SettingsShell>{children}</SettingsShell> : children}
                         <CommandBar />
                     </main>
                     <SnackbarContainer />
@@ -63,7 +71,7 @@ export default function Dashboard({ children }: { children: ReactNode }) {
                     <UnreadTitleSync />
                 </div>
                 {/* Trong luồng, không nổi: cột trên co lại nên thẻ cuối danh sách không bị che. */}
-                {hasMobileTabBar ? (
+                {hasMobileTabBar && !isSettingsScreen ? (
                     <MobileTabBar
                         isMobileSidebarOpen={isMobileSidebarOpen}
                         onToggleSidebar={() => setMobileSidebarOpen(open => !open)}
