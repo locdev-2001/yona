@@ -103,27 +103,23 @@ export default function ChatListHeader({
                 <ChatListSearch
                     actions={
                         <>
-                            {isProductFeatureVisible('listFilters') ? (
-                                <ListFilterButton
-                                    isOnExpandedLayout={isOnExpandedLayout}
-                                    isAdvancedActive={isAdvancedActive}
-                                    onOpenAdvancedFilters={onFiltersModal}
-                                />
-                            ) : null}
+                            <ListFilterButton
+                                isOnExpandedLayout={isOnExpandedLayout}
+                                isAdvancedActive={isAdvancedActive}
+                                onOpenAdvancedFilters={onFiltersModal}
+                            />
                             <ListHeaderButton
                                 icon="i-lucide-user-plus"
                                 label={t('CHAT.NEW.TITLE')}
                                 onClick={() => newYonaChatRef.current?.open()}
                             />
-                            {isProductFeatureVisible('bulkActions') ? (
-                                <ListHeaderButton
-                                    icon={isSelecting ? 'i-lucide-x' : 'i-lucide-list-checks'}
-                                    label={t(isSelecting ? 'CHAT_LIST.SELECTION_MODE.EXIT' : 'CHAT_LIST.SELECTION_MODE.START')}
-                                    isActive={isSelecting}
-                                    aria-pressed={isSelecting}
-                                    onClick={onToggleSelection}
-                                />
-                            ) : null}
+                            <ListHeaderButton
+                                icon={isSelecting ? 'i-lucide-x' : 'i-lucide-list-checks'}
+                                label={t(isSelecting ? 'CHAT_LIST.SELECTION_MODE.EXIT' : 'CHAT_LIST.SELECTION_MODE.START')}
+                                isActive={isSelecting}
+                                aria-pressed={isSelecting}
+                                onClick={onToggleSelection}
+                            />
                         </>
                     }
                     trailing={<ListMoreMenu isOnExpandedLayout={isOnExpandedLayout} />}

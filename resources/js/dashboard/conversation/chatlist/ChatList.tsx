@@ -240,12 +240,8 @@ export default function ChatList({
                         {isAssignmentVisible ? (
                             <ChatTypeTabs items={assigneeTabItems} activeTab={assigneeTab} onChatTabChange={setAssigneeTab} />
                         ) : null}
-                        {isProductFeatureVisible('listFilters') ? (
-                            <>
-                                <ChannelChipRow />
-                                <ActiveFilterChips hidesInboxChipsBelowMd={hasChannelChipRow(inboxes.length)} />
-                            </>
-                        ) : null}
+                        <ChannelChipRow />
+                        <ActiveFilterChips hidesInboxChipsBelowMd={hasChannelChipRow(inboxes.length)} />
                     </>
                 ) : null}
                 {isSearching && !listSearch.loading && !listSearch.contacts.length && !listSearch.conversations.length ? (

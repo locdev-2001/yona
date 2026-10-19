@@ -32,9 +32,8 @@ const PRODUCT_FEATURE_VISIBILITY = {
     conversationStatus: false,
     contactProfileEditing: false,
     previousConversations: false,
-    // Danh sách hội thoại gọn: không bộ lọc (trạng thái, kênh, nhãn), không chọn hàng loạt.
-    listFilters: false,
-    bulkActions: false,
+    // Widget website đã ẩn: các trường chỉ khách truy cập web mới có (ngôn ngữ trình duyệt, trang giới thiệu).
+    websiteWidget: false,
 } as const;
 
 export type ProductFeature = keyof typeof PRODUCT_FEATURE_VISIBILITY;

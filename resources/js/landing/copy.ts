@@ -90,7 +90,7 @@ const VI: LandingCopy = {
                 },
                 {
                     title: 'Nhãn, ghi chú, câu trả lời mẫu',
-                    body: 'Gắn nhãn, ghi chú riêng chỉ mình thấy, lưu câu trả lời hay dùng. Ô tìm kiếm giúp lục lại tin cũ nhanh.',
+                    body: 'Gắn nhãn, ghi chú riêng chỉ mình thấy, lưu câu trả lời hay dùng. Tìm kiếm và bộ lọc giúp lục lại tin cũ nhanh.',
                 },
             ],
         },
@@ -194,7 +194,7 @@ const EN: LandingCopy = {
                 },
                 {
                     title: 'Labels, notes, saved replies',
-                    body: 'Label conversations, keep private notes only you can see, save replies you use often. Search finds old messages fast.',
+                    body: 'Label conversations, keep private notes only you can see, save replies you use often. Search and filters find old messages fast.',
                 },
             ],
         },

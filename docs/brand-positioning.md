@@ -41,7 +41,7 @@ một `@username`.
      thoại; nhắn ngay trong hộp thư, không phải mở ứng dụng khác.
   3. **Trò chuyện đầy đủ:** trả lời trích dẫn, cảm xúc, thu hồi, sticker, ảnh và
      file, thẻ chuyển khoản VietQR; thêm nhãn, ghi chú riêng, câu trả lời mẫu,
-     liên hệ, tìm kiếm, thông báo đẩy trên trình duyệt.
+     liên hệ, bộ lọc, tìm kiếm, thông báo đẩy trên trình duyệt.
 - **Giọng điệu:** thân thiện, gần gũi, câu ngắn, nói thật. Như một người bạn chỉ
   cho bạn mình cách gom tin nhắn về một chỗ; không thuật ngữ kỹ thuật, không hô
   hào, không hứa quá.

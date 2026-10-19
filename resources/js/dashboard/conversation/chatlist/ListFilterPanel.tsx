@@ -1,3 +1,4 @@
+import { isProductFeatureVisible } from 'shared/helpers/productVisibility';
 import type { ReactNode } from 'react';
 import { usePage } from '@inertiajs/react';
 
@@ -43,6 +44,7 @@ export default function ListFilterPanel({ onOpenAdvancedFilters }: ListFilterPan
 
     return (
         <div className="flex flex-col gap-4 p-3 min-w-0">
+            {isProductFeatureVisible('conversationStatus') ? (
             <FilterGroup title={t('CHAT_LIST.FILTER_PANEL.STATUS')}>
                 {QUICK_STATUS_VALUES.map(status => (
                     <FilterChip
@@ -55,6 +57,7 @@ export default function ListFilterPanel({ onOpenAdvancedFilters }: ListFilterPan
                     </FilterChip>
                 ))}
             </FilterGroup>
+            ) : null}
             {inboxes.length ? (
                 <FilterGroup title={t('CHAT_LIST.FILTER_PANEL.CHANNEL')}>
                     {inboxes.map(inbox => (

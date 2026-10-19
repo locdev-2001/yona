@@ -1,3 +1,4 @@
+import { isProductFeatureVisible } from 'shared/helpers/productVisibility';
 import { useEffect } from 'react';
 
 import { clearCommandBarActions, setCommandBarActions } from 'dashboard/commands/commandBarStore';
@@ -49,7 +50,8 @@ const BULK_ACTIONS: CommandBarAction[] = [
 
 export function useBulkActionsHotKeys(selectedCount: number): void {
     useEffect(() => {
-        if (!selectedCount) {
+        // Lệnh hàng loạt ở đây đều là đổi trạng thái hội thoại.
+        if (!selectedCount || !isProductFeatureVisible('conversationStatus')) {
             clearCommandBarActions(SOURCE);
             return undefined;
         }

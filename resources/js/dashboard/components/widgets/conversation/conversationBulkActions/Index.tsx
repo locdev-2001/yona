@@ -139,19 +139,23 @@ export default function ConversationBulkActions({
                                 appliedLabels={appliedLabels}
                                 onApply={onRemoveLabels}
                             />
-                            <BulkUpdateActions
-                                showResolve={!showResolvedAction}
-                                showReopen={!showOpenAction}
-                                showSnooze={!showSnoozedAction}
-                                onUpdate={onUpdateConversations}
-                            />
-                            <BulkAgentActions
-                                accountId={accountId}
-                                selectedInboxes={selectedInboxes}
-                                conversationCount={conversations.length}
-                                isUpdating={isUpdating}
-                                onSelect={onAssignAgent}
-                            />
+                            {isProductFeatureVisible('conversationStatus') ? (
+                                <BulkUpdateActions
+                                    showResolve={!showResolvedAction}
+                                    showReopen={!showOpenAction}
+                                    showSnooze={!showSnoozedAction}
+                                    onUpdate={onUpdateConversations}
+                                />
+                            ) : null}
+                            {isProductFeatureVisible('conversationAssignment') ? (
+                                <BulkAgentActions
+                                    accountId={accountId}
+                                    selectedInboxes={selectedInboxes}
+                                    conversationCount={conversations.length}
+                                    isUpdating={isUpdating}
+                                    onSelect={onAssignAgent}
+                                />
+                            ) : null}
                             {isProductFeatureVisible('teams') ? (
                                 <BulkTeamActions
                                     accountId={accountId}
