@@ -674,7 +674,7 @@ return [
         ],
     ],
     'SIDEBAR' => [
-        'CONTACT' => 'Liên hệ',
+        'CONTACT' => 'Thông tin',
         'CLOSE_OVERLAY' => 'Đóng bảng thông tin',
         'COPILOT' => 'Copilot',
     ],

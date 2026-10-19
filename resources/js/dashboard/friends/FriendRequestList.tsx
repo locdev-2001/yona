@@ -1,4 +1,7 @@
 import { useState } from 'react';
+import { usePage } from '@inertiajs/react';
+
+import { openProfile } from 'dashboard/contacts/profile/profileOverlay';
 import type { ReactNode } from 'react';
 
 import Avatar from 'dashboard/components-next/avatar/Avatar';
@@ -6,7 +9,8 @@ import { useAlert } from 'dashboard/composables/useAlert';
 import { parseApiErrorMessage } from 'dashboard/helper/apiClient';
 import { avatarSeed } from 'shared/avatar/avatarSeed';
 import { t } from '../../i18n';
-import { acceptFriendRequest, removeFriendship } from './api';
+import type { DashboardPageProps } from '../types';
+import { acceptFriendRequest, ensureYonaContact, removeFriendship } from './api';
 import type { FriendRequest, PendingFriendRequests } from './api';
 
 const ACCEPT_CLASS = 'h-8 px-3 rounded-lg text-sm font-semibold bg-n-brand text-white hover:brightness-110 transition disabled:opacity-60';
@@ -56,7 +60,16 @@ function RequestSection({ title, children }: { title: string; children: ReactNod
 
 function RequestRow({ request, isIncoming, onChanged }: { request: FriendRequest; isIncoming: boolean; onChanged: () => void }) {
     const [isBusy, setBusy] = useState(false);
+    const accountId = usePage<DashboardPageProps>().props.currentAccount.id;
     const { person } = request;
+
+    const viewProfile = async () => {
+        try {
+            openProfile(await ensureYonaContact(accountId, person.id));
+        } catch (error) {
+            useAlert(parseApiErrorMessage(error) || t('FRIENDS.REQUESTS.ERROR'));
+        }
+    };
 
     const run = async (action: () => Promise<unknown>, doneKey: string) => {
         setBusy(true);
@@ -73,16 +86,18 @@ function RequestRow({ request, isIncoming, onChanged }: { request: FriendRequest
 
     return (
         <li className="flex items-center gap-3 px-2.5 py-2.5 -mx-2.5 rounded-lg border-t border-n-weak first:border-t-transparent hover:bg-n-alpha-1">
-            <Avatar seed={avatarSeed('user', person.id)} src={person.avatar_url ?? ''} name={person.name} size={32} />
-            <span className="flex flex-col flex-1 min-w-0">
-                <span className="flex items-center gap-1.5 min-w-0">
-                    <span className="text-sm font-semibold truncate text-n-slate-12">{person.name}</span>
-                    <span className="text-xs truncate text-n-slate-10">@{person.username}</span>
+            <button type="button" className="flex flex-1 items-center gap-3 min-w-0 text-start" onClick={() => void viewProfile()}>
+                <Avatar seed={avatarSeed('user', person.id)} src={person.avatar_url ?? ''} name={person.name} size={32} />
+                <span className="flex flex-col flex-1 min-w-0">
+                    <span className="flex items-center gap-1.5 min-w-0">
+                        <span className="text-sm font-semibold truncate text-n-slate-12">{person.name}</span>
+                        <span className="text-xs truncate text-n-slate-10">@{person.username}</span>
+                    </span>
+                    <span className="text-xs truncate text-n-slate-11">
+                        {isIncoming ? t('FRIENDS.REQUESTS.INCOMING_HINT') : t('FRIENDS.REQUESTS.OUTGOING_HINT')}
+                    </span>
                 </span>
-                <span className="text-xs truncate text-n-slate-11">
-                    {isIncoming ? t('FRIENDS.REQUESTS.INCOMING_HINT') : t('FRIENDS.REQUESTS.OUTGOING_HINT')}
-                </span>
-            </span>
+            </button>
             <div className="flex items-center gap-2 shrink-0">
                 {isIncoming ? (
                     <>

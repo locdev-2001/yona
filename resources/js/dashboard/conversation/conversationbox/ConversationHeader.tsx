@@ -7,6 +7,7 @@ import { avatarSeed } from 'shared/avatar/avatarSeed';
 import BackButton from 'dashboard/components/widgets/BackButton';
 import Button from 'dashboard/components-next/button/Button';
 import { conversationListPageURL } from 'dashboard/helper/URLHelper';
+import { openProfile } from 'dashboard/contacts/profile/profileOverlay';
 import ChannelIcon from 'dashboard/components-next/icon/ChannelIcon';
 import { snoozedReopenTime } from 'dashboard/helper/snoozeHelpers';
 import { useIsLargeScreen, useIsPhoneScreen } from 'dashboard/composables/useViewportWidth';
@@ -119,9 +120,13 @@ export default function ConversationHeader({
                         previewable
                     />
                     <div className="flex items-center min-w-0 gap-1.5">
-                        <span className="text-sm font-medium truncate leading-tight text-n-slate-12">
+                        <button
+                            type="button"
+                            className="min-w-0 text-sm font-medium truncate leading-tight text-start text-n-slate-12 hover:underline"
+                            onClick={() => openProfile(currentContact.id)}
+                        >
                             {currentContact.name}
-                        </span>
+                        </button>
                         {isSnoozed ? (
                             <span title={snoozedDisplayText} className="i-lucide-alarm-clock size-4 flex-shrink-0 text-n-amber-10" />
                         ) : null}
@@ -171,9 +176,13 @@ export default function ConversationHeader({
                 />
                 <div className="flex flex-col items-start min-w-0 ms-2 overflow-hidden">
                     <div className="flex flex-row items-center max-w-full gap-1 p-0 m-0">
-                        <span className="text-sm font-medium truncate leading-tight text-n-slate-12">
+                        <button
+                            type="button"
+                            className="min-w-0 text-sm font-medium truncate leading-tight text-start text-n-slate-12 hover:underline"
+                            onClick={() => openProfile(currentContact.id)}
+                        >
                             {currentContact.name}
-                        </span>
+                        </button>
                     </div>
                     <div className="flex items-center gap-1 overflow-hidden text-xs conversation--header--actions text-n-slate-11 text-ellipsis whitespace-nowrap">
                         {hasMultipleInboxes && inbox ? (

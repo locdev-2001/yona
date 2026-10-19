@@ -4520,7 +4520,7 @@ const messages: Record<string, unknown> = {
             }
         },
         "SIDEBAR": {
-            "CONTACT": "Contact",
+            "CONTACT": "Details",
             "CLOSE_OVERLAY": "Close details panel",
             "COPILOT": "Copilot"
         },

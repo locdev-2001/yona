@@ -11,6 +11,7 @@ import { isThreadOpen, showMobileTabBar } from 'dashboard/conversation/layoutMod
 import SnackbarContainer from 'v3/components/SnackBar/Container';
 import RealtimeProvider from 'dashboard/realtime/RealtimeProvider';
 import CommandBar from 'dashboard/commands/CommandBar';
+import { ProfileOverlay } from 'dashboard/contacts/profile/profileOverlay';
 import { bindUnreadIndicators } from 'dashboard/notifications/unreadIndicators';
 import UnreadTitleSync from 'dashboard/notifications/components/UnreadTitleSync';
 import PushSubscriptionSync from 'dashboard/notifications/components/PushSubscriptionSync';
@@ -63,6 +64,7 @@ export default function Dashboard({ children }: { children: ReactNode }) {
                     <main className="flex flex-1 h-full w-full min-h-0 px-0 overflow-hidden bg-n-surface-canvas">
                         {isSettingsScreen ? <SettingsShell>{children}</SettingsShell> : children}
                         <CommandBar />
+                        <ProfileOverlay />
                     </main>
                     <SnackbarContainer />
                     <RealtimeProvider />

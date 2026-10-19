@@ -43,3 +43,8 @@ export async function acceptFriendRequest(friendshipId: number): Promise<Friends
 export function removeFriendship(friendshipId: number): Promise<unknown> {
     return deleteJson(`${FRIENDSHIPS_URL}/${friendshipId}`);
 }
+
+// Hồ sơ người dùng Yona trong hộp thư (chưa có thì thêm, không mở hội thoại): trả id để mở trang hồ sơ.
+export async function ensureYonaContact(accountId: number, userId: number): Promise<number> {
+    return (await postJson<{ id: number }>(`/api/v1/accounts/${accountId}/yona/contacts`, { user_id: userId })).id;
+}

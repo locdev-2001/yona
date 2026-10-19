@@ -2,6 +2,8 @@ import { isProductFeatureVisible } from 'shared/helpers/productVisibility';
 import { useEffect, useRef, useState } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 import { router, usePage } from '@inertiajs/react';
+
+import { openProfile } from 'dashboard/contacts/profile/profileOverlay';
 import { ICONS } from 'dashboard/icons';
 
 import Avatar from 'dashboard/components-next/avatar/Avatar';
@@ -204,7 +206,7 @@ export default function ContactInfo({
                                 <h3
                                     className="flex-shrink max-w-full min-w-0 my-0 text-base break-words text-n-slate-12 cursor-pointer hover:text-n-slate-12/80"
                                     title={canEditProfile ? t('CONTACT_PANEL.CLICK_TO_EDIT') : undefined}
-                                    onClick={canEditProfile ? startEditingName : undefined}
+                                    onClick={canEditProfile ? startEditingName : () => openProfile(contact.id)}
                                 >
                                     {contact.name}
                                 </h3>
@@ -277,7 +279,7 @@ export default function ContactInfo({
                         faded
                         sm
                         className="max-md:size-11"
-                        onClick={() => router.visit(contactProfileLink)}
+                        onClick={() => openProfile(contact.id)}
                     />
                     <ContactMergeModal
                         primaryContact={contact}

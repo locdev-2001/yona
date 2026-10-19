@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { router, usePage } from '@inertiajs/react';
+import { usePage } from '@inertiajs/react';
 
 import { t } from '../../../i18n';
 import Avatar from 'dashboard/components-next/avatar/Avatar';
@@ -8,6 +8,7 @@ import DropdownMenu from 'dashboard/components-next/dropdown-menu/DropdownMenu';
 import { useAlert } from 'dashboard/composables/useAlert';
 import { fetchFriendshipProfile, removeFriendship } from 'dashboard/friends/api';
 import { openContactChat } from 'dashboard/contacts/openContactChat';
+import { openProfile } from 'dashboard/contacts/profile/profileOverlay';
 import { avatarSeed } from 'shared/avatar/avatarSeed';
 import type { Contact } from 'dashboard/contacts/types';
 import { uniqueChannels, yonaUserIdOf } from 'dashboard/contacts/contactChannels';
@@ -55,7 +56,7 @@ export default function FriendRow({ contact, onRemoved }: FriendRowProps) {
         }
     };
 
-    const viewProfile = () => router.visit(`/app/accounts/${accountId}/contacts/${contact.id}`);
+    const viewProfile = () => openProfile(contact.id);
 
 
     const menuItems = [

@@ -673,7 +673,7 @@ return [
         ],
     ],
     'SIDEBAR' => [
-        'CONTACT' => 'Contact',
+        'CONTACT' => 'Details',
         'CLOSE_OVERLAY' => 'Close details panel',
         'COPILOT' => 'Copilot',
     ],
