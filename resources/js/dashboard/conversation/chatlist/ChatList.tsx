@@ -286,7 +286,7 @@ export default function ChatList({
                                     title={t(isSelecting ? 'CHAT_LIST.SELECTION_MODE.EXIT' : 'CHAT_LIST.SELECTION_MODE.START')}
                                     aria-label={t(isSelecting ? 'CHAT_LIST.SELECTION_MODE.EXIT' : 'CHAT_LIST.SELECTION_MODE.START')}
                                     aria-pressed={isSelecting}
-                                    className="flex-shrink-0 max-md:!size-11"
+                                    className="flex-shrink-0"
                                     onClick={toggleSelectionMode}
                                 />
                             </div>

@@ -1,7 +1,7 @@
 import Tabs from '../../components/ui/Tabs';
 
 // Port từ dashboard/components/widgets/ChatTypeTabs.vue — bỏ phím tắt Alt+N (B3).
-// Cùng một thanh tab cho mọi cỡ màn; dưới 768px thành thanh chia đều, ô cao 44px.
+// Cùng một thanh tab gạch chân cho mọi cỡ màn, điện thoại giống hệt máy tính.
 export interface ChatTypeTabItem<Key extends string = string> {
     key: Key;
     name: string;
@@ -32,8 +32,7 @@ export default function ChatTypeTabs<Key extends string>({ items, activeTab, onC
             items={items.map(item => ({ ...item, showBadge: true }))}
             index={activeTabIndex}
             isCompact
-            isStretchedBelowMd
-            className="w-full ps-3 pe-0 -mt-1 py-0 [&_ul]:p-0 h-10 text-sm [&_a]:font-medium max-md:h-auto max-md:mt-0 max-md:px-3 max-md:pb-2"
+            className="w-full ps-3 pe-0 -mt-1 py-0 [&_ul]:p-0 h-10 text-sm [&_a]:font-medium"
             onChange={onTabChange}
         />
     );
