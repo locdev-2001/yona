@@ -48,9 +48,12 @@ class SetCurrentAccount
             return $next($request);
         }
 
+        // Mỗi người chỉ vào hộp thư cá nhân của mình (account mình làm quản trị); dòng
+        // thành viên cũ ở account người khác vẫn giữ trong DB nhưng không mở được.
         $accountUser = $request->user()
             ?->accountUsers()
             ->where('account_id', $account->id)
+            ->where('role', AccountUser::ROLE_ADMINISTRATOR)
             ->first();
 
         abort_unless($accountUser !== null, 404);
@@ -108,6 +111,7 @@ class SetCurrentAccount
                     'name' => $team->name,
                 ]),
             'userAccounts' => fn () => $request->user()->accountUsers()
+                ->where('role', AccountUser::ROLE_ADMINISTRATOR)
                 ->with('account:id,name')
                 ->get()
                 ->map(fn (AccountUser $membership) => [

@@ -50,7 +50,6 @@ export interface MessageContextValue {
     onReplyTo?: () => void;
     // Mở hộp chuyển tiếp tin này sang hội thoại khác.
     onForward?: () => void;
-    onEdit?: () => void;
     // Mở form tạo câu trả lời mẫu, điền sẵn nội dung tin này.
     onCreateCannedResponse?: () => void;
     // Chỉ có khi account bật dịch vụ dịch; không có thì thao tác "Dịch" bị ẩn.

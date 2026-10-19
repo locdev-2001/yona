@@ -2,14 +2,18 @@ import { useMemo } from 'react';
 import { Link, usePage } from '@inertiajs/react';
 
 import Icon from 'dashboard/components-next/icon/Icon';
+import { useNotificationsUnreadCount } from 'dashboard/notifications/useUnreadCount';
 import { t } from '../../../i18n';
+import type { DashboardPageProps } from '../../types';
 import { buildMenuItems } from './menuItems';
 import MobileSidebarLauncher from './MobileSidebarLauncher';
+import { filterMenuByRole } from './permissions';
 import type { SidebarMenuChild, SidebarMenuItem } from './provider';
 
-// Thanh tab dưới của điện thoại (cao 60px kể cả viền): các nhóm chính như điều hướng
-// máy tính, lấy thẳng từ menu sidebar. Ô cuối mở ngăn kéo (hồ sơ, đăng xuất).
-export const MOBILE_TAB_GROUPS = ['Conversation'] as const;
+// Thanh tab dưới của điện thoại (cao 60px kể cả viền): bốn nhóm chính như điều hướng máy tính, lấy thẳng từ
+// menu sidebar đã lọc quyền (nhân viên không thấy Báo cáo). Ô cuối mở ngăn kéo cho
+// phần còn lại (chuông, hồ sơ, đổi tài khoản, Chiến dịch, Trung tâm trợ giúp).
+export const MOBILE_TAB_GROUPS = ['Conversation', 'Contacts', 'Reports', 'Settings'] as const;
 
 const BADGE_LIMIT = 99;
 
@@ -19,7 +23,6 @@ export interface MobileTab {
     icon: string;
     href: string;
     activePaths: string[];
-    badgeCount?: number;
 }
 
 function pathOf(url: string): string {
@@ -49,7 +52,7 @@ export function buildMobileTabs(menuItems: SidebarMenuItem[]): MobileTab[] {
         const href = group ? firstHref(group) : undefined;
         if (!group || !href || typeof group.icon !== 'string') return [];
 
-        return [{ name: group.name, label: group.label, icon: group.icon, href, activePaths: [...new Set(routePaths(group))], badgeCount: group.badgeCount }];
+        return [{ name: group.name, label: group.label, icon: group.icon, href, activePaths: [...new Set(routePaths(group))] }];
     });
 }
 
@@ -64,8 +67,17 @@ interface MobileTabBarProps {
 }
 
 export default function MobileTabBar({ isMobileSidebarOpen, onToggleSidebar }: MobileTabBarProps) {
-    const { url } = usePage();
-    const tabs = useMemo(() => buildMobileTabs(buildMenuItems()), []);
+    const { url, props } = usePage<DashboardPageProps>();
+    const { currentAccount, currentAccountUser } = props;
+    const unreadCount = useNotificationsUnreadCount();
+    const accountId = currentAccount.id;
+    const role = currentAccountUser.role;
+    const features = currentAccount.features;
+
+    const tabs = useMemo(
+        () => buildMobileTabs(filterMenuByRole(buildMenuItems(accountId), role, features ?? {})),
+        [accountId, role, features],
+    );
 
     return (
         <nav
@@ -74,7 +86,7 @@ export default function MobileTabBar({ isMobileSidebarOpen, onToggleSidebar }: M
         >
             {tabs.map(tab => {
                 const isActive = isMobileTabActive(tab, url);
-                const badgeCount = tab.badgeCount ?? 0;
+                const badgeCount = tab.name === 'Conversation' ? unreadCount : 0;
 
                 return (
                     <Link

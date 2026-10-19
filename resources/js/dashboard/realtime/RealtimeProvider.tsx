@@ -17,7 +17,7 @@ let connectedIdentity: RealtimeIdentity | null = null;
 let reconnectService: ReconnectService | null = null;
 
 const isSameIdentity = (a: RealtimeIdentity | null, b: RealtimeIdentity) =>
-    !!a && a.userId === b.userId && a.pubsubToken === b.pubsubToken;
+    !!a && a.accountId === b.accountId && a.userId === b.userId && a.pubsubToken === b.pubsubToken;
 
 export function ensureConnected(identity: RealtimeIdentity): ActionCableConnector {
     if (connector && isSameIdentity(connectedIdentity, identity)) return connector;
@@ -37,14 +37,15 @@ export function disconnectRealtime(): void {
 }
 
 export default function RealtimeProvider() {
-    const { auth } = usePage<DashboardPageProps>().props;
+    const { auth, currentAccount } = usePage<DashboardPageProps>().props;
     const userId = auth.user?.id;
     const pubsubToken = auth.user?.pubsub_token;
+    const accountId = currentAccount?.id;
 
     useEffect(() => {
-        if (!userId || !pubsubToken) return;
-        ensureConnected({ userId, pubsubToken });
-    }, [userId, pubsubToken]);
+        if (!userId || !pubsubToken || !accountId) return;
+        ensureConnected({ accountId, userId, pubsubToken });
+    }, [accountId, userId, pubsubToken]);
 
     return (
         <>

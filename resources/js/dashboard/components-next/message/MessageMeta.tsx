@@ -1,4 +1,3 @@
-import { t } from '../../../i18n';
 import { messageTimestamp } from 'shared/helpers/timeHelper';
 import Icon from 'dashboard/components-next/icon/Icon';
 import { inboxSupports } from 'shared/composables/useInboxCapabilities';
@@ -44,9 +43,7 @@ export default function MessageMeta({ className = '', showTime = true }: { class
         return MESSAGE_STATUS.PROGRESS;
     })();
 
-    const isEdited = Boolean(contentAttributes.edited) && !contentAttributes.deleted;
-
-    if (!showTime && !isPrivate && !showStatusIndicator && !isEdited) return null;
+    if (!showTime && !isPrivate && !showStatusIndicator) return null;
 
     return (
         <div className={`text-xs flex items-center gap-1.5 ${className}`}>
@@ -55,7 +52,6 @@ export default function MessageMeta({ className = '', showTime = true }: { class
                     <time className="inline">{readableTime}</time>
                 </div>
             ) : null}
-            {isEdited ? <span>{t('CONVERSATION.MESSAGE_ACTIONS.EDITED')}</span> : null}
             {isPrivate ? <Icon icon="i-lucide-lock-keyhole" className="size-3" /> : null}
             {showStatusIndicator ? <MessageStatus status={statusToShow} /> : null}
         </div>

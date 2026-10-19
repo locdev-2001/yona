@@ -43,9 +43,8 @@ interface ReplyBottomPanelProps {
     quotedReplyEnabled?: boolean;
     onToggleQuotedReply?: () => void;
     onSend: () => void;
-    // Vắng = ô soạn không nhận tệp / không có chữ ký: không vẽ nút.
-    onFileUpload?: (file: File) => void;
-    onToggleSignature?: () => void;
+    onFileUpload: (file: File) => void;
+    onToggleSignature: () => void;
     onSelectEmoji: (emoji: string) => void;
     // null = kênh không gửi được sticker hoặc đang ở Lưu ý riêng: không có nút.
     stickerPicker?: ReplyStickerPicker | null;
@@ -78,9 +77,9 @@ export default function ReplyBottomPanel({
     const emojiButtonRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const showAttachButton = !isEditorDisabled && Boolean(onFileUpload);
+    const showAttachButton = !isEditorDisabled;
     const showAudioRecorderButton = !isEditorDisabled && showAudioRecorder && Boolean(onStartAudioRecording);
-    const showMessageSignatureButton = !isEditorDisabled && !isOnPrivateNote && Boolean(onToggleSignature);
+    const showMessageSignatureButton = !isEditorDisabled && !isOnPrivateNote;
 
     const quotedReplyToggleTooltip = quotedReplyEnabled
         ? t('CONVERSATION.REPLYBOX.QUOTED_REPLY.DISABLE_TOOLTIP')
@@ -98,7 +97,7 @@ export default function ReplyBottomPanel({
     };
 
     const handleFilesChosen = (event: ChangeEvent<HTMLInputElement>) => {
-        Array.from(event.target.files ?? []).forEach(file => onFileUpload?.(file));
+        Array.from(event.target.files ?? []).forEach(onFileUpload);
         event.target.value = '';
     };
 

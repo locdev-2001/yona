@@ -19,7 +19,7 @@ class WelcomeController extends Controller
         $user = $request->user();
 
         if ($user->username !== null) {
-            return redirect()->route('chat');
+            return redirect()->route('dashboard');
         }
 
         return Inertia::render('v3/views/auth/welcome/Index', [
@@ -44,6 +44,6 @@ class WelcomeController extends Controller
         $user->forceFill(['display_name' => $data['name'], 'username' => $data['username']])->save();
 
         // Trang auth và trang chat dùng hai bộ CSS khác nhau nên phải tải lại trọn trang.
-        return Inertia::location(route('chat'));
+        return Inertia::location(route('dashboard'));
     }
 }

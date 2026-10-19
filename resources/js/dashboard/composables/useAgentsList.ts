@@ -134,3 +134,41 @@ export function buildAgentsList(
     return [...(includeNoneAgent && isAgentSelected ? [createNoneAgent(noneLabel)] : []), ...sorted];
 }
 
+export function useAgentsList(includeNoneAgent = true, { includeAgentBots = false } = {}) {
+    const { auth, currentAccount, currentAccountUser } = usePage<DashboardPageProps>().props;
+    const { selectedConversation } = useConversation();
+
+    const accountId = currentAccount.id;
+    const currentUserId = auth.user?.id ?? 0;
+    const inboxId = selectedConversation?.inbox_id ?? 0;
+    const isAgentSelected = Boolean(selectedConversation?.meta?.assignee);
+
+    // ConversationBox.vue watch `currentChat.inbox_id` (immediate) — nạp lại khi đổi inbox.
+    useEffect(() => {
+        if (inboxId) fetchAssignableAgents(accountId, inboxId, { includeAgentBots });
+    }, [accountId, inboxId, includeAgentBots]);
+
+    const records = useSyncExternalStore(
+        subscribeToRecords,
+        () => (inboxId ? assignableAgentRecords.get(recordKey(inboxId, includeAgentBots)) : undefined) ?? EMPTY_AGENTS,
+    );
+
+    const assignableAgents = useMemo(
+        () => filterVerifiedAgents(records, includeAgentBots),
+        [records, includeAgentBots],
+    );
+
+    const agentsList = useMemo(
+        () =>
+            buildAgentsList(assignableAgents, {
+                currentUserId,
+                currentAvailability: currentAccountUser.availability,
+                includeNoneAgent,
+                isAgentSelected,
+                noneLabel: t('AGENT_MGMT.MULTI_SELECTOR.LIST.NONE'),
+            }),
+        [assignableAgents, currentUserId, currentAccountUser.availability, includeNoneAgent, isAgentSelected],
+    );
+
+    return { agentsList, assignableAgents };
+}

@@ -35,10 +35,7 @@ import {
 } from './cardPayloads';
 
 const CARD_KINDS: { kind: CardKind; icon: string }[] = [
-    { kind: 'quick_replies', icon: 'i-lucide-list-checks' },
-    { kind: 'product', icon: 'i-lucide-shopping-bag' },
     { kind: 'bank_transfer', icon: 'i-lucide-landmark' },
-    { kind: 'schedule', icon: 'i-lucide-calendar-clock' },
 ];
 
 const k = (key: string, values?: Record<string, string | number>) => t(`CONVERSATION.SEND_CARD.${key}`, values);

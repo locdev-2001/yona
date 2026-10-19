@@ -1,173 +1,531 @@
-import { deleteJson, getJson, patchJson, postForm, postJson } from 'dashboard/helper/apiClient';
-import type { StickerBrowseParams, StickerBrowseResult } from './stickerApi';
-import type { OutgoingMention } from 'dashboard/components/widgets/WootWriter/groupMemberMentions';
-import type { ChatListTab, Conversation, ConversationListMeta, ConversationMessage, GroupMemberPerson, GroupRole } from './types';
+import type { MessageAttachment } from 'dashboard/components-next/message/helpers/attachments';
+import type { ConversationFilterPayload } from 'dashboard/components-next/filter/helper/filterQuery';
+import { deleteJson, getJson, patchJson, postForm, postJson } from '../helper/apiClient';
+import type { RequestOptions } from '../helper/apiClient';
+import type { ConversationType } from './constants';
+import type {
+    AgentMeta,
+    Conversation,
+    ConversationListMeta,
+    ConversationMessage,
+    ConversationPriority,
+    ConversationStatus,
+    ContactMeta,
+    TeamMeta,
+} from './types';
 
-// Một chỗ duy nhất gọi API nhắn tin (/api/v1/chats…). Giao diện không tự dựng URL.
-const CHATS = '/api/v1/chats';
+// Endpoint dashboard API (web_api session) — xem ConversationsController.
 
-export interface ChatListResponse {
-    payload: Conversation[];
-    meta: ConversationListMeta;
+// Trang lấy bằng cursor chỉ mang next_cursor; số đếm tab lấy riêng ở fetchConversationMeta.
+export interface ConversationListPageMeta extends Partial<ConversationListMeta> {
+    next_cursor?: string | null;
 }
 
-export interface MessagePageResponse {
+interface ConversationListResponse {
+    data: {
+        meta: ConversationListPageMeta;
+        payload: Conversation[];
+    };
+}
+
+export function tabCountsOf(meta: ConversationListPageMeta): ConversationListMeta | null {
+    const { mine_count, assigned_count, unassigned_count, all_count } = meta;
+    if (mine_count === undefined || assigned_count === undefined || unassigned_count === undefined || all_count === undefined) {
+        return null;
+    }
+
+    return { mine_count, assigned_count, unassigned_count, all_count };
+}
+
+interface MessagesResponse {
+    meta: {
+        labels: string[];
+        additional_attributes: Record<string, unknown>;
+        contact: ContactMeta;
+        agent_last_seen_at: string | null;
+        assignee_last_seen_at: string | null;
+    };
     payload: ConversationMessage[];
-    meta: { has_more: boolean };
 }
 
-export interface SendMessagePayload {
+export interface FetchConversationsParams {
+    accountId: number;
+    assigneeType: string;
+    status: string;
+    // `cursor` (meta.next_cursor của trang trước) thắng `page` khi có cả hai.
+    page?: number;
+    cursor?: string;
+    sortBy: string;
+    inboxId?: number;
+    teamId?: number;
+    // conversationFilters.labels của ChatList.vue — trang lọc theo nhãn (B7).
+    labels?: string[];
+    // conversationFilters.conversationType: tab Mentions/Participating/Unattended.
+    conversationType?: ConversationType;
+    // Từ khoá ô tìm trong cột danh sách — chỉ đường tìm chia mục (searchConversationList) gửi.
+    searchQuery?: string;
+    updatedWithin?: number;
+}
+
+// Phạm vi danh sách đang xem (tab, trạng thái, hộp thư, nhóm, nhãn, loại, sắp xếp) — không gồm trang.
+export type ConversationListScope = Omit<FetchConversationsParams, 'page' | 'cursor' | 'searchQuery' | 'updatedWithin'>;
+
+// conversationFilters của ChatList.vue — cùng một bộ tham số cho danh sách và
+// bộ đếm, nên chỉ dựng ở một chỗ (`page`/`cursor`/`updated_within` chỉ danh sách mới có).
+function buildConversationQuery(params: FetchConversationsParams): string {
+    const query = new URLSearchParams({
+        assignee_type: params.assigneeType,
+        status: params.status,
+        sort_by: params.sortBy,
+    });
+    if (params.cursor) {
+        query.set('cursor', params.cursor);
+    } else if (params.page) {
+        query.set('page', String(params.page));
+    }
+    if (params.inboxId) {
+        query.set('inbox_id', String(params.inboxId));
+    }
+    if (params.teamId) {
+        query.set('team_id', String(params.teamId));
+    }
+    params.labels?.forEach(label => query.append('labels[]', label));
+    if (params.conversationType) {
+        query.set('conversation_type', params.conversationType);
+    }
+    if (params.searchQuery) {
+        query.set('q', params.searchQuery);
+    }
+    if (params.updatedWithin) {
+        query.set('updated_within', String(params.updatedWithin));
+    }
+
+    return query.toString();
+}
+
+export function fetchConversations(params: FetchConversationsParams): Promise<ConversationListResponse> {
+    return getJson(`/api/v1/accounts/${params.accountId}/conversations?${buildConversationQuery(params)}`);
+}
+
+export function fetchFilteredConversations(
+    accountId: number,
+    payload: ConversationFilterPayload[],
+    page: number,
+): Promise<ConversationListResponse> {
+    return postJson(`/api/v1/accounts/${accountId}/conversations/filter?${new URLSearchParams({ page: String(page) })}`, { payload });
+}
+
+// Hội thoại của mục "Hội thoại" khi tìm: thẻ thường kèm tin khớp mới nhất (null
+// khi hội thoại ra vì gõ đúng mã hội thoại).
+export type MatchedConversation = Conversation & { matched_message: ConversationMessage | null };
+
+export interface ConversationListSearchResponse {
+    data: {
+        meta: ConversationListPageMeta & { has_more: boolean };
+        // Mỗi liên hệ khớp một dòng, mang hội thoại gần nhất của liên hệ trong danh sách đang xem.
+        contacts: Conversation[];
+        conversations: MatchedConversation[];
+    };
+}
+
+// Ô tìm trong cột danh sách: kết quả chia mục trong đúng phạm vi danh sách đang
+// xem — `params` như danh sách thường, có `filterPayload` thì phạm vi là bộ lọc nâng cao.
+export function searchConversationList(
+    params: FetchConversationsParams & { searchQuery: string; filterPayload?: ConversationFilterPayload[] },
+): Promise<ConversationListSearchResponse> {
+    const base = `/api/v1/accounts/${params.accountId}/conversations`;
+
+    if (params.filterPayload) {
+        const query = new URLSearchParams({ q: params.searchQuery, page: String(params.page ?? 1) });
+
+        return postJson(`${base}/filter/search?${query}`, { payload: params.filterPayload });
+    }
+
+    return getJson(`${base}/search?${buildConversationQuery(params)}`);
+}
+
+export function fetchConversationMeta(
+    params: Omit<FetchConversationsParams, 'page' | 'cursor'>,
+): Promise<{ meta: ConversationListMeta }> {
+    return getJson(`/api/v1/accounts/${params.accountId}/conversations/meta?${buildConversationQuery(params)}`);
+}
+
+export function fetchConversation(accountId: number, conversationId: number): Promise<Conversation> {
+    return getJson(`/api/v1/accounts/${accountId}/conversations/${conversationId}`);
+}
+
+// ConversationApi.getAllAttachments → action fetchAllAttachments: trang đầu (15
+// tệp mới nhất) của hội thoại, nguồn cho accordion Attachments.
+export function fetchConversationAttachments(
+    accountId: number,
+    conversationId: number,
+): Promise<MessageAttachment[]> {
+    return getJson<{ payload?: MessageAttachment[] }>(
+        `/api/v1/accounts/${accountId}/conversations/${conversationId}/attachments`,
+    ).then(response => response.payload ?? []);
+}
+
+// Mục "Ảnh/video · Tệp" ở panel hội thoại: một trang của một loại, mới trước.
+export type SharedAttachmentKind = 'media' | 'files';
+
+export interface SharedAttachmentPage {
+    attachments: MessageAttachment[];
+    totalCount: number;
+}
+
+export function fetchSharedAttachments(
+    accountId: number,
+    conversationId: number,
+    kind: SharedAttachmentKind,
+    page: number,
+): Promise<SharedAttachmentPage> {
+    return getJson<{ payload?: MessageAttachment[]; meta?: { total_count?: number } }>(
+        `/api/v1/accounts/${accountId}/conversations/${conversationId}/attachments?${new URLSearchParams({ kind, page: String(page) })}`,
+    ).then(response => ({ attachments: response.payload ?? [], totalCount: response.meta?.total_count ?? 0 }));
+}
+
+export interface LinkMessage {
+    message_id: number;
     content: string;
-    echoId: string;
-    inReplyTo?: number | null;
-    mentions?: OutgoingMention[];
+    created_at: number;
 }
 
-export type AbuseReason = 'spam' | 'harassment' | 'inappropriate' | 'scam' | 'other';
-
-export function fetchChats(tab: ChatListTab, before?: number): Promise<ChatListResponse> {
-    const query = new URLSearchParams({ tab, ...(before ? { before: String(before) } : {}) });
-    return getJson<ChatListResponse>(`${CHATS}?${query}`);
+export interface SharedLinkPage {
+    messages: LinkMessage[];
+    hasMore: boolean;
 }
 
-export function fetchChat(chatId: number): Promise<Conversation> {
-    return getJson<Conversation>(`${CHATS}/${chatId}`);
+export function fetchSharedLinks(accountId: number, conversationId: number, page: number): Promise<SharedLinkPage> {
+    return getJson<{ payload?: LinkMessage[]; meta?: { has_more?: boolean } }>(
+        `/api/v1/accounts/${accountId}/conversations/${conversationId}/links?page=${page}`,
+    ).then(response => ({ messages: response.payload ?? [], hasMore: Boolean(response.meta?.has_more) }));
 }
 
-export function openDirectChat(userId: number): Promise<Conversation> {
-    return postJson<Conversation>(`${CHATS}/direct`, { user_id: userId });
+// Thanh tìm trong hội thoại: id mọi tin khớp, mới trước.
+export function searchConversationMessages(
+    accountId: number,
+    conversationId: number,
+    query: string,
+): Promise<number[]> {
+    return getJson<{ payload?: { message_ids?: number[] } }>(
+        `/api/v1/accounts/${accountId}/conversations/${conversationId}/search/messages?${new URLSearchParams({ q: query })}`,
+    ).then(response => response.payload?.message_ids ?? []);
 }
 
-export function fetchMessages(chatId: number, before?: number): Promise<MessagePageResponse> {
-    return getJson<MessagePageResponse>(`${CHATS}/${chatId}/messages${before ? `?before=${before}` : ''}`);
+// getPreviousMessages gốc: `after` chỉ gửi khi khác `before`.
+export function fetchMessages(
+    accountId: number,
+    conversationId: number,
+    before?: number,
+    after?: number,
+): Promise<MessagesResponse> {
+    const query = new URLSearchParams();
+    if (before) {
+        query.set('before', String(before));
+    }
+    if (after && Number(after) !== Number(before)) {
+        query.set('after', String(after));
+    }
+    const suffix = query.size ? `?${query.toString()}` : '';
+    return getJson(`/api/v1/accounts/${accountId}/conversations/${conversationId}/messages${suffix}`);
 }
 
-export function sendMessage(chatId: number, { content, echoId, inReplyTo, mentions }: SendMessagePayload): Promise<ConversationMessage> {
-    return postJson<ConversationMessage>(`${CHATS}/${chatId}/messages`, {
-        content,
-        echo_id: echoId,
-        ...(inReplyTo ? { in_reply_to: inReplyTo } : {}),
-        ...(mentions?.length ? { mentions } : {}),
+// ConversationApi.markMessageRead / markMessagesUnread. Khác gốc: backend trả
+// 204 rỗng (hợp đồng b8-be) thay vì partial conversation → mốc seen mới do
+// context tự suy ra, riêng lần đánh dấu chưa đọc thì đọc lại conversation.
+export function markMessagesRead(accountId: number, conversationId: number): Promise<void> {
+    return postWithoutBody(`/api/v1/accounts/${accountId}/conversations/${conversationId}/update_last_seen`);
+}
+
+export function markMessagesUnread(accountId: number, conversationId: number): Promise<void> {
+    return postWithoutBody(`/api/v1/accounts/${accountId}/conversations/${conversationId}/unread`);
+}
+
+// Bộ đếm badge unread của sidebar (conversationUnreadCounts store). 403 khi
+// account chưa bật cờ `conversation_unread_counts` — gốc nuốt lỗi, không hiện badge.
+export interface ConversationUnreadCounts {
+    all_count: number;
+    inboxes: Record<string, number>;
+    labels: Record<string, number>;
+    teams: Record<string, number>;
+}
+
+export function fetchConversationUnreadCounts(
+    accountId: number,
+): Promise<{ payload: ConversationUnreadCounts }> {
+    return getJson(`/api/v1/accounts/${accountId}/conversations/unread_counts`);
+}
+
+export function toggleTyping(
+    accountId: number,
+    conversationId: number,
+    status: 'on' | 'off',
+    isPrivate: boolean,
+): Promise<unknown> {
+    return postJson(`/api/v1/accounts/${accountId}/conversations/${conversationId}/toggle_typing_status`, {
+        typing_status: status,
+        is_private: isPrivate,
     });
 }
 
-// Ảnh/file (kèm chú thích) hoặc sticker đi chung đường gửi tin, dạng multipart.
-export function sendRichMessage(
-    chatId: number,
-    { echoId, caption, files = [], stickerId, inReplyTo }: { echoId: string; caption?: string; files?: File[]; stickerId?: string; inReplyTo?: number | null },
+export interface SendMessagePayload {
+    content?: string;
+    private: boolean;
+    echo_id?: string;
+    content_attributes?: Record<string, unknown>;
+    // Tin sticker: chỉ gửi mã, máy chủ tự dựng nội dung và đính kèm. Tin có cấu trúc
+    // (input_select, cards…): máy chủ kiểm và chuẩn hoá content_attributes theo loại.
+    content_type?: string;
+    sticker_id?: string;
+    files?: File[];
+    // Tệp âm thanh trong `files` là bản ghi âm thu ở ô soạn (kênh có tin thoại gửi thành tin thoại).
+    is_voice_message?: boolean;
+    // Kênh email (buildCreatePayload gốc luôn gửi cc/bcc, to chỉ khi có).
+    cc_emails?: string;
+    bcc_emails?: string;
+    to_emails?: string;
+}
+
+// buildCreatePayload của api/inbox/message.js: có tệp thì gửi multipart với
+// `attachments[]`, không thì giữ nguyên JSON như trước.
+function buildCreateForm({
+    content,
+    private: isPrivate,
+    echo_id: echoId,
+    content_attributes: contentAttributes,
+    files,
+    is_voice_message: isVoiceMessage,
+    cc_emails: ccEmails,
+    bcc_emails: bccEmails,
+    to_emails: toEmails,
+}: SendMessagePayload): FormData {
+    const form = new FormData();
+    if (content) {
+        form.append('content', content);
+    }
+    (files ?? []).forEach((file) => form.append('attachments[]', file));
+    // '1'/'0' theo quy ước multipart của repo (Show.tsx inbox) — PHP ép chuỗi
+    // 'false' thành true nên KHÔNG dùng String(boolean) như bản gốc JS.
+    form.append('private', isPrivate ? '1' : '0');
+    if (isVoiceMessage) {
+        form.append('is_voice_message', '1');
+    }
+    if (echoId) {
+        form.append('echo_id', echoId);
+    }
+    if (contentAttributes) {
+        form.append('content_attributes', JSON.stringify(contentAttributes));
+    }
+    if (ccEmails !== undefined) form.append('cc_emails', ccEmails);
+    if (bccEmails !== undefined) form.append('bcc_emails', bccEmails);
+    if (toEmails) form.append('to_emails', toEmails);
+    return form;
+}
+
+export function sendMessage(
+    accountId: number,
+    conversationId: number,
+    payload: SendMessagePayload,
+    options?: RequestOptions,
 ): Promise<ConversationMessage> {
-    const form = new FormData();
-    form.set('echo_id', echoId);
-    if (caption) form.set('content', caption);
-    if (stickerId) form.set('sticker_id', stickerId);
-    if (inReplyTo) form.set('in_reply_to', String(inReplyTo));
-    files.forEach(file => form.append('attachments[]', file));
-    return postForm<ConversationMessage>(`${CHATS}/${chatId}/messages`, form);
+    const url = `/api/v1/accounts/${accountId}/conversations/${conversationId}/messages`;
+    const { files, ...jsonPayload } = payload;
+
+    if (files && files.length) {
+        return postForm(url, buildCreateForm(payload), options);
+    }
+
+    return postJson(url, { ...jsonPayload });
 }
 
-export function editMessage(chatId: number, messageId: number, content: string): Promise<ConversationMessage> {
-    return patchJson<ConversationMessage>(`${CHATS}/${chatId}/messages/${messageId}`, { content });
+/**
+ * Gửi lại một tin thất bại. Hợp đồng ở reports/zalo-lo3-notes.md: 200 trả về
+ * chính tin (MessageResource); bấm lại khi tin không còn `failed` là no-op.
+ */
+export function retryMessage(
+    accountId: number,
+    conversationId: number,
+    messageId: number,
+): Promise<ConversationMessage> {
+    return postJson(
+        `/api/v1/accounts/${accountId}/conversations/${conversationId}/messages/${messageId}/retry`,
+        {},
+    );
 }
 
-export function recallMessage(chatId: number, messageId: number): Promise<ConversationMessage> {
-    return deleteJson<ConversationMessage>(`${CHATS}/${chatId}/messages/${messageId}`);
+/**
+ * Thả / gỡ biểu cảm và thu hồi tin (reports/zalo-lo4-notes.md §2.1). Kênh không
+ * khai năng lực tương ứng trả 422 `capability_not_supported` — FE gate trước.
+ */
+export function addMessageReaction(
+    accountId: number,
+    conversationId: number,
+    messageId: number,
+    emoji: string,
+): Promise<ConversationMessage> {
+    return postJson(
+        `/api/v1/accounts/${accountId}/conversations/${conversationId}/messages/${messageId}/reactions`,
+        { emoji },
+    );
 }
 
-export function reactToMessage(chatId: number, messageId: number, emoji: string): Promise<ConversationMessage> {
-    return postJson<ConversationMessage>(`${CHATS}/${chatId}/messages/${messageId}/reactions`, { emoji });
+export function removeMessageReaction(
+    accountId: number,
+    conversationId: number,
+    messageId: number,
+): Promise<ConversationMessage> {
+    return deleteJson(
+        `/api/v1/accounts/${accountId}/conversations/${conversationId}/messages/${messageId}/reactions`,
+    );
 }
 
-export function forwardMessage(chatId: number, messageId: number, chatIds: number[]): Promise<void> {
-    return postJson<void>(`${CHATS}/${chatId}/messages/${messageId}/forward`, { chat_ids: chatIds });
+export function deleteMessage(
+    accountId: number,
+    conversationId: number,
+    messageId: number,
+): Promise<ConversationMessage> {
+    return deleteJson(`/api/v1/accounts/${accountId}/conversations/${conversationId}/messages/${messageId}`);
 }
 
-export function searchMessages(chatId: number, query: string): Promise<{ payload: ConversationMessage[] }> {
-    return getJson<{ payload: ConversationMessage[] }>(`${CHATS}/${chatId}/messages/search?q=${encodeURIComponent(query)}`);
+/**
+ * Đánh dấu thẻ chuyển khoản đã nhận tiền — idempotent, bấm lại khi đã đánh dấu
+ * rồi không đổi ai/lúc nào (server chỉ ghi lần đầu).
+ */
+export function markBankTransferPaid(
+    accountId: number,
+    conversationId: number,
+    messageId: number,
+): Promise<ConversationMessage> {
+    return postJson(
+        `/api/v1/accounts/${accountId}/conversations/${conversationId}/messages/${messageId}/mark_bank_transfer_paid`,
+        {},
+    );
 }
 
-export function updateChatPreferences(chatId: number, preferences: { pinned?: boolean; muted?: boolean }): Promise<Conversation> {
-    return patchJson<Conversation>(`${CHATS}/${chatId}/preferences`, preferences);
+/**
+ * Dịch nội dung một tin sang ngôn ngữ đích. Tin đã có bản dịch sẵn thì máy chủ
+ * trả thân rỗng — bản dịch khi đó nằm ở `content_attributes.translations`.
+ */
+export function translateMessage(
+    accountId: number,
+    conversationId: number,
+    messageId: number,
+    targetLanguage: string,
+): Promise<{ content?: string | null } | null> {
+    return postJson(
+        `/api/v1/accounts/${accountId}/conversations/${conversationId}/messages/${messageId}/translate`,
+        { target_language: targetLanguage },
+    );
 }
 
-export function fetchChatStickers(chatId: number, params: StickerBrowseParams = {}): Promise<StickerBrowseResult> {
-    const query = new URLSearchParams();
-    if (params.q) query.set('q', params.q);
-    if (params.pack) query.set('pack', params.pack);
-    return getJson<StickerBrowseResult>(`${CHATS}/${chatId}/stickers${query.toString() ? `?${query}` : ''}`);
+export interface ToggleStatusResponse {
+    meta: Record<string, never>;
+    payload: {
+        success: boolean;
+        conversation_id: number;
+        current_status: ConversationStatus;
+        snoozed_until: string | null;
+    };
 }
 
-export function markChatRead(chatId: number, messageId?: number | null): Promise<void> {
-    return postJson<void>(`${CHATS}/${chatId}/read`, messageId ? { message_id: messageId } : {});
+export function toggleStatus(
+    accountId: number,
+    conversationId: number,
+    status: ConversationStatus,
+    snoozedUntil: number | null = null,
+): Promise<ToggleStatusResponse> {
+    return postJson(`/api/v1/accounts/${accountId}/conversations/${conversationId}/toggle_status`, {
+        status,
+        snoozed_until: snoozedUntil,
+    });
 }
 
-export function toggleTyping(chatId: number, typing: boolean): Promise<void> {
-    return postJson<void>(`${CHATS}/${chatId}/typing`, { typing });
+// toggle_priority / mute / unmute trả 200 body rỗng (head :ok gốc) → nuốt lỗi parse JSON.
+function postWithoutBody(url: string, body: Record<string, unknown> = {}): Promise<void> {
+    return postJson(url, body).then(
+        () => undefined,
+        (error: unknown) => (error instanceof SyntaxError ? undefined : Promise.reject(error)),
+    );
 }
 
-export function acceptChat(chatId: number): Promise<Conversation> {
-    return postJson<Conversation>(`${CHATS}/${chatId}/accept`, {});
+export function togglePriority(
+    accountId: number,
+    conversationId: number,
+    priority: ConversationPriority | null,
+): Promise<void> {
+    return postWithoutBody(`/api/v1/accounts/${accountId}/conversations/${conversationId}/toggle_priority`, {
+        priority,
+    });
 }
 
-export function removeChat(chatId: number): Promise<void> {
-    return deleteJson<void>(`${CHATS}/${chatId}`);
+// ConversationApi.updateCustomAttributes — POST /conversations/{id}/custom_attributes
+export function updateConversationCustomAttributes(
+    accountId: number,
+    conversationId: number,
+    customAttributes: Record<string, unknown>,
+): Promise<Conversation> {
+    return postJson<Conversation>(`/api/v1/accounts/${accountId}/conversations/${conversationId}/custom_attributes`, {
+        custom_attributes: customAttributes,
+    });
 }
 
-export function blockUser(userId: number): Promise<void> {
-    return postJson<void>('/api/v1/blocks', { user_id: userId });
+export function muteConversation(accountId: number, conversationId: number): Promise<void> {
+    return postWithoutBody(`/api/v1/accounts/${accountId}/conversations/${conversationId}/mute`);
 }
 
-export function unblockUser(userId: number): Promise<void> {
-    return deleteJson<void>(`/api/v1/blocks/${userId}`);
+export function unmuteConversation(accountId: number, conversationId: number): Promise<void> {
+    return postWithoutBody(`/api/v1/accounts/${accountId}/conversations/${conversationId}/unmute`);
 }
 
-export function reportAbuse(report: { type: 'user' | 'chat' | 'message'; id: number; reason: AbuseReason; note?: string }): Promise<void> {
-    return postJson<void>('/api/v1/abuse_reports', report);
+// Ghim là của riêng người đang đăng nhập; máy chủ trả 204.
+export function setConversationPinned(accountId: number, conversationId: number, pinned: boolean): Promise<void> {
+    const url = `/api/v1/accounts/${accountId}/conversations/${conversationId}/pin`;
+
+    return (pinned ? postWithoutBody(url) : deleteJson(url)).then(() => undefined);
 }
 
-export function createGroup({ title, userIds, avatar }: { title: string; userIds: number[]; avatar?: File | null }): Promise<Conversation> {
-    const form = new FormData();
-    form.set('title', title);
-    userIds.forEach(id => form.append('user_ids[]', String(id)));
-    if (avatar) form.set('avatar', avatar);
-    return postForm<Conversation>(`${CHATS}/groups`, form);
+export interface PinPosition {
+    id: number;
+    pin_position: number;
 }
 
-export function updateGroup(chatId: number, changes: { title?: string; avatar?: File | null; removeAvatar?: boolean }): Promise<Conversation> {
-    const form = new FormData();
-    if (changes.title !== undefined) form.set('title', changes.title);
-    if (changes.avatar) form.set('avatar', changes.avatar);
-    if (changes.removeAvatar) form.set('remove_avatar', '1');
-    return postForm<Conversation>(`${CHATS}/${chatId}/group`, form);
+// Xếp lại nhóm ghim của người đang đăng nhập; máy chủ trả vị trí mới của cả nhóm.
+export function reorderPinnedConversations(accountId: number, orderedIds: number[]): Promise<PinPosition[]> {
+    return patchJson<{ payload: PinPosition[] }>(`/api/v1/accounts/${accountId}/conversations/pins/order`, {
+        conversation_ids: orderedIds,
+    }).then(response => response.payload);
 }
 
-export function fetchGroupMembers(chatId: number): Promise<{ payload: GroupMemberPerson[] }> {
-    return getJson<{ payload: GroupMemberPerson[] }>(`${CHATS}/${chatId}/members`);
+// AssignmentsController#create: agent trả partial _agent (null khi gỡ), team trả `json: @team`.
+// Thân "null" là JSON hợp lệ; 200 rỗng (nếu backend đổi) rơi vào SyntaxError → coi như null.
+function postAssignment<T>(url: string, body: Record<string, unknown>): Promise<T | null> {
+    return postJson<T | null>(url, body).catch((error: unknown) =>
+        error instanceof SyntaxError ? null : Promise.reject(error),
+    );
 }
 
-export function addGroupMembers(chatId: number, userIds: number[]): Promise<{ skipped_count: number }> {
-    return postJson<{ skipped_count: number }>(`${CHATS}/${chatId}/members`, { user_ids: userIds });
+export function assignAgent(
+    accountId: number,
+    conversationId: number,
+    agentId: number | null,
+    assigneeType: string | null = null,
+): Promise<AgentMeta | null> {
+    return postAssignment<AgentMeta>(`/api/v1/accounts/${accountId}/conversations/${conversationId}/assignments`, {
+        assignee_id: agentId,
+        assignee_type: assigneeType,
+    });
 }
 
-export function removeGroupMember(chatId: number, userId: number): Promise<void> {
-    return deleteJson<void>(`${CHATS}/${chatId}/members/${userId}`);
+export function assignTeam(
+    accountId: number,
+    conversationId: number,
+    teamId: number,
+): Promise<TeamMeta | null> {
+    return postAssignment<TeamMeta>(`/api/v1/accounts/${accountId}/conversations/${conversationId}/assignments`, {
+        team_id: teamId,
+    });
 }
 
-export function changeGroupRole(chatId: number, userId: number, role: GroupRole): Promise<void> {
-    return patchJson<void>(`${CHATS}/${chatId}/members/${userId}`, { role });
-}
-
-export function dissolveGroup(chatId: number): Promise<void> {
-    return postJson<void>(`${CHATS}/${chatId}/dissolve`, {});
-}
-
-export function fetchInviteLink(chatId: number): Promise<{ url: string | null }> {
-    return getJson<{ url: string | null }>(`${CHATS}/${chatId}/invite_link`);
-}
-
-export function rotateInviteLink(chatId: number): Promise<{ url: string }> {
-    return postJson<{ url: string }>(`${CHATS}/${chatId}/invite_link`, {});
-}
-
-export function revokeInviteLink(chatId: number): Promise<void> {
-    return deleteJson<void>(`${CHATS}/${chatId}/invite_link`);
+export function sendEmailTranscript(accountId: number, conversationId: number, email: string): Promise<void> {
+    return postWithoutBody(`/api/v1/accounts/${accountId}/conversations/${conversationId}/transcript`, { email });
 }

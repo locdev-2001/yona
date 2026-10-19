@@ -108,7 +108,7 @@ Route::get('/sitemap.xml', SitemapController::class)->name('sitemap');
 Route::get('/site.webmanifest', fn () => response()->json([
     'name' => config('yona.branding.installation_name'),
     'short_name' => config('yona.branding.brand_name'),
-    'start_url' => '/chat',
+    'start_url' => '/app',
     'scope' => '/',
     'display' => 'standalone',
     'theme_color' => config('yona.branding.theme_color'),
@@ -180,7 +180,7 @@ Route::post('/invite/{token}', [InviteAcceptancesController::class, 'store'])
 Route::middleware('auth')->group(function () {
     Route::post('/app/logout', [SessionsController::class, 'destroy'])->name('logout');
 
-    Route::get('/app', [DashboardController::class, 'index'])->name('dashboard');
+    Route::get('/app', [DashboardController::class, 'index'])->middleware(EnsureUsername::class)->name('dashboard');
 
     Route::get('/chat/welcome', [WelcomeController::class, 'show'])->name('chat.welcome');
     Route::post('/chat/welcome', [WelcomeController::class, 'store']);
@@ -195,7 +195,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/app/email/oauth/{provider}/callback', [EmailOAuthController::class, 'callback'])
         ->where('provider', '[a-z]+')->name('email_oauth.callback');
 
-    Route::middleware('account.scope')->prefix('/app/accounts/{account}')->whereNumber('account')->group(function () {
+    Route::middleware(['account.scope', EnsureUsername::class])->prefix('/app/accounts/{account}')->whereNumber('account')->group(function () {
         Route::get('', fn (Account $account) => redirect("/app/accounts/{$account->id}/dashboard"));
         Route::get('/dashboard', [DashboardController::class, 'show'])->name('account_dashboard');
 

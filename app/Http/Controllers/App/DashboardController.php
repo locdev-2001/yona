@@ -4,6 +4,7 @@ namespace App\Http\Controllers\App;
 
 use App\Http\Controllers\Controller;
 use App\Models\Account;
+use App\Services\Users\PersonalAccounts;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -11,9 +12,11 @@ use Inertia\Response;
 
 class DashboardController extends Controller
 {
-    public function index(): RedirectResponse
+    public function index(Request $request, PersonalAccounts $accounts): RedirectResponse
     {
-        return redirect()->route('chat');
+        $account = $accounts->ensureFor($request->user());
+
+        return redirect("/app/accounts/{$account->id}/dashboard");
     }
 
     public function show(Request $request, Account $account): RedirectResponse|Response

@@ -11,6 +11,8 @@ import { isThreadOpen, showMobileTabBar } from 'dashboard/conversation/layoutMod
 import SnackbarContainer from 'v3/components/SnackBar/Container';
 import RealtimeProvider from 'dashboard/realtime/RealtimeProvider';
 import CommandBar from 'dashboard/commands/CommandBar';
+import { bindUnreadIndicators } from 'dashboard/notifications/unreadIndicators';
+import UnreadTitleSync from 'dashboard/notifications/components/UnreadTitleSync';
 import PushSubscriptionSync from 'dashboard/notifications/components/PushSubscriptionSync';
 import { StickerDisplaySizeProvider } from 'shared/sticker/stickerDisplaySize';
 import type { DashboardPageProps } from './types';
@@ -19,7 +21,7 @@ import type { DashboardPageProps } from './types';
 // Copilot/UpgradePage/KeyShortcutModal: EE hoặc vào nhóm sau. CommandBar: khung + snooze (B5), phần còn lại B10.
 export default function Dashboard({ children }: { children: ReactNode }) {
     const [isMobileSidebarOpen, setMobileSidebarOpen] = useState(false);
-    const { auth, stickerDisplaySize, conversationId, isComposing } = usePage<
+    const { auth, currentAccount, stickerDisplaySize, conversationId, isComposing } = usePage<
         DashboardPageProps & { conversationId?: number | null; isComposing?: boolean }
     >().props;
     const viewportWidth = useViewportWidth();
@@ -35,6 +37,12 @@ export default function Dashboard({ children }: { children: ReactNode }) {
     useEffect(() => {
         applyColorScheme(colorScheme);
     }, [colorScheme]);
+
+    const accountId = currentAccount?.id ?? 0;
+
+    useEffect(() => {
+        bindUnreadIndicators(accountId);
+    }, [accountId]);
 
     return (
         <StickerDisplaySizeProvider size={stickerDisplaySize}>
@@ -52,6 +60,7 @@ export default function Dashboard({ children }: { children: ReactNode }) {
                     </main>
                     <SnackbarContainer />
                     <RealtimeProvider />
+                    <UnreadTitleSync />
                 </div>
                 {/* Trong luồng, không nổi: cột trên co lại nên thẻ cuối danh sách không bị che. */}
                 {hasMobileTabBar ? (

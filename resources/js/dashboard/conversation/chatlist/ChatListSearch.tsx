@@ -1,21 +1,21 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
+import { router } from '@inertiajs/react';
 
+import { composeConversationUrl } from 'dashboard/helper/URLHelper';
 import { t } from '../../../i18n';
 import { useConversation } from '../ConversationContext';
 import ListHeaderButton from './ListHeaderButton';
-import NewChatDialog from './NewChatDialog';
-import type { DialogHandle } from 'dashboard/components-next/dialog/Dialog';
 
 // Gõ xong mới hỏi máy chủ — mỗi phím không bắn một truy vấn.
 const SEARCH_DEBOUNCE_MS = 300;
 
-// Ô tìm ngay trong cột danh sách: lọc tại chỗ các cuộc trò chuyện của tab đang xem.
-// Nút soạn tin mở hộp tìm người theo @username để bắt đầu trò chuyện mới.
+// Ô tìm ngay trong cột danh sách: lọc tại chỗ danh sách đang xem (hộp thư, tab,
+// trạng thái, bộ lọc giữ nguyên). Tìm mọi thứ trong hệ thống là ô ở sidebar.
+// `actions` là các nút của cột (Lọc, Chọn nhiều) chen giữa ô tìm và nút Soạn tin.
 export default function ChatListSearch({ actions, trailing }: { actions?: ReactNode; trailing?: ReactNode }) {
-    const { searchQuery, setSearchQuery } = useConversation();
+    const { accountId, listFilters, teamId, searchQuery, setSearchQuery, isComposing } = useConversation();
     const [draft, setDraft] = useState(searchQuery);
-    const newChatDialogRef = useRef<DialogHandle>(null);
 
     // Từ khoá đổi từ ngoài (điều hướng) thì ô theo; khoảng trắng đang gõ dở thì giữ.
     useEffect(() => {
@@ -67,11 +67,17 @@ export default function ChatListSearch({ actions, trailing }: { actions?: ReactN
             {actions}
             <ListHeaderButton
                 icon="i-lucide-square-pen"
-                label={t('CHAT.NEW.TITLE')}
-                onClick={() => newChatDialogRef.current?.open()}
+                label={t('CHAT_LIST.SEARCH.COMPOSE')}
+                isActive={isComposing}
+                aria-current={isComposing ? 'page' : undefined}
+                onClick={() =>
+                    router.visit(composeConversationUrl({ accountId, filters: listFilters, teamId }), {
+                        preserveState: true,
+                        preserveScroll: true,
+                    })
+                }
             />
             {trailing}
-            <NewChatDialog ref={newChatDialogRef} />
         </div>
     );
 }
