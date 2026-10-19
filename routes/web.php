@@ -24,7 +24,6 @@ use App\Http\Controllers\Public\Portals\CategoriesController as PublicCategories
 use App\Http\Controllers\Public\Portals\PortalsController as PublicPortalsController;
 use App\Http\Controllers\Public\Portals\SearchController as PublicSearchController;
 use App\Http\Controllers\SitemapController;
-use App\Http\Controllers\SuperAdmin\AbuseReportsController as SuperAdminAbuseReportsController;
 use App\Http\Controllers\SuperAdmin\AccessTokensController as SuperAdminAccessTokensController;
 use App\Http\Controllers\SuperAdmin\AccountsController as SuperAdminAccountsController;
 use App\Http\Controllers\SuperAdmin\AccountUsersController as SuperAdminAccountUsersController;
@@ -186,10 +185,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/chat/welcome', [WelcomeController::class, 'store']);
 
     Route::middleware(EnsureUsername::class)->group(function () {
-        Route::get('/chat', [ChatPagesController::class, 'index'])->name('chat');
-        Route::get('/chat/c/{chat}', [ChatPagesController::class, 'index'])->whereNumber('chat')->name('chat.show');
+        Route::get('/chat', fn () => redirect()->route('dashboard'))->name('chat');
         Route::get('/chat/profile', [ChatPagesController::class, 'profile'])->name('chat.profile');
-        Route::get('/chat/join/{token}', [ChatPagesController::class, 'join'])->name('chat.join');
     });
 
     Route::get('/app/email/oauth/{provider}/callback', [EmailOAuthController::class, 'callback'])
@@ -611,7 +608,6 @@ Route::prefix(SuperAdminArea::PREFIX)->middleware(SuperAdminInertia::class)->gro
             'installation_configs' => SuperAdminInstallationConfigsController::class,
             'agent_bots' => SuperAdminAgentBotsController::class,
             'platform_apps' => SuperAdminPlatformAppsController::class,
-            'abuse_reports' => SuperAdminAbuseReportsController::class,
         ] as $resource => $controller) {
             Route::get("/{$resource}", [$controller, 'index']);
             Route::get("/{$resource}/new", [$controller, 'create']);

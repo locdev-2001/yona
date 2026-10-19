@@ -26,7 +26,6 @@ use App\Models\Channel\WebWidget;
 use App\Models\Channel\Whatsapp;
 use App\Models\Channel\Yona;
 use App\Models\Channel\Zalo;
-use App\Models\Chat;
 use App\Models\Contact;
 use App\Models\Conversation;
 use App\Models\Inbox;
@@ -143,7 +142,6 @@ class AppServiceProvider extends ServiceProvider
             'Inbox' => Inbox::class,
             'Message' => Message::class,
             'Conversation' => Conversation::class,
-            'Chat' => Chat::class,
             'AgentBot' => AgentBot::class,
             'Account' => Account::class,
             'PlatformApp' => PlatformApp::class,

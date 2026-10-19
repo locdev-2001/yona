@@ -2,36 +2,14 @@
 
 namespace App\Http\Controllers\Chat;
 
-use App\Exceptions\Chat\ChatActionRefused;
 use App\Http\Controllers\Controller;
-use App\Models\Chat;
-use App\Services\Chat\GroupInviteLinks;
 use App\Services\Users\PrivacySettings;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class ChatPagesController extends Controller
 {
-    public function index(?Chat $chat = null): Response
-    {
-        return Inertia::render('dashboard/conversation/ConversationView', [
-            'conversationId' => $chat?->id ?? 0,
-        ]);
-    }
-
-    public function join(Request $request, string $token, GroupInviteLinks $links): RedirectResponse
-    {
-        try {
-            $chat = $links->join($request->user(), $token);
-        } catch (ChatActionRefused $refused) {
-            return redirect()->route('chat')->with('error', $refused->getMessage());
-        }
-
-        return redirect()->route('chat.show', $chat);
-    }
-
     public function profile(Request $request): Response
     {
         $user = $request->user();
