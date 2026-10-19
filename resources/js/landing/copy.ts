@@ -1,6 +1,7 @@
-// Chữ của bề mặt công khai, theo từng ngôn ngữ. Chỉ chứa lời giới thiệu sản phẩm;
-// đường dẫn, thương hiệu, nhãn pháp lý và danh sách ngôn ngữ vẫn do máy chủ đẩy
-// xuống qua `landingConfig`.
+// Chữ hiển thị của bề mặt công khai, theo từng ngôn ngữ. Thẻ meta (tiêu đề tab,
+// mô tả, JSON-LD) không nằm ở đây mà ở lang/{locale}/landing.php, máy chủ in sẵn
+// vào HTML; đường dẫn, thương hiệu, nhãn pháp lý và danh sách ngôn ngữ cũng do máy
+// chủ đẩy xuống qua `landingConfig`.
 
 interface Card {
     title: string;
@@ -17,7 +18,6 @@ export interface FeatureCopy {
 }
 
 export interface LandingCopy {
-    meta: { title: string; description: string };
     nav: {
         features: string;
         how: string;
@@ -28,7 +28,7 @@ export interface LandingCopy {
         menu: string;
     };
     hero: { title_lead: string; title_focus: string; title_tail: string; subtitle: string; fine: string };
-    features: { people: FeatureCopy; conversation: FeatureCopy };
+    features: { inbox: FeatureCopy; conversation: FeatureCopy };
     flow: { eyebrow: string; title: string; subtitle: string; steps: Card[] };
     rules: { eyebrow: string; title: string; items: Card[] };
     closing: { title: string };
@@ -36,11 +36,6 @@ export interface LandingCopy {
 }
 
 const VI: LandingCopy = {
-    meta: {
-        title: 'Yona · Nhắn tin với bạn bè',
-        description:
-            'Yona là ứng dụng nhắn tin cho bạn bè và người thân: nhắn riêng, lập nhóm, tìm nhau bằng @username. Mở ngay trên trình duyệt, cài lên điện thoại như một ứng dụng.',
-    },
     nav: {
         features: 'Tính năng',
         how: 'Cách bắt đầu',
@@ -51,81 +46,81 @@ const VI: LandingCopy = {
         menu: 'Menu',
     },
     hero: {
-        title_lead: 'Trò chuyện với bạn bè',
-        title_focus: 'nhắn riêng hay cả nhóm',
-        title_tail: 'ngay trên trình duyệt',
+        title_lead: 'Zalo, email và bạn bè',
+        title_focus: 'chung một hộp thư',
+        title_tail: 'của riêng bạn',
         subtitle:
-            'Yona là ứng dụng nhắn tin cho bạn bè và người thân. Đăng ký, chọn một @username, rồi nhắn riêng cho từng người hoặc lập nhóm cho cả hội.',
+            'Đăng ký là có ngay một hộp thư riêng và một @username. Kết nối Zalo cá nhân và Gmail để tin nhắn về một chỗ, rồi nhắn với bạn bè trên Yona ngay trong hộp thư đó.',
         fine: 'Đăng ký bằng email hoặc tài khoản Google.',
     },
     features: {
-        people: {
-            eyebrow: 'Nhắn riêng và nhóm',
-            title_a: 'Một người hay cả nhóm,',
-            title_b: 'đều ở chung một chỗ',
-            body: 'Nhắn riêng cho từng người, hoặc lập nhóm cho gia đình, lớp học, hội bạn. Nhóm có trưởng nhóm và phó nhóm, tối đa 500 người.',
+        inbox: {
+            eyebrow: 'Một hộp thư cho mọi tin',
+            title_a: 'Không phải mở từng ứng dụng,',
+            title_b: 'mọi tin nhắn nằm một chỗ',
+            body: 'Tin Zalo, thư Gmail và tin từ bạn bè trên Yona xếp chung một danh sách. Mỗi cuộc trò chuyện ghi rõ đến từ kênh nào, trả lời là đi đúng về kênh đó.',
             cards: [
                 {
-                    title: 'Tìm nhau bằng @username',
-                    body: 'Mỗi người có một @username riêng. Gõ tên là tìm thấy, không cần trao số điện thoại.',
+                    title: 'Zalo cá nhân',
+                    body: 'Quét mã QR như khi mở Zalo trên máy tính. Tin nhắn Zalo về hộp thư, trả lời từ Yona thì người kia nhận trên Zalo.',
                 },
                 {
-                    title: 'Mời vào nhóm bằng link',
-                    body: 'Thêm bạn vào nhóm bằng @username, hoặc gửi link mời để ai có link cũng vào được.',
+                    title: 'Gmail và email',
+                    body: 'Kết nối Gmail để thư về hộp thư Yona. Đọc và trả lời thư ngay cạnh tin nhắn Zalo.',
                 },
                 {
-                    title: 'Trưởng nhóm, phó nhóm',
-                    body: 'Trưởng nhóm giao quyền phó nhóm để cùng quản lý thành viên. Nhóm phẳng, không chia kênh con.',
+                    title: 'Bạn bè trên Yona',
+                    body: 'Mỗi người có một @username. Gõ tên là tìm thấy và nhắn được ngay, không cần trao số điện thoại.',
                 },
             ],
         },
         conversation: {
-            eyebrow: 'Trò chuyện tự nhiên',
-            title_a: 'Biết bạn đã xem,',
-            title_b: 'biết bạn đang gõ',
-            body: 'Những thứ bạn quen dùng khi nhắn tin đều có sẵn, và tin mới hiện ra ngay khi bạn bè vừa gửi.',
+            eyebrow: 'Trò chuyện đầy đủ',
+            title_a: 'Trả lời, thả cảm xúc,',
+            title_b: 'gửi ảnh hay sticker',
+            body: 'Những thứ bạn quen dùng khi nhắn tin đều có, cộng thêm vài thứ giúp hộp thư gọn gàng. Kênh nào hỗ trợ thì làm được ngay trong Yona.',
             cards: [
                 {
-                    title: 'Đã xem, đang gõ',
-                    body: 'Thấy ngay tin đã được đọc hay bạn đang trả lời, không phải đoán.',
+                    title: 'Trả lời, cảm xúc, thu hồi',
+                    body: 'Trích đúng tin muốn trả lời, thả cảm xúc lên tin, thu hồi tin lỡ gửi nhầm.',
                 },
                 {
-                    title: 'Trả lời, cảm xúc, sticker',
-                    body: 'Trích đúng tin muốn trả lời, thả cảm xúc lên tin, gửi sticker thay lời.',
+                    title: 'Ảnh, file, sticker, chuyển khoản',
+                    body: 'Gửi ảnh, file và sticker trong cuộc trò chuyện. Cần nhận tiền thì gửi thẻ chuyển khoản có mã VietQR để người kia quét.',
                 },
                 {
-                    title: 'Ảnh, file, chuyển khoản',
-                    body: 'Gửi ảnh và file ngay trong cuộc trò chuyện. Cần chuyển tiền thì gửi thẻ chuyển khoản có mã VietQR để bạn quét.',
+                    title: 'Nhãn, ghi chú, câu trả lời mẫu',
+                    body: 'Gắn nhãn, ghi chú riêng chỉ mình thấy, lưu câu trả lời hay dùng. Tìm kiếm và bộ lọc giúp lục lại tin cũ nhanh.',
                 },
             ],
         },
     },
     flow: {
         eyebrow: 'Cách bắt đầu',
-        title: 'Bốn bước tới tin nhắn đầu tiên',
+        title: 'Bốn bước để gom tin nhắn về một chỗ',
         subtitle: 'Không phải tải gì về. Mở trình duyệt trên máy tính hoặc điện thoại là dùng được.',
         steps: [
-            { title: 'Đăng ký', body: 'Bằng email hoặc tài khoản Google.' },
-            { title: 'Chọn @username', body: 'Cái tên để bạn bè tìm thấy bạn.' },
-            { title: 'Tìm bạn', body: 'Gõ @username của bạn bè, hoặc mở link mời vào nhóm.' },
-            { title: 'Nhắn tin', body: 'Nhắn riêng hay cả nhóm, trên máy tính lẫn điện thoại.' },
+            { title: 'Đăng ký', body: 'Bằng email hoặc tài khoản Google. Hộp thư của bạn có ngay.' },
+            { title: 'Chọn @username', body: 'Cái tên để bạn bè trên Yona tìm thấy bạn.' },
+            { title: 'Kết nối Zalo, Gmail', body: 'Quét mã QR cho Zalo cá nhân, đăng nhập Google cho Gmail.' },
+            { title: 'Nhắn tin', body: 'Trả lời tin Zalo và thư, hoặc gõ @username để nhắn bạn bè.' },
         ],
     },
     rules: {
-        eyebrow: 'Bạn làm chủ hộp tin',
-        title: 'Người lạ không tự chen vào cuộc trò chuyện của bạn',
+        eyebrow: 'Riêng tư và an toàn',
+        title: 'Hộp thư của bạn, nói thật những gì nên biết',
         items: [
             {
-                title: 'Tin chờ cho người lạ',
-                body: 'Tin từ người chưa từng trò chuyện với bạn nằm riêng ở Tin chờ. Bạn chấp nhận thì mới thành cuộc trò chuyện, không thì xoá.',
+                title: 'Chỉ bạn vào được',
+                body: 'Mỗi tài khoản có một hộp thư riêng. Không ai khác được thêm vào hộp thư đó để đọc tin của bạn.',
             },
             {
-                title: 'Chặn là chặn hai chiều',
-                body: 'Chặn một người thì cả hai không nhắn được cho nhau nữa, cho tới khi bạn bỏ chặn.',
+                title: 'Nói trước về Zalo',
+                body: 'Zalo cá nhân kết nối qua mã QR, không phải cổng chính thức của Zalo. Zalo có thể hạn chế tài khoản hoặc ngắt kết nối, nên hãy cân nhắc trước khi dùng.',
             },
             {
-                title: 'Báo cáo vi phạm',
-                body: 'Báo cáo một người, một cuộc trò chuyện hay một tin nhắn. Đội ngũ Yona xem và xử lý.',
+                title: 'Tin lưu trên máy chủ',
+                body: 'Tin nhắn được lưu trên máy chủ Yona để bạn đọc được trên mọi thiết bị. Yona không mã hoá đầu cuối, đừng gửi mật khẩu hay mã OTP qua đây.',
             },
             {
                 title: 'Như ứng dụng trên điện thoại',
@@ -133,9 +128,9 @@ const VI: LandingCopy = {
             },
         ],
     },
-    closing: { title: 'Rủ bạn bè vào Yona' },
+    closing: { title: 'Gom tin nhắn về một chỗ' },
     footer: {
-        tagline: 'Ứng dụng nhắn tin cho bạn bè và người thân, chạy ngay trên trình duyệt.',
+        tagline: 'Hộp thư cá nhân cho Zalo, email và bạn bè, chạy ngay trên trình duyệt.',
         copyright: '© :year Yona. Đã đăng ký bản quyền.',
         product: 'Sản phẩm',
         account: 'Tài khoản',
@@ -145,11 +140,6 @@ const VI: LandingCopy = {
 };
 
 const EN: LandingCopy = {
-    meta: {
-        title: 'Yona · Messaging for friends',
-        description:
-            'Yona is a messaging app for friends and family: direct messages, group chats, find each other by @username. Runs in your browser and installs on your phone like an app.',
-    },
     nav: {
         features: 'Features',
         how: 'Get started',
@@ -160,81 +150,81 @@ const EN: LandingCopy = {
         menu: 'Menu',
     },
     hero: {
-        title_lead: 'Talk with your friends',
-        title_focus: 'one to one or as a group',
-        title_tail: 'right in your browser',
+        title_lead: 'Zalo, email and friends',
+        title_focus: 'in one inbox',
+        title_tail: 'that is yours alone',
         subtitle:
-            'Yona is a messaging app for friends and family. Sign up, pick an @username, then message people directly or start a group for the whole crew.',
+            'Sign up and you get your own inbox and an @username right away. Connect personal Zalo and Gmail so every message lands in one place, then chat with friends on Yona from that same inbox.',
         fine: 'Sign up with email or your Google account.',
     },
     features: {
-        people: {
-            eyebrow: 'Direct and group chats',
-            title_a: 'One person or a whole group,',
-            title_b: 'all in one place',
-            body: 'Message people one to one, or start a group for family, class or friends. Groups have an owner and admins, up to 500 members.',
+        inbox: {
+            eyebrow: 'One inbox for everything',
+            title_a: 'No more hopping between apps,',
+            title_b: 'every message in one place',
+            body: 'Zalo messages, Gmail and chats with friends on Yona share one list. Each conversation shows where it came from, and your reply goes back the same way.',
             cards: [
                 {
-                    title: 'Find people by @username',
-                    body: 'Everyone has their own @username. Type it to find them, no phone numbers to swap.',
+                    title: 'Personal Zalo',
+                    body: 'Scan a QR code, just like opening Zalo on a computer. Zalo messages land in your inbox, and replies from Yona arrive on Zalo.',
                 },
                 {
-                    title: 'Invite with a link',
-                    body: 'Add friends to a group by @username, or share an invite link so anyone with it can join.',
+                    title: 'Gmail and email',
+                    body: 'Connect Gmail and your mail shows up in Yona. Read and reply next to your Zalo messages.',
                 },
                 {
-                    title: 'Owners and admins',
-                    body: 'Group owners can make members admins to help manage the group. Groups stay flat, no sub-channels.',
+                    title: 'Friends on Yona',
+                    body: 'Everyone has an @username. Type it to find someone and message them right away, no phone numbers to swap.',
                 },
             ],
         },
         conversation: {
-            eyebrow: 'Natural conversations',
-            title_a: 'See when it is read,',
-            title_b: 'see who is typing',
-            body: 'The things you expect from a messaging app are all there, and new messages show up the moment they are sent.',
+            eyebrow: 'Full conversations',
+            title_a: 'Reply, react,',
+            title_b: 'send a photo or a sticker',
+            body: 'Everything you expect from a messaging app, plus a few things that keep your inbox tidy. Whatever a channel supports works right inside Yona.',
             cards: [
                 {
-                    title: 'Read receipts and typing',
-                    body: 'See right away whether a message was read or a friend is replying.',
+                    title: 'Replies, reactions, unsend',
+                    body: 'Quote the exact message you are answering, react to messages, take back a message sent by mistake.',
                 },
                 {
-                    title: 'Replies, reactions, stickers',
-                    body: 'Quote the exact message you are answering, react to messages, send a sticker instead of words.',
+                    title: 'Photos, files, stickers, transfers',
+                    body: 'Share photos, files and stickers in the chat. Need to get paid back? Send a bank transfer card with a VietQR code to scan.',
                 },
                 {
-                    title: 'Photos, files, bank transfers',
-                    body: 'Share photos and files in the chat. Need to send money? Share a bank transfer card with a VietQR code to scan.',
+                    title: 'Labels, notes, saved replies',
+                    body: 'Label conversations, keep private notes only you can see, save replies you use often. Search and filters find old messages fast.',
                 },
             ],
         },
     },
     flow: {
         eyebrow: 'Get started',
-        title: 'Four steps to your first message',
+        title: 'Four steps to one inbox',
         subtitle: 'Nothing to download. Open a browser on your computer or phone and you are ready.',
         steps: [
-            { title: 'Sign up', body: 'With email or your Google account.' },
-            { title: 'Pick an @username', body: 'The name friends use to find you.' },
-            { title: 'Find friends', body: "Type a friend's @username, or open a group invite link." },
-            { title: 'Start chatting', body: 'One to one or in groups, on desktop and on mobile.' },
+            { title: 'Sign up', body: 'With email or your Google account. Your inbox is ready at once.' },
+            { title: 'Pick an @username', body: 'The name friends on Yona use to find you.' },
+            { title: 'Connect Zalo, Gmail', body: 'Scan a QR code for personal Zalo, sign in with Google for Gmail.' },
+            { title: 'Start chatting', body: "Reply to Zalo and email, or type a friend's @username to message them." },
         ],
     },
     rules: {
-        eyebrow: 'Your inbox, your call',
-        title: 'Strangers cannot just walk into your chats',
+        eyebrow: 'Privacy and safety',
+        title: 'Your inbox, and the honest fine print',
         items: [
             {
-                title: 'Message requests',
-                body: 'Messages from people you have never talked to wait in Requests. Accept to start the conversation, or delete them.',
+                title: 'Only you get in',
+                body: 'Every account has its own inbox. Nobody else can be added to it to read your messages.',
             },
             {
-                title: 'Blocking works both ways',
-                body: 'Block someone and neither of you can message the other until you unblock.',
+                title: 'A word about Zalo',
+                body: 'Personal Zalo connects through a QR code, not an official Zalo gateway. Zalo may restrict the account or end the connection, so weigh that before you connect.',
             },
             {
-                title: 'Report abuse',
-                body: 'Report a person, a conversation or a single message. The Yona team reviews every report.',
+                title: 'Stored on our servers',
+                body: 'Messages are kept on Yona servers so you can read them on any device. Yona is not end-to-end encrypted, so do not send passwords or OTP codes here.',
             },
             {
                 title: 'Feels like a phone app',
@@ -242,9 +232,9 @@ const EN: LandingCopy = {
             },
         ],
     },
-    closing: { title: 'Bring your friends to Yona' },
+    closing: { title: 'Bring your messages together' },
     footer: {
-        tagline: 'A messaging app for friends and family that runs right in your browser.',
+        tagline: 'A personal inbox for Zalo, email and friends that runs right in your browser.',
         copyright: '© :year Yona. All rights reserved.',
         product: 'Product',
         account: 'Account',

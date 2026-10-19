@@ -4,26 +4,23 @@ Những chỗ Yona cố ý làm khác cách làm quen thuộc của ứng dụng
 do. Quyết định mới ghi vào đây cùng commit với code. Sửa ngược một quyết định ở
 đây mà không có lý do mới = lỗi hồi quy.
 
-Từ 19/10/2026 Yona là ứng dụng nhắn tin giữa bạn bè (xem
-[brand-positioning.md](brand-positioning.md)). Tài liệu này được viết lại cho sản
-phẩm đó: chỉ giữ quyết định còn đúng với màn chat và bề mặt công khai. Quyết định
-của thời CRM (hộp thư đa kênh, widget, phụ trách, trạng thái hội thoại, tìm kiếm
-liên hệ, mời vào account, soạn hội thoại mới) đã bỏ; muốn tra lại thì xem lịch sử
-git của tệp này trước tag `main-truoc-chat-ban-be`.
+Từ 19/10/2026 Yona là hộp thư cá nhân đa kênh cho người dùng cá nhân (xem
+[brand-positioning.md](brand-positioning.md)): mỗi người một hộp thư, gom Zalo cá
+nhân, Gmail/email và tin từ người dùng Yona khác. Quyết định chỉ dành cho đội ngũ
+doanh nghiệp (phụ trách, team, báo cáo, widget, mời vào account) không còn hiện
+trên giao diện; muốn tra lại thì xem lịch sử git của tệp này trước tag
+`main-truoc-chat-ban-be`.
 
 Kiến trúc: [system-architecture.md](system-architecture.md).
 
-## Nhắn tin giữa bạn bè
+## Hộp thư cá nhân
 
 | Màn | Quyết định | Lý do | Ngày |
 |---|---|---|---|
-| Màn chat (`/chat`, `/chat/c/{id}`) | **Dùng lại y hệt giao diện hộp thư** (`dashboard/conversation/ConversationView.tsx`, `ConversationContext.tsx` viết lại cho chat), không biến tấu. Payload tin và hội thoại giữ khuôn cũ (`ChatPresenter`) để component sẵn có chạy được | Founder chốt: giao diện hộp thư đã được mài qua nhiều vòng nghiệm thu, dựng lại từ đầu là mất công mà chưa chắc tốt hơn | 19/10/2026 |
-| Tin từ người lạ | Hội thoại 1-1 mới: người mở là thành viên chính thức, người nhận ở trạng thái **chờ** và thấy nó ở tab **Tin chờ**, không ở danh sách chính. Tin chờ chỉ hiện khi đã có ít nhất một tin (mở hội thoại rồi bỏ đi không làm phiền ai). Trả lời trong Tin chờ = chấp nhận. Xoá khỏi danh sách không báo cho người kia | Nhắn tự do giữa người dùng (không có bảng bạn bè) mà không để người lạ chen thẳng vào danh sách chính. Người bị từ chối không cần biết, tránh gây khó xử | 19/10/2026 |
-| Thông báo đẩy với Tin chờ | Tin vào Tin chờ **không** gửi thông báo đẩy; chỉ thành viên đã chấp nhận và không tắt thông báo hội thoại mới nhận | Người lạ không được dùng thông báo đẩy để gây chú ý | 19/10/2026 |
-| Chặn | Chặn khai một chiều nhưng hiệu lực **hai chiều** ở 1-1: không bên nào gửi được cho bên kia. Người chặn vẫn thấy hội thoại cũ (`blocked_by_me`), ô soạn bị khoá (`can_reply = false`) | Chặn mà người bị chặn vẫn nhắn được thì không còn là chặn; giữ lịch sử để người chặn còn đối chiếu hoặc báo cáo | 19/10/2026 |
-| Báo cáo vi phạm | Báo cáo được một người, một hội thoại hoặc một tin (`AbuseReport::REPORTABLE`); Super Admin xử lý ở console | Đủ ba mức người dùng thực sự gặp: kẻ quấy rối, nhóm xấu, một tin cụ thể | 19/10/2026 |
-| Đã xem | Dấu đã xem chỉ có ở hội thoại 1-1 (tin tới id người kia đã đọc) | Ở nhóm, "đã xem" của từng người cần giao diện riêng; chưa làm thì không hiện nửa vời | 19/10/2026 |
-| `@username` | Chưa chọn username thì mọi trang chat chuyển về màn chào mừng (`/chat/welcome`, middleware `EnsureUsername`) | Chưa có username thì không ai tìm thấy mình, vào chat cũng không làm được gì | 19/10/2026 |
+| Toàn bộ app | **Mỗi người dùng một hộp thư** (account do chính họ làm quản trị, không có thành viên khác). Đăng ký tạo luôn account và hộp thư kênh Yona (`App\Services\Users\PersonalSignUpService` → `App\Services\Yona\YonaInboxes` → `App\Services\Users\PersonalAccounts`); `/app` đưa thẳng vào hộp thư đó, người cũ chưa có account thì được tạo khi mở `/app`. `SetCurrentAccount` chỉ cho vào account mình làm quản trị, nên không có bộ chuyển account | Sản phẩm cho cá nhân: không ai cần chọn "không gian làm việc", và hộp thư riêng không được để người khác mở | 19/10/2026 |
+| Sidebar, Ctrl+K | **Phần B2B ẩn khỏi menu, không xoá code:** mục nhắc, đang tham gia, chưa phụ trách, team, phân khúc, báo cáo, chiến dịch, Help Center, cài đặt nhân viên/team/mẫu tin/automation/bot/macro/tích hợp/dữ liệu/bảo mật… Danh sách ở `HIDDEN_TEAM_ITEMS` trong `resources/js/dashboard/components-next/sidebar/menuItems.ts`; bảng lệnh sinh từ cùng danh sách menu nên cũng không thấy. Route vẫn còn | Người dùng cá nhân không có đội để phân công hay báo cáo; giữ code để không mất dữ liệu cũ và lấy lại được khi cần | 19/10/2026 |
+| Danh sách hội thoại | **Chat giữa người dùng là một kênh trong hộp thư** (`Channel::Yona`), không phải màn riêng: hội thoại với bạn bè nằm chung danh sách với Zalo và email, mở bằng cùng khung chat, lọc theo kênh như kênh khác. Nhắn người mới: hộp thoại tìm theo username (`resources/js/dashboard/conversation/people/NewYonaChatDialog.tsx`) | Một chỗ đọc mọi tin là lý do sản phẩm tồn tại; tách chat bạn bè ra màn riêng là hai hộp thư | 19/10/2026 |
+| `@username` | Chưa chọn username thì `/app`, `/chat` và mọi trang hộp thư chuyển về màn chào mừng (`/chat/welcome`, middleware `EnsureUsername`) | Chưa có username thì không ai trên Yona tìm thấy mình | 19/10/2026 |
 
 ## Bong bóng tin, avatar
 
@@ -82,7 +79,7 @@ Kiến trúc: [system-architecture.md](system-architecture.md).
 | Hồ sơ · Thông báo đẩy | **Ẩn** công tắc khi máy chủ không có khoá VAPID hoặc trình duyệt thiếu Push API (`isPushSupported()` ở `dashboard/helper/pushHelper.ts`) | Không hứa tính năng không chạy | 24/09/2026 |
 | Tắt công tắc đẩy | Xoá luôn bản ghi phía máy chủ (DELETE `/api/v1/notification_subscriptions` theo `endpoint`) | Không đẩy tiếp vào đăng ký đã chết | 24/09/2026 |
 | Đăng xuất | Gỡ đăng ký đẩy của trình duyệt (chờ tối đa 2 giây), xoá badge biểu tượng app, bỏ số ở tiêu đề tab, đóng mọi thông báo trong khay. Mọi lối đăng xuất đi qua `dashboard/helper/logout.ts` | Máy dùng chung: người sau không được nhận thông báo kèm trích tin của người trước | 24/09/2026 |
-| Nội dung thông báo tin mới | Tiêu đề là tên người gửi, nội dung là xem trước tin (tối đa 120 ký tự; sticker, thẻ chuyển khoản, tin đã thu hồi có chữ riêng), `tag` theo hội thoại nên mỗi hội thoại một ô trong khay, cái sau thay cái trước. Nguồn: `app/Notifications/ChatMessageNotification.php` | Bạn nhắn năm tin không thành năm thông báo | 19/10/2026 |
+| Nội dung thông báo tin mới | Tiêu đề và nội dung cắt ngắn trước khi gửi (Web Push chở tối đa khoảng 4 KB); `tag` theo hội thoại nên mỗi hội thoại một ô trong khay, cái sau thay cái trước. Nguồn: `app/Services/Notification/PushNotificationService.php` | Bạn nhắn năm tin không thành năm thông báo; tin dài không làm hỏng cả lượt đẩy | 19/10/2026 |
 | Bấm thông báo đẩy | Đưa tab Yona sẵn có lên rồi điều hướng tới hội thoại thay vì mở cửa sổ mới; thông báo tự đóng | Không mở chồng nhiều cửa sổ | 24/09/2026 |
 | Kênh đẩy | Chỉ Web Push; `subscription_type: fcm` trả 422 | Chưa có app gốc | 24/09/2026 |
 | Khoá VAPID | Env `VAPID_PUBLIC_KEY` + `VAPID_PRIVATE_KEY` thắng bản đã lưu; không có thì tự sinh một lần, lưu `installation_configs` (`VAPID_KEYS`, locked). Một chỗ: `VapidService` | Đổi khoá bằng env, không sửa DB tay | 24/09/2026 |
@@ -94,10 +91,10 @@ Kiến trúc: [system-architecture.md](system-architecture.md).
 
 | Màn | Quyết định | Lý do | Ngày |
 |---|---|---|---|
-| `/` | Trang giới thiệu ứng dụng nhắn tin, có nút Tạo tài khoản / Đăng nhập (người đã đăng nhập thấy "Mở Yona"). Bề mặt riêng: `resources/js/landing/**`, `resources/css/landing.css`, `tailwind.landing.config.js`, `landing.blade.php`. Lời giới thiệu ở `resources/js/landing/copy.ts` (vi + en). Không có ảnh chụp màn hình cho tới khi có ảnh màn chat thật; không bảng giá vì chưa có gói cước | Gốc tên miền phải giới thiệu sản phẩm; ảnh màn hộp thư cũ và bảng giá là hứa điều không có | 19/10/2026 |
+| `/` | Trang giới thiệu hộp thư cá nhân (gom Zalo, email và bạn bè trên Yona), có nút Tạo tài khoản / Đăng nhập (người đã đăng nhập thấy "Mở Yona"). Bề mặt riêng: `resources/js/landing/**`, `resources/css/landing.css`, `tailwind.landing.config.js`, `landing.blade.php`. Chữ hiển thị ở `resources/js/landing/copy.ts` (vi + en); thẻ meta và JSON-LD chỉ lấy từ `lang/{locale}/landing.php`, trình duyệt không ghi đè. Có một câu nói thật về rủi ro kết nối Zalo không chính thức. Không ảnh chụp màn hình, không bảng giá vì chưa có gói cước | Gốc tên miền phải giới thiệu sản phẩm; hứa điều không có (giá, nhóm chat, "an toàn tuyệt đối") là mất lòng tin | 19/10/2026 |
 | `/zalo-ca-nhan`, `/dat-lich-demo` | Route còn nhưng giao diện hiện trang chủ | Link cũ đã chia sẻ không thành trang lỗi, cũng không còn nói về sản phẩm cũ | 19/10/2026 |
 | `/app/login`, `/app/auth/signup` | Logo là liên kết về `/`, thêm "← Về trang chủ" dưới form | Có trang chủ thì phải quay lại được | 07/09/2026 |
-| Đăng ký | Bằng email hoặc Google; chỉ tạo người dùng (`PersonalSignUpService`), không tạo không gian làm việc. Email chưa xác minh thì gửi thư xác nhận | Ứng dụng cá nhân, mỗi người một tài khoản | 19/10/2026 |
+| Đăng ký | Bằng email hoặc Google, một lối duy nhất `PersonalSignUpService`; tạo người dùng kèm hộp thư cá nhân và kênh Yona. Email chưa xác minh thì gửi thư xác nhận | Đăng ký xong là dùng được ngay, không có bước tạo không gian làm việc | 19/10/2026 |
 | Mọi mặt tiền công khai | `SetLocale` đọc `Accept-Language` cho khách vô danh, rút `vi-VN` → `vi` | Khách chưa đăng nhập không có hồ sơ để hỏi ngôn ngữ | 07/09/2026 |
 | Đăng nhập bằng Google | Tài khoản đã bật 2FA vẫn phải nhập mã 2FA | 2FA là lớp bảo vệ người dùng tự bật; một lối đăng nhập không được lách qua nó | 25/09/2026 |
 

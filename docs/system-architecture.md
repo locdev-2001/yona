@@ -5,19 +5,19 @@ Nguồn chuẩn cho các quyết định kiến trúc đang có hiệu lực. Đ
 [ux-decisions.md](ux-decisions.md), triển khai production ở
 [deployment.md](deployment.md).
 
-> **Hiện trạng 19/10/2026:** Yona đổi hướng thành ứng dụng nhắn tin giữa bạn bè.
-> Lõi mới nằm ở **mục 11 "Lõi nhắn tin giữa người dùng"**. Các phần mang nhãn
-> **(đang gỡ)** thuộc bản CRM cũ (hộp thư theo kênh, widget, webhook, account):
-> code còn chạy ngầm cho tới khi gỡ xong, không xây tính năng mới trên chúng và
-> không lấy chúng làm khuôn cho chat. Mục 1, 2, 5, 7 (phần chung), 8 vẫn áp dụng
-> cho cả lõi mới.
+> **Hiện trạng 19/10/2026:** Yona là hộp thư cá nhân đa kênh. Mỗi người dùng có
+> một account cá nhân (người đó làm quản trị) chứa hộp thư; Zalo cá nhân,
+> Gmail/email và người dùng Yona khác đều là **kênh** của hộp thư đó. Chat giữa
+> người dùng là kênh `Channel::Yona` (mục 11), không có lõi chat riêng. Phần chỉ
+> dành cho đội ngũ doanh nghiệp (team, báo cáo, chiến dịch, automation, widget,
+> Help Center) ẩn khỏi menu nhưng code và route còn chạy; không xây thêm trên
+> chúng.
 
 ## 1. Stack
 
 PHP 8.3+ / Laravel 13 · Inertia + React 19 (TypeScript), Tailwind + Radix ·
 PostgreSQL (`pg_trgm`) · Redis (cache, queue, session) · Laravel Reverb
-(WebSocket) · bridge Node cho Zalo cá nhân (`services/zalo-bridge`, zca-js;
-**đang gỡ**, không thuộc sản phẩm nhắn tin bạn bè).
+(WebSocket) · bridge Node cho Zalo cá nhân (`services/zalo-bridge`, zca-js, đăng nhập QR).
 
 ## 2. Phân lớp và ba mặt tiền route
 
@@ -34,10 +34,11 @@ PostgreSQL (`pg_trgm`) · Redis (cache, queue, session) · Laravel Reverb
     danh khó đoán trên URL.
 - `routes/channels.php`: quyền nghe kênh realtime (mục 4).
 
-## 3. Kênh nhắn tin: lõi trung tính, đặc thù ở driver (đang gỡ)
+## 3. Kênh nhắn tin: lõi trung tính, đặc thù ở driver
 
-> Toàn bộ mục này là hộp thư theo kênh của bản CRM. Chat bạn bè không đi qua
-> kênh, driver hay `CapabilitySet`: xem mục 11.
+> Mọi nguồn tin của hộp thư cá nhân (Zalo cá nhân, Gmail/email, người dùng Yona
+> và các kênh khác) đi qua khung này. Kênh Yona là một driver như mọi driver
+> khác: xem mục 11.
 
 - Mỗi kênh là một model `app/Models/Channel/*` (quan hệ đa hình với `inboxes`).
 - Năng lực kênh khai **duy nhất** ở `app/Channels/CapabilitySet.php` qua
@@ -49,8 +50,7 @@ PostgreSQL (`pg_trgm`) · Redis (cache, queue, session) · Laravel Reverb
   là phần cấu hình kênh có thật **và** lõi áp dụng. Tab và khối lấy từ
   `resources/js/dashboard/settings/inboxes/inboxSettingsTabs.ts`. Kênh khai
   `settings_single_conversation` phải tạo hội thoại qua `IncomingConversationResolver`
-  hoặc `ConversationBuilder`; kênh có harness contract chạy thêm
-  `SingleConversationContract`.
+  hoặc `ConversationBuilder`.
 - Gửi tin: `SendReplyJob::CHANNEL_SERVICES`. Hành động khác (thu hồi, cảm xúc,
   thành viên nhóm, sticker): `app/Services/Channels/ChannelActionRegistry.php`.
 - **Thêm kênh = thêm driver** (model + service + một dòng đăng ký), không sửa
@@ -65,14 +65,13 @@ PostgreSQL (`pg_trgm`) · Redis (cache, queue, session) · Laravel Reverb
   `channels`) và `GET /api/v1/accounts/{id}/channel_connections` đọc cùng nguồn;
   bước 2 của lối vào đã đóng chuyển về màn chọn. Lối vào con có thể ở trạng thái
   sắp ra mắt (`comingSoon()`, API trả `coming_soon: true`, không có `start_url`, route
-  bắt đầu trả 404 cho hộp mới); Email hiện chỉ mở đăng nhập Google. Contract test
-  `tests/Contracts/Channels/ChannelConnectionDeclarationTest.php` bắt driver quên
-  khai hoặc khai lệch năng lực phiên (`session_qr`/`session_oauth`/`session_token`).
+  bắt đầu trả 404 cho hộp mới); Email hiện chỉ mở đăng nhập Google. Phương thức kết nối phải khớp năng lực
+  phiên khai ở `CapabilitySet` (`session_qr`/`session_oauth`/`session_token`).
   SMS (Bandwidth, Twilio SMS) đóng có chủ đích; dữ liệu và hộp thư cũ giữ nguyên.
 - **Kiểm thông tin đăng nhập khi lưu**: `InboxesController` dựng kênh (chưa lưu)
   rồi gọi `ChannelCredentialsCheck` — bảng tra driver → verifier
-  (`VerifiesChannelCredentials`): Email thử IMAP/SMTP qua `MailServerProbe`
-  (test thay bằng `tests/Support/FakeMailServerProbe.php`), Telegram gọi `getMe`,
+  (`VerifiesChannelCredentials`): Email thử IMAP/SMTP qua `MailServerProbe`,
+  Telegram gọi `getMe`,
   LINE gọi `v2/oauth/verify` (lấy luôn ID kênh). Sai thì 422 gắn ô `channel.*`.
 - **Email nối bằng OAuth** (Google/Microsoft): lối con `oauth_redirect` của lối
   vào Email trỏ `EmailOAuthController` (`/app/accounts/{id}/email/oauth/{provider}`
@@ -201,12 +200,12 @@ tảng thành giá trị của lõi, không dựng Message/Attachment/Conversati
   (`RelayEventParser::events()`) và đính kèm (`InboundAttachmentFactory`); writer tin
   đến của Zalo còn giữ riêng vì luật backfill (không đổi trạng thái hội thoại), chờ
   echo khớp bí danh và đồng bộ hồ sơ nhóm — nợ có tên, chuyển sau.
-- **Ép bằng contract** (`tests/Contracts/Channels`): kênh khai năng lực nào thì
-  harness của nó phải qua contract đó: `inbound_image/sticker/file/video/audio/
-  location/contact_card/reply_to/forward`, `event_delivered/seen/reaction/recall`,
-  `outbound_*`, `settings_single_conversation`. Harness có cho Telegram, Zalo,
-  Messenger. **Thêm kênh = viết parser + harness; thêm loại tin = thêm giá trị +
-  contract, không sửa kênh nào.**
+- **Năng lực là lời hứa:** kênh khai năng lực nào (`inbound_image/sticker/file/
+  video/audio/location/contact_card/reply_to/forward`, `event_delivered/seen/
+  reaction/recall`, `outbound_*`, `settings_single_conversation`) thì phải làm được
+  đúng việc đó; repo không còn test tự động, nên kiểm bằng dùng thật trên giao
+  diện khi thêm hoặc đổi kênh. **Thêm kênh = viết parser; thêm loại tin = thêm
+  giá trị, không sửa kênh nào.**
 
 ### Tin nhắn có cấu trúc và hạ cấp theo kênh
 
@@ -321,12 +320,11 @@ ra kênh ngoài là sticker gốc của nền tảng hoặc một ảnh, không 
 
 ## 4. Realtime
 
-- Chat bạn bè chỉ dùng kênh `pubsub_token` của từng người dùng, sự kiện `chat.*`
-  (mục 11). Kênh `account_{id}` và kênh của khách widget dưới đây là của bản CRM
-  (**đang gỡ**).
+- Hộp thư cá nhân dùng chung khung realtime của hộp thư: tin kênh Yona đến hộp
+  thư người nhận cũng phát như tin đến của mọi kênh.
 - Laravel Reverb + Echo. Sự kiện đẩy qua `app/Events/RealtimeBroadcast.php`
   (`ShouldBroadcastNow`, kênh private).
-- Mỗi nhân viên nghe hai kênh: `account_{id}` (chung account) và kênh mang
+- Mỗi người dùng nghe hai kênh: `account_{id}` (chung account) và kênh mang
   chính `pubsub_token` của mình. Khách widget nghe `pubsub_token` của
   `contact_inboxes`. Pattern `{pubsubToken}` phải đăng ký **cuối cùng** trong
   `routes/channels.php`.
@@ -340,11 +338,7 @@ ra kênh ngoài là sticker gốc của nền tảng hoặc một ảnh, không 
   purgable). Horizon, `Makefile` và `deploy.sh` cùng đọc file này.
 - Việc định kỳ chạy bằng Laravel scheduler (`routes/console.php`).
 
-## 6. Sự kiện nghiệp vụ (đang gỡ)
-
-> `EventType` và listener dưới đây phục vụ hộp thư CRM (webhook, automation,
-> báo cáo). Chat bạn bè không phát `EventType`; sự kiện của nó là hằng trong
-> `ChatBroadcaster` (mục 11).
+## 6. Sự kiện nghiệp vụ
 
 - Tên sự kiện là enum `app/Events/EventType.php` (`message.created`,
   `conversation.status_changed`…). Chuỗi đó vừa là tên client Echo nhận
@@ -355,10 +349,10 @@ ra kênh ngoài là sticker gốc của nền tảng hoặc một ảnh, không 
 
 ## 7. Dữ liệu
 
-- (Đang gỡ) `display_id` của hội thoại (và chiến dịch) tăng riêng theo từng account bằng
+- `display_id` của hội thoại (và chiến dịch) tăng riêng theo từng account bằng
   trigger PostgreSQL + sequence per-account (`conv_dpid_seq_<account_id>`), tạo
   lúc thêm account.
-- (Đang gỡ) Cờ tính năng: cột jsonb `accounts.feature_flags`; danh mục cờ ở
+- Cờ tính năng: cột jsonb `accounts.feature_flags`; danh mục cờ ở
   `config/features.php`.
 - Tệp: bảng `attachments` + Laravel filesystem. URL tệp dạng
   `/attachments/{id}/{chữ ký}/{tên tệp gốc}` (giao diện đọc tên hiển thị từ đoạn
@@ -385,10 +379,11 @@ ra kênh ngoài là sticker gốc của nền tảng hoặc một ảnh, không 
   `{installationName}`, điền lúc chạy từ cấu hình cài đặt — không viết cứng tên
   sản phẩm vào bản dịch.
 
-## 9. Contract công khai: SDK nhúng và webhook (đang gỡ)
+## 9. Contract công khai: SDK nhúng và webhook
 
-> SDK widget và webhook thuộc bản CRM. Khi gỡ, contract ngoài vẫn phải được xử
-> lý có chủ đích (tắt hẳn hoặc trả lỗi rõ ràng), không xoá lặng lẽ.
+> SDK widget và webhook đã ẩn khỏi menu của hộp thư cá nhân nhưng code còn chạy.
+> Nếu sau này gỡ, contract ngoài phải được xử lý có chủ đích (tắt hẳn hoặc trả
+> lỗi rõ ràng), không xoá lặng lẽ.
 
 Website khách đã dán mã nhúng và hệ thống khách đã nhận webhook: mọi tên đã phát
 ra ngoài là **contract**. Đổi tên thì tên mới là chính, tên đời trước giữ làm
@@ -413,10 +408,9 @@ dùng.
 
 ## 10. Ký + mã hoá request nhắn tin và giới hạn nhịp
 
-> Phạm vi ký + mã hoá dưới đây là route của hộp thư CRM và widget (**đang gỡ**).
-> Route chat bạn bè (`/api/v1/chats…`) hiện **không** ký/mã hoá, chỉ có
-> `throttle` theo route (mục 11). Muốn đưa chat vào lớp ký thì gắn
-> `VerifySignedRequest` ở `routes/web_api.php`, không viết lớp thứ hai.
+> Kênh Yona dùng chung route gửi tin của hộp thư nên đi qua cùng lớp ký + mã hoá
+> và giới hạn nhịp dưới đây; route mở hội thoại Yona mới
+> (`POST /api/v1/accounts/{account}/yona/conversations`) chỉ có `throttle:60,1`.
 
 Mục tiêu là **chống lạm dụng API** (dựng request bằng tay, dán lại cURL, replay,
 script gọi hàng loạt), **không** phải E2EE: máy chủ vẫn đọc nội dung, khoá nằm
@@ -432,7 +426,7 @@ trong JS nên chỉ làm khó; lớp chặn thật là giới hạn nhịp.
   chữ ký + nonce rồi chạy lại TrimStrings/ConvertEmptyStringsToNull; lõi nhắn tin
   nhận request thường. Hợp đồng ở `app/Http/RequestSigning/SignedRequestProtocol.php`
   và bản TS `resources/js/shared/requestSigning/protocol.ts`, khớp nhau bằng
-  `vectors.json` dùng chung (test cả hai phía).
+  `resources/js/shared/requestSigning/vectors.json` dùng chung.
 - **Khoá phiên**: `POST /api/v1/request_signing_key` (dashboard) và
   `POST /api/v1/widget/request_signing_key` (widget) cấp khoá AES + HMAC ngẫu
   nhiên, lưu cache có hạn (`SigningKeyStore`), gắn với người gọi (user/bot, hoặc
@@ -462,127 +456,86 @@ trong JS nên chỉ làm khó; lớp chặn thật là giới hạn nhịp.
 - **Cấu hình một chỗ**: `config/request_protection.php`. `REQUEST_SIGNING_ENABLED=false`
   là rollback tức thì không cần deploy mã (chạy `php artisan config:cache` lại).
 
-## 11. Lõi nhắn tin giữa người dùng
+## 11. Kênh Yona: nhắn tin giữa người dùng trong hộp thư cá nhân
 
-Lõi của sản phẩm từ 19/10/2026: hội thoại giữa các `users` ngang hàng, không
-`account`, không `inbox`, không `contact`. Mô tả dưới đây khớp code trên `main`
-ngày 19/10/2026; phần chưa có code ghi rõ ở cuối mục.
+Người dùng Yona nhắn cho nhau qua một **kênh** của hộp thư, không qua lõi chat
+riêng (lõi `Chat*`/`/chats` cũ đã gỡ). Mọi thứ ở mục 3 áp dụng nguyên vẹn: kênh
+Yona khai năng lực, có service gửi, có hành động ra ngoài, và tin đến đi qua
+đường vào chung.
 
-### Dữ liệu: dùng chung bảng, model riêng
+### Hộp thư cá nhân
 
-- **`App\Models\Chat`** trên bảng `conversations`. Hàng có cột `kind` khác rỗng là
-  chat giữa người dùng (`KIND_DIRECT = 1`, `KIND_GROUP = 2`); `account_id`/`inbox_id`
-  để rỗng. Global scope `kind not null` giữ hàng CRM ngoài mọi truy vấn chat;
-  có `SoftDeletes`. Cột riêng: `title`, `description`, `created_by`, `direct_key`
-  (unique), `last_message_id`, `last_activity_at`, `member_count`, `settings` (jsonb).
-- **`App\Models\ChatMember`** trên bảng `conversation_members` (unique
-  `conversation_id + user_id`): `role` (`ROLE_MEMBER`/`ROLE_ADMIN`/`ROLE_OWNER`),
-  `status` (`STATUS_ACTIVE`/`STATUS_PENDING` = Tin chờ/`STATUS_LEFT`/`STATUS_REMOVED`),
-  `last_read_message_id`, `muted_until`, `archived_at`, `pinned_at`, `invited_by`.
-  Trạng thái riêng của từng người (đã đọc, tắt thông báo, ghim) nằm ở đây, không ở hội thoại.
-- **`App\Models\ChatMessage`** trên bảng `messages` (chia partition theo tháng,
-  chung với tin hộp thư). Người gửi luôn là `User` (`sender_type = 'User'`); tin
-  hệ thống không có người gửi (`TYPE_SYSTEM`). Trả lời, thu hồi, cảm xúc đi trong
-  `content_attributes` (`in_reply_to`, `deleted`…), không có bảng riêng. Chống gửi
-  trùng bằng `client_id` (client gửi `echo_id`).
-- Lý do không dùng `Conversation`/`Message`: hai model đó mang hook của hộp thư
-  (gán người, webhook, automation, báo cáo) vốn giả định có account/inbox/contact
-  và hỏng khi chúng rỗng.
-- Bảng phụ: `user_blocks` (`UserBlock`), `abuse_reports` (`AbuseReport`,
-  `REPORTABLE` = `user` / `chat` / `message`), `conversation_invite_links` (đã
-  migrate, chưa có code dùng). Người dùng có `username` và các trường hồ sơ
-  (migration `add_profile_fields_to_users_table`).
+- **Mỗi người dùng một account**, người đó làm quản trị
+  (`App\Services\Users\PersonalAccounts`: `ownedBy()`, `ensureFor()` tạo account
+  qua `AccountBuilder` nếu chưa có). Không đổi tên bảng: account chính là hộp thư
+  cá nhân.
+- **Mỗi account đúng một hộp thư kênh Yona**
+  (`App\Services\Yona\YonaInboxes::ensureFor()` / `ensureForAccount()`), tạo kèm
+  bản ghi `channel_yona`. `ownerOf(Inbox)` trả người dùng quản trị của account,
+  tức chủ hộp thư.
+- **Đăng ký:** `App\Services\Users\PersonalSignUpService` (form và Google cùng một
+  lối) tạo user rồi gọi `YonaInboxes::ensureFor()`. Người dùng cũ chưa có account
+  được tạo khi mở `/app` (`App\Http\Controllers\App\DashboardController::index`).
+- **Quyền vào:** `App\Http\Middleware\SetCurrentAccount` chỉ nhận account mà
+  người dùng làm quản trị (`AccountUser::ROLE_ADMINISTRATOR`); dòng thành viên cũ
+  ở account người khác vẫn trong DB nhưng trả 404. `userAccounts` chia sẻ cho
+  giao diện cũng chỉ gồm các account đó.
+- **`@username` bắt buộc:** middleware `EnsureUsername` gắn trên `/app`, `/chat`
+  và nhóm `/app/accounts/{account}`; chưa có username thì về `/chat/welcome`. Tìm
+  người theo username: `App\Services\Users\UserDirectory`
+  (`GET /api/v1/users/search`); chuẩn hoá username: `App\Services\Users\Username`.
 
-### Nghiệp vụ: `app/Services/Chat/`
+### Driver kênh
 
-Mỗi class một trách nhiệm; controller chỉ validate rồi gọi xuống đây.
+- **Model** `App\Models\Channel\Yona` (bảng `channel_yona`, `channel_type` của
+  hộp thư là `Channel::Yona`). Khai `DeclaresCapabilities` (chữ, ảnh, video, âm
+  thanh, file, sticker, trả lời trích dẫn, cảm xúc, thu hồi, chuyển tiếp đến, mở
+  hội thoại chiều đi; định dạng Markdown), `DeclaresPlatform`, `AddressesContacts`.
+  `connection()` khai `available(false)`: kênh có sẵn cho mọi hộp thư, không mở
+  từ màn "Thêm kênh".
+- **Định danh:** liên hệ của kênh là một người dùng Yona khác, `source_id` =
+  `yona:{user_id}` (`Yona::contactSourceIdFor()`, `userIdFromSourceId()`). Tin
+  được chuyển mang `source_id` = `yona-msg:{id}` ở **cả hai** hộp thư, nên trả lời,
+  cảm xúc, thu hồi tra được tin tương ứng bên kia.
+- **Gửi:** `SendReplyJob::CHANNEL_SERVICES['Channel::Yona']` →
+  `App\Services\Yona\SendOnYonaService` (kế thừa `BaseSendOnChannelService`) →
+  `YonaRelay::deliver()`.
+- **Hành động ra ngoài:** `ChannelActionRegistry` đăng ký
+  `App\Services\Yona\YonaOutboundActions` (cảm xúc, thu hồi; đang gõ chưa chuyển).
 
-| Class | Trách nhiệm |
-|---|---|
-| `DirectChats` | Mở (hoặc lấy lại) hội thoại 1-1. Mỗi cặp đúng một hội thoại qua `Chat::directKey()` (`min:max` của hai user id); hai bên mở cùng lúc thì bên thua bắt lỗi unique và lấy hội thoại bên kia vừa tạo. Người mở `ACTIVE`, người nhận `PENDING` (Tin chờ). Từ chối nhắn cho chính mình và khi có chặn giữa hai người |
-| `ChatMessageSender` | **Đường gửi tin duy nhất**: kiểm thành viên, kiểm chặn (1-1), chống trùng theo `client_id`, ghi tin + cập nhật `last_message_id`/`last_activity_at` + đánh dấu người gửi đã đọc trong một transaction. Người gửi đang `PENDING` thì chuyển `ACTIVE` (trả lời = chấp nhận). Sau đó phát `chat.message.created` và gửi `ChatMessageNotification` cho thành viên `ACTIVE` không tắt thông báo. `sendText()` là lối vào cho tin chữ (kèm `in_reply_to` nếu tin gốc thuộc hội thoại); loại tin khác sẽ đi qua `send()` |
-| `ChatMemberships` | Trạng thái của một người trong hội thoại: chấp nhận Tin chờ, xoá khỏi danh sách của mình (`STATUS_LEFT`, không báo người kia), đánh dấu đã đọc, đang gõ, đếm chưa đọc (trần 100). `membership()` là chỗ duy nhất kiểm "có phải thành viên" |
-| `ChatInbox` | Danh sách hội thoại theo tab `all` (ACTIVE) / `requests` (PENDING, chỉ hội thoại đã có tin), phân trang theo `last_activity_at` (25/trang); trang tin cũ → mới (30/trang, theo `platform_sent_at`, `id`) |
-| `UserBlocks` | Chặn/bỏ chặn. Khai một chiều, `isBlockedBetween()` kiểm hai chiều |
-| `AbuseReports` | Ghi báo cáo vi phạm; Super Admin `resolve()` |
-| `ChatBroadcaster` | **Nơi duy nhất phát realtime của chat** (xem dưới) |
-| `ChatPresenter` | Dựng JSON cho giao diện, giữ khuôn payload hội thoại/tin của hộp thư để `ConversationView` dùng lại. Tin không phụ thuộc người xem; trạng thái `read` tính từ `last_read_message_id` của người kia (chỉ 1-1). Có `preview()` cho thông báo đẩy |
+### Chuyển tin giữa hai hộp thư: `App\Services\Yona\YonaRelay`
 
-Tìm người theo username nằm ở `app/Services/Users/UserDirectory.php` (khớp tiền
-tố username hoặc tên không dấu qua `search_fold`, bỏ chính mình và người chưa có
-username); chuẩn hoá và kiểm trống username ở `app/Services/Users/Username.php`.
-Đăng ký đi qua `app/Services/Users/PersonalSignUpService.php` (form và Google
-cùng một lối, chỉ tạo user).
+- `deliver(Message)`: tìm hộp thư Yona của người nhận (`counterpartInbox()` đọc
+  `user_id` từ `source_id` của liên hệ), dựng `InboundMessage` (chữ, sticker, đính
+  kèm dạng URL ngoài, trả lời trích dẫn theo `source_id` tin gốc) rồi ghi qua
+  `InboundMessageWriter::write()`, tức đường vào chung của mọi kênh (mục 3, "Tin
+  đến và sự kiện"). Người gửi xuất hiện bên kia là `InboundSender` mang tên, ảnh và
+  `@username`. Sau đó gán `source_id` cho tin gốc.
+- `react()` / `recall()`: phát `ReactionEvent` / `RecallEvent` vào hộp thư bên kia
+  qua `MessageEventService::apply()`.
+- `openWith(Account, User)`: mở (hoặc lấy lại) hội thoại với một người dùng trong
+  hộp thư Yona của mình, qua `ContactInboxWithContactBuilder` +
+  `IncomingConversationResolver::resolve()`.
 
 ### Route
 
-Trang Inertia (`routes/web.php`, sau `auth`):
-
 | Route | Ghi chú |
 |---|---|
-| `GET /app` | Chuyển về `/chat` |
-| `GET/POST /chat/welcome` | Chọn username; middleware `EnsureUsername` đẩy người chưa có username về đây |
-| `GET /chat`, `GET /chat/c/{chat}` | Màn chat (render `dashboard/conversation/ConversationView`), sau `EnsureUsername` |
-| `GET /chat/profile` | Hồ sơ (`resources/js/chat/Profile.tsx`) |
+| `POST /api/v1/accounts/{account}/yona/conversations` (`user_id`) | `App\Http\Controllers\WebApi\YonaConversationsController`: mở hội thoại với người dùng đó, trả `display_id`; từ chối nhắn cho chính mình (throttle 60/phút) |
+| `GET /api/v1/users/search?q=` · `GET /api/v1/usernames/availability?username=` | Tìm người, kiểm username còn trống (throttle 60/phút) |
+| `GET/POST /chat/welcome` · `GET /chat/profile` | Chọn username · hồ sơ (`resources/js/chat/Profile.tsx`) |
+| `GET /chat` | Chuyển về `/app` |
 
-JSON (`routes/web_api.php`, nhóm `auth.api_token` + `auth`, tiền tố `/api/v1`;
-session của giao diện hoặc header `api_access_token`):
+Còn lại (danh sách hội thoại, gửi tin, cảm xúc, thu hồi, đính kèm) dùng route
+hộp thư sẵn có. Giao diện mở hội thoại mới:
+`resources/js/dashboard/conversation/people/NewYonaChatDialog.tsx`.
 
-| Route | Ghi chú |
-|---|---|
-| `GET /users/search?q=` | Tìm người (throttle 60/phút) |
-| `GET /usernames/availability?username=` | Kiểm username còn trống (throttle 60/phút) |
-| `GET /chats?tab=all\|requests&before=` | Danh sách hội thoại |
-| `POST /chats/direct` (`user_id`) | Mở hội thoại 1-1 (throttle 60/phút) |
-| `GET /chats/{chat}` · `DELETE /chats/{chat}` | Xem · xoá khỏi danh sách của mình |
-| `POST /chats/{chat}/accept` · `/read` · `/typing` | Chấp nhận Tin chờ · đã đọc · đang gõ (typing throttle 120/phút) |
-| `GET /chats/{chat}/messages?before=` | Trang tin |
-| `POST /chats/{chat}/messages` (`content`, `echo_id`, `in_reply_to`) | Gửi tin chữ (throttle 120/phút) |
-| `POST /blocks` · `DELETE /blocks/{user}` | Chặn · bỏ chặn |
-| `POST /abuse_reports` | Báo cáo vi phạm (throttle 20/phút) |
-| `POST/DELETE /notification_subscriptions` | Đăng ký Web Push của trình duyệt |
+### Chưa có
 
-Phía giao diện, một chỗ duy nhất gọi các API này:
-`resources/js/dashboard/conversation/api.ts`.
-
-### Realtime
-
-- `ChatBroadcaster` phát qua `App\Events\RealtimeBroadcast` tới kênh private mang
-  **`pubsub_token` của từng người dùng** (`routes/channels.php`, pattern
-  `{pubsubToken}`). `toMembers()` gửi cho thành viên `ACTIVE` và `PENDING` (có thể
-  trừ người gây ra sự kiện); `toUser()` gửi cho một người. Mọi người nghe đi chung
-  một lượt POST tới Reverb. Reverb trục trặc chỉ ghi log: tin đã lưu thì người
-  nhận vẫn thấy khi tải lại.
-- Sự kiện (hằng trong `ChatBroadcaster`, payload luôn có `chat_id`):
-
-| Sự kiện | Khi nào | Payload thêm |
-|---|---|---|
-| `chat.message.created` | Có tin mới | `message` (khuôn `ChatPresenter::message`) |
-| `chat.updated` | Chấp nhận Tin chờ, xoá khỏi danh sách (chỉ gửi cho chính người đó) | `removed` khi xoá |
-| `chat.read` | Một người đọc tới tin nào | `user_id`, `message_id` |
-| `chat.typing` | Đang gõ / thôi gõ (không gửi cho chính người gõ) | `user`, `typing` |
-| `chat.message.updated` | Mới khai hằng, chưa có chỗ phát (dành cho sửa/thu hồi/cảm xúc) | |
-
-- Phía giao diện nghe ở `resources/js/dashboard/realtime/ActionCableConnector.ts`
-  và xử lý trong `resources/js/dashboard/conversation/ConversationContext.tsx`.
-
-### Thông báo đẩy
-
-`App\Notifications\ChatMessageNotification` qua kênh
-`App\Notifications\Channels\WebPushChannel` (dùng lại `WebPushGateway` + khoá VAPID
-+ `public/sw.js` sẵn có). Chỉ gửi khi người nhận có đăng ký đẩy; đăng ký đã chết
-thì xoá. Payload: tên người gửi, xem trước 120 ký tự, `tag = chat-{id}`, URL
-`/chat/c/{id}`.
-
-### Chưa có code (đang dựng)
-
-- **Nhóm:** mới có hằng `Chat::KIND_GROUP`, vai trò trong `ChatMember` và bảng
-  `conversation_invite_links`; chưa có service, route hay giao diện tạo nhóm, mời,
-  đổi quyền, rời, giải tán.
-- **Tin không phải chữ:** `POST .../messages` chỉ nhận `content`; presenter trả
-  `attachments: []`. Ảnh/file, sticker, thẻ chuyển khoản VietQR, cảm xúc, sửa,
-  thu hồi chưa có đường ghi. Khi thêm: đi qua `ChatMessageSender::send()` và phát
-  `chat.message.updated` qua `ChatBroadcaster`, không mở đường thứ hai.
-- **Đã xem trong nhóm**, ghim, lưu trữ, tắt thông báo theo hội thoại: cột đã có
-  ở `conversation_members`, chưa có route.
-- **Ký + mã hoá request** cho route chat (mục 10).
+- **Nhóm chat giữa người dùng Yona:** chưa chốt cách lưu (mỗi tin nhóm chép vào
+  hộp thư từng thành viên); chưa có code.
+- **Tin chờ và chặn cho người lạ** trên kênh Yona: chưa có; ai biết username đều
+  mở được hội thoại.
+- **Đang gõ, đã xem** giữa hai hộp thư Yona: `YonaOutboundActions::typing()` rỗng,
+  kênh không khai năng lực tương ứng.
+- **Sửa tin** trên kênh Yona: kênh không khai năng lực sửa.
