@@ -1,18 +1,18 @@
 import { fillPlaceholders, type LandingConfig } from '../config';
+import { landingCopy } from '../copy';
 import { BrandLogo } from './BrandLogo';
 
 // Chỉ liệt kê đích thật sự tồn tại; không dựng link chết cho đầy cột.
 export function Footer({ config }: { config: LandingConfig }) {
-    const { brand, strings, legalNav, urls, year, locale, locales } = config;
+    const { brand, legalNav, urls, year, locale, locales } = config;
+    const strings = landingCopy(locale);
 
     const columns = [
         {
             heading: strings.footer.product,
             links: [
                 { label: strings.nav.features, href: `${urls.home}#features` },
-                { label: strings.nav.zalo, href: urls.zalo },
-                { label: strings.nav.pricing, href: `${urls.home}#pricing` },
-                { label: strings.nav.demo, href: urls.demo },
+                { label: strings.nav.how, href: `${urls.home}#how-it-works` },
             ],
         },
         {
