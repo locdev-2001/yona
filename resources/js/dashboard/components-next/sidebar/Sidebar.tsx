@@ -12,6 +12,7 @@ import { SidebarContextProvider, useSidebarResize, COLLAPSED_THRESHOLD, MOBILE_D
 import { filterMenuByRole } from './permissions';
 import { useConversationUnreadCounts } from './useConversationUnreadCounts';
 import NotificationBell from 'dashboard/notifications/components/NotificationBell';
+import { useNotificationsUnreadInboxCounts } from 'dashboard/notifications/useUnreadCount';
 import { accountScopedUrl } from 'dashboard/helper/URLHelper';
 import type { DashboardPageProps } from '../../types';
 import { SETTINGS_MENU_NAME } from 'dashboard/settings/shell/settingsPages';
@@ -26,14 +27,20 @@ export default function Sidebar({
     isMobileSidebarOpen?: boolean;
     onCloseMobileSidebar: () => void;
 }) {
-    const { currentAccount, currentAccountUser, teams = [] } = usePage<DashboardPageProps>().props;
+    const { currentAccount, currentAccountUser, inboxes = [], teams = [] } = usePage<DashboardPageProps>().props;
     const accountId = currentAccount.id;
     const role = currentAccountUser.role;
     const features = currentAccount.features ?? {};
     const conversationCustomViews = useCustomViews(accountId, 'conversation');
     const contactCustomViews = useCustomViews(accountId, 'contact');
     // watch([accountId, hasConversationUnreadCounts], fetchConversationUnreadCounts) của Sidebar.vue.
-    const unreadCounts = useConversationUnreadCounts();
+    const conversationUnreadCounts = useConversationUnreadCounts();
+    // Badge từng kênh đếm y như số trên chuông, chỉ chia theo kênh.
+    const inboxUnreadCounts = useNotificationsUnreadInboxCounts();
+    const unreadCounts = useMemo(
+        () => ({ ...conversationUnreadCounts, inboxes: inboxUnreadCounts }),
+        [conversationUnreadCounts, inboxUnreadCounts],
+    );
 
     const [windowWidth, setWindowWidth] = useState(() => window.innerWidth);
     const isMobile = windowWidth < 768;
@@ -122,6 +129,7 @@ export default function Sidebar({
                     unreadCounts,
                     conversationCustomViews,
                     contactCustomViews,
+                    inboxes,
                 ),
                 role,
                 features,
@@ -132,6 +140,7 @@ export default function Sidebar({
             unreadCounts,
             conversationCustomViews,
             contactCustomViews,
+            inboxes,
             role,
             features,
         ],

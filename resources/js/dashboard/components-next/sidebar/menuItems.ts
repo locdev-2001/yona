@@ -1,11 +1,23 @@
 
 import { t } from '../../../i18n';
 import { COMPACT_INTERFACE } from 'shared/helpers/productVisibility';
-import { accountScopedUrl } from 'dashboard/helper/URLHelper';
+import { createElement } from 'react';
+import { accountScopedUrl, conversationListPageURL } from 'dashboard/helper/URLHelper';
+import { SidebarChannelLeafContent } from './SidebarGroupLeaf';
 import type { SidebarMenuItem } from './provider';
 import { EMPTY_UNREAD_COUNTS } from './useConversationUnreadCounts';
 import type { SidebarUnreadCounts } from './useConversationUnreadCounts';
 import type { ChannelPlatform } from 'shared/constants/channelPlatform';
+
+// Kênh rút gọn share từ SetCurrentAccount cho nhóm Kênh dưới Hộp thư.
+export interface SidebarInbox {
+    id: number;
+    name: string;
+    channel_type: string;
+    // Kênh mất phiên xác thực (Zalo mất phiên…) — cảnh báo cạnh tên kênh.
+    reauthorization_required?: boolean;
+    platform?: ChannelPlatform | null;
+}
 
 // Team của user (teams/getMyTeams) cho nhóm Teams.
 export interface SidebarTeam {
@@ -69,8 +81,10 @@ export function buildMenuItems(
     unreadCounts: SidebarUnreadCounts = EMPTY_UNREAD_COUNTS,
     conversationCustomViews: SidebarCustomView[] = [],
     contactCustomViews: SidebarCustomView[] = [],
+    inboxes: SidebarInbox[] = [],
 ): SidebarMenuItem[] {
     const scoped = (path: string) => accountScopedUrl(accountId, path);
+    const inboxListUrl = (inboxId: number) => conversationListPageURL({ accountId, filters: { inboxIds: [inboxId], labels: [] } });
 
     return withoutTeamItems<SidebarMenuItem>([
         {
@@ -138,6 +152,21 @@ export function buildMenuItems(
                         label: team.name,
                         badgeCount: unreadCounts.teams[String(team.id)] ?? 0,
                         to: scoped(`team/${team.id}`),
+                    })),
+                },
+                {
+                    name: 'Channels',
+                    label: t('SIDEBAR.CHANNELS'),
+                    icon: 'i-lucide-mailbox',
+                    collapsible: true,
+                    showTreeLine: true,
+                    children: inboxes.map(inbox => ({
+                        name: `${inbox.name}-${inbox.id}`,
+                        label: inbox.name,
+                        badgeCount: unreadCounts.inboxes?.[String(inbox.id)] ?? 0,
+                        to: inboxListUrl(inbox.id),
+                        component: ({ label, badgeCount }: { label: string; active: boolean; badgeCount?: number }) =>
+                            createElement(SidebarChannelLeafContent, { label, badgeCount, inbox }),
                     })),
                 },
             ],
