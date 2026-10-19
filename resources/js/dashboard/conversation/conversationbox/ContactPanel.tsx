@@ -113,7 +113,7 @@ export default function ContactPanel() {
               }
             : null,
         // Bản gốc bọc accordion này trong `v-if="contact.id"`.
-        previous_conversation: contact.id
+        previous_conversation: contact.id && isProductFeatureVisible('previousConversations')
             ? {
                   name: 'previous_conversation',
                   title: t('CONVERSATION_SIDEBAR.ACCORDION.PREVIOUS_CONVERSATION'),

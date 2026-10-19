@@ -1,3 +1,4 @@
+import { isProductFeatureVisible } from 'shared/helpers/productVisibility';
 import { usePage } from '@inertiajs/react';
 
 import { useAlert } from 'dashboard/composables/useAlert';
@@ -19,7 +20,7 @@ export default function ReplyBoxBanner({
     const { auth } = usePage<DashboardPageProps>().props;
     const currentUser = auth.user!;
 
-    if (!selectedConversation) return null;
+    if (!selectedConversation || !isProductFeatureVisible('conversationAssignment')) return null;
 
     const assignee = selectedConversation.meta.assignee;
     const isUserTyping = message !== '' && !isOnPrivateNote;

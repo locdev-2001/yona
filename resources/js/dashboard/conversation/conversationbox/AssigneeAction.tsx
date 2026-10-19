@@ -1,3 +1,4 @@
+import { isProductFeatureVisible } from 'shared/helpers/productVisibility';
 import { useCallback, useRef, useState } from 'react';
 
 import NextButton from 'dashboard/components-next/button/Button';
@@ -23,7 +24,7 @@ interface AssigneeActionProps {
     isStretched?: boolean;
 }
 
-export default function AssigneeAction({ isCompact = false, isStretched = false }: AssigneeActionProps = {}) {
+function AssigneeActionControl({ isCompact = false, isStretched = false }: AssigneeActionProps = {}) {
     const { agentsList, assignedAgent, isAssignedToMe, selfAssign, toggleAgent, unassign } = useConversationAssignment();
     const [isMenuOpen, setMenuOpen] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -120,4 +121,9 @@ export default function AssigneeAction({ isCompact = false, isStretched = false 
             />
         </div>
     );
+}
+
+// Hộp thư cá nhân ẩn hẳn thao tác này (productVisibility); mọi nơi đặt nút cùng theo.
+export default function AssigneeAction(props: AssigneeActionProps = {}) {
+    return isProductFeatureVisible('conversationAssignment') ? <AssigneeActionControl {...props} /> : null;
 }

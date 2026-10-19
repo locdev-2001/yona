@@ -1,3 +1,4 @@
+import { isProductFeatureVisible } from 'shared/helpers/productVisibility';
 import { useEffect, useState } from 'react';
 import { usePage } from '@inertiajs/react';
 
@@ -39,6 +40,8 @@ import ConversationSearchBar from './search/ConversationSearchBar';
 // Ba cột + panel phải mở thì mũ còn ~460px dù khung nhìn rộng: dưới ngưỡng này nút
 // phụ trách và trạng thái thu về avatar/chấm màu để tên khách không bị ép mất.
 const FULL_ACTION_LABELS_MIN_WIDTH = 640;
+
+const hasPhoneActionStrip = isProductFeatureVisible('conversationAssignment') || isProductFeatureVisible('conversationStatus');
 
 export default function ConversationHeader({
     className = '',
@@ -143,7 +146,7 @@ export default function ConversationHeader({
             </div>
         );
 
-        if (!isPhone) return headerRow;
+        if (!isPhone || !hasPhoneActionStrip) return headerRow;
 
         return (
             <div className="flex flex-col flex-none w-full min-w-0 border-b border-n-weak bg-n-surface-panel">

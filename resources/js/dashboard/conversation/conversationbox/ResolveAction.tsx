@@ -1,3 +1,4 @@
+import { isProductFeatureVisible } from 'shared/helpers/productVisibility';
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import NextButton from 'dashboard/components-next/button/Button';
@@ -40,7 +41,7 @@ interface ResolveActionProps {
     isStretched?: boolean;
 }
 
-export default function ResolveAction({ isCompact = false, isStretched = false }: ResolveActionProps = {}) {
+function ResolveActionControl({ isCompact = false, isStretched = false }: ResolveActionProps = {}) {
     const { selectedConversation, toggleStatus: toggleStatusRequest } = useConversation();
     const markUnreadAndLeave = useMarkUnreadAndLeave();
     const [isLoading, setIsLoading] = useState(false);
@@ -186,4 +187,9 @@ export default function ResolveAction({ isCompact = false, isStretched = false }
             />
         </div>
     );
+}
+
+// Hộp thư cá nhân ẩn hẳn thao tác này (productVisibility); mọi nơi đặt nút cùng theo.
+export default function ResolveAction(props: ResolveActionProps = {}) {
+    return isProductFeatureVisible('conversationStatus') ? <ResolveActionControl {...props} /> : null;
 }

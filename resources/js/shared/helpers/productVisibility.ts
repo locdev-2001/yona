@@ -26,6 +26,15 @@ const PRODUCT_FEATURE_VISIBILITY = {
     conversationMetadata: false,
     conversationParticipants: false,
     conversationPriority: false,
+    // Hộp thư cá nhân (một người): không gán người phụ trách, không đóng/mở hội thoại,
+    // không sửa hồ sơ liên hệ, không xem lại hội thoại trước của liên hệ.
+    conversationAssignment: false,
+    conversationStatus: false,
+    contactProfileEditing: false,
+    previousConversations: false,
+    // Danh sách hội thoại gọn: không bộ lọc (trạng thái, kênh, nhãn), không chọn hàng loạt.
+    listFilters: false,
+    bulkActions: false,
 } as const;
 
 export type ProductFeature = keyof typeof PRODUCT_FEATURE_VISIBILITY;

@@ -1,3 +1,4 @@
+import { isProductFeatureVisible } from 'shared/helpers/productVisibility';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { usePage } from '@inertiajs/react';
@@ -207,7 +208,8 @@ export default function ChatList({
 
     const emptyHint = emptyListHint(assigneeTab, listMeta, appliedFilters !== null);
 
-    const showAssigneeInConversationCard = appliedFilters !== null || assigneeTab === ASSIGNEE_TYPE.ALL;
+    const isAssignmentVisible = isProductFeatureVisible('conversationAssignment');
+    const showAssigneeInConversationCard = isAssignmentVisible && (appliedFilters !== null || assigneeTab === ASSIGNEE_TYPE.ALL);
     const showEndOfListMessage = conversations.length > 0 && endReached && !listLoading;
 
     return (
@@ -235,9 +237,15 @@ export default function ChatList({
                 />
                 {appliedFilters === null ? (
                     <>
-                        <ChatTypeTabs items={assigneeTabItems} activeTab={assigneeTab} onChatTabChange={setAssigneeTab} />
-                        <ChannelChipRow />
-                        <ActiveFilterChips hidesInboxChipsBelowMd={hasChannelChipRow(inboxes.length)} />
+                        {isAssignmentVisible ? (
+                            <ChatTypeTabs items={assigneeTabItems} activeTab={assigneeTab} onChatTabChange={setAssigneeTab} />
+                        ) : null}
+                        {isProductFeatureVisible('listFilters') ? (
+                            <>
+                                <ChannelChipRow />
+                                <ActiveFilterChips hidesInboxChipsBelowMd={hasChannelChipRow(inboxes.length)} />
+                            </>
+                        ) : null}
                     </>
                 ) : null}
                 {isSearching && !listSearch.loading && !listSearch.contacts.length && !listSearch.conversations.length ? (

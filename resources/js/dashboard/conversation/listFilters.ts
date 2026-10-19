@@ -1,3 +1,4 @@
+import { isProductFeatureVisible } from 'shared/helpers/productVisibility';
 import { SORT_BY_TYPE, STATUS_TYPE } from './constants';
 import type { ConversationStatusFilter } from './types';
 
@@ -21,7 +22,9 @@ export const LABEL_FILTER_PARAM = 'label';
 // API danh sách nhận đúng một `inbox_id`; chọn nhiều kênh cần mở rộng lõi API trước.
 export const MAX_INBOX_FILTERS = 1;
 
-export const DEFAULT_LIST_STATUS: ConversationStatusFilter = STATUS_TYPE.OPEN;
+export const DEFAULT_LIST_STATUS: ConversationStatusFilter = isProductFeatureVisible('conversationStatus')
+    ? STATUS_TYPE.OPEN
+    : STATUS_TYPE.ALL;
 export const DEFAULT_LIST_SORT: string = SORT_BY_TYPE.LAST_ACTIVITY_AT_DESC;
 
 export const EMPTY_LIST_FILTER_QUERY: ListFilterQuery = { inboxIds: [], labels: [] };
@@ -84,7 +87,10 @@ export function readPersistedListFilters(settings: { status?: unknown; order_by?
     const sortBy = String(settings?.order_by ?? '');
 
     return {
-        status: STATUS_VALUES.includes(status) ? (status as ConversationStatusFilter) : DEFAULT_LIST_STATUS,
+        status:
+            isProductFeatureVisible('conversationStatus') && STATUS_VALUES.includes(status)
+                ? (status as ConversationStatusFilter)
+                : DEFAULT_LIST_STATUS,
         sortBy: SORT_VALUES.includes(sortBy) ? sortBy : DEFAULT_LIST_SORT,
     };
 }

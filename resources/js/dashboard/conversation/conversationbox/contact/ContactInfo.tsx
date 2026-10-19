@@ -1,3 +1,4 @@
+import { isProductFeatureVisible } from 'shared/helpers/productVisibility';
 import { useEffect, useRef, useState } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 import { router, usePage } from '@inertiajs/react';
@@ -167,6 +168,8 @@ export default function ContactInfo({
     ];
     const emptyRows = contactRows.filter(row => !row.value);
 
+    const canEditProfile = isProductFeatureVisible('contactProfileEditing');
+
     return (
         <div className="relative items-center w-full p-4">
             <div className="flex flex-col w-full gap-2 text-left rtl:text-right">
@@ -200,13 +203,13 @@ export default function ContactInfo({
                             ) : (
                                 <h3
                                     className="flex-shrink max-w-full min-w-0 my-0 text-base break-words text-n-slate-12 cursor-pointer hover:text-n-slate-12/80"
-                                    title={t('CONTACT_PANEL.CLICK_TO_EDIT')}
-                                    onClick={startEditingName}
+                                    title={canEditProfile ? t('CONTACT_PANEL.CLICK_TO_EDIT') : undefined}
+                                    onClick={canEditProfile ? startEditingName : undefined}
                                 >
                                     {contact.name}
                                 </h3>
                             )}
-                            <NextButton
+                            {canEditProfile ? <NextButton
                                 ghost
                                 xs
                                 slate
@@ -216,7 +219,7 @@ export default function ContactInfo({
                                     isEditingName ? 'invisible' : 'group-hover/name:opacity-100 focus-visible:opacity-100'
                                 }`}
                                 onClick={startEditingName}
-                            />
+                            /> : null}
                         </div>
                         <div className="flex flex-row items-center gap-2">
                             {contact.created_at ? (
@@ -225,9 +228,11 @@ export default function ContactInfo({
                                     className="i-lucide-info text-sm text-n-slate-10"
                                 />
                             ) : null}
-                            <a href={contactProfileLink} target="_blank" rel="noopener nofollow noreferrer" className="leading-3">
-                                <span className="i-lucide-external-link text-sm text-n-slate-10" />
-                            </a>
+                            {canEditProfile ? (
+                                <a href={contactProfileLink} target="_blank" rel="noopener nofollow noreferrer" className="leading-3">
+                                    <span className="i-lucide-external-link text-sm text-n-slate-10" />
+                                </a>
+                            ) : null}
                         </div>
                     </div>
 
@@ -255,7 +260,7 @@ export default function ContactInfo({
                                 }
                             />
                         ) : null}
-                        {emptyRows.length ? (
+                        {canEditProfile && emptyRows.length ? (
                             <div className="flex flex-wrap items-center w-full gap-x-4 gap-y-1">
                                 {emptyRows.map(({ key, ...row }) => (
                                     <ContactInfoRow key={key} {...row} />
@@ -264,7 +269,7 @@ export default function ContactInfo({
                         ) : null}
                     </div>
                 </div>
-                <div className="flex items-center w-full mt-0.5 gap-2">
+                {canEditProfile ? <div className="flex items-center w-full mt-0.5 gap-2">
                     <NextButton
                         title={t('EDIT_CONTACT.BUTTON_LABEL')}
                         icon={ICONS.edit}
@@ -308,7 +313,7 @@ export default function ContactInfo({
                             />
                         ) : null}
                     </div>
-                </div>
+                </div> : null}
                 {isAdmin ? (
                     <ConfirmContactDeleteDialog
                         ref={deleteDialogRef}
