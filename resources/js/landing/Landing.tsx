@@ -18,7 +18,7 @@ export function Landing() {
             <Feature
                 id="features"
                 surface="band"
-                copy={copy.features.people}
+                copy={copy.features.inbox}
                 art={{ src: 'feat-ink-1', width: 246, height: 300 }}
             />
 

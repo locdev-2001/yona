@@ -2,7 +2,6 @@ import type { ReactElement } from 'react';
 import { createRoot } from 'react-dom/client';
 
 import { landingConfig, type LandingPage } from './config';
-import { landingCopy } from './copy';
 import { Shell } from './components/Shell';
 import { Landing } from './Landing';
 import { LegalDocument } from './pages/LegalDocument';
@@ -26,14 +25,6 @@ if (container) {
         not_found: <NotFound config={config} />,
     };
     const page = pages[config.page];
-
-    // Thẻ meta trong blade đọc lang/landing.php; trang chủ lấy lời giới thiệu ở
-    // copy.ts nên tab trình duyệt phải theo cùng nguồn đó.
-    if (page === null) {
-        const meta = landingCopy(config.locale).meta;
-        document.title = meta.title;
-        document.querySelector('meta[name="description"]')?.setAttribute('content', meta.description);
-    }
 
     createRoot(container).render(page === null ? <Landing /> : <Shell config={config}>{page}</Shell>);
 }
