@@ -36,7 +36,7 @@ export default function ChatListSearch({ actions, trailing }: { actions?: ReactN
 
     return (
         <div className="flex items-center gap-1.5 min-w-0">
-            <div className="field-surface flex flex-1 min-w-0 items-center gap-2 h-9 max-md:h-11 px-2.5 rounded-lg">
+            <div className="field-surface flex flex-1 min-w-0 items-center gap-2 h-9 max-md:h-10 px-2.5 rounded-lg">
                 <span className="i-lucide-search size-[1.125rem] shrink-0 text-n-slate-10" aria-hidden="true" />
                 <input
                     type="search"

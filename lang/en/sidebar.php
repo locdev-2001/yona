@@ -9,7 +9,7 @@ return [
     'SWITCH' => 'Switch',
     'INBOX_VIEW' => 'Inbox View',
     'COMPACT_INBOX' => 'Inbox',
-    'COMPACT_CONTACTS' => 'Customers',
+    'COMPACT_CONTACTS' => 'Friends',
     'CONVERSATIONS' => 'Conversations',
     'INBOX' => 'My Inbox',
     'ALL_CONVERSATIONS' => 'All Conversations',

@@ -3652,6 +3652,29 @@ const messages: Record<string, unknown> = {
                 "CLEAR_FILTERS": "Xóa các bộ lọc"
             }
         },
+        "FRIENDS": {
+            "TITLE": "Bạn bè",
+            "TABS": {
+                "ONLINE": "Trực tuyến",
+                "ALL": "Tất cả",
+                "PENDING": "Đang chờ xử lý"
+            },
+            "ADD_FRIEND": "Thêm Bạn",
+            "SEARCH_PLACEHOLDER": "Tìm kiếm",
+            "SECTION": "{label} — {count}",
+            "STATUS_ONLINE": "Trực tuyến",
+            "STATUS_OFFLINE": "Ngoại tuyến",
+            "MESSAGE": "Nhắn tin",
+            "MORE": "Thêm",
+            "VIEW_PROFILE": "Xem hồ sơ",
+            "REMOVE": "Xoá khỏi danh sách",
+            "EMPTY": {
+                "ONLINE": "Chưa có bạn nào đang trực tuyến.",
+                "ALL": "Chưa có bạn bè nào. Bấm Thêm Bạn để tìm theo @username.",
+                "PENDING": "Không có ai đang chờ xử lý.",
+                "SEARCH": "Không tìm thấy ai khớp."
+            }
+        },
         "IDENTIFICATION": {
             "ALL": "Tất cả",
             "IDENTIFIED": "Đã định danh",
@@ -10900,7 +10923,7 @@ const messages: Record<string, unknown> = {
         "SWITCH": "Chuyển",
         "INBOX_VIEW": "Khung nhìn hộp thư",
         "COMPACT_INBOX": "Hộp thư",
-        "COMPACT_CONTACTS": "Khách hàng",
+        "COMPACT_CONTACTS": "Bạn bè",
         "CONVERSATIONS": "Hội thoại",
         "INBOX": "Hộp thư của tôi",
         "ALL_CONVERSATIONS": "Tất cả hội thoại",

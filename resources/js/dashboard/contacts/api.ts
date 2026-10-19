@@ -52,7 +52,7 @@ function toClientPage(response: RawListResponse): ContactsPage {
     };
 }
 
-// ContactAPI.get — danh sách không kèm contact_inboxes như bản gốc.
+// Danh sách Bạn bè kèm contact_inboxes để mỗi dòng hiện logo kênh của người đó.
 const identificationParam = (filter: ContactIdentificationFilter) =>
     filter === 'all' ? '' : `&identified=${filter === 'identified'}`;
 
@@ -63,7 +63,7 @@ export async function fetchContacts(
     identification: ContactIdentificationFilter = 'all',
 ): Promise<ContactsPage> {
     const response = await getJson<RawListResponse>(
-        `${contactsUrl(accountId)}?include_contact_inboxes=false&page=${page}&sort=${encodeURIComponent(sortAttr)}${identificationParam(identification)}`,
+        `${contactsUrl(accountId)}?include_contact_inboxes=true&page=${page}&sort=${encodeURIComponent(sortAttr)}${identificationParam(identification)}`,
     );
 
     return toClientPage(response);
@@ -77,7 +77,7 @@ export async function searchContacts(
     sortAttr: string,
 ): Promise<ContactsPage> {
     const response = await getJson<RawListResponse>(
-        `${contactsUrl(accountId)}/search?include_contact_inboxes=false&page=${page}&sort=${encodeURIComponent(sortAttr)}&q=${encodeURIComponent(search)}`,
+        `${contactsUrl(accountId)}/search?include_contact_inboxes=true&page=${page}&sort=${encodeURIComponent(sortAttr)}&q=${encodeURIComponent(search)}`,
     );
 
     return toClientPage(response);
@@ -172,7 +172,7 @@ export async function deleteContactCustomAttributes(
 // ContactAPI.active — GET /contacts/active (liên hệ đang online).
 export async function fetchActiveContacts(accountId: number, page: number, sortAttr: string): Promise<ContactsPage> {
     const response = await getJson<RawListResponse>(
-        `${contactsUrl(accountId)}/active?include_contact_inboxes=false&page=${page}&sort=${encodeURIComponent(sortAttr)}`,
+        `${contactsUrl(accountId)}/active?include_contact_inboxes=true&page=${page}&sort=${encodeURIComponent(sortAttr)}`,
     );
 
     return toClientPage(response);

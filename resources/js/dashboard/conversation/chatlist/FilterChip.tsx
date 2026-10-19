@@ -11,7 +11,7 @@ export default function FilterChip({ isSelected = false, className = '', childre
         <button
             type="button"
             className={[
-                'inline-flex items-center gap-1.5 h-11 md:h-7 max-w-full px-3 rounded-full text-sm md:text-xs whitespace-nowrap',
+                'inline-flex items-center gap-1.5 h-9 md:h-7 max-w-full px-3 rounded-full text-sm md:text-xs whitespace-nowrap',
                 'outline outline-1 -outline-offset-1 transition-colors duration-150 focus-visible:outline-2 focus-visible:outline-n-brand',
                 isSelected
                     ? 'bg-n-blue-3 text-n-blue-11 outline-n-blue-7'

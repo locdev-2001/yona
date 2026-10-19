@@ -1,159 +1,73 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { usePage } from '@inertiajs/react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { t } from '../../i18n';
-import { putJson } from 'dashboard/helper/apiClient';
 import Dashboard from '../Dashboard';
-import ContactsListLayout from 'dashboard/components-next/Contacts/ContactsListLayout';
-import ContactEmptyState from 'dashboard/components-next/Contacts/EmptyState/ContactEmptyState';
 import Loader from 'shared/components/loader/Loader';
-import ContactsList from 'dashboard/components-next/Contacts/Pages/ContactsList';
-import ContactsBulkActionBar from './components/ContactsBulkActionBar';
-import TabBar from 'dashboard/components-next/tabbar/TabBar';
-import Dialog from 'dashboard/components-next/dialog/Dialog';
+import PaginationFooter from 'dashboard/components-next/pagination/PaginationFooter';
 import type { DialogHandle } from 'dashboard/components-next/dialog/Dialog';
-import { useAlert } from 'dashboard/composables/useAlert';
-import { processContactBulkAction } from 'dashboard/contacts/bulkApi';
-import type { SortState } from 'dashboard/components-next/Contacts/ContactsHeader/components/ContactSortMenu';
-import {
-    fetchActiveContacts,
-    fetchContacts,
-    fetchContactsByLabel,
-    filterContacts,
-    searchContacts,
-} from 'dashboard/contacts/api';
-import { buildConversationFilterPayload } from 'dashboard/components-next/filter/helper/filterQuery';
-import type { ConversationFilterCondition } from 'dashboard/components-next/filter/helper/filterHelper';
-import { useCustomViews } from 'dashboard/composables/useCustomViews';
+import NewYonaChatDialog from 'dashboard/conversation/people/NewYonaChatDialog';
+import { mergeContactPresence } from 'dashboard/components-next/Contacts/Pages/ContactsList';
+import { useContactPresenceOverlay } from 'dashboard/components-next/avatar/presence';
+import { fetchActiveContacts, fetchContacts, searchContacts } from 'dashboard/contacts/api';
 import { mergeContactUpdateIntoList, useContactUpdates } from 'dashboard/contacts/contactUpdates';
-import type { Contact, ContactIdentificationFilter, ContactsMeta } from 'dashboard/contacts/types';
+import type { Contact, ContactsMeta } from 'dashboard/contacts/types';
+import FriendRow from './components/FriendRow';
+import { usePage } from '@inertiajs/react';
 import type { DashboardPageProps } from '../types';
 
-// Port từ dashboard/routes/dashboard/contacts/pages/ContactsIndex.vue.
-const DEFAULT_SORT_FIELD = 'last_activity_at';
-const DEBOUNCE_DELAY = 300;
-const IDENTIFICATION_FILTERS: ContactIdentificationFilter[] = ['all', 'identified', 'unidentified'];
+const SORT_BY_LAST_ACTIVITY = '-last_activity_at';
+const SEARCH_DEBOUNCE_MS = 300;
+const PAGE_SIZE = 15;
 
-const parseSortSettings = (sortString = '') => {
-    const hasDescending = sortString.startsWith('-');
-    const sortField = hasDescending ? sortString.slice(1) : sortString;
+// "Đang chờ xử lý" = người mới nhắn tới, chưa định danh (liên hệ nháp); xem docs/ux-decisions.md.
+const FRIEND_TABS = ['online', 'all', 'pending'] as const;
+type FriendTab = (typeof FRIEND_TABS)[number];
 
-    return {
-        sort: sortField || DEFAULT_SORT_FIELD,
-        order: hasDescending ? '-' : '',
-    };
+const TAB_LABEL_KEYS: Record<FriendTab, string> = {
+    online: 'CONTACTS_LAYOUT.FRIENDS.TABS.ONLINE',
+    all: 'CONTACTS_LAYOUT.FRIENDS.TABS.ALL',
+    pending: 'CONTACTS_LAYOUT.FRIENDS.TABS.PENDING',
 };
 
-const readQueryParam = (name: string) => new URLSearchParams(window.location.search).get(name);
-
-// updatePageParam của bản gốc (router.replace query) — giữ page/search trên URL.
-const updatePageParam = (page: number, search = '') => {
-    const params = new URLSearchParams(window.location.search);
-    params.set('page', String(page));
-    if (search) {
-        params.set('search', search);
-    } else {
-        params.delete('search');
-    }
-    window.history.replaceState(window.history.state, '', `${window.location.pathname}?${params}`);
+const EMPTY_KEYS: Record<FriendTab, string> = {
+    online: 'CONTACTS_LAYOUT.FRIENDS.EMPTY.ONLINE',
+    all: 'CONTACTS_LAYOUT.FRIENDS.EMPTY.ALL',
+    pending: 'CONTACTS_LAYOUT.FRIENDS.EMPTY.PENDING',
 };
 
-interface ContactsIndexProps {
-    segmentId?: number;
-    label?: string;
+function fetchTab(accountId: number, tab: FriendTab, page: number) {
+    if (tab === 'online') return fetchActiveContacts(accountId, page, SORT_BY_LAST_ACTIVITY);
+    return fetchContacts(accountId, page, SORT_BY_LAST_ACTIVITY, tab === 'pending' ? 'unidentified' : 'all');
+}
+
+interface FriendsIndexProps {
     isActiveView?: boolean;
 }
 
-export default function ContactsIndex({ segmentId = 0, label = '', isActiveView = false }: ContactsIndexProps) {
-    const { auth, currentAccount } = usePage<DashboardPageProps>().props;
-    const accountId = currentAccount.id;
-    const segments = useCustomViews(accountId, 'contact');
-    const activeSegment = segmentId ? (segments.find(view => view.id === segmentId) ?? null) : null;
-
-    const initialSort = useMemo(
-        () => parseSortSettings(String(auth.user?.ui_settings?.contacts_sort_by ?? '')),
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-        [],
-    );
-
+// Trang Bạn bè: tab Trực tuyến / Tất cả / Đang chờ xử lý, tìm theo tên, Thêm Bạn
+// mở hộp tìm người dùng Yona theo @username (dùng chung với danh sách hội thoại).
+export default function FriendsIndex({ isActiveView = false }: FriendsIndexProps) {
+    const accountId = usePage<DashboardPageProps>().props.currentAccount.id;
+    const [activeTab, setActiveTab] = useState<FriendTab>(isActiveView ? 'online' : 'all');
+    const [searchValue, setSearchValue] = useState('');
     const [contacts, setContacts] = useState<Contact[]>([]);
     const [meta, setMeta] = useState<ContactsMeta>({ count: 0, currentPage: 1 });
     const [isFetching, setFetching] = useState(true);
-    const [searchValue, setSearchValue] = useState(() => readQueryParam('search') || '');
-    const [sortState, setSortState] = useState<SortState>(initialSort);
-    const [selectedContactIds, setSelectedContactIds] = useState<number[]>([]);
-    const [isLoadingMore, setLoadingMore] = useState(false);
-    const [isBulkActionLoading, setBulkActionLoading] = useState(false);
-    const bulkDeleteDialogRef = useRef<DialogHandle>(null);
-    const [appliedFilters, setAppliedFilters] = useState<ConversationFilterCondition[]>([]);
-    const [identification, setIdentification] = useState<ContactIdentificationFilter>('all');
-    const identificationRef = useRef(identification);
-    identificationRef.current = identification;
-    const appliedFiltersRef = useRef<ConversationFilterCondition[]>([]);
-    appliedFiltersRef.current = appliedFilters;
-    const searchPageNumber = useRef(1);
-    const debounceTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
     const requestSeq = useRef(0);
+    const addFriendDialogRef = useRef<DialogHandle>(null);
+    const { presenceMap, hasReceivedPresence } = useContactPresenceOverlay();
 
-    const sortStateRef = useRef(sortState);
-    sortStateRef.current = sortState;
-    const searchValueRef = useRef(searchValue);
-    searchValueRef.current = searchValue;
-
-    const buildSortAttr = () => `${sortStateRef.current.order}${sortStateRef.current.sort}`;
-
-    // fetchContactsBasedOnContext của gốc: segment đang mở hoặc bộ lọc vừa áp
-    // dùng POST /contacts/filter, còn lại dùng GET /contacts.
-    const segmentQueryRef = useRef<string>('');
-    segmentQueryRef.current = activeSegment ? JSON.stringify(activeSegment.query?.payload ?? []) : '';
-
-    const fetchList = useCallback(
-        async (page = 1, options: { clearSelection?: boolean } = {}) => {
-            const { clearSelection = true } = options;
-            if (clearSelection) setSelectedContactIds([]);
-
-            const filterPayload = segmentQueryRef.current
-                ? JSON.parse(segmentQueryRef.current)
-                : appliedFiltersRef.current.length
-                  ? buildConversationFilterPayload(appliedFiltersRef.current)
-                  : null;
-
+    const load = useCallback(
+        async (tab: FriendTab, search: string, page: number) => {
             const seq = ++requestSeq.current;
             setFetching(true);
             try {
-                // fetchContactsBasedOnContext của gốc: active > filter/segment > label > mặc định.
-                const result = isActiveView
-                    ? await fetchActiveContacts(accountId, page, buildSortAttr())
-                    : filterPayload && !label
-                      ? await filterContacts(accountId, filterPayload, page, buildSortAttr())
-                      : label
-                        ? await fetchContactsByLabel(accountId, label, page, buildSortAttr(), identificationRef.current)
-                        : await fetchContacts(accountId, page, buildSortAttr(), identificationRef.current);
+                const result = search
+                    ? await searchContacts(accountId, search, page, SORT_BY_LAST_ACTIVITY)
+                    : await fetchTab(accountId, tab, page);
                 if (seq !== requestSeq.current) return;
                 setContacts(result.contacts);
                 setMeta(result.meta);
-                updatePageParam(page);
-            } finally {
-                if (seq === requestSeq.current) setFetching(false);
-            }
-        },
-        [accountId, label, isActiveView],
-    );
-
-    const runSearch = useCallback(
-        async (value: string, page = 1, append = false) => {
-            const seq = ++requestSeq.current;
-            if (!append) {
-                searchPageNumber.current = 1;
-                setFetching(true);
-            }
-            try {
-                const result = await searchContacts(accountId, value, page, buildSortAttr());
-                if (seq !== requestSeq.current) return;
-                setContacts(current => (append ? [...current, ...result.contacts] : result.contacts));
-                setMeta(result.meta);
-                updatePageParam(page, value);
-                searchPageNumber.current = page;
             } finally {
                 if (seq === requestSeq.current) setFetching(false);
             }
@@ -161,319 +75,105 @@ export default function ContactsIndex({ segmentId = 0, label = '', isActiveView 
         [accountId],
     );
 
-    const onSearchInput = (value: string) => {
-        setSearchValue(value);
-        clearTimeout(debounceTimer.current);
-        debounceTimer.current = setTimeout(() => {
-            setSelectedContactIds([]);
-            if (!value) {
-                void fetchList(1, { clearSelection: false });
-                return;
-            }
-            void runSearch(value, 1);
-        }, DEBOUNCE_DELAY);
-    };
-
-    const loadMoreSearchResults = async () => {
-        if (!meta.hasMore || isLoadingMore) return;
-
-        setLoadingMore(true);
-        await runSearch(searchValueRef.current, searchPageNumber.current + 1, true);
-        setLoadingMore(false);
-    };
-
-    const handleSort = async (nextSort: SortState) => {
-        setSortState(nextSort);
-        sortStateRef.current = nextSort;
-
-        // Lưu lựa chọn sort vào ui_settings như bản gốc (useUISettings).
-        void putJson('/api/v1/profile', {
-            ui_settings: { contacts_sort_by: `${nextSort.order}${nextSort.sort}` },
-        });
-
-        if (searchValueRef.current) {
-            await runSearch(searchValueRef.current, 1);
-            return;
-        }
-        await fetchList();
-    };
-
-    const toggleContactSelection = ({ id, value }: { id: number; value?: boolean }) => {
-        setSelectedContactIds(current => {
-            const isAlreadySelected = current.includes(id);
-            const shouldSelect = value ?? !isAlreadySelected;
-
-            if (shouldSelect && !isAlreadySelected) return [...current, id];
-            if (!shouldSelect && isAlreadySelected) return current.filter(contactId => contactId !== id);
-            return current;
-        });
-    };
-
-    const clearSelection = () => setSelectedContactIds([]);
-
-    const toggleSelectAll = (shouldSelect: boolean) => {
-        setSelectedContactIds(current => {
-            const selection = new Set(current);
-            contacts.forEach(contact => (shouldSelect ? selection.add(contact.id) : selection.delete(contact.id)));
-
-            return Array.from(selection);
-        });
-    };
-
-    const runBulkAction = async (
-        action: () => Promise<void>,
-        successKey: string,
-        failureKey: string,
-        onDone?: () => void,
-    ) => {
-        if (!selectedContactIds.length) return;
-
-        setBulkActionLoading(true);
-        try {
-            await action();
-            useAlert(t(successKey));
-            clearSelection();
-            await fetchList(meta.currentPage || 1, { clearSelection: false });
-            onDone?.();
-        } catch {
-            useAlert(t(failureKey));
-        } finally {
-            setBulkActionLoading(false);
-        }
-    };
-
-    const assignLabels = (labels: string[]) => {
-        if (!labels.length) return;
-        void runBulkAction(
-            () => processContactBulkAction(accountId, { ids: selectedContactIds, labels: { add: labels } }),
-            'CONTACTS_BULK_ACTIONS.ASSIGN_LABELS_SUCCESS',
-            'CONTACTS_BULK_ACTIONS.ASSIGN_LABELS_FAILED',
-        );
-    };
-
-    const removeLabels = (labels: string[]) => {
-        if (!labels.length) return;
-        void runBulkAction(
-            () => processContactBulkAction(accountId, { ids: selectedContactIds, labels: { remove: labels } }),
-            'CONTACTS_BULK_ACTIONS.REMOVE_LABELS_SUCCESS',
-            'CONTACTS_BULK_ACTIONS.REMOVE_LABELS_FAILED',
-        );
-    };
-
-    const deleteContacts = () => {
-        void runBulkAction(
-            () => processContactBulkAction(accountId, { ids: selectedContactIds, action_name: 'delete' }),
-            'CONTACTS_BULK_ACTIONS.DELETE_SUCCESS',
-            'CONTACTS_BULK_ACTIONS.DELETE_FAILED',
-            () => bulkDeleteDialogRef.current?.close(),
-        );
-    };
-
-    const refreshCurrentView = () => {
-        if (searchValueRef.current) {
-            void runSearch(searchValueRef.current, 1);
-            return;
-        }
-        void fetchList(meta.currentPage || 1);
-    };
-
     useEffect(() => {
-        const initialPage = Number(readQueryParam('page')) || 1;
-        if (searchValueRef.current) {
-            void runSearch(searchValueRef.current, initialPage);
-        } else {
-            void fetchList(initialPage);
-        }
-
-        return () => clearTimeout(debounceTimer.current);
-        // segmentQueryRef đổi khi store custom view nạp xong → nạp lại đúng segment.
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [fetchList, runSearch, segmentQueryRef.current]);
-
-    const onApplyContactFilters = (filters: ConversationFilterCondition[]) => {
-        setAppliedFilters(filters);
-        appliedFiltersRef.current = filters;
-        void fetchList(1);
-    };
-
-    const onClearContactFilters = () => {
-        setAppliedFilters([]);
-        appliedFiltersRef.current = [];
-        void fetchList(1);
-    };
-
-    const onIdentificationChanged = (next: ContactIdentificationFilter) => {
-        setIdentification(next);
-        identificationRef.current = next;
-        void fetchList(1);
-    };
-
-    const isSearchView = Boolean(searchValue);
-    const hasContacts = contacts.length > 0;
-    const headerTitle = isSearchView
-        ? t('CONTACTS_LAYOUT.HEADER.SEARCH_TITLE')
-        : isActiveView
-          ? t('CONTACTS_LAYOUT.HEADER.ACTIVE_TITLE')
-          : label
-            ? `#${label}`
-            : (activeSegment?.name ?? t('CONTACTS_LAYOUT.HEADER.TITLE'));
-    const hasAppliedFilters = appliedFilters.length > 0 || Boolean(activeSegment);
-    const showIdentificationTabs = !isSearchView && !isActiveView && !hasAppliedFilters;
-    const identificationTabs = [
-        {
-            value: 'all',
-            label: t('CONTACTS_LAYOUT.IDENTIFICATION.ALL'),
-            count:
-                meta.identifiedCount === undefined || meta.unidentifiedCount === undefined
-                    ? undefined
-                    : meta.identifiedCount + meta.unidentifiedCount,
-        },
-        {
-            value: 'identified',
-            label: t('CONTACTS_LAYOUT.IDENTIFICATION.IDENTIFIED'),
-            count: meta.identifiedCount,
-        },
-        {
-            value: 'unidentified',
-            label: t('CONTACTS_LAYOUT.IDENTIFICATION.UNIDENTIFIED'),
-            count: meta.unidentifiedCount,
-        },
-    ];
-    const isContactIndexView = !label && !isActiveView && !segmentId;
-    const showEmptyStateLayout =
-        !isSearchView &&
-        !hasContacts &&
-        isContactIndexView &&
-        (meta.currentPage || 1) === 1 &&
-        !isFetching &&
-        !hasAppliedFilters &&
-        identification === 'all';
-    const showEmptyText =
-        (isSearchView || hasAppliedFilters || !isContactIndexView || identification !== 'all') &&
-        !hasContacts &&
-        !isFetching;
-    const emptyStateMessage = isActiveView
-        ? t('CONTACTS_LAYOUT.EMPTY_STATE.ACTIVE_EMPTY_STATE_TITLE')
-        : !isSearchView || hasAppliedFilters
-          ? t('CONTACTS_LAYOUT.EMPTY_STATE.LIST_EMPTY_STATE_TITLE')
-          : t('CONTACTS_LAYOUT.EMPTY_STATE.SEARCH_EMPTY_STATE_TITLE');
-
-    const handleContactUpdated = (updated: Contact) => {
-        setContacts(current => current.map(contact => (contact.id === updated.id ? updated : contact)));
-    };
+        const timer = setTimeout(() => void load(activeTab, searchValue.trim(), 1), searchValue ? SEARCH_DEBOUNCE_MS : 0);
+        return () => clearTimeout(timer);
+    }, [load, activeTab, searchValue]);
 
     useContactUpdates(update => setContacts(current => mergeContactUpdateIntoList(current, update)));
 
+    const visibleContacts = mergeContactPresence(contacts, presenceMap, hasReceivedPresence);
+    const isSearching = searchValue.trim() !== '';
+    const sectionLabel = isSearching ? t('CONTACTS_LAYOUT.HEADER.SEARCH_TITLE') : t(TAB_LABEL_KEYS[activeTab]);
+    const emptyMessage = isSearching ? t('CONTACTS_LAYOUT.FRIENDS.EMPTY.SEARCH') : t(EMPTY_KEYS[activeTab]);
+    const reload = () => void load(activeTab, searchValue.trim(), meta.currentPage || 1);
+
     return (
         <Dashboard>
-            <div className="flex flex-col justify-between flex-1 h-full m-0 overflow-auto bg-n-surface-1">
-                <ContactsListLayout
-                    searchValue={searchValue}
-                    headerTitle={headerTitle}
-                    currentPage={meta.currentPage}
-                    totalItems={meta.count}
-                    showPaginationFooter={!isFetching && hasContacts && !isSearchView}
-                    activeSort={sortState.sort}
-                    activeOrdering={sortState.order}
-                    useInfiniteScroll={isSearchView}
-                    hasMore={meta.hasMore ?? false}
-                    isLoadingMore={isLoadingMore}
-                    onPageChange={page => fetchList(page, { clearSelection: false })}
-                    onSearch={onSearchInput}
-                    onUpdateSort={handleSort}
-                    onLoadMore={loadMoreSearchResults}
-                    onContactCreated={refreshCurrentView}
-                    segmentsId={segmentId}
-                    activeSegment={activeSegment}
-                    appliedFilters={appliedFilters}
-                    onApplyFilter={onApplyContactFilters}
-                    onClearFilters={onClearContactFilters}
-                    isFetchingList={isFetching}
-                    hasAppliedFilters={hasAppliedFilters}
-                    isLabelView={Boolean(label)}
-                    isActiveView={isActiveView}
-                    showSearch={!segmentId && !isActiveView}
-                    activeLabel={label}
-                >
-                    {showIdentificationTabs && !showEmptyStateLayout ? (
-                        <TabBar
-                            className="mt-4 w-fit"
-                            tabs={identificationTabs}
-                            initialActiveTab={IDENTIFICATION_FILTERS.indexOf(identification)}
-                            onTabChanged={tab => onIdentificationChanged(tab.value as ContactIdentificationFilter)}
+            <section className="flex flex-col flex-1 h-full min-w-0 overflow-hidden bg-n-surface-1">
+                <header className="flex flex-wrap items-center gap-x-2 gap-y-1 min-h-12 px-4 py-2 border-b border-n-weak">
+                    <span className="flex items-center gap-2 pe-2 shrink-0 text-sm font-semibold text-n-slate-12">
+                        <span className="i-lucide-users-round size-5 text-n-slate-11" />
+                        {t('CONTACTS_LAYOUT.FRIENDS.TITLE')}
+                    </span>
+                    <span className="size-1 rounded-full bg-n-slate-8 shrink-0 max-md:hidden" />
+                    <nav className="flex items-center gap-1 max-md:order-last max-md:w-full max-md:overflow-x-auto no-scrollbar" role="tablist">
+                        {FRIEND_TABS.map(tab => {
+                            const isActive = tab === activeTab && !isSearching;
+                            return (
+                                <button
+                                    key={tab}
+                                    type="button"
+                                    role="tab"
+                                    aria-selected={isActive}
+                                    className={`h-8 px-3 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
+                                        isActive
+                                            ? 'bg-n-alpha-3 text-n-slate-12'
+                                            : 'text-n-slate-11 hover:bg-n-alpha-2 hover:text-n-slate-12'
+                                    }`}
+                                    onClick={() => {
+                                        setSearchValue('');
+                                        setActiveTab(tab);
+                                    }}
+                                >
+                                    {t(TAB_LABEL_KEYS[tab])}
+                                </button>
+                            );
+                        })}
+                    </nav>
+                    <button
+                        type="button"
+                        className="h-8 px-3 ms-auto md:ms-1 rounded-lg text-sm font-semibold whitespace-nowrap shrink-0 bg-n-brand text-white hover:brightness-110 transition"
+                        onClick={() => addFriendDialogRef.current?.open()}
+                    >
+                        {t('CONTACTS_LAYOUT.FRIENDS.ADD_FRIEND')}
+                    </button>
+                </header>
+
+                <main className="flex-1 overflow-y-auto px-4 sm:px-7">
+                    <label className="flex items-center gap-2 h-10 px-3 mt-4 rounded-lg border border-n-weak bg-n-surface-2 focus-within:border-n-brand">
+                        <span className="i-lucide-search size-4 shrink-0 text-n-slate-11" />
+                        <input
+                            type="search"
+                            value={searchValue}
+                            placeholder={t('CONTACTS_LAYOUT.FRIENDS.SEARCH_PLACEHOLDER')}
+                            className="flex-1 min-w-0 !m-0 !p-0 !h-auto !border-0 !bg-transparent !shadow-none text-sm text-n-slate-12 placeholder:text-n-slate-10 focus:!ring-0"
+                            onChange={event => setSearchValue(event.target.value)}
                         />
-                    ) : null}
-                    {selectedContactIds.length > 0 && !(isFetching && !(isSearchView && hasContacts)) ? (
-                        <ContactsBulkActionBar
-                            visibleContactIds={contacts.map(contact => contact.id)}
-                            selectedContactIds={selectedContactIds}
-                            isLoading={isBulkActionLoading}
-                            onToggleAll={toggleSelectAll}
-                            onClearSelection={clearSelection}
-                            onAssignLabels={assignLabels}
-                            onRemoveLabels={removeLabels}
-                            onDeleteSelected={() => {
-                                if (!selectedContactIds.length || isBulkActionLoading) return;
-                                bulkDeleteDialogRef.current?.open();
-                            }}
-                        />
-                    ) : null}
-                    {isFetching && !(isSearchView && hasContacts) ? (
-                        <div className="flex items-center justify-center py-10 text-n-slate-11">
+                    </label>
+
+                    <h2 className="mt-6 mb-2 text-xs font-semibold text-n-slate-11">
+                        {t('CONTACTS_LAYOUT.FRIENDS.SECTION', { label: sectionLabel, count: meta.count })}
+                    </h2>
+
+                    {isFetching && contacts.length === 0 ? (
+                        <div className="flex justify-center py-10 text-n-slate-11">
                             <Loader />
                         </div>
-                    ) : showEmptyStateLayout ? (
-                        <ContactEmptyState
-                            className="pt-14"
-                            title={t('CONTACTS_LAYOUT.EMPTY_STATE.TITLE')}
-                            subtitle={t('CONTACTS_LAYOUT.EMPTY_STATE.SUBTITLE')}
-                            buttonLabel={t('CONTACTS_LAYOUT.EMPTY_STATE.BUTTON_LABEL')}
-                            onCreated={refreshCurrentView}
-                        />
-                    ) : showEmptyText ? (
-                        <div className="flex items-center justify-center py-10">
-                            <span className="text-base text-n-slate-11">
-                                {emptyStateMessage}
-                            </span>
-                        </div>
+                    ) : visibleContacts.length === 0 ? (
+                        <p className="py-10 text-sm text-center text-n-slate-11">{emptyMessage}</p>
                     ) : (
-                        <div className="flex flex-col gap-4 pt-4 pb-6">
-                            <ContactsList
-                                contacts={contacts}
-                                selectedContactIds={selectedContactIds}
-                                onToggleContact={toggleContactSelection}
-                                onContactUpdated={handleContactUpdated}
-                                onContactDeleted={refreshCurrentView}
-                            />
-                            {selectedContactIds.length > 0 ? (
-                                <Dialog
-                                    ref={bulkDeleteDialogRef}
-                                    type="alert"
-                                    title={
-                                        selectedContactIds.length > 1
-                                            ? t('CONTACTS_BULK_ACTIONS.DELETE_DIALOG.TITLE')
-                                            : t('CONTACTS_BULK_ACTIONS.DELETE_DIALOG.SINGULAR_TITLE')
-                                    }
-                                    description={
-                                        selectedContactIds.length > 1
-                                            ? t('CONTACTS_BULK_ACTIONS.DELETE_DIALOG.DESCRIPTION', {
-                                                  count: selectedContactIds.length,
-                                              })
-                                            : t('CONTACTS_BULK_ACTIONS.DELETE_DIALOG.SINGULAR_DESCRIPTION')
-                                    }
-                                    confirmButtonLabel={
-                                        selectedContactIds.length > 1
-                                            ? t('CONTACTS_BULK_ACTIONS.DELETE_DIALOG.CONFIRM_MULTIPLE')
-                                            : t('CONTACTS_BULK_ACTIONS.DELETE_DIALOG.CONFIRM_SINGLE')
-                                    }
-                                    isLoading={isBulkActionLoading}
-                                    onConfirm={deleteContacts}
-                                />
-                            ) : null}
-                        </div>
+                        <ul className={`m-0 p-0 list-none pb-6 ${isFetching ? 'opacity-60' : ''}`}>
+                            {visibleContacts.map(contact => (
+                                <FriendRow key={contact.id} contact={contact} onRemoved={reload} />
+                            ))}
+                        </ul>
                     )}
-                </ContactsListLayout>
-            </div>
+                </main>
+
+                {meta.count > PAGE_SIZE ? (
+                    <footer className="sticky bottom-0 z-0">
+                        <PaginationFooter
+                            currentPageInfo="CONTACTS_LAYOUT.PAGINATION_FOOTER.SHOWING"
+                            currentPage={meta.currentPage}
+                            totalItems={meta.count}
+                            itemsPerPage={PAGE_SIZE}
+                            onPageChange={page => void load(activeTab, searchValue.trim(), page)}
+                        />
+                    </footer>
+                ) : null}
+            </section>
+            <NewYonaChatDialog ref={addFriendDialogRef} />
         </Dashboard>
     );
 }

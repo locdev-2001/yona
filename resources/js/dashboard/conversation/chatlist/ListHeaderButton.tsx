@@ -3,7 +3,7 @@ import type { ButtonHTMLAttributes, ReactNode } from 'react';
 
 // Nút icon đầu cột danh sách. `icon` (mặc định): icon nhỏ không nền trên dòng tiêu đề
 // (Lọc, Nhắn tin mới, Chọn nhiều, ⋯). `field`: ô vuông cùng cỡ ô tìm (Soạn tin).
-// Chạm 44px dưới 768px.
+// Dưới 768px: nút icon 32px, nút ô 40px cho cân với ô tìm.
 interface ListHeaderButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
     icon: string;
     label: string;
@@ -13,12 +13,12 @@ interface ListHeaderButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> 
 }
 
 const VARIANT_CLASSES = {
-    icon: 'size-6 max-md:size-11 rounded-lg bg-n-slate-9/10 hover:bg-n-slate-9/20 active:scale-[0.97]',
-    field: 'field-surface size-9 max-md:size-11 rounded-lg',
+    icon: 'size-6 max-md:size-8 rounded-lg bg-n-slate-9/10 hover:bg-n-slate-9/20 active:scale-[0.97]',
+    field: 'field-surface size-9 max-md:size-10 rounded-lg',
 } as const;
 
 const ICON_SIZE_CLASSES = {
-    icon: 'size-3.5',
+    icon: 'size-3.5 max-md:size-4',
     field: 'size-[1.125rem]',
 } as const;
 

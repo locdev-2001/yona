@@ -3652,6 +3652,29 @@ const messages: Record<string, unknown> = {
                 "CLEAR_FILTERS": "Clear filters"
             }
         },
+        "FRIENDS": {
+            "TITLE": "Friends",
+            "TABS": {
+                "ONLINE": "Online",
+                "ALL": "All",
+                "PENDING": "Pending"
+            },
+            "ADD_FRIEND": "Add Friend",
+            "SEARCH_PLACEHOLDER": "Search",
+            "SECTION": "{label} — {count}",
+            "STATUS_ONLINE": "Online",
+            "STATUS_OFFLINE": "Offline",
+            "MESSAGE": "Message",
+            "MORE": "More",
+            "VIEW_PROFILE": "View profile",
+            "REMOVE": "Remove from list",
+            "EMPTY": {
+                "ONLINE": "No friends are online right now.",
+                "ALL": "No friends yet. Use Add Friend to find people by @username.",
+                "PENDING": "Nobody is waiting on you.",
+                "SEARCH": "Nobody matches that search."
+            }
+        },
         "IDENTIFICATION": {
             "ALL": "All",
             "IDENTIFIED": "Identified",
@@ -10900,7 +10923,7 @@ const messages: Record<string, unknown> = {
         "SWITCH": "Switch",
         "INBOX_VIEW": "Inbox View",
         "COMPACT_INBOX": "Inbox",
-        "COMPACT_CONTACTS": "Customers",
+        "COMPACT_CONTACTS": "Friends",
         "CONVERSATIONS": "Conversations",
         "INBOX": "My Inbox",
         "ALL_CONVERSATIONS": "All Conversations",

@@ -70,7 +70,7 @@ export default function ChannelChipRow() {
             aria-expanded={isExpanded}
             aria-controls="channel-chip-row"
             aria-label={t(isExpanded ? 'CHAT_LIST.FILTER_PANEL.COLLAPSE_CHANNELS' : 'CHAT_LIST.FILTER_PANEL.SHOW_ALL_CHANNELS')}
-            className="grid place-content-center size-11 shrink-0 rounded-full text-n-slate-11 active:scale-[0.97]"
+            className="grid place-content-center size-9 shrink-0 rounded-full text-n-slate-11 active:scale-[0.97]"
             onClick={() => setExpanded(expanded => !expanded)}
         >
             <Icon icon={isExpanded ? 'i-lucide-chevron-up' : 'i-lucide-chevron-down'} className="size-4" />

@@ -5,6 +5,7 @@ import { t } from '../../../i18n';
 import Logo from 'dashboard/components-next/icon/Logo';
 import SidebarGroup from './SidebarGroup';
 import SidebarProfileMenu from './SidebarProfileMenu';
+import SidebarSettingsMenu from './SidebarSettingsMenu';
 import SidebarAccountSwitcher from './SidebarAccountSwitcher';
 import { buildMenuItems } from './menuItems';
 import { useCustomViews } from 'dashboard/composables/useCustomViews';
@@ -14,6 +15,9 @@ import { useConversationUnreadCounts } from './useConversationUnreadCounts';
 import NotificationBell from 'dashboard/notifications/components/NotificationBell';
 import { accountScopedUrl } from 'dashboard/helper/URLHelper';
 import type { DashboardPageProps } from '../../types';
+
+// Cài đặt là nút bánh răng cạnh hồ sơ ở chân sidebar, không nằm trong danh sách điều hướng.
+const SETTINGS_ITEM_NAME = 'Settings';
 
 // Port từ components-next/sidebar/Sidebar.vue
 // (soạn hội thoại mới nằm cạnh ô tìm ở danh sách hội thoại; ChangelogCard
@@ -136,6 +140,9 @@ export default function Sidebar({
         ],
     );
 
+    const navItems = menuItems.filter(item => item.name !== SETTINGS_ITEM_NAME);
+    const settingsItem = menuItems.find(item => item.name === SETTINGS_ITEM_NAME);
+
     const asideRef = useRef<HTMLElement>(null);
 
     useEffect(() => {
@@ -229,7 +236,7 @@ export default function Sidebar({
                             isEffectivelyCollapsed ? 'items-center' : ''
                         }`}
                     >
-                        {menuItems.map(item => (
+                        {navItems.map(item => (
                             <SidebarGroup key={item.name} accountId={accountId} {...item} />
                         ))}
                     </ul>
@@ -238,10 +245,11 @@ export default function Sidebar({
                     <div className="pointer-events-none absolute inset-x-0 -top-[1.938rem] h-8 bg-gradient-to-t from-n-surface-sidebar to-transparent" />
                     <div
                         className={`px-1 py-1.5 flex-shrink-0 flex w-full z-50 gap-2 items-center ${
-                            isEffectivelyCollapsed ? 'justify-center' : 'justify-between'
+                            isEffectivelyCollapsed ? 'flex-col-reverse justify-center' : 'justify-between'
                         }`}
                     >
                         <SidebarProfileMenu isCollapsed={isEffectivelyCollapsed} />
+                        {settingsItem ? <SidebarSettingsMenu item={settingsItem} /> : null}
                     </div>
                 </section>
                 {/* Resize Handle (desktop only) */}

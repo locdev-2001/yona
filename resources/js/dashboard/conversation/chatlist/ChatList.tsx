@@ -235,7 +235,8 @@ export default function ChatList({
                 />
                 {appliedFilters === null ? (
                     <>
-                        <div className="flex items-center min-w-0">
+                        {/* Điện thoại chỉ có một tab "Tất cả" nên bỏ cả hàng, dải kênh bên dưới đủ để lọc. */}
+                        <div className="flex items-center min-w-0 max-md:hidden">
                             <div className="flex-1 min-w-0">
                                 <ChatTypeTabs
                                     items={isAssignmentVisible ? assigneeTabItems : assigneeTabItems.filter(item => item.key === ASSIGNEE_TYPE.ALL)}

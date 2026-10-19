@@ -94,7 +94,7 @@ export default function ChatListHeader({
                                     slate
                                     xs
                                     faded
-                                    className="max-md:!size-11"
+                                    className="max-md:!size-8"
                                     onClick={onFiltersModal}
                                 />
                                 <NextButton
@@ -103,7 +103,7 @@ export default function ChatListHeader({
                                     ruby
                                     xs
                                     faded
-                                    className="max-md:!size-11"
+                                    className="max-md:!size-8"
                                     onClick={onDeleteFolders}
                                 />
                             </>
@@ -117,7 +117,7 @@ export default function ChatListHeader({
                                     slate
                                     xs
                                     faded
-                                    className="max-md:!size-11"
+                                    className="max-md:!size-8"
                                     onClick={onAddFolders}
                                 />
                             ) : null}
@@ -127,7 +127,7 @@ export default function ChatListHeader({
                                 ruby
                                 faded
                                 xs
-                                className="max-md:!size-11"
+                                className="max-md:!size-8"
                                 onClick={onResetFilters}
                             />
                         </>
