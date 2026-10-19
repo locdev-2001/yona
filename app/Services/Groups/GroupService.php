@@ -316,7 +316,7 @@ final class GroupService
     private function activeMemberById(YonaGroup $group, int $userId): YonaGroupMember
     {
         return $group->activeMembers()->with('user')->where('user_id', $userId)->first()
-            ?? throw new GroupActionRejected('NOT_A_MEMBER', 404);
+            ?? throw new GroupActionRejected('MEMBER_NOT_FOUND', 404);
     }
 
     /**

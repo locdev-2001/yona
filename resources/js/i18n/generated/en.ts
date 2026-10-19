@@ -5626,6 +5626,7 @@ const messages: Record<string, unknown> = {
             "NOT_ADMIN": "Only group admins can do this",
             "NOT_FRIEND": "You can only add your friends directly. Others can join with an invite link",
             "USER_NOT_FOUND": "User not found",
+            "MEMBER_NOT_FOUND": "This person is not in the group",
             "NO_USERNAME": "You need a @username to join a group",
             "FULL": "The group already has :max members",
             "LAST_ADMIN": "The group needs at least one admin",

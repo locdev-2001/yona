@@ -572,8 +572,16 @@ hộp thư sẵn có. Giao diện mở hội thoại mới:
 
 ### Chưa có
 
-- **Giao diện nhóm** (tạo nhóm, panel thông tin nhóm, trang mở link mời `/g/{token}`):
-  chưa có; lõi và API ở mục "Nhóm giữa người dùng Yona" bên trên đã chạy.
+- **Giao diện nhóm** (tạo nhóm, panel thông tin nhóm, trang mở link mời `/g/{token}`,
+  tên người gửi trên bong bóng và ở dòng xem trước): chưa có; lõi và API ở mục "Nhóm
+  giữa người dùng Yona" bên trên đã chạy.
+- **Tìm tin trong nhóm:** `PostgresSearchEngine`, `MeilisearchDocuments`,
+  `ListSearchService` vẫn chỉ tìm trong account của người tìm, nên tin nhóm (thuộc
+  account ẩn) chưa tìm thấy được.
+- **Account ẩn của nhóm** vẫn được đếm trong chỉ số và danh sách account của Super
+  Admin (0 người dùng); chưa có scope loại ra.
+- **Dòng nhóm đã đóng** không tự mở lại khi có tin mới trong nhóm (1-1 mở lại qua
+  `Message::reopenConversation`, chỉ áp cho tin đến của chính dòng đó).
 - **Gọi thoại/video, chia sẻ màn hình:** chưa có code, kế hoạch đã duyệt schema.
 - **Tin chờ và chặn cho người lạ** trên kênh Yona: chưa có; ai biết username đều
   mở được hội thoại.
