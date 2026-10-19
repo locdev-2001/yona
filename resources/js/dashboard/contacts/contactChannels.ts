@@ -8,3 +8,12 @@ export function uniqueChannels(contact: Contact): { channel_type: string; name: 
     });
     return [...byType.values()];
 }
+
+const YONA_CHANNEL_TYPE = 'Channel::Yona';
+const YONA_SOURCE_PREFIX = 'yona:';
+
+// Người dùng Yona trong hộp thư mang địa chỉ "yona:{user_id}" ở kênh Yona.
+export function yonaUserIdOf(contact: Contact | null): number | null {
+    const sourceId = contact?.contactInboxes?.find(({ inbox }) => inbox.channelType === YONA_CHANNEL_TYPE)?.sourceId;
+    return sourceId?.startsWith(YONA_SOURCE_PREFIX) ? Number(sourceId.slice(YONA_SOURCE_PREFIX.length)) : null;
+}

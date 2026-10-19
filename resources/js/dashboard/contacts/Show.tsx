@@ -17,6 +17,7 @@ import type { ConfirmContactDeleteDialogHandle } from 'dashboard/components-next
 import { fetchContact, updateContact } from 'dashboard/contacts/api';
 import { mergeContactUpdate, useContactUpdates } from 'dashboard/contacts/contactUpdates';
 import { openContactChat } from 'dashboard/contacts/openContactChat';
+import { yonaUserIdOf } from 'dashboard/contacts/contactChannels';
 import type { Contact } from 'dashboard/contacts/types';
 import { acceptFriendRequest, fetchFriendshipProfile, removeFriendship, sendFriendRequest } from 'dashboard/friends/api';
 import type { FriendshipProfile } from 'dashboard/friends/api';
@@ -25,9 +26,6 @@ import ProfileCard from './profile/ProfileCard';
 import type { ProfileMenuItem } from './profile/ProfileCard';
 import ProfileWindow from './profile/ProfileWindow';
 import type { DashboardPageProps } from '../types';
-
-const YONA_CHANNEL_TYPE = 'Channel::Yona';
-const YONA_SOURCE_PREFIX = 'yona:';
 
 const PROFILE_TABS = [
     { key: 'ACTIVITY', value: 'history' },
@@ -40,12 +38,6 @@ type ProfileTab = (typeof PROFILE_TABS)[number]['value'];
 
 interface ContactShowPageProps extends DashboardPageProps {
     contactId: number;
-}
-
-// Người dùng Yona trong hộp thư mang địa chỉ "yona:{user_id}" ở kênh Yona.
-function yonaUserIdOf(contact: Contact | null): number | null {
-    const sourceId = contact?.contactInboxes?.find(({ inbox }) => inbox.channelType === YONA_CHANNEL_TYPE)?.sourceId;
-    return sourceId?.startsWith(YONA_SOURCE_PREFIX) ? Number(sourceId.slice(YONA_SOURCE_PREFIX.length)) : null;
 }
 
 // Hồ sơ một người: thẻ trái (ảnh, tên, kết bạn, giới thiệu, kết nối) và các tab bên phải

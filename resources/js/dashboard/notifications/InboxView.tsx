@@ -10,6 +10,7 @@ import { t } from '../../i18n';
 import InboxEmptyState from './InboxEmptyState';
 import InboxItemHeader from './components/InboxItemHeader';
 import { useNotifications } from './NotificationsContext';
+import { notificationTargetUrl } from './helpers';
 import type { NotificationRecord } from './types';
 
 // Port từ routes/dashboard/inbox/InboxView.vue — cột phải của trung tâm thông báo.
@@ -32,8 +33,9 @@ export default function InboxView({ conversationId }: { conversationId: number }
         const target = notifications[index];
         if (!target?.primary_actor) return;
 
+        const friendsUrl = target.primary_actor_type === 'Friendship' ? notificationTargetUrl(accountId, target) : null;
         void openNotification(target).then(() =>
-            router.visit(accountScopedUrl(accountId, `inbox-view/conversation/${target.primary_actor!.id}`)),
+            router.visit(friendsUrl ?? accountScopedUrl(accountId, `inbox-view/conversation/${target.primary_actor!.id}`)),
         );
     };
 

@@ -5,12 +5,12 @@ import { t } from '../../../i18n';
 import Avatar from 'dashboard/components-next/avatar/Avatar';
 import ChannelIcon from 'dashboard/components-next/icon/ChannelIcon';
 import DropdownMenu from 'dashboard/components-next/dropdown-menu/DropdownMenu';
-import ConfirmContactDeleteDialog from 'dashboard/components-next/Contacts/ContactsForm/ConfirmContactDeleteDialog';
-import type { ConfirmContactDeleteDialogHandle } from 'dashboard/components-next/Contacts/ContactsForm/ConfirmContactDeleteDialog';
+import { useAlert } from 'dashboard/composables/useAlert';
+import { fetchFriendshipProfile, removeFriendship } from 'dashboard/friends/api';
 import { openContactChat } from 'dashboard/contacts/openContactChat';
 import { avatarSeed } from 'shared/avatar/avatarSeed';
 import type { Contact } from 'dashboard/contacts/types';
-import { uniqueChannels } from 'dashboard/contacts/contactChannels';
+import { uniqueChannels, yonaUserIdOf } from 'dashboard/contacts/contactChannels';
 import type { DashboardPageProps } from '../../types';
 
 const ROUND_ACTION_CLASS =
@@ -24,14 +24,12 @@ interface FriendRowProps {
 // Một dòng trong danh sách Bạn bè: ảnh có chấm trạng thái, tên kèm logo kênh,
 // dòng trạng thái; bên phải là Nhắn tin và menu ⋮.
 export default function FriendRow({ contact, onRemoved }: FriendRowProps) {
-    const { currentAccount, currentAccountUser } = usePage<DashboardPageProps>().props;
+    const { currentAccount } = usePage<DashboardPageProps>().props;
     const accountId = currentAccount.id;
-    const canRemove = currentAccountUser.role === 'administrator';
     const isOnline = contact.availabilityStatus === 'online';
     const channels = uniqueChannels(contact);
     const [isMenuOpen, setMenuOpen] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
-    const removeDialogRef = useRef<ConfirmContactDeleteDialogHandle>(null);
 
     useEffect(() => {
         if (!isMenuOpen) return undefined;
@@ -42,13 +40,28 @@ export default function FriendRow({ contact, onRemoved }: FriendRowProps) {
         return () => document.removeEventListener('mousedown', closeOnClickAway);
     }, [isMenuOpen]);
 
+    const yonaUserId = yonaUserIdOf(contact);
+
+    // Xoá khỏi danh sách Bạn bè = huỷ kết bạn; người đó và lịch sử chat vẫn ở Hộp thư.
+    const unfriend = async () => {
+        if (yonaUserId === null) return;
+        try {
+            const { friendship_id: friendshipId } = await fetchFriendshipProfile(yonaUserId);
+            if (friendshipId) await removeFriendship(friendshipId);
+            useAlert(t('FRIENDS.PROFILE.UNFRIENDED', { name: contact.name }));
+            onRemoved();
+        } catch {
+            useAlert(t('FRIENDS.REQUESTS.ERROR'));
+        }
+    };
+
     const viewProfile = () => router.visit(`/app/accounts/${accountId}/contacts/${contact.id}`);
 
 
     const menuItems = [
         { label: t('CONTACTS_LAYOUT.FRIENDS.VIEW_PROFILE'), action: 'profile', value: 'profile', icon: 'i-lucide-user-round' },
-        ...(canRemove
-            ? [{ label: t('CONTACTS_LAYOUT.FRIENDS.REMOVE'), action: 'remove', value: 'remove', icon: 'i-lucide-trash-2' }]
+        ...(yonaUserId !== null
+            ? [{ label: t('FRIENDS.PROFILE.UNFRIEND'), action: 'unfriend', value: 'unfriend', icon: 'i-lucide-user-round-x' }]
             : []),
     ];
 
@@ -106,20 +119,12 @@ export default function FriendRow({ contact, onRemoved }: FriendRowProps) {
                             onAction={item => {
                                 setMenuOpen(false);
                                 if (item.action === 'profile') viewProfile();
-                                else if (item.action === 'remove') removeDialogRef.current?.open();
+                                else if (item.action === 'unfriend') void unfriend();
                             }}
                         />
                     ) : null}
                 </div>
             </div>
-            {canRemove ? (
-                <ConfirmContactDeleteDialog
-                    ref={removeDialogRef}
-                    accountId={accountId}
-                    contactId={contact.id}
-                    onDeleted={onRemoved}
-                />
-            ) : null}
         </li>
     );
 }
