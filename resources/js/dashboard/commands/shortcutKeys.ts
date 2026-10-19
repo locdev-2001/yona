@@ -1,35 +1,53 @@
-// Port từ dashboard/components/widgets/modal/constants.js — danh sách phím tắt
-// hiển thị trong modal "Keyboard shortcuts".
+import { accountScopedUrl } from 'dashboard/helper/URLHelper';
+import { settingsHomeUrl } from 'dashboard/settings/shell/settingsPages';
 
-export const KEYS = {
-    ALT: 'Alt / ⌥',
-    WIN: 'Win / ⌘',
-    SHIFT: 'Shift',
-    SLASH: '/',
-    UP: 'Up',
-    DOWN: 'Down',
-} as const;
+// Nguồn duy nhất của bộ phím tắt: modal "Phím tắt" đọc để hiển thị, phím di chuyển
+// được gắn từ chính danh sách này (useSidebarKeyboardShortcuts). Chỉ liệt kê phím
+// đang thật sự hoạt động.
 
-export interface ShortcutKey {
-    id: number;
-    label: string;
-    displayKeys: string[];
-    keySet: string[];
+// Phím trừu tượng; modal đổi sang ký hiệu theo hệ điều hành (⌘/⌥ trên Mac, Ctrl/Alt nơi khác).
+export type ShortcutKey = 'mod' | 'alt' | 'shift' | 'enter' | 'esc' | 'up' | 'down' | (string & {});
+
+export interface Shortcut {
+    action: string;
+    keys: ShortcutKey[];
 }
 
-export const SHORTCUT_KEYS: ShortcutKey[] = [
-    { id: 1, label: 'OPEN_CONVERSATION', displayKeys: [KEYS.ALT, 'J', KEYS.SLASH, KEYS.ALT, 'K'], keySet: ['Alt+KeyJ', 'Alt+KeyK'] },
-    { id: 2, label: 'RESOLVE_AND_NEXT', displayKeys: [KEYS.WIN, KEYS.ALT, 'E'], keySet: ['$mod+Alt+KeyE'] },
-    { id: 3, label: 'NAVIGATE_DROPDOWN', displayKeys: [KEYS.UP, KEYS.DOWN], keySet: ['ArrowUp', 'ArrowDown'] },
-    { id: 4, label: 'RESOLVE_CONVERSATION', displayKeys: [KEYS.ALT, 'E'], keySet: ['Alt+KeyE'] },
-    { id: 5, label: 'GO_TO_CONVERSATION_DASHBOARD', displayKeys: [KEYS.ALT, 'C'], keySet: ['Alt+KeyC'] },
-    { id: 6, label: 'ADD_ATTACHMENT', displayKeys: [KEYS.WIN, KEYS.ALT, 'A'], keySet: ['$mod+Alt+KeyA'] },
-    { id: 7, label: 'GO_TO_CONTACTS_DASHBOARD', displayKeys: [KEYS.ALT, 'V'], keySet: ['Alt+KeyV'] },
-    { id: 8, label: 'TOGGLE_SIDEBAR', displayKeys: [KEYS.ALT, 'O'], keySet: ['Alt+KeyO'] },
-    { id: 9, label: 'GO_TO_REPORTS_SIDEBAR', displayKeys: [KEYS.ALT, 'R'], keySet: ['Alt+KeyR'] },
-    { id: 10, label: 'MOVE_TO_NEXT_TAB', displayKeys: [KEYS.ALT, 'N'], keySet: ['Alt+KeyN'] },
-    { id: 11, label: 'GO_TO_SETTINGS', displayKeys: [KEYS.ALT, 'S'], keySet: ['Alt+KeyS'] },
-    { id: 12, label: 'SWITCH_TO_PRIVATE_NOTE', displayKeys: [KEYS.ALT, 'P'], keySet: ['Alt+KeyP'] },
-    { id: 13, label: 'SWITCH_TO_REPLY', displayKeys: [KEYS.ALT, 'L'], keySet: ['Alt+KeyL'] },
-    { id: 14, label: 'TOGGLE_SNOOZE_DROPDOWN', displayKeys: [KEYS.ALT, 'M'], keySet: ['Alt+KeyM'] },
+export interface NavigationShortcut extends Shortcut {
+    binding: string;
+    url: (accountId: number) => string;
+}
+
+export const NAVIGATION_SHORTCUTS: NavigationShortcut[] = [
+    { action: 'GO_TO_INBOX', keys: ['alt', 'C'], binding: 'Alt+KeyC', url: id => accountScopedUrl(id, 'dashboard') },
+    { action: 'GO_TO_FRIENDS', keys: ['alt', 'V'], binding: 'Alt+KeyV', url: id => accountScopedUrl(id, 'contacts') },
+    { action: 'GO_TO_SETTINGS', keys: ['alt', 'S'], binding: 'Alt+KeyS', url: settingsHomeUrl },
 ];
+
+export interface ShortcutGroup {
+    group: 'GENERAL' | 'NAVIGATION' | 'COMPOSER';
+    shortcuts: Shortcut[];
+}
+
+// Ô soạn tin gửi bằng Enter hoặc ⌘/Ctrl+Enter tuỳ cài đặt của người dùng.
+export function shortcutGroups(sendsWithEnter: boolean): ShortcutGroup[] {
+    return [
+        {
+            group: 'GENERAL',
+            shortcuts: [
+                { action: 'COMMAND_BAR', keys: ['mod', 'K'] },
+                { action: 'SHOW_SHORTCUTS', keys: ['mod', '/'] },
+                { action: 'CLOSE', keys: ['esc'] },
+            ],
+        },
+        { group: 'NAVIGATION', shortcuts: NAVIGATION_SHORTCUTS },
+        {
+            group: 'COMPOSER',
+            shortcuts: [
+                { action: 'SEND_MESSAGE', keys: sendsWithEnter ? ['enter'] : ['mod', 'enter'] },
+                { action: 'NEW_LINE', keys: sendsWithEnter ? ['shift', 'enter'] : ['enter'] },
+                { action: 'NAVIGATE_LIST', keys: ['up', 'down'] },
+            ],
+        },
+    ];
+}

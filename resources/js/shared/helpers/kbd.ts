@@ -28,6 +28,23 @@ export function modifierKeyLabel(): string {
     return isMacOS() ? '⌘' : 'Ctrl';
 }
 
+// Nhãn một phím trừu tượng ('mod', 'alt', 'shift', 'enter', 'esc', 'up', 'down' hoặc ký tự)
+// theo hệ điều hành, dùng cho chip phím <Kbd>.
+export function keyLabel(key: string): string {
+    const mac = isMacOS();
+    const labels: Record<string, string> = {
+        mod: mac ? '⌘' : 'Ctrl',
+        alt: mac ? '⌥' : 'Alt',
+        shift: mac ? '⇧' : 'Shift',
+        enter: '↵',
+        esc: 'Esc',
+        up: '↑',
+        down: '↓',
+    };
+
+    return labels[key.toLowerCase()] ?? key.toUpperCase();
+}
+
 /** useKbd(['$mod', '+', 'enter']) của bản gốc → '⌘ + ↵' / 'CTRL + ↵'. */
 export function shortcutLabel(keys: string[]): string {
     return keys

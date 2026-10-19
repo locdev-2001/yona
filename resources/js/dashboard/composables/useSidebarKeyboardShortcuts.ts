@@ -1,26 +1,22 @@
 import { router } from '@inertiajs/react';
 
-import { accountScopedUrl } from 'dashboard/helper/URLHelper';
+import { NAVIGATION_SHORTCUTS } from 'dashboard/commands/shortcutKeys';
 import { useKeyboardEvents } from './useKeyboardEvents';
 
-// Port từ components-next/sidebar/helpers/useSidebarKeyboardShortcuts.js.
-// Router Vue → Inertia: so sánh `route.name` thay bằng so sánh đường dẫn hiện tại.
-
+// Phím mở modal Phím tắt và phím di chuyển giữa các màn (lấy từ shortcutKeys.ts).
 export function useSidebarKeyboardShortcuts(
     accountId: number,
     toggleShortcutModal: (show: boolean) => void,
 ): void {
-    const navigateTo = (path: string) => {
-        const url = accountScopedUrl(accountId, path);
+    const navigateTo = (url: string) => {
         if (window.location.pathname !== url) router.visit(url);
     };
 
     useKeyboardEvents({
         '$mod+Slash': { action: () => toggleShortcutModal(true) },
         '$mod+Escape': { action: () => toggleShortcutModal(false) },
-        'Alt+KeyC': { action: () => navigateTo('dashboard') },
-        'Alt+KeyV': { action: () => navigateTo('contacts') },
-        'Alt+KeyR': { action: () => navigateTo('reports/overview') },
-        'Alt+KeyS': { action: () => navigateTo('settings/agents/list') },
+        ...Object.fromEntries(
+            NAVIGATION_SHORTCUTS.map(shortcut => [shortcut.binding, { action: () => navigateTo(shortcut.url(accountId)) }]),
+        ),
     });
 }

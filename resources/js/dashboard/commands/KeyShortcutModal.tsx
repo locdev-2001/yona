@@ -1,89 +1,48 @@
-import { useEffect, useState } from 'react';
-import type { ReactNode } from 'react';
+import { usePage } from '@inertiajs/react';
 
 import Modal from 'dashboard/components/Modal';
-import ModalHeader from 'dashboard/components/ModalHeader';
-import { LAYOUT_QWERTZ, detectKeyboardLayout, keysToModifyInQWERTZ } from 'dashboard/composables/useKeyboardEvents';
+import Kbd from 'dashboard/components-next/kbd/Kbd';
+import { isEditorHotKeyEnabled } from 'dashboard/composables/useUISettings';
+import type { DashboardPageProps } from 'dashboard/types';
 import { t } from '../../i18n';
-import { KEYS, SHORTCUT_KEYS } from './shortcutKeys';
-
-// Port từ dashboard/components/widgets/modal/WootKeyShortcutModal.vue.
-// `Hotkey.vue` (kbd.hotkey) chỉ có style nên gộp thẳng vào đây.
-
-// `kbd.hotkey` gốc có `leading-[0.625rem]` nhưng class `.key` (scoped, đặc hiệu hơn)
-// đè bằng line-height của `text-xs` (16px) → bỏ leading ở đây để cao độ trùng oracle.
-const HOTKEY_BASE =
-    'hotkey p-0.5 min-w-[1rem] uppercase inline-flex rounded tracking-wide flex-shrink-0 items-center select-none justify-center';
-// class `.key` trong <style scoped> của modal gốc.
-const KEY_STYLE =
-    'py-2 px-2.5 font-semibold text-xs text-n-slate-12 bg-n-slate-4 shadow border-b-2 rtl:border-l-2 ltr:border-r-2 border-n-strong';
-
-function Hotkey({ className = '', children }: { className?: string; children: ReactNode }) {
-    return <kbd className={`${HOTKEY_BASE} ${className}`}>{children}</kbd>;
-}
+import { shortcutGroups } from './shortcutKeys';
 
 interface KeyShortcutModalProps {
     show: boolean;
     onClose: () => void;
 }
 
+// Bảng phím tắt chia nhóm, đọc từ shortcutKeys.ts; phím gửi tin theo cài đặt ô soạn.
 export default function KeyShortcutModal({ show, onClose }: KeyShortcutModalProps) {
-    const [currentLayout, setCurrentLayout] = useState<string | null>(null);
-
-    useEffect(() => {
-        if (!show) return;
-        void detectKeyboardLayout().then(setCurrentLayout);
-    }, [show]);
-
-    // Bàn phím QWERTZ cần thêm Shift.
-    const needsShiftKey = (keySet: string[]) =>
-        currentLayout === LAYOUT_QWERTZ && keySet.some(key => keysToModifyInQWERTZ.has(key));
+    const uiSettings = usePage<DashboardPageProps>().props.auth.user?.ui_settings ?? {};
+    const groups = shortcutGroups(isEditorHotKeyEnabled(uiSettings, 'enter'));
 
     return (
-        <Modal show={show} onClose={onClose} size="medium">
-            <div className="flex flex-col h-auto overflow-auto">
-                <ModalHeader headerTitle={t('SIDEBAR_ITEMS.KEYBOARD_SHORTCUTS')} />
-                <div className="grid grid-cols-2 px-8 pt-0 pb-4 mt-6 gap-x-5 gap-y-3">
-                    <div className="flex justify-between items-center min-w-[25rem]">
-                        <h5 className="text-sm text-n-slate-12">{t('KEYBOARD_SHORTCUTS.TOGGLE_MODAL')}</h5>
-                        <div className="flex items-center gap-2 mb-1 ml-2">
-                            <Hotkey className={`min-h-[28px] min-w-[60px] normal-case ${KEY_STYLE}`}>{KEYS.WIN}</Hotkey>
-                            <Hotkey className={`min-h-[28px] min-w-[36px] ${KEY_STYLE}`}>{KEYS.SLASH}</Hotkey>
-                        </div>
-                    </div>
-                </div>
-
-                <div className="grid grid-cols-2 px-8 pt-0 pb-8 gap-x-5 gap-y-3">
-                    {SHORTCUT_KEYS.map(shortcut => (
-                        <div key={shortcut.id} className="flex justify-between items-center min-w-[25rem]">
-                            <h5 className="text-sm text-n-slate-12 min-w-[36px]">
-                                {t(`KEYBOARD_SHORTCUTS.TITLE.${shortcut.label}`)}
-                            </h5>
-                            <div className="flex items-center gap-2 mb-1 ml-2">
-                                {needsShiftKey(shortcut.keySet) ? (
-                                    <Hotkey className={`min-h-[28px] min-w-[36px] ${KEY_STYLE}`}>{KEYS.SHIFT}</Hotkey>
-                                ) : null}
-                                {shortcut.displayKeys.map((key, index) =>
-                                    key !== KEYS.SLASH ? (
-                                        <Hotkey
-                                            key={index}
-                                            className={`min-h-[28px] min-w-[36px] normal-case ${KEY_STYLE}`}
-                                        >
-                                            {key}
-                                        </Hotkey>
-                                    ) : (
-                                        <span
-                                            key={index}
-                                            className="flex items-center text-sm font-semibold text-n-slate-12"
-                                        >
-                                            {key}
-                                        </span>
-                                    ),
-                                )}
-                            </div>
-                        </div>
-                    ))}
-                </div>
+        <Modal show={show} onClose={onClose} size="!w-[32rem] max-w-[calc(100vw-2rem)]">
+            <div className="flex flex-col gap-5 p-6">
+                <header className="pe-8">
+                    <h2 className="m-0 text-base font-semibold text-n-slate-12">{t('KEYBOARD_SHORTCUTS.TITLE')}</h2>
+                    <p className="m-0 mt-1 text-sm text-n-slate-11">{t('KEYBOARD_SHORTCUTS.SUBTITLE')}</p>
+                </header>
+                {groups.map(({ group, shortcuts }) => (
+                    <section key={group} className="flex flex-col gap-1">
+                        <h3 className="m-0 mb-1 text-xs font-medium uppercase tracking-wide text-n-slate-10">
+                            {t(`KEYBOARD_SHORTCUTS.GROUPS.${group}`)}
+                        </h3>
+                        <ul className="m-0 p-0 list-none rounded-xl border border-n-weak divide-y divide-n-weak">
+                            {shortcuts.map(shortcut => (
+                                <li key={shortcut.action} className="flex items-center justify-between gap-4 px-3 py-2">
+                                    <span className="text-sm text-n-slate-12">{t(`KEYBOARD_SHORTCUTS.ACTIONS.${shortcut.action}`)}</span>
+                                    <span className="flex items-center gap-1 shrink-0">
+                                        {shortcut.keys.map(key => (
+                                            <Kbd key={key} keyName={key} />
+                                        ))}
+                                    </span>
+                                </li>
+                            ))}
+                        </ul>
+                    </section>
+                ))}
             </div>
         </Modal>
     );

@@ -10,6 +10,7 @@ import { DropdownInlineList, DropdownItem } from 'dashboard/components-next/drop
 import SidebarProfileMenuStatus from 'dashboard/components-next/sidebar/SidebarProfileMenuStatus';
 import KeyShortcutModal from 'dashboard/commands/KeyShortcutModal';
 import SearchField from 'dashboard/components-next/search-field/SearchField';
+import Kbd from 'dashboard/components-next/kbd/Kbd';
 import { logout } from 'dashboard/helper/logout';
 import { accountScopedUrl } from 'dashboard/helper/URLHelper';
 import { useCurrentUserAvailability } from 'dashboard/realtime/hooks';
@@ -228,15 +229,13 @@ export default function SettingsShell({ children }: { children: ReactNode }) {
                     </h1>
                     <button
                         type="button"
-                        className="flex flex-col items-center gap-0.5 text-n-slate-11 hover:text-n-slate-12"
+                        className="flex items-center gap-1.5 h-8 ps-2 pe-1.5 max-md:pe-2 rounded-lg text-n-slate-11 hover:bg-n-alpha-2 hover:text-n-slate-12 transition-colors"
                         aria-label={t('SIDEBAR_ITEMS.SETTINGS_SCREEN.CLOSE')}
                         title={t('SIDEBAR_ITEMS.SETTINGS_SCREEN.CLOSE')}
                         onClick={close}
                     >
-                        <span className="grid place-content-center size-8 rounded-full border border-n-strong">
-                            <Icon icon="i-lucide-x" className="size-4" />
-                        </span>
-                        <span className="max-md:hidden text-[10px] font-semibold leading-none">ESC</span>
+                        <Icon icon="i-lucide-x" className="size-4" />
+                        <Kbd keyName="esc" className="max-md:hidden" />
                     </button>
                 </header>
                 <div className="flex flex-1 min-h-0 overflow-hidden">{children}</div>
