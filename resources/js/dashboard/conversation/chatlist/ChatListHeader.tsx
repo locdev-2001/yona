@@ -1,3 +1,5 @@
+import type { DialogHandle } from 'dashboard/components-next/dialog/Dialog';
+import NewYonaChatDialog from '../people/NewYonaChatDialog';
 import { useRef, useState } from 'react';
 import { isProductFeatureVisible } from 'shared/helpers/productVisibility';
 import { formatNumber } from '@ext/utils';
@@ -92,6 +94,7 @@ export default function ChatListHeader({
     const isAdvancedActive = hasAppliedFilters || hasActiveFolder;
     const canManageViews = isProductFeatureVisible('conversationViews');
     const anchorSide = isOnExpandedLayout ? 'end-3' : 'start-3';
+    const newYonaChatRef = useRef<DialogHandle>(null);
 
     return (
         <>
@@ -106,6 +109,11 @@ export default function ChatListHeader({
                                 onOpenAdvancedFilters={onFiltersModal}
                             />
                             <ListHeaderButton
+                                icon="i-lucide-user-plus"
+                                label={t('CHAT.NEW.TITLE')}
+                                onClick={() => newYonaChatRef.current?.open()}
+                            />
+                            <ListHeaderButton
                                 icon={isSelecting ? 'i-lucide-x' : 'i-lucide-list-checks'}
                                 label={t(isSelecting ? 'CHAT_LIST.SELECTION_MODE.EXIT' : 'CHAT_LIST.SELECTION_MODE.START')}
                                 isActive={isSelecting}
@@ -116,6 +124,7 @@ export default function ChatListHeader({
                     }
                     trailing={<ListMoreMenu isOnExpandedLayout={isOnExpandedLayout} />}
                 />
+                <NewYonaChatDialog ref={newYonaChatRef} />
                 <div id="conversationFilterTeleportTarget" className={`absolute top-full z-50 ${anchorSide}`} />
             </div>
             {isAdvancedActive ? (

@@ -15,6 +15,7 @@ export const INBOX_TYPES = {
     INSTAGRAM: 'Channel::Instagram',
     TIKTOK: 'Channel::Tiktok',
     ZALO: 'Channel::Zalo',
+    YONA: 'Channel::Yona',
 } as const;
 
 const INBOX_ICON_MAP_LINE: Record<string, string> = {

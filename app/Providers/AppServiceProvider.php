@@ -24,6 +24,7 @@ use App\Models\Channel\TwilioSms;
 use App\Models\Channel\TwitterProfile;
 use App\Models\Channel\WebWidget;
 use App\Models\Channel\Whatsapp;
+use App\Models\Channel\Yona;
 use App\Models\Channel\Zalo;
 use App\Models\Chat;
 use App\Models\Contact;
@@ -136,6 +137,7 @@ class AppServiceProvider extends ServiceProvider
             'Channel::Tiktok' => Tiktok::class,
             'Channel::TwitterProfile' => TwitterProfile::class,
             'Channel::Zalo' => Zalo::class,
+            'Channel::Yona' => Yona::class,
             'User' => User::class,
             'Contact' => Contact::class,
             'Inbox' => Inbox::class,

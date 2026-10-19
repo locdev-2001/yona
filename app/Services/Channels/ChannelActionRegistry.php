@@ -7,6 +7,7 @@ use App\Services\Channels\Stickers\StickerCatalog;
 use App\Services\Facebook\FacebookOutboundActions;
 use App\Services\Instagram\InstagramOutboundActions;
 use App\Services\Widget\WidgetOutboundActions;
+use App\Services\Yona\YonaOutboundActions;
 use App\Services\Zalo\ZaloGroupMembers;
 use App\Services\Zalo\ZaloOutboundActions;
 use App\Services\Zalo\ZaloStickerCatalog;
@@ -23,6 +24,7 @@ class ChannelActionRegistry
         'Channel::WebWidget' => WidgetOutboundActions::class,
         'Channel::FacebookPage' => FacebookOutboundActions::class,
         'Channel::Instagram' => InstagramOutboundActions::class,
+        'Channel::Yona' => YonaOutboundActions::class,
     ];
 
     /** @var array<string, class-string<ChannelGroupMembers>> */

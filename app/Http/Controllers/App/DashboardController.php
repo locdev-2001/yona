@@ -4,7 +4,7 @@ namespace App\Http\Controllers\App;
 
 use App\Http\Controllers\Controller;
 use App\Models\Account;
-use App\Services\Users\PersonalAccounts;
+use App\Services\Yona\YonaInboxes;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -12,9 +12,9 @@ use Inertia\Response;
 
 class DashboardController extends Controller
 {
-    public function index(Request $request, PersonalAccounts $accounts): RedirectResponse
+    public function index(Request $request, YonaInboxes $yonaInboxes): RedirectResponse
     {
-        $account = $accounts->ensureFor($request->user());
+        $account = $yonaInboxes->ensureFor($request->user())->account;
 
         return redirect("/app/accounts/{$account->id}/dashboard");
     }

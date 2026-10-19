@@ -14,6 +14,7 @@ use App\Services\Telegram\SendOnTelegramService;
 use App\Services\Tiktok\SendOnTiktokService;
 use App\Services\Twilio\SendOnTwilioService;
 use App\Services\Whatsapp\SendOnWhatsappService;
+use App\Services\Yona\SendOnYonaService;
 use App\Services\Zalo\SendOnZaloService;
 use Throwable;
 
@@ -38,6 +39,7 @@ class SendReplyJob extends ApplicationJob
         'Channel::Whatsapp' => SendOnWhatsappService::class,
         'Channel::Tiktok' => SendOnTiktokService::class,
         'Channel::Zalo' => SendOnZaloService::class,
+        'Channel::Yona' => SendOnYonaService::class,
     ];
 
     /** Tin chữ: người gửi đang nhìn bong bóng chờ tick, không xếp sau thông báo/phân công. */
