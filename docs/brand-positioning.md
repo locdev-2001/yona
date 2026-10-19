@@ -1,32 +1,54 @@
 # Định vị thương hiệu Yona
 
-Nguồn chuẩn cho mọi nội dung công khai: landing yona.vn, Fanpage Facebook, mô tả Meta App, tài liệu bán hàng. Đổi định vị thì sửa file này trước, các bề mặt khác theo sau.
+Nguồn chuẩn cho mọi nội dung công khai: landing yona.vn, trang mạng xã hội của
+Yona, mô tả ứng dụng, bài giới thiệu. Đổi định vị thì sửa file này trước, các bề
+mặt khác theo sau.
 
-Chốt với founder ngày 10/10/2026.
+Chốt với founder ngày 19/10/2026 (đổi hướng sản phẩm, thay bản 10/10/2026).
 
 ## Loại sản phẩm
 
-**Nền tảng tương tác khách hàng đa kênh** (customer engagement platform). Ba trụ: OmniChat đa kênh, CRM (hồ sơ khách hàng 360), tự động hoá.
+**Ứng dụng nhắn tin giữa bạn bè.** Nhắn riêng 1-1 và nhắn nhóm, chạy trên trình
+duyệt và cài lên điện thoại như một ứng dụng (PWA). Ứng dụng gốc làm sau.
 
-Không tự gọi là "Messaging CRM" (trùng cách gọi của đối thủ) và không nhấn riêng một kênh nào.
+Yona không còn là phần mềm cho doanh nghiệp: không hộp thư chung, không kết nối
+kênh bên ngoài, không hồ sơ khách, không nhân viên. Mọi nội dung công khai không
+được dùng lại ngôn ngữ của định vị cũ.
 
-## Khách hàng mục tiêu
+## Người dùng mục tiêu
 
-Doanh nghiệp Việt quy mô vừa, 20-200 người, có đội chăm sóc khách hàng hoặc bán hàng trực chat riêng.
+Người Việt nhắn tin với bạn bè, gia đình, lớp học, hội nhóm sở thích. Mỗi người
+dùng là một cá nhân với một `@username`.
 
 ## Thông điệp
 
-- **Tên hiển thị:** Yona - Nền tảng tương tác khách hàng đa kênh
-- **Tagline:** Mọi kênh chat. Một hồ sơ khách hàng. Tự động từ đầu đến cuối.
+- **Tên hiển thị:** Yona - Nhắn tin với bạn bè
+- **Tagline:** Nhắn riêng hay cả nhóm, ngay trên trình duyệt.
 - **Ba lợi ích dẫn đầu, theo thứ tự:**
-  1. **Hồ sơ khách hàng 360:** một người nhắn từ nhiều kênh gộp thành một hồ sơ, đủ lịch sử, nhãn, ghi chú, nguồn kênh.
-  2. **Một hộp thư cho mọi kênh:** Zalo, Messenger, Instagram, WhatsApp, website, email trên một màn hình, cập nhật tức thì.
-  3. **Tự động hoá:** quy tắc tự gắn nhãn và phân công, câu trả lời mẫu, macro, bot.
-- **Kênh:** nêu đủ Zalo, Messenger, Instagram, WhatsApp, website, email.
-- **Giọng điệu:** chuyên nghiệp, rõ ràng, kiểu B2B. Câu ngắn, nói kết quả cho đội ngũ; không dùng từ lóng, không hô hào.
-- **Lời kêu gọi chính:** Dùng thử miễn phí.
+  1. **Nhắn riêng và nhóm ở một chỗ:** tìm nhau bằng `@username`, nhóm phẳng có
+     trưởng nhóm và phó nhóm, tối đa 500 người, mời bằng username hoặc link mời.
+  2. **Trò chuyện tự nhiên:** đã xem, đang gõ, trả lời trích dẫn, cảm xúc,
+     sticker, ảnh và file, thẻ chuyển khoản VietQR, thông báo đẩy.
+  3. **Bạn làm chủ hộp tin:** tin từ người lạ vào Tin chờ để mình chấp nhận hoặc
+     xoá; chặn có hiệu lực hai chiều; báo cáo vi phạm.
+- **Giọng điệu:** thân thiện, gần gũi, câu ngắn. Nói như một người bạn giới thiệu
+  ứng dụng cho bạn mình; không thuật ngữ kỹ thuật, không hô hào.
+- **Lời kêu gọi chính:** Tạo tài khoản. Lời kêu gọi phụ: Đăng nhập.
+
+## Không được nói
+
+- Gọi thoại, gọi video: chưa có.
+- Miễn phí mãi mãi, gói cước, giá: chưa có quyết định về gói cước.
+- Mã hoá đầu cuối: không có (máy chủ đọc được nội dung tin).
+- Số người dùng, đánh giá, logo đối tác: chưa có số thật thì không nêu.
+- Bất kỳ chữ nào của định vị cũ: CRM, khách hàng, đa kênh, omnichannel, doanh
+  nghiệp, nhân viên, Zalo, widget website.
 
 ## Mô tả ngắn dùng lại
 
-- **Một câu (tối đa 160 ký tự):** Yona gom mọi kênh chat về một nền tảng, tạo hồ sơ khách hàng 360 và tự động hoá chăm sóc khách hàng cho doanh nghiệp.
-- **Đoạn ngắn (tiểu sử Fanpage, tối đa 255 ký tự):** Nền tảng tương tác khách hàng đa kênh cho doanh nghiệp Việt. Gom Zalo, Messenger, Instagram, WhatsApp, website và email về một hộp thư, hồ sơ khách hàng 360, tự động hoá chăm sóc. Dùng thử miễn phí tại yona.vn
+- **Một câu (tối đa 160 ký tự):** Yona là ứng dụng nhắn tin cho bạn bè và người
+  thân: nhắn riêng, lập nhóm, tìm nhau bằng @username, ngay trên trình duyệt.
+- **Đoạn ngắn (tiểu sử trang mạng xã hội, tối đa 255 ký tự):** Ứng dụng nhắn tin
+  cho bạn bè và người thân. Nhắn riêng hoặc lập nhóm tới 500 người, tìm nhau bằng
+  @username, tin từ người lạ vào Tin chờ. Mở trên trình duyệt, cài lên điện
+  thoại. Tạo tài khoản tại yona.vn

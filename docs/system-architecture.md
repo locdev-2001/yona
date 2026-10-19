@@ -5,11 +5,19 @@ Nguồn chuẩn cho các quyết định kiến trúc đang có hiệu lực. Đ
 [ux-decisions.md](ux-decisions.md), triển khai production ở
 [deployment.md](deployment.md).
 
+> **Hiện trạng 19/10/2026:** Yona đổi hướng thành ứng dụng nhắn tin giữa bạn bè.
+> Lõi mới nằm ở **mục 11 "Lõi nhắn tin giữa người dùng"**. Các phần mang nhãn
+> **(đang gỡ)** thuộc bản CRM cũ (hộp thư theo kênh, widget, webhook, account):
+> code còn chạy ngầm cho tới khi gỡ xong, không xây tính năng mới trên chúng và
+> không lấy chúng làm khuôn cho chat. Mục 1, 2, 5, 7 (phần chung), 8 vẫn áp dụng
+> cho cả lõi mới.
+
 ## 1. Stack
 
 PHP 8.3+ / Laravel 13 · Inertia + React 19 (TypeScript), Tailwind + Radix ·
 PostgreSQL (`pg_trgm`) · Redis (cache, queue, session) · Laravel Reverb
-(WebSocket) · bridge Node cho Zalo cá nhân (`services/zalo-bridge`, zca-js).
+(WebSocket) · bridge Node cho Zalo cá nhân (`services/zalo-bridge`, zca-js;
+**đang gỡ**, không thuộc sản phẩm nhắn tin bạn bè).
 
 ## 2. Phân lớp và ba mặt tiền route
 
@@ -26,7 +34,10 @@ PostgreSQL (`pg_trgm`) · Redis (cache, queue, session) · Laravel Reverb
     danh khó đoán trên URL.
 - `routes/channels.php`: quyền nghe kênh realtime (mục 4).
 
-## 3. Kênh nhắn tin: lõi trung tính, đặc thù ở driver
+## 3. Kênh nhắn tin: lõi trung tính, đặc thù ở driver (đang gỡ)
+
+> Toàn bộ mục này là hộp thư theo kênh của bản CRM. Chat bạn bè không đi qua
+> kênh, driver hay `CapabilitySet`: xem mục 11.
 
 - Mỗi kênh là một model `app/Models/Channel/*` (quan hệ đa hình với `inboxes`).
 - Năng lực kênh khai **duy nhất** ở `app/Channels/CapabilitySet.php` qua
@@ -333,6 +344,9 @@ ra kênh ngoài là sticker gốc của nền tảng hoặc một ảnh, không 
 
 ## 4. Realtime
 
+- Chat bạn bè chỉ dùng kênh `pubsub_token` của từng người dùng, sự kiện `chat.*`
+  (mục 11). Kênh `account_{id}` và kênh của khách widget dưới đây là của bản CRM
+  (**đang gỡ**).
 - Laravel Reverb + Echo. Sự kiện đẩy qua `app/Events/RealtimeBroadcast.php`
   (`ShouldBroadcastNow`, kênh private).
 - Mỗi nhân viên nghe hai kênh: `account_{id}` (chung account) và kênh mang
@@ -349,7 +363,11 @@ ra kênh ngoài là sticker gốc của nền tảng hoặc một ảnh, không 
   purgable). Horizon, `Makefile` và `deploy.sh` cùng đọc file này.
 - Việc định kỳ chạy bằng Laravel scheduler (`routes/console.php`).
 
-## 6. Sự kiện nghiệp vụ
+## 6. Sự kiện nghiệp vụ (đang gỡ)
+
+> `EventType` và listener dưới đây phục vụ hộp thư CRM (webhook, automation,
+> báo cáo). Chat bạn bè không phát `EventType`; sự kiện của nó là hằng trong
+> `ChatBroadcaster` (mục 11).
 
 - Tên sự kiện là enum `app/Events/EventType.php` (`message.created`,
   `conversation.status_changed`…). Chuỗi đó vừa là tên client Echo nhận
@@ -360,10 +378,10 @@ ra kênh ngoài là sticker gốc của nền tảng hoặc một ảnh, không 
 
 ## 7. Dữ liệu
 
-- `display_id` của hội thoại (và chiến dịch) tăng riêng theo từng account bằng
+- (Đang gỡ) `display_id` của hội thoại (và chiến dịch) tăng riêng theo từng account bằng
   trigger PostgreSQL + sequence per-account (`conv_dpid_seq_<account_id>`), tạo
   lúc thêm account.
-- Cờ tính năng: cột jsonb `accounts.feature_flags`; danh mục cờ ở
+- (Đang gỡ) Cờ tính năng: cột jsonb `accounts.feature_flags`; danh mục cờ ở
   `config/features.php`.
 - Tệp: bảng `attachments` + Laravel filesystem. URL tệp dạng
   `/attachments/{id}/{chữ ký}/{tên tệp gốc}` (giao diện đọc tên hiển thị từ đoạn
@@ -390,7 +408,10 @@ ra kênh ngoài là sticker gốc của nền tảng hoặc một ảnh, không 
   `{installationName}`, điền lúc chạy từ cấu hình cài đặt — không viết cứng tên
   sản phẩm vào bản dịch.
 
-## 9. Contract công khai: SDK nhúng và webhook
+## 9. Contract công khai: SDK nhúng và webhook (đang gỡ)
+
+> SDK widget và webhook thuộc bản CRM. Khi gỡ, contract ngoài vẫn phải được xử
+> lý có chủ đích (tắt hẳn hoặc trả lỗi rõ ràng), không xoá lặng lẽ.
 
 Website khách đã dán mã nhúng và hệ thống khách đã nhận webhook: mọi tên đã phát
 ra ngoài là **contract**. Đổi tên thì tên mới là chính, tên đời trước giữ làm
@@ -414,6 +435,11 @@ dùng.
   website khách — giữ nguyên.
 
 ## 10. Ký + mã hoá request nhắn tin và giới hạn nhịp
+
+> Phạm vi ký + mã hoá dưới đây là route của hộp thư CRM và widget (**đang gỡ**).
+> Route chat bạn bè (`/api/v1/chats…`) hiện **không** ký/mã hoá, chỉ có
+> `throttle` theo route (mục 11). Muốn đưa chat vào lớp ký thì gắn
+> `VerifySignedRequest` ở `routes/web_api.php`, không viết lớp thứ hai.
 
 Mục tiêu là **chống lạm dụng API** (dựng request bằng tay, dán lại cURL, replay,
 script gọi hàng loạt), **không** phải E2EE: máy chủ vẫn đọc nội dung, khoá nằm
@@ -458,3 +484,128 @@ trong JS nên chỉ làm khó; lớp chặn thật là giới hạn nhịp.
   nằm trong danh sách ưu tiên, nên khoá của widget/Platform API đọc thẳng từ token.
 - **Cấu hình một chỗ**: `config/request_protection.php`. `REQUEST_SIGNING_ENABLED=false`
   là rollback tức thì không cần deploy mã (chạy `php artisan config:cache` lại).
+
+## 11. Lõi nhắn tin giữa người dùng
+
+Lõi của sản phẩm từ 19/10/2026: hội thoại giữa các `users` ngang hàng, không
+`account`, không `inbox`, không `contact`. Mô tả dưới đây khớp code trên `main`
+ngày 19/10/2026; phần chưa có code ghi rõ ở cuối mục.
+
+### Dữ liệu: dùng chung bảng, model riêng
+
+- **`App\Models\Chat`** trên bảng `conversations`. Hàng có cột `kind` khác rỗng là
+  chat giữa người dùng (`KIND_DIRECT = 1`, `KIND_GROUP = 2`); `account_id`/`inbox_id`
+  để rỗng. Global scope `kind not null` giữ hàng CRM ngoài mọi truy vấn chat;
+  có `SoftDeletes`. Cột riêng: `title`, `description`, `created_by`, `direct_key`
+  (unique), `last_message_id`, `last_activity_at`, `member_count`, `settings` (jsonb).
+- **`App\Models\ChatMember`** trên bảng `conversation_members` (unique
+  `conversation_id + user_id`): `role` (`ROLE_MEMBER`/`ROLE_ADMIN`/`ROLE_OWNER`),
+  `status` (`STATUS_ACTIVE`/`STATUS_PENDING` = Tin chờ/`STATUS_LEFT`/`STATUS_REMOVED`),
+  `last_read_message_id`, `muted_until`, `archived_at`, `pinned_at`, `invited_by`.
+  Trạng thái riêng của từng người (đã đọc, tắt thông báo, ghim) nằm ở đây, không ở hội thoại.
+- **`App\Models\ChatMessage`** trên bảng `messages` (chia partition theo tháng,
+  chung với tin hộp thư). Người gửi luôn là `User` (`sender_type = 'User'`); tin
+  hệ thống không có người gửi (`TYPE_SYSTEM`). Trả lời, thu hồi, cảm xúc đi trong
+  `content_attributes` (`in_reply_to`, `deleted`…), không có bảng riêng. Chống gửi
+  trùng bằng `client_id` (client gửi `echo_id`).
+- Lý do không dùng `Conversation`/`Message`: hai model đó mang hook của hộp thư
+  (gán người, webhook, automation, báo cáo) vốn giả định có account/inbox/contact
+  và hỏng khi chúng rỗng.
+- Bảng phụ: `user_blocks` (`UserBlock`), `abuse_reports` (`AbuseReport`,
+  `REPORTABLE` = `user` / `chat` / `message`), `conversation_invite_links` (đã
+  migrate, chưa có code dùng). Người dùng có `username` và các trường hồ sơ
+  (migration `add_profile_fields_to_users_table`).
+
+### Nghiệp vụ: `app/Services/Chat/`
+
+Mỗi class một trách nhiệm; controller chỉ validate rồi gọi xuống đây.
+
+| Class | Trách nhiệm |
+|---|---|
+| `DirectChats` | Mở (hoặc lấy lại) hội thoại 1-1. Mỗi cặp đúng một hội thoại qua `Chat::directKey()` (`min:max` của hai user id); hai bên mở cùng lúc thì bên thua bắt lỗi unique và lấy hội thoại bên kia vừa tạo. Người mở `ACTIVE`, người nhận `PENDING` (Tin chờ). Từ chối nhắn cho chính mình và khi có chặn giữa hai người |
+| `ChatMessageSender` | **Đường gửi tin duy nhất**: kiểm thành viên, kiểm chặn (1-1), chống trùng theo `client_id`, ghi tin + cập nhật `last_message_id`/`last_activity_at` + đánh dấu người gửi đã đọc trong một transaction. Người gửi đang `PENDING` thì chuyển `ACTIVE` (trả lời = chấp nhận). Sau đó phát `chat.message.created` và gửi `ChatMessageNotification` cho thành viên `ACTIVE` không tắt thông báo. `sendText()` là lối vào cho tin chữ (kèm `in_reply_to` nếu tin gốc thuộc hội thoại); loại tin khác sẽ đi qua `send()` |
+| `ChatMemberships` | Trạng thái của một người trong hội thoại: chấp nhận Tin chờ, xoá khỏi danh sách của mình (`STATUS_LEFT`, không báo người kia), đánh dấu đã đọc, đang gõ, đếm chưa đọc (trần 100). `membership()` là chỗ duy nhất kiểm "có phải thành viên" |
+| `ChatInbox` | Danh sách hội thoại theo tab `all` (ACTIVE) / `requests` (PENDING, chỉ hội thoại đã có tin), phân trang theo `last_activity_at` (25/trang); trang tin cũ → mới (30/trang, theo `platform_sent_at`, `id`) |
+| `UserBlocks` | Chặn/bỏ chặn. Khai một chiều, `isBlockedBetween()` kiểm hai chiều |
+| `AbuseReports` | Ghi báo cáo vi phạm; Super Admin `resolve()` |
+| `ChatBroadcaster` | **Nơi duy nhất phát realtime của chat** (xem dưới) |
+| `ChatPresenter` | Dựng JSON cho giao diện, giữ khuôn payload hội thoại/tin của hộp thư để `ConversationView` dùng lại. Tin không phụ thuộc người xem; trạng thái `read` tính từ `last_read_message_id` của người kia (chỉ 1-1). Có `preview()` cho thông báo đẩy |
+
+Tìm người theo username nằm ở `app/Services/Users/UserDirectory.php` (khớp tiền
+tố username hoặc tên không dấu qua `search_fold`, bỏ chính mình và người chưa có
+username); chuẩn hoá và kiểm trống username ở `app/Services/Users/Username.php`.
+Đăng ký đi qua `app/Services/Users/PersonalSignUpService.php` (form và Google
+cùng một lối, chỉ tạo user).
+
+### Route
+
+Trang Inertia (`routes/web.php`, sau `auth`):
+
+| Route | Ghi chú |
+|---|---|
+| `GET /app` | Chuyển về `/chat` |
+| `GET/POST /chat/welcome` | Chọn username; middleware `EnsureUsername` đẩy người chưa có username về đây |
+| `GET /chat`, `GET /chat/c/{chat}` | Màn chat (render `dashboard/conversation/ConversationView`), sau `EnsureUsername` |
+| `GET /chat/profile` | Hồ sơ (`resources/js/chat/Profile.tsx`) |
+
+JSON (`routes/web_api.php`, nhóm `auth.api_token` + `auth`, tiền tố `/api/v1`;
+session của giao diện hoặc header `api_access_token`):
+
+| Route | Ghi chú |
+|---|---|
+| `GET /users/search?q=` | Tìm người (throttle 60/phút) |
+| `GET /usernames/availability?username=` | Kiểm username còn trống (throttle 60/phút) |
+| `GET /chats?tab=all\|requests&before=` | Danh sách hội thoại |
+| `POST /chats/direct` (`user_id`) | Mở hội thoại 1-1 (throttle 60/phút) |
+| `GET /chats/{chat}` · `DELETE /chats/{chat}` | Xem · xoá khỏi danh sách của mình |
+| `POST /chats/{chat}/accept` · `/read` · `/typing` | Chấp nhận Tin chờ · đã đọc · đang gõ (typing throttle 120/phút) |
+| `GET /chats/{chat}/messages?before=` | Trang tin |
+| `POST /chats/{chat}/messages` (`content`, `echo_id`, `in_reply_to`) | Gửi tin chữ (throttle 120/phút) |
+| `POST /blocks` · `DELETE /blocks/{user}` | Chặn · bỏ chặn |
+| `POST /abuse_reports` | Báo cáo vi phạm (throttle 20/phút) |
+| `POST/DELETE /notification_subscriptions` | Đăng ký Web Push của trình duyệt |
+
+Phía giao diện, một chỗ duy nhất gọi các API này:
+`resources/js/dashboard/conversation/api.ts`.
+
+### Realtime
+
+- `ChatBroadcaster` phát qua `App\Events\RealtimeBroadcast` tới kênh private mang
+  **`pubsub_token` của từng người dùng** (`routes/channels.php`, pattern
+  `{pubsubToken}`). `toMembers()` gửi cho thành viên `ACTIVE` và `PENDING` (có thể
+  trừ người gây ra sự kiện); `toUser()` gửi cho một người. Mọi người nghe đi chung
+  một lượt POST tới Reverb. Reverb trục trặc chỉ ghi log: tin đã lưu thì người
+  nhận vẫn thấy khi tải lại.
+- Sự kiện (hằng trong `ChatBroadcaster`, payload luôn có `chat_id`):
+
+| Sự kiện | Khi nào | Payload thêm |
+|---|---|---|
+| `chat.message.created` | Có tin mới | `message` (khuôn `ChatPresenter::message`) |
+| `chat.updated` | Chấp nhận Tin chờ, xoá khỏi danh sách (chỉ gửi cho chính người đó) | `removed` khi xoá |
+| `chat.read` | Một người đọc tới tin nào | `user_id`, `message_id` |
+| `chat.typing` | Đang gõ / thôi gõ (không gửi cho chính người gõ) | `user`, `typing` |
+| `chat.message.updated` | Mới khai hằng, chưa có chỗ phát (dành cho sửa/thu hồi/cảm xúc) | |
+
+- Phía giao diện nghe ở `resources/js/dashboard/realtime/ActionCableConnector.ts`
+  và xử lý trong `resources/js/dashboard/conversation/ConversationContext.tsx`.
+
+### Thông báo đẩy
+
+`App\Notifications\ChatMessageNotification` qua kênh
+`App\Notifications\Channels\WebPushChannel` (dùng lại `WebPushGateway` + khoá VAPID
++ `public/sw.js` sẵn có). Chỉ gửi khi người nhận có đăng ký đẩy; đăng ký đã chết
+thì xoá. Payload: tên người gửi, xem trước 120 ký tự, `tag = chat-{id}`, URL
+`/chat/c/{id}`.
+
+### Chưa có code (đang dựng)
+
+- **Nhóm:** mới có hằng `Chat::KIND_GROUP`, vai trò trong `ChatMember` và bảng
+  `conversation_invite_links`; chưa có service, route hay giao diện tạo nhóm, mời,
+  đổi quyền, rời, giải tán.
+- **Tin không phải chữ:** `POST .../messages` chỉ nhận `content`; presenter trả
+  `attachments: []`. Ảnh/file, sticker, thẻ chuyển khoản VietQR, cảm xúc, sửa,
+  thu hồi chưa có đường ghi. Khi thêm: đi qua `ChatMessageSender::send()` và phát
+  `chat.message.updated` qua `ChatBroadcaster`, không mở đường thứ hai.
+- **Đã xem trong nhóm**, ghim, lưu trữ, tắt thông báo theo hội thoại: cột đã có
+  ở `conversation_members`, chưa có route.
+- **Ký + mã hoá request** cho route chat (mục 10).

@@ -12,29 +12,28 @@
 > - **Cấm tạo tài khoản thử trên production.** Thử luồng khách thì làm ở local (xem README, mục Chạy local).
 
 **Repo:** github.com/locflamedia/yona · **Domain:** yona.vn · **Team:** bootstrapped, 3 dev
-**Định vị:** Conversational CRM — gom tin nhắn khách từ mọi kênh chat về một hộp thư, biến hội thoại thành hồ sơ khách hàng. Marketing KHÔNG giới hạn theo một kênh cụ thể.
-**Đối tượng:** SME Việt bán online — kể cả hộ kinh doanh, nhà phân phối nhỏ, kinh doanh phi chính thức.
+**Định vị:** Ứng dụng nhắn tin giữa bạn bè — nhắn riêng 1-1 và nhắn nhóm, tìm nhau bằng `@username`, chạy trên trình duyệt và cài lên điện thoại (PWA). Đổi hướng ngày 19/10/2026; Yona **không còn là CRM/omnichannel**. Nguồn định vị: `docs/brand-positioning.md`.
+**Đối tượng:** người Việt nhắn tin với bạn bè, gia đình, lớp học, hội nhóm. Mỗi người dùng là một cá nhân, không có doanh nghiệp/tenant.
 
 ---
 
-## Sản phẩm hôm nay thực sự là gì (20/09/2026)
+## Sản phẩm hôm nay thực sự là gì (19/10/2026)
 
-Production chạy tại https://yona.vn. Tiếng Việt đầy đủ. Repo không còn test tự động (gỡ 16/10/2026); nghiệm thu bằng UI có ảnh.
+Production chạy tại https://yona.vn nhưng **vẫn là bản CRM cũ** cho tới khi deploy `main`. Deploy `main` = 3 tài khoản CRM đang dùng mất giao diện CRM, nên phải xong việc báo khách và xuất dữ liệu (phase 0 của kế hoạch đổi hướng) trước. Mốc quay lại: tag `main-truoc-chat-ban-be`. Repo không còn test tự động; nghiệm thu bằng UI có ảnh.
 
-**Có thật:** hộp thư đa kênh realtime · Zalo cá nhân (QR, thu hồi hai chiều, cảm xúc, tin nhóm) · widget website + SDK · email IMAP/SMTP · nhãn, ghi chú, mention, gán việc · automation rules + macro + câu trả lời mẫu · webhook + agent bot · liên hệ, thuộc tính tùy biến, bộ lọc, import/export CSV · báo cáo + CSAT · Help Center · chiến dịch live chat · thông báo đẩy trình duyệt (Web Push, VAPID tự sinh) · 2FA, RBAC, Platform API, Super Admin.
+**Có trong code trên `main`:** đăng ký email hoặc Google (chỉ tạo user, không tạo account) · chọn `@username` ở `/chat/welcome` (chưa có thì không vào được chat) · hồ sơ `/chat/profile` · tìm người theo username · nhắn riêng 1-1 bằng chữ, trả lời trích dẫn, đã xem, đang gõ, realtime · Tin chờ cho người lạ (chấp nhận/xoá, trả lời = chấp nhận) · chặn (hiệu lực hai chiều) · báo cáo vi phạm người/hội thoại/tin · Web Push cho tin mới · `/app` chuyển về `/chat` · màn chat dùng lại y hệt giao diện hộp thư cũ · landing đã viết lại cho ứng dụng nhắn tin · kho sticker và Super Admin giữ lại. Kiến trúc lõi: `docs/system-architecture.md` mục "Lõi nhắn tin giữa người dùng".
 
-**Widget mới và tin có cấu trúc** (26/09/2026, nhánh `feat/widget-revamp`, chờ deploy): widget có Home + 4 tab (Tin nhắn nhiều hội thoại, Trợ giúp, Cập nhật), phóng to hai cột, khách thả cảm xúc · tin có cấu trúc một lõi (`app/Messaging/Structured`, `shared/messaging`): trả lời nhanh, thẻ sản phẩm + đặt mua chọn biến thể, chọn lịch, form, tra đơn, **thẻ chuyển khoản VietQR** + đánh dấu đã nhận · kênh không có nút gốc tự hạ cấp (Zalo nhận ảnh thẻ + chữ + danh sách số, khách **trả lời bằng số**) · trang công khai theo token `/m/{token}` hạn 14 ngày · lời mời chủ động có chip · màn cấu hình Widget chat xem trước bằng widget thật. Kiến trúc: `docs/system-architecture.md` §3.
+**Đang dựng (có trong phạm vi sản phẩm, CHƯA có code chạy):** nhóm phẳng (trưởng/phó nhóm, tối đa 500 người; mới có hằng `Chat::KIND_GROUP` và bảng `conversation_invite_links`) · mời vào nhóm bằng username hoặc link · ảnh/file, sticker, cảm xúc, thu hồi, sửa tin trong chat (API gửi tin hiện chỉ nhận chữ) · thẻ chuyển khoản VietQR trong chat · cài dạng PWA đầy đủ.
 
-**KHÔNG có trong code — đừng viết marketing hay code dựa trên chúng:**
-- **Lead, Pipeline, Deal, Task, Project** — không một bảng nào. Landing đã sửa ngày 24/09 để không hứa nữa; sửa landing thì đọc lại toàn trang để chắc không hứa lại.
-- **Gói cước, thanh toán, entitlements** — chưa có gì (thẻ chuyển khoản VietQR là khách trả tiền cho shop, không phải Yona thu tiền).
-- **Trợ lý AI trong widget** — chưa có bộ não; tab Trợ lý AI ở màn cấu hình chỉ ghi "Sắp ra mắt".
-- **Bộ đếm hội thoại (metering)** — `MeteringService` đã bỏ khi viết lại; chỉ còn số đếm của báo cáo.
-- **Messenger, Instagram, WhatsApp Cloud, TikTok** — có wizard nhưng cần Meta App + App Review đứng tên Yona (#57).
+**KHÔNG có và không làm ở giai đoạn này — đừng viết marketing hay code dựa trên chúng:**
+- **Gọi thoại, gọi video.**
+- **Bảng bạn bè / kết bạn** — nhắn tự do, người lạ vào Tin chờ.
+- **Gói cước, thanh toán** — chưa có gì (thẻ VietQR là người dùng chuyển tiền cho nhau, Yona không thu tiền).
+- **Mã hoá đầu cuối** — máy chủ đọc được nội dung tin.
+- **App gốc iOS/Android** — Web/PWA trước.
+- **Mọi thứ của CRM:** hộp thư đa kênh, Zalo cá nhân, email, widget website, Help Center, báo cáo, nhân viên/team, gán việc, CDP/liên hệ, automation, chiến dịch, nhân viên AI. Code CRM còn chạy ngầm trong `app/` và `routes/` cho tới khi gỡ xong (phase 6); không xây thêm gì trên đó.
 
-**Luồng khách lạ tự đăng ký tới màn đầu tiên** đã thông trong code (24/09/2026): website không còn bắt buộc ở onboarding, quản trị viên account chưa có hộp thư thấy màn bắt đầu (cả trên điện thoại). Còn chờ deploy. Trên production, ảnh đính kèm và trang 404 chỉ đúng sau khi sửa vhost nginx theo `docs/deployment.md` mục 7.
-
-Ảnh rà soát giao diện: nhánh `evidence/ui-audit-260920`, file `plans/reports/ui-audit-260920-evidence.md`.
+**Pháp lý chưa xong:** Nghị định 147/2024/NĐ-CP có thể xếp ứng dụng nhắn tin có nhóm vào "mạng xã hội" (xác thực số điện thoại). Founder đang hỏi luật sư; schema có sẵn `phone` + `phone_verified_at` để thêm xác thực SMS mà không đổi lõi.
 
 ---
 
@@ -46,20 +45,24 @@ Stack: PHP 8.3+ / Laravel 13 · Inertia + React 19 (TypeScript), Tailwind + Radi
 
 ## 4 quy tắc xuyên suốt
 
-1. **Chống trùng:** một người từ nhiều nguồn gộp thành một hồ sơ — khóa chính = số điện thoại.
-2. **Phân biệt rõ:** người lạ = "Liên hệ nháp", không phải khách tiềm năng.
-3. **Ghi nguồn:** mỗi hồ sơ lưu rõ đến từ kênh nào.
-4. **Tôn trọng nền tảng:** chỉ gửi khi còn trong cửa sổ cho phép của kênh (vd 24h của Meta). Yona không tự chặn tin chủ động: cửa sổ 7h–22h và trần 3 tin/số/ngày đã gỡ ngày 07/09/2026, `SendRateLimiter` chỉ còn đếm.
+1. **Một người = một tài khoản cá nhân, một `@username`.** Tìm nhau bằng username hoặc link mời; không cần trao số điện thoại.
+2. **Người lạ vào Tin chờ:** tin đầu từ người chưa từng trò chuyện không vào danh sách chính, không gửi thông báo đẩy, cho tới khi người nhận chấp nhận hoặc trả lời.
+3. **Người dùng làm chủ an toàn của mình:** chặn có hiệu lực hai chiều ở 1-1; báo cáo được người, hội thoại, tin; Super Admin xử lý báo cáo.
+4. **Một đường gửi tin:** mọi tin của chat đi qua `App\Services\Chat\ChatMessageSender` (kiểm thành viên + chặn, ghi tin, cập nhật hội thoại, phát realtime, đẩy thông báo); mọi sự kiện realtime đi qua `ChatBroadcaster`. Thêm loại tin mới = thêm payload vào đường này, không mở đường gửi thứ hai.
 
 ## Quyết định đã chốt — đừng làm sai lại
 
-- **Zalo CÁ NHÂN, không phải Zalo OA.** Không có API chính thức → QR login qua zca-js; rủi ro ToS và khóa tài khoản là có thật, phải nói trước với khách (#43).
-- Hội thoại đếm **per-channel**, không gộp theo người. Cùng người trên Zalo + Messenger = 2 hội thoại.
-- Bộ đếm chỉ tính khi **tenant trả lời**, không tính tin inbound.
-- **Gate hạn mức đã gỡ hoàn toàn** (25/07/2026) — dùng không giới hạn, chỉ thống kê. Đừng tự dựng lại gate khi chưa có lệnh.
-- **Luôn nhận inbound** — để không mất lead.
-- **Không** xây module e-commerce (order/inventory/shipping). KiotViet/Sapo chỉ là nguồn làm giàu dữ liệu.
-- Quyết định UX có chủ đích (khác cách làm quen thuộc của loại sản phẩm này) phải ghi `docs/ux-decisions.md`.
+- **Ứng dụng nhắn tin giữa bạn bè, không phải CRM** (19/10/2026). Đừng dựng lại hộp thư theo kênh, liên hệ, phụ trách, báo cáo cho doanh nghiệp.
+- **Dùng lại bảng `conversations`/`messages`**, không đổi tên sang `legacy_*`. Hàng có `kind` (1 = 1-1, 2 = nhóm) là chat bạn bè, `account_id`/`inbox_id` để rỗng. Trả lời, thu hồi, cảm xúc dùng `content_attributes`, không có bảng `message_reactions`.
+- **Model riêng `Chat`/`ChatMember`/`ChatMessage`** trên cùng bảng; không dùng `Conversation`/`Message` cho chat vì chúng mang hook CRM và hỏng khi `inbox` rỗng.
+- **Màn chat dùng lại y hệt giao diện hộp thư** (`ConversationView`), không biến tấu.
+- **Nhóm phẳng** như Zalo/Messenger (trưởng nhóm, phó nhóm, tối đa 500), không có server → kênh con.
+- **Nhắn tự do**, không bảng bạn bè; 1-1 mỗi cặp đúng một hội thoại (`direct_key`).
+- **Đăng ký bằng email hoặc Google**, không tạo account/tenant. Super Admin vẫn là một người dùng tìm thấy được qua username.
+- **Giữ thẻ chuyển khoản VietQR**; bỏ thẻ sản phẩm, đặt mua, form.
+- **Web/PWA trước**, app gốc sau; chưa gọi thoại/video.
+- **Gate hạn mức không tồn tại** — dùng không giới hạn. Đừng tự dựng gate khi chưa có lệnh.
+- Quyết định UX có chủ đích (khác cách làm quen thuộc của ứng dụng nhắn tin) phải ghi `docs/ux-decisions.md`.
 
 ## Nhánh mới = worktree mới (bắt buộc với mọi phiên AI)
 
