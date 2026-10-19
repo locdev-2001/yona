@@ -57,6 +57,20 @@ class ChatMemberships
         $this->broadcaster->toMembers($chat, ChatBroadcaster::TYPING, ['user' => $this->presenter->person($user), 'typing' => $isTyping], except: $user);
     }
 
+    // Ghim và tắt thông báo là trạng thái riêng của từng người, người khác không biết.
+    /** @throws ChatActionRefused */
+    public function updatePreferences(User $user, Chat $chat, ?bool $pinned, ?bool $muted): void
+    {
+        $member = $this->membership($user, $chat);
+        $changes = array_filter([
+            'pinned_at' => $pinned === null ? null : ($pinned ? ($member->pinned_at ?? now()) : false),
+            'muted_until' => $muted === null ? null : ($muted ? now()->addYears(100) : false),
+        ], fn ($value) => $value !== null);
+
+        $member->update(array_map(fn ($value) => $value === false ? null : $value, $changes));
+        $this->broadcaster->toUser($user, ChatBroadcaster::CHAT_UPDATED, ['chat_id' => $chat->id]);
+    }
+
     public function unreadCount(ChatMember $member): int
     {
         return ChatMessage::query()

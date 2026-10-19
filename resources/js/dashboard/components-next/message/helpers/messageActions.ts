@@ -13,6 +13,7 @@ export interface MessageActionHandlers {
     react: boolean;
     delete: boolean;
     forward: boolean;
+    edit?: boolean;
     createCannedResponse?: boolean;
     translate?: boolean;
 }
@@ -40,6 +41,7 @@ export interface MessageActionFlags {
     // Chuyển tiếp không gate theo kênh nguồn: năng lực nằm ở hộp thư đích, lõi
     // quyết cho từng đích khi agent chọn.
     forward: boolean;
+    edit: boolean;
     copy: boolean;
     copyImage: boolean;
     copyLink: boolean;
@@ -50,7 +52,7 @@ export interface MessageActionFlags {
     recall: boolean;
 }
 
-export type MessageActionId = 'reply' | 'forward' | 'copy' | 'copyImage' | 'copyLink' | 'openSource' | 'createCannedResponse' | 'translate' | 'delete';
+export type MessageActionId = 'reply' | 'forward' | 'edit' | 'copy' | 'copyImage' | 'copyLink' | 'openSource' | 'createCannedResponse' | 'translate' | 'delete';
 
 export type MessageActionGroup = 'respond' | 'content' | 'danger';
 
@@ -66,6 +68,7 @@ export interface MessageActionDescriptor {
 export const MESSAGE_ACTIONS: readonly MessageActionDescriptor[] = [
     { id: 'reply', group: 'respond', icon: 'i-lucide-reply', labelKey: 'CONVERSATION.MESSAGE_ACTIONS.REPLY' },
     { id: 'forward', group: 'respond', icon: 'i-lucide-forward', labelKey: 'CONVERSATION.MESSAGE_ACTIONS.FORWARD' },
+    { id: 'edit', group: 'respond', icon: 'i-lucide-pencil', labelKey: 'CONVERSATION.MESSAGE_ACTIONS.EDIT' },
     { id: 'copy', group: 'content', icon: 'i-lucide-copy', labelKey: 'CONVERSATION.CONTEXT_MENU.COPY' },
     { id: 'copyImage', group: 'content', icon: 'i-lucide-image', labelKey: 'CONVERSATION.CONTEXT_MENU.COPY_IMAGE' },
     { id: 'copyLink', group: 'content', icon: 'i-lucide-link', labelKey: 'CONVERSATION.CONTEXT_MENU.COPY_PERMALINK' },
@@ -112,6 +115,7 @@ export function resolveMessageActions({
         react: handlers.react && inboxSupports(inbox, 'outbound_reaction') && !isDeleted,
         delete: handlers.delete && !isDeleted && messageType === MESSAGE_TYPES.OUTGOING,
         forward: handlers.forward && isSettledChatMessage,
+        edit: Boolean(handlers.edit) && isSettledChatMessage && hasText && messageType === MESSAGE_TYPES.OUTGOING,
         copy: hasText,
         copyImage: !isDeleted && hasCopyableImage,
         copyLink: !isDeleted && id > 0,

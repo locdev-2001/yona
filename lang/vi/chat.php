@@ -4,6 +4,7 @@
 
 return [
     'COMPOSER' => [
+        'EDITING' => 'Đang sửa tin nhắn',
         'PLACEHOLDER' => 'Nhập tin nhắn…',
     ],
     'TABS' => [
@@ -28,6 +29,10 @@ return [
         'BLOCK' => 'Chặn',
     ],
     'ACTIONS' => [
+        'PIN' => 'Ghim cuộc trò chuyện',
+        'UNPIN' => 'Bỏ ghim',
+        'MUTE' => 'Tắt thông báo',
+        'UNMUTE' => 'Bật thông báo',
         'BLOCK' => 'Chặn',
         'UNBLOCK' => 'Bỏ chặn',
         'REPORT' => 'Báo cáo',
@@ -64,6 +69,22 @@ return [
         'RECALLED' => 'Tin nhắn đã được thu hồi',
         'STICKER' => 'Đã gửi một nhãn dán',
         'BANK_TRANSFER' => 'Đã gửi thông tin chuyển khoản',
+    ],
+    'FORWARD' => [
+        'TITLE' => 'Chuyển tiếp tới',
+        'SEND' => 'Gửi',
+        'SENT' => 'Đã chuyển tiếp',
+    ],
+    'SEARCH' => [
+        'TITLE' => 'Tìm trong cuộc trò chuyện',
+        'PLACEHOLDER' => 'Gõ ít nhất 2 ký tự',
+        'EMPTY' => 'Không tìm thấy tin nào.',
+    ],
+    'PRESENCE' => [
+        'ONLINE' => 'Đang hoạt động',
+        'MINUTES' => 'Hoạt động {count} phút trước',
+        'HOURS' => 'Hoạt động {count} giờ trước',
+        'DAYS' => 'Hoạt động {count} ngày trước',
     ],
     'SYSTEM' => [
         'CREATED' => ':actor đã tạo nhóm :title',

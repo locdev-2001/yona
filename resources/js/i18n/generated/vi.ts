@@ -2662,6 +2662,7 @@ const messages: Record<string, unknown> = {
     },
     "CHAT": {
         "COMPOSER": {
+            "EDITING": "Đang sửa tin nhắn",
             "PLACEHOLDER": "Nhập tin nhắn…"
         },
         "TABS": {
@@ -2686,6 +2687,10 @@ const messages: Record<string, unknown> = {
             "BLOCK": "Chặn"
         },
         "ACTIONS": {
+            "PIN": "Ghim cuộc trò chuyện",
+            "UNPIN": "Bỏ ghim",
+            "MUTE": "Tắt thông báo",
+            "UNMUTE": "Bật thông báo",
             "BLOCK": "Chặn",
             "UNBLOCK": "Bỏ chặn",
             "REPORT": "Báo cáo",
@@ -2722,6 +2727,22 @@ const messages: Record<string, unknown> = {
             "RECALLED": "Tin nhắn đã được thu hồi",
             "STICKER": "Đã gửi một nhãn dán",
             "BANK_TRANSFER": "Đã gửi thông tin chuyển khoản"
+        },
+        "FORWARD": {
+            "TITLE": "Chuyển tiếp tới",
+            "SEND": "Gửi",
+            "SENT": "Đã chuyển tiếp"
+        },
+        "SEARCH": {
+            "TITLE": "Tìm trong cuộc trò chuyện",
+            "PLACEHOLDER": "Gõ ít nhất 2 ký tự",
+            "EMPTY": "Không tìm thấy tin nào."
+        },
+        "PRESENCE": {
+            "ONLINE": "Đang hoạt động",
+            "MINUTES": "Hoạt động {count} phút trước",
+            "HOURS": "Hoạt động {count} giờ trước",
+            "DAYS": "Hoạt động {count} ngày trước"
         },
         "SYSTEM": {
             "CREATED": ":actor đã tạo nhóm :title",
@@ -4014,6 +4035,8 @@ const messages: Record<string, unknown> = {
             "MORE": "Thêm hành động",
             "REACT": "Thả cảm xúc",
             "FORWARD": "Chuyển tiếp",
+            "EDITED": "Đã sửa",
+            "EDIT": "Sửa",
             "RECALL": "Thu hồi với mọi người",
             "DELETE": "Xoá",
             "COPIED": "Đã sao chép nội dung tin nhắn",

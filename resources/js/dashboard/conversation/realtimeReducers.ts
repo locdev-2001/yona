@@ -7,11 +7,27 @@ import type { Conversation, ConversationMessage } from './types';
 
 // Tin máy chủ trả về không phụ thuộc người xem; ở đây mới quyết tin của mình (phải)
 // hay của người khác (trái). Tin hệ thống giữ nguyên.
+// Cảm xúc lưu `by` = id người thả; của chính người xem đổi thành `agent:self` để
+// bong bóng tô "mình đã thả".
+function toViewerReactions(contentAttributes: Record<string, unknown>, currentUserId: number): Record<string, unknown> {
+    const reactions = contentAttributes.reactions;
+    if (!Array.isArray(reactions)) return contentAttributes;
+    const self = String(currentUserId);
+
+    return {
+        ...contentAttributes,
+        reactions: reactions.map(reaction =>
+            reaction && typeof reaction === 'object' && (reaction as { by?: string }).by === self ? { ...reaction, by: 'agent:self' } : reaction,
+        ),
+    };
+}
+
 export function toViewerMessage(message: ConversationMessage, currentUserId: number): ConversationMessage {
     if (message.message_type === MESSAGE_TYPES.ACTIVITY) return message;
 
     return {
         ...message,
+        content_attributes: toViewerReactions(message.content_attributes ?? {}, currentUserId),
         message_type: message.sender_id === currentUserId ? MESSAGE_TYPES.OUTGOING : MESSAGE_TYPES.INCOMING,
     };
 }
@@ -42,8 +58,11 @@ export function applyIncomingMessage(messages: ConversationMessage[], message: C
     return { messages: [...messages, message], appended: true };
 }
 
+// Hội thoại ghim đứng đầu, còn lại theo hoạt động mới nhất.
 export function sortConversations(conversations: Conversation[]): Conversation[] {
-    return [...conversations].sort((a, b) => b.last_activity_at - a.last_activity_at || b.id - a.id);
+    return [...conversations].sort(
+        (a, b) => Number(Boolean(b.pinned)) - Number(Boolean(a.pinned)) || b.last_activity_at - a.last_activity_at || b.id - a.id,
+    );
 }
 
 // Thêm hoặc thay một hội thoại rồi xếp lại theo hoạt động mới nhất.

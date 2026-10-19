@@ -7,6 +7,7 @@ use App\Models\ChatMember;
 use App\Models\ChatMessage;
 use App\Models\Message;
 use App\Models\User;
+use App\Services\Users\PrivacySettings;
 
 // Dựng payload JSON cho giao diện nhắn tin, cùng khuôn với payload hội thoại/tin
 // của hộp thư để các component hiện có dùng lại được.
@@ -44,14 +45,14 @@ class ChatPresenter
             'sender_id' => $message->sender_id,
             'sender' => $sender ? $this->person($sender) : null,
             'echo_id' => $message->client_id,
-            'attachments' => [],
+            'attachments' => $message->isRecalled() ? [] : $message->attachments->map(fn ($attachment) => $attachment->pushEventData())->values()->all(),
         ];
     }
 
     /** @return array<string, mixed> */
     public function chat(Chat $chat, User $viewer, ChatMemberships $memberships): array
     {
-        $chat->loadMissing(['members.user', 'lastMessage.sender']);
+        $chat->loadMissing(['members.user', 'lastMessage.sender', 'lastMessage.attachments']);
         $membership = $chat->memberFor($viewer);
         $counterpart = $chat->isDirect() ? $chat->members->firstWhere('user_id', '!=', $viewer->getKey())?->user : null;
         $blocks = $counterpart !== null
@@ -77,6 +78,7 @@ class ChatPresenter
             'member_status' => $membership?->isPending() ? 'pending' : 'active',
             'can_reply' => $isMember && ! $blocks['blocked_either'],
             'blocked_by_me' => $blocks['blocked_by_me'],
+            'counterpart_last_seen_at' => $counterpart !== null ? $this->lastSeenAt($counterpart) : null,
             'muted' => $membership?->isMuted() ?? false,
             'pinned' => $membership?->pinned_at !== null,
             'unread_count' => $membership ? $memberships->unreadCount($membership) : 0,
@@ -124,6 +126,11 @@ class ChatPresenter
     private function contentTypeName(int $contentType): string
     {
         return array_flip(Message::CONTENT_TYPES)[$contentType] ?? 'text';
+    }
+
+    private function lastSeenAt(User $user): ?int
+    {
+        return PrivacySettings::resolve($user->privacy)['show_last_seen'] ? $user->last_seen_at?->getTimestamp() : null;
     }
 
     // Tin tới id này người kia đã xem (hội thoại 1-1), để hiện dấu đã xem.

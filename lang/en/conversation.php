@@ -206,6 +206,8 @@ return [
         'MORE' => 'More actions',
         'REACT' => 'React',
         'FORWARD' => 'Forward',
+        'EDITED' => 'Edited',
+        'EDIT' => 'Edit',
         'RECALL' => 'Unsend for everyone',
         'DELETE' => 'Delete',
         'COPIED' => 'Message text copied',

@@ -124,6 +124,8 @@ export interface Conversation {
     member_status: ChatMemberStatus;
     can_reply: boolean;
     blocked_by_me: boolean;
+    // Lần hoạt động cuối của người bên kia (1-1), null khi họ ẩn.
+    counterpart_last_seen_at?: number | null;
     muted: boolean;
     pinned?: boolean;
     unread_count: number;

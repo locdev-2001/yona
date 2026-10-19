@@ -29,8 +29,20 @@ class DirectChats
 
         $key = Chat::directKey($opener->getKey(), $recipient->getKey());
 
-        return Chat::query()->where('direct_key', $key)->first()
-            ?? $this->create($key, $opener, $recipient);
+        $chat = Chat::query()->where('direct_key', $key)->first() ?? $this->create($key, $opener, $recipient);
+        $this->restoreHidden($chat, $opener);
+
+        return $chat;
+    }
+
+    // Người đã xoá hội thoại 1-1 khỏi danh sách: mở lại, hoặc được nhắn tới, thì nó hiện lại.
+    public function restoreHidden(Chat $chat, User $user): void
+    {
+        $chat->members()
+            ->where('user_id', $user->getKey())
+            ->where('status', ChatMember::STATUS_LEFT)
+            ->update(['status' => ChatMember::STATUS_ACTIVE]);
+        $chat->unsetRelation('members');
     }
 
     public function counterpart(Chat $chat, User $viewer): ?User

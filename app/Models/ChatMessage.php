@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 // Tin trong hội thoại giữa người dùng. Chung bảng `messages` (chia partition theo
 // tháng) với tin hộp thư nhưng không mang hook gửi ra kênh ngoài của Message.
@@ -51,6 +52,17 @@ class ChatMessage extends Model
             $message->created_at ??= $message->freshTimestamp();
             $message->platform_sent_at ??= $message->created_at;
         });
+    }
+
+    // Cùng hàng trong bảng messages nên đính kèm ghi đúng loại 'Message' như tin hộp thư.
+    public function getMorphClass(): string
+    {
+        return 'Message';
+    }
+
+    public function attachments(): MorphMany
+    {
+        return $this->morphMany(Attachment::class, 'attachable');
     }
 
     public function chat(): BelongsTo

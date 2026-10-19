@@ -15,6 +15,13 @@ import {
     acceptChat,
     blockUser,
     createGroup as createGroupRequest,
+    editMessage as editMessageRequest,
+    forwardMessage as forwardMessageRequest,
+    reactToMessage,
+    recallMessage,
+    searchMessages,
+    sendRichMessage,
+    updateChatPreferences,
     fetchChat,
     fetchChats,
     fetchMessages,
@@ -89,6 +96,16 @@ interface ConversationContextValue {
     // Nạp lại hội thoại (và thành viên nhóm) sau một thao tác quản lý nhóm.
     refreshConversation: (conversationId: number) => Promise<Conversation | null>;
     groupMembers: GroupMemberPerson[];
+    toggleReaction: (message: ConversationMessage, emoji: string) => Promise<void>;
+    // Tin đang sửa: ô soạn nạp nội dung tin, bấm Gửi là lưu bản sửa.
+    editingMessage: ConversationMessage | null;
+    setEditingMessage: (message: ConversationMessage | null) => void;
+    submitEdit: (content: string) => Promise<void>;
+    sendFiles: (files: File[], caption?: string, inReplyTo?: number | null) => Promise<void>;
+    sendSticker: (stickerId: string) => Promise<void>;
+    forwardMessage: (message: ConversationMessage, chatIds: number[]) => Promise<void>;
+    updatePreferences: (preferences: { pinned?: boolean; muted?: boolean }) => Promise<void>;
+    searchConversation: (query: string) => Promise<ConversationMessage[]>;
     acceptRequest: () => Promise<void>;
     removeConversation: (conversationId: number) => Promise<void>;
     setCounterpartBlocked: (blocked: boolean) => Promise<void>;
@@ -158,7 +175,9 @@ export function ConversationProvider({ conversationId = 0, children }: { convers
                 const response = await fetchChats(targetTab, before);
                 if (tabRef.current !== targetTab) return;
                 const loaded = response.payload.map(item => toViewerConversation(item, currentUserId));
-                setAllConversations(current => (before ? [...current, ...loaded] : loaded));
+                setAllConversations(current =>
+                    before ? [...current, ...loaded.filter(item => !current.some(existing => existing.id === item.id))] : loaded,
+                );
                 setListMeta(response.meta);
             } catch (error) {
                 useAlert(parseApiErrorMessage(error) || t('PEOPLE.CHAT.LOAD_ERROR'));
@@ -354,11 +373,101 @@ export function ConversationProvider({ conversationId = 0, children }: { convers
         [deliver],
     );
 
-    const deleteConversationMessage = useCallback(async (message: ConversationMessage) => {
-        if (message.echo_id && isUnsentMessageId(message.id)) {
-            setMessages(current => removeUnsent(current, message.echo_id!));
+    const applyServerMessage = useCallback(
+        (chatId: number, message: ConversationMessage) => {
+            const viewerMessage = toViewerMessage(message, currentUserId);
+            if (conversationIdRef.current === chatId) setMessages(current => applyIncomingMessage(current, viewerMessage).messages);
+            setAllConversations(current =>
+                current.map(item =>
+                    item.id === chatId && (item.last_non_activity_message?.id ?? 0) <= viewerMessage.id
+                        ? applyMessageToConversation(item, viewerMessage, { isOpen: conversationIdRef.current === chatId })
+                        : item,
+                ),
+            );
+        },
+        [currentUserId],
+    );
+
+    // Tin tạm gửi hỏng thì chỉ bỏ khỏi khung chat; tin đã gửi thì thu hồi với mọi người.
+    const deleteConversationMessage = useCallback(
+        async (message: ConversationMessage) => {
+            if (message.echo_id && isUnsentMessageId(message.id)) {
+                setMessages(current => removeUnsent(current, message.echo_id!));
+                return;
+            }
+            try {
+                applyServerMessage(message.conversation_id, await recallMessage(message.conversation_id, message.id));
+            } catch (error) {
+                useAlert(parseApiErrorMessage(error) || t('CONVERSATION.MESSAGE_ERROR'));
+            }
+        },
+        [applyServerMessage],
+    );
+
+    const toggleReaction = useCallback(
+        async (message: ConversationMessage, emoji: string) => {
+            try {
+                applyServerMessage(message.conversation_id, await reactToMessage(message.conversation_id, message.id, emoji));
+            } catch (error) {
+                useAlert(parseApiErrorMessage(error) || t('CONVERSATION.MESSAGE_ERROR'));
+            }
+        },
+        [applyServerMessage],
+    );
+
+    const [editingMessage, setEditingMessage] = useState<ConversationMessage | null>(null);
+    useEffect(() => setEditingMessage(null), [conversationId]);
+
+    const submitEdit = useCallback(
+        async (content: string) => {
+            const target = editingMessage;
+            if (!target) return;
+            setEditingMessage(null);
+            try {
+                applyServerMessage(target.conversation_id, await editMessageRequest(target.conversation_id, target.id, content));
+            } catch (error) {
+                useAlert(parseApiErrorMessage(error) || t('CONVERSATION.MESSAGE_ERROR'));
+            }
+        },
+        [applyServerMessage, editingMessage],
+    );
+
+    const sendRich = useCallback(
+        async (input: { caption?: string; files?: File[]; stickerId?: string; inReplyTo?: number | null }) => {
+            if (!conversationId) return;
+            try {
+                applyServerMessage(conversationId, await sendRichMessage(conversationId, { echoId: newEchoId(), ...input }));
+            } catch (error) {
+                useAlert(parseApiErrorMessage(error) || t('CONVERSATION.MESSAGE_ERROR'));
+            }
+        },
+        [applyServerMessage, conversationId],
+    );
+
+    const sendFiles = useCallback(
+        (files: File[], caption?: string, inReplyTo?: number | null) => sendRich({ files, caption, inReplyTo }),
+        [sendRich],
+    );
+
+    const sendSticker = useCallback((stickerId: string) => sendRich({ stickerId }), [sendRich]);
+
+    const forwardMessage = useCallback(async (message: ConversationMessage, chatIds: number[]) => {
+        try {
+            await forwardMessageRequest(message.conversation_id, message.id, chatIds);
+            useAlert(t('CHAT.FORWARD.SENT'));
+        } catch (error) {
+            useAlert(parseApiErrorMessage(error) || t('CONVERSATION.MESSAGE_ERROR'));
         }
     }, []);
+
+    const searchConversation = useCallback(
+        async (query: string) => {
+            if (!conversationId) return [];
+            const response = await searchMessages(conversationId, query);
+            return response.payload.map(item => toViewerMessage(item, currentUserId));
+        },
+        [conversationId, currentUserId],
+    );
 
     const toggleTypingStatus = useCallback(
         (typingStatus: 'on' | 'off') => {
@@ -438,6 +547,16 @@ export function ConversationProvider({ conversationId = 0, children }: { convers
         [conversationId, refreshConversation, selectedConversation?.meta.sender.id],
     );
 
+    const updatePreferences = useCallback(
+        async (preferences: { pinned?: boolean; muted?: boolean }) => {
+            if (!conversationId) return;
+            const chat = toViewerConversation(await updateChatPreferences(conversationId, preferences), currentUserId);
+            setAllConversations(current => (current.some(item => item.id === chat.id) ? upsertConversation(current, chat) : current));
+            setOpenedConversation(current => (current?.id === chat.id ? chat : current));
+        },
+        [conversationId, currentUserId],
+    );
+
     const reportConversation = useCallback(
         async (reason: AbuseReason, note?: string) => {
             if (!selectedConversation) return;
@@ -477,6 +596,10 @@ export function ConversationProvider({ conversationId = 0, children }: { convers
                 }
             });
         }
+    });
+
+    useRealtimeEvent<{ chat_id: number; message: ConversationMessage }>('chat.message.updated', ({ chat_id: chatId, message }) => {
+        applyServerMessage(chatId, message);
     });
 
     useRealtimeEvent<{ chat_id: number; user_id: number; message_id: number }>('chat.read', ({ chat_id: chatId, user_id: userId, message_id: messageId }) => {
@@ -539,6 +662,15 @@ export function ConversationProvider({ conversationId = 0, children }: { convers
             createGroup,
             refreshConversation,
             groupMembers,
+            toggleReaction,
+            editingMessage,
+            setEditingMessage,
+            submitEdit,
+            sendFiles,
+            sendSticker,
+            forwardMessage,
+            updatePreferences,
+            searchConversation,
             acceptRequest,
             removeConversation,
             setCounterpartBlocked,
@@ -575,6 +707,15 @@ export function ConversationProvider({ conversationId = 0, children }: { convers
             createGroup,
             refreshConversation,
             groupMembers,
+            toggleReaction,
+            editingMessage,
+            setEditingMessage,
+            submitEdit,
+            sendFiles,
+            sendSticker,
+            forwardMessage,
+            updatePreferences,
+            searchConversation,
             acceptRequest,
             removeConversation,
             setCounterpartBlocked,

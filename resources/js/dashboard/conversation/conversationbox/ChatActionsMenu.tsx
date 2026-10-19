@@ -13,11 +13,13 @@ import ReportDialog from './ReportDialog';
 export default function ChatActionsMenu({
     triggerClassName = '',
     onOpenGroupInfo,
+    onOpenSearch,
 }: {
     triggerClassName?: string;
     onOpenGroupInfo?: () => void;
+    onOpenSearch?: () => void;
 }) {
-    const { selectedConversation, setCounterpartBlocked } = useConversation();
+    const { selectedConversation, setCounterpartBlocked, updatePreferences } = useConversation();
     const [isOpen, setOpen] = useState(false);
     const actionsRef = useRef<HTMLDivElement>(null);
     const reportDialogRef = useRef<DialogHandle>(null);
@@ -35,7 +37,16 @@ export default function ChatActionsMenu({
     if (!selectedConversation) return null;
 
     const isBlocked = selectedConversation.blocked_by_me;
-    const menuItems = selectedConversation.kind === 'group' ? [
+    const commonItems = [
+        { icon: 'i-lucide-search', label: t('CHAT.SEARCH.TITLE'), action: 'search', value: 'search' },
+        selectedConversation.pinned
+            ? { icon: 'i-lucide-pin-off', label: t('CHAT.ACTIONS.UNPIN'), action: 'unpin', value: 'unpin' }
+            : { icon: 'i-lucide-pin', label: t('CHAT.ACTIONS.PIN'), action: 'pin', value: 'pin' },
+        selectedConversation.muted
+            ? { icon: 'i-lucide-bell', label: t('CHAT.ACTIONS.UNMUTE'), action: 'unmute', value: 'unmute' }
+            : { icon: 'i-lucide-bell-off', label: t('CHAT.ACTIONS.MUTE'), action: 'mute', value: 'mute' },
+    ];
+    const menuItems = [...commonItems, ...(selectedConversation.kind === 'group' ? [
         { icon: 'i-lucide-info', label: t('CHAT.GROUP.INFO'), action: 'info', value: 'info' },
         { icon: 'i-lucide-flag', label: t('CHAT.ACTIONS.REPORT'), action: 'report', value: 'report' },
         { icon: 'i-lucide-log-out', label: t('CHAT.GROUP.LEAVE'), action: 'info', value: 'leave' },
@@ -45,12 +56,15 @@ export default function ChatActionsMenu({
             : { icon: 'i-lucide-ban', label: t('CHAT.ACTIONS.BLOCK'), action: 'block', value: 'block' },
         { icon: 'i-lucide-flag', label: t('CHAT.ACTIONS.REPORT'), action: 'report', value: 'report' },
         { icon: 'i-lucide-trash-2', label: t('CHAT.ACTIONS.DELETE'), action: 'delete', value: 'delete' },
-    ];
+    ])];
 
     const handleAction = ({ action }: { action: string }) => {
         setOpen(false);
         if (action === 'block' || action === 'unblock') void setCounterpartBlocked(action === 'block');
         if (action === 'info') onOpenGroupInfo?.();
+        if (action === 'search') onOpenSearch?.();
+        if (action === 'pin' || action === 'unpin') void updatePreferences({ pinned: action === 'pin' });
+        if (action === 'mute' || action === 'unmute') void updatePreferences({ muted: action === 'mute' });
         if (action === 'report') reportDialogRef.current?.open();
         if (action === 'delete') deleteDialogRef.current?.open();
     };

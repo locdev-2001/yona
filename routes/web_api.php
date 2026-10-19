@@ -17,6 +17,7 @@ use App\Http\Controllers\WebApi\CannedResponsesController;
 use App\Http\Controllers\WebApi\CategoriesController;
 use App\Http\Controllers\WebApi\ChatMessagesController;
 use App\Http\Controllers\WebApi\ChatsController;
+use App\Http\Controllers\WebApi\ChatStickersController;
 use App\Http\Controllers\WebApi\Contacts\ContactableInboxesController;
 use App\Http\Controllers\WebApi\Contacts\ContactInboxesController;
 use App\Http\Controllers\WebApi\Contacts\ConversationsController as ContactConversationsController;
@@ -75,6 +76,7 @@ use App\Http\Controllers\WebApi\WebhooksController;
 use App\Http\Controllers\WebApi\WidgetUpdatesController;
 use App\Http\Controllers\WebApi\ZaloConnectionsController;
 use App\Http\Middleware\EnsureStickerLibraryAccess;
+use App\Http\Middleware\TouchLastSeen;
 use App\Http\RateLimiting\MessagingRateLimiters;
 use App\Http\RequestSigning\ProtectedRoutes;
 use Illuminate\Support\Facades\Route;
@@ -131,7 +133,7 @@ Route::middleware(['auth', EnsureStickerLibraryAccess::class.':'.EnsureStickerLi
 
 // resource :notification_subscriptions (số ít, không gắn account). Nhận cả phiên
 // lẫn header api_access_token như Api::BaseController của bản gốc.
-Route::middleware(['auth.api_token', 'auth'])->prefix('/api/v1')->group(function () {
+Route::middleware(['auth.api_token', 'auth', TouchLastSeen::class])->prefix('/api/v1')->group(function () {
     Route::get('/users/search', [UsersController::class, 'search'])->middleware('throttle:60,1');
     Route::get('/usernames/availability', [UsersController::class, 'usernameAvailability'])->middleware('throttle:60,1');
 
@@ -146,6 +148,13 @@ Route::middleware(['auth.api_token', 'auth'])->prefix('/api/v1')->group(function
         Route::post('/typing', [ChatsController::class, 'typing'])->middleware('throttle:120,1');
         Route::get('/messages', [ChatMessagesController::class, 'index']);
         Route::post('/messages', [ChatMessagesController::class, 'store'])->middleware('throttle:120,1');
+        Route::get('/messages/search', [ChatMessagesController::class, 'search'])->middleware('throttle:60,1');
+        Route::patch('/messages/{message}', [ChatMessagesController::class, 'update'])->whereNumber('message');
+        Route::delete('/messages/{message}', [ChatMessagesController::class, 'destroy'])->whereNumber('message');
+        Route::post('/messages/{message}/reactions', [ChatMessagesController::class, 'react'])->whereNumber('message')->middleware('throttle:120,1');
+        Route::post('/messages/{message}/forward', [ChatMessagesController::class, 'forward'])->whereNumber('message')->middleware('throttle:30,1');
+        Route::patch('/preferences', [ChatsController::class, 'preferences']);
+        Route::get('/stickers', [ChatStickersController::class, 'index']);
         Route::post('/group', [GroupChatsController::class, 'update']);
         Route::post('/dissolve', [GroupChatsController::class, 'dissolve']);
         Route::get('/members', [GroupChatsController::class, 'members']);

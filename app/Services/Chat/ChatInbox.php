@@ -35,8 +35,10 @@ class ChatInbox
                     ->orWhereIn('conversation_members.conversation_id', Chat::query()->where('kind', Chat::KIND_DIRECT)->select('id'))),
                 'members.user.avatar',
                 'lastMessage.sender',
+                'lastMessage.attachments',
                 'avatar',
             ])
+            ->orderByRaw('(select pinned_at from conversation_members pinned where pinned.conversation_id = conversations.id and pinned.user_id = ?) desc nulls last', [$user->getKey()])
             ->orderByDesc('last_activity_at')
             ->orderByDesc('id')
             ->limit(self::PAGE_SIZE)
@@ -56,7 +58,7 @@ class ChatInbox
     public function messages(Chat $chat, ?int $beforeId = null): Collection
     {
         return $chat->messages()
-            ->with('sender')
+            ->with(['sender', 'attachments'])
             ->when($beforeId, fn ($query, $before) => $query->where('id', '<', $before))
             ->orderByDesc('platform_sent_at')
             ->orderByDesc('id')

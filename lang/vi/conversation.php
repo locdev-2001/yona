@@ -207,6 +207,8 @@ return [
         'MORE' => 'Thêm hành động',
         'REACT' => 'Thả cảm xúc',
         'FORWARD' => 'Chuyển tiếp',
+        'EDITED' => 'Đã sửa',
+        'EDIT' => 'Sửa',
         'RECALL' => 'Thu hồi với mọi người',
         'DELETE' => 'Xoá',
         'COPIED' => 'Đã sao chép nội dung tin nhắn',

@@ -72,6 +72,7 @@ interface MessageProps {
     onDeleteMessage?: (message: ConversationMessage) => Promise<void> | void;
     onReplyTo?: (message: ConversationMessage) => void;
     onForward?: (message: ConversationMessage) => void;
+    onEdit?: (message: ConversationMessage) => void;
     onCreateCannedResponse?: (message: ConversationMessage) => void;
     onTranslate?: (message: ConversationMessage) => void;
     onJumpToMessage?: (messageId: number) => void;
@@ -136,6 +137,7 @@ export default function Message({
     onDeleteMessage,
     onReplyTo,
     onForward,
+    onEdit,
     onCreateCannedResponse,
     onTranslate,
     onJumpToMessage,
@@ -259,6 +261,7 @@ export default function Message({
         onDeleteMessage: onDeleteMessage ? () => void onDeleteMessage(message) : undefined,
         onReplyTo: onReplyTo ? () => onReplyTo(message) : undefined,
         onForward: onForward ? () => onForward(message) : undefined,
+        onEdit: onEdit ? () => onEdit(message) : undefined,
         onCreateCannedResponse: onCreateCannedResponse ? () => onCreateCannedResponse(message) : undefined,
         onTranslate: onTranslate ? () => onTranslate(message) : undefined,
         onJumpToMessage,

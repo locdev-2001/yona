@@ -18,11 +18,14 @@ import ReplyBox from './ReplyBox';
 import ResizableEditorWrapper from './ResizableEditorWrapper';
 import type { ResizableEditorWrapperHandle } from './ResizableEditorWrapper';
 import { useMessageReply } from './useMessageReply';
+import type { DialogHandle } from 'dashboard/components-next/dialog/Dialog';
+import ForwardDialog from './ForwardDialog';
+import type { ConversationMessage } from '../types';
 import { toMentionable } from '../groupMembersApi';
 
 // Năng lực của cuộc trò chuyện giữa người dùng mà bong bóng tin hỏi tới: dấu đã xem
 // và trả lời trích dẫn. Cảm xúc, thu hồi bật khi máy chủ có đường cho chúng.
-const CHAT_CAPABILITIES = ['event_seen', 'outbound_reply_to'] as const;
+const CHAT_CAPABILITIES = ['event_seen', 'outbound_reply_to', 'outbound_reaction', 'outbound_recall'] as const;
 
 export default function MessagesView() {
     const {
@@ -39,7 +42,11 @@ export default function MessagesView() {
         clearFocusedMessage,
         focusMessage,
         groupMembers,
+        toggleReaction,
+        setEditingMessage,
     } = useConversation();
+    const forwardDialogRef = useRef<DialogHandle>(null);
+    const [forwarding, setForwarding] = useState<ConversationMessage | null>(null);
     const mentionableMembers = useMemo(() => groupMembers.map(toMentionable), [groupMembers]);
 
     const conversationPanelRef = useRef<HTMLUListElement>(null);
@@ -159,6 +166,12 @@ export default function MessagesView() {
                 onScroll={handleScroll}
                 onRetry={retryFailedMessage}
                 onDeleteMessage={deleteConversationMessage}
+                onToggleReaction={isRequest ? undefined : toggleReaction}
+                onEdit={isRequest || !currentChat.can_reply ? undefined : setEditingMessage}
+                onForward={message => {
+                    setForwarding(message);
+                    forwardDialogRef.current?.open();
+                }}
                 replyTargets={replyTargets}
                 onReplyTo={isRequest ? undefined : startReply}
                 onJumpToMessage={focusMessage}
@@ -184,6 +197,7 @@ export default function MessagesView() {
                         </div>
                     </div>
                 )}
+                <ForwardDialog ref={forwardDialogRef} message={forwarding} />
                 {isRequest ? (
                     <MessageRequestBanner />
                 ) : (

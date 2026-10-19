@@ -41,6 +41,7 @@ interface MessageListProps {
     replyTargets?: ReadonlyMap<number, ConversationMessage | null>;
     onReplyTo?: (message: ConversationMessage) => void;
     onForward?: (message: ConversationMessage) => void;
+    onEdit?: (message: ConversationMessage) => void;
     onCreateCannedResponse?: (message: ConversationMessage) => void;
     onTranslate?: (message: ConversationMessage) => void;
     onJumpToMessage?: (messageId: number) => void;
@@ -109,6 +110,7 @@ const MessageList = forwardRef<HTMLUListElement, MessageListProps>(function Mess
         replyTargets = NO_REPLY_TARGETS,
         onReplyTo,
         onForward,
+        onEdit,
         onCreateCannedResponse,
         onTranslate,
         onJumpToMessage,
@@ -150,6 +152,7 @@ const MessageList = forwardRef<HTMLUListElement, MessageListProps>(function Mess
                         onDeleteMessage={onDeleteMessage}
                         onReplyTo={onReplyTo}
                         onForward={onForward}
+                        onEdit={onEdit}
                         onCreateCannedResponse={onCreateCannedResponse}
                         onTranslate={onTranslate}
                         onJumpToMessage={onJumpToMessage}

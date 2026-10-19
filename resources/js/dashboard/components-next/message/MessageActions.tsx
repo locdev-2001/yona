@@ -130,6 +130,7 @@ export default function MessageActions({
         onDeleteMessage,
         onReplyTo,
         onForward,
+        onEdit,
         onCreateCannedResponse,
         onTranslate,
     } = useMessageContext();
@@ -172,6 +173,7 @@ export default function MessageActions({
             react: Boolean(onToggleReaction),
             delete: Boolean(onDeleteMessage),
             forward: Boolean(onForward),
+            edit: Boolean(onEdit),
             createCannedResponse: Boolean(onCreateCannedResponse),
             translate: Boolean(onTranslate),
         },
@@ -218,6 +220,7 @@ export default function MessageActions({
         const handlers: Record<MessageActionId, () => void> = {
             reply: () => onReplyTo?.(),
             forward: () => onForward?.(),
+            edit: () => onEdit?.(),
             copy: () =>
                 copyWithNotice(
                     { text: toCopyText(content), html: new MessageFormatter(content).formattedMessage },

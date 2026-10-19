@@ -8,6 +8,8 @@ import type { DialogHandle } from 'dashboard/components-next/dialog/Dialog';
 import { t } from '../../../i18n';
 import { useConversation } from '../ConversationContext';
 import GroupInfoDialog from '../group/GroupInfoDialog';
+import { presenceLabel } from '../presence';
+import SearchMessagesDialog from './SearchMessagesDialog';
 import ChatActionsMenu from './ChatActionsMenu';
 
 // Mũ khung chat: quay lại (bố cục hai-màn), avatar + tên + @username người bên kia,
@@ -24,6 +26,7 @@ export default function ConversationHeader({
     const { selectedConversation } = useConversation();
     const isWideLayout = useIsLargeScreen();
     const groupInfoRef = useRef<DialogHandle>(null);
+    const searchRef = useRef<DialogHandle>(null);
 
     if (!selectedConversation) return null;
 
@@ -31,9 +34,8 @@ export default function ConversationHeader({
     const currentContact = selectedConversation.meta.sender;
     const subtitle = isGroup
         ? t('CHAT.GROUP.MEMBERS', { count: selectedConversation.member_count })
-        : currentContact.username
-          ? `@${currentContact.username}`
-          : null;
+        : (presenceLabel(selectedConversation.counterpart_last_seen_at) ??
+          (currentContact.username ? `@${currentContact.username}` : null));
     const openGroupInfo = isGroup ? () => groupInfoRef.current?.open() : undefined;
     const avatar = (
         <Avatar
@@ -44,7 +46,13 @@ export default function ConversationHeader({
             previewable={!isGroup}
         />
     );
-    const groupInfo = isGroup ? <GroupInfoDialog ref={groupInfoRef} /> : null;
+    const dialogs = (
+        <>
+            {isGroup ? <GroupInfoDialog ref={groupInfoRef} /> : null}
+            <SearchMessagesDialog ref={searchRef} />
+        </>
+    );
+    const openSearch = () => searchRef.current?.open();
 
     if (!isWideLayout) {
         return (
@@ -58,14 +66,14 @@ export default function ConversationHeader({
                         {avatar}
                         <span className="flex flex-col min-w-0">
                             <span className="text-sm font-medium truncate leading-tight text-n-slate-12">{currentContact.name}</span>
-                            {isGroup && subtitle ? <span className="text-xs truncate text-n-slate-11">{subtitle}</span> : null}
+                            {subtitle ? <span className="text-xs truncate text-n-slate-11">{subtitle}</span> : null}
                         </span>
                     </button>
                 </div>
                 <div className="flex flex-row items-center justify-end flex-shrink-0 gap-1 header-actions-wrap">
-                    <ChatActionsMenu triggerClassName="max-md:!size-11" onOpenGroupInfo={openGroupInfo} />
+                    <ChatActionsMenu triggerClassName="max-md:!size-11" onOpenGroupInfo={openGroupInfo} onOpenSearch={openSearch} />
                 </div>
-                {groupInfo}
+                {dialogs}
             </div>
         );
     }
@@ -86,9 +94,9 @@ export default function ConversationHeader({
                 </button>
             </div>
             <div className="flex flex-row items-center justify-end flex-shrink-0 gap-2 header-actions-wrap">
-                <ChatActionsMenu onOpenGroupInfo={openGroupInfo} />
+                <ChatActionsMenu onOpenGroupInfo={openGroupInfo} onOpenSearch={openSearch} />
             </div>
-            {groupInfo}
+            {dialogs}
         </div>
     );
 }

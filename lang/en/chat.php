@@ -2,6 +2,7 @@
 
 return [
     'COMPOSER' => [
+        'EDITING' => 'Editing message',
         'PLACEHOLDER' => 'Type a message…',
     ],
     'TABS' => [
@@ -26,6 +27,10 @@ return [
         'BLOCK' => 'Block',
     ],
     'ACTIONS' => [
+        'PIN' => 'Pin chat',
+        'UNPIN' => 'Unpin',
+        'MUTE' => 'Mute notifications',
+        'UNMUTE' => 'Unmute notifications',
         'BLOCK' => 'Block',
         'UNBLOCK' => 'Unblock',
         'REPORT' => 'Report',
@@ -62,6 +67,22 @@ return [
         'RECALLED' => 'Message unsent',
         'STICKER' => 'Sent a sticker',
         'BANK_TRANSFER' => 'Sent bank transfer details',
+    ],
+    'FORWARD' => [
+        'TITLE' => 'Forward to',
+        'SEND' => 'Send',
+        'SENT' => 'Forwarded',
+    ],
+    'SEARCH' => [
+        'TITLE' => 'Search in chat',
+        'PLACEHOLDER' => 'Type at least 2 characters',
+        'EMPTY' => 'No messages found.',
+    ],
+    'PRESENCE' => [
+        'ONLINE' => 'Active now',
+        'MINUTES' => 'Active {count}m ago',
+        'HOURS' => 'Active {count}h ago',
+        'DAYS' => 'Active {count}d ago',
     ],
     'SYSTEM' => [
         'CREATED' => ':actor created the group :title',

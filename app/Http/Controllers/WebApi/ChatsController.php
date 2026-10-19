@@ -74,6 +74,14 @@ class ChatsController extends Controller
         return response()->noContent();
     }
 
+    public function preferences(Request $request, Chat $chat): JsonResponse
+    {
+        $data = $request->validate(['pinned' => ['sometimes', 'boolean'], 'muted' => ['sometimes', 'boolean']]);
+        $this->memberships->updatePreferences($request->user(), $chat, $data['pinned'] ?? null, $data['muted'] ?? null);
+
+        return response()->json($this->presenter->chat($chat->refresh(), $request->user(), $this->memberships));
+    }
+
     public function read(Request $request, Chat $chat): Response
     {
         $messageId = $request->validate(['message_id' => ['sometimes', 'nullable', 'integer']])['message_id'] ?? null;

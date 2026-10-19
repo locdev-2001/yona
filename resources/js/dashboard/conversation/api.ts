@@ -1,4 +1,5 @@
 import { deleteJson, getJson, patchJson, postForm, postJson } from 'dashboard/helper/apiClient';
+import type { StickerBrowseParams, StickerBrowseResult } from './stickerApi';
 import type { OutgoingMention } from 'dashboard/components/widgets/WootWriter/groupMemberMentions';
 import type { ChatListTab, Conversation, ConversationListMeta, ConversationMessage, GroupMemberPerson, GroupRole } from './types';
 
@@ -48,6 +49,51 @@ export function sendMessage(chatId: number, { content, echoId, inReplyTo, mentio
         ...(inReplyTo ? { in_reply_to: inReplyTo } : {}),
         ...(mentions?.length ? { mentions } : {}),
     });
+}
+
+// Ảnh/file (kèm chú thích) hoặc sticker đi chung đường gửi tin, dạng multipart.
+export function sendRichMessage(
+    chatId: number,
+    { echoId, caption, files = [], stickerId, inReplyTo }: { echoId: string; caption?: string; files?: File[]; stickerId?: string; inReplyTo?: number | null },
+): Promise<ConversationMessage> {
+    const form = new FormData();
+    form.set('echo_id', echoId);
+    if (caption) form.set('content', caption);
+    if (stickerId) form.set('sticker_id', stickerId);
+    if (inReplyTo) form.set('in_reply_to', String(inReplyTo));
+    files.forEach(file => form.append('attachments[]', file));
+    return postForm<ConversationMessage>(`${CHATS}/${chatId}/messages`, form);
+}
+
+export function editMessage(chatId: number, messageId: number, content: string): Promise<ConversationMessage> {
+    return patchJson<ConversationMessage>(`${CHATS}/${chatId}/messages/${messageId}`, { content });
+}
+
+export function recallMessage(chatId: number, messageId: number): Promise<ConversationMessage> {
+    return deleteJson<ConversationMessage>(`${CHATS}/${chatId}/messages/${messageId}`);
+}
+
+export function reactToMessage(chatId: number, messageId: number, emoji: string): Promise<ConversationMessage> {
+    return postJson<ConversationMessage>(`${CHATS}/${chatId}/messages/${messageId}/reactions`, { emoji });
+}
+
+export function forwardMessage(chatId: number, messageId: number, chatIds: number[]): Promise<void> {
+    return postJson<void>(`${CHATS}/${chatId}/messages/${messageId}/forward`, { chat_ids: chatIds });
+}
+
+export function searchMessages(chatId: number, query: string): Promise<{ payload: ConversationMessage[] }> {
+    return getJson<{ payload: ConversationMessage[] }>(`${CHATS}/${chatId}/messages/search?q=${encodeURIComponent(query)}`);
+}
+
+export function updateChatPreferences(chatId: number, preferences: { pinned?: boolean; muted?: boolean }): Promise<Conversation> {
+    return patchJson<Conversation>(`${CHATS}/${chatId}/preferences`, preferences);
+}
+
+export function fetchChatStickers(chatId: number, params: StickerBrowseParams = {}): Promise<StickerBrowseResult> {
+    const query = new URLSearchParams();
+    if (params.q) query.set('q', params.q);
+    if (params.pack) query.set('pack', params.pack);
+    return getJson<StickerBrowseResult>(`${CHATS}/${chatId}/stickers${query.toString() ? `?${query}` : ''}`);
 }
 
 export function markChatRead(chatId: number, messageId?: number | null): Promise<void> {
