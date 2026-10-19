@@ -24,16 +24,12 @@ return [
     ],
     'CHAT' => [
         'TITLE' => 'Messages',
-        'PROFILE_LINK' => 'Your profile',
         'SEARCH_PLACEHOLDER' => 'Search by @username or name',
         'SEARCH_LABEL' => 'Find people',
-        'PEOPLE' => 'People',
         'NO_RESULTS' => 'No one found with this name',
         'SEARCH_ERROR' => "Couldn't search. Try again",
-        'EMPTY_TITLE' => 'Find friends to get started',
-        'EMPTY_BODY' => "Type a friend's @username or name in the search box.",
-        'PICK_PERSON' => 'Pick someone to see their profile',
-        'CLOSE_CARD' => 'Close profile card',
+        'LOAD_ERROR' => "Couldn't load your conversations. Try again",
+        'OPEN_ERROR' => "Couldn't open the conversation. Try again",
     ],
     'PROFILE' => [
         'TITLE' => 'Profile',

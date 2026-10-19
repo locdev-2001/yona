@@ -55,7 +55,7 @@ export interface MessageSourceLink {
 export interface ConversationMessage {
     id: number;
     content: string | null;
-    inbox_id: number;
+    inbox_id?: number | null;
     conversation_id: number;
     message_type: number;
     content_type: string;
@@ -81,56 +81,38 @@ export interface ConversationMessage {
 }
 
 export interface ConversationMeta {
-    sender: ContactMeta;
-    channel: string | null;
-    assignee?: AgentMeta;
-    assignee_type?: string;
-    team?: TeamMeta;
-    hmac_verified?: boolean | null;
+    // Người bên kia của hội thoại 1-1 (với nhóm: tên và ảnh của nhóm).
+    sender: ContactMeta & { username?: string | null };
 }
 
-export type ConversationStatus = 'open' | 'resolved' | 'pending' | 'snoozed';
-export type ConversationPriority = 'low' | 'medium' | 'high' | 'urgent';
+// Tab của danh sách: hội thoại đang trò chuyện, hoặc tin chờ từ người lạ.
+export type ChatListTab = 'all' | 'requests';
+
+// Tình trạng của chính người xem trong hội thoại.
+export type ChatMemberStatus = 'active' | 'pending';
 
 export interface Conversation {
     id: number;
     uuid: string;
-    account_id: number;
-    inbox_id: number;
+    kind: 'direct' | 'group';
+    title: string | null;
     meta: ConversationMeta;
-    messages: ConversationMessage[];
-    status: ConversationStatus;
-    priority: ConversationPriority | null;
-    labels: string[];
-    muted: boolean;
+    member_status: ChatMemberStatus;
     can_reply: boolean;
-    snoozed_until: string | null;
-    custom_attributes: Record<string, unknown>;
-    additional_attributes: Record<string, unknown>;
-    agent_last_seen_at: number;
-    assignee_last_seen_at: number;
-    contact_last_seen_at: number;
-    first_reply_created_at: number;
+    blocked_by_me: boolean;
+    muted: boolean;
+    pinned?: boolean;
     unread_count: number;
+    last_read_message_id: number | null;
+    // Tin tới id này người kia đã xem (hội thoại 1-1).
+    counterpart_last_read_message_id: number | null;
     last_non_activity_message: ConversationMessage | null;
     last_activity_at: number;
     timestamp: number;
-    waiting_since: number;
     created_at: number;
-    updated_at: number;
-    sla_policy_id: number | null;
-    // Cờ ghim của chính người xem; vắng mặt ở payload realtime (dựng chung cho cả account).
-    pinned?: boolean;
-    // Thứ tự trong nhóm ghim của người xem, nhỏ đứng trên; null khi chưa ghim.
-    pin_position?: number | null;
 }
 
 export interface ConversationListMeta {
-    mine_count: number;
-    assigned_count: number;
-    unassigned_count: number;
-    all_count: number;
+    request_count: number;
+    has_more: boolean;
 }
-
-export type AssigneeTab = 'me' | 'unassigned' | 'all';
-export type ConversationStatusFilter = 'open' | 'resolved' | 'pending' | 'snoozed' | 'all';

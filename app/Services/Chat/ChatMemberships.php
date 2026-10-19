@@ -11,7 +11,10 @@ use App\Models\User;
 // Trạng thái của một người trong hội thoại: chấp nhận/xoá tin chờ, đã đọc, đang gõ.
 class ChatMemberships
 {
-    public function __construct(private readonly ChatBroadcaster $broadcaster) {}
+    public function __construct(
+        private readonly ChatBroadcaster $broadcaster,
+        private readonly ChatPresenter $presenter,
+    ) {}
 
     /** @throws ChatActionRefused */
     public function accept(User $user, Chat $chat): void
@@ -51,7 +54,7 @@ class ChatMemberships
     public function typing(User $user, Chat $chat, bool $isTyping): void
     {
         $this->membership($user, $chat);
-        $this->broadcaster->toMembers($chat, ChatBroadcaster::TYPING, ['user_id' => $user->getKey(), 'typing' => $isTyping], except: $user);
+        $this->broadcaster->toMembers($chat, ChatBroadcaster::TYPING, ['user' => $this->presenter->person($user), 'typing' => $isTyping], except: $user);
     }
 
     public function unreadCount(ChatMember $member): int

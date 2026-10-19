@@ -21,7 +21,6 @@ function getMinimizedSections(): Record<string, boolean> {
 
 interface SidebarSubGroupProps {
     name: string;
-    accountId: number;
     isExpanded?: boolean;
     label: string;
     icon?: SidebarMenuChild['icon'];
@@ -34,7 +33,6 @@ interface SidebarSubGroupProps {
 
 export default function SidebarSubGroup({
     name,
-    accountId,
     isExpanded = false,
     label,
     icon = '',
@@ -46,7 +44,7 @@ export default function SidebarSubGroup({
 }: SidebarSubGroupProps) {
     const [minimizedSections, setMinimizedSections] = useState(getMinimizedSections);
 
-    const storageKey = accountId ? `${accountId}:${name}` : name;
+    const storageKey = name;
     const isSubGroupExpanded = !collapsible || !minimizedSections[storageKey];
     const hasActiveChild = children.some(child => child.name === activeChild?.name);
     const hasAccessibleItems = children.some(child => child.to);

@@ -1,10 +1,9 @@
 import Tabs from '../../components/ui/Tabs';
-import type { AssigneeTab } from '../types';
+import type { ChatListTab } from '../types';
 
-// Port từ dashboard/components/widgets/ChatTypeTabs.vue — bỏ phím tắt Alt+N (B3).
 // Cùng một thanh tab cho mọi cỡ màn; dưới 768px thành thanh chia đều, ô cao 44px.
 export interface ChatTypeTabItem {
-    key: AssigneeTab;
+    key: ChatListTab;
     name: string;
     count: number;
     badgeTone?: 'neutral' | 'warning';
@@ -12,8 +11,8 @@ export interface ChatTypeTabItem {
 
 interface ChatTypeTabsProps {
     items: ChatTypeTabItem[];
-    activeTab: AssigneeTab;
-    onChatTabChange: (tab: AssigneeTab) => void;
+    activeTab: ChatListTab;
+    onChatTabChange: (tab: ChatListTab) => void;
 }
 
 export default function ChatTypeTabs({ items, activeTab, onChatTabChange }: ChatTypeTabsProps) {
@@ -30,7 +29,7 @@ export default function ChatTypeTabs({ items, activeTab, onChatTabChange }: Chat
 
     return (
         <Tabs
-            items={items.map(item => ({ ...item, showBadge: true }))}
+            items={items.map(item => ({ ...item, showBadge: item.count > 0 }))}
             index={activeTabIndex}
             isCompact
             isStretchedBelowMd

@@ -1,19 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Link, usePage } from '@inertiajs/react';
+import { usePage } from '@inertiajs/react';
 
-import { t } from '../../../i18n';
 import Logo from 'dashboard/components-next/icon/Logo';
 import SidebarGroup from './SidebarGroup';
 import SidebarProfileMenu from './SidebarProfileMenu';
-import SidebarAccountSwitcher from './SidebarAccountSwitcher';
 import { buildMenuItems } from './menuItems';
-import { useCustomViews } from 'dashboard/composables/useCustomViews';
 import { SidebarContextProvider, useSidebarResize, COLLAPSED_THRESHOLD, MOBILE_DRAWER_WIDTH } from './provider';
-import { filterMenuByRole } from './permissions';
-import { useConversationUnreadCounts } from './useConversationUnreadCounts';
-import NotificationBell from 'dashboard/notifications/components/NotificationBell';
-import { accountScopedUrl } from 'dashboard/helper/URLHelper';
-import type { DashboardPageProps } from '../../types';
 
 // Port từ components-next/sidebar/Sidebar.vue
 // (soạn hội thoại mới nằm cạnh ô tìm ở danh sách hội thoại; ChangelogCard
@@ -25,14 +17,7 @@ export default function Sidebar({
     isMobileSidebarOpen?: boolean;
     onCloseMobileSidebar: () => void;
 }) {
-    const { currentAccount, currentAccountUser, teams = [] } = usePage<DashboardPageProps>().props;
-    const accountId = currentAccount.id;
-    const role = currentAccountUser.role;
-    const features = currentAccount.features ?? {};
-    const conversationCustomViews = useCustomViews(accountId, 'conversation');
-    const contactCustomViews = useCustomViews(accountId, 'contact');
-    // watch([accountId, hasConversationUnreadCounts], fetchConversationUnreadCounts) của Sidebar.vue.
-    const unreadCounts = useConversationUnreadCounts();
+    const { installationName } = usePage<{ globalConfig: { installationName: string } }>().props.globalConfig;
 
     const [windowWidth, setWindowWidth] = useState(() => window.innerWidth);
     const isMobile = windowWidth < 768;
@@ -112,29 +97,7 @@ export default function Sidebar({
         Object.assign(document.body.style, { cursor: 'col-resize', userSelect: 'none' });
     };
 
-    const menuItems = useMemo(
-        () =>
-            filterMenuByRole(
-                buildMenuItems(
-                    accountId,
-                    teams,
-                    unreadCounts,
-                    conversationCustomViews,
-                    contactCustomViews,
-                ),
-                role,
-                features,
-            ),
-        [
-            accountId,
-            teams,
-            unreadCounts,
-            conversationCustomViews,
-            contactCustomViews,
-            role,
-            features,
-        ],
-    );
+    const menuItems = useMemo(() => buildMenuItems(), []);
 
     const asideRef = useRef<HTMLElement>(null);
 
@@ -183,40 +146,12 @@ export default function Sidebar({
                             isEffectivelyCollapsed ? 'justify-center px-1' : 'px-2'
                         }`}
                     >
-                        {isEffectivelyCollapsed ? (
-                            <SidebarAccountSwitcher isCollapsed />
-                        ) : (
-                            <>
-                                <div className="grid flex-shrink-0 place-content-center size-6">
-                                    <Logo className="size-4" />
-                                </div>
-                                <div className="flex-shrink-0 w-px h-3 bg-n-strong" />
-                                <SidebarAccountSwitcher />
-                            </>
-                        )}
-                    </div>
-                    <div className={`flex gap-2 min-w-0 ${isEffectivelyCollapsed ? 'flex-col items-center' : 'px-2'}`}>
+                        <div className="grid flex-shrink-0 place-content-center size-6">
+                            <Logo className="size-4" />
+                        </div>
                         {!isEffectivelyCollapsed ? (
-                            <Link
-                                href={accountScopedUrl(accountId, 'search')}
-                                title={t('SIDEBAR.GLOBAL_SEARCH_HINT')}
-                                className="flex gap-2 items-center px-2 py-1 w-full min-w-0 h-7 rounded-lg bg-n-surface-field hover:bg-n-surface-field-hover transition-colors duration-100 ease-out"
-                            >
-                                <span className="flex-shrink-0 i-lucide-search size-4 text-n-slate-10" />
-                                <span className="flex-grow min-w-0 truncate text-start text-n-slate-10">
-                                    {t('SIDEBAR.GLOBAL_SEARCH')}
-                                </span>
-                            </Link>
-                        ) : (
-                            <Link
-                                href={accountScopedUrl(accountId, 'search')}
-                                className="flex items-center justify-center size-8 rounded-lg bg-n-surface-field hover:bg-n-surface-field-hover transition-colors duration-100 ease-out"
-                                title={t('SIDEBAR.GLOBAL_SEARCH_HINT')}
-                            >
-                                <span className="i-lucide-search size-4 text-n-slate-11" />
-                            </Link>
-                        )}
-                        <NotificationBell isCollapsed={isEffectivelyCollapsed} onNavigate={onCloseMobileSidebar} />
+                            <span className="min-w-0 truncate text-sm font-medium text-n-slate-12">{installationName}</span>
+                        ) : null}
                     </div>
                 </section>
                 <nav
@@ -230,7 +165,7 @@ export default function Sidebar({
                         }`}
                     >
                         {menuItems.map(item => (
-                            <SidebarGroup key={item.name} accountId={accountId} {...item} />
+                            <SidebarGroup key={item.name} {...item} />
                         ))}
                     </ul>
                 </nav>

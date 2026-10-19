@@ -65,6 +65,7 @@ export const NAV_ICONS: Record<string, IconName> = {
   dashboard: 'LayoutDashboardIcon',
   accounts: 'Building2Icon',
   users: 'UsersIcon',
+  abuse_reports: 'FlagIcon',
   channel_health: 'ActivityIcon',
   instance_status: 'ServerIcon',
   alerts: 'BellRingIcon',

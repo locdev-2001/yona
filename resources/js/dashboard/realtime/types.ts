@@ -26,7 +26,6 @@ export type AgentPresenceMap = Record<number, AvailabilityStatus>;
 export type ContactPresenceMap = Record<number, 'online'>;
 
 export interface RealtimeIdentity {
-    accountId: number;
     userId: number;
     pubsubToken: string;
 }

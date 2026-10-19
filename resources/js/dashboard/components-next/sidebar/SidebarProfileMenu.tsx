@@ -7,17 +7,13 @@ import { logout } from 'dashboard/helper/logout';
 import Avatar from 'dashboard/components-next/avatar/Avatar';
 import { avatarSeed } from 'shared/avatar/avatarSeed';
 import KeyShortcutModal from 'dashboard/commands/KeyShortcutModal';
-import SidebarProfileMenuStatus from './SidebarProfileMenuStatus';
 import SidebarProfileMenuLanguage from './SidebarProfileMenuLanguage';
 import SidebarProfileMenuAppearance from './SidebarProfileMenuAppearance';
-import { useSidebarKeyboardShortcuts } from 'dashboard/composables/useSidebarKeyboardShortcuts';
-import { accountScopedUrl } from 'dashboard/helper/URLHelper';
-import { useCurrentUserAvailability } from 'dashboard/realtime/hooks';
+import { CHAT_PROFILE_PATH } from './menuItems';
 import {
     DropdownBody,
     DropdownContainer,
     DropdownItem,
-    DropdownSeparator,
 } from 'dashboard/components-next/dropdown-menu/base';
 import type { DashboardPageProps } from '../../types';
 
@@ -26,21 +22,14 @@ import type { DashboardPageProps } from '../../types';
 // Contact support / Docs / Changelog (link ra site ngoài) bỏ theo branding;
 // Keyboard shortcuts vào B10.
 export default function SidebarProfileMenu({ isCollapsed = false }: { isCollapsed?: boolean }) {
-    const { auth, currentAccount } = usePage<DashboardPageProps>().props;
+    const { auth } = usePage<DashboardPageProps>().props;
     const user = auth.user!;
-    const availability = useCurrentUserAvailability();
     const availableName = user.display_name || user.name;
     const [showShortcutModal, setShowShortcutModal] = useState(false);
-
-    // Sidebar.vue gốc gắn phím tắt $mod+Slash / Alt+C,V,R,S; ở đây gắn cùng chỗ
-    // với mục menu mở modal để không đụng Sidebar.tsx của tính năng khác.
-    useSidebarKeyboardShortcuts(currentAccount.id, setShowShortcutModal);
 
 
     const menu = (
         <DropdownBody className="bottom-12 z-50 mb-2 w-80 ltr:left-0 rtl:right-0">
-            <SidebarProfileMenuStatus />
-            <DropdownSeparator />
             <SidebarProfileMenuLanguage />
             <SidebarProfileMenuAppearance />
             <DropdownItem
@@ -51,7 +40,7 @@ export default function SidebarProfileMenu({ isCollapsed = false }: { isCollapse
             <DropdownItem
                 label={t('SIDEBAR_ITEMS.PROFILE_SETTINGS')}
                 icon="i-lucide-user-pen"
-                link={accountScopedUrl(currentAccount.id, 'profile/settings')}
+                link={CHAT_PROFILE_PATH}
             />
             {user.type === 'SuperAdmin' ? (
                 <DropdownItem
@@ -82,7 +71,6 @@ export default function SidebarProfileMenu({ isCollapsed = false }: { isCollapse
                         size={32}
                         src={user.avatar_url}
                         name={availableName}
-                        status={availability}
                     />
                     {!isCollapsed ? (
                         <div className="min-w-0">

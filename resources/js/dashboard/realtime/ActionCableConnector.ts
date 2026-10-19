@@ -2,7 +2,7 @@ import { logoutKeepingPushSubscription } from 'dashboard/helper/logout';
 import { BUS_EVENTS, emitter } from 'shared/helpers/emitter';
 import BaseActionCableConnector from './BaseActionCableConnector';
 import { realtimeStore, typingUserKey } from './store';
-import type { PresenceUpdatePayload, RealtimeIdentity, TypingUser } from './types';
+import type { RealtimeIdentity, TypingUser } from './types';
 
 // Port từ dashboard/helper/actionCable.js. Không có Vuex nên handler chỉ ghi vào
 // realtimeStore (presence/typing) rồi phát lại đúng tên event nghiệp vụ qua emitter —
@@ -13,6 +13,11 @@ const TYPING_TIMEOUT = 30000;
 export const FETCH_CONVERSATION_STATS_EVENT = 'fetch_conversation_stats';
 
 export const REALTIME_EVENTS = [
+    'chat.message.created',
+    'chat.message.updated',
+    'chat.updated',
+    'chat.read',
+    'chat.typing',
     'message.created',
     'message.updated',
     'conversation.created',
@@ -39,43 +44,30 @@ export const REALTIME_EVENTS = [
 export type RealtimeEventName = (typeof REALTIME_EVENTS)[number];
 
 interface TypingPayload {
-    account_id: number;
     conversation: { id: number };
     user: TypingUser;
 }
 
-interface AccountScopedPayload {
-    account_id?: number;
+interface ChatTypingPayload {
+    chat_id: number;
+    user: TypingUser;
+    typing: boolean;
 }
 
 class ActionCableConnector extends BaseActionCableConnector {
     // Một hẹn giờ cho mỗi người gõ: trong nhóm nhiều thành viên gõ cùng lúc trên một hội thoại.
     private cancelTyping: Record<string, ReturnType<typeof setTimeout> | null> = {};
 
-    constructor(identity: RealtimeIdentity, presenceInterval?: number) {
-        super(identity, presenceInterval);
+    constructor(identity: RealtimeIdentity) {
+        super(identity);
         this.events = {
-            'message.created': this.forward('message.created'),
-            'message.updated': this.forward('message.updated'),
-            'conversation.created': this.forwardThenFetchStats('conversation.created'),
-            'conversation.status_changed': this.forwardThenFetchStats('conversation.status_changed'),
+            'chat.message.created': this.forward('chat.message.created'),
+            'chat.message.updated': this.forward('chat.message.updated'),
+            'chat.updated': this.forward('chat.updated'),
+            'chat.read': this.forward('chat.read'),
+            'chat.typing': this.onChatTyping,
             'user:logout': this.onLogout,
             'page:reload': this.onReload,
-            'assignee.changed': this.forwardThenFetchStats('assignee.changed'),
-            'conversation.typing_on': this.onTypingOn,
-            'conversation.typing_off': this.onTypingOff,
-            'conversation.contact_changed': this.forward('conversation.contact_changed'),
-            'presence.update': this.onPresenceUpdate,
-            'contact.deleted': this.forwardThenFetchStats('contact.deleted'),
-            'contact.updated': this.forward('contact.updated'),
-            'conversation.mentioned': this.forward('conversation.mentioned'),
-            'notification.created': this.forward('notification.created'),
-            'notification.deleted': this.forward('notification.deleted'),
-            'notification.updated': this.forward('notification.updated'),
-            'conversation.read': this.forward('conversation.read'),
-            'conversation.updated': this.forwardThenFetchStats('conversation.updated'),
-            'conversation.unread_count_changed': this.forward('conversation.unread_count_changed'),
-            'account.cache_invalidated': this.forward('account.cache_invalidated'),
         };
     }
 
@@ -93,31 +85,21 @@ class ActionCableConnector extends BaseActionCableConnector {
         realtimeStore.setConnected(true);
     };
 
-    isAValidEvent = (data: unknown): boolean =>
-        (data as AccountScopedPayload | null)?.account_id === this.identity.accountId;
-
     private forward = (eventName: RealtimeEventName) => (data: unknown) => {
         emitter.emit(eventName, data);
     };
 
-    private forwardThenFetchStats = (eventName: RealtimeEventName) => (data: unknown) => {
-        emitter.emit(eventName, data);
-        this.fetchConversationStats();
-    };
-
-    fetchConversationStats = () => {
-        emitter.emit(FETCH_CONVERSATION_STATS_EVENT);
-    };
 
     onLogout = () => logoutKeepingPushSubscription();
 
     onReload = () => window.location.reload();
 
-    onPresenceUpdate = (data: PresenceUpdatePayload) => {
-        realtimeStore.updateContactsPresence(data.contacts);
-        realtimeStore.updateAgentsPresence(data.users);
-        realtimeStore.applyCurrentUserAvailability(data.users, this.identity.userId);
-        emitter.emit('presence.update', data);
+    onChatTyping = ({ chat_id: chatId, user, typing }: ChatTypingPayload) => {
+        if (typing) {
+            this.onTypingOn({ conversation: { id: chatId }, user });
+        } else {
+            this.onTypingOff({ conversation: { id: chatId }, user });
+        }
     };
 
     onTypingOn = ({ conversation, user }: TypingPayload) => {

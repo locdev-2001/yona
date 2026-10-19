@@ -1,14 +1,11 @@
 import { useEffect } from 'react';
-import { router, usePage } from '@inertiajs/react';
+import { router } from '@inertiajs/react';
 
-import { accountScopedUrl } from 'dashboard/helper/URLHelper';
-import { ICON_BELL, ICON_MESSAGE_CIRCLE, ICON_USER_PEN, NAVIGATION_ICONS } from 'dashboard/helper/commandbar/icons';
+import { ICON_USER_PEN, NAVIGATION_ICONS } from 'dashboard/helper/commandbar/icons';
 import type { CommandBarAction } from 'dashboard/helper/commandbar/actions';
-import { buildMenuItems } from 'dashboard/components-next/sidebar/menuItems';
-import { filterMenuByRole } from 'dashboard/components-next/sidebar/permissions';
-import type { AccountRole, SidebarMenuChild } from 'dashboard/components-next/sidebar/provider';
+import { buildMenuItems, CHAT_PROFILE_PATH } from 'dashboard/components-next/sidebar/menuItems';
+import type { SidebarMenuChild } from 'dashboard/components-next/sidebar/provider';
 import { t } from '../../i18n';
-import type { DashboardPageProps } from '../types';
 import { clearCommandBarActions, setCommandBarActions } from './commandBarStore';
 
 // Lệnh "đi tới" sinh từ chính menu sidebar (cùng bộ lọc quyền + cờ tính năng),
@@ -25,13 +22,11 @@ interface OffMenuDestination {
 }
 
 const OFF_MENU_DESTINATIONS: OffMenuDestination[] = [
-    { id: 'goto_my_inbox', title: 'COMMAND_BAR.COMMANDS.GO_TO_MY_INBOX', icon: ICON_BELL, path: 'inbox-view' },
-    { id: 'compose_conversation', title: 'COMMAND_BAR.COMMANDS.COMPOSE_CONVERSATION', icon: ICON_MESSAGE_CIRCLE, path: 'inbox/new' },
     {
         id: 'open_profile_settings',
         title: 'COMMAND_BAR.COMMANDS.GO_TO_SETTINGS_PROFILE',
         icon: ICON_USER_PEN,
-        path: 'profile/settings',
+        path: CHAT_PROFILE_PATH,
     },
 ];
 
@@ -69,18 +64,14 @@ function collectMenuDestinations(
     });
 }
 
-export function buildGoToActions(
-    accountId: number,
-    role: AccountRole,
-    features: Record<string, boolean> = {},
-): CommandBarAction[] {
-    const menuDestinations = filterMenuByRole(buildMenuItems(accountId), role, features).flatMap(group =>
+export function buildGoToActions(): CommandBarAction[] {
+    const menuDestinations = buildMenuItems().flatMap(group =>
         collectMenuDestinations([group], group.label, [], undefined),
     );
 
     const generalSection = t('COMMAND_BAR.SECTIONS.GENERAL');
     const offMenuDestinations = OFF_MENU_DESTINATIONS.map(destination => {
-        const url = accountScopedUrl(accountId, destination.path);
+        const url = destination.path;
         return {
             id: destination.id,
             title: t(destination.title),
@@ -94,15 +85,8 @@ export function buildGoToActions(
 }
 
 export function useGoToCommandHotKeys(): void {
-    const { currentAccount, currentAccountUser } = usePage<DashboardPageProps>().props;
-    const accountId = currentAccount?.id ?? 0;
-    const role = currentAccountUser?.role ?? 'agent';
-    const features = currentAccount?.features;
-
     useEffect(() => {
-        if (!accountId) return undefined;
-
-        setCommandBarActions(SOURCE, buildGoToActions(accountId, role, features ?? {}));
+        setCommandBarActions(SOURCE, buildGoToActions());
         return () => clearCommandBarActions(SOURCE);
-    }, [accountId, role, features]);
+    }, []);
 }

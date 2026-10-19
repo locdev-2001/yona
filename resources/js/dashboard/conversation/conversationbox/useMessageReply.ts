@@ -2,7 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { readInReplyToId } from 'dashboard/components-next/message/helpers/replyQuote';
 
-import { fetchSingleMessage, messagesRangeOf } from '../messageFocus';
+import { fetchMessages } from '../api';
+import { toViewerMessage } from '../realtimeReducers';
 import { getReplyTarget, removeReplyTarget, setReplyTarget } from '../replyToStore';
 import type { ConversationMessage } from '../types';
 
@@ -12,10 +13,9 @@ import type { ConversationMessage } from '../types';
 // API danh sách tin nhắn, không cần endpoint riêng.
 
 interface UseMessageReplyArgs {
-    accountId: number;
+    currentUserId: number;
     conversationId: number;
     messages: ConversationMessage[];
-    // Kênh khai `outbound_reply_to`. Không khai thì không bao giờ có tin đang trả lời.
     enabled: boolean;
 }
 
@@ -45,8 +45,15 @@ interface PendingLookups {
 
 const EMPTY_TARGETS: ReadonlyMap<number, ConversationMessage | null> = new Map();
 
+// Tin gốc nằm ngoài trang đang tải: lấy trang tin ngay trước id + 1 (gồm chính nó).
+async function fetchSingleMessage(conversationId: number, messageId: number, currentUserId: number): Promise<ConversationMessage | null> {
+    const page = await fetchMessages(conversationId, messageId + 1);
+    const found = page.payload.find(message => message.id === messageId);
+    return found ? toViewerMessage(found, currentUserId) : null;
+}
+
 export function useMessageReply({
-    accountId,
+    currentUserId,
     conversationId,
     messages,
     enabled,
@@ -93,7 +100,7 @@ export function useMessageReply({
             if (targets.has(messageId) || pending.loading.has(messageId) || pending.failed.has(messageId)) return;
 
             pending.loading.add(messageId);
-            fetchSingleMessage(messagesRangeOf(accountId, conversationId), messageId).then(
+            fetchSingleMessage(conversationId, messageId, currentUserId).then(
                 found => {
                     pending.loading.delete(messageId);
                     if (conversationIdRef.current !== conversationId) return;
@@ -118,7 +125,7 @@ export function useMessageReply({
                 },
             );
         });
-    }, [accountId, conversationId, messages, enabled, storedTargetId, targets]);
+    }, [currentUserId, conversationId, messages, enabled, storedTargetId, targets]);
 
     const startReply = useCallback(
         (message: ConversationMessage) => {

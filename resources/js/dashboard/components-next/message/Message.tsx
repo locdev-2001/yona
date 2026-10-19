@@ -184,17 +184,9 @@ export default function Message({
         return variants[messageType] ?? MESSAGE_VARIANTS.USER;
     })();
 
-    const isBotOrAgentMessage = (() => {
-        if (messageType === MESSAGE_TYPES.ACTIVITY) return false;
-        if (status === MESSAGE_STATUS.PROGRESS && messageType === MESSAGE_TYPES.OUTGOING) return true;
-
-        const senderId = message.sender_id ?? sender?.id;
-        const effectiveSenderType = sender?.type ?? senderType;
-        if (!effectiveSenderType || !senderId) return true;
-        if (BOT_SENDER_TYPES.includes(effectiveSenderType)) return true;
-
-        return effectiveSenderType.toLowerCase() === SENDER_TYPES.USER.toLowerCase();
-    })();
+    // Tin của chính người xem nằm bên phải: message_type đã được quy theo người xem
+    // (OUTGOING = của mình) trước khi tới đây.
+    const isBotOrAgentMessage = messageType === MESSAGE_TYPES.OUTGOING;
 
     const orientation: MessageOrientation = (() => {
         if (isBotOrAgentMessage) return ORIENTATION.RIGHT;

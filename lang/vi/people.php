@@ -26,16 +26,12 @@ return [
     ],
     'CHAT' => [
         'TITLE' => 'Tin nhắn',
-        'PROFILE_LINK' => 'Hồ sơ của bạn',
         'SEARCH_PLACEHOLDER' => 'Tìm theo @username hoặc tên',
         'SEARCH_LABEL' => 'Tìm người',
-        'PEOPLE' => 'Mọi người',
         'NO_RESULTS' => 'Không tìm thấy ai với tên này',
         'SEARCH_ERROR' => 'Chưa tìm được, bạn thử lại nhé',
-        'EMPTY_TITLE' => 'Tìm bạn bè để bắt đầu',
-        'EMPTY_BODY' => 'Gõ @username hoặc tên của bạn bè vào ô tìm kiếm.',
-        'PICK_PERSON' => 'Chọn một người để xem hồ sơ',
-        'CLOSE_CARD' => 'Đóng thẻ hồ sơ',
+        'LOAD_ERROR' => 'Chưa tải được danh sách trò chuyện, bạn thử lại nhé',
+        'OPEN_ERROR' => 'Chưa mở được cuộc trò chuyện, bạn thử lại nhé',
     ],
     'PROFILE' => [
         'TITLE' => 'Hồ sơ',

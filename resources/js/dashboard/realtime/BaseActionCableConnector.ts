@@ -1,13 +1,10 @@
 import type Echo from 'laravel-echo';
 
-import { postJson } from 'dashboard/helper/apiClient';
 import { createEcho } from './echo';
 import type { RealtimeIdentity } from './types';
 
-// Port từ shared/helpers/BaseActionCableConnector.js — RoomChannel (stream pubsub_token
-// + account_{id}, perform('update_presence')) đổi thành 2 kênh private của Reverb +
-// heartbeat POST /presence (server broadcast presence.update về kênh pubsub_token).
-const PRESENCE_INTERVAL = 20000;
+// Mỗi người dùng nghe một kênh private của Reverb mang tên pubsub_token của mình;
+// mọi sự kiện nhắn tin của người đó đi qua kênh này.
 const RECONNECT_INTERVAL = 1000;
 
 // pusher-js: state đi qua initialized → connecting → connected → (unavailable|disconnected|failed).
@@ -33,8 +30,6 @@ export function normalizeEchoEventName(eventName: string): string {
     return eventName.startsWith('.') ? eventName.slice(1) : eventName;
 }
 
-export const accountChannelName = (accountId: number) => `account_${accountId}`;
-
 class BaseActionCableConnector {
     static isDisconnected = false;
 
@@ -43,23 +38,17 @@ class BaseActionCableConnector {
     protected events: Record<string, EventHandler> = {};
     protected isAValidEvent: (data: unknown) => boolean = () => true;
     private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
-    private presenceTimer: ReturnType<typeof setTimeout> | null = null;
-    private readonly presenceInterval: number;
     private hasBeenConnected = false;
 
-    constructor(identity: RealtimeIdentity, presenceInterval = PRESENCE_INTERVAL) {
+    constructor(identity: RealtimeIdentity) {
         this.identity = identity;
-        this.presenceInterval = presenceInterval;
         this.echo = createEcho();
 
-        [identity.pubsubToken, accountChannelName(identity.accountId)].forEach(channelName => {
-            this.echo.private(channelName).listenToAll((eventName: string, data: unknown) => {
-                this.onReceived({ event: normalizeEchoEventName(eventName), data });
-            });
+        this.echo.private(identity.pubsubToken).listenToAll((eventName: string, data: unknown) => {
+            this.onReceived({ event: normalizeEchoEventName(eventName), data });
         });
 
         this.connection.bind('state_change', this.onConnectionStateChange);
-        this.triggerPresenceInterval();
     }
 
     protected get connection(): PusherConnection {
@@ -73,11 +62,7 @@ class BaseActionCableConnector {
     private onConnectionStateChange = (change?: { previous: string; current: string }) => {
         const current = change?.current ?? this.connection.state;
         if (current === PUSHER_CONNECTED_STATE) {
-            // Lần connect đầu: bắn heartbeat ngay để nhận presence.update (RoomChannel#subscribed).
-            if (!this.hasBeenConnected) {
-                this.hasBeenConnected = true;
-                void this.updatePresence();
-            }
+            this.hasBeenConnected = true;
             this.onConnected();
             return;
         }
@@ -86,21 +71,6 @@ class BaseActionCableConnector {
             this.onDisconnected();
             this.initReconnectTimer();
         }
-    };
-
-    updatePresence = async (): Promise<void> => {
-        try {
-            await postJson(`/api/v1/accounts/${this.identity.accountId}/presence`, {});
-        } catch {
-            // Heartbeat lỗi (mất mạng/401) — lần sau thử lại, giống perform() gốc không await.
-        }
-    };
-
-    private triggerPresenceInterval = () => {
-        this.presenceTimer = setTimeout(() => {
-            void this.updatePresence();
-            this.triggerPresenceInterval();
-        }, this.presenceInterval);
     };
 
     checkConnection() {
@@ -134,10 +104,6 @@ class BaseActionCableConnector {
 
     disconnect() {
         this.clearReconnectTimer();
-        if (this.presenceTimer) {
-            clearTimeout(this.presenceTimer);
-            this.presenceTimer = null;
-        }
         this.connection.unbind('state_change', this.onConnectionStateChange);
         this.echo.disconnect();
     }

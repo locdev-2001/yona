@@ -49,8 +49,7 @@ export default function SidebarGroup({
     activeOn = [],
     children,
     getterKeys = {},
-    accountId,
-}: SidebarMenuItem & { accountId: number }) {
+}: SidebarMenuItem) {
     const { url } = usePage();
     const path = currentPath(url);
 
@@ -191,7 +190,6 @@ export default function SidebarGroup({
                             <SidebarSubGroup
                                 key={child.name}
                                 name={`${name}:${child.name}`}
-                                accountId={accountId}
                                 label={child.label}
                                 icon={child.icon}
                                 children={child.children}
