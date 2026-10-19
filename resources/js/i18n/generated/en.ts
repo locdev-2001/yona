@@ -5533,6 +5533,7 @@ const messages: Record<string, unknown> = {
             "FRIENDS_SINCE": "Friends since",
             "FIRST_SEEN": "First message",
             "LABELS": "Labels",
+            "NO_LABELS": "No labels yet. Add labels from the chat.",
             "CONNECTIONS": "Connections",
             "LOCKED": "Add {name} as a friend to see activity, notes and files.",
             "NO_CONNECTIONS": "No connections yet.",

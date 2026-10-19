@@ -37,7 +37,7 @@ export default function ProfileWindow({ label, card, tabs, children, onClose }: 
 
     return (
         <div
-            className="fixed inset-0 z-40 flex md:items-center md:justify-center md:p-8 md:bg-n-alpha-black1 md:backdrop-blur-[2px]"
+            className="fixed inset-0 z-[55] flex md:items-center md:justify-center md:p-8 md:bg-n-alpha-black1 md:backdrop-blur-[2px]"
             onClick={event => {
                 if (event.target !== event.currentTarget) return;
                 if (Date.now() - openedAt.current < BACKDROP_CLOSE_GRACE_MS) return;

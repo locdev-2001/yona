@@ -5533,6 +5533,7 @@ const messages: Record<string, unknown> = {
             "FRIENDS_SINCE": "Bạn bè từ",
             "FIRST_SEEN": "Nhắn lần đầu",
             "LABELS": "Nhãn",
+            "NO_LABELS": "Chưa có nhãn. Gán nhãn trong khung chat.",
             "CONNECTIONS": "Kết nối",
             "LOCKED": "Kết bạn với {name} để xem hoạt động, ghi chú và tệp.",
             "NO_CONNECTIONS": "Chưa có kết nối nào.",

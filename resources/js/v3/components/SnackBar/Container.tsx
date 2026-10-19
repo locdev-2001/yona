@@ -31,7 +31,7 @@ export default function SnackbarContainer({ duration = DEFAULT_DURATION }: { dur
     }, [duration]);
 
     return (
-        <div className="fixed left-0 right-0 mx-auto overflow-hidden text-center top-10 z-50 max-w-[40rem]">
+        <div className="fixed left-0 right-0 mx-auto overflow-hidden text-center top-10 z-[60] max-w-[40rem]">
             {snackbarMessages.map(snackbarMessage => (
                 <SnackbarItem
                     key={snackbarMessage.key}

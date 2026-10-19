@@ -4,13 +4,13 @@ import type { ReactNode } from 'react';
 import { t } from '../../../i18n';
 import Avatar from 'dashboard/components-next/avatar/Avatar';
 import ChannelIcon from 'dashboard/components-next/icon/ChannelIcon';
-import ContactLabels from 'dashboard/components-next/Contacts/ContactLabels/ContactLabels';
 import DropdownMenu from 'dashboard/components-next/dropdown-menu/DropdownMenu';
 import { BRAND_ICONS } from 'dashboard/icons';
 import { avatarSeed } from 'shared/avatar/avatarSeed';
 import { formatInLocale } from 'shared/helpers/timeHelper';
 import type { Contact, ContactSocialProfiles } from 'dashboard/contacts/types';
 import { uniqueChannels } from 'dashboard/contacts/contactChannels';
+import PersonLabels from './PersonLabels';
 import type { FriendshipProfile } from 'dashboard/friends/api';
 
 const DATE_PATTERN = 'd MMM, yyyy';
@@ -135,7 +135,7 @@ export default function ProfileCard({
 
                 {showLabels ? (
                     <ProfileSection title={t('FRIENDS.PROFILE.LABELS')}>
-                        <ContactLabels contactId={contact.id} />
+                        <PersonLabels contactId={contact.id} />
                     </ProfileSection>
                 ) : null}
 

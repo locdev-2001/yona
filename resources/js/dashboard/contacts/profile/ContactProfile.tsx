@@ -166,7 +166,7 @@ export default function ContactProfile({ contactId, onClose }: ContactProfilePro
     return (
         <>
             {isFetching || !contact || friendship === undefined ? (
-                <div className="fixed inset-0 z-40 grid place-content-center md:bg-n-alpha-black1 max-md:bg-n-surface-1 text-n-slate-11">
+                <div className="fixed inset-0 z-[55] grid place-content-center md:bg-n-alpha-black1 max-md:bg-n-surface-1 text-n-slate-11">
                     {isFetching || contact ? <Loader /> : null}
                 </div>
             ) : (
