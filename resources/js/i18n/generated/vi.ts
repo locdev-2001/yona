@@ -2671,7 +2671,7 @@ const messages: Record<string, unknown> = {
         },
         "NEW": {
             "TITLE": "Nhắn tin mới",
-            "DESCRIPTION": "Tìm bạn bè theo @username hoặc tên.",
+            "DESCRIPTION": "Tìm theo @username hoặc tên, chọn một người để xem hồ sơ và nhắn tin.",
             "HINT": "Gõ ít nhất 2 ký tự để tìm."
         },
         "EMPTY": {
@@ -5496,10 +5496,8 @@ const messages: Record<string, unknown> = {
         },
         "ADD": {
             "TITLE": "Thêm bạn",
-            "DESCRIPTION": "Tìm theo @username hoặc tên rồi gửi lời mời kết bạn.",
-            "SENT": "Đã gửi lời mời kết bạn tới {name}",
-            "ALREADY_FRIENDS": "Bạn và {name} đã là bạn bè",
-            "ERROR": "Chưa gửi được lời mời. Bạn hãy thử lại."
+            "DESCRIPTION": "Tìm theo @username hoặc tên, chọn một người để xem hồ sơ và kết bạn.",
+            "SENT": "Đã gửi lời mời kết bạn tới {name}"
         },
         "REQUESTS": {
             "INCOMING": "Lời mời đã nhận — {count}",
@@ -5527,6 +5525,7 @@ const messages: Record<string, unknown> = {
             "UNFRIEND": "Huỷ kết bạn",
             "UNFRIENDED": "Đã huỷ kết bạn với {name}",
             "FRIEND": "Bạn bè",
+            "NOT_FRIEND_HINT": "Chưa kết bạn · bấm để xem hồ sơ",
             "STRANGER": "Người lạ",
             "ABOUT": "Giới thiệu",
             "JOINED": "Tham gia Yona từ",

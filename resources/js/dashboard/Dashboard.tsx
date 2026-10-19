@@ -12,6 +12,7 @@ import SnackbarContainer from 'v3/components/SnackBar/Container';
 import RealtimeProvider from 'dashboard/realtime/RealtimeProvider';
 import CommandBar from 'dashboard/commands/CommandBar';
 import { ProfileOverlay } from 'dashboard/contacts/profile/profileOverlay';
+import { YonaRelationshipsSync } from 'dashboard/friends/yonaRelationships';
 import { bindUnreadIndicators } from 'dashboard/notifications/unreadIndicators';
 import UnreadTitleSync from 'dashboard/notifications/components/UnreadTitleSync';
 import PushSubscriptionSync from 'dashboard/notifications/components/PushSubscriptionSync';
@@ -71,6 +72,7 @@ function DashboardFrame({ children }: { children: ReactNode }) {
                         {isSettingsScreen ? <SettingsShell>{children}</SettingsShell> : children}
                         <CommandBar />
                         <ProfileOverlay />
+                        <YonaRelationshipsSync />
                         <SettingsOverlay />
                     </main>
                     <SnackbarContainer />

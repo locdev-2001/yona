@@ -9,10 +9,8 @@ return [
     ],
     'ADD' => [
         'TITLE' => 'Add friend',
-        'DESCRIPTION' => 'Search by @username or name, then send a friend request.',
+        'DESCRIPTION' => 'Search by @username or name, then pick someone to see their profile and add them.',
         'SENT' => 'Friend request sent to {name}',
-        'ALREADY_FRIENDS' => 'You and {name} are already friends',
-        'ERROR' => 'Could not send the request. Please try again.',
     ],
     'REQUESTS' => [
         'INCOMING' => 'Received — {count}',
@@ -40,6 +38,7 @@ return [
         'UNFRIEND' => 'Remove friend',
         'UNFRIENDED' => 'You are no longer friends with {name}',
         'FRIEND' => 'Friend',
+        'NOT_FRIEND_HINT' => 'Not friends yet · click to see the profile',
         'STRANGER' => 'Stranger',
         'ABOUT' => 'About',
         'JOINED' => 'Member since',

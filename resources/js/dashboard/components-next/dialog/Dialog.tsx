@@ -33,10 +33,14 @@ interface DialogProps {
     overflowYAuto?: boolean;
     width?: DialogWidth;
     position?: 'center' | 'top';
+    // Bấm nền mờ có đóng không; hộp chỉ đóng bằng Esc/nút thì tắt đi.
+    closeOnBackdrop?: boolean;
     children?: ReactNode;
     footer?: ReactNode;
     onConfirm?: () => void;
     onClose?: () => void;
+    // Sự kiện cancel gốc (Esc); gọi preventDefault để giữ hộp mở.
+    onCancel?: (event: React.SyntheticEvent<HTMLDialogElement>) => void;
 }
 
 const MAX_WIDTH_CLASSES: Record<DialogWidth, string> = {
@@ -63,10 +67,12 @@ const Dialog = forwardRef<DialogHandle, DialogProps>(function Dialog(
         overflowYAuto = false,
         width = 'lg',
         position = 'center',
+        closeOnBackdrop = true,
         children,
         footer,
         onConfirm,
         onClose,
+        onCancel,
     },
     ref,
 ) {
@@ -104,7 +110,7 @@ const Dialog = forwardRef<DialogHandle, DialogProps>(function Dialog(
     };
 
     const handleBackdropClick = (event: React.MouseEvent<HTMLDialogElement>) => {
-        if (event.target === dialogRef.current) close();
+        if (closeOnBackdrop && event.target === dialogRef.current) close();
     };
 
     return (
@@ -122,6 +128,7 @@ const Dialog = forwardRef<DialogHandle, DialogProps>(function Dialog(
                 if (event.target === dialogRef.current) close();
             }}
             onClick={handleBackdropClick}
+            onCancel={onCancel}
         >
             <form
                 className="flex flex-col w-full h-auto gap-6 p-6 overflow-visible text-start align-middle transition-all duration-300 ease-in-out transform bg-n-surface-raised rounded-xl"

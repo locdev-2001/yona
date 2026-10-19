@@ -70,7 +70,6 @@ use App\Http\Controllers\WebApi\UsersController;
 use App\Http\Controllers\WebApi\WebhooksController;
 use App\Http\Controllers\WebApi\WidgetUpdatesController;
 use App\Http\Controllers\WebApi\YonaContactsController;
-use App\Http\Controllers\WebApi\YonaConversationsController;
 use App\Http\Controllers\WebApi\ZaloConnectionsController;
 use App\Http\Middleware\EnsureStickerLibraryAccess;
 use App\Http\RateLimiting\MessagingRateLimiters;
@@ -218,7 +217,7 @@ Route::middleware(['auth.api_token', 'auth', 'account.scope'])
         Route::get('/contacts/{contactId}/labels', [ContactLabelsController::class, 'index'])->whereNumber('contactId');
         Route::post('/contacts/{contactId}/labels', [ContactLabelsController::class, 'create'])->whereNumber('contactId');
 
-        Route::post('/yona/conversations', [YonaConversationsController::class, 'store'])->middleware('throttle:60,1');
+        Route::get('/yona/contacts', [YonaContactsController::class, 'index']);
         Route::post('/yona/contacts', [YonaContactsController::class, 'store'])->middleware('throttle:60,1');
         Route::get('/conversations', [ConversationsController::class, 'index']);
         Route::post('/conversations', [ConversationsController::class, 'store']);

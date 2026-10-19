@@ -15,12 +15,17 @@ interface PeoplePickerProps {
     selected?: PickedPerson[];
     onChange?: (people: PickedPerson[]) => void;
     excludeIds?: number[];
+    // Ô tìm do nơi dùng giữ (để đóng mở hộp vẫn còn chữ đang tìm); vắng thì tự giữ.
+    query?: string;
+    onQueryChange?: (query: string) => void;
 }
 
 // Tìm người theo @username hoặc tên. Có `selected` thì thành chế độ chọn nhiều, người
 // đã chọn hiện thành chip phía trên ô tìm.
-export default function PeoplePicker({ onPick, selected, onChange, excludeIds = [] }: PeoplePickerProps) {
-    const [query, setQuery] = useState('');
+export default function PeoplePicker({ onPick, selected, onChange, excludeIds = [], query: controlledQuery, onQueryChange }: PeoplePickerProps) {
+    const [ownQuery, setOwnQuery] = useState('');
+    const query = controlledQuery ?? ownQuery;
+    const setQuery = onQueryChange ?? setOwnQuery;
     const search = usePeopleSearch(query);
     const isMulti = selected !== undefined;
     const selectedIds = new Set((selected ?? []).map(person => person.id));

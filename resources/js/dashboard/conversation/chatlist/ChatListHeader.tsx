@@ -1,5 +1,5 @@
 import type { DialogHandle } from 'dashboard/components-next/dialog/Dialog';
-import NewYonaChatDialog from '../people/NewYonaChatDialog';
+import FindPeopleDialog from 'dashboard/friends/FindPeopleDialog';
 import { useRef } from 'react';
 import { isProductFeatureVisible } from 'shared/helpers/productVisibility';
 import { formatNumber } from '@ext/utils';
@@ -72,7 +72,7 @@ export default function ChatListHeader({
                     </div>
                 </div>
                 <ChatListSearch />
-                <NewYonaChatDialog ref={newYonaChatRef} />
+                <FindPeopleDialog ref={newYonaChatRef} title={t('CHAT.NEW.TITLE')} description={t('CHAT.NEW.DESCRIPTION')} />
                 <div id="conversationFilterTeleportTarget" className={`absolute top-full z-50 ${anchorSide}`} />
             </div>
             {isAdvancedActive ? (

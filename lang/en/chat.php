@@ -11,7 +11,7 @@ return [
     ],
     'NEW' => [
         'TITLE' => 'New message',
-        'DESCRIPTION' => 'Find friends by @username or name.',
+        'DESCRIPTION' => 'Search by @username or name, then pick someone to see their profile and message them.',
         'HINT' => 'Type at least 2 characters to search.',
     ],
     'EMPTY' => [

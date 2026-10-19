@@ -5,7 +5,7 @@ import Dashboard from '../Dashboard';
 import Loader from 'shared/components/loader/Loader';
 import PaginationFooter from 'dashboard/components-next/pagination/PaginationFooter';
 import type { DialogHandle } from 'dashboard/components-next/dialog/Dialog';
-import AddFriendDialog from 'dashboard/friends/AddFriendDialog';
+import FindPeopleDialog from 'dashboard/friends/FindPeopleDialog';
 import FriendRequestList from 'dashboard/friends/FriendRequestList';
 import { fetchPendingFriendRequests } from 'dashboard/friends/api';
 import type { PendingFriendRequests } from 'dashboard/friends/api';
@@ -216,7 +216,7 @@ export default function FriendsIndex({ isActiveView = false }: FriendsIndexProps
                     </footer>
                 ) : null}
             </section>
-            <AddFriendDialog ref={addFriendDialogRef} onSent={loadRequests} />
+            <FindPeopleDialog ref={addFriendDialogRef} title={t('FRIENDS.ADD.TITLE')} description={t('FRIENDS.ADD.DESCRIPTION')} />
         </Dashboard>
     );
 }

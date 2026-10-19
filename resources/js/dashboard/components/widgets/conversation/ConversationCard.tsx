@@ -15,6 +15,7 @@ import { previewSenderLabel } from 'dashboard/components-next/message/helpers/se
 import type { DashboardPageProps } from '../../../types';
 import type { AgentMeta, ContactMeta, Conversation, ConversationMessage } from '../../../conversation/types';
 import InboxName from '../InboxName';
+import { StrangerBadge, useIsStranger } from 'dashboard/friends/yonaRelationships';
 import TimeAgo from '../../ui/TimeAgo';
 import MessagePreview from './MessagePreview';
 import CardLabels from './conversationCardComponents/CardLabels';
@@ -124,6 +125,7 @@ export default function ConversationCard({
         currentContact.availability_status as AvailabilityStatus | undefined,
     );
     const hasUnread = unreadCount > 0;
+    const isStranger = useIsStranger(chat.meta?.sender?.id);
     const lastMessageInChat = previewMessage ?? getLastMessage(chat);
     const currentUserId = usePage<DashboardPageProps>().props.auth?.user?.id ?? null;
     const lastMessageSender = lastMessageInChat
@@ -151,11 +153,17 @@ export default function ConversationCard({
         }
     };
 
-    const messagePreviewClass = [
-        hasUnread ? 'font-medium text-n-slate-12' : 'text-n-slate-11',
-        !compact && hasUnread ? 'ltr:pr-4 rtl:pl-4' : '',
-        compact && hasUnread ? 'ltr:pr-6 rtl:pl-6' : '',
-    ]
+    // Lề cuối dòng xem trước chừa chỗ cho số chưa đọc và nút thêm bạn nằm cùng hàng.
+    const previewEndPadding = isStranger
+        ? hasUnread
+            ? 'ltr:pr-16 rtl:pl-16 max-md:ltr:pr-[4.5rem] max-md:rtl:pl-[4.5rem]'
+            : 'ltr:pr-8 rtl:pl-8 max-md:ltr:pr-10 max-md:rtl:pl-10'
+        : hasUnread
+          ? compact
+              ? 'ltr:pr-6 rtl:pl-6'
+              : 'ltr:pr-4 rtl:pl-4'
+          : '';
+    const messagePreviewClass = [hasUnread ? 'font-medium text-n-slate-12' : 'text-n-slate-11', previewEndPadding]
         .filter(Boolean)
         .join(' ');
 
@@ -291,6 +299,14 @@ export default function ConversationCard({
                         className={['absolute ltr:right-3 rtl:left-3', showMetaSection ? 'top-[3.25rem]' : 'top-9'].join(' ')}
                     />
                 ) : null}
+                <StrangerBadge
+                    contactId={chat.meta?.sender?.id}
+                    className={[
+                        'absolute',
+                        showMetaSection ? 'top-[3.125rem] max-md:top-[2.875rem]' : 'top-8 max-md:top-7',
+                        hasUnread ? 'ltr:right-11 rtl:left-11' : 'ltr:right-3 rtl:left-3',
+                    ].join(' ')}
+                />
                 {showLabelsSection || showAssigneeSection ? (
                     <div className="flex items-center gap-2 min-w-0 mt-0.5 mx-2">
                         {showLabelsSection ? (

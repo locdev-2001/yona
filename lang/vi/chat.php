@@ -13,7 +13,7 @@ return [
     ],
     'NEW' => [
         'TITLE' => 'Nhắn tin mới',
-        'DESCRIPTION' => 'Tìm bạn bè theo @username hoặc tên.',
+        'DESCRIPTION' => 'Tìm theo @username hoặc tên, chọn một người để xem hồ sơ và nhắn tin.',
         'HINT' => 'Gõ ít nhất 2 ký tự để tìm.',
     ],
     'EMPTY' => [

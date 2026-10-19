@@ -2671,7 +2671,7 @@ const messages: Record<string, unknown> = {
         },
         "NEW": {
             "TITLE": "New message",
-            "DESCRIPTION": "Find friends by @username or name.",
+            "DESCRIPTION": "Search by @username or name, then pick someone to see their profile and message them.",
             "HINT": "Type at least 2 characters to search."
         },
         "EMPTY": {
@@ -5496,10 +5496,8 @@ const messages: Record<string, unknown> = {
         },
         "ADD": {
             "TITLE": "Add friend",
-            "DESCRIPTION": "Search by @username or name, then send a friend request.",
-            "SENT": "Friend request sent to {name}",
-            "ALREADY_FRIENDS": "You and {name} are already friends",
-            "ERROR": "Could not send the request. Please try again."
+            "DESCRIPTION": "Search by @username or name, then pick someone to see their profile and add them.",
+            "SENT": "Friend request sent to {name}"
         },
         "REQUESTS": {
             "INCOMING": "Received — {count}",
@@ -5527,6 +5525,7 @@ const messages: Record<string, unknown> = {
             "UNFRIEND": "Remove friend",
             "UNFRIENDED": "You are no longer friends with {name}",
             "FRIEND": "Friend",
+            "NOT_FRIEND_HINT": "Not friends yet · click to see the profile",
             "STRANGER": "Stranger",
             "ABOUT": "About",
             "JOINED": "Member since",
