@@ -5529,13 +5529,12 @@ const messages: Record<string, unknown> = {
             "FIRST_SEEN": "Nhắn lần đầu",
             "LABELS": "Nhãn",
             "CONNECTIONS": "Kết nối",
+            "LOCKED": "Kết bạn với {name} để xem hoạt động, ghi chú và tệp.",
             "NO_CONNECTIONS": "Chưa có kết nối nào.",
             "TABS": {
                 "ACTIVITY": "Hoạt động",
                 "NOTES": "Ghi chú",
-                "MEDIA": "Tệp",
-                "INFO": "Thông tin",
-                "ATTRIBUTES": "Thuộc tính"
+                "MEDIA": "Tệp"
             }
         }
     },

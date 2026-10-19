@@ -1,4 +1,3 @@
-import { isProductFeatureVisible } from 'shared/helpers/productVisibility';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePage } from '@inertiajs/react';
 
@@ -6,8 +5,6 @@ import { t } from '../../../i18n';
 import { useAlert } from 'dashboard/composables/useAlert';
 import { parseApiErrorMessage } from 'dashboard/helper/apiClient';
 import Loader from 'shared/components/loader/Loader';
-import ContactDetails from 'dashboard/components-next/Contacts/Pages/ContactDetails';
-import ContactCustomAttributes from 'dashboard/components-next/Contacts/ContactsSidebar/ContactCustomAttributes';
 import ContactHistory from 'dashboard/components-next/Contacts/ContactsSidebar/ContactHistory';
 import ContactNotes from 'dashboard/components-next/Contacts/ContactsSidebar/ContactNotes';
 import ContactMedia from 'dashboard/components-next/Contacts/ContactsSidebar/ContactMedia';
@@ -26,12 +23,11 @@ import type { ProfileMenuItem } from './ProfileCard';
 import ProfileWindow from './ProfileWindow';
 import type { DashboardPageProps } from '../../types';
 
+// Không có tab sửa thông tin: hồ sơ của ai thì chỉ người đó sửa.
 const PROFILE_TABS = [
     { key: 'ACTIVITY', value: 'history' },
     { key: 'NOTES', value: 'notes' },
     { key: 'MEDIA', value: 'media' },
-    { key: 'INFO', value: 'info' },
-    { key: 'ATTRIBUTES', value: 'attributes' },
 ] as const;
 type ProfileTab = (typeof PROFILE_TABS)[number]['value'];
 
@@ -142,11 +138,12 @@ export default function ContactProfile({ contactId, onClose }: ContactProfilePro
             void runFriendAction(() => acceptFriendRequest(friendshipId), t('FRIENDS.REQUESTS.ACCEPTED', { name }));
     };
 
-    const visibleTabs = PROFILE_TABS.filter(tab => tab.value !== 'attributes' || isProductFeatureVisible('customAttributes'));
+    // Người dùng Yona chưa kết bạn: không xem hoạt động, ghi chú, tệp của người đó.
+    const isLockedStranger = friendship !== null && friendship !== undefined && friendship.state !== 'friends';
 
-    const tabs = (
+    const tabs = isLockedStranger ? null : (
         <nav className="flex items-center gap-5 overflow-x-auto no-scrollbar border-b border-n-weak" role="tablist">
-            {visibleTabs.map(tab => {
+            {PROFILE_TABS.map(tab => {
                 const isActive = tab.value === activeTab;
                 return (
                     <button
@@ -183,22 +180,24 @@ export default function ContactProfile({ contactId, onClose }: ContactProfilePro
                             friendship={friendship}
                             isBusy={isBusy}
                             menuItems={menuItems}
+                            showLabels={!isLockedStranger}
                             onMessage={() => void openContactChat(accountId, contact.id)}
                             onFriendAction={onFriendAction}
                             onMenuAction={onMenuAction}
                         />
                     }
                 >
-                    {activeTab === 'history' ? (
+                    {isLockedStranger ? (
+                        <div className="flex flex-col items-center justify-center h-full gap-2 py-16 text-center">
+                            <span className="i-lucide-lock size-6 text-n-slate-10" />
+                            <p className="m-0 max-w-72 text-sm text-n-slate-11">{t('FRIENDS.PROFILE.LOCKED', { name })}</p>
+                        </div>
+                    ) : activeTab === 'history' ? (
                         <ContactHistory contactId={contactId} selectedContact={contact} />
                     ) : activeTab === 'notes' ? (
                         <ContactNotes contactId={contactId} />
-                    ) : activeTab === 'media' ? (
-                        <ContactMedia contactId={contactId} />
-                    ) : activeTab === 'info' ? (
-                        <ContactDetails selectedContact={contact} onContactUpdated={setContact} onGoToContactsList={close} showHeader={false} />
                     ) : (
-                        <ContactCustomAttributes selectedContact={contact} onContactUpdated={setContact} />
+                        <ContactMedia contactId={contactId} />
                     )}
                 </ProfileWindow>
             )}

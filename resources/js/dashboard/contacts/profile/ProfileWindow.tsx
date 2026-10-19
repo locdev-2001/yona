@@ -13,7 +13,7 @@ const isTypingTarget = (target: EventTarget | null) =>
 interface ProfileWindowProps {
     label: string;
     card: ReactNode;
-    tabs: ReactNode;
+    tabs: ReactNode | null;
     children: ReactNode;
     onClose: () => void;
 }
@@ -57,7 +57,7 @@ export default function ProfileWindow({ label, card, tabs, children, onClose }: 
                 />
                 <aside className="shrink-0 md:w-[380px] md:m-4 md:me-0 md:overflow-y-auto md:overflow-x-hidden md:rounded-xl bg-n-surface-2">{card}</aside>
                 <section className="flex flex-col flex-1 min-w-0 md:min-h-0">
-                    <div className="shrink-0 px-4 md:px-6 pt-4 md:pt-6 md:pe-16">{tabs}</div>
+                    {tabs ? <div className="shrink-0 px-4 md:px-6 pt-4 md:pt-6 md:pe-16">{tabs}</div> : null}
                     <div className="flex-1 min-h-0 px-4 md:px-6 py-4 md:overflow-y-auto">{children}</div>
                 </section>
             </div>

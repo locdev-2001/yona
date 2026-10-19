@@ -38,6 +38,7 @@ interface ProfileCardProps {
     friendship: FriendshipProfile | null;
     isBusy: boolean;
     menuItems: ProfileMenuItem[];
+    showLabels: boolean;
     onMessage: () => void;
     onFriendAction: () => void;
     onMenuAction: (action: string) => void;
@@ -50,6 +51,7 @@ export default function ProfileCard({
     friendship,
     isBusy,
     menuItems,
+    showLabels,
     onMessage,
     onFriendAction,
     onMenuAction,
@@ -131,9 +133,11 @@ export default function ProfileCard({
                     </ProfileSection>
                 ) : null}
 
-                <ProfileSection title={t('FRIENDS.PROFILE.LABELS')}>
-                    <ContactLabels contactId={contact.id} />
-                </ProfileSection>
+                {showLabels ? (
+                    <ProfileSection title={t('FRIENDS.PROFILE.LABELS')}>
+                        <ContactLabels contactId={contact.id} />
+                    </ProfileSection>
+                ) : null}
 
                 <ProfileSection title={t('FRIENDS.PROFILE.CONNECTIONS')}>
                     <Connections contact={contact} />

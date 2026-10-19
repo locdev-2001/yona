@@ -5529,13 +5529,12 @@ const messages: Record<string, unknown> = {
             "FIRST_SEEN": "First message",
             "LABELS": "Labels",
             "CONNECTIONS": "Connections",
+            "LOCKED": "Add {name} as a friend to see activity, notes and files.",
             "NO_CONNECTIONS": "No connections yet.",
             "TABS": {
                 "ACTIVITY": "Activity",
                 "NOTES": "Notes",
-                "MEDIA": "Files",
-                "INFO": "Info",
-                "ATTRIBUTES": "Attributes"
+                "MEDIA": "Files"
             }
         }
     },
