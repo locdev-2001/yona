@@ -5,7 +5,7 @@ import type { ReactNode } from 'react';
  * dòng sản phẩm mà section đang nói tới, và một màu xám cho section trung tính
  * — nhờ vậy mắt nhận ra "khối này vẫn thuộc mạch hội thoại" mà không cần chữ.
  *
- * Yona có hai mạch: hội thoại (primary) và hồ sơ/dữ liệu (navy). KHÔNG dùng
+ * Trang chủ luân phiên primary và navy giữa các khối liền nhau. KHÔNG dùng
  * cyan ở đây: §1 chốt cyan chỉ được đặt trên nền navy.
  */
 export const ACCENT = {
@@ -47,7 +47,7 @@ const SURFACE = {
 const RHYTHM = {
     xl: 'py-24 md:py-[13.5rem]', // 216px — riêng section kết
     lg: 'py-16 md:py-28', // 112px — khối tính năng
-    md: 'py-12 md:py-20', // 80px — hero, bảng giá
+    md: 'py-12 md:py-20', // 80px — hero, các bước
     sm: 'py-10 md:py-16', // 64px — dải kênh
 } as const;
 

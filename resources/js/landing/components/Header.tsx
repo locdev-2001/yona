@@ -1,4 +1,5 @@
 import type { LandingConfig } from '../config';
+import { landingCopy } from '../copy';
 import { BrandLogo } from './BrandLogo';
 import { ButtonLink } from './Button';
 
@@ -7,12 +8,12 @@ import { ButtonLink } from './Button';
 /** Các mục chỉ hiện ở desktop; dưới 768px chúng nằm trong `MenuDiDong`. */
 const LIEN_KET = [
     { key: 'features', href: (urls: LandingConfig['urls']) => `${urls.home}#features` },
-    { key: 'pricing', href: (urls: LandingConfig['urls']) => `${urls.home}#pricing` },
-    { key: 'demo', href: (urls: LandingConfig['urls']) => urls.demo },
+    { key: 'how', href: (urls: LandingConfig['urls']) => `${urls.home}#how-it-works` },
 ] as const;
 
 export function Header({ config }: { config: LandingConfig }) {
-    const { brand, urls, strings, isAuthenticated } = config;
+    const { brand, urls, isAuthenticated } = config;
+    const strings = landingCopy(config.locale);
 
     return (
         <header className="fixed inset-x-0 top-0 z-50 h-16 bg-neutral-0">
@@ -38,7 +39,7 @@ export function Header({ config }: { config: LandingConfig }) {
                     <LocaleSwitch config={config} />
 
                     {isAuthenticated ? (
-                        <ButtonLink href={urls.dashboard}>{strings.nav.dashboard}</ButtonLink>
+                        <ButtonLink href={urls.dashboard}>{strings.nav.open_app}</ButtonLink>
                     ) : (
                         <>
                             <ButtonLink href={urls.login} variant="ghost" className="hidden md:inline-flex">
@@ -60,7 +61,8 @@ export function Header({ config }: { config: LandingConfig }) {
  * chữ đen, cái kia là link. Chọn xong middleware nhớ bằng cookie.
  */
 function LocaleSwitch({ config }: { config: LandingConfig }) {
-    const { locales, locale, strings } = config;
+    const { locales, locale } = config;
+    const strings = landingCopy(locale);
 
     if (locales.length < 2) {
         return null;
@@ -102,20 +104,21 @@ function LocaleSwitch({ config }: { config: LandingConfig }) {
  * Menu dưới 768px.
  *
  * Dựng bằng `<details>` chứ không bằng state React: đóng/mở, phím Enter/Space,
- * và thứ tự tab đã là hành vi sẵn có của thẻ này. Một `Dialog` cho bốn liên kết
+ * và thứ tự tab đã là hành vi sẵn có của thẻ này. Một `Dialog` cho vài liên kết
  * đổi lấy state, overlay, focus trap, khoá cuộn và một phụ thuộc mới.
  *
  * Lý do tồn tại: trước đây bốn mục chỉ mang `hidden md:inline-flex` và không có
- * gì thay thế — khách mở trên điện thoại mất đường vào Bảng giá, Đặt lịch demo
+ * gì thay thế — khách mở trên điện thoại mất đường vào các mục nav
  * và **Đăng nhập** (đo 21/09 · 390px: nav chỉ còn logo, vi/en, Dùng thử).
  */
 function MenuDiDong({ config }: { config: LandingConfig }) {
-    const { urls, strings, isAuthenticated } = config;
+    const { urls, isAuthenticated } = config;
+    const strings = landingCopy(config.locale);
 
     const muc = [
         ...LIEN_KET.map((mot) => ({ key: mot.key, href: mot.href(urls), label: strings.nav[mot.key] })),
         isAuthenticated
-            ? { key: 'dashboard', href: urls.dashboard, label: strings.nav.dashboard }
+            ? { key: 'dashboard', href: urls.dashboard, label: strings.nav.open_app }
             : { key: 'login', href: urls.login, label: strings.nav.login },
     ];
 

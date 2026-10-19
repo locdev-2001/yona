@@ -1,6 +1,7 @@
 import type { LandingConfig } from '../config';
+import type { LandingCopy } from '../copy';
 import { ArtMark } from './ArtMark';
-import { CtaPair } from './Button';
+import { AccountCta } from './AccountCta';
 import { Section } from './Section';
 
 /**
@@ -25,9 +26,8 @@ const ART = [
     { src: 'hero-4', width: 176, height: 137, size: 'w-36 2xl:w-48', className: '-right-10 bottom-1/4' },
 ];
 
-export function Hero({ config }: { config: LandingConfig }) {
-    const { urls, strings, isAuthenticated } = config;
-    const hero = strings.hero;
+export function Hero({ config, copy }: { config: LandingConfig; copy: LandingCopy }) {
+    const hero = copy.hero;
 
     return (
         // accent="primary": hero mở đầu mạch hội thoại, dấu góc + eyebrow của
@@ -44,7 +44,7 @@ export function Hero({ config }: { config: LandingConfig }) {
 
             {/* Bề mặt tham chiếu có một dòng 14px căn giữa phía trên h1 (bằng
                 chứng xã hội của họ). Yona chưa có khách thật để trưng ra nên
-                bỏ trống chỗ này — bịa số liệu hay tên khách còn tệ hơn thưa. */}
+                bỏ trống chỗ này: bịa số liệu hay tên người dùng còn tệ hơn thưa. */}
 
             {/* Ba dòng: dòng giữa là thông điệp, hai dòng kia lùi lại bằng alpha.
                 60% chứ không phải 50%: 50% cho 3.54:1 — qua ngưỡng 3:1 của chữ
@@ -63,19 +63,8 @@ export function Hero({ config }: { config: LandingConfig }) {
                 {hero.subtitle}
             </p>
 
-            {/* Giữ hai nút (không chuyển sang form bắt email như bề mặt tham
-                chiếu): Yona chưa có luồng đăng ký chỉ-bằng-email, dựng form mà
-                không biết nó dẫn đi đâu là bịa một bước sản phẩm chưa tồn tại. */}
             <div className="relative mt-8">
-                {isAuthenticated ? (
-                    <CtaPair align="center" primary={{ label: hero.cta_dashboard, href: urls.dashboard }} />
-                ) : (
-                    <CtaPair
-                        align="center"
-                        primary={{ label: hero.cta_primary, href: urls.register }}
-                        secondary={{ label: strings.nav.demo, href: urls.demo }}
-                    />
-                )}
+                <AccountCta config={config} copy={copy} />
             </div>
 
             {/* Dòng gỡ rào ngay dưới CTA: nó trả lời câu hỏi đầu tiên người đọc

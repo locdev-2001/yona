@@ -1,4 +1,5 @@
 import type { LandingConfig } from '../config';
+import { landingCopy } from '../copy';
 import { CtaPair } from '../components/Button';
 import { Eyebrow, Section } from '../components/Section';
 
@@ -6,17 +7,18 @@ import { Eyebrow, Section } from '../components/Section';
  * Trang 404 có thương hiệu (resources/views/errors/404.blade.php).
  *
  * Đi đúng hai lối người lạc đường thật sự cần: trang chủ, và chỗ làm việc của
- * họ. Người đã đăng nhập thì lối thứ hai là Dashboard, không phải màn đăng nhập.
+ * họ. Người đã đăng nhập thì lối thứ hai là app, không phải màn đăng nhập.
  */
 export function NotFound({ config }: { config: LandingConfig }) {
-    const { notFound, strings, urls, isAuthenticated } = config;
+    const { notFound, urls, isAuthenticated } = config;
+    const strings = landingCopy(config.locale);
 
     if (!notFound) {
         return null;
     }
 
     const workspace = isAuthenticated
-        ? { label: strings.nav.dashboard, href: urls.dashboard }
+        ? { label: strings.nav.open_app, href: urls.dashboard }
         : { label: strings.nav.login, href: urls.login };
 
     return (

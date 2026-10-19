@@ -1,6 +1,7 @@
 import type { LandingConfig } from '../../config';
+import type { LandingCopy } from '../../copy';
+import { AccountCta } from '../AccountCta';
 import { ArtMark } from '../ArtMark';
-import { CtaPair } from '../Button';
 import { Section } from '../Section';
 
 // Trang mở bằng tiêu đề 80px giữa những cụm tranh và đóng lại đúng như vậy.
@@ -28,10 +29,7 @@ const ART = [
     { src: 'end-4', width: 144, height: 110, size: 'w-32 2xl:w-40', className: 'right-6 bottom-20' },
 ];
 
-export function Closing({ config }: { config: LandingConfig }) {
-    const { strings, urls, isAuthenticated } = config;
-    const closing = strings.closing;
-
+export function Closing({ config, copy }: { config: LandingConfig; copy: LandingCopy }) {
     return (
         // accent="neutral": section kết không thuộc mạch hội thoại hay hồ
         // sơ/dữ liệu nào — nó khép trang lại, không tiếp tục một mạch cụ thể.
@@ -48,18 +46,10 @@ export function Closing({ config }: { config: LandingConfig }) {
                 Số đo thật chỉ có h2 + 2 nút, KHÔNG có đoạn dẫn — bỏ hẳn dòng
                 dẫn 16px để h2 vừa một dòng ở 1440px. */}
             <div className="relative mx-auto text-center">
-                <h2 className="text-balance text-display">{closing.title}</h2>
+                <h2 className="text-balance text-display">{copy.closing.title}</h2>
 
                 <div className="mt-8">
-                    {isAuthenticated ? (
-                        <CtaPair align="center" primary={{ label: strings.hero.cta_dashboard, href: urls.dashboard }} />
-                    ) : (
-                        <CtaPair
-                            align="center"
-                            primary={{ label: closing.cta_primary, href: urls.register }}
-                            secondary={{ label: strings.nav.demo, href: urls.demo }}
-                        />
-                    )}
+                    <AccountCta config={config} copy={copy} />
                 </div>
             </div>
         </Section>
