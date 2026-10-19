@@ -43,7 +43,7 @@ class Yona extends Model implements AddressesContacts, DeclaresCapabilities, Dec
 
     public function platform(): ChannelPlatform
     {
-        return ChannelPlatform::of('yona', 'Yona');
+        return ChannelPlatform::of('chat', 'Yona');
     }
 
     public static function channelRules(): array

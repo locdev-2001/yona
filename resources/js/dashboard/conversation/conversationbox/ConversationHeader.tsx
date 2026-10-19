@@ -8,8 +8,6 @@ import BackButton from 'dashboard/components/widgets/BackButton';
 import Button from 'dashboard/components-next/button/Button';
 import { conversationListPageURL } from 'dashboard/helper/URLHelper';
 import ChannelIcon from 'dashboard/components-next/icon/ChannelIcon';
-import { useAlert } from 'dashboard/composables/useAlert';
-import { copyTextToClipboard } from 'shared/helpers/clipboard';
 import { snoozedReopenTime } from 'dashboard/helper/snoozeHelpers';
 import { useIsLargeScreen, useIsPhoneScreen } from 'dashboard/composables/useViewportWidth';
 import { useObservedWidth } from 'dashboard/composables/useObservedWidth';
@@ -89,14 +87,6 @@ export default function ConversationHeader({
         ? `${t('CONVERSATION.HEADER.SNOOZED_UNTIL')} ${snoozedReopenTime(selectedConversation.snoozed_until)}`
         : t('CONVERSATION.HEADER.SNOOZED_UNTIL_NEXT_REPLY');
 
-    const copyConversationId = async () => {
-        try {
-            await copyTextToClipboard(String(selectedConversation.id));
-            useAlert(t('CONVERSATION.HEADER.COPY_ID_SUCCESS'));
-        } catch {
-            // Gốc nuốt lỗi clipboard (headless/không quyền) — không toast.
-        }
-    };
 
     if (!isWideLayout) {
         const headerRow = isSearchOpen ? (
@@ -186,14 +176,6 @@ export default function ConversationHeader({
                         </span>
                     </div>
                     <div className="flex items-center gap-1 overflow-hidden text-xs conversation--header--actions text-n-slate-11 text-ellipsis whitespace-nowrap">
-                        <button
-                            type="button"
-                            className="shrink-0 tabular-nums text-label-small text-n-slate-11 hover:text-n-slate-12 !p-0 cursor-pointer"
-                            onClick={copyConversationId}
-                        >
-                            {`#${selectedConversation.id}`}
-                        </button>
-                        {hasMultipleInboxes && inbox ? <span className="shrink-0">•</span> : null}
                         {hasMultipleInboxes && inbox ? (
                             <div title={inbox.name} className="flex items-center gap-0.5 min-w-0 !mx-0">
                                 <ChannelIcon inbox={inbox} className="size-4 flex-shrink-0 text-n-slate-11" />
