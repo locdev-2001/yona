@@ -1,7 +1,7 @@
 import { t } from '../../../../i18n';
 import { messagePreviewBody } from 'dashboard/components-next/message/helpers/messagePreview';
 import Icon from 'dashboard/components-next/icon/Icon';
-import HighlightedText from 'dashboard/search/components/HighlightedText';
+import HighlightedText from 'dashboard/components-next/highlighted-text/HighlightedText';
 import { MESSAGE_TYPES } from '../../../conversation/constants';
 import type { ConversationMessage } from '../../../conversation/types';
 import { ICONS } from 'dashboard/icons';

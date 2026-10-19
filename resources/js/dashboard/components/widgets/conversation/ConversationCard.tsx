@@ -18,7 +18,7 @@ import InboxName from '../InboxName';
 import TimeAgo from '../../ui/TimeAgo';
 import MessagePreview from './MessagePreview';
 import CardLabels from './conversationCardComponents/CardLabels';
-import HighlightedText from 'dashboard/search/components/HighlightedText';
+import HighlightedText from 'dashboard/components-next/highlighted-text/HighlightedText';
 import { useContactAvailabilityStatus } from 'dashboard/realtime/hooks';
 import type { AvailabilityStatus } from 'dashboard/constants/globals';
 import { ICONS } from 'dashboard/icons';

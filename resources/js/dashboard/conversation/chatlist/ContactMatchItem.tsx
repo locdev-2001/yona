@@ -4,7 +4,7 @@ import { router, usePage } from '@inertiajs/react';
 import Avatar from 'dashboard/components-next/avatar/Avatar';
 import InboxName from 'dashboard/components/widgets/InboxName';
 import { conversationUrl } from 'dashboard/helper/URLHelper';
-import HighlightedText from 'dashboard/search/components/HighlightedText';
+import HighlightedText from 'dashboard/components-next/highlighted-text/HighlightedText';
 import { avatarSeed } from 'shared/avatar/avatarSeed';
 import type { DashboardPageProps } from '../../types';
 import { useConversation } from '../ConversationContext';

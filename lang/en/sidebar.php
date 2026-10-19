@@ -4,7 +4,7 @@ return [
     'NO_ITEMS' => 'No items',
     // Yona: the sidebar box searches everything, unlike the conversation list search box.
     'GLOBAL_SEARCH' => 'Search',
-    'GLOBAL_SEARCH_HINT' => 'Search conversations, messages, people and files across the workspace',
+    'GLOBAL_SEARCH_HINT' => 'Open the command bar: find features, jump to pages, switch theme',
     'CURRENTLY_VIEWING_ACCOUNT' => 'Currently viewing:',
     'SWITCH' => 'Switch',
     'INBOX_VIEW' => 'Inbox View',

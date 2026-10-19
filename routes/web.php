@@ -494,11 +494,6 @@ Route::middleware('auth')->group(function () {
         // F6 dashboard apps pages — BEGIN (agent f6 sở hữu khối này)
         // F6 dashboard apps pages — END
 
-        // E2 search.routes.js.
-        Route::get('/search/{tab?}', fn (Account $account, ?string $tab = null) => Inertia::render('dashboard/search/SearchView', [
-            'tab' => $tab,
-        ]))->where('tab', 'conversations|messages|contacts|files|articles')->name('search');
-
         // Trang con chưa port (nhóm B→F): giữ đúng URL cũ, render placeholder.
         Route::get('/{view}', [DashboardController::class, 'placeholder'])
             ->where('view', '.*')->name('account_view');

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Link, usePage } from '@inertiajs/react';
+import { usePage } from '@inertiajs/react';
 
 import { t } from '../../../i18n';
 import Logo from 'dashboard/components-next/icon/Logo';
@@ -13,7 +13,8 @@ import { filterMenuByRole } from './permissions';
 import { useConversationUnreadCounts } from './useConversationUnreadCounts';
 import NotificationBell from 'dashboard/notifications/components/NotificationBell';
 import { useNotificationsUnreadInboxCounts } from 'dashboard/notifications/useUnreadCount';
-import { accountScopedUrl } from 'dashboard/helper/URLHelper';
+import { openCommandBar } from 'dashboard/commands/commandBarStore';
+import { keyLabel } from 'shared/helpers/kbd';
 import type { DashboardPageProps } from '../../types';
 import { SETTINGS_MENU_NAME } from 'dashboard/settings/shell/settingsPages';
 
@@ -164,6 +165,12 @@ export default function Sidebar({
         return () => document.removeEventListener('mousedown', onClickOutside);
     }, [isMobileSidebarOpen, onCloseMobileSidebar]);
 
+    // Ô tìm kiếm mở bảng lệnh Ctrl+K (tìm tính năng, chuyển trang); không còn trang tìm kiếm riêng.
+    const openSearch = () => {
+        onCloseMobileSidebar();
+        openCommandBar();
+    };
+
     return (
         <SidebarContextProvider
             value={{
@@ -210,24 +217,27 @@ export default function Sidebar({
                     </div>
                     <div className={`flex gap-2 min-w-0 ${isEffectivelyCollapsed ? 'flex-col items-center' : 'px-2'}`}>
                         {!isEffectivelyCollapsed ? (
-                            <Link
-                                href={accountScopedUrl(accountId, 'search')}
+                            <button
+                                type="button"
                                 title={t('SIDEBAR.GLOBAL_SEARCH_HINT')}
                                 className="flex gap-2 items-center px-2 py-1 w-full min-w-0 h-7 rounded-lg bg-n-surface-field hover:bg-n-surface-field-hover transition-colors duration-100 ease-out"
+                                onClick={openSearch}
                             >
                                 <span className="flex-shrink-0 i-lucide-search size-4 text-n-slate-10" />
                                 <span className="flex-grow min-w-0 truncate text-start text-n-slate-10">
                                     {t('SIDEBAR.GLOBAL_SEARCH')}
                                 </span>
-                            </Link>
+                                <span className="flex-shrink-0 text-xs text-n-slate-10 max-md:hidden">{`${keyLabel('mod')} K`}</span>
+                            </button>
                         ) : (
-                            <Link
-                                href={accountScopedUrl(accountId, 'search')}
+                            <button
+                                type="button"
                                 className="flex items-center justify-center size-8 rounded-lg bg-n-surface-field hover:bg-n-surface-field-hover transition-colors duration-100 ease-out"
                                 title={t('SIDEBAR.GLOBAL_SEARCH_HINT')}
+                                onClick={openSearch}
                             >
                                 <span className="i-lucide-search size-4 text-n-slate-11" />
-                            </Link>
+                            </button>
                         )}
                         <NotificationBell isCollapsed={isEffectivelyCollapsed} onNavigate={onCloseMobileSidebar} />
                     </div>

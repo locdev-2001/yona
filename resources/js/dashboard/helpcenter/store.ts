@@ -4,7 +4,7 @@ import { articlesApi, categoriesApi, portalsApi, type ArticlesQuery } from './ap
 import type { Article, ArticlesMeta, Category, Portal } from './types';
 
 // Port từ store/modules/helpCenter{Portals,Categories,Articles} — ba module vuex
-// gộp vào một ô nhớ cấp module + useSyncExternalStore (cùng lối search/store.ts).
+// gộp vào một ô nhớ cấp module + useSyncExternalStore (lối store cấp module dùng chung).
 
 interface PortalUiFlags {
     isFetching: boolean;

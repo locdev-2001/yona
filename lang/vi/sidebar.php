@@ -7,7 +7,7 @@ return [
     // Ô tìm ở sidebar tìm khắp hệ thống, khác ô tìm lọc tại chỗ của cột hội thoại.
     // Chữ gợi ý phải ngắn để hiện trọn trong hàng đầu sidebar; phạm vi nằm ở HINT.
     'GLOBAL_SEARCH' => 'Tìm kiếm',
-    'GLOBAL_SEARCH_HINT' => 'Tìm hội thoại, tin nhắn, mọi người và tệp trong toàn hệ thống',
+    'GLOBAL_SEARCH_HINT' => 'Mở bảng lệnh: tìm tính năng, chuyển trang, đổi giao diện',
     'CURRENTLY_VIEWING_ACCOUNT' => 'Hiện đang xem:',
     'SWITCH' => 'Chuyển',
     'INBOX_VIEW' => 'Khung nhìn hộp thư',
