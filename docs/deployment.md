@@ -1181,6 +1181,7 @@ Lưu ý vận hành:
 - **OAuth client cho nút "Tiếp tục với Google"** — xem ngay dưới. Chưa làm thì nút ẩn, không hỏng gì.
 - **Dọn access token mồ côi** — một lần, sau lần deploy đầu có lệnh `access-tokens:prune-orphans`. Xem ngay dưới.
 - **Kho sticker**: cài renderer, nginx cho tệp sticker, sao lưu thư mục sticker. Xem "Kho sticker" ngay dưới.
+- **Hộp thư cá nhân cho người dùng cũ** — một lần, ngay sau lần deploy đầu có kênh Yona: `php artisan users:backfill-personal-inboxes --dry-run` để xem trước, rồi chạy lại không có `--dry-run`. Lệnh gán `@username` (gợi ý từ email) cho người chưa có và tạo hộp thư cá nhân + kênh Yona cho người còn thiếu; không sửa hay xoá dữ liệu cũ, chạy lại nhiều lần vẫn an toàn.
 
 Xong mấy thứ đó thì từ đây về sau chỉ còn `./deploy.sh`.
 
