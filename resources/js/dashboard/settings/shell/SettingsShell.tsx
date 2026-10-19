@@ -229,12 +229,12 @@ export default function SettingsShell({ children }: { children: ReactNode }) {
                     </h1>
                     <button
                         type="button"
-                        className="flex items-center gap-1.5 h-8 ps-2 pe-1.5 max-md:pe-2 rounded-lg text-n-slate-11 hover:bg-n-alpha-2 hover:text-n-slate-12 transition-colors"
+                        className="flex items-center h-8 px-1.5 rounded-lg text-n-slate-11 hover:bg-n-alpha-2 hover:text-n-slate-12 transition-colors"
                         aria-label={t('SIDEBAR_ITEMS.SETTINGS_SCREEN.CLOSE')}
                         title={t('SIDEBAR_ITEMS.SETTINGS_SCREEN.CLOSE')}
                         onClick={close}
                     >
-                        <Icon icon="i-lucide-x" className="size-4" />
+                        <Icon icon="i-lucide-x" className="size-4 md:hidden" />
                         <Kbd keyName="esc" className="max-md:hidden" />
                     </button>
                 </header>
