@@ -5,7 +5,6 @@ namespace App\Http\Resources;
 use App\Channels\LinksMessagesToSource;
 use App\Http\Resources\Concerns\SerializesAttributeMaps;
 use App\Messaging\MessagePreview;
-use App\Messaging\Structured\LegacyWebhookAliases;
 use App\Models\Account;
 use App\Models\AgentBot;
 use App\Models\Attachment;
@@ -222,7 +221,7 @@ class MessageResource extends JsonResource
     {
         return [
             ...self::pushEventData($message),
-            'content_attributes' => LegacyWebhookAliases::apply($message->content_attributes ?? []),
+            'content_attributes' => $message->content_attributes ?? [],
             'content' => WebhookContentNormalizer::normalize($message->content),
             'processed_message_content' => WebhookContentNormalizer::normalize($message->processed_message_content),
         ];
@@ -234,7 +233,7 @@ class MessageResource extends JsonResource
         $data = [
             'account' => $message->account->webhookData(),
             'additional_attributes' => self::attributeMap($message->additional_attributes),
-            'content_attributes' => LegacyWebhookAliases::apply($message->content_attributes ?? []),
+            'content_attributes' => $message->content_attributes ?? [],
             'content_type' => $message->contentTypeName(),
             'content' => WebhookContentNormalizer::normalize($message->content),
             'conversation' => ConversationResource::webhookData($message->conversation),

@@ -36,7 +36,7 @@ interface StructuredType
     public function normalize(array $attributes, PayloadContext $context): array;
 
     /** Chữ thuần cho kênh không hiển thị được payload và cho trình đọc màn hình. */
-    public function plainText(?string $content, array $attributes, ?string $pageUrl = null): string;
+    public function plainText(?string $content, array $attributes): string;
 
     /** Dòng xem trước trong danh sách hội thoại, thông báo đẩy, email. */
     public function previewText(?string $content, array $attributes): string;
@@ -53,7 +53,4 @@ interface StructuredType
 
     /** Nội dung tin khách sinh ra từ câu trả lời, để nhân viên và automation đọc. */
     public function submissionText(array $accepted): string;
-
-    /** Có cần trang công khai (form dài, chọn lịch…) thay vì thao tác ngay trong tin. */
-    public function needsPublicPage(array $attributes): bool;
 }

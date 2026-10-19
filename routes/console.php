@@ -46,8 +46,6 @@ Schedule::job(new ProcessSearchOutboxJob)->everyMinute()->when(fn () => app(Sear
 // hàng đợi định kỳ; không có dòng này thì tab Metrics trống.
 Schedule::command('horizon:snapshot')->everyFiveMinutes();
 
-// Ảnh thẻ gửi qua kênh không có dạng gốc (Zalo): kênh đã tải về lúc gửi, bản cache chỉ còn tốn đĩa.
-Schedule::command('messaging:prune-card-images')->dailyAt('03:40');
 // Xoá sticker trước rồi mới xoá tin đã gửi thì tệp sticker bị bỏ lại trên đĩa.
 Schedule::command('stickers:prune-orphan-files')->weeklyOn(0, '03:50');
 // messages chia partition theo tháng: tạo sẵn 3 tháng tới, chạy hằng ngày để một lần lỡ lịch không sao.

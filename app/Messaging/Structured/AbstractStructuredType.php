@@ -12,9 +12,9 @@ abstract class AbstractStructuredType implements StructuredType
         return [Message::TYPE_OUTGOING, Message::TYPE_TEMPLATE];
     }
 
-    public function plainText(?string $content, array $attributes, ?string $pageUrl = null): string
+    public function plainText(?string $content, array $attributes): string
     {
-        return self::lines([$content, $pageUrl]);
+        return self::lines([$content]);
     }
 
     public function previewText(?string $content, array $attributes): string
@@ -35,11 +35,6 @@ abstract class AbstractStructuredType implements StructuredType
     public function submissionText(array $accepted): string
     {
         return '';
-    }
-
-    public function needsPublicPage(array $attributes): bool
-    {
-        return false;
     }
 
     /** Ghép các dòng khác rỗng. */

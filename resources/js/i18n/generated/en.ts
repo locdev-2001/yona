@@ -5438,63 +5438,6 @@ const messages: Record<string, unknown> = {
             }
         }
     },
-    "FLOWS": {
-        "not_found": "This link is invalid or has expired.",
-        "loading": "Loading…",
-        "send_failed": "Could not send, please try again.",
-        "submitted_title": "Received",
-        "submitted_body": "Thanks, the shop has received your details.",
-        "close": "Close",
-        "you_can_close_tab": "You can close this page now.",
-        "open_in_new_tab": "Open in a new tab",
-        "schedule": {
-            "day_section": "Day",
-            "time_section": "Time slot",
-            "full_note": "Crossed-out slots are already full.",
-            "no_slots": "No open time slots right now.",
-            "confirm": "Confirm {day}, {time}",
-            "choose_slot": "Choose a time slot"
-        },
-        "form": {
-            "submit": "Send details",
-            "check_field": "Check {field}"
-        },
-        "order_tracking": {
-            "ref": "Order #{ref}",
-            "eta": "Arrives {date}",
-            "fee_included": "Shipping included",
-            "total": "Total",
-            "track_order": "Track on the website",
-            "statuses": {
-                "placed": "Placed",
-                "confirmed": "Confirmed",
-                "shipped": "Shipped",
-                "delivering": "On the way",
-                "delivered": "Delivered",
-                "cancelled": "Cancelled"
-            }
-        },
-        "bank_transfer": {
-            "copy": "Copy",
-            "copied": "Copied",
-            "bank_name": "Bank",
-            "account_number": "Account number",
-            "account_name": "Account name",
-            "amount": "Amount",
-            "transfer_note": "Transfer note",
-            "instructions": "Instructions"
-        },
-        "product": {
-            "variant": "Variant",
-            "quantity": "Quantity",
-            "max_quantity": "Up to {max}",
-            "note_label": "Note for the shop",
-            "note_placeholder": "Optional",
-            "subtotal": "Subtotal",
-            "submit": "Send order request",
-            "select_variant": "Choose every variant before ordering"
-        }
-    },
     "GALLERY_VIEW": {
         "ERROR_DOWNLOADING": "Unable to download attachment. Please try again",
         "VIEW_AVATAR": "View {name}'s profile photo",
@@ -9874,20 +9817,10 @@ const messages: Record<string, unknown> = {
             "not_answerable": "A :type message does not accept replies.",
             "unknown_choice": "That option is not part of the message.",
             "already_submitted": "This message has already been answered.",
-            "duplicate_choice": "Options must be distinct.",
-            "duplicate_item": "Card ids must be unique.",
             "invalid_action": "Invalid button.",
             "invalid_url": "Links must start with http:// or https://.",
             "invalid_phone": "Invalid phone number.",
             "invalid_price": "Invalid price.",
-            "variants_without_order": "A card with variants needs an Order button.",
-            "unknown_item": "The product to order was not found.",
-            "invalid_selection": "The :name option is invalid or sold out.",
-            "quantity_exceeded": "Quantity is above the allowed maximum.",
-            "field_required": ":field is required.",
-            "field_invalid": ":field is invalid.",
-            "empty_submission": "Nothing was submitted.",
-            "payload_too_large": "The page data is too large.",
             "unknown_payment_account": "The receiving bank account was not found.",
             "payment_account_not_allowed": "You are not allowed to send a bank transfer card with this account.",
             "duplicate_payment_account": "This bank and account number were already added."
@@ -9905,29 +9838,6 @@ const messages: Record<string, unknown> = {
         "delivery": {
             "numbered_prompt": "Reply with the number of your choice:"
         },
-        "cards": {
-            "preview_many": ":title and :count more",
-            "compare_at": "was :price, -:percent%"
-        },
-        "order_status": {
-            "preview": "Order #:ref · :status",
-            "eta": "Arrives :date",
-            "total": "Total :amount",
-            "tracking": "Track: :url",
-            "statuses": {
-                "placed": "Placed",
-                "confirmed": "Confirmed",
-                "shipped": "Shipped",
-                "delivering": "Out for delivery",
-                "delivered": "Delivered",
-                "cancelled": "Cancelled"
-            }
-        },
-        "order_request": {
-            "preview": "Order request: :title",
-            "line": "Order request: :title:selection × :quantity",
-            "note": "Note: :note"
-        },
         "bank_transfer": {
             "preview": "Bank transfer via :bank",
             "bank_line": "Bank :bank, account :account",
@@ -9936,34 +9846,9 @@ const messages: Record<string, unknown> = {
             "memo": "Memo: :memo"
         },
         "kit": {
-            "item_position": "Item {current} of {total}",
-            "previous_item": "Previous item",
-            "next_item": "Next item",
             "copied": "Copied",
             "copy": "Copy {label}",
-            "submit_field": "Send {field}",
-            "submit": "Send",
-            "selected": "Customer chose: {value}",
-            "form_received": "Details received",
-            "form_open": "Fill in details",
-            "order_request": "Order request",
-            "note": "Note: {note}",
-            "order_ref": "Order #{ref}",
-            "eta": "Arrives {date}",
-            "fee_included": "Shipping included",
-            "total": "Total",
-            "track_order": "Track order",
-            "help_article": "Help",
-            "more": "+{count}",
             "read_only": "The customer can tap this in the widget",
-            "check_field": "Check {field}",
-            "send_failed": "Could not send, please try again",
-            "steps": {
-                "placed": "Placed",
-                "shipped": "Shipped",
-                "delivering": "On the way",
-                "delivered": "Delivered"
-            },
             "bank_transfer_title": "Bank transfer",
             "show_qr": "Show QR code to scan",
             "bank_transfer_qr_alt": "Bank transfer QR code",
@@ -12118,27 +12003,6 @@ const messages: Record<string, unknown> = {
             "MORE": "More actions",
             "RECALL": "Unsend",
             "COPY": "Copy text"
-        },
-        "ORDER_SHEET": {
-            "CLOSE": "Close",
-            "MAX": "Up to {count}",
-            "QUANTITY": "Quantity",
-            "DECREASE": "Decrease",
-            "INCREASE": "Increase",
-            "NOTE": "Note for the shop",
-            "OPTIONAL": "Optional",
-            "NOTE_PLACEHOLDER": "E.g. please gift-wrap it",
-            "SUBTOTAL": "Subtotal",
-            "SHIPPING_HINT": "The shop will confirm shipping in chat",
-            "SUBMIT": "Send order request",
-            "VIEW_SITE": "View on the shop's website",
-            "SOLD_OUT": "{option}, sold out",
-            "FAILED": "Could not send the request, please try again."
-        },
-        "WEBVIEW_SHEET": {
-            "OPEN_TAB": "Open in a new tab",
-            "CLOSE": "Close",
-            "FAILED": "Could not open the page, please try again."
         },
         "REACTIONS": {
             "COUNT": "{count} reacted {emoji}",
