@@ -12,28 +12,22 @@
 > - **Cấm tạo tài khoản thử trên production.** Thử luồng khách thì làm ở local (xem README, mục Chạy local).
 
 **Repo:** github.com/locflamedia/yona · **Domain:** yona.vn · **Team:** bootstrapped, 3 dev
-**Định vị:** Ứng dụng nhắn tin giữa bạn bè — nhắn riêng 1-1 và nhắn nhóm, tìm nhau bằng `@username`, chạy trên trình duyệt và cài lên điện thoại (PWA). Đổi hướng ngày 19/10/2026; Yona **không còn là CRM/omnichannel**. Nguồn định vị: `docs/brand-positioning.md`.
-**Đối tượng:** người Việt nhắn tin với bạn bè, gia đình, lớp học, hội nhóm. Mỗi người dùng là một cá nhân, không có doanh nghiệp/tenant.
+**Định vị:** Hộp thư cá nhân đa kênh: mỗi người đăng ký có một hộp thư riêng, nhắn với người dùng Yona khác, kết nối Zalo cá nhân và Gmail/email để gom tin về một chỗ. B2C, không còn B2B (không nhân viên, team, gán việc, báo cáo). Chốt lại ngày 19/10/2026.
+**Đối tượng:** người dùng cá nhân. Mỗi user = một hộp thư (một account do chính họ làm quản trị), không có thành viên bên trong.
 
 ---
 
 ## Sản phẩm hôm nay thực sự là gì (19/10/2026)
 
-Production chạy tại https://yona.vn nhưng **vẫn là bản CRM cũ** cho tới khi deploy `main`. Deploy `main` = 3 tài khoản CRM đang dùng mất giao diện CRM, nên phải xong việc báo khách và xuất dữ liệu (phase 0 của kế hoạch đổi hướng) trước. Mốc quay lại: tag `main-truoc-chat-ban-be`. Repo không còn test tự động; nghiệm thu bằng UI có ảnh.
+Production https://yona.vn vẫn chạy bản trước đổi hướng cho tới khi deploy `main`. Mốc quay lại: tag `main-truoc-chat-ban-be`. Repo không còn test tự động; nghiệm thu bằng UI có ảnh.
 
-**Có trong code trên `main`:** đăng ký email hoặc Google (chỉ tạo user, không tạo account) · chọn `@username` ở `/chat/welcome` (chưa có thì không vào được chat) · hồ sơ `/chat/profile` · tìm người theo username · nhắn riêng 1-1 bằng chữ, trả lời trích dẫn, đã xem, đang gõ, realtime · Tin chờ cho người lạ (chấp nhận/xoá, trả lời = chấp nhận) · chặn (hiệu lực hai chiều) · báo cáo vi phạm người/hội thoại/tin · Web Push cho tin mới · `/app` chuyển về `/chat` · màn chat dùng lại y hệt giao diện hộp thư cũ · landing đã viết lại cho ứng dụng nhắn tin · kho sticker và Super Admin giữ lại. Kiến trúc lõi: `docs/system-architecture.md` mục "Lõi nhắn tin giữa người dùng".
+**Trên `main`:** giao diện hộp thư giữ nguyên 100% (khôi phục từ git sau một lần gỡ nhầm) · kết nối Zalo cá nhân, Gmail/email, các kênh khác như cũ · đăng ký (email/Google) tự tạo hộp thư cá nhân và kênh Yona · bắt buộc chọn `@username` ở `/chat/welcome` trước khi vào hộp thư · **kênh Yona** (`Channel::Yona`, bảng `channel_yona`): người dùng nhắn cho nhau, tin gửi từ hộp thư A thành tin đến trong hộp thư B, trả lời/cảm xúc/thu hồi/sticker/đính kèm dùng lại tính năng hộp thư · nút "Nhắn tin mới" ở đầu danh sách tìm người theo username · mỗi user chỉ vào được account mình làm quản trị (`SetCurrentAccount`) · menu ẩn phần B2B (`HIDDEN_TEAM_ITEMS` trong `menuItems.ts`), code và route vẫn còn · thẻ có cấu trúc chỉ còn VietQR · PWA mở `/app`.
 
-**Đang dựng (có trong phạm vi sản phẩm, CHƯA có code chạy):** nhóm phẳng (trưởng/phó nhóm, tối đa 500 người; mới có hằng `Chat::KIND_GROUP` và bảng `conversation_invite_links`) · mời vào nhóm bằng username hoặc link · ảnh/file, sticker, cảm xúc, thu hồi, sửa tin trong chat (API gửi tin hiện chỉ nhận chữ) · thẻ chuyển khoản VietQR trong chat · cài dạng PWA đầy đủ.
+**Chưa có:** nhóm giữa người dùng Yona (cần chốt cách lưu: mỗi tin nhóm chép vào hộp thư từng thành viên) · tin chờ/chặn cho người lạ trên kênh Yona · landing và `docs/brand-positioning.md` đang viết theo hướng "app nhắn tin bạn bè, bỏ kênh" (SAI), cần viết lại.
 
-**KHÔNG có và không làm ở giai đoạn này — đừng viết marketing hay code dựa trên chúng:**
-- **Gọi thoại, gọi video.**
-- **Bảng bạn bè / kết bạn** — nhắn tự do, người lạ vào Tin chờ.
-- **Gói cước, thanh toán** — chưa có gì (thẻ VietQR là người dùng chuyển tiền cho nhau, Yona không thu tiền).
-- **Mã hoá đầu cuối** — máy chủ đọc được nội dung tin.
-- **App gốc iOS/Android** — Web/PWA trước.
-- **Mọi thứ của CRM:** hộp thư đa kênh, Zalo cá nhân, email, widget website, Help Center, báo cáo, nhân viên/team, gán việc, CDP/liên hệ, automation, chiến dịch, nhân viên AI. Code CRM còn chạy ngầm trong `app/` và `routes/` cho tới khi gỡ xong (phase 6); không xây thêm gì trên đó.
+**KHÔNG có:** gọi thoại/video · gói cước, thanh toán · app gốc iOS/Android.
 
-**Pháp lý chưa xong:** Nghị định 147/2024/NĐ-CP có thể xếp ứng dụng nhắn tin có nhóm vào "mạng xã hội" (xác thực số điện thoại). Founder đang hỏi luật sư; schema có sẵn `phone` + `phone_verified_at` để thêm xác thực SMS mà không đổi lõi.
+**Pháp lý chưa xong:** Nghị định 147/2024/NĐ-CP (founder đang hỏi luật sư); `users.phone` + `phone_verified_at` đã có sẵn.
 
 ---
 
@@ -45,24 +39,20 @@ Stack: PHP 8.3+ / Laravel 13 · Inertia + React 19 (TypeScript), Tailwind + Radi
 
 ## 4 quy tắc xuyên suốt
 
-1. **Một người = một tài khoản cá nhân, một `@username`.** Tìm nhau bằng username hoặc link mời; không cần trao số điện thoại.
-2. **Người lạ vào Tin chờ:** tin đầu từ người chưa từng trò chuyện không vào danh sách chính, không gửi thông báo đẩy, cho tới khi người nhận chấp nhận hoặc trả lời.
-3. **Người dùng làm chủ an toàn của mình:** chặn có hiệu lực hai chiều ở 1-1; báo cáo được người, hội thoại, tin; Super Admin xử lý báo cáo.
-4. **Một đường gửi tin:** mọi tin của chat đi qua `App\Services\Chat\ChatMessageSender` (kiểm thành viên + chặn, ghi tin, cập nhật hội thoại, phát realtime, đẩy thông báo); mọi sự kiện realtime đi qua `ChatBroadcaster`. Thêm loại tin mới = thêm payload vào đường này, không mở đường gửi thứ hai.
+1. **Một người = một hộp thư cá nhân** (account do người đó làm quản trị) và một `@username`. Không có thành viên/team.
+2. **Mọi tin đi qua hộp thư:** Zalo, email, người dùng Yona đều là kênh của cùng một hộp thư; thêm cách nhắn mới = thêm driver kênh, không dựng lõi chat thứ hai.
+3. **Ghi nguồn:** mỗi liên hệ/hội thoại lưu rõ kênh; liên hệ kênh Yona có `source_id` = `yona:{user_id}`, tin Yona mang `source_id` = `yona-msg:{id}` ở cả hai bên.
+4. **Tôn trọng nền tảng:** chỉ gửi khi còn trong cửa sổ cho phép của kênh. Luôn nhận inbound.
 
 ## Quyết định đã chốt — đừng làm sai lại
 
-- **Ứng dụng nhắn tin giữa bạn bè, không phải CRM** (19/10/2026). Đừng dựng lại hộp thư theo kênh, liên hệ, phụ trách, báo cáo cho doanh nghiệp.
-- **Dùng lại bảng `conversations`/`messages`**, không đổi tên sang `legacy_*`. Hàng có `kind` (1 = 1-1, 2 = nhóm) là chat bạn bè, `account_id`/`inbox_id` để rỗng. Trả lời, thu hồi, cảm xúc dùng `content_attributes`, không có bảng `message_reactions`.
-- **Model riêng `Chat`/`ChatMember`/`ChatMessage`** trên cùng bảng; không dùng `Conversation`/`Message` cho chat vì chúng mang hook CRM và hỏng khi `inbox` rỗng.
-- **Màn chat dùng lại y hệt giao diện hộp thư** (`ConversationView`), không biến tấu.
-- **Nhóm phẳng** như Zalo/Messenger (trưởng nhóm, phó nhóm, tối đa 500), không có server → kênh con.
-- **Nhắn tự do**, không bảng bạn bè; 1-1 mỗi cặp đúng một hội thoại (`direct_key`).
-- **Đăng ký bằng email hoặc Google**, không tạo account/tenant. Super Admin vẫn là một người dùng tìm thấy được qua username.
+- **Giữ toàn bộ hộp thư, Zalo cá nhân, Gmail** (19/10/2026). Không bao giờ gỡ kênh, bridge Zalo, IMAP. Phần B2B chỉ ẩn khỏi menu, không xoá code.
+- **Account = hộp thư cá nhân**, không đổi tên bảng; dữ liệu production giữ nguyên. Dòng thành viên cũ ở account người khác giữ trong DB nhưng không mở được.
+- **Chat giữa người dùng = kênh `Channel::Yona`** trong hộp thư, gộp chung danh sách với Zalo/email. Lõi chat riêng (`Chat*`, `/chats`) đã bị gỡ.
+- **Zalo CÁ NHÂN, không phải Zalo OA.** QR login qua zca-js; rủi ro ToS phải nói trước.
 - **Giữ thẻ chuyển khoản VietQR**; bỏ thẻ sản phẩm, đặt mua, form.
-- **Web/PWA trước**, app gốc sau; chưa gọi thoại/video.
-- **Gate hạn mức không tồn tại** — dùng không giới hạn. Đừng tự dựng gate khi chưa có lệnh.
-- Quyết định UX có chủ đích (khác cách làm quen thuộc của ứng dụng nhắn tin) phải ghi `docs/ux-decisions.md`.
+- **Gate hạn mức không tồn tại** — dùng không giới hạn.
+- Quyết định UX có chủ đích phải ghi `docs/ux-decisions.md`.
 
 ## Nhánh mới = worktree mới (bắt buộc với mọi phiên AI)
 
