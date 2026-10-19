@@ -10,7 +10,7 @@ import { DropdownInlineList, DropdownItem } from 'dashboard/components-next/drop
 import SidebarProfileMenuStatus from 'dashboard/components-next/sidebar/SidebarProfileMenuStatus';
 import KeyShortcutModal from 'dashboard/commands/KeyShortcutModal';
 import SearchField from 'dashboard/components-next/search-field/SearchField';
-import Kbd from 'dashboard/components-next/kbd/Kbd';
+import CloseButton from 'dashboard/components-next/close-button/CloseButton';
 import { logout } from 'dashboard/helper/logout';
 import { accountScopedUrl } from 'dashboard/helper/URLHelper';
 import { useCurrentUserAvailability } from 'dashboard/realtime/hooks';
@@ -227,16 +227,7 @@ export default function SettingsShell({ children }: { children: ReactNode }) {
                     <h1 className="flex-1 m-0 text-sm font-semibold truncate text-n-slate-12">
                         {currentLink?.label ?? t('SIDEBAR_ITEMS.SETTINGS_SCREEN.TITLE')}
                     </h1>
-                    <button
-                        type="button"
-                        className="flex items-center h-8 px-1.5 rounded-lg text-n-slate-11 hover:bg-n-alpha-2 hover:text-n-slate-12 transition-colors"
-                        aria-label={t('SIDEBAR_ITEMS.SETTINGS_SCREEN.CLOSE')}
-                        title={t('SIDEBAR_ITEMS.SETTINGS_SCREEN.CLOSE')}
-                        onClick={close}
-                    >
-                        <Icon icon="i-lucide-x" className="size-4 md:hidden" />
-                        <Kbd keyName="esc" className="max-md:hidden" />
-                    </button>
+                    <CloseButton label={t('SIDEBAR_ITEMS.SETTINGS_SCREEN.CLOSE')} onClick={close} />
                 </header>
                 <div className="flex flex-1 min-h-0 overflow-hidden">{children}</div>
             </section>

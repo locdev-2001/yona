@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
 
-import Button from 'dashboard/components-next/button/Button';
+import CloseButton from 'dashboard/components-next/close-button/CloseButton';
 
 // Port từ dashboard/components/Modal.vue — giữ nguyên class + hành vi đóng
 // (Esc, mousedown lên backdrop rồi mouseup mới đóng). Transition modal-fade
@@ -78,13 +78,7 @@ export default function Modal({
         >
             <div className={containerClasses} onMouseDown={event => event.stopPropagation()}>
                 {showCloseButton ? (
-                    <Button
-                        ghost
-                        slate
-                        icon="i-lucide-x"
-                        className="absolute z-10 ltr:right-2 rtl:left-2 top-2"
-                        onClick={onClose}
-                    />
+                    <CloseButton className="absolute z-10 ltr:right-2 rtl:left-2 top-2" onClick={onClose} />
                 ) : null}
                 {children}
             </div>

@@ -3,6 +3,7 @@ import { forwardRef, useImperativeHandle, useRef, useState } from 'react';
 import { t } from '../../../i18n';
 import { useAlert } from 'dashboard/composables/useAlert';
 import Button from 'dashboard/components-next/button/Button';
+import CloseButton from 'dashboard/components-next/close-button/CloseButton';
 import Dialog from 'dashboard/components-next/dialog/Dialog';
 import type { DialogHandle } from 'dashboard/components-next/dialog/Dialog';
 import Input from 'dashboard/components-next/input/Input';
@@ -41,11 +42,7 @@ const DNSConfigurationDialog = forwardRef<DialogHandle, DNSConfigurationDialogPr
 
     return (
         <Dialog ref={dialogRef} showCancelButton={false} showConfirmButton={false} onClose={reset}>
-            <Button
-                icon="i-lucide-x"
-                sm
-                ghost
-                slate
+            <CloseButton
                 className="flex-shrink-0 absolute top-2 ltr:right-2 rtl:left-2"
                 onClick={() => {
                     reset();

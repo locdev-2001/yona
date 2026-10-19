@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 
-import Button from 'dashboard/components-next/button/Button';
+import CloseButton from 'dashboard/components-next/close-button/CloseButton';
 import { t } from '../../../i18n';
 
 // Port từ dashboard/components-next/side-panel/SidePanel.vue — bảng trượt từ
@@ -96,7 +96,7 @@ export default function SidePanel({
                     )}
                     <div className="flex items-center gap-1 shrink-0 -me-2">
                         {headerActions}
-                        <Button ghost slate sm icon="i-lucide-x" aria-label={t('GENERAL.CLOSE')} onClick={onClose} />
+                        <CloseButton onClick={onClose} />
                     </div>
                 </header>
                 <div className="flex-1 min-h-0 px-6 py-5 overflow-y-auto">{children}</div>

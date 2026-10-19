@@ -5,6 +5,7 @@ import { downloadFile } from '@ext/utils';
 import Avatar from 'dashboard/components-next/avatar/Avatar';
 import { senderAvatarSeed } from 'shared/avatar/avatarSeed';
 import NextButton from 'dashboard/components-next/button/Button';
+import CloseButton from 'dashboard/components-next/close-button/CloseButton';
 import Modal from 'dashboard/components/Modal';
 import { useAlert } from 'dashboard/composables/useAlert';
 import { useKeyboardEvents } from 'dashboard/composables/useKeyboardEvents';
@@ -234,7 +235,7 @@ export default function GalleryView({
                             disabled={isDownloading}
                             onClick={onClickDownload}
                         />
-                        <NextButton icon="i-lucide-x" aria-label={t('GALLERY_VIEW.CLOSE')} slate ghost onClick={onClose} />
+                        <CloseButton label={t('GALLERY_VIEW.CLOSE')} onClick={onClose} />
                     </div>
                 </header>
 
