@@ -41,7 +41,7 @@ export default function MessagePreview({
 
     const typeIcon = (extraClass: string) => {
         if (isMessagePrivate) return <Icon icon="i-lucide-lock-keyhole" className={extraClass} />;
-        if (messageByAgent) return <Icon icon="i-lucide-undo-2" className={extraClass} />;
+        if (messageByAgent && body.kind !== 'call') return <Icon icon="i-lucide-undo-2" className={extraClass} />;
         if (isMessageAnActivity && body.kind !== 'call') return <Icon icon="i-lucide-info" className={extraClass} />;
 
         return null;

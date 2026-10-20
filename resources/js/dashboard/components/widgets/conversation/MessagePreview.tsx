@@ -48,7 +48,7 @@ export default function MessagePreview({
             {showMessageType ? (
                 isMessagePrivate ? (
                     <span className={`${ICONS.privateNote} size-4 ${typeIconClass}`} aria-hidden="true" />
-                ) : messageByAgent && !senderLabel ? (
+                ) : messageByAgent && !senderLabel && body.kind !== 'call' ? (
                     <span className={`${ICONS.reply} size-4 ${typeIconClass}`} aria-hidden="true" />
                 ) : isMessageAnActivity && body.kind !== 'call' ? (
                     <span className={`${ICONS.info} size-4 ${typeIconClass}`} aria-hidden="true" />

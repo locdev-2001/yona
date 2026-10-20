@@ -653,8 +653,10 @@ POST /webhooks/media/{provider} ─► MediaDrivers ─► MediaWebhooks ─► 
 - **Phòng nhóm (module `App\Services\Groups\Calls`):** `GroupRoomPolicy` (≤25, quản trị
   nhóm điều hành), `GroupRoomTrail` (tin "X đã mở phòng thoại" khi người đầu tiên vào, tin
   "Phòng thoại đã kết thúc · thời lượng · số người" khi phòng đóng; phòng không ai vào thì
-  không ghi; viết theo ngôn ngữ account của nhóm vì sự kiện đến từ webhook; đi qua
-  `GroupService::postNotice`, `content_attributes.call`), `GroupRoomPresence` → job
+  không ghi; tin nhóm lưu một bản cho mọi thành viên nên `content_attributes.call` mang dữ
+  liệu có cấu trúc (người mở phòng, thời lượng, số người, tối đa 5 người tham gia) và giao diện
+  dịch theo người đọc, `content` chỉ là bản ngôn ngữ mặc định cho tìm kiếm; đi qua
+  `GroupService::postNotice`), `GroupRoomPresence` → job
   `BroadcastGroupVoiceRoomJob` (duy nhất theo nhóm tới khi chạy, trễ 2 giây để gom; đẩy
   `voice_room.updated` tới từng thành viên với `account_id`/`conversation_id` của dòng họ).
   `GroupRoomSummaries` dựng ảnh chụp `voice_room` (người đang ngồi, ai chia sẻ màn hình, mở
@@ -670,7 +672,11 @@ POST /webhooks/media/{provider} ─► MediaDrivers ─► MediaWebhooks ─► 
   phòng và `DirectCallSignals` đẩy `direct_call.updated` tới mọi tab của hai người (mỗi bên
   một góc nhìn: vai, người kia, hội thoại trong hộp thư mình) và Web Push lúc đổ chuông
   (`PushIncomingDirectCallJob`). Không ghi `ended_at` ở module: sự kiện đóng phòng ghi, rồi
-  `DirectCallTrail` để lại mỗi bên một tin theo vai và ngôn ngữ hộp thư; `DirectCallPresence`
+  `DirectCallTrail` để lại mỗi bên một tin nhật ký cuộc gọi như tin nhắn thường (người gọi tin
+  đi, người nhận tin đến, chung `source_id` `yona-call:{id}` nên không gửi ra kênh, không ghi
+  trùng); `content_attributes.call` theo hợp đồng nhật ký cuộc gọi chung mọi kênh (`media`,
+  `direction`, `outcome`, `duration_seconds`), thẻ `CallMessage` và dòng xem trước đọc chung
+  `resources/js/dashboard/calls/callLog.ts`; `DirectCallPresence`
   kết thúc cuộc khi một bên rời sau khi đã nghe máy, huỷ khi người gọi bỏ đi lúc còn đổ chuông.
   API: `GET|POST /yona/conversations/{id}/call`, `GET /yona/calls/current`,
   `POST /yona/calls/{id}/accept`, `DELETE /yona/calls/{id}`.
