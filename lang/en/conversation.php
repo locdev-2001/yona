@@ -432,6 +432,8 @@ return [
         ],
         'GROUP_MEMBER' => [
             'TITLE' => 'Group members',
+            'EVERYONE_HINT' => 'Notify everyone in the group',
+            'EVERYONE_ALIAS' => 'Everyone',
         ],
     ],
     'CUSTOM_SNOOZE' => [

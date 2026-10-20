@@ -48,6 +48,8 @@ enum Capability: string
     case OutboundContactCard = 'outbound_contact_card';
     case OutboundReplyTo = 'outbound_reply_to';
     case OutboundMention = 'outbound_mention';
+    // Nhắc cả nhóm một lần (mục nhắc tên mang `OutboundMentionsBuilder::EVERYONE`), không phải liệt kê từng người.
+    case OutboundMentionAll = 'outbound_mention_all';
     case OutboundReaction = 'outbound_reaction';
     case OutboundRecall = 'outbound_recall';
     case OutboundEdit = 'outbound_edit';

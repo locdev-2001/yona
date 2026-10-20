@@ -19,11 +19,18 @@ import type { CannedCardSelection } from 'dashboard/components/widgets/conversat
 import type { CaretPosition, PickerCloseReason } from './CaretAnchoredPicker';
 import TagAgents from './TagAgents';
 import TagGroupMembers from './TagGroupMembers';
-import { MEMBER_MENTION_TYPE, filterGroupMembers, multiWordTriggerMatcher, type SuggestionMatch } from './groupMemberMentions';
+import {
+    MEMBER_MENTION_TYPE,
+    filterGroupMembers,
+    multiWordTriggerMatcher,
+    withEveryoneMention,
+    type SuggestionMatch,
+} from './groupMemberMentions';
 import type { GroupMember } from 'dashboard/conversation/groupMembersApi';
 import { FORMATTING, stripUnsupportedFormatting } from 'dashboard/helper/editorHelper';
 import { isEditorHotKeyEnabled, type UISettings } from 'dashboard/composables/useUISettings';
 import { filesFromDataTransfer } from 'shared/helpers/FileHelper';
+import { t } from '../../../../i18n';
 
 // Port từ dashboard/components/widgets/WootWriter/Editor.vue — giữ nguyên
 // engine @ext/prosemirror-schema (quyết định plan: KHÔNG viết lại editor).
@@ -51,6 +58,8 @@ interface EditorProps {
     pickerBoundaryRef?: React.RefObject<HTMLElement | null>;
     /** Thành viên nhóm để nhắc tên khi trả lời (rỗng = `@` không mở bảng nào). */
     groupMembers?: GroupMember[];
+    /** Kênh nhắc được cả nhóm một lần: bảng thành viên có thêm mục @All. */
+    mentionsEveryone?: boolean;
     onChange: (value: string) => void;
     onFocus?: () => void;
     onBlur?: () => void;
@@ -155,6 +164,7 @@ const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
         enableCannedResponses = true,
         pickerBoundaryRef,
         groupMembers = NO_GROUP_MEMBERS,
+        mentionsEveryone = false,
         onChange,
         onFocus,
         onBlur,
@@ -424,7 +434,12 @@ const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
     const shouldShowCannedResponses = enableCannedResponses && showCannedMenu && !isPrivate;
     // shouldShowUserMentions gốc: chỉ hiện khi đang soạn ghi chú riêng.
     const shouldShowUserMentions = showUserMentions && isPrivate;
-    const memberItems = useMemo(() => filterGroupMembers(groupMembers, mentionSearchKey), [groupMembers, mentionSearchKey]);
+    const memberItems = useMemo(() => {
+        const matchedMembers = filterGroupMembers(groupMembers, mentionSearchKey);
+        if (!mentionsEveryone || groupMembers.length === 0) return matchedMembers;
+
+        return withEveryoneMention(matchedMembers, mentionSearchKey, [t('CONVERSATION.PICKER.GROUP_MEMBER.EVERYONE_ALIAS')]);
+    }, [groupMembers, mentionSearchKey, mentionsEveryone]);
     // Chỉ mở khi có người để chọn: bảng rỗng vẫn nuốt Enter và agent không gửi được tin.
     const shouldShowMemberMentions = showUserMentions && !isPrivate && memberItems.length > 0;
 

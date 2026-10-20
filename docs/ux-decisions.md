@@ -64,6 +64,7 @@ Kiến trúc: [system-architecture.md](system-architecture.md).
 | Sticker · bong bóng | Không khung, không mở thư viện ảnh, không nút tải; xem trước ghi "Sticker". Sticker không mang trích dẫn (khối "Đang trả lời" giữ cho tin chữ kế tiếp) | Sticker là cảm xúc, không phải tệp | 24/09/2026 |
 | Phím tắt | Phím bổ trợ theo hệ điều hành (`⌘` trên macOS, `Ctrl` nơi khác) qua một helper `shared/helpers/kbd.ts` | Phần lớn người dùng Việt dùng Windows/Linux | 07/09/2026 |
 | Bảng lệnh (Ctrl+K) · chân bảng | Chân bảng gợi ý phím bằng tiếng Việt; không khớp gì thì báo "Không tìm thấy kết quả nào"; icon Lucide | Thư viện bảng lệnh nhúng chuỗi tiếng Anh và không có thông báo rỗng | 07/09/2026 |
+| Ô soạn tin · nhắc cả nhóm | Trong hội thoại nhóm, gõ `@` thì mục **@All** ("Nhắc cả nhóm") đứng đầu bảng thành viên; tìm được bằng `all` hoặc tên gọi theo ngôn ngữ giao diện ("Tất cả"/"Everyone"). Chữ chèn vào tin là `@All`. Chỉ hiện khi kênh khai `outbound_mention_all` (Zalo cá nhân, nhóm Yona); nhóm Yona báo "nhắc tên" cho mọi thành viên còn trong nhóm trừ người gửi | `@All` trùng đúng chữ Zalo dùng, nên tin qua lại giữa hai bên đọc như nhau | 20/10/2026 |
 
 ## Kho sticker (console Super Admin)
 

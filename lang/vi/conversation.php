@@ -433,6 +433,8 @@ return [
         ],
         'GROUP_MEMBER' => [
             'TITLE' => 'Thành viên nhóm',
+            'EVERYONE_HINT' => 'Nhắc cả nhóm',
+            'EVERYONE_ALIAS' => 'Tất cả',
         ],
     ],
     'CUSTOM_SNOOZE' => [

@@ -683,7 +683,7 @@ class IncomingMessageService
 
         $mentions = array_values(array_filter(
             array_map(
-                fn ($mention) => self::pick($mention, self::GROUP_MENTION_KEYS),
+                fn ($mention) => self::neutralMention(self::pick($mention, self::GROUP_MENTION_KEYS)),
                 is_array($this->params['mentions'] ?? null) ? $this->params['mentions'] : [],
             ),
             fn (array $mention) => filled($mention['name'] ?? null),
@@ -694,6 +694,19 @@ class IncomingMessageService
         }
 
         return $context;
+    }
+
+    /**
+     * @param  array<string, mixed>  $mention
+     * @return array<string, mixed>
+     */
+    private static function neutralMention(array $mention): array
+    {
+        if ((string) ($mention['external_id'] ?? '') === Zalo::MENTION_EVERYONE_UID) {
+            $mention['external_id'] = OutboundMentionsBuilder::EVERYONE;
+        }
+
+        return $mention;
     }
 
     private function isGroupThread(): bool

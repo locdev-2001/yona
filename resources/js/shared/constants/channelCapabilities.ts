@@ -32,6 +32,7 @@ export const CHANNEL_CAPABILITIES = [
     'outbound_contact_card',
     'outbound_reply_to',
     'outbound_mention',
+    'outbound_mention_all',
     'outbound_reaction',
     'outbound_recall',
     'outbound_edit',

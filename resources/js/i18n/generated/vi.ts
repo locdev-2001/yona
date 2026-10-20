@@ -4332,7 +4332,9 @@ const messages: Record<string, unknown> = {
                 "YOU_ARE_A_MEMBER": "Bạn là thành viên của nhóm này"
             },
             "GROUP_MEMBER": {
-                "TITLE": "Thành viên nhóm"
+                "TITLE": "Thành viên nhóm",
+                "EVERYONE_HINT": "Nhắc cả nhóm",
+                "EVERYONE_ALIAS": "Tất cả"
             }
         },
         "CUSTOM_SNOOZE": {

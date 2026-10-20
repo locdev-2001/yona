@@ -737,7 +737,8 @@ class SendOnZaloService extends BaseSendOnChannelService
         $payload = [];
 
         foreach (OutboundMentionsBuilder::reanchor($valid, (string) $this->message->content, (string) $text) as $mention) {
-            $payload[] = ['uid' => (string) $mention['external_id'], 'pos' => $mention['offset'], 'len' => $mention['length']];
+            $uid = $mention['external_id'] === OutboundMentionsBuilder::EVERYONE ? Zalo::MENTION_EVERYONE_UID : (string) $mention['external_id'];
+            $payload[] = ['uid' => $uid, 'pos' => $mention['offset'], 'len' => $mention['length']];
         }
 
         return $payload === [] ? null : $payload;

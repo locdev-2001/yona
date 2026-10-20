@@ -6,6 +6,7 @@ import type { GroupMember } from 'dashboard/conversation/groupMembersApi';
 import { searchHighlightHtml } from 'dashboard/helper/searchHighlight';
 import { t } from '../../../../i18n';
 import CaretAnchoredPicker from './CaretAnchoredPicker';
+import { isEveryoneMention } from './groupMemberMentions';
 import type { CaretPosition, PickerCloseReason } from './CaretAnchoredPicker';
 
 // Bảng gợi ý thành viên nhóm khi gõ `@` ở chế độ Trả lời. Ô soạn giữ focus: từ khoá
@@ -26,6 +27,7 @@ interface GroupMemberPickerItem {
     member: GroupMember;
     label: string;
     title: string;
+    subtitle?: string;
     group: string;
 }
 
@@ -39,6 +41,7 @@ export default function TagGroupMembers({
     onRemoveTrigger,
 }: TagGroupMembersProps) {
     const groupLabel = t('CONVERSATION.PICKER.GROUP_MEMBER.TITLE');
+    const everyoneHint = t('CONVERSATION.PICKER.GROUP_MEMBER.EVERYONE_HINT');
 
     const items = useMemo<GroupMemberPickerItem[]>(
         () =>
@@ -46,10 +49,11 @@ export default function TagGroupMembers({
                 id: member.external_id,
                 member,
                 label: member.name,
-                title: searchHighlightHtml(member.name, searchKey),
+                title: searchHighlightHtml(isEveryoneMention(member) ? `@${member.name}` : member.name, searchKey),
+                subtitle: isEveryoneMention(member) ? everyoneHint : undefined,
                 group: groupLabel,
             })),
-        [members, searchKey, groupLabel],
+        [members, searchKey, groupLabel, everyoneHint],
     );
 
     return (
@@ -63,9 +67,15 @@ export default function TagGroupMembers({
             onSelect={item => onSelect(item.member)}
             onClose={onClose}
             onRemoveTrigger={onRemoveTrigger}
-            renderLeading={item => (
-                <Avatar seed={avatarSeed('group_member', item.member.external_id)} src={item.member.avatar ?? undefined} name={item.label} size={24} roundedFull className="flex-shrink-0" />
-            )}
+            renderLeading={item =>
+                isEveryoneMention(item.member) ? (
+                    <span className="flex size-6 flex-shrink-0 items-center justify-center rounded-full bg-n-brand/10 text-n-brand">
+                        <span className="i-lucide-users-round size-3.5" aria-hidden />
+                    </span>
+                ) : (
+                    <Avatar seed={avatarSeed('group_member', item.member.external_id)} src={item.member.avatar ?? undefined} name={item.label} size={24} roundedFull className="flex-shrink-0" />
+                )
+            }
         />
     );
 }

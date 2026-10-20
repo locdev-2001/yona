@@ -54,6 +54,9 @@ class Zalo extends Model implements DeclaresCapabilities, DeclaresConnection, De
     /** Giá trị `thread_type` của luồng nhóm (0 = chat 1-1). */
     public const THREAD_TYPE_GROUP = 1;
 
+    /** `uid` zca-js dành cho nhắc cả nhóm (@All). */
+    public const MENTION_EVERYONE_UID = '-1';
+
     /** Hồ sơ liên hệ của một nhóm Zalo đánh dấu bằng khoá này trong additional_attributes. */
     public const CONTACT_THREAD_KIND_ATTRIBUTE = 'zalo_thread_type';
 
@@ -260,6 +263,7 @@ class Zalo extends Model implements DeclaresCapabilities, DeclaresConnection, De
             Capability::OutboundCustomSticker,
             Capability::OutboundReplyTo,
             Capability::OutboundMention,
+            Capability::OutboundMentionAll,
             Capability::OutboundReaction,
             Capability::OutboundRecall,
             Capability::OutboundTyping,

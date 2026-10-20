@@ -21,6 +21,9 @@ class OutboundMentionsBuilder
     /** Hình dạng chuẩn của một mục nhắc tên, dùng chung cho cả hai chiều. */
     public const KEYS = ['external_id', 'name', 'offset', 'length'];
 
+    /** `external_id` trung tính của mục "nhắc cả nhóm"; driver kênh tự đổi sang mã của nền tảng. */
+    public const EVERYONE = 'all';
+
     private const MAX_MENTIONS = 50;
 
     private const AGENT_AUTHORED_TYPES = [Message::TYPE_OUTGOING, Message::TYPE_TEMPLATE];
@@ -39,7 +42,7 @@ class OutboundMentionsBuilder
             return;
         }
 
-        $mentions = $this->canCarryMentions() ? $this->anchor($attributes['mentions']) : [];
+        $mentions = $this->canCarryMentions() ? $this->withoutUnsupportedEveryone($this->anchor($attributes['mentions'])) : [];
 
         if ($mentions === []) {
             unset($attributes['mentions']);
@@ -62,6 +65,19 @@ class OutboundMentionsBuilder
     {
         return ! $this->message->private
             && $this->message->inbox?->supports(Capability::OutboundMention) === true;
+    }
+
+    /**
+     * @param  list<array{external_id: string, name: string, offset: int, length: int}>  $mentions
+     * @return list<array{external_id: string, name: string, offset: int, length: int}>
+     */
+    private function withoutUnsupportedEveryone(array $mentions): array
+    {
+        if ($this->message->inbox?->supports(Capability::OutboundMentionAll) === true) {
+            return $mentions;
+        }
+
+        return array_values(array_filter($mentions, fn (array $mention) => $mention['external_id'] !== self::EVERYONE));
     }
 
     /**

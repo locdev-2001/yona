@@ -96,6 +96,8 @@ class Yona extends Model implements AddressesContacts, DeclaresCapabilities, Dec
             Capability::OutboundReaction,
             Capability::OutboundRecall,
             Capability::OutboundReplyTo,
+            Capability::OutboundMention,
+            Capability::OutboundMentionAll,
             Capability::EventDelivered,
             Capability::EventReaction,
             Capability::EventRecall,
@@ -103,6 +105,7 @@ class Yona extends Model implements AddressesContacts, DeclaresCapabilities, Dec
             Capability::ProfileName,
             Capability::ProfileAvatar,
             Capability::IdentityStableId,
+            Capability::GroupThreads,
             Capability::ThreadingContinuous,
         )->withTextFormat(TextFormat::Markdown);
     }

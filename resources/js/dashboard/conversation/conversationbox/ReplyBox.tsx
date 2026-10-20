@@ -720,6 +720,7 @@ export default function ReplyBox({
                     channelType={channelType}
                     uiSettings={uiSettings}
                     groupMembers={mentionableMembers}
+                    mentionsEveryone={inboxSupports(inbox, 'outbound_mention_all')}
                     onChange={setMessage}
                     onFocus={() => setIsFocused(true)}
                     onBlur={() => setIsFocused(false)}

@@ -545,7 +545,8 @@ export function normalizeMentions(rawD) {
         if (!item || typeof item !== 'object') {
             continue;
         }
-        const externalId = String(item.uid ?? item.userId ?? item.external_id ?? '').trim();
+        // zca đánh dấu @All bằng `type: 1`; quy về đúng uid đặc biệt `-1` cho mọi nguồn.
+        const externalId = item.type === 1 ? '-1' : String(item.uid ?? item.userId ?? item.external_id ?? '').trim();
         const offset = Number(item.pos ?? item.offset);
         const length = Number(item.len ?? item.length);
         if (!externalId || !Number.isFinite(offset) || !Number.isFinite(length) || length <= 0) {

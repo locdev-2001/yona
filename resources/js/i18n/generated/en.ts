@@ -4332,7 +4332,9 @@ const messages: Record<string, unknown> = {
                 "YOU_ARE_A_MEMBER": "You are a member of this team"
             },
             "GROUP_MEMBER": {
-                "TITLE": "Group members"
+                "TITLE": "Group members",
+                "EVERYONE_HINT": "Notify everyone in the group",
+                "EVERYONE_ALIAS": "Everyone"
             }
         },
         "CUSTOM_SNOOZE": {

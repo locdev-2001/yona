@@ -14,6 +14,23 @@ export const MEMBER_MENTION_TYPE = 'member';
 
 export const GROUP_MEMBER_RESULT_LIMIT = 50;
 
+/** `external_id` trung tính của mục nhắc cả nhóm — trùng `OutboundMentionsBuilder::EVERYONE`. */
+export const EVERYONE_MENTION_ID = 'all';
+
+/** Chữ chèn vào tin là `@All`, đúng chữ Zalo dùng cho nhắc cả nhóm. */
+export const EVERYONE_MENTION_NAME = 'All';
+
+export function isEveryoneMention(member: GroupMember): boolean {
+    return member.external_id === EVERYONE_MENTION_ID;
+}
+
+/** Mục @All đứng đầu bảng khi từ khoá khớp `All` hoặc một tên gọi bản địa (vd. "Tất cả"). */
+export function withEveryoneMention(members: GroupMember[], searchKey: string, aliases: string[]): GroupMember[] {
+    const matchesSearch = searchByRelevance([EVERYONE_MENTION_NAME, ...aliases], searchKey, alias => alias).length > 0;
+
+    return matchesSearch ? [{ external_id: EVERYONE_MENTION_ID, name: EVERYONE_MENTION_NAME }, ...members] : members;
+}
+
 /** Vị trí theo chỉ số chuỗi JavaScript (UTF-16) — máy chủ neo lại theo nội dung cuối. */
 export interface OutgoingMention {
     external_id: string;
