@@ -136,7 +136,7 @@ const MENU_BY_KEY: Record<string, string[]> = {
 // Phím do bảng gợi ý (`/` câu trả lời mẫu, `@` nhắc tên) sở hữu khi nó đang mở.
 const PICKER_OWNED_KEYS = new Set(['Enter', 'Tab', 'ArrowUp', 'ArrowDown']);
 
-// Shift+Enter vẫn là xuống dòng của ô soạn; Shift+Tab thuộc bảng (lùi lựa chọn).
+// Shift+Enter vẫn là xuống dòng của ô soạn; Tab chốt dòng đang chọn, Shift+Tab lùi lựa chọn.
 export function isPickerOwnedKey(event: KeyboardEvent): boolean {
     if (!PICKER_OWNED_KEYS.has(event.key)) return false;
     return !(event.key === 'Enter' && event.shiftKey);

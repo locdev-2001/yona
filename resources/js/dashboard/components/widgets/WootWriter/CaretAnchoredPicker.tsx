@@ -208,9 +208,8 @@ export default function CaretAnchoredPicker<TItem extends PreviewPickerItem>({
     });
 
     useKeyboardEvents({
-        Tab: withPicker(() =>
-            setSelectedIndex(current => (items.length ? (current === items.length - 1 ? 0 : current + 1) : current)),
-        ),
+        // Tab chốt luôn dòng đang tô sáng (gõ vài chữ rồi Tab là xong), như tự hoàn thành.
+        Tab: withPicker(() => selectAtIndex(selectedIndex)),
         'Shift+Tab': withPicker(() =>
             setSelectedIndex(current => (items.length ? (current === 0 ? items.length - 1 : current - 1) : current)),
         ),
