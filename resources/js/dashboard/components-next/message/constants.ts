@@ -41,6 +41,9 @@ export const MEDIA_TYPES: string[] = [
     ATTACHMENT_TYPES.IG_REEL,
 ];
 
+// Tab "Ảnh/video" ở panel hội thoại: chỉ loại có hình để xếp lưới; âm thanh nằm ở tab Tệp.
+export const SHARED_MEDIA_TYPES: string[] = [ATTACHMENT_TYPES.IMAGE, ATTACHMENT_TYPES.VIDEO, ATTACHMENT_TYPES.IG_REEL];
+
 export type AttachmentType = (typeof ATTACHMENT_TYPES)[keyof typeof ATTACHMENT_TYPES];
 
 // Loại đính kèm không phải "tệp tải về" — accordion Attachments bỏ qua chúng.

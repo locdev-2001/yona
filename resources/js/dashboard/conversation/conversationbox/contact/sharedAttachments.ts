@@ -1,5 +1,5 @@
 import type { MessageAttachment } from 'dashboard/components-next/message/helpers/attachments';
-import { MEDIA_TYPES, NON_FILE_TYPES } from 'dashboard/components-next/message/constants';
+import { NON_FILE_TYPES, SHARED_MEDIA_TYPES } from 'dashboard/components-next/message/constants';
 
 // Phần thuần của SharedFiles.vue + components-next/SharedAttachments/{Media,Files}.vue.
 const newestFirst = (first: MessageAttachment, second: MessageAttachment): number =>
@@ -7,7 +7,7 @@ const newestFirst = (first: MessageAttachment, second: MessageAttachment): numbe
 
 export function mediaAttachments(attachments: MessageAttachment[]): MessageAttachment[] {
     return attachments
-        .filter(attachment => Boolean(attachment.data_url) && MEDIA_TYPES.includes(attachment.file_type))
+        .filter(attachment => Boolean(attachment.data_url) && SHARED_MEDIA_TYPES.includes(attachment.file_type))
         .sort(newestFirst);
 }
 
@@ -16,7 +16,7 @@ export function fileAttachments(attachments: MessageAttachment[]): MessageAttach
         .filter(
             attachment =>
                 Boolean(attachment.data_url) &&
-                !MEDIA_TYPES.includes(attachment.file_type) &&
+                !SHARED_MEDIA_TYPES.includes(attachment.file_type) &&
                 !NON_FILE_TYPES.includes(attachment.file_type),
         )
         .sort(newestFirst);

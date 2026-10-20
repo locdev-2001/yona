@@ -103,10 +103,11 @@ class Attachment extends Model
     public const SEARCHABLE_FILE_TYPES = [...self::FILE_BEARING_TYPES, self::FILE_TYPE_FALLBACK];
 
     // Nhóm của khối "Ảnh/video · Tệp" ở panel hội thoại — cùng cách chia với
-    // MEDIA_TYPES của giao diện (components-next/message/constants.ts).
+    // SHARED_MEDIA_TYPES của giao diện (components-next/message/constants.ts): âm thanh
+    // không có hình để xếp lưới nên nằm ở Tệp.
     public const SHARED_KIND_FILE_TYPES = [
-        'media' => [self::FILE_TYPE_IMAGE, self::FILE_TYPE_VIDEO, self::FILE_TYPE_AUDIO, self::FILE_TYPE_IG_REEL],
-        'files' => [self::FILE_TYPE_FILE],
+        'media' => [self::FILE_TYPE_IMAGE, self::FILE_TYPE_VIDEO, self::FILE_TYPE_IG_REEL],
+        'files' => [self::FILE_TYPE_FILE, self::FILE_TYPE_AUDIO],
     ];
 
     // Đánh dấu bản ghi âm nhân viên thu ngay ở ô soạn (khác một tệp âm thanh tải lên).
