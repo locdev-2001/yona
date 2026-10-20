@@ -52,6 +52,11 @@ final class SelfContainedHtml
 
     private const FETCH_TIMEOUT_SECONDS = 8;
 
+    /** Dựng PDF chạy trong request chuyển tiếp: hết quỹ giờ thì ảnh ngoài còn lại bị bỏ. */
+    private const REMOTE_FETCH_BUDGET_SECONDS = 20;
+
+    private ?float $remoteFetchStartedAt = null;
+
     /** @var array<string, string|null> url → data URI (null = không dùng được) */
     private array $resolvedImages = [];
 
@@ -211,7 +216,7 @@ final class SelfContainedHtml
 
     private function remoteImage(string $url): ?string
     {
-        if (! preg_match('#^https?://#i', $url) || $this->remoteImageCount >= self::MAX_REMOTE_IMAGES) {
+        if (! preg_match('#^https?://#i', $url) || $this->remoteImageCount >= self::MAX_REMOTE_IMAGES || $this->remoteBudgetSpent()) {
             return null;
         }
 
@@ -235,6 +240,13 @@ final class SelfContainedHtml
         return $contents !== null && $this->withinBudget(strlen($contents))
             ? self::dataUri($contentType, $contents)
             : null;
+    }
+
+    private function remoteBudgetSpent(): bool
+    {
+        $this->remoteFetchStartedAt ??= microtime(true);
+
+        return microtime(true) - $this->remoteFetchStartedAt > self::REMOTE_FETCH_BUDGET_SECONDS;
     }
 
     private function readCapped(StreamInterface $stream): ?string
