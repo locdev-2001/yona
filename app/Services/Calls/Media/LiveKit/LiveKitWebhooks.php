@@ -45,6 +45,7 @@ final readonly class LiveKitWebhooks implements MediaWebhooks
             isset($payload['createdAt']) ? CarbonImmutable::createFromTimestamp((int) $payload['createdAt']) : CarbonImmutable::now(),
             $payload['participant']['identity'] ?? null,
             LiveKitSources::fromTrackSource($payload['track']['source'] ?? null),
+            $payload['participant']['name'] ?? null,
         );
     }
 

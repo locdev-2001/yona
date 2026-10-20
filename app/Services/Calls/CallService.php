@@ -100,12 +100,7 @@ final readonly class CallService
     // cho đa số lượt vào; chỉ khi DB báo đầy (có thể do dòng cũ vì mất webhook) mới hỏi nhà cung cấp.
     private function rejectWhenFull(Call $call, CallAttendee $attendee, int $maxParticipants): void
     {
-        $present = $call->presentParticipants();
-        $userId = $attendee->identity->userId();
-
-        if ($userId !== null) {
-            $present->where('user_id', '!=', $userId);
-        }
+        $present = $call->presentParticipants()->where('identity', '!=', $attendee->identity->toString());
 
         if ($present->count() < $maxParticipants) {
             return;
