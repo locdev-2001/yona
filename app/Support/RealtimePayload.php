@@ -42,7 +42,8 @@ final class RealtimePayload
     }
 
     // messages[0]/last_non_activity_message — chỉ giữ field MessagePreview.tsx /
-    // getLastMessage() thật sự đọc, bỏ sender/conversation lồng/sentiment/attachment đầy đủ.
+    // getLastMessage() thật sự đọc, bỏ conversation lồng/sentiment/attachment đầy đủ; người gửi
+    // chỉ giữ id/type/name cho tiền tố "Bạn:" / tên người gửi ở dòng xem trước.
     /** @param array<string, mixed> $message */
     private static function messagePreviewFromData(array $message): array
     {
@@ -58,10 +59,20 @@ final class RealtimePayload
             'message_type' => $message['message_type'],
             'private' => $message['private'],
             'created_at' => $message['created_at'],
+            'sender' => self::compactSender($message['sender'] ?? null),
             ...($attachments === [] ? [] : [
                 'attachments' => [['file_type' => $attachments[0]['file_type']]],
             ]),
         ];
+    }
+
+    private static function compactSender(mixed $sender): ?array
+    {
+        if (! is_array($sender)) {
+            return null;
+        }
+
+        return ['id' => $sender['id'] ?? null, 'type' => $sender['type'] ?? null, 'name' => $sender['name'] ?? null];
     }
 
     // notification.primary_actor — dashboard chỉ đọc id/inbox_id/priority/meta.sender

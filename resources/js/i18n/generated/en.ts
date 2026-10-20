@@ -2791,6 +2791,10 @@ const messages: Record<string, unknown> = {
             "COPY": "Copy",
             "COPIED": "Link copied",
             "RENAME": "Rename group",
+            "CHANGE_AVATAR": "Change group picture",
+            "CHANGE_AVATAR_DESCRIPTION": "Pick a picture for the group. Every member sees it.",
+            "MORE_AVATARS": "Show more",
+            "PICK_AVATAR": "Pick picture {number}",
             "SAVE": "Save",
             "ROLES": {
                 "ADMIN": "Admin",
@@ -5666,7 +5670,8 @@ const messages: Record<string, unknown> = {
             "RENAMED": ":actor renamed the group to \":name\"",
             "MADE_ADMIN": ":actor made :member a group admin",
             "REMOVED_ADMIN": ":actor removed :member as a group admin",
-            "ADMIN_HANDOVER": ":member is now a group admin"
+            "ADMIN_HANDOVER": ":member is now a group admin",
+            "AVATAR_CHANGED": ":actor changed the group picture"
         },
         "ERRORS": {
             "NOT_A_MEMBER": "You are no longer in this group",
@@ -5678,6 +5683,7 @@ const messages: Record<string, unknown> = {
             "FULL": "The group already has :max members",
             "LAST_ADMIN": "The group needs at least one admin",
             "INVALID_ROLE": "Invalid role",
+            "INVALID_AVATAR": "Invalid group picture",
             "INVITE_UNUSABLE": "This invite link can no longer be used",
             "NAME_REQUIRED": "Give the group a name",
             "NAME_TOO_LONG": "Group names can be at most 100 characters",

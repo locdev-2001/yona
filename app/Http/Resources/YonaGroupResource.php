@@ -27,6 +27,7 @@ final class YonaGroupResource
         return [
             'id' => $group->id,
             'name' => $group->name,
+            'avatar_seed' => $group->avatar_seed,
             'member_count' => $group->member_count,
             'my_role' => $membership->isActive() ? $membership->role : null,
         ];
@@ -38,6 +39,7 @@ final class YonaGroupResource
         return [
             'id' => $group->id,
             'name' => $group->name,
+            'avatar_seed' => $group->avatar_seed,
             'description' => $group->description,
             'member_count' => $group->member_count,
             'max_members' => YonaGroup::MAX_MEMBERS,

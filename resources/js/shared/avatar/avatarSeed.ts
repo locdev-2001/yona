@@ -32,8 +32,27 @@ export function resolveAvatarIdentity(seed: string | undefined, name: string | n
     return seed || (name ?? '').trim();
 }
 
-// Avatar của một dòng hội thoại: nhóm theo id nhóm (mọi thành viên thấy cùng một hình),
-// còn lại theo liên hệ.
-export function conversationAvatarSeed(group: { id: number } | null | undefined, contactId: AvatarSubjectId): string | undefined {
-    return group ? avatarSeed('chat', `group:${group.id}`) : avatarSeed('contact', contactId);
+const PICKED_AVATAR_PREFIX = 'pick-';
+
+// Lựa chọn thứ `index` trong lưới chọn hình (máy chủ chỉ nhận dạng `pick-{số}`).
+export function pickedAvatarChoice(index: number): string {
+    return `${PICKED_AVATAR_PREFIX}${index}`;
+}
+
+export function pickedAvatarIndex(choice: string): number | null {
+    if (!choice.startsWith(PICKED_AVATAR_PREFIX)) return null;
+    const index = Number(choice.slice(PICKED_AVATAR_PREFIX.length));
+
+    return Number.isInteger(index) && index > 0 ? index : null;
+}
+
+// Avatar của một dòng hội thoại: nhóm theo hình quản trị đã chọn, chưa chọn thì theo id nhóm
+// (mọi thành viên thấy cùng một hình); còn lại theo liên hệ.
+export function conversationAvatarSeed(
+    group: { id: number; avatar_seed?: string | null } | null | undefined,
+    contactId: AvatarSubjectId,
+): string | undefined {
+    if (!group) return avatarSeed('contact', contactId);
+
+    return avatarSeed('chat', group.avatar_seed || `group:${group.id}`);
 }

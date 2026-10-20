@@ -10,11 +10,12 @@ import { useAlert } from 'dashboard/composables/useAlert';
 import { openProfile } from 'dashboard/contacts/profile/profileOverlay';
 import { ensureYonaContact } from 'dashboard/friends/api';
 import { parseApiErrorMessage } from 'dashboard/helper/apiClient';
+import AvatarPickerDialog from 'shared/avatar/AvatarPickerDialog';
 import { conversationAvatarSeed } from 'shared/avatar/avatarSeed';
 import PickPeopleDialog from 'shared/people/PickPeopleDialog';
 import { t } from '../../../../i18n';
 import type { DashboardPageProps } from '../../../types';
-import { addGroupMembers, fetchGroup, removeGroupMember, renameGroup, setGroupMemberRole } from '../../groupsApi';
+import { addGroupMembers, changeGroupAvatar, fetchGroup, removeGroupMember, renameGroup, setGroupMemberRole } from '../../groupsApi';
 import type { GroupDetails, GroupMember, GroupSummary } from '../../groupsApi';
 import GroupInviteLinks from './GroupInviteLinks';
 import GroupMemberRow from './GroupMemberRow';
@@ -36,6 +37,7 @@ export default function GroupInfo({ group }: { group: GroupSummary }) {
     const [hasLeft, setHasLeft] = useState(false);
     const addRef = useRef<DialogHandle>(null);
     const renameRef = useRef<DialogHandle>(null);
+    const avatarRef = useRef<DialogHandle>(null);
     const confirmRef = useRef<DialogHandle>(null);
 
     const isMember = group.my_role !== null && !hasLeft;
@@ -48,7 +50,8 @@ export default function GroupInfo({ group }: { group: GroupSummary }) {
             .catch(() => setDetails(null));
     }, [accountId, group.id, isMember]);
 
-    useEffect(reload, [reload]);
+    // Tóm tắt nhóm đổi qua realtime (tên, ảnh, số thành viên do người khác đổi) thì đọc lại chi tiết.
+    useEffect(reload, [reload, group.name, group.avatar_seed, group.member_count]);
     useEffect(() => setHasLeft(false), [group.id]);
 
     const fail = (error: unknown) => useAlert(parseApiErrorMessage(error) || t('CHAT.GROUP.ERROR'));
@@ -83,13 +86,28 @@ export default function GroupInfo({ group }: { group: GroupSummary }) {
     };
 
     const name = details?.name ?? group.name;
+    const avatarChoice = details?.avatar_seed ?? group.avatar_seed;
+    const groupAvatar = <Avatar seed={conversationAvatarSeed({ id: group.id, avatar_seed: avatarChoice }, null)} name={name} size={72} roundedFull />;
     const memberCount = details?.member_count ?? group.member_count;
     const members = details?.members ?? [];
 
     return (
         <div className="flex flex-col">
             <div className="flex flex-col items-center gap-1.5 px-4 pt-5 pb-4 text-center border-b border-n-weak">
-                <Avatar seed={conversationAvatarSeed(group, null)} name={name} size={72} roundedFull />
+                {isAdmin ? (
+                    <button
+                        type="button"
+                        aria-label={t('CHAT.GROUP.CHANGE_AVATAR')}
+                        title={t('CHAT.GROUP.CHANGE_AVATAR')}
+                        className="relative flex rounded-full outline-none group/avatar focus-visible:ring-2 focus-visible:ring-n-brand"
+                        onClick={() => avatarRef.current?.open()}
+                    >
+                        {groupAvatar}
+                        <span className="absolute -bottom-0.5 -right-0.5 flex items-center justify-center size-6 rounded-full bg-n-solid-1 border border-n-weak text-n-slate-11 group-hover/avatar:text-n-slate-12">
+                            <span className="i-lucide-pencil size-3" aria-hidden="true" />
+                        </span>
+                    </button>
+                ) : groupAvatar}
                 <div className="flex items-center gap-1 max-w-full">
                     <h2 className="m-0 text-lg font-medium text-n-slate-12 truncate">{name}</h2>
                     {isAdmin ? (
@@ -165,6 +183,15 @@ export default function GroupInfo({ group }: { group: GroupSummary }) {
                     if (added) useAlert(t('CHAT.GROUP.ADDED', { count: people.length }));
                     return added;
                 }}
+            />
+
+            <AvatarPickerDialog
+                ref={avatarRef}
+                title={t('CHAT.GROUP.CHANGE_AVATAR')}
+                description={t('CHAT.GROUP.CHANGE_AVATAR_DESCRIPTION')}
+                subject="chat"
+                current={avatarChoice}
+                onConfirm={choice => run(() => changeGroupAvatar(accountId, group.id, choice))}
             />
 
             <Dialog

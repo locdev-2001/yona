@@ -36,10 +36,22 @@ class YonaGroupsController extends Controller
         return response()->json(YonaGroupResource::forMember($group, $this->permissions->activeMember($group, $request->user()), withMembers: true));
     }
 
+    // Đổi tên và/hoặc avatar nhóm (quản trị).
     public function update(Request $request, Account $account, int $groupId): JsonResponse
     {
-        $input = $request->validate(['name' => ['required', 'string']]);
-        $group = $this->groups->rename(YonaGroup::query()->findOrFail($groupId), $request->user(), $input['name']);
+        $input = $request->validate([
+            'name' => ['required_without:avatar_seed', 'string'],
+            'avatar_seed' => ['required_without:name', 'string'],
+        ]);
+        $group = YonaGroup::query()->findOrFail($groupId);
+
+        if (isset($input['name'])) {
+            $group = $this->groups->rename($group, $request->user(), $input['name']);
+        }
+
+        if (isset($input['avatar_seed'])) {
+            $group = $this->groups->changeAvatar($group, $request->user(), $input['avatar_seed']);
+        }
 
         return response()->json(YonaGroupResource::forMember($group, $this->permissions->activeMember($group, $request->user())));
     }

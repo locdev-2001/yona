@@ -133,6 +133,10 @@ return [
         'COPY' => 'Sao chép',
         'COPIED' => 'Đã sao chép link',
         'RENAME' => 'Đổi tên nhóm',
+        'CHANGE_AVATAR' => 'Đổi ảnh nhóm',
+        'CHANGE_AVATAR_DESCRIPTION' => 'Chọn một hình cho nhóm, mọi thành viên đều thấy hình này.',
+        'MORE_AVATARS' => 'Xem thêm hình',
+        'PICK_AVATAR' => 'Chọn hình {number}',
         'SAVE' => 'Lưu',
         'ROLES' => [
             'ADMIN' => 'Quản trị',

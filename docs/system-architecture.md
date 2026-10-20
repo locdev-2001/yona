@@ -587,8 +587,11 @@ hộp thư sẵn có. Giao diện mở hội thoại mới:
 | `GET /g/{token}` · `POST /g/{token}` | Trang mở link mời (`Chat\GroupInvitesController`, trang `v3/views/groups/invite/Index`): ai cũng xem được; khách được giữ `url.intended` để đăng nhập/đăng ký xong quay lại; tham gia xong tải lại trọn trang vào hội thoại nhóm |
 | `GET /api/v1/users/search?scope=friends` | Tìm trong bạn bè, ô tìm trống trả luôn danh sách bạn bè (chọn người thêm vào nhóm) |
 
-**Giao diện:** payload hội thoại có `group` (`YonaGroupResource::summaryFor`: id, tên, số
-thành viên, `my_role`, null khi đã rời). Tin nhóm của người khác mang
+**Giao diện:** payload hội thoại có `group` (`YonaGroupResource::summaryFor`: id, tên,
+`avatar_seed`, số thành viên, `my_role`, null khi đã rời). Ảnh nhóm: quản trị chọn một hình
+khối trong lưới (`shared/avatar/AvatarPickerDialog`), lưu `yona_groups.avatar_seed` dạng
+`pick-{n}` qua `PATCH /…/yona/groups/{id}` (`GroupService::changeAvatar`, ghi tin hoạt động);
+NULL = hình theo id nhóm. Một chỗ dựng hình: `conversationAvatarSeed`. Tin nhóm của người khác mang
 `content_attributes.sender` (`external_id`, `name`, `avatar`, `avatar_seed`) như tin nhóm
 mọi kênh, nên bong bóng, trích dẫn, cảm xúc, dòng xem trước dùng chung đường hiển thị
 nhóm sẵn có. Tạo nhóm và thêm bạn dùng `shared/people/PickPeopleDialog` (bọc
@@ -598,8 +601,7 @@ nhóm sẵn có. Tạo nhóm và thêm bạn dùng `shared/people/PickPeopleDial
 
 ### Chưa có
 
-- **Ảnh và mô tả nhóm, giải tán nhóm:** chưa có; nhóm dùng avatar hình khối theo id nhóm
-  (`conversationAvatarSeed`).
+- **Ảnh tải lên, mô tả nhóm, giải tán nhóm:** chưa có; ảnh nhóm chỉ chọn từ hình khối dựng sẵn.
 - **Quay về link mời sau khi đăng ký mới:** `url.intended` giữ qua đăng nhập và màn chọn
   `@username`, nhưng đăng ký bằng email phải xác minh email trước nên có thể mất mốc này.
 - **Tìm theo tên người gửi trong nhóm Yona:** tìm theo người gửi thật

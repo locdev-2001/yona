@@ -2791,6 +2791,10 @@ const messages: Record<string, unknown> = {
             "COPY": "Sao chép",
             "COPIED": "Đã sao chép link",
             "RENAME": "Đổi tên nhóm",
+            "CHANGE_AVATAR": "Đổi ảnh nhóm",
+            "CHANGE_AVATAR_DESCRIPTION": "Chọn một hình cho nhóm, mọi thành viên đều thấy hình này.",
+            "MORE_AVATARS": "Xem thêm hình",
+            "PICK_AVATAR": "Chọn hình {number}",
             "SAVE": "Lưu",
             "ROLES": {
                 "ADMIN": "Quản trị",
@@ -5666,7 +5670,8 @@ const messages: Record<string, unknown> = {
             "RENAMED": ":actor đã đổi tên nhóm thành \":name\"",
             "MADE_ADMIN": ":actor đã đặt :member làm quản trị nhóm",
             "REMOVED_ADMIN": ":actor đã gỡ quyền quản trị của :member",
-            "ADMIN_HANDOVER": ":member trở thành quản trị nhóm"
+            "ADMIN_HANDOVER": ":member trở thành quản trị nhóm",
+            "AVATAR_CHANGED": ":actor đã đổi ảnh nhóm"
         },
         "ERRORS": {
             "NOT_A_MEMBER": "Bạn không còn ở trong nhóm này",
@@ -5678,6 +5683,7 @@ const messages: Record<string, unknown> = {
             "FULL": "Nhóm đã đủ :max thành viên",
             "LAST_ADMIN": "Nhóm cần còn ít nhất một quản trị",
             "INVALID_ROLE": "Vai trò không hợp lệ",
+            "INVALID_AVATAR": "Ảnh nhóm không hợp lệ",
             "INVITE_UNUSABLE": "Link mời không còn dùng được",
             "NAME_REQUIRED": "Hãy đặt tên cho nhóm",
             "NAME_TOO_LONG": "Tên nhóm dài tối đa 100 ký tự",

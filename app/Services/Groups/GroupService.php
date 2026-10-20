@@ -172,6 +172,26 @@ final class GroupService
         });
     }
 
+    public function changeAvatar(YonaGroup $group, User $admin, string $avatarSeed): YonaGroup
+    {
+        $this->permissions->admin($group, $admin);
+
+        if (preg_match(YonaGroup::AVATAR_SEED_PATTERN, $avatarSeed) !== 1) {
+            throw new GroupActionRejected('INVALID_AVATAR');
+        }
+
+        if ($avatarSeed === $group->avatar_seed) {
+            return $group;
+        }
+
+        return DB::transaction(function () use ($group, $admin, $avatarSeed) {
+            $group->update(['avatar_seed' => $avatarSeed]);
+            $this->postActivity($group, 'AVATAR_CHANGED', ['actor' => $admin->availableName()]);
+
+            return $group;
+        });
+    }
+
     /** @return array{0: YonaGroupInviteLink, 1: string} */
     public function issueInviteLink(YonaGroup $group, User $admin, ?int $expiresInDays, ?int $maxUses): array
     {

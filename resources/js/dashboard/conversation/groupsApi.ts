@@ -8,6 +8,8 @@ export type GroupJoinedVia = 'creator' | 'added' | 'invite_link';
 export interface GroupSummary {
     id: number;
     name: string;
+    // null: chưa chọn, dùng hình theo id nhóm.
+    avatar_seed: string | null;
     member_count: number;
     // null: người xem đã rời nhóm.
     my_role: GroupRole | null;
@@ -51,6 +53,10 @@ export function fetchGroup(accountId: number, groupId: number): Promise<GroupDet
 
 export function renameGroup(accountId: number, groupId: number, name: string): Promise<GroupSummary> {
     return patchJson<GroupSummary>(groupUrl(accountId, groupId), { name });
+}
+
+export function changeGroupAvatar(accountId: number, groupId: number, avatarSeed: string): Promise<GroupSummary> {
+    return patchJson<GroupSummary>(groupUrl(accountId, groupId), { avatar_seed: avatarSeed });
 }
 
 export async function addGroupMembers(accountId: number, groupId: number, userIds: number[]): Promise<GroupMember[]> {

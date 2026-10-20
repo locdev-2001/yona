@@ -131,6 +131,10 @@ return [
         'COPY' => 'Copy',
         'COPIED' => 'Link copied',
         'RENAME' => 'Rename group',
+        'CHANGE_AVATAR' => 'Change group picture',
+        'CHANGE_AVATAR_DESCRIPTION' => 'Pick a picture for the group. Every member sees it.',
+        'MORE_AVATARS' => 'Show more',
+        'PICK_AVATAR' => 'Pick picture {number}',
         'SAVE' => 'Save',
         'ROLES' => [
             'ADMIN' => 'Admin',
