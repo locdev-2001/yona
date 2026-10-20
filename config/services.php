@@ -97,6 +97,14 @@ return [
     // Kết nối hộp thư Outlook/Microsoft 365 bằng OAuth (app đăng ký ở Azure / Entra ID).
     // Thiếu client id/secret thì thẻ "Đăng nhập Microsoft" tự ẩn.
     // Redirect URI cần khai ở Azure: {APP_URL}/app/email/oauth/microsoft/callback.
+    // Nhà cung cấp phòng media cho cuộc gọi (driver App\Services\Calls\Media\LiveKit).
+    // `url` là địa chỉ trình duyệt kết nối (ws/wss); API phòng gọi cùng host qua http/https.
+    'livekit' => [
+        'url' => env('LIVEKIT_URL'),
+        'api_key' => env('LIVEKIT_API_KEY'),
+        'api_secret' => env('LIVEKIT_API_SECRET'),
+    ],
+
     'microsoft_mail' => [
         'client_id' => env('MICROSOFT_MAIL_CLIENT_ID'),
         'client_secret' => env('MICROSOFT_MAIL_CLIENT_SECRET'),

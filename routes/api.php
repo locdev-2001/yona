@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\Webhooks\FacebookController as FacebookWebhooksCont
 use App\Http\Controllers\Api\Webhooks\GmailPushController;
 use App\Http\Controllers\Api\Webhooks\InstagramController as InstagramWebhooksController;
 use App\Http\Controllers\Api\Webhooks\LineController as LineWebhooksController;
+use App\Http\Controllers\Api\Webhooks\MediaController as MediaWebhooksController;
 use App\Http\Controllers\Api\Webhooks\SmsController as SmsWebhooksController;
 use App\Http\Controllers\Api\Webhooks\TelegramController as TelegramWebhooksController;
 use App\Http\Controllers\Api\Webhooks\TiktokController as TiktokWebhooksController;
@@ -160,6 +161,10 @@ Route::post('/twilio/delivery_status', [TwilioWebhooksController::class, 'delive
 Route::post('/webhooks/zalo', ZaloWebhooksController::class)
     ->middleware(VerifyZaloBridgeSecret::class);
 // G1 Zalo webhook — END
+
+// Nhà cung cấp phòng media (cuộc gọi) báo vào/ra phòng; driver theo {provider} trong
+// config/calls.php tự kiểm chữ ký.
+Route::post('/webhooks/media/{provider}', MediaWebhooksController::class)->where('provider', '[a-z0-9_-]+');
 
 // Analytics first-party: script và sự kiện đi qua chính domain app để trình chặn quảng
 // cáo không chặn theo domain/mẫu URL của nhà cung cấp. Nhóm `api`: không session, không

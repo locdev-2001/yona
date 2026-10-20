@@ -9,7 +9,7 @@ COMPOSER := $(PHP) $(shell command -v composer)
 PSQL     := psql -h 127.0.0.1 -U postgres
 
 .DEFAULT_GOAL := help
-.PHONY: help setup dev serve worker reverb migrate seed format stan check build i18n i18n-check tinker \
+.PHONY: help setup dev serve worker reverb livekit migrate seed format stan check build i18n i18n-check tinker \
 	up down status
 
 help: ## Show this help
@@ -67,8 +67,10 @@ APP_PORT ?= $(shell sed -n 's/^SERVER_PORT=//p' .env 2>/dev/null | head -1)
 APP_PORT := $(if $(APP_PORT),$(APP_PORT),8610)
 REVERB_PORT ?= $(shell sed -n 's/^REVERB_SERVER_PORT=//p' .env 2>/dev/null | head -1)
 REVERB_PORT := $(if $(REVERB_PORT),$(REVERB_PORT),8611)
+LIVEKIT_PORT ?= $(shell sed -n 's/^LIVEKIT_PORT=//p' .env 2>/dev/null | head -1)
+LIVEKIT_PORT := $(if $(LIVEKIT_PORT),$(LIVEKIT_PORT),8613)
 
-up: ## Bật cả môi trường sau khi mở máy: yona serve + queue worker + reverb chạy nền (cổng theo .env)
+up: ## Bật cả môi trường sau khi mở máy: yona serve + queue worker + reverb + livekit chạy nền (cổng theo .env)
 	@if curl -sf -o /dev/null http://localhost:$(APP_PORT); then \
 		echo "yona: đã chạy sẵn trên :$(APP_PORT)"; \
 	else \
@@ -91,6 +93,13 @@ up: ## Bật cả môi trường sau khi mở máy: yona serve + queue worker + 
 		echo $$! > storage/logs/reverb.pid; \
 		echo "reverb: đã start trên :$(REVERB_PORT) (log: storage/logs/reverb.log)"; \
 	fi
+	@if [ -f storage/logs/livekit.pid ] && kill -0 $$(cat storage/logs/livekit.pid) 2>/dev/null; then \
+		echo "livekit: đã chạy sẵn (pid $$(cat storage/logs/livekit.pid))"; \
+	else \
+		nohup services/livekit/dev.sh > storage/logs/livekit.log 2>&1 & \
+		echo $$! > storage/logs/livekit.pid; \
+		echo "livekit: đã start trên :$(LIVEKIT_PORT) (log: storage/logs/livekit.log)"; \
+	fi
 	@$(MAKE) --no-print-directory status
 
 worker: ## Queue worker foreground (dev): đủ tier theo config/queue_tiers.php
@@ -99,7 +108,10 @@ worker: ## Queue worker foreground (dev): đủ tier theo config/queue_tiers.php
 reverb: ## Reverb websocket server foreground (cổng theo .env)
 	$(ARTISAN) reverb:start --debug
 
-down: ## Tắt yona serve + worker + reverb
+livekit: ## livekit-server foreground cho cuộc gọi (cổng, key, webhook theo .env)
+	services/livekit/dev.sh
+
+down: ## Tắt yona serve + worker + reverb + livekit
 	@pkill -f 'artisan serve' && echo "yona: đã tắt" || echo "yona: không có process nào"
 	@if [ -f storage/logs/worker.pid ]; then \
 		{ kill $$(cat storage/logs/worker.pid) 2>/dev/null && echo "worker: đã tắt"; } || echo "worker: không có process nào"; \
@@ -109,8 +121,13 @@ down: ## Tắt yona serve + worker + reverb
 		{ kill $$(cat storage/logs/reverb.pid) 2>/dev/null && echo "reverb: đã tắt"; } || echo "reverb: không có process nào"; \
 		rm -f storage/logs/reverb.pid; \
 	else echo "reverb: không có process nào"; fi
+	@if [ -f storage/logs/livekit.pid ]; then \
+		{ kill $$(cat storage/logs/livekit.pid) 2>/dev/null && echo "livekit: đã tắt"; } || echo "livekit: không có process nào"; \
+		rm -f storage/logs/livekit.pid; \
+	else echo "livekit: không có process nào"; fi
 
-status: ## Kiểm tra yona + reverb + worker (cổng theo .env)
+status: ## Kiểm tra yona + reverb + worker + livekit (cổng theo .env)
 	@printf 'yona    :$(APP_PORT)  '; curl -sf -o /dev/null http://localhost:$(APP_PORT) && echo OK || echo TẮT
 	@printf 'worker         '; { [ -f storage/logs/worker.pid ] && kill -0 $$(cat storage/logs/worker.pid) 2>/dev/null; } && echo OK || echo TẮT
 	@printf 'reverb  :$(REVERB_PORT)  '; curl -sf -o /dev/null http://localhost:$(REVERB_PORT)/up && echo OK || echo TẮT
+	@printf 'livekit :$(LIVEKIT_PORT)  '; curl -sf -o /dev/null http://localhost:$(LIVEKIT_PORT) && echo OK || echo TẮT

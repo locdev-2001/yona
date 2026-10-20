@@ -36,6 +36,10 @@ use App\Models\User;
 use App\Models\YonaGroup;
 use App\Search\SearchEngine;
 use App\Services\Analytics\PlausibleProxy;
+use App\Services\Calls\Media\MediaDrivers;
+use App\Services\Calls\Media\MediaModeration;
+use App\Services\Calls\Media\MediaRooms;
+use App\Services\Calls\Media\MediaTickets;
 use App\Services\Email\MailServerProbe;
 use App\Services\Email\SocketMailServerProbe;
 use App\Services\Email\Verification\MailDomainResolver;
@@ -108,6 +112,11 @@ class AppServiceProvider extends ServiceProvider
 
             return $app->make($engineClass);
         });
+
+        // Lõi cuộc gọi nhận từng vai media của nhà cung cấp đang chọn (config/calls.php).
+        $this->app->bind(MediaRooms::class, fn ($app) => $app->make(MediaDrivers::class)->default()->rooms());
+        $this->app->bind(MediaTickets::class, fn ($app) => $app->make(MediaDrivers::class)->default()->tickets());
+        $this->app->bind(MediaModeration::class, fn ($app) => $app->make(MediaDrivers::class)->default()->moderation());
     }
 
     /**

@@ -614,9 +614,72 @@ nhóm sẵn có. Tạo nhóm và thêm bạn dùng `shared/people/PickPeopleDial
 - **Tìm theo tên người gửi trong nhóm Yona:** tìm theo người gửi thật
   (`GROUP_SENDER_NAME_SQL`) chỉ áp cho nhóm của kênh ngoài; tin nhóm Yona tìm theo nội
   dung và tệp. Đếm tin vào/ra ở chỉ số Super Admin vẫn tính tin chung của nhóm (một bản).
-- **Gọi thoại/video, chia sẻ màn hình:** chưa có code, kế hoạch đã duyệt schema.
+- **Gọi thoại/video, chia sẻ màn hình:** mới có nền máy chủ (mục 12), chưa có giao diện,
+  chưa có gọi 1-1 đổ chuông, chưa có tin hệ thống về cuộc gọi.
 - **Tin chờ và chặn cho người lạ** trên kênh Yona: chưa có; ai biết username đều
   mở được hội thoại.
 - **Đang gõ, đã xem** giữa hai hộp thư Yona: `YonaOutboundActions::typing()` rỗng,
   kênh không khai năng lực tương ứng.
 - **Sửa tin** trên kênh Yona: kênh không khai năng lực sửa.
+
+## 12. Cuộc gọi: lõi trung tính, nhà cung cấp media là driver
+
+Phòng thoại nhóm (luôn mở, tối đa 25 người) và gọi 1-1 đi chung một lõi
+`App\Services\Calls`. Thoại, video, chia sẻ màn hình không phải ba hệ thống: chúng là
+**quyền phát nguồn** của người trong phòng (`Media\MediaSource`: microphone, camera,
+screen, screen_audio, gom trong `Media\ParticipantPermissions`). Loại cuộc gọi là
+**chính sách** trên cùng lõi. Lõi không có chữ `livekit`; mọi thứ của LiveKit nằm trong
+`app/Services/Calls/Media/LiveKit/`.
+
+```
+YonaGroupCallsController ─► GroupRooms (tạo/tìm dòng calls của nhóm)
+                          ┌─────────┘                    ┌─ MediaRooms       (mở/đóng phòng)
+                          ├─► CallService ──────────────►├─ MediaTickets     (vé vào phòng + quyền)
+                          │     │ CallPolicies            └─ MediaModeration  (tắt nguồn, đưa ra)
+                          │     ├─ GroupRoomPolicy (≤25, quản trị nhóm điều hành)
+                          │     └─ DirectCallPolicy (2 người, không ai điều hành)
+POST /webhooks/media/{provider} ─► MediaDrivers::named() ─► MediaWebhooks::parse() ─► RoomEvent
+                                                                       └─► CallPresenceRecorder
+MediaDriver (gom 4 vai) ◄── LiveKitDriver: LiveKitRooms · LiveKitTickets · LiveKitModeration
+                                           · LiveKitWebhooks  (dùng chung LiveKitRoomService,
+                                             LiveKitTokenSigner, LiveKitCredentials)
+```
+
+- **Chọn nhà cung cấp:** `config/calls.php` (`provider` = `MEDIA_PROVIDER`, `drivers` =
+  tên → lớp driver). `AppServiceProvider` gắn `MediaRooms`/`MediaTickets`/`MediaModeration`
+  vào driver đang chọn, nên `CallService` chỉ nhận contract. Thêm nhà cung cấp = một driver
+  cài `MediaDriver` + một dòng `drivers`, lõi không đổi.
+- **`CallService` không biết nhóm, 1-1 hay meeting:** nó nhận một dòng `calls` có sẵn và hỏi
+  chính sách theo `calls.kind`. Mỗi tính năng tự tạo dòng `calls` của mình rồi gọi
+  `CallService::join` (phòng nhóm: `GroupRooms`; gọi 1-1, meeting: lớp riêng sau này). Thêm
+  loại cuộc gọi = một lớp tạo dòng + một chính sách + một dòng ở `CallPolicies`.
+- **Một dòng `calls` = một đời phòng.** Tên phòng phía nhà cung cấp là `calls.uuid`.
+  `GroupRooms::join` dùng phòng nhóm đang mở hoặc tạo dòng mới (index một phòng
+  mở mỗi nhóm chặn hai dòng khi hai người mở cùng lúc); `CallService::join` gọi `MediaRooms::open` (gọi lại an
+  toàn, nên phòng phía nhà cung cấp lỡ đóng thì tự mở lại) rồi cấp vé 1 giờ. Phòng chưa ai
+  vào đóng sau 60 giây, người cuối rời thì đóng sau 20 giây; lần vào sau mở dòng mới.
+  "Phòng luôn mở" là khái niệm giao diện, không phải một phòng media sống mãi.
+- **Ai đang trong phòng chỉ ghi từ sự kiện phòng**, không từ client:
+  `CallPresenceRecorder` nhận `RoomEvent` (bắt đầu/kết thúc phòng, vào/ra) và ghi
+  `call_participants`, `started_at`, `ended_at`, `peak_participants`. Khoá dòng `calls` và
+  chịu được sự kiện gửi lại/lệch thứ tự (đã có dòng mở thì bỏ qua). Phòng kết thúc thì khép
+  mọi dòng còn mở. Định danh trong phòng là `user:{id}` (`ParticipantIdentity`).
+- **Vé không mang quyền điều hành:** người tham gia không có kênh dữ liệu (chat trong phòng
+  đi qua hội thoại nhóm) và không có quyền quản trị phòng; tắt mic/đưa ra chỉ đi từ máy chủ
+  qua `CallService::mute`/`remove` sau khi chính sách cho phép.
+- **Driver LiveKit:** token HS256 ký bằng `firebase/php-jwt` (`iss` = API key, `sub` =
+  identity, `name`, grant `video` có `room`, `roomJoin`, `canPublish`, `canPublishSources`,
+  `canSubscribe`, `canPublishData`). API phòng qua Twirp JSON
+  `POST {LIVEKIT_URL→http}/twirp/livekit.RoomService/{Method}` với token ngắn hạn mang
+  `roomCreate` hoặc `roomAdmin`; tắt mic = tìm track theo nguồn rồi `MutePublishedTrack`.
+  Webhook: header `Authorization` là JWT ký bằng API secret, claim `sha256` =
+  base64(sha256(thân thô)); thân là protojson. Sai chữ ký → 401, nhà cung cấp lạ → 404.
+- **Local:** `make livekit` (hoặc `make up`, launch.json `livekit`) chạy
+  `services/livekit/dev.sh`: cổng `LIVEKIT_PORT` (8613), RTC TCP 7881, UDP 50000–50100, key
+  và địa chỉ webhook (`APP_URL/webhooks/media/livekit`) đọc từ `.env`.
+
+| Route | Ghi chú |
+|---|---|
+| `POST /api/v1/accounts/{account}/yona/groups/{id}/call` (`media`: audio\|video) | Vào phòng thoại nhóm (mở nếu chưa có); trả `call` và `ticket` (`server_url`, `token`, `expires_at`) |
+| `POST /webhooks/media/{provider}` | Sự kiện phòng từ nhà cung cấp, không session; driver tự kiểm chữ ký |
+

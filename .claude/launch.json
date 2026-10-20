@@ -46,6 +46,14 @@
                 "--queue=critical,high,media,medium,default,mailers,low,scheduled_jobs,purgable,stickers",
                 "--tries=1"
             ]
+        },
+        {
+            "name": "livekit",
+            "runtimeExecutable": "bash",
+            "runtimeArgs": [
+                "services/livekit/dev.sh"
+            ],
+            "port": 8613
         }
     ]
 }

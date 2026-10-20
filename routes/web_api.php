@@ -70,6 +70,7 @@ use App\Http\Controllers\WebApi\UsersController;
 use App\Http\Controllers\WebApi\WebhooksController;
 use App\Http\Controllers\WebApi\WidgetUpdatesController;
 use App\Http\Controllers\WebApi\YonaContactsController;
+use App\Http\Controllers\WebApi\YonaGroupCallsController;
 use App\Http\Controllers\WebApi\YonaGroupInvitesController;
 use App\Http\Controllers\WebApi\YonaGroupMembersController;
 use App\Http\Controllers\WebApi\YonaGroupsController;
@@ -229,6 +230,7 @@ Route::middleware(['auth.api_token', 'auth', 'account.scope'])
         Route::get('/yona/groups/{groupId}', [YonaGroupsController::class, 'show'])->whereNumber('groupId');
         Route::patch('/yona/groups/{groupId}', [YonaGroupsController::class, 'update'])->whereNumber('groupId');
         Route::post('/yona/groups/{groupId}/avatar', [YonaGroupsController::class, 'updateAvatar'])->whereNumber('groupId')->middleware('throttle:30,1');
+        Route::post('/yona/groups/{groupId}/call', [YonaGroupCallsController::class, 'store'])->whereNumber('groupId')->middleware('throttle:30,1');
         Route::post('/yona/groups/{groupId}/members', [YonaGroupMembersController::class, 'store'])->whereNumber('groupId')->middleware('throttle:60,1');
         Route::patch('/yona/groups/{groupId}/members/{userId}', [YonaGroupMembersController::class, 'update'])->whereNumber(['groupId', 'userId']);
         Route::delete('/yona/groups/{groupId}/members/{userId}', [YonaGroupMembersController::class, 'destroy'])->whereNumber(['groupId', 'userId']);

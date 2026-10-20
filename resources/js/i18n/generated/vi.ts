@@ -2421,6 +2421,14 @@ const messages: Record<string, unknown> = {
             "ASSIGN_FAILED": "Giao cho nhóm thất bại. Bạn hãy thử lại."
         }
     },
+    "CALLS": {
+        "ERRORS": {
+            "NOT_A_PARTICIPANT": "Bạn không ở trong cuộc gọi này",
+            "MODERATION_FORBIDDEN": "Bạn không có quyền điều hành cuộc gọi này",
+            "CALL_ENDED": "Cuộc gọi đã kết thúc",
+            "MEDIA_UNAVAILABLE": "Chưa kết nối được máy chủ cuộc gọi, hãy thử lại sau ít phút"
+        }
+    },
     "CAMPAIGN": {
         "LIVE_CHAT": {
             "HEADER_TITLE": "Chiến dịch chat trực tuyến",
