@@ -203,7 +203,15 @@ export default function CallSessionProvider({ children }: { children: ReactNode 
 
     const startDirect = useCallback(
         ({ accountId, conversation, media }: StartDirectCallRequest) => {
-            if (activeRef.current || directRef.current) {
+            // Bấm gọi lại đúng người đang gọi dở: mở lại màn gọi chứ không báo bận.
+            const current = directRef.current;
+            if (current && current.view.conversation_id === conversation.id) {
+                setDirect({ ...current, isExpanded: true });
+                if (current.view.status === 'active') setStageOpen(true);
+                return;
+            }
+
+            if (activeRef.current || current) {
                 useAlert(t('CALLS.ERRORS.YOU_BUSY'));
                 return;
             }

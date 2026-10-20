@@ -192,7 +192,7 @@ function InCallLayout(props: DirectCallSceneProps) {
                 {/* Ô camera của mình: nhỏ ở góc trên khi giữa màn là quả cầu, để không đè lên cầu. */}
                 {selfVideo ? (
                     <div
-                        className={`absolute end-4 overflow-hidden rounded-xl bg-n-black ${
+                        className={`absolute end-3 overflow-hidden rounded-xl bg-n-black ${
                             isOnVideo ? 'bottom-4 w-28 sm:w-40 aspect-[3/4] sm:aspect-video' : 'top-0 w-[72px] sm:w-[112px] aspect-[3/4]'
                         }`}
                     >

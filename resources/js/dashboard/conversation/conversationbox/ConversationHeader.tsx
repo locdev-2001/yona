@@ -74,7 +74,7 @@ export default function ConversationHeader({
             sm
             icon="i-lucide-search"
             title={t('CONVERSATION.SEARCH_IN_CONVERSATION.OPEN')}
-            className="max-md:!size-[44px]"
+            className="max-md:!size-[44px] touch:!size-[44px]"
             onClick={() => setSearchOpen(true)}
         />
     );
@@ -138,7 +138,7 @@ export default function ConversationHeader({
                         ) : null}
                     </div>
                 </div>
-                <div className="flex flex-row items-center justify-end flex-shrink-0 gap-1 header-actions-wrap [&_button]:!rounded-lg max-md:[&_[data-testid=sidepanel-switch]_button]:!size-[44px]">
+                <div className="flex flex-row items-center justify-end flex-shrink-0 gap-1 header-actions-wrap [&_button]:!rounded-lg max-md:[&_[data-testid=sidepanel-switch]_button]:!size-[44px] touch:[&_[data-testid=sidepanel-switch]_button]:!size-[44px]">
                     {group ? <GroupRoomButton accountId={accountId} group={group} isCompact className="max-md:!h-[44px]" /> : null}
                     {!group && inbox?.channel_type === 'Channel::Yona' ? (
                         <DirectCallButtons accountId={accountId} conversation={selectedConversation} isCompact={isPhone} className="max-md:!size-[44px]" />
@@ -146,7 +146,7 @@ export default function ConversationHeader({
                     {searchButton}
                     <SidepanelSwitch />
                     {isPhone ? null : <AssigneeAction isCompact />}
-                    <MoreActions isCompact showResolveAction={!isPhone} triggerClassName="max-md:!size-[44px]" />
+                    <MoreActions isCompact showResolveAction={!isPhone} triggerClassName="max-md:!size-[44px] touch:!size-[44px]" />
                 </div>
             </div>
         );
@@ -211,12 +211,12 @@ export default function ConversationHeader({
                     <ConversationSearchBar onClose={closeSearch} />
                 </div>
             ) : (
-                <div className="flex flex-row items-center justify-start xl:justify-end flex-shrink-0 gap-2 w-full xl:w-auto header-actions-wrap [&_button]:!rounded-lg">
+                <div className="flex flex-row items-center justify-start xl:justify-end flex-shrink-0 gap-2 w-full xl:w-auto header-actions-wrap [&_button]:!rounded-lg touch:[&_[data-testid=sidepanel-switch]_button]:!size-[44px]">
                     {group ? <GroupRoomButton accountId={accountId} group={group} isCompact={isActionsCompact} /> : null}
                     {!group && inbox?.channel_type === 'Channel::Yona' ? <DirectCallButtons accountId={accountId} conversation={selectedConversation} isCompact={false} /> : null}
                     {searchButton}
                     <AssigneeAction isCompact={isActionsCompact} />
-                    <MoreActions isCompact={isActionsCompact} />
+                    <MoreActions isCompact={isActionsCompact} triggerClassName="touch:!size-[44px]" />
                     <SidepanelSwitch />
                 </div>
             )}

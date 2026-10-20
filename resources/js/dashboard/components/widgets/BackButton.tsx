@@ -31,7 +31,7 @@ export default function BackButton({
         <button
             type="button"
             className={`flex items-center p-0 font-normal cursor-pointer text-n-slate-11 ${compact ? 'text-sm' : 'text-base'} ${
-                isIconOnlyBelowMd ? 'max-md:justify-center max-md:size-11 max-md:shrink-0' : ''
+                isIconOnlyBelowMd ? 'max-md:justify-center max-md:size-[44px] max-md:shrink-0' : ''
             } ${className}`}
             onClickCapture={goBack}
         >

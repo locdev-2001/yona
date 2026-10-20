@@ -47,7 +47,7 @@ export default function CallStage({
     return (
         <section ref={stageRef} data-testid="call-stage" className="absolute inset-0 z-20 flex flex-col bg-n-surface-canvas text-n-slate-12">
             <header className="flex flex-none items-center gap-2 px-4 h-12 min-w-0">
-                <Icon icon="i-lucide-volume-2" className="size-4 flex-shrink-0 text-n-slate-11" />
+                <Icon icon="i-lucide-headphones" className="size-4 flex-shrink-0 text-n-slate-11" />
                 <span className="text-sm font-semibold truncate">{room.title}</span>
                 {sharer && !isPhone ? (
                     <>

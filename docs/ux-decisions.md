@@ -153,7 +153,7 @@ Kiến trúc: [system-architecture.md](system-architecture.md).
 | Thẻ nổi | Thẻ gọi đến và dải đang gọi đi khi xem trang khác: cùng góc phải, cùng bề ngang 400px, đáy cách mép 96px để không che nút Gửi. Giữ bóng của `overlay-surface` (lớp nổi chung của app) để tách khỏi nội dung bên dưới | Ngoại lệ có chủ đích cho luật "không bóng đổ": lớp nổi đè lên nội dung cần tách lớp | 21/10/2026 |
 | Màu trạng thái nút | Chỉ mic tắt (và tắt âm thanh) tô đỏ; camera tắt là trạng thái thường, nút trung tính, ở cả phòng nhóm lẫn 1-1. Lúc micro đang mở sau khi nối, nút mic trung tính chứ không đỏ | Tắt camera là mặc định của gọi thoại; đỏ chỉ để cảnh báo người khác không nghe mình | 21/10/2026 |
 | Vùng chạm | 44px trên điện thoại và mọi màn cảm ứng (`touch:` = `pointer: coarse`, gồm máy tính bảng 768px), tính bằng px để cỡ chữ nhỏ không làm co | Máy tính bảng dọc đúng 768px trước đây nhận nút 30–32px | 21/10/2026 |
-| Mời ra khỏi phòng | Bấm hai lần: lần đầu nút đổi thành chữ "Mời ra" màu đỏ, lần hai mới mời ra. Nút quản trị 32px (44px trên màn cảm ứng, luôn hiện chứ không chờ rê chuột) | Tránh bấm nhầm; cảm ứng không có rê chuột | 21/10/2026 |
+| Mời ra khỏi phòng | Bấm hai lần: lần đầu nút đổi thành chữ "Mời ra" màu đỏ, lần hai mới mời ra. Nút quản trị 32px, hiện khi rê chuột vào ô; trên màn cảm ứng 44px và luôn hiện (không có rê chuột) | Tránh bấm nhầm; cảm ứng không có rê chuột | 21/10/2026 |
 
 ## Phân loại cuộc gọi (21/10/2026)
 
