@@ -12,6 +12,8 @@ final readonly class LiveKitTokenSigner
 {
     private const ALGORITHM = 'HS256';
 
+    private const CLOCK_LEEWAY_SECONDS = 30;
+
     public function __construct(private LiveKitCredentials $credentials) {}
 
     /** @param  array<string, mixed>  $claims */
@@ -34,7 +36,15 @@ final readonly class LiveKitTokenSigner
      */
     public function verify(string $token): array
     {
-        $claims = (array) JWT::decode($token, new Key($this->credentials->apiSecret(), self::ALGORITHM));
+        // Đồng hồ máy LiveKit và máy app lệch vài giây không được làm hỏng webhook (nbf/exp).
+        $previousLeeway = JWT::$leeway;
+        JWT::$leeway = self::CLOCK_LEEWAY_SECONDS;
+
+        try {
+            $claims = (array) JWT::decode($token, new Key($this->credentials->apiSecret(), self::ALGORITHM));
+        } finally {
+            JWT::$leeway = $previousLeeway;
+        }
 
         if (($claims['iss'] ?? null) !== $this->credentials->apiKey()) {
             throw new UnexpectedValueException('Token issued by an unknown API key');

@@ -656,9 +656,11 @@ POST /webhooks/media/{provider} ─► MediaDrivers ─► MediaWebhooks ─► 
   `GroupService::postNotice`, `content_attributes.call`), `GroupRoomPresence` → job
   `BroadcastGroupVoiceRoomJob` (duy nhất theo nhóm tới khi chạy, trễ 2 giây để gom; đẩy
   `voice_room.updated` tới từng thành viên với `account_id`/`conversation_id` của dòng họ).
-  `GroupRoomSummaries` dựng `voice_room` (người đang ngồi, ai chia sẻ màn hình, mở từ lúc
-  nào) gắn vào `group` trong payload hội thoại, nạp theo lô qua quan hệ
-  `YonaGroup::openVoiceRoom`.
+  `GroupRoomSummaries` dựng ảnh chụp `voice_room` (người đang ngồi, ai chia sẻ màn hình, mở
+  từ lúc nào) kèm `as_of`, cache theo nhóm (dòng nhóm của mọi thành viên dùng chung một lần
+  tính) và xoá khi trong phòng có thay đổi; gắn vào `group` trong payload hội thoại
+  (`voice_room`, `voice_room_as_of`) và vào sự kiện `voice_room.updated` (mỗi thành viên một
+  `ActionCableBroadcastJob`).
 - **Phòng bắt đầu = người đầu tiên vào**, không phải lúc nhà cung cấp mở phòng trống.
 - **Ai đang chia sẻ màn hình:** `Calls\ScreenShares` giữ trong cache từ sự kiện
   `TrackPublished/Unpublished` nguồn `screen` (schema không lưu trạng thái nguồn phát).
@@ -702,7 +704,9 @@ POST /webhooks/media/{provider} ─► MediaDrivers ─► MediaWebhooks ─► 
   base64(sha256(thân thô)); thân là protojson. Sai chữ ký → 401, nhà cung cấp lạ → 404.
 - **Local:** `make livekit` (hoặc `make up`, launch.json `livekit`) chạy
   `services/livekit/dev.sh`: cổng `LIVEKIT_PORT` (8613), RTC TCP 7881, UDP 50000–50100, key
-  và địa chỉ webhook (`APP_URL/webhooks/media/livekit`) đọc từ `.env`.
+  và địa chỉ webhook (`APP_URL/webhooks/media/livekit`) đọc từ `.env`. `room.auto_create: false`:
+  phòng chỉ mở qua `CreateRoom` (trần người, hẹn giờ đóng), vé cũ không dựng lại được phòng đã
+  đóng; production phải đặt giống vậy.
 
 | Route | Ghi chú |
 |---|---|

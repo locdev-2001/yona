@@ -22,8 +22,12 @@ command -v livekit-server > /dev/null || {
     exit 1
 }
 
+# room.auto_create tắt: phòng chỉ mở qua CreateRoom của CallService (có trần người, hẹn giờ đóng);
+# vé cũ không dựng lại được phòng đã đóng. Production phải đặt giống vậy.
 export LIVEKIT_CONFIG="
 port: ${port:-8613}
+room:
+  auto_create: false
 rtc:
   tcp_port: 7881
   port_range_start: 50000

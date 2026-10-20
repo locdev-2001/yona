@@ -17,9 +17,9 @@ final class MediaDrivers
 
     public function defaultIsConfigured(): bool
     {
-        $provider = (string) config('calls.provider');
+        $driverClass = config('calls.drivers')[(string) config('calls.provider')] ?? null;
 
-        return $this->has($provider) && $this->named($provider)->isConfigured();
+        return $driverClass !== null && $driverClass::isConfigured();
     }
 
     public function has(string $provider): bool

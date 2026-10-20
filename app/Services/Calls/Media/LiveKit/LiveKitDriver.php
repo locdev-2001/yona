@@ -12,16 +12,15 @@ use App\Services\Calls\Media\MediaWebhooks;
 final readonly class LiveKitDriver implements MediaDriver
 {
     public function __construct(
-        private LiveKitCredentials $credentials,
         private LiveKitRooms $rooms,
         private LiveKitTickets $tickets,
         private LiveKitModeration $moderation,
         private LiveKitWebhooks $webhooks,
     ) {}
 
-    public function isConfigured(): bool
+    public static function isConfigured(): bool
     {
-        return $this->credentials->isComplete();
+        return app(LiveKitCredentials::class)->isComplete();
     }
 
     public function rooms(): MediaRooms

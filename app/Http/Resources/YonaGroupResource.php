@@ -25,7 +25,7 @@ final class YonaGroupResource
             return null;
         }
 
-        $voiceRoomAsOf = $group->voiceRoomLoadedAt ?? now()->getTimestampMs();
+        $voiceRoom = $membership->isActive() ? app(GroupRoomSummaries::class)->snapshot($group) : null;
 
         return [
             'id' => $group->id,
@@ -33,9 +33,9 @@ final class YonaGroupResource
             ...self::avatar($group, $membership->user_id),
             'member_count' => $group->member_count,
             'my_role' => $membership->isActive() ? $membership->role : null,
-            'voice_room' => $membership->isActive() ? app(GroupRoomSummaries::class)->of($group) : null,
+            'voice_room' => $voiceRoom['voice_room'] ?? null,
             // Mốc đóng trước khi tính `voice_room`: client so với sự kiện voice_room.updated để giữ bản mới hơn.
-            'voice_room_as_of' => $voiceRoomAsOf,
+            'voice_room_as_of' => $voiceRoom['as_of'] ?? now()->getTimestampMs(),
         ];
     }
 

@@ -8,10 +8,13 @@ use App\Services\Calls\Kinds\CallPresenceObserver;
 
 // Người vào/ra phòng nhóm hay bật/tắt chia sẻ màn hình: đẩy lại chỉ báo phòng tới thành viên,
 // gom theo nhịp để phòng đông không bắn một lượt cho từng sự kiện.
-final class GroupRoomPresence implements CallPresenceObserver
+final readonly class GroupRoomPresence implements CallPresenceObserver
 {
+    public function __construct(private GroupRoomSummaries $summaries) {}
+
     public function presenceChanged(Call $call): void
     {
+        $this->summaries->forget($call->yona_group_id);
         BroadcastGroupVoiceRoomJob::dispatch($call->yona_group_id)->delay(now()->addSeconds(BroadcastGroupVoiceRoomJob::BATCH_SECONDS));
     }
 }

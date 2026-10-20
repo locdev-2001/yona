@@ -2,7 +2,7 @@
 
 namespace App\Jobs\Calls;
 
-use App\Events\RealtimeBroadcast;
+use App\Jobs\ActionCableBroadcastJob;
 use App\Jobs\ApplicationJob;
 use App\Models\YonaGroup;
 use App\Models\YonaGroupMember;
@@ -38,17 +38,17 @@ class BroadcastGroupVoiceRoomJob extends ApplicationJob implements ShouldBeUniqu
             return;
         }
 
-        // Đóng mốc trước khi đọc: thay đổi đến trong lúc đọc sẽ có payload mốc muộn hơn thắng.
-        $asOf = now()->getTimestampMs();
-        $voiceRoom = $summaries->of($group);
+        $snapshot = $summaries->snapshot($group);
 
+        // Payload khác nhau theo account của từng thành viên: mỗi người một job phát, các worker
+        // chạy song song thay vì một vòng gọi Reverb tuần tự.
         $group->activeMembers()->with(['user:id,pubsub_token', 'conversation:id,account_id,display_id'])->get()
-            ->each(fn (YonaGroupMember $member) => broadcast(new RealtimeBroadcast([$member->user->pubsub_token], self::EVENT, [
+            ->each(fn (YonaGroupMember $member) => ActionCableBroadcastJob::dispatch([$member->user->pubsub_token], self::EVENT, [
                 'account_id' => $member->conversation->account_id,
                 'conversation_id' => $member->conversation->display_id,
                 'group_id' => $group->id,
-                'voice_room' => $voiceRoom,
-                'voice_room_as_of' => $asOf,
-            ])));
+                'voice_room' => $snapshot['voice_room'],
+                'voice_room_as_of' => $snapshot['as_of'],
+            ]));
     }
 }

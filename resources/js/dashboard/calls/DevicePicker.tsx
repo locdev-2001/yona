@@ -45,7 +45,13 @@ export default function DevicePicker({
                 <DropdownMenu
                     menuItems={
                         devices.length > 0
-                            ? devices.map(device => ({ label: device.label || device.id, value: device.id, action: 'select', isSelected: device.isActive }))
+                            ? devices.map((device, index) => ({
+                                  // Trình duyệt chưa cấp quyền thì không trả tên thiết bị: đánh số thay vì hiện mã.
+                                  label: device.label || t(kind === 'audioinput' ? 'CALLS.ROOM.MICROPHONE_N' : 'CALLS.ROOM.CAMERA_N', { n: index + 1 }),
+                                  value: device.id,
+                                  action: 'select',
+                                  isSelected: device.isActive,
+                              }))
                             : [{ label: t('CALLS.ROOM.NO_DEVICES'), value: '', action: 'none', disabled: true }]
                     }
                     className="bottom-full mb-2 start-0 w-64"

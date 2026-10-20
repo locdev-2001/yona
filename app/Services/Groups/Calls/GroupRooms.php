@@ -26,8 +26,14 @@ final readonly class GroupRooms
     {
         $attendee = CallAttendee::user($user);
         $admission = $this->calls->admit($this->draftRoomOf($group), $attendee);
+        $call = $this->openRoomOf($group, $media);
 
-        return $this->calls->join($this->openRoomOf($group, $media), $attendee, $admission);
+        // Phòng vừa đóng giữa lúc tìm và lúc vào (người cuối rời, hết giờ chờ): mở phòng mới.
+        if ($call->refresh()->isEnded()) {
+            $call = $this->openRoomOf($group, $media);
+        }
+
+        return $this->calls->join($call, $attendee, $admission);
     }
 
     // Dòng chưa lưu chỉ để hỏi chính sách trước khi tạo phòng cho người không có quyền.

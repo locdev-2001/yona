@@ -9,7 +9,8 @@ use Carbon\CarbonInterval;
 
 // Dấu vết phòng thoại trong hội thoại nhóm: một tin khi người đầu tiên vào, một tin khi phòng
 // đóng (thời lượng, số người đã tham gia). Chỉ ghi mới, không sửa tin cũ. Sự kiện phòng đến
-// từ webhook, không có ngôn ngữ người dùng: tin viết theo ngôn ngữ account của nhóm.
+// từ webhook, không có ngôn ngữ người dùng: tin viết theo ngôn ngữ mặc định của sản phẩm (account
+// ẩn của nhóm mang locale mặc định của cột, không phải lựa chọn của ai).
 final readonly class GroupRoomTrail implements CallTrail
 {
     private const DURATION_PARTS = 2;
@@ -51,6 +52,6 @@ final readonly class GroupRoomTrail implements CallTrail
 
     private function localeOf(Call $call): string
     {
-        return $call->group->account?->locale ?: app()->getLocale();
+        return (string) config('app.locale');
     }
 }
