@@ -2499,6 +2499,16 @@ const messages: Record<string, unknown> = {
             "DIRECT_YOU_DECLINED": "Bạn đã từ chối cuộc gọi",
             "DIRECT_CANCELLED": "Đã huỷ cuộc gọi"
         },
+        "LOG": {
+            "VOICE": "Cuộc gọi thoại",
+            "VIDEO": "Cuộc gọi video",
+            "MISSED": "Cuộc gọi nhỡ",
+            "NO_ANSWER": "Không ai nghe máy",
+            "CANCELLED": "Đã huỷ cuộc gọi",
+            "DECLINED_BY_PEER": "Cuộc gọi bị từ chối",
+            "YOU_DECLINED": "Bạn đã từ chối",
+            "BUSY": "Máy bận"
+        },
         "DIRECT": {
             "CALL": "Gọi",
             "OPEN_CHAT": "Nhắn tin",
@@ -4161,13 +4171,6 @@ const messages: Record<string, unknown> = {
             },
             "REMINDER": {
                 "FALLBACK_TITLE": "Nhắc hẹn"
-            },
-            "CALL": {
-                "VOICE": "Cuộc gọi thoại",
-                "VIDEO": "Cuộc gọi video",
-                "MISSED": "nhỡ",
-                "BUSY": "máy bận",
-                "CANCELED": "đã huỷ"
             }
         },
         "LINK_PREVIEW": {

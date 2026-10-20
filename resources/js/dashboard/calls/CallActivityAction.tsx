@@ -18,7 +18,7 @@ export interface CallActivity {
 const DIRECT_FINISHED_STATUSES = ['ended', 'missed', 'declined', 'cancelled'];
 
 // Nút ngay dưới tin cuộc gọi: phòng nhóm còn mở thì "Vào phòng", cuộc gọi 1-1 đã xong thì "Gọi lại".
-export default function CallActivityAction({ call }: { call: CallActivity }) {
+export default function CallActivityAction({ call, className = '' }: { call: CallActivity; className?: string }) {
     const conversation = useOptionalConversation();
     const session = useCallSession();
     const selected = conversation?.selectedConversation ?? null;
@@ -45,6 +45,7 @@ export default function CallActivityAction({ call }: { call: CallActivity }) {
             faded
             icon={media === 'video' ? 'i-lucide-video' : 'i-lucide-phone'}
             label={t('CALLS.DIRECT.CALL_BACK')}
+            className={className}
             onClick={() => session.startDirectCall({ accountId: conversation.accountId, conversation: selected, media })}
         />
     );

@@ -14,6 +14,16 @@ return [
         'DIRECT_YOU_DECLINED' => 'Bạn đã từ chối cuộc gọi',
         'DIRECT_CANCELLED' => 'Đã huỷ cuộc gọi',
     ],
+    'LOG' => [
+        'VOICE' => 'Cuộc gọi thoại',
+        'VIDEO' => 'Cuộc gọi video',
+        'MISSED' => 'Cuộc gọi nhỡ',
+        'NO_ANSWER' => 'Không ai nghe máy',
+        'CANCELLED' => 'Đã huỷ cuộc gọi',
+        'DECLINED_BY_PEER' => 'Cuộc gọi bị từ chối',
+        'YOU_DECLINED' => 'Bạn đã từ chối',
+        'BUSY' => 'Máy bận',
+    ],
     'DIRECT' => [
         'CALL' => 'Gọi',
         'OPEN_CHAT' => 'Nhắn tin',

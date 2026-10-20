@@ -38,7 +38,7 @@ import VideoBubble from './bubbles/Video';
 import FriendRequestBubble from './bubbles/FriendRequest';
 import ZaloBankCardBubble from './bubbles/ZaloBankCard';
 import ZaloBusinessCardBubble from './bubbles/ZaloBusinessCard';
-import ZaloCallBubble from './bubbles/ZaloCall';
+import CallLogBubble from './bubbles/CallLog';
 import ZaloReminderBubble from './bubbles/ZaloReminder';
 import PendingDocumentBubble from './bubbles/PendingDocument';
 import { BUBBLE_NAMES, resolveBubbleName } from './helpers/attachments';
@@ -113,7 +113,7 @@ const CHANNEL_CARD_BUBBLES = {
     business_card: ZaloBusinessCardBubble,
     bank_card: ZaloBankCardBubble,
     reminder: ZaloReminderBubble,
-    call: ZaloCallBubble,
+    call: CallLogBubble,
     friend_request: FriendRequestBubble,
 } as const;
 

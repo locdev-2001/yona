@@ -2499,6 +2499,16 @@ const messages: Record<string, unknown> = {
             "DIRECT_YOU_DECLINED": "You declined the call",
             "DIRECT_CANCELLED": "Call cancelled"
         },
+        "LOG": {
+            "VOICE": "Voice call",
+            "VIDEO": "Video call",
+            "MISSED": "Missed call",
+            "NO_ANSWER": "No answer",
+            "CANCELLED": "Call cancelled",
+            "DECLINED_BY_PEER": "Call declined",
+            "YOU_DECLINED": "You declined",
+            "BUSY": "Busy"
+        },
         "DIRECT": {
             "CALL": "Call",
             "OPEN_CHAT": "Message",
@@ -4161,13 +4171,6 @@ const messages: Record<string, unknown> = {
             },
             "REMINDER": {
                 "FALLBACK_TITLE": "Reminder"
-            },
-            "CALL": {
-                "VOICE": "Voice call",
-                "VIDEO": "Video call",
-                "MISSED": "missed",
-                "BUSY": "busy",
-                "CANCELED": "canceled"
             }
         },
         "LINK_PREVIEW": {
