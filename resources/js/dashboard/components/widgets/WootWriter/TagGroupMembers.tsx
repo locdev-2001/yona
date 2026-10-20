@@ -27,7 +27,6 @@ interface GroupMemberPickerItem {
     member: GroupMember;
     label: string;
     title: string;
-    subtitle?: string;
     group: string;
 }
 
@@ -49,8 +48,10 @@ export default function TagGroupMembers({
                 id: member.external_id,
                 member,
                 label: member.name,
-                title: searchHighlightHtml(isEveryoneMention(member) ? `@${member.name}` : member.name, searchKey),
-                subtitle: isEveryoneMention(member) ? everyoneHint : undefined,
+                // @All giữ một dòng như các thành viên: lời giải thích nằm cùng dòng, chữ nhạt.
+                title: isEveryoneMention(member)
+                    ? `${searchHighlightHtml(`@${member.name}`, searchKey)} <span class="font-normal text-n-slate-11">· ${searchHighlightHtml(everyoneHint, '')}</span>`
+                    : searchHighlightHtml(member.name, searchKey),
                 group: groupLabel,
             })),
         [members, searchKey, groupLabel, everyoneHint],
