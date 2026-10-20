@@ -2136,3 +2136,135 @@ phục từ `pg_dump` — đó là lý do luôn dump trước khi deploy có mig
 - `imap_sync_state` lưu định danh hộp thư, UIDVALIDITY, UID đã quét và UID còn phải thử. Lượt đầu giữ cửa sổ SINCE hiện tại; các lượt sau lấy UID mới nên outage nhiều ngày không làm thư mới rơi ra ngoài cửa sổ. UIDVALIDITY đổi thì quét lại INBOX theo lô, chống trùng theo Message-ID.
 - Cờ cấp quyền lại từ bản cũ có lỗi gần nhất là `connection` được coi là có thể phục hồi. Không cần xóa Redis hàng loạt. Lỗi xác thực vẫn yêu cầu người dùng kết nối lại.
 - Nghiệm thu production sau deploy: theo dõi từng pha, trạng thái lỗi, khoảng chờ; thử một email có Message-ID biết trước trên inbox được phép và đối chiếu DB. Chưa đo được tuyến mạng production qua cổng SSH chỉ cho status/deploy/log; cần thao tác trên server hoặc bổ sung một hành động chẩn đoán chỉ đọc riêng để đo DNS/TCP/TLS/IPv4/IPv6.
+
+## 14. Cuộc gọi (LiveKit)
+
+Cuộc gọi thoại, video và chia sẻ màn hình (phòng thoại nhóm, gọi 1-1) đi qua `livekit-server` tự cài trên cùng server. Laravel cấp vé, mở và đóng phòng, nhận webhook; media đi thẳng giữa trình duyệt và LiveKit. **Chưa cấu hình thì mọi nút gọi tự ẩn** (`globalConfig.callsEnabled`), nên deploy code trước khi cài LiveKit vẫn an toàn.
+
+### 14.1 Đo trước khi bật
+
+Kiểm trước, chưa thay đổi gì:
+
+```bash
+nproc; free -m; uptime
+# Băng thông thực tế (cài speedtest-cli nếu chưa có):
+speedtest-cli --simple
+```
+
+Ước lượng thô từ local: 3 người, 2 camera 640×360 và 1 màn hình tốn khoảng 12 Mbit/s tổng và khoảng 6% một nhân. Phòng nhóm tối đa 25 người. Nếu băng thông lên dưới khoảng 100 Mbit/s thì hạ trần khi bật camera, quyết định cùng founder.
+
+### 14.2 Cài binary
+
+```bash
+LK_VERSION=1.13.10   # cùng bản đã nghiệm thu ở local
+curl -fsSL -o /tmp/livekit.tar.gz   "https://github.com/livekit/livekit/releases/download/v${LK_VERSION}/livekit_${LK_VERSION}_linux_amd64.tar.gz"
+tar -xzf /tmp/livekit.tar.gz -C /usr/local/bin livekit-server
+livekit-server --version
+```
+
+### 14.3 `.env` production
+
+```dotenv
+MEDIA_PROVIDER=livekit
+LIVEKIT_PORT=7880
+LIVEKIT_URL=wss://rtc.yona.vn
+LIVEKIT_API_KEY=        # livekit-server generate-keys
+LIVEKIT_API_SECRET=
+LIVEKIT_TURN_DOMAIN=    # turn.yona.vn, xem 14.6
+LIVEKIT_TURN_CERT_FILE=
+LIVEKIT_TURN_KEY_FILE=
+```
+
+Laravel gọi API phòng qua cùng địa chỉ (`https://rtc.yona.vn`). Sau khi sửa thì chạy `php artisan config:cache`.
+
+### 14.4 Supervisor
+
+Tạo `/etc/supervisor/conf.d/yona-livekit.conf`, chạy cạnh `yona-reverb`:
+
+```ini
+[program:yona-livekit]
+command=/www/wwwroot/yona.vn/services/livekit/production.sh
+directory=/www/wwwroot/yona.vn
+user=www
+autostart=true
+autorestart=true
+stopsignal=TERM
+stopwaitsecs=30
+stdout_logfile=/www/wwwroot/yona.vn/storage/logs/livekit.log
+redirect_stderr=true
+```
+
+```bash
+SUPERVISORCTL="/www/server/panel/pyenv/bin/supervisorctl -c /etc/supervisor/supervisord.conf"
+$SUPERVISORCTL reread && $SUPERVISORCTL update && $SUPERVISORCTL status yona-livekit
+```
+
+`production.sh` tự kiểm: thiếu key, `APP_URL` không phải https hoặc chưa cài binary thì dừng với thông báo rõ. Cấu hình cố định trong script:
+
+- `room.auto_create: false`: phòng chỉ mở qua `CallService`, vé cũ không dựng lại được phòng đã đóng.
+- `use_external_ip: true`.
+- Dải UDP 50000–60000, ICE TCP 7881, TURN/UDP 3478.
+- Webhook về `APP_URL/webhooks/media/livekit`.
+
+### 14.5 Nginx: `wss://rtc.yona.vn`
+
+Thêm tên miền `rtc.yona.vn` trong aaPanel, cấp chứng chỉ, rồi thêm vào vhost của tên miền đó:
+
+```nginx
+location / {
+    proxy_pass http://127.0.0.1:7880;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+    proxy_set_header Host $host;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_read_timeout 86400s;
+    proxy_send_timeout 86400s;
+}
+```
+
+Cổng 7880 **không** mở ra ngoài, chỉ nginx gọi vào.
+
+### 14.6 Firewall (aaPanel và nhà cung cấp VPS)
+
+| Cổng | Giao thức | Dùng cho |
+|---|---|---|
+| 7881 | TCP | ICE TCP (mạng chặn UDP) |
+| 50000–60000 | UDP | Media WebRTC |
+| 3478 | UDP | TURN/UDP |
+| 7880 | — | **Không mở**, nginx proxy |
+
+**TURN/TLS: cần founder quyết trước khi làm.** LiveKit luôn quảng bá TURN/TLS dạng `turns:<LIVEKIT_TURN_DOMAIN>:443`. Mạng công ty chặn hết UDP và chỉ cho 443 thì phải tới được LiveKit qua `turn.yona.vn:443`. Cổng 443 trên server đang là nginx, nên có hai cách:
+
+1. Thêm một IP công khai thứ hai cho TURN. Đơn giản nhất, có thể tốn phí VPS.
+2. Chuyển nginx sang `stream` + `ssl_preread`: tách theo tên miền ở cổng 443, `turn.yona.vn` vào LiveKit `5349`, còn lại vào vhost web (dời sang 8443 nội bộ). Đây là đổi cấu hình nginx chính, rủi ro cho mọi trang.
+
+Chưa chọn thì để trống ba biến `LIVEKIT_TURN_*`: TURN/TLS tắt, cuộc gọi vẫn chạy qua UDP và ICE TCP 7881.
+
+### 14.7 Kiểm sống sau khi bật
+
+```bash
+curl -fsS http://127.0.0.1:7880 && echo                 # LiveKit trả "OK"
+curl -fsSI https://rtc.yona.vn | head -1                  # qua nginx
+grep -c "webhooks/media/livekit" storage/logs/laravel.log # webhook về tới
+```
+
+Rồi gọi thử giữa hai thiết bị ở hai mạng khác nhau (4G và wifi).
+
+### 14.8 Quay lại
+
+```bash
+$SUPERVISORCTL stop yona-livekit
+sed -i 's/^MEDIA_PROVIDER=.*/MEDIA_PROVIDER=/' .env && php artisan config:cache
+```
+
+Nút gọi ẩn ngay; nhóm chat và tin nhắn không bị ảnh hưởng. Job đối soát chỉ chạy khi đã cấu hình, nên các cuộc gọi đang mở phải khép tay. Nếu không, lần bật lại sau, người đang có cuộc 1-1 treo sẽ bị báo "đang bận":
+
+```bash
+php artisan tinker --execute="
+DB::table('call_participants')->whereNull('left_at')->update(['left_at' => now()]);
+DB::table('calls')->whereNull('ended_at')->where('status', 'ringing')->update(['status' => 'missed', 'ended_at' => now()]);
+DB::table('calls')->whereNull('ended_at')->where('status', 'active')->update(['status' => 'ended', 'ended_at' => now()]);
+DB::table('calls')->whereNull('ended_at')->update(['ended_at' => now()]);"
+```
+
