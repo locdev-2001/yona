@@ -44,6 +44,7 @@ class YonaGroupsController extends Controller
         $input = $request->validate([
             'name' => [Rule::requiredIf(! $request->exists('avatar_seed')), 'string'],
             'avatar_seed' => ['sometimes', 'nullable', 'string'],
+            'avatar_traits' => ['sometimes', 'nullable', 'array'],
         ]);
         $group = YonaGroup::query()->findOrFail($groupId);
 
@@ -52,7 +53,7 @@ class YonaGroupsController extends Controller
         }
 
         if (array_key_exists('avatar_seed', $input)) {
-            $group = $this->groups->changeAvatar($group, $request->user(), $input['avatar_seed']);
+            $group = $this->groups->changeAvatar($group, $request->user(), $input['avatar_seed'], $input['avatar_traits'] ?? null);
         }
 
         return response()->json(YonaGroupResource::forMember($group, $this->permissions->activeMember($group, $request->user())));

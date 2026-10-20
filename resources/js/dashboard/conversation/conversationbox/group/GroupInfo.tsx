@@ -96,8 +96,9 @@ export default function GroupInfo({ group }: { group: GroupSummary }) {
     const name = details?.name ?? group.name;
     // null là "ghép ảnh thành viên", không phải "chưa có": không dùng ?? ở đây.
     const avatarChoice = details ? details.avatar_seed : group.avatar_seed;
+    const avatarTraits = details ? details.avatar_traits : group.avatar_traits;
     const avatarPhotoUrl = details ? details.avatar_url : group.avatar_url;
-    const avatarGroup = { ...group, avatar_url: avatarPhotoUrl, avatar_seed: avatarChoice };
+    const avatarGroup = { ...group, avatar_url: avatarPhotoUrl, avatar_seed: avatarChoice, avatar_traits: avatarTraits };
     const groupAvatar = <Avatar {...conversationAvatar(avatarGroup, null)} name={name} size={72} roundedFull />;
     const memberCount = details?.member_count ?? group.member_count;
     const members = details?.members ?? [];
@@ -201,7 +202,8 @@ export default function GroupInfo({ group }: { group: GroupSummary }) {
                 title={t('CHAT.GROUP.CHANGE_AVATAR')}
                 description={t('CHAT.GROUP.CHANGE_AVATAR_DESCRIPTION')}
                 subject="chat"
-                current={avatarChoice}
+                current={avatarChoice ? { name: avatarChoice, traits: avatarTraits } : null}
+                initialName={`group:${group.id}`}
                 defaultOption={{
                     label: t('CHAT.GROUP.MEMBER_AVATARS'),
                     preview: (

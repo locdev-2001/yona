@@ -18,9 +18,11 @@ use App\Models\YonaGroupInviteLink;
 use App\Models\YonaGroupMember;
 use App\Services\Users\Friendships;
 use App\Services\Yona\YonaInboxes;
+use App\Support\GeneratedAvatarConfig;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use InvalidArgumentException;
 
 /**
  * Vòng đời nhóm giữa người dùng Yona: tạo, thêm, rời, đưa ra, đổi vai trò, đổi tên, link
@@ -173,21 +175,29 @@ final class GroupService
         });
     }
 
-    // null = quay về avatar ghép ảnh thành viên. Chọn hình nào cũng gỡ ảnh đã tải lên.
-    public function changeAvatar(YonaGroup $group, User $admin, ?string $avatarSeed): YonaGroup
+    // Hình khối tự chỉnh (tên + các trục đã ghim); tên null = quay về avatar ghép ảnh thành viên.
+    // Chọn hình nào cũng gỡ ảnh đã tải lên.
+    public function changeAvatar(YonaGroup $group, User $admin, ?string $avatarSeed, mixed $avatarTraits = null): YonaGroup
     {
         $this->permissions->admin($group, $admin);
 
-        if ($avatarSeed !== null && preg_match(YonaGroup::AVATAR_SEED_PATTERN, $avatarSeed) !== 1) {
+        if ($avatarSeed !== null && ! GeneratedAvatarConfig::isValidName($avatarSeed)) {
             throw new GroupActionRejected('INVALID_AVATAR');
         }
 
-        if ($avatarSeed === $group->avatar_seed && $group->avatar === null) {
+        try {
+            $traits = $avatarSeed === null ? null : GeneratedAvatarConfig::sanitizeTraits($avatarTraits);
+        } catch (InvalidArgumentException) {
+            throw new GroupActionRejected('INVALID_AVATAR');
+        }
+
+        if ($avatarSeed === $group->avatar_seed && $traits == $group->avatar_traits && $group->avatar === null) {
             return $group;
         }
 
-        return DB::transaction(function () use ($group, $admin, $avatarSeed) {
+        return DB::transaction(function () use ($group, $admin, $avatarSeed, $traits) {
             $group->avatar_seed = $avatarSeed;
+            $group->avatar_traits = $traits;
             $group->removeAvatar();
             $group->save();
             $this->postActivity($group, 'AVATAR_CHANGED', ['actor' => $admin->availableName()]);
@@ -202,6 +212,7 @@ final class GroupService
 
         return DB::transaction(function () use ($group, $admin, $photo) {
             $group->avatar_seed = null;
+            $group->avatar_traits = null;
             $group->replaceAvatar($photo);
             $group->save();
             $this->postActivity($group, 'AVATAR_CHANGED', ['actor' => $admin->availableName()]);

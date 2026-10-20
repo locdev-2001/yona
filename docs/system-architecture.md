@@ -590,8 +590,10 @@ hộp thư sẵn có. Giao diện mở hội thoại mới:
 **Giao diện:** payload hội thoại có `group` (`YonaGroupResource::summaryFor`: id, tên,
 `avatar_url`, `avatar_seed`, `avatar_members` tối đa 3 người, số thành viên, `my_role`, null khi
 đã rời; danh sách nạp sẵn `threadMembership.group.avatarMembers` + `.avatar` theo lô). Ảnh nhóm:
-NULL = ghép ảnh thành viên (`Avatar` chế độ `stack` → `shared/avatar/AvatarStack`); quản trị chọn
-một hình khối trong lưới (`shared/avatar/AvatarPickerDialog`), lưu `pick-{n}` qua `PATCH
+NULL = ghép ảnh thành viên (`Avatar` chế độ `stack` → `shared/avatar/AvatarStack`); quản trị tự
+tạo hình khối bằng `shared/avatar/AvatarEditor` (trong `AvatarPickerDialog`), lưu tên dựng hình
+`avatar_seed` + các trục đã ghim `avatar_traits` (jsonb, kiểm hình dạng ở `App\Support\GeneratedAvatarConfig`,
+danh sách trục ở `shared/avatar/avatarEditorAxes.ts`, khớp bản blobatar đang cài) qua `PATCH
 /…/yona/groups/{id}` (`GroupService::changeAvatar`, `null` để quay về ảnh ghép), hoặc tải ảnh từ
 máy qua `POST /…/yona/groups/{id}/avatar` (`GroupService::uploadAvatar`). Ảnh tải lên lưu như
 avatar người dùng: `YonaGroup` dùng `Avatarable` (bảng `attachments`, morph `YonaGroup`, disk

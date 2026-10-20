@@ -44,6 +44,7 @@ final class YonaGroupResource
         return [
             'avatar_url' => $group->avatarUrl() ?: null,
             'avatar_seed' => $group->avatar_seed,
+            'avatar_traits' => $group->avatar_traits,
             'avatar_members' => self::avatarMembers($group, $viewerId),
         ];
     }
@@ -75,6 +76,7 @@ final class YonaGroupResource
             'name' => $group->name,
             'avatar_url' => $group->avatarUrl() ?: null,
             'avatar_seed' => $group->avatar_seed,
+            'avatar_traits' => $group->avatar_traits,
             'description' => $group->description,
             'member_count' => $group->member_count,
             'max_members' => YonaGroup::MAX_MEMBERS,

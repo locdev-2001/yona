@@ -7,6 +7,7 @@ import AvatarStack from 'shared/avatar/AvatarStack';
 import type { AvatarStackPerson } from 'shared/avatar/AvatarStack';
 import GeneratedAvatar from 'shared/avatar/GeneratedAvatar';
 import { resolveAvatarIdentity } from 'shared/avatar/avatarSeed';
+import type { AvatarTraits } from 'shared/avatar/avatarSeed';
 import { generatedAvatarUri } from 'shared/avatar/generatedAvatarUri';
 import type { ChannelPlatform } from 'shared/constants/channelPlatform';
 
@@ -29,6 +30,8 @@ interface AvatarProps {
     name: string;
     // Định danh bền (avatarSeed) cho avatar hình khối khi không có ảnh; thiếu thì dựng theo tên.
     seed?: string;
+    // Trục hình khối đã ghim (AvatarEditor); thiếu thì cả hình theo seed.
+    traits?: AvatarTraits | null;
     // Avatar hình khối chuyển động (chớp, nhìn theo con trỏ); nơi chứa bật khi đang được trỏ vào.
     animated?: boolean;
     size?: number;
@@ -64,6 +67,7 @@ export default function Avatar({
     src = '',
     name,
     seed,
+    traits = null,
     animated = false,
     size = 32,
     allowUpload = false,
@@ -192,7 +196,7 @@ export default function Avatar({
                     // Glyph to theo cỡ avatar; không có icon riêng và không có danh tính thì là người vô danh.
                     <Icon icon={iconName || 'i-lucide-user'} className="" style={{ fontSize: size / 1.6 }} />
                 ) : (
-                    <GeneratedAvatar seed={seed} name={name} size={size} alt={name} animated={animated} />
+                    <GeneratedAvatar seed={seed} name={name} size={size} alt={name} animated={animated} traits={traits} />
                 )}
 
                 {overlay ? (
@@ -229,7 +233,7 @@ export default function Avatar({
             {canPreview && isPreviewOpen ? (
                 <Suspense fallback={null}>
                     <AvatarPreview
-                        src={showImage ? src : generatedAvatarUri(generatedIdentity, GENERATED_AVATAR_PREVIEW_SIZE)}
+                        src={showImage ? src : generatedAvatarUri(generatedIdentity, GENERATED_AVATAR_PREVIEW_SIZE, traits)}
                         name={name}
                         onClose={() => setPreviewOpen(false)}
                     />

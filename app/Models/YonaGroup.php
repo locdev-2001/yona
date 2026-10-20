@@ -19,13 +19,15 @@ class YonaGroup extends Model
 
     public const CONTACT_SOURCE_PREFIX = 'yona-group:';
 
-    // Avatar quản trị chọn từ lưới hình khối dựng sẵn: `pick-1`, `pick-2`…
-    public const AVATAR_SEED_PATTERN = '/^pick-\d{1,4}$/';
-
     // Chưa chọn avatar thì ghép ảnh vài thành viên; nạp dư một người để bỏ được chính người xem.
     public const AVATAR_MEMBER_COUNT = 3;
 
-    protected $fillable = ['account_id', 'conversation_id', 'name', 'avatar_path', 'avatar_seed', 'description', 'created_by_id', 'member_count'];
+    protected $fillable = ['account_id', 'conversation_id', 'name', 'avatar_path', 'avatar_seed', 'avatar_traits', 'description', 'created_by_id', 'member_count'];
+
+    protected function casts(): array
+    {
+        return ['avatar_traits' => 'array'];
+    }
 
     public static function contactSourceIdFor(int $groupId): string
     {

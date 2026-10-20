@@ -1,3 +1,4 @@
+import type { TraitOverrides } from 'blobatar';
 import type { AvatarStackPerson } from './AvatarStack';
 
 // Chuỗi dựng avatar hình khối phải bền theo danh tính, không theo tên hiển thị:
@@ -34,25 +35,15 @@ export function resolveAvatarIdentity(seed: string | undefined, name: string | n
     return seed || (name ?? '').trim();
 }
 
-const PICKED_AVATAR_PREFIX = 'pick-';
-
-// Lựa chọn thứ `index` trong lưới chọn hình (máy chủ chỉ nhận dạng `pick-{số}`).
-export function pickedAvatarChoice(index: number): string {
-    return `${PICKED_AVATAR_PREFIX}${index}`;
-}
-
-export function pickedAvatarIndex(choice: string): number | null {
-    if (!choice.startsWith(PICKED_AVATAR_PREFIX)) return null;
-    const index = Number(choice.slice(PICKED_AVATAR_PREFIX.length));
-
-    return Number.isInteger(index) && index > 0 ? index : null;
-}
+// Các trục hình khối đã ghim (tự chỉnh trong AvatarEditor); trục thiếu thì lấy theo seed.
+export type AvatarTraits = TraitOverrides;
 
 interface ConversationGroupAvatar {
     id: number;
     // Ảnh quản trị tải lên; có thì thắng hình khối và ảnh ghép.
     avatar_url?: string | null;
     avatar_seed?: string | null;
+    avatar_traits?: AvatarTraits | null;
     avatar_members?: AvatarStackPerson[];
     member_count?: number;
 }
@@ -80,10 +71,16 @@ export function conversationAvatar(
     group: ConversationGroupAvatar | null | undefined,
     contactId: AvatarSubjectId,
     contactThumbnail?: string | null,
-): { src: string; seed: string | undefined; stack: { people: AvatarStackPerson[]; total: number } | null } {
+): {
+    src: string;
+    seed: string | undefined;
+    traits: AvatarTraits | null;
+    stack: { people: AvatarStackPerson[]; total: number } | null;
+} {
     return {
         src: (group ? group.avatar_url : contactThumbnail) || '',
         seed: conversationAvatarSeed(group, contactId),
+        traits: group?.avatar_seed ? (group.avatar_traits ?? null) : null,
         stack: conversationAvatarStack(group),
     };
 }

@@ -6,6 +6,7 @@ import 'blobatar/gaze.css';
 
 import { avatarExpression } from './avatarMood';
 import { resolveAvatarIdentity } from './avatarSeed';
+import type { AvatarTraits } from './avatarSeed';
 import { watchPointerProximity } from './pointerProximity';
 
 // Đơn vị viewBox (khuôn mặt rộng 100). Cao hơn mức 1.5–4 thư viện gợi ý để avatar
@@ -26,6 +27,8 @@ interface GeneratedAvatarProps {
     className?: string;
     // Nơi chứa bật khi người dùng đang trỏ vào nó (vd thẻ hội thoại): chớp, liếc, nhún.
     animated?: boolean;
+    // Trục đã ghim trong AvatarEditor; thiếu thì cả hình theo seed.
+    traits?: AvatarTraits | null;
 }
 
 /**
@@ -42,6 +45,7 @@ export default function GeneratedAvatar({
     alt = '',
     className = '',
     animated = false,
+    traits = null,
 }: GeneratedAvatarProps) {
     const identity = resolveAvatarIdentity(seed, name);
     const frameRef = useRef<HTMLSpanElement>(null);
@@ -68,6 +72,7 @@ export default function GeneratedAvatar({
                     background="square"
                     animate={animated ? 'always' : 'hover'}
                     expression={avatarExpression(identity)}
+                    traits={traits ?? undefined}
                     aria-hidden="true"
                 />
             </span>
