@@ -10,6 +10,7 @@ use App\Models\AgentBot;
 use App\Models\Attachment;
 use App\Models\Contact;
 use App\Models\Conversation;
+use App\Models\Inbox;
 use App\Models\Message;
 use App\Models\User;
 use App\Services\Messages\StickerMessageBuilder;
@@ -36,6 +37,9 @@ class MessageBuilder
     // Hội thoại thật sự nhận tin: dòng riêng của luồng dùng chung chuyển tin gửi đi về hội thoại gốc.
     private readonly Conversation $conversation;
 
+    // Hộp thư người gửi đang soạn tin: kho sticker riêng của họ tra theo hộp thư này.
+    private readonly Inbox $composerInbox;
+
     /**
      * $incomingAllowed: người gửi CHÍNH LÀ khách (widget website). Bản gốc bỏ
      * qua builder cho luồng đó và tạo message trực tiếp; ở đây giữ một đường
@@ -55,6 +59,7 @@ class MessageBuilder
         private readonly array $trustedContentAttributes = [],
     ) {
         $this->conversation = $conversation->messageTargetFor(BooleanParam::from($params['private'] ?? null));
+        $this->composerInbox = $conversation->inbox;
     }
 
     public function perform(): Message
@@ -64,7 +69,7 @@ class MessageBuilder
         $this->message->sender()->associate($this->sender());
 
         // Sticker dựng tin trước khi lưu tệp: bị từ chối thì không để lại tệp mồ côi.
-        (new StickerMessageBuilder($this->message, $this->conversation->inbox, $this->params))->perform();
+        (new StickerMessageBuilder($this->message, $this->composerInbox, $this->params))->perform();
         // Sau mọi bước dựng lại content_attributes (sticker) để khoá tin cậy không bị xoá mất.
         $this->applyTrustedContentAttributes();
 

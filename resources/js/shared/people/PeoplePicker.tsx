@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import type { ReactNode } from 'react';
 
 import Avatar from 'dashboard/components-next/avatar/Avatar';
 import { avatarSeed } from 'shared/avatar/avatarSeed';
@@ -20,6 +21,8 @@ interface PeoplePickerProps {
     onQueryChange?: (query: string) => void;
     // Chỉ tìm trong bạn bè (thêm trực tiếp vào nhóm); ô tìm trống thì hiện sẵn bạn bè.
     friendsOnly?: boolean;
+    // Lối đi tiếp khi không tìm thấy ai (vd mở hộp kết bạn).
+    emptyAction?: ReactNode;
 }
 
 // Tìm người theo @username hoặc tên. Có `selected` thì thành chế độ chọn nhiều, người
@@ -32,6 +35,7 @@ export default function PeoplePicker({
     query: controlledQuery,
     onQueryChange,
     friendsOnly = false,
+    emptyAction,
 }: PeoplePickerProps) {
     const [ownQuery, setOwnQuery] = useState('');
     const query = controlledQuery ?? ownQuery;
@@ -85,7 +89,10 @@ export default function PeoplePicker({
             <div className="min-h-24 max-h-72 overflow-y-auto" aria-busy={search.status === 'loading'}>
                 {search.status === 'error' ? <p className="py-3 text-sm text-n-ruby-11">{t('PEOPLE.CHAT.SEARCH_ERROR')}</p> : null}
                 {search.status === 'done' && results.length === 0 ? (
-                    <p className="py-3 text-sm text-n-slate-11">{t(friendsOnly ? 'CHAT.GROUP.NO_FRIENDS' : 'PEOPLE.CHAT.NO_RESULTS')}</p>
+                    <div className="flex flex-col items-start gap-2 py-3">
+                        <p className="m-0 text-sm text-n-slate-11">{t(friendsOnly ? 'CHAT.GROUP.NO_FRIENDS' : 'PEOPLE.CHAT.NO_RESULTS')}</p>
+                        {emptyAction}
+                    </div>
                 ) : null}
                 {search.status === 'idle' ? <p className="py-3 text-sm text-n-slate-11">{t('CHAT.NEW.HINT')}</p> : null}
                 <ul className="flex flex-col gap-0.5 m-0 p-0 list-none">

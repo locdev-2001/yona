@@ -1,8 +1,11 @@
 import { forwardRef, useImperativeHandle, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 
+import Button from 'dashboard/components-next/button/Button';
 import Dialog from 'dashboard/components-next/dialog/Dialog';
 import type { DialogHandle } from 'dashboard/components-next/dialog/Dialog';
+import FindPeopleDialog from 'dashboard/friends/FindPeopleDialog';
+import { t } from '../../i18n';
 import PeoplePicker from './PeoplePicker';
 import type { PickedPerson } from './PeoplePicker';
 
@@ -28,6 +31,7 @@ const PickPeopleDialog = forwardRef<DialogHandle, PickPeopleDialogProps>(functio
     ref,
 ) {
     const dialogRef = useRef<DialogHandle>(null);
+    const findPeopleRef = useRef<DialogHandle>(null);
     const [selected, setSelected] = useState<PickedPerson[]>([]);
     const [query, setQuery] = useState('');
     const [isSubmitting, setSubmitting] = useState(false);
@@ -49,33 +53,54 @@ const PickPeopleDialog = forwardRef<DialogHandle, PickPeopleDialogProps>(functio
         if (done) dialogRef.current?.close();
     };
 
-    return (
-        <Dialog
-            ref={dialogRef}
-            title={title}
-            description={description}
-            confirmButtonLabel={confirmLabel}
-            disableConfirmButton={!canConfirm || (!allowEmpty && selected.length === 0)}
-            isLoading={isSubmitting}
-            closeOnBackdrop={false}
-            onConfirm={() => void confirm()}
-            onClose={() => {
-                reset();
-                onClose?.();
+    // Chưa có bạn bè nào để chọn: đóng hộp này, mở hộp tìm người để kết bạn.
+    const addFriendAction = friendsOnly ? (
+        <Button
+            faded
+            slate
+            sm
+            icon="i-lucide-user-plus"
+            label={t('FRIENDS.ADD.TITLE')}
+            onClick={() => {
+                dialogRef.current?.close();
+                findPeopleRef.current?.open();
             }}
-        >
-            <div className="flex flex-col gap-4">
-                {header}
-                <PeoplePicker
-                    selected={selected}
-                    onChange={setSelected}
-                    query={query}
-                    onQueryChange={setQuery}
-                    excludeIds={excludeIds}
-                    friendsOnly={friendsOnly}
-                />
-            </div>
-        </Dialog>
+        />
+    ) : null;
+
+    return (
+        <>
+            <Dialog
+                ref={dialogRef}
+                title={title}
+                description={description}
+                confirmButtonLabel={confirmLabel}
+                disableConfirmButton={!canConfirm || (!allowEmpty && selected.length === 0)}
+                isLoading={isSubmitting}
+                closeOnBackdrop={false}
+                onConfirm={() => void confirm()}
+                onClose={() => {
+                    reset();
+                    onClose?.();
+                }}
+            >
+                <div className="flex flex-col gap-4">
+                    {header}
+                    <PeoplePicker
+                        selected={selected}
+                        onChange={setSelected}
+                        query={query}
+                        onQueryChange={setQuery}
+                        excludeIds={excludeIds}
+                        friendsOnly={friendsOnly}
+                        emptyAction={addFriendAction}
+                    />
+                </div>
+            </Dialog>
+            {friendsOnly ? (
+                <FindPeopleDialog ref={findPeopleRef} title={t('FRIENDS.ADD.TITLE')} description={t('FRIENDS.ADD.DESCRIPTION')} />
+            ) : null}
+        </>
     );
 });
 
