@@ -1,5 +1,5 @@
 import { DndContext, PointerSensor, closestCenter, useSensor, useSensors } from '@dnd-kit/core';
-import type { DragEndEvent } from '@dnd-kit/core';
+import type { DragEndEvent, Modifier } from '@dnd-kit/core';
 import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
@@ -11,6 +11,10 @@ import type { ArrangedChannel } from './useChannelPreferences';
 
 // Ngưỡng rê trước khi bắt đầu kéo: chạm vào tay nắm trên điện thoại không bị hiểu nhầm là kéo.
 const DRAG_ACTIVATION_DISTANCE = 4;
+// Kênh chỉ đổi thứ tự theo chiều dọc: khoá trục ngang và không tự cuộn ngang, kẻo kéo
+// lệch sang bên là cả sidebar trôi ra khỏi màn.
+const lockToVerticalAxis: Modifier = ({ transform }) => ({ ...transform, x: 0 });
+const VERTICAL_AUTO_SCROLL = { threshold: { x: 0, y: 0.2 } };
 
 interface SidebarChannelsEditorProps {
     channels: ArrangedChannel[];
@@ -36,8 +40,14 @@ export default function SidebarChannelsEditor({
     };
 
     return (
-        <div className="ms-3 flex flex-col gap-0.5 py-1">
-            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+        <div className="ms-3 flex flex-col gap-0.5 overflow-x-hidden py-1">
+            <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                modifiers={[lockToVerticalAxis]}
+                autoScroll={VERTICAL_AUTO_SCROLL}
+                onDragEnd={onDragEnd}
+            >
                 <SortableContext items={inboxIds} strategy={verticalListSortingStrategy}>
                     {channels.map(channel => (
                         <ChannelEditorRow
