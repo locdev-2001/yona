@@ -8,6 +8,7 @@ import { parseApiErrorMessage } from 'dashboard/helper/apiClient';
 import { isTouchOnlyDevice } from 'shared/helpers/kbd';
 import StickerImage from 'shared/sticker/StickerImage';
 import type { StickerBrowseParams, StickerBrowseResult, StickerItem } from 'dashboard/conversation/stickerApi';
+import { useDragScroll } from 'dashboard/composables/useDragScroll';
 import { t } from '../../../i18n';
 
 // Bảng chọn sticker trung tính: không biết kênh nào, chỉ gọi `loadStickers` mà
@@ -33,6 +34,8 @@ function suggestedKeywords(): string[] {
 }
 
 export default function StickerPicker({ loadStickers, onSelect }: StickerPickerProps) {
+    const keywordsRowRef = useDragScroll<HTMLDivElement>();
+    const packsRowRef = useDragScroll<HTMLDivElement>();
     const [searchText, setSearchText] = useState('');
     const [status, setStatus] = useState<LoadStatus>('loading');
     const [result, setResult] = useState<StickerBrowseResult | null>(null);
@@ -133,7 +136,7 @@ export default function StickerPicker({ loadStickers, onSelect }: StickerPickerP
                     }
                 />
             </div>
-            <div data-testid="sticker-picker-keywords" className="flex shrink-0 gap-1.5 px-2 pb-2 overflow-x-auto no-scrollbar">
+            <div ref={keywordsRowRef} data-testid="sticker-picker-keywords" className="flex shrink-0 gap-1.5 px-2 pb-2 overflow-x-auto no-scrollbar">
                 {suggestedKeywords().map(keyword => (
                     <button
                         key={keyword}
@@ -147,6 +150,7 @@ export default function StickerPicker({ loadStickers, onSelect }: StickerPickerP
             </div>
             {isBrowsing ? (
                 <div
+                    ref={packsRowRef}
                     data-testid="sticker-picker-packs"
                     className="flex shrink-0 gap-1 px-2 pb-1.5 overflow-x-auto no-scrollbar"
                 >

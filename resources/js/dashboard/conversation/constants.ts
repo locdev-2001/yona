@@ -78,6 +78,9 @@ export const MESSAGE_MAX_LENGTH = {
 
 export const CONVERSATIONS_PER_PAGE = 25;
 
+// Trần đính kèm mỗi tin, khớp Message::NUMBER_OF_PERMITTED_ATTACHMENTS ở máy chủ.
+export const MAX_ATTACHMENTS_PER_MESSAGE = 15;
+
 // wootConstants.LAYOUT_TYPES: bố cục ChatList (condensed = cột 340px, expanded = full).
 export const LAYOUT_TYPES = {
     CONDENSED: 'condensed',

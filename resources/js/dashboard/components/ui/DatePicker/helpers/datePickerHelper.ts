@@ -1,3 +1,4 @@
+import { chunk } from 'shared/helpers/array';
 import {
     addDays,
     addMonths,
@@ -75,12 +76,6 @@ export function getIntlDateFormatForLocale(): string {
     const date = new Date(year, month - 1, day);
     const formattedDate = new Intl.DateTimeFormat(navigator.language).format(date);
     return formattedDate.replace(`${year}`, 'yyyy').replace(`${month}`, 'MM').replace(`${day}`, 'dd');
-}
-
-export function chunk<T>(array: T[], size: number): T[][] {
-    return Array.from({ length: Math.ceil(array.length / size) }, (_, index) =>
-        array.slice(index * size, index * size + size),
-    );
 }
 
 export function getWeeksForMonth(date: Date, weekStartsOn: 0 | 1 | 2 | 3 | 4 | 5 | 6 = 1): Date[][] {

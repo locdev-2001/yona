@@ -27,6 +27,7 @@ import type { DashboardPageProps } from '../types';
 import { parseApiErrorMessage } from 'dashboard/helper/apiClient';
 import { conversationListPageURL, conversationUrl } from 'dashboard/helper/URLHelper';
 import { REPLY_EDITOR_MODES } from 'dashboard/components/widgets/WootWriter/constants';
+import { chunk } from 'shared/helpers/array';
 import { draftKey, setDraft as saveReplyDraft } from './draftApi';
 import { createConversationFromDraft } from './compose/composeApi';
 import { EMPTY_COMPOSE_DRAFT, draftBlocker } from './compose/composeDraft';
@@ -113,6 +114,7 @@ import {
     CONVERSATION_TYPE,
     CONVERSATIONS_PER_PAGE,
     LAYOUT_TYPES,
+    MAX_ATTACHMENTS_PER_MESSAGE,
     MESSAGE_STATUS,
     MESSAGE_TYPES,
     SORT_BY_TYPE,
@@ -1223,22 +1225,34 @@ export function ConversationProvider({
             attachments?: OutgoingAttachment[];
             isVoiceMessage?: boolean;
         }) => {
-            sendWithPendingMessage(
-                {
-                    content,
-                    private: isPrivate,
-                    ...(contentAttributes ? { content_attributes: contentAttributes } : {}),
-                    ...(attachments.length ? { files: attachments.map((attachment) => attachment.file) } : {}),
-                    ...(isVoiceMessage ? { is_voice_message: true } : {}),
-                    ...(ccEmails !== undefined ? { cc_emails: ccEmails } : {}),
-                    ...(bccEmails !== undefined ? { bcc_emails: bccEmails } : {}),
-                    ...(toEmails !== undefined ? { to_emails: toEmails } : {}),
-                },
-                attachments.length ? { attachments: pendingAttachments(attachments) } : {},
-                true,
-            );
+            // Nhiều tệp hơn trần một tin thì chia thành nhiều tin liên tiếp, gửi lần lượt để
+            // giữ thứ tự; chữ, trích dẫn và email chỉ đi kèm tin đầu.
+            const batches = chunk(attachments, MAX_ATTACHMENTS_PER_MESSAGE);
+            const payloadFor = (batch: OutgoingAttachment[], isFirst: boolean): Omit<SendMessagePayload, 'echo_id'> => ({
+                content: isFirst ? content : '',
+                private: isPrivate,
+                ...(isFirst && contentAttributes ? { content_attributes: contentAttributes } : {}),
+                ...(batch.length ? { files: batch.map((attachment) => attachment.file) } : {}),
+                ...(isVoiceMessage ? { is_voice_message: true } : {}),
+                ...(isFirst && ccEmails !== undefined ? { cc_emails: ccEmails } : {}),
+                ...(isFirst && bccEmails !== undefined ? { bcc_emails: bccEmails } : {}),
+                ...(isFirst && toEmails !== undefined ? { to_emails: toEmails } : {}),
+            });
+            const pendingFor = (batch: OutgoingAttachment[]) => (batch.length ? { attachments: pendingAttachments(batch) } : {});
+
+            if (batches.length <= 1 || !conversationId || !selectedConversation) {
+                sendWithPendingMessage(payloadFor(attachments, true), pendingFor(attachments), true);
+                return;
+            }
+
+            const inboxId = selectedConversation.inbox_id;
+            void (async () => {
+                for (const [index, batch] of batches.entries()) {
+                    await enqueuePendingMessage(conversationId, inboxId, payloadFor(batch, index === 0), pendingFor(batch));
+                }
+            })();
         },
-        [sendWithPendingMessage],
+        [sendWithPendingMessage, conversationId, selectedConversation, enqueuePendingMessage],
     );
 
     // Tin pending mang sẵn ảnh sticker để bong bóng hiện ngay, cùng hình dạng máy
