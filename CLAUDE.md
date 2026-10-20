@@ -27,6 +27,8 @@ Production https://yona.vn vẫn chạy bản trước đổi hướng cho tới
 
 **Chưa có:** gọi 1-1 có đổ chuông (phase 6), LiveKit trên production (phase 7), meeting (schema chờ duyệt) · tin chờ/chặn cho người lạ trên kênh Yona · landing và `docs/brand-positioning.md` đang viết theo hướng "app nhắn tin bạn bè, bỏ kênh" (SAI), cần viết lại.
 
+**5 kiểu gọi (chốt 21/10/2026):** voice room của nhóm (luôn mở, không chuông, thoại + chia sẻ màn hình, không camera, ≤25) · voice call 1-1 · video call 1-1 · call group thoại/video (ai cũng gọi, đổ chuông cả nhóm, ≤50, 45 giây là nhỡ) · meeting. Màn đổ chuông: Nghe · Video · Từ chối; nghe máy là mở màn gọi lớn, chỉ thu nhỏ khi bấm.
+
 **Gọi đã chốt (20/10/2026):** nhóm chat + gọi kiểu nhóm Zalo (không phải server Discord), tin nhóm lưu một bản chung nhưng vẫn là một dòng trong hộp thư từng thành viên · nhóm tối đa 500, vai trò quản trị + thành viên, thêm trực tiếp chỉ bạn bè, link mời ai cũng vào · phòng thoại nhóm luôn mở, tối đa 25 người, không đổ chuông · gọi 1-1 có đổ chuông, chỉ giữa bạn bè · không ghi âm/ghi hình · LiveKit tự cài cùng server yona.vn, lõi cuộc gọi trung tính, LiveKit chỉ là driver · **meeting** (bổ sung cùng ngày): phòng họp có link kiểu Google Meet, ai có link cũng vào, đặt lịch trước, khách không tài khoản vào bằng tên, phòng chờ người tạo duyệt, tối đa 50 người; là tính năng riêng có mục riêng trên sidebar dưới "Bạn bè", chỉ dùng chung lõi cuộc gọi (lõi không biết nhóm/1-1/meeting); schema chưa duyệt.
 
 **KHÔNG có:** gói cước, thanh toán · app gốc iOS/Android.
