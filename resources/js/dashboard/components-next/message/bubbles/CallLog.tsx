@@ -7,7 +7,8 @@ import { useMessageContext } from '../provider';
 
 // Nhật ký một cuộc gọi, chung mọi kênh (Zalo, gọi giữa người dùng Yona): tin đi/đến như tin nhắn
 // thường, trong bong bóng là ô biểu tượng, lời theo góc nhìn của mình (gọi đi hay gọi đến) và
-// thời lượng hoặc kết cục. Kênh gọi lại được thì có nút Gọi lại ngay trong bong bóng.
+// thời lượng hoặc kết cục. Kênh gọi lại được thì có nút Gọi lại ngay trong bong bóng. Mọi bong bóng
+// cuộc gọi cùng một bề ngang để xếp chồng thẳng hàng.
 
 type CallOutcome = 'completed' | 'missed' | 'busy' | 'canceled' | 'declined';
 
@@ -72,7 +73,7 @@ export default function CallLogBubble() {
             : 'i-lucide-phone-outgoing';
 
     return (
-        <BaseBubble className="flex flex-col gap-2 p-2 min-w-[12.5rem]" dataBubbleName="call-log">
+        <BaseBubble className="flex flex-col gap-2 p-2 w-[240px] max-w-full" dataBubbleName="call-log">
             <div className="flex items-center gap-3 pe-2">
                 <span className={`flex flex-shrink-0 items-center justify-center size-9 rounded-lg ${tone}`}>
                     <Icon icon={icon} className="size-[1.125rem]" />

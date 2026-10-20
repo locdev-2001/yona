@@ -74,7 +74,7 @@ export default function ConversationHeader({
             sm
             icon="i-lucide-search"
             title={t('CONVERSATION.SEARCH_IN_CONVERSATION.OPEN')}
-            className="!rounded-full max-md:!size-11"
+            className="max-md:!size-[44px]"
             onClick={() => setSearchOpen(true)}
         />
     );
@@ -138,15 +138,15 @@ export default function ConversationHeader({
                         ) : null}
                     </div>
                 </div>
-                <div className="flex flex-row items-center justify-end flex-shrink-0 gap-1 header-actions-wrap max-md:[&_[data-testid=sidepanel-switch]_button]:!size-11">
-                    {group ? <GroupRoomButton accountId={accountId} group={group} isCompact className="max-md:!h-11" /> : null}
+                <div className="flex flex-row items-center justify-end flex-shrink-0 gap-1 header-actions-wrap [&_button]:!rounded-lg max-md:[&_[data-testid=sidepanel-switch]_button]:!size-[44px]">
+                    {group ? <GroupRoomButton accountId={accountId} group={group} isCompact className="max-md:!h-[44px]" /> : null}
                     {!group && inbox?.channel_type === 'Channel::Yona' ? (
-                        <DirectCallButtons accountId={accountId} conversation={selectedConversation} isCompact={isPhone} className="max-md:!size-11" />
+                        <DirectCallButtons accountId={accountId} conversation={selectedConversation} isCompact={isPhone} className="max-md:!size-[44px]" />
                     ) : null}
                     {searchButton}
                     <SidepanelSwitch />
                     {isPhone ? null : <AssigneeAction isCompact />}
-                    <MoreActions isCompact showResolveAction={!isPhone} triggerClassName="max-md:!size-11" />
+                    <MoreActions isCompact showResolveAction={!isPhone} triggerClassName="max-md:!size-[44px]" />
                 </div>
             </div>
         );
@@ -211,7 +211,7 @@ export default function ConversationHeader({
                     <ConversationSearchBar onClose={closeSearch} />
                 </div>
             ) : (
-                <div className="flex flex-row items-center justify-start xl:justify-end flex-shrink-0 gap-2 w-full xl:w-auto header-actions-wrap">
+                <div className="flex flex-row items-center justify-start xl:justify-end flex-shrink-0 gap-2 w-full xl:w-auto header-actions-wrap [&_button]:!rounded-lg">
                     {group ? <GroupRoomButton accountId={accountId} group={group} isCompact={isActionsCompact} /> : null}
                     {!group && inbox?.channel_type === 'Channel::Yona' ? <DirectCallButtons accountId={accountId} conversation={selectedConversation} isCompact={false} /> : null}
                     {searchButton}

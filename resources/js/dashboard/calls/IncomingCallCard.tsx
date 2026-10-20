@@ -4,7 +4,7 @@ import { t } from '../../i18n';
 import RingingAvatar from './RingingAvatar';
 import type { CallMediaKind, CallPeerView } from './types';
 import { answerOptionsFor, answerTone, RINGING_ICON_CLASS } from './answerOptions';
-import { PHONE_TOUCH_SIZE } from './touchTarget';
+import { FLOATING_CALL_CARD, PHONE_TOUCH_SIZE } from './touchTarget';
 
 interface IncomingCallProps {
     peer: CallPeerView;
@@ -34,7 +34,7 @@ export default function IncomingCallCard(props: IncomingCallProps) {
     }
 
     return (
-        <section role="dialog" aria-label={title} className="fixed bottom-6 end-6 z-50 w-[22rem] p-3 rounded-[1.25rem] overlay-surface animate-fade-in-up">
+        <section role="dialog" aria-label={title} className={`${FLOATING_CALL_CARD} p-3 rounded-[1.25rem] overlay-surface animate-fade-in-up`}>
             <IncomingCallRow {...props} subtitle={title} />
         </section>
     );

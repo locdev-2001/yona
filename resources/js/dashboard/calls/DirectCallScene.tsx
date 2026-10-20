@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react';
 import Avatar from 'dashboard/components-next/avatar/Avatar';
 import Button from 'dashboard/components-next/button/Button';
-import { avatarSeed } from 'shared/avatar/avatarSeed';
 import { t } from '../../i18n';
 import CallDuration from './CallDuration';
 import CallOrb from './CallOrb';
@@ -76,7 +75,7 @@ function CallAction({
 }
 
 function PeerAvatar({ peer, size }: { peer: CallPeerView; size: number }) {
-    return <Avatar name={peer.name} src={peer.avatarUrl ?? undefined} seed={avatarSeed('user', peer.userId)} size={size} roundedFull />;
+    return <Avatar name={peer.name} src={peer.avatarUrl ?? undefined} seed={peer.avatarSeed} size={size} roundedFull />;
 }
 
 function SceneOrb({ phase, readSelfLevel, readPeerLevel, className }: DirectCallSceneProps & { className: string }) {
@@ -107,7 +106,7 @@ function IncomingLayout(props: DirectCallSceneProps) {
     return (
         <>
             <div className="flex justify-end px-3 h-12">
-                <Button sm slate link label={t('CALLS.DIRECT.HIDE')} className={`${TOUCH_HEIGHT} px-2`} onClick={onMinimize} />
+                <Button sm slate link icon="i-lucide-chevron-down" label={t('CALLS.DIRECT.HIDE')} className={`${TOUCH_HEIGHT} px-2`} onClick={onMinimize} />
             </div>
             <div className="relative flex flex-1 items-center justify-center min-h-0">
                 <SceneOrb {...props} className="aspect-square w-[min(80vw,40vh,22rem)]" />
@@ -146,11 +145,11 @@ function InCallLayout(props: DirectCallSceneProps) {
     return (
         <>
             {isOnVideo ? (
-                <div className="absolute inset-0 -z-10 bg-black" aria-hidden="true">
+                <div className="absolute inset-0 -z-10 bg-n-black" aria-hidden="true">
                     {peerVideo}
                     {/* Lớp tối mờ trên và dưới để chữ, nút đọc được trên mọi hình. */}
-                    <span className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-black/60 to-transparent" />
-                    <span className="absolute inset-x-0 bottom-0 h-72 bg-gradient-to-t from-black/70 to-transparent" />
+                    <span className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-n-black/60 to-transparent" />
+                    <span className="absolute inset-x-0 bottom-0 h-72 bg-gradient-to-t from-n-black/70 to-transparent" />
                 </div>
             ) : null}
             <div className="flex items-center justify-between px-3 h-12">
@@ -162,12 +161,12 @@ function InCallLayout(props: DirectCallSceneProps) {
                             ghost
                             icon="i-lucide-settings-2"
                             title={t('CALLS.DIRECT.DEVICES')}
-                            className={`${PHONE_TOUCH_SIZE} ${isOnVideo ? '!text-white hover:enabled:!bg-white/15' : ''}`}
+                            className={`${PHONE_TOUCH_SIZE} ${isOnVideo ? '!bg-white/15 !text-white hover:enabled:!bg-white/25 backdrop-blur-md' : ''}`}
                             onClick={toggle}
                         />
                     )}
                 </DevicePicker>
-                <Button sm slate link label={t('CALLS.DIRECT.HIDE')} className={`${TOUCH_HEIGHT} px-2 ${isOnVideo ? '!text-white' : ''}`} onClick={onMinimize} />
+                <Button sm slate link icon="i-lucide-chevron-down" label={t('CALLS.DIRECT.HIDE')} className={`${TOUCH_HEIGHT} px-2 ${isOnVideo ? '!text-white' : ''}`} onClick={onMinimize} />
             </div>
             <div className="flex flex-col items-center gap-1 w-full max-w-sm mx-auto px-6 text-center">
                 <span className={`max-w-full text-2xl font-semibold truncate ${isOnVideo ? 'text-white' : 'text-n-slate-12'}`}>{peer.name}</span>
@@ -190,8 +189,15 @@ function InCallLayout(props: DirectCallSceneProps) {
                         </span>
                     </>
                 )}
+                {/* Ô camera của mình: nhỏ ở góc trên khi giữa màn là quả cầu, để không đè lên cầu. */}
                 {selfVideo ? (
-                    <div className="absolute bottom-4 end-4 w-28 sm:w-40 aspect-[3/4] sm:aspect-video overflow-hidden rounded-xl bg-black">{selfVideo}</div>
+                    <div
+                        className={`absolute end-4 overflow-hidden rounded-xl bg-n-black ${
+                            isOnVideo ? 'bottom-4 w-28 sm:w-40 aspect-[3/4] sm:aspect-video' : 'top-0 w-[72px] sm:w-[112px] aspect-[3/4]'
+                        }`}
+                    >
+                        {selfVideo}
+                    </div>
                 ) : null}
             </div>
             {/* Ba nút điều khiển một hàng, Kết thúc đứng riêng ở giữa hàng dưới. */}

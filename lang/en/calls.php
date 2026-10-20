@@ -5,7 +5,7 @@
 return [
     'ACTIVITY' => [
         'ROOM_STARTED' => ':actor started a voice room',
-        'ROOM_ENDED' => 'The voice room ended · :duration · :count people joined',
+        'ROOM_ENDED' => 'The voice room ended · :duration · :count person joined|The voice room ended · :duration · :count people joined',
         'DIRECT_ENDED_VOICE' => 'Voice call · :duration',
         'DIRECT_ENDED_VIDEO' => 'Video call · :duration',
         'DIRECT_MISSED' => 'Missed call',
@@ -37,6 +37,8 @@ return [
         'DECLINE' => 'Decline',
         'CANCEL' => 'Cancel call',
         'CALL_BACK' => 'Call back',
+        'PEER_DECLINED' => '{name} declined the call',
+        'PEER_NO_ANSWER' => '{name} didn\'t answer',
         'EXPAND' => 'Expand',
         'MINIMIZE' => 'Collapse',
         'END' => 'End call',
@@ -89,6 +91,8 @@ return [
         'LEAVE' => 'Leave',
         'MUTE_PARTICIPANT' => 'Mute this person',
         'REMOVE_PARTICIPANT' => 'Remove from room',
+        'CONFIRM_REMOVE' => 'Remove',
+        'WAITING_FOR_OTHERS' => 'Waiting for others to join',
         'MUTED' => 'Muted',
     ],
     'ERRORS' => [

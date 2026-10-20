@@ -9,8 +9,8 @@ use Carbon\CarbonInterval;
 
 // Dấu vết phòng thoại trong hội thoại nhóm: một tin khi người đầu tiên vào, một tin khi phòng
 // đóng (thời lượng, số người đã tham gia). Chỉ ghi mới, không sửa tin cũ. Sự kiện phòng đến
-// từ webhook, không có ngôn ngữ người dùng: tin viết theo ngôn ngữ mặc định của sản phẩm (account
-// ẩn của nhóm mang locale mặc định của cột, không phải lựa chọn của ai).
+// từ webhook, không có ngôn ngữ người dùng: tin viết theo ngôn ngữ hộp thư ẩn của nhóm (tin nhóm
+// lưu một bản chung cho mọi thành viên).
 final readonly class GroupRoomTrail implements CallTrail
 {
     private const DURATION_PARTS = 2;
@@ -33,10 +33,10 @@ final readonly class GroupRoomTrail implements CallTrail
         }
 
         $durationSeconds = (int) $call->started_at->diffInSeconds($call->ended_at);
-        $participantCount = $call->participants()->distinct()->count('user_id');
+        $participantCount = $call->participants()->distinct()->count('identity');
 
         $locale = $this->localeOf($call);
-        $this->groups->postNotice($call->group, __('calls.ACTIVITY.ROOM_ENDED', [
+        $this->groups->postNotice($call->group, trans_choice('calls.ACTIVITY.ROOM_ENDED', $participantCount, [
             'duration' => CarbonInterval::seconds($durationSeconds)->cascade()->locale($locale)->forHumans(['parts' => self::DURATION_PARTS]),
             'count' => $participantCount,
         ], $locale), [
@@ -52,6 +52,6 @@ final readonly class GroupRoomTrail implements CallTrail
 
     private function localeOf(Call $call): string
     {
-        return (string) config('app.locale');
+        return $call->group?->account?->locale ?? (string) config('app.locale');
     }
 }

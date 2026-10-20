@@ -1,5 +1,6 @@
 import Button from 'dashboard/components-next/button/Button';
 import { t } from '../../i18n';
+import { PHONE_TOUCH_MIN_WIDTH } from './touchTarget';
 import type { OpenRoomSummary } from './types';
 
 // Nút ở mũ khung chat nhóm. Phòng đang mở thì nổi màu và kèm số người đang ngồi.
@@ -32,7 +33,7 @@ export default function JoinRoomButton({
             icon="i-lucide-headphones"
             label={isCompact ? compactLabel : label}
             title={label}
-            className={className}
+            className={`justify-center ${PHONE_TOUCH_MIN_WIDTH} ${className}`}
             onClick={onJoin}
         />
     );

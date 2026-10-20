@@ -32,7 +32,14 @@ function DeviceToggle({
 }) {
     const toneProps = TONE_PROPS[tone];
     const mainButton = (
-        <Button sm {...toneProps} icon={icon} title={title} className={`!h-9 !w-10 !px-0 ${deviceKind ? '!rounded-e-none' : ''}`} onClick={onToggle} />
+        <Button
+            sm
+            {...toneProps}
+            icon={icon}
+            title={title}
+            className={`!h-9 !w-10 max-md:!h-[44px] max-md:!w-[44px] touch:!h-[44px] touch:!w-[44px] !px-0 ${deviceKind ? '!rounded-e-none' : ''}`}
+            onClick={onToggle}
+        />
     );
 
     if (!deviceKind || !actions) return mainButton;
@@ -49,7 +56,8 @@ function DeviceToggle({
     );
 }
 
-// Hàng nút của màn phòng: mic, camera (kèm chọn thiết bị), chia sẻ màn hình, rời phòng.
+// Hàng nút của màn phòng: mic, camera (kèm chọn thiết bị), chia sẻ màn hình, rời phòng. Chỉ mic tắt
+// mới tô đỏ: tắt camera là trạng thái bình thường, cùng quy ước với màn gọi 1-1.
 export default function CallControls({ local, actions, isPhone }: { local: CallLocalState; actions: CallActions; isPhone: boolean }) {
     return (
         <div className="flex items-center gap-2">
@@ -65,7 +73,7 @@ export default function CallControls({ local, actions, isPhone }: { local: CallL
             <DeviceToggle
                 icon={local.camOn ? 'i-lucide-video' : 'i-lucide-video-off'}
                 title={local.camOn ? t('CALLS.ROOM.CAMERA_ON') : t('CALLS.ROOM.CAMERA_OFF')}
-                tone={local.camOn ? 'neutral' : 'off'}
+                tone="neutral"
                 onToggle={actions.toggleCamera}
                 chevronTitle={t('CALLS.ROOM.CHOOSE_CAMERA')}
                 deviceKind={isPhone ? undefined : 'videoinput'}
@@ -91,7 +99,7 @@ export default function CallControls({ local, actions, isPhone }: { local: CallL
                 solid
                 icon="i-lucide-phone-off"
                 title={t('CALLS.ROOM.LEAVE')}
-                className="!h-9 !w-12 !px-0 ms-2"
+                className="!h-9 !w-12 max-md:!h-[44px] max-md:!w-[56px] touch:!h-[44px] touch:!w-[56px] !px-0 ms-2"
                 onClick={actions.leave}
             />
         </div>

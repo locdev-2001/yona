@@ -3,6 +3,7 @@ import Button from 'dashboard/components-next/button/Button';
 import Icon from 'dashboard/components-next/icon/Icon';
 import { t } from '../../i18n';
 import CallControls from './CallControls';
+import { PHONE_TOUCH_SIZE } from './touchTarget';
 import CallDuration from './CallDuration';
 import CallTile from './CallTile';
 import type { CallActions, CallLocalState, CallRoomView, RenderCallMedia } from './types';
@@ -63,8 +64,8 @@ export default function CallStage({
                         {t('CALLS.ROOM.LIVE')}
                     </span>
                 ) : null}
-                <Button sm slate ghost icon="i-lucide-message-circle" title={t('CALLS.ROOM.CHAT')} className=" max-md:!size-10" onClick={actions.openChat} />
-                <Button sm slate ghost icon="i-lucide-minimize-2" title={t('CALLS.ROOM.MINIMIZE')} className=" max-md:!size-10" onClick={actions.minimize} />
+                <Button sm slate ghost icon="i-lucide-message-circle" title={t('CALLS.ROOM.CHAT')} className={PHONE_TOUCH_SIZE} onClick={actions.openChat} />
+                <Button sm slate ghost icon="i-lucide-minimize-2" title={t('CALLS.ROOM.MINIMIZE')} className={PHONE_TOUCH_SIZE} onClick={actions.minimize} />
             </header>
 
             <div className="flex-1 min-h-0 px-4 pb-2">
@@ -80,14 +81,21 @@ export default function CallStage({
                 ) : (
                     <div className={`grid h-full gap-3 auto-rows-fr ${gridColumns(room.participants.length, isPhone)}`}>
                         {room.participants.map(participant => (
-                            <CallTile key={participant.identity} participant={participant} source="camera" {...tileProps} className="min-h-0" />
+                            <CallTile
+                                key={participant.identity}
+                                participant={participant}
+                                source="camera"
+                                {...tileProps}
+                                hint={room.participants.length === 1 ? t('CALLS.ROOM.WAITING_FOR_OTHERS') : undefined}
+                                className="min-h-0"
+                            />
                         ))}
                     </div>
                 )}
             </div>
 
             <footer className="relative flex flex-none items-center justify-center px-4 py-3">
-                <div className="flex items-center p-1.5 rounded-xl bg-n-surface-panel">
+                <div className="flex items-center p-1 rounded-xl bg-n-surface-panel">
                     <CallControls local={local} actions={actions} isPhone={isPhone} />
                 </div>
                 {isPhone ? null : (
@@ -97,7 +105,7 @@ export default function CallStage({
                         ghost
                         icon="i-lucide-maximize"
                         title={t('CALLS.ROOM.FULLSCREEN')}
-                        className=" absolute end-4"
+                        className="absolute end-4"
                         onClick={toggleFullscreen}
                     />
                 )}

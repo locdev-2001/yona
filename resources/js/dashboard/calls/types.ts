@@ -25,10 +25,21 @@ export interface CallRoomView {
     conversationUrl: string;
     startedAt: string;
     participants: CallParticipantView[];
+    presentation: CallRoomPresentation;
+}
+
+// Chữ và biểu tượng của khối "Đã kết nối" (thanh bên, dải đáy điện thoại): phòng thoại nhóm
+// và cuộc gọi 1-1 dùng chung khối nhưng gọi tên khác nhau.
+export interface CallRoomPresentation {
+    icon: string;
+    expandLabel: string;
+    leaveLabel: string;
 }
 
 export interface CallLocalState {
     micOn: boolean;
+    // Vừa nối phòng, micro đang mở: chưa nên hiện là "đang tắt tiếng".
+    micStarting: boolean;
     camOn: boolean;
     sharingScreen: boolean;
     // Tắt toàn bộ âm thanh phòng phía mình (không nghe ai, người khác vẫn nghe mình nếu mở mic).
@@ -84,6 +95,8 @@ export interface CallPeerView {
     userId: number;
     name: string;
     avatarUrl: string | null;
+    // Cùng hình khối với ảnh đại diện của liên hệ ở khung chat khi người kia chưa có ảnh.
+    avatarSeed: string | undefined;
 }
 
 export type DirectCallStatus = 'ringing' | 'active' | 'ended' | 'missed' | 'declined' | 'cancelled';
@@ -97,5 +110,5 @@ export interface DirectCallView {
     ringing_since: string | null;
     answered_at: string | null;
     conversation_id: number;
-    peer: { id: number; name: string; avatar_url: string | null };
+    peer: { id: number; contact_id: number; name: string; avatar_url: string | null };
 }

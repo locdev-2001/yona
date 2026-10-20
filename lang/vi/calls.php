@@ -37,6 +37,8 @@ return [
         'DECLINE' => 'Từ chối',
         'CANCEL' => 'Huỷ cuộc gọi',
         'CALL_BACK' => 'Gọi lại',
+        'PEER_DECLINED' => '{name} đã từ chối cuộc gọi',
+        'PEER_NO_ANSWER' => '{name} không nghe máy',
         'EXPAND' => 'Mở rộng',
         'MINIMIZE' => 'Thu gọn',
         'END' => 'Kết thúc',
@@ -89,6 +91,8 @@ return [
         'LEAVE' => 'Rời phòng',
         'MUTE_PARTICIPANT' => 'Tắt mic người này',
         'REMOVE_PARTICIPANT' => 'Mời ra khỏi phòng',
+        'CONFIRM_REMOVE' => 'Mời ra',
+        'WAITING_FOR_OTHERS' => 'Đang chờ người khác vào phòng',
         'MUTED' => 'Đang tắt mic',
     ],
     'ERRORS' => [

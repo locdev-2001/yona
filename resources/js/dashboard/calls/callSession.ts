@@ -61,7 +61,7 @@ const noop = () => undefined;
 
 const IDLE_SESSION: CallSession = {
     room: null,
-    local: { micOn: false, camOn: false, sharingScreen: false, deafened: false, canShareScreen: false, canModerate: false },
+    local: { micOn: false, micStarting: false, camOn: false, sharingScreen: false, deafened: false, canShareScreen: false, canModerate: false },
     stageOpen: false,
     isJoining: false,
     groupId: null,

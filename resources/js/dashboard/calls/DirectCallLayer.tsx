@@ -1,3 +1,6 @@
+import { avatarSeed } from 'shared/avatar/avatarSeed';
+import { useEffect } from 'react';
+import { loadVoiceOrb } from './CallOrb';
 import { useCallSession } from './callSession';
 import type { CallSession, DirectCallState } from './callSession';
 import DirectCallScene from './DirectCallScene';
@@ -5,6 +8,7 @@ import type { DirectCallPhase } from './DirectCallScene';
 import IncomingCallCard from './IncomingCallCard';
 import OutgoingCallBar from './OutgoingCallBar';
 import { identityOfUser } from './participantIdentity';
+import { FLOATING_CALL_CARD } from './touchTarget';
 import type { CallPeerView } from './types';
 
 // Giao diện cuộc gọi 1-1 đọc từ phiên gọi: thẻ/sheet cuộc gọi đến, dải đang gọi đi, màn gọi lớn.
@@ -25,7 +29,9 @@ function useDirectCall(): DirectCallContext | null {
     const { view } = direct;
     const phase: DirectCallPhase = view.status === 'active' ? 'connected' : view.role === 'callee' ? 'incoming' : 'outgoing';
 
-    return { session, direct, peer: { userId: view.peer.id, name: view.peer.name, avatarUrl: view.peer.avatar_url }, phase };
+    const peer = { userId: view.peer.id, name: view.peer.name, avatarUrl: view.peer.avatar_url, avatarSeed: avatarSeed('contact', view.peer.contact_id) };
+
+    return { session, direct, peer, phase };
 }
 
 // Dải "đang gọi" của người gọi. `conversationId`: chỉ hiện khi đang xem đúng hội thoại đó (dải dưới
@@ -44,7 +50,7 @@ export function DirectOutgoingStrip({ placement, conversationId }: { placement: 
             placement={placement}
             since={direct.view.ringing_since ?? new Date().toISOString()}
             isRinging
-            micOn={session.local.micOn}
+            micOn={session.local.micStarting ? null : session.local.micOn}
             selfIdentity={session.selfIdentity}
             renderMedia={session.renderMedia}
             onToggleMic={session.actions.toggleMic}
@@ -53,13 +59,18 @@ export function DirectOutgoingStrip({ placement, conversationId }: { placement: 
         />
     );
 
-    return placement === 'floating' ? <div className="fixed bottom-6 end-6 z-50 w-[26rem] max-w-[calc(100vw-3rem)]">{bar}</div> : bar;
+    return placement === 'floating' ? <div className={FLOATING_CALL_CARD}>{bar}</div> : bar;
 }
 
 // Lớp nổi trên mọi trang: cuộc gọi đến và màn gọi lớn. `viewingConversationId`: hội thoại đang
 // mở, để dải đang gọi đi nổi ở góc chỉ khi không đang xem hội thoại đó (máy tính).
 export function DirectCallOverlay({ isPhone, viewingConversationId }: { isPhone: boolean; viewingConversationId: number | null }) {
     const context = useDirectCall();
+    const hasCall = context !== null;
+    useEffect(() => {
+        if (hasCall) void loadVoiceOrb();
+    }, [hasCall]);
+
     if (!context) return null;
 
     const { session, direct, peer, phase } = context;
@@ -81,7 +92,7 @@ export function DirectCallOverlay({ isPhone, viewingConversationId }: { isPhone:
                 speaker={peerSpeaking ? 'peer' : selfSpeaking ? 'self' : null}
                 readSelfLevel={() => (session.selfIdentity ? session.readAudioLevel(session.selfIdentity) : 0)}
                 readPeerLevel={() => session.readAudioLevel(peerIdentity)}
-                micOn={session.local.micOn}
+                micOn={session.local.micOn || session.local.micStarting}
                 camOn={session.local.camOn}
                 deafened={session.local.deafened}
                 peerVideo={peerCamOn ? session.renderMedia(peerIdentity, 'camera') : null}

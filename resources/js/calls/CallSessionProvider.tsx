@@ -19,7 +19,7 @@ import type { CallTicket, DirectCallJoinResponse, DirectCallPayload } from 'dash
 import { CallSessionContext } from 'dashboard/calls/callSession';
 import { userIdOfIdentity } from 'dashboard/calls/participantIdentity';
 import type { CallSession, DirectCallState, JoinGroupRoomRequest, StartDirectCallRequest } from 'dashboard/calls/callSession';
-import type { CallActions, CallLocalState, CallMediaKind, CallRoomView } from 'dashboard/calls/types';
+import type { CallActions, CallLocalState, CallMediaKind, CallRoomPresentation, CallRoomView } from 'dashboard/calls/types';
 import { t } from '../i18n';
 import type { MediaSessionEnd, MediaSessionHandle, MediaSessionState } from './mediaSession';
 
@@ -57,6 +57,16 @@ const EMPTY_MEDIA: MediaSessionState = { participants: [], renderMedia: () => nu
 
 const LIVE_DIRECT_STATUSES = ['ringing', 'active'];
 
+// Người gọi đang đợi mà bên kia không bắt máy: báo bằng toast, vì dải đang gọi biến mất ngay và tin
+// nhật ký chỉ nằm trong hội thoại (người gọi có thể đang ở trang khác).
+const CALLER_UNANSWERED_MESSAGES: Record<string, string> = {
+    declined: 'CALLS.DIRECT.PEER_DECLINED',
+    missed: 'CALLS.DIRECT.PEER_NO_ANSWER',
+};
+
+const GROUP_ROOM_PRESENTATION: CallRoomPresentation = { icon: 'i-lucide-headphones', expandLabel: 'CALLS.ROOM.EXPAND', leaveLabel: 'CALLS.ROOM.LEAVE' };
+const DIRECT_CALL_PRESENTATION: CallRoomPresentation = { icon: 'i-lucide-phone', expandLabel: 'CALLS.DIRECT.EXPAND', leaveLabel: 'CALLS.DIRECT.END' };
+
 const canShareScreen = () =>
     typeof navigator !== 'undefined' && Boolean(navigator.mediaDevices?.getDisplayMedia) && window.innerWidth >= PHONE_MAX_WIDTH;
 
@@ -70,6 +80,7 @@ export default function CallSessionProvider({ children }: { children: ReactNode 
     const [isJoining, setJoining] = useState(false);
     const [stageOpen, setStageOpen] = useState(false);
     const [deafened, setDeafened] = useState(false);
+    const [isMicStarting, setMicStarting] = useState(false);
     const [media, setMedia] = useState<MediaSessionState>(EMPTY_MEDIA);
     const handleRef = useRef<MediaSessionHandle | null>(null);
 
@@ -79,12 +90,16 @@ export default function CallSessionProvider({ children }: { children: ReactNode 
     activeRef.current = active;
     const directRef = useRef<DirectCallState | null>(null);
     directRef.current = direct;
+    // Cuộc 1-1 gần nhất của tab này: phòng có thể đóng (xoá `direct`) trước khi sự kiện kết cục tới.
+    const lastDirectCallIdRef = useRef<number | null>(null);
+    if (direct) lastDirectCallIdRef.current = direct.view.id;
 
     const endCall = useCallback(() => {
         handleRef.current = null;
         setActive(null);
         setStageOpen(false);
         setDeafened(false);
+        setMicStarting(false);
         setMedia(EMPTY_MEDIA);
     }, []);
 
@@ -97,7 +112,8 @@ export default function CallSessionProvider({ children }: { children: ReactNode 
     const onReady = useCallback(
         (handle: MediaSessionHandle) => {
             handleRef.current = handle;
-            runOnMedia(ready => ready.setMicrophone(true));
+            setMicStarting(true);
+            runOnMedia(ready => ready.setMicrophone(true).finally(() => setMicStarting(false)));
             if (activeRef.current?.startsWithCamera) runOnMedia(ready => ready.setCamera(true));
         },
         [runOnMedia],
@@ -231,6 +247,11 @@ export default function CallSessionProvider({ children }: { children: ReactNode 
             const isConnectedHere = activeRef.current?.groupId === null && activeRef.current.callId === call.id;
 
             if (!LIVE_DIRECT_STATUSES.includes(call.status)) {
+                if (lastDirectCallIdRef.current === call.id) {
+                    lastDirectCallIdRef.current = null;
+                    const unansweredMessage = call.role === 'caller' ? CALLER_UNANSWERED_MESSAGES[call.status] : undefined;
+                    if (unansweredMessage) useAlert(t(unansweredMessage, { name: call.peer.name }));
+                }
                 if (!isCurrent) return;
                 setDirect(null);
                 if (isConnectedHere) endCall();
@@ -334,15 +355,17 @@ export default function CallSessionProvider({ children }: { children: ReactNode 
               conversationUrl: active.conversationUrl,
               startedAt: active.startedAt,
               participants: media.participants,
+              presentation: active.groupId === null ? DIRECT_CALL_PRESENTATION : GROUP_ROOM_PRESENTATION,
           }
         : null;
 
     const local: CallLocalState = {
         micOn: self?.micOn ?? false,
+        micStarting: isMicStarting || self === null,
         camOn: self?.camOn ?? false,
         sharingScreen: self?.isSharingScreen ?? false,
         deafened,
-        canShareScreen: canShareScreen(),
+        canShareScreen: active?.groupId != null && canShareScreen(),
         canModerate: active?.canModerate ?? false,
     };
 

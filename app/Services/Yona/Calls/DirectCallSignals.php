@@ -61,7 +61,8 @@ final readonly class DirectCallSignals
                 'ringing_since' => $call->created_at?->toIso8601String(),
                 'answered_at' => $call->answered_at?->toIso8601String(),
                 'conversation_id' => $conversation->display_id,
-                'peer' => ['id' => $peer->id, 'name' => $peer->availableName(), 'avatar_url' => $peer->avatarUrl() ?: null],
+                // `contact_id`: liên hệ của người kia trong hộp thư người xem, để ảnh đại diện trùng khung chat.
+                'peer' => ['id' => $peer->id, 'contact_id' => $conversation->contact_id, 'name' => $peer->availableName(), 'avatar_url' => $peer->avatarUrl() ?: null],
             ],
         ];
     }
