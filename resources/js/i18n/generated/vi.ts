@@ -2499,18 +2499,9 @@ const messages: Record<string, unknown> = {
             "DIRECT_YOU_DECLINED": "Bạn đã từ chối cuộc gọi",
             "DIRECT_CANCELLED": "Đã huỷ cuộc gọi"
         },
-        "LOG": {
-            "VOICE": "Cuộc gọi thoại",
-            "VIDEO": "Cuộc gọi video",
-            "MISSED": "Cuộc gọi nhỡ",
-            "NO_ANSWER": "Không ai nghe máy",
-            "CANCELLED": "Đã huỷ cuộc gọi",
-            "DECLINED_BY_PEER": "Cuộc gọi bị từ chối",
-            "YOU_DECLINED": "Bạn đã từ chối",
-            "BUSY": "Máy bận"
-        },
         "DIRECT": {
             "CALL": "Gọi",
+            "OPEN_CHAT": "Nhắn tin",
             "CALL_VOICE": "Gọi thoại",
             "CALL_VIDEO": "Gọi video",
             "CALLING": "Đang gọi…",
@@ -2518,20 +2509,20 @@ const messages: Record<string, unknown> = {
             "INCOMING_VOICE": "Cuộc gọi thoại đến",
             "INCOMING_VIDEO": "Cuộc gọi video đến",
             "ACCEPT": "Nghe",
-            "ACCEPT_VIDEO": "Video",
+            "ACCEPT_AUDIO_ONLY": "Chỉ nghe tiếng",
             "DECLINE": "Từ chối",
             "CANCEL": "Huỷ cuộc gọi",
             "CALL_BACK": "Gọi lại",
-            "PEER_DECLINED": "{name} đã từ chối cuộc gọi",
-            "PEER_NO_ANSWER": "{name} không nghe máy",
             "EXPAND": "Mở rộng",
             "MINIMIZE": "Thu gọn",
             "END": "Kết thúc",
             "PEER_SPEAKING": "{name} đang nói",
             "YOU_SPEAKING": "Bạn đang nói",
+            "SPEAKER_OFF": "Tắt loa",
+            "SPEAKER_ON": "Bật loa",
             "MUTE": "Tắt tiếng",
             "CAMERA": "Camera",
-            "SOUND": "Âm thanh",
+            "SPEAKER": "Loa",
             "DEVICES": "Thiết bị",
             "HIDE": "Thu gọn"
         },
@@ -2547,8 +2538,8 @@ const messages: Record<string, unknown> = {
             "DEVICE_BLOCKED": "Trình duyệt chưa cho dùng micro, camera hoặc chia sẻ màn hình",
             "NO_DEVICES": "Không tìm thấy thiết bị",
             "CONNECTED": "Đã kết nối",
-            "DEAFEN": "Tắt âm thanh",
-            "UNDEAFEN": "Bật âm thanh",
+            "DEAFEN": "Tắt âm thanh phòng",
+            "UNDEAFEN": "Bật âm thanh phòng",
             "YOU_ARE_SHARING": "Bạn đang chia sẻ màn hình",
             "LIVE": "Trực tiếp",
             "FULLSCREEN": "Toàn màn hình",
@@ -2576,8 +2567,6 @@ const messages: Record<string, unknown> = {
             "LEAVE": "Rời phòng",
             "MUTE_PARTICIPANT": "Tắt mic người này",
             "REMOVE_PARTICIPANT": "Mời ra khỏi phòng",
-            "CONFIRM_REMOVE": "Mời ra",
-            "WAITING_FOR_OTHERS": "Đang chờ người khác vào phòng",
             "MUTED": "Đang tắt mic"
         },
         "ERRORS": {
@@ -4172,6 +4161,13 @@ const messages: Record<string, unknown> = {
             },
             "REMINDER": {
                 "FALLBACK_TITLE": "Nhắc hẹn"
+            },
+            "CALL": {
+                "VOICE": "Cuộc gọi thoại",
+                "VIDEO": "Cuộc gọi video",
+                "MISSED": "nhỡ",
+                "BUSY": "máy bận",
+                "CANCELED": "đã huỷ"
             }
         },
         "LINK_PREVIEW": {

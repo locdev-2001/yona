@@ -1,4 +1,5 @@
 import Avatar from 'dashboard/components-next/avatar/Avatar';
+import { avatarSeed } from 'shared/avatar/avatarSeed';
 import type { CallPeerView } from './types';
 
 const WAVE_DELAYS_MS = [0, 800];
@@ -12,14 +13,14 @@ export default function RingingAvatar({ peer, size, isRinging }: { peer: CallPee
                 ? WAVE_DELAYS_MS.map(delay => (
                       <span
                           key={delay}
-                          className={`absolute inset-0 ${size > 32 ? 'rounded-xl' : 'rounded-lg'} bg-n-brand/30 animate-call-wave motion-reduce:hidden`}
+                          className={`absolute inset-0 ${size > 32 ? 'rounded-xl' : 'rounded-lg'} bg-n-teal-9/40 animate-call-wave motion-reduce:hidden`}
                           style={{ animationDelay: `${delay}ms` }}
                           aria-hidden="true"
                       />
                   ))
                 : null}
             <span className="relative">
-                <Avatar name={peer.name} src={peer.avatarUrl ?? undefined} seed={peer.avatarSeed} size={size} />
+                <Avatar name={peer.name} src={peer.avatarUrl ?? undefined} seed={avatarSeed('user', peer.userId)} size={size} />
             </span>
         </span>
     );

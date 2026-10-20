@@ -135,8 +135,8 @@ final readonly class DirectCalls
 
             return match (true) {
                 $call->status === CallStatus::Ringing && $callerLeft && ! in_array($call->caller_id, $present, true) => CallStatus::Cancelled,
-                $call->status === CallStatus::Active && $call->answered_at !== null && count($present) < 2
-                    && $call->participants()->where('left_at', '>=', $call->answered_at)->exists() => CallStatus::Ended,
+                $call->status === CallStatus::Active && count($present) < 2
+                    && $call->participants()->whereNotNull('left_at')->where('left_at', '>=', $call->answered_at)->exists() => CallStatus::Ended,
                 default => null,
             };
         });

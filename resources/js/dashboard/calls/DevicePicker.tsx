@@ -1,9 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import DropdownMenu from 'dashboard/components-next/dropdown-menu/DropdownMenu';
-import Icon from 'dashboard/components-next/icon/Icon';
 import { t } from '../../i18n';
-import { PHONE_TOUCH_HEIGHT } from './touchTarget';
 import type { CallDevice, CallDeviceKind } from './types';
 
 // Bảng chọn micro / camera mở lên trên nút mũi tên (hàng nút nằm ở đáy màn phòng).
@@ -12,14 +10,11 @@ export default function DevicePicker({
     listDevices,
     onSelect,
     children,
-    opensBelow = false,
 }: {
     kind: CallDeviceKind;
     listDevices: (kind: CallDeviceKind) => Promise<CallDevice[]>;
     onSelect: (kind: CallDeviceKind, deviceId: string) => void;
     children: (toggle: () => void) => ReactNode;
-    // Mặc định mở lên trên (hàng nút ở đáy màn); đặt ở mũ thì mở xuống.
-    opensBelow?: boolean;
 }) {
     const [devices, setDevices] = useState<CallDevice[] | null>(null);
     const rootRef = useRef<HTMLDivElement>(null);
@@ -59,9 +54,7 @@ export default function DevicePicker({
                               }))
                             : [{ label: t('CALLS.ROOM.NO_DEVICES'), value: '', action: 'none', disabled: true }]
                     }
-                    className={`${opensBelow ? 'top-full mt-2' : 'bottom-full mb-2'} start-0 w-64`}
-                    itemClassName={PHONE_TOUCH_HEIGHT}
-                    renderTrailingIcon={item => (item.isSelected ? <Icon icon="i-lucide-check" className="flex-shrink-0 ms-auto size-4 text-n-brand" /> : null)}
+                    className="bottom-full mb-2 start-0 w-64"
                     onAction={item => {
                         if (item.action === 'select') onSelect(kind, String(item.value));
                         setDevices(null);

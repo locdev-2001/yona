@@ -1,10 +1,8 @@
 import Button from 'dashboard/components-next/button/Button';
 import { useOptionalConversation } from 'dashboard/conversation/ConversationContext';
-import type { ConversationMessage } from 'dashboard/conversation/types';
 import { t } from '../../i18n';
 import GroupRoomButton from './GroupRoomButton';
 import { useCallSession } from './callSession';
-import { PHONE_TOUCH_HEIGHT } from './touchTarget';
 import type { CallMediaKind } from './types';
 import { useCallsEnabled } from './useCallsEnabled';
 import { useOpenRoom } from './voiceRooms';
@@ -17,24 +15,10 @@ export interface CallActivity {
     media?: CallMediaKind;
 }
 
-// Nút Gọi lại nằm trong bong bóng nhật ký cuộc gọi: cùng kiểu nút hành động của bong bóng thẻ (nền
-// phụ đặc, chữ màu brand), đọc được trên bong bóng của mình lẫn người kia, sáng lẫn tối.
-const CARD_ACTION_CLASS = '!bg-n-solid-3 !text-n-blue-11 hover:enabled:!bg-n-solid-2';
-
 const DIRECT_FINISHED_STATUSES = ['ended', 'missed', 'declined', 'cancelled'];
 
-// Gọi lại chỉ nằm ở nhật ký cuộc gọi mới nhất của hội thoại, để nhiều cuộc liền nhau không lặp nút.
-function latestCallIdOf(messages: ConversationMessage[]): number | null {
-    for (let index = messages.length - 1; index >= 0; index--) {
-        const call = messages[index].content_attributes?.call as { id?: number } | undefined;
-        if (call?.id) return call.id;
-    }
-
-    return null;
-}
-
 // Nút ngay dưới tin cuộc gọi: phòng nhóm còn mở thì "Vào phòng", cuộc gọi 1-1 đã xong thì "Gọi lại".
-export default function CallActivityAction({ call, className = '' }: { call: CallActivity; className?: string }) {
+export default function CallActivityAction({ call }: { call: CallActivity }) {
     const conversation = useOptionalConversation();
     const session = useCallSession();
     const selected = conversation?.selectedConversation ?? null;
@@ -51,18 +35,16 @@ export default function CallActivityAction({ call, className = '' }: { call: Cal
     }
 
     if (!callsEnabled || call.kind !== 'direct' || !DIRECT_FINISHED_STATUSES.includes(call.status)) return null;
-    if (latestCallIdOf(conversation.messages) !== call.id) return null;
 
     const media = call.media ?? 'audio';
 
     return (
         <Button
             sm
-            slate
-            solid
+            teal
+            faded
             icon={media === 'video' ? 'i-lucide-video' : 'i-lucide-phone'}
             label={t('CALLS.DIRECT.CALL_BACK')}
-            className={`${CARD_ACTION_CLASS} ${PHONE_TOUCH_HEIGHT} ${className}`}
             onClick={() => session.startDirectCall({ accountId: conversation.accountId, conversation: selected, media })}
         />
     );

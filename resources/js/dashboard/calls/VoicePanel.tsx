@@ -4,8 +4,7 @@ import CallDuration from './CallDuration';
 import type { CallActions, CallLocalState, CallRoomView } from './types';
 
 // Khối "Đã kết nối" ở đáy thanh bên: trạng thái + thời lượng, tên phòng (bấm để mở lại màn
-// phòng), rồi một hàng nút nhỏ mic / âm thanh / camera / màn hình / rời phòng. Mép trái chữ và nút
-// đầu, mép phải đồng hồ và nút cúp thẳng hàng.
+// phòng), rồi một hàng nút nhỏ mic / âm thanh phòng / camera / màn hình / rời phòng.
 export default function VoicePanel({
     room,
     local,
@@ -17,13 +16,11 @@ export default function VoicePanel({
     actions: CallActions;
     isCollapsed: boolean;
 }) {
-    const { presentation } = room;
-
     if (isCollapsed) {
         return (
             <div data-testid="voice-panel" className="flex flex-col items-center gap-1 w-full px-1 py-2">
-                <Button sm teal faded icon={presentation.icon} title={room.title} onClick={actions.expand} />
-                <Button sm ruby ghost icon="i-lucide-phone-off" title={t(presentation.leaveLabel)} onClick={actions.leave} />
+                <Button sm teal faded icon="i-lucide-volume-2" title={room.title} onClick={actions.expand} />
+                <Button sm ruby ghost icon="i-lucide-phone-off" title={t('CALLS.ROOM.LEAVE')} onClick={actions.leave} />
             </div>
         );
     }
@@ -41,7 +38,7 @@ export default function VoicePanel({
 
     return (
         <div data-testid="voice-panel" className="flex flex-col gap-1 w-full px-3 pt-2 pb-1">
-            <button type="button" className="flex flex-col gap-0.5 min-w-0 p-0 text-start group/voice" title={t(presentation.expandLabel)} onClick={actions.expand}>
+            <button type="button" className="flex flex-col gap-0.5 min-w-0 text-start group/voice" title={t('CALLS.ROOM.EXPAND')} onClick={actions.expand}>
                 <span className="flex items-center gap-1.5 text-xs font-medium text-n-teal-11">
                     <span className="relative flex size-2 flex-shrink-0">
                         <span className="absolute inset-0 rounded-full bg-n-teal-9 opacity-60 animate-ping" />
@@ -58,10 +55,10 @@ export default function VoicePanel({
                     <span className="truncate">{t('CALLS.ROOM.YOU_ARE_SHARING')}</span>
                 </span>
             ) : null}
-            <div className="flex items-center gap-0.5">
+            <div className="flex items-center gap-0.5 -mx-1">
                 {control(local.micOn ? 'i-lucide-mic' : 'i-lucide-mic-off', local.micOn ? t('CALLS.ROOM.MIC_ON') : t('CALLS.ROOM.MIC_OFF'), actions.toggleMic, !local.micOn)}
                 {control(
-                    local.deafened ? 'i-lucide-volume-x' : 'i-lucide-volume-2',
+                    local.deafened ? 'i-lucide-headphone-off' : 'i-lucide-headphones',
                     local.deafened ? t('CALLS.ROOM.UNDEAFEN') : t('CALLS.ROOM.DEAFEN'),
                     actions.toggleDeafen,
                     local.deafened,
@@ -77,7 +74,7 @@ export default function VoicePanel({
                       )
                     : null}
                 <span className="flex-1" />
-                <Button xs ruby faded icon="i-lucide-phone-off" title={t(presentation.leaveLabel)} className="!size-7 !px-0 [&>span]:!size-3.5" onClick={actions.leave} />
+                <Button xs ruby faded icon="i-lucide-phone-off" title={t('CALLS.ROOM.LEAVE')} className="!size-7 !px-0 [&>span]:!size-3.5" onClick={actions.leave} />
             </div>
         </div>
     );

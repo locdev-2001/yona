@@ -11,27 +11,12 @@ use App\Services\Users\PersonalAccounts;
 use App\Services\Yona\YonaRelay;
 use Carbon\CarbonInterval;
 
-// Dấu vết cuộc gọi 1-1: khi phòng đóng, mỗi bên một tin nhật ký cuộc gọi trong hội thoại của mình,
-// như một tin nhắn thường: người gọi thấy tin đi, người nhận thấy tin đến. `content` là lời theo vai
-// và ngôn ngữ hộp thư (xem trước trong danh sách, tìm kiếm); `content_attributes.call` theo hợp đồng
-// nhật ký cuộc gọi chung của mọi kênh (media, direction, outcome, duration_seconds) để bong bóng vẽ.
-// Hai bản mang chung `source_id` nên không bị gửi ra kênh và không ghi trùng.
+// Dấu vết cuộc gọi 1-1: khi phòng đóng, mỗi bên một tin hoạt động trong hội thoại của mình, lời
+// theo vai và theo ngôn ngữ hộp thư của người đó (người gọi thấy "Không ai nghe máy", người nhận
+// thấy "Cuộc gọi nhỡ"…). Tin mang `call` để nút Gọi lại dưới tin biết gọi lại kiểu gì.
 final readonly class DirectCallTrail implements CallTrail
 {
     private const DURATION_PARTS = 2;
-
-    public const SOURCE_PREFIX = 'yona-call:';
-
-    // Trạng thái kết thúc → kết cục trong hợp đồng nhật ký cuộc gọi.
-    private const OUTCOMES = [
-        'ended' => 'completed',
-        'missed' => 'missed',
-        'declined' => 'declined',
-        'cancelled' => 'canceled',
-    ];
-
-    // Người nhận đã tự nghe hoặc tự từ chối thì tin đó không tính là chưa đọc.
-    private const CALLEE_HANDLED = ['ended', 'declined'];
 
     // Trạng thái kết thúc → [khoá cho người gọi, khoá cho người nhận].
     private const OUTCOME_KEYS = [
@@ -73,36 +58,20 @@ final readonly class DirectCallTrail implements CallTrail
             ], $locale)
             : __('calls.ACTIVITY.'.(self::OUTCOME_KEYS[$call->status->value][$side] ?? 'DIRECT_MISSED'), [], $locale);
 
-        $isCaller = $side === 0;
-        $sourceId = self::SOURCE_PREFIX.$call->id;
-
-        if ($conversation->messages()->where('source_id', $sourceId)->exists()) {
-            return;
-        }
-
         $conversation->messages()->create([
             'account_id' => $conversation->account_id,
             'inbox_id' => $conversation->inbox_id,
-            'message_type' => $isCaller ? Message::TYPE_OUTGOING : Message::TYPE_INCOMING,
-            'sender_type' => $isCaller ? $owner->getMorphClass() : $conversation->contact?->getMorphClass(),
-            'sender_id' => $isCaller ? $owner->id : $conversation->contact_id,
-            'source_id' => $sourceId,
+            'message_type' => Message::TYPE_ACTIVITY,
             'content' => $content,
             'content_attributes' => [
                 'call' => [
                     'id' => $call->id,
                     'kind' => $call->kind,
                     'status' => $call->status->value,
-                    'media' => $call->media->value === 'video' ? 'video' : 'voice',
-                    'direction' => $isCaller ? 'outbound' : 'inbound',
-                    'outcome' => self::OUTCOMES[$call->status->value] ?? 'missed',
+                    'media' => $call->media->value,
                     'duration_seconds' => $durationSeconds,
                 ],
             ],
         ]);
-
-        if (! $isCaller && in_array($call->status->value, self::CALLEE_HANDLED, true)) {
-            $conversation->forceFill(['agent_last_seen_at' => now()])->save();
-        }
     }
 }

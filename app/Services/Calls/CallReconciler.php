@@ -3,6 +3,7 @@
 namespace App\Services\Calls;
 
 use App\Models\Call;
+use App\Models\CallParticipant;
 use App\Services\Calls\Media\MediaProviderFailed;
 use App\Services\Calls\Media\MediaRooms;
 use App\Services\Calls\Media\RoomEvent;
@@ -40,7 +41,7 @@ final readonly class CallReconciler
         }
 
         $now = CarbonImmutable::now();
-        $stored = $call->presentParticipants->keyBy('identity');
+        $stored = $call->presentParticipants->keyBy(fn (CallParticipant $row) => ParticipantIdentity::forUser($row->user_id)->toString());
 
         foreach (array_diff($connected, $stored->keys()->all()) as $identity) {
             $this->record($call, RoomEventType::ParticipantJoined, $now, $identity);

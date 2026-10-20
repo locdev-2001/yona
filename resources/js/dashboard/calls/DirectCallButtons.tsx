@@ -7,7 +7,6 @@ import { fetchDirectCallEligibility } from './api';
 import { useCallSession } from './callSession';
 import type { CallMediaKind } from './types';
 import { useCallsEnabled } from './useCallsEnabled';
-import { PHONE_TOUCH_HEIGHT, PHONE_TOUCH_SIZE } from './touchTarget';
 
 // Hội thoại 1-1 trên Yona đã hỏi máy chủ (gọi được hay không), nhớ trong phiên trang.
 const eligibilityByConversation = new Map<string, boolean>();
@@ -70,15 +69,15 @@ export default function DirectCallButtons({
     if (!isCompact) {
         return (
             <>
-                <Button sm slate ghost icon="i-lucide-phone" title={t('CALLS.DIRECT.CALL_VOICE')} className={`${PHONE_TOUCH_SIZE} ${className}`} onClick={() => onCall('audio')} />
-                <Button sm slate ghost icon="i-lucide-video" title={t('CALLS.DIRECT.CALL_VIDEO')} className={`${PHONE_TOUCH_SIZE} ${className}`} onClick={() => onCall('video')} />
+                <Button sm slate ghost icon="i-lucide-phone" title={t('CALLS.DIRECT.CALL_VOICE')} className={className} onClick={() => onCall('audio')} />
+                <Button sm slate ghost icon="i-lucide-video" title={t('CALLS.DIRECT.CALL_VIDEO')} className={className} onClick={() => onCall('video')} />
             </>
         );
     }
 
     return (
         <div ref={rootRef} className="relative">
-            <Button sm slate ghost icon="i-lucide-phone" title={t('CALLS.DIRECT.CALL')} className={`${PHONE_TOUCH_SIZE} ${className}`} onClick={() => setMenuOpen(open => !open)} />
+            <Button sm slate ghost icon="i-lucide-phone" title={t('CALLS.DIRECT.CALL')} className={className} onClick={() => setMenuOpen(open => !open)} />
             {isMenuOpen ? (
                 <DropdownMenu
                     menuItems={[
@@ -86,7 +85,6 @@ export default function DirectCallButtons({
                         { label: t('CALLS.DIRECT.CALL_VIDEO'), value: 'video', action: 'video', icon: 'i-lucide-video' },
                     ]}
                     className="top-full mt-1 end-0 w-44"
-                    itemClassName={PHONE_TOUCH_HEIGHT}
                     onAction={item => {
                         setMenuOpen(false);
                         onCall(item.action as CallMediaKind);

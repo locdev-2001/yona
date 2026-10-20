@@ -2,10 +2,7 @@ import { lazy, Suspense, useEffect, useState } from 'react';
 import type { VoiceOrbMode } from './orb/VoiceOrb';
 
 // three.js chỉ tải khi màn gọi lớn mở ra.
-// Tải trước ngay khi có cuộc gọi (đổ chuông, bấm gọi) để màn lớn mở ra là có quả cầu, không nháy bản tĩnh.
-export const loadVoiceOrb = () => import('./orb/VoiceOrb');
-
-const VoiceOrb = lazy(loadVoiceOrb);
+const VoiceOrb = lazy(() => import('./orb/VoiceOrb'));
 
 interface OrbTheme {
     colors: [string, string];

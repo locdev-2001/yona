@@ -12,7 +12,6 @@ use App\Services\Notification\PushDeliveryResult;
 use App\Services\Notification\WebPushGateway;
 use App\Services\Users\PersonalAccounts;
 use App\Services\Yona\YonaRelay;
-use Throwable;
 
 // Báo trạng thái cuộc gọi 1-1 tới cả hai người: sự kiện realtime `direct_call.updated` vào mọi
 // tab của từng người (mỗi người nhìn từ phía mình: vai, người kia, hội thoại trong hộp thư mình).
@@ -37,25 +36,11 @@ final readonly class DirectCallSignals
             return;
         }
 
-        $this->send($caller, $this->viewFor($call, $caller, $callee));
-        $this->send($callee, $this->viewFor($call, $callee, $caller));
+        ActionCableBroadcastJob::dispatch([$caller->pubsub_token], self::EVENT, $this->viewFor($call, $caller, $callee));
+        ActionCableBroadcastJob::dispatch([$callee->pubsub_token], self::EVENT, $this->viewFor($call, $callee, $caller));
 
         if ($call->status === CallStatus::Ringing) {
             PushIncomingDirectCallJob::dispatch($call->id);
-        }
-    }
-
-    // Chuông và kết cục phải tới ngay: phát thẳng trong yêu cầu, không xếp sau các job khác của hàng
-    // đợi. Máy chủ realtime lỗi thì mới lui về hàng đợi để tự thử lại.
-    /** @param array<string, mixed> $payload */
-    private function send(User $recipient, array $payload): void
-    {
-        $job = new ActionCableBroadcastJob([$recipient->pubsub_token], self::EVENT, $payload);
-
-        try {
-            dispatch_sync($job);
-        } catch (Throwable) {
-            dispatch($job);
         }
     }
 
@@ -76,8 +61,7 @@ final readonly class DirectCallSignals
                 'ringing_since' => $call->created_at?->toIso8601String(),
                 'answered_at' => $call->answered_at?->toIso8601String(),
                 'conversation_id' => $conversation->display_id,
-                // `contact_id`: liên hệ của người kia trong hộp thư người xem, để ảnh đại diện trùng khung chat.
-                'peer' => ['id' => $peer->id, 'contact_id' => $conversation->contact_id, 'name' => $peer->availableName(), 'avatar_url' => $peer->avatarUrl() ?: null],
+                'peer' => ['id' => $peer->id, 'name' => $peer->availableName(), 'avatar_url' => $peer->avatarUrl() ?: null],
             ],
         ];
     }

@@ -2490,7 +2490,7 @@ const messages: Record<string, unknown> = {
     "CALLS": {
         "ACTIVITY": {
             "ROOM_STARTED": ":actor started a voice room",
-            "ROOM_ENDED": "The voice room ended · :duration · :count person joined|The voice room ended · :duration · :count people joined",
+            "ROOM_ENDED": "The voice room ended · :duration · :count people joined",
             "DIRECT_ENDED_VOICE": "Voice call · :duration",
             "DIRECT_ENDED_VIDEO": "Video call · :duration",
             "DIRECT_MISSED": "Missed call",
@@ -2499,18 +2499,9 @@ const messages: Record<string, unknown> = {
             "DIRECT_YOU_DECLINED": "You declined the call",
             "DIRECT_CANCELLED": "Call cancelled"
         },
-        "LOG": {
-            "VOICE": "Voice call",
-            "VIDEO": "Video call",
-            "MISSED": "Missed call",
-            "NO_ANSWER": "No answer",
-            "CANCELLED": "Call cancelled",
-            "DECLINED_BY_PEER": "Call declined",
-            "YOU_DECLINED": "You declined",
-            "BUSY": "Busy"
-        },
         "DIRECT": {
             "CALL": "Call",
+            "OPEN_CHAT": "Message",
             "CALL_VOICE": "Voice call",
             "CALL_VIDEO": "Video call",
             "CALLING": "Calling…",
@@ -2518,20 +2509,20 @@ const messages: Record<string, unknown> = {
             "INCOMING_VOICE": "Incoming voice call",
             "INCOMING_VIDEO": "Incoming video call",
             "ACCEPT": "Answer",
-            "ACCEPT_VIDEO": "Video",
+            "ACCEPT_AUDIO_ONLY": "Audio only",
             "DECLINE": "Decline",
             "CANCEL": "Cancel call",
             "CALL_BACK": "Call back",
-            "PEER_DECLINED": "{name} declined the call",
-            "PEER_NO_ANSWER": "{name} didn't answer",
             "EXPAND": "Expand",
             "MINIMIZE": "Collapse",
             "END": "End call",
             "PEER_SPEAKING": "{name} is speaking",
             "YOU_SPEAKING": "You are speaking",
+            "SPEAKER_OFF": "Mute speaker",
+            "SPEAKER_ON": "Unmute speaker",
             "MUTE": "Mute",
             "CAMERA": "Camera",
-            "SOUND": "Sound",
+            "SPEAKER": "Speaker",
             "DEVICES": "Devices",
             "HIDE": "Hide"
         },
@@ -2547,8 +2538,8 @@ const messages: Record<string, unknown> = {
             "DEVICE_BLOCKED": "The browser has not allowed the microphone, camera or screen sharing",
             "NO_DEVICES": "No devices found",
             "CONNECTED": "Voice connected",
-            "DEAFEN": "Mute sound",
-            "UNDEAFEN": "Unmute sound",
+            "DEAFEN": "Deafen",
+            "UNDEAFEN": "Undeafen",
             "YOU_ARE_SHARING": "You are sharing your screen",
             "LIVE": "Live",
             "FULLSCREEN": "Full screen",
@@ -2576,8 +2567,6 @@ const messages: Record<string, unknown> = {
             "LEAVE": "Leave",
             "MUTE_PARTICIPANT": "Mute this person",
             "REMOVE_PARTICIPANT": "Remove from room",
-            "CONFIRM_REMOVE": "Remove",
-            "WAITING_FOR_OTHERS": "Waiting for others to join",
             "MUTED": "Muted"
         },
         "ERRORS": {
@@ -4172,6 +4161,13 @@ const messages: Record<string, unknown> = {
             },
             "REMINDER": {
                 "FALLBACK_TITLE": "Reminder"
+            },
+            "CALL": {
+                "VOICE": "Voice call",
+                "VIDEO": "Video call",
+                "MISSED": "missed",
+                "BUSY": "busy",
+                "CANCELED": "canceled"
             }
         },
         "LINK_PREVIEW": {

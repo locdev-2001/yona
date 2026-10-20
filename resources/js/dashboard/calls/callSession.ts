@@ -34,6 +34,7 @@ export interface DirectCallActions {
     hangUp: () => void;
     expand: () => void;
     collapse: () => void;
+    openChat: () => void;
 }
 
 export interface CallSession {
@@ -61,7 +62,7 @@ const noop = () => undefined;
 
 const IDLE_SESSION: CallSession = {
     room: null,
-    local: { micOn: false, micStarting: false, camOn: false, sharingScreen: false, deafened: false, canShareScreen: false, canModerate: false },
+    local: { micOn: false, camOn: false, sharingScreen: false, deafened: false, canShareScreen: false, canModerate: false },
     stageOpen: false,
     isJoining: false,
     groupId: null,
@@ -85,7 +86,7 @@ const IDLE_SESSION: CallSession = {
     startDirectCall: noop,
     recoverDirectCall: noop,
     direct: null,
-    directActions: { accept: noop, hangUp: noop, expand: noop, collapse: noop },
+    directActions: { accept: noop, hangUp: noop, expand: noop, collapse: noop, openChat: noop },
     selfIdentity: null,
     readAudioLevel: () => 0,
 };

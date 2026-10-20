@@ -86,18 +86,13 @@ final readonly class CallPresenceRecorder
 
     private function recordJoin(Call $call, RoomEvent $event): void
     {
-        $participant = ParticipantIdentity::parse($event->identity);
+        $userId = $this->storableUserId($event);
 
-        if ($participant === null || $call->isEnded() || $this->isPresent($call, $participant)) {
+        if ($userId === null || $call->isEnded() || $call->presentParticipants()->where('user_id', $userId)->exists()) {
             return;
         }
 
-        $call->participants()->create([
-            'identity' => $participant->toString(),
-            'user_id' => $participant->userId(),
-            'display_name' => $event->displayName,
-            'joined_at' => $event->occurredAt,
-        ]);
+        $call->participants()->create(['user_id' => $userId, 'joined_at' => $event->occurredAt]);
         $this->markStarted($call, $event->occurredAt);
         $call->peak_participants = max($call->peak_participants, $call->presentParticipants()->count());
         $call->save();
@@ -106,22 +101,18 @@ final readonly class CallPresenceRecorder
 
     private function recordLeave(Call $call, RoomEvent $event): void
     {
-        $participant = ParticipantIdentity::parse($event->identity);
+        $userId = $this->storableUserId($event);
 
-        if ($participant === null) {
+        if ($userId === null) {
             return;
         }
 
         CallParticipant::query()
             ->whereBelongsTo($call)
-            ->where('identity', $participant->toString())
+            ->where('user_id', $userId)
             ->whereNull('left_at')
             ->update(['left_at' => $event->occurredAt]);
-
-        if ($participant->userId() !== null) {
-            $this->screenShares->stop($call, $participant->userId());
-        }
-
+        $this->screenShares->stop($call, $userId);
         $this->notifyPresenceChanged($call);
     }
 
@@ -144,10 +135,10 @@ final readonly class CallPresenceRecorder
     // gì (phòng chưa đóng, người đó còn dòng mở). Không hỏi được thì coi như đã rời.
     private function leaverStillConnected(RoomEvent $event, MediaRooms $rooms): bool
     {
-        $participant = ParticipantIdentity::parse($event->identity);
-        $call = $participant === null ? null : Call::query()->where('uuid', $event->room)->first();
+        $userId = $this->storableUserId($event);
+        $call = $userId === null ? null : Call::query()->where('uuid', $event->room)->first();
 
-        if ($call === null || $call->isEnded() || ! $this->isPresent($call, $participant)) {
+        if ($call === null || $call->isEnded() || ! $call->presentParticipants()->where('user_id', $userId)->exists()) {
             return false;
         }
 
@@ -163,12 +154,7 @@ final readonly class CallPresenceRecorder
         DB::afterCommit(fn () => $this->kinds->presenceObserverOf($call)?->presenceChanged($call));
     }
 
-    private function isPresent(Call $call, ParticipantIdentity $participant): bool
-    {
-        return $call->presentParticipants()->where('identity', $participant->toString())->exists();
-    }
-
-    // Chia sẻ màn hình hiện ghi theo người dùng (ScreenShares), khách chưa chia sẻ được.
+    // `call_participants` hiện chỉ chứa người dùng Yona; khách (meeting) chờ schema được duyệt.
     private function storableUserId(RoomEvent $event): ?int
     {
         return ParticipantIdentity::parse($event->identity)?->userId();

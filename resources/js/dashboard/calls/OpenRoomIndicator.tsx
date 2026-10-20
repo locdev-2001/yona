@@ -10,7 +10,7 @@ export default function OpenRoomIndicator({ room }: { room: OpenRoomSummary }) {
             className="flex items-center gap-1 flex-shrink-0 text-xs font-medium text-n-teal-11"
             title={t('CALLS.ROOM.OPEN_IN_LIST', { count: room.total })}
         >
-            <Icon icon="i-lucide-headphones" className="size-3" />
+            <Icon icon="i-lucide-volume-2" className="size-3" />
             <CallDuration startedAt={room.started_at} />
         </span>
     );

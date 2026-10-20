@@ -293,8 +293,6 @@ const tailwindConfig = {
     // eslint-disable-next-line
     require('@tailwindcss/typography'),
     hiddenScrollbarPlugin,
-    // `touch:` cho màn cảm ứng (máy tính bảng ≥768px vẫn cần vùng chạm 44px như điện thoại).
-    ({ addVariant }) => addVariant('touch', '@media (pointer: coarse)'),
     iconsPlugin({
       collections: {
         yona: { icons: yonaIcons },
