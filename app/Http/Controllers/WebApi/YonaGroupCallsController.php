@@ -7,7 +7,7 @@ use App\Http\Resources\CallResource;
 use App\Models\Account;
 use App\Models\YonaGroup;
 use App\Services\Calls\CallMedia;
-use App\Services\Calls\GroupRooms;
+use App\Services\Groups\Calls\GroupRooms;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -31,7 +31,8 @@ class YonaGroupCallsController extends Controller
 
         return response()->json([
             'call' => CallResource::from($join->call),
-            'ticket' => $join->ticket->toArray(),
+            'ticket' => $join->ticket?->toArray(),
+            'awaiting_approval' => $join->isAwaitingApproval(),
         ]);
     }
 }

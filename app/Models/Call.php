@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Services\Calls\CallKind;
 use App\Services\Calls\CallMedia;
 use App\Services\Calls\CallStatus;
 use Illuminate\Database\Eloquent\Builder;
@@ -10,8 +9,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-// Một phòng thoại nhóm hoặc một cuộc gọi 1-1. `uuid` là tên phòng phía nhà cung cấp media.
-// Một dòng ứng với một đời phòng: phòng nhóm đóng khi vắng người, lần vào sau mở dòng mới.
+// Một đời phòng media. `uuid` là tên phòng phía nhà cung cấp; `kind` là khoá trong sổ loại
+// cuộc gọi (config/calls.php), do module sở hữu loại đó tạo dòng.
 class Call extends Model
 {
     protected $fillable = [
@@ -22,7 +21,6 @@ class Call extends Model
     protected function casts(): array
     {
         return [
-            'kind' => CallKind::class,
             'media' => CallMedia::class,
             'status' => CallStatus::class,
             'started_at' => 'datetime',

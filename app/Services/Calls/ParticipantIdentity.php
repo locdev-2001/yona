@@ -2,25 +2,58 @@
 
 namespace App\Services\Calls;
 
-// Định danh người trong phòng media: `user:{id}`. Lõi tự dựng và tự đọc, nên mọi nhà
-// cung cấp chỉ chuyển nguyên chuỗi này qua lại.
-final class ParticipantIdentity
+// Định danh một người trong phòng media: `user:{id}` cho người dùng Yona, `guest:{key}` cho
+// khách không tài khoản. Lõi tự dựng và tự đọc, mọi nhà cung cấp chỉ chuyển nguyên chuỗi.
+final readonly class ParticipantIdentity
 {
-    private const PREFIX = 'user:';
+    private const USER = 'user';
 
-    public static function forUser(int $userId): string
+    private const GUEST = 'guest';
+
+    private const GUEST_KEY_PATTERN = '/^[A-Za-z0-9_-]{8,64}$/';
+
+    private function __construct(
+        private string $kind,
+        private string $key,
+    ) {}
+
+    public static function forUser(int $userId): self
     {
-        return self::PREFIX.$userId;
+        return new self(self::USER, (string) $userId);
     }
 
-    public static function userId(?string $identity): ?int
+    public static function forGuest(string $key): self
     {
-        if ($identity === null || ! str_starts_with($identity, self::PREFIX)) {
-            return null;
+        if (preg_match(self::GUEST_KEY_PATTERN, $key) !== 1) {
+            throw new \InvalidArgumentException('Guest key must be 8-64 URL-safe characters');
         }
 
-        $userId = substr($identity, strlen(self::PREFIX));
+        return new self(self::GUEST, $key);
+    }
 
-        return ctype_digit($userId) ? (int) $userId : null;
+    public static function parse(?string $identity): ?self
+    {
+        [$kind, $key] = explode(':', (string) $identity, 2) + [null, null];
+
+        return match (true) {
+            $kind === self::USER && ctype_digit((string) $key) => self::forUser((int) $key),
+            $kind === self::GUEST && preg_match(self::GUEST_KEY_PATTERN, (string) $key) === 1 => self::forGuest($key),
+            default => null,
+        };
+    }
+
+    public function userId(): ?int
+    {
+        return $this->kind === self::USER ? (int) $this->key : null;
+    }
+
+    public function isGuest(): bool
+    {
+        return $this->kind === self::GUEST;
+    }
+
+    public function toString(): string
+    {
+        return $this->kind.':'.$this->key;
     }
 }

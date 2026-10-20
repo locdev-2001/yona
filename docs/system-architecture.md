@@ -622,51 +622,55 @@ nhóm sẵn có. Tạo nhóm và thêm bạn dùng `shared/people/PickPeopleDial
   kênh không khai năng lực tương ứng.
 - **Sửa tin** trên kênh Yona: kênh không khai năng lực sửa.
 
-## 12. Cuộc gọi: lõi trung tính, nhà cung cấp media là driver
+## 12. Cuộc gọi: lõi trung tính, module dùng lõi, nhà cung cấp media là driver
 
-Phòng thoại nhóm (luôn mở, tối đa 25 người) và gọi 1-1 đi chung một lõi
-`App\Services\Calls`. Thoại, video, chia sẻ màn hình không phải ba hệ thống: chúng là
-**quyền phát nguồn** của người trong phòng (`Media\MediaSource`: microphone, camera,
-screen, screen_audio, gom trong `Media\ParticipantPermissions`). Loại cuộc gọi là
-**chính sách** trên cùng lõi. Lõi không có chữ `livekit`; mọi thứ của LiveKit nằm trong
-`app/Services/Calls/Media/LiveKit/`.
+Ba tầng, mỗi tầng chỉ biết tầng ngay dưới:
+
+1. **Module dùng lõi** (theo chức năng): phòng thoại nhóm ở `App\Services\Groups\Calls`
+   (`GroupRooms` + `GroupRoomPolicy`); gọi 1-1 và meeting sẽ là module anh em. Module tự
+   tạo dòng `calls` của mình và khai luật của loại đó.
+2. **Lõi `App\Services\Calls`**: không biết nhóm, 1-1, meeting hay nhà cung cấp nào.
+   `CallService` (cấp phép, mở phòng, cấp vé, điều hành), `CallPresenceRecorder` (ghi vào/ra
+   từ sự kiện phòng), sổ loại cuộc gọi `Kinds\CallKinds`.
+3. **Driver media** `App\Services\Calls\Media\LiveKit` sau các contract `Media\*`.
 
 ```
-YonaGroupCallsController ─► GroupRooms (tạo/tìm dòng calls của nhóm)
-                          ┌─────────┘                    ┌─ MediaRooms       (mở/đóng phòng)
-                          ├─► CallService ──────────────►├─ MediaTickets     (vé vào phòng + quyền)
-                          │     │ CallPolicies            └─ MediaModeration  (tắt nguồn, đưa ra)
-                          │     ├─ GroupRoomPolicy (≤25, quản trị nhóm điều hành)
-                          │     └─ DirectCallPolicy (2 người, không ai điều hành)
-POST /webhooks/media/{provider} ─► MediaDrivers::named() ─► MediaWebhooks::parse() ─► RoomEvent
-                                                                       └─► CallPresenceRecorder
-MediaDriver (gom 4 vai) ◄── LiveKitDriver: LiveKitRooms · LiveKitTickets · LiveKitModeration
-                                           · LiveKitWebhooks  (dùng chung LiveKitRoomService,
-                                             LiveKitTokenSigner, LiveKitCredentials)
+GroupRooms (module nhóm) ─► CallService ─► CallKinds ─► CallPolicy / CallTrail của module
+                                │                        (config/calls.php `kinds`)
+                                └─► MediaRooms · MediaTickets · MediaModeration ◄─ LiveKitDriver
+POST /webhooks/media/{provider} ─► MediaDrivers ─► MediaWebhooks ─► RoomEvent ─► CallPresenceRecorder
+                                                                                 └─► CallTrail
 ```
 
-- **Chọn nhà cung cấp:** `config/calls.php` (`provider` = `MEDIA_PROVIDER`, `drivers` =
-  tên → lớp driver). `AppServiceProvider` gắn `MediaRooms`/`MediaTickets`/`MediaModeration`
-  vào driver đang chọn, nên `CallService` chỉ nhận contract. Thêm nhà cung cấp = một driver
-  cài `MediaDriver` + một dòng `drivers`, lõi không đổi.
-- **`CallService` không biết nhóm, 1-1 hay meeting:** nó nhận một dòng `calls` có sẵn và hỏi
-  chính sách theo `calls.kind`. Mỗi tính năng tự tạo dòng `calls` của mình rồi gọi
-  `CallService::join` (phòng nhóm: `GroupRooms`; gọi 1-1, meeting: lớp riêng sau này). Thêm
-  loại cuộc gọi = một lớp tạo dòng + một chính sách + một dòng ở `CallPolicies`.
+- **Loại cuộc gọi = một dòng sổ:** `config/calls.php` `kinds` map `calls.kind` →
+  `policy` (`Kinds\CallPolicy`: trần người, `admit`, ai điều hành) và `trail`
+  (`Kinds\CallTrail`, tuỳ chọn: phòng bắt đầu/kết thúc thì để lại tin hệ thống hay lịch
+  sử). Lõi không có `if` theo loại. Thêm loại = một module + một dòng sổ.
+- **Người vào phòng trung tính:** `CallAttendee` = định danh + tên hiển thị + `User` nếu có.
+  `ParticipantIdentity` là `user:{id}` hoặc `guest:{key}` (khách không tài khoản), lõi tự
+  dựng và tự đọc. Điều hành nhắm vào định danh, nên đưa được cả khách ra.
+- **Cấp phép là bước riêng:** `CallService::admit` hỏi chính sách, trả `Admission` được vào
+  (kèm `ParticipantPermissions`) hoặc chờ duyệt (phòng chờ); bị từ chối thì chính sách ném
+  lỗi. Chờ duyệt thì `CallJoin` không có vé (`awaiting_approval`). Module gọi `admit` trước
+  khi tạo dòng `calls` để người không có quyền không mở được phòng.
+- **Thoại, video, chia sẻ màn hình là quyền phát nguồn** (`Media\MediaSource`: microphone,
+  camera, screen, screen_audio), không phải ba hệ thống. Chính sách quyết định ai phát gì.
+- **Chọn nhà cung cấp:** `config/calls.php` (`provider` = `MEDIA_PROVIDER`, `drivers`).
+  `AppServiceProvider` gắn `MediaRooms`/`MediaTickets`/`MediaModeration` vào driver đang
+  chọn. Thêm nhà cung cấp = một driver cài `MediaDriver` + một dòng `drivers`.
 - **Một dòng `calls` = một đời phòng.** Tên phòng phía nhà cung cấp là `calls.uuid`.
-  `GroupRooms::join` dùng phòng nhóm đang mở hoặc tạo dòng mới (index một phòng
-  mở mỗi nhóm chặn hai dòng khi hai người mở cùng lúc); `CallService::join` gọi `MediaRooms::open` (gọi lại an
-  toàn, nên phòng phía nhà cung cấp lỡ đóng thì tự mở lại) rồi cấp vé 1 giờ. Phòng chưa ai
-  vào đóng sau 60 giây, người cuối rời thì đóng sau 20 giây; lần vào sau mở dòng mới.
-  "Phòng luôn mở" là khái niệm giao diện, không phải một phòng media sống mãi.
-- **Ai đang trong phòng chỉ ghi từ sự kiện phòng**, không từ client:
-  `CallPresenceRecorder` nhận `RoomEvent` (bắt đầu/kết thúc phòng, vào/ra) và ghi
-  `call_participants`, `started_at`, `ended_at`, `peak_participants`. Khoá dòng `calls` và
-  chịu được sự kiện gửi lại/lệch thứ tự (đã có dòng mở thì bỏ qua). Phòng kết thúc thì khép
-  mọi dòng còn mở. Định danh trong phòng là `user:{id}` (`ParticipantIdentity`).
-- **Vé không mang quyền điều hành:** người tham gia không có kênh dữ liệu (chat trong phòng
-  đi qua hội thoại nhóm) và không có quyền quản trị phòng; tắt mic/đưa ra chỉ đi từ máy chủ
-  qua `CallService::mute`/`remove` sau khi chính sách cho phép.
+  `GroupRooms` dùng phòng nhóm đang mở hoặc tạo dòng mới (index một phòng mở mỗi nhóm chặn
+  hai dòng khi hai người mở cùng lúc). `CallService::join` gọi `MediaRooms::open` (gọi lại an
+  toàn, phòng phía nhà cung cấp lỡ đóng thì tự mở lại) rồi cấp vé 1 giờ. Phòng chưa ai vào
+  đóng sau 60 giây, người cuối rời thì đóng sau 20 giây; lần vào sau mở dòng mới. "Phòng
+  luôn mở" là khái niệm giao diện, không phải một phòng media sống mãi.
+- **Ai đang trong phòng chỉ ghi từ sự kiện phòng**, không từ client: `CallPresenceRecorder`
+  ghi `call_participants`, `started_at`, `ended_at`, `peak_participants`, khoá dòng `calls`,
+  chịu được sự kiện gửi lại/lệch thứ tự; người đầu tiên vào cũng đánh dấu phòng đã bắt đầu
+  (sự kiện bắt đầu có thể mất). Sau commit gọi `CallTrail` của loại. Khách chưa lưu được vì
+  `call_participants.user_id` bắt buộc.
+- **Vé không mang quyền điều hành:** không kênh dữ liệu (chat trong phòng đi qua hội thoại),
+  không quyền quản trị phòng; tắt mic/đưa ra chỉ đi từ máy chủ qua `CallService::mute`/`remove`.
 - **Driver LiveKit:** token HS256 ký bằng `firebase/php-jwt` (`iss` = API key, `sub` =
   identity, `name`, grant `video` có `room`, `roomJoin`, `canPublish`, `canPublishSources`,
   `canSubscribe`, `canPublishData`). API phòng qua Twirp JSON
@@ -680,6 +684,5 @@ MediaDriver (gom 4 vai) ◄── LiveKitDriver: LiveKitRooms · LiveKitTickets 
 
 | Route | Ghi chú |
 |---|---|
-| `POST /api/v1/accounts/{account}/yona/groups/{id}/call` (`media`: audio\|video) | Vào phòng thoại nhóm (mở nếu chưa có); trả `call` và `ticket` (`server_url`, `token`, `expires_at`) |
+| `POST /api/v1/accounts/{account}/yona/groups/{id}/call` (`media`: audio\|video) | Vào phòng thoại nhóm (mở nếu chưa có); trả `call`, `ticket` (`server_url`, `token`, `expires_at`; null khi chờ duyệt), `awaiting_approval` |
 | `POST /webhooks/media/{provider}` | Sự kiện phòng từ nhà cung cấp, không session; driver tự kiểm chữ ký |
-

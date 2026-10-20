@@ -5,19 +5,17 @@ namespace App\Services\Calls;
 use App\Exceptions\CallActionRejected;
 use App\Models\Call;
 use App\Models\User;
+use App\Services\Calls\Kinds\CallKinds;
 use App\Services\Calls\Media\MediaModeration;
 use App\Services\Calls\Media\MediaRooms;
 use App\Services\Calls\Media\MediaSource;
 use App\Services\Calls\Media\MediaTickets;
 use App\Services\Calls\Media\RoomSpec;
 use App\Services\Calls\Media\TicketRequest;
-use App\Services\Calls\Policies\CallPolicies;
-use App\Services\Calls\Policies\CallPolicy;
 
-// Lõi cuộc gọi: không biết nhóm, 1-1 hay nhà cung cấp media nào. Nhận một dòng `calls` đã
-// có, hỏi chính sách theo loại để vào phòng, cấp vé, điều hành. Mỗi tính năng (phòng nhóm,
-// gọi 1-1…) tự tạo dòng `calls` của mình rồi gọi vào đây. Ai đang ở trong phòng không ghi ở
-// đây mà từ sự kiện phòng (CallPresenceRecorder).
+// Lõi cuộc gọi: không biết nhóm, 1-1, meeting hay nhà cung cấp media nào. Module dùng lõi tự
+// tạo dòng `calls` của mình rồi gọi vào đây; luật từng loại lấy từ sổ CallKinds. Ai đang ở
+// trong phòng không ghi ở đây mà từ sự kiện phòng (CallPresenceRecorder).
 final readonly class CallService
 {
     private const TICKET_TTL_SECONDS = 3600;
@@ -29,44 +27,56 @@ final readonly class CallService
     private const DEPARTURE_TIMEOUT_SECONDS = 20;
 
     public function __construct(
-        private CallPolicies $policies,
+        private CallKinds $kinds,
         private MediaRooms $rooms,
         private MediaTickets $tickets,
         private MediaModeration $moderation,
     ) {}
 
-    public function join(Call $call, User $user): CallJoin
+    // Bước cấp phép tách riêng để module hỏi trước khi tạo dòng `calls` của mình.
+    public function admit(Call $call, CallAttendee $attendee): Admission
     {
-        $policy = $this->policyOf($call);
-        $policy->authorizeJoin($call, $user);
+        return $this->kinds->policyOf($call)->admit($call, $attendee);
+    }
+
+    public function join(Call $call, CallAttendee $attendee): CallJoin
+    {
+        $admission = $this->admit($call, $attendee);
 
         if ($call->isEnded()) {
             throw new CallActionRejected('CALL_ENDED');
         }
 
-        $this->rooms->open(new RoomSpec($call->uuid, $policy->maxParticipants(), self::EMPTY_ROOM_TIMEOUT_SECONDS, self::DEPARTURE_TIMEOUT_SECONDS));
+        if (! $admission->isGranted()) {
+            return new CallJoin($call, null);
+        }
 
-        $ticket = $this->tickets->issue(new TicketRequest(
+        $this->rooms->open(new RoomSpec(
             $call->uuid,
-            ParticipantIdentity::forUser($user->id),
-            $user->availableName(),
-            $policy->permissionsFor($call, $user),
-            self::TICKET_TTL_SECONDS,
+            $this->kinds->policyOf($call)->maxParticipants(),
+            self::EMPTY_ROOM_TIMEOUT_SECONDS,
+            self::DEPARTURE_TIMEOUT_SECONDS,
         ));
 
-        return new CallJoin($call, $ticket);
+        return new CallJoin($call, $this->tickets->issue(new TicketRequest(
+            $call->uuid,
+            $attendee->identity->toString(),
+            $attendee->displayName,
+            $admission->permissions,
+            self::TICKET_TTL_SECONDS,
+        )));
     }
 
-    public function mute(Call $call, User $actor, User $target, MediaSource $source): void
+    public function mute(Call $call, User $actor, ParticipantIdentity $target, MediaSource $source): void
     {
         $this->authorizeModeration($call, $actor);
-        $this->moderation->mute($call->uuid, ParticipantIdentity::forUser($target->id), $source);
+        $this->moderation->mute($call->uuid, $target->toString(), $source);
     }
 
-    public function remove(Call $call, User $actor, User $target): void
+    public function remove(Call $call, User $actor, ParticipantIdentity $target): void
     {
         $this->authorizeModeration($call, $actor);
-        $this->moderation->remove($call->uuid, ParticipantIdentity::forUser($target->id));
+        $this->moderation->remove($call->uuid, $target->toString());
     }
 
     // Đóng phòng phía nhà cung cấp; dòng `calls` khép lại khi sự kiện phòng kết thúc về tới.
@@ -77,13 +87,8 @@ final readonly class CallService
 
     private function authorizeModeration(Call $call, User $actor): void
     {
-        if (! $this->policyOf($call)->mayModerate($call, $actor)) {
+        if (! $this->kinds->policyOf($call)->mayModerate($call, $actor)) {
             throw CallActionRejected::forbidden('MODERATION_FORBIDDEN');
         }
-    }
-
-    private function policyOf(Call $call): CallPolicy
-    {
-        return $this->policies->for($call->kind);
     }
 }

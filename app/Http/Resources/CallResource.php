@@ -11,7 +11,7 @@ final class CallResource
     {
         return [
             'id' => $call->id,
-            'kind' => $call->kind->value,
+            'kind' => $call->kind,
             'media' => $call->media->value,
             'status' => $call->status->value,
             'started_at' => $call->started_at?->toIso8601String(),
