@@ -195,7 +195,7 @@ export default function GroupInfo({ group }: { group: GroupSummary }) {
                     confirm?.kind === 'remove' ? t('CHAT.GROUP.REMOVE_TITLE', { name: confirm.member.name }) : t('CHAT.GROUP.LEAVE_TITLE')
                 }
                 description={confirm?.kind === 'remove' ? t('CHAT.GROUP.REMOVE_BODY') : t('CHAT.GROUP.LEAVE_BODY')}
-                confirmButtonLabel={confirm?.kind === 'remove' ? t('CHAT.GROUP.REMOVE') : t('CHAT.GROUP.LEAVE')}
+                confirmButtonLabel={confirm?.kind === 'remove' ? t('CHAT.GROUP.REMOVE_CONFIRM') : t('CHAT.GROUP.LEAVE')}
                 onConfirm={() => void confirmPending()}
                 onClose={() => setConfirm(null)}
             />

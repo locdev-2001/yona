@@ -43,8 +43,12 @@ export default function GroupInviteLinks({ accountId, groupId }: { accountId: nu
     };
 
     const copy = async (url: string) => {
-        await copyTextToClipboard(url);
-        useAlert(t('CHAT.GROUP.COPIED'));
+        try {
+            await copyTextToClipboard(url);
+            useAlert(t('CHAT.GROUP.COPIED'));
+        } catch (error) {
+            fail(error);
+        }
     };
 
     const revoke = async (linkId: number) => {

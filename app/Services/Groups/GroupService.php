@@ -3,7 +3,9 @@
 namespace App\Services\Groups;
 
 use App\Builders\ContactInboxWithContactBuilder;
+use App\Events\EventType;
 use App\Exceptions\GroupActionRejected;
+use App\Jobs\ActionCableBroadcastJob;
 use App\Models\Account;
 use App\Models\Contact;
 use App\Models\ContactInbox;
@@ -159,9 +161,11 @@ final class GroupService
         return DB::transaction(function () use ($group, $admin, $name) {
             $group->update(['name' => $name]);
             $group->account->update(['name' => $name]);
+            // Qua model để mỗi hộp thư nhận `contact.updated`: danh sách và tiêu đề đổi tên ngay.
             Contact::query()
                 ->whereIn('id', ContactInbox::query()->where('source_id', YonaGroup::contactSourceIdFor($group->id))->select('contact_id'))
-                ->update(['name' => $name]);
+                ->get()
+                ->each(fn (Contact $contact) => $contact->update(['name' => $name]));
             $this->postActivity($group, 'RENAMED', ['actor' => $admin->availableName(), 'name' => $name]);
 
             return $group;
@@ -373,7 +377,12 @@ final class GroupService
         return $name;
     }
 
-    /** @param  array<string, string>  $replace */
+    /**
+     * Mỗi thay đổi của nhóm để lại một tin hoạt động trong hội thoại gốc, rồi báo dòng
+     * nhóm của mọi thành viên (cả người vừa rời) đọc lại tên, số thành viên, vai trò.
+     *
+     * @param  array<string, string>  $replace
+     */
     private function postActivity(YonaGroup $group, string $key, array $replace): void
     {
         $thread = $group->conversation;
@@ -384,5 +393,17 @@ final class GroupService
             'message_type' => Message::TYPE_ACTIVITY,
             'content' => __('groups.ACTIVITY.'.$key, $replace),
         ]);
+
+        DB::afterCommit(fn () => $this->refreshMemberRows($group));
+    }
+
+    private function refreshMemberRows(YonaGroup $group): void
+    {
+        $group->members()->with(['user:id,pubsub_token', 'conversation:id,account_id,display_id'])->get()
+            ->each(fn (YonaGroupMember $member) => ActionCableBroadcastJob::dispatch(
+                [$member->user->pubsub_token],
+                EventType::CONVERSATION_UPDATED->value,
+                ['account_id' => $member->conversation->account_id, 'id' => $member->conversation->display_id],
+            ));
     }
 }
