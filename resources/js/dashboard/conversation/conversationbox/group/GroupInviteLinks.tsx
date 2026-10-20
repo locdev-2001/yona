@@ -9,8 +9,8 @@ import { t } from '../../../../i18n';
 import { createGroupInviteLink, fetchGroupInviteLinks, revokeGroupInviteLink } from '../../groupsApi';
 import type { GroupInviteLink } from '../../groupsApi';
 
-// Link mời của nhóm (chỉ quản trị): tạo link, sao chép ngay lúc tạo (máy chủ chỉ giữ bản
-// băm nên sau đó không xem lại được), xem các link đang dùng và thu hồi.
+// Link mời của nhóm (chỉ quản trị): mỗi nhóm một link đang dùng, tạo link mới thì máy chủ thu
+// hồi link cũ. Sao chép ngay lúc tạo (máy chủ chỉ giữ bản băm nên sau đó không xem lại được).
 export default function GroupInviteLinks({ accountId, groupId }: { accountId: number; groupId: number }) {
     const [links, setLinks] = useState<GroupInviteLink[]>([]);
     const [freshUrl, setFreshUrl] = useState<string | null>(null);
@@ -98,7 +98,7 @@ export default function GroupInviteLinks({ accountId, groupId }: { accountId: nu
             ) : (
                 <p className="m-0 text-xs text-n-slate-11">{t('CHAT.GROUP.INVITE_EMPTY')}</p>
             )}
-            <Button faded slate sm icon="i-lucide-link" label={t('CHAT.GROUP.INVITE_CREATE')} isLoading={isCreating} className="self-start" onClick={() => void create()} />
+            <Button faded slate sm icon="i-lucide-link" label={t(links.length > 0 ? 'CHAT.GROUP.INVITE_RENEW' : 'CHAT.GROUP.INVITE_CREATE')} isLoading={isCreating} className="self-start" onClick={() => void create()} />
         </section>
     );
 }

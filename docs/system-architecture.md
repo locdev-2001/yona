@@ -582,7 +582,7 @@ hộp thư sẵn có. Giao diện mở hội thoại mới:
 | `POST /api/v1/accounts/{account}/yona/groups` (`name`, `user_ids[]`) | Tạo nhóm; trả nhóm theo góc nhìn người tạo, `conversation_id` là dòng của họ |
 | `GET/PATCH /api/v1/accounts/{account}/yona/groups/{id}` | Xem kèm thành viên · đổi tên (quản trị) |
 | `POST /…/yona/groups/{id}/members` · `PATCH/DELETE /…/members/{userId}` | Thêm bạn bè · đổi vai trò · đưa ra (xoá chính mình = rời) |
-| `GET/POST /…/yona/groups/{id}/invite_links` · `DELETE /…/invite_links/{linkId}` | Link mời (quản trị); token chỉ trả lúc tạo |
+| `GET/POST /…/yona/groups/{id}/invite_links` · `DELETE /…/invite_links/{linkId}` | Link mời (quản trị); token chỉ trả lúc tạo; tạo link mới thu hồi mọi link cũ (mỗi nhóm một link đang dùng) |
 | `GET /api/v1/group_invites/{token}` · `POST /api/v1/group_invites/{token}/accept` | Xem trước · tham gia bằng link |
 | `GET /g/{token}` · `POST /g/{token}` | Trang mở link mời (`Chat\GroupInvitesController`, trang `v3/views/groups/invite/Index`): ai cũng xem được; khách được giữ `url.intended` để đăng nhập/đăng ký xong quay lại; tham gia xong tải lại trọn trang vào hội thoại nhóm |
 | `GET /api/v1/users/search?scope=friends` | Tìm trong bạn bè, ô tìm trống trả luôn danh sách bạn bè (chọn người thêm vào nhóm) |

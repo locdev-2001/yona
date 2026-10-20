@@ -198,7 +198,12 @@ final class GroupService
     {
         $this->permissions->admin($group, $admin);
 
-        return YonaGroupInviteLink::issue($group, $admin, $expiresInDays, $maxUses);
+        // Mỗi nhóm chỉ một link đang dùng: link mới thay link cũ.
+        return DB::transaction(function () use ($group, $admin, $expiresInDays, $maxUses) {
+            $group->inviteLinks()->whereNull('revoked_at')->update(['revoked_at' => now()]);
+
+            return YonaGroupInviteLink::issue($group, $admin, $expiresInDays, $maxUses);
+        });
     }
 
     public function revokeInviteLink(YonaGroup $group, User $admin, int $linkId): void

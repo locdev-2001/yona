@@ -72,11 +72,6 @@ export default function ChatListHeader({
                             label={t('CHAT.NEW.TITLE')}
                             onClick={() => newYonaChatRef.current?.open()}
                         />
-                        <ListHeaderButton
-                            icon="i-lucide-users-round"
-                            label={t('CHAT.GROUP.NEW')}
-                            onClick={() => newGroupRef.current?.open()}
-                        />
                         <ListFilterButton
                             isOnExpandedLayout={isOnExpandedLayout}
                             isAdvancedActive={isAdvancedActive}
@@ -90,7 +85,16 @@ export default function ChatListHeader({
                         />
                     </div>
                 </div>
-                <ChatListSearch />
+                <ChatListSearch
+                    actions={
+                        <ListHeaderButton
+                            variant="field"
+                            icon="i-lucide-users-round"
+                            label={t('CHAT.GROUP.NEW')}
+                            onClick={() => newGroupRef.current?.open()}
+                        />
+                    }
+                />
                 <FindPeopleDialog ref={newYonaChatRef} title={t('CHAT.NEW.TITLE')} description={t('CHAT.NEW.DESCRIPTION')} />
                 <CreateGroupDialog ref={newGroupRef} />
                 <div id="conversationFilterTeleportTarget" className={`absolute top-full z-50 ${anchorSide}`} />

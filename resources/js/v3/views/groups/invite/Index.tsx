@@ -6,6 +6,9 @@ import type { SharedPageProps } from '../../../../types';
 import { t } from '../../../../i18n';
 import { useAlert } from 'dashboard/composables/useAlert';
 import NextButton from 'dashboard/components-next/button/Button';
+import Avatar from 'dashboard/components-next/avatar/Avatar';
+import type { AvatarStackPerson } from 'shared/avatar/AvatarStack';
+import { conversationAvatarSeed, conversationAvatarStack } from 'shared/avatar/avatarSeed';
 import AuthShell, { authCard } from 'v3/components/AuthShell';
 import { BrandMark } from '../../../components/BrandMark';
 
@@ -14,9 +17,18 @@ type InviteStatus = 'active' | 'not_found' | 'revoked' | 'expired' | 'exhausted'
 interface GroupInvitePageProps extends SharedPageProps {
     status: InviteStatus;
     token: string;
-    group: { name: string; member_count: number; inviter: string | null } | null;
+    group: {
+        id: number;
+        name: string;
+        avatar_seed: string | null;
+        avatar_members: AvatarStackPerson[];
+        member_count: number;
+        inviter: string | null;
+    } | null;
     openUrl: string | null;
 }
+
+const GROUP_AVATAR_SIZE_PX = 72;
 
 const ERROR_STATUS_KEYS: Record<Exclude<InviteStatus, 'active'>, string> = {
     not_found: 'NOT_FOUND',
@@ -58,6 +70,14 @@ export default function GroupInviteIndex() {
 
                 {group ? (
                     <div className="flex flex-col items-center text-center gap-2 w-full">
+                        <Avatar
+                            seed={conversationAvatarSeed(group, null)}
+                            stack={conversationAvatarStack(group)}
+                            name={group.name}
+                            size={GROUP_AVATAR_SIZE_PX}
+                            roundedFull
+                            className="mb-2"
+                        />
                         <p className="m-0 text-sm text-n-slate-11">
                             {group.inviter
                                 ? t('CHAT.GROUP.INVITE_PAGE.INVITED_BY', { name: group.inviter })

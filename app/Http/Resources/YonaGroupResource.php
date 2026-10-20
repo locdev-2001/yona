@@ -27,11 +27,21 @@ final class YonaGroupResource
         return [
             'id' => $group->id,
             'name' => $group->name,
-            'avatar_seed' => $group->avatar_seed,
-            'avatar_members' => self::avatarMembers($group, $membership->user_id),
+            ...self::avatar($group, $membership->user_id),
             'member_count' => $group->member_count,
             'my_role' => $membership->isActive() ? $membership->role : null,
         ];
+    }
+
+    /**
+     * Dữ liệu dựng avatar nhóm (hình quản trị chọn, hoặc ghép ảnh vài thành viên) — chung cho
+     * dòng hội thoại và trang link mời.
+     *
+     * @return array{avatar_seed: string|null, avatar_members: list<array{user_id: int, name: string, avatar_url: string|null}>}
+     */
+    public static function avatar(YonaGroup $group, ?int $viewerId = null): array
+    {
+        return ['avatar_seed' => $group->avatar_seed, 'avatar_members' => self::avatarMembers($group, $viewerId)];
     }
 
     /**
@@ -39,7 +49,7 @@ final class YonaGroupResource
      *
      * @return list<array{user_id: int, name: string, avatar_url: string|null}>
      */
-    private static function avatarMembers(YonaGroup $group, int $viewerId): array
+    private static function avatarMembers(YonaGroup $group, ?int $viewerId): array
     {
         return $group->avatarMembers
             ->sortBy(fn (YonaGroupMember $member) => $member->user_id === $viewerId ? 1 : 0)

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Chat;
 
 use App\Exceptions\GroupActionRejected;
 use App\Http\Controllers\Controller;
+use App\Http\Resources\YonaGroupResource;
 use App\Models\User;
 use App\Models\YonaGroupInviteLink;
 use App\Services\Groups\GroupService;
@@ -33,7 +34,9 @@ class GroupInvitesController extends Controller
             'status' => $link?->status() ?? 'not_found',
             'token' => $token,
             'group' => $group === null ? null : [
+                'id' => $group->id,
                 'name' => $group->name,
+                ...YonaGroupResource::avatar($group, $request->user()?->id),
                 'member_count' => $group->member_count,
                 'inviter' => $link->creator?->availableName(),
             ],
