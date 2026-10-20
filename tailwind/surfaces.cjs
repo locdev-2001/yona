@@ -48,11 +48,15 @@ module.exports = {
         content: [
             sourcesIn('v3'),
             ...SHARED,
+            // Avatar (trang mời nhóm) kéo theo khung xem ảnh lớn và logo nền tảng.
+            sourcesIn('dashboard/components-next/{avatar,close-button,kbd}'),
             './resources/js/dashboard/components-next/button/Button.tsx',
             './resources/js/dashboard/components-next/dialog/Dialog.tsx',
-            './resources/js/dashboard/components-next/icon/Icon.tsx',
+            './resources/js/dashboard/components-next/icon/{Icon,PlatformLogo}.tsx',
+            './resources/js/dashboard/components/Modal.tsx',
+            sourcesIn('dashboard/components/widgets/conversation/components'),
             sourcesIn('dashboard/components/auth'),
-            './resources/js/dashboard/composables/useAlert.ts',
+            './resources/js/dashboard/composables/{useAlert,useKeyboardEvents,useSwipeToDismiss}.ts',
             './resources/js/dashboard/helper/apiClient.ts',
             './resources/views/app.blade.php',
         ],

@@ -588,12 +588,17 @@ hộp thư sẵn có. Giao diện mở hội thoại mới:
 | `GET /api/v1/users/search?scope=friends` | Tìm trong bạn bè, ô tìm trống trả luôn danh sách bạn bè (chọn người thêm vào nhóm) |
 
 **Giao diện:** payload hội thoại có `group` (`YonaGroupResource::summaryFor`: id, tên,
-`avatar_seed`, `avatar_members` tối đa 3 người, số thành viên, `my_role`, null khi đã rời;
-danh sách nạp sẵn `threadMembership.group.avatarMembers` theo lô). Ảnh nhóm: NULL = ghép ảnh
-thành viên (`Avatar` chế độ `stack` → `shared/avatar/AvatarStack`); quản trị chọn một hình khối
-trong lưới (`shared/avatar/AvatarPickerDialog`), lưu `pick-{n}` qua `PATCH /…/yona/groups/{id}`
-(`GroupService::changeAvatar`, `null` để quay về ảnh ghép, ghi tin hoạt động). Một chỗ quyết
-định: `conversationAvatarSeed` + `conversationAvatarStack`. Tin nhóm của người khác mang
+`avatar_url`, `avatar_seed`, `avatar_members` tối đa 3 người, số thành viên, `my_role`, null khi
+đã rời; danh sách nạp sẵn `threadMembership.group.avatarMembers` + `.avatar` theo lô). Ảnh nhóm:
+NULL = ghép ảnh thành viên (`Avatar` chế độ `stack` → `shared/avatar/AvatarStack`); quản trị chọn
+một hình khối trong lưới (`shared/avatar/AvatarPickerDialog`), lưu `pick-{n}` qua `PATCH
+/…/yona/groups/{id}` (`GroupService::changeAvatar`, `null` để quay về ảnh ghép), hoặc tải ảnh từ
+máy qua `POST /…/yona/groups/{id}/avatar` (`GroupService::uploadAvatar`). Ảnh tải lên lưu như
+avatar người dùng: `YonaGroup` dùng `Avatarable` (bảng `attachments`, morph `YonaGroup`, disk
+`public`), trình duyệt cắt vuông giữa và thu về 512px (`shared/avatar/squareAvatarImage`) trước
+khi gửi; có ảnh thì ảnh thắng hình khối, chọn lại hình khối thì gỡ ảnh. Mỗi lần đổi đều ghi tin
+hoạt động và làm mới dòng nhóm của mọi thành viên. Cột `yona_groups.avatar_path` bỏ trống. Một
+chỗ quyết định: `conversationAvatar` (trả `src`, `seed`, `stack`). Tin nhóm của người khác mang
 `content_attributes.sender` (`external_id`, `name`, `avatar`, `avatar_seed`) như tin nhóm
 mọi kênh, nên bong bóng, trích dẫn, cảm xúc, dòng xem trước dùng chung đường hiển thị
 nhóm sẵn có. Tạo nhóm và thêm bạn dùng `shared/people/PickPeopleDialog` (bọc
@@ -603,7 +608,7 @@ nhóm sẵn có. Tạo nhóm và thêm bạn dùng `shared/people/PickPeopleDial
 
 ### Chưa có
 
-- **Ảnh tải lên, mô tả nhóm, giải tán nhóm:** chưa có; ảnh nhóm chỉ chọn từ hình khối dựng sẵn.
+- **Mô tả nhóm, giải tán nhóm:** chưa có. Ảnh tải lên chỉ cắt vuông giữa tự động, chưa có khung cắt kéo tay.
 - **Quay về link mời sau khi đăng ký mới:** `url.intended` giữ qua đăng nhập và màn chọn
   `@username`, nhưng đăng ký bằng email phải xác minh email trước nên có thể mất mốc này.
 - **Tìm theo tên người gửi trong nhóm Yona:** tìm theo người gửi thật

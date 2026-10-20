@@ -134,7 +134,7 @@ class ConversationResource extends JsonResource
             return;
         }
 
-        $views->loadMissing('threadMembership.group.avatarMembers');
+        $views->loadMissing(['threadMembership.group.avatarMembers', 'threadMembership.group.avatar']);
         $threads = Conversation::query()
             ->whereIn('id', $views->pluck('thread_conversation_id')->unique())
             ->with([

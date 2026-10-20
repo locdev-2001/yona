@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Avatarable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -11,6 +12,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 // một dòng hội thoại trong hộp thư Yona của mình trỏ tới hội thoại gốc.
 class YonaGroup extends Model
 {
+    // Ảnh quản trị tải lên; có ảnh thì ảnh thắng hình khối và ảnh ghép thành viên.
+    use Avatarable;
+
     public const MAX_MEMBERS = 500;
 
     public const CONTACT_SOURCE_PREFIX = 'yona-group:';

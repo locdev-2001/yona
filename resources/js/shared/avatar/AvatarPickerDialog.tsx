@@ -1,20 +1,26 @@
-import { forwardRef, useImperativeHandle, useRef, useState } from 'react';
-import type { ReactNode } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import type { ChangeEvent, ReactNode } from 'react';
 
 import Avatar from 'dashboard/components-next/avatar/Avatar';
 import Button from 'dashboard/components-next/button/Button';
 import Dialog from 'dashboard/components-next/dialog/Dialog';
 import type { DialogHandle } from 'dashboard/components-next/dialog/Dialog';
+import { useAlert } from 'dashboard/composables/useAlert';
 import { t } from '../../i18n';
 import { pickedAvatarChoice, pickedAvatarIndex } from './avatarSeed';
 import type { AvatarSubject } from './avatarSeed';
 import { avatarSeed } from './avatarSeed';
+import { AVATAR_IMAGE_TYPES, squareAvatarImage } from './squareAvatarImage';
 
 const CHOICES_PER_PAGE = 24;
 export const CHOICE_SIZE_PX = 48;
 const CHOICE_BUTTON_CLASS = 'flex p-1 rounded-full outline-none transition-shadow focus-visible:ring-2 focus-visible:ring-n-brand';
 const CHOICE_SELECTED_CLASS = 'ring-2 ring-n-brand';
 const CHOICE_IDLE_CLASS = 'hover:ring-2 hover:ring-n-weak';
+// Ô "ảnh tải lên" trong lưới; không trùng dạng `pick-{số}` máy chủ nhận.
+const PHOTO_CHOICE = 'photo';
+
+type PendingPhoto = { blob: Blob; url: string };
 
 // Số ô của lưới (kể cả ô mặc định), đủ dài để thấy hình đang dùng (đã chọn ở trang "xem thêm" trước đó).
 function cellCountShowing(current: string | null, leadingCells: number): number {
@@ -32,33 +38,63 @@ interface AvatarPickerDialogProps {
     current: string | null;
     // Ô đầu lưới để quay về avatar mặc định; chọn ô này gửi null.
     defaultOption?: { label: string; preview: ReactNode };
+    // Cho tải ảnh từ máy: `url` là ảnh đang dùng (null = chưa có), chọn ảnh thì thắng mọi hình khối.
+    photo?: { url: string | null; onConfirm: (photo: Blob) => Promise<boolean> };
     onConfirm: (choice: string | null) => Promise<boolean>;
 }
 
-// Hộp chọn avatar hình khối từ một lưới dựng sẵn (pick-1, pick-2…), bấm "xem thêm" để mở rộng.
+// Hộp chọn avatar hình khối từ một lưới dựng sẵn (pick-1, pick-2…), bấm "xem thêm" để mở rộng;
+// có `photo` thì thêm nút tải ảnh từ máy, ảnh được cắt vuông và xem trước trong lưới trước khi lưu.
 const AvatarPickerDialog = forwardRef<DialogHandle, AvatarPickerDialogProps>(function AvatarPickerDialog(
-    { title, description, subject, current, defaultOption, onConfirm },
+    { title, description, subject, current, defaultOption, photo, onConfirm },
     ref,
 ) {
     const dialogRef = useRef<DialogHandle>(null);
-    const [selected, setSelected] = useState<string | null>(current);
-    const leadingCells = defaultOption ? 1 : 0;
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const currentChoice = photo?.url ? PHOTO_CHOICE : current;
+    const [selected, setSelected] = useState<string | null>(currentChoice);
+    const [pendingPhoto, setPendingPhoto] = useState<PendingPhoto | null>(null);
+    const photoUrl = pendingPhoto?.url ?? photo?.url ?? null;
+    const leadingCells = (defaultOption ? 1 : 0) + (photoUrl ? 1 : 0);
     const [cellCount, setCellCount] = useState(() => cellCountShowing(current, leadingCells));
     const [isSubmitting, setSubmitting] = useState(false);
 
+    useEffect(() => () => {
+        if (pendingPhoto) URL.revokeObjectURL(pendingPhoto.url);
+    }, [pendingPhoto]);
+
     useImperativeHandle(ref, () => ({
         open: () => {
-            setSelected(current);
+            setSelected(currentChoice);
+            setPendingPhoto(null);
             setCellCount(cellCountShowing(current, leadingCells));
             dialogRef.current?.open();
         },
         close: () => dialogRef.current?.close(),
     }));
 
+    const pickPhoto = async (event: ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        event.target.value = '';
+        if (!file) return;
+
+        try {
+            const blob = await squareAvatarImage(file);
+            setPendingPhoto({ blob, url: URL.createObjectURL(blob) });
+            setSelected(PHOTO_CHOICE);
+        } catch {
+            useAlert(t('CHAT.GROUP.PHOTO_UNREADABLE'));
+        }
+    };
+
+    const hasChange = selected !== currentChoice || (selected === PHOTO_CHOICE && pendingPhoto !== null);
+    const canConfirm = hasChange && (selected !== null || Boolean(defaultOption));
+
     const confirm = async () => {
-        if ((!selected && !defaultOption) || isSubmitting) return;
+        if (!canConfirm || isSubmitting) return;
         setSubmitting(true);
-        const done = await onConfirm(selected).finally(() => setSubmitting(false));
+        const save = selected === PHOTO_CHOICE && pendingPhoto && photo ? photo.onConfirm(pendingPhoto.blob) : onConfirm(selected);
+        const done = await save.finally(() => setSubmitting(false));
         if (done) dialogRef.current?.close();
     };
 
@@ -71,13 +107,46 @@ const AvatarPickerDialog = forwardRef<DialogHandle, AvatarPickerDialogProps>(fun
             title={title}
             description={description}
             confirmButtonLabel={t('CHAT.GROUP.SAVE')}
-            disableConfirmButton={(!selected && !defaultOption) || selected === current}
+            disableConfirmButton={!canConfirm}
             isLoading={isSubmitting}
             overflowYAuto
             onConfirm={() => void confirm()}
         >
             <div className="flex flex-col items-center gap-4">
+                {photo ? (
+                    <>
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept={AVATAR_IMAGE_TYPES.join(',')}
+                            className="hidden"
+                            onChange={event => void pickPhoto(event)}
+                        />
+                        <Button
+                            type="button"
+                            faded
+                            sm
+                            icon="i-lucide-image-up"
+                            label={t('CHAT.GROUP.UPLOAD_PHOTO')}
+                            onClick={() => fileInputRef.current?.click()}
+                        />
+                    </>
+                ) : null}
                 <ul className="grid grid-cols-4 sm:grid-cols-6 gap-3 m-0 p-0 list-none">
+                    {photoUrl ? (
+                        <li>
+                            <button
+                                type="button"
+                                aria-pressed={selected === PHOTO_CHOICE}
+                                aria-label={t('CHAT.GROUP.UPLOADED_PHOTO')}
+                                title={t('CHAT.GROUP.UPLOADED_PHOTO')}
+                                className={`${CHOICE_BUTTON_CLASS} ${selected === PHOTO_CHOICE ? CHOICE_SELECTED_CLASS : CHOICE_IDLE_CLASS}`}
+                                onClick={() => setSelected(PHOTO_CHOICE)}
+                            >
+                                <Avatar src={photoUrl} name="" size={CHOICE_SIZE_PX} roundedFull />
+                            </button>
+                        </li>
+                    ) : null}
                     {defaultOption ? (
                         <li>
                             <button

@@ -1,4 +1,4 @@
-import { deleteJson, getJson, patchJson, postJson } from 'dashboard/helper/apiClient';
+import { deleteJson, getJson, patchJson, postForm, postJson } from 'dashboard/helper/apiClient';
 import type { AvatarStackPerson } from 'shared/avatar/AvatarStack';
 
 export type GroupRole = 'admin' | 'member';
@@ -9,6 +9,8 @@ export type GroupJoinedVia = 'creator' | 'added' | 'invite_link';
 export interface GroupSummary {
     id: number;
     name: string;
+    // Ảnh quản trị tải lên; có thì thắng avatar_seed và ảnh ghép.
+    avatar_url: string | null;
     // null: chưa chọn, dùng hình theo id nhóm.
     avatar_seed: string | null;
     // Vài thành viên cho avatar ghép khi chưa chọn avatar riêng (người khác trước).
@@ -61,6 +63,13 @@ export function renameGroup(accountId: number, groupId: number, name: string): P
 // null: quay về avatar ghép ảnh thành viên.
 export function changeGroupAvatar(accountId: number, groupId: number, avatarSeed: string | null): Promise<GroupSummary> {
     return patchJson<GroupSummary>(groupUrl(accountId, groupId), { avatar_seed: avatarSeed });
+}
+
+export function uploadGroupAvatar(accountId: number, groupId: number, photo: Blob): Promise<GroupSummary> {
+    const form = new FormData();
+    form.append('avatar', photo, `group-avatar.${photo.type.split('/')[1] || 'png'}`);
+
+    return postForm<GroupSummary>(`${groupUrl(accountId, groupId)}/avatar`, form);
 }
 
 export async function addGroupMembers(accountId: number, groupId: number, userIds: number[]): Promise<GroupMember[]> {

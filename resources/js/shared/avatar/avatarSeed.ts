@@ -50,6 +50,8 @@ export function pickedAvatarIndex(choice: string): number | null {
 
 interface ConversationGroupAvatar {
     id: number;
+    // Ảnh quản trị tải lên; có thì thắng hình khối và ảnh ghép.
+    avatar_url?: string | null;
     avatar_seed?: string | null;
     avatar_members?: AvatarStackPerson[];
     member_count?: number;
@@ -57,17 +59,31 @@ interface ConversationGroupAvatar {
 
 // Avatar của một dòng hội thoại: nhóm theo hình quản trị đã chọn, chưa chọn thì theo id nhóm
 // (mọi thành viên thấy cùng một hình); còn lại theo liên hệ.
-export function conversationAvatarSeed(group: ConversationGroupAvatar | null | undefined, contactId: AvatarSubjectId): string | undefined {
+function conversationAvatarSeed(group: ConversationGroupAvatar | null | undefined, contactId: AvatarSubjectId): string | undefined {
     if (!group) return avatarSeed('contact', contactId);
 
     return avatarSeed('chat', group.avatar_seed || `group:${group.id}`);
 }
 
-// Nhóm chưa chọn avatar riêng thì ghép ảnh thành viên để khác hẳn hội thoại 1-1.
-export function conversationAvatarStack(
+// Nhóm chưa có ảnh hay hình riêng thì ghép ảnh thành viên để khác hẳn hội thoại 1-1.
+function conversationAvatarStack(
     group: ConversationGroupAvatar | null | undefined,
 ): { people: AvatarStackPerson[]; total: number } | null {
-    if (!group || group.avatar_seed || !group.avatar_members?.length) return null;
+    if (!group || group.avatar_url || group.avatar_seed || !group.avatar_members?.length) return null;
 
     return { people: group.avatar_members, total: group.member_count ?? group.avatar_members.length };
+}
+
+// Mọi chỗ hiện avatar dòng hội thoại (danh sách, đầu khung chat, panel nhóm, trang mời) lấy
+// đủ ảnh, hình khối và ảnh ghép từ đây.
+export function conversationAvatar(
+    group: ConversationGroupAvatar | null | undefined,
+    contactId: AvatarSubjectId,
+    contactThumbnail?: string | null,
+): { src: string; seed: string | undefined; stack: { people: AvatarStackPerson[]; total: number } | null } {
+    return {
+        src: (group ? group.avatar_url : contactThumbnail) || '',
+        seed: conversationAvatarSeed(group, contactId),
+        stack: conversationAvatarStack(group),
+    };
 }

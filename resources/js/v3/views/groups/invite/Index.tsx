@@ -8,7 +8,7 @@ import { useAlert } from 'dashboard/composables/useAlert';
 import NextButton from 'dashboard/components-next/button/Button';
 import Avatar from 'dashboard/components-next/avatar/Avatar';
 import type { AvatarStackPerson } from 'shared/avatar/AvatarStack';
-import { conversationAvatarSeed, conversationAvatarStack } from 'shared/avatar/avatarSeed';
+import { conversationAvatar } from 'shared/avatar/avatarSeed';
 import AuthShell, { authCard } from 'v3/components/AuthShell';
 import { BrandMark } from '../../../components/BrandMark';
 
@@ -20,6 +20,7 @@ interface GroupInvitePageProps extends SharedPageProps {
     group: {
         id: number;
         name: string;
+        avatar_url: string | null;
         avatar_seed: string | null;
         avatar_members: AvatarStackPerson[];
         member_count: number;
@@ -71,8 +72,7 @@ export default function GroupInviteIndex() {
                 {group ? (
                     <div className="flex flex-col items-center text-center gap-2 w-full">
                         <Avatar
-                            seed={conversationAvatarSeed(group, null)}
-                            stack={conversationAvatarStack(group)}
+                            {...conversationAvatar(group, null)}
                             name={group.name}
                             size={GROUP_AVATAR_SIZE_PX}
                             roundedFull

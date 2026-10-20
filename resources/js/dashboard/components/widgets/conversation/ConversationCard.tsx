@@ -4,7 +4,7 @@ import { usePage } from '@inertiajs/react';
 
 import { t } from '../../../../i18n';
 import Avatar from 'dashboard/components-next/avatar/Avatar';
-import { conversationAvatarSeed, conversationAvatarStack } from 'shared/avatar/avatarSeed';
+import { conversationAvatar } from 'shared/avatar/avatarSeed';
 import Checkbox from 'dashboard/components-next/checkbox/Checkbox';
 import Icon from 'dashboard/components-next/icon/Icon';
 import type { ChannelIconInbox } from 'dashboard/components-next/icon/ChannelIcon';
@@ -186,11 +186,9 @@ export default function ConversationCard({
             <div className="relative">
                 {!hideThumbnail ? (
                     <Avatar
-                        seed={conversationAvatarSeed(chat.group, currentContact.id)}
-                        stack={conversationAvatarStack(chat.group)}
+                        {...conversationAvatar(chat.group, currentContact.id, currentContact.thumbnail)}
                         animated={isPointerInside}
                         name={currentContact.name ?? ''}
-                        src={currentContact.thumbnail}
                         size={40}
                         status={contactAvailabilityStatus}
                         hideOfflineStatus

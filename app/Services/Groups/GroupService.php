@@ -18,6 +18,7 @@ use App\Models\YonaGroupInviteLink;
 use App\Models\YonaGroupMember;
 use App\Services\Users\Friendships;
 use App\Services\Yona\YonaInboxes;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
@@ -172,7 +173,7 @@ final class GroupService
         });
     }
 
-    // null = quay về avatar ghép ảnh thành viên.
+    // null = quay về avatar ghép ảnh thành viên. Chọn hình nào cũng gỡ ảnh đã tải lên.
     public function changeAvatar(YonaGroup $group, User $admin, ?string $avatarSeed): YonaGroup
     {
         $this->permissions->admin($group, $admin);
@@ -181,12 +182,28 @@ final class GroupService
             throw new GroupActionRejected('INVALID_AVATAR');
         }
 
-        if ($avatarSeed === $group->avatar_seed) {
+        if ($avatarSeed === $group->avatar_seed && $group->avatar === null) {
             return $group;
         }
 
         return DB::transaction(function () use ($group, $admin, $avatarSeed) {
-            $group->update(['avatar_seed' => $avatarSeed]);
+            $group->avatar_seed = $avatarSeed;
+            $group->removeAvatar();
+            $group->save();
+            $this->postActivity($group, 'AVATAR_CHANGED', ['actor' => $admin->availableName()]);
+
+            return $group;
+        });
+    }
+
+    public function uploadAvatar(YonaGroup $group, User $admin, UploadedFile $photo): YonaGroup
+    {
+        $this->permissions->admin($group, $admin);
+
+        return DB::transaction(function () use ($group, $admin, $photo) {
+            $group->avatar_seed = null;
+            $group->replaceAvatar($photo);
+            $group->save();
             $this->postActivity($group, 'AVATAR_CHANGED', ['actor' => $admin->availableName()]);
 
             return $group;

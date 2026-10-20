@@ -12,6 +12,8 @@ final class AvatarContentType
     /** @var list<string> Đúng danh sách ALLOWED_AVATAR_CONTENT_TYPES của Avatarable bản gốc. */
     public const ALLOWED = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
 
+    public const UPLOAD_MAX_KILOBYTES = 15360;
+
     /**
      * Kiểu ảnh thật của nội dung tải về, hoặc null nếu không dùng làm avatar được.
      *

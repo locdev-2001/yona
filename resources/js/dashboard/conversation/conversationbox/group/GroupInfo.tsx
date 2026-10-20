@@ -11,11 +11,19 @@ import { openProfile } from 'dashboard/contacts/profile/profileOverlay';
 import { ensureYonaContact } from 'dashboard/friends/api';
 import { parseApiErrorMessage } from 'dashboard/helper/apiClient';
 import AvatarPickerDialog, { CHOICE_SIZE_PX } from 'shared/avatar/AvatarPickerDialog';
-import { conversationAvatarSeed, conversationAvatarStack } from 'shared/avatar/avatarSeed';
+import { conversationAvatar } from 'shared/avatar/avatarSeed';
 import PickPeopleDialog from 'shared/people/PickPeopleDialog';
 import { t } from '../../../../i18n';
 import type { DashboardPageProps } from '../../../types';
-import { addGroupMembers, changeGroupAvatar, fetchGroup, removeGroupMember, renameGroup, setGroupMemberRole } from '../../groupsApi';
+import {
+    addGroupMembers,
+    changeGroupAvatar,
+    fetchGroup,
+    removeGroupMember,
+    renameGroup,
+    setGroupMemberRole,
+    uploadGroupAvatar,
+} from '../../groupsApi';
 import type { GroupDetails, GroupMember, GroupSummary } from '../../groupsApi';
 import GroupInviteLinks from './GroupInviteLinks';
 import GroupMemberRow from './GroupMemberRow';
@@ -51,7 +59,7 @@ export default function GroupInfo({ group }: { group: GroupSummary }) {
     }, [accountId, group.id, isMember]);
 
     // Tóm tắt nhóm đổi qua realtime (tên, ảnh, số thành viên do người khác đổi) thì đọc lại chi tiết.
-    useEffect(reload, [reload, group.name, group.avatar_seed, group.member_count]);
+    useEffect(reload, [reload, group.name, group.avatar_url, group.avatar_seed, group.member_count]);
     useEffect(() => setHasLeft(false), [group.id]);
 
     const fail = (error: unknown) => useAlert(parseApiErrorMessage(error) || t('CHAT.GROUP.ERROR'));
@@ -88,10 +96,9 @@ export default function GroupInfo({ group }: { group: GroupSummary }) {
     const name = details?.name ?? group.name;
     // null là "ghép ảnh thành viên", không phải "chưa có": không dùng ?? ở đây.
     const avatarChoice = details ? details.avatar_seed : group.avatar_seed;
-    const avatarGroup = { ...group, avatar_seed: avatarChoice };
-    const groupAvatar = (
-        <Avatar seed={conversationAvatarSeed(avatarGroup, null)} stack={conversationAvatarStack(avatarGroup)} name={name} size={72} roundedFull />
-    );
+    const avatarPhotoUrl = details ? details.avatar_url : group.avatar_url;
+    const avatarGroup = { ...group, avatar_url: avatarPhotoUrl, avatar_seed: avatarChoice };
+    const groupAvatar = <Avatar {...conversationAvatar(avatarGroup, null)} name={name} size={72} roundedFull />;
     const memberCount = details?.member_count ?? group.member_count;
     const members = details?.members ?? [];
 
@@ -199,14 +206,14 @@ export default function GroupInfo({ group }: { group: GroupSummary }) {
                     label: t('CHAT.GROUP.MEMBER_AVATARS'),
                     preview: (
                         <Avatar
-                            seed={conversationAvatarSeed({ id: group.id }, null)}
-                            stack={conversationAvatarStack({ ...group, avatar_seed: null })}
+                            {...conversationAvatar({ ...group, avatar_url: null, avatar_seed: null }, null)}
                             name={name}
                             size={CHOICE_SIZE_PX}
                             roundedFull
                         />
                     ),
                 }}
+                photo={{ url: avatarPhotoUrl, onConfirm: photo => run(() => uploadGroupAvatar(accountId, group.id, photo)) }}
                 onConfirm={choice => run(() => changeGroupAvatar(accountId, group.id, choice))}
             />
 

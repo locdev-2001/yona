@@ -33,6 +33,7 @@ use App\Models\Inbox;
 use App\Models\Message;
 use App\Models\PlatformApp;
 use App\Models\User;
+use App\Models\YonaGroup;
 use App\Search\SearchEngine;
 use App\Services\Analytics\PlausibleProxy;
 use App\Services\Email\MailServerProbe;
@@ -147,6 +148,7 @@ class AppServiceProvider extends ServiceProvider
             'AgentBot' => AgentBot::class,
             'Account' => Account::class,
             'PlatformApp' => PlatformApp::class,
+            'YonaGroup' => YonaGroup::class,
         ]);
     }
 

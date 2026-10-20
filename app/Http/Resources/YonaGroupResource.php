@@ -34,14 +34,18 @@ final class YonaGroupResource
     }
 
     /**
-     * Dữ liệu dựng avatar nhóm (hình quản trị chọn, hoặc ghép ảnh vài thành viên) — chung cho
-     * dòng hội thoại và trang link mời.
+     * Dữ liệu dựng avatar nhóm (ảnh quản trị tải lên, hình quản trị chọn, hoặc ghép ảnh vài
+     * thành viên) — chung cho dòng hội thoại, panel thông tin và trang link mời.
      *
-     * @return array{avatar_seed: string|null, avatar_members: list<array{user_id: int, name: string, avatar_url: string|null}>}
+     * @return array{avatar_url: string|null, avatar_seed: string|null, avatar_members: list<array{user_id: int, name: string, avatar_url: string|null}>}
      */
     public static function avatar(YonaGroup $group, ?int $viewerId = null): array
     {
-        return ['avatar_seed' => $group->avatar_seed, 'avatar_members' => self::avatarMembers($group, $viewerId)];
+        return [
+            'avatar_url' => $group->avatarUrl() ?: null,
+            'avatar_seed' => $group->avatar_seed,
+            'avatar_members' => self::avatarMembers($group, $viewerId),
+        ];
     }
 
     /**
@@ -69,6 +73,7 @@ final class YonaGroupResource
         return [
             'id' => $group->id,
             'name' => $group->name,
+            'avatar_url' => $group->avatarUrl() ?: null,
             'avatar_seed' => $group->avatar_seed,
             'description' => $group->description,
             'member_count' => $group->member_count,
