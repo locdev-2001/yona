@@ -110,6 +110,7 @@ const AvatarPickerDialog = forwardRef<DialogHandle, AvatarPickerDialogProps>(fun
                     })}
                 </ul>
                 <Button
+                    type="button"
                     faded
                     slate
                     sm

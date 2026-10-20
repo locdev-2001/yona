@@ -56,6 +56,7 @@ const PickPeopleDialog = forwardRef<DialogHandle, PickPeopleDialogProps>(functio
     // Chưa có bạn bè nào để chọn: đóng hộp này, mở hộp tìm người để kết bạn.
     const addFriendAction = friendsOnly ? (
         <Button
+            type="button"
             faded
             slate
             sm
