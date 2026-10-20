@@ -64,14 +64,24 @@ function savePreferences(next: ChannelPreferences) {
     void putJson('/api/v1/profile', { ui_settings: { [CHANNEL_PREFERENCES_KEY]: next } });
 }
 
-export function useChannelPreferences(inboxes: SidebarInbox[]) {
+function useSharedPreferences(): ChannelPreferences {
     const { auth } = usePage<SharedPageProps>().props;
     const ownerId = auth.user?.id ?? null;
     if (sharedOwnerId !== ownerId) {
         sharedOwnerId = ownerId;
         sharedPreferences = auth.user ? readPreferences(auth.user.ui_settings) : EMPTY_PREFERENCES;
     }
-    const preferences = useSyncExternalStore(subscribe, () => sharedPreferences);
+    return useSyncExternalStore(subscribe, () => sharedPreferences);
+}
+
+// Tên hiển thị của một kênh (biệt danh nếu người dùng đã đặt) cho chỗ chỉ hiện một kênh.
+export function useChannelDisplayName(inboxId: number | undefined, name: string): string {
+    const preferences = useSharedPreferences();
+    return (inboxId !== undefined && preferences.aliases[String(inboxId)]?.trim()) || name;
+}
+
+export function useChannelPreferences(inboxes: SidebarInbox[]) {
+    const preferences = useSharedPreferences();
 
     const channels = useMemo(() => arrangeChannels(inboxes, preferences), [inboxes, preferences]);
     // Kênh đang hiện, mang tên hiển thị riêng: thứ mọi danh sách kênh liệt kê.
