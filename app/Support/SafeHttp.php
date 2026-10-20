@@ -48,10 +48,15 @@ final class SafeHttp
      */
     public static function streamingRequest(int $connectTimeoutSeconds, int $timeoutSeconds, int $maxRedirects = 3): PendingRequest
     {
-        return Http::connectTimeout($connectTimeoutSeconds)
+        return self::guarded(Http::withOptions(['stream' => true]), $connectTimeoutSeconds, $timeoutSeconds, $maxRedirects);
+    }
+
+    /** Cùng hàng rào chuyển hướng cho một request dựng sẵn, ví dụ từng request trong `Http::pool`. */
+    public static function guarded(PendingRequest $request, int $connectTimeoutSeconds, int $timeoutSeconds, int $maxRedirects = 3): PendingRequest
+    {
+        return $request->connectTimeout($connectTimeoutSeconds)
             ->timeout($timeoutSeconds)
             ->withOptions([
-                'stream' => true,
                 'allow_redirects' => [
                     'max' => $maxRedirects,
                     'protocols' => self::ALLOWED_SCHEMES,

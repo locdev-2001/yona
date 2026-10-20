@@ -3,13 +3,10 @@
 namespace App\Services\Email;
 
 use App\Models\Attachment;
-use App\Support\SafeHttp;
 use DOMDocument;
 use DOMElement;
 use DOMXPath;
 use Illuminate\Support\Facades\Storage;
-use Psr\Http\Message\StreamInterface;
-use Throwable;
 
 /**
  * Biến HTML của một thư thành tài liệu không còn đường gọi mạng nào: ảnh (cả ảnh
@@ -17,8 +14,9 @@ use Throwable;
  * thể tự tải hay tự chạy (script, iframe, link, @import, on*) bị bỏ. Trình dựng
  * PDF nhờ vậy được chạy cách ly mạng hoàn toàn.
  *
- * Ảnh ngoài chỉ tải qua SafeHttp (http/https, chặn mạng nội bộ), có trần số ảnh,
- * cỡ mỗi ảnh và tổng dung lượng; ảnh nào hỏng thì bỏ, thư vẫn dựng được.
+ * Ảnh ngoài tải song song một lượt theo luật của RemoteEmailImage (chặn mạng nội bộ,
+ * trần cỡ, chỉ ảnh bitmap), có trần số ảnh và tổng dung lượng; ảnh nào hỏng thì bỏ,
+ * thư vẫn dựng được.
  */
 final class SelfContainedHtml
 {
@@ -44,23 +42,10 @@ final class SelfContainedHtml
 
     private const MAX_REMOTE_IMAGES = 40;
 
-    private const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
-
     private const MAX_TOTAL_IMAGE_BYTES = 25 * 1024 * 1024;
-
-    private const CONNECT_TIMEOUT_SECONDS = 3;
-
-    private const FETCH_TIMEOUT_SECONDS = 8;
-
-    /** Dựng PDF chạy trong request chuyển tiếp: hết quỹ giờ thì ảnh ngoài còn lại bị bỏ. */
-    private const REMOTE_FETCH_BUDGET_SECONDS = 20;
-
-    private ?float $remoteFetchStartedAt = null;
 
     /** @var array<string, string|null> url → data URI (null = không dùng được) */
     private array $resolvedImages = [];
-
-    private int $remoteImageCount = 0;
 
     private int $totalImageBytes = 0;
 
@@ -71,7 +56,7 @@ final class SelfContainedHtml
     private readonly array $storedImagesByPath;
 
     /** @param  iterable<Attachment>  $storedAttachments  tệp của chính tin, nơi ảnh cid đã được lưu */
-    public function __construct(iterable $storedAttachments)
+    public function __construct(iterable $storedAttachments, private readonly RemoteEmailImage $remoteImages)
     {
         $byPath = [];
 
@@ -99,6 +84,8 @@ final class SelfContainedHtml
                 $element->parentNode?->removeChild($element);
             }
         }
+
+        $this->fetchRemoteImages($this->imageUrlsIn($xpath));
 
         foreach (iterator_to_array($document->getElementsByTagName('style')) as $style) {
             $style->textContent = $this->rewriteCss($style->textContent);
@@ -180,19 +167,68 @@ final class SelfContainedHtml
         }, $css);
     }
 
+    /** @return list<string> mọi URL ảnh trong thư (thuộc tính ảnh, <style>, style="…"), đã chuẩn hoá */
+    private function imageUrlsIn(DOMXPath $xpath): array
+    {
+        $urls = [];
+
+        foreach (iterator_to_array($xpath->query('//*')) as $element) {
+            if (! $element instanceof DOMElement) {
+                continue;
+            }
+
+            foreach (self::IMAGE_URL_ATTRIBUTES[strtolower($element->tagName)] ?? [] as $attributeName) {
+                if ($element->hasAttribute($attributeName)) {
+                    $urls[] = self::normalizedUrl($element->getAttribute($attributeName));
+                }
+            }
+
+            $css = strtolower($element->tagName) === 'style' ? $element->textContent : $element->getAttribute('style');
+            preg_match_all(self::CSS_URL_PATTERN, $css, $matches);
+
+            foreach ($matches[2] as $cssUrl) {
+                $urls[] = self::normalizedUrl($cssUrl);
+            }
+        }
+
+        return array_values(array_unique($urls));
+    }
+
+    /** @param  list<string>  $urls */
+    private function fetchRemoteImages(array $urls): void
+    {
+        $remoteUrls = array_slice(array_values(array_filter(
+            $urls,
+            fn (string $url) => preg_match('#^https?://#i', $url) === 1 && ! isset($this->storedImagesByPath[self::urlPath($url)]),
+        )), 0, self::MAX_REMOTE_IMAGES);
+
+        foreach ($this->remoteImages->fetchMany($remoteUrls) as $url => $image) {
+            $this->resolvedImages[$url] = $image !== null && $this->withinBudget(strlen($image['bytes']))
+                ? self::dataUri($image['content_type'], $image['bytes'])
+                : null;
+        }
+    }
+
     private function imageDataUri(string $url): ?string
     {
-        $url = trim(html_entity_decode($url, ENT_QUOTES | ENT_HTML5));
-
-        if (str_starts_with($url, '//')) {
-            $url = 'https:'.$url;
-        }
+        $url = self::normalizedUrl($url);
 
         if (preg_match('#^data:image/[a-z0-9.+-]+[;,]#i', $url)) {
             return $url;
         }
 
-        return $this->resolvedImages[$url] ??= $this->storedImage($url) ?? $this->remoteImage($url);
+        if (array_key_exists($url, $this->resolvedImages)) {
+            return $this->resolvedImages[$url];
+        }
+
+        return $this->resolvedImages[$url] = $this->storedImage($url);
+    }
+
+    private static function normalizedUrl(string $url): string
+    {
+        $url = trim(html_entity_decode($url, ENT_QUOTES | ENT_HTML5));
+
+        return str_starts_with($url, '//') ? 'https:'.$url : $url;
     }
 
     private function storedImage(string $url): ?string
@@ -214,59 +250,9 @@ final class SelfContainedHtml
         return self::dataUri((string) $attachment->content_type, $contents);
     }
 
-    private function remoteImage(string $url): ?string
-    {
-        if (! preg_match('#^https?://#i', $url) || $this->remoteImageCount >= self::MAX_REMOTE_IMAGES || $this->remoteBudgetSpent()) {
-            return null;
-        }
-
-        $this->remoteImageCount++;
-
-        try {
-            SafeHttp::assertPublicUrl($url);
-            $response = SafeHttp::streamingRequest(self::CONNECT_TIMEOUT_SECONDS, self::FETCH_TIMEOUT_SECONDS)->get($url);
-        } catch (Throwable) {
-            return null;
-        }
-
-        $contentType = strtolower(trim(explode(';', (string) $response->header('Content-Type'))[0]));
-
-        if (! $response->successful() || ! str_starts_with($contentType, 'image/')) {
-            return null;
-        }
-
-        $contents = $this->readCapped($response->toPsrResponse()->getBody());
-
-        return $contents !== null && $this->withinBudget(strlen($contents))
-            ? self::dataUri($contentType, $contents)
-            : null;
-    }
-
-    private function remoteBudgetSpent(): bool
-    {
-        $this->remoteFetchStartedAt ??= microtime(true);
-
-        return microtime(true) - $this->remoteFetchStartedAt > self::REMOTE_FETCH_BUDGET_SECONDS;
-    }
-
-    private function readCapped(StreamInterface $stream): ?string
-    {
-        $contents = '';
-
-        while (! $stream->eof()) {
-            $contents .= $stream->read(65536);
-
-            if (strlen($contents) > self::MAX_IMAGE_BYTES) {
-                return null;
-            }
-        }
-
-        return $contents === '' ? null : $contents;
-    }
-
     private function withinBudget(int $bytes): bool
     {
-        if ($bytes > self::MAX_IMAGE_BYTES || $this->totalImageBytes + $bytes > self::MAX_TOTAL_IMAGE_BYTES) {
+        if ($bytes > RemoteEmailImage::MAX_BYTES || $this->totalImageBytes + $bytes > self::MAX_TOTAL_IMAGE_BYTES) {
             return false;
         }
 

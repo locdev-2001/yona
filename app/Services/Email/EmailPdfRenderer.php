@@ -34,10 +34,12 @@ final class EmailPdfRenderer
 
     private const DATE_FORMAT = 'd/m/Y H:i (P)';
 
+    public function __construct(private readonly RemoteEmailImage $remoteImages) {}
+
     public function render(Message $email): EmailPdf
     {
         $mail = (array) data_get($email->content_attributes, 'email', []);
-        $selfContained = new SelfContainedHtml($email->attachments);
+        $selfContained = new SelfContainedHtml($email->attachments, $this->remoteImages);
         $locale = $email->account->locale;
 
         $html = view(self::VIEW, [
