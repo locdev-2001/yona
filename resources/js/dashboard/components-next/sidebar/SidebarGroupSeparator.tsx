@@ -17,6 +17,8 @@ interface SidebarGroupSeparatorProps {
     showTreeLine?: boolean;
     endTreeLine?: boolean;
     className?: string;
+    // Nút phụ hiện cạnh mũi tên thu gọn.
+    action?: ReactNode;
     onToggle: () => void;
 }
 
@@ -28,13 +30,14 @@ export default function SidebarGroupSeparator({
     showTreeLine = false,
     endTreeLine = false,
     className = '',
+    action,
     onToggle,
 }: SidebarGroupSeparatorProps) {
     const sharedClasses = [
         'relative flex h-8 w-full min-w-0 items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-n-slate-10 select-none',
         showTreeLine ? TREE_VERTICAL_LINE : '',
         showTreeLine ? (endTreeLine ? `before:h-3 ${TREE_ELBOW}` : 'before:-bottom-1') : '',
-        collapsible ? 'cursor-pointer hover:bg-n-surface-hover pe-8' : 'pointer-events-none',
+        collapsible ? `cursor-pointer hover:bg-n-surface-hover ${action ? 'pe-16' : 'pe-8'}` : 'pointer-events-none',
     ]
         .filter(Boolean)
         .join(' ');
@@ -68,6 +71,7 @@ export default function SidebarGroupSeparator({
             )}
             {collapsible ? (
                 <div className="absolute end-2 top-1/2 flex -translate-y-1/2 items-center gap-1">
+                    {action}
                     <button
                         type="button"
                         className="flex size-6 flex-shrink-0 items-center justify-center rounded-md text-n-slate-10 hover:bg-n-surface-hover focus-visible:bg-n-surface-hover focus-visible:outline-none"

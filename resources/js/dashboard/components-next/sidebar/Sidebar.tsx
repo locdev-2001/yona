@@ -7,6 +7,9 @@ import SidebarGroup from './SidebarGroup';
 import SidebarProfileMenu from './SidebarProfileMenu';
 import SidebarAccountSwitcher from './SidebarAccountSwitcher';
 import { buildMenuItems } from './menuItems';
+import SidebarChannelsEditor from './SidebarChannelsEditor';
+import { useChannelPreferences } from './useChannelPreferences';
+import Icon from 'dashboard/components-next/icon/Icon';
 import { useCustomViews } from 'dashboard/composables/useCustomViews';
 import { SidebarContextProvider, useSidebarResize, COLLAPSED_THRESHOLD, MOBILE_DRAWER_WIDTH } from './provider';
 import { filterMenuByRole } from './permissions';
@@ -41,6 +44,37 @@ export default function Sidebar({
     const unreadCounts = useMemo(
         () => ({ ...conversationUnreadCounts, inboxes: inboxUnreadCounts }),
         [conversationUnreadCounts, inboxUnreadCounts],
+    );
+
+    const { channels, visibleInboxes, reorder, toggleHidden, rename } = useChannelPreferences(inboxes);
+    const [isArrangingChannels, setArrangingChannels] = useState(false);
+    const channelControls = useMemo(
+        () => ({
+            headerAction: isArrangingChannels ? null : (
+                <button
+                    type="button"
+                    title={t('SIDEBAR.CHANNEL_PREFERENCES.ARRANGE')}
+                    aria-label={t('SIDEBAR.CHANNEL_PREFERENCES.ARRANGE')}
+                    onClick={event => {
+                        event.stopPropagation();
+                        setArrangingChannels(true);
+                    }}
+                    className="flex size-6 flex-shrink-0 items-center justify-center rounded-md text-n-slate-10 hover:bg-n-surface-hover hover:text-n-slate-12 focus-visible:bg-n-surface-hover focus-visible:outline-none"
+                >
+                    <Icon icon="i-lucide-arrow-up-down" className="size-3.5 shrink-0" />
+                </button>
+            ),
+            replacement: isArrangingChannels ? (
+                <SidebarChannelsEditor
+                    channels={channels}
+                    onReorder={reorder}
+                    onToggleHidden={toggleHidden}
+                    onRename={rename}
+                    onDone={() => setArrangingChannels(false)}
+                />
+            ) : null,
+        }),
+        [isArrangingChannels, channels, reorder, toggleHidden, rename],
     );
 
     const [windowWidth, setWindowWidth] = useState(() => window.innerWidth);
@@ -130,7 +164,8 @@ export default function Sidebar({
                     unreadCounts,
                     conversationCustomViews,
                     contactCustomViews,
-                    inboxes,
+                    visibleInboxes,
+                    channelControls,
                 ),
                 role,
                 features,
@@ -141,7 +176,8 @@ export default function Sidebar({
             unreadCounts,
             conversationCustomViews,
             contactCustomViews,
-            inboxes,
+            visibleInboxes,
+            channelControls,
             role,
             features,
         ],

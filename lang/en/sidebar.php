@@ -92,6 +92,14 @@ return [
         'SETTINGS' => 'Settings',
     ],
     'CHANNELS' => 'Channels',
+    'CHANNEL_PREFERENCES' => [
+        'ARRANGE' => 'Arrange channels',
+        'DONE' => 'Done',
+        'DRAG' => 'Drag to reorder',
+        'RENAME' => 'Rename for display',
+        'HIDE' => 'Hide from sidebar',
+        'SHOW' => 'Show channel',
+    ],
     'SET_AUTO_OFFLINE' => [
         'TEXT' => 'Mark offline automatically',
         'INFO_TEXT' => 'Let the system automatically mark you offline when you aren\'t using the app or dashboard.',

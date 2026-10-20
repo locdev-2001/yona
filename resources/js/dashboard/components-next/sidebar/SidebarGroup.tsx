@@ -72,8 +72,11 @@ export default function SidebarGroup({
 
     const navigableChildren = (children ?? []).flatMap(child => child.children ?? child);
 
+    // Nhóm con có nút riêng (Kênh khi ẩn hết) vẫn hiện để mở lại được.
     const visibleChildren = (children ?? []).filter(child =>
-        child.children ? child.children.some(subChild => subChild.to) : Boolean(child.to),
+        child.children
+            ? Boolean(child.headerAction || child.replacement) || child.children.some(subChild => subChild.to)
+            : Boolean(child.to),
     );
     const accessibleItems = visibleChildren.flatMap(child => child.children ?? child).filter(child => child.to);
     const hasAccessibleChildren = visibleChildren.length > 0;
@@ -197,6 +200,8 @@ export default function SidebarGroup({
                                 children={child.children}
                                 collapsible={child.collapsible}
                                 showTreeLine={child.showTreeLine}
+                                headerAction={child.headerAction}
+                                replacement={child.replacement}
                                 endTreeLine={child.showTreeLine && isLastVisibleChild(child)}
                                 isExpanded={isExpanded}
                                 activeChild={activeChild}

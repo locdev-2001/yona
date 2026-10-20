@@ -95,6 +95,14 @@ return [
         'SETTINGS' => 'Cài đặt',
     ],
     'CHANNELS' => 'Kênh',
+    'CHANNEL_PREFERENCES' => [
+        'ARRANGE' => 'Sắp xếp kênh',
+        'DONE' => 'Xong',
+        'DRAG' => 'Kéo để đổi thứ tự',
+        'RENAME' => 'Đổi tên hiển thị',
+        'HIDE' => 'Ẩn kênh khỏi sidebar',
+        'SHOW' => 'Hiện lại kênh',
+    ],
     'SET_AUTO_OFFLINE' => [
         'TEXT' => 'Tự động đánh dấu ngoại tuyến',
         'INFO_TEXT' => 'Hãy để hệ thống tự động đánh dấu bạn ngoại tuyến khi bạn không sử dụng ứng dụng hoặc trang tổng quan.',

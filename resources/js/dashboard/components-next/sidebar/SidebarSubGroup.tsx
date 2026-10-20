@@ -30,6 +30,8 @@ interface SidebarSubGroupProps {
     collapsible?: boolean;
     showTreeLine?: boolean;
     endTreeLine?: boolean;
+    headerAction?: SidebarMenuChild['headerAction'];
+    replacement?: SidebarMenuChild['replacement'];
 }
 
 export default function SidebarSubGroup({
@@ -43,6 +45,8 @@ export default function SidebarSubGroup({
     collapsible = false,
     showTreeLine = false,
     endTreeLine = false,
+    headerAction,
+    replacement,
 }: SidebarSubGroupProps) {
     const [minimizedSections, setMinimizedSections] = useState(getMinimizedSections);
 
@@ -63,7 +67,8 @@ export default function SidebarSubGroup({
         setMinimizedSections(sections);
     }, [collapsible, hasActiveChild, isSubGroupExpanded, storageKey]);
 
-    if (!hasAccessibleItems) return null;
+    // Kênh ẩn hết vẫn giữ tiêu đề nhóm để mở lại khung sắp xếp.
+    if (!hasAccessibleItems && !headerAction && !replacement) return null;
 
     const toggleSubGroup = () => {
         if (!collapsible) return;
@@ -94,10 +99,13 @@ export default function SidebarSubGroup({
                     isExpanded={isSubGroupExpanded}
                     showTreeLine={showTreeLine}
                     endTreeLine={endTreeLine}
+                    action={headerAction}
                     onToggle={toggleSubGroup}
                 />
             ) : null}
-            {children.length ? (
+            {isExpanded && isSubGroupExpanded && replacement ? (
+                replacement
+            ) : children.length ? (
                 <ul
                     className={[
                         'm-0 list-none reset-base relative group min-w-0',

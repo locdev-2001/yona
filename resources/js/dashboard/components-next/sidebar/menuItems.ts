@@ -2,6 +2,7 @@
 import { t } from '../../../i18n';
 import { COMPACT_INTERFACE } from 'shared/helpers/productVisibility';
 import { createElement } from 'react';
+import type { ReactNode } from 'react';
 import { accountScopedUrl, conversationListPageURL } from 'dashboard/helper/URLHelper';
 import { SidebarChannelLeafContent } from './SidebarGroupLeaf';
 import type { SidebarMenuItem } from './provider';
@@ -75,6 +76,12 @@ function withoutTeamItems<T extends { name: string; children?: T[] }>(items: T[]
         .map(item => (item.children ? { ...item, children: withoutTeamItems(item.children) } : item));
 }
 
+// Điều khiển cá nhân hoá nhóm Kênh do Sidebar dựng (nút sắp xếp, khung sắp xếp).
+export interface SidebarChannelControls {
+    headerAction?: ReactNode;
+    replacement?: ReactNode;
+}
+
 export function buildMenuItems(
     accountId: number,
     teams: SidebarTeam[] = [],
@@ -82,6 +89,7 @@ export function buildMenuItems(
     conversationCustomViews: SidebarCustomView[] = [],
     contactCustomViews: SidebarCustomView[] = [],
     inboxes: SidebarInbox[] = [],
+    channelControls: SidebarChannelControls = {},
 ): SidebarMenuItem[] {
     const scoped = (path: string) => accountScopedUrl(accountId, path);
     const inboxListUrl = (inboxId: number) => conversationListPageURL({ accountId, filters: { inboxIds: [inboxId], labels: [] } });
@@ -160,6 +168,8 @@ export function buildMenuItems(
                     icon: 'i-lucide-mailbox',
                     collapsible: true,
                     showTreeLine: true,
+                    headerAction: channelControls.headerAction,
+                    replacement: channelControls.replacement,
                     children: inboxes.map(inbox => ({
                         name: `${inbox.name}-${inbox.id}`,
                         label: inbox.name,

@@ -23,7 +23,9 @@ function filterChildren<T extends SidebarMenuChild>(
         }
 
         const children = filterChildren(item.children, role, features);
-        if (COMPACT_INTERFACE && children.length === 0) continue;
+        // Nhóm rỗng nhưng có nút riêng (Kênh khi ẩn hết) giữ lại để mở lại được.
+        const keepsEmptyGroup = Boolean(item.headerAction || item.replacement);
+        if (COMPACT_INTERFACE && children.length === 0 && !keepsEmptyGroup) continue;
         if (item.children.length > 0 && children.length === 0) continue;
 
         if (COMPACT_INTERFACE && item.collapseSingleChild && children.length === 1 && children[0].to) {

@@ -26,12 +26,12 @@ export function isEditorHotKeyEnabled(uiSettings: UISettings, key: 'enter' | 'cm
     return editorMessageKey === key;
 }
 
-// updateUISettings của store gốc: merge rồi PUT /api/v1/profile (một điểm cho
-// sidebar_width, signature flag, conversation_display_type, contacts_sort_by…).
+// updateUISettings của store gốc (một điểm cho signature flag, conversation_display_type,
+// contacts_sort_by…). Chỉ gửi phần đổi: server gộp theo khoá, còn bản `current` của
+// màn này có thể cũ hơn khoá màn khác vừa lưu (sidebar_width, sidebar_channels).
 export function updateUISettings(current: UISettings, patch: UISettings): UISettings {
-    const next = { ...current, ...patch };
-    void putJson('/api/v1/profile', { ui_settings: next });
-    return next;
+    void putJson('/api/v1/profile', { ui_settings: patch });
+    return { ...current, ...patch };
 }
 
 // DEFAULT_CONVERSATION_SIDEBAR_ITEMS_ORDER + useConversationSidebarItemsOrder gốc:

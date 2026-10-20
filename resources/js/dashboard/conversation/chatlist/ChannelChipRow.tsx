@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { usePage } from '@inertiajs/react';
 
 import Icon from 'dashboard/components-next/icon/Icon';
+import { useChannelPreferences } from 'dashboard/components-next/sidebar/useChannelPreferences';
 import { useNotificationsUnreadInboxCounts } from 'dashboard/notifications/useUnreadCount';
 import { t } from '../../../i18n';
 import type { DashboardPageProps } from '../../types';
@@ -20,6 +21,7 @@ export function hasChannelChipRow(inboxCount: number): boolean {
 export default function ChannelChipRow() {
     const { listFilters, setListFilters } = useConversation();
     const { inboxes = [] } = usePage<DashboardPageProps>().props;
+    const { visibleInboxes } = useChannelPreferences(inboxes);
     const inboxUnreadCounts = useNotificationsUnreadInboxCounts();
     const rowRef = useRef<HTMLDivElement>(null);
     const [isExpanded, setExpanded] = useState(false);
@@ -55,7 +57,7 @@ export default function ChannelChipRow() {
             >
                 {t('CHAT_LIST.FILTER_PANEL.ALL_CHANNELS')}
             </FilterChip>
-            {inboxes.map(inbox => (
+            {visibleInboxes.map(inbox => (
                 <InboxFilterChip
                     key={inbox.id}
                     inbox={inbox}
