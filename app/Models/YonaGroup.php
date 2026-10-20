@@ -3,9 +3,11 @@
 namespace App\Models;
 
 use App\Models\Concerns\Avatarable;
+use App\Services\Groups\Calls\GroupRoomPolicy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 // Nhóm giữa người dùng Yona. Tin của nhóm lưu một bản trong hội thoại gốc thuộc account
 // ẩn của nhóm (account không có ai làm quản trị nên không ai mở được); mỗi thành viên có
@@ -65,6 +67,16 @@ class YonaGroup extends Model
     public function avatarMembers(): HasMany
     {
         return $this->activeMembers()->with('user')->orderBy('created_at')->orderBy('id')->limit(self::AVATAR_MEMBER_COUNT + 1);
+    }
+
+    // Phòng thoại đang mở của nhóm (mỗi nhóm tối đa một), kèm người đang ngồi trong phòng.
+    /** @return HasOne<Call, $this> */
+    public function openVoiceRoom(): HasOne
+    {
+        return $this->hasOne(Call::class)
+            ->where('kind', GroupRoomPolicy::KIND)
+            ->whereNull('ended_at')
+            ->with(['presentParticipants' => fn ($query) => $query->orderBy('joined_at')->with('user.avatar')]);
     }
 
     /** @return HasMany<YonaGroupInviteLink, $this> */

@@ -51,9 +51,12 @@ final readonly class CallService
             return new CallJoin($call, null);
         }
 
+        $maxParticipants = $this->kinds->policyOf($call)->maxParticipants();
+        $this->rejectWhenFull($call, $attendee, $maxParticipants);
+
         $this->rooms->open(new RoomSpec(
             $call->uuid,
-            $this->kinds->policyOf($call)->maxParticipants(),
+            $maxParticipants,
             self::EMPTY_ROOM_TIMEOUT_SECONDS,
             self::DEPARTURE_TIMEOUT_SECONDS,
         ));
@@ -64,6 +67,7 @@ final readonly class CallService
             $attendee->displayName,
             $admission->permissions,
             self::TICKET_TTL_SECONDS,
+            $attendee->displayAttributes(),
         )));
     }
 
@@ -83,6 +87,21 @@ final readonly class CallService
     public function close(Call $call): void
     {
         $this->rooms->close($call->uuid);
+    }
+
+    // Nhà cung cấp cũng chặn ở trần phòng, nhưng chặn trước khi cấp vé để báo được lý do.
+    private function rejectWhenFull(Call $call, CallAttendee $attendee, int $maxParticipants): void
+    {
+        $present = $call->presentParticipants();
+        $userId = $attendee->identity->userId();
+
+        if ($userId !== null) {
+            $present->where('user_id', '!=', $userId);
+        }
+
+        if ($present->count() >= $maxParticipants) {
+            throw new CallActionRejected('ROOM_FULL', 409, ['max' => $maxParticipants]);
+        }
     }
 
     private function authorizeModeration(Call $call, User $actor): void

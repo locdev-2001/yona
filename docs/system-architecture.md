@@ -616,8 +616,7 @@ nhóm sẵn có. Tạo nhóm và thêm bạn dùng `shared/people/PickPeopleDial
 - **Tìm theo tên người gửi trong nhóm Yona:** tìm theo người gửi thật
   (`GROUP_SENDER_NAME_SQL`) chỉ áp cho nhóm của kênh ngoài; tin nhóm Yona tìm theo nội
   dung và tệp. Đếm tin vào/ra ở chỉ số Super Admin vẫn tính tin chung của nhóm (một bản).
-- **Gọi thoại/video, chia sẻ màn hình:** mới có nền máy chủ (mục 12), chưa có giao diện,
-  chưa có gọi 1-1 đổ chuông, chưa có tin hệ thống về cuộc gọi.
+- **Gọi 1-1 có đổ chuông, meeting:** chưa có (mục 12 đã chừa chỗ). Phòng thoại nhóm đã có.
 - **Tin chờ và chặn cho người lạ** trên kênh Yona: chưa có; ai biết username đều
   mở được hội thoại.
 - **Đang gõ, đã xem** giữa hai hộp thư Yona: `YonaOutboundActions::typing()` rỗng,
@@ -645,9 +644,30 @@ POST /webhooks/media/{provider} ─► MediaDrivers ─► MediaWebhooks ─► 
 ```
 
 - **Loại cuộc gọi = một dòng sổ:** `config/calls.php` `kinds` map `calls.kind` →
-  `policy` (`Kinds\CallPolicy`: trần người, `admit`, ai điều hành) và `trail`
+  `policy` (`Kinds\CallPolicy`: trần người, `admit`, ai điều hành), `trail`
   (`Kinds\CallTrail`, tuỳ chọn: phòng bắt đầu/kết thúc thì để lại tin hệ thống hay lịch
-  sử). Lõi không có `if` theo loại. Thêm loại = một module + một dòng sổ.
+  sử) và `presence` (`Kinds\CallPresenceObserver`, tuỳ chọn: người vào/ra, bật/tắt chia sẻ
+  màn hình thì module tự đẩy cập nhật). Lõi không có `if` theo loại. Thêm loại = một module
+  + một mục sổ.
+- **Phòng nhóm (module `App\Services\Groups\Calls`):** `GroupRoomPolicy` (≤25, quản trị
+  nhóm điều hành), `GroupRoomTrail` (tin "X đã mở phòng thoại" khi người đầu tiên vào, tin
+  "Phòng thoại đã kết thúc · thời lượng · số người" khi phòng đóng; phòng không ai vào thì
+  không ghi; viết theo ngôn ngữ account của nhóm vì sự kiện đến từ webhook; đi qua
+  `GroupService::postNotice`, `content_attributes.call`), `GroupRoomPresence` → job
+  `BroadcastGroupVoiceRoomJob` (duy nhất theo nhóm tới khi chạy, trễ 2 giây để gom; đẩy
+  `voice_room.updated` tới từng thành viên với `account_id`/`conversation_id` của dòng họ).
+  `GroupRoomSummaries` dựng `voice_room` (người đang ngồi, ai chia sẻ màn hình, mở từ lúc
+  nào) gắn vào `group` trong payload hội thoại, nạp theo lô qua quan hệ
+  `YonaGroup::openVoiceRoom`.
+- **Phòng bắt đầu = người đầu tiên vào**, không phải lúc nhà cung cấp mở phòng trống.
+- **Ai đang chia sẻ màn hình:** `Calls\ScreenShares` giữ trong cache từ sự kiện
+  `TrackPublished/Unpublished` nguồn `screen` (schema không lưu trạng thái nguồn phát).
+- **Phòng đầy:** `CallService::join` đếm người đang ngồi, đủ trần thì từ chối trước khi cấp
+  vé (`CallActionRejected` `ROOM_FULL`, 409); nhà cung cấp vẫn chặn ở `maxParticipants`.
+- **Bật/tắt theo cấu hình:** `MediaDriver::isConfigured()`; `MediaDrivers::defaultIsConfigured()`
+  ra `globalConfig.callsEnabled` (HandleInertiaRequests), thiếu thì giao diện ẩn mọi nút gọi.
+- **Vé mang thông tin hiển thị:** `TicketRequest::$attributes` (ảnh đại diện), driver LiveKit
+  ghi vào claim `attributes`.
 - **Người vào phòng trung tính:** `CallAttendee` = định danh + tên hiển thị + `User` nếu có.
   `ParticipantIdentity` là `user:{id}` hoặc `guest:{key}` (khách không tài khoản), lõi tự
   dựng và tự đọc. Điều hành nhắm vào định danh, nên đưa được cả khách ra.
@@ -686,5 +706,23 @@ POST /webhooks/media/{provider} ─► MediaDrivers ─► MediaWebhooks ─► 
 
 | Route | Ghi chú |
 |---|---|
-| `POST /api/v1/accounts/{account}/yona/groups/{id}/call` (`media`: audio\|video) | Vào phòng thoại nhóm (mở nếu chưa có); trả `call`, `ticket` (`server_url`, `token`, `expires_at`; null khi chờ duyệt), `awaiting_approval` |
+| `GET /api/v1/accounts/{account}/yona/groups/{id}/call` | Phòng đang mở của nhóm (`voice_room`, null khi không ai ngồi) |
+| `POST /api/v1/accounts/{account}/yona/groups/{id}/call` (`media`: audio\|video) | Vào phòng thoại nhóm (mở nếu chưa có); trả `call`, `ticket` (`server_url`, `token`, `expires_at`; null khi chờ duyệt), `awaiting_approval`; đầy thì 409 |
+| `POST /…/yona/groups/{id}/call/participants/{userId}/mute` · `DELETE /…/call/participants/{userId}` | Quản trị nhóm tắt mic · mời ra khỏi phòng |
 | `POST /webhooks/media/{provider}` | Sự kiện phòng từ nhà cung cấp, không session; driver tự kiểm chữ ký |
+
+**Giao diện cuộc gọi (hai tầng):**
+- `resources/js/dashboard/calls/`: giao diện trung tính, không biết LiveKit. Kiểu hiển thị
+  `types.ts`, phiên gọi qua `useCallSession()` (`callSession.ts`), phòng đang mở của từng
+  nhóm qua `useOpenRoom()` (`voiceRooms.ts`, nhận `voice_room.updated` từ realtime, mỗi thẻ
+  chỉ đọc nhóm của mình). Thành phần: `VoicePanel` (đáy thanh bên), `CallBar` (điện thoại),
+  `CallStage` + `CallTile` + `CallControls` + `DevicePicker` (màn phòng), `CallMiniPlayer`,
+  `OpenRoomIndicator` + `OpenRoomPeople` (thẻ danh sách), `GroupRoomButton` (mũ khung chat),
+  `CallActivityJoin` (nút dưới tin mở phòng).
+- `resources/js/calls/`: **chỗ duy nhất import LiveKit** (`livekit-client`,
+  `@livekit/components-react`, khoá phiên bản). `CallSessionProvider` gắn ở gốc app qua
+  `children` của Inertia `App` (`resources/js/app.tsx`), nên chuyển trang không rớt phòng;
+  `LiveKitSession` tải lười (chunk riêng) chỉ khi vào phòng, dịch người trong phòng sang kiểu
+  trung tính, phát âm thanh phòng (`RoomAudioRenderer`, tắt âm thanh phòng = `muted`), nhận
+  lệnh bật/tắt mic, camera, màn hình, đổi thiết bị qua `MediaSessionHandle` (`mediaSession.ts`).
+

@@ -15,6 +15,13 @@ final class MediaDrivers
         return $this->named((string) config('calls.provider'));
     }
 
+    public function defaultIsConfigured(): bool
+    {
+        $provider = (string) config('calls.provider');
+
+        return $this->has($provider) && $this->named($provider)->isConfigured();
+    }
+
     public function has(string $provider): bool
     {
         return isset(config('calls.drivers')[$provider]);

@@ -8,4 +8,6 @@ enum RoomEventType
     case RoomFinished;
     case ParticipantJoined;
     case ParticipantLeft;
+    case TrackPublished;
+    case TrackUnpublished;
 }

@@ -21,4 +21,15 @@ final class LiveKitSources
     {
         return strtoupper(self::grantName($source));
     }
+
+    public static function fromTrackSource(?string $trackSource): ?MediaSource
+    {
+        foreach (MediaSource::cases() as $source) {
+            if (self::trackSourceName($source) === $trackSource) {
+                return $source;
+            }
+        }
+
+        return null;
+    }
 }

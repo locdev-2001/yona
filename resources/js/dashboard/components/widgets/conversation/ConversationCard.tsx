@@ -17,6 +17,9 @@ import type { AgentMeta, ContactMeta, Conversation, ConversationMessage } from '
 import InboxName from '../InboxName';
 import { StrangerBadge, useIsStranger } from 'dashboard/friends/yonaRelationships';
 import TimeAgo from '../../ui/TimeAgo';
+import OpenRoomIndicator from 'dashboard/calls/OpenRoomIndicator';
+import OpenRoomPeople from 'dashboard/calls/OpenRoomPeople';
+import { useOpenRoom } from 'dashboard/calls/voiceRooms';
 import MessagePreview from './MessagePreview';
 import CardLabels from './conversationCardComponents/CardLabels';
 import HighlightedText from 'dashboard/components-next/highlighted-text/HighlightedText';
@@ -119,6 +122,7 @@ export default function ConversationCard({
 }: ConversationCardProps) {
     // Avatar hình khối chỉ chuyển động khi đang trỏ vào thẻ, danh sách dài vẫn là ảnh tĩnh.
     const [isPointerInside, setPointerInside] = useState(false);
+    const openRoom = useOpenRoom(chat.group?.id, chat.group?.voice_room);
     const unreadCount = chat.unread_count;
     const contactAvailabilityStatus = useContactAvailabilityStatus(
         currentContact.id,
@@ -183,7 +187,7 @@ export default function ConversationCard({
             onMouseEnter={() => setPointerInside(true)}
             onMouseLeave={() => setPointerInside(false)}
         >
-            <div className="relative">
+            <div className={openRoom ? 'relative self-start pt-3' : 'relative'}>
                 {!hideThumbnail ? (
                     <Avatar
                         {...conversationAvatar(chat.group, currentContact.id, currentContact.thumbnail)}
@@ -215,7 +219,8 @@ export default function ConversationCard({
                         ].join(' ')}
                     >
                         {showInboxName ? <InboxName inbox={inbox} className="flex-1 min-w-0" /> : null}
-                        {chat.group ? (
+                        {chat.group && openRoom ? <OpenRoomIndicator room={openRoom} /> : null}
+                        {chat.group && !openRoom ? (
                             <span className="flex items-center gap-1 flex-shrink-0 text-xs text-n-slate-11">
                                 <Icon icon="i-lucide-users-round" className="size-3" />
                                 {t('CHAT.GROUP.MEMBERS', { count: chat.group.member_count })}
@@ -312,6 +317,7 @@ export default function ConversationCard({
                         hasUnread ? 'ltr:right-11 rtl:left-11' : 'ltr:right-3 rtl:left-3',
                     ].join(' ')}
                 />
+                {chat.group && openRoom ? <OpenRoomPeople room={openRoom} /> : null}
                 {showLabelsSection || showAssigneeSection ? (
                     <div className="flex items-center gap-2 min-w-0 mt-0.5 mx-2">
                         {showLabelsSection ? (

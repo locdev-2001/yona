@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Models\Sticker;
 use App\Services\Branding\BrandAssets;
+use App\Services\Calls\Media\MediaDrivers;
 use App\Services\Meta\GraphApi;
 use App\Services\Notification\VapidService;
 use App\Services\Stickers\StickerLibraryAccess;
@@ -59,6 +60,9 @@ class HandleInertiaRequests extends Middleware
                 // báo đẩy. Closure chỉ chạy khi render trang, và chỉ tra khoá cho
                 // người đã đăng nhập — trang công khai, request JSON không đụng tới.
                 'vapidPublicKey' => fn () => $request->user() !== null ? app(VapidService::class)->publicKey() : null,
+                // Nhà cung cấp phòng media đủ cấu hình thì mới hiện nút gọi; thiếu thì giao diện
+                // không mở cuộc gọi hỏng.
+                'callsEnabled' => fn () => $request->user() !== null && app(MediaDrivers::class)->defaultIsConfigured(),
             ],
             'flash' => [
                 'alert' => $request->session()->get('alert'),

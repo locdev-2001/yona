@@ -6,6 +6,9 @@ namespace App\Services\Calls\Media;
 // dòng ở config/calls.php, lõi không đổi.
 interface MediaDriver
 {
+    // Đủ địa chỉ và khoá để gọi được nhà cung cấp; chưa đủ thì giao diện không mở cuộc gọi.
+    public function isConfigured(): bool;
+
     public function rooms(): MediaRooms;
 
     public function tickets(): MediaTickets;

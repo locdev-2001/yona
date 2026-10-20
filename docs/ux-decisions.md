@@ -124,3 +124,15 @@ Kiến trúc: [system-architecture.md](system-architecture.md).
 | Màn | Quyết định | Lý do | Ngày |
 |---|---|---|---|
 | Mọi bề mặt | Chờ tải dùng **một** hiệu ứng: ba khối nảy, màu theo chữ xung quanh, không vòng quay. Nguồn duy nhất `resources/js/shared/components/loader/LoaderIcon.tsx`; `Loader` là bản mang nhãn "Đang tải" (`role="status"`), `LoaderIcon` không nhãn chỉ dùng cạnh chữ "Đang…" đã hiện sẵn. Người bật giảm chuyển động thấy ba khối đứng yên so le. Skeleton giữ chỗ, chấm "đang gõ" và biểu cảm avatar không thuộc loại này | Mỗi vùng tự vẽ một kiểu quay riêng thì rối; đổi kiểu tải về sau chỉ sửa một tệp | 08/10/2026 |
+
+## Phòng thoại nhóm
+
+| Màn | Quyết định | Lý do | Ngày |
+|---|---|---|---|
+| Bố cục chung | **Tính năng và bố cục theo Discord, phong cách của Yona:** người đang ngồi liệt kê dưới dòng nhóm trong danh sách hội thoại; khối "Đã kết nối" ở đáy thanh bên (điện thoại: dải ngay trên thanh tab); màn phòng phủ vùng nội dung, thanh bên còn; thu nhỏ phòng mà có người chia sẻ màn hình thì có khung xem nhỏ. Không làm nút Hoạt động, Soundboard, không dựng bảng chọn cửa sổ riêng (trình duyệt tự hiện) | Founder duyệt mockup v6: quen tay như Discord nhưng không nhái giao diện | 20/10/2026 |
+| Màu và đường nét | Theo chế độ sáng/tối người dùng chọn (màn phòng không ép tối). **Không viền, không bóng đổ ở mọi màn cuộc gọi**, chỉ bo góc theo ba bậc: nút `rounded-lg` (mặc định `Button`), khối (ô người, ô màn hình, khung xem nhỏ, hàng nút) `rounded-xl`, nhãn nhỏ `rounded-md`. Người đang nói: nhãn tên chuyển nền xanh + sóng âm, không viền quanh ô | Founder chốt "tuyệt đối không viền, toàn bộ" | 20/10/2026 |
+| Chia sẻ màn hình | **Chỉ là hình trực tiếp:** không phải video, không lưu, không ghi hình, không vào kho Ảnh/video của hội thoại. Khung xem nhỏ đặt góc dưới cột danh sách, xa panel Ảnh/video. Điện thoại không có nút chia sẻ (trình duyệt di động không có `getDisplayMedia`) | Lưu luồng trực tiếp thì dung lượng rất lớn; đặt cạnh kho ảnh dễ hiểu nhầm là tệp | 20/10/2026 |
+| Chỉ báo phòng mở | Chỉ hiện trong danh sách (loa xanh + thời lượng, người đang ngồi, nhãn "Trực tiếp") và nút ở mũ khung chat; **không đẩy thông báo**. Cập nhật realtime gom theo nhịp 2 giây | Phòng luôn mở kiểu nhóm Zalo, không phải cuộc gọi đổ chuông | 20/10/2026 |
+| Nút gọi | Ẩn mọi nút gọi khi máy chủ cuộc gọi chưa cấu hình đủ (`globalConfig.callsEnabled`) | Không hiện tính năng chưa chạy | 20/10/2026 |
+| Tắt âm thanh phòng | Có nút tai nghe tắt toàn bộ tiếng phòng phía mình (mic vẫn theo nút mic) | Thói quen Discord; ngồi phòng mà tạm không nghe | 20/10/2026 |
+| Quản trị nhóm | Rê chuột vào ô người khác: tắt mic, mời ra khỏi phòng. Người bị tắt mic tự bật lại được; người bị mời ra thấy thông báo và có thể vào lại | Đúng quyết định "quản trị tắt mic hoặc đưa ra" | 20/10/2026 |

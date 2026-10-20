@@ -1,6 +1,7 @@
 import { deleteJson, getJson, patchJson, postForm, postJson } from 'dashboard/helper/apiClient';
 import type { AvatarStackPerson } from 'shared/avatar/AvatarStack';
 import type { AvatarTraits } from 'shared/avatar/avatarSeed';
+import type { OpenRoomSummary } from 'dashboard/calls/types';
 
 export type GroupRole = 'admin' | 'member';
 
@@ -21,6 +22,8 @@ export interface GroupSummary {
     member_count: number;
     // null: người xem đã rời nhóm.
     my_role: GroupRole | null;
+    // Phòng thoại đang có người ngồi; null khi không mở hoặc người xem đã rời nhóm.
+    voice_room?: OpenRoomSummary | null;
 }
 
 export interface GroupMember {

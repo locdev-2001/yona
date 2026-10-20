@@ -230,7 +230,10 @@ Route::middleware(['auth.api_token', 'auth', 'account.scope'])
         Route::get('/yona/groups/{groupId}', [YonaGroupsController::class, 'show'])->whereNumber('groupId');
         Route::patch('/yona/groups/{groupId}', [YonaGroupsController::class, 'update'])->whereNumber('groupId');
         Route::post('/yona/groups/{groupId}/avatar', [YonaGroupsController::class, 'updateAvatar'])->whereNumber('groupId')->middleware('throttle:30,1');
+        Route::get('/yona/groups/{groupId}/call', [YonaGroupCallsController::class, 'show'])->whereNumber('groupId');
         Route::post('/yona/groups/{groupId}/call', [YonaGroupCallsController::class, 'store'])->whereNumber('groupId')->middleware('throttle:30,1');
+        Route::post('/yona/groups/{groupId}/call/participants/{userId}/mute', [YonaGroupCallsController::class, 'mute'])->whereNumber(['groupId', 'userId'])->middleware('throttle:60,1');
+        Route::delete('/yona/groups/{groupId}/call/participants/{userId}', [YonaGroupCallsController::class, 'remove'])->whereNumber(['groupId', 'userId'])->middleware('throttle:60,1');
         Route::post('/yona/groups/{groupId}/members', [YonaGroupMembersController::class, 'store'])->whereNumber('groupId')->middleware('throttle:60,1');
         Route::patch('/yona/groups/{groupId}/members/{userId}', [YonaGroupMembersController::class, 'update'])->whereNumber(['groupId', 'userId']);
         Route::delete('/yona/groups/{groupId}/members/{userId}', [YonaGroupMembersController::class, 'destroy'])->whereNumber(['groupId', 'userId']);

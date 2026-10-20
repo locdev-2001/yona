@@ -1,6 +1,7 @@
 import { createInertiaApp } from '@inertiajs/react';
 import { createRoot } from 'react-dom/client';
 
+import CallSessionProvider from './calls/CallSessionProvider';
 import { SERVICE_WORKER_URL } from './dashboard/helper/pushHelper';
 import { documentTitle } from './documentTitle';
 
@@ -30,7 +31,16 @@ createInertiaApp({
         return importPage();
     },
     setup({ el, App, props }) {
-        createRoot(el).render(<App {...props} />);
+        // Phiên gọi nằm trên trang: chuyển trang Inertia thì trang đổi, cuộc gọi không rớt.
+        createRoot(el).render(
+            <App {...props}>
+                {({ Component, props: pageProps, key }) => (
+                    <CallSessionProvider>
+                        <Component key={key} {...pageProps} />
+                    </CallSessionProvider>
+                )}
+            </App>,
+        );
     },
     progress: {
         color: '#2781F6',

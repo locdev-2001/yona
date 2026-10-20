@@ -5,6 +5,7 @@ namespace App\Services\Calls;
 use App\Models\Call;
 use App\Models\CallParticipant;
 use App\Services\Calls\Kinds\CallKinds;
+use App\Services\Calls\Media\MediaSource;
 use App\Services\Calls\Media\RoomEvent;
 use App\Services\Calls\Media\RoomEventType;
 use Carbon\CarbonImmutable;
@@ -12,11 +13,15 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 // Ghi đời phòng và vào/ra phòng từ sự kiện của nhà cung cấp media. Nhà cung cấp có thể
-// gửi lại hoặc gửi lệch thứ tự, nên mỗi bước đều chịu được chạy hai lần. Phòng bắt đầu/kết
-// thúc thì báo dấu vết của loại cuộc gọi (CallTrail) sau khi đã ghi xong.
+// gửi lại hoặc gửi lệch thứ tự, nên mỗi bước đều chịu được chạy hai lần. Sau khi ghi xong:
+// phòng bắt đầu/kết thúc thì báo dấu vết của loại cuộc gọi (CallTrail), người hoặc nguồn
+// phát đổi thì báo bên nghe của loại đó (CallPresenceObserver).
 final readonly class CallPresenceRecorder
 {
-    public function __construct(private CallKinds $kinds) {}
+    public function __construct(
+        private CallKinds $kinds,
+        private ScreenShares $screenShares,
+    ) {}
 
     public function record(RoomEvent $event): void
     {
@@ -32,10 +37,13 @@ final readonly class CallPresenceRecorder
             }
 
             match ($event->type) {
-                RoomEventType::RoomStarted => $this->markStarted($call, $event->occurredAt),
+                // Phòng tính là bắt đầu khi người đầu tiên vào (recordJoin), không phải lúc nhà
+                // cung cấp mở phòng trống.
+                RoomEventType::RoomStarted => null,
                 RoomEventType::RoomFinished => $this->markFinished($call, $event->occurredAt),
                 RoomEventType::ParticipantJoined => $this->recordJoin($call, $event),
                 RoomEventType::ParticipantLeft => $this->recordLeave($call, $event),
+                RoomEventType::TrackPublished, RoomEventType::TrackUnpublished => $this->recordScreenShare($call, $event),
             };
         });
     }
@@ -65,7 +73,9 @@ final readonly class CallPresenceRecorder
         }
 
         $call->save();
+        $this->screenShares->clear($call);
         DB::afterCommit(fn () => $this->kinds->trailOf($call)?->roomFinished($call));
+        $this->notifyPresenceChanged($call);
     }
 
     private function recordJoin(Call $call, RoomEvent $event): void
@@ -76,11 +86,11 @@ final readonly class CallPresenceRecorder
             return;
         }
 
-        // Sự kiện bắt đầu phòng có thể tới sau, hoặc đã mất: người đầu tiên vào là phòng đã bắt đầu.
-        $this->markStarted($call, $event->occurredAt);
         $call->participants()->create(['user_id' => $userId, 'joined_at' => $event->occurredAt]);
+        $this->markStarted($call, $event->occurredAt);
         $call->peak_participants = max($call->peak_participants, $call->presentParticipants()->count());
         $call->save();
+        $this->notifyPresenceChanged($call);
     }
 
     private function recordLeave(Call $call, RoomEvent $event): void
@@ -96,6 +106,27 @@ final readonly class CallPresenceRecorder
             ->where('user_id', $userId)
             ->whereNull('left_at')
             ->update(['left_at' => $event->occurredAt]);
+        $this->screenShares->stop($call, $userId);
+        $this->notifyPresenceChanged($call);
+    }
+
+    private function recordScreenShare(Call $call, RoomEvent $event): void
+    {
+        $userId = $this->storableUserId($event);
+
+        if ($userId === null || $call->isEnded() || $event->source !== MediaSource::Screen) {
+            return;
+        }
+
+        $event->type === RoomEventType::TrackPublished
+            ? $this->screenShares->start($call, $userId)
+            : $this->screenShares->stop($call, $userId);
+        $this->notifyPresenceChanged($call);
+    }
+
+    private function notifyPresenceChanged(Call $call): void
+    {
+        DB::afterCommit(fn () => $this->kinds->presenceObserverOf($call)?->presenceChanged($call));
     }
 
     // `call_participants` hiện chỉ chứa người dùng Yona; khách (meeting) chờ schema được duyệt.

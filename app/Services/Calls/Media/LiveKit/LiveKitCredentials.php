@@ -13,6 +13,11 @@ final readonly class LiveKitCredentials
         #[Config('services.livekit.api_secret')] private ?string $apiSecret,
     ) {}
 
+    public function isComplete(): bool
+    {
+        return filled($this->url) && filled($this->apiKey) && filled($this->apiSecret);
+    }
+
     // Địa chỉ trình duyệt kết nối (ws/wss).
     public function clientUrl(): string
     {

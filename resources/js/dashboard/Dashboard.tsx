@@ -21,6 +21,11 @@ import SettingsShell from 'dashboard/settings/shell/SettingsShell';
 import { InsideSettingsOverlay, SettingsOverlay } from 'dashboard/settings/shell/settingsOverlay';
 import { isSettingsPath, rememberAppUrl } from 'dashboard/settings/shell/settingsPages';
 import type { DashboardPageProps } from './types';
+import CallBar from 'dashboard/calls/CallBar';
+import CallStage from 'dashboard/calls/CallStage';
+import CallMiniPlayer from 'dashboard/calls/CallMiniPlayer';
+import { useCallSession } from 'dashboard/calls/callSession';
+import { useIsPhoneScreen } from 'dashboard/composables/useViewportWidth';
 
 // Port từ dashboard/routes/dashboard/Dashboard.vue (shell)
 // Copilot/UpgradePage/KeyShortcutModal: EE hoặc vào nhóm sau. CommandBar: khung + snooze (B5), phần còn lại B10.
@@ -38,6 +43,8 @@ function DashboardFrame({ children }: { children: ReactNode }) {
     const fontSize = auth.user?.ui_settings?.font_size as string | undefined;
 
     const { colorScheme } = useColorScheme();
+    const isPhone = useIsPhoneScreen();
+    const call = useCallSession();
 
     useEffect(() => {
         applyFontSizeToDOM(fontSize);
@@ -68,17 +75,24 @@ function DashboardFrame({ children }: { children: ReactNode }) {
                         isMobileSidebarOpen={isMobileSidebarOpen}
                         onCloseMobileSidebar={() => setMobileSidebarOpen(false)}
                     />
-                    <main className="flex flex-1 h-full w-full min-h-0 px-0 overflow-hidden bg-n-surface-canvas">
+                    <main className="relative flex flex-1 h-full w-full min-h-0 px-0 overflow-hidden bg-n-surface-canvas">
                         {isSettingsScreen ? <SettingsShell>{children}</SettingsShell> : children}
                         <CommandBar />
                         <ProfileOverlay />
                         <YonaRelationshipsSync />
                         <SettingsOverlay />
+                        {call.room && call.stageOpen ? (
+                            <CallStage room={call.room} local={call.local} actions={call.actions} renderMedia={call.renderMedia} isPhone={isPhone} />
+                        ) : null}
+                        {call.room && !call.stageOpen && !isPhone && call.sharer ? (
+                            <CallMiniPlayer sharer={call.sharer} renderMedia={call.renderMedia} onExpand={call.actions.expand} />
+                        ) : null}
                     </main>
                     <SnackbarContainer />
                     <RealtimeProvider />
                     <UnreadTitleSync />
                 </div>
+                {call.room && !call.stageOpen && isPhone ? <CallBar room={call.room} local={call.local} actions={call.actions} /> : null}
                 {/* Trong luồng, không nổi: cột trên co lại nên thẻ cuối danh sách không bị che. */}
                 {hasMobileTabBar && !isSettingsScreen ? (
                     <MobileTabBar

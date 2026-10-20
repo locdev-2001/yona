@@ -9,9 +9,10 @@ use RuntimeException;
 // thúc): trả `{error, code}` giống GroupActionRejected để ba mặt tiền route dùng chung.
 class CallActionRejected extends RuntimeException
 {
-    public function __construct(public readonly string $reason, public readonly int $status = 422)
+    /** @param  array<string, string|int>  $replace */
+    public function __construct(public readonly string $reason, public readonly int $status = 422, array $replace = [])
     {
-        parent::__construct(__('calls.ERRORS.'.$reason));
+        parent::__construct(__('calls.ERRORS.'.$reason, $replace));
     }
 
     public static function forbidden(string $reason): self

@@ -34,6 +34,8 @@ export interface GlobalConfig {
     // Khoá công khai VAPID cho Web Push (thay biến cấu hình toàn cục vapidPublicKey
     // của bản gốc); null khi máy chủ không có khoá — giao diện ẩn phần đẩy.
     vapidPublicKey?: string | null;
+    // Máy chủ cuộc gọi đã cấu hình đủ: không có thì ẩn mọi nút gọi.
+    callsEnabled?: boolean;
 }
 
 export interface SharedPageProps {

@@ -19,6 +19,8 @@ final readonly class LiveKitWebhooks implements MediaWebhooks
         'room_finished' => RoomEventType::RoomFinished,
         'participant_joined' => RoomEventType::ParticipantJoined,
         'participant_left' => RoomEventType::ParticipantLeft,
+        'track_published' => RoomEventType::TrackPublished,
+        'track_unpublished' => RoomEventType::TrackUnpublished,
     ];
 
     public function __construct(private LiveKitTokenSigner $signer) {}
@@ -40,6 +42,7 @@ final readonly class LiveKitWebhooks implements MediaWebhooks
             $room,
             isset($payload['createdAt']) ? CarbonImmutable::createFromTimestamp((int) $payload['createdAt']) : CarbonImmutable::now(),
             $payload['participant']['identity'] ?? null,
+            LiveKitSources::fromTrackSource($payload['track']['source'] ?? null),
         );
     }
 

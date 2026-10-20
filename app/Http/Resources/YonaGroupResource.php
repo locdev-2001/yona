@@ -6,6 +6,7 @@ use App\Models\Conversation;
 use App\Models\YonaGroup;
 use App\Models\YonaGroupInviteLink;
 use App\Models\YonaGroupMember;
+use App\Services\Groups\Calls\GroupRoomSummaries;
 
 // Payload nhóm theo góc nhìn một thành viên: vai trò của họ và dòng hội thoại nhóm trong hộp thư của họ.
 final class YonaGroupResource
@@ -30,6 +31,7 @@ final class YonaGroupResource
             ...self::avatar($group, $membership->user_id),
             'member_count' => $group->member_count,
             'my_role' => $membership->isActive() ? $membership->role : null,
+            'voice_room' => $membership->isActive() ? app(GroupRoomSummaries::class)->of($group) : null,
         ];
     }
 

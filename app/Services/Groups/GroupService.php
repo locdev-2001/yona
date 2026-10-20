@@ -439,13 +439,22 @@ final class GroupService
      */
     private function postActivity(YonaGroup $group, string $key, array $replace): void
     {
+        $this->postNotice($group, __('groups.ACTIVITY.'.$key, $replace));
+    }
+
+    // Tin hoạt động trong hội thoại gốc của nhóm (thay đổi thành viên, phòng thoại…), rồi làm
+    // mới dòng nhóm của mọi thành viên.
+    /** @param  array<string, mixed>  $contentAttributes */
+    public function postNotice(YonaGroup $group, string $content, array $contentAttributes = []): void
+    {
         $thread = $group->conversation;
 
         $thread->messages()->create([
             'account_id' => $thread->account_id,
             'inbox_id' => $thread->inbox_id,
             'message_type' => Message::TYPE_ACTIVITY,
-            'content' => __('groups.ACTIVITY.'.$key, $replace),
+            'content' => $content,
+            'content_attributes' => $contentAttributes,
         ]);
 
         DB::afterCommit(fn () => $this->refreshMemberRows($group));

@@ -24,6 +24,7 @@ final readonly class LiveKitTickets implements MediaTickets
         $token = $this->signer->sign([
             'sub' => $request->identity,
             'name' => $request->displayName,
+            'attributes' => (object) $request->attributes,
             'video' => [
                 'room' => $request->room,
                 'roomJoin' => true,

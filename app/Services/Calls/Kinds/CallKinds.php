@@ -6,7 +6,7 @@ use App\Models\Call;
 use Illuminate\Contracts\Container\Container;
 use InvalidArgumentException;
 
-// Sổ loại cuộc gọi: `calls.kind` → chính sách và dấu vết của module sở hữu loại đó, đọc từ
+// Sổ loại cuộc gọi: `calls.kind` → chính sách, dấu vết, bên nghe thay đổi trong phòng của module sở hữu loại đó, đọc từ
 // config/calls.php. Lõi chỉ hỏi sổ, không rẽ nhánh theo loại.
 final readonly class CallKinds
 {
@@ -24,7 +24,14 @@ final readonly class CallKinds
         return $trailClass === null ? null : $this->container->make($trailClass);
     }
 
-    /** @return array{policy: class-string<CallPolicy>, trail?: class-string<CallTrail>|null} */
+    public function presenceObserverOf(Call $call): ?CallPresenceObserver
+    {
+        $observerClass = $this->entry($call->kind)['presence'] ?? null;
+
+        return $observerClass === null ? null : $this->container->make($observerClass);
+    }
+
+    /** @return array{policy: class-string<CallPolicy>, trail?: class-string<CallTrail>|null, presence?: class-string<CallPresenceObserver>|null} */
     private function entry(string $kind): array
     {
         return config('calls.kinds')[$kind] ?? throw new InvalidArgumentException("Unknown call kind [{$kind}]");

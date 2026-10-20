@@ -11,6 +11,8 @@ use App\Services\Calls\CallJoin;
 use App\Services\Calls\CallMedia;
 use App\Services\Calls\CallService;
 use App\Services\Calls\CallStatus;
+use App\Services\Calls\Media\MediaSource;
+use App\Services\Calls\ParticipantIdentity;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Str;
 
@@ -34,14 +36,33 @@ final readonly class GroupRooms
         return (new Call(['kind' => GroupRoomPolicy::KIND, 'yona_group_id' => $group->id]))->setRelation('group', $group);
     }
 
-    private function openRoomOf(YonaGroup $group, CallMedia $media): Call
+    // Quản trị nhóm tắt mic hoặc mời một người ra khỏi phòng đang mở; quyền kiểm ở lõi.
+    public function mute(YonaGroup $group, User $actor, int $targetUserId): void
     {
-        $openRoom = fn (): ?Call => Call::query()->open()
+        $this->calls->mute($this->currentRoomOf($group), $actor, ParticipantIdentity::forUser($targetUserId), MediaSource::Microphone);
+    }
+
+    public function remove(YonaGroup $group, User $actor, int $targetUserId): void
+    {
+        $this->calls->remove($this->currentRoomOf($group), $actor, ParticipantIdentity::forUser($targetUserId));
+    }
+
+    private function currentRoomOf(YonaGroup $group): Call
+    {
+        return $this->findOpenRoom($group) ?? throw new CallActionRejected('CALL_ENDED');
+    }
+
+    private function findOpenRoom(YonaGroup $group): ?Call
+    {
+        return Call::query()->open()
             ->where('kind', GroupRoomPolicy::KIND)
             ->where('yona_group_id', $group->id)
             ->first();
+    }
 
-        if ($call = $openRoom()) {
+    private function openRoomOf(YonaGroup $group, CallMedia $media): Call
+    {
+        if ($call = $this->findOpenRoom($group)) {
             return $call;
         }
 
@@ -55,7 +76,7 @@ final readonly class GroupRooms
             ]);
         } catch (UniqueConstraintViolationException) {
             // Hai người mở phòng cùng lúc: index một-phòng-mở-mỗi-nhóm giữ lại một dòng.
-            return $openRoom() ?? throw new CallActionRejected('CALL_ENDED');
+            return $this->currentRoomOf($group);
         }
     }
 }

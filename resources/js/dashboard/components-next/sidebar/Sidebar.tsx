@@ -20,6 +20,8 @@ import { openCommandBar } from 'dashboard/commands/commandBarStore';
 import { keyLabel } from 'shared/helpers/kbd';
 import type { DashboardPageProps } from '../../types';
 import { SETTINGS_MENU_NAME } from 'dashboard/settings/shell/settingsPages';
+import VoicePanel from 'dashboard/calls/VoicePanel';
+import { useCallSession } from 'dashboard/calls/callSession';
 
 // Port từ components-next/sidebar/Sidebar.vue
 // (soạn hội thoại mới nằm cạnh ô tìm ở danh sách hội thoại; ChangelogCard
@@ -39,6 +41,7 @@ export default function Sidebar({
     const contactCustomViews = useCustomViews(accountId, 'contact');
     // watch([accountId, hasConversationUnreadCounts], fetchConversationUnreadCounts) của Sidebar.vue.
     const conversationUnreadCounts = useConversationUnreadCounts();
+    const call = useCallSession();
     // Badge từng kênh đếm y như số trên chuông, chỉ chia theo kênh.
     const inboxUnreadCounts = useNotificationsUnreadInboxCounts();
     const unreadCounts = useMemo(
@@ -295,6 +298,9 @@ export default function Sidebar({
                 </nav>
                 <section className="flex relative flex-col flex-shrink-0 gap-1 justify-between items-center pb-[env(safe-area-inset-bottom)]">
                     <div className="pointer-events-none absolute inset-x-0 -top-[1.938rem] h-8 bg-gradient-to-t from-n-surface-sidebar to-transparent" />
+                    {call.room && !isMobile ? (
+                        <VoicePanel room={call.room} local={call.local} actions={call.actions} isCollapsed={isEffectivelyCollapsed} />
+                    ) : null}
                     <div
                         className={`px-1 py-1.5 flex-shrink-0 flex w-full z-50 gap-2 items-center ${
                             isEffectivelyCollapsed ? 'justify-center' : 'justify-between'
