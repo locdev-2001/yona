@@ -662,6 +662,10 @@ POST /webhooks/media/{provider} ─► MediaDrivers ─► MediaWebhooks ─► 
   (`voice_room`, `voice_room_as_of`) và vào sự kiện `voice_room.updated` (mỗi thành viên một
   `ActionCableBroadcastJob`).
 - **Phòng bắt đầu = người đầu tiên vào**, không phải lúc nhà cung cấp mở phòng trống.
+- **Đối soát khi mất webhook:** `ReconcileCallsJob` (mỗi phút, chỉ khi đã cấu hình) →
+  `Calls\CallReconciler` so người đang ngồi trong DB với người đang kết nối ở nhà cung cấp và
+  đưa chỗ lệch qua `CallPresenceRecorder` như sự kiện thường: thiếu dòng thì ghi vào, dòng thừa
+  (quá 30 giây) thì ghi rời, phòng trống quá 90 giây thì ghi kết thúc.
 - **Ai đang chia sẻ màn hình:** `Calls\ScreenShares` giữ trong cache từ sự kiện
   `TrackPublished/Unpublished` nguồn `screen` (schema không lưu trạng thái nguồn phát).
 - **Phòng đầy:** `CallService::join` đếm người đang ngồi, đủ trần thì từ chối trước khi cấp

@@ -2,6 +2,7 @@
 
 use App\Jobs\Account\ConversationsResolutionSchedulerJob;
 use App\Jobs\AutomationRules\TriggerPendingExecutionsJob;
+use App\Jobs\Calls\ReconcileCallsJob;
 use App\Jobs\Conversations\ReopenSnoozedConversationsJob;
 use App\Jobs\Conversations\SweepOutboundOrderJob;
 use App\Jobs\Inboxes\FetchImapEmailInboxesJob;
@@ -12,6 +13,7 @@ use App\Jobs\Search\ProcessSearchOutboxJob;
 use App\Jobs\Zalo\ZaloHealthSweepJob;
 use App\Models\UserSession;
 use App\Search\SearchOutbox;
+use App\Services\Calls\Media\MediaDrivers;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -41,6 +43,10 @@ Schedule::job(new SweepOutboundOrderJob)->everyMinute()->withoutOverlapping();
 // Outbox tìm kiếm đã xếp job ngay sau mỗi lần ghi; lịch này vét phần xếp hàng lỗi
 // hoặc job hết lượt thử. Engine không giữ chỉ mục riêng thì không chạy.
 Schedule::job(new ProcessSearchOutboxJob)->everyMinute()->when(fn () => app(SearchOutbox::class)->enabled());
+
+// Cuộc gọi: bù webhook bị mất (người đã rời vẫn hiện "đang ngồi", phòng đã đóng vẫn mở).
+Schedule::job(new ReconcileCallsJob)->everyMinute()->withoutOverlapping()
+    ->when(fn () => app(MediaDrivers::class)->defaultIsConfigured());
 
 // Horizon chỉ vẽ được biểu đồ thông lượng/thời gian chờ nếu có ai chụp ảnh
 // hàng đợi định kỳ; không có dòng này thì tab Metrics trống.

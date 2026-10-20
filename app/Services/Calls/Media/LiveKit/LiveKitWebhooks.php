@@ -19,6 +19,8 @@ final readonly class LiveKitWebhooks implements MediaWebhooks
         'room_finished' => RoomEventType::RoomFinished,
         'participant_joined' => RoomEventType::ParticipantJoined,
         'participant_left' => RoomEventType::ParticipantLeft,
+        // Kết nối hỏng giữa chừng: với lõi là người đó không còn trong phòng.
+        'participant_connection_aborted' => RoomEventType::ParticipantLeft,
         'track_published' => RoomEventType::TrackPublished,
         'track_unpublished' => RoomEventType::TrackUnpublished,
     ];
