@@ -10,6 +10,7 @@ use App\Services\Admin\Operations\AccountSuspension;
 use App\Support\SuperAdmin\Dashboard;
 use App\Support\SuperAdmin\Dashboards\AccountDashboard;
 use App\Support\SuperAdminArea;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -33,6 +34,11 @@ class AccountsController extends ResourceController
                 'roles' => array_values(AccountUser::ROLE_NAMES),
             ],
         ];
+    }
+
+    protected function indexQuery(): Builder
+    {
+        return parent::indexQuery()->personal();
     }
 
     // Danh sách account mở thẳng account 360; trang show cũ vẫn có nút từ đó.

@@ -522,6 +522,21 @@ class Conversation extends Model
         return $this->priority === null ? null : self::PRIORITY_NAMES[$this->priority];
     }
 
+    // Tin mới tới kéo hội thoại đang tạm ẩn hoặc đã đóng về hàng đang mở.
+    public function reopenForNewMessage(): void
+    {
+        // `return if conversation.muted?` — khách bị chặn nhắn tiếp không kéo
+        // hội thoại đã đóng quay lại hàng đợi của agent.
+        if ($this->isMuted()) {
+            return;
+        }
+
+        // reopen_resolved_conversation: inbox bot chưa port — API/kênh khác đều mở lại.
+        if ($this->isSnoozed() || $this->isResolved()) {
+            $this->update(['status' => self::STATUS_OPEN]);
+        }
+    }
+
     public function isSnoozed(): bool
     {
         return $this->status === self::STATUS_SNOOZED;

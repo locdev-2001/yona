@@ -618,25 +618,8 @@ class Message extends Model
 
     private function reopenConversation(): void
     {
-        if (! $this->isIncoming()) {
-            return;
-        }
-
-        $conversation = $this->conversation;
-
-        // `return if conversation.muted?` — khách bị chặn nhắn tiếp không kéo
-        // hội thoại đã đóng quay lại hàng đợi của agent.
-        if ($conversation->isMuted()) {
-            return;
-        }
-
-        if ($conversation->isSnoozed()) {
-            $conversation->update(['status' => Conversation::STATUS_OPEN]);
-        }
-
-        // reopen_resolved_conversation: inbox bot chưa port — API/kênh khác đều mở lại.
-        if ($conversation->isResolved()) {
-            $conversation->update(['status' => Conversation::STATUS_OPEN]);
+        if ($this->isIncoming()) {
+            $this->conversation->reopenForNewMessage();
         }
     }
 

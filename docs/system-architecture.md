@@ -554,7 +554,20 @@ hộp thư sẵn có. Giao diện mở hội thoại mới:
   của gốc và mọi dòng thành viên trong một câu UPDATE (`Message::setConversationActivity`).
 - **Realtime:** `ActionCableListener` phát như thường cho hội thoại gốc rồi đẩy
   `SharedThreadBroadcastJob` (queue `critical`): mỗi thành viên còn trong nhóm nhận
-  `message.created/updated` với payload theo dòng của họ.
+  `message.created/updated` với payload theo dòng của họ. Tin mới (không phải hoạt động)
+  của người khác mở lại dòng đã đóng/tạm ẩn của thành viên qua
+  `Conversation::reopenForNewMessage()` (cùng luật tin đến 1-1), phát
+  `conversation.status_changed`; dòng của người gửi giữ nguyên.
+- **Tìm kiếm:** scope `Conversation::threadViewsOf()` (trong `SharesThread`) cho dòng nhóm
+  của account người tìm; mỗi dòng thành một `App\Search\ThreadWindow` (hội thoại gốc +
+  mốc `left_at`) gửi xuống engine qua `SearchQuery::$threadWindows`. Engine chỉ cộng
+  thêm `conversation_id = gốc [AND created_at <= left_at]` vào phạm vi account/hộp thư
+  (pgsql: `ThreadWindow::orWhereVisible`, Meilisearch: filter OR, không đổi chỉ mục).
+  `SearchService` map kết quả về dòng của người tìm (`presentMessage`), ô tìm danh sách
+  gộp ghi chú riêng và tin chung về một dòng.
+- **Account ẩn ở Super Admin:** `Account::scopePersonal()` / `Account::wherePersonal()`
+  loại account có trong `yona_groups.account_id` khỏi mọi chỉ số, danh sách account,
+  tìm kiếm admin. Mở account ẩn theo id (`/admin/accounts/{id}`) vẫn được để điều tra.
 - **Nghiệp vụ:** `App\Services\Groups\GroupService` (tạo, thêm, rời, đưa ra, vai trò,
   đổi tên, link mời) + `GroupPermissions` (thành viên, quản trị, ai thu hồi được tin
   chung). Lỗi trả `GroupActionRejected` → `{error, code}`. Mỗi thay đổi thành viên để
@@ -575,13 +588,9 @@ hộp thư sẵn có. Giao diện mở hội thoại mới:
 - **Giao diện nhóm** (tạo nhóm, panel thông tin nhóm, trang mở link mời `/g/{token}`,
   tên người gửi trên bong bóng và ở dòng xem trước): chưa có; lõi và API ở mục "Nhóm
   giữa người dùng Yona" bên trên đã chạy.
-- **Tìm tin trong nhóm:** `PostgresSearchEngine`, `MeilisearchDocuments`,
-  `ListSearchService` vẫn chỉ tìm trong account của người tìm, nên tin nhóm (thuộc
-  account ẩn) chưa tìm thấy được.
-- **Account ẩn của nhóm** vẫn được đếm trong chỉ số và danh sách account của Super
-  Admin (0 người dùng); chưa có scope loại ra.
-- **Dòng nhóm đã đóng** không tự mở lại khi có tin mới trong nhóm (1-1 mở lại qua
-  `Message::reopenConversation`, chỉ áp cho tin đến của chính dòng đó).
+- **Tìm theo tên người gửi trong nhóm Yona:** tìm theo người gửi thật
+  (`GROUP_SENDER_NAME_SQL`) chỉ áp cho nhóm của kênh ngoài; tin nhóm Yona tìm theo nội
+  dung và tệp. Đếm tin vào/ra ở chỉ số Super Admin vẫn tính tin chung của nhóm (một bản).
 - **Gọi thoại/video, chia sẻ màn hình:** chưa có code, kế hoạch đã duyệt schema.
 - **Tin chờ và chặn cho người lạ** trên kênh Yona: chưa có; ai biết username đều
   mở được hội thoại.

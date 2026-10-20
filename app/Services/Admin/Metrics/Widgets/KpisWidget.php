@@ -2,11 +2,13 @@
 
 namespace App\Services\Admin\Metrics\Widgets;
 
+use App\Models\Account;
 use App\Models\Message;
 use App\Models\SuperAdmin;
 use App\Services\Admin\Metrics\DateRange;
 use App\Services\Admin\Metrics\MetricWidget;
 use App\Services\Admin\Metrics\WidgetSize;
+use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Support\Facades\DB;
 
 final class KpisWidget extends MetricWidget
@@ -25,20 +27,20 @@ final class KpisWidget extends MetricWidget
     {
         $previous = $range->previous();
         $messages = $this->messageCounts($range, $previous);
-        $newConversations = $this->createdCounts('conversations', $range, $previous);
-        $newAccounts = $this->createdCounts('accounts', $range, $previous);
+        $newConversations = $this->createdCounts(Account::wherePersonal(DB::table('conversations'), 'conversations.account_id'), $range, $previous);
+        $newAccounts = $this->createdCounts(Account::query()->personal()->toBase(), $range, $previous);
 
         return [
             'range' => $range->toArray(),
             'metrics' => [
-                $this->metric('accounts_total', DB::table('accounts')->count()),
+                $this->metric('accounts_total', Account::query()->personal()->count()),
                 $this->metric('accounts_new', $newAccounts['current'], $newAccounts['previous']),
                 $this->metric('accounts_active', (int) $messages->active, (int) $messages->active_previous),
                 $this->metric('users_total', $this->agentCount()),
                 $this->metric('conversations_new', $newConversations['current'], $newConversations['previous']),
                 $this->metric('messages_incoming', (int) $messages->incoming, (int) $messages->incoming_previous),
                 $this->metric('messages_outgoing', (int) $messages->outgoing, (int) $messages->outgoing_previous),
-                $this->metric('inboxes_total', DB::table('inboxes')->count()),
+                $this->metric('inboxes_total', Account::wherePersonal(DB::table('inboxes'), 'inboxes.account_id')->count()),
             ],
         ];
     }
@@ -60,6 +62,7 @@ final class KpisWidget extends MetricWidget
     {
         $incoming = Message::TYPE_INCOMING;
         $outgoing = Message::TYPE_OUTGOING;
+        $personal = 'not '.Account::groupThreadAccountSql('messages.account_id');
 
         return DB::table('messages')
             ->where('created_at', '>=', $previous->startsAtUtc())
@@ -71,17 +74,17 @@ final class KpisWidget extends MetricWidget
                 ." count(*) filter (where message_type = {$incoming} and created_at < ?) as incoming_previous,"
                 ." count(*) filter (where message_type = {$outgoing} and created_at >= ?) as outgoing,"
                 ." count(*) filter (where message_type = {$outgoing} and created_at < ?) as outgoing_previous,"
-                ." count(distinct account_id) filter (where message_type = {$outgoing} and created_at >= ?) as active,"
-                ." count(distinct account_id) filter (where message_type = {$outgoing} and created_at < ?) as active_previous",
+                ." count(distinct account_id) filter (where message_type = {$outgoing} and {$personal} and created_at >= ?) as active,"
+                ." count(distinct account_id) filter (where message_type = {$outgoing} and {$personal} and created_at < ?) as active_previous",
                 array_fill(0, 6, $range->startsAtUtc()),
             )
             ->first();
     }
 
     /** @return array{current: int, previous: int} */
-    private function createdCounts(string $table, DateRange $range, DateRange $previous): array
+    private function createdCounts(QueryBuilder $rows, DateRange $range, DateRange $previous): array
     {
-        $row = DB::table($table)
+        $row = $rows
             ->where('created_at', '>=', $previous->startsAtUtc())
             ->where('created_at', '<', $range->endsBeforeUtc())
             ->selectRaw(

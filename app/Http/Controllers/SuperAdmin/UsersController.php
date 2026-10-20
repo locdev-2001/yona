@@ -26,7 +26,7 @@ class UsersController extends ResourceController
         return [
             'accountUserForm' => [
                 'userId' => $record->getKey(),
-                'accounts' => Account::query()->orderByDesc('id')->get(['id', 'name'])
+                'accounts' => Account::query()->personal()->orderByDesc('id')->get(['id', 'name'])
                     ->map(fn (Account $account) => ['value' => $account->id, 'label' => "#{$account->id} {$account->name}"])->all(),
                 'roles' => array_values(AccountUser::ROLE_NAMES),
             ],

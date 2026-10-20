@@ -135,8 +135,9 @@ final class ListSearchService
     /** @return Builder<Conversation> */
     private function conversationsWithMatchedMessage(): Builder
     {
-        $matched = $this->search->latestMatchedMessages()
-            ->select('messages.conversation_id', 'messages.id as '.self::MATCHED_MESSAGE_ID, 'messages.created_at as matched_at');
+        $matched = DB::query()
+            ->fromSub($this->search->latestMatchedMessages(), 'latest')
+            ->select('latest.conversation_id', 'latest.id as '.self::MATCHED_MESSAGE_ID, 'latest.created_at as matched_at');
 
         return $this->listScope->clone()
             ->reorder()
@@ -221,7 +222,8 @@ final class ListSearchService
             ->whereKey($conversationsByMessageId->keys()->all())
             ->with(['attachments', 'sender'])
             ->get()
-            ->each(fn (Message $message) => $message->setRelation('conversation', $conversationsByMessageId[$message->id]))
+            ->map(fn (Message $message) => $conversationsByMessageId[$message->id]->presentMessage($message)
+                ->setRelation('conversation', $conversationsByMessageId[$message->id]))
             ->keyBy('id');
     }
 }

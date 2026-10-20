@@ -13,6 +13,7 @@ use App\Search\SearchEngine;
 use App\Search\SearchHits;
 use App\Search\SearchQuery;
 use App\Search\SearchTarget;
+use App\Search\ThreadWindow;
 use App\Support\SearchTerm;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -25,8 +26,9 @@ use Illuminate\Support\Carbon;
 // vi và quyền: dựng SearchQuery với hộp thư người tìm được xem, rồi nạp lại theo
 // id từ PostgreSQL dưới đúng điều kiện account + hộp thư đó, giữ thứ tự của engine
 // và bỏ id không còn hoặc không được xem. Trang có thể ngắn hơn khi engine trả id
-// đã mất quyền — không bù bằng truy vấn thêm. Articles: trả rỗng tới khi có Help
-// Center.
+// đã mất quyền — không bù bằng truy vấn thêm. Tin của nhóm (lưu ở hội thoại gốc thuộc
+// account ẩn) nằm trong phạm vi qua dòng nhóm của người tìm (ThreadWindow) và trả ra
+// như tin của chính dòng đó. Articles: trả rỗng tới khi có Help Center.
 class SearchService
 {
     public const RESULTS_PER_PAGE = 15;
@@ -52,6 +54,9 @@ class SearchService
     private ?AccountUser $accountUser = null;
 
     private ?SearchEngine $engine = null;
+
+    /** @var Collection<int, Conversation>|null dòng nhóm người tìm được xem, theo id hội thoại gốc */
+    private ?Collection $threadViews = null;
 
     /** @param array<string, mixed> $params */
     public function __construct(
@@ -114,9 +119,13 @@ class SearchService
      */
     public function matchingConversationIds(): Builder
     {
+        $matchedIds = $this->engine()->matchingConversationIds($this->searchQuery(SearchTarget::Conversations));
+
         return $this->permitted(SearchTarget::Conversations)
             ->select('conversations.id')
-            ->whereIn('conversations.id', $this->engine()->matchingConversationIds($this->searchQuery(SearchTarget::Conversations)));
+            ->where(fn (Builder $matches) => $matches
+                ->whereIn('conversations.id', $matchedIds)
+                ->orWhereIn('conversations.thread_conversation_id', $matchedIds));
     }
 
     /**
@@ -133,23 +142,35 @@ class SearchService
     }
 
     /**
-     * Tin trò chuyện khớp từ khoá mới nhất của từng hội thoại (bỏ tin hoạt động hệ
-     * thống), trong phạm vi tin người tìm được xem — mục "Hội thoại" của ô tìm
-     * trong danh sách.
+     * Tin trò chuyện khớp từ khoá mới nhất của từng hội thoại người tìm (bỏ tin hoạt
+     * động hệ thống), trong phạm vi tin người tìm được xem — mục "Hội thoại" của ô tìm
+     * trong danh sách. Tin của nhóm tính cho dòng nhóm của người tìm, nên mỗi dòng một
+     * tin dù khớp cả ghi chú riêng lẫn tin chung. Cột: `conversation_id` (hội thoại của
+     * người tìm), `id`, `created_at`.
      *
      * @return Builder<Message>
      */
     public function latestMatchedMessages(): Builder
     {
+        $viewConversationId = 'coalesce(thread_views.id, messages.conversation_id)';
+
         return $this->permittedMessages()
+            ->leftJoin('conversations as thread_views', fn ($join) => $join
+                ->on('thread_views.thread_conversation_id', '=', 'messages.conversation_id')
+                ->where('thread_views.account_id', $this->currentAccount->id))
             ->where('messages.message_type', '!=', Message::TYPE_ACTIVITY)
-            ->whereIn('messages.id', $this->engine()->latestMatchedMessageIds($this->searchQuery(SearchTarget::Messages, conversationMessagesOnly: true)));
+            ->whereIn('messages.id', $this->engine()->latestMatchedMessageIds($this->searchQuery(SearchTarget::Messages, conversationMessagesOnly: true)))
+            ->selectRaw("DISTINCT ON ({$viewConversationId}) {$viewConversationId} as conversation_id, messages.id, messages.created_at")
+            ->orderByRaw($viewConversationId)
+            ->orderByDesc('messages.created_at')
+            ->orderByDesc('messages.id');
     }
 
     /** @return Collection<int, Message> */
     public function filterMessages(): Collection
     {
-        return $this->reload(SearchTarget::Messages, $this->hits($this->searchQuery(SearchTarget::Messages)), self::MESSAGE_RESULT_RELATIONS);
+        return $this->reload(SearchTarget::Messages, $this->hits($this->searchQuery(SearchTarget::Messages)), self::MESSAGE_RESULT_RELATIONS)
+            ->map(fn (Message $message) => $this->presentInOwnView($message));
     }
 
     /** @return list<int> */
@@ -169,7 +190,8 @@ class SearchService
     {
         return $this->reload(SearchTarget::Files, $this->hits($this->searchQuery(SearchTarget::Files)), [
             'attachable' => fn (MorphTo $morph) => $morph->morphWith([Message::class => self::MESSAGE_RESULT_RELATIONS]),
-        ]);
+        ])->each(fn (Attachment $attachment) => $attachment->attachable instanceof Message
+            && $attachment->setRelation('attachable', $this->presentInOwnView($attachment->attachable)));
     }
 
     /** @return Collection<int, Contact> */
@@ -199,6 +221,8 @@ class SearchService
         $advanced = $this->advancedSearchEnabled();
         $messageBound = $target->isMessageBound();
         [$senderType, $senderId] = $advanced && $messageBound ? $this->parseFromParam($this->params['from'] ?? null) : [null, null];
+        $inboxIds = $messageBound ? $this->messageInboxFilter($advanced) : $this->accessableInboxIds();
+        $conversationId = $messageBound ? $this->scopedConversationId() : null;
 
         return new SearchQuery(
             target: $target,
@@ -207,14 +231,15 @@ class SearchService
             lookbackStart: $this->lookbackStart(),
             page: $page ?? $this->currentPage(),
             perPage: $perPage,
-            inboxIds: $messageBound ? $this->messageInboxFilter($advanced) : $this->accessableInboxIds(),
-            conversationId: $messageBound ? $this->scopedConversationId() : null,
+            inboxIds: $inboxIds,
+            conversationId: $conversationId,
             senderType: $senderType,
             senderId: $senderId,
             since: $advanced ? $this->capSinceTime($this->params['since'] ?? null) : null,
             until: $advanced ? $this->capUntilTime($this->params['until'] ?? null) : null,
             leadContactsOnly: $this->currentAccount->featureEnabled('crm_v2'),
             conversationMessagesOnly: $conversationMessagesOnly,
+            threadWindows: $this->threadWindows($inboxIds, $conversationId),
         );
     }
 
@@ -275,13 +300,47 @@ class SearchService
     /** @return Builder<Message> */
     private function permittedMessages(): Builder
     {
-        $messages = Message::query()->where('messages.account_id', $this->currentAccount->id);
+        return Message::query()->where(fn (Builder $scope) => ThreadWindow::orWhereVisible(
+            $scope->where(fn (Builder $own) => $own
+                ->where('messages.account_id', $this->currentAccount->id)
+                ->when(! $this->shouldSkipInboxFiltering(), fn (Builder $inboxes) => $inboxes->whereIn('messages.inbox_id', $this->accessableInboxIds()))),
+            $this->threadWindows(),
+        ));
+    }
 
-        if (! $this->shouldSkipInboxFiltering()) {
-            $messages->whereIn('messages.inbox_id', $this->accessableInboxIds());
-        }
+    /**
+     * Luồng dùng chung trong phạm vi: dòng nhóm của người tìm nằm trong các hộp thư này
+     * (null = mọi hộp thư được xem); thu hẹp vào một hội thoại thì chỉ còn luồng của
+     * chính hội thoại đó.
+     *
+     * @param  list<int>|null  $inboxIds
+     * @return list<ThreadWindow>
+     */
+    private function threadWindows(?array $inboxIds = null, ?int $conversationId = null): array
+    {
+        return $this->threadViews()
+            ->filter(fn (Conversation $view) => ($inboxIds === null || in_array($view->inbox_id, $inboxIds, true))
+                && ($conversationId === null || $view->id === $conversationId))
+            ->map(fn (Conversation $view) => ThreadWindow::of($view))
+            ->values()
+            ->all();
+    }
 
-        return $messages;
+    /** @return Collection<int, Conversation> */
+    private function threadViews(): Collection
+    {
+        return $this->threadViews ??= Conversation::query()
+            ->threadViewsOf($this->currentAccount->id, $this->shouldSkipInboxFiltering() ? null : $this->accessableInboxIds())
+            ->get()
+            ->keyBy('thread_conversation_id');
+    }
+
+    // Tin chung của nhóm hiện như tin của dòng nhóm trong hộp thư người tìm.
+    private function presentInOwnView(Message $message): Message
+    {
+        $view = $message->account_id === $this->currentAccount->id ? null : $this->threadViews()->get($message->conversation_id);
+
+        return $view === null ? $message : $view->presentMessage($message);
     }
 
     /** @return list<int>|null */

@@ -9,6 +9,7 @@ use App\Search\SearchEngine;
 use App\Search\SearchHits;
 use App\Search\SearchQuery;
 use App\Search\SearchTarget;
+use App\Search\ThreadWindow;
 use Meilisearch\Client;
 use Meilisearch\Contracts\DocumentsQuery;
 use Meilisearch\Endpoints\Indexes;
@@ -200,17 +201,13 @@ final class MeilisearchEngine implements ConfiguresIndexSettings, SearchEngine
      */
     private function scopeFilters(SearchQuery $query, SearchTarget $index): array
     {
-        $filters = ['account_id = '.$query->accountId];
-
-        if ($index !== SearchTarget::Contacts && $query->inboxIds !== null) {
-            $filters[] = 'inbox_id IN ['.$this->integerList($query->inboxIds).']';
-        }
+        $filters = [$this->ownershipFilter($query, $index)];
 
         if ($index->isMessageBound()) {
             $filters[] = 'created_at >= '.$query->lookbackStart->getTimestamp();
 
-            if ($query->conversationId !== null) {
-                $filters[] = 'conversation_id = '.$query->conversationId;
+            if ($query->conversationIds() !== null) {
+                $filters[] = 'conversation_id IN ['.$this->integerList($query->conversationIds()).']';
             }
 
             if ($query->senderType !== null && $query->senderId !== null) {
@@ -239,6 +236,28 @@ final class MeilisearchEngine implements ConfiguresIndexSettings, SearchEngine
         }
 
         return $filters;
+    }
+
+    // Account và hộp thư của người tìm; tin và tệp còn tính thêm luồng dùng chung họ được nhìn vào.
+    private function ownershipFilter(SearchQuery $query, SearchTarget $index): string
+    {
+        $own = 'account_id = '.$query->accountId;
+
+        if ($index !== SearchTarget::Contacts && $query->inboxIds !== null) {
+            $own .= ' AND inbox_id IN ['.$this->integerList($query->inboxIds).']';
+        }
+
+        if (! $index->isMessageBound() || $query->threadWindows === []) {
+            return $own;
+        }
+
+        $threads = array_map(
+            fn (ThreadWindow $window) => '(conversation_id = '.$window->threadConversationId
+                .($window->until !== null ? ' AND created_at <= '.$window->until->getTimestamp() : '').')',
+            $query->threadWindows,
+        );
+
+        return "({$own}) OR ".implode(' OR ', $threads);
     }
 
     /**

@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Support\Facades\DB;
 
 class Account extends Model
@@ -112,6 +113,34 @@ class Account extends Model
     public function setting(string $key): mixed
     {
         return $this->settings[$key] ?? null;
+    }
+
+    /**
+     * Hộp thư của người dùng: bỏ account ẩn giữ luồng chung của một nhóm (không ai làm
+     * quản trị). Mọi chỗ đếm hay liệt kê account đi qua đây.
+     */
+    public function scopePersonal(Builder $query): Builder
+    {
+        return self::wherePersonal($query, $query->qualifyColumn('id'));
+    }
+
+    /**
+     * Cùng luật cho truy vấn đọc account qua một cột id account khác (`messages.account_id`...).
+     *
+     * @template TQuery of Builder|QueryBuilder
+     *
+     * @param  TQuery  $query
+     * @return TQuery
+     */
+    public static function wherePersonal(Builder|QueryBuilder $query, string $accountIdColumn): Builder|QueryBuilder
+    {
+        return $query->whereRaw('not '.self::groupThreadAccountSql($accountIdColumn));
+    }
+
+    // SQL true khi cột là account ẩn của một nhóm; dùng trong biểu thức đếm `filter (where ...)`.
+    public static function groupThreadAccountSql(string $accountIdColumn): string
+    {
+        return "exists (select 1 from yona_groups where yona_groups.account_id = {$accountIdColumn})";
     }
 
     // scope :with_auto_resolve — account đã đặt thời hạn tự đóng hội thoại.

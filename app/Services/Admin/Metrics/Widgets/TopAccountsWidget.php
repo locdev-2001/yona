@@ -2,6 +2,7 @@
 
 namespace App\Services\Admin\Metrics\Widgets;
 
+use App\Models\Account;
 use App\Models\Message;
 use App\Services\Admin\Metrics\DateRange;
 use App\Services\Admin\Metrics\MetricWidget;
@@ -25,7 +26,7 @@ final class TopAccountsWidget extends MetricWidget
 
     public function compute(DateRange $range): array
     {
-        $ranking = DB::table('messages')
+        $ranking = Account::wherePersonal(DB::table('messages'), 'messages.account_id')
             ->where('created_at', '>=', $range->startsAtUtc())
             ->where('created_at', '<', $range->endsBeforeUtc())
             ->whereIn('message_type', [Message::TYPE_INCOMING, Message::TYPE_OUTGOING])

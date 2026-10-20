@@ -28,7 +28,7 @@ abstract class ResourceController extends Controller
     public function index(Request $request): Response
     {
         $dashboard = $this->dashboard();
-        $query = $this->scopedQuery();
+        $query = $this->indexQuery();
         $search = trim((string) $request->query('search', ''));
 
         $this->applySearch($query, $dashboard, $search);
@@ -138,6 +138,12 @@ abstract class ResourceController extends Controller
     protected function scopedQuery(): Builder
     {
         return $this->dashboard()->baseQuery();
+    }
+
+    // Danh sách có thể hẹp hơn chỗ mở theo id (findRecord) — bản ghi ẩn khỏi danh sách vẫn mở được.
+    protected function indexQuery(): Builder
+    {
+        return $this->scopedQuery();
     }
 
     protected function findRecord(int $id): Model

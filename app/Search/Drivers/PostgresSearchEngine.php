@@ -10,6 +10,7 @@ use App\Search\SearchEngine;
 use App\Search\SearchHits;
 use App\Search\SearchQuery;
 use App\Search\SearchTarget;
+use App\Search\ThreadWindow;
 use App\Support\SearchTerm;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -39,6 +40,7 @@ final class PostgresSearchEngine implements SearchEngine
         };
     }
 
+    // Hội thoại khớp, cộng hội thoại chứa tin khớp (có thể là hội thoại gốc của nhóm).
     /** @return Builder<Conversation> */
     public function matchingConversationIds(SearchQuery $query): Builder
     {
@@ -46,10 +48,11 @@ final class PostgresSearchEngine implements SearchEngine
 
         return $this->conversations($query)
             ->select('conversations.id')
-            ->where(fn (Builder $matches) => $this->whereConversationMatches($matches, $term)
-                ->orWhereExists($this->messages($query)
-                    ->whereColumn('messages.conversation_id', 'conversations.id')
-                    ->whereRaw(...$term->foldedMatch('messages.content'))));
+            ->where(fn (Builder $matches) => $this->whereConversationMatches($matches, $term))
+            ->union($this->messages($query)
+                ->whereRaw(...$term->foldedMatch('messages.content'))
+                ->select('messages.conversation_id')
+                ->toBase());
     }
 
     /** @return Builder<Conversation> */
@@ -182,21 +185,23 @@ final class PostgresSearchEngine implements SearchEngine
             ->all());
     }
 
-    // Tin trong phạm vi của lượt tìm: account, mốc nhìn lại, hộp thư, hội thoại,
-    // người gửi và khoảng thời gian — chưa lọc theo từ khoá.
+    // Tin trong phạm vi của lượt tìm: account và hộp thư (hoặc luồng dùng chung được
+    // nhìn vào), mốc nhìn lại, hội thoại, người gửi và khoảng thời gian — chưa lọc theo từ khoá.
     /** @return Builder<Message> */
     private function messages(SearchQuery $query): Builder
     {
         $messages = Message::query()
-            ->where('messages.account_id', $query->accountId)
+            // Bọc ngoặc: nhánh OR của luồng dùng chung không được nuốt các điều kiện sau.
+            ->where(fn (Builder $scope) => ThreadWindow::orWhereVisible(
+                $scope->where(fn (Builder $own) => $own
+                    ->where('messages.account_id', $query->accountId)
+                    ->when($query->inboxIds !== null, fn (Builder $inboxes) => $inboxes->whereIn('messages.inbox_id', $query->inboxIds))),
+                $query->threadWindows,
+            ))
             ->where('messages.created_at', '>=', $query->lookbackStart);
 
-        if ($query->inboxIds !== null) {
-            $messages->whereIn('messages.inbox_id', $query->inboxIds);
-        }
-
-        if ($query->conversationId !== null) {
-            $messages->where('messages.conversation_id', $query->conversationId);
+        if ($query->conversationIds() !== null) {
+            $messages->whereIn('messages.conversation_id', $query->conversationIds());
         }
 
         if ($query->senderType !== null && $query->senderId !== null) {

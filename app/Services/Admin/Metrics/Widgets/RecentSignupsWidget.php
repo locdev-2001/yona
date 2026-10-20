@@ -2,6 +2,7 @@
 
 namespace App\Services\Admin\Metrics\Widgets;
 
+use App\Models\Account;
 use App\Models\AccountUser;
 use App\Services\Admin\Metrics\DateRange;
 use App\Services\Admin\Metrics\MetricWidget;
@@ -44,7 +45,7 @@ final class RecentSignupsWidget extends MetricWidget
             ->whereColumn('inboxes.account_id', 'accounts.id')
             ->selectRaw('count(*)');
 
-        $items = DB::table('accounts')
+        $items = Account::query()->personal()->toBase()
             ->select(['accounts.id', 'accounts.name', 'accounts.created_at'])
             ->selectSub($ownerEmail, 'owner_email')
             ->selectSub($inboxesCount, 'inboxes_count')

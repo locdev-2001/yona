@@ -16,6 +16,7 @@ final readonly class SearchQuery
      * @param  CarbonInterface  $lookbackStart  tin và tệp cũ hơn mốc này không được tìm
      * @param  bool  $leadContactsOnly  liên hệ chỉ tính loại lead (account bật crm_v2); tắt thì tính mọi liên hệ
      * @param  bool  $conversationMessagesOnly  tin chỉ tính tin trò chuyện (khách, nhân viên, ghi chú), bỏ tin hoạt động hệ thống
+     * @param  list<ThreadWindow>  $threadWindows  tin và tệp còn tính thêm tin của các hội thoại gốc này (tới mốc cắt), ngoài account và hộp thư
      */
     public function __construct(
         public SearchTarget $target,
@@ -32,5 +33,21 @@ final readonly class SearchQuery
         public ?CarbonInterface $until = null,
         public bool $leadContactsOnly = false,
         public bool $conversationMessagesOnly = false,
+        public array $threadWindows = [],
     ) {}
+
+    /**
+     * Hội thoại tin và tệp được thu hẹp vào: hội thoại đang mở cùng hội thoại gốc của
+     * nó nếu là dòng nhóm; null = không thu hẹp.
+     *
+     * @return list<int>|null
+     */
+    public function conversationIds(): ?array
+    {
+        if ($this->conversationId === null) {
+            return null;
+        }
+
+        return [$this->conversationId, ...array_map(fn (ThreadWindow $window) => $window->threadConversationId, $this->threadWindows)];
+    }
 }

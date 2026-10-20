@@ -2,6 +2,7 @@
 
 namespace App\Services\Admin\Metrics\Widgets;
 
+use App\Models\Account;
 use App\Models\Message;
 use App\Services\Admin\Metrics\DateRange;
 use App\Services\Admin\Metrics\MetricWidget;
@@ -46,7 +47,7 @@ final class CohortRetentionWidget extends MetricWidget
         $cohortWeekSql = "date_trunc('week', ".DateRange::localDateSql('accounts.created_at').')::date';
         $activeWeekSql = "date_trunc('week', ".DateRange::localDateSql('messages.created_at').')::date';
 
-        $sizes = DB::table('accounts')
+        $sizes = Account::query()->personal()->toBase()
             ->where('created_at', '>=', $since)
             ->groupByRaw('1')
             ->selectRaw("{$cohortWeekSql} as cohort_week, count(*) as size")
@@ -58,7 +59,7 @@ final class CohortRetentionWidget extends MetricWidget
             ->where('messages.private', false)
             ->selectRaw("distinct messages.account_id, {$activeWeekSql} as active_week");
 
-        $active = DB::table('accounts')
+        $active = Account::query()->personal()->toBase()
             ->joinSub($activity, 'activity', 'activity.account_id', '=', 'accounts.id')
             ->where('accounts.created_at', '>=', $since)
             ->whereRaw("activity.active_week >= {$cohortWeekSql}")

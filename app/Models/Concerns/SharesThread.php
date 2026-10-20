@@ -41,6 +41,23 @@ trait SharesThread
         return $this->hasOne(YonaGroupMember::class, 'conversation_id');
     }
 
+    /**
+     * Dòng nhóm của một account kèm mốc rời: phạm vi tin chung account đó tìm được, ngoài
+     * tin của chính nó (xem `App\Search\ThreadWindow`).
+     *
+     * @param  Builder<Conversation>  $query
+     * @param  list<int>|null  $inboxIds  null = mọi hộp thư
+     * @return Builder<Conversation>
+     */
+    public function scopeThreadViewsOf(Builder $query, int $accountId, ?array $inboxIds = null): Builder
+    {
+        return $query
+            ->where('conversations.account_id', $accountId)
+            ->whereNotNull('conversations.thread_conversation_id')
+            ->when($inboxIds !== null, fn (Builder $views) => $views->whereIn('conversations.inbox_id', $inboxIds))
+            ->with('threadMembership');
+    }
+
     public function isThreadView(): bool
     {
         return $this->thread_conversation_id !== null;

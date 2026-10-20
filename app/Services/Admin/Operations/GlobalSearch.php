@@ -39,7 +39,7 @@ final class GlobalSearch
 
     private function accounts(string $like, ?int $id, int $limit): array
     {
-        return $this->matching(Account::query(), ['name'], $like, $id)
+        return $this->matching(Account::query()->personal(), ['name'], $like, $id)
             ->limit($limit)
             ->get(['id', 'name', 'status'])
             ->map(fn (Account $account) => $this->result('account', $account->id, (string) $account->name,

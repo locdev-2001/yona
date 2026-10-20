@@ -2,6 +2,7 @@
 
 namespace App\Services\Admin\Metrics\Widgets;
 
+use App\Models\Account;
 use App\Models\Message;
 use App\Models\User;
 use App\Services\Admin\Metrics\DateRange;
@@ -56,7 +57,7 @@ final class ActivationFunnelWidget extends MetricWidget
     {
         $eventExists = 'exists (select 1 from product_events where product_events.account_id = accounts.id and product_events.name = ?)';
 
-        $cohort = DB::table('accounts')
+        $cohort = Account::query()->personal()->toBase()
             ->where('accounts.created_at', '>=', $range->startsAtUtc())
             ->where('accounts.created_at', '<', $range->endsBeforeUtc())
             ->selectRaw("{$eventExists} as confirmed_email", [ProductEventName::EmailConfirmed->value])

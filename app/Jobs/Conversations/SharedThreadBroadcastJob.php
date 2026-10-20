@@ -2,16 +2,20 @@
 
 namespace App\Jobs\Conversations;
 
+use App\Events\EventType;
 use App\Events\RealtimeBroadcast;
 use App\Http\Resources\MessageResource;
 use App\Jobs\ApplicationJob;
 use App\Models\Conversation;
 use App\Models\Message;
+use App\Models\User;
 
 /**
  * Tin của hội thoại gốc (tạo mới, cảm xúc, thu hồi) tới dòng riêng của từng thành viên
  * luồng dùng chung, mỗi người một payload mang id hội thoại, account, số chưa đọc của
- * chính dòng đó. Chạy trong hàng đợi vì một nhóm có tới vài trăm thành viên.
+ * chính dòng đó. Tin mới của người khác mở lại dòng đã đóng như tin đến của hội thoại
+ * 1-1 (phát `conversation.status_changed` cho dòng đó). Chạy trong hàng đợi vì một nhóm
+ * có tới vài trăm thành viên.
  */
 class SharedThreadBroadcastJob extends ApplicationJob
 {
@@ -46,11 +50,22 @@ class SharedThreadBroadcastJob extends ApplicationJob
                 continue;
             }
 
+            if ($this->opensViewOf($message, $view)) {
+                $view->reopenForNewMessage();
+            }
+
             broadcast(new RealtimeBroadcast([$token], $this->eventName, [
                 ...MessageResource::pushEventData($view->presentMessage($message)),
                 ...($this->previousChanges !== null ? ['previous_changes' => $this->previousChanges] : []),
                 'account_id' => $view->account_id,
             ]));
         }
+    }
+
+    private function opensViewOf(Message $message, Conversation $view): bool
+    {
+        return $this->eventName === EventType::MESSAGE_CREATED->value
+            && $message->message_type !== Message::TYPE_ACTIVITY
+            && ! ($message->sender_type === (new User)->getMorphClass() && (int) $message->sender_id === $view->threadViewerId());
     }
 }

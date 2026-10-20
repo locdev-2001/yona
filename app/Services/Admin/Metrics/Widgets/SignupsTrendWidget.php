@@ -2,11 +2,11 @@
 
 namespace App\Services\Admin\Metrics\Widgets;
 
+use App\Models\Account;
 use App\Services\Admin\Metrics\DailySeries;
 use App\Services\Admin\Metrics\DateRange;
 use App\Services\Admin\Metrics\MetricWidget;
 use App\Services\Admin\Metrics\WidgetSize;
-use Illuminate\Support\Facades\DB;
 
 final class SignupsTrendWidget extends MetricWidget
 {
@@ -24,7 +24,7 @@ final class SignupsTrendWidget extends MetricWidget
     {
         return [
             'range' => $range->toArray(),
-            'days' => DailySeries::count(DB::table('accounts'), 'created_at', $range, ['count' => 'count(*)']),
+            'days' => DailySeries::count(Account::query()->personal()->toBase(), 'created_at', $range, ['count' => 'count(*)']),
         ];
     }
 }
