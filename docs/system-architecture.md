@@ -571,7 +571,9 @@ hộp thư sẵn có. Giao diện mở hội thoại mới:
 - **Nghiệp vụ:** `App\Services\Groups\GroupService` (tạo, thêm, rời, đưa ra, vai trò,
   đổi tên, link mời) + `GroupPermissions` (thành viên, quản trị, ai thu hồi được tin
   chung). Lỗi trả `GroupActionRejected` → `{error, code}`. Mỗi thay đổi thành viên để
-  lại tin hoạt động trong hội thoại gốc. Trần `YonaGroup::MAX_MEMBERS` = 500. Link mời
+  lại tin hoạt động trong hội thoại gốc, rồi (sau commit) báo `conversation.updated` tới
+  dòng nhóm của mọi thành viên để tên, số thành viên, vai trò đổi ngay; đổi tên đi qua
+  model `Contact` nên mọi hộp thư nhận `contact.updated`. Trần `YonaGroup::MAX_MEMBERS` = 500. Link mời
   dùng chung trait `InviteToken` với `AccountInviteLink`.
 - **Danh bạ nhóm:** `YonaGroupMembers` đăng ký ở `ChannelActionRegistry::GROUP_MEMBER_DRIVERS`.
 
