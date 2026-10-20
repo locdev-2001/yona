@@ -3,8 +3,10 @@
 namespace App\Services\Messages\Forwarding;
 
 use App\Channels\Capability;
+use App\Channels\TextFormat;
 use App\Models\Attachment;
 use App\Models\Conversation;
+use App\Models\Inbox;
 use App\Models\Message;
 use App\Services\Channels\Stickers\StickerLibrary;
 use Illuminate\Support\Collection;
@@ -44,11 +46,21 @@ final class ForwardRequirements
     }
 
     /**
+     * Thư chuyển sang hộp thư không hiển thị được HTML thư thì đi thành một tệp PDF
+     * của cả bức thư (giữ bố cục, ảnh), không thành chữ trơn bị cắt hay bị kênh từ chối.
+     */
+    public static function forwardsAsDocument(Message $source, Inbox $target): bool
+    {
+        return $source->content_type === Message::CONTENT_TYPES['incoming_email']
+            && $target->capabilities()->textFormat() !== TextFormat::Html;
+    }
+
+    /**
      * Năng lực hộp thư đích phải có để nhận bản chuyển tiếp của tin này.
      *
      * @return list<Capability> theo thứ tự enum, không trùng
      */
-    public static function capabilitiesFor(Message $source): array
+    public static function capabilitiesFor(Message $source, ?Inbox $target = null): array
     {
         if (self::isSticker($source)) {
             $stored = $source->content_attributes['sticker'] ?? null;
@@ -61,7 +73,9 @@ final class ForwardRequirements
             self::forwardableAttachments($source),
         );
 
-        if (filled($source->content)) {
+        if ($target !== null && self::forwardsAsDocument($source, $target)) {
+            $required[] = Capability::OutboundFile;
+        } elseif (filled($source->content)) {
             $required[] = Capability::OutboundText;
         }
 
@@ -126,7 +140,7 @@ final class ForwardRequirements
     {
         $inbox = $target->inbox;
         $missing = array_values(array_filter(
-            self::capabilitiesFor($source),
+            self::capabilitiesFor($source, $inbox),
             fn (Capability $capability) => ! $inbox->supports($capability),
         ));
 

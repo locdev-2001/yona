@@ -16,6 +16,8 @@ final readonly class ForwardBlock
 
     public const STICKER_UNAVAILABLE = 'sticker_unavailable';
 
+    public const DOCUMENT_UNAVAILABLE = 'document_unavailable';
+
     public const REPLY_WINDOW_CLOSED = 'reply_window_closed';
 
     public const TARGET_NOT_FOUND = 'target_not_found';

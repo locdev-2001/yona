@@ -19,6 +19,8 @@
         "opcodesio/log-viewer": "^3.24",
         "react/dns": "^1.14",
         "soundasleep/html2text": "^2.1",
+        "spatie/browsershot": "^5.4",
+        "spatie/laravel-pdf": "^2.14",
         "spomky-labs/otphp": "^11.5",
         "webklex/php-imap": "^6.2",
         "zbateson/mail-mime-parser": "^4.0"

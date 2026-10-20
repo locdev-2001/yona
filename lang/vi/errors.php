@@ -151,6 +151,7 @@ return [
         'attachment_unavailable' => 'Tệp :filename không còn trên máy chủ nên không chuyển tiếp được.',
         'capability_not_supported' => 'Hộp thư :inbox không gửi được :items.',
         'sticker_unavailable' => 'Hộp thư :inbox không gửi được sticker này.',
+        'document_unavailable' => 'Chưa dựng được bản PDF của thư này, bạn thử lại sau nhé.',
         'reply_window_closed' => 'Hội thoại này đã hết thời gian được phép trả lời.',
         'target_not_found' => 'Không tìm thấy hội thoại hoặc bạn không có quyền.',
         'no_targets' => 'Chọn ít nhất một hội thoại.',

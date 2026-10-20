@@ -53,6 +53,7 @@ readonly APP_DIR="${DEPLOY_APP_DIR:-$SCRIPT_DIR}"
 readonly ENV_FILE="$APP_DIR/.env"
 readonly BRIDGE_DIR="$APP_DIR/services/zalo-bridge"
 readonly STICKER_RENDERER_DIR="$APP_DIR/services/sticker-renderer"
+readonly PDF_RENDERER_DIR="$APP_DIR/services/pdf-renderer"
 readonly LOCK_FILE="$APP_DIR/storage/framework/cache/yona-deploy.lock"
 
 readonly DEPLOY_BRANCH="${DEPLOY_BRANCH:-main}"
@@ -694,6 +695,14 @@ deploy_sticker_renderer() {
     run_pnpm --dir "$STICKER_RENDERER_DIR" install --frozen-lockfile --prod
 }
 
+# Renderer PDF (puppeteer + chrome-headless-shell cho Browsershot) cũng là workspace
+# riêng; postinstall của puppeteer tải chrome-headless-shell vào .cache của chính nó,
+# đã có đúng bản thì bỏ qua. Thiếu thì chuyển tiếp email sang kênh chat báo lỗi dựng PDF.
+deploy_pdf_renderer() {
+    log 'Cài renderer PDF'
+    run_pnpm --dir "$PDF_RENDERER_DIR" install --frozen-lockfile --prod
+}
+
 deploy_zalo_bridge() {
     local bridge_port
 
@@ -1287,6 +1296,7 @@ main() {
     step 'permissions'    prepare_runtime_permissions
     step 'zalo bridge'    deploy_zalo_bridge
     step 'sticker renderer' deploy_sticker_renderer
+    step 'pdf renderer'   deploy_pdf_renderer
     step 'services'       ensure_system_services
     step 'restart'        restart_application_processes
     step 'maintenance off' disable_maintenance_mode

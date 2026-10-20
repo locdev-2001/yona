@@ -5108,6 +5108,7 @@ const messages: Record<string, unknown> = {
         "BCC": "Bcc",
         "CC": "Cc",
         "SUBJECT": "Subject",
+        "DATE": "Date",
         "EXPAND": "Show full email",
         "COLLAPSE": "Collapse email",
         "BODY_FRAME_TITLE": "Email content"
@@ -5314,6 +5315,7 @@ const messages: Record<string, unknown> = {
             "attachment_unavailable": "The file :filename is no longer on the server, so it cannot be forwarded.",
             "capability_not_supported": "The :inbox inbox cannot send :items.",
             "sticker_unavailable": "The :inbox inbox cannot send this sticker.",
+            "document_unavailable": "Could not build the PDF of this email, please try again later.",
             "reply_window_closed": "The reply window for this conversation has closed.",
             "target_not_found": "Conversation not found or you do not have access to it.",
             "no_targets": "Choose at least one conversation.",

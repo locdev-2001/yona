@@ -1647,6 +1647,57 @@ khác.
    Cloudflare (job ghi tệp không gắn header này), vì block nginx ở mục 7 không còn
    áp cho tên miền bucket.
 
+### PDF của thư khi chuyển tiếp sang kênh chat
+
+Chuyển tiếp một email sang hộp thư không hiển thị được HTML thư (Zalo, Messenger,
+kênh Yona…) thì Yona gửi **một tệp PDF của cả bức thư** (khối người gửi/người
+nhận/ngày, thân thư giữ bố cục và ảnh), không gửi chữ trơn: Zalo từ chối tin chữ
+dài (đo trên production: 2.258 ký tự qua, 4.991 ký tự bị từ chối) và chữ trơn làm
+mất ảnh. Chuyển sang hộp thư email thì vẫn đi thành thư như cũ.
+
+PDF dựng bằng `spatie/laravel-pdf` (driver Browsershot) + `chrome-headless-shell`
+ngay trong request chuyển tiếp, dựng một lần cho mọi đích. Chromium chạy với JS tắt
+và mọi request mạng bị đẩy vào proxy không tồn tại: ảnh của thư (ảnh nhúng đã lưu
+và ảnh ở máy chủ ngoài) được PHP tải trước qua `SafeHttp` (chặn mạng nội bộ) rồi
+nhúng thành data URI (`app/Services/Email/SelfContainedHtml.php`). Thẻ ảnh/đồ hoạ
+cho Zalo vẫn vẽ bằng satori trong bridge, không dùng Chromium.
+
+**Cài một lần trên server mới** (root): thư viện hệ thống Chromium cần và font có
+đủ dấu tiếng Việt, emoji:
+
+```bash
+apt-get install -y libasound2t64 libatk1.0-0t64 libatk-bridge2.0-0t64 libatspi2.0-0t64 \
+  libatomic1 libdbus-1-3 libdrm2 libgbm1 libnspr4 libnss3 libxkbcommon0 libxcomposite1 \
+  libxdamage1 libxfixes3 libxrandr2 libxi6 libxres1 \
+  fonts-noto-core fonts-noto-color-emoji fonts-liberation
+```
+
+**Cài renderer.** Workspace pnpm riêng `services/pdf-renderer`, `deploy.sh` cài ở
+bước `pdf renderer` (ngay sau `sticker renderer`); postinstall của puppeteer tải
+`chrome-headless-shell` vào `services/pdf-renderer/.cache/puppeteer` (~260 MB, đã
+có đúng bản thì bỏ qua). Cài tay và thử bằng đúng user chạy PHP-FPM:
+
+```bash
+cd /www/wwwroot/yona.vn
+corepack pnpm --dir services/pdf-renderer install --frozen-lockfile --prod
+sudo -u www /www/server/php/84/bin/php artisan tinker --execute='echo strlen(Spatie\LaravelPdf\Facades\Pdf::html("<p>Tiếng Việt có dấu</p>")->withBrowsershot(fn ($b) => $b->setNodeModulePath(base_path("services/pdf-renderer/node_modules"))->setChromePath(glob(base_path("services/pdf-renderer/.cache/puppeteer/chrome-headless-shell/*/chrome-headless-shell-*/chrome-headless-shell"))[0]))->generatePdfContent());'
+```
+
+In ra một số byte là chạy được. Lỗi `No usable sandbox` (Ubuntu 24.04 chặn user
+namespace không đặc quyền qua AppArmor) thì đặt `LARAVEL_PDF_NO_SANDBOX=true` trong
+`.env` rồi `php artisan config:cache`: Chromium ở đây chỉ mở HTML đã làm sạch, tắt JS
+và không ra được mạng. Biến khác (mẫu ở `.env.example`), mặc định dùng được luôn:
+
+| Biến | Mặc định | Ý nghĩa |
+|---|---|---|
+| `LARAVEL_PDF_NODE_BINARY` | `node` trong PATH | Đường dẫn node mà PHP-FPM thấy (nvm/aaPanel không nằm trong PATH của `www` thì ghi đường dẫn tuyệt đối) |
+| `LARAVEL_PDF_CHROME_PATH` | bản trong `services/pdf-renderer/.cache` | Chỉ khai khi muốn dùng Chromium khác |
+| `LARAVEL_PDF_NO_SANDBOX` | `false` | `true` khi Chromium không mở được sandbox (xem trên) |
+
+Thiếu renderer hay Chromium hỏng thì lượt chuyển tiếp email sang kênh chat báo
+"Chưa dựng được bản PDF của thư này" (mã `document_unavailable`), lỗi gốc ghi vào
+log Laravel.
+
 ## 10. Deploy
 
 Dry-run (in ra lệnh sẽ chạy, không đổi gì):

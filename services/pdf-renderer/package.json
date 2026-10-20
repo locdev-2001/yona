@@ -1,0 +1,12 @@
+{
+    "name": "yona-pdf-renderer",
+    "version": "1.0.0",
+    "private": true,
+    "description": "Puppeteer + chrome-headless-shell cho Browsershot (spatie/laravel-pdf) dựng PDF từ HTML",
+    "engines": {
+        "node": ">=20.19.0"
+    },
+    "dependencies": {
+        "puppeteer": "25.12.0"
+    }
+}
