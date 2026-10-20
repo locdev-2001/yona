@@ -84,7 +84,7 @@ export default function CallLogBubble() {
             </div>
             <CallActivityAction
                 call={{ id: call.id ?? 0, kind: call.kind ?? '', status: call.status ?? '', media: isVideo ? 'video' : 'audio' }}
-                className="w-full justify-center !bg-n-solid-3 !text-n-blue-11 hover:enabled:!bg-n-solid-2"
+                className="w-full justify-center"
             />
         </BaseBubble>
     );

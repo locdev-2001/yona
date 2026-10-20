@@ -94,7 +94,6 @@ export function DirectCallOverlay({ isPhone, viewingConversationId }: { isPhone:
                 listDevices={session.actions.listDevices}
                 onSelectDevice={session.actions.selectDevice}
                 onMinimize={session.directActions.collapse}
-                onOpenChat={session.directActions.openChat}
             />
         );
     }
@@ -107,7 +106,6 @@ export function DirectCallOverlay({ isPhone, viewingConversationId }: { isPhone:
                 isPhone={isPhone}
                 onAccept={session.directActions.accept}
                 onDecline={session.directActions.hangUp}
-                onOpenChat={session.directActions.openChat}
                 onExpand={session.directActions.expand}
             />
         );

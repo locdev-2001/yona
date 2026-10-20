@@ -80,7 +80,7 @@ export default function CallControls({ local, actions, isPhone }: { local: CallL
                 />
             ) : null}
             <DeviceToggle
-                icon={local.deafened ? 'i-lucide-headphone-off' : 'i-lucide-headphones'}
+                icon={local.deafened ? 'i-lucide-volume-x' : 'i-lucide-volume-2'}
                 title={local.deafened ? t('CALLS.ROOM.UNDEAFEN') : t('CALLS.ROOM.DEAFEN')}
                 tone={local.deafened ? 'off' : 'neutral'}
                 onToggle={actions.toggleDeafen}

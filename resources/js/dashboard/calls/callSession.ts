@@ -34,7 +34,6 @@ export interface DirectCallActions {
     hangUp: () => void;
     expand: () => void;
     collapse: () => void;
-    openChat: () => void;
 }
 
 export interface CallSession {
@@ -86,7 +85,7 @@ const IDLE_SESSION: CallSession = {
     startDirectCall: noop,
     recoverDirectCall: noop,
     direct: null,
-    directActions: { accept: noop, hangUp: noop, expand: noop, collapse: noop, openChat: noop },
+    directActions: { accept: noop, hangUp: noop, expand: noop, collapse: noop },
     selfIdentity: null,
     readAudioLevel: () => 0,
 };

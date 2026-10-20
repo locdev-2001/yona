@@ -286,13 +286,6 @@ export default function CallSessionProvider({ children }: { children: ReactNode 
                 setDirect(state => (state ? { ...state, isExpanded: false } : state));
                 setStageOpen(false);
             },
-            openChat: () => {
-                const current = directRef.current;
-                if (!current) return;
-                setDirect(state => (state ? { ...state, isExpanded: false } : state));
-                setStageOpen(false);
-                router.visit(directConversationUrl({ account_id: current.accountId, call: current.view }), { preserveState: true });
-            },
         }),
         [connectDirect, hangUpDirect],
     );

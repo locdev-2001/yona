@@ -143,9 +143,33 @@ Kiến trúc: [system-architecture.md](system-architecture.md).
 |---|---|---|---|
 | Ai gọi được | Nút gọi chỉ hiện ở hội thoại 1-1 trên Yona khi hai người là bạn bè (máy chủ trả lời, kiểm lại lúc gọi). Máy tính: hai nút thoại/video ở mũ; điện thoại: một nút mở menu | Gọi 1-1 chỉ giữa bạn bè; mũ điện thoại hẹp | 20/10/2026 |
 | Đang gọi đi | **Một dải gọn, không phải màn hình:** máy tính dưới mũ khung chat (đang xem trang khác thì nổi góc dưới phải), điện thoại ở đáy màn trong tầm ngón cái. Bấm tên trên dải mở màn gọi lớn | Khung chat vẫn đọc, gõ được trong lúc chờ; màn lớn trống không có nghĩa | 20/10/2026 |
-| Cuộc gọi đến | Máy tính: thẻ nổi góc dưới phải; điện thoại: bottom sheet sẵn có, **vuốt lên** mở màn gọi lớn. Hàng gọn chỉ có biểu tượng, cỡ nút chuẩn của app (32px máy tính, 44px điện thoại). Nút phụ (Nhắn tin, Chỉ nghe tiếng) mờ, đứng riêng; cặp chính **Nghe trái, Từ chối phải** | Founder chốt nút cúp máy bên phải; tách nút phụ khỏi cặp chính cho khó bấm nhầm | 20/10/2026 |
-| Màn gọi lớn | Gọi đến: quả cầu ôm ảnh người gọi, bảng dưới có tên, hai nút phụ và cặp Nghe/Từ chối 64px có chữ. Đang nói: tên, số đếm kèm sóng âm ở giữa, quả cầu ôm ảnh tròn, lưới 3×2 (Tắt tiếng, Camera, Loa / Nhắn tin, Kết thúc, Thiết bị), Kết thúc ở giữa hàng dưới | Founder đưa mẫu bố cục | 20/10/2026 |
+| Cuộc gọi đến | Máy tính: thẻ nổi góc dưới phải; điện thoại: bottom sheet sẵn có, **vuốt lên** mở màn gọi lớn. Hàng gọn chỉ có biểu tượng, cỡ nút chuẩn của app (32px máy tính, 44px điện thoại). **Bắt máy rồi cúp máy:** gọi thoại [Nghe][Từ chối]; gọi video [Nghe][Video][Từ chối] (Nghe = chỉ tiếng, Video = bật camera, nút chính rung như chuông). Không có nút Nhắn tin | Founder: "thao tác có Bắt máy (Nghe / Video), Cúp máy"; nút Nhắn tin và "Chỉ nghe tiếng" khó hiểu, đã bỏ | 21/10/2026 |
+| Màn gọi lớn | Gọi đến: quả cầu ôm ảnh người gọi, tên, rồi một hàng nút 64px có chữ: [Nghe] ([Video]) [Từ chối]. Đang nói: tên, số đếm kèm sóng âm ở giữa, quả cầu ôm ảnh tròn; hàng [Tắt tiếng][Camera][Âm thanh], [Kết thúc] riêng ở giữa hàng dưới; Thiết bị là nút biểu tượng góc trái mũ, Thu gọn góc phải | Founder đưa mẫu bố cục; bỏ Nhắn tin (Thu gọn đã đưa về khung chat) nên còn 4 thao tác | 21/10/2026 |
 | Quả cầu âm thanh | Hàng trăm sợi mảnh, mờ, gấp thành dải dọc mép trong; sáng và lún sâu theo âm lượng người đang nói; màu teal theo nền sáng/tối. Vẽ bằng three.js, tải lười riêng màn gọi; máy không có WebGL hoặc chọn giảm chuyển động thì hiện quầng tĩnh | Founder chọn kiểu "mỏng, mờ, thanh lịch"; không để trang khác tải three.js | 20/10/2026 |
-| Tin cuộc gọi | Mỗi bên một tin hoạt động theo vai: đã nói ("Cuộc gọi thoại · 15 giây"), người gọi "Không ai nghe máy" / "Cuộc gọi bị từ chối" / "Đã huỷ cuộc gọi", người nhận "Cuộc gọi nhỡ" / "Bạn đã từ chối cuộc gọi"; dưới tin có nút Gọi lại | Hai phía nhìn cùng cuộc gọi bằng lời của mình | 20/10/2026 |
+| Tin cuộc gọi | **Bong bóng tin nhắn**, không phải nhãn giữa màn: người gọi thấy tin đi (phải), người nhận thấy tin đến (trái); chung hợp đồng nhật ký cuộc gọi với Zalo. Ô biểu tượng theo bảng màu thẻ (brand đã nói, ruby nhỡ, trung tính còn lại), chữ theo màu bong bóng. Lời theo vai: đã nói ("Cuộc gọi thoại · 15 giây"), người gọi "Không ai nghe máy" / "Cuộc gọi bị từ chối" / "Đã huỷ cuộc gọi", người nhận "Cuộc gọi nhỡ" / "Bạn đã từ chối cuộc gọi"; dưới tin có nút Gọi lại | Hai phía nhìn cùng cuộc gọi bằng lời của mình | 20/10/2026 |
 | Đổ chuông | 30 giây không nghe thành cuộc gọi nhỡ. Người nhận còn được báo bằng Web Push khi tab ẩn/đóng; mở app hoặc tải lại trang giữa lúc đổ chuông thì chuông hiện lại | Đúng kế hoạch phase 6; tải lại trang không làm lỡ cuộc gọi | 20/10/2026 |
 | Gọi video | Người kia bật camera: hình họ phủ toàn màn, lớp tối mờ trên/dưới giữ chữ và nút đọc được, nút thường thành kính mờ, quả cầu ẩn. Camera của mình là ô nhỏ góc dưới phải ngay trên lưới nút (lật gương). Người kia tắt camera thì quay về quả cầu | Theo mẫu bố cục founder đưa | 20/10/2026 |
+
+## Phân loại cuộc gọi (21/10/2026)
+
+Mỗi khái niệm gọi có một biểu tượng nhận diện riêng; cùng một thao tác dùng cùng một biểu tượng ở mọi màn.
+
+| Khái niệm | Là gì | Lối vào | Biểu tượng | Bắt máy / vào | Cúp máy / rời | Trạng thái |
+|---|---|---|---|---|---|---|
+| Phòng thoại (voice room) | Phòng luôn mở của một nhóm, ai vào ra tự do, không đổ chuông, ≤25 người, bật được camera và chia sẻ màn hình | Nút "Vào phòng" ở mũ chat nhóm, dưới tin "đã mở phòng thoại" | `headphones` | Vào phòng | `phone-off` "Rời phòng" | Đã có |
+| Gọi thoại (voice call) | Gọi 1-1 có đổ chuông giữa bạn bè | Nút gọi ở mũ chat 1-1 | `phone` | `phone` "Nghe" | `phone-off` "Từ chối" / "Huỷ cuộc gọi" / "Kết thúc" | Đã có |
+| Gọi video (video call) | Như gọi thoại, mở camera ngay | Nút gọi ở mũ chat 1-1 | `video` | `video` "Video" (hoặc `phone` "Nghe" = chỉ tiếng) | `phone-off` | Đã có |
+| Gọi nhóm (call group) | **Chờ founder chốt:** đổ chuông cả nhóm kiểu Messenger, hay chính là phòng thoại có video? | — | đề xuất `phone-call` | — | `phone-off` | Chưa làm |
+| Cuộc họp (meeting) | Phòng có link, đặt lịch, khách vào bằng tên, phòng chờ duyệt, ≤50 người | Mục "Cuộc họp" trên sidebar | đề xuất `calendar-clock` | Xin vào / vào thẳng | `phone-off` "Rời cuộc họp" | Chờ duyệt schema |
+
+**Thao tác trong cuộc gọi, dùng chung mọi loại:**
+- Mic: `mic` / `mic-off`.
+- Camera: `video` / `video-off`.
+- Âm thanh (tắt nghe phía mình): `volume-2` / `volume-x`, nhãn "Âm thanh".
+- Chia sẻ màn hình: `screen-share`.
+- Thiết bị: `settings-2`.
+
+**Màu:**
+- Xanh lá `teal`: chỉ cho trạng thái đang sống (đã kết nối, người đang nói, phòng đang mở) và nút bắt máy.
+- Đỏ `ruby`: cúp máy, cuộc gọi nhỡ, thiết bị đang tắt.
+- Trạng thái đang đổ chuông và chữ thông tin: màu trung tính hoặc brand.

@@ -19,7 +19,7 @@ export default function VoicePanel({
     if (isCollapsed) {
         return (
             <div data-testid="voice-panel" className="flex flex-col items-center gap-1 w-full px-1 py-2">
-                <Button sm teal faded icon="i-lucide-volume-2" title={room.title} onClick={actions.expand} />
+                <Button sm teal faded icon="i-lucide-headphones" title={room.title} onClick={actions.expand} />
                 <Button sm ruby ghost icon="i-lucide-phone-off" title={t('CALLS.ROOM.LEAVE')} onClick={actions.leave} />
             </div>
         );
@@ -58,7 +58,7 @@ export default function VoicePanel({
             <div className="flex items-center gap-0.5 -mx-1">
                 {control(local.micOn ? 'i-lucide-mic' : 'i-lucide-mic-off', local.micOn ? t('CALLS.ROOM.MIC_ON') : t('CALLS.ROOM.MIC_OFF'), actions.toggleMic, !local.micOn)}
                 {control(
-                    local.deafened ? 'i-lucide-headphone-off' : 'i-lucide-headphones',
+                    local.deafened ? 'i-lucide-volume-x' : 'i-lucide-volume-2',
                     local.deafened ? t('CALLS.ROOM.UNDEAFEN') : t('CALLS.ROOM.DEAFEN'),
                     actions.toggleDeafen,
                     local.deafened,

@@ -15,6 +15,10 @@ export interface CallActivity {
     media?: CallMediaKind;
 }
 
+// Nút Gọi lại nằm trong bong bóng nhật ký cuộc gọi: cùng kiểu nút hành động của bong bóng thẻ (nền
+// phụ đặc, chữ màu brand), đọc được trên bong bóng của mình lẫn người kia, sáng lẫn tối.
+const CARD_ACTION_CLASS = '!bg-n-solid-3 !text-n-blue-11 hover:enabled:!bg-n-solid-2';
+
 const DIRECT_FINISHED_STATUSES = ['ended', 'missed', 'declined', 'cancelled'];
 
 // Nút ngay dưới tin cuộc gọi: phòng nhóm còn mở thì "Vào phòng", cuộc gọi 1-1 đã xong thì "Gọi lại".
@@ -41,11 +45,11 @@ export default function CallActivityAction({ call, className = '' }: { call: Cal
     return (
         <Button
             sm
-            teal
-            faded
+            slate
+            solid
             icon={media === 'video' ? 'i-lucide-video' : 'i-lucide-phone'}
             label={t('CALLS.DIRECT.CALL_BACK')}
-            className={className}
+            className={`${CARD_ACTION_CLASS} ${className}`}
             onClick={() => session.startDirectCall({ accountId: conversation.accountId, conversation: selected, media })}
         />
     );

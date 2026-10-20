@@ -47,12 +47,12 @@ export default function OutgoingCallBar({
     const bar = (
         <div data-testid="outgoing-call" className={`relative overflow-hidden flex flex-none items-center gap-3 p-2 rounded-2xl ${PLACEMENT_CLASS[placement]}`}>
             {/* Vệt sáng lướt qua thẻ trong lúc chờ người kia nghe máy. */}
-            <span className="absolute inset-0 bg-gradient-to-r from-transparent via-n-teal-9/10 to-transparent animate-call-sweep motion-reduce:hidden pointer-events-none" aria-hidden="true" />
+            <span className="absolute inset-0 bg-gradient-to-r from-transparent via-n-brand/10 to-transparent animate-call-sweep motion-reduce:hidden pointer-events-none" aria-hidden="true" />
             <button type="button" title={t('CALLS.DIRECT.EXPAND')} className="relative flex flex-1 items-center gap-3 min-w-0 p-0 text-start" onClick={onExpand}>
                 <RingingAvatar peer={peer} size={32} isRinging />
                 <span className="flex flex-1 flex-col min-w-0">
                     <span className="text-sm font-medium leading-5 truncate text-n-slate-12">{peer.name}</span>
-                    <span className="flex items-center gap-1 text-xs leading-4 text-n-teal-11">
+                    <span className="flex items-center gap-1 text-xs leading-4 text-n-slate-11">
                         <span className={`${media === 'video' ? 'i-lucide-video' : 'i-lucide-phone'} size-3 flex-shrink-0`} />
                         <span className="truncate">{isRinging ? t('CALLS.DIRECT.RINGING') : t('CALLS.DIRECT.CALLING')}</span>
                     </span>

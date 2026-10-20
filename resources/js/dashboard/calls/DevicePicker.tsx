@@ -10,11 +10,14 @@ export default function DevicePicker({
     listDevices,
     onSelect,
     children,
+    opensBelow = false,
 }: {
     kind: CallDeviceKind;
     listDevices: (kind: CallDeviceKind) => Promise<CallDevice[]>;
     onSelect: (kind: CallDeviceKind, deviceId: string) => void;
     children: (toggle: () => void) => ReactNode;
+    // Mặc định mở lên trên (hàng nút ở đáy màn); đặt ở mũ thì mở xuống.
+    opensBelow?: boolean;
 }) {
     const [devices, setDevices] = useState<CallDevice[] | null>(null);
     const rootRef = useRef<HTMLDivElement>(null);
@@ -54,7 +57,7 @@ export default function DevicePicker({
                               }))
                             : [{ label: t('CALLS.ROOM.NO_DEVICES'), value: '', action: 'none', disabled: true }]
                     }
-                    className="bottom-full mb-2 start-0 w-64"
+                    className={`${opensBelow ? 'top-full mt-2' : 'bottom-full mb-2'} start-0 w-64`}
                     onAction={item => {
                         if (item.action === 'select') onSelect(kind, String(item.value));
                         setDevices(null);
