@@ -70,6 +70,7 @@ export function DirectCallOverlay({ isPhone, viewingConversationId }: { isPhone:
         const peerIdentity = identityOfUser(view.peer.id);
         const peerSpeaking = session.room?.participants.some(participant => participant.identity === peerIdentity && participant.isSpeaking);
         const selfSpeaking = session.room?.participants.some(participant => participant.isLocal && participant.isSpeaking);
+        const peerCamOn = session.room?.participants.some(participant => participant.identity === peerIdentity && participant.camOn);
 
         return (
             <DirectCallScene
@@ -83,6 +84,8 @@ export function DirectCallOverlay({ isPhone, viewingConversationId }: { isPhone:
                 micOn={session.local.micOn}
                 camOn={session.local.camOn}
                 deafened={session.local.deafened}
+                peerVideo={peerCamOn ? session.renderMedia(peerIdentity, 'camera') : null}
+                selfVideo={session.local.camOn && session.selfIdentity ? session.renderMedia(session.selfIdentity, 'camera') : null}
                 onAccept={session.directActions.accept}
                 onDecline={session.directActions.hangUp}
                 onToggleMic={session.actions.toggleMic}

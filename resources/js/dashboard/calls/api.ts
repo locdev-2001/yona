@@ -45,6 +45,10 @@ export const fetchDirectCallEligibility = (accountId: number, conversationId: nu
 export const startDirectCall = (accountId: number, conversationId: number, media: CallMediaKind) =>
     postJson<DirectCallJoinResponse>(`${yonaUrl(accountId)}/conversations/${conversationId}/call`, { media });
 
+// Cuộc gọi 1-1 còn sống của mình (tải lại trang giữa lúc đổ chuông).
+export const fetchCurrentDirectCall = (accountId: number) =>
+    getJson<{ direct_call: DirectCallPayload | null }>(`${yonaUrl(accountId)}/calls/current`);
+
 export const acceptDirectCall = (accountId: number, callId: number, media: CallMediaKind) =>
     postJson<DirectCallJoinResponse>(`${yonaUrl(accountId)}/calls/${callId}/accept`, { media });
 

@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import Avatar from 'dashboard/components-next/avatar/Avatar';
 import Button from 'dashboard/components-next/button/Button';
 import { avatarSeed } from 'shared/avatar/avatarSeed';
@@ -22,6 +23,9 @@ interface DirectCallSceneProps {
     micOn: boolean;
     camOn: boolean;
     deafened: boolean;
+    // Hình camera đang phát (lớp media vẽ); null khi người đó tắt camera.
+    peerVideo: ReactNode | null;
+    selfVideo: ReactNode | null;
     onAccept: (media: CallMediaKind) => void;
     onDecline: () => void;
     onToggleMic: () => void;
@@ -42,12 +46,15 @@ const TONE_PROPS: Record<ActionTone, Record<string, boolean>> = {
     accept: { teal: true, solid: true },
 };
 
-// Nút lớn của màn gọi: ô 64px bo 16, chữ ngắn ở dưới.
-function CallAction({ icon, label, tone, className = '', onClick }: { icon: string; label: string; tone: ActionTone; className?: string; onClick: () => void }) {
+// Nút lớn của màn gọi: ô 64px bo 16, chữ ngắn ở dưới. Trên nền hình video thì nút thường thành
+// kính mờ sáng, chữ trắng, để không lẫn vào hình.
+function CallAction({ icon, label, tone, isOnVideo = false, className = '', onClick }: { icon: string; label: string; tone: ActionTone; isOnVideo?: boolean; className?: string; onClick: () => void }) {
+    const videoClass = isOnVideo && tone === 'neutral' ? '!bg-white/15 !text-white hover:enabled:!bg-white/25 backdrop-blur-md' : '';
+
     return (
         <div className="flex flex-col items-center gap-2">
-            <Button lg {...TONE_PROPS[tone]} icon={icon} title={label} className={`!size-16 !rounded-2xl [&>span]:!size-6 ${className}`} onClick={onClick} />
-            <span className="text-xs text-n-slate-11">{label}</span>
+            <Button lg {...TONE_PROPS[tone]} icon={icon} title={label} className={`!size-16 !rounded-2xl [&>span]:!size-6 ${videoClass} ${className}`} onClick={onClick} />
+            <span className={`text-xs ${isOnVideo ? 'text-white/90' : 'text-n-slate-11'}`}>{label}</span>
         </div>
     );
 }
@@ -79,7 +86,7 @@ export default function DirectCallScene(props: DirectCallSceneProps) {
             role="dialog"
             aria-label={props.peer.name}
             data-testid="direct-call-scene"
-            className="fixed inset-0 z-50 flex flex-col bg-n-surface-canvas pt-[max(0.5rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))] animate-fade-in-up"
+            className="fixed inset-0 z-50 isolate flex flex-col bg-n-surface-canvas pt-[max(0.5rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))] animate-fade-in-up"
         >
             {props.phase === 'incoming' ? <IncomingLayout {...props} /> : <InCallLayout {...props} />}
         </section>
@@ -130,39 +137,55 @@ function IncomingLayout(props: DirectCallSceneProps) {
 }
 
 function InCallLayout(props: DirectCallSceneProps) {
-    const { peer, phase, since, speaker, micOn, camOn, deafened, onDecline, onToggleMic, onToggleCamera, onToggleDeafen, listDevices, onSelectDevice, onMinimize, onOpenChat } = props;
+    const { peer, phase, since, speaker, micOn, camOn, deafened, peerVideo, selfVideo, onDecline, onToggleMic, onToggleCamera, onToggleDeafen, listDevices, onSelectDevice, onMinimize, onOpenChat } = props;
+    const isOnVideo = peerVideo !== null;
 
     return (
         <>
+            {isOnVideo ? (
+                <div className="absolute inset-0 -z-10 bg-black" aria-hidden="true">
+                    {peerVideo}
+                    {/* Lớp tối mờ trên và dưới để chữ, nút đọc được trên mọi hình. */}
+                    <span className="absolute inset-x-0 top-0 h-40 bg-gradient-to-b from-black/60 to-transparent" />
+                    <span className="absolute inset-x-0 bottom-0 h-72 bg-gradient-to-t from-black/70 to-transparent" />
+                </div>
+            ) : null}
             <div className="flex justify-end px-3 h-12">
-                <Button sm slate link label={t('CALLS.DIRECT.HIDE')} className="!h-11 px-2" onClick={onMinimize} />
+                <Button sm slate link label={t('CALLS.DIRECT.HIDE')} className={`!h-11 px-2 ${isOnVideo ? '!text-white' : ''}`} onClick={onMinimize} />
             </div>
             <div className="flex flex-col items-center gap-1 w-full max-w-sm mx-auto px-6 text-center">
-                <span className="max-w-full text-2xl font-semibold truncate text-n-slate-12">{peer.name}</span>
+                <span className={`max-w-full text-2xl font-semibold truncate ${isOnVideo ? 'text-white' : 'text-n-slate-12'}`}>{peer.name}</span>
                 {phase === 'connected' ? (
-                    <span className="flex items-center gap-1.5 text-sm text-n-slate-11">
+                    <span className={`flex items-center gap-1.5 text-sm ${isOnVideo ? 'text-white/80' : 'text-n-slate-11'}`}>
                         <CallDuration startedAt={since} />
                         {/* Có người đang nói thì sóng âm sáng màu teal ngay cạnh số đếm. */}
-                        <span className={`i-lucide-audio-lines size-4 ${speaker ? 'text-n-teal-11' : 'text-n-slate-8'}`} aria-hidden="true" />
+                        <span className={`i-lucide-audio-lines size-4 ${speaker ? 'text-n-teal-9' : isOnVideo ? 'text-white/40' : 'text-n-slate-8'}`} aria-hidden="true" />
                     </span>
                 ) : (
                     <span className="text-sm text-n-teal-11">{t('CALLS.DIRECT.RINGING')}</span>
                 )}
             </div>
             <div className="relative flex flex-1 items-center justify-center min-h-0">
-                <SceneOrb {...props} className="aspect-square w-[min(84vw,40vh,22rem)]" />
-                <span className="absolute">
-                    <PeerAvatar peer={peer} size={88} />
-                </span>
+                {isOnVideo ? null : (
+                    <>
+                        <SceneOrb {...props} className="aspect-square w-[min(84vw,40vh,22rem)]" />
+                        <span className="absolute">
+                            <PeerAvatar peer={peer} size={88} />
+                        </span>
+                    </>
+                )}
+                {selfVideo ? (
+                    <div className="absolute bottom-4 end-4 w-28 sm:w-40 aspect-[3/4] sm:aspect-video overflow-hidden rounded-xl bg-black">{selfVideo}</div>
+                ) : null}
             </div>
             <div className="grid grid-cols-3 gap-y-6 w-full max-w-xs mx-auto px-4">
-                <CallAction icon={micOn ? 'i-lucide-mic' : 'i-lucide-mic-off'} label={t('CALLS.DIRECT.MUTE')} tone={micOn ? 'neutral' : 'off'} onClick={onToggleMic} />
-                <CallAction icon={camOn ? 'i-lucide-video' : 'i-lucide-video-off'} label={t('CALLS.DIRECT.CAMERA')} tone="neutral" onClick={onToggleCamera} />
-                <CallAction icon={deafened ? 'i-lucide-volume-x' : 'i-lucide-volume-2'} label={t('CALLS.DIRECT.SPEAKER')} tone={deafened ? 'off' : 'neutral'} onClick={onToggleDeafen} />
-                <CallAction icon="i-lucide-message-circle" label={t('CALLS.DIRECT.OPEN_CHAT')} tone="neutral" onClick={onOpenChat} />
-                <CallAction icon="i-lucide-phone-off" label={phase === 'connected' ? t('CALLS.DIRECT.END') : t('CALLS.DIRECT.CANCEL')} tone="end" onClick={onDecline} />
+                <CallAction icon={micOn ? 'i-lucide-mic' : 'i-lucide-mic-off'} label={t('CALLS.DIRECT.MUTE')} tone={micOn ? 'neutral' : 'off'} isOnVideo={isOnVideo} onClick={onToggleMic} />
+                <CallAction icon={camOn ? 'i-lucide-video' : 'i-lucide-video-off'} label={t('CALLS.DIRECT.CAMERA')} tone="neutral" isOnVideo={isOnVideo} onClick={onToggleCamera} />
+                <CallAction icon={deafened ? 'i-lucide-volume-x' : 'i-lucide-volume-2'} label={t('CALLS.DIRECT.SPEAKER')} tone={deafened ? 'off' : 'neutral'} isOnVideo={isOnVideo} onClick={onToggleDeafen} />
+                <CallAction icon="i-lucide-message-circle" label={t('CALLS.DIRECT.OPEN_CHAT')} tone="neutral" isOnVideo={isOnVideo} onClick={onOpenChat} />
+                <CallAction icon="i-lucide-phone-off" label={phase === 'connected' ? t('CALLS.DIRECT.END') : t('CALLS.DIRECT.CANCEL')} tone="end" isOnVideo={isOnVideo} onClick={onDecline} />
                 <DevicePicker kind="audioinput" listDevices={listDevices} onSelect={onSelectDevice}>
-                    {toggle => <CallAction icon="i-lucide-settings-2" label={t('CALLS.DIRECT.DEVICES')} tone="neutral" onClick={toggle} />}
+                    {toggle => <CallAction icon="i-lucide-settings-2" label={t('CALLS.DIRECT.DEVICES')} tone="neutral" isOnVideo={isOnVideo} onClick={toggle} />}
                 </DevicePicker>
             </div>
         </>

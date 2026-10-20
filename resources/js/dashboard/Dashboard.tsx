@@ -25,6 +25,7 @@ import CallBar from 'dashboard/calls/CallBar';
 import CallStage from 'dashboard/calls/CallStage';
 import CallMiniPlayer from 'dashboard/calls/CallMiniPlayer';
 import { DirectCallOverlay, DirectOutgoingStrip } from 'dashboard/calls/DirectCallLayer';
+import { useCallsEnabled } from 'dashboard/calls/useCallsEnabled';
 import { useCallSession } from 'dashboard/calls/callSession';
 import { useIsPhoneScreen } from 'dashboard/composables/useViewportWidth';
 
@@ -65,6 +66,12 @@ function DashboardFrame({ children }: { children: ReactNode }) {
     useEffect(() => {
         bindUnreadIndicators(accountId);
     }, [accountId]);
+
+    const callsEnabled = useCallsEnabled();
+    const { recoverDirectCall } = call;
+    useEffect(() => {
+        if (accountId && callsEnabled) recoverDirectCall(accountId);
+    }, [accountId, callsEnabled, recoverDirectCall]);
 
     return (
         <StickerDisplaySizeProvider size={stickerDisplaySize}>

@@ -7,6 +7,7 @@ import { conversationUrl } from 'dashboard/helper/URLHelper';
 import { emitter } from 'shared/helpers/emitter';
 import {
     acceptDirectCall,
+    fetchCurrentDirectCall,
     fetchGroupRoom,
     hangUpDirectCall,
     joinGroupRoom,
@@ -200,6 +201,18 @@ export default function CallSessionProvider({ children }: { children: ReactNode 
         [connectDirect],
     );
 
+    const recoverDirect = useCallback((accountId: number) => {
+        fetchCurrentDirectCall(accountId)
+            .then(({ direct_call: payload }) => {
+                // Chỉ cuộc đang đổ chuông tới mình mới nối lại được. Cuộc mình gọi đi hay đang nói thì
+                // phòng đã rớt khi tải lại, máy chủ tự huỷ hoặc kết thúc theo sự kiện phòng.
+                if (!payload || payload.call.status !== 'ringing' || payload.call.role !== 'callee') return;
+                if (directRef.current || activeRef.current) return;
+                setDirect({ view: payload.call, accountId: payload.account_id, isExpanded: false });
+            })
+            .catch(() => undefined);
+    }, []);
+
     const hangUpDirect = useCallback(() => {
         const current = directRef.current;
         if (!current) return;
@@ -351,6 +364,7 @@ export default function CallSessionProvider({ children }: { children: ReactNode 
         renderMedia: media.renderMedia,
         joinGroupRoom: joinGroup,
         startDirectCall: startDirect,
+        recoverDirectCall: recoverDirect,
         direct,
         directActions,
         selfIdentity: self?.identity ?? null,

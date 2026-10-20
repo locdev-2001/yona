@@ -49,6 +49,8 @@ export interface CallSession {
     renderMedia: RenderCallMedia;
     joinGroupRoom: (request: JoinGroupRoomRequest) => void;
     startDirectCall: (request: StartDirectCallRequest) => void;
+    // Mở app (hoặc tải lại trang) giữa lúc có người đang gọi tới: hỏi máy chủ để đổ chuông lại.
+    recoverDirectCall: (accountId: number) => void;
     direct: DirectCallState | null;
     directActions: DirectCallActions;
     // Định danh của mình trong phòng đang nối (để đọc âm lượng của mình).
@@ -82,6 +84,7 @@ const IDLE_SESSION: CallSession = {
     renderMedia: () => null,
     joinGroupRoom: noop,
     startDirectCall: noop,
+    recoverDirectCall: noop,
     direct: null,
     directActions: { accept: noop, hangUp: noop, expand: noop, collapse: noop, openChat: noop },
     selfIdentity: null,
