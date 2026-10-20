@@ -44,14 +44,14 @@ class SharedThreadBroadcastJob extends ApplicationJob
         Conversation::preloadUnreadIncomingMessagesCounts($views);
 
         foreach ($views as $view) {
+            if ($this->opensViewOf($message, $view)) {
+                $view->reopenForNewMessage();
+            }
+
             $token = $view->threadMembership?->user?->pubsub_token;
 
             if ($token === null) {
                 continue;
-            }
-
-            if ($this->opensViewOf($message, $view)) {
-                $view->reopenForNewMessage();
             }
 
             broadcast(new RealtimeBroadcast([$token], $this->eventName, [
