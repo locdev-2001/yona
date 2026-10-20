@@ -113,6 +113,7 @@ export default function MessagesView() {
     });
 
     const replyWindowBannerMessage = (() => {
+        if (currentChat.group && currentChat.group.my_role === null) return t('CHAT.GROUP.LEFT_NOTICE');
         const additionalAttributes = inbox?.additional_attributes ?? {};
         return (
             additionalAttributes.agent_reply_time_window_message ||

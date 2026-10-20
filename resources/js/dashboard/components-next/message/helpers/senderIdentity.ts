@@ -93,7 +93,12 @@ export function resolveMessageSender(
     if (message.message_type === MESSAGE_TYPES.INCOMING) {
         const groupSender = readGroupSender(contentAttributes);
         if (groupSender) {
-            return build(groupSender.name, groupSender.avatar, channelPlatform, avatarSeed('group_member', groupSender.externalId));
+            return build(
+                groupSender.name,
+                groupSender.avatar,
+                channelPlatform,
+                groupSender.avatarSeed ?? avatarSeed('group_member', groupSender.externalId),
+            );
         }
         if (sender) return build(sender.name ?? '', sender.thumbnail ?? '', channelPlatform, senderAvatarSeed(sender));
     }

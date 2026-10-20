@@ -1,3 +1,4 @@
+import type { GroupSummary } from './groupsApi';
 // Shape payload của API: _conversation partial + _message + push_event_data.
 
 export interface ContactMeta {
@@ -112,6 +113,8 @@ export interface Conversation {
     contact_last_seen_at: number;
     first_reply_created_at: number;
     unread_count: number;
+    // Có khi dòng này là nhóm giữa người dùng Yona.
+    group?: GroupSummary | null;
     last_non_activity_message: ConversationMessage | null;
     last_activity_at: number;
     timestamp: number;

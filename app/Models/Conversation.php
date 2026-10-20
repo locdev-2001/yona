@@ -554,6 +554,10 @@ class Conversation extends Model
 
     public function canReply(): bool
     {
+        if ($this->hasLeftThread()) {
+            return false;
+        }
+
         // Conversations::MessageWindowService — nhánh Channel::Api: chỉ giới hạn
         // khi channel đặt agent_reply_time_window; kênh khác chưa port → true.
         if ($this->inbox->channel_type !== 'Channel::Api') {

@@ -1,6 +1,7 @@
 import type { DialogHandle } from 'dashboard/components-next/dialog/Dialog';
 import FindPeopleDialog from 'dashboard/friends/FindPeopleDialog';
-import { useRef } from 'react';
+import CreateGroupDialog from '../groups/CreateGroupDialog';
+import { useEffect, useRef } from 'react';
 import { isProductFeatureVisible } from 'shared/helpers/productVisibility';
 import { formatNumber } from '@ext/utils';
 
@@ -10,6 +11,9 @@ import { useConversation } from '../ConversationContext';
 import ChatListSearch from './ChatListSearch';
 import ListFilterButton from './ListFilterButton';
 import ListHeaderButton from './ListHeaderButton';
+
+const NEW_PARAM = 'new';
+const NEW_GROUP = 'group';
 
 // Hàng đầu cột danh sách: Tìm · Lọc · Chọn nhiều · Soạn tin · ⋯. Lưu/sửa/xoá view
 // chỉ hiện ở dải riêng khi đang dùng lọc nâng cao hoặc mở một view đã lưu.
@@ -43,7 +47,17 @@ export default function ChatListHeader({
     const canManageViews = isProductFeatureVisible('conversationViews');
     const anchorSide = isOnExpandedLayout ? 'end-3' : 'start-3';
     const newYonaChatRef = useRef<DialogHandle>(null);
+    const newGroupRef = useRef<DialogHandle>(null);
     const { toggleConversationLayout } = useConversation();
+
+    // Ctrl+K "Tạo nhóm" đi tới `?new=group`: mở hộp rồi bỏ tham số khỏi địa chỉ.
+    useEffect(() => {
+        const url = new URL(window.location.href);
+        if (url.searchParams.get(NEW_PARAM) !== NEW_GROUP) return;
+        url.searchParams.delete(NEW_PARAM);
+        window.history.replaceState(window.history.state, '', url);
+        newGroupRef.current?.open();
+    }, []);
 
     return (
         <>
@@ -57,6 +71,11 @@ export default function ChatListHeader({
                             icon="i-lucide-user-plus"
                             label={t('CHAT.NEW.TITLE')}
                             onClick={() => newYonaChatRef.current?.open()}
+                        />
+                        <ListHeaderButton
+                            icon="i-lucide-users-round"
+                            label={t('CHAT.GROUP.NEW')}
+                            onClick={() => newGroupRef.current?.open()}
                         />
                         <ListFilterButton
                             isOnExpandedLayout={isOnExpandedLayout}
@@ -73,6 +92,7 @@ export default function ChatListHeader({
                 </div>
                 <ChatListSearch />
                 <FindPeopleDialog ref={newYonaChatRef} title={t('CHAT.NEW.TITLE')} description={t('CHAT.NEW.DESCRIPTION')} />
+                <CreateGroupDialog ref={newGroupRef} />
                 <div id="conversationFilterTeleportTarget" className={`absolute top-full z-50 ${anchorSide}`} />
             </div>
             {isAdvancedActive ? (

@@ -46,7 +46,7 @@ class YonaGroupInvitesController extends Controller
             $input['max_uses'] ?? null,
         );
 
-        return response()->json([...YonaGroupResource::inviteLink($link), 'token' => $token], 201);
+        return response()->json([...YonaGroupResource::inviteLink($link), 'token' => $token, 'url' => route('group_invites.show', $token)], 201);
     }
 
     public function destroy(Request $request, Account $account, int $groupId, int $linkId): Response

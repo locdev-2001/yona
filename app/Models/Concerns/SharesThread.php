@@ -3,6 +3,7 @@
 namespace App\Models\Concerns;
 
 use App\Exceptions\MessageValidationException;
+use App\Models\Channel\Yona;
 use App\Models\Conversation;
 use App\Models\Message;
 use App\Models\User;
@@ -130,11 +131,29 @@ trait SharesThread
         return $this->threadConversation;
     }
 
-    // Tin của hội thoại gốc hiện ra như tin của dòng này, theo góc nhìn người xem.
+    /**
+     * Tin của hội thoại gốc hiện ra như tin của dòng này, theo góc nhìn người xem. Tin người
+     * khác gửi mang `content_attributes.sender` như tin nhóm của mọi kênh, nên bong bóng,
+     * trích dẫn, cảm xúc và dòng xem trước hiện đúng tên người gửi.
+     */
     public function presentMessage(Message $message): Message
     {
-        return $this->isThreadView() && $message->conversation_id !== $this->id
-            ? $message->seenFrom($this, $this->threadViewerId())
-            : $message;
+        if (! $this->isThreadView() || $message->conversation_id === $this->id) {
+            return $message;
+        }
+
+        $viewerId = $this->threadViewerId();
+        $sender = $message->sender;
+        $groupSender = $sender instanceof User && $sender->id !== $viewerId
+            ? [
+                'external_id' => Yona::contactSourceIdFor($sender->id),
+                'name' => $sender->availableName(),
+                'avatar' => $sender->avatarUrl() ?: '',
+                // Cùng avatar hình khối với người này ở mọi màn khác (seed theo user).
+                'avatar_seed' => 'user:'.$sender->id,
+            ]
+            : null;
+
+        return $message->seenFrom($this, $viewerId, $groupSender);
     }
 }

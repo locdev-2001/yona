@@ -3,8 +3,8 @@ import { useState } from 'react';
 import Avatar from 'dashboard/components-next/avatar/Avatar';
 import { avatarSeed } from 'shared/avatar/avatarSeed';
 import type { Person } from 'shared/people/person';
-import { usePeopleSearch } from 'shared/people/usePeopleSearch';
-import { t } from '../../../i18n';
+import { usePeopleSearch } from './usePeopleSearch';
+import { t } from '../../i18n';
 
 export type PickedPerson = Pick<Person, 'id' | 'name' | 'username' | 'avatar_url'>;
 
@@ -18,15 +18,25 @@ interface PeoplePickerProps {
     // Ô tìm do nơi dùng giữ (để đóng mở hộp vẫn còn chữ đang tìm); vắng thì tự giữ.
     query?: string;
     onQueryChange?: (query: string) => void;
+    // Chỉ tìm trong bạn bè (thêm trực tiếp vào nhóm); ô tìm trống thì hiện sẵn bạn bè.
+    friendsOnly?: boolean;
 }
 
 // Tìm người theo @username hoặc tên. Có `selected` thì thành chế độ chọn nhiều, người
 // đã chọn hiện thành chip phía trên ô tìm.
-export default function PeoplePicker({ onPick, selected, onChange, excludeIds = [], query: controlledQuery, onQueryChange }: PeoplePickerProps) {
+export default function PeoplePicker({
+    onPick,
+    selected,
+    onChange,
+    excludeIds = [],
+    query: controlledQuery,
+    onQueryChange,
+    friendsOnly = false,
+}: PeoplePickerProps) {
     const [ownQuery, setOwnQuery] = useState('');
     const query = controlledQuery ?? ownQuery;
     const setQuery = onQueryChange ?? setOwnQuery;
-    const search = usePeopleSearch(query);
+    const search = usePeopleSearch(query, { friendsOnly });
     const isMulti = selected !== undefined;
     const selectedIds = new Set((selected ?? []).map(person => person.id));
     const results = search.people.filter(person => !excludeIds.includes(person.id));
@@ -75,7 +85,7 @@ export default function PeoplePicker({ onPick, selected, onChange, excludeIds = 
             <div className="min-h-24 max-h-72 overflow-y-auto" aria-busy={search.status === 'loading'}>
                 {search.status === 'error' ? <p className="py-3 text-sm text-n-ruby-11">{t('PEOPLE.CHAT.SEARCH_ERROR')}</p> : null}
                 {search.status === 'done' && results.length === 0 ? (
-                    <p className="py-3 text-sm text-n-slate-11">{t('PEOPLE.CHAT.NO_RESULTS')}</p>
+                    <p className="py-3 text-sm text-n-slate-11">{t(friendsOnly ? 'CHAT.GROUP.NO_FRIENDS' : 'PEOPLE.CHAT.NO_RESULTS')}</p>
                 ) : null}
                 {search.status === 'idle' ? <p className="py-3 text-sm text-n-slate-11">{t('CHAT.NEW.HINT')}</p> : null}
                 <ul className="flex flex-col gap-0.5 m-0 p-0 list-none">

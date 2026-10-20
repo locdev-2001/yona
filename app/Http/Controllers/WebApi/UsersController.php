@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\WebApi;
 
 use App\Http\Controllers\Controller;
+use App\Services\Users\Friendships;
 use App\Services\Users\UserDirectory;
 use App\Services\Users\Username;
 use Illuminate\Http\JsonResponse;
@@ -10,11 +11,16 @@ use Illuminate\Http\Request;
 
 class UsersController extends Controller
 {
-    public function search(Request $request, UserDirectory $directory): JsonResponse
+    // `scope=friends`: chỉ bạn bè của người tìm (chọn người thêm vào nhóm), ô tìm trống được.
+    public function search(Request $request, UserDirectory $directory, Friendships $friendships): JsonResponse
     {
-        $query = (string) $request->validate(['q' => ['required', 'string', 'max:100']])['q'];
+        $input = $request->validate([
+            'q' => ['nullable', 'string', 'max:100', 'required_unless:scope,friends'],
+            'scope' => ['nullable', 'in:friends'],
+        ]);
+        $among = ($input['scope'] ?? null) === 'friends' ? $friendships->friendIds($request->user()) : null;
 
-        return response()->json(['payload' => $directory->search($request->user(), $query)->values()]);
+        return response()->json(['payload' => $directory->search($request->user(), (string) ($input['q'] ?? ''), $among)->values()]);
     }
 
     public function usernameAvailability(Request $request): JsonResponse

@@ -582,12 +582,24 @@ hộp thư sẵn có. Giao diện mở hội thoại mới:
 | `POST /…/yona/groups/{id}/members` · `PATCH/DELETE /…/members/{userId}` | Thêm bạn bè · đổi vai trò · đưa ra (xoá chính mình = rời) |
 | `GET/POST /…/yona/groups/{id}/invite_links` · `DELETE /…/invite_links/{linkId}` | Link mời (quản trị); token chỉ trả lúc tạo |
 | `GET /api/v1/group_invites/{token}` · `POST /api/v1/group_invites/{token}/accept` | Xem trước · tham gia bằng link |
+| `GET /g/{token}` · `POST /g/{token}` | Trang mở link mời (`Chat\GroupInvitesController`, trang `v3/views/groups/invite/Index`): ai cũng xem được; khách được giữ `url.intended` để đăng nhập/đăng ký xong quay lại; tham gia xong tải lại trọn trang vào hội thoại nhóm |
+| `GET /api/v1/users/search?scope=friends` | Tìm trong bạn bè, ô tìm trống trả luôn danh sách bạn bè (chọn người thêm vào nhóm) |
+
+**Giao diện:** payload hội thoại có `group` (`YonaGroupResource::summaryFor`: id, tên, số
+thành viên, `my_role`, null khi đã rời). Tin nhóm của người khác mang
+`content_attributes.sender` (`external_id`, `name`, `avatar`, `avatar_seed`) như tin nhóm
+mọi kênh, nên bong bóng, trích dẫn, cảm xúc, dòng xem trước dùng chung đường hiển thị
+nhóm sẵn có. Tạo nhóm và thêm bạn dùng `shared/people/PickPeopleDialog` (bọc
+`PeoplePicker`, chế độ `friendsOnly`); panel phải của dòng nhóm là
+`conversationbox/group/GroupInfo` thay cho khối hồ sơ người. Dòng nhóm đã rời:
+`canReply()` false, chỉ còn ghi chú riêng.
 
 ### Chưa có
 
-- **Giao diện nhóm** (tạo nhóm, panel thông tin nhóm, trang mở link mời `/g/{token}`,
-  tên người gửi trên bong bóng và ở dòng xem trước): chưa có; lõi và API ở mục "Nhóm
-  giữa người dùng Yona" bên trên đã chạy.
+- **Ảnh và mô tả nhóm, giải tán nhóm:** chưa có; nhóm dùng avatar hình khối theo id nhóm
+  (`conversationAvatarSeed`).
+- **Quay về link mời sau khi đăng ký mới:** `url.intended` giữ qua đăng nhập và màn chọn
+  `@username`, nhưng đăng ký bằng email phải xác minh email trước nên có thể mất mốc này.
 - **Tìm theo tên người gửi trong nhóm Yona:** tìm theo người gửi thật
   (`GROUP_SENDER_NAME_SQL`) chỉ áp cho nhóm của kênh ngoài; tin nhóm Yona tìm theo nội
   dung và tệp. Đếm tin vào/ra ở chỉ số Super Admin vẫn tính tin chung của nhóm (một bản).

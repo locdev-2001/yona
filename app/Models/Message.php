@@ -137,8 +137,10 @@ class Message extends Model
     /**
      * Tin của hội thoại gốc nhìn từ dòng riêng của một thành viên: mang id hội thoại,
      * account, hộp thư của dòng đó, và tin người khác gửi đi thành tin đến với người xem.
+     *
+     * @param  array{external_id: string, name: string, avatar: string, avatar_seed: string}|null  $groupSender
      */
-    public function seenFrom(Conversation $view, ?int $viewerId): self
+    public function seenFrom(Conversation $view, ?int $viewerId, ?array $groupSender = null): self
     {
         $sentByViewer = $this->sender_type === (new User)->getMorphClass() && (int) $this->sender_id === $viewerId;
 
@@ -151,6 +153,9 @@ class Message extends Model
             'conversation_id' => $view->id,
             'message_type' => $this->message_type === self::TYPE_OUTGOING && ! $sentByViewer ? self::TYPE_INCOMING : $this->message_type,
         ], true);
+        if ($groupSender !== null) {
+            $copy->content_attributes = [...($this->content_attributes ?? []), 'sender' => $groupSender];
+        }
         $copy->setRelation('conversation', $view);
         $copy->unsetRelation('account');
         $copy->unsetRelation('inbox');

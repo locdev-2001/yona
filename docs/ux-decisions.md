@@ -30,6 +30,11 @@ Kiến trúc: [system-architecture.md](system-architecture.md).
 | Nhóm · ghi chú riêng | Ghi chú riêng trong nhóm chỉ người viết thấy (nằm ở dòng của họ, không vào tin chung) | Ghi chú là của riêng người dùng, không lộ cho cả nhóm | 20/10/2026 |
 | Nhóm · thu hồi, bản dịch | Thu hồi tin chung: người gửi thu hồi tin của mình, quản trị thu hồi được mọi tin. Bản dịch một tin dùng chung cho cả nhóm | Tin chung chỉ có một bản, xoá là xoá với mọi người | 20/10/2026 |
 | Nhóm · thông báo | Tin nhóm không đẩy thông báo từng tin, như hội thoại 1-1 Yona; chỉ có số chưa đọc và realtime | Giữ cùng mức với 1-1, tránh ồn ở nhóm đông | 20/10/2026 |
+| Nhóm · lối vào | Nút "Tạo nhóm" (biểu tượng nhóm người) nằm cạnh nút nhắn tin mới ở đầu danh sách hội thoại; Ctrl+K có lệnh "Tạo nhóm". Hộp tạo nhóm hiện sẵn bạn bè khi ô tìm còn trống, cho tạo nhóm chưa chọn ai (mời bằng link sau) | Tạo nhóm nhanh như mở hội thoại mới; người chưa có bạn bè vẫn lập nhóm được | 20/10/2026 |
+| Nhóm · panel phải | Dòng nhóm thay khối hồ sơ người bằng "Thông tin nhóm": ảnh, tên (quản trị đổi được), số thành viên và vai trò, Thêm bạn, link mời (chỉ quản trị), danh sách thành viên với menu ⋯ (xem hồ sơ; quản trị: đặt/gỡ quản trị, mời ra), Rời nhóm có hộp xác nhận. Chỉ giữ "Hành động của hội thoại" và "Ảnh/video, tệp và liên kết" | Nhóm không có một người để xem hồ sơ | 20/10/2026 |
+| Nhóm · link mời | Link chỉ hiện đầy đủ ngay lúc tạo (máy chủ giữ bản băm); sau đó chỉ thấy trạng thái, số lần dùng, hạn và nút Thu hồi | Không lộ link cũ, muốn chia sẻ lại thì tạo link mới | 20/10/2026 |
+| Nhóm · avatar | Avatar nhóm là hình khối theo id nhóm, mọi thành viên thấy cùng một hình; người gửi trong nhóm dùng đúng hình khối của người đó ở mọi màn khác | Nhận ra cùng một nhóm, cùng một người ở mọi chỗ | 20/10/2026 |
+| Nhóm · đã rời | Dòng nhóm đã rời vẫn đọc được tin tới lúc rời; banner và ô soạn ghi "Bạn không còn ở trong nhóm này", chỉ còn viết ghi chú riêng | Không để người đã rời tưởng mình còn nhắn được | 20/10/2026 |
 
 ## Bong bóng tin, avatar
 

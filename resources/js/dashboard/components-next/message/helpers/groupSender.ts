@@ -7,6 +7,8 @@ export interface GroupSender {
     externalId: string;
     name: string;
     avatar: string;
+    // Seed avatar hình khối khi kênh biết người gửi là ai trong hệ thống (người dùng Yona).
+    avatarSeed: string | null;
 }
 
 export interface GroupMention {
@@ -19,7 +21,7 @@ export function readGroupSender(contentAttributes: Record<string, unknown>): Gro
     const raw = contentAttributes.sender;
     if (!raw || typeof raw !== 'object') return null;
 
-    const { external_id: externalId, name, avatar } = raw as Record<string, unknown>;
+    const { external_id: externalId, name, avatar, avatar_seed: avatarSeed } = raw as Record<string, unknown>;
     const displayName = typeof name === 'string' ? name.trim() : '';
     if (!displayName) return null;
 
@@ -27,6 +29,7 @@ export function readGroupSender(contentAttributes: Record<string, unknown>): Gro
         externalId: typeof externalId === 'string' ? externalId : '',
         name: displayName,
         avatar: typeof avatar === 'string' ? avatar : '',
+        avatarSeed: typeof avatarSeed === 'string' && avatarSeed !== '' ? avatarSeed : null,
     };
 }
 

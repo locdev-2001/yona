@@ -15,6 +15,7 @@ use App\Http\Controllers\Auth\PasswordsController;
 use App\Http\Controllers\Auth\RegistrationsController;
 use App\Http\Controllers\Auth\SessionsController;
 use App\Http\Controllers\Chat\ChatPagesController;
+use App\Http\Controllers\Chat\GroupInvitesController;
 use App\Http\Controllers\Chat\WelcomeController;
 use App\Http\Controllers\DemoRequestsController;
 use App\Http\Controllers\LandingController;
@@ -175,6 +176,12 @@ Route::get('/invite/{token}', [InviteAcceptancesController::class, 'show'])
     ->where('token', '[A-Za-z0-9]+')->name('invite_links.show');
 Route::post('/invite/{token}', [InviteAcceptancesController::class, 'store'])
     ->where('token', '[A-Za-z0-9]+')->middleware('throttle:10,1')->name('invite_links.accept');
+
+// Link mời vào nhóm: xem được khi chưa đăng nhập (kèm lối đăng nhập/đăng ký rồi quay lại),
+// tham gia thì cần đăng nhập.
+Route::get('/g/{token}', [GroupInvitesController::class, 'show'])->where('token', '[A-Za-z0-9]+')->name('group_invites.show');
+Route::post('/g/{token}', [GroupInvitesController::class, 'store'])
+    ->where('token', '[A-Za-z0-9]+')->middleware(['auth', 'throttle:10,1'])->name('group_invites.accept');
 
 Route::middleware('auth')->group(function () {
     Route::post('/app/logout', [SessionsController::class, 'destroy'])->name('logout');

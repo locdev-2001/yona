@@ -4,7 +4,7 @@ import { usePage } from '@inertiajs/react';
 
 import { t } from '../../../../i18n';
 import Avatar from 'dashboard/components-next/avatar/Avatar';
-import { avatarSeed } from 'shared/avatar/avatarSeed';
+import { conversationAvatarSeed } from 'shared/avatar/avatarSeed';
 import Checkbox from 'dashboard/components-next/checkbox/Checkbox';
 import Icon from 'dashboard/components-next/icon/Icon';
 import type { ChannelIconInbox } from 'dashboard/components-next/icon/ChannelIcon';
@@ -186,7 +186,7 @@ export default function ConversationCard({
             <div className="relative">
                 {!hideThumbnail ? (
                     <Avatar
-                        seed={avatarSeed('contact', currentContact.id)}
+                        seed={conversationAvatarSeed(chat.group, currentContact.id)}
                         animated={isPointerInside}
                         name={currentContact.name ?? ''}
                         src={currentContact.thumbnail}
@@ -216,6 +216,12 @@ export default function ConversationCard({
                         ].join(' ')}
                     >
                         {showInboxName ? <InboxName inbox={inbox} className="flex-1 min-w-0" /> : null}
+                        {chat.group ? (
+                            <span className="flex items-center gap-1 flex-shrink-0 text-xs text-n-slate-11">
+                                <Icon icon="i-lucide-users-round" className="size-3" />
+                                {t('CHAT.GROUP.MEMBERS', { count: chat.group.member_count })}
+                            </span>
+                        ) : null}
                         {showStatus ? <ConversationStatusChip status={chat.status} /> : null}
                         <div className="flex items-center gap-1 flex-shrink-0 ltr:ml-auto rtl:mr-auto">
                             {isPinned ? (

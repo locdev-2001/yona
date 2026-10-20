@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Conversation;
 use App\Models\YonaGroup;
 use App\Models\YonaGroupInviteLink;
 use App\Models\YonaGroupMember;
@@ -9,6 +10,28 @@ use App\Models\YonaGroupMember;
 // Payload nhóm theo góc nhìn một thành viên: vai trò của họ và dòng hội thoại nhóm trong hộp thư của họ.
 final class YonaGroupResource
 {
+    /**
+     * Tóm tắt nhóm gắn vào payload dòng hội thoại nhóm (danh sách, khung chat, panel).
+     *
+     * @return array<string, mixed>|null
+     */
+    public static function summaryFor(Conversation $conversation): ?array
+    {
+        $membership = $conversation->isThreadView() ? $conversation->threadMembership : null;
+        $group = $membership?->group;
+
+        if ($group === null) {
+            return null;
+        }
+
+        return [
+            'id' => $group->id,
+            'name' => $group->name,
+            'member_count' => $group->member_count,
+            'my_role' => $membership->isActive() ? $membership->role : null,
+        ];
+    }
+
     /** @return array<string, mixed> */
     public static function forMember(YonaGroup $group, YonaGroupMember $viewer, bool $withMembers = false): array
     {

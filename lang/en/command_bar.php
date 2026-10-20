@@ -22,6 +22,7 @@ return [
     'COMMANDS' => [
         'GO_TO_MY_INBOX' => 'Go to notifications',
         'COMPOSE_CONVERSATION' => 'New message',
+        'CREATE_GROUP' => 'New group',
         'GO_TO_CONVERSATION_DASHBOARD' => 'Go to Conversation Dashboard',
         'GO_TO_CONTACTS_DASHBOARD' => 'Go to Friends',
         'GO_TO_CAPTAIN' => 'Go to Captain',

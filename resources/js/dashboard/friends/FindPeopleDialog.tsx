@@ -5,7 +5,7 @@ import Dialog from 'dashboard/components-next/dialog/Dialog';
 import type { DialogHandle } from 'dashboard/components-next/dialog/Dialog';
 import { useAlert } from 'dashboard/composables/useAlert';
 import { openProfile } from 'dashboard/contacts/profile/profileOverlay';
-import PeoplePicker from 'dashboard/conversation/people/PeoplePicker';
+import PeoplePicker from 'shared/people/PeoplePicker';
 import { parseApiErrorMessage } from 'dashboard/helper/apiClient';
 import { t } from '../../i18n';
 import type { DashboardPageProps } from '../types';

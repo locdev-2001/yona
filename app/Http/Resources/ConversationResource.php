@@ -134,7 +134,7 @@ class ConversationResource extends JsonResource
             return;
         }
 
-        $views->loadMissing('threadMembership');
+        $views->loadMissing('threadMembership.group');
         $threads = Conversation::query()
             ->whereIn('id', $views->pluck('thread_conversation_id')->unique())
             ->with([
@@ -208,6 +208,7 @@ class ConversationResource extends JsonResource
             'timestamp' => $conversation->last_activity_at?->getTimestamp() ?? 0,
             'first_reply_created_at' => $conversation->first_reply_created_at?->getTimestamp() ?? 0,
             'unread_count' => $conversation->unreadIncomingMessagesCount(),
+            'group' => YonaGroupResource::summaryFor($conversation),
             'last_non_activity_message' => $lastNonActivityMessage === null
                 ? null
                 : MessageResource::pushEventData($lastNonActivityMessage),

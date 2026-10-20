@@ -13,21 +13,31 @@ class UserDirectory
 
     public const MAX_RESULTS = 20;
 
-    /** @return Collection<int, array<string, mixed>> */
-    public function search(User $viewer, string $query): Collection
+    /**
+     * `$among` thu hẹp vào một nhóm người (bạn bè của người tìm khi tạo nhóm); khi đó ô
+     * tìm còn trống thì trả luôn những người đó theo tên.
+     *
+     * @param  list<int>|null  $among
+     * @return Collection<int, array<string, mixed>>
+     */
+    public function search(User $viewer, string $query, ?array $among = null): Collection
     {
         $term = trim(ltrim(trim($query), '@'));
+        $people = User::query()
+            ->whereNotNull('username')
+            ->whereKeyNot($viewer->getKey())
+            ->when($among !== null, fn ($scoped) => $scoped->whereKey($among));
 
         if (mb_strlen($term) < self::MIN_QUERY_LENGTH) {
-            return collect();
+            return $among === null
+                ? collect()
+                : $people->orderByRaw('coalesce(display_name, name)')->limit(self::MAX_RESULTS)->get()->map(fn (User $user) => $this->card($user));
         }
 
         $usernamePrefix = addcslashes(Username::normalize($term), '%_\\').'%';
         $nameTerm = '%'.addcslashes($term, '%_\\').'%';
 
-        return User::query()
-            ->whereNotNull('username')
-            ->whereKeyNot($viewer->getKey())
+        return $people
             ->where(fn ($match) => $match
                 ->where('username', 'like', $usernamePrefix)
                 ->orWhereRaw('search_fold(coalesce(display_name, name)) like search_fold(?)', [$nameTerm]))

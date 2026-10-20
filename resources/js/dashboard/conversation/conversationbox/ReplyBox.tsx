@@ -245,7 +245,13 @@ export default function ReplyBox({
     // Trên thiết bị cảm ứng, placeholder bỏ phần gợi ý phím tắt.
     const isTouchOnly = isTouchOnlyDevice();
     const messagePlaceHolder = isEditorDisabled
-        ? t(isComposing ? 'COMPOSE_NEW_CONVERSATION.DRAFT.COMPOSER_LOCKED' : 'CONVERSATION.FOOTER.MESSAGING_RESTRICTED_API')
+        ? t(
+              isComposing
+                  ? 'COMPOSE_NEW_CONVERSATION.DRAFT.COMPOSER_LOCKED'
+                  : selectedConversation?.group
+                    ? 'CHAT.GROUP.LEFT_NOTICE'
+                    : 'CONVERSATION.FOOTER.MESSAGING_RESTRICTED_API',
+          )
         : isPrivate
           ? t(isTouchOnly ? 'CONVERSATION.FOOTER.PRIVATE_MSG_INPUT_TOUCH' : 'CONVERSATION.FOOTER.PRIVATE_MSG_INPUT')
           : t(isTouchOnly ? 'CONVERSATION.FOOTER.MSG_INPUT_TOUCH' : 'CONVERSATION.FOOTER.MSG_INPUT');

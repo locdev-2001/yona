@@ -43,7 +43,8 @@ class WelcomeController extends Controller
 
         $user->forceFill(['display_name' => $data['name'], 'username' => $data['username']])->save();
 
-        // Trang auth và trang chat dùng hai bộ CSS khác nhau nên phải tải lại trọn trang.
-        return Inertia::location(route('dashboard'));
+        // Trang auth và trang chat dùng hai bộ CSS khác nhau nên phải tải lại trọn trang. Đến
+        // từ link mời nhóm thì quay lại đúng link đó.
+        return Inertia::location(session()->pull('url.intended', route('dashboard')));
     }
 }

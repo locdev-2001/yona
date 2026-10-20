@@ -13,6 +13,7 @@ import { useContactPanelControl } from '../contactPanelVisibility';
 import type { ContactMeta } from '../types';
 import ContactConversations from './contact/ContactConversations';
 import ContactInfo from './contact/ContactInfo';
+import GroupInfo from './group/GroupInfo';
 import ContactNotes from './contact/ContactNotes';
 import ConversationAction from './contact/ConversationAction';
 import ConversationInfo from './contact/ConversationInfo';
@@ -34,6 +35,9 @@ const NO_CONTACT: ContactMeta = { id: 0, name: null };
 // ngay khi mở panel, nên mặc định mở — người dùng đóng thì ui_settings nhớ lại.
 const SECTIONS_OPEN_BY_DEFAULT: readonly string[] = ['is_previous_conv_open'];
 
+// Dòng nhóm không có một người để xem hồ sơ: chỉ giữ các mục của chính hội thoại.
+const GROUP_SECTIONS: readonly string[] = ['conversation_actions', 'shared_files'];
+
 interface SidebarSection {
     name: string;
     title: string;
@@ -46,9 +50,10 @@ export default function ContactPanel() {
     const { selectedConversation, uiSettings, updateUISettings } = useConversation();
     const { currentAccount } = usePage<DashboardPageProps>().props;
     const macrosEnabled = Boolean(currentAccount.features.macros) && isProductFeatureVisible('macros');
+    const group = selectedConversation?.group ?? null;
     const [contact, setContact] = useContactDetails(
         currentAccount.id,
-        selectedConversation?.meta.sender ?? NO_CONTACT,
+        group ? NO_CONTACT : (selectedConversation?.meta.sender ?? NO_CONTACT),
     );
     // Đóng panel đi qua một chỗ duy nhất: màn rộng ghi ui_settings, màn hẹp tắt
     // lớp phủ. Ghi thẳng ui_settings ở đây sẽ không đóng nổi lớp phủ di động.
@@ -151,16 +156,21 @@ export default function ContactPanel() {
 
     const orderedSections = conversationSidebarItemsOrder(uiSettings)
         .map(item => sections[item.name])
-        .filter((section): section is SidebarSection => section !== null && section !== undefined);
+        .filter((section): section is SidebarSection => section !== null && section !== undefined)
+        .filter(section => !group || GROUP_SECTIONS.includes(section.name));
 
     return (
         <div className="w-full">
-            <SidebarActionsHeader title={t('CONVERSATION.SIDEBAR.CONTACT')} onClose={closeContactPanel} />
-            <ContactInfo
-                contact={contact}
-                onContactChange={setContact}
-                onPanelClose={closeContactPanel}
-            />
+            <SidebarActionsHeader title={group ? t('CHAT.GROUP.INFO') : t('CONVERSATION.SIDEBAR.CONTACT')} onClose={closeContactPanel} />
+            {group ? (
+                <GroupInfo group={group} />
+            ) : (
+                <ContactInfo
+                    contact={contact}
+                    onContactChange={setContact}
+                    onPanelClose={closeContactPanel}
+                />
+            )}
             {/* Lề chữ của mọi mục = lề 16px của khối liên hệ phía trên: 7px + viền 1px + lề trong 8px. */}
             <div className="px-[7px] pb-8 list-group">
                 <div className="flex flex-col gap-3">

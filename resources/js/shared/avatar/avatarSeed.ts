@@ -31,3 +31,9 @@ export function senderAvatarSeed(
 export function resolveAvatarIdentity(seed: string | undefined, name: string | null | undefined): string {
     return seed || (name ?? '').trim();
 }
+
+// Avatar của một dòng hội thoại: nhóm theo id nhóm (mọi thành viên thấy cùng một hình),
+// còn lại theo liên hệ.
+export function conversationAvatarSeed(group: { id: number } | null | undefined, contactId: AvatarSubjectId): string | undefined {
+    return group ? avatarSeed('chat', `group:${group.id}`) : avatarSeed('contact', contactId);
+}

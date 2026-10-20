@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { usePage } from '@inertiajs/react';
 
 import Avatar from 'dashboard/components-next/avatar/Avatar';
-import { avatarSeed } from 'shared/avatar/avatarSeed';
+import { conversationAvatarSeed } from 'shared/avatar/avatarSeed';
 import BackButton from 'dashboard/components/widgets/BackButton';
 import Button from 'dashboard/components-next/button/Button';
 import { conversationListPageURL } from 'dashboard/helper/URLHelper';
@@ -22,6 +22,7 @@ import AssigneeAction from './AssigneeAction';
 import MoreActions from './MoreActions';
 import ResolveAction from './ResolveAction';
 import SidepanelSwitch from './SidepanelSwitch';
+import { useContactPanelControl } from '../contactPanelVisibility';
 import ConversationSearchBar from './search/ConversationSearchBar';
 
 // Port từ widgets/conversation/ConversationHeader.vue. Bỏ ở B3: SLACardLabel
@@ -49,7 +50,8 @@ export default function ConversationHeader({
     className?: string;
     showBackButton?: boolean;
 }) {
-    const { selectedConversation, accountId, listFilters, teamId } = useConversation();
+    const { selectedConversation, accountId, listFilters, teamId, uiSettings, updateUISettings } = useConversation();
+    const { setOpen: setSidePanelOpen } = useContactPanelControl(uiSettings, updateUISettings);
     const { inboxes = [] } = usePage<DashboardPageProps>().props;
     const isWideLayout = useIsLargeScreen();
     const isPhone = useIsPhoneScreen();
@@ -76,6 +78,9 @@ export default function ConversationHeader({
     );
 
     const currentContact = selectedConversation.meta.sender;
+    const group = selectedConversation.group ?? null;
+    // Tên nhóm mở panel thông tin nhóm; tên người mở hồ sơ.
+    const openIdentity = () => (group ? setSidePanelOpen(true) : openProfile(currentContact.id));
     const contactAvailabilityStatus = useContactAvailabilityStatus(
         currentContact.id,
         currentContact.availability_status as AvailabilityStatus | undefined,
@@ -111,7 +116,7 @@ export default function ConversationHeader({
                     ) : null}
                     <Avatar
                         name={currentContact.name ?? ''}
-                        seed={avatarSeed('contact', currentContact.id)}
+                        seed={conversationAvatarSeed(group, currentContact.id)}
                         src={currentContact.thumbnail}
                         size={36}
                         status={contactAvailabilityStatus}
@@ -123,7 +128,7 @@ export default function ConversationHeader({
                         <button
                             type="button"
                             className="min-w-0 text-sm font-medium truncate leading-tight text-start text-n-slate-12 hover:underline"
-                            onClick={() => openProfile(currentContact.id)}
+                            onClick={openIdentity}
                         >
                             {currentContact.name}
                         </button>
@@ -166,7 +171,7 @@ export default function ConversationHeader({
                 ) : null}
                 <Avatar
                     name={currentContact.name ?? ''}
-                    seed={avatarSeed('contact', currentContact.id)}
+                    seed={conversationAvatarSeed(group, currentContact.id)}
                     src={currentContact.thumbnail}
                     size={36}
                     status={contactAvailabilityStatus}
@@ -179,7 +184,7 @@ export default function ConversationHeader({
                         <button
                             type="button"
                             className="min-w-0 text-sm font-medium truncate leading-tight text-start text-n-slate-12 hover:underline"
-                            onClick={() => openProfile(currentContact.id)}
+                            onClick={openIdentity}
                         >
                             {currentContact.name}
                         </button>
@@ -191,6 +196,7 @@ export default function ConversationHeader({
                                 <span className="truncate text-label-small text-n-slate-11">{inbox.name}</span>
                             </div>
                         ) : null}
+                        {group ? <span>{t('CHAT.GROUP.MEMBERS', { count: group.member_count })}</span> : null}
                         {isSnoozed ? <span>•</span> : null}
                         {isSnoozed ? <span className="font-medium text-n-amber-10">{snoozedDisplayText}</span> : null}
                     </div>
