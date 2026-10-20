@@ -2,10 +2,11 @@ import { closestCenter } from '@dnd-kit/core';
 import type { CollisionDetection } from '@dnd-kit/core';
 
 /**
- * Thẻ ghim kéo bay tự do theo con trỏ, nhưng chỉ đổi chỗ khi con trỏ còn nằm trong
- * khung nhóm ghim (hợp các dòng ghim). Ra ngoài thì không có đích: thả là về chỗ cũ.
+ * Bản sao đang kéo bay tự do theo con trỏ, nhưng chỉ đổi chỗ khi con trỏ còn nằm trong
+ * khung danh sách (hợp các dòng xếp được). Ra ngoài thì không có đích: thả là về chỗ cũ.
+ * Dùng chung cho nhóm hội thoại ghim và danh sách kênh trên sidebar.
  */
-export const closestPinInsideGroup: CollisionDetection = args => {
+export const closestInsideGroup: CollisionDetection = args => {
     const { pointerCoordinates, droppableRects } = args;
     const rects = [...droppableRects.values()];
     if (!pointerCoordinates || !rects.length) return [];

@@ -20,7 +20,7 @@ import type { Conversation, ConversationMessage } from '../types';
 import { useMarkUnreadAndLeave } from '../useMarkUnreadAndLeave';
 import ConversationItem from './ConversationItem';
 import type { ConversationItemActions } from './ConversationItem';
-import { closestPinInsideGroup } from './pinDragCollision';
+import { closestInsideGroup } from 'shared/reorder/closestInsideGroup';
 
 // Kéo thả cả thẻ ghim, chỉ bằng chuột (MouseSensor): màn cảm
 // ứng không kéo để khỏi tranh cuộn, đổi chỗ bằng mục Lên/Xuống trong menu thao tác.
@@ -192,7 +192,7 @@ export default function ConversationList({
                 {pinnedConversations.length ? (
                     <DndContext
                         sensors={sensors}
-                        collisionDetection={closestPinInsideGroup}
+                        collisionDetection={closestInsideGroup}
                         autoScroll={VERTICAL_AUTO_SCROLL}
                         onDragStart={onDragStart}
                         onDragEnd={onDragEnd}
