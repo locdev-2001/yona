@@ -76,3 +76,26 @@ export interface OpenRoomSummary {
     participants: OpenRoomPerson[];
     total: number;
 }
+
+export type CallMediaKind = 'audio' | 'video';
+
+// Người ở đầu bên kia của cuộc gọi 1-1.
+export interface CallPeerView {
+    userId: number;
+    name: string;
+    avatarUrl: string | null;
+}
+
+export type DirectCallStatus = 'ringing' | 'active' | 'ended' | 'missed' | 'declined' | 'cancelled';
+
+// Cuộc gọi 1-1 nhìn từ phía mình (payload máy chủ): vai, người kia, hội thoại trong hộp thư mình.
+export interface DirectCallView {
+    id: number;
+    status: DirectCallStatus;
+    media: CallMediaKind;
+    role: 'caller' | 'callee';
+    ringing_since: string | null;
+    answered_at: string | null;
+    conversation_id: number;
+    peer: { id: number; name: string; avatar_url: string | null };
+}

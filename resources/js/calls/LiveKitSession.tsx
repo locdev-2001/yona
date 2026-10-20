@@ -76,6 +76,7 @@ export default function LiveKitSession({ serverUrl, token, deafened, onState, on
                     const isOwnCamera = participant === room.localParticipant && source === 'camera';
                     return <AttachedVideo key={track.sid} track={track} fit={source === 'screen' ? 'contain' : 'cover'} mirrored={isOwnCamera} />;
                 },
+                readAudioLevel: identity => participantsOf(room).find(candidate => candidate.identity === identity)?.audioLevel ?? 0,
             });
         };
         // Phiên đã bị gỡ (rời, đổi phòng) thì mọi kết quả kết nối đến muộn không được đụng phiên gọi mới.

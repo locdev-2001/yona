@@ -628,7 +628,8 @@ nhóm sẵn có. Tạo nhóm và thêm bạn dùng `shared/people/PickPeopleDial
 Ba tầng, mỗi tầng chỉ biết tầng ngay dưới:
 
 1. **Module dùng lõi** (theo chức năng): phòng thoại nhóm ở `App\Services\Groups\Calls`
-   (`GroupRooms` + `GroupRoomPolicy`); gọi 1-1 và meeting sẽ là module anh em. Module tự
+   (`GroupRooms` + `GroupRoomPolicy`), gọi 1-1 ở `App\Services\Yona\Calls` (`DirectCalls` +
+   `DirectCallPolicy`); meeting sẽ là module anh em. Module tự
    tạo dòng `calls` của mình và khai luật của loại đó.
 2. **Lõi `App\Services\Calls`**: không biết nhóm, 1-1, meeting hay nhà cung cấp nào.
    `CallService` (cấp phép, mở phòng, cấp vé, điều hành), `CallPresenceRecorder` (ghi vào/ra
@@ -661,6 +662,18 @@ POST /webhooks/media/{provider} ─► MediaDrivers ─► MediaWebhooks ─► 
   tính) và xoá khi trong phòng có thay đổi; gắn vào `group` trong payload hội thoại
   (`voice_room`, `voice_room_as_of`) và vào sự kiện `voice_room.updated` (mỗi thành viên một
   `ActionCableBroadcastJob`).
+- **Gọi 1-1 (module `App\Services\Yona\Calls`, kind `direct`):** `DirectCalls` bắt đầu
+  từ hội thoại 1-1 trên Yona (người kia tìm qua `YonaRelay::counterpartOf`, chỉ bạn bè,
+  không ai đang bận; `pair_key` chặn hai cuộc sống giữa một cặp), người gọi vào phòng ngay
+  lúc đổ chuông; nghe máy (`accept`), một nút cúp (`hangUp`: huỷ/từ chối/kết thúc theo vai
+  và trạng thái), `ExpireDirectCallJob` sau 30 giây thành `missed`. Đổi trạng thái thì đóng
+  phòng và `DirectCallSignals` đẩy `direct_call.updated` tới mọi tab của hai người (mỗi bên
+  một góc nhìn: vai, người kia, hội thoại trong hộp thư mình) và Web Push lúc đổ chuông
+  (`PushIncomingDirectCallJob`). Không ghi `ended_at` ở module: sự kiện đóng phòng ghi, rồi
+  `DirectCallTrail` để lại mỗi bên một tin theo vai và ngôn ngữ hộp thư; `DirectCallPresence`
+  kết thúc cuộc khi một bên rời sau khi đã nghe máy, huỷ khi người gọi bỏ đi lúc còn đổ chuông.
+  API: `GET|POST /yona/conversations/{id}/call`, `GET /yona/calls/current`,
+  `POST /yona/calls/{id}/accept`, `DELETE /yona/calls/{id}`.
 - **Phòng bắt đầu = người đầu tiên vào**, không phải lúc nhà cung cấp mở phòng trống.
 - **Đối soát khi mất webhook:** `ReconcileCallsJob` (mỗi phút, chỉ khi đã cấu hình) →
   `Calls\CallReconciler` so người đang ngồi trong DB với người đang kết nối ở nhà cung cấp và

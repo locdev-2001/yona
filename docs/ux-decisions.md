@@ -136,3 +136,15 @@ Kiến trúc: [system-architecture.md](system-architecture.md).
 | Nút gọi | Ẩn mọi nút gọi khi máy chủ cuộc gọi chưa cấu hình đủ (`globalConfig.callsEnabled`) | Không hiện tính năng chưa chạy | 20/10/2026 |
 | Tắt âm thanh phòng | Có nút tai nghe tắt toàn bộ tiếng phòng phía mình (mic vẫn theo nút mic) | Thói quen Discord; ngồi phòng mà tạm không nghe | 20/10/2026 |
 | Quản trị nhóm | Rê chuột vào ô người khác: tắt mic, mời ra khỏi phòng. Người bị tắt mic tự bật lại được; người bị mời ra thấy thông báo và có thể vào lại | Đúng quyết định "quản trị tắt mic hoặc đưa ra" | 20/10/2026 |
+
+## Gọi 1-1
+
+| Màn | Quyết định | Lý do | Ngày |
+|---|---|---|---|
+| Ai gọi được | Nút gọi chỉ hiện ở hội thoại 1-1 trên Yona khi hai người là bạn bè (máy chủ trả lời, kiểm lại lúc gọi). Máy tính: hai nút thoại/video ở mũ; điện thoại: một nút mở menu | Gọi 1-1 chỉ giữa bạn bè; mũ điện thoại hẹp | 20/10/2026 |
+| Đang gọi đi | **Một dải gọn, không phải màn hình:** máy tính dưới mũ khung chat (đang xem trang khác thì nổi góc dưới phải), điện thoại ở đáy màn trong tầm ngón cái. Bấm tên trên dải mở màn gọi lớn | Khung chat vẫn đọc, gõ được trong lúc chờ; màn lớn trống không có nghĩa | 20/10/2026 |
+| Cuộc gọi đến | Máy tính: thẻ nổi góc dưới phải; điện thoại: bottom sheet sẵn có, **vuốt lên** mở màn gọi lớn. Hàng gọn chỉ có biểu tượng, cỡ nút chuẩn của app (32px máy tính, 44px điện thoại). Nút phụ (Nhắn tin, Chỉ nghe tiếng) mờ, đứng riêng; cặp chính **Nghe trái, Từ chối phải** | Founder chốt nút cúp máy bên phải; tách nút phụ khỏi cặp chính cho khó bấm nhầm | 20/10/2026 |
+| Màn gọi lớn | Gọi đến: quả cầu ôm ảnh người gọi, bảng dưới có tên, hai nút phụ và cặp Nghe/Từ chối 64px có chữ. Đang nói: tên, số đếm kèm sóng âm ở giữa, quả cầu ôm ảnh tròn, lưới 3×2 (Tắt tiếng, Camera, Loa / Nhắn tin, Kết thúc, Thiết bị), Kết thúc ở giữa hàng dưới | Founder đưa mẫu bố cục | 20/10/2026 |
+| Quả cầu âm thanh | Hàng trăm sợi mảnh, mờ, gấp thành dải dọc mép trong; sáng và lún sâu theo âm lượng người đang nói; màu teal theo nền sáng/tối. Vẽ bằng three.js, tải lười riêng màn gọi; máy không có WebGL hoặc chọn giảm chuyển động thì hiện quầng tĩnh | Founder chọn kiểu "mỏng, mờ, thanh lịch"; không để trang khác tải three.js | 20/10/2026 |
+| Tin cuộc gọi | Mỗi bên một tin hoạt động theo vai: đã nói ("Cuộc gọi thoại · 15 giây"), người gọi "Không ai nghe máy" / "Cuộc gọi bị từ chối" / "Đã huỷ cuộc gọi", người nhận "Cuộc gọi nhỡ" / "Bạn đã từ chối cuộc gọi"; dưới tin có nút Gọi lại | Hai phía nhìn cùng cuộc gọi bằng lời của mình | 20/10/2026 |
+| Đổ chuông | 30 giây không nghe thành cuộc gọi nhỡ. Người nhận còn được báo bằng Web Push khi tab ẩn/đóng | Đúng kế hoạch phase 6 | 20/10/2026 |

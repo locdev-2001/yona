@@ -24,6 +24,7 @@ import type { DashboardPageProps } from './types';
 import CallBar from 'dashboard/calls/CallBar';
 import CallStage from 'dashboard/calls/CallStage';
 import CallMiniPlayer from 'dashboard/calls/CallMiniPlayer';
+import { DirectCallOverlay, DirectOutgoingStrip } from 'dashboard/calls/DirectCallLayer';
 import { useCallSession } from 'dashboard/calls/callSession';
 import { useIsPhoneScreen } from 'dashboard/composables/useViewportWidth';
 
@@ -81,7 +82,7 @@ function DashboardFrame({ children }: { children: ReactNode }) {
                         <ProfileOverlay />
                         <YonaRelationshipsSync />
                         <SettingsOverlay />
-                        {call.room && call.stageOpen ? (
+                        {call.room && call.stageOpen && !call.direct ? (
                             <CallStage room={call.room} local={call.local} actions={call.actions} renderMedia={call.renderMedia} isPhone={isPhone} />
                         ) : null}
                         {call.room && !call.stageOpen && !isPhone && call.sharer ? (
@@ -89,10 +90,12 @@ function DashboardFrame({ children }: { children: ReactNode }) {
                         ) : null}
                     </main>
                     <SnackbarContainer />
+                    <DirectCallOverlay isPhone={isPhone} viewingConversationId={conversationId ?? null} />
                     <RealtimeProvider />
                     <UnreadTitleSync />
                 </div>
                 {call.room && !call.stageOpen && isPhone ? <CallBar room={call.room} local={call.local} actions={call.actions} /> : null}
+                {isPhone ? <DirectOutgoingStrip placement="bottom" /> : null}
                 {/* Trong luồng, không nổi: cột trên co lại nên thẻ cuối danh sách không bị che. */}
                 {hasMobileTabBar && !isSettingsScreen ? (
                     <MobileTabBar

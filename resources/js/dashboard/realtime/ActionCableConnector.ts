@@ -35,6 +35,7 @@ export const REALTIME_EVENTS = [
     'conversation.unread_count_changed',
     'account.cache_invalidated',
     'voice_room.updated',
+    'direct_call.updated',
 ] as const;
 
 export type RealtimeEventName = (typeof REALTIME_EVENTS)[number];
@@ -78,6 +79,7 @@ class ActionCableConnector extends BaseActionCableConnector {
             'conversation.unread_count_changed': this.forward('conversation.unread_count_changed'),
             'account.cache_invalidated': this.forward('account.cache_invalidated'),
             'voice_room.updated': this.forward('voice_room.updated'),
+            'direct_call.updated': this.forward('direct_call.updated'),
         };
     }
 

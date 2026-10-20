@@ -7,6 +7,8 @@ import { useDashboardApps } from 'dashboard/composables/useDashboardApps';
 import Tabs from 'dashboard/components/ui/Tabs';
 import DashboardAppFrame from 'dashboard/components/widgets/DashboardApp/Frame';
 import ConversationHeader from './ConversationHeader';
+import { DirectOutgoingStrip } from 'dashboard/calls/DirectCallLayer';
+import { useIsPhoneScreen } from 'dashboard/composables/useViewportWidth';
 import EmptyState from './EmptyState';
 import MessagesView from './MessagesView';
 import SenderIdentityProvider from './SenderIdentityProvider';
@@ -39,6 +41,8 @@ export default function ConversationBox({
         })),
     ];
 
+    const isPhone = useIsPhoneScreen();
+
     return (
         <div
             className={`conversation-details-wrap flex flex-col min-w-0 w-full bg-n-surface-canvas relative ${className}`}
@@ -48,6 +52,7 @@ export default function ConversationBox({
                     showBackButton={isOnExpandedLayout && !isInboxView}
                 />
             )}
+            {currentChat && !isPhone ? <DirectOutgoingStrip placement="top" conversationId={currentChat.id} /> : null}
             {showTabs ? (
                 <Tabs items={tabItems} index={activeTabIndex} isCompact className="h-10" onChange={setActiveIndex} />
             ) : null}

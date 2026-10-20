@@ -263,6 +263,19 @@ const tailwindConfig = {
         '50%': { transform: 'translateX(-0.234375rem)' },
         '75%': { transform: 'translateX(0.234375rem)' },
       },
+      'call-ring': {
+        '0%, 40%, 100%': { transform: 'rotate(0)' },
+        '5%, 15%, 25%': { transform: 'rotate(-14deg)' },
+        '10%, 20%, 30%': { transform: 'rotate(14deg)' },
+      },
+      'call-wave': {
+        '0%': { transform: 'scale(1)', opacity: 0.5 },
+        '100%': { transform: 'scale(1.4)', opacity: 0 },
+      },
+      'call-sweep': {
+        '0%': { transform: 'translateX(-100%)' },
+        '100%': { transform: 'translateX(100%)' },
+      },
     },
     animation: {
       ...defaultTheme.animation,
@@ -271,6 +284,9 @@ const tailwindConfig = {
       'loader-pulse': 'loader-pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
       'card-select': 'card-select 0.25s ease-in-out',
       shake: 'shake 0.3s ease-in-out 0s 2',
+      'call-ring': 'call-ring 1.6s ease-in-out infinite',
+      'call-wave': 'call-wave 1.6s ease-out infinite',
+      'call-sweep': 'call-sweep 2.4s ease-in-out infinite',
     },
   },
   plugins: [

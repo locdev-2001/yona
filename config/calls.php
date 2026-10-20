@@ -4,6 +4,9 @@ use App\Services\Calls\Media\LiveKit\LiveKitDriver;
 use App\Services\Groups\Calls\GroupRoomPolicy;
 use App\Services\Groups\Calls\GroupRoomPresence;
 use App\Services\Groups\Calls\GroupRoomTrail;
+use App\Services\Yona\Calls\DirectCallPolicy;
+use App\Services\Yona\Calls\DirectCallPresence;
+use App\Services\Yona\Calls\DirectCallTrail;
 
 // Cuộc gọi thoại/video. Lõi App\Services\Calls chỉ biết contract.
 //   - `provider`/`drivers`: nhà cung cấp phòng media, chọn bằng MEDIA_PROVIDER; webhook của
@@ -23,6 +26,11 @@ return [
             'policy' => GroupRoomPolicy::class,
             'trail' => GroupRoomTrail::class,
             'presence' => GroupRoomPresence::class,
+        ],
+        DirectCallPolicy::KIND => [
+            'policy' => DirectCallPolicy::class,
+            'trail' => DirectCallTrail::class,
+            'presence' => DirectCallPresence::class,
         ],
     ],
 ];

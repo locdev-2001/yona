@@ -2490,7 +2490,41 @@ const messages: Record<string, unknown> = {
     "CALLS": {
         "ACTIVITY": {
             "ROOM_STARTED": ":actor started a voice room",
-            "ROOM_ENDED": "The voice room ended · :duration · :count people joined"
+            "ROOM_ENDED": "The voice room ended · :duration · :count people joined",
+            "DIRECT_ENDED_VOICE": "Voice call · :duration",
+            "DIRECT_ENDED_VIDEO": "Video call · :duration",
+            "DIRECT_MISSED": "Missed call",
+            "DIRECT_NO_ANSWER": "No answer",
+            "DIRECT_DECLINED_BY_PEER": "Call declined",
+            "DIRECT_YOU_DECLINED": "You declined the call",
+            "DIRECT_CANCELLED": "Call cancelled"
+        },
+        "DIRECT": {
+            "CALL": "Call",
+            "OPEN_CHAT": "Message",
+            "CALL_VOICE": "Voice call",
+            "CALL_VIDEO": "Video call",
+            "CALLING": "Calling…",
+            "RINGING": "Ringing…",
+            "INCOMING_VOICE": "Incoming voice call",
+            "INCOMING_VIDEO": "Incoming video call",
+            "ACCEPT": "Answer",
+            "ACCEPT_AUDIO_ONLY": "Audio only",
+            "DECLINE": "Decline",
+            "CANCEL": "Cancel call",
+            "CALL_BACK": "Call back",
+            "EXPAND": "Expand",
+            "MINIMIZE": "Collapse",
+            "END": "End call",
+            "PEER_SPEAKING": "{name} is speaking",
+            "YOU_SPEAKING": "You are speaking",
+            "SPEAKER_OFF": "Mute speaker",
+            "SPEAKER_ON": "Unmute speaker",
+            "MUTE": "Mute",
+            "CAMERA": "Camera",
+            "SPEAKER": "Speaker",
+            "DEVICES": "Devices",
+            "HIDE": "Hide"
         },
         "ROOM": {
             "MICROPHONE_N": "Microphone {n}",
@@ -2540,7 +2574,11 @@ const messages: Record<string, unknown> = {
             "NOT_A_PARTICIPANT": "You are not in this call",
             "MODERATION_FORBIDDEN": "You cannot moderate this call",
             "CALL_ENDED": "This call has ended",
-            "MEDIA_UNAVAILABLE": "Could not reach the call server, please try again in a few minutes"
+            "MEDIA_UNAVAILABLE": "Could not reach the call server, please try again in a few minutes",
+            "NOT_DIRECT": "Calls are only available in one-to-one Yona chats",
+            "NOT_FRIENDS": "You can only call friends",
+            "BUSY": "This person is in another call",
+            "YOU_BUSY": "You are already in another call"
         }
     },
     "CAMPAIGN": {

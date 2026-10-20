@@ -1,6 +1,7 @@
 import { messageTimestamp } from 'shared/helpers/timeHelper';
 
-import CallActivityJoin from 'dashboard/calls/CallActivityJoin';
+import CallActivityAction from 'dashboard/calls/CallActivityAction';
+import type { CallActivity } from 'dashboard/calls/CallActivityAction';
 import BaseBubble from './Base';
 import { useMessageContext } from '../provider';
 
@@ -9,8 +10,8 @@ import { useMessageContext } from '../provider';
 
 export default function ActivityBubble() {
     const { content, createdAt, contentAttributes } = useMessageContext();
-    // Tin mở phòng thoại mang id cuộc gọi: phòng còn mở thì có nút vào ngay dưới tin.
-    const openedCall = (contentAttributes.call ?? null) as { id: number; status: string } | null;
+    // Tin cuộc gọi mang `call`: phòng nhóm còn mở thì có nút vào, cuộc gọi 1-1 xong thì có nút gọi lại.
+    const call = (contentAttributes.call ?? null) as CallActivity | null;
 
     const readableTime = messageTimestamp(createdAt, 'LLL d, h:mm a');
 
@@ -24,12 +25,12 @@ export default function ActivityBubble() {
         </BaseBubble>
     );
 
-    if (openedCall?.status !== 'active') return bubble;
+    if (!call) return bubble;
 
     return (
         <div className="flex flex-col items-center gap-1.5">
             {bubble}
-            <CallActivityJoin callId={openedCall.id} />
+            <CallActivityAction call={call} />
         </div>
     );
 }

@@ -6,6 +6,8 @@ import type { CallDevice, CallDeviceKind, CallParticipantView, RenderCallMedia }
 export interface MediaSessionState {
     participants: CallParticipantView[];
     renderMedia: RenderCallMedia;
+    // Âm lượng 0..1 của một người lúc gọi (đọc mỗi khung hình cho hiệu ứng, không qua state React).
+    readAudioLevel: (identity: string) => number;
 }
 
 export interface MediaSessionHandle {

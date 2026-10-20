@@ -1,8 +1,7 @@
-import { usePage } from '@inertiajs/react';
 import type { GroupSummary } from 'dashboard/conversation/groupsApi';
-import type { SharedPageProps } from '../../types';
 import { useCallSession } from './callSession';
 import JoinRoomButton from './JoinRoomButton';
+import { useCallsEnabled } from './useCallsEnabled';
 import { useOpenRoom } from './voiceRooms';
 
 // Nút phòng thoại ở mũ khung chat nhóm. Ẩn khi máy chủ cuộc gọi chưa cấu hình hoặc người xem
@@ -18,7 +17,7 @@ export default function GroupRoomButton({
     isCompact: boolean;
     className?: string;
 }) {
-    const callsEnabled = Boolean(usePage<SharedPageProps>().props.globalConfig?.callsEnabled);
+    const callsEnabled = useCallsEnabled();
     const call = useCallSession();
     const openRoom = useOpenRoom(group);
 

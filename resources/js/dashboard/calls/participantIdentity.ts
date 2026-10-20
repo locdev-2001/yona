@@ -7,3 +7,5 @@ export function userIdOfIdentity(identity: string): number | null {
     const userId = Number(identity.slice(USER_PREFIX.length));
     return Number.isInteger(userId) && userId > 0 ? userId : null;
 }
+
+export const identityOfUser = (userId: number): string => `${USER_PREFIX}${userId}`;

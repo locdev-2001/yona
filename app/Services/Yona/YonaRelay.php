@@ -118,7 +118,7 @@ class YonaRelay
         return $recipient === null ? null : $this->inboxes->ensureFor($recipient);
     }
 
-    private function counterpartOf(Conversation $conversation): ?User
+    public function counterpartOf(Conversation $conversation): ?User
     {
         return User::query()->find(Yona::userIdFromSourceId($conversation->contactInbox?->source_id));
     }

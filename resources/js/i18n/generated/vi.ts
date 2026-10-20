@@ -2490,7 +2490,41 @@ const messages: Record<string, unknown> = {
     "CALLS": {
         "ACTIVITY": {
             "ROOM_STARTED": ":actor đã mở phòng thoại",
-            "ROOM_ENDED": "Phòng thoại đã kết thúc · :duration · :count người tham gia"
+            "ROOM_ENDED": "Phòng thoại đã kết thúc · :duration · :count người tham gia",
+            "DIRECT_ENDED_VOICE": "Cuộc gọi thoại · :duration",
+            "DIRECT_ENDED_VIDEO": "Cuộc gọi video · :duration",
+            "DIRECT_MISSED": "Cuộc gọi nhỡ",
+            "DIRECT_NO_ANSWER": "Không ai nghe máy",
+            "DIRECT_DECLINED_BY_PEER": "Cuộc gọi bị từ chối",
+            "DIRECT_YOU_DECLINED": "Bạn đã từ chối cuộc gọi",
+            "DIRECT_CANCELLED": "Đã huỷ cuộc gọi"
+        },
+        "DIRECT": {
+            "CALL": "Gọi",
+            "OPEN_CHAT": "Nhắn tin",
+            "CALL_VOICE": "Gọi thoại",
+            "CALL_VIDEO": "Gọi video",
+            "CALLING": "Đang gọi…",
+            "RINGING": "Đang đổ chuông…",
+            "INCOMING_VOICE": "Cuộc gọi thoại đến",
+            "INCOMING_VIDEO": "Cuộc gọi video đến",
+            "ACCEPT": "Nghe",
+            "ACCEPT_AUDIO_ONLY": "Chỉ nghe tiếng",
+            "DECLINE": "Từ chối",
+            "CANCEL": "Huỷ cuộc gọi",
+            "CALL_BACK": "Gọi lại",
+            "EXPAND": "Mở rộng",
+            "MINIMIZE": "Thu gọn",
+            "END": "Kết thúc",
+            "PEER_SPEAKING": "{name} đang nói",
+            "YOU_SPEAKING": "Bạn đang nói",
+            "SPEAKER_OFF": "Tắt loa",
+            "SPEAKER_ON": "Bật loa",
+            "MUTE": "Tắt tiếng",
+            "CAMERA": "Camera",
+            "SPEAKER": "Loa",
+            "DEVICES": "Thiết bị",
+            "HIDE": "Thu gọn"
         },
         "ROOM": {
             "MICROPHONE_N": "Micro {n}",
@@ -2540,7 +2574,11 @@ const messages: Record<string, unknown> = {
             "NOT_A_PARTICIPANT": "Bạn không ở trong cuộc gọi này",
             "MODERATION_FORBIDDEN": "Bạn không có quyền điều hành cuộc gọi này",
             "CALL_ENDED": "Cuộc gọi đã kết thúc",
-            "MEDIA_UNAVAILABLE": "Chưa kết nối được máy chủ cuộc gọi, hãy thử lại sau ít phút"
+            "MEDIA_UNAVAILABLE": "Chưa kết nối được máy chủ cuộc gọi, hãy thử lại sau ít phút",
+            "NOT_DIRECT": "Chỉ gọi được trong hội thoại 1-1 trên Yona",
+            "NOT_FRIENDS": "Chỉ gọi được cho bạn bè",
+            "BUSY": "Người này đang trong một cuộc gọi khác",
+            "YOU_BUSY": "Bạn đang trong một cuộc gọi khác"
         }
     },
     "CAMPAIGN": {
