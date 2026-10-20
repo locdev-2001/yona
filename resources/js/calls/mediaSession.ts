@@ -16,8 +16,9 @@ export interface MediaSessionHandle {
     selectDevice: (kind: CallDeviceKind, deviceId: string) => Promise<void>;
 }
 
-// Vì sao phòng đóng phía mình: tự rời, bị mời ra, vào lại ở nơi khác, phòng bị đóng, mất kết nối.
-export type MediaSessionEnd = 'left' | 'removed' | 'replaced' | 'closed' | 'lost';
+// Vì sao phòng đóng phía mình: tự rời, bị đưa ra, vào lại ở nơi khác, phòng bị đóng, phòng đầy,
+// mất kết nối.
+export type MediaSessionEnd = 'left' | 'removed' | 'replaced' | 'closed' | 'full' | 'lost';
 
 export interface MediaSessionProps {
     serverUrl: string;

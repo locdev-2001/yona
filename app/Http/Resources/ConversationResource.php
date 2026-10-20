@@ -134,7 +134,13 @@ class ConversationResource extends JsonResource
             return;
         }
 
+        $voiceRoomLoadedAt = now()->getTimestampMs();
         $views->loadMissing(['threadMembership.group.avatarMembers', 'threadMembership.group.avatar', 'threadMembership.group.openVoiceRoom']);
+        $views->each(function (Conversation $view) use ($voiceRoomLoadedAt): void {
+            if ($group = $view->threadMembership?->group) {
+                $group->voiceRoomLoadedAt ??= $voiceRoomLoadedAt;
+            }
+        });
         $threads = Conversation::query()
             ->whereIn('id', $views->pluck('thread_conversation_id')->unique())
             ->with([

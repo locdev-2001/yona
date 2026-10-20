@@ -29,8 +29,10 @@ class MediaController extends Controller
             collect($request->headers->all())->map(fn (array $values) => (string) ($values[0] ?? ''))->all(),
         );
 
+        $driver = $this->drivers->named($provider);
+
         try {
-            $event = $this->drivers->named($provider)->webhooks()->parse($delivery);
+            $event = $driver->webhooks()->parse($delivery);
         } catch (InvalidMediaWebhook $exception) {
             Log::warning('Rejected media webhook', ['provider' => $provider, 'reason' => $exception->getMessage()]);
 
@@ -38,7 +40,7 @@ class MediaController extends Controller
         }
 
         if ($event !== null) {
-            $this->recorder->record($event);
+            $this->recorder->record($event, $driver->rooms());
         }
 
         return response()->json(['ok' => true]);

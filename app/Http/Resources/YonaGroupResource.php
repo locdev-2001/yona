@@ -25,7 +25,7 @@ final class YonaGroupResource
             return null;
         }
 
-        $voiceRoomAsOf = now()->getTimestampMs();
+        $voiceRoomAsOf = $group->voiceRoomLoadedAt ?? now()->getTimestampMs();
 
         return [
             'id' => $group->id,

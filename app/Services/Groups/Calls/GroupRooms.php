@@ -11,7 +11,6 @@ use App\Services\Calls\CallJoin;
 use App\Services\Calls\CallMedia;
 use App\Services\Calls\CallService;
 use App\Services\Calls\CallStatus;
-use App\Services\Calls\Media\MediaProviderFailed;
 use App\Services\Calls\Media\MediaSource;
 use App\Services\Calls\ParticipantIdentity;
 use Illuminate\Database\UniqueConstraintViolationException;
@@ -48,20 +47,14 @@ final readonly class GroupRooms
         $this->calls->remove($this->currentRoomOf($group), $actor, ParticipantIdentity::forUser($targetUserId));
     }
 
-    // Người không còn trong nhóm: đưa khỏi phòng đang mở. Nhà cung cấp lỗi thì chỉ ghi log,
-    // việc rời nhóm vẫn xong.
+    // Người không còn trong nhóm: đưa khỏi phòng đang mở. Chạy trong job (EvictFromGroupVoiceRoomJob),
+    // nhà cung cấp lỗi thì ném ra để job thử lại.
     public function evict(YonaGroup $group, int $userId): void
     {
         $call = $this->findOpenRoom($group);
 
-        if ($call === null) {
-            return;
-        }
-
-        try {
+        if ($call !== null) {
             $this->calls->disconnect($call, ParticipantIdentity::forUser($userId));
-        } catch (MediaProviderFailed $exception) {
-            report($exception);
         }
     }
 

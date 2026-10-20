@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { router } from '@inertiajs/react';
 import { parseApiErrorMessage } from 'dashboard/helper/apiClient';
 import { useAlert } from 'dashboard/composables/useAlert';
-import { joinGroupRoom, muteGroupRoomParticipant, removeGroupRoomParticipant } from 'dashboard/calls/api';
+import { fetchGroupRoom, joinGroupRoom, muteGroupRoomParticipant, removeGroupRoomParticipant } from 'dashboard/calls/api';
 import type { CallTicket } from 'dashboard/calls/api';
 import { CallSessionContext } from 'dashboard/calls/callSession';
 import { userIdOfIdentity } from 'dashboard/calls/participantIdentity';
@@ -29,6 +29,7 @@ const END_MESSAGES: Record<MediaSessionEnd, string | null> = {
     removed: 'CALLS.ROOM.REMOVED_YOU',
     replaced: 'CALLS.ROOM.JOINED_ELSEWHERE',
     closed: 'CALLS.ROOM.ROOM_CLOSED',
+    full: 'CALLS.ROOM.ROOM_FULL_NOW',
     lost: 'CALLS.ROOM.CONNECTION_LOST',
 };
 
@@ -72,9 +73,23 @@ export default function CallSessionProvider({ children }: { children: ReactNode 
         [runOnMedia],
     );
 
+    const activeRef = useRef<ActiveCall | null>(null);
+    activeRef.current = active;
+
     const onEnded = useCallback(
         (reason: MediaSessionEnd) => {
+            const endedCall = activeRef.current;
             endCall();
+
+            // Bị đưa ra vì đã rời nhóm (kể cả từ thiết bị khác) khác với bị quản trị mời ra: hỏi
+            // lại máy chủ xem mình còn trong nhóm không.
+            if (reason === 'removed' && endedCall) {
+                fetchGroupRoom(endedCall.request.accountId, endedCall.request.groupId)
+                    .then(() => useAlert(t('CALLS.ROOM.REMOVED_YOU')))
+                    .catch(() => useAlert(t('CALLS.ROOM.LEFT_GROUP')));
+                return;
+            }
+
             const message = END_MESSAGES[reason];
             if (message) useAlert(t(message));
         },

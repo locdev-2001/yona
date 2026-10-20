@@ -31,6 +31,9 @@ const TRACK_SOURCE: Record<CallMediaSource, Track.Source> = {
     screen: Track.Source.ScreenShare,
 };
 
+// Máy chủ LiveKit từ chối vào khi phòng đã chạm trần maxParticipants.
+const ROOM_FULL_ERROR = /max participants/i;
+
 const END_BY_REASON: Partial<Record<DisconnectReason, MediaSessionEnd>> = {
     [DisconnectReason.CLIENT_INITIATED]: 'left',
     [DisconnectReason.PARTICIPANT_REMOVED]: 'removed',
@@ -114,8 +117,9 @@ export default function LiveKitSession({ serverUrl, token, deafened, onState, on
                 emitState();
                 onReady(handle);
             })
-            .catch(() => {
-                if (!isCancelled) onEnded('lost');
+            .catch((error: unknown) => {
+                if (isCancelled) return;
+                onEnded(ROOM_FULL_ERROR.test(error instanceof Error ? error.message : String(error)) ? 'full' : 'lost');
             });
 
         return () => {

@@ -8,6 +8,8 @@ return [
         'ROOM_ENDED' => 'Phòng thoại đã kết thúc · :duration · :count người tham gia',
     ],
     'ROOM' => [
+        'LEFT_GROUP' => 'Bạn không còn ở trong nhóm nên đã rời phòng thoại',
+        'ROOM_FULL_NOW' => 'Phòng thoại đã đủ người',
         'JOINED_ELSEWHERE' => 'Bạn vừa vào phòng này ở thiết bị hoặc tab khác',
         'ROOM_CLOSED' => 'Phòng thoại đã đóng',
         'REMOVED_YOU' => 'Quản trị nhóm đã mời bạn ra khỏi phòng',

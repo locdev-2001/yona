@@ -69,6 +69,10 @@ class YonaGroup extends Model
         return $this->activeMembers()->with('user')->orderBy('created_at')->orderBy('id')->limit(self::AVATAR_MEMBER_COUNT + 1);
     }
 
+    // Mốc (ms) lúc nạp openVoiceRoom theo lô; không phải cột DB. Null thì phòng nạp lười ngay khi
+    // dựng payload (YonaGroupResource đóng mốc trước lúc đó).
+    public ?int $voiceRoomLoadedAt = null;
+
     // Phòng thoại đang mở của nhóm (mỗi nhóm tối đa một), kèm người đang ngồi trong phòng.
     /** @return HasOne<Call, $this> */
     public function openVoiceRoom(): HasOne

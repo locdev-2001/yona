@@ -20,11 +20,18 @@ final readonly class LiveKitRooms implements MediaRooms
         ], ['roomCreate' => true]);
     }
 
+    // Bỏ người đang ở trạng thái đã ngắt (ParticipantInfo.State DISCONNECTED = 3).
+    private const DISCONNECTED_STATES = ['DISCONNECTED', 3];
+
     public function participantIdentities(string $room): array
     {
         $response = $this->roomService->call('ListParticipants', ['room' => $room], ['roomAdmin' => true, 'room' => $room]);
+        $connected = array_filter(
+            $response['participants'] ?? [],
+            fn (array $participant) => ! in_array($participant['state'] ?? null, self::DISCONNECTED_STATES, true),
+        );
 
-        return array_values(array_map(fn (array $participant) => (string) $participant['identity'], $response['participants'] ?? []));
+        return array_values(array_map(fn (array $participant) => (string) $participant['identity'], $connected));
     }
 
     public function close(string $room): void

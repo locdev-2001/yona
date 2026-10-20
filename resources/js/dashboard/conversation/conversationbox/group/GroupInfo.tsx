@@ -90,10 +90,9 @@ export default function GroupInfo({ group }: { group: GroupSummary }) {
     const confirmPending = async () => {
         if (confirm === null || myUserId === null) return;
         const userId = confirm.kind === 'remove' ? confirm.member.user_id : myUserId;
-        // Tự rời nhóm khi đang ngồi trong phòng thoại của nhóm: rời phòng trước, để máy chủ không
-        // phải đưa ra (sẽ hiện như bị quản trị mời ra).
-        if (confirm.kind === 'leave' && call.groupId === group.id) call.actions.leave();
         if (!(await run(() => removeGroupMember(accountId, group.id, userId)))) return;
+        // Đã rời nhóm thành công khi đang ngồi trong phòng thoại của nhóm: rời phòng ngay ở tab này.
+        if (confirm.kind === 'leave' && call.groupId === group.id) call.actions.leave();
         if (confirm.kind === 'leave') setHasLeft(true);
         confirmRef.current?.close();
     };

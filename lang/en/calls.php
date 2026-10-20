@@ -8,6 +8,8 @@ return [
         'ROOM_ENDED' => 'The voice room ended · :duration · :count people joined',
     ],
     'ROOM' => [
+        'LEFT_GROUP' => 'You are no longer in this group, so you left its voice room',
+        'ROOM_FULL_NOW' => 'The voice room is full',
         'JOINED_ELSEWHERE' => 'You joined this room from another device or tab',
         'ROOM_CLOSED' => 'The voice room was closed',
         'REMOVED_YOU' => 'A group admin removed you from the room',

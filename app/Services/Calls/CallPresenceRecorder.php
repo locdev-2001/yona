@@ -23,16 +23,19 @@ final readonly class CallPresenceRecorder
     public function __construct(
         private CallKinds $kinds,
         private ScreenShares $screenShares,
-        private MediaRooms $rooms,
     ) {}
 
-    public function record(RoomEvent $event): void
+    // `$rooms` là vai phòng của chính nhà cung cấp đã gửi sự kiện.
+    public function record(RoomEvent $event, MediaRooms $rooms): void
     {
         if (! Str::isUuid($event->room)) {
             return;
         }
 
-        DB::transaction(function () use ($event): void {
+        // Hỏi nhà cung cấp trước khi khoá dòng `calls`, để không giữ khoá trong lúc chờ mạng.
+        $leaverStillConnected = $event->type === RoomEventType::ParticipantLeft && $this->leaverStillConnected($event, $rooms);
+
+        DB::transaction(function () use ($event, $leaverStillConnected): void {
             $call = Call::query()->where('uuid', $event->room)->lockForUpdate()->first();
 
             if ($call === null) {
@@ -45,7 +48,7 @@ final readonly class CallPresenceRecorder
                 RoomEventType::RoomStarted => null,
                 RoomEventType::RoomFinished => $this->markFinished($call, $event->occurredAt),
                 RoomEventType::ParticipantJoined => $this->recordJoin($call, $event),
-                RoomEventType::ParticipantLeft => $this->recordLeave($call, $event),
+                RoomEventType::ParticipantLeft => $leaverStillConnected ? null : $this->recordLeave($call, $event),
                 RoomEventType::TrackPublished, RoomEventType::TrackUnpublished => $this->recordScreenShare($call, $event),
             };
         });
@@ -100,7 +103,7 @@ final readonly class CallPresenceRecorder
     {
         $userId = $this->storableUserId($event);
 
-        if ($userId === null || $this->stillConnected($call, (string) $event->identity)) {
+        if ($userId === null) {
             return;
         }
 
@@ -128,11 +131,19 @@ final readonly class CallPresenceRecorder
     }
 
     // Cùng một người vào lại từ tab/thiết bị khác: nhà cung cấp đá phiên cũ và báo "rời" cho phiên
-    // cũ trong khi phiên mới vẫn đang kết nối với cùng định danh. Không hỏi được thì coi như đã rời.
-    private function stillConnected(Call $call, string $identity): bool
+    // cũ trong khi phiên mới vẫn đang kết nối với cùng định danh. Chỉ hỏi khi sự kiện còn đổi được
+    // gì (phòng chưa đóng, người đó còn dòng mở). Không hỏi được thì coi như đã rời.
+    private function leaverStillConnected(RoomEvent $event, MediaRooms $rooms): bool
     {
+        $userId = $this->storableUserId($event);
+        $call = $userId === null ? null : Call::query()->where('uuid', $event->room)->first();
+
+        if ($call === null || $call->isEnded() || ! $call->presentParticipants()->where('user_id', $userId)->exists()) {
+            return false;
+        }
+
         try {
-            return in_array($identity, $this->rooms->participantIdentities($call->uuid), true);
+            return in_array((string) $event->identity, $rooms->participantIdentities($call->uuid), true);
         } catch (MediaProviderFailed) {
             return false;
         }
