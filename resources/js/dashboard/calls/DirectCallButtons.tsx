@@ -1,6 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Button from 'dashboard/components-next/button/Button';
-import DropdownMenu from 'dashboard/components-next/dropdown-menu/DropdownMenu';
 import type { Conversation } from 'dashboard/conversation/types';
 import { t } from '../../i18n';
 import { fetchDirectCallEligibility } from './api';
@@ -34,63 +33,28 @@ function useCanCall(accountId: number, conversationId: number, isEnabled: boolea
 }
 
 // Nút gọi ở mũ khung chat 1-1 trên Yona, chỉ hiện khi hai người là bạn bè (máy chủ trả lời).
-// Máy tính: hai nút thoại/video. Điện thoại: một nút, bấm mở menu chọn, để tên người không bị ép
-// trên mũ hẹp.
+// Mọi bề rộng đều có đủ hai nút thoại và video, gọi bằng một chạm như Zalo/Messenger.
 export default function DirectCallButtons({
     accountId,
     conversation,
-    isCompact,
     className = '',
 }: {
     accountId: number;
     conversation: Conversation;
-    isCompact: boolean;
     className?: string;
 }) {
-    const [isMenuOpen, setMenuOpen] = useState(false);
-    const rootRef = useRef<HTMLDivElement>(null);
     const session = useCallSession();
     const canCall = useCanCall(accountId, conversation.id, useCallsEnabled());
     const onCall = (media: CallMediaKind) => {
         if (!session.isJoining) session.startDirectCall({ accountId, conversation, media });
     };
 
-    useEffect(() => {
-        if (!isMenuOpen) return undefined;
-        const closeOnOutsideClick = (event: MouseEvent) => {
-            if (!rootRef.current?.contains(event.target as Node)) setMenuOpen(false);
-        };
-        document.addEventListener('mousedown', closeOnOutsideClick);
-        return () => document.removeEventListener('mousedown', closeOnOutsideClick);
-    }, [isMenuOpen]);
-
     if (!canCall) return null;
 
-    if (!isCompact) {
-        return (
-            <>
-                <Button sm slate ghost icon="i-lucide-phone" title={t('CALLS.DIRECT.CALL_VOICE')} className={className} onClick={() => onCall('audio')} />
-                <Button sm slate ghost icon="i-lucide-video" title={t('CALLS.DIRECT.CALL_VIDEO')} className={className} onClick={() => onCall('video')} />
-            </>
-        );
-    }
-
     return (
-        <div ref={rootRef} className="relative">
-            <Button sm slate ghost icon="i-lucide-phone" title={t('CALLS.DIRECT.CALL')} className={className} onClick={() => setMenuOpen(open => !open)} />
-            {isMenuOpen ? (
-                <DropdownMenu
-                    menuItems={[
-                        { label: t('CALLS.DIRECT.CALL_VOICE'), value: 'audio', action: 'audio', icon: 'i-lucide-phone' },
-                        { label: t('CALLS.DIRECT.CALL_VIDEO'), value: 'video', action: 'video', icon: 'i-lucide-video' },
-                    ]}
-                    className="top-full mt-1 end-0 w-44"
-                    onAction={item => {
-                        setMenuOpen(false);
-                        onCall(item.action as CallMediaKind);
-                    }}
-                />
-            ) : null}
-        </div>
+        <>
+            <Button sm slate ghost icon="i-lucide-phone" title={t('CALLS.DIRECT.CALL_VOICE')} className={className} onClick={() => onCall('audio')} />
+            <Button sm slate ghost icon="i-lucide-video" title={t('CALLS.DIRECT.CALL_VIDEO')} className={className} onClick={() => onCall('video')} />
+        </>
     );
 }

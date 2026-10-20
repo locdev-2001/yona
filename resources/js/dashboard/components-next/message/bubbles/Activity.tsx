@@ -1,8 +1,9 @@
 import { messageTimestamp } from 'shared/helpers/timeHelper';
 
 import CallActivityAction from 'dashboard/calls/CallActivityAction';
-import type { CallActivity } from 'dashboard/calls/CallActivityAction';
+import { groupRoomStartText, isGroupRoomStart, readCallLog } from 'dashboard/calls/callLog';
 import BaseBubble from './Base';
+import CallMessageBubble from './CallMessage';
 import { useMessageContext } from '../provider';
 
 // Port từ dashboard/components-next/message/bubbles/Activity.vue —
@@ -10,9 +11,13 @@ import { useMessageContext } from '../provider';
 
 export default function ActivityBubble() {
     const { content, createdAt, contentAttributes } = useMessageContext();
-    // Tin cuộc gọi mang `call`: phòng nhóm còn mở thì có nút vào, cuộc gọi 1-1 xong thì có nút gọi lại.
-    const call = (contentAttributes.call ?? null) as CallActivity | null;
+    // Tin cuộc gọi lưu dữ liệu có cấu trúc, lời dịch theo người đọc: phòng nhóm vừa mở là một dòng
+    // (kèm nút Tham gia khi phòng còn mở), cuộc gọi đã xong là thẻ cuộc gọi.
+    const call = readCallLog(contentAttributes);
 
+    if (call && !isGroupRoomStart(call)) return <CallMessageBubble />;
+
+    const text = call ? groupRoomStartText(call) : content;
     const readableTime = messageTimestamp(createdAt, 'LLL d, h:mm a');
 
     const bubble = (
@@ -21,7 +26,7 @@ export default function ActivityBubble() {
             title={readableTime}
             dataBubbleName="activity"
         >
-            <span title={content ?? ''}>{content}</span>
+            <span title={text ?? ''}>{text}</span>
         </BaseBubble>
     );
 

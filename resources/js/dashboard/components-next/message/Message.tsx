@@ -38,7 +38,7 @@ import VideoBubble from './bubbles/Video';
 import FriendRequestBubble from './bubbles/FriendRequest';
 import ZaloBankCardBubble from './bubbles/ZaloBankCard';
 import ZaloBusinessCardBubble from './bubbles/ZaloBusinessCard';
-import ZaloCallBubble from './bubbles/ZaloCall';
+import CallMessageBubble from './bubbles/CallMessage';
 import ZaloReminderBubble from './bubbles/ZaloReminder';
 import PendingDocumentBubble from './bubbles/PendingDocument';
 import { BUBBLE_NAMES, resolveBubbleName } from './helpers/attachments';
@@ -113,7 +113,7 @@ const CHANNEL_CARD_BUBBLES = {
     business_card: ZaloBusinessCardBubble,
     bank_card: ZaloBankCardBubble,
     reminder: ZaloReminderBubble,
-    call: ZaloCallBubble,
+    call: CallMessageBubble,
     friend_request: FriendRequestBubble,
 } as const;
 
@@ -300,7 +300,7 @@ export default function Message({
                     </div>
                 ) : (
                     <div
-                        className={`${GRID_CLASS_MAP[orientation] ?? ''} gap-x-2 ${
+                        className={`${GRID_CLASS_MAP[orientation] ?? ''} gap-x-2 min-w-0 max-w-full ${
                             isEmailVariant ? 'w-full' : ''
                         }`}
                         style={{ gridTemplateAreas: GRID_TEMPLATE_MAP[orientation] } as CSSProperties}

@@ -141,12 +141,17 @@ export default function ConversationHeader({
                 <div className="flex flex-row items-center justify-end flex-shrink-0 gap-1 header-actions-wrap max-md:[&_[data-testid=sidepanel-switch]_button]:!size-11">
                     {group ? <GroupRoomButton accountId={accountId} group={group} isCompact className="max-md:!h-11" /> : null}
                     {!group && inbox?.channel_type === 'Channel::Yona' ? (
-                        <DirectCallButtons accountId={accountId} conversation={selectedConversation} isCompact={isPhone} className="max-md:!size-11" />
+                        <DirectCallButtons accountId={accountId} conversation={selectedConversation} className="max-md:!size-11" />
                     ) : null}
-                    {searchButton}
+                    {isPhone ? null : searchButton}
                     <SidepanelSwitch />
                     {isPhone ? null : <AssigneeAction isCompact />}
-                    <MoreActions isCompact showResolveAction={!isPhone} triggerClassName="max-md:!size-11" />
+                    <MoreActions
+                        isCompact
+                        showResolveAction={!isPhone}
+                        triggerClassName="max-md:!size-11"
+                        onSearch={isPhone ? () => setSearchOpen(true) : undefined}
+                    />
                 </div>
             </div>
         );
@@ -213,7 +218,7 @@ export default function ConversationHeader({
             ) : (
                 <div className="flex flex-row items-center justify-start xl:justify-end flex-shrink-0 gap-2 w-full xl:w-auto header-actions-wrap">
                     {group ? <GroupRoomButton accountId={accountId} group={group} isCompact={isActionsCompact} /> : null}
-                    {!group && inbox?.channel_type === 'Channel::Yona' ? <DirectCallButtons accountId={accountId} conversation={selectedConversation} isCompact={false} /> : null}
+                    {!group && inbox?.channel_type === 'Channel::Yona' ? <DirectCallButtons accountId={accountId} conversation={selectedConversation} /> : null}
                     {searchButton}
                     <AssigneeAction isCompact={isActionsCompact} />
                     <MoreActions isCompact={isActionsCompact} />

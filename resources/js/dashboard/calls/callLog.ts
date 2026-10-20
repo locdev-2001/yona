@@ -1,0 +1,198 @@
+import { t } from '../../i18n';
+
+// Một tin cuộc gọi đọc từ `content_attributes.call`, chung mọi kênh: gọi 1-1 giữa người dùng Yona
+// (tin đi/đến, có hướng và kết cục), cuộc gọi Zalo (có hướng, có thể không có `kind`) và phòng
+// thoại nhóm (tin hoạt động, lưu một bản cho mọi thành viên nên lời dịch lúc hiển thị theo người
+// đọc). Thẻ trong lịch sử chat và dòng xem trước ở danh sách cùng đọc ở đây.
+
+type CallOutcome = 'completed' | 'missed' | 'busy' | 'canceled' | 'declined';
+
+export interface CallAttendee {
+    user_id: number;
+    name: string;
+    avatar_url: string | null;
+}
+
+export interface CallLogData {
+    id?: number;
+    kind?: string;
+    status?: string;
+    media?: 'voice' | 'video' | 'audio' | null;
+    direction?: 'inbound' | 'outbound' | null;
+    outcome?: CallOutcome | null;
+    duration_seconds?: number | null;
+    participants?: number;
+    attendees?: CallAttendee[];
+    actor?: { user_id: number; name: string } | null;
+}
+
+export type CallTone = 'success' | 'danger' | 'info' | 'neutral' | 'group';
+
+export interface CallLogView {
+    tone: CallTone;
+    icon: string;
+    title: string;
+    subtitle: string;
+    // Dòng thứ ba của thẻ nhóm (thời lượng); thẻ 1-1 gộp thời lượng vào dòng phụ.
+    detail: string | null;
+    pill: string;
+    media: 'audio' | 'video';
+    isGroup: boolean;
+    canCallBack: boolean;
+    attendees: CallAttendee[];
+    moreAttendees: number;
+    preview: { text: string; icon: string; isAlert: boolean };
+}
+
+export const GROUP_ROOM_KIND = 'group_room';
+const DIRECT_KIND = 'direct';
+
+const STATUS_OUTCOMES: Record<string, CallOutcome> = {
+    ended: 'completed',
+    missed: 'missed',
+    declined: 'declined',
+    cancelled: 'canceled',
+};
+
+const SECONDS_PER_MINUTE = 60;
+const SECONDS_PER_HOUR = 3600;
+
+export function readCallLog(contentAttributes: Record<string, unknown> | null | undefined): CallLogData | null {
+    const call = contentAttributes?.call;
+
+    return call && typeof call === 'object' ? (call as CallLogData) : null;
+}
+
+// Hai đơn vị lớn nhất như phía máy chủ: "1 giờ 5 phút", "12 phút 46 giây", "8 giây".
+export function formatCallDuration(totalSeconds: number): string {
+    const hours = Math.floor(totalSeconds / SECONDS_PER_HOUR);
+    const minutes = Math.floor((totalSeconds % SECONDS_PER_HOUR) / SECONDS_PER_MINUTE);
+    const seconds = totalSeconds % SECONDS_PER_MINUTE;
+    const parts = [
+        hours > 0 ? t('CALLS.LOG.HOURS', { n: hours }) : null,
+        minutes > 0 ? t('CALLS.LOG.MINUTES', { n: minutes }) : null,
+        seconds > 0 || totalSeconds === 0 ? t('CALLS.LOG.SECONDS', { n: seconds }) : null,
+    ].filter((part): part is string => part !== null);
+
+    return parts.slice(0, 2).join(' ');
+}
+
+export function isGroupRoomStart(call: CallLogData): boolean {
+    return call.kind === GROUP_ROOM_KIND && call.status !== 'ended';
+}
+
+// Tin "đã mở phòng thoại": tin cũ chưa lưu người mở thì nói chung chung, không hiện lại câu
+// tiếng Anh đã ghi sẵn.
+export function groupRoomStartText(call: CallLogData): string {
+    return call.actor?.name ? t('CALLS.LOG.ROOM_STARTED', { actor: call.actor.name }) : t('CALLS.LOG.ROOM_STARTED_SOMEONE');
+}
+
+function outcomeOf(call: CallLogData): CallOutcome {
+    if (call.outcome) return call.outcome;
+    const hasTalked = (call.duration_seconds ?? 0) > 0;
+    const fromStatus = call.status ? STATUS_OUTCOMES[call.status] : undefined;
+    if (fromStatus === 'completed') return hasTalked ? 'completed' : 'missed';
+
+    return fromStatus ?? (hasTalked ? 'completed' : 'missed');
+}
+
+function groupRoomView(call: CallLogData, groupName: string): CallLogView {
+    const total = call.participants ?? call.attendees?.length ?? 0;
+    const attendees = call.attendees ?? [];
+    const duration = formatCallDuration(call.duration_seconds ?? 0);
+
+    return {
+        tone: 'group',
+        icon: 'i-lucide-users',
+        title: t('CALLS.LOG.GROUP_ROOM'),
+        subtitle: t('CALLS.LOG.ROOM_PEOPLE', { group: groupName, count: total }),
+        detail: t('CALLS.LOG.ENDED_FOR', { duration }),
+        pill: t('CALLS.LOG.STATE_ENDED'),
+        media: 'audio',
+        isGroup: true,
+        canCallBack: true,
+        attendees,
+        moreAttendees: Math.max(0, total - attendees.length),
+        preview: { text: `${t('CALLS.LOG.GROUP_ROOM')} · ${duration}`, icon: 'i-lucide-users', isAlert: false },
+    };
+}
+
+export function describeCall(call: CallLogData, groupName = ''): CallLogView {
+    if (call.kind === GROUP_ROOM_KIND) return groupRoomView(call, groupName);
+
+    const isVideo = call.media === 'video';
+    const outcome = outcomeOf(call);
+    const isInbound = call.direction !== 'outbound';
+    const hasDirection = Boolean(call.direction);
+    const mediaLabel = t(isVideo ? 'CALLS.LOG.VIDEO' : 'CALLS.LOG.VOICE');
+    const base = {
+        detail: null,
+        media: isVideo ? ('video' as const) : ('audio' as const),
+        isGroup: false,
+        attendees: [],
+        moreAttendees: 0,
+    };
+    const canCallBack = call.kind === DIRECT_KIND;
+
+    if (outcome === 'completed') {
+        const duration = formatCallDuration(call.duration_seconds ?? 0);
+        const icon = isVideo ? 'i-lucide-video' : !hasDirection ? 'i-lucide-phone' : isInbound ? 'i-lucide-phone-incoming' : 'i-lucide-phone-outgoing';
+        const title = hasDirection ? t(isInbound ? 'CALLS.LOG.INCOMING' : 'CALLS.LOG.OUTGOING') : mediaLabel;
+
+        return {
+            ...base,
+            tone: hasDirection ? 'success' : 'info',
+            icon,
+            title,
+            subtitle: t(hasDirection ? 'CALLS.LOG.CONNECTED_FOR' : 'CALLS.LOG.ENDED_FOR', { duration }),
+            pill: t(hasDirection ? 'CALLS.LOG.STATE_CONNECTED' : 'CALLS.LOG.STATE_ENDED'),
+            canCallBack: false,
+            preview: { text: `${title} · ${duration}`, icon, isAlert: false },
+        };
+    }
+
+    // Với người xem, cuộc gọi đến không ai bắt máy (nhỡ, người gọi huỷ, đang bận) là cuộc gọi nhỡ.
+    const isMissedByViewer = isInbound && outcome !== 'declined';
+    if (isMissedByViewer || outcome === 'missed') {
+        const icon = isVideo ? 'i-lucide-video-off' : 'i-lucide-phone-missed';
+        const subtitle = t(isMissedByViewer ? 'CALLS.LOG.YOU_MISSED' : 'CALLS.LOG.NO_ANSWER');
+
+        return {
+            ...base,
+            tone: 'danger',
+            icon,
+            title: t('CALLS.LOG.MISSED'),
+            subtitle,
+            pill: t('CALLS.LOG.STATE_MISSED'),
+            canCallBack,
+            preview: isMissedByViewer
+                ? { text: t('CALLS.LOG.PREVIEW_MISSED'), icon, isAlert: true }
+                : { text: `${t('CALLS.LOG.MISSED')} · ${subtitle}`, icon, isAlert: false },
+        };
+    }
+
+    // Còn lại là cuộc không thành: người nhận từ chối hoặc bận (thất bại, màu đỏ), mình từ chối
+    // hoặc mình huỷ (chủ ý, trung tính).
+    const isFailure = !isInbound && (outcome === 'declined' || outcome === 'busy');
+    const subtitleKey = isInbound
+        ? 'CALLS.LOG.YOU_DECLINED'
+        : outcome === 'declined'
+          ? 'CALLS.LOG.DECLINED_BY_PEER'
+          : outcome === 'busy'
+            ? 'CALLS.LOG.PEER_BUSY'
+            : 'CALLS.LOG.YOU_CANCELLED';
+    const pillKey = outcome === 'declined' ? 'CALLS.LOG.STATE_DECLINED' : outcome === 'busy' ? 'CALLS.LOG.STATE_BUSY' : 'CALLS.LOG.STATE_CANCELLED';
+    const icon = isVideo ? 'i-lucide-video-off' : 'i-lucide-phone-off';
+    const subtitle = t(subtitleKey);
+
+    return {
+        ...base,
+        tone: isFailure ? 'danger' : 'neutral',
+        icon,
+        title: mediaLabel,
+        subtitle,
+        pill: t(pillKey),
+        canCallBack,
+        preview: { text: `${mediaLabel} · ${subtitle}`, icon, isAlert: false },
+    };
+}

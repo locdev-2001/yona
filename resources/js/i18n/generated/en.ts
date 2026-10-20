@@ -2490,7 +2490,7 @@ const messages: Record<string, unknown> = {
     "CALLS": {
         "ACTIVITY": {
             "ROOM_STARTED": ":actor started a voice room",
-            "ROOM_ENDED": "The voice room ended · :duration · :count people joined",
+            "ROOM_ENDED": "The voice room ended · :duration · :count person joined|The voice room ended · :duration · :count people joined",
             "DIRECT_ENDED_VOICE": "Voice call · :duration",
             "DIRECT_ENDED_VIDEO": "Video call · :duration",
             "DIRECT_MISSED": "Missed call",
@@ -2499,8 +2499,37 @@ const messages: Record<string, unknown> = {
             "DIRECT_YOU_DECLINED": "You declined the call",
             "DIRECT_CANCELLED": "Call cancelled"
         },
+        "LOG": {
+            "INCOMING": "Incoming call",
+            "OUTGOING": "Outgoing call",
+            "VOICE": "Voice call",
+            "VIDEO": "Video call",
+            "MISSED": "Missed call",
+            "GROUP_ROOM": "Voice room",
+            "STATE_CONNECTED": "Connected",
+            "STATE_MISSED": "Missed call",
+            "STATE_ENDED": "Ended",
+            "STATE_DECLINED": "Declined",
+            "STATE_CANCELLED": "Cancelled",
+            "STATE_BUSY": "Busy",
+            "CONNECTED_FOR": "Connected · {duration}",
+            "ENDED_FOR": "Ended · {duration}",
+            "NO_ANSWER": "No answer",
+            "YOU_MISSED": "You missed this call",
+            "DECLINED_BY_PEER": "The other person declined",
+            "YOU_DECLINED": "You declined the call",
+            "YOU_CANCELLED": "You cancelled the call",
+            "PEER_BUSY": "The other person was busy",
+            "ROOM_STARTED": "{actor} started a voice room",
+            "ROOM_STARTED_SOMEONE": "A voice room started",
+            "ROOM_PEOPLE": "{group} · {count} person joined|{group} · {count} people joined",
+            "MORE": "+{count}",
+            "PREVIEW_MISSED": "Missed call",
+            "HOURS": "{n} hour|{n} hours",
+            "MINUTES": "{n} minute|{n} minutes",
+            "SECONDS": "{n} second|{n} seconds"
+        },
         "DIRECT": {
-            "CALL": "Call",
             "OPEN_CHAT": "Message",
             "CALL_VOICE": "Voice call",
             "CALL_VIDEO": "Video call",
@@ -4161,13 +4190,6 @@ const messages: Record<string, unknown> = {
             },
             "REMINDER": {
                 "FALLBACK_TITLE": "Reminder"
-            },
-            "CALL": {
-                "VOICE": "Voice call",
-                "VIDEO": "Video call",
-                "MISSED": "missed",
-                "BUSY": "busy",
-                "CANCELED": "canceled"
             }
         },
         "LINK_PREVIEW": {

@@ -5,6 +5,7 @@ import HighlightedText from 'dashboard/components-next/highlighted-text/Highligh
 import { MESSAGE_TYPES } from '../../../conversation/constants';
 import type { ConversationMessage } from '../../../conversation/types';
 import { ICONS } from 'dashboard/icons';
+import CallPreview from 'dashboard/calls/CallPreview';
 
 // Trích ATTACHMENT_ICONS của shared/constants/messages.js.
 const ATTACHMENT_ICONS: Record<string, string> = {
@@ -49,12 +50,14 @@ export default function MessagePreview({
                     <span className={`${ICONS.privateNote} size-4 ${typeIconClass}`} aria-hidden="true" />
                 ) : messageByAgent && !senderLabel ? (
                     <span className={`${ICONS.reply} size-4 ${typeIconClass}`} aria-hidden="true" />
-                ) : isMessageAnActivity ? (
+                ) : isMessageAnActivity && body.kind !== 'call' ? (
                     <span className={`${ICONS.info} size-4 ${typeIconClass}`} aria-hidden="true" />
                 ) : null
             ) : null}
             {senderLabel ? <span data-testid="preview-sender">{`${senderLabel}: `}</span> : null}
-            {body.kind === 'sticker' ? (
+            {body.kind === 'call' ? (
+                <CallPreview call={body.call} iconClassName="text-n-slate-11" />
+            ) : body.kind === 'sticker' ? (
                 <span>
                     <Icon icon={ICONS.sticker} className="-mt-0.5 align-middle inline-block text-n-slate-11 size-4" />{' '}
                     {t('CHAT_LIST.ATTACHMENTS.sticker.CONTENT')}

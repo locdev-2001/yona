@@ -89,13 +89,6 @@ return [
         'REMINDER' => [
             'FALLBACK_TITLE' => 'Reminder',
         ],
-        'CALL' => [
-            'VOICE' => 'Voice call',
-            'VIDEO' => 'Video call',
-            'MISSED' => 'missed',
-            'BUSY' => 'busy',
-            'CANCELED' => 'canceled',
-        ],
     ],
     // Mở rộng của Yona: xem trước liên kết (`inbound_link_preview`,
     // docs/channel-capabilities.md §2.1) — trung tính theo kênh.

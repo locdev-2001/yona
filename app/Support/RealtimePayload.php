@@ -18,6 +18,9 @@ final class RealtimePayload
 {
     private const CONTENT_PREVIEW_LIMIT = 200;
 
+    // Dòng xem trước tin cuộc gọi chỉ cần loại, hướng, kết cục và thời lượng; danh sách người dự bỏ đi.
+    private const CALL_PREVIEW_KEYS = ['kind', 'status', 'media', 'direction', 'outcome', 'duration_seconds'];
+
     // conversation.* qua Reverb — dùng lại dữ liệu ĐẦY ĐỦ đã có của
     // ConversationResource::pushEventData() (không truy vấn thêm), chỉ rút gọn
     // messages[0]/last_non_activity_message xuống bản xem trước.
@@ -175,6 +178,10 @@ final class RealtimePayload
 
         if (isset($attributes['email']['subject'])) {
             $compact['email'] = ['subject' => $attributes['email']['subject']];
+        }
+
+        if (isset($attributes['call']) && is_array($attributes['call'])) {
+            $compact['call'] = array_intersect_key($attributes['call'], array_flip(self::CALL_PREVIEW_KEYS));
         }
 
         return $compact;

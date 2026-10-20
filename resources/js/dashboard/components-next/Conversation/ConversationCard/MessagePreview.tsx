@@ -4,6 +4,7 @@ import { messagePreviewBody } from 'dashboard/components-next/message/helpers/me
 import { MESSAGE_TYPES } from 'dashboard/conversation/constants';
 import type { ConversationMessage } from 'dashboard/conversation/types';
 import { ICONS } from 'dashboard/icons';
+import CallPreview from 'dashboard/calls/CallPreview';
 
 // Port từ components-next/Conversation/ConversationCard/MessagePreview.vue.
 const ATTACHMENT_ICONS: Record<string, string> = {
@@ -41,7 +42,7 @@ export default function MessagePreview({
     const typeIcon = (extraClass: string) => {
         if (isMessagePrivate) return <Icon icon="i-lucide-lock-keyhole" className={extraClass} />;
         if (messageByAgent) return <Icon icon="i-lucide-undo-2" className={extraClass} />;
-        if (isMessageAnActivity) return <Icon icon="i-lucide-info" className={extraClass} />;
+        if (isMessageAnActivity && body.kind !== 'call') return <Icon icon="i-lucide-info" className={extraClass} />;
 
         return null;
     };
@@ -62,6 +63,8 @@ export default function MessagePreview({
                         <Icon icon="i-lucide-user-plus" className="size-3.5" />
                         {t('CHAT_LIST.FRIEND_REQUEST')}
                     </span>
+                ) : body.kind === 'call' ? (
+                    <CallPreview call={body.call} />
                 ) : body.kind === 'sticker' ? (
                     <span className="inline-grid grid-flow-col auto-cols-max items-center gap-1">
                         <Icon icon={ICONS.sticker} className="size-3.5" />

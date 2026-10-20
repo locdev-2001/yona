@@ -22,9 +22,11 @@ interface MoreActionsProps {
     isCompact?: boolean;
     showResolveAction?: boolean;
     triggerClassName?: string;
+    // Điện thoại: tìm trong hội thoại nằm trong menu này để mũ khung chat còn chỗ cho tên người.
+    onSearch?: () => void;
 }
 
-export default function MoreActions({ isCompact = false, showResolveAction = true, triggerClassName = '' }: MoreActionsProps = {}) {
+export default function MoreActions({ isCompact = false, showResolveAction = true, triggerClassName = '', onSearch }: MoreActionsProps = {}) {
     const { selectedConversation, accountId, muteConversation, unmuteConversation } = useConversation();
     const [showEmailActionsModal, setShowEmailActionsModal] = useState(false);
     const [showActionsDropdown, setShowActionsDropdown] = useState(false);
@@ -65,6 +67,9 @@ export default function MoreActions({ isCompact = false, showResolveAction = tru
     if (!selectedConversation) return null;
 
     const actionMenuItems = [
+        ...(onSearch
+            ? [{ icon: 'i-lucide-search', label: t('CONVERSATION.SEARCH_IN_CONVERSATION.OPEN'), action: 'search', value: 'search' }]
+            : []),
         !selectedConversation.muted
             ? { icon: 'i-lucide-volume-off', label: t('CONTACT_PANEL.MUTE_CONTACT'), action: 'mute', value: 'mute' }
             : { icon: 'i-lucide-volume-1', label: t('CONTACT_PANEL.UNMUTE_CONTACT'), action: 'unmute', value: 'unmute' },
@@ -78,7 +83,9 @@ export default function MoreActions({ isCompact = false, showResolveAction = tru
 
     const handleActionClick = ({ action }: { action: string }) => {
         setShowActionsDropdown(false);
-        if (action === 'mute') {
+        if (action === 'search') {
+            onSearch?.();
+        } else if (action === 'mute') {
             mute();
         } else if (action === 'unmute') {
             unmute();
