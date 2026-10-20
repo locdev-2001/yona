@@ -39,6 +39,7 @@ class BroadcastGroupVoiceRoomJob extends ApplicationJob implements ShouldBeUniqu
         }
 
         $voiceRoom = $summaries->of($group);
+        $asOf = now()->getTimestampMs();
 
         $group->activeMembers()->with(['user:id,pubsub_token', 'conversation:id,account_id,display_id'])->get()
             ->each(fn (YonaGroupMember $member) => broadcast(new RealtimeBroadcast([$member->user->pubsub_token], self::EVENT, [
@@ -46,6 +47,7 @@ class BroadcastGroupVoiceRoomJob extends ApplicationJob implements ShouldBeUniqu
                 'conversation_id' => $member->conversation->display_id,
                 'group_id' => $group->id,
                 'voice_room' => $voiceRoom,
+                'voice_room_as_of' => $asOf,
             ])));
     }
 }

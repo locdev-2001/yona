@@ -122,7 +122,7 @@ export default function ConversationCard({
 }: ConversationCardProps) {
     // Avatar hình khối chỉ chuyển động khi đang trỏ vào thẻ, danh sách dài vẫn là ảnh tĩnh.
     const [isPointerInside, setPointerInside] = useState(false);
-    const openRoom = useOpenRoom(chat.group?.id, chat.group?.voice_room);
+    const openRoom = useOpenRoom(chat.group);
     const unreadCount = chat.unread_count;
     const contactAvailabilityStatus = useContactAvailabilityStatus(
         currentContact.id,

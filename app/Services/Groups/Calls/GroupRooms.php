@@ -11,6 +11,7 @@ use App\Services\Calls\CallJoin;
 use App\Services\Calls\CallMedia;
 use App\Services\Calls\CallService;
 use App\Services\Calls\CallStatus;
+use App\Services\Calls\Media\MediaProviderFailed;
 use App\Services\Calls\Media\MediaSource;
 use App\Services\Calls\ParticipantIdentity;
 use Illuminate\Database\UniqueConstraintViolationException;
@@ -25,9 +26,9 @@ final readonly class GroupRooms
     public function join(YonaGroup $group, User $user, CallMedia $media): CallJoin
     {
         $attendee = CallAttendee::user($user);
-        $this->calls->admit($this->draftRoomOf($group), $attendee);
+        $admission = $this->calls->admit($this->draftRoomOf($group), $attendee);
 
-        return $this->calls->join($this->openRoomOf($group, $media), $attendee);
+        return $this->calls->join($this->openRoomOf($group, $media), $attendee, $admission);
     }
 
     // Dòng chưa lưu chỉ để hỏi chính sách trước khi tạo phòng cho người không có quyền.
@@ -45,6 +46,23 @@ final readonly class GroupRooms
     public function remove(YonaGroup $group, User $actor, int $targetUserId): void
     {
         $this->calls->remove($this->currentRoomOf($group), $actor, ParticipantIdentity::forUser($targetUserId));
+    }
+
+    // Người không còn trong nhóm: đưa khỏi phòng đang mở. Nhà cung cấp lỗi thì chỉ ghi log,
+    // việc rời nhóm vẫn xong.
+    public function evict(YonaGroup $group, int $userId): void
+    {
+        $call = $this->findOpenRoom($group);
+
+        if ($call === null) {
+            return;
+        }
+
+        try {
+            $this->calls->disconnect($call, ParticipantIdentity::forUser($userId));
+        } catch (MediaProviderFailed $exception) {
+            report($exception);
+        }
     }
 
     private function currentRoomOf(YonaGroup $group): Call

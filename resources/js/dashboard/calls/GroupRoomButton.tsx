@@ -20,7 +20,7 @@ export default function GroupRoomButton({
 }) {
     const callsEnabled = Boolean(usePage<SharedPageProps>().props.globalConfig?.callsEnabled);
     const call = useCallSession();
-    const openRoom = useOpenRoom(group.id, group.voice_room);
+    const openRoom = useOpenRoom(group);
 
     if (!callsEnabled || group.my_role === null) return null;
 
@@ -35,5 +35,7 @@ export default function GroupRoomButton({
         });
     };
 
-    return <JoinRoomButton openRoom={openRoom} isCompact={isCompact} onJoin={join} className={className} />;
+    return (
+        <JoinRoomButton openRoom={openRoom} isInRoom={call.groupId === group.id} isCompact={isCompact} onJoin={join} className={className} />
+    );
 }

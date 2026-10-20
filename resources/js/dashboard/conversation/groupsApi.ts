@@ -24,6 +24,8 @@ export interface GroupSummary {
     my_role: GroupRole | null;
     // Phòng thoại đang có người ngồi; null khi không mở hoặc người xem đã rời nhóm.
     voice_room?: OpenRoomSummary | null;
+    // Mốc (ms) máy chủ tính voice_room, để so với sự kiện realtime.
+    voice_room_as_of?: number;
 }
 
 export interface GroupMember {

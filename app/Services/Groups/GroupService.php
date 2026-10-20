@@ -16,6 +16,7 @@ use App\Models\User;
 use App\Models\YonaGroup;
 use App\Models\YonaGroupInviteLink;
 use App\Models\YonaGroupMember;
+use App\Services\Groups\Calls\GroupRooms;
 use App\Services\Users\Friendships;
 use App\Services\Yona\YonaInboxes;
 use App\Support\GeneratedAvatarConfig;
@@ -37,6 +38,7 @@ final class GroupService
         private readonly YonaInboxes $inboxes,
         private readonly Friendships $friendships,
         private readonly GroupPermissions $permissions,
+        private readonly GroupRooms $groupRooms,
     ) {}
 
     /** @param  list<int>  $memberIds */
@@ -347,6 +349,8 @@ final class GroupService
     {
         $member->update(['left_at' => now()]);
         $group->decrement('member_count');
+        // Không còn trong nhóm thì không còn ngồi trong phòng thoại của nhóm (vé cũ cũng mất hiệu lực).
+        DB::afterCommit(fn () => $this->groupRooms->evict($group, $member->user_id));
     }
 
     // Quản trị cuối cùng rời nhóm thì thành viên vào lâu nhất lên làm quản trị.

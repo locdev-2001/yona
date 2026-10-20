@@ -6,6 +6,7 @@ import { useAlert } from 'dashboard/composables/useAlert';
 import { joinGroupRoom, muteGroupRoomParticipant, removeGroupRoomParticipant } from 'dashboard/calls/api';
 import type { CallTicket } from 'dashboard/calls/api';
 import { CallSessionContext } from 'dashboard/calls/callSession';
+import { userIdOfIdentity } from 'dashboard/calls/participantIdentity';
 import type { CallSession, JoinGroupRoomRequest } from 'dashboard/calls/callSession';
 import type { CallActions, CallLocalState, CallRoomView } from 'dashboard/calls/types';
 import { t } from '../i18n';
@@ -15,7 +16,6 @@ import type { MediaSessionEnd, MediaSessionHandle, MediaSessionState } from './m
 const LiveKitSession = lazy(() => import('./LiveKitSession'));
 
 const PHONE_MAX_WIDTH = 768;
-const USER_IDENTITY_PREFIX = 'user:';
 
 interface ActiveCall {
     request: JoinGroupRoomRequest;
@@ -24,12 +24,19 @@ interface ActiveCall {
     ticket: CallTicket;
 }
 
+const END_MESSAGES: Record<MediaSessionEnd, string | null> = {
+    left: null,
+    removed: 'CALLS.ROOM.REMOVED_YOU',
+    replaced: 'CALLS.ROOM.JOINED_ELSEWHERE',
+    closed: 'CALLS.ROOM.ROOM_CLOSED',
+    lost: 'CALLS.ROOM.CONNECTION_LOST',
+};
+
 const EMPTY_MEDIA: MediaSessionState = { participants: [], renderMedia: () => null };
 
 const canShareScreen = () =>
     typeof navigator !== 'undefined' && Boolean(navigator.mediaDevices?.getDisplayMedia) && window.innerWidth >= PHONE_MAX_WIDTH;
 
-const userIdOf = (identity: string) => (identity.startsWith(USER_IDENTITY_PREFIX) ? Number(identity.slice(USER_IDENTITY_PREFIX.length)) : NaN);
 
 // Phiên gọi của người dùng, đặt ở gốc app Inertia: chuyển trang thì trang đổi nhưng phiên
 // (kết nối, âm thanh) giữ nguyên. Giao diện đọc qua useCallSession().
@@ -68,8 +75,8 @@ export default function CallSessionProvider({ children }: { children: ReactNode 
     const onEnded = useCallback(
         (reason: MediaSessionEnd) => {
             endCall();
-            if (reason === 'removed') useAlert(t('CALLS.ROOM.REMOVED_YOU'));
-            if (reason === 'lost') useAlert(t('CALLS.ROOM.CONNECTION_LOST'));
+            const message = END_MESSAGES[reason];
+            if (message) useAlert(t(message));
         },
         [endCall],
     );
@@ -103,8 +110,8 @@ export default function CallSessionProvider({ children }: { children: ReactNode 
 
     const moderate = useCallback(
         (identity: string, request: (accountId: number, groupId: number, userId: number) => Promise<unknown>) => {
-            const userId = userIdOf(identity);
-            if (!active || Number.isNaN(userId)) return;
+            const userId = userIdOfIdentity(identity);
+            if (!active || userId === null) return;
             request(active.request.accountId, active.request.groupId, userId).catch(error =>
                 useAlert(parseApiErrorMessage(error) ?? t('CALLS.ROOM.CONNECTION_LOST')),
             );

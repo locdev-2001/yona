@@ -4,12 +4,11 @@ import type { Participant } from 'livekit-client';
 import { RoomAudioRenderer } from '@livekit/components-react';
 import type { CallMediaSource, CallParticipantView } from 'dashboard/calls/types';
 import AttachedVideo from './AttachedVideo';
-import type { MediaSessionHandle, MediaSessionProps } from './mediaSession';
+import { userIdOfIdentity } from 'dashboard/calls/participantIdentity';
+import type { MediaSessionEnd, MediaSessionHandle, MediaSessionProps } from './mediaSession';
 
 // Lớp media duy nhất dùng LiveKit: kết nối phòng bằng vé, dịch người trong phòng sang mô hình
 // hiển thị trung tính, phát âm thanh phòng, nhận lệnh bật/tắt nguồn phát từ phiên gọi.
-
-const USER_IDENTITY_PREFIX = 'user:';
 
 const ROOM_EVENTS = [
     RoomEvent.Connected,
@@ -32,14 +31,17 @@ const TRACK_SOURCE: Record<CallMediaSource, Track.Source> = {
     screen: Track.Source.ScreenShare,
 };
 
-function userIdOf(identity: string): number | null {
-    return identity.startsWith(USER_IDENTITY_PREFIX) ? Number(identity.slice(USER_IDENTITY_PREFIX.length)) || null : null;
-}
+const END_BY_REASON: Partial<Record<DisconnectReason, MediaSessionEnd>> = {
+    [DisconnectReason.CLIENT_INITIATED]: 'left',
+    [DisconnectReason.PARTICIPANT_REMOVED]: 'removed',
+    [DisconnectReason.DUPLICATE_IDENTITY]: 'replaced',
+    [DisconnectReason.ROOM_DELETED]: 'closed',
+};
 
 function toView(participant: Participant, isLocal: boolean): CallParticipantView {
     return {
         identity: participant.identity,
-        userId: userIdOf(participant.identity),
+        userId: userIdOfIdentity(participant.identity),
         name: participant.name || participant.identity,
         avatarUrl: participant.attributes?.avatar_url || null,
         isLocal,
@@ -72,9 +74,11 @@ export default function LiveKitSession({ serverUrl, token, deafened, onState, on
                 },
             });
         };
+        // Phiên đã bị gỡ (rời, đổi phòng) thì mọi kết quả kết nối đến muộn không được đụng phiên gọi mới.
+        let isCancelled = false;
         const onDisconnected = (reason?: DisconnectReason) => {
-            if (reason === DisconnectReason.CLIENT_INITIATED) return;
-            onEnded(reason === DisconnectReason.PARTICIPANT_REMOVED ? 'removed' : 'lost');
+            const end = (reason !== undefined && END_BY_REASON[reason]) || 'lost';
+            if (end !== 'left') onEnded(end);
         };
 
         ROOM_EVENTS.forEach(event => room.on(event, emitState));
@@ -105,12 +109,16 @@ export default function LiveKitSession({ serverUrl, token, deafened, onState, on
 
         room.connect(serverUrl, token)
             .then(() => {
+                if (isCancelled) return;
                 emitState();
                 onReady(handle);
             })
-            .catch(() => onEnded('lost'));
+            .catch(() => {
+                if (!isCancelled) onEnded('lost');
+            });
 
         return () => {
+            isCancelled = true;
             ROOM_EVENTS.forEach(event => room.off(event, emitState));
             room.off(RoomEvent.Disconnected, onDisconnected);
             void room.disconnect();

@@ -39,9 +39,10 @@ final readonly class CallService
         return $this->kinds->policyOf($call)->admit($call, $attendee);
     }
 
-    public function join(Call $call, CallAttendee $attendee): CallJoin
+    // Module đã hỏi chính sách trước khi tạo dòng `calls` thì truyền kết quả vào, khỏi hỏi lại.
+    public function join(Call $call, CallAttendee $attendee, ?Admission $admission = null): CallJoin
     {
-        $admission = $this->admit($call, $attendee);
+        $admission ??= $this->admit($call, $attendee);
 
         if ($call->isEnded()) {
             throw new CallActionRejected('CALL_ENDED');
@@ -83,23 +84,25 @@ final readonly class CallService
         $this->moderation->remove($call->uuid, $target->toString());
     }
 
+    // Đưa một người khỏi phòng vì họ không còn quyền ở đó (rời nhóm…), không qua quyền điều hành.
+    public function disconnect(Call $call, ParticipantIdentity $participant): void
+    {
+        $this->moderation->remove($call->uuid, $participant->toString());
+    }
+
     // Đóng phòng phía nhà cung cấp; dòng `calls` khép lại khi sự kiện phòng kết thúc về tới.
     public function close(Call $call): void
     {
         $this->rooms->close($call->uuid);
     }
 
-    // Nhà cung cấp cũng chặn ở trần phòng, nhưng chặn trước khi cấp vé để báo được lý do.
+    // Hỏi thẳng nhà cung cấp ai đang trong phòng (bản ghi DB có thể cũ khi mất webhook), chặn
+    // trước khi cấp vé để báo được lý do; nhà cung cấp vẫn chặn ở trần phòng.
     private function rejectWhenFull(Call $call, CallAttendee $attendee, int $maxParticipants): void
     {
-        $present = $call->presentParticipants();
-        $userId = $attendee->identity->userId();
+        $others = array_diff($this->rooms->participantIdentities($call->uuid), [$attendee->identity->toString()]);
 
-        if ($userId !== null) {
-            $present->where('user_id', '!=', $userId);
-        }
-
-        if ($present->count() >= $maxParticipants) {
+        if (count($others) >= $maxParticipants) {
             throw new CallActionRejected('ROOM_FULL', 409, ['max' => $maxParticipants]);
         }
     }

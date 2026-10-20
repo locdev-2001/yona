@@ -6,7 +6,7 @@ import { useOpenRoom } from './voiceRooms';
 export default function CallActivityJoin({ callId }: { callId: number }) {
     const conversation = useOptionalConversation();
     const group = conversation?.selectedConversation?.group ?? null;
-    const openRoom = useOpenRoom(group?.id, group?.voice_room);
+    const openRoom = useOpenRoom(group);
 
     if (!conversation || !group || openRoom?.call_id !== callId) return null;
 

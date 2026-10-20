@@ -2493,6 +2493,8 @@ const messages: Record<string, unknown> = {
             "ROOM_ENDED": "Phòng thoại đã kết thúc · :duration · :count người tham gia"
         },
         "ROOM": {
+            "JOINED_ELSEWHERE": "Bạn vừa vào phòng này ở thiết bị hoặc tab khác",
+            "ROOM_CLOSED": "Phòng thoại đã đóng",
             "REMOVED_YOU": "Quản trị nhóm đã mời bạn ra khỏi phòng",
             "CONNECTION_LOST": "Mất kết nối phòng thoại",
             "DEVICE_BLOCKED": "Trình duyệt chưa cho dùng micro, camera hoặc chia sẻ màn hình",

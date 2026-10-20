@@ -2493,6 +2493,8 @@ const messages: Record<string, unknown> = {
             "ROOM_ENDED": "The voice room ended · :duration · :count people joined"
         },
         "ROOM": {
+            "JOINED_ELSEWHERE": "You joined this room from another device or tab",
+            "ROOM_CLOSED": "The voice room was closed",
             "REMOVED_YOU": "A group admin removed you from the room",
             "CONNECTION_LOST": "Lost connection to the voice room",
             "DEVICE_BLOCKED": "The browser has not allowed the microphone, camera or screen sharing",

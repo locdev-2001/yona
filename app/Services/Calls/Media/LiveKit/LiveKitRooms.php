@@ -20,6 +20,13 @@ final readonly class LiveKitRooms implements MediaRooms
         ], ['roomCreate' => true]);
     }
 
+    public function participantIdentities(string $room): array
+    {
+        $response = $this->roomService->call('ListParticipants', ['room' => $room], ['roomAdmin' => true, 'room' => $room]);
+
+        return array_values(array_map(fn (array $participant) => (string) $participant['identity'], $response['participants'] ?? []));
+    }
+
     public function close(string $room): void
     {
         $this->roomService->call('DeleteRoom', ['room' => $room], ['roomCreate' => true]);
