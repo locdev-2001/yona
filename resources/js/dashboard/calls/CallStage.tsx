@@ -9,8 +9,9 @@ import CallTile from './CallTile';
 import type { CallActions, CallLocalState, CallRoomView, RenderCallMedia } from './types';
 
 // Số cột theo số người: 1 → 1, 2–4 → 2, 5–9 → 3, nhiều hơn → 4 (điện thoại tối đa 2).
+// Điện thoại hai người xếp chồng hai hàng ngang, không chia hai cột cao hẹp.
 function gridColumns(count: number, isPhone: boolean): string {
-    if (count <= 1) return 'grid-cols-1';
+    if (count <= 1 || (isPhone && count === 2)) return 'grid-cols-1';
     if (isPhone || count <= 4) return 'grid-cols-2';
     if (count <= 9) return 'grid-cols-3';
     return 'grid-cols-4';
