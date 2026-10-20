@@ -55,7 +55,7 @@ final class EmailPdfRenderer
             ->withBrowsershot(fn (Browsershot $browsershot) => $this->isolate($browsershot))
             ->generatePdfContent();
 
-        return new EmailPdf($contents, $this->filename((string) ($mail['subject'] ?? '')), $selfContained->embeddedAttachmentIds());
+        return new EmailPdf($contents, self::filenameFor($email), $selfContained->embeddedAttachmentIds());
     }
 
     private function isolate(Browsershot $browsershot): void
@@ -134,8 +134,10 @@ final class EmailPdfRenderer
         }
     }
 
-    private function filename(string $subject): string
+    /** Tên tệp PDF theo tiêu đề thư; biết được trước khi dựng để giao diện hiện ngay. */
+    public static function filenameFor(Message $email): string
     {
+        $subject = (string) data_get($email->content_attributes, 'email.subject', '');
         $name = trim((string) preg_replace('/[\x00-\x1F\x7F\/\\\\:*?"<>|]+/u', ' ', $subject));
         $name = Str::limit((string) preg_replace('/\s+/u', ' ', $name), self::MAX_FILENAME_LENGTH, '');
 

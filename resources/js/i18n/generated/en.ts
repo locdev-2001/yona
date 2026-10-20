@@ -4107,7 +4107,8 @@ const messages: Record<string, unknown> = {
         "FORWARDED": {
             "LABEL": "Forwarded",
             "FROM": "Forwarded from {name}",
-            "SOURCE_CONVERSATION": "Forwarded from conversation #{id}"
+            "SOURCE_CONVERSATION": "Forwarded from conversation #{id}",
+            "PREPARING_DOCUMENT": "Preparing the email PDF"
         },
         "MESSAGE_FAILURE": {
             "RETRY": "Retry sending",

@@ -256,6 +256,7 @@ return [
         'LABEL' => 'Đã chuyển tiếp',
         'FROM' => 'Chuyển tiếp từ {name}',
         'SOURCE_CONVERSATION' => 'Chuyển tiếp từ hội thoại #{id}',
+        'PREPARING_DOCUMENT' => 'Đang tạo PDF của thư',
     ],
     'MESSAGE_FAILURE' => [
         'RETRY' => 'Thử lại',

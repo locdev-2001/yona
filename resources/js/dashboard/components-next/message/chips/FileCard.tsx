@@ -27,7 +27,7 @@ export default function FileCard({ fileName, extension, fileSize, uploadProgress
         >
             <FileIcon fileType={extension} className="size-5 shrink-0 text-n-slate-11" />
             <span className="flex flex-1 min-w-0 text-sm text-n-slate-12">
-                <span className="truncate">{head}</span>
+                <span className="truncate whitespace-pre">{head}</span>
                 <span className="shrink-0 whitespace-pre">{tail}</span>
             </span>
             {fileSize ? (

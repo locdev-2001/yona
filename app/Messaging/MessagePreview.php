@@ -3,6 +3,7 @@
 namespace App\Messaging;
 
 use App\Channels\TextFormat;
+use App\Messaging\Delivery\PendingDocument;
 use App\Messaging\Structured\StructuredTypeRegistry;
 use App\Models\Attachment;
 use App\Models\Message;
@@ -37,6 +38,8 @@ final class MessagePreview
 
         if ($text === '' && $message->attachments->isNotEmpty()) {
             $text = __('messaging.preview.'.($message->attachments->first()->file_type === Attachment::FILE_TYPE_IMAGE ? 'image' : 'file'));
+        } elseif ($text === '' && PendingDocument::isPending($message)) {
+            $text = __('messaging.preview.file');
         }
 
         return mb_strimwidth(preg_replace('/\s+/u', ' ', $text) ?? '', 0, self::MAX_LENGTH, '…');

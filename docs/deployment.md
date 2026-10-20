@@ -1656,10 +1656,15 @@ dài (đo trên production: 2.258 ký tự qua, 4.991 ký tự bị từ chối)
 mất ảnh. Chuyển sang hộp thư email thì vẫn đi thành thư như cũ.
 
 PDF dựng bằng `spatie/laravel-pdf` (driver Browsershot) + `chrome-headless-shell`
-ngay trong request chuyển tiếp, dựng một lần cho mọi đích. Chromium chạy với JS tắt
-và mọi request mạng bị đẩy vào proxy không tồn tại: ảnh của thư (ảnh nhúng đã lưu
-và ảnh ở máy chủ ngoài) được PHP tải trước qua `SafeHttp` (chặn mạng nội bộ) rồi
-nhúng thành data URI (`app/Services/Email/SelfContainedHtml.php`). Thẻ ảnh/đồ hoạ
+**ở worker, không trong request**: bấm Chuyển tiếp là tin hiện ngay với thẻ tệp
+đang tạo (`content_attributes.pending_document`), `SendReplyJob` (hàng `media`,
+supervisor `supervisor-media`) dựng PDF rồi mới gửi ra kênh
+(`app/Messaging/Delivery/PendingDocument.php`). Dựng hỏng thì tin thành "Gửi thất
+bại", bấm Thử lại là dựng lại. Chromium chạy với JS tắt và mọi request mạng bị đẩy
+vào proxy không tồn tại: ảnh của thư (ảnh nhúng đã lưu và ảnh ở máy chủ ngoài) được
+PHP tải song song trước qua `RemoteEmailImage` (chặn mạng nội bộ, trần 5 MB mỗi ảnh)
+rồi nhúng thành data URI (`app/Services/Email/SelfContainedHtml.php`). Đo trên
+production 20/10/2026: email 7.790 ký tự có ảnh dựng trong 1,7 giây, PDF 124 KB. Thẻ ảnh/đồ hoạ
 cho Zalo vẫn vẽ bằng satori trong bridge, không dùng Chromium.
 
 **Cài một lần trên server mới** (root): thư viện hệ thống Chromium cần và font có
@@ -1694,9 +1699,9 @@ và không ra được mạng. Biến khác (mẫu ở `.env.example`), mặc đ
 | `LARAVEL_PDF_CHROME_PATH` | bản trong `services/pdf-renderer/.cache` | Chỉ khai khi muốn dùng Chromium khác |
 | `LARAVEL_PDF_NO_SANDBOX` | `false` | `true` khi Chromium không mở được sandbox (xem trên) |
 
-Thiếu renderer hay Chromium hỏng thì lượt chuyển tiếp email sang kênh chat báo
-"Chưa dựng được bản PDF của thư này" (mã `document_unavailable`), lỗi gốc ghi vào
-log Laravel.
+Thiếu renderer hay Chromium hỏng thì tin chuyển tiếp email sang kênh chat thành
+"Gửi thất bại" với lý do "Chưa dựng được bản PDF của thư này" (mã
+`document_unavailable`), lỗi gốc ghi vào log Laravel.
 
 ## 10. Deploy
 

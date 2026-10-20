@@ -10,7 +10,8 @@ export type MessagePreviewBody =
 
 /**
  * Một dòng xem trước nói gì, cùng thứ tự với App\Messaging\MessagePreview: tin thu hồi,
- * sticker (dù mang ảnh đính kèm hay chữ), chữ hoặc dòng máy chủ gửi sẵn, rồi mới tới tệp.
+ * sticker (dù mang ảnh đính kèm hay chữ), chữ hoặc dòng máy chủ gửi sẵn, rồi mới tới tệp
+ * (kể cả tệp còn đang dựng).
  */
 export function messagePreviewBody(message: Partial<ConversationMessage>): MessagePreviewBody {
     const deletedLabel = deletedMessageLabel(message.content_attributes);
@@ -23,7 +24,12 @@ export function messagePreviewBody(message: Partial<ConversationMessage>): Messa
         return { kind: 'text', text: message.preview_text || getPlainText(subject || message.content) };
     }
 
-    if (message.attachments) return { kind: 'attachment', fileType: String(message.attachments[0]?.file_type ?? '') };
+    if (message.attachments?.length) return { kind: 'attachment', fileType: String(message.attachments[0]?.file_type ?? '') };
+
+    // Tệp còn đang dựng ở worker: xem trước như tin có tệp.
+    if ((message.content_attributes as { pending_document?: unknown } | null | undefined)?.pending_document) {
+        return { kind: 'attachment', fileType: 'file' };
+    }
 
     return { kind: 'empty' };
 }

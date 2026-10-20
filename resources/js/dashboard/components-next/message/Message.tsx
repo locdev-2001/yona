@@ -40,6 +40,7 @@ import ZaloBankCardBubble from './bubbles/ZaloBankCard';
 import ZaloBusinessCardBubble from './bubbles/ZaloBusinessCard';
 import ZaloCallBubble from './bubbles/ZaloCall';
 import ZaloReminderBubble from './bubbles/ZaloReminder';
+import PendingDocumentBubble from './bubbles/PendingDocument';
 import { BUBBLE_NAMES, resolveBubbleName } from './helpers/attachments';
 import type { MessageAttachment } from './helpers/attachments';
 import { resolveReplyQuote } from './helpers/replyQuote';
@@ -213,6 +214,7 @@ export default function Message({
 
     const attachments = (message.attachments ?? []) as unknown as MessageAttachment[];
     const ChannelCardBubble = resolveChannelCardBubble(contentAttributes);
+    const isPendingDocument = attachments.length === 0 && Boolean(contentAttributes.pending_document);
     // Sticker có ảnh đính kèm (contract lõi) lên bong bóng sticker; sticker chỉ
     // có markdown trong content vẫn đi bong bóng chữ.
     const isStickerWithImage =
@@ -225,7 +227,9 @@ export default function Message({
             ? EmailBubble
             : isStickerWithImage
               ? StickerBubble
-              : (ChannelCardBubble ?? BUBBLE_COMPONENTS[resolveBubbleName(attachments, message.content)]);
+              : isPendingDocument
+                ? PendingDocumentBubble
+                : (ChannelCardBubble ?? BUBBLE_COMPONENTS[resolveBubbleName(attachments, message.content)]);
 
     const structured =
         contentAttributes.deleted || contentAttributes.external_error
@@ -235,6 +239,7 @@ export default function Message({
     const shouldRenderMessage = Boolean(
         structured ||
         attachments.length > 0 ||
+            isPendingDocument ||
             message.content ||
             ChannelCardBubble ||
             status === MESSAGE_STATUS.FAILED ||

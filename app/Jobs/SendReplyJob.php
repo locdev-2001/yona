@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Messaging\Delivery\OutboundOrder;
+use App\Messaging\Delivery\PendingDocument;
 use App\Models\Message;
 use App\Services\Email\SendOnEmailService;
 use App\Services\Facebook\SendOnFacebookService;
@@ -45,7 +46,7 @@ class SendReplyJob extends ApplicationJob
     /** Tin chữ: người gửi đang nhìn bong bóng chờ tick, không xếp sau thông báo/phân công. */
     public const TEXT_QUEUE = 'high';
 
-    /** Tin có tệp: tải và đẩy tệp tới 120s, chạy ở pool worker riêng (config/horizon.php). */
+    /** Tin có tệp (kể cả tệp còn chờ dựng): tải và đẩy tệp tới 120s, chạy ở pool worker riêng (config/horizon.php). */
     public const MEDIA_QUEUE = 'media';
 
     public function __construct(public readonly Message $message)
@@ -56,7 +57,7 @@ class SendReplyJob extends ApplicationJob
     /** Chỗ DUY NHẤT quyết định tin đi hàng đợi nào. */
     public static function queueFor(Message $message): string
     {
-        return $message->attachments->isEmpty() ? self::TEXT_QUEUE : self::MEDIA_QUEUE;
+        return $message->attachments->isEmpty() && ! PendingDocument::isPending($message) ? self::TEXT_QUEUE : self::MEDIA_QUEUE;
     }
 
     // Lỗi ném ra thì chưa nhả hàng: lượt thử lại vẫn là tin đầu hàng của hội thoại.
@@ -64,7 +65,7 @@ class SendReplyJob extends ApplicationJob
     {
         $serviceClass = self::CHANNEL_SERVICES[$this->message->conversation->inbox->channel_type] ?? null;
 
-        if ($serviceClass !== null) {
+        if ($serviceClass !== null && app(PendingDocument::class)->materialize($this->message)) {
             (new $serviceClass($this->message))->perform();
         }
 

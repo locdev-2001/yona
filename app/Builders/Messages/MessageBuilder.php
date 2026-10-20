@@ -3,6 +3,7 @@
 namespace App\Builders\Messages;
 
 use App\Exceptions\MessageValidationException;
+use App\Messaging\Delivery\ChannelAttachmentLimit;
 use App\Messaging\Structured\PayloadContext;
 use App\Messaging\Structured\StructuredTypeRegistry;
 use App\Models\AgentBot;
@@ -179,7 +180,7 @@ class MessageBuilder
                 Message::guardAttachmentsLimit(count($attachments));
                 $attachments[] = $attachment = $this->buildAttachment($upload);
                 $attachment->validateFile();
-                $this->validateChannelAttachmentSize($attachment);
+                ChannelAttachmentLimit::assertFits($this->conversation->inbox, $attachment);
             }
         } catch (MessageValidationException $exception) {
             $this->discardStoredFiles($attachments);
@@ -188,22 +189,6 @@ class MessageBuilder
         }
 
         return $attachments;
-    }
-
-    // Kênh khai trần tệp riêng (vd Zalo) thì chặn ngay lúc đính kèm, không để tin
-    // đi tới bridge rồi mới hỏng mà người gửi không biết.
-    private function validateChannelAttachmentSize(Attachment $attachment): void
-    {
-        $limit = $this->conversation->inbox->capabilities()->maxAttachmentBytes();
-
-        if ($limit === null || (int) $attachment->byte_size <= $limit) {
-            return;
-        }
-
-        $megabytes = intdiv($limit, 1024 * 1024);
-        $name = $attachment->filename ?: 'tệp';
-
-        throw new MessageValidationException("Tệp \"{$name}\" vượt quá {$megabytes} MB, kênh này không gửi được. Hãy nén hoặc chia nhỏ tệp rồi gửi lại.");
     }
 
     private function buildAttachment(mixed $upload): Attachment
