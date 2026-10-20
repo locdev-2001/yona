@@ -18,6 +18,9 @@ class YonaGroup extends Model
     // Avatar quản trị chọn từ lưới hình khối dựng sẵn: `pick-1`, `pick-2`…
     public const AVATAR_SEED_PATTERN = '/^pick-\d{1,4}$/';
 
+    // Chưa chọn avatar thì ghép ảnh vài thành viên; nạp dư một người để bỏ được chính người xem.
+    public const AVATAR_MEMBER_COUNT = 3;
+
     protected $fillable = ['account_id', 'conversation_id', 'name', 'avatar_path', 'avatar_seed', 'description', 'created_by_id', 'member_count'];
 
     public static function contactSourceIdFor(int $groupId): string
@@ -50,6 +53,12 @@ class YonaGroup extends Model
     public function activeMembers(): HasMany
     {
         return $this->members()->whereNull('left_at');
+    }
+
+    /** @return HasMany<YonaGroupMember, $this> */
+    public function avatarMembers(): HasMany
+    {
+        return $this->activeMembers()->with('user')->orderBy('created_at')->orderBy('id')->limit(self::AVATAR_MEMBER_COUNT + 1);
     }
 
     /** @return HasMany<YonaGroupInviteLink, $this> */

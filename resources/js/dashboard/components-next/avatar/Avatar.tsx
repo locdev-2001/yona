@@ -3,6 +3,8 @@ import type { ChangeEvent, KeyboardEvent, MouseEvent, ReactNode } from 'react';
 
 import Icon from 'dashboard/components-next/icon/Icon';
 import PlatformLogo from 'dashboard/components-next/icon/PlatformLogo';
+import AvatarStack from 'shared/avatar/AvatarStack';
+import type { AvatarStackPerson } from 'shared/avatar/AvatarStack';
 import GeneratedAvatar from 'shared/avatar/GeneratedAvatar';
 import { resolveAvatarIdentity } from 'shared/avatar/avatarSeed';
 import { generatedAvatarUri } from 'shared/avatar/generatedAvatarUri';
@@ -40,6 +42,8 @@ interface AvatarProps {
     className?: string;
     // Bấm (hoặc Enter/Space) vào avatar có ảnh thật thì mở ảnh cỡ lớn; avatar hình khối không bấm được.
     previewable?: boolean;
+    // Ảnh ghép nhiều người (nhóm chưa chọn avatar riêng): thay ảnh/hình khối, giữ chấm trạng thái, badge, overlay.
+    stack?: { people: AvatarStackPerson[]; total: number } | null;
     // Slot overlay của bản gốc: thay thế lớp upload phủ trên avatar
     // (ContactsCard dùng để hiện checkbox chọn khi hover).
     overlay?: (args: { size: number }) => ReactNode;
@@ -71,6 +75,7 @@ export default function Avatar({
     className = '',
     previewable = false,
     overlay,
+    stack = null,
     onUpload,
     onDelete,
 }: AvatarProps) {
@@ -88,10 +93,11 @@ export default function Avatar({
         ...(hideOfflineStatus ? {} : { offline: 'bg-n-slate-10' }),
     };
 
-    const showImage = Boolean(src) && isImageValid;
+    const showStack = stack !== null && stack.people.length > 0;
+    const showImage = !showStack && Boolean(src) && isImageValid;
     const generatedIdentity = resolveAvatarIdentity(seed, name);
     const hasGeneratedIdentity = Boolean(generatedIdentity);
-    const showIcon = !showImage && (Boolean(iconName) || !hasGeneratedIdentity);
+    const showIcon = !showStack && !showImage && (Boolean(iconName) || !hasGeneratedIdentity);
 
     const badgeSize = Math.max(size * 0.35, 8);
     const showPlatformBadge = Boolean(platform) && size >= PLATFORM_BADGE_MIN_AVATAR;
@@ -100,7 +106,7 @@ export default function Avatar({
         PLATFORM_BADGE_MAX,
     );
     const borderRadiusClass = getBorderRadiusClass(size, roundedFull);
-    const canPreview = previewable && !showIcon;
+    const canPreview = previewable && !showIcon && !showStack;
 
     const openPreview = (event: MouseEvent | KeyboardEvent) => {
         event.stopPropagation();
@@ -165,7 +171,9 @@ export default function Avatar({
             <span
                 {...previewTriggerProps}
                 className={[
-                    'relative inline-flex items-center justify-center object-cover overflow-hidden outline outline-1 -outline-offset-1 outline-[rgb(0_0_0_/_0.03)]',
+                    showStack
+                        ? 'relative inline-flex'
+                        : 'relative inline-flex items-center justify-center object-cover overflow-hidden outline outline-1 -outline-offset-1 outline-[rgb(0_0_0_/_0.03)]',
                     borderRadiusClass,
                     canPreview
                         ? 'cursor-zoom-in focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-n-brand'
@@ -176,7 +184,9 @@ export default function Avatar({
                     .join(' ')}
                 style={{ width: size, height: size }}
             >
-                {showImage ? (
+                {showStack && stack ? (
+                    <AvatarStack people={stack.people} total={stack.total} size={size} />
+                ) : showImage ? (
                     <img src={src} alt={name} onError={() => setImageValid(false)} />
                 ) : showIcon ? (
                     // Glyph to theo cỡ avatar; không có icon riêng và không có danh tính thì là người vô danh.

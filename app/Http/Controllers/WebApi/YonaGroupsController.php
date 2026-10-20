@@ -10,6 +10,7 @@ use App\Services\Groups\GroupPermissions;
 use App\Services\Groups\GroupService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 // Nhóm giữa người dùng Yona: tạo, xem (kèm thành viên), đổi tên.
 class YonaGroupsController extends Controller
@@ -40,8 +41,8 @@ class YonaGroupsController extends Controller
     public function update(Request $request, Account $account, int $groupId): JsonResponse
     {
         $input = $request->validate([
-            'name' => ['required_without:avatar_seed', 'string'],
-            'avatar_seed' => ['required_without:name', 'string'],
+            'name' => [Rule::requiredIf(! $request->exists('avatar_seed')), 'string'],
+            'avatar_seed' => ['sometimes', 'nullable', 'string'],
         ]);
         $group = YonaGroup::query()->findOrFail($groupId);
 
@@ -49,7 +50,7 @@ class YonaGroupsController extends Controller
             $group = $this->groups->rename($group, $request->user(), $input['name']);
         }
 
-        if (isset($input['avatar_seed'])) {
+        if (array_key_exists('avatar_seed', $input)) {
             $group = $this->groups->changeAvatar($group, $request->user(), $input['avatar_seed']);
         }
 

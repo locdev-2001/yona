@@ -2794,6 +2794,7 @@ const messages: Record<string, unknown> = {
             "CHANGE_AVATAR": "Change group picture",
             "CHANGE_AVATAR_DESCRIPTION": "Pick a picture for the group. Every member sees it.",
             "MORE_AVATARS": "Show more",
+            "MEMBER_AVATARS": "Member photos",
             "PICK_AVATAR": "Pick picture {number}",
             "SAVE": "Save",
             "ROLES": {

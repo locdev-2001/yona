@@ -172,11 +172,12 @@ final class GroupService
         });
     }
 
-    public function changeAvatar(YonaGroup $group, User $admin, string $avatarSeed): YonaGroup
+    // null = quay về avatar ghép ảnh thành viên.
+    public function changeAvatar(YonaGroup $group, User $admin, ?string $avatarSeed): YonaGroup
     {
         $this->permissions->admin($group, $admin);
 
-        if (preg_match(YonaGroup::AVATAR_SEED_PATTERN, $avatarSeed) !== 1) {
+        if ($avatarSeed !== null && preg_match(YonaGroup::AVATAR_SEED_PATTERN, $avatarSeed) !== 1) {
             throw new GroupActionRejected('INVALID_AVATAR');
         }
 

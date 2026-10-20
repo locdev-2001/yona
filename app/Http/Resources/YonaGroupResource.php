@@ -28,9 +28,29 @@ final class YonaGroupResource
             'id' => $group->id,
             'name' => $group->name,
             'avatar_seed' => $group->avatar_seed,
+            'avatar_members' => self::avatarMembers($group, $membership->user_id),
             'member_count' => $group->member_count,
             'my_role' => $membership->isActive() ? $membership->role : null,
         ];
+    }
+
+    /**
+     * Vài thành viên cho avatar ghép, người khác trước, chính người xem chỉ để lấp chỗ trống.
+     *
+     * @return list<array{user_id: int, name: string, avatar_url: string|null}>
+     */
+    private static function avatarMembers(YonaGroup $group, int $viewerId): array
+    {
+        return $group->avatarMembers
+            ->sortBy(fn (YonaGroupMember $member) => $member->user_id === $viewerId ? 1 : 0)
+            ->take(YonaGroup::AVATAR_MEMBER_COUNT)
+            ->map(fn (YonaGroupMember $member) => [
+                'user_id' => $member->user_id,
+                'name' => $member->user->availableName(),
+                'avatar_url' => $member->user->avatarUrl() ?: null,
+            ])
+            ->values()
+            ->all();
     }
 
     /** @return array<string, mixed> */

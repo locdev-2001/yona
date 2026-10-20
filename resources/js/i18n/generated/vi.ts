@@ -2794,6 +2794,7 @@ const messages: Record<string, unknown> = {
             "CHANGE_AVATAR": "Đổi ảnh nhóm",
             "CHANGE_AVATAR_DESCRIPTION": "Chọn một hình cho nhóm, mọi thành viên đều thấy hình này.",
             "MORE_AVATARS": "Xem thêm hình",
+            "MEMBER_AVATARS": "Ghép ảnh thành viên",
             "PICK_AVATAR": "Chọn hình {number}",
             "SAVE": "Lưu",
             "ROLES": {

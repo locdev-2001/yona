@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { usePage } from '@inertiajs/react';
 
 import Avatar from 'dashboard/components-next/avatar/Avatar';
-import { conversationAvatarSeed } from 'shared/avatar/avatarSeed';
+import { conversationAvatarSeed, conversationAvatarStack } from 'shared/avatar/avatarSeed';
 import BackButton from 'dashboard/components/widgets/BackButton';
 import Button from 'dashboard/components-next/button/Button';
 import { conversationListPageURL } from 'dashboard/helper/URLHelper';
@@ -117,6 +117,7 @@ export default function ConversationHeader({
                     <Avatar
                         name={currentContact.name ?? ''}
                         seed={conversationAvatarSeed(group, currentContact.id)}
+                        stack={conversationAvatarStack(group)}
                         src={currentContact.thumbnail}
                         size={36}
                         status={contactAvailabilityStatus}
@@ -172,6 +173,7 @@ export default function ConversationHeader({
                 <Avatar
                     name={currentContact.name ?? ''}
                     seed={conversationAvatarSeed(group, currentContact.id)}
+                    stack={conversationAvatarStack(group)}
                     src={currentContact.thumbnail}
                     size={36}
                     status={contactAvailabilityStatus}

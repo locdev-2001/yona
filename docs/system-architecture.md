@@ -588,10 +588,12 @@ hộp thư sẵn có. Giao diện mở hội thoại mới:
 | `GET /api/v1/users/search?scope=friends` | Tìm trong bạn bè, ô tìm trống trả luôn danh sách bạn bè (chọn người thêm vào nhóm) |
 
 **Giao diện:** payload hội thoại có `group` (`YonaGroupResource::summaryFor`: id, tên,
-`avatar_seed`, số thành viên, `my_role`, null khi đã rời). Ảnh nhóm: quản trị chọn một hình
-khối trong lưới (`shared/avatar/AvatarPickerDialog`), lưu `yona_groups.avatar_seed` dạng
-`pick-{n}` qua `PATCH /…/yona/groups/{id}` (`GroupService::changeAvatar`, ghi tin hoạt động);
-NULL = hình theo id nhóm. Một chỗ dựng hình: `conversationAvatarSeed`. Tin nhóm của người khác mang
+`avatar_seed`, `avatar_members` tối đa 3 người, số thành viên, `my_role`, null khi đã rời;
+danh sách nạp sẵn `threadMembership.group.avatarMembers` theo lô). Ảnh nhóm: NULL = ghép ảnh
+thành viên (`Avatar` chế độ `stack` → `shared/avatar/AvatarStack`); quản trị chọn một hình khối
+trong lưới (`shared/avatar/AvatarPickerDialog`), lưu `pick-{n}` qua `PATCH /…/yona/groups/{id}`
+(`GroupService::changeAvatar`, `null` để quay về ảnh ghép, ghi tin hoạt động). Một chỗ quyết
+định: `conversationAvatarSeed` + `conversationAvatarStack`. Tin nhóm của người khác mang
 `content_attributes.sender` (`external_id`, `name`, `avatar`, `avatar_seed`) như tin nhóm
 mọi kênh, nên bong bóng, trích dẫn, cảm xúc, dòng xem trước dùng chung đường hiển thị
 nhóm sẵn có. Tạo nhóm và thêm bạn dùng `shared/people/PickPeopleDialog` (bọc

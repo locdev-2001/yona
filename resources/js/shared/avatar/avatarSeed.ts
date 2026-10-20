@@ -1,3 +1,5 @@
+import type { AvatarStackPerson } from './AvatarStack';
+
 // Chuỗi dựng avatar hình khối phải bền theo danh tính, không theo tên hiển thị:
 // đổi tên không được đổi hình, và cùng một người ra cùng một hình ở mọi màn.
 // `group_member`: người trong nhóm chat của kênh, định danh theo mã ngoài của nền tảng.
@@ -46,13 +48,26 @@ export function pickedAvatarIndex(choice: string): number | null {
     return Number.isInteger(index) && index > 0 ? index : null;
 }
 
+interface ConversationGroupAvatar {
+    id: number;
+    avatar_seed?: string | null;
+    avatar_members?: AvatarStackPerson[];
+    member_count?: number;
+}
+
 // Avatar của một dòng hội thoại: nhóm theo hình quản trị đã chọn, chưa chọn thì theo id nhóm
 // (mọi thành viên thấy cùng một hình); còn lại theo liên hệ.
-export function conversationAvatarSeed(
-    group: { id: number; avatar_seed?: string | null } | null | undefined,
-    contactId: AvatarSubjectId,
-): string | undefined {
+export function conversationAvatarSeed(group: ConversationGroupAvatar | null | undefined, contactId: AvatarSubjectId): string | undefined {
     if (!group) return avatarSeed('contact', contactId);
 
     return avatarSeed('chat', group.avatar_seed || `group:${group.id}`);
+}
+
+// Nhóm chưa chọn avatar riêng thì ghép ảnh thành viên để khác hẳn hội thoại 1-1.
+export function conversationAvatarStack(
+    group: ConversationGroupAvatar | null | undefined,
+): { people: AvatarStackPerson[]; total: number } | null {
+    if (!group || group.avatar_seed || !group.avatar_members?.length) return null;
+
+    return { people: group.avatar_members, total: group.member_count ?? group.avatar_members.length };
 }

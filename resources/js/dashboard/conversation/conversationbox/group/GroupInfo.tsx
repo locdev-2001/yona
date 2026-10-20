@@ -10,8 +10,8 @@ import { useAlert } from 'dashboard/composables/useAlert';
 import { openProfile } from 'dashboard/contacts/profile/profileOverlay';
 import { ensureYonaContact } from 'dashboard/friends/api';
 import { parseApiErrorMessage } from 'dashboard/helper/apiClient';
-import AvatarPickerDialog from 'shared/avatar/AvatarPickerDialog';
-import { conversationAvatarSeed } from 'shared/avatar/avatarSeed';
+import AvatarPickerDialog, { CHOICE_SIZE_PX } from 'shared/avatar/AvatarPickerDialog';
+import { conversationAvatarSeed, conversationAvatarStack } from 'shared/avatar/avatarSeed';
 import PickPeopleDialog from 'shared/people/PickPeopleDialog';
 import { t } from '../../../../i18n';
 import type { DashboardPageProps } from '../../../types';
@@ -86,8 +86,12 @@ export default function GroupInfo({ group }: { group: GroupSummary }) {
     };
 
     const name = details?.name ?? group.name;
-    const avatarChoice = details?.avatar_seed ?? group.avatar_seed;
-    const groupAvatar = <Avatar seed={conversationAvatarSeed({ id: group.id, avatar_seed: avatarChoice }, null)} name={name} size={72} roundedFull />;
+    // null là "ghép ảnh thành viên", không phải "chưa có": không dùng ?? ở đây.
+    const avatarChoice = details ? details.avatar_seed : group.avatar_seed;
+    const avatarGroup = { ...group, avatar_seed: avatarChoice };
+    const groupAvatar = (
+        <Avatar seed={conversationAvatarSeed(avatarGroup, null)} stack={conversationAvatarStack(avatarGroup)} name={name} size={72} roundedFull />
+    );
     const memberCount = details?.member_count ?? group.member_count;
     const members = details?.members ?? [];
 
@@ -191,6 +195,18 @@ export default function GroupInfo({ group }: { group: GroupSummary }) {
                 description={t('CHAT.GROUP.CHANGE_AVATAR_DESCRIPTION')}
                 subject="chat"
                 current={avatarChoice}
+                defaultOption={{
+                    label: t('CHAT.GROUP.MEMBER_AVATARS'),
+                    preview: (
+                        <Avatar
+                            seed={conversationAvatarSeed({ id: group.id }, null)}
+                            stack={conversationAvatarStack({ ...group, avatar_seed: null })}
+                            name={name}
+                            size={CHOICE_SIZE_PX}
+                            roundedFull
+                        />
+                    ),
+                }}
                 onConfirm={choice => run(() => changeGroupAvatar(accountId, group.id, choice))}
             />
 

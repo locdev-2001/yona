@@ -1,4 +1,5 @@
 import { deleteJson, getJson, patchJson, postJson } from 'dashboard/helper/apiClient';
+import type { AvatarStackPerson } from 'shared/avatar/AvatarStack';
 
 export type GroupRole = 'admin' | 'member';
 
@@ -10,6 +11,8 @@ export interface GroupSummary {
     name: string;
     // null: chưa chọn, dùng hình theo id nhóm.
     avatar_seed: string | null;
+    // Vài thành viên cho avatar ghép khi chưa chọn avatar riêng (người khác trước).
+    avatar_members: AvatarStackPerson[];
     member_count: number;
     // null: người xem đã rời nhóm.
     my_role: GroupRole | null;
@@ -55,7 +58,8 @@ export function renameGroup(accountId: number, groupId: number, name: string): P
     return patchJson<GroupSummary>(groupUrl(accountId, groupId), { name });
 }
 
-export function changeGroupAvatar(accountId: number, groupId: number, avatarSeed: string): Promise<GroupSummary> {
+// null: quay về avatar ghép ảnh thành viên.
+export function changeGroupAvatar(accountId: number, groupId: number, avatarSeed: string | null): Promise<GroupSummary> {
     return patchJson<GroupSummary>(groupUrl(accountId, groupId), { avatar_seed: avatarSeed });
 }
 
