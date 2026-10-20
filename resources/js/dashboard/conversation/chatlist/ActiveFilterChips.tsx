@@ -1,5 +1,6 @@
 import { usePage } from '@inertiajs/react';
 
+import { useChannelPreferences } from 'dashboard/components-next/sidebar/useChannelPreferences';
 import ChannelIcon from 'dashboard/components-next/icon/ChannelIcon';
 import { useLabelsList } from 'dashboard/composables/useLabelsList';
 import { t } from '../../../i18n';
@@ -15,6 +16,7 @@ import type { ActiveFilterChip } from './listFilterOptions';
 export default function ActiveFilterChips({ hidesInboxChipsBelowMd = false }: { hidesInboxChipsBelowMd?: boolean } = {}) {
     const { accountId, listFilters, setListFilters } = useConversation();
     const { inboxes = [] } = usePage<DashboardPageProps>().props;
+    const { channels } = useChannelPreferences(inboxes);
     const accountLabels = useLabelsList(accountId);
     const chips = activeFilterChips(listFilters);
 
@@ -25,8 +27,9 @@ export default function ActiveFilterChips({ hidesInboxChipsBelowMd = false }: { 
 
     const renderContent = (chip: ActiveFilterChip) => {
         if (chip.kind === 'inbox') {
-            const inbox = inboxes.find(item => item.id === chip.inboxId);
-            const name = inbox?.name ?? `#${chip.inboxId}`;
+            const channel = channels.find(item => item.inbox.id === chip.inboxId);
+            const inbox = channel?.inbox;
+            const name = channel?.label ?? `#${chip.inboxId}`;
 
             return {
                 name,

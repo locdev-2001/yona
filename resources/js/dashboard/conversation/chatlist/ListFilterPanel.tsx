@@ -2,6 +2,7 @@ import { isProductFeatureVisible } from 'shared/helpers/productVisibility';
 import type { ReactNode } from 'react';
 import { usePage } from '@inertiajs/react';
 
+import { useChannelPreferences } from 'dashboard/components-next/sidebar/useChannelPreferences';
 import { useLabelsList } from 'dashboard/composables/useLabelsList';
 import { useNotificationsUnreadInboxCounts } from 'dashboard/notifications/useUnreadCount';
 import { t } from '../../../i18n';
@@ -38,6 +39,7 @@ function FilterGroup({ title, children }: { title: string; children: ReactNode }
 export default function ListFilterPanel({ onOpenAdvancedFilters }: ListFilterPanelProps) {
     const { accountId, listFilters, setListFilters } = useConversation();
     const { inboxes = [] } = usePage<DashboardPageProps>().props;
+    const { visibleInboxes } = useChannelPreferences(inboxes);
     const accountLabels = useLabelsList(accountId);
     const inboxUnreadCounts = useNotificationsUnreadInboxCounts();
     const activeFilterCount = countActiveListFilters(listFilters);
@@ -58,9 +60,9 @@ export default function ListFilterPanel({ onOpenAdvancedFilters }: ListFilterPan
                 ))}
             </FilterGroup>
             ) : null}
-            {inboxes.length ? (
+            {visibleInboxes.length ? (
                 <FilterGroup title={t('CHAT_LIST.FILTER_PANEL.CHANNEL')}>
-                    {inboxes.map(inbox => (
+                    {visibleInboxes.map(inbox => (
                         <InboxFilterChip
                             key={inbox.id}
                             inbox={inbox}
