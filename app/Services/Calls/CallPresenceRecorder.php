@@ -5,6 +5,8 @@ namespace App\Services\Calls;
 use App\Models\Call;
 use App\Models\CallParticipant;
 use App\Services\Calls\Kinds\CallKinds;
+use App\Services\Calls\Media\MediaProviderFailed;
+use App\Services\Calls\Media\MediaRooms;
 use App\Services\Calls\Media\MediaSource;
 use App\Services\Calls\Media\RoomEvent;
 use App\Services\Calls\Media\RoomEventType;
@@ -21,6 +23,7 @@ final readonly class CallPresenceRecorder
     public function __construct(
         private CallKinds $kinds,
         private ScreenShares $screenShares,
+        private MediaRooms $rooms,
     ) {}
 
     public function record(RoomEvent $event): void
@@ -97,7 +100,7 @@ final readonly class CallPresenceRecorder
     {
         $userId = $this->storableUserId($event);
 
-        if ($userId === null) {
+        if ($userId === null || $this->stillConnected($call, (string) $event->identity)) {
             return;
         }
 
@@ -122,6 +125,17 @@ final readonly class CallPresenceRecorder
             ? $this->screenShares->start($call, $userId)
             : $this->screenShares->stop($call, $userId);
         $this->notifyPresenceChanged($call);
+    }
+
+    // Cùng một người vào lại từ tab/thiết bị khác: nhà cung cấp đá phiên cũ và báo "rời" cho phiên
+    // cũ trong khi phiên mới vẫn đang kết nối với cùng định danh. Không hỏi được thì coi như đã rời.
+    private function stillConnected(Call $call, string $identity): bool
+    {
+        try {
+            return in_array($identity, $this->rooms->participantIdentities($call->uuid), true);
+        } catch (MediaProviderFailed) {
+            return false;
+        }
     }
 
     private function notifyPresenceChanged(Call $call): void

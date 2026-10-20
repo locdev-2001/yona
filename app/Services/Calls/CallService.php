@@ -81,7 +81,7 @@ final readonly class CallService
     public function remove(Call $call, User $actor, ParticipantIdentity $target): void
     {
         $this->authorizeModeration($call, $actor);
-        $this->moderation->remove($call->uuid, $target->toString());
+        $this->disconnect($call, $target);
     }
 
     // Đưa một người khỏi phòng vì họ không còn quyền ở đó (rời nhóm…), không qua quyền điều hành.
@@ -96,10 +96,21 @@ final readonly class CallService
         $this->rooms->close($call->uuid);
     }
 
-    // Hỏi thẳng nhà cung cấp ai đang trong phòng (bản ghi DB có thể cũ khi mất webhook), chặn
-    // trước khi cấp vé để báo được lý do; nhà cung cấp vẫn chặn ở trần phòng.
+    // Chặn trước khi cấp vé để báo được lý do; nhà cung cấp vẫn chặn ở trần phòng. Bản ghi DB đủ
+    // cho đa số lượt vào; chỉ khi DB báo đầy (có thể do dòng cũ vì mất webhook) mới hỏi nhà cung cấp.
     private function rejectWhenFull(Call $call, CallAttendee $attendee, int $maxParticipants): void
     {
+        $present = $call->presentParticipants();
+        $userId = $attendee->identity->userId();
+
+        if ($userId !== null) {
+            $present->where('user_id', '!=', $userId);
+        }
+
+        if ($present->count() < $maxParticipants) {
+            return;
+        }
+
         $others = array_diff($this->rooms->participantIdentities($call->uuid), [$attendee->identity->toString()]);
 
         if (count($others) >= $maxParticipants) {

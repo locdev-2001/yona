@@ -7,6 +7,7 @@ import Dialog from 'dashboard/components-next/dialog/Dialog';
 import type { DialogHandle } from 'dashboard/components-next/dialog/Dialog';
 import Input from 'dashboard/components-next/input/Input';
 import { useAlert } from 'dashboard/composables/useAlert';
+import { useCallSession } from 'dashboard/calls/callSession';
 import { openProfile } from 'dashboard/contacts/profile/profileOverlay';
 import { ensureYonaContact } from 'dashboard/friends/api';
 import { parseApiErrorMessage } from 'dashboard/helper/apiClient';
@@ -39,6 +40,7 @@ export default function GroupInfo({ group }: { group: GroupSummary }) {
     const { currentAccount, auth } = usePage<DashboardPageProps>().props;
     const accountId = currentAccount.id;
     const myUserId = auth?.user?.id ?? null;
+    const call = useCallSession();
     const [details, setDetails] = useState<GroupDetails | null>(null);
     const [draftName, setDraftName] = useState('');
     const [confirm, setConfirm] = useState<PendingConfirm>(null);
@@ -88,6 +90,9 @@ export default function GroupInfo({ group }: { group: GroupSummary }) {
     const confirmPending = async () => {
         if (confirm === null || myUserId === null) return;
         const userId = confirm.kind === 'remove' ? confirm.member.user_id : myUserId;
+        // Tự rời nhóm khi đang ngồi trong phòng thoại của nhóm: rời phòng trước, để máy chủ không
+        // phải đưa ra (sẽ hiện như bị quản trị mời ra).
+        if (confirm.kind === 'leave' && call.groupId === group.id) call.actions.leave();
         if (!(await run(() => removeGroupMember(accountId, group.id, userId)))) return;
         if (confirm.kind === 'leave') setHasLeft(true);
         confirmRef.current?.close();

@@ -36,6 +36,7 @@ const END_BY_REASON: Partial<Record<DisconnectReason, MediaSessionEnd>> = {
     [DisconnectReason.PARTICIPANT_REMOVED]: 'removed',
     [DisconnectReason.DUPLICATE_IDENTITY]: 'replaced',
     [DisconnectReason.ROOM_DELETED]: 'closed',
+    [DisconnectReason.ROOM_CLOSED]: 'closed',
 };
 
 function toView(participant: Participant, isLocal: boolean): CallParticipantView {

@@ -38,8 +38,9 @@ class BroadcastGroupVoiceRoomJob extends ApplicationJob implements ShouldBeUniqu
             return;
         }
 
-        $voiceRoom = $summaries->of($group);
+        // Đóng mốc trước khi đọc: thay đổi đến trong lúc đọc sẽ có payload mốc muộn hơn thắng.
         $asOf = now()->getTimestampMs();
+        $voiceRoom = $summaries->of($group);
 
         $group->activeMembers()->with(['user:id,pubsub_token', 'conversation:id,account_id,display_id'])->get()
             ->each(fn (YonaGroupMember $member) => broadcast(new RealtimeBroadcast([$member->user->pubsub_token], self::EVENT, [
