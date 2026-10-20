@@ -7,6 +7,7 @@ import CallDuration from './CallDuration';
 import CallOrb from './CallOrb';
 import DevicePicker from './DevicePicker';
 import type { CallDevice, CallDeviceKind, CallMediaKind, CallPeerView } from './types';
+import { TOUCH_HEIGHT, TOUCH_MIN_HEIGHT } from './touchTarget';
 
 export type DirectCallPhase = 'incoming' | 'outgoing' | 'connected';
 
@@ -62,7 +63,7 @@ function CallAction({ icon, label, tone, isOnVideo = false, className = '', onCl
 // Nút phụ của màn gọi đến: biểu tượng và chữ nhỏ, không nền.
 function SmallAction({ icon, label, onClick }: { icon: string; label: string; onClick: () => void }) {
     return (
-        <button type="button" className="flex flex-col items-center gap-1 min-h-11 px-2 text-n-slate-12 hover:text-n-slate-11" onClick={onClick}>
+        <button type="button" className={`flex flex-col items-center gap-1 ${TOUCH_MIN_HEIGHT} px-2 text-n-slate-12 hover:text-n-slate-11`} onClick={onClick}>
             <span className={`${icon} size-5`} aria-hidden="true" />
             <span className="text-xs">{label}</span>
         </button>
@@ -100,7 +101,7 @@ function IncomingLayout(props: DirectCallSceneProps) {
     return (
         <>
             <div className="flex justify-end px-3 h-12">
-                <Button sm slate link label={t('CALLS.DIRECT.HIDE')} className="!h-11 px-2" onClick={onMinimize} />
+                <Button sm slate link label={t('CALLS.DIRECT.HIDE')} className={`${TOUCH_HEIGHT} px-2`} onClick={onMinimize} />
             </div>
             <div className="relative flex flex-1 items-center justify-center min-h-0">
                 <SceneOrb {...props} className="aspect-square w-[min(80vw,40vh,22rem)]" />
@@ -113,7 +114,7 @@ function IncomingLayout(props: DirectCallSceneProps) {
                     <span className="text-xs text-n-slate-11">{title}</span>
                     <span className="max-w-full text-3xl font-semibold truncate text-n-slate-12">{peer.name}</span>
                 </div>
-                <div className="grid grid-cols-2 w-full">
+                <div className="grid grid-cols-2 place-items-center w-full">
                     {media === 'video' ? (
                         <SmallAction icon="i-lucide-video-off" label={t('CALLS.DIRECT.ACCEPT_AUDIO_ONLY')} onClick={() => onAccept('audio')} />
                     ) : (
@@ -121,7 +122,7 @@ function IncomingLayout(props: DirectCallSceneProps) {
                     )}
                     <SmallAction icon="i-lucide-message-circle" label={t('CALLS.DIRECT.OPEN_CHAT')} onClick={onOpenChat} />
                 </div>
-                <div className="grid grid-cols-2 w-full">
+                <div className="grid grid-cols-2 place-items-center w-full">
                     <CallAction
                         icon={media === 'video' ? 'i-lucide-video' : 'i-lucide-phone'}
                         label={t('CALLS.DIRECT.ACCEPT')}
@@ -151,7 +152,7 @@ function InCallLayout(props: DirectCallSceneProps) {
                 </div>
             ) : null}
             <div className="flex justify-end px-3 h-12">
-                <Button sm slate link label={t('CALLS.DIRECT.HIDE')} className={`!h-11 px-2 ${isOnVideo ? '!text-white' : ''}`} onClick={onMinimize} />
+                <Button sm slate link label={t('CALLS.DIRECT.HIDE')} className={`${TOUCH_HEIGHT} px-2 ${isOnVideo ? '!text-white' : ''}`} onClick={onMinimize} />
             </div>
             <div className="flex flex-col items-center gap-1 w-full max-w-sm mx-auto px-6 text-center">
                 <span className={`max-w-full text-2xl font-semibold truncate ${isOnVideo ? 'text-white' : 'text-n-slate-12'}`}>{peer.name}</span>
@@ -178,7 +179,7 @@ function InCallLayout(props: DirectCallSceneProps) {
                     <div className="absolute bottom-4 end-4 w-28 sm:w-40 aspect-[3/4] sm:aspect-video overflow-hidden rounded-xl bg-black">{selfVideo}</div>
                 ) : null}
             </div>
-            <div className="grid grid-cols-3 gap-y-6 w-full max-w-xs mx-auto px-4">
+            <div className="grid grid-cols-3 place-items-center gap-y-6 w-full max-w-xs mx-auto px-4">
                 <CallAction icon={micOn ? 'i-lucide-mic' : 'i-lucide-mic-off'} label={t('CALLS.DIRECT.MUTE')} tone={micOn ? 'neutral' : 'off'} isOnVideo={isOnVideo} onClick={onToggleMic} />
                 <CallAction icon={camOn ? 'i-lucide-video' : 'i-lucide-video-off'} label={t('CALLS.DIRECT.CAMERA')} tone="neutral" isOnVideo={isOnVideo} onClick={onToggleCamera} />
                 <CallAction icon={deafened ? 'i-lucide-volume-x' : 'i-lucide-volume-2'} label={t('CALLS.DIRECT.SPEAKER')} tone={deafened ? 'off' : 'neutral'} isOnVideo={isOnVideo} onClick={onToggleDeafen} />

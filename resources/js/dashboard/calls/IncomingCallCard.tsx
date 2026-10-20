@@ -3,6 +3,7 @@ import BottomSheet from 'dashboard/components-next/BottomSheet';
 import { t } from '../../i18n';
 import RingingAvatar from './RingingAvatar';
 import type { CallMediaKind, CallPeerView } from './types';
+import { PHONE_TOUCH_SIZE } from './touchTarget';
 
 interface IncomingCallProps {
     peer: CallPeerView;
@@ -40,13 +41,13 @@ export default function IncomingCallCard(props: IncomingCallProps) {
 }
 
 function IncomingCallRow({ peer, media, subtitle, onAccept, onDecline, onOpenChat, onExpand }: IncomingCallProps & { subtitle: string | null }) {
-    const sizeClass = 'max-md:!size-11';
+    const sizeClass = PHONE_TOUCH_SIZE;
 
     return (
         <div data-testid="incoming-call" className="flex items-center gap-3 max-md:gap-2 min-w-0">
-            <button type="button" title={t('CALLS.DIRECT.EXPAND')} className="flex flex-1 items-center gap-3 max-md:gap-2 min-w-0 text-start" onClick={onExpand}>
+            <button type="button" title={t('CALLS.DIRECT.EXPAND')} className="flex flex-1 items-center gap-3 max-md:gap-2 min-w-0 p-0 text-start" onClick={onExpand}>
                 <RingingAvatar peer={peer} size={40} isRinging />
-                <span className="flex flex-col min-w-0">
+                <span className="flex flex-1 flex-col min-w-0">
                     <span className="text-sm font-medium truncate text-n-slate-12">{peer.name}</span>
                     {subtitle ? <span className="text-xs truncate text-n-teal-11">{subtitle}</span> : null}
                 </span>

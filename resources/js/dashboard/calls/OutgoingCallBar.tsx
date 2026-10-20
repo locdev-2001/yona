@@ -3,6 +3,7 @@ import { t } from '../../i18n';
 import CallDuration from './CallDuration';
 import RingingAvatar from './RingingAvatar';
 import type { CallMediaKind, CallPeerView, RenderCallMedia } from './types';
+import { PHONE_TOUCH_SIZE } from './touchTarget';
 
 // Đang gọi đi (1-1): một thẻ gọn, khung chat vẫn đọc và gõ được. Máy tính đặt ngay dưới mũ khung
 // chat (gần nút gọi vừa bấm); điện thoại đặt ở đáy, trong tầm ngón cái. Số giây đổ chuông đậm
@@ -47,9 +48,9 @@ export default function OutgoingCallBar({
         <div data-testid="outgoing-call" className={`relative overflow-hidden flex flex-none items-center gap-3 p-2 rounded-2xl ${PLACEMENT_CLASS[placement]}`}>
             {/* Vệt sáng lướt qua thẻ trong lúc chờ người kia nghe máy. */}
             <span className="absolute inset-0 bg-gradient-to-r from-transparent via-n-teal-9/10 to-transparent animate-call-sweep motion-reduce:hidden pointer-events-none" aria-hidden="true" />
-            <button type="button" title={t('CALLS.DIRECT.EXPAND')} className="relative flex flex-1 items-center gap-3 min-w-0 text-start" onClick={onExpand}>
+            <button type="button" title={t('CALLS.DIRECT.EXPAND')} className="relative flex flex-1 items-center gap-3 min-w-0 p-0 text-start" onClick={onExpand}>
                 <RingingAvatar peer={peer} size={32} isRinging />
-                <span className="flex flex-col min-w-0">
+                <span className="flex flex-1 flex-col min-w-0">
                     <span className="text-sm font-medium leading-5 truncate text-n-slate-12">{peer.name}</span>
                     <span className="flex items-center gap-1 text-xs leading-4 text-n-teal-11">
                         <span className={`${media === 'video' ? 'i-lucide-video' : 'i-lucide-phone'} size-3 flex-shrink-0`} />
@@ -65,10 +66,10 @@ export default function OutgoingCallBar({
                     {...(micOn ? { slate: true, faded: true } : { ruby: true, faded: true })}
                     icon={micOn ? 'i-lucide-mic' : 'i-lucide-mic-off'}
                     title={micOn ? t('CALLS.ROOM.MIC_ON') : t('CALLS.ROOM.MIC_OFF')}
-                    className="max-md:!size-11"
+                    className={PHONE_TOUCH_SIZE}
                     onClick={onToggleMic}
                 />
-                <Button sm ruby solid icon="i-lucide-phone-off" title={t('CALLS.DIRECT.CANCEL')} className="max-md:!size-11" onClick={onCancel} />
+                <Button sm ruby solid icon="i-lucide-phone-off" title={t('CALLS.DIRECT.CANCEL')} className={PHONE_TOUCH_SIZE} onClick={onCancel} />
             </div>
         </div>
     );
