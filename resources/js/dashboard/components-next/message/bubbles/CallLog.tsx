@@ -29,10 +29,15 @@ const OUTCOME_TITLES: Record<Exclude<CallOutcome, 'completed'>, [string, string]
     busy: ['CALLS.LOG.BUSY', 'CALLS.LOG.BUSY'],
 };
 
+// Cùng bảng màu ô biểu tượng của các bong bóng thẻ (BaseAttachment): nền đặc, biểu tượng trắng;
+// cuộc gọi nhỡ dùng màu nguy hiểm, kết cục trung tính (bị từ chối, đã huỷ) dùng nền phụ. Màu chỉ
+// nằm ở ô; chữ kế thừa màu chữ của bong bóng (tin đi/đến, sáng/tối) như tin văn bản.
 const TILE_TONES = {
-    completed: 'bg-n-teal-9/15 text-n-teal-11',
-    missed: 'bg-n-ruby-9/15 text-n-ruby-11',
-    neutral: 'bg-n-slate-9/15 text-n-slate-11',
+    completed: 'bg-n-brand text-white',
+    // Tin của mình nằm trên bong bóng màu brand (đặc ở nền tối): ô đảo màu để không chìm vào nền.
+    completedOnOwn: 'bg-white text-n-brand',
+    missed: 'bg-n-ruby-9 text-white',
+    neutral: 'bg-n-alpha-3 text-n-slate-12',
 };
 
 function formatDuration(totalSeconds: number): string {
@@ -42,7 +47,7 @@ function formatDuration(totalSeconds: number): string {
 }
 
 export default function CallLogBubble() {
-    const { contentAttributes } = useMessageContext();
+    const { contentAttributes, orientation } = useMessageContext();
     const call = (contentAttributes.call ?? {}) as CallLog;
 
     const isVideo = call.media === 'video';
@@ -55,7 +60,7 @@ export default function CallLogBubble() {
 
     const title = outcome === 'completed' ? kindLabel : t(OUTCOME_TITLES[outcome][isInbound ? 0 : 1]);
     const detail = outcome === 'completed' ? formatDuration(seconds) : kindLabel;
-    const tone = outcome === 'completed' ? TILE_TONES.completed : isMissedForViewer ? TILE_TONES.missed : TILE_TONES.neutral;
+    const tone = outcome === 'completed' ? (orientation === 'right' ? TILE_TONES.completedOnOwn : TILE_TONES.completed) : isMissedForViewer ? TILE_TONES.missed : TILE_TONES.neutral;
     const icon = isMissedForViewer
         ? isVideo
             ? 'i-lucide-video-off'
@@ -73,13 +78,13 @@ export default function CallLogBubble() {
                     <Icon icon={icon} className="size-[1.125rem]" />
                 </span>
                 <span className="flex flex-col min-w-0">
-                    <span className={`text-sm font-medium truncate ${isMissedForViewer ? 'text-n-ruby-11' : ''}`}>{title}</span>
-                    <span className="text-xs truncate opacity-70 tabular-nums">{detail}</span>
+                    <span className="text-sm font-medium truncate">{title}</span>
+                    <span className="text-xs truncate tabular-nums">{detail}</span>
                 </span>
             </div>
             <CallActivityAction
                 call={{ id: call.id ?? 0, kind: call.kind ?? '', status: call.status ?? '', media: isVideo ? 'video' : 'audio' }}
-                className="w-full justify-center"
+                className="w-full justify-center !bg-n-solid-3 !text-n-blue-11 hover:enabled:!bg-n-solid-2"
             />
         </BaseBubble>
     );
