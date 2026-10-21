@@ -1,8 +1,8 @@
 import { messageTimestamp } from 'shared/helpers/timeHelper';
 
-import CallActivityAction from 'dashboard/calls/CallActivityAction';
-import { GROUP_CALL_KIND, callStartText, isCallStartNotice, readCallLog } from 'dashboard/calls/callLog';
+import { GROUP_CALL_KIND, GROUP_ROOM_KIND, callStartText, isCallStartNotice, readCallLog } from 'dashboard/calls/callLog';
 import { useGroupCall } from 'dashboard/calls/groupCalls';
+import { useOpenRoom } from 'dashboard/calls/voiceRooms';
 import { useOptionalConversation } from 'dashboard/conversation/ConversationContext';
 import BaseBubble from './Base';
 import CallMessageBubble from './CallMessage';
@@ -12,27 +12,26 @@ import { ORIENTATION } from '../constants';
 // Port từ dashboard/components-next/message/bubbles/Activity.vue —
 // v-tooltip.top → attr title trên bubble.
 
-// Dòng mở phòng nằm theo người mở (trái/phải) thì nút Tham gia bám cùng mép.
-const ACTION_ALIGNMENT: Record<string, string> = {
-    [ORIENTATION.LEFT]: 'items-start',
-    [ORIENTATION.RIGHT]: 'items-end',
-};
-
 export default function ActivityBubble() {
     const { content, createdAt, contentAttributes, orientation } = useMessageContext();
-    // Tin cuộc gọi lưu dữ liệu có cấu trúc, lời dịch theo người đọc: phòng nhóm vừa mở là một dòng
-    // (kèm nút Tham gia khi phòng còn mở), cuộc gọi nhóm còn diễn ra là thẻ có nút Tham gia, cuộc
-    // gọi đã xong là thẻ cuộc gọi.
+    // Tin cuộc gọi lưu dữ liệu có cấu trúc, lời dịch theo người đọc. Phòng thoại hay cuộc gọi nhóm
+    // còn đang diễn ra thì tin lúc bắt đầu là thẻ có nút Tham gia; đã xong thì danh sách chỉ giữ thẻ
+    // kết thúc (withoutSupersededStartNotices). Tin bắt đầu còn lại mà không còn diễn ra là một dòng.
     const call = readCallLog(contentAttributes);
-    const liveGroupCall = useGroupCall(useOptionalConversation()?.selectedConversation?.group);
-    const isLiveGroupCall = call?.kind === GROUP_CALL_KIND && liveGroupCall?.call_id === call.id;
+    const group = useOptionalConversation()?.selectedConversation?.group;
+    const liveGroupCall = useGroupCall(group);
+    const openRoom = useOpenRoom(group);
+    const isLive =
+        call?.id !== undefined &&
+        (call.kind === GROUP_CALL_KIND ? liveGroupCall?.call_id === call.id : call.kind === GROUP_ROOM_KIND && openRoom?.call_id === call.id);
 
-    if (call && (!isCallStartNotice(call) || isLiveGroupCall)) return <CallMessageBubble />;
+    if (call && (!isCallStartNotice(call) || isLive)) return <CallMessageBubble />;
 
-    const text = call ? callStartText(call) : content;
+    // Tin nằm cạnh người khởi tạo thì tên họ đã đứng đầu cụm, dòng không nhắc lại.
+    const text = call ? callStartText(call, orientation === ORIENTATION.CENTER) : content;
     const readableTime = messageTimestamp(createdAt, 'LLL d, h:mm a');
 
-    const bubble = (
+    return (
         <BaseBubble
             className="px-3 py-1 !rounded-xl flex min-w-0 items-center gap-2"
             title={readableTime}
@@ -40,14 +39,5 @@ export default function ActivityBubble() {
         >
             <span title={text ?? ''}>{text}</span>
         </BaseBubble>
-    );
-
-    if (!call) return bubble;
-
-    return (
-        <div className={`flex flex-col gap-1.5 ${ACTION_ALIGNMENT[orientation] ?? 'items-center'}`}>
-            {bubble}
-            <CallActivityAction call={call} />
-        </div>
     );
 }

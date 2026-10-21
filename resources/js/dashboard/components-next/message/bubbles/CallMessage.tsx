@@ -7,8 +7,10 @@ import CallActivityAction from 'dashboard/calls/CallActivityAction';
 import CallDetailsDialog from 'dashboard/calls/CallDetailsDialog';
 import { useJoinGroupCall } from 'dashboard/calls/GroupCallButtons';
 import { useGroupCall } from 'dashboard/calls/groupCalls';
+import { useJoinGroupRoom } from 'dashboard/calls/GroupRoomButton';
+import { useOpenRoom } from 'dashboard/calls/voiceRooms';
 import { useCallSession } from 'dashboard/calls/callSession';
-import { describeCall, readCallLog } from 'dashboard/calls/callLog';
+import { GROUP_ROOM_KIND, describeCall, readCallLog } from 'dashboard/calls/callLog';
 import type { CallTone } from 'dashboard/calls/callLog';
 import { useOptionalConversation } from 'dashboard/conversation/ConversationContext';
 
@@ -70,10 +72,14 @@ export default function CallMessageBubble() {
     const conversation = useOptionalConversation();
     const call = readCallLog(contentAttributes) ?? {};
     const group = conversation?.selectedConversation?.group ?? null;
-    const view = describeCall(call, group?.name ?? '', useGroupCall(group));
+    const view = describeCall(call, group?.name ?? '', useGroupCall(group), useOpenRoom(group));
     const joinGroupCall = useJoinGroupCall(conversation?.accountId ?? 0, group);
+    const joinGroupRoom = useJoinGroupRoom(conversation?.accountId ?? 0, group);
     const session = useCallSession();
-    const isInThisGroupCall = session.activeKind === 'group_call' && session.groupId === group?.id;
+    // Thẻ đang diễn ra: Tham gia đúng loại (phòng thoại hay cuộc gọi nhóm); đang ở trong rồi thì là mở lại.
+    const isRoom = call.kind === GROUP_ROOM_KIND;
+    const join = isRoom ? joinGroupRoom : joinGroupCall ? () => joinGroupCall(view.media) : null;
+    const isInThisCall = session.activeKind === (isRoom ? 'group_room' : 'group_call') && session.groupId === group?.id;
     const isOwn = orientation === ORIENTATION.RIGHT;
     // Viền tách các avatar chồng nhau cùng màu nền thẻ, để không lộ khung sáng trên thẻ của mình.
     const attendeeRing = isOwn && view.tone !== 'danger' ? 'ring-n-solid-blue' : view.tone === 'danger' ? 'ring-n-ruby-2' : 'ring-n-solid-1';
@@ -128,16 +134,16 @@ export default function CallMessageBubble() {
                         ) : null}
                     </div>
                 ) : null}
-                {view.canJoin && joinGroupCall ? (
+                {view.canJoin && join ? (
                     <Button
                         type="button"
                         sm
                         teal
                         solid
                         icon={view.icon}
-                        label={t(isInThisGroupCall ? 'CALLS.LOG.OPEN_CALL' : 'CALLS.LOG.JOIN')}
+                        label={t(isInThisCall ? (isRoom ? 'CALLS.ROOM.EXPAND' : 'CALLS.LOG.OPEN_CALL') : 'CALLS.LOG.JOIN')}
                         className={`${ACTION_ROW_CLASS} !justify-center`}
-                        onClick={() => joinGroupCall(view.media)}
+                        onClick={join}
                     />
                 ) : view.canCallBack ? (
                     <CallActivityAction call={call} tone={view.tone} className={`${ACTION_ROW_CLASS} !justify-start ${CALL_BACK_FRAMES[view.tone] ?? ''}`} />

@@ -15,6 +15,8 @@ import type { MessageAttachment } from './helpers/attachments';
 import { createReactorNameResolver } from './helpers/reactions';
 import { readInReplyToId } from './helpers/replyQuote';
 import { messageSenderKey } from './helpers/senderIdentity';
+import { callNoticeSide } from './helpers/callNotice';
+import { withoutSupersededStartNotices } from 'dashboard/calls/callLog';
 
 // Port từ dashboard/components-next/message/MessageList.vue — slot Vue
 // (beforeAll/unreadBadge/after) thành props ReactNode; gộp nhóm tin và mốc thời
@@ -55,12 +57,17 @@ const NO_REPLY_TARGETS: ReadonlyMap<number, ConversationMessage | null> = new Ma
 const STANDALONE_MESSAGE_TYPES: number[] = [MESSAGE_TYPES.TEMPLATE, MESSAGE_TYPES.ACTIVITY];
 
 // Quy tin của hộp thư về dạng luật gộp nhóm dùng chung hiểu được: khác loại tin
-// (khách/nhân viên) là khác người gửi; tin lỗi, tin mẫu, tin hoạt động đứng riêng.
+// (khách/nhân viên) là khác người gửi; tin lỗi, tin mẫu, tin hoạt động đứng riêng. Tin cuộc gọi
+// có người khởi tạo gộp cụm với tin của người đó như tin đi/tin đến thường.
 function toGroupableMessage(message: ConversationMessage): GroupableMessage {
+    const noticeSide = callNoticeSide(message);
+    const groupedType = noticeSide === null ? message.message_type : noticeSide === 'own' ? MESSAGE_TYPES.OUTGOING : MESSAGE_TYPES.INCOMING;
+
     return {
-        senderKey: `${message.message_type}:${messageSenderKey(message) ?? ''}`,
+        senderKey: `${groupedType}:${messageSenderKey(message) ?? ''}`,
         createdAt: messageSentAt(message),
-        standalone: message.status === MESSAGE_STATUS.FAILED || STANDALONE_MESSAGE_TYPES.includes(message.message_type),
+        standalone:
+            message.status === MESSAGE_STATUS.FAILED || (noticeSide === null && STANDALONE_MESSAGE_TYPES.includes(message.message_type)),
     };
 }
 
@@ -116,7 +123,9 @@ const MessageList = forwardRef<HTMLUListElement, MessageListProps>(function Mess
     },
     ref,
 ) {
-    const groupPositions = useMemo(() => resolveGroupPositions(messages.map(toGroupableMessage)), [messages]);
+    // Một sự kiện cuộc gọi một mục: tin bắt đầu đã có thẻ kết thúc thì không vẽ, kể cả khi gộp cụm.
+    const visibleMessages = useMemo(() => withoutSupersededStartNotices(messages), [messages]);
+    const groupPositions = useMemo(() => resolveGroupPositions(visibleMessages.map(toGroupableMessage)), [visibleMessages]);
     const resolveReactorName = useMemo(
         () => createReactorNameResolver(messages, groupMembers),
         [messages, groupMembers],
@@ -125,10 +134,10 @@ const MessageList = forwardRef<HTMLUListElement, MessageListProps>(function Mess
     return (
         <ul ref={ref} className={`px-4 bg-n-surface-1 ${className}`} onScroll={onScroll}>
             {beforeAll}
-            {messages.map((message, index) => (
+            {visibleMessages.map((message, index) => (
                 <Fragment key={message.id}>
                     {firstUnreadId != null && message.id === firstUnreadId && unreadBadge}
-                    {needsTimeDivider(index > 0 ? messageSentAt(messages[index - 1]) : null, messageSentAt(message)) ? (
+                    {needsTimeDivider(index > 0 ? messageSentAt(visibleMessages[index - 1]) : null, messageSentAt(message)) ? (
                         <li
                             data-testid="message-time-divider"
                             className="list-none flex justify-center py-2 text-xs font-medium text-n-slate-11"

@@ -26,8 +26,7 @@ import MessageActions from './MessageActions';
 import MessageError from './MessageError';
 import MessageMeta from './MessageMeta';
 import ActivityBubble from './bubbles/Activity';
-import { readCallLog } from 'dashboard/calls/callLog';
-import { readGroupSender } from './helpers/groupSender';
+import { callNoticeSide } from './helpers/callNotice';
 import AudioBubble from './bubbles/Audio';
 import FallbackBubble from './bubbles/Fallback';
 import LinkPreviewBubble from './bubbles/LinkPreview';
@@ -201,11 +200,9 @@ export default function Message({
         return effectiveSenderType.toLowerCase() === SENDER_TYPES.USER.toLowerCase();
     })();
 
-    // Tin cuộc gọi trong nhóm (mở phòng thoại, gọi nhóm) có người khởi tạo làm người gửi: nằm theo
-    // người đó như tin nhắn thường. Tin người khác khởi tạo mang `content_attributes.sender`.
-    const isInitiatedNotice =
-        messageType === MESSAGE_TYPES.ACTIVITY && readCallLog(contentAttributes) !== null && Boolean(message.sender_id ?? sender?.id);
-    const isOwnNotice = isInitiatedNotice && readGroupSender(contentAttributes) === null;
+    const noticeSide = callNoticeSide(message);
+    const isInitiatedNotice = noticeSide !== null;
+    const isOwnNotice = noticeSide === 'own';
 
     const orientation: MessageOrientation = (() => {
         if (isBotOrAgentMessage) return ORIENTATION.RIGHT;
