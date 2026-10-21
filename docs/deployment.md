@@ -2183,7 +2183,7 @@ Tạo `/etc/supervisor/conf.d/yona-livekit.conf`, chạy cạnh `yona-reverb`:
 
 ```ini
 [program:yona-livekit]
-command=/www/wwwroot/yona.vn/services/livekit/production.sh
+command=/bin/bash /www/wwwroot/yona.vn/services/livekit/production.sh
 directory=/www/wwwroot/yona.vn
 user=www
 autostart=true
