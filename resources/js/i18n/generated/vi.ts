@@ -2529,6 +2529,24 @@ const messages: Record<string, unknown> = {
             "MINUTES": "{n} phút",
             "SECONDS": "{n} giây"
         },
+        "DETAILS": {
+            "VIEW": "Xem chi tiết",
+            "CALLER": "Người gọi",
+            "CALLEE": "Người nhận",
+            "YOU": "{name} (bạn)",
+            "TYPE": "Loại cuộc gọi",
+            "GROUP": "Nhóm",
+            "DATE": "Ngày",
+            "RANG_AT": "Đổ chuông lúc",
+            "ANSWERED_AT": "Nghe máy lúc",
+            "OPENED_AT": "Mở phòng lúc",
+            "ENDED_AT": "Kết thúc lúc",
+            "DURATION": "Thời lượng",
+            "RESULT": "Kết quả",
+            "PARTICIPANTS": "Người tham gia ({count})",
+            "NO_PARTICIPANT_LIST": "Tin cũ không lưu danh sách người tham gia",
+            "CLOSE": "Đóng"
+        },
         "DIRECT": {
             "OPEN_CHAT": "Nhắn tin",
             "CALL_VOICE": "Gọi thoại",

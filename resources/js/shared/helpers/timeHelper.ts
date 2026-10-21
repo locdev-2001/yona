@@ -24,6 +24,7 @@ function activeDateFnsLocale(): Locale {
 const PATTERN_BY_LOCALE: Record<string, Record<string, string>> = {
     vi: {
         'h:mm a': 'HH:mm',
+        'h:mm:ss a': 'HH:mm:ss',
         'LLL d, h:mm a': 'd MMM, HH:mm',
         'LLL d y, h:mm a': 'd MMM y, HH:mm',
         'LLL d yyyy, h:mm a': 'd MMM yyyy, HH:mm',

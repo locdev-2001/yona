@@ -21,6 +21,11 @@ export interface CallLogData {
     direction?: 'inbound' | 'outbound' | null;
     outcome?: CallOutcome | null;
     duration_seconds?: number | null;
+    // Mốc thời gian ISO: 1-1 có đổ chuông/nghe máy/kết thúc, phòng nhóm có mở/đóng. Tin cũ không có.
+    rang_at?: string | null;
+    answered_at?: string | null;
+    started_at?: string | null;
+    ended_at?: string | null;
     participants?: number;
     attendees?: CallAttendee[];
     actor?: { user_id: number; name: string } | null;
@@ -39,6 +44,8 @@ export interface CallLogView {
     media: 'audio' | 'video';
     isGroup: boolean;
     canCallBack: boolean;
+    // Cuộc gọi do Yona ghi (có mã) thì mở được hộp chi tiết; cuộc gọi kênh ngoài thì không.
+    hasDetails: boolean;
     attendees: CallAttendee[];
     moreAttendees: number;
     preview: { text: string; icon: string; isAlert: boolean };
@@ -53,6 +60,9 @@ const STATUS_OUTCOMES: Record<string, CallOutcome> = {
     declined: 'declined',
     cancelled: 'canceled',
 };
+
+// Hàng avatar trên thẻ chỉ cần vài người đầu, phần còn lại hiện "+N"; hộp chi tiết liệt kê đủ.
+const LISTED_ATTENDEES = 5;
 
 const SECONDS_PER_MINUTE = 60;
 const SECONDS_PER_HOUR = 3600;
@@ -98,7 +108,7 @@ function outcomeOf(call: CallLogData): CallOutcome {
 
 function groupRoomView(call: CallLogData, groupName: string): CallLogView {
     const total = call.participants ?? call.attendees?.length ?? 0;
-    const attendees = call.attendees ?? [];
+    const attendees = (call.attendees ?? []).slice(0, LISTED_ATTENDEES);
     const duration = formatCallDuration(call.duration_seconds ?? 0);
 
     return {
@@ -110,7 +120,8 @@ function groupRoomView(call: CallLogData, groupName: string): CallLogView {
         pill: t('CALLS.LOG.STATE_ENDED'),
         media: 'audio',
         isGroup: true,
-        canCallBack: true,
+        canCallBack: false,
+        hasDetails: Boolean(call.id),
         attendees,
         moreAttendees: Math.max(0, total - attendees.length),
         preview: { text: `${t('CALLS.LOG.GROUP_ROOM')} · ${duration}`, icon: 'i-lucide-users', isAlert: false },
@@ -129,6 +140,7 @@ export function describeCall(call: CallLogData, groupName = ''): CallLogView {
         detail: null,
         media: isVideo ? ('video' as const) : ('audio' as const),
         isGroup: false,
+        hasDetails: call.kind === DIRECT_KIND && Boolean(call.id),
         attendees: [],
         moreAttendees: 0,
     };

@@ -97,6 +97,9 @@ final readonly class DirectCallTrail implements CallTrail
                     'direction' => $isCaller ? 'outbound' : 'inbound',
                     'outcome' => self::OUTCOMES[$call->status->value] ?? 'missed',
                     'duration_seconds' => $durationSeconds,
+                    'rang_at' => $call->created_at?->toIso8601String(),
+                    'answered_at' => $call->answered_at?->toIso8601String(),
+                    'ended_at' => $call->ended_at?->toIso8601String(),
                 ],
             ],
         ]);

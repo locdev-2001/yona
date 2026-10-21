@@ -12,13 +12,11 @@ use Carbon\CarbonInterval;
 // Dấu vết phòng thoại trong hội thoại nhóm: một tin khi người đầu tiên vào, một tin khi phòng
 // đóng (thời lượng, ai đã tham gia). Chỉ ghi mới, không sửa tin cũ. Tin nhóm lưu một bản chung cho
 // mọi thành viên nên lời hiển thị dịch theo người đọc từ `content_attributes.call`; `content` chỉ
-// là bản ngôn ngữ mặc định cho tìm kiếm và nơi chưa đọc dữ liệu có cấu trúc.
+// là bản ngôn ngữ mặc định cho tìm kiếm và nơi chưa đọc dữ liệu có cấu trúc. Tin đóng phòng ghi đủ
+// người đã vào (phòng tối đa 25) để hộp chi tiết liệt kê; thẻ tự cắt hàng avatar.
 final readonly class GroupRoomTrail implements CallTrail
 {
     private const DURATION_PARTS = 2;
-
-    // Hàng avatar trên thẻ chỉ cần vài người đầu, phần còn lại hiện "+N" từ tổng số.
-    private const LISTED_PARTICIPANTS = 5;
 
     public function __construct(private GroupService $groups) {}
 
@@ -60,8 +58,10 @@ final readonly class GroupRoomTrail implements CallTrail
                 'kind' => $call->kind,
                 'status' => $call->status->value,
                 'duration_seconds' => $durationSeconds,
+                'started_at' => $call->started_at->toIso8601String(),
+                'ended_at' => $call->ended_at?->toIso8601String(),
                 'participants' => $attendees->count(),
-                'attendees' => $attendees->take(self::LISTED_PARTICIPANTS)->map(fn (User $user) => [
+                'attendees' => $attendees->map(fn (User $user) => [
                     'user_id' => $user->id,
                     'name' => $user->availableName(),
                     'avatar_url' => $user->avatarUrl() ?: null,

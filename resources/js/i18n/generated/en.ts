@@ -2529,6 +2529,24 @@ const messages: Record<string, unknown> = {
             "MINUTES": "{n} minute|{n} minutes",
             "SECONDS": "{n} second|{n} seconds"
         },
+        "DETAILS": {
+            "VIEW": "View details",
+            "CALLER": "Caller",
+            "CALLEE": "Recipient",
+            "YOU": "{name} (you)",
+            "TYPE": "Call type",
+            "GROUP": "Group",
+            "DATE": "Date",
+            "RANG_AT": "Rang at",
+            "ANSWERED_AT": "Answered at",
+            "OPENED_AT": "Room opened at",
+            "ENDED_AT": "Ended at",
+            "DURATION": "Duration",
+            "RESULT": "Result",
+            "PARTICIPANTS": "Participants ({count})",
+            "NO_PARTICIPANT_LIST": "This older message has no participant list",
+            "CLOSE": "Close"
+        },
         "DIRECT": {
             "OPEN_CHAT": "Message",
             "CALL_VOICE": "Voice call",

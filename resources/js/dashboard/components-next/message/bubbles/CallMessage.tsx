@@ -1,6 +1,10 @@
+import { useState } from 'react';
+
 import Avatar from 'dashboard/components-next/avatar/Avatar';
+import Button from 'dashboard/components-next/button/Button';
 import Icon from 'dashboard/components-next/icon/Icon';
 import CallActivityAction from 'dashboard/calls/CallActivityAction';
+import CallDetailsDialog from 'dashboard/calls/CallDetailsDialog';
 import { describeCall, readCallLog } from 'dashboard/calls/callLog';
 import type { CallTone } from 'dashboard/calls/callLog';
 import { useOptionalConversation } from 'dashboard/conversation/ConversationContext';
@@ -11,10 +15,12 @@ import { useMessageContext } from '../provider';
 import { ORIENTATION } from '../constants';
 
 // Thẻ một cuộc gọi trong lịch sử chat, chung mọi kênh: ô biểu tượng tròn, tiêu đề, dòng phụ, nhãn
-// trạng thái góc phải, hàng hành động dưới cùng. Gọi đi nằm bên phải trên nền tin của mình, gọi
-// đến bên trái; đỏ chỉ dành cho cuộc gọi nhỡ hoặc thất bại.
+// trạng thái góc phải, hàng hành động dưới cùng (Gọi lại ở cuộc gọi không thành, còn lại "Xem chi
+// tiết"). Gọi đi nằm bên phải trên nền tin của mình, gọi đến bên trái; đỏ chỉ dành cho cuộc gọi nhỡ
+// hoặc thất bại.
 
 const ATTENDEE_AVATAR_SIZE = 24;
+const ATTENDEE_PLACEHOLDERS = 5;
 
 const ICON_TONES: Record<CallTone, string> = {
     success: 'bg-n-teal-3 text-n-teal-11',
@@ -39,6 +45,8 @@ const PILL_ICONS: Partial<Record<CallTone, string>> = {
     group: 'i-lucide-check',
 };
 
+const ACTION_ROW_CLASS = 'w-full !h-[2.125rem] !rounded-[0.5625rem] !text-[0.6875rem] !font-semibold';
+
 // Hàng Gọi lại ở cuộc gọi nhỡ có viền đỏ nhạt như thẻ, để nổi trên nền đỏ rất nhạt.
 const CALL_BACK_FRAMES: Partial<Record<CallTone, string>> = {
     danger: 'border border-n-ruby-5 !bg-n-ruby-3 hover:enabled:!bg-n-ruby-4',
@@ -57,6 +65,10 @@ export default function CallMessageBubble() {
     const call = readCallLog(contentAttributes) ?? {};
     const view = describeCall(call, conversation?.selectedConversation?.group?.name ?? '');
     const isOwn = orientation === ORIENTATION.RIGHT;
+    const [isDetailsOpen, setDetailsOpen] = useState(false);
+    // Tin phòng cũ chỉ lưu tổng số người, không có danh sách: hàng avatar dùng ô trống thay mặt.
+    const placeholderAttendees = view.isGroup && view.attendees.length === 0 ? Math.min(view.moreAttendees, ATTENDEE_PLACEHOLDERS) : 0;
+    const moreAttendees = view.moreAttendees - placeholderAttendees;
 
     return (
         <BaseBubble bare className="w-[320px] !max-w-full" dataBubbleName="call-message">
@@ -77,7 +89,7 @@ export default function CallMessageBubble() {
                         {view.detail ? <span className="text-[0.6875rem] leading-4 text-n-slate-11 truncate tabular-nums">{view.detail}</span> : null}
                     </span>
                 </div>
-                {view.attendees.length > 0 ? (
+                {view.attendees.length + placeholderAttendees > 0 ? (
                     <div className="flex items-center ps-12">
                         {view.attendees.map(attendee => (
                             <Avatar
@@ -89,15 +101,38 @@ export default function CallMessageBubble() {
                                 className="-me-[0.4375rem] ring-2 ring-n-solid-1"
                             />
                         ))}
-                        {view.moreAttendees > 0 ? (
+                        {Array.from({ length: placeholderAttendees }, (_, index) => (
+                            <span
+                                key={`placeholder-${index}`}
+                                className="flex items-center justify-center size-6 -me-[0.4375rem] rounded-full bg-n-slate-4 text-n-slate-10 ring-2 ring-n-solid-1"
+                            >
+                                <Icon icon="i-lucide-user-round" className="size-3.5" />
+                            </span>
+                        ))}
+                        {moreAttendees > 0 ? (
                             <span className="flex items-center justify-center h-6 min-w-6 px-1.5 ms-2 rounded-full bg-n-alpha-2 text-[0.6875rem] font-medium text-n-slate-11">
-                                {t('CALLS.LOG.MORE', { count: view.moreAttendees })}
+                                {t('CALLS.LOG.MORE', { count: moreAttendees })}
                             </span>
                         ) : null}
                     </div>
                 ) : null}
-                {view.canCallBack ? <CallActivityAction call={call} tone={view.tone} className={`w-full !justify-start !h-[2.125rem] !rounded-[0.5625rem] !text-[0.6875rem] !font-semibold ${CALL_BACK_FRAMES[view.tone] ?? ''}`} /> : null}
+                {view.canCallBack ? (
+                    <CallActivityAction call={call} tone={view.tone} className={`${ACTION_ROW_CLASS} !justify-start ${CALL_BACK_FRAMES[view.tone] ?? ''}`} />
+                ) : view.hasDetails ? (
+                    <Button
+                        type="button"
+                        sm
+                        faded
+                        slate
+                        trailingIcon
+                        icon="i-lucide-chevron-right"
+                        label={t('CALLS.DETAILS.VIEW')}
+                        className={`${ACTION_ROW_CLASS} !justify-between !font-medium`}
+                        onClick={() => setDetailsOpen(true)}
+                    />
+                ) : null}
             </div>
+            {isDetailsOpen ? <CallDetailsDialog call={call} view={view} onClose={() => setDetailsOpen(false)} /> : null}
         </BaseBubble>
     );
 }

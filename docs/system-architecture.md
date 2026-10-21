@@ -675,7 +675,9 @@ POST /webhooks/media/{provider} ─► MediaDrivers ─► MediaWebhooks ─► 
   `DirectCallTrail` để lại mỗi bên một tin nhật ký cuộc gọi như tin nhắn thường (người gọi tin
   đi, người nhận tin đến, chung `source_id` `yona-call:{id}` nên không gửi ra kênh, không ghi
   trùng); `content_attributes.call` theo hợp đồng nhật ký cuộc gọi chung mọi kênh (`media`,
-  `direction`, `outcome`, `duration_seconds`), thẻ `CallMessage` và dòng xem trước đọc chung
+  `direction`, `outcome`, `duration_seconds`, mốc `rang_at`/`answered_at`/`ended_at` cho hộp
+  chi tiết; tin đóng phòng nhóm ghi `started_at`/`ended_at` và đủ `attendees`), thẻ
+  `CallMessage`, hộp `CallDetailsDialog` và dòng xem trước đọc chung
   `resources/js/dashboard/calls/callLog.ts`; `DirectCallPresence`
   kết thúc cuộc khi một bên rời sau khi đã nghe máy, huỷ khi người gọi bỏ đi lúc còn đổ chuông.
   API: `GET|POST /yona/conversations/{id}/call`, `GET /yona/calls/current`,
