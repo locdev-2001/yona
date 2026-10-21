@@ -1,8 +1,9 @@
-import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { router } from '@inertiajs/react';
 import { parseApiErrorMessage } from 'dashboard/helper/apiClient';
 import { useAlert } from 'dashboard/composables/useAlert';
+import { useIsPhoneScreen } from 'dashboard/composables/useViewportWidth';
 import { conversationUrl } from 'dashboard/helper/URLHelper';
 import { emitter } from 'shared/helpers/emitter';
 import {
@@ -31,8 +32,6 @@ import type { MediaSessionEnd, MediaSessionHandle, MediaSessionState } from './m
 
 // Lớp media chỉ tải khi vào phòng, để các trang khác không phải tải thư viện LiveKit.
 const LiveKitSession = lazy(() => import('./LiveKitSession'));
-
-const PHONE_MAX_WIDTH = 768;
 
 const DIRECT_CALL_UPDATED = 'direct_call.updated';
 
@@ -70,22 +69,12 @@ const SCREEN_SOURCE = 'screen';
 
 const LIVE_GROUP_CALL_STATUSES = ['ringing', 'active'];
 
-const WIDE_VIEWPORT_QUERY = `(min-width: ${PHONE_MAX_WIDTH}px)`;
-
-// Màn đủ rộng để chia sẻ màn hình (trình duyệt điện thoại không có getDisplayMedia); đọc lại khi
-// khung nhìn đổi bề rộng.
+// Chia sẻ màn hình chỉ trên màn rộng (trình duyệt điện thoại không có getDisplayMedia); đọc theo
+// bề rộng hiện tại nên thu khung nhìn xuống cỡ điện thoại thì nút ẩn ngay.
 function useCanShareScreen(): boolean {
-    const isWide = useSyncExternalStore(
-        listener => {
-            const query = window.matchMedia(WIDE_VIEWPORT_QUERY);
-            query.addEventListener('change', listener);
-            return () => query.removeEventListener('change', listener);
-        },
-        () => window.matchMedia(WIDE_VIEWPORT_QUERY).matches,
-        () => false,
-    );
+    const isPhone = useIsPhoneScreen();
 
-    return isWide && typeof navigator !== 'undefined' && Boolean(navigator.mediaDevices?.getDisplayMedia);
+    return !isPhone && typeof navigator !== 'undefined' && Boolean(navigator.mediaDevices?.getDisplayMedia);
 }
 
 const directConversationUrl = ({ account_id, call }: DirectCallPayload) => conversationUrl({ accountId: account_id, id: call.conversation_id });
