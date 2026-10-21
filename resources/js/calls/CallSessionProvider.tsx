@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import type { ReactNode } from 'react';
 import { router } from '@inertiajs/react';
 import { parseApiErrorMessage } from 'dashboard/helper/apiClient';
@@ -7,18 +7,24 @@ import { conversationUrl } from 'dashboard/helper/URLHelper';
 import { emitter } from 'shared/helpers/emitter';
 import {
     acceptDirectCall,
+    declineGroupCall,
     fetchCurrentDirectCall,
     fetchGroupRoom,
+    fetchRingingGroupCalls,
     hangUpDirectCall,
+    joinGroupCall as requestGroupCall,
     joinGroupRoom,
+    muteGroupCallParticipant,
     muteGroupRoomParticipant,
+    removeGroupCallParticipant,
     removeGroupRoomParticipant,
     startDirectCall as requestDirectCall,
 } from 'dashboard/calls/api';
-import type { CallTicket, DirectCallJoinResponse, DirectCallPayload } from 'dashboard/calls/api';
+import type { CallJoinResponse, CallTicket, DirectCallJoinResponse, DirectCallPayload, GroupCallPayload } from 'dashboard/calls/api';
+import { GROUP_CALL_UPDATED } from 'dashboard/calls/groupCalls';
 import { CallSessionContext } from 'dashboard/calls/callSession';
 import { userIdOfIdentity } from 'dashboard/calls/participantIdentity';
-import type { CallSession, DirectCallState, JoinGroupRoomRequest, StartDirectCallRequest } from 'dashboard/calls/callSession';
+import type { ActiveCallKind, CallSession, DirectCallState, GroupRingState, JoinGroupCallRequest, JoinGroupRoomRequest, StartDirectCallRequest } from 'dashboard/calls/callSession';
 import type { CallActions, CallLocalState, CallMediaKind, CallRoomView } from 'dashboard/calls/types';
 import { t } from '../i18n';
 import type { MediaSessionEnd, MediaSessionHandle, MediaSessionState } from './mediaSession';
@@ -30,8 +36,9 @@ const PHONE_MAX_WIDTH = 768;
 
 const DIRECT_CALL_UPDATED = 'direct_call.updated';
 
-// Phòng đang nối: phòng thoại nhóm (có `groupId`) hoặc cuộc gọi 1-1.
+// Phòng đang nối: phòng thoại nhóm, cuộc gọi nhóm (cả hai có `groupId`) hoặc cuộc gọi 1-1.
 interface ActiveCall {
+    kind: ActiveCallKind;
     callId: number;
     accountId: number;
     title: string;
@@ -61,8 +68,25 @@ const LIVE_DIRECT_STATUSES = ['ringing', 'active'];
 const CAMERA_SOURCE = 'camera';
 const SCREEN_SOURCE = 'screen';
 
-const canShareScreen = () =>
-    typeof navigator !== 'undefined' && Boolean(navigator.mediaDevices?.getDisplayMedia) && window.innerWidth >= PHONE_MAX_WIDTH;
+const LIVE_GROUP_CALL_STATUSES = ['ringing', 'active'];
+
+const WIDE_VIEWPORT_QUERY = `(min-width: ${PHONE_MAX_WIDTH}px)`;
+
+// Màn đủ rộng để chia sẻ màn hình (trình duyệt điện thoại không có getDisplayMedia); đọc lại khi
+// khung nhìn đổi bề rộng.
+function useCanShareScreen(): boolean {
+    const isWide = useSyncExternalStore(
+        listener => {
+            const query = window.matchMedia(WIDE_VIEWPORT_QUERY);
+            query.addEventListener('change', listener);
+            return () => query.removeEventListener('change', listener);
+        },
+        () => window.matchMedia(WIDE_VIEWPORT_QUERY).matches,
+        () => false,
+    );
+
+    return isWide && typeof navigator !== 'undefined' && Boolean(navigator.mediaDevices?.getDisplayMedia);
+}
 
 const directConversationUrl = ({ account_id, call }: DirectCallPayload) => conversationUrl({ accountId: account_id, id: call.conversation_id });
 
@@ -75,7 +99,9 @@ export default function CallSessionProvider({ children }: { children: ReactNode 
     const [stageOpen, setStageOpen] = useState(false);
     const [deafened, setDeafened] = useState(false);
     const [media, setMedia] = useState<MediaSessionState>(EMPTY_MEDIA);
+    const [groupRing, setGroupRing] = useState<GroupRingState | null>(null);
     const handleRef = useRef<MediaSessionHandle | null>(null);
+    const canShareScreen = useCanShareScreen();
 
     const self = media.participants.find(participant => participant.isLocal) ?? null;
 
@@ -83,6 +109,8 @@ export default function CallSessionProvider({ children }: { children: ReactNode 
     activeRef.current = active;
     const directRef = useRef<DirectCallState | null>(null);
     directRef.current = direct;
+    const groupRingRef = useRef<GroupRingState | null>(null);
+    groupRingRef.current = groupRing;
 
     const endCall = useCallback(() => {
         handleRef.current = null;
@@ -113,14 +141,14 @@ export default function CallSessionProvider({ children }: { children: ReactNode 
             endCall();
 
             // Cuộc 1-1 đóng phòng vì một bên đã cúp: trạng thái cuối đến qua sự kiện, không báo lỗi.
-            if (endedCall?.groupId === null) {
+            if (endedCall?.kind === 'direct') {
                 setDirect(null);
                 return;
             }
 
             // Bị đưa ra vì đã rời nhóm (kể cả từ thiết bị khác) khác với bị quản trị mời ra: hỏi
             // lại máy chủ xem mình còn trong nhóm không.
-            if (reason === 'removed' && endedCall?.groupId) {
+            if (reason === 'removed' && endedCall?.kind === 'group_room' && endedCall.groupId) {
                 fetchGroupRoom(endedCall.accountId, endedCall.groupId)
                     .then(() => useAlert(t('CALLS.ROOM.REMOVED_YOU')))
                     .catch(() => useAlert(t('CALLS.ROOM.LEFT_GROUP')));
@@ -135,9 +163,46 @@ export default function CallSessionProvider({ children }: { children: ReactNode 
 
     const showApiError = (error: unknown) => useAlert(parseApiErrorMessage(error) ?? t('CALLS.ROOM.CONNECTION_LOST'));
 
+    // Mỗi người chỉ ở một cuộc gọi: vào cuộc mới thì rời cuộc đang ở. Rời cuộc 1-1 là cúp máy cho cả
+    // hai; phòng hay cuộc gọi nhóm thì chỉ mình ra (máy chủ cũng tự đưa mình khỏi phòng cũ).
+    const leaveCurrentCall = useCallback(() => {
+        const current = directRef.current;
+        if (current) {
+            setDirect(null);
+            hangUpDirectCall(current.accountId, current.view.id).catch(() => undefined);
+        }
+        if (activeRef.current) endCall();
+    }, [endCall]);
+
+    // Vé vào phòng hay cuộc gọi nhóm: nối phòng và mở màn lớn.
+    const connectGroup = useCallback(
+        (kind: 'group_room' | 'group_call', request: JoinGroupRoomRequest, response: CallJoinResponse, startsWithCamera: boolean) => {
+            if (!response.ticket) return;
+            handleRef.current = null;
+            setMedia(EMPTY_MEDIA);
+            setActive({
+                kind,
+                callId: response.call.id,
+                accountId: request.accountId,
+                title: request.title,
+                conversationUrl: request.conversationUrl,
+                startedAt: response.call.started_at ?? new Date().toISOString(),
+                ticket: response.ticket,
+                groupId: request.groupId,
+                canModerate: request.canModerate,
+                startsWithCamera,
+                publishableSources: response.publishable_sources,
+            });
+            setStageOpen(true);
+        },
+        [],
+    );
+
+    const isInGroup = (kind: ActiveCallKind, groupId: number) => activeRef.current?.kind === kind && activeRef.current.groupId === groupId;
+
     const joinGroup = useCallback(
         (request: JoinGroupRoomRequest) => {
-            if (active?.groupId === request.groupId) {
+            if (isInGroup('group_room', request.groupId)) {
                 setStageOpen(true);
                 return;
             }
@@ -145,27 +210,34 @@ export default function CallSessionProvider({ children }: { children: ReactNode 
             setJoining(true);
             joinGroupRoom(request.accountId, request.groupId)
                 .then(response => {
-                    if (!response.ticket) return;
-                    handleRef.current = null;
-                    setMedia(EMPTY_MEDIA);
-                    setActive({
-                        callId: response.call.id,
-                        accountId: request.accountId,
-                        title: request.title,
-                        conversationUrl: request.conversationUrl,
-                        startedAt: response.call.started_at ?? new Date().toISOString(),
-                        ticket: response.ticket,
-                        groupId: request.groupId,
-                        canModerate: request.canModerate,
-                        startsWithCamera: false,
-                        publishableSources: response.publishable_sources,
-                    });
-                    setStageOpen(true);
+                    leaveCurrentCall();
+                    connectGroup('group_room', request, response, false);
                 })
                 .catch(showApiError)
                 .finally(() => setJoining(false));
         },
-        [active?.groupId],
+        [connectGroup, leaveCurrentCall],
+    );
+
+    // Gọi nhóm (nhóm chưa có cuộc gọi thì đổ chuông cả nhóm) hoặc vào cuộc gọi nhóm đang diễn ra.
+    const joinGroupCall = useCallback(
+        (request: JoinGroupCallRequest) => {
+            if (isInGroup('group_call', request.groupId)) {
+                setStageOpen(true);
+                return;
+            }
+
+            setJoining(true);
+            requestGroupCall(request.accountId, request.groupId, request.media)
+                .then(response => {
+                    setGroupRing(ring => (ring?.payload.group_id === request.groupId ? null : ring));
+                    leaveCurrentCall();
+                    connectGroup('group_call', request, response, request.media === 'video');
+                })
+                .catch(showApiError)
+                .finally(() => setJoining(false));
+        },
+        [connectGroup, leaveCurrentCall],
     );
 
     // Vé 1-1 (người gọi lúc bắt đầu, người nhận lúc nghe máy): nối phòng và ghi trạng thái cuộc gọi.
@@ -177,6 +249,7 @@ export default function CallSessionProvider({ children }: { children: ReactNode 
         handleRef.current = null;
         setMedia(EMPTY_MEDIA);
         setActive({
+            kind: 'direct',
             callId: payload.call.id,
             accountId: payload.account_id,
             title: payload.call.peer.name,
@@ -193,18 +266,16 @@ export default function CallSessionProvider({ children }: { children: ReactNode 
 
     const startDirect = useCallback(
         ({ accountId, conversation, media }: StartDirectCallRequest) => {
-            if (activeRef.current || directRef.current) {
-                useAlert(t('CALLS.ERRORS.YOU_BUSY'));
-                return;
-            }
-
             setJoining(true);
             requestDirectCall(accountId, conversation.id, media)
-                .then(response => connectDirect(response, media, false))
+                .then(response => {
+                    leaveCurrentCall();
+                    connectDirect(response, media, false);
+                })
                 .catch(showApiError)
                 .finally(() => setJoining(false));
         },
-        [connectDirect],
+        [connectDirect, leaveCurrentCall],
     );
 
     const recoverDirect = useCallback((accountId: number) => {
@@ -219,12 +290,23 @@ export default function CallSessionProvider({ children }: { children: ReactNode 
             .catch(() => undefined);
     }, []);
 
+    const recoverRinging = useCallback((accountId: number) => {
+        fetchRingingGroupCalls(accountId)
+            .then(({ group_calls: ringing }) => {
+                const [first] = ringing;
+                if (!first || groupRingRef.current || activeRef.current) return;
+                setGroupRing({ payload: first, isExpanded: false });
+            })
+            .catch(() => undefined);
+        recoverDirect(accountId);
+    }, [recoverDirect]);
+
     const hangUpDirect = useCallback(() => {
         const current = directRef.current;
         if (!current) return;
 
         setDirect(null);
-        if (activeRef.current?.groupId === null) endCall();
+        if (activeRef.current?.kind === 'direct') endCall();
         hangUpDirectCall(current.accountId, current.view.id).catch(() => undefined);
     }, [endCall]);
 
@@ -234,7 +316,7 @@ export default function CallSessionProvider({ children }: { children: ReactNode 
             const { account_id: accountId, call } = payload as DirectCallPayload;
             const current = directRef.current;
             const isCurrent = current?.view.id === call.id;
-            const isConnectedHere = activeRef.current?.groupId === null && activeRef.current.callId === call.id;
+            const isConnectedHere = activeRef.current?.kind === 'direct' && activeRef.current.callId === call.id;
 
             if (!LIVE_DIRECT_STATUSES.includes(call.status)) {
                 if (!isCurrent) return;
@@ -244,8 +326,9 @@ export default function CallSessionProvider({ children }: { children: ReactNode 
             }
 
             if (call.status === 'ringing' && call.role === 'callee') {
-                // Đang bận cuộc khác thì không đổ chuông ở đây; máy chủ đã chặn trường hợp này.
-                if (!current && !activeRef.current) setDirect({ view: call, accountId, isExpanded: false });
+                // Đang ở phòng hay cuộc gọi nhóm vẫn đổ chuông: nghe máy là rời chỗ cũ. Đang có cuộc 1-1
+                // khác thì máy chủ đã báo bận cho người gọi.
+                if (!current) setDirect({ view: call, accountId, isExpanded: false });
                 return;
             }
 
@@ -276,7 +359,11 @@ export default function CallSessionProvider({ children }: { children: ReactNode 
                 if (!current) return;
                 setJoining(true);
                 acceptDirectCall(current.accountId, current.view.id, media)
-                    .then(response => connectDirect(response, media, true))
+                    .then(response => {
+                        // Nghe máy là rời phòng hay cuộc gọi đang ở (cuộc 1-1 đang đổ chuông này thì giữ).
+                        if (activeRef.current) endCall();
+                        connectDirect(response, media, true);
+                    })
                     .catch(error => {
                         setDirect(null);
                         showApiError(error);
@@ -286,7 +373,7 @@ export default function CallSessionProvider({ children }: { children: ReactNode 
             hangUp: hangUpDirect,
             expand: () => {
                 setDirect(state => (state ? { ...state, isExpanded: true } : state));
-                if (activeRef.current?.groupId === null && directRef.current?.view.status === 'active') setStageOpen(true);
+                if (activeRef.current?.kind === 'direct' && directRef.current?.view.status === 'active') setStageOpen(true);
             },
             collapse: () => {
                 setDirect(state => (state ? { ...state, isExpanded: false } : state));
@@ -300,7 +387,61 @@ export default function CallSessionProvider({ children }: { children: ReactNode 
                 router.visit(directConversationUrl({ account_id: current.accountId, call: current.view }), { preserveState: true });
             },
         }),
-        [connectDirect, hangUpDirect],
+        [connectDirect, endCall, hangUpDirect],
+    );
+
+    // Sự kiện cuộc gọi nhóm, cho mọi tab của mình: đổ chuông khi được mời, thôi đổ khi mình đã nghe
+    // hay từ chối ở nơi khác, rời màn gọi khi cuộc gọi đã kết thúc.
+    useEffect(() => {
+        const onGroupCallUpdated = (payload: unknown) => {
+            const update = payload as GroupCallPayload;
+            const call = update.group_call;
+            const isLive = call !== null && LIVE_GROUP_CALL_STATUSES.includes(call.status);
+            const isRingingMe = isLive && call.my_invitation === 'ringing';
+            const isInThisCall = activeRef.current?.kind === 'group_call' && activeRef.current.groupId === update.group_id;
+
+            if (!isLive && isInThisCall) endCall();
+
+            setGroupRing(ring => {
+                if (ring && ring.payload.group_id === update.group_id) return isRingingMe ? { ...ring, payload: update } : null;
+                return !ring && isRingingMe && !isInThisCall ? { payload: update, isExpanded: false } : ring;
+            });
+        };
+
+        emitter.on(GROUP_CALL_UPDATED, onGroupCallUpdated);
+        return () => emitter.off(GROUP_CALL_UPDATED, onGroupCallUpdated);
+    }, [endCall]);
+
+    const groupRingActions = useMemo(
+        () => ({
+            accept: (media: CallMediaKind) => {
+                const ring = groupRingRef.current;
+                if (!ring) return;
+                joinGroupCall({
+                    accountId: ring.payload.account_id,
+                    groupId: ring.payload.group_id,
+                    title: ring.payload.group.name,
+                    conversationUrl: conversationUrl({ accountId: ring.payload.account_id, id: ring.payload.conversation_id }),
+                    canModerate: ring.payload.my_role === 'admin',
+                    media,
+                });
+            },
+            decline: () => {
+                const ring = groupRingRef.current;
+                if (!ring) return;
+                setGroupRing(null);
+                declineGroupCall(ring.payload.account_id, ring.payload.group_id).catch(() => undefined);
+            },
+            expand: () => setGroupRing(ring => (ring ? { ...ring, isExpanded: true } : ring)),
+            collapse: () => setGroupRing(ring => (ring ? { ...ring, isExpanded: false } : ring)),
+            openChat: () => {
+                const ring = groupRingRef.current;
+                if (!ring) return;
+                setGroupRing({ ...ring, isExpanded: false });
+                router.visit(conversationUrl({ accountId: ring.payload.account_id, id: ring.payload.conversation_id }), { preserveState: true });
+            },
+        }),
+        [joinGroupCall],
     );
 
     const moderate = useCallback(
@@ -321,7 +462,7 @@ export default function CallSessionProvider({ children }: { children: ReactNode 
             listDevices: kind => handleRef.current?.listDevices(kind) ?? Promise.resolve([]),
             selectDevice: (kind, deviceId) => runOnMedia(handle => handle.selectDevice(kind, deviceId)),
             // Rời cuộc 1-1 là cúp máy cho cả hai; rời phòng nhóm chỉ là mình ra.
-            leave: () => (active?.groupId === null ? hangUpDirect() : endCall()),
+            leave: () => (active?.kind === 'direct' ? hangUpDirect() : endCall()),
             expand: () => setStageOpen(true),
             minimize: () => {
                 setStageOpen(false);
@@ -332,14 +473,14 @@ export default function CallSessionProvider({ children }: { children: ReactNode 
                 setDirect(state => (state ? { ...state, isExpanded: false } : state));
                 if (active) router.visit(active.conversationUrl, { preserveState: true });
             },
-            muteParticipant: identity => moderate(identity, muteGroupRoomParticipant),
-            removeParticipant: identity => moderate(identity, removeGroupRoomParticipant),
+            muteParticipant: identity => moderate(identity, active?.kind === 'group_call' ? muteGroupCallParticipant : muteGroupRoomParticipant),
+            removeParticipant: identity => moderate(identity, active?.kind === 'group_call' ? removeGroupCallParticipant : removeGroupRoomParticipant),
         }),
         [active, endCall, hangUpDirect, moderate, runOnMedia, self?.camOn, self?.isSharingScreen, self?.micOn],
     );
 
     // Cuộc 1-1 còn đổ chuông thì chưa là "phòng đã kết nối": khối Đã kết nối chỉ hiện khi đã nghe máy.
-    const isRingingDirect = active?.groupId === null && direct?.view.status === 'ringing';
+    const isRingingDirect = active?.kind === 'direct' && direct?.view.status === 'ringing';
     const room: CallRoomView | null = active && !isRingingDirect
         ? {
               callId: active.callId,
@@ -356,7 +497,7 @@ export default function CallSessionProvider({ children }: { children: ReactNode 
         sharingScreen: self?.isSharingScreen ?? false,
         deafened,
         canUseCamera: active?.publishableSources.includes(CAMERA_SOURCE) ?? false,
-        canShareScreen: canShareScreen() && (active?.publishableSources.includes(SCREEN_SOURCE) ?? false),
+        canShareScreen: canShareScreen && (active?.publishableSources.includes(SCREEN_SOURCE) ?? false),
         canModerate: active?.canModerate ?? false,
     };
 
@@ -366,12 +507,16 @@ export default function CallSessionProvider({ children }: { children: ReactNode 
         stageOpen: Boolean(active) && stageOpen,
         isJoining,
         groupId: active?.groupId ?? null,
+        activeKind: active?.kind ?? null,
         sharer: media.participants.find(participant => participant.isSharingScreen) ?? null,
         actions,
         renderMedia: media.renderMedia,
         joinGroupRoom: joinGroup,
+        joinGroupCall,
         startDirectCall: startDirect,
-        recoverDirectCall: recoverDirect,
+        recoverRingingCalls: recoverRinging,
+        groupRing,
+        groupRingActions,
         direct,
         directActions,
         selfIdentity: self?.identity ?? null,

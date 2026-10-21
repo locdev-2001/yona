@@ -5,6 +5,9 @@ import Button from 'dashboard/components-next/button/Button';
 import Icon from 'dashboard/components-next/icon/Icon';
 import CallActivityAction from 'dashboard/calls/CallActivityAction';
 import CallDetailsDialog from 'dashboard/calls/CallDetailsDialog';
+import { useJoinGroupCall } from 'dashboard/calls/GroupCallButtons';
+import { useGroupCall } from 'dashboard/calls/groupCalls';
+import { useCallSession } from 'dashboard/calls/callSession';
 import { describeCall, readCallLog } from 'dashboard/calls/callLog';
 import type { CallTone } from 'dashboard/calls/callLog';
 import { useOptionalConversation } from 'dashboard/conversation/ConversationContext';
@@ -28,6 +31,7 @@ const ICON_TONES: Record<CallTone, string> = {
     info: 'bg-n-blue-3 text-n-blue-11',
     neutral: 'bg-n-alpha-2 text-n-slate-11',
     group: 'bg-n-violet-3 text-n-violet-11',
+    live: 'bg-n-teal-3 text-n-teal-11',
 };
 
 const PILL_TONES: Record<CallTone, string> = {
@@ -36,6 +40,7 @@ const PILL_TONES: Record<CallTone, string> = {
     info: 'bg-n-blue-3 text-n-blue-11',
     neutral: 'bg-n-alpha-2 text-n-slate-11',
     group: 'bg-n-blue-3 text-n-blue-11',
+    live: 'bg-n-teal-3 text-n-teal-11',
 };
 
 // Nhỡ/không thành dùng chính biểu tượng của thẻ (nhỡ, từ chối, huỷ khác nhau).
@@ -43,6 +48,7 @@ const PILL_ICONS: Partial<Record<CallTone, string>> = {
     success: 'i-lucide-phone',
     info: 'i-lucide-check',
     group: 'i-lucide-check',
+    live: 'i-lucide-audio-lines',
 };
 
 const ACTION_ROW_CLASS = 'w-full !h-[2.125rem] !rounded-[0.5625rem] !text-[0.6875rem] !font-semibold';
@@ -63,7 +69,11 @@ export default function CallMessageBubble() {
     const { contentAttributes, orientation } = useMessageContext();
     const conversation = useOptionalConversation();
     const call = readCallLog(contentAttributes) ?? {};
-    const view = describeCall(call, conversation?.selectedConversation?.group?.name ?? '');
+    const group = conversation?.selectedConversation?.group ?? null;
+    const view = describeCall(call, group?.name ?? '', useGroupCall(group));
+    const joinGroupCall = useJoinGroupCall(conversation?.accountId ?? 0, group);
+    const session = useCallSession();
+    const isInThisGroupCall = session.activeKind === 'group_call' && session.groupId === group?.id;
     const isOwn = orientation === ORIENTATION.RIGHT;
     const [isDetailsOpen, setDetailsOpen] = useState(false);
     // Tin phòng cũ chỉ lưu tổng số người, không có danh sách: hàng avatar dùng ô trống thay mặt.
@@ -116,7 +126,18 @@ export default function CallMessageBubble() {
                         ) : null}
                     </div>
                 ) : null}
-                {view.canCallBack ? (
+                {view.canJoin && joinGroupCall ? (
+                    <Button
+                        type="button"
+                        sm
+                        teal
+                        solid
+                        icon={view.icon}
+                        label={t(isInThisGroupCall ? 'CALLS.LOG.OPEN_CALL' : 'CALLS.LOG.JOIN')}
+                        className={`${ACTION_ROW_CLASS} !justify-center`}
+                        onClick={() => joinGroupCall(view.media)}
+                    />
+                ) : view.canCallBack ? (
                     <CallActivityAction call={call} tone={view.tone} className={`${ACTION_ROW_CLASS} !justify-start ${CALL_BACK_FRAMES[view.tone] ?? ''}`} />
                 ) : view.hasDetails ? (
                     <Button

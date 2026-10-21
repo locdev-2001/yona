@@ -1,5 +1,6 @@
 import { deleteJson, getJson, postJson } from 'dashboard/helper/apiClient';
-import type { CallMediaKind, DirectCallView, OpenRoomSummary } from './types';
+import type { ConversationGroupAvatar } from 'shared/avatar/avatarSeed';
+import type { CallMediaKind, DirectCallView, GroupCallSummary, OpenRoomSummary } from './types';
 
 // Vé vào phòng nhận từ máy chủ; lớp media dùng `server_url` + `token` để kết nối.
 export interface CallTicket {
@@ -40,6 +41,32 @@ export const removeGroupRoomParticipant = (accountId: number, groupId: number, u
     deleteJson(`${groupCallUrl(accountId, groupId)}/participants/${userId}`);
 
 const yonaUrl = (accountId: number) => `/api/v1/accounts/${accountId}/yona`;
+
+// Cuộc gọi nhóm nhìn từ một thành viên, cùng hình với sự kiện realtime `group_call.updated`.
+export interface GroupCallPayload {
+    account_id: number;
+    conversation_id: number;
+    group_id: number;
+    my_role: 'admin' | 'member';
+    group: ConversationGroupAvatar & { name: string };
+    group_call: GroupCallSummary | null;
+    group_call_as_of: number;
+}
+
+const groupCallingUrl = (accountId: number, groupId: number) => `${yonaUrl(accountId)}/groups/${groupId}/group_call`;
+
+export const joinGroupCall = (accountId: number, groupId: number, media: CallMediaKind) =>
+    postJson<CallJoinResponse>(groupCallingUrl(accountId, groupId), { media });
+
+export const declineGroupCall = (accountId: number, groupId: number) => deleteJson(groupCallingUrl(accountId, groupId));
+
+export const fetchRingingGroupCalls = (accountId: number) => getJson<{ group_calls: GroupCallPayload[] }>(`${yonaUrl(accountId)}/group_calls/ringing`);
+
+export const muteGroupCallParticipant = (accountId: number, groupId: number, userId: number) =>
+    postJson(`${groupCallingUrl(accountId, groupId)}/participants/${userId}/mute`, {});
+
+export const removeGroupCallParticipant = (accountId: number, groupId: number, userId: number) =>
+    deleteJson(`${groupCallingUrl(accountId, groupId)}/participants/${userId}`);
 
 export const fetchDirectCallEligibility = (accountId: number, conversationId: number) =>
     getJson<{ callable: boolean }>(`${yonaUrl(accountId)}/conversations/${conversationId}/call`);

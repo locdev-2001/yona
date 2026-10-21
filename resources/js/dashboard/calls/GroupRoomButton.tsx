@@ -42,6 +42,6 @@ export default function GroupRoomButton({
     if (!join) return null;
 
     return (
-        <JoinRoomButton openRoom={openRoom} isInRoom={call.groupId === group.id} isCompact={isCompact} onJoin={join} className={className} />
+        <JoinRoomButton openRoom={openRoom} isInRoom={call.activeKind === 'group_room' && call.groupId === group.id} isCompact={isCompact} onJoin={join} className={className} />
     );
 }

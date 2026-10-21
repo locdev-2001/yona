@@ -12,12 +12,13 @@ import { formatInLocale, parseStoredTimestamp } from 'shared/helpers/timeHelper'
 
 import { t } from '../../i18n';
 import CallActivityAction from './CallActivityAction';
-import { formatCallDuration } from './callLog';
+import { useJoinGroupCall } from './GroupCallButtons';
+import { GROUP_CALL_KIND, formatCallDuration } from './callLog';
 import type { CallLogData, CallLogView } from './callLog';
 
 // Hộp chi tiết một cuộc gọi mở từ hàng "Xem chi tiết" trên thẻ: ai gọi ai, thoại hay video, các
-// mốc giờ, thời lượng, kết quả; phòng nhóm thì danh sách người đã vào. Đọc thẳng dữ liệu tin cuộc
-// gọi; tin cũ thiếu mốc nào thì hiện gạch ngang.
+// mốc giờ, thời lượng, kết quả; phòng thoại và cuộc gọi nhóm thì danh sách người đã vào. Đọc thẳng
+// dữ liệu tin cuộc gọi; tin cũ thiếu mốc nào thì hiện gạch ngang.
 
 const PERSON_AVATAR_SIZE = 32;
 const ATTENDEE_AVATAR_SIZE = 28;
@@ -67,7 +68,10 @@ function PersonCell({ label, person }: { label: string; person: Person }) {
 export default function CallDetailsDialog({ call, view, onClose }: { call: CallLogData; view: CallLogView; onClose: () => void }) {
     const dialogRef = useRef<DialogHandle>(null);
     const { auth } = usePage<DashboardPageProps>().props;
-    const conversation = useOptionalConversation()?.selectedConversation ?? null;
+    const conversationContext = useOptionalConversation();
+    const conversation = conversationContext?.selectedConversation ?? null;
+    const isGroupCall = call.kind === GROUP_CALL_KIND;
+    const joinGroupCall = useJoinGroupCall(conversationContext?.accountId ?? 0, isGroupCall ? (conversation?.group ?? null) : null);
 
     useEffect(() => {
         dialogRef.current?.open();
@@ -85,7 +89,16 @@ export default function CallDetailsDialog({ call, view, onClose }: { call: CallL
     };
     const isOutbound = call.direction === 'outbound';
     const attendees = call.attendees ?? [];
-    const firstStamp = view.isGroup ? call.started_at : call.rang_at;
+    // Phòng thoại không đổ chuông: mốc đầu là lúc mở phòng; gọi 1-1 và gọi nhóm là lúc đổ chuông.
+    const isRoom = view.isGroup && !isGroupCall;
+    const firstStamp = isRoom ? call.started_at : call.rang_at;
+    const callBack = isGroupCall ? (
+        joinGroupCall ? (
+            <Button type="button" faded slate icon={view.icon} label={t('CALLS.DIRECT.CALL_BACK')} className="w-full" onClick={() => joinGroupCall(view.media)} />
+        ) : null
+    ) : (
+        <CallActivityAction call={call} size="md" className="w-full" />
+    );
     const duration = call.duration_seconds == null ? MISSING_VALUE : formatCallDuration(call.duration_seconds);
 
     return (
@@ -97,12 +110,12 @@ export default function CallDetailsDialog({ call, view, onClose }: { call: CallL
             showConfirmButton={false}
             onClose={onClose}
             footer={
-                <div className={`grid gap-3 w-full ${view.isGroup ? 'grid-cols-1' : 'grid-cols-2'}`}>
+                <div className={`grid gap-3 w-full ${isRoom ? 'grid-cols-1' : 'grid-cols-2'}`}>
                     <Button type="button" faded slate label={t('CALLS.DETAILS.CLOSE')} className="w-full" onClick={() => dialogRef.current?.close()} />
-                    {view.isGroup ? null : (
+                    {isRoom ? null : (
                         // Gọi lại mở màn gọi; hộp đóng sau cú bấm để không che màn gọi.
                         <span className="flex min-w-0" onClick={() => dialogRef.current?.close()}>
-                            <CallActivityAction call={call} size="md" className="w-full" />
+                            {callBack}
                         </span>
                     )}
                 </div>
@@ -119,13 +132,13 @@ export default function CallDetailsDialog({ call, view, onClose }: { call: CallL
                     </div>
                 )}
                 <dl className="flex flex-col">
-                    {view.isGroup ? (
-                        <DetailRow label={t('CALLS.DETAILS.GROUP')}>{conversation?.group?.name ?? MISSING_VALUE}</DetailRow>
-                    ) : (
+                    {view.isGroup ? <DetailRow label={t('CALLS.DETAILS.GROUP')}>{conversation?.group?.name ?? MISSING_VALUE}</DetailRow> : null}
+                    {isGroupCall && call.actor ? <DetailRow label={t('CALLS.DETAILS.CALLER')}>{call.actor.name}</DetailRow> : null}
+                    {isRoom ? null : (
                         <DetailRow label={t('CALLS.DETAILS.TYPE')}>{t(view.media === 'video' ? 'CALLS.LOG.VIDEO' : 'CALLS.LOG.VOICE')}</DetailRow>
                     )}
                     <DetailRow label={t('CALLS.DETAILS.DATE')}>{dateOf(firstStamp ?? call.ended_at)}</DetailRow>
-                    {view.isGroup ? (
+                    {isRoom ? (
                         <DetailRow label={t('CALLS.DETAILS.OPENED_AT')}>{timeOf(call.started_at)}</DetailRow>
                     ) : (
                         <>

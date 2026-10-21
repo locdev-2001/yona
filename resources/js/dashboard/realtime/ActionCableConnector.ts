@@ -36,6 +36,7 @@ export const REALTIME_EVENTS = [
     'account.cache_invalidated',
     'voice_room.updated',
     'direct_call.updated',
+    'group_call.updated',
 ] as const;
 
 export type RealtimeEventName = (typeof REALTIME_EVENTS)[number];
@@ -80,6 +81,7 @@ class ActionCableConnector extends BaseActionCableConnector {
             'account.cache_invalidated': this.forward('account.cache_invalidated'),
             'voice_room.updated': this.forward('voice_room.updated'),
             'direct_call.updated': this.forward('direct_call.updated'),
+            'group_call.updated': this.forward('group_call.updated'),
         };
     }
 

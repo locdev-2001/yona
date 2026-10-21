@@ -25,6 +25,7 @@ import CallBar from 'dashboard/calls/CallBar';
 import CallStage from 'dashboard/calls/CallStage';
 import CallMiniPlayer from 'dashboard/calls/CallMiniPlayer';
 import { DirectCallOverlay, DirectOutgoingStrip } from 'dashboard/calls/DirectCallLayer';
+import GroupCallRinging from 'dashboard/calls/GroupCallRinging';
 import { useCallsEnabled } from 'dashboard/calls/useCallsEnabled';
 import { isGroupStageOpen, useCallSession } from 'dashboard/calls/callSession';
 import { useIsPhoneScreen } from 'dashboard/composables/useViewportWidth';
@@ -68,10 +69,10 @@ function DashboardFrame({ children }: { children: ReactNode }) {
     }, [accountId]);
 
     const callsEnabled = useCallsEnabled();
-    const { recoverDirectCall } = call;
+    const { recoverRingingCalls } = call;
     useEffect(() => {
-        if (accountId && callsEnabled) recoverDirectCall(accountId);
-    }, [accountId, callsEnabled, recoverDirectCall]);
+        if (accountId && callsEnabled) recoverRingingCalls(accountId);
+    }, [accountId, callsEnabled, recoverRingingCalls]);
 
     return (
         <StickerDisplaySizeProvider size={stickerDisplaySize}>
@@ -98,6 +99,7 @@ function DashboardFrame({ children }: { children: ReactNode }) {
                     </main>
                     <SnackbarContainer />
                     <DirectCallOverlay isPhone={isPhone} viewingConversationId={conversationId ?? null} />
+                    <GroupCallRinging isPhone={isPhone} />
                     <RealtimeProvider />
                     <UnreadTitleSync />
                 </div>

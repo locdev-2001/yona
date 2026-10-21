@@ -1,9 +1,11 @@
 import { t } from '../../i18n';
+import type { GroupCallSummary } from './types';
 
 // Một tin cuộc gọi đọc từ `content_attributes.call`, chung mọi kênh: gọi 1-1 giữa người dùng Yona
 // (tin đi/đến, có hướng và kết cục), cuộc gọi Zalo (có hướng, có thể không có `kind`) và phòng
 // thoại nhóm (tin hoạt động, lưu một bản cho mọi thành viên nên lời dịch lúc hiển thị theo người
-// đọc). Thẻ trong lịch sử chat và dòng xem trước ở danh sách cùng đọc ở đây.
+// đọc), cuộc gọi nhóm có đổ chuông (tin lúc bắt đầu và tin lúc kết thúc, như phòng thoại). Thẻ trong
+// lịch sử chat và dòng xem trước ở danh sách cùng đọc ở đây.
 
 type CallOutcome = 'completed' | 'missed' | 'busy' | 'canceled' | 'declined';
 
@@ -31,7 +33,7 @@ export interface CallLogData {
     actor?: { user_id: number; name: string } | null;
 }
 
-export type CallTone = 'success' | 'danger' | 'info' | 'neutral' | 'group';
+export type CallTone = 'success' | 'danger' | 'info' | 'neutral' | 'group' | 'live';
 
 export interface CallLogView {
     tone: CallTone;
@@ -46,13 +48,17 @@ export interface CallLogView {
     canCallBack: boolean;
     // Cuộc gọi do Yona ghi (có mã) thì mở được hộp chi tiết; cuộc gọi kênh ngoài thì không.
     hasDetails: boolean;
+    // Cuộc gọi nhóm còn đang diễn ra: thẻ có nút Tham gia.
+    canJoin: boolean;
     attendees: CallAttendee[];
     moreAttendees: number;
     preview: { text: string; icon: string; isAlert: boolean };
 }
 
 export const GROUP_ROOM_KIND = 'group_room';
+export const GROUP_CALL_KIND = 'group_call';
 const DIRECT_KIND = 'direct';
+const GROUP_CALL_START_STATUS = 'ringing';
 
 const STATUS_OUTCOMES: Record<string, CallOutcome> = {
     ended: 'completed',
@@ -87,13 +93,20 @@ export function formatCallDuration(totalSeconds: number): string {
     return parts.slice(0, 2).join(' ');
 }
 
-export function isGroupRoomStart(call: CallLogData): boolean {
-    return call.kind === GROUP_ROOM_KIND && call.status !== 'ended';
+// Tin lúc phòng thoại mở hay cuộc gọi nhóm bắt đầu (khác tin lúc kết thúc của cùng cuộc đó).
+export function isCallStartNotice(call: CallLogData): boolean {
+    return (call.kind === GROUP_ROOM_KIND && call.status !== 'ended') || (call.kind === GROUP_CALL_KIND && call.status === GROUP_CALL_START_STATUS);
 }
 
-// Tin "đã mở phòng thoại": tin cũ chưa lưu người mở thì nói chung chung, không hiện lại câu
-// tiếng Anh đã ghi sẵn.
-export function groupRoomStartText(call: CallLogData): string {
+export function callStartIcon(call: CallLogData): string {
+    return call.kind === GROUP_CALL_KIND ? 'i-lucide-phone' : 'i-lucide-headphones';
+}
+
+// Tin "đã mở phòng thoại" / "đã bắt đầu cuộc gọi nhóm": tin cũ chưa lưu người mở thì nói chung
+// chung, không hiện lại câu tiếng Anh đã ghi sẵn.
+export function callStartText(call: CallLogData): string {
+    if (call.kind === GROUP_CALL_KIND) return t('CALLS.LOG.GROUP_CALL_STARTED', { actor: call.actor?.name ?? '' });
+
     return call.actor?.name ? t('CALLS.LOG.ROOM_STARTED', { actor: call.actor.name }) : t('CALLS.LOG.ROOM_STARTED_SOMEONE');
 }
 
@@ -122,14 +135,66 @@ function groupRoomView(call: CallLogData, groupName: string): CallLogView {
         isGroup: true,
         canCallBack: false,
         hasDetails: Boolean(call.id),
+        canJoin: false,
         attendees,
         moreAttendees: Math.max(0, total - attendees.length),
         preview: { text: `${t('CALLS.LOG.GROUP_ROOM')} · ${duration}`, icon: 'i-lucide-users', isAlert: false },
     };
 }
 
-export function describeCall(call: CallLogData, groupName = ''): CallLogView {
+// Cuộc gọi nhóm có đổ chuông. Tin lúc bắt đầu chỉ thành thẻ khi cuộc gọi còn diễn ra (`live`):
+// ai đang ở trong và nút Tham gia; tin lúc kết thúc là kết quả, thời lượng, ai đã tham gia.
+function groupCallView(call: CallLogData, groupName: string, live: GroupCallSummary | null): CallLogView {
+    const isVideo = call.media === 'video';
+    const title = t(isVideo ? 'CALLS.LOG.GROUP_CALL_VIDEO' : 'CALLS.LOG.GROUP_CALL_VOICE');
+    const icon = isVideo ? 'i-lucide-video' : 'i-lucide-phone';
+    const base = { icon, title, media: isVideo ? ('video' as const) : ('audio' as const), isGroup: true, canCallBack: false };
+
+    if (call.status === GROUP_CALL_START_STATUS) {
+        const people = live?.participants ?? [];
+
+        return {
+            ...base,
+            tone: 'live',
+            subtitle: t('CALLS.LOG.GROUP_CALL_LIVE', { actor: call.actor?.name ?? '', count: live?.total ?? 0 }),
+            detail: null,
+            pill: t('CALLS.LOG.STATE_LIVE'),
+            hasDetails: false,
+            canJoin: live !== null,
+            attendees: people.slice(0, LISTED_ATTENDEES),
+            moreAttendees: Math.max(0, (live?.total ?? 0) - Math.min(people.length, LISTED_ATTENDEES)),
+            preview: { text: callStartText(call), icon, isAlert: false },
+        };
+    }
+
+    const total = call.participants ?? call.attendees?.length ?? 0;
+    const isAnswered = Boolean(call.answered_at);
+    const duration = formatCallDuration(call.duration_seconds ?? 0);
+    const isCancelled = call.status === 'cancelled';
+    const outcome = isAnswered
+        ? t('CALLS.LOG.ENDED_FOR', { duration })
+        : t(isCancelled ? 'CALLS.LOG.GROUP_CALL_CANCELLED' : 'CALLS.LOG.GROUP_CALL_UNANSWERED');
+
+    // Không ai nghe: người duy nhất trong phòng là người gọi, nên không kể số người và avatar.
+    return {
+        ...base,
+        tone: isAnswered ? 'group' : 'neutral',
+        subtitle: isAnswered
+            ? t('CALLS.LOG.ROOM_PEOPLE', { group: groupName, count: total })
+            : t('CALLS.LOG.GROUP_CALL_BY', { group: groupName, actor: call.actor?.name ?? '' }),
+        detail: outcome,
+        pill: t(isAnswered ? 'CALLS.LOG.STATE_ENDED' : isCancelled ? 'CALLS.LOG.STATE_CANCELLED' : 'CALLS.LOG.STATE_UNANSWERED'),
+        hasDetails: Boolean(call.id),
+        canJoin: false,
+        attendees: isAnswered ? (call.attendees ?? []).slice(0, LISTED_ATTENDEES) : [],
+        moreAttendees: isAnswered ? Math.max(0, total - Math.min(call.attendees?.length ?? 0, LISTED_ATTENDEES)) : 0,
+        preview: { text: `${title} · ${isAnswered ? duration : outcome}`, icon, isAlert: false },
+    };
+}
+
+export function describeCall(call: CallLogData, groupName = '', live: GroupCallSummary | null = null): CallLogView {
     if (call.kind === GROUP_ROOM_KIND) return groupRoomView(call, groupName);
+    if (call.kind === GROUP_CALL_KIND) return groupCallView(call, groupName, live);
 
     const isVideo = call.media === 'video';
     const outcome = outcomeOf(call);
@@ -141,6 +206,7 @@ export function describeCall(call: CallLogData, groupName = ''): CallLogView {
         media: isVideo ? ('video' as const) : ('audio' as const),
         isGroup: false,
         hasDetails: call.kind === DIRECT_KIND && Boolean(call.id),
+        canJoin: false,
         attendees: [],
         moreAttendees: 0,
     };

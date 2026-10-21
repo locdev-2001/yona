@@ -1,7 +1,9 @@
 import { messageTimestamp } from 'shared/helpers/timeHelper';
 
 import CallActivityAction from 'dashboard/calls/CallActivityAction';
-import { groupRoomStartText, isGroupRoomStart, readCallLog } from 'dashboard/calls/callLog';
+import { GROUP_CALL_KIND, callStartText, isCallStartNotice, readCallLog } from 'dashboard/calls/callLog';
+import { useGroupCall } from 'dashboard/calls/groupCalls';
+import { useOptionalConversation } from 'dashboard/conversation/ConversationContext';
 import BaseBubble from './Base';
 import CallMessageBubble from './CallMessage';
 import { useMessageContext } from '../provider';
@@ -12,12 +14,15 @@ import { useMessageContext } from '../provider';
 export default function ActivityBubble() {
     const { content, createdAt, contentAttributes } = useMessageContext();
     // Tin cuộc gọi lưu dữ liệu có cấu trúc, lời dịch theo người đọc: phòng nhóm vừa mở là một dòng
-    // (kèm nút Tham gia khi phòng còn mở), cuộc gọi đã xong là thẻ cuộc gọi.
+    // (kèm nút Tham gia khi phòng còn mở), cuộc gọi nhóm còn diễn ra là thẻ có nút Tham gia, cuộc
+    // gọi đã xong là thẻ cuộc gọi.
     const call = readCallLog(contentAttributes);
+    const liveGroupCall = useGroupCall(useOptionalConversation()?.selectedConversation?.group);
+    const isLiveGroupCall = call?.kind === GROUP_CALL_KIND && liveGroupCall?.call_id === call.id;
 
-    if (call && !isGroupRoomStart(call)) return <CallMessageBubble />;
+    if (call && (!isCallStartNotice(call) || isLiveGroupCall)) return <CallMessageBubble />;
 
-    const text = call ? groupRoomStartText(call) : content;
+    const text = call ? callStartText(call) : content;
     const readableTime = messageTimestamp(createdAt, 'LLL d, h:mm a');
 
     const bubble = (

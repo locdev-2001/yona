@@ -38,7 +38,7 @@ export function resolveAvatarIdentity(seed: string | undefined, name: string | n
 // Các trục hình khối đã ghim (tự chỉnh trong AvatarEditor); trục thiếu thì lấy theo seed.
 export type AvatarTraits = TraitOverrides;
 
-interface ConversationGroupAvatar {
+export interface ConversationGroupAvatar {
     id: number;
     // Ảnh quản trị tải lên; có thì thắng hình khối và ảnh ghép.
     avatar_url?: string | null;

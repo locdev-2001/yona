@@ -2,7 +2,11 @@ import { useCallSession } from './callSession';
 import type { CallSession, DirectCallState } from './callSession';
 import DirectCallScene from './DirectCallScene';
 import type { DirectCallPhase } from './DirectCallScene';
-import IncomingCallCard from './IncomingCallCard';
+import { RingingCard, RingingScene } from './RingingCall';
+import type { RingingCallerView } from './RingingCall';
+import Avatar from 'dashboard/components-next/avatar/Avatar';
+import { avatarSeed } from 'shared/avatar/avatarSeed';
+import { t } from '../../i18n';
 import OutgoingCallBar from './OutgoingCallBar';
 import { identityOfUser } from './participantIdentity';
 import type { CallPeerView } from './types';
@@ -56,6 +60,15 @@ export function DirectOutgoingStrip({ placement, conversationId }: { placement: 
     return placement === 'floating' ? <div className="fixed bottom-6 end-6 z-50 w-[26rem] max-w-[calc(100vw-3rem)]">{bar}</div> : bar;
 }
 
+function peerCaller(peer: CallPeerView, media: 'audio' | 'video'): RingingCallerView {
+    return {
+        title: peer.name,
+        subtitle: t(media === 'video' ? 'CALLS.DIRECT.INCOMING_VIDEO' : 'CALLS.DIRECT.INCOMING_VOICE'),
+        renderAvatar: size => <Avatar name={peer.name} src={peer.avatarUrl ?? undefined} seed={avatarSeed('user', peer.userId)} size={size} roundedFull />,
+        joined: [],
+    };
+}
+
 // Lớp nổi trên mọi trang: cuộc gọi đến và màn gọi lớn. `viewingConversationId`: hội thoại đang
 // mở, để dải đang gọi đi nổi ở góc chỉ khi không đang xem hội thoại đó (máy tính).
 export function DirectCallOverlay({ isPhone, viewingConversationId }: { isPhone: boolean; viewingConversationId: number | null }) {
@@ -65,6 +78,21 @@ export function DirectCallOverlay({ isPhone, viewingConversationId }: { isPhone:
     const { session, direct, peer, phase } = context;
     const { view } = direct;
     const showsScene = direct.isExpanded || (phase === 'connected' && session.stageOpen);
+
+    if (phase === 'incoming') {
+        const ringingProps = {
+            caller: peerCaller(peer, view.media),
+            onAccept: session.directActions.accept,
+            onDecline: session.directActions.hangUp,
+            onOpenChat: session.directActions.openChat,
+        };
+
+        return direct.isExpanded ? (
+            <RingingScene {...ringingProps} onMinimize={session.directActions.collapse} />
+        ) : (
+            <RingingCard {...ringingProps} isPhone={isPhone} onExpand={session.directActions.expand} />
+        );
+    }
 
     if (showsScene) {
         const peerIdentity = identityOfUser(view.peer.id);
@@ -86,7 +114,6 @@ export function DirectCallOverlay({ isPhone, viewingConversationId }: { isPhone:
                 deafened={session.local.deafened}
                 peerVideo={peerCamOn ? session.renderMedia(peerIdentity, 'camera') : null}
                 selfVideo={session.local.camOn && session.selfIdentity ? session.renderMedia(session.selfIdentity, 'camera') : null}
-                onAccept={session.directActions.accept}
                 onDecline={session.directActions.hangUp}
                 onToggleMic={session.actions.toggleMic}
                 onToggleCamera={session.actions.toggleCamera}
@@ -95,20 +122,6 @@ export function DirectCallOverlay({ isPhone, viewingConversationId }: { isPhone:
                 onSelectDevice={session.actions.selectDevice}
                 onMinimize={session.directActions.collapse}
                 onOpenChat={session.directActions.openChat}
-            />
-        );
-    }
-
-    if (phase === 'incoming') {
-        return (
-            <IncomingCallCard
-                peer={peer}
-                media={view.media}
-                isPhone={isPhone}
-                onAccept={session.directActions.accept}
-                onDecline={session.directActions.hangUp}
-                onOpenChat={session.directActions.openChat}
-                onExpand={session.directActions.expand}
             />
         );
     }

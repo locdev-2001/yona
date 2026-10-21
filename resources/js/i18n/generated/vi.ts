@@ -2497,7 +2497,10 @@ const messages: Record<string, unknown> = {
             "DIRECT_NO_ANSWER": "Không ai nghe máy",
             "DIRECT_DECLINED_BY_PEER": "Cuộc gọi bị từ chối",
             "DIRECT_YOU_DECLINED": "Bạn đã từ chối cuộc gọi",
-            "DIRECT_CANCELLED": "Đã huỷ cuộc gọi"
+            "DIRECT_CANCELLED": "Đã huỷ cuộc gọi",
+            "GROUP_CALL_STARTED": ":actor đã bắt đầu cuộc gọi nhóm",
+            "GROUP_CALL_UNANSWERED": "Cuộc gọi nhóm không có ai nghe máy",
+            "GROUP_CALL_ENDED": "Cuộc gọi nhóm đã kết thúc · :duration · :count người tham gia"
         },
         "LOG": {
             "INCOMING": "Cuộc gọi đến",
@@ -2524,6 +2527,17 @@ const messages: Record<string, unknown> = {
             "ROOM_STARTED_SOMEONE": "Phòng thoại đã mở",
             "ROOM_PEOPLE": "{group} · {count} người tham gia",
             "MORE": "+{count}",
+            "GROUP_CALL_VOICE": "Cuộc gọi nhóm thoại",
+            "GROUP_CALL_VIDEO": "Cuộc gọi nhóm video",
+            "GROUP_CALL_STARTED": "{actor} đã bắt đầu cuộc gọi nhóm",
+            "GROUP_CALL_LIVE": "{actor} đang gọi · {count} người trong cuộc gọi",
+            "GROUP_CALL_UNANSWERED": "Không ai nghe máy",
+            "STATE_LIVE": "Đang diễn ra",
+            "STATE_UNANSWERED": "Không ai nghe",
+            "JOIN": "Tham gia",
+            "GROUP_CALL_CANCELLED": "Người gọi đã huỷ",
+            "GROUP_CALL_BY": "{group} · {actor} gọi",
+            "OPEN_CALL": "Mở cuộc gọi",
             "PREVIEW_MISSED": "Đã nhỡ cuộc gọi",
             "HOURS": "{n} giờ",
             "MINUTES": "{n} phút",
@@ -2547,6 +2561,22 @@ const messages: Record<string, unknown> = {
             "NO_PARTICIPANT_LIST": "Tin cũ không lưu danh sách người tham gia",
             "CLOSE": "Đóng"
         },
+        "RINGING": {
+            "VIDEO": "Video",
+            "JOINED": "{count} người đã vào",
+            "GROUP_VOICE_FROM": "Cuộc gọi nhóm thoại từ {name}",
+            "GROUP_VIDEO_FROM": "Cuộc gọi nhóm video từ {name}"
+        },
+        "GROUP": {
+            "MENU": "Gọi",
+            "CALL_VOICE": "Gọi thoại cả nhóm",
+            "CALL_VIDEO": "Gọi video cả nhóm",
+            "JOIN_VOICE": "Tham gia cuộc gọi nhóm",
+            "JOIN_VIDEO": "Tham gia cuộc gọi nhóm có video",
+            "CALL_HINT": "Đổ chuông tới mọi thành viên",
+            "VIDEO_HINT": "Đổ chuông, vào là bật camera",
+            "ROOM_HINT": "Phòng luôn mở, không đổ chuông"
+        },
         "DIRECT": {
             "OPEN_CHAT": "Nhắn tin",
             "CALL_VOICE": "Gọi thoại",
@@ -2556,7 +2586,6 @@ const messages: Record<string, unknown> = {
             "INCOMING_VOICE": "Cuộc gọi thoại đến",
             "INCOMING_VIDEO": "Cuộc gọi video đến",
             "ACCEPT": "Nghe",
-            "ACCEPT_AUDIO_ONLY": "Chỉ nghe tiếng",
             "DECLINE": "Từ chối",
             "CANCEL": "Huỷ cuộc gọi",
             "CALL_BACK": "Gọi lại",

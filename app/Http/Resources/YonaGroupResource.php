@@ -2,10 +2,12 @@
 
 namespace App\Http\Resources;
 
+use App\Models\CallInvitation;
 use App\Models\Conversation;
 use App\Models\YonaGroup;
 use App\Models\YonaGroupInviteLink;
 use App\Models\YonaGroupMember;
+use App\Services\Groups\Calls\GroupCallSummaries;
 use App\Services\Groups\Calls\GroupRoomSummaries;
 
 // Payload nhóm theo góc nhìn một thành viên: vai trò của họ và dòng hội thoại nhóm trong hộp thư của họ.
@@ -26,6 +28,10 @@ final class YonaGroupResource
         }
 
         $voiceRoom = $membership->isActive() ? app(GroupRoomSummaries::class)->snapshot($group) : null;
+        $groupCall = $membership->isActive() ? app(GroupCallSummaries::class)->snapshot($group) : null;
+        $myInvitation = $groupCall['group_call'] ?? null
+            ? CallInvitation::query()->where('call_id', $groupCall['group_call']['call_id'])->where('user_id', $membership->user_id)->value('status')
+            : null;
 
         return [
             'id' => $group->id,
@@ -36,6 +42,9 @@ final class YonaGroupResource
             'voice_room' => $voiceRoom['voice_room'] ?? null,
             // Mốc đóng trước khi tính `voice_room`: client so với sự kiện voice_room.updated để giữ bản mới hơn.
             'voice_room_as_of' => $voiceRoom['as_of'] ?? now()->getTimestampMs(),
+            // Cuộc gọi nhóm có đổ chuông đang diễn ra, kèm lời mời của chính người xem; mốc như voice_room.
+            'group_call' => isset($groupCall['group_call']) ? [...$groupCall['group_call'], 'my_invitation' => $myInvitation?->value] : null,
+            'group_call_as_of' => $groupCall['as_of'] ?? now()->getTimestampMs(),
         ];
     }
 

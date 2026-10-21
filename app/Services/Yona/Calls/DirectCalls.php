@@ -27,8 +27,6 @@ use Illuminate\Support\Str;
 // thúc thì đóng phòng, dấu vết hai bên ghi khi sự kiện đóng phòng về tới (DirectCallTrail).
 final readonly class DirectCalls
 {
-    public const RING_SECONDS = 30;
-
     private const LIVE_STATUSES = [CallStatus::Ringing, CallStatus::Active];
 
     public function __construct(
@@ -55,11 +53,10 @@ final readonly class DirectCalls
             throw CallActionRejected::forbidden('NOT_FRIENDS');
         }
 
-        if ($this->isBusy($caller)) {
-            throw new CallActionRejected('YOU_BUSY', 409);
-        }
-
-        if ($this->isBusy($callee)) {
+        // Người gọi đang ở cuộc khác thì lõi tự cho rời cuộc đó khi vào cuộc này. Người nhận chỉ
+        // bận khi đang trong một cuộc 1-1; đang ở phòng thoại hay cuộc gọi nhóm thì vẫn đổ chuông,
+        // nghe máy là rời chỗ cũ.
+        if ($this->liveCallOf($callee) !== null) {
             throw new CallActionRejected('BUSY', 409);
         }
 
@@ -80,7 +77,7 @@ final readonly class DirectCalls
 
         $join = $this->calls->join($call, CallAttendee::user($caller));
         $this->signals->publish($call);
-        ExpireDirectCallJob::dispatch($call->id)->delay(now()->addSeconds(self::RING_SECONDS));
+        ExpireDirectCallJob::dispatch($call->id)->delay(now()->addSeconds((int) config('calls.ring_seconds')));
 
         return $join;
     }
@@ -210,12 +207,6 @@ final readonly class DirectCalls
         }
 
         return $call;
-    }
-
-    private function isBusy(User $user): bool
-    {
-        return $this->liveCallOf($user) !== null
-            || Call::query()->open()->whereHas('presentParticipants', fn ($query) => $query->where('user_id', $user->id))->exists();
     }
 
     private function conversationOf(Account $account, int $displayId): Conversation

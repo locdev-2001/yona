@@ -81,6 +81,27 @@ export interface OpenRoomSummary {
 
 export type CallMediaKind = 'audio' | 'video';
 
+export interface CallPerson {
+    user_id: number;
+    name: string;
+    avatar_url: string | null;
+}
+
+export type GroupCallStatus = 'ringing' | 'active' | 'ended' | 'missed' | 'cancelled';
+
+// Cuộc gọi nhóm đang diễn ra (payload máy chủ): ai gọi, ai đang ở trong, lời mời của chính mình.
+export interface GroupCallSummary {
+    call_id: number;
+    status: GroupCallStatus;
+    media: CallMediaKind;
+    caller: CallPerson | null;
+    ringing_since: string | null;
+    answered_at: string | null;
+    total: number;
+    participants: CallPerson[];
+    my_invitation: 'ringing' | 'accepted' | 'declined' | 'missed' | null;
+}
+
 // Người ở đầu bên kia của cuộc gọi 1-1.
 export interface CallPeerView {
     userId: number;

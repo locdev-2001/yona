@@ -1,7 +1,7 @@
 import { deleteJson, getJson, patchJson, postForm, postJson } from 'dashboard/helper/apiClient';
 import type { AvatarStackPerson } from 'shared/avatar/AvatarStack';
 import type { AvatarTraits } from 'shared/avatar/avatarSeed';
-import type { OpenRoomSummary } from 'dashboard/calls/types';
+import type { GroupCallSummary, OpenRoomSummary } from 'dashboard/calls/types';
 
 export type GroupRole = 'admin' | 'member';
 
@@ -26,6 +26,9 @@ export interface GroupSummary {
     voice_room?: OpenRoomSummary | null;
     // Mốc (ms) máy chủ tính voice_room, để so với sự kiện realtime.
     voice_room_as_of?: number;
+    // Cuộc gọi nhóm có đổ chuông đang diễn ra; mốc như voice_room.
+    group_call?: GroupCallSummary | null;
+    group_call_as_of?: number;
 }
 
 export interface GroupMember {

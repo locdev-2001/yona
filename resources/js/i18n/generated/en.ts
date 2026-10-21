@@ -2497,7 +2497,10 @@ const messages: Record<string, unknown> = {
             "DIRECT_NO_ANSWER": "No answer",
             "DIRECT_DECLINED_BY_PEER": "Call declined",
             "DIRECT_YOU_DECLINED": "You declined the call",
-            "DIRECT_CANCELLED": "Call cancelled"
+            "DIRECT_CANCELLED": "Call cancelled",
+            "GROUP_CALL_STARTED": ":actor started a group call",
+            "GROUP_CALL_UNANSWERED": "Nobody answered the group call",
+            "GROUP_CALL_ENDED": "Group call ended · :duration · :count participant|Group call ended · :duration · :count participants"
         },
         "LOG": {
             "INCOMING": "Incoming call",
@@ -2524,6 +2527,17 @@ const messages: Record<string, unknown> = {
             "ROOM_STARTED_SOMEONE": "A voice room started",
             "ROOM_PEOPLE": "{group} · {count} person joined|{group} · {count} people joined",
             "MORE": "+{count}",
+            "GROUP_CALL_VOICE": "Group voice call",
+            "GROUP_CALL_VIDEO": "Group video call",
+            "GROUP_CALL_STARTED": "{actor} started a group call",
+            "GROUP_CALL_LIVE": "{actor} is calling · {count} in the call",
+            "GROUP_CALL_UNANSWERED": "Nobody answered",
+            "STATE_LIVE": "Live",
+            "STATE_UNANSWERED": "Unanswered",
+            "JOIN": "Join",
+            "GROUP_CALL_CANCELLED": "The caller cancelled",
+            "GROUP_CALL_BY": "{group} · called by {actor}",
+            "OPEN_CALL": "Open the call",
             "PREVIEW_MISSED": "Missed call",
             "HOURS": "{n} hour|{n} hours",
             "MINUTES": "{n} minute|{n} minutes",
@@ -2547,6 +2561,22 @@ const messages: Record<string, unknown> = {
             "NO_PARTICIPANT_LIST": "This older message has no participant list",
             "CLOSE": "Close"
         },
+        "RINGING": {
+            "VIDEO": "Video",
+            "JOINED": "{count} joined",
+            "GROUP_VOICE_FROM": "Group voice call from {name}",
+            "GROUP_VIDEO_FROM": "Group video call from {name}"
+        },
+        "GROUP": {
+            "MENU": "Call",
+            "CALL_VOICE": "Voice call the group",
+            "CALL_VIDEO": "Video call the group",
+            "JOIN_VOICE": "Join the group call",
+            "JOIN_VIDEO": "Join the group call with video",
+            "CALL_HINT": "Rings every member",
+            "VIDEO_HINT": "Rings everyone, camera on when you join",
+            "ROOM_HINT": "Always open, no ringing"
+        },
         "DIRECT": {
             "OPEN_CHAT": "Message",
             "CALL_VOICE": "Voice call",
@@ -2556,7 +2586,6 @@ const messages: Record<string, unknown> = {
             "INCOMING_VOICE": "Incoming voice call",
             "INCOMING_VIDEO": "Incoming video call",
             "ACCEPT": "Answer",
-            "ACCEPT_AUDIO_ONLY": "Audio only",
             "DECLINE": "Decline",
             "CANCEL": "Cancel call",
             "CALL_BACK": "Call back",

@@ -627,8 +627,9 @@ nhóm sẵn có. Tạo nhóm và thêm bạn dùng `shared/people/PickPeopleDial
 
 Ba tầng, mỗi tầng chỉ biết tầng ngay dưới:
 
-1. **Module dùng lõi** (theo chức năng): phòng thoại nhóm ở `App\Services\Groups\Calls`
-   (`GroupRooms` + `GroupRoomPolicy`), gọi 1-1 ở `App\Services\Yona\Calls` (`DirectCalls` +
+1. **Module dùng lõi** (theo chức năng): phòng thoại nhóm và cuộc gọi nhóm có đổ chuông ở
+   `App\Services\Groups\Calls` (`GroupRooms` + `GroupRoomPolicy`, `GroupCalls` +
+   `GroupCallPolicy`), gọi 1-1 ở `App\Services\Yona\Calls` (`DirectCalls` +
    `DirectCallPolicy`); meeting sẽ là module anh em. Module tự
    tạo dòng `calls` của mình và khai luật của loại đó.
 2. **Lõi `App\Services\Calls`**: không biết nhóm, 1-1, meeting hay nhà cung cấp nào.
@@ -668,7 +669,9 @@ POST /webhooks/media/{provider} ─► MediaDrivers ─► MediaWebhooks ─► 
   từ hội thoại 1-1 trên Yona (người kia tìm qua `YonaRelay::counterpartOf`, chỉ bạn bè,
   không ai đang bận; `pair_key` chặn hai cuộc sống giữa một cặp), người gọi vào phòng ngay
   lúc đổ chuông; nghe máy (`accept`), một nút cúp (`hangUp`: huỷ/từ chối/kết thúc theo vai
-  và trạng thái), `ExpireDirectCallJob` sau 30 giây thành `missed`. Đổi trạng thái thì đóng
+  và trạng thái), `ExpireDirectCallJob` hết giờ đổ chuông (`config('calls.ring_seconds')`,
+  45 giây, chung mọi loại có chuông) thành `missed`. Người nhận chỉ bận khi đang trong một cuộc
+  1-1; đang ở phòng thoại hay cuộc gọi nhóm thì vẫn đổ chuông. Đổi trạng thái thì đóng
   phòng và `DirectCallSignals` đẩy `direct_call.updated` tới mọi tab của hai người (mỗi bên
   một góc nhìn: vai, người kia, hội thoại trong hộp thư mình) và Web Push lúc đổ chuông
   (`PushIncomingDirectCallJob`). Không ghi `ended_at` ở module: sự kiện đóng phòng ghi, rồi
@@ -682,6 +685,27 @@ POST /webhooks/media/{provider} ─► MediaDrivers ─► MediaWebhooks ─► 
   kết thúc cuộc khi một bên rời sau khi đã nghe máy, huỷ khi người gọi bỏ đi lúc còn đổ chuông.
   API: `GET|POST /yona/conversations/{id}/call`, `GET /yona/calls/current`,
   `POST /yona/calls/{id}/accept`, `DELETE /yona/calls/{id}`.
+- **Gọi nhóm có đổ chuông (module `App\Services\Groups\Calls`, kind `group_call`):**
+  `GroupCallPolicy` (≤50, thoại + camera + màn hình, quản trị nhóm điều hành). `GroupCalls`:
+  thành viên nào cũng gọi được; nhóm chưa có cuộc đang diễn ra thì tạo dòng `calls` (`ringing`,
+  `caller_id`) và mỗi thành viên khác một dòng `call_invitations` (`ringing`), có rồi thì vào
+  cuộc đó (lời mời thành `accepted`, kể cả người đã nhỡ hay từ chối; cuộc thành `active` khi
+  người đầu tiên nghe). Từ chối = `declined`; `ExpireGroupCallJob` sau 45 giây đổi lời mời còn
+  đổ chuông thành `missed`. Chưa ai nghe mà hết người để đổ chuông thì cả cuộc `missed`, người
+  gọi rời khi còn đổ chuông thì `cancelled`, người cuối cùng rời cuộc đã nghe thì `ended`
+  (`GroupCallPresence`); một người rời không kết thúc cuộc gọi. Index một phần giữ mỗi nhóm
+  tối đa một cuộc gọi nhóm chưa đóng. `GroupCallSummaries` (ảnh chụp cache theo nhóm: ai gọi,
+  thoại/video, ai đang ở trong, `as_of`) gắn vào payload nhóm (`group_call`, kèm
+  `my_invitation` của người xem) và vào sự kiện `group_call.updated` (`BroadcastGroupCallJob`,
+  không trễ, mỗi thành viên một payload có lời mời của chính họ). `GroupCallTrail`: tin "X đã
+  bắt đầu cuộc gọi nhóm" khi người đầu tiên vào (giao diện vẽ thẻ có nút Tham gia khi cuộc còn
+  diễn ra) và tin kết quả khi phòng đóng. API: `POST|DELETE /yona/groups/{id}/group_call`
+  (gọi/vào, từ chối), `GET /yona/group_calls/ringing`, điều hành
+  `…/group_call/participants/{userId}`.
+- **Mỗi người một cuộc gọi:** `CallService::join` cho người vào tự rời mọi cuộc khác đang ngồi
+  (đưa khỏi phòng phía nhà cung cấp); hệ quả ở cuộc cũ do loại của cuộc đó xử lý khi sự kiện rời
+  phòng về tới (1-1 kết thúc, phòng nhóm bớt người). Giao diện làm cùng việc đó trước khi nối
+  phòng mới (`leaveCurrentCall` trong `CallSessionProvider`).
 - **Phòng bắt đầu = người đầu tiên vào**, không phải lúc nhà cung cấp mở phòng trống.
 - **Đối soát khi mất webhook:** `ReconcileCallsJob` (mỗi phút, chỉ khi đã cấu hình) →
   `Calls\CallReconciler` so người đang ngồi trong DB với người đang kết nối ở nhà cung cấp và

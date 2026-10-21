@@ -50,6 +50,12 @@ class Call extends Model
         return $this->hasMany(CallParticipant::class);
     }
 
+    /** @return HasMany<CallInvitation, $this> */
+    public function invitations(): HasMany
+    {
+        return $this->hasMany(CallInvitation::class);
+    }
+
     /** @return HasMany<CallParticipant, $this> */
     public function presentParticipants(): HasMany
     {

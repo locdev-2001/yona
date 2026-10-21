@@ -7,11 +7,13 @@ use App\Models\Call;
 use App\Models\User;
 use App\Services\Calls\Kinds\CallKinds;
 use App\Services\Calls\Media\MediaModeration;
+use App\Services\Calls\Media\MediaProviderFailed;
 use App\Services\Calls\Media\MediaRooms;
 use App\Services\Calls\Media\MediaSource;
 use App\Services\Calls\Media\MediaTickets;
 use App\Services\Calls\Media\RoomSpec;
 use App\Services\Calls\Media\TicketRequest;
+use Illuminate\Support\Facades\Log;
 
 // Lõi cuộc gọi: không biết nhóm, 1-1, meeting hay nhà cung cấp media nào. Module dùng lõi tự
 // tạo dòng `calls` của mình rồi gọi vào đây; luật từng loại lấy từ sổ CallKinds. Ai đang ở
@@ -54,6 +56,7 @@ final readonly class CallService
 
         $maxParticipants = $this->kinds->policyOf($call)->maxParticipants();
         $this->rejectWhenFull($call, $attendee, $maxParticipants);
+        $this->leaveOtherCalls($call, $attendee);
 
         $this->rooms->open(new RoomSpec(
             $call->uuid,
@@ -116,6 +119,29 @@ final readonly class CallService
         if (count($others) >= $maxParticipants) {
             throw new CallActionRejected('ROOM_FULL', 409, ['max' => $maxParticipants]);
         }
+    }
+
+    // Mỗi người chỉ ở một cuộc gọi tại một lúc: vào cuộc này thì tự rời mọi cuộc khác đang ngồi.
+    // Hệ quả ở cuộc cũ (1-1 kết thúc, phòng nhóm bớt người) do loại của cuộc đó xử lý khi sự kiện
+    // rời phòng về tới.
+    private function leaveOtherCalls(Call $call, CallAttendee $attendee): void
+    {
+        $userId = $attendee->identity->userId();
+
+        if ($userId === null) {
+            return;
+        }
+
+        Call::query()->open()
+            ->whereKeyNot($call->id)
+            ->whereHas('presentParticipants', fn ($query) => $query->where('user_id', $userId))
+            ->each(function (Call $otherCall) use ($attendee): void {
+                try {
+                    $this->disconnect($otherCall, $attendee->identity);
+                } catch (MediaProviderFailed $exception) {
+                    Log::warning('Leaving the previous call failed', ['call_id' => $otherCall->id, 'error' => $exception->getMessage()]);
+                }
+            });
     }
 
     private function authorizeModeration(Call $call, User $actor): void

@@ -1,5 +1,6 @@
 import { createContext, useContext } from 'react';
 import type { Conversation } from 'dashboard/conversation/types';
+import type { GroupCallPayload } from './api';
 import type { CallActions, CallLocalState, CallMediaKind, CallParticipantView, CallRoomView, DirectCallView, RenderCallMedia } from './types';
 
 // Phiên gọi đang diễn ra của người dùng, sống ở gốc app (resources/js/calls/) để chuyển trang
@@ -12,6 +13,26 @@ export interface JoinGroupRoomRequest {
     conversationUrl: string;
     // Người xem là quản trị nhóm: được tắt mic / mời người khác ra.
     canModerate: boolean;
+}
+
+export interface JoinGroupCallRequest extends JoinGroupRoomRequest {
+    media: CallMediaKind;
+}
+
+export type ActiveCallKind = 'group_room' | 'group_call' | 'direct';
+
+// Cuộc gọi nhóm đang đổ chuông tới mình.
+export interface GroupRingState {
+    payload: GroupCallPayload;
+    isExpanded: boolean;
+}
+
+export interface GroupRingActions {
+    accept: (media: CallMediaKind) => void;
+    decline: () => void;
+    expand: () => void;
+    collapse: () => void;
+    openChat: () => void;
 }
 
 export interface StartDirectCallRequest {
@@ -42,15 +63,19 @@ export interface CallSession {
     local: CallLocalState;
     stageOpen: boolean;
     isJoining: boolean;
-    // Nhóm đang ngồi trong phòng (để mũ khung chat biết mình đã ở trong phòng đó).
+    // Nhóm của phòng hay cuộc gọi nhóm đang ở (để mũ khung chat biết mình đã ở trong đó).
     groupId: number | null;
+    activeKind: ActiveCallKind | null;
     sharer: CallParticipantView | null;
     actions: CallActions;
     renderMedia: RenderCallMedia;
     joinGroupRoom: (request: JoinGroupRoomRequest) => void;
+    joinGroupCall: (request: JoinGroupCallRequest) => void;
     startDirectCall: (request: StartDirectCallRequest) => void;
     // Mở app (hoặc tải lại trang) giữa lúc có người đang gọi tới: hỏi máy chủ để đổ chuông lại.
-    recoverDirectCall: (accountId: number) => void;
+    recoverRingingCalls: (accountId: number) => void;
+    groupRing: GroupRingState | null;
+    groupRingActions: GroupRingActions;
     direct: DirectCallState | null;
     directActions: DirectCallActions;
     // Định danh của mình trong phòng đang nối (để đọc âm lượng của mình).
@@ -66,6 +91,7 @@ const IDLE_SESSION: CallSession = {
     stageOpen: false,
     isJoining: false,
     groupId: null,
+    activeKind: null,
     sharer: null,
     actions: {
         toggleMic: noop,
@@ -83,8 +109,11 @@ const IDLE_SESSION: CallSession = {
     },
     renderMedia: () => null,
     joinGroupRoom: noop,
+    joinGroupCall: noop,
     startDirectCall: noop,
-    recoverDirectCall: noop,
+    recoverRingingCalls: noop,
+    groupRing: null,
+    groupRingActions: { accept: noop, decline: noop, expand: noop, collapse: noop, openChat: noop },
     direct: null,
     directActions: { accept: noop, hangUp: noop, expand: noop, collapse: noop, openChat: noop },
     selfIdentity: null,
@@ -96,4 +125,4 @@ export const CallSessionContext = createContext<CallSession>(IDLE_SESSION);
 export const useCallSession = (): CallSession => useContext(CallSessionContext);
 
 // Màn phòng thoại nhóm đang phủ vùng làm việc (không tính màn gọi 1-1, vốn có lớp riêng).
-export const isGroupStageOpen = (session: CallSession): boolean => Boolean(session.room && session.stageOpen && !session.direct);
+export const isGroupStageOpen = (session: CallSession): boolean => Boolean(session.room && session.stageOpen && session.activeKind !== 'direct');
