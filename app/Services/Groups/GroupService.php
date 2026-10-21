@@ -446,9 +446,10 @@ final class GroupService
     }
 
     // Tin hoạt động trong hội thoại gốc của nhóm (thay đổi thành viên, phòng thoại…), rồi làm
-    // mới dòng nhóm của mọi thành viên.
+    // mới dòng nhóm của mọi thành viên. Tin có người khởi tạo (mở phòng, gọi nhóm) ghi người đó
+    // làm người gửi để mỗi thành viên thấy tin nằm theo người khởi tạo như tin nhắn thường.
     /** @param  array<string, mixed>  $contentAttributes */
-    public function postNotice(YonaGroup $group, string $content, array $contentAttributes = []): void
+    public function postNotice(YonaGroup $group, string $content, array $contentAttributes = [], ?User $initiator = null): void
     {
         $thread = $group->conversation;
 
@@ -456,6 +457,8 @@ final class GroupService
             'account_id' => $thread->account_id,
             'inbox_id' => $thread->inbox_id,
             'message_type' => Message::TYPE_ACTIVITY,
+            'sender_type' => $initiator?->getMorphClass(),
+            'sender_id' => $initiator?->id,
             'content' => $content,
             'content_attributes' => $contentAttributes,
         ]);

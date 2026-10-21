@@ -657,7 +657,7 @@ POST /webhooks/media/{provider} ─► MediaDrivers ─► MediaWebhooks ─► 
   không ghi; tin nhóm lưu một bản cho mọi thành viên nên `content_attributes.call` mang dữ
   liệu có cấu trúc (người mở phòng, thời lượng, số người, tối đa 5 người tham gia) và giao diện
   dịch theo người đọc, `content` chỉ là bản ngôn ngữ mặc định cho tìm kiếm; đi qua
-  `GroupService::postNotice`), `GroupRoomPresence` → job
+  `GroupService::postNotice`, người mở phòng là người gửi của cả hai tin để mỗi thành viên thấy tin nằm theo người khởi tạo), `GroupRoomPresence` → job
   `BroadcastGroupVoiceRoomJob` (duy nhất theo nhóm tới khi chạy, trễ 2 giây để gom; đẩy
   `voice_room.updated` tới từng thành viên với `account_id`/`conversation_id` của dòng họ).
   `GroupRoomSummaries` dựng ảnh chụp `voice_room` (người đang ngồi, ai chia sẻ màn hình, mở

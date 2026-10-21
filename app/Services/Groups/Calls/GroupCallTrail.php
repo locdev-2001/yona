@@ -10,7 +10,7 @@ use App\Services\Calls\Kinds\CallTrail;
 use App\Services\Groups\GroupService;
 use Carbon\CarbonInterval;
 
-// Dấu vết cuộc gọi nhóm trong hội thoại nhóm: một tin khi người gọi vào phòng (thẻ "Tham gia" khi
+// Dấu vết cuộc gọi nhóm trong hội thoại nhóm (người gọi là người gửi): một tin khi người gọi vào phòng (thẻ "Tham gia" khi
 // cuộc gọi còn diễn ra), một tin khi phòng đóng (kết quả, thời lượng, ai đã tham gia). Như phòng
 // thoại, lời hiển thị dịch theo người đọc từ `content_attributes.call`; `content` là bản ngôn ngữ
 // mặc định cho tìm kiếm.
@@ -27,7 +27,7 @@ final readonly class GroupCallTrail implements CallTrail
 
         $this->groups->postNotice($call->group, __('calls.ACTIVITY.GROUP_CALL_STARTED', ['actor' => $caller?->availableName() ?? ''], $locale), [
             'call' => [...$this->basics($call, $caller), 'status' => 'ringing'],
-        ]);
+        ], $caller);
     }
 
     public function roomFinished(Call $call): void
@@ -63,7 +63,7 @@ final readonly class GroupCallTrail implements CallTrail
                     'avatar_url' => $user->avatarUrl() ?: null,
                 ])->all(),
             ],
-        ]);
+        ], $caller);
     }
 
     /** @return array<string, mixed> */

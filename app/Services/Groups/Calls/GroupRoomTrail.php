@@ -10,7 +10,7 @@ use App\Services\Groups\GroupService;
 use Carbon\CarbonInterval;
 
 // Dấu vết phòng thoại trong hội thoại nhóm: một tin khi người đầu tiên vào, một tin khi phòng
-// đóng (thời lượng, ai đã tham gia). Chỉ ghi mới, không sửa tin cũ. Tin nhóm lưu một bản chung cho
+// đóng (thời lượng, ai đã tham gia); cả hai mang người mở phòng làm người gửi. Chỉ ghi mới, không sửa tin cũ. Tin nhóm lưu một bản chung cho
 // mọi thành viên nên lời hiển thị dịch theo người đọc từ `content_attributes.call`; `content` chỉ
 // là bản ngôn ngữ mặc định cho tìm kiếm và nơi chưa đọc dữ liệu có cấu trúc. Tin đóng phòng ghi đủ
 // người đã vào (phòng tối đa 25) để hộp chi tiết liệt kê; thẻ tự cắt hàng avatar.
@@ -32,7 +32,7 @@ final readonly class GroupRoomTrail implements CallTrail
                 'status' => $call->status->value,
                 'actor' => $opener === null ? null : ['user_id' => $opener->id, 'name' => $opener->availableName()],
             ],
-        ]);
+        ], $opener);
     }
 
     public function roomFinished(Call $call): void
@@ -67,6 +67,6 @@ final readonly class GroupRoomTrail implements CallTrail
                     'avatar_url' => $user->avatarUrl() ?: null,
                 ])->all(),
             ],
-        ]);
+        ], $attendees->first());
     }
 }

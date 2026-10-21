@@ -7,12 +7,19 @@ import { useOptionalConversation } from 'dashboard/conversation/ConversationCont
 import BaseBubble from './Base';
 import CallMessageBubble from './CallMessage';
 import { useMessageContext } from '../provider';
+import { ORIENTATION } from '../constants';
 
 // Port từ dashboard/components-next/message/bubbles/Activity.vue —
 // v-tooltip.top → attr title trên bubble.
 
+// Dòng mở phòng nằm theo người mở (trái/phải) thì nút Tham gia bám cùng mép.
+const ACTION_ALIGNMENT: Record<string, string> = {
+    [ORIENTATION.LEFT]: 'items-start',
+    [ORIENTATION.RIGHT]: 'items-end',
+};
+
 export default function ActivityBubble() {
-    const { content, createdAt, contentAttributes } = useMessageContext();
+    const { content, createdAt, contentAttributes, orientation } = useMessageContext();
     // Tin cuộc gọi lưu dữ liệu có cấu trúc, lời dịch theo người đọc: phòng nhóm vừa mở là một dòng
     // (kèm nút Tham gia khi phòng còn mở), cuộc gọi nhóm còn diễn ra là thẻ có nút Tham gia, cuộc
     // gọi đã xong là thẻ cuộc gọi.
@@ -38,7 +45,7 @@ export default function ActivityBubble() {
     if (!call) return bubble;
 
     return (
-        <div className="flex flex-col items-center gap-1.5">
+        <div className={`flex flex-col gap-1.5 ${ACTION_ALIGNMENT[orientation] ?? 'items-center'}`}>
             {bubble}
             <CallActivityAction call={call} />
         </div>

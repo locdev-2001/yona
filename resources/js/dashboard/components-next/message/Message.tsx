@@ -26,6 +26,8 @@ import MessageActions from './MessageActions';
 import MessageError from './MessageError';
 import MessageMeta from './MessageMeta';
 import ActivityBubble from './bubbles/Activity';
+import { readCallLog } from 'dashboard/calls/callLog';
+import { readGroupSender } from './helpers/groupSender';
 import AudioBubble from './bubbles/Audio';
 import FallbackBubble from './bubbles/Fallback';
 import LinkPreviewBubble from './bubbles/LinkPreview';
@@ -199,8 +201,15 @@ export default function Message({
         return effectiveSenderType.toLowerCase() === SENDER_TYPES.USER.toLowerCase();
     })();
 
+    // Tin cuộc gọi trong nhóm (mở phòng thoại, gọi nhóm) có người khởi tạo làm người gửi: nằm theo
+    // người đó như tin nhắn thường. Tin người khác khởi tạo mang `content_attributes.sender`.
+    const isInitiatedNotice =
+        messageType === MESSAGE_TYPES.ACTIVITY && readCallLog(contentAttributes) !== null && Boolean(message.sender_id ?? sender?.id);
+    const isOwnNotice = isInitiatedNotice && readGroupSender(contentAttributes) === null;
+
     const orientation: MessageOrientation = (() => {
         if (isBotOrAgentMessage) return ORIENTATION.RIGHT;
+        if (isInitiatedNotice) return isOwnNotice ? ORIENTATION.RIGHT : ORIENTATION.LEFT;
         if (messageType === MESSAGE_TYPES.ACTIVITY) return ORIENTATION.CENTER;
         return ORIENTATION.LEFT;
     })();
@@ -208,7 +217,7 @@ export default function Message({
     const effectiveGroupPosition: MessageGroupPosition = status === MESSAGE_STATUS.FAILED ? 'single' : groupPosition;
     const shouldGroupWithNext = joinsNextMessage(effectiveGroupPosition);
 
-    const shouldShowAvatar = messageType !== MESSAGE_TYPES.ACTIVITY;
+    const shouldShowAvatar = messageType !== MESSAGE_TYPES.ACTIVITY || isInitiatedNotice;
     // Thư email cao cả trang: ảnh người gửi và thanh thao tác đứng ngang đầu thư.
     const isEmailVariant = variant === MESSAGE_VARIANTS.EMAIL;
 
@@ -247,6 +256,7 @@ export default function Message({
     );
 
     const senderIdentity = resolveMessageSender(message, useSenderIdentityContext());
+    const bubbleSideClass = orientation === ORIENTATION.RIGHT ? 'ltr:ml-8 rtl:mr-8 justify-end' : 'ltr:mr-8 rtl:ml-8';
 
     const contextValue: MessageContextValue = {
         id: message.id,
@@ -294,7 +304,7 @@ export default function Message({
                     shouldGroupWithNext ? 'group-with-next mb-0.5' : 'mb-3'
                 }`}
             >
-                {variant === MESSAGE_VARIANTS.ACTIVITY ? (
+                {variant === MESSAGE_VARIANTS.ACTIVITY && !isInitiatedNotice ? (
                     <div>
                         <ActivityBubble />
                     </div>
@@ -320,16 +330,15 @@ export default function Message({
                                 />
                             </div>
                         )}
-                        <MessageActions
-                            barPlacement={isEmailVariant ? 'top' : 'center'}
-                            className={`[grid-area:bubble] flex min-w-0 items-end ${
-                                orientation === ORIENTATION.RIGHT
-                                    ? 'ltr:ml-8 rtl:mr-8 justify-end'
-                                    : 'ltr:mr-8 rtl:ml-8'
-                            }`}
-                        >
-                            {structured ? <StructuredBubble resolved={structured} message={message} /> : <BubbleComponent />}
-                        </MessageActions>
+                        {isInitiatedNotice ? (
+                            <div className={`[grid-area:bubble] flex min-w-0 items-end ${bubbleSideClass}`}>
+                                <ActivityBubble />
+                            </div>
+                        ) : (
+                            <MessageActions barPlacement={isEmailVariant ? 'top' : 'center'} className={`[grid-area:bubble] flex min-w-0 items-end ${bubbleSideClass}`}>
+                                {structured ? <StructuredBubble resolved={structured} message={message} /> : <BubbleComponent />}
+                            </MessageActions>
+                        )}
                         {hasFooter ? (
                             <div
                                 className={`[grid-area:meta] flex flex-wrap items-center gap-x-1.5 ${FLEX_ORIENTATION_MAP[orientation]}`}

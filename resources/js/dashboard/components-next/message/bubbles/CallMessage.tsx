@@ -75,6 +75,8 @@ export default function CallMessageBubble() {
     const session = useCallSession();
     const isInThisGroupCall = session.activeKind === 'group_call' && session.groupId === group?.id;
     const isOwn = orientation === ORIENTATION.RIGHT;
+    // Viền tách các avatar chồng nhau cùng màu nền thẻ, để không lộ khung sáng trên thẻ của mình.
+    const attendeeRing = isOwn && view.tone !== 'danger' ? 'ring-n-solid-blue' : view.tone === 'danger' ? 'ring-n-ruby-2' : 'ring-n-solid-1';
     const [isDetailsOpen, setDetailsOpen] = useState(false);
     // Tin phòng cũ chỉ lưu tổng số người, không có danh sách: hàng avatar dùng ô trống thay mặt.
     const placeholderAttendees = view.isGroup && view.attendees.length === 0 ? Math.min(view.moreAttendees, ATTENDEE_PLACEHOLDERS) : 0;
@@ -108,13 +110,13 @@ export default function CallMessageBubble() {
                                 src={attendee.avatar_url ?? ''}
                                 size={ATTENDEE_AVATAR_SIZE}
                                 roundedFull
-                                className="-me-[0.4375rem] ring-2 ring-n-solid-1"
+                                className={`-me-[0.4375rem] ring-2 ${attendeeRing}`}
                             />
                         ))}
                         {Array.from({ length: placeholderAttendees }, (_, index) => (
                             <span
                                 key={`placeholder-${index}`}
-                                className="flex items-center justify-center size-6 -me-[0.4375rem] rounded-full bg-n-slate-4 text-n-slate-10 ring-2 ring-n-solid-1"
+                                className={`flex items-center justify-center size-6 -me-[0.4375rem] rounded-full bg-n-slate-4 text-n-slate-10 ring-2 ${attendeeRing}`}
                             >
                                 <Icon icon="i-lucide-user-round" className="size-3.5" />
                             </span>
