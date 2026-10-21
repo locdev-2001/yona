@@ -33,7 +33,9 @@ export interface CallLocalState {
     sharingScreen: boolean;
     // Tắt toàn bộ âm thanh phòng phía mình (không nghe ai, người khác vẫn nghe mình nếu mở mic).
     deafened: boolean;
-    // Trình duyệt có getDisplayMedia (điện thoại không có).
+    // Chính sách phòng cho bật camera (phòng thoại nhóm thì không).
+    canUseCamera: boolean;
+    // Chính sách phòng cho chia sẻ màn hình và trình duyệt có getDisplayMedia (điện thoại không có).
     canShareScreen: boolean;
     // Người xem được tắt mic / mời người khác ra.
     canModerate: boolean;

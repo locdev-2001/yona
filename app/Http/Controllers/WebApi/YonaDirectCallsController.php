@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\WebApi;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\CallResource;
+use App\Http\Resources\CallJoinResource;
 use App\Models\Account;
 use App\Models\Call;
 use App\Models\User;
@@ -69,9 +69,7 @@ class YonaDirectCallsController extends Controller
     private function joinResponse(CallJoin $join, User $viewer): JsonResponse
     {
         return response()->json([
-            'call' => CallResource::from($join->call),
-            'ticket' => $join->ticket?->toArray(),
-            'awaiting_approval' => $join->isAwaitingApproval(),
+            ...CallJoinResource::from($join),
             'direct_call' => $this->viewOf($join->call, $viewer),
         ]);
     }

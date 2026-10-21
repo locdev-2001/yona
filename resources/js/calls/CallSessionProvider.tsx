@@ -42,6 +42,7 @@ interface ActiveCall {
     canModerate: boolean;
     // Vào phòng gọi video thì bật camera ngay khi nối.
     startsWithCamera: boolean;
+    publishableSources: string[];
 }
 
 const END_MESSAGES: Record<MediaSessionEnd, string | null> = {
@@ -56,6 +57,9 @@ const END_MESSAGES: Record<MediaSessionEnd, string | null> = {
 const EMPTY_MEDIA: MediaSessionState = { participants: [], renderMedia: () => null, readAudioLevel: () => 0 };
 
 const LIVE_DIRECT_STATUSES = ['ringing', 'active'];
+
+const CAMERA_SOURCE = 'camera';
+const SCREEN_SOURCE = 'screen';
 
 const canShareScreen = () =>
     typeof navigator !== 'undefined' && Boolean(navigator.mediaDevices?.getDisplayMedia) && window.innerWidth >= PHONE_MAX_WIDTH;
@@ -154,6 +158,7 @@ export default function CallSessionProvider({ children }: { children: ReactNode 
                         groupId: request.groupId,
                         canModerate: request.canModerate,
                         startsWithCamera: false,
+                        publishableSources: response.publishable_sources,
                     });
                     setStageOpen(true);
                 })
@@ -181,6 +186,7 @@ export default function CallSessionProvider({ children }: { children: ReactNode 
             groupId: null,
             canModerate: false,
             startsWithCamera: media === 'video',
+            publishableSources: response.publishable_sources,
         });
         setStageOpen(payload.call.status === 'active');
     }, []);
@@ -349,7 +355,8 @@ export default function CallSessionProvider({ children }: { children: ReactNode 
         camOn: self?.camOn ?? false,
         sharingScreen: self?.isSharingScreen ?? false,
         deafened,
-        canShareScreen: canShareScreen(),
+        canUseCamera: active?.publishableSources.includes(CAMERA_SOURCE) ?? false,
+        canShareScreen: canShareScreen() && (active?.publishableSources.includes(SCREEN_SOURCE) ?? false),
         canModerate: active?.canModerate ?? false,
     };
 

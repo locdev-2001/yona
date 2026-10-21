@@ -63,7 +63,9 @@ export default function VoicePanel({
                     actions.toggleDeafen,
                     local.deafened,
                 )}
-                {control(local.camOn ? 'i-lucide-video' : 'i-lucide-video-off', local.camOn ? t('CALLS.ROOM.CAMERA_ON') : t('CALLS.ROOM.CAMERA_OFF'), actions.toggleCamera)}
+                {local.canUseCamera
+                    ? control(local.camOn ? 'i-lucide-video' : 'i-lucide-video-off', local.camOn ? t('CALLS.ROOM.CAMERA_ON') : t('CALLS.ROOM.CAMERA_OFF'), actions.toggleCamera)
+                    : null}
                 {local.canShareScreen
                     ? control(
                           'i-lucide-screen-share',

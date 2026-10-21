@@ -69,7 +69,7 @@ final readonly class CallService
             $admission->permissions,
             self::TICKET_TTL_SECONDS,
             $attendee->displayAttributes(),
-        )));
+        )), $admission->permissions);
     }
 
     public function mute(Call $call, User $actor, ParticipantIdentity $target, MediaSource $source): void

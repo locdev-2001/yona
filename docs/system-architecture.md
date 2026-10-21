@@ -703,7 +703,9 @@ POST /webhooks/media/{provider} ─► MediaDrivers ─► MediaWebhooks ─► 
   lỗi. Chờ duyệt thì `CallJoin` không có vé (`awaiting_approval`). Module gọi `admit` trước
   khi tạo dòng `calls` để người không có quyền không mở được phòng.
 - **Thoại, video, chia sẻ màn hình là quyền phát nguồn** (`Media\MediaSource`: microphone,
-  camera, screen, screen_audio), không phải ba hệ thống. Chính sách quyết định ai phát gì.
+  camera, screen, screen_audio), không phải ba hệ thống. Chính sách quyết định ai phát gì
+  (phòng thoại nhóm: mic + màn hình, không camera); `CallJoinResource` trả
+  `publishable_sources` để giao diện chỉ hiện nút của nguồn được phát.
 - **Chọn nhà cung cấp:** `config/calls.php` (`provider` = `MEDIA_PROVIDER`, `drivers`).
   `AppServiceProvider` gắn `MediaRooms`/`MediaTickets`/`MediaModeration` vào driver đang
   chọn. Thêm nhà cung cấp = một driver cài `MediaDriver` + một dòng `drivers`.

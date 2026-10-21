@@ -8,16 +8,20 @@ use App\Models\User;
 use App\Services\Calls\Admission;
 use App\Services\Calls\CallAttendee;
 use App\Services\Calls\Kinds\CallPolicy;
+use App\Services\Calls\Media\MediaSource;
 use App\Services\Calls\Media\ParticipantPermissions;
 use App\Services\Groups\GroupPermissions;
 
-// Phòng thoại nhóm luôn mở: thành viên nhóm vào thẳng, không phòng chờ, phát được mọi nguồn;
-// quản trị nhóm tắt mic hoặc đưa người ra. Khách không tài khoản không vào được.
+// Phòng thoại nhóm luôn mở: thành viên nhóm vào thẳng, không phòng chờ, phát tiếng và chia sẻ
+// màn hình nhưng không camera (gọi video là cuộc gọi nhóm có chuông, loại khác); quản trị nhóm tắt
+// mic hoặc đưa người ra. Khách không tài khoản không vào được.
 final readonly class GroupRoomPolicy implements CallPolicy
 {
     public const KIND = 'group_room';
 
     public const MAX_PARTICIPANTS = 25;
+
+    private const PUBLISHABLE_SOURCES = [MediaSource::Microphone, MediaSource::Screen, MediaSource::ScreenAudio];
 
     public function __construct(private GroupPermissions $groupPermissions) {}
 
@@ -34,7 +38,7 @@ final readonly class GroupRoomPolicy implements CallPolicy
 
         $this->groupPermissions->activeMember($call->group, $attendee->user);
 
-        return Admission::granted(ParticipantPermissions::allSources());
+        return Admission::granted(new ParticipantPermissions(self::PUBLISHABLE_SOURCES));
     }
 
     public function mayModerate(Call $call, User $actor): bool

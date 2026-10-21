@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\WebApi;
 
 use App\Http\Controllers\Controller;
-use App\Http\Resources\CallResource;
+use App\Http\Resources\CallJoinResource;
 use App\Models\Account;
 use App\Models\YonaGroup;
 use App\Services\Calls\CallMedia;
@@ -44,11 +44,7 @@ class YonaGroupCallsController extends Controller
             CallMedia::tryFrom($input['media'] ?? '') ?? CallMedia::Audio,
         );
 
-        return response()->json([
-            'call' => CallResource::from($join->call),
-            'ticket' => $join->ticket?->toArray(),
-            'awaiting_approval' => $join->isAwaitingApproval(),
-        ]);
+        return response()->json(CallJoinResource::from($join));
     }
 
     public function mute(Request $request, Account $account, int $groupId, int $userId): JsonResponse

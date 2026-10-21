@@ -49,7 +49,7 @@ function DeviceToggle({
     );
 }
 
-// Hàng nút của màn phòng: mic, camera (kèm chọn thiết bị), chia sẻ màn hình, rời phòng.
+// Hàng nút của màn phòng: mic, camera khi phòng cho phép (kèm chọn thiết bị), chia sẻ màn hình, rời phòng.
 export default function CallControls({ local, actions, isPhone }: { local: CallLocalState; actions: CallActions; isPhone: boolean }) {
     return (
         <div className="flex items-center gap-2">
@@ -62,15 +62,17 @@ export default function CallControls({ local, actions, isPhone }: { local: CallL
                 deviceKind={isPhone ? undefined : 'audioinput'}
                 actions={actions}
             />
-            <DeviceToggle
-                icon={local.camOn ? 'i-lucide-video' : 'i-lucide-video-off'}
-                title={local.camOn ? t('CALLS.ROOM.CAMERA_ON') : t('CALLS.ROOM.CAMERA_OFF')}
-                tone={local.camOn ? 'neutral' : 'off'}
-                onToggle={actions.toggleCamera}
-                chevronTitle={t('CALLS.ROOM.CHOOSE_CAMERA')}
-                deviceKind={isPhone ? undefined : 'videoinput'}
-                actions={actions}
-            />
+            {local.canUseCamera ? (
+                <DeviceToggle
+                    icon={local.camOn ? 'i-lucide-video' : 'i-lucide-video-off'}
+                    title={local.camOn ? t('CALLS.ROOM.CAMERA_ON') : t('CALLS.ROOM.CAMERA_OFF')}
+                    tone={local.camOn ? 'neutral' : 'off'}
+                    onToggle={actions.toggleCamera}
+                    chevronTitle={t('CALLS.ROOM.CHOOSE_CAMERA')}
+                    deviceKind={isPhone ? undefined : 'videoinput'}
+                    actions={actions}
+                />
+            ) : null}
             {local.canShareScreen ? (
                 <DeviceToggle
                     icon="i-lucide-screen-share"

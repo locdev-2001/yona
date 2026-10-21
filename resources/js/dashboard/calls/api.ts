@@ -12,6 +12,8 @@ export interface CallJoinResponse {
     call: { id: number; kind: string; media: string; status: string; started_at: string | null };
     ticket: CallTicket | null;
     awaiting_approval: boolean;
+    // Nguồn chính sách phòng cho phát: phòng thoại nhóm không có camera.
+    publishable_sources: string[];
 }
 
 // Cuộc gọi 1-1 nhìn từ phía mình, cùng hình với sự kiện realtime `direct_call.updated`.
