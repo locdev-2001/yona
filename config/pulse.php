@@ -1,7 +1,9 @@
 <?php
 
 use App\Http\Middleware\EnsureOperationsDashboardAccess;
+use App\Jobs\Inboxes\FetchImapEmailInboxesJob;
 use App\Jobs\Inboxes\FetchImapEmailsJob;
+use App\Jobs\Zalo\ZaloHealthSweepJob;
 use Laravel\Pulse\Http\Middleware\Authorize;
 use Laravel\Pulse\Pulse;
 use Laravel\Pulse\Recorders;
@@ -186,6 +188,10 @@ return [
             'sample_rate' => env('PULSE_SLOW_JOBS_SAMPLE_RATE', 1),
             'threshold' => [
                 '/^'.preg_quote(FetchImapEmailsJob::class, '/').'$/' => (int) env('IMAP_SLOW_FETCH_MS', 10000),
+                // Job quét theo lịch, không ai chờ kết quả: ~1s ở việc đầu tiên của worker mới
+                // là giá mở kết nối, không phải job chậm.
+                '/^'.preg_quote(FetchImapEmailInboxesJob::class, '/').'$/' => 5000,
+                '/^'.preg_quote(ZaloHealthSweepJob::class, '/').'$/' => 5000,
                 'default' => (int) env('PULSE_SLOW_JOBS_THRESHOLD', 1000),
             ],
             'ignore' => [
