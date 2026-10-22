@@ -223,6 +223,10 @@ return [
     // minProcesses (mặc định 1) khi hàng đợi rỗng rồi chỉ thêm MỘT process mỗi 3
     // giây khi có việc, và process mới chạy việc đầu tiên chậm vì nạp lại toàn bộ
     // mã. Pool cố định thì worker luôn ấm và đủ ngay từ việc đầu.
+    // maxTime = 0: không tự khởi động lại theo giờ. PHP CLI không có opcache nên mỗi
+    // worker mới biên dịch lại từng đường code lần đầu gặp (~1s CPU cho 100–200 tệp
+    // trên production); worker chỉ dùng 10–20MB nên giới hạn `memory` đủ để thay
+    // tiến trình khi rò bộ nhớ, deploy thì `horizon:terminate` thay toàn bộ.
     'defaults' => [
         'supervisor-realtime' => [
             'connection' => 'redis',
@@ -230,7 +234,7 @@ return [
             'balance' => false,
             'minProcesses' => 1,
             'maxProcesses' => 1,
-            'maxTime' => 3600,
+            'maxTime' => 0,
             'maxJobs' => 0,
             'memory' => 256,
             'tries' => 3,
@@ -245,7 +249,7 @@ return [
             'autoScalingStrategy' => 'time',
             'minProcesses' => 1,
             'maxProcesses' => 1,
-            'maxTime' => 3600,
+            'maxTime' => 0,
             'maxJobs' => 0,
             'memory' => 256,
             'tries' => 3,
@@ -262,7 +266,7 @@ return [
             'balance' => false,
             'minProcesses' => 1,
             'maxProcesses' => 1,
-            'maxTime' => 3600,
+            'maxTime' => 0,
             'maxJobs' => 0,
             'memory' => 256,
             'tries' => 3,
@@ -277,7 +281,7 @@ return [
             'queue' => ['stickers'],
             'balance' => false,
             'maxProcesses' => 1,
-            'maxTime' => 3600,
+            'maxTime' => 0,
             'maxJobs' => 0,
             'memory' => 256,
             'tries' => 1,
