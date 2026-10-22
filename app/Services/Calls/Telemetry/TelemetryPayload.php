@@ -9,6 +9,7 @@ final class TelemetryPayload
 {
     private const NUMERIC_METRICS = [
         'width' => 32768, 'height' => 32768, 'renderWidth' => 32768, 'renderHeight' => 32768, 'fps' => 1000, 'bitrate' => 1000000000,
+        'previewWidth' => 32768, 'previewHeight' => 32768, 'previewFps' => 1000,
         'packetsLost' => 1000000000000, 'packets' => 1000000000000, 'jitter' => 3600,
         'rtt' => 3600, 'framesDropped' => 1000000000000, 'freezeCount' => 1000000000,
         'processingMs' => 3600000, 'audioLevel' => 1, 'concealedSamples' => 1000000000000000,
@@ -19,7 +20,7 @@ final class TelemetryPayload
      */
     public function validate(array $payload): array
     {
-        $fields = implode(',', [...array_keys(self::NUMERIC_METRICS), 'key', 'identity', 'source', 'direction', 'sampledAt', 'codec', 'implementation', 'limitation', 'protocol', 'powerEfficient', 'relay']);
+        $fields = implode(',', [...array_keys(self::NUMERIC_METRICS), 'key', 'identity', 'source', 'direction', 'sampledAt', 'codec', 'implementation', 'limitation', 'protocol', 'powerEfficient', 'relay', 'transmissionState']);
         $rules = [
             'client_session_id' => ['required', 'uuid'],
             'events' => ['present', 'array', 'max:30'],
@@ -55,6 +56,7 @@ final class TelemetryPayload
             'samples.*.streams.*.identity' => ['required', 'string', 'max:100', 'regex:/^(user:\d+|guest:[a-zA-Z0-9_-]+)$/'],
             'samples.*.streams.*.source' => ['required', Rule::in(['microphone', 'camera', 'screen', 'screen_audio'])],
             'samples.*.streams.*.direction' => ['required', Rule::in(['send', 'receive'])],
+            'samples.*.streams.*.transmissionState' => ['sometimes', Rule::in(['active', 'waiting', 'paused'])],
             'samples.*.streams.*.sampledAt' => ['nullable', 'date'],
             'samples.*.streams.*.powerEfficient' => ['nullable', 'boolean'],
             'samples.*.streams.*.relay' => ['nullable', 'boolean'],

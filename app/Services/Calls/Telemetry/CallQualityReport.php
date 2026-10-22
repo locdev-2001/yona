@@ -14,6 +14,7 @@ final class CallQualityReport
             ->where('samples.created_at', '>=', now()->subDays($days))
             ->when($kind, fn ($query) => $query->where('calls.kind', $kind));
         $groups = (clone $samples)->crossJoin(DB::raw('jsonb_array_elements(samples.streams) as stream'))
+            ->whereRaw("coalesce(stream->>'transmissionState', 'active') = 'active'")
             ->selectRaw("calls.kind, samples.environment->>'browser' as browser, samples.environment->>'os' as os, stream->>'codec' as codec, stream->>'source' as source, stream->>'direction' as direction")
             ->selectRaw("count(*) as measurements, count(distinct samples.call_id) as calls, percentile_cont(0.5) within group (order by (stream->>'fps')::numeric) as fps_median, percentile_cont(0.5) within group (order by (stream->>'height')::numeric) as height_median")
             ->selectRaw("round(100.0 * count(*) filter (where stream->>'limitation' = 'cpu') / nullif(count(*) filter (where stream->>'limitation' is not null), 0), 1) as cpu_limited_pct")

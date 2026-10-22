@@ -7,6 +7,7 @@ import CallDuration from './CallDuration';
 import CallTile from './CallTile';
 import type { CallActions, CallLocalState, CallRoomView, RenderCallMedia } from './types';
 import { useVisibleCameras } from './visibleCameras';
+import { useAlert } from 'dashboard/composables/useAlert';
 
 // Số cột theo số người: 1 → 1, 2–4 → 2, 5–9 → 3, nhiều hơn → 4 (điện thoại tối đa 2).
 function gridColumns(count: number, isPhone: boolean): string {
@@ -40,9 +41,13 @@ export default function CallStage({
         onMute: actions.muteParticipant,
         onRemove: actions.removeParticipant,
     };
-    const toggleFullscreen = () => {
-        if (document.fullscreenElement) void document.exitFullscreen();
-        else void stageRef.current?.requestFullscreen();
+    const toggleFullscreen = async () => {
+        try {
+            if (document.fullscreenElement) await document.exitFullscreen();
+            else await stageRef.current?.requestFullscreen();
+        } catch {
+            useAlert(t('CALLS.ROOM.FULLSCREEN_BLOCKED'));
+        }
     };
 
     return (
@@ -87,7 +92,7 @@ export default function CallStage({
                 />
             </header>
 
-            <div className="flex-1 min-h-0 px-4 pb-2">
+            <div className="flex-1 min-h-0 overflow-y-auto px-4 pb-2">
                 {sharer ? (
                     <div className="flex flex-col h-full gap-3">
                         <CallTile participant={sharer} source="screen" {...tileProps} className="flex-1 min-h-0" />
@@ -105,7 +110,7 @@ export default function CallStage({
                         </div>
                     </div>
                 ) : (
-                    <div className={`grid h-full gap-3 auto-rows-fr ${gridColumns(room.participants.length, isPhone)}`}>
+                    <div className={`grid h-full gap-3 ${isPhone ? 'auto-rows-min [align-content:safe_center]' : 'auto-rows-fr'} ${gridColumns(room.participants.length, isPhone)}`}>
                         {room.participants.map((participant) => (
                             <CallTile
                                 key={participant.identity}
@@ -113,7 +118,7 @@ export default function CallStage({
                                 source="camera"
                                 displayVideo={visibleCameras.has(participant.identity)}
                                 {...tileProps}
-                                className="min-h-0"
+                                className={isPhone ? 'aspect-square min-h-0' : 'min-h-0'}
                             />
                         ))}
                     </div>

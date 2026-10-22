@@ -124,5 +124,5 @@ export const CallSessionContext = createContext<CallSession>(IDLE_SESSION);
 
 export const useCallSession = (): CallSession => useContext(CallSessionContext);
 
-// Màn phòng thoại nhóm đang phủ vùng làm việc (không tính màn gọi 1-1, vốn có lớp riêng).
-export const isGroupStageOpen = (session: CallSession): boolean => Boolean(session.room && session.stageOpen && session.activeKind !== 'direct');
+export const isCallStageOpen = (session: CallSession): boolean =>
+    Boolean(session.room && session.stageOpen && (session.activeKind !== 'direct' || session.sharer));

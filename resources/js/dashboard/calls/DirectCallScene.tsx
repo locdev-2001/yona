@@ -7,7 +7,7 @@ import CallDuration from './CallDuration';
 import CallOrb from './CallOrb';
 import type { CallDevice, CallDeviceKind, CallMediaKind, CallPeerView } from './types';
 import { TOUCH_HEIGHT } from './touchTarget';
-import CallActionButton from './CallActionButton';
+import CallActionButton, { CallActionGrid } from './CallActionButton';
 import CallSettings from './CallSettings';
 
 export type DirectCallPhase = 'incoming' | 'outgoing' | 'connected';
@@ -143,7 +143,7 @@ function InCallLayout(props: DirectCallSceneProps) {
                     </div>
                 ) : null}
             </div>
-            <div className="grid grid-cols-3 place-items-center gap-y-6 w-full max-w-xs mx-auto px-4">
+            <CallActionGrid className="w-full max-w-xs mx-auto px-4">
                 <CallActionButton
                     icon={micOn ? 'i-lucide-mic' : 'i-lucide-mic-off'}
                     label={t('CALLS.DIRECT.MUTE')}
@@ -190,7 +190,7 @@ function InCallLayout(props: DirectCallSceneProps) {
                         />
                     )}
                 />
-            </div>
+            </CallActionGrid>
         </>
     );
 }

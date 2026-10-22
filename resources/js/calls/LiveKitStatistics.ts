@@ -20,6 +20,7 @@ export class LiveKitStatistics {
     readonly statistics = new CallStatistics();
     private previous = new Map<string, Stat>();
     private audioReadings = new Map<string, { at: number; statistics: StreamStatistics }>();
+    private previews = new Map<string, { video: HTMLVideoElement; frames: number; at: number }>();
     private timer?: ReturnType<typeof setTimeout>;
     private stopped = true;
     private observer?: PerformanceObserver;
@@ -48,6 +49,7 @@ export class LiveKitStatistics {
         this.observer?.disconnect();
         this.previous.clear();
         this.audioReadings.clear();
+        this.previews.clear();
     }
 
     private async sample() {
@@ -61,6 +63,7 @@ export class LiveKitStatistics {
         const activeKeys = new Set(streams.map((stream) => stream.key));
         for (const key of this.previous.keys()) if (!activeKeys.has(key.split('|')[0])) this.previous.delete(key);
         for (const key of this.audioReadings.keys()) if (!activeKeys.has(key)) this.audioReadings.delete(key);
+        for (const key of this.previews.keys()) if (!activeKeys.has(key)) this.previews.delete(key);
         this.statistics.publish({ observedAt: new Date().toISOString(), streams, longTasks: this.longTasks, longTaskMs: this.longTaskMs });
         this.timer = setTimeout(
             () => {
@@ -68,6 +71,20 @@ export class LiveKitStatistics {
             },
             readCallPreferences().showStatistics ? 1000 : 5000,
         );
+    }
+
+    private readPreview(key: string, track: LocalTrack) {
+        const video = track.attachedElements.find((element): element is HTMLVideoElement => element instanceof HTMLVideoElement && element.videoWidth > 0);
+        if (!video) return { previewWidth: null, previewHeight: null, previewFps: null };
+        const quality = video.getVideoPlaybackQuality?.();
+        const frames = quality ? quality.totalVideoFrames - quality.droppedVideoFrames : null;
+        const at = performance.now();
+        const previous = this.previews.get(key);
+        const previewFps = frames !== null && previous?.video === video && frames >= previous.frames && at > previous.at
+            ? (frames - previous.frames) * 1000 / (at - previous.at)
+            : null;
+        if (frames !== null) this.previews.set(key, { video, frames, at });
+        return { previewWidth: video.videoWidth, previewHeight: video.videoHeight, previewFps };
     }
 
     private async readTrack(participant: Participant, publication: TrackPublication): Promise<StreamStatistics | null> {
@@ -79,6 +96,13 @@ export class LiveKitStatistics {
         if (track.kind === Track.Kind.Audio && audioReading && performance.now() - audioReading.at < 5000) return audioReading.statistics;
         if (publication instanceof RemoteTrackPublication && track.kind === Track.Kind.Video && !publication.isEnabled) return null;
         const outgoing = track instanceof LocalTrack;
+        const preview = outgoing && track.kind === Track.Kind.Video ? this.readPreview(key, track) : {};
+        const encodings = outgoing ? track.sender?.getParameters().encodings : undefined;
+        const transmissionState = outgoing && track.kind === Track.Kind.Video && this.room.remoteParticipants.size === 0
+            ? 'waiting'
+            : track.streamState === Track.StreamState.Paused || (outgoing && (track.isUpstreamPaused || (encodings?.length && encodings.every((encoding) => encoding.active === false))))
+              ? 'paused'
+              : 'active';
         const report = outgoing ? await track.sender?.getStats() : track instanceof RemoteTrack ? await track.getRTCStatsReport() : undefined;
         if (!report || this.stopped) return null;
         const records: Stat[] = [];
@@ -139,6 +163,8 @@ export class LiveKitStatistics {
                     : null,
             fps,
             bitrate: hasRate ? Math.round(bitrate) : null,
+            ...preview,
+            transmissionState,
             codec: literal(codec, 'mimeType'),
             implementation: literal(primary, outgoing ? 'encoderImplementation' : 'decoderImplementation'),
             powerEfficient:

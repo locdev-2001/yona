@@ -4,6 +4,7 @@ import Dialog from 'dashboard/components-next/dialog/Dialog';
 import type { DialogHandle } from 'dashboard/components-next/dialog/Dialog';
 import Button from 'dashboard/components-next/button/Button';
 import Switch from 'dashboard/components-next/switch/Switch';
+import SelectInput from 'dashboard/components-next/select/Select';
 import { t } from '../../i18n';
 import { useCallSession } from './callSession';
 import { updateCallPreferences, useCallPreferences } from './preferences';
@@ -39,13 +40,16 @@ function DeviceSelect({ kind }: { kind: CallDeviceKind }) {
     return (
         <label className="flex flex-col gap-2 text-sm text-n-slate-12">
             <span>{t(DEVICE_LABELS[kind])}</span>
-            <select
+            <SelectInput
                 disabled={isSelecting}
                 aria-label={t(DEVICE_LABELS[kind])}
                 value={devices.find((device) => device.isActive)?.id ?? ''}
-                className={`field-surface ${TOUCH_MIN_HEIGHT} w-full rounded-lg px-3 text-sm`}
-                onChange={async (event) => {
-                    const id = event.target.value;
+                className="!w-full [&_select]:w-full [&_select]:min-h-[44px]"
+                options={devices.length ? devices.map((device, index) => ({
+                    value: device.id,
+                    label: device.label || t('CALLS.QUALITY.DEVICE_N', { n: index + 1 }),
+                })) : [{ value: '', label: t(error ? 'CALLS.ROOM.DEVICE_BLOCKED' : 'CALLS.ROOM.NO_DEVICES') }]}
+                onChange={async (id) => {
                     setSelecting(true);
                     setError(false);
                     try {
@@ -57,14 +61,7 @@ function DeviceSelect({ kind }: { kind: CallDeviceKind }) {
                         setSelecting(false);
                     }
                 }}
-            >
-                {!devices.length ? <option value="">{t(error ? 'CALLS.ROOM.DEVICE_BLOCKED' : 'CALLS.ROOM.NO_DEVICES')}</option> : null}
-                {devices.map((device, index) => (
-                    <option key={device.id} value={device.id}>
-                        {device.label || t('CALLS.QUALITY.DEVICE_N', { n: index + 1 })}
-                    </option>
-                ))}
-            </select>
+            />
             {error ? (
                 <span role="alert" className="text-xs text-n-ruby-11">
                     {t('CALLS.ROOM.DEVICE_BLOCKED')}

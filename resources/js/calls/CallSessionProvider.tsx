@@ -97,6 +97,17 @@ export default function CallSessionProvider({ children }: { children: ReactNode 
     const [direct, setDirect] = useState<DirectCallState | null>(null);
     const [isJoining, setJoining] = useState(false);
     const [stageOpen, setStageOpen] = useState(false);
+    useEffect(() => {
+        let previousUrl = window.location.pathname + window.location.search;
+        return router.on('navigate', (event) => {
+            const target = new URL(event.detail.page.url, window.location.origin);
+            const nextUrl = target.pathname + target.search;
+            if (nextUrl === previousUrl) return;
+            previousUrl = nextUrl;
+            setStageOpen(false);
+            setDirect((state) => (state ? { ...state, isExpanded: false } : state));
+        });
+    }, []);
     const [deafened, setDeafened] = useState(false);
     const [media, setMedia] = useState<MediaSessionState>(EMPTY_MEDIA);
     const [groupRing, setGroupRing] = useState<GroupRingState | null>(null);

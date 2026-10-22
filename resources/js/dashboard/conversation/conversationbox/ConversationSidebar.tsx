@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
-import { isGroupStageOpen, useCallSession } from 'dashboard/calls/callSession';
+import { isCallStageOpen, useCallSession } from 'dashboard/calls/callSession';
 import { t } from '../../../i18n';
 import { useConversation } from '../ConversationContext';
 import { useContactPanelControl, useIsContactPanelOverlay } from '../contactPanelVisibility';
@@ -27,7 +27,7 @@ export default function ConversationSidebar() {
     const { isOpen: isPanelOpen, setOpen } = useContactPanelControl(uiSettings, updateUISettings);
     // Lớp phủ nằm trên mọi thứ trong khung làm việc: khi màn phòng thoại mở thì nhường chỗ (không
     // lưu là đã đóng), để thanh điều khiển phòng không bị che; về lại chat thì panel hiện như cũ.
-    const isCoveredByCallStage = isGroupStageOpen(useCallSession());
+    const isCoveredByCallStage = isCallStageOpen(useCallSession());
     const isOpen = isPanelOpen && !(isOverlay && isCoveredByCallStage);
     const [isContentMounted, setIsContentMounted] = useState(isOpen);
 

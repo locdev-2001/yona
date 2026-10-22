@@ -12,6 +12,10 @@ export interface StreamStatistics {
     renderHeight: number | null;
     fps: number | null;
     bitrate: number | null;
+    previewWidth?: number | null;
+    previewHeight?: number | null;
+    previewFps?: number | null;
+    transmissionState?: 'active' | 'waiting' | 'paused';
     codec: string | null;
     implementation: string | null;
     powerEfficient: boolean | null;

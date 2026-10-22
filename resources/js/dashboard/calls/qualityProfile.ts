@@ -3,7 +3,8 @@ export const CALL_QUALITY = {
     camera: { width: 1280, height: 720, frameRate: 30, maxBitrate: 2_000_000 },
 } as const;
 
-export function screenBelowRequirement(stream: { width: number | null; height: number | null; fps: number | null }): boolean {
+export function screenBelowRequirement(stream: { width: number | null; height: number | null; fps: number | null; transmissionState?: string }): boolean {
+    if (stream.transmissionState && stream.transmissionState !== 'active') return false;
     const requirement = CALL_QUALITY.screen;
     return (
         (stream.width !== null && stream.width < requirement.width) ||

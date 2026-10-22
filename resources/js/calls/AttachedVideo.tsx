@@ -1,4 +1,4 @@
-import { useEffect, useRef, useSyncExternalStore } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import type { Track } from 'livekit-client';
 import { useCallPreferences } from 'dashboard/calls/preferences';
 import type { CallStatistics } from 'dashboard/calls/statistics';
@@ -22,6 +22,7 @@ export default function AttachedVideo({
     statistics: CallStatistics;
 }) {
     const videoRef = useRef<HTMLVideoElement>(null);
+    const [compact, setCompact] = useState(false);
     const preferences = useCallPreferences();
 
     useEffect(() => {
@@ -29,13 +30,18 @@ export default function AttachedVideo({
         if (!video) return undefined;
 
         track.attach(video);
+        const measure = () => setCompact(video.clientWidth < 320 || video.clientHeight < 180);
+        const observer = new ResizeObserver(measure);
+        observer.observe(video);
+        measure();
         return () => {
+            observer.disconnect();
             track.detach(video);
         };
     }, [track]);
 
     return (
-        <>
+        <div className="relative size-full min-h-0 min-w-0">
             <video
                 ref={videoRef}
                 autoPlay
@@ -44,9 +50,9 @@ export default function AttachedVideo({
                 className={`size-full ${fit === 'cover' ? 'object-cover' : 'object-contain'} ${mirrored ? '-scale-x-100' : ''}`}
             />
             {preferences.showStatistics || source === 'screen' ? (
-                <StatisticsOverlay statistics={statistics} identity={identity} source={source} showDetails={preferences.showStatistics} />
+                <StatisticsOverlay statistics={statistics} identity={identity} source={source} showDetails={preferences.showStatistics} compact={compact} />
             ) : null}
-        </>
+        </div>
     );
 }
 
@@ -55,14 +61,16 @@ function StatisticsOverlay({
     identity,
     source,
     showDetails,
+    compact,
 }: {
     statistics: CallStatistics;
     identity: string;
     source: 'camera' | 'screen';
     showDetails: boolean;
+    compact: boolean;
 }) {
     const snapshot = useSyncExternalStore(statistics.subscribe, statistics.read);
     const stream = snapshot.streams.find((candidate) => candidate.identity === identity && candidate.source === source);
     if (!showDetails && (!stream || !screenBelowRequirement(stream))) return null;
-    return <VideoStatistics statistics={stream} source={source} />;
+    return <VideoStatistics statistics={stream} source={source} compact={compact} />;
 }

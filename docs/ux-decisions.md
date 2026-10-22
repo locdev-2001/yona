@@ -181,3 +181,9 @@ Kiến trúc: [system-architecture.md](system-architecture.md).
 | Cài đặt | Một component CallSettings dùng chung màn phòng và màn 1-1; VolumeControl dùng cho đầu ra chung và từng người | Không lặp cấu trúc UI theo kiểu gọi |
 | Thẻ hoạt động gọi | Mọi tin có dữ liệu call đều là thẻ; snapshot chưa có thì đang cập nhật. Tin hoạt động khác vẫn dùng component Activity | Founder chỉ ra dòng chữ thay cho thẻ ở local, task 270 |
 | Dữ liệu phân tích | Giữ số liệu kỹ thuật đã duyệt, không tự xóa sau 30 ngày; không ghi nội dung media | Founder duyệt schema và yêu cầu giữ lại để phân tích |
+
+### Scene cuộc gọi khi điều hướng và số đo video (22/10/2026)
+
+Chuyển kênh/hội thoại thu nhỏ màn gọi, giữ phiên media; mini player mở lại màn live. Gọi 1-1 có chia sẻ dùng cùng scene live với nhóm. Các nút lớn dùng chung CallActionGrid; chọn thiết bị dùng SelectInput của portal. Trên điện thoại, ô người tham gia giữ tỷ lệ vuông và cuộn khi nhiều hàng.
+
+Số FPS preview được đo từ video đang hiển thị, độc lập với FPS/bitrate RTP gửi hoặc nhận. Khi không có người xem hoặc encoding tạm ngừng, giữ số truyền thực tế và ghi rõ trạng thái; không coi FPS gửi 0 là preview đứng. Mục tiêu 1080p60 không đổi; mẫu active chưa đạt vẫn cảnh báo. Chi tiết nghiệm thu và giới hạn nằm ở reports/call-scenes-audit-20261022.md.
