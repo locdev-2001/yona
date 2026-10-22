@@ -1051,7 +1051,20 @@ restart_application_processes() {
     log 'Yêu cầu Reverb khởi động lại graceful'
     run "$PHP_BIN" artisan reverb:restart --no-interaction
 
+    hand_opcache_file_cache_to_runtime_user
     reload_php_fpm
+}
+
+# Opcache CLI ghi mã đã biên dịch ra đĩa với quyền 0600. Deploy chạy artisan bằng root
+# nên tệp root tạo ra worker (DEPLOY_RUNTIME_USER) không đọc, không ghi đè được, và
+# những tệp đó bị biên dịch lại ở mọi worker mới. Không bật file_cache thì bỏ qua.
+hand_opcache_file_cache_to_runtime_user() {
+    local file_cache_dir
+    file_cache_dir="$("$PHP_BIN" -r 'echo ini_get("opcache.file_cache");' 2>/dev/null || true)"
+    [[ -n "$file_cache_dir" && -d "$file_cache_dir" ]] || return 0
+
+    log "Trả thư mục opcache CLI cho $DEPLOY_RUNTIME_USER: $file_cache_dir"
+    run chown -R "$DEPLOY_RUNTIME_USER:$DEPLOY_RUNTIME_GROUP" "$file_cache_dir"
 }
 
 disable_maintenance_mode() {
