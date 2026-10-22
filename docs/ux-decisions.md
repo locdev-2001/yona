@@ -187,3 +187,5 @@ Kiến trúc: [system-architecture.md](system-architecture.md).
 Chuyển kênh/hội thoại thu nhỏ màn gọi, giữ phiên media; mini player mở lại màn live. Gọi 1-1 có chia sẻ dùng cùng scene live với nhóm. Các nút lớn dùng chung CallActionGrid; chọn thiết bị dùng SelectInput của portal. Trên điện thoại, ô người tham gia giữ tỷ lệ vuông và cuộn khi nhiều hàng.
 
 Số FPS preview được đo từ video đang hiển thị, độc lập với FPS/bitrate RTP gửi hoặc nhận. Khi không có người xem hoặc encoding tạm ngừng, giữ số truyền thực tế và ghi rõ trạng thái; không coi FPS gửi 0 là preview đứng. Mục tiêu 1080p60 không đổi; mẫu active chưa đạt vẫn cảnh báo. Chi tiết nghiệm thu và giới hạn nằm ở reports/call-scenes-audit-20261022.md.
+
+Bố cục người tham gia trên phone: hai người xếp dọc và tự giới hạn kích thước theo chiều cao vùng nội dung để giữ ô vuông; 3–4 người dùng hai cột, từ 5 người dùng ba cột. Hàng cuối căn giữa; khi không đủ chỗ thì cuộn. Kích thước dùng CSS container của vùng gọi, không thêm timer đo layout.

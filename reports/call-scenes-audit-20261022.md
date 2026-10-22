@@ -8,7 +8,7 @@
 2. **Mũi tên chọn thiết bị bị cắt:** thay select viết riêng bằng `SelectInput` của portal, có khoảng trống và icon bên trong field, vùng chạm tối thiểu 44px. Không đổi logic chọn micro hoặc thiết bị phát.
 3. **Màn live che trang mới:** phiên gọi sống ngoài trang, nhưng scene mở rộng cũng được giữ khi URL đổi. Khi pathname/query thay đổi, chỉ thu nhỏ scene; không disconnect media. Bấm mini player mở lại được. Chia sẻ trong cuộc gọi 1-1 dùng scene live chung; dừng chia sẻ quay lại scene thoại/video.
 4. **FPS về 0:** UI cũ chỉ đọc outbound RTP rồi dùng nó để kết luận preview bị đứng/chất lượng kém. Tách `previewWidth`, `previewHeight`, `previewFps` đo từ thẻ video thật với FPS/bitrate gửi hoặc nhận từ WebRTC. Giữ riêng trạng thái `active`, `waiting`, `paused`. Preview không lấy FPS cấu hình làm FPS đo được.
-5. **Ô người tham gia trên điện thoại:** ô cũ 345×681.75px tại viewport 375×812. Sau sửa, một người là 345×345px; hai người đều 166.875×166.875px. Nhiều hàng có vùng cuộn, không kéo ô để lấp chiều cao màn hình.
+5. **Ô người tham gia trên điện thoại:** ô cũ 345×681.75px tại viewport 375×812. Sau sửa, một người là 345×345px; hai người xếp dọc, mỗi ô 335.25×335.25px, không phát sinh cuộn thừa. Nhiều hàng có vùng cuộn, không kéo ô để lấp chiều cao màn hình.
 6. **Fullscreen bị browser từ chối:** bắt lỗi và báo bằng snackbar; vẫn xem/thu nhỏ được, không còn Promise rejection không xử lý.
 
 ## Bằng chứng production chỉ đọc
@@ -36,7 +36,7 @@ Room đang bật Dynacast. [Tài liệu LiveKit](https://docs.livekit.io/transpo
 | Fullscreen | Browser của phiên nghiệm thu từ chối request; bản cuối hiện thông báo và Thu nhỏ vẫn dùng được. Chưa xác nhận nhánh vào fullscreen thành công trên thiết bị cho phép |
 | Rời/kết thúc | Hai phiên đã rời; DOM cả hai không còn thẻ audio/video |
 
-Hai phiên nằm trên cùng máy, không thay cho nghiệm thu hai thiết bị vật lý. Không thêm hoặc chạy test tự động. Không ghi nội dung tiếng/hình vào telemetry.
+Hai phiên nằm trên cùng máy, không thay cho nghiệm thu hai thiết bị vật lý. Bố cục 3–4 người dùng hai cột, từ 5 người dùng ba cột và căn giữa hàng cuối; chưa nghiệm thu thật đủ 3/4/5 người trong lượt này. Không thêm hoặc chạy test tự động. Không ghi nội dung tiếng/hình vào telemetry.
 
 ## Số đo và giới hạn
 

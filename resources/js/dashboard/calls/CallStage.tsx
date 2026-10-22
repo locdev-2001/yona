@@ -10,9 +10,9 @@ import { useVisibleCameras } from './visibleCameras';
 import { useAlert } from 'dashboard/composables/useAlert';
 
 // Số cột theo số người: 1 → 1, 2–4 → 2, 5–9 → 3, nhiều hơn → 4 (điện thoại tối đa 2).
-function gridColumns(count: number, isPhone: boolean): string {
+function gridColumns(count: number): string {
     if (count <= 1) return 'grid-cols-1';
-    if (isPhone || count <= 4) return 'grid-cols-2';
+    if (count <= 4) return 'grid-cols-2';
     if (count <= 9) return 'grid-cols-3';
     return 'grid-cols-4';
 }
@@ -35,6 +35,17 @@ export default function CallStage({
     const stageRef = useRef<HTMLElement>(null);
     const sharer = room.participants.find((participant) => participant.isSharingScreen) ?? null;
     const visibleCameras = useVisibleCameras(room.participants, sharer !== null);
+    const participantCount = room.participants.length;
+    const phoneLayout = participantCount <= 2
+        ? 'flex flex-col items-center [justify-content:safe_center]'
+        : 'flex flex-wrap justify-center [align-content:safe_center]';
+    const phoneTileWidth = participantCount <= 1
+        ? 'w-full'
+        : participantCount === 2
+          ? 'w-[min(100%,calc((100cqh-0.75rem)/2))]'
+          : participantCount <= 4
+            ? 'w-[calc((100%-0.75rem)/2)]'
+            : 'w-[calc((100%-1.5rem)/3)]';
     const tileProps = {
         renderMedia,
         canModerate: local.canModerate,
@@ -110,7 +121,7 @@ export default function CallStage({
                         </div>
                     </div>
                 ) : (
-                    <div className={`grid h-full gap-3 ${isPhone ? 'auto-rows-min [align-content:safe_center]' : 'auto-rows-fr'} ${gridColumns(room.participants.length, isPhone)}`}>
+                    <div className={`h-full gap-3 ${isPhone ? `${phoneLayout} [container-type:size]` : `grid auto-rows-fr ${gridColumns(participantCount)}`}`}>
                         {room.participants.map((participant) => (
                             <CallTile
                                 key={participant.identity}
@@ -118,7 +129,7 @@ export default function CallStage({
                                 source="camera"
                                 displayVideo={visibleCameras.has(participant.identity)}
                                 {...tileProps}
-                                className={isPhone ? 'aspect-square min-h-0' : 'min-h-0'}
+                                className={isPhone ? `aspect-square min-h-0 flex-none ${phoneTileWidth}` : 'min-h-0'}
                             />
                         ))}
                     </div>
