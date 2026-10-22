@@ -51,6 +51,12 @@ final class SlowJobBreakdown
 
     private float $cpuStartedMs = 0;
 
+    private int $includedFilesAtStart = 0;
+
+    private int $gcRunsAtStart = 0;
+
+    private float $gcSecondsAtStart = 0;
+
     private static ?self $instance = null;
 
     private int $jobsInProcess = 0;
@@ -80,6 +86,8 @@ final class SlowJobBreakdown
 
         $this->startedAt = hrtime(true);
         $this->cpuStartedMs = self::cpuMs();
+        $this->includedFilesAtStart = count(get_included_files());
+        ['runs' => $this->gcRunsAtStart, 'collector_time' => $this->gcSecondsAtStart] = gc_status();
         $this->databaseMs = $this->httpMs = $this->broadcastMs = $this->broadcastConnectMs = $this->redisMs = 0;
         $this->databaseQueries = $this->httpCalls = $this->broadcastCalls = $this->redisCommands = 0;
         $this->jobsInProcess++;
@@ -150,6 +158,7 @@ final class SlowJobBreakdown
 
         $totalMs = (hrtime(true) - $this->startedAt) / 1e6;
         $cpuMs = self::cpuMs() - $this->cpuStartedMs;
+        $gc = gc_status();
         $this->startedAt = null;
 
         $jobName = $event->job->resolveName();
@@ -177,6 +186,11 @@ final class SlowJobBreakdown
             'redis_ms' => (int) round($this->redisMs),
             'redis_commands' => $this->redisCommands,
             'cpu_ms' => (int) round($cpuMs),
+            // Tệp PHP nạp lần đầu trong job: nhiều nghĩa là CPU đi vào biên dịch mã (CLI không có opcache).
+            'new_php_files' => count(get_included_files()) - $this->includedFilesAtStart,
+            'gc_runs' => $gc['runs'] - $this->gcRunsAtStart,
+            'gc_ms' => (int) round(($gc['collector_time'] - $this->gcSecondsAtStart) * 1000),
+            'memory_mb' => (int) round(memory_get_usage() / 1048576),
             'other_ms' => (int) round(max(0, $totalMs - $this->databaseMs - $this->httpMs - $this->broadcastMs - $this->redisMs)),
             // Từ lúc tới hạn chạy (đã trừ thời gian hẹn trễ) tới lúc bắt đầu chạy.
             'waited_since_push_ms' => is_numeric($pushedAt) ? (int) round(max(0, (microtime(true) - (float) $pushedAt) * 1000 - $totalMs - $delayMs)) : null,
