@@ -1,5 +1,24 @@
 import type { CallDevice, CallDeviceKind, CallParticipantView, RenderCallMedia } from 'dashboard/calls/types';
 
+export class MediaOperationError extends Error {
+    constructor(public readonly code: 'screen_quality') {
+        super(code);
+    }
+}
+
+export function mediaFailureReason(error: unknown): string {
+    if (error instanceof MediaOperationError) return 'quality_requirement';
+    const reasons: Record<string, string> = {
+        NotAllowedError: 'permission_denied',
+        SecurityError: 'security_restriction',
+        NotFoundError: 'device_not_found',
+        NotReadableError: 'device_busy',
+        OverconstrainedError: 'constraints',
+        AbortError: 'capture_aborted',
+    };
+    return error instanceof Error ? (reasons[error.name] ?? 'unknown') : 'unknown';
+}
+
 // Hợp đồng giữa phiên gọi ở gốc app (CallSessionProvider) và lớp media được tải lười
 // (LiveKitSession): lớp media báo trạng thái phòng lên, phiên gọi điều khiển qua handle.
 
@@ -8,6 +27,8 @@ export interface MediaSessionState {
     renderMedia: RenderCallMedia;
     // Âm lượng 0..1 của một người lúc gọi (đọc mỗi khung hình cho hiệu ứng, không qua state React).
     readAudioLevel: (identity: string) => number;
+    canSelectAudioOutput?: boolean;
+    filterState?: 'off' | 'browser' | 'enhanced';
 }
 
 export interface MediaSessionHandle {
@@ -23,6 +44,7 @@ export interface MediaSessionHandle {
 export type MediaSessionEnd = 'left' | 'removed' | 'replaced' | 'closed' | 'full' | 'lost';
 
 export interface MediaSessionProps {
+    callId: number;
     serverUrl: string;
     token: string;
     deafened: boolean;

@@ -39,6 +39,8 @@ export interface CallLocalState {
     canShareScreen: boolean;
     // Người xem được tắt mic / mời người khác ra.
     canModerate: boolean;
+    canSelectAudioOutput?: boolean;
+    filterState?: 'off' | 'browser' | 'enhanced';
 }
 
 export interface CallActions {
@@ -47,7 +49,7 @@ export interface CallActions {
     toggleScreen: () => void;
     toggleDeafen: () => void;
     listDevices: (kind: CallDeviceKind) => Promise<CallDevice[]>;
-    selectDevice: (kind: CallDeviceKind, deviceId: string) => void;
+    selectDevice: (kind: CallDeviceKind, deviceId: string) => Promise<void>;
     leave: () => void;
     expand: () => void;
     minimize: () => void;
@@ -56,7 +58,7 @@ export interface CallActions {
     removeParticipant: (identity: string) => void;
 }
 
-export type CallDeviceKind = 'audioinput' | 'videoinput';
+export type CallDeviceKind = 'audioinput' | 'videoinput' | 'audiooutput';
 
 export interface CallDevice {
     id: string;

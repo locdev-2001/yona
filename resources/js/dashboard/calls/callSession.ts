@@ -99,7 +99,7 @@ const IDLE_SESSION: CallSession = {
         toggleScreen: noop,
         toggleDeafen: noop,
         listDevices: async () => [],
-        selectDevice: noop,
+        selectDevice: async () => undefined,
         leave: noop,
         expand: noop,
         minimize: noop,

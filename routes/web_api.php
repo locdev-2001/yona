@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\Integrations\WebhooksController as SlackEventsWebhooksController;
+use App\Http\Controllers\Calls\TelemetryController;
 use App\Http\Controllers\RequestSigningKeysController;
 use App\Http\Controllers\WebApi\AccountsController;
 use App\Http\Controllers\WebApi\Actions\ContactMergesController;
@@ -135,6 +136,7 @@ Route::middleware(['auth', EnsureStickerLibraryAccess::class.':'.EnsureStickerLi
 // resource :notification_subscriptions (số ít, không gắn account). Nhận cả phiên
 // lẫn header api_access_token như Api::BaseController của bản gốc.
 Route::middleware(['auth.api_token', 'auth'])->prefix('/api/v1')->group(function () {
+    Route::post('/calls/{call}/telemetry', TelemetryController::class)->whereNumber('call')->middleware('throttle:12,1,call-telemetry:');
     Route::get('/users/search', [UsersController::class, 'search'])->middleware('throttle:60,1');
     Route::get('/usernames/availability', [UsersController::class, 'usernameAvailability'])->middleware('throttle:60,1');
 

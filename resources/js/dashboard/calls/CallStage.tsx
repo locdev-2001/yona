@@ -6,6 +6,7 @@ import CallControls from './CallControls';
 import CallDuration from './CallDuration';
 import CallTile from './CallTile';
 import type { CallActions, CallLocalState, CallRoomView, RenderCallMedia } from './types';
+import { useVisibleCameras } from './visibleCameras';
 
 // Số cột theo số người: 1 → 1, 2–4 → 2, 5–9 → 3, nhiều hơn → 4 (điện thoại tối đa 2).
 function gridColumns(count: number, isPhone: boolean): string {
@@ -31,7 +32,8 @@ export default function CallStage({
     isPhone: boolean;
 }) {
     const stageRef = useRef<HTMLElement>(null);
-    const sharer = room.participants.find(participant => participant.isSharingScreen) ?? null;
+    const sharer = room.participants.find((participant) => participant.isSharingScreen) ?? null;
+    const visibleCameras = useVisibleCameras(room.participants, sharer !== null);
     const tileProps = {
         renderMedia,
         canModerate: local.canModerate,
@@ -50,7 +52,9 @@ export default function CallStage({
                 <span className="text-sm font-semibold truncate">{room.title}</span>
                 {sharer && !isPhone ? (
                     <>
-                        <span aria-hidden="true" className="text-n-slate-10">•</span>
+                        <span aria-hidden="true" className="text-n-slate-10">
+                            •
+                        </span>
                         <span className="text-sm truncate text-n-slate-11">{t('CALLS.ROOM.SCREEN_OF', { name: sharer.name })}</span>
                     </>
                 ) : null}
@@ -63,8 +67,24 @@ export default function CallStage({
                         {t('CALLS.ROOM.LIVE')}
                     </span>
                 ) : null}
-                <Button sm slate ghost icon="i-lucide-message-circle" title={t('CALLS.ROOM.CHAT')} className=" max-md:!size-10" onClick={actions.openChat} />
-                <Button sm slate ghost icon="i-lucide-minimize-2" title={t('CALLS.ROOM.MINIMIZE')} className=" max-md:!size-10" onClick={actions.minimize} />
+                <Button
+                    sm
+                    slate
+                    ghost
+                    icon="i-lucide-message-circle"
+                    title={t('CALLS.ROOM.CHAT')}
+                    className=" max-md:!size-10"
+                    onClick={actions.openChat}
+                />
+                <Button
+                    sm
+                    slate
+                    ghost
+                    icon="i-lucide-minimize-2"
+                    title={t('CALLS.ROOM.MINIMIZE')}
+                    className=" max-md:!size-10"
+                    onClick={actions.minimize}
+                />
             </header>
 
             <div className="flex-1 min-h-0 px-4 pb-2">
@@ -72,15 +92,29 @@ export default function CallStage({
                     <div className="flex flex-col h-full gap-3">
                         <CallTile participant={sharer} source="screen" {...tileProps} className="flex-1 min-h-0" />
                         <div className="flex flex-none [justify-content:safe_center] gap-3 h-28 overflow-x-auto">
-                            {room.participants.map(participant => (
-                                <CallTile key={participant.identity} participant={participant} source="camera" {...tileProps} className="flex-none aspect-video h-full" />
+                            {room.participants.map((participant) => (
+                                <CallTile
+                                    key={participant.identity}
+                                    participant={participant}
+                                    source="camera"
+                                    displayVideo={visibleCameras.has(participant.identity)}
+                                    {...tileProps}
+                                    className="flex-none aspect-video h-full"
+                                />
                             ))}
                         </div>
                     </div>
                 ) : (
                     <div className={`grid h-full gap-3 auto-rows-fr ${gridColumns(room.participants.length, isPhone)}`}>
-                        {room.participants.map(participant => (
-                            <CallTile key={participant.identity} participant={participant} source="camera" {...tileProps} className="min-h-0" />
+                        {room.participants.map((participant) => (
+                            <CallTile
+                                key={participant.identity}
+                                participant={participant}
+                                source="camera"
+                                displayVideo={visibleCameras.has(participant.identity)}
+                                {...tileProps}
+                                className="min-h-0"
+                            />
                         ))}
                     </div>
                 )}

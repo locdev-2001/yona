@@ -1,10 +1,3 @@
-# Yona — Design System: Bề mặt ứng dụng
+# Giao diện ứng dụng
 
-> **Đã chuyển thành skill.** Nội dung nay ở
-> [`.claude/skills/yona-ui/references/app.md`](../.claude/skills/yona-ui/references/app.md).
->
-> Vì sao: doc không có lối vào tự động và không tới được subagent. Skill thì tự
-> nạp khi việc khớp, và bảo agent con gọi skill là xong, không phải diễn giải lại.
->
-> Chuẩn bề mặt công khai: `.claude/skills/yona-ui/SKILL.md`
-> Kiểm trang đã render: `npm run check:ui`
+Dùng [quy ước UI portal và danh sách token](portal-ui.md). Component dùng chung lấy từ `resources/js/dashboard/components-next/`; màu sáng/tối lấy từ các biến CSS hiện hành, không định nghĩa bảng màu riêng trong từng tính năng.

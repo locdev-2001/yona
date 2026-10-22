@@ -25,6 +25,7 @@
         "@ext/utils": "npm:@chatwoot/utils@0.0.57",
         "@inertiajs/react": "^2.0.0",
         "@livekit/components-react": "2.9.24",
+        "@sapphi-red/web-noise-suppressor": "0.4.1",
         "@tailwindcss/postcss": "^4.3.3",
         "@tanstack/react-table": "8.21.3",
         "@types/qrcode": "^1.5.6",

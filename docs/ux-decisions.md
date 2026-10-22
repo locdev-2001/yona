@@ -168,3 +168,16 @@ Kiến trúc: [system-architecture.md](system-architecture.md).
 | Người gọi | Bấm gọi là vào màn gọi lớn ngay (như phòng thoại), có camera; thu nhỏ thì thành khối "Đã kết nối" | Luôn mở màn gọi lớn trước, chỉ thu nhỏ khi bấm | 21/10/2026 |
 | Tin trong chat | **Một sự kiện một mục:** đang diễn ra là thẻ "Cuộc gọi nhóm thoại/video" nền teal ("N người trong cuộc gọi", avatar người đang ở trong, nút Tham gia; đang ở trong thì "Mở cuộc gọi"); xong thì chỉ còn thẻ kết quả (tên nhóm · số người tham gia · thời lượng, avatar, Xem chi tiết có Gọi lại; không ai nghe thì chỉ nhãn "Không ai nghe", không đếm người). Dòng trên thẻ không nhắc tên người khởi tạo vì tên đã đứng đầu cụm | Founder: bỏ lặp tên, lặp thông tin | 21/10/2026 |
 | Vị trí tin cuộc gọi nhóm | Tin "X đã mở phòng thoại", thẻ phòng thoại nhóm, tin và thẻ cuộc gọi nhóm **nằm theo người khởi tạo như tin nhắn thường**: mình khởi tạo thì bên phải, người khác thì bên trái kèm avatar và tên. Không căn giữa; tin liên tiếp của cùng người gộp cụm như tin nhắn thường (tên ở mục đầu, avatar ở mục cuối). Máy chủ ghi người mở phòng / người gọi làm người gửi của tin hoạt động đó | Founder: "các tin nhóm vẫn hiển thị ở đúng vị trí của người khởi tạo" | 21/10/2026 |
+
+
+## Chất lượng cuộc gọi và chuẩn portal (22/10/2026)
+
+| Phần | Quyết định | Cơ sở |
+|---|---|---|
+| Chuẩn UI | Vô hiệu hóa skill `yona-ui`; dùng component và token portal hiện có. Nguồn danh sách token là `docs/portal-ui.md` | Founder yêu cầu trong phiên triển khai |
+| Chia sẻ màn hình | Tối thiểu 1080p60. Nguồn không capture được thì báo không đáp ứng, không âm thầm hạ profile. Số thực gửi/nhận dưới yêu cầu được thể hiện bằng lớp phủ cảnh báo | Founder chốt mức tối thiểu |
+| Phòng đông | Hiện avatar cho camera ngoài ngân sách 8 video hoặc 4 thumbnail khi xem màn hình; vẫn giữ âm thanh mọi người. Ưu tiên người nói gần đây, tránh đổi video theo từng frame âm lượng | Giảm số decoder và giữ chất lượng màn hình chính |
+| Thiết bị phát | Dùng lựa chọn thiết bị thật từ browser. Nơi không hỗ trợ thì chỉ dẫn dùng lựa chọn của hệ điều hành; không gắn nhãn loa ngoài cho thao tác tắt âm thanh | Năng lực web khác app native; không có nút giả |
+| Cài đặt | Một component CallSettings dùng chung màn phòng và màn 1-1; VolumeControl dùng cho đầu ra chung và từng người | Không lặp cấu trúc UI theo kiểu gọi |
+| Thẻ hoạt động gọi | Mọi tin có dữ liệu call đều là thẻ; snapshot chưa có thì đang cập nhật. Tin hoạt động khác vẫn dùng component Activity | Founder chỉ ra dòng chữ thay cho thẻ ở local, task 270 |
+| Dữ liệu phân tích | Giữ số liệu kỹ thuật đã duyệt, không tự xóa sau 30 ngày; không ghi nội dung media | Founder duyệt schema và yêu cầu giữ lại để phân tích |
