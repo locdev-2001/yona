@@ -83,7 +83,7 @@ const columns: ColumnDef<FeatureRow>[] = [
             <Link
                 href={row.original.url}
                 aria-label={label('OPEN', { feature: row.original.label })}
-                className="inline-flex min-h-11 min-w-48 items-center font-medium hover:underline md:min-h-0"
+                className="inline-flex min-h-11 min-w-0 max-w-full items-center font-medium hover:underline md:min-h-0"
             >
                 {row.original.label}
             </Link>

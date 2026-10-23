@@ -830,6 +830,8 @@ const messages: Record<string, unknown> = {
             "churn_risk": "Churn risk (inactive 14 days)"
         },
         "attributes": {
+            "superAdmin": "Super admin",
+            "targetUser": "Impersonated user",
             "id": "ID",
             "name": "Name",
             "display_name": "Display name",

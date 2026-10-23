@@ -14,6 +14,11 @@ class SuperAdminImpersonationDashboard extends Dashboard
         return SuperAdminImpersonation::class;
     }
 
+    public function resourceName(): string
+    {
+        return 'impersonations';
+    }
+
     public function attributeTypes(): array
     {
         return [

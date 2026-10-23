@@ -67,7 +67,7 @@ const columns: ColumnDef<ChannelHealthItem>[] = [
         id: 'inbox',
         header: () => label('COLUMNS.INBOX'),
         cell: ({ row }) => (
-            <div className="flex min-w-48 items-center gap-2">
+            <div className="flex min-w-0 max-w-full items-center gap-2">
                 <Avatar className="size-9 rounded-sm after:rounded-sm">
                     <AvatarImage src={row.original.platform.logo_url} alt="" className="rounded-sm" />
                     <AvatarFallback className="rounded-sm text-xs">{initialsOf(row.original.platform.name)}</AvatarFallback>
@@ -97,7 +97,7 @@ const columns: ColumnDef<ChannelHealthItem>[] = [
             const detail = problemDetail(row.original.detail);
 
             return (
-                <div className="flex min-w-48 flex-col items-start gap-1 py-2 whitespace-normal">
+                <div className="flex min-w-0 max-w-full flex-col items-start gap-1 py-2 whitespace-normal">
                     <SeverityBadge severity={row.original.severity} label={row.original.problemLabel} />
                     {detail ? <span className="text-muted-foreground break-words">{detail}</span> : null}
                 </div>

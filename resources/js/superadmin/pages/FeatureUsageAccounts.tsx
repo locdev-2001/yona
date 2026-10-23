@@ -47,8 +47,8 @@ const columns: ColumnDef<FeatureAccountRow>[] = [
         id: 'account',
         header: () => label('COLUMNS.ACCOUNT'),
         cell: ({ row }) => (
-            <Link href={row.original.url} className="inline-flex min-h-11 min-w-48 flex-col justify-center hover:underline md:min-h-0">
-                <span className="font-medium">{row.original.accountName || `#${row.original.accountId}`}</span>
+            <Link href={row.original.url} className="inline-flex min-h-11 min-w-0 max-w-full flex-col justify-center hover:underline md:min-h-0">
+                <span className="block max-w-full truncate font-medium" title={row.original.accountName || `#${row.original.accountId}`}>{row.original.accountName || `#${row.original.accountId}`}</span>
                 <span className="text-muted-foreground text-sm">#{row.original.accountId}</span>
             </Link>
         ),

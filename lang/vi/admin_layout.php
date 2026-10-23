@@ -278,6 +278,8 @@ return [
     ],
 
     'attributes' => [
+        'superAdmin' => 'Quản trị nền tảng',
+        'targetUser' => 'Người được đăng nhập hộ',
         'id' => 'ID',
         'name' => 'Tên',
         'display_name' => 'Tên hiển thị',

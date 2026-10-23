@@ -132,3 +132,21 @@ Nghiệm thu trực tiếp trên cùng form trong gallery: cả theme trắng/t�
 Các thay đổi đợt này chưa commit/push/deploy. Công việc revamp tổng thể vẫn đang tiến hành.
 
 Kiểm tra cuối đợt: Pint toàn bộ PHP thay đổi, TypeScript, i18n-check, build admin/SDK và build gallery đều đạt; diff-check sạch. Nút hiện/ẩn mật khẩu đã kiểm tra trên LoginForm dùng chung. Link review trong gallery tự chọn component theo tham số review sau reload.
+
+## Rà tiếp bảng vận hành và các màn tích hợp — 23/10/2026
+
+Đợt trước đã commit và push `ce1b7496` lên `origin/codex/admin-design-skeleton`. Chưa merge hoặc deploy.
+
+- Sửa bảng Tài khoản dùng tính năng: cột mặc định 150px xung đột link tối thiểu 192px. ListTable dùng chiều rộng cột V1 196/120/184px, giữ chiều rộng khai báo riêng; các link danh tính co theo ô, tên dài có ellipsis/title. Áp dụng cùng điểm dùng chung cho Mức dùng tính năng, Sức khỏe kênh và Cảnh báo.
+- Nghiệm thu bảng tài khoản dùng “Tạo hộp thư” có dữ liệu thật: mobile 375px, trang 369px, các cột 196/120/120/184/184px; bấm hàng mở đúng hồ sơ và quay lại được. Đã kiểm tra desktop và lưu ảnh trước/sau.
+- Agent bot: mở danh sách, chi tiết có token che, form Sửa và Hủy; mobile 375px không tràn (trang 369px). Không lưu thay đổi bot.
+- Access token: danh sách/điều khiển bảng dùng V1; các giá trị vẫn che. Desktop và mobile 375px (trang 369px); không bấm Hiện/Sao chép.
+- Đăng nhập hộ: sửa resourceName tại Dashboard thành `impersonations` đúng route; trước đó tiêu đề còn tiếng Anh và tìm/sort có thể điều hướng sang resource suy ra từ model. Bổ sung nhãn quan hệ Việt/Anh. Đã bấm sort Tạo lúc, nhập/tìm/xóa từ khóa, xác nhận URL luôn `/admin/impersonations`. Dữ liệu local đang rỗng; chưa có nghiệm thu hàng nhật ký có dữ liệu. Mobile trang 375px trong viewport 375px.
+- Biến cấu hình hệ thống: mở bảng, tìm từ khóa không khớp, xác nhận trạng thái rỗng trên desktop/mobile. Chỉ lưu ảnh trạng thái rỗng để không đưa giá trị cấu hình vào bằng chứng. Không sửa cấu hình.
+- Kiểm tra hồi quy bảng Sức khỏe kênh/Cảnh báo sau chỉnh cột: trang 369px trong viewport 375px; cuộn bảng nằm trong khung. Bộ ảnh mobile bổ sung dùng viewport 375×700.
+
+Kiểm tra mã: TypeScript, Pint các tệp PHP sửa, i18n-check (đã sinh lại bundle en/vi), build admin/SDK và gallery đạt. Không chạy hoặc viết test tự động. Không thêm token hoặc pattern mới.
+
+Ảnh bổ sung: feature-accounts-before-mobile.png, feature-accounts-after-mobile.png, feature-accounts-after-desktop.png, agent-bots-desktop.png, agent-bot-form-mobile.png, access-tokens-desktop.png, access-tokens-mobile.png, impersonations-desktop.png, impersonations-mobile.png, installation-config-empty-desktop.png, installation-config-empty-mobile.png, channel-health-column-mobile.png, alerts-column-mobile.png.
+
+Công việc tổng thể vẫn đang tiến hành. Còn nghiệm thu đăng nhập/2FA bằng phiên mới và các trạng thái chỉ có khi có dữ liệu (nhật ký đăng nhập hộ); không đánh dấu hoàn tất toàn bộ.

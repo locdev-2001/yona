@@ -276,6 +276,8 @@ return [
     ],
 
     'attributes' => [
+        'superAdmin' => 'Super admin',
+        'targetUser' => 'Impersonated user',
         'id' => 'ID',
         'name' => 'Name',
         'display_name' => 'Display name',

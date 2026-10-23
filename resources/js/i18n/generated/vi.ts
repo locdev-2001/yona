@@ -830,6 +830,8 @@ const messages: Record<string, unknown> = {
             "churn_risk": "Nguy cơ rời (14 ngày không hoạt động)"
         },
         "attributes": {
+            "superAdmin": "Quản trị nền tảng",
+            "targetUser": "Người được đăng nhập hộ",
             "id": "ID",
             "name": "Tên",
             "display_name": "Tên hiển thị",

@@ -201,7 +201,7 @@ function ruleColumns(onEdit: (key: string) => void): ColumnDef<AlertRuleItem>[] 
             id: 'rule',
             header: () => label('COLUMNS.RULE'),
             cell: ({ row }) => (
-                <div className="flex min-w-48 flex-col gap-0.5 py-2 whitespace-normal">
+                <div className="flex min-w-0 max-w-full flex-col gap-0.5 py-2 whitespace-normal">
                     <span className="font-medium">{ruleTitle(row.original.key)}</span>
                     <span className="text-muted-foreground">{label(`RULES.${row.original.key}.DESCRIPTION`)}</span>
                 </div>
