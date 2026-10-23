@@ -1,7 +1,7 @@
 @import '../design-preview/shell.css';
 @import '../design-preview/scrollbars.css';
 
-.admin-console-shell {
+:is(.admin-console-shell, .admin-console-auth) {
     width: 100%;
     min-width: 0;
 }

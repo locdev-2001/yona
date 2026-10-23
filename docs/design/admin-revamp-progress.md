@@ -175,3 +175,9 @@ TypeScript, Pint các PHP sửa, i18n-check, build admin/SDK và gallery đạt.
 Đã commit đổi route tại 3ee754cb và tích hợp origin/main tại 98cd6917. Giữ cả cập nhật cuộc gọi lẫn Reicon/giấy phép, chuẩn hóa thêm call-quality (màn từ main mới), không đổi khóa dịch. TypeScript trên bản tích hợp đạt; Pint và i18n-check đạt. Đã mở /admin/call-quality với dữ liệu local và ghi ảnh release-call-quality-local.png. Ảnh production-login-before.png ghi nhận giao diện production cũ tại /admin/sign_in trước triển khai.
 
 Production đang ở f7661f97. Bốn commit main mới hơn là cập nhật UI cuộc gọi/tài liệu; plan trước triển khai xác nhận không có migration mới. Triển khai qua cổng yona-deploy theo lệnh deploy trực tiếp của người dùng, nghiệm thu production sẽ ghi tiếp sau khi server hoàn tất.
+
+## Sửa wrapper auth sau nghiệm thu production — 23/10/2026
+
+Deploy đầu 2f83d87e thành công nhưng nghiệm thu màn đăng nhập runtime production phát hiện admin-console-auth co còn 98px vì là flex item không được cấp width, kéo panel còn 50px. Đây là lỗi ở wrapper runtime, gallery không tái hiện. Đã dùng chung quy tắc width:100%/min-width:0 của admin-console-shell cho admin-console-auth; không thêm token hoặc thay layout mẫu đã duyệt.
+
+Nghiệm thu trực tiếp form runtime local: viewport 1280px, root/stage 1280px, panel 320px; mobile 375px trang 375px, panel 320px. Để mở cùng trang khi phiên local đã đăng nhập, tạm bỏ guest-only trong local lúc kiểm tra và đã khôi phục trước commit; auth production và routes được giữ nguyên. Ảnh production-login-narrow-before.png, auth-runtime-width-desktop.png, auth-runtime-width-mobile.png. Deploy bản sửa ngay trong cùng yêu cầu triển khai.
