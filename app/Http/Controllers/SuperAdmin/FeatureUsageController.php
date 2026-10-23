@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Services\Admin\Operations\FeatureUsage;
 use App\Services\ProductEvents\ProductEventName;
 use App\Support\SuperAdminArea;
+use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -23,15 +24,19 @@ class FeatureUsageController extends Controller
         ]);
     }
 
-    public function show(string $name): Response
+    public function show(string $name): Response|RedirectResponse
     {
-        $event = ProductEventName::tryFrom($name) ?? abort(404);
+        $event = ProductEventName::tryFrom(str_replace('-', '_', $name)) ?? abort(404);
+        $slug = str_replace('_', '-', $event->value);
+        if ($name !== $slug) {
+            return redirect(SuperAdminArea::url("feature-usage/{$slug}"), 301);
+        }
 
         return Inertia::render('superadmin/FeatureUsageAccounts', [
             'feature' => ['key' => $event->value, 'label' => $event->label(), 'group' => $event->group()],
             'accounts' => $this->usage->accounts($event),
             'limit' => FeatureUsage::ACCOUNTS_LIMIT,
-            'backUrl' => SuperAdminArea::url('feature_usage'),
+            'backUrl' => SuperAdminArea::url('feature-usage'),
         ]);
     }
 }

@@ -45,7 +45,7 @@ final class ChannelHealthWidget extends MetricWidget
             'total' => $summary['total'],
             'healthy' => $summary['healthy'],
             'failing' => $summary['failing'],
-            'url' => SuperAdminArea::url('channel_health'),
+            'url' => SuperAdminArea::url('channel-health'),
             'items' => array_map(static fn (array $item) => [
                 'inboxId' => $item['inboxId'],
                 'inboxName' => $item['inboxName'],

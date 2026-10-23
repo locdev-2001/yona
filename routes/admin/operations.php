@@ -13,13 +13,13 @@ use App\Http\Controllers\SuperAdmin\DataBrowserController;
 use App\Http\Controllers\SuperAdmin\SearchController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/channel_health', [ChannelHealthController::class, 'index']);
+Route::get('/channel-health', [ChannelHealthController::class, 'index']);
 
 Route::get('/accounts/{id}/overview', [AccountOverviewController::class, 'show'])->whereNumber('id');
 Route::post('/accounts/{id}/suspend', [AccountsController::class, 'suspend'])->whereNumber('id');
 Route::post('/accounts/{id}/unsuspend', [AccountsController::class, 'unsuspend'])->whereNumber('id');
 
-Route::get('/audit_logs', [AuditLogsController::class, 'index']);
+Route::get('/audit-logs', [AuditLogsController::class, 'index']);
 
 Route::get('/api/search', [SearchController::class, 'index'])->middleware('throttle:60,1');
 
@@ -27,8 +27,8 @@ Route::get('/api/search', [SearchController::class, 'index'])->middleware('throt
 Route::get('/data', [DataBrowserController::class, 'index']);
 Route::get('/data/{table}', [DataBrowserController::class, 'show'])->where('table', '[a-z0-9_]+');
 
-Route::get('/accounts/{accountId}/sticker_packs', [AccountStickerPacksController::class, 'page'])->whereNumber('accountId');
-Route::prefix('/api/accounts/{accountId}/sticker_packs')->whereNumber('accountId')->group(function () {
+Route::get('/accounts/{accountId}/sticker-packs', [AccountStickerPacksController::class, 'page'])->whereNumber('accountId');
+Route::prefix('/api/accounts/{accountId}/sticker-packs')->whereNumber('accountId')->group(function () {
     Route::get('/', [AccountStickerPacksController::class, 'index']);
     Route::post('/', [AccountStickerPacksController::class, 'store']);
     Route::get('/{packId}', [AccountStickerPacksController::class, 'show'])->whereNumber('packId');

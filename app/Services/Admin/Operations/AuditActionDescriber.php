@@ -84,7 +84,7 @@ final class AuditActionDescriber
 
     public static function normalize(string $action): string
     {
-        return (string) preg_replace('#^(\w+) api/#', '$1 ', trim($action));
+        return (string) preg_replace('#^(\w+) api/#', '$1 ', str_replace('-', '_', trim($action)));
     }
 
     /** Khoá câu mô tả, null khi route chưa có trong bảng. */

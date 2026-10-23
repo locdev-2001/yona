@@ -10,5 +10,5 @@ use Illuminate\Support\Facades\Route;
 Route::get('/alerts', [AlertsController::class, 'index']);
 Route::patch('/alerts/rules/{key}', [AlertsController::class, 'update'])->where('key', '[a-z0-9_]+');
 Route::post('/alerts/test', [AlertsController::class, 'test'])->middleware('throttle:6,1');
-Route::post('/api/push_subscriptions', [AlertsController::class, 'subscribe']);
-Route::delete('/api/push_subscriptions', [AlertsController::class, 'unsubscribe']);
+Route::post('/api/push-subscriptions', [AlertsController::class, 'subscribe']);
+Route::delete('/api/push-subscriptions', [AlertsController::class, 'unsubscribe']);

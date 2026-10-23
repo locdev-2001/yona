@@ -150,3 +150,22 @@ Kiểm tra mã: TypeScript, Pint các tệp PHP sửa, i18n-check (đã sinh l�
 Ảnh bổ sung: feature-accounts-before-mobile.png, feature-accounts-after-mobile.png, feature-accounts-after-desktop.png, agent-bots-desktop.png, agent-bot-form-mobile.png, access-tokens-desktop.png, access-tokens-mobile.png, impersonations-desktop.png, impersonations-mobile.png, installation-config-empty-desktop.png, installation-config-empty-mobile.png, channel-health-column-mobile.png, alerts-column-mobile.png.
 
 Công việc tổng thể vẫn đang tiến hành. Còn nghiệm thu đăng nhập/2FA bằng phiên mới và các trạng thái chỉ có khi có dữ liệu (nhật ký đăng nhập hộ); không đánh dấu hoàn tất toàn bộ.
+
+## Route đăng nhập gọn — 23/10/2026
+
+Theo yêu cầu người dùng, đổi GET/POST đăng nhập từ `/admin/sign_in` thành `/admin/login`. Named route `admin.login` là nguồn dùng chung: middleware khách, redirect lỗi/throttle và URL submit cấp cho LoginForm đều lấy từ route này. Đường dẫn GET cũ chuyển hướng 301 sang `/admin/login` để giữ bookmark. Không thêm luồng đăng ký quản trị.
+
+Kiểm tra HTTP local không có phiên: `/admin/login` trả 200; `/admin/sign_in` trả 301 với Location `/admin/login`; `/admin` trả 302 về `/admin/login`. Pint, i18n-check, TypeScript và build admin/SDK đạt. Không đổi bố cục giao diện; chưa chạy lại đăng nhập/2FA bằng phiên mới. Thay đổi route chưa commit/push/deploy.
+
+## Chuẩn hóa các route admin còn snake_case — 23/10/2026
+
+Đổi toàn bộ đoạn route tĩnh của console sang kebab-case: access-tokens, account-users, agent-bots, platform-apps, installation-configs, app-config, audit-logs, channel-health, feature-usage, instance-status, sticker-packs, reset-cache, resend-confirmation và push-subscriptions; bao gồm API kho sticker chung/riêng theo tài khoản. Chi tiết tính năng dùng slug (ví dụ inbox-created), khóa sự kiện trong DB giữ nguyên. Tên bảng dữ liệu và query/payload vẫn là định danh dữ liệu, không bị thay thế chuỗi tùy tiện.
+
+- Dashboard::resourceName dùng kebab-case; singular/form payload, khóa dịch, metadata và tùy chọn cột đã lưu giữ định danh cũ. Sidebar, command palette, liên kết profile, widget và các thông báo đều lấy đường dẫn mới.
+- Sticker API dùng chung nhận tên collection do adapter admin truyền vào; API của dashboard người dùng tiếp tục dùng mặc định hiện có. Không gắn logic đặc thù admin vào lõi sticker.
+- Chuyển hướng GET/HEAD URL cũ tập trung qua SuperAdminArea::canonicalPath và LegacyRedirectController, giữ query string. Prefix /super_admin cũ cũng đi thẳng tới URL chuẩn; không tạo alias POST/PUT/DELETE cũ.
+- Nhật ký ghi mẫu route mới, giữ subject_type dạng định danh cũ; bộ mô tả chuẩn hóa khi đọc để cả dòng cũ/mới có cùng bản dịch và liên kết đúng.
+
+Nghiệm thu trình duyệt local: Agent bot mở chi tiết/form ở route mới, submit quay về chi tiết thành công và tên vẫn là “Nhân viên AI”; nhật ký mới hiển thị “Sửa agent bot” với liên kết /admin/agent-bots/128. Kho sticker tải hai bộ và nội dung qua API mới. Đã mở Sức khỏe kênh, Trạng thái hệ thống, Mức dùng tính năng, Access token, Ứng dụng nền tảng, Biến cấu hình hệ thống (tìm rỗng) và Cấu hình Email qua URL mới. Bookmark /admin/feature_usage/inbox_created chuyển về /admin/feature-usage/inbox-created, reload vẫn ra dữ liệu. Mobile 375px: trang 369px. HTTP kiểm tra URL cũ có query giữ nguyên query; /super_admin/sign_in chuyển 301 về /admin/login. route:list không còn đoạn tĩnh snake_case dưới /admin; /super_admin chỉ còn route chuyển hướng.
+
+TypeScript, Pint các PHP sửa, i18n-check, build admin/SDK và gallery đạt. Ảnh: kebab-agent-bot-detail.png, kebab-sticker-library.png, kebab-audit-logs.png, kebab-feature-usage-mobile.png (dùng các ảnh đợt trước làm đối chiếu). Chưa commit/push/deploy thay đổi route.

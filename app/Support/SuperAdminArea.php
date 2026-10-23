@@ -26,6 +26,37 @@ final class SuperAdminArea
         return '/'.self::PREFIX.($path === '' ? '' : '/'.$path);
     }
 
+    public static function canonicalPath(string $path): string
+    {
+        $segments = explode('/', trim($path, '/'));
+        $resourceIndex = ($segments[0] ?? '') === 'api' ? 1 : 0;
+        $resource = $segments[$resourceIndex] ?? '';
+        $legacyResources = [
+            'access_tokens', 'account_users', 'agent_bots', 'platform_apps',
+            'installation_configs', 'app_config', 'audit_logs', 'channel_health',
+            'feature_usage', 'instance_status', 'sticker_packs', 'push_subscriptions',
+        ];
+
+        if ($resource === 'sign_in' && $resourceIndex === 0) {
+            $segments[0] = 'login';
+        } elseif (in_array($resource, $legacyResources, true)) {
+            $segments[$resourceIndex] = str_replace('_', '-', $resource);
+        }
+
+        $actionIndex = $resourceIndex + 2;
+        $action = $segments[$actionIndex] ?? '';
+        if (($resource === 'accounts' && in_array($action, ['sticker_packs', 'reset_cache'], true))
+            || ($resource === 'users' && $action === 'resend_confirmation')) {
+            $segments[$actionIndex] = str_replace('_', '-', $action);
+        }
+
+        if (in_array($resource, ['feature_usage', 'feature-usage'], true) && isset($segments[$resourceIndex + 1])) {
+            $segments[$resourceIndex + 1] = str_replace('_', '-', $segments[$resourceIndex + 1]);
+        }
+
+        return implode('/', $segments);
+    }
+
     public static function isConsole(Request $request): bool
     {
         return $request->is(self::PREFIX, self::PREFIX.'/*');

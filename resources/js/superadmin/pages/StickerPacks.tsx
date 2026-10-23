@@ -14,7 +14,7 @@ import { t } from '../../i18n';
 
 type AccountRef = { id: number; name: string; overviewUrl: string };
 
-const PLATFORM_URL = '/admin/sticker_packs';
+const PLATFORM_URL = '/admin/sticker-packs';
 
 const label = (key: string, params?: Record<string, string | number>) => t(`ADMIN_OPERATIONS.STICKERS.${key}`, params);
 
@@ -30,7 +30,7 @@ export default function StickerPacks({
     account?: AccountRef;
     platformUrl?: string;
 }) {
-    const platformApi = useMemo(() => createStickerLibraryApi(apiBaseUrl), [apiBaseUrl]);
+    const platformApi = useMemo(() => createStickerLibraryApi(apiBaseUrl, 'sticker-packs'), [apiBaseUrl]);
     // Chưa chọn tài khoản mà bấm tab "Kho của tài khoản" thì hiện ô chọn tài khoản
     // trong tab đó; ở tab Kho chung ô chọn không có việc gì nên không hiện.
     const [choosingAccount, setChoosingAccount] = useState(false);

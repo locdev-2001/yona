@@ -57,7 +57,7 @@ class AlertsController extends Controller
             'push' => [
                 'vapidPublicKey' => $vapid->publicKey(),
                 'subscriptions' => $admin instanceof SuperAdmin ? $admin->browserPushSubscriptions()->count() : 0,
-                'endpoint' => SuperAdminArea::url('api/push_subscriptions'),
+                'endpoint' => SuperAdminArea::url('api/push-subscriptions'),
             ],
             'stats' => [
                 'firing' => $openIncidents->count(),

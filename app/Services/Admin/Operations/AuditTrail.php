@@ -58,7 +58,7 @@ final class AuditTrail
             fn (string $segment) => $segment !== '' && $segment !== 'api',
         ));
 
-        $type = $segments[0] ?? null;
+        $type = isset($segments[0]) ? str_replace('-', '_', $segments[0]) : null;
         if ($type === null || str_starts_with($type, '{')) {
             return [null, null];
         }

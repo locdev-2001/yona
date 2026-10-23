@@ -46,7 +46,7 @@ type Props = {
     options: { problems: Option[]; platforms: Option[] };
 };
 
-const PAGE_URL = '/admin/channel_health';
+const PAGE_URL = '/admin/channel-health';
 const SEVERITIES = ['error', 'warning'] as const;
 
 const label = (key: string, params?: Record<string, string | number>) => t(`ADMIN_OPERATIONS.CHANNEL_HEALTH.${key}`, params);

@@ -74,7 +74,7 @@ class AppConfigsController extends Controller
         $message = __('admin_layout.flash.settings_updated');
 
         // Lưu xong ở lại đúng mục vừa sửa.
-        return redirect(SuperAdminArea::url('app_config?config='.(in_array($section, self::sections(), true) ? $section : 'general')))->with(
+        return redirect(SuperAdminArea::url('app-config?config='.(in_array($section, self::sections(), true) ? $section : 'general')))->with(
             'notice',
             $restartRequired ? $message.' '.__('admin_layout.flash.restart_required') : $message,
         );

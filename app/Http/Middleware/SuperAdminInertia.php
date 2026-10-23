@@ -35,7 +35,7 @@ class SuperAdminInertia
                 // Nhãn dịch sẵn ở máy chủ: layout nằm trong entry của console,
                 // gọi t() ở đó kéo cả bộ i18n vào mọi trang, kể cả trang đăng nhập.
                 'toolPages' => [
-                    ['key' => 'sticker_packs', 'label' => __('sticker_library.MENU'), 'url' => SuperAdminArea::url('sticker_packs')],
+                    ['key' => 'sticker_packs', 'label' => __('sticker_library.MENU'), 'url' => SuperAdminArea::url('sticker-packs')],
                 ],
                 'settingsPages' => ConsoleNavigation::appConfigSections(),
                 'navGroups' => ConsoleNavigation::groups(),

@@ -25,27 +25,27 @@ final class ConsoleNavigation
                 self::item('users', SuperAdminArea::url('users')),
             ],
             'channels' => [
-                self::item('channel_health', SuperAdminArea::url('channel_health')),
-                self::item('instance_status', SuperAdminArea::url('instance_status')),
+                self::item('channel_health', SuperAdminArea::url('channel-health')),
+                self::item('instance_status', SuperAdminArea::url('instance-status')),
                 self::item('alerts', SuperAdminArea::url('alerts')),
             ],
             'data' => [
-                self::item('feature_usage', SuperAdminArea::url('feature_usage')),
+                self::item('feature_usage', SuperAdminArea::url('feature-usage')),
                 self::item('data', SuperAdminArea::url('data')),
             ],
-            'content' => [self::item('sticker_packs', SuperAdminArea::url('sticker_packs'))],
+            'content' => [self::item('sticker_packs', SuperAdminArea::url('sticker-packs'))],
             'integrations' => [
-                self::item('agent_bots', SuperAdminArea::url('agent_bots')),
-                self::item('platform_apps', SuperAdminArea::url('platform_apps')),
-                self::item('access_tokens', SuperAdminArea::url('access_tokens')),
+                self::item('agent_bots', SuperAdminArea::url('agent-bots')),
+                self::item('platform_apps', SuperAdminArea::url('platform-apps')),
+                self::item('access_tokens', SuperAdminArea::url('access-tokens')),
             ],
             'config' => [
                 self::item('branding', SuperAdminArea::url('branding')),
-                self::item('app_config', SuperAdminArea::url('app_config'), children: self::appConfigSections()),
-                self::item('installation_configs', SuperAdminArea::url('installation_configs')),
+                self::item('app_config', SuperAdminArea::url('app-config'), children: self::appConfigSections()),
+                self::item('installation_configs', SuperAdminArea::url('installation-configs')),
             ],
             'security' => [
-                self::item('audit_logs', SuperAdminArea::url('audit_logs')),
+                self::item('audit_logs', SuperAdminArea::url('audit-logs')),
                 self::item('impersonations', SuperAdminArea::url('impersonations')),
             ],
             'tools' => array_values(array_filter([
@@ -90,7 +90,7 @@ final class ConsoleNavigation
             'key' => $section,
             'label' => self::appConfigSectionLabel($section),
             'title' => self::appConfigSectionTitle($section),
-            'url' => SuperAdminArea::url("app_config?config={$section}"),
+            'url' => SuperAdminArea::url("app-config?config={$section}"),
         ], AppConfigsController::sections());
     }
 

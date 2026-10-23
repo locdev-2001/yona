@@ -40,7 +40,7 @@ class AccountStickerPacksController extends Controller
                 'name' => $account->name,
                 'overviewUrl' => SuperAdminArea::url("accounts/{$account->id}/overview"),
             ],
-            'platformUrl' => SuperAdminArea::url('sticker_packs'),
+            'platformUrl' => SuperAdminArea::url('sticker-packs'),
         ]);
     }
 

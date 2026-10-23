@@ -52,7 +52,7 @@ export default function AppConfig({ config, title, values, definitions, strings 
             className="space-y-6"
             onSubmit={event => {
                 event.preventDefault();
-                post('/admin/app_config');
+                post('/admin/app-config');
             }}
         >
             {Object.entries(definitions).map(([name, definition]) => {

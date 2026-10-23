@@ -58,7 +58,7 @@ final class FeatureUsage
                 'events' => (int) ($row->events ?? 0),
                 'lastAt' => $this->iso($row->last_at ?? null),
                 'trend' => $trends[$name->value] ?? array_fill(0, self::TREND_DAYS, 0),
-                'url' => SuperAdminArea::url("feature_usage/{$name->value}"),
+                'url' => SuperAdminArea::url('feature-usage/'.str_replace('_', '-', $name->value)),
             ];
         }, ProductEventName::cases());
     }

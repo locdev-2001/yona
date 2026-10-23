@@ -4,7 +4,7 @@ import type { AvatarSubject } from 'shared/avatar/avatarSeed';
 const RESOURCE_AVATAR_SUBJECTS: Record<string, AvatarSubject> = {
     accounts: 'account',
     users: 'user',
-    agent_bots: 'agent_bot',
+    'agent-bots': 'agent_bot',
 };
 
 export function resourceAvatarSubject(resource: string): AvatarSubject | undefined {

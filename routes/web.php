@@ -35,6 +35,7 @@ use App\Http\Controllers\SuperAdmin\DashboardController as SuperAdminDashboardCo
 use App\Http\Controllers\SuperAdmin\ImpersonationsController as SuperAdminImpersonationsController;
 use App\Http\Controllers\SuperAdmin\InstallationConfigsController as SuperAdminInstallationConfigsController;
 use App\Http\Controllers\SuperAdmin\InstanceStatusesController as SuperAdminInstanceStatusesController;
+use App\Http\Controllers\SuperAdmin\LegacyRedirectController;
 use App\Http\Controllers\SuperAdmin\MfaController as SuperAdminMfaController;
 use App\Http\Controllers\SuperAdmin\PlatformAppsController as SuperAdminPlatformAppsController;
 use App\Http\Controllers\SuperAdmin\SessionsController as SuperAdminSessionsController;
@@ -526,16 +527,12 @@ Route::prefix('/hc')->group(function () {
 
 // Console quản trị (/admin/*): guard riêng `super_admin`, layout riêng.
 // Bookmark đường dẫn cũ /super_admin/* chuyển hẳn sang prefix mới.
-Route::get(SuperAdminArea::LEGACY_PREFIX.'/{path?}', function (Request $request, ?string $path = null) {
-    $query = $request->getQueryString();
-
-    return redirect(SuperAdminArea::url($path ?? '').($query === null ? '' : '?'.$query), 301);
-})->where('path', '.*');
+Route::get(SuperAdminArea::LEGACY_PREFIX.'/{path?}', LegacyRedirectController::class)->where('path', '.*');
 
 Route::prefix(SuperAdminArea::PREFIX)->middleware(SuperAdminInertia::class)->group(function () {
     Route::middleware('guest:super_admin')->group(function () {
-        Route::get('/sign_in', [SuperAdminSessionsController::class, 'create'])->name('admin.login');
-        Route::post('/sign_in', [SuperAdminSessionsController::class, 'store']);
+        Route::get('/login', [SuperAdminSessionsController::class, 'create'])->name('admin.login');
+        Route::post('/login', [SuperAdminSessionsController::class, 'store']);
     });
 
     Route::middleware(['auth:super_admin', RecordSuperAdminAudit::class])->group(function () {
@@ -547,8 +544,8 @@ Route::prefix(SuperAdminArea::PREFIX)->middleware(SuperAdminInertia::class)->gro
 
         Route::get('/', [SuperAdminDashboardController::class, 'index'])->name('admin.root');
 
-        Route::get('/app_config', [SuperAdminAppConfigsController::class, 'show']);
-        Route::post('/app_config', [SuperAdminAppConfigsController::class, 'store']);
+        Route::get('/app-config', [SuperAdminAppConfigsController::class, 'show']);
+        Route::post('/app-config', [SuperAdminAppConfigsController::class, 'store']);
         Route::get('/settings', [SuperAdminSettingsController::class, 'show']);
 
         // Logo, biểu tượng, favicon của cả bản cài đặt.
@@ -556,11 +553,11 @@ Route::prefix(SuperAdminArea::PREFIX)->middleware(SuperAdminInertia::class)->gro
         Route::post('/branding/{slot}', [SuperAdminBrandingController::class, 'update'])->where('slot', '[a-z_]+');
         Route::delete('/branding/{slot}', [SuperAdminBrandingController::class, 'destroy'])->where('slot', '[a-z_]+');
 
-        Route::get('/instance_status', [SuperAdminInstanceStatusesController::class, 'show']);
+        Route::get('/instance-status', [SuperAdminInstanceStatusesController::class, 'show']);
 
         // Kho sticker chung: trang + JSON cho trang (dùng chung khung với kho riêng của tenant).
-        Route::get('/sticker_packs', [SuperAdminStickerPacksController::class, 'page']);
-        Route::prefix('/api/sticker_packs')->group(function () {
+        Route::get('/sticker-packs', [SuperAdminStickerPacksController::class, 'page']);
+        Route::prefix('/api/sticker-packs')->group(function () {
             Route::get('/', [SuperAdminStickerPacksController::class, 'index']);
             Route::post('/', [SuperAdminStickerPacksController::class, 'store']);
             Route::get('/{packId}', [SuperAdminStickerPacksController::class, 'show'])->whereNumber('packId');
@@ -581,17 +578,17 @@ Route::prefix(SuperAdminArea::PREFIX)->middleware(SuperAdminInertia::class)->gro
                 ->whereNumber(['packId', 'stickerId']);
         });
 
-        Route::post('/accounts/{id}/reset_cache', [SuperAdminAccountsController::class, 'resetCache'])->whereNumber('id');
+        Route::post('/accounts/{id}/reset-cache', [SuperAdminAccountsController::class, 'resetCache'])->whereNumber('id');
 
         Route::delete('/users/{id}/avatar', [SuperAdminUsersController::class, 'destroyAvatar'])->whereNumber('id');
-        Route::post('/users/{id}/resend_confirmation', [SuperAdminUsersController::class, 'resendConfirmation'])->whereNumber('id');
+        Route::post('/users/{id}/resend-confirmation', [SuperAdminUsersController::class, 'resendConfirmation'])->whereNumber('id');
         Route::post('/users/{id}/impersonate', [SuperAdminUsersController::class, 'impersonate'])->whereNumber('id');
 
-        Route::delete('/agent_bots/{id}/avatar', [SuperAdminAgentBotsController::class, 'destroyAvatar'])->whereNumber('id');
+        Route::delete('/agent-bots/{id}/avatar', [SuperAdminAgentBotsController::class, 'destroyAvatar'])->whereNumber('id');
 
-        Route::get('/account_users/{id}', [SuperAdminAccountUsersController::class, 'show'])->whereNumber('id');
-        Route::post('/account_users', [SuperAdminAccountUsersController::class, 'store']);
-        Route::delete('/account_users/{id}', [SuperAdminAccountUsersController::class, 'destroy'])->whereNumber('id');
+        Route::get('/account-users/{id}', [SuperAdminAccountUsersController::class, 'show'])->whereNumber('id');
+        Route::post('/account-users', [SuperAdminAccountUsersController::class, 'store']);
+        Route::delete('/account-users/{id}', [SuperAdminAccountUsersController::class, 'destroy'])->whereNumber('id');
 
         require __DIR__.'/admin/dashboard.php';
         require __DIR__.'/admin/operations.php';
@@ -606,10 +603,10 @@ Route::prefix(SuperAdminArea::PREFIX)->middleware(SuperAdminInertia::class)->gro
         foreach ([
             'accounts' => SuperAdminAccountsController::class,
             'users' => SuperAdminUsersController::class,
-            'access_tokens' => SuperAdminAccessTokensController::class,
-            'installation_configs' => SuperAdminInstallationConfigsController::class,
-            'agent_bots' => SuperAdminAgentBotsController::class,
-            'platform_apps' => SuperAdminPlatformAppsController::class,
+            'access-tokens' => SuperAdminAccessTokensController::class,
+            'installation-configs' => SuperAdminInstallationConfigsController::class,
+            'agent-bots' => SuperAdminAgentBotsController::class,
+            'platform-apps' => SuperAdminPlatformAppsController::class,
         ] as $resource => $controller) {
             Route::get("/{$resource}", [$controller, 'index']);
             Route::get("/{$resource}/new", [$controller, 'create']);
@@ -620,6 +617,8 @@ Route::prefix(SuperAdminArea::PREFIX)->middleware(SuperAdminInertia::class)->gro
             Route::delete("/{$resource}/{id}", [$controller, 'destroy'])->whereNumber('id');
         }
     });
+
+    Route::get('/{path}', LegacyRedirectController::class)->where('path', '.*');
 });
 
 // Đăng nhập bằng link một lần (Platform API users#login, impersonate của console).

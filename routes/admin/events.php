@@ -6,5 +6,5 @@
 use App\Http\Controllers\SuperAdmin\FeatureUsageController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/feature_usage', [FeatureUsageController::class, 'index']);
-Route::get('/feature_usage/{name}', [FeatureUsageController::class, 'show'])->where('name', '[a-z_]+');
+Route::get('/feature-usage', [FeatureUsageController::class, 'index']);
+Route::get('/feature-usage/{name}', [FeatureUsageController::class, 'show'])->where('name', '[a-z_-]+');

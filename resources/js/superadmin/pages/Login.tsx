@@ -8,7 +8,7 @@ import LoginForm from '@admin/views/pages/auth/login/login-form';
 import { useConsoleLabels } from '../labels';
 import type { SuperAdminPageProps } from '../types';
 
-export default function SuperAdminLogin() {
+export default function SuperAdminLogin({ loginUrl }: { loginUrl: string }) {
     const { flash } = usePage<SuperAdminPageProps>().props;
     const { data, setData, post, processing, errors } = useForm({
         super_admin: { email: '', password: '' },
@@ -36,7 +36,7 @@ export default function SuperAdminLogin() {
                     }}
                     onEmailChange={email => setData('super_admin', { ...data.super_admin, email })}
                     onPasswordChange={password => setData('super_admin', { ...data.super_admin, password })}
-                    onSubmit={() => post('/admin/sign_in')}
+                    onSubmit={() => post(loginUrl)}
                 />
             </Login>
         </>

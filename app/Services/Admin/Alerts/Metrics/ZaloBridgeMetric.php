@@ -43,7 +43,7 @@ final class ZaloBridgeMetric implements AlertMetric
 
     public function url(): string
     {
-        return SuperAdminArea::url('channel_health');
+        return SuperAdminArea::url('channel-health');
     }
 
     public function measure(int $windowMinutes): int

@@ -52,7 +52,7 @@ type Props = {
     options: { superAdmins: { value: string; label: string }[]; subjectTypes: string[]; subjectTypeLabels?: Record<string, string> };
 };
 
-const PAGE_URL = '/admin/audit_logs';
+const PAGE_URL = '/admin/audit-logs';
 
 const label = (key: string, params?: Record<string, string | number>) => t(`ADMIN_OPERATIONS.AUDIT_LOGS.${key}`, params);
 

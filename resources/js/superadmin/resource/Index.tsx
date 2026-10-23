@@ -87,7 +87,7 @@ export default function ResourceIndex({
     const showingFrom = (pagination.current - 1) * PER_PAGE + 1;
     const searchLabel = label('search_records', { resource: title.toLowerCase() });
     // Câu mô tả như các trang khác; tài nguyên chưa có câu thì dùng số bản ghi.
-    const descriptionKey = `resource_description_${resource}` as const;
+    const descriptionKey = `resource_description_${resource.replaceAll('-', '_')}` as const;
     const resourceDescription = label(descriptionKey);
     const description = resourceDescription !== descriptionKey ? resourceDescription : label('records_total', { total: pagination.total.toLocaleString('vi-VN') });
 
@@ -134,7 +134,7 @@ export default function ResourceIndex({
                 }
                 table={<ResourceTable
                     key={resource}
-                    storageKey={`yona.admin.table.${resource}`}
+                    storageKey={`yona.admin.table.${resource.replaceAll('-', '_')}`}
                     label={title} rows={rows} columns={tableColumns} totalPages={pagination.last} totalRows={pagination.total}
                     sorting={columns.some(column => column.name === order) ? { id: order, desc: direction === 'desc' } : null}
                     onSort={sort} onOpenRow={url => router.visit(url)}

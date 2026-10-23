@@ -11,12 +11,12 @@ import type { LibraryStickerPackDetail } from 'dashboard/settings/customStickers
 import StickerLibrary from './sticker-library'
 import type { PackTransfer } from './use-sticker-library'
 
-export const PLATFORM_STICKERS_URL = '/admin/sticker_packs'
+export const PLATFORM_STICKERS_URL = '/admin/sticker-packs'
 
 // Gốc API kho riêng của một account trong console (AccountStickerPacksController::apiBaseUrl).
 export const accountStickerApiBase = (accountId: number) => `/admin/api/accounts/${accountId}`
 
-export const accountStickersUrl = (accountId: number) => `/admin/accounts/${accountId}/sticker_packs`
+export const accountStickersUrl = (accountId: number) => `/admin/accounts/${accountId}/sticker-packs`
 
 type AccountStickerLibraryProps = {
   accountId: number
@@ -33,13 +33,13 @@ const AccountStickerLibrary = ({
   platformUrl = PLATFORM_STICKERS_URL,
   className
 }: AccountStickerLibraryProps) => {
-  const api = useMemo(() => createStickerLibraryApi(apiBaseUrl), [apiBaseUrl])
+  const api = useMemo(() => createStickerLibraryApi(apiBaseUrl, 'sticker-packs'), [apiBaseUrl])
 
   const packTransfer = useMemo<PackTransfer>(
     () => ({
       destination: 'platform',
       movePack: (packId: number) =>
-        postJson<LibraryStickerPackDetail>(`${apiBaseUrl}/sticker_packs/${packId}/move`, { library: 'platform' }),
+        postJson<LibraryStickerPackDetail>(`${apiBaseUrl}/sticker-packs/${packId}/move`, { library: 'platform' }),
       openDestination: () => router.visit(platformUrl)
     }),
     [apiBaseUrl, platformUrl]

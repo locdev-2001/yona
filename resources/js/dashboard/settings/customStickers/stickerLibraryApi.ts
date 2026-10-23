@@ -61,14 +61,12 @@ export type StickerLibraryKind = 'account' | 'platform';
 
 export const accountStickerLibraryBase = (accountId: number) => `/api/v1/accounts/${accountId}`;
 
-const stickerPacksUrl = (baseUrl: string) => `${baseUrl}/sticker_packs`;
-const stickerPackUrl = (baseUrl: string, packId: number) => `${stickerPacksUrl(baseUrl)}/${packId}`;
+const stickerPacksUrl = (baseUrl: string, packsPath = 'sticker_packs') => `${baseUrl}/${packsPath}`;
 
-// Cùng một bộ endpoint cho kho chung (Super Admin) và kho riêng của account;
-// chỉ khác gốc URL.
-export function createStickerLibraryApi(baseUrl: string) {
-    const packsUrl = stickerPacksUrl(baseUrl);
-    const packUrl = (packId: number) => stickerPackUrl(baseUrl, packId);
+// Các kho dùng chung hành vi; adapter cấp gốc URL và tên collection.
+export function createStickerLibraryApi(baseUrl: string, packsPath = 'sticker_packs') {
+    const packsUrl = stickerPacksUrl(baseUrl, packsPath);
+    const packUrl = (packId: number) => `${packsUrl}/${packId}`;
     const stickerUrl = (packId: number, stickerId: number) => `${packUrl(packId)}/stickers/${stickerId}`;
 
     return {
@@ -114,6 +112,6 @@ export function createStickerPackMoveApi(accountId: number) {
 
     return {
         movePack: (packId: number, destination: StickerLibraryKind) =>
-            postJson<LibraryStickerPackDetail>(`${stickerPackUrl(baseUrl, packId)}/move`, { library: destination }),
+            postJson<LibraryStickerPackDetail>(`${stickerPacksUrl(baseUrl)}/${packId}/move`, { library: destination }),
     };
 }

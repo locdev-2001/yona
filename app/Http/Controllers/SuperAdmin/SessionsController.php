@@ -21,7 +21,9 @@ class SessionsController extends Controller
     {
         Inertia::setRootView('superadmin_auth');
 
-        return Inertia::render('superadmin/Login');
+        return Inertia::render('superadmin/Login', [
+            'loginUrl' => route('admin.login', [], false),
+        ]);
     }
 
     public function store(Request $request): RedirectResponse
@@ -39,7 +41,7 @@ class SessionsController extends Controller
         $throttleKey = $this->throttleKey($credentials['email'], $request);
 
         if (RateLimiter::tooManyAttempts($throttleKey, self::MAX_ATTEMPTS)) {
-            return redirect(SuperAdminArea::url('sign_in'))->with(
+            return redirect()->route('admin.login')->with(
                 'error',
                 __('auth.throttle', ['seconds' => RateLimiter::availableIn($throttleKey)]),
             );
@@ -50,7 +52,7 @@ class SessionsController extends Controller
         if ($superAdmin === null || ! Hash::check($credentials['password'], $superAdmin->password)) {
             RateLimiter::hit($throttleKey);
 
-            return redirect(SuperAdminArea::url('sign_in'))->with('error', __('admin_layout.flash.invalid_credentials'));
+            return redirect()->route('admin.login')->with('error', __('admin_layout.flash.invalid_credentials'));
         }
 
         RateLimiter::clear($throttleKey);

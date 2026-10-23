@@ -57,7 +57,7 @@ class DashboardRegistry
         return array_map(fn (string $resourceName) => [
             'resource' => $resourceName,
             'label' => $this->get($resourceName)->displayName(),
-            'url' => SuperAdminArea::url($resourceName),
+            'url' => SuperAdminArea::url($this->get($resourceName)->resourceName()),
         ], self::NAVIGATION_RESOURCES);
     }
 }

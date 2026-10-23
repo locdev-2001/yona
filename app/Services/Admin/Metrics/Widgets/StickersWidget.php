@@ -50,7 +50,7 @@ final class StickersWidget extends MetricWidget
             'sharedStickers' => (int) $stickers->shared_stickers,
             'accountsWithPrivateLibrary' => (int) $packs->accounts_with_private_library,
             'privateStickers' => (int) $stickers->private_stickers,
-            'url' => SuperAdminArea::url('sticker_packs'),
+            'url' => SuperAdminArea::url('sticker-packs'),
         ];
     }
 }

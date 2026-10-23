@@ -136,7 +136,7 @@ export default function ResourceShow({
                 actions={panelActions}
                 footer={
                     resource === 'users' && !confirmed ? (
-                        <Button variant="outline" className="w-full" onClick={() => router.post(`${record.url}/resend_confirmation`)}>
+                        <Button variant="outline" className="w-full" onClick={() => router.post(`${record.url}/resend-confirmation`)}>
                             <MailIcon />
                             {label('resend_confirmation')}
                         </Button>
@@ -171,7 +171,7 @@ export default function ResourceShow({
                             title={label('reset_cache_title')}
                             description={label('reset_cache_description')}
                             action={
-                                <Button variant="outline" onClick={() => router.post(`${record.url}/reset_cache`)}>
+                                <Button variant="outline" onClick={() => router.post(`${record.url}/reset-cache`)}>
                                     <RefreshCwIcon />
                                     {label('reset_cache')}
                                 </Button>
@@ -258,7 +258,7 @@ function AccountUserSection({ form }: { form: AccountUserForm }) {
             <form
                 onSubmit={event => {
                     event.preventDefault();
-                    post('/admin/account_users', { preserveScroll: true });
+                    post('/admin/account-users', { preserveScroll: true });
                 }}
             >
                 <FieldGroup className="grid grid-cols-1 items-end gap-6 sm:grid-cols-[1fr_12rem_auto]">

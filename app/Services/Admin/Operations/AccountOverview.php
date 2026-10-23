@@ -69,13 +69,13 @@ final class AccountOverview
             'urls' => [
                 'show' => SuperAdminArea::url("accounts/{$account->id}"),
                 'edit' => SuperAdminArea::url("accounts/{$account->id}/edit"),
-                'stickers' => SuperAdminArea::url("accounts/{$account->id}/sticker_packs"),
-                'auditLogs' => SuperAdminArea::url("audit_logs?subject_type=accounts&subject_id={$account->id}"),
+                'stickers' => SuperAdminArea::url("accounts/{$account->id}/sticker-packs"),
+                'auditLogs' => SuperAdminArea::url("audit-logs?subject_type=accounts&subject_id={$account->id}"),
                 'data' => SuperAdminArea::url("data/inboxes?filter[account_id]={$account->id}"),
                 'suspend' => SuperAdminArea::url("accounts/{$account->id}/suspend"),
                 'unsuspend' => SuperAdminArea::url("accounts/{$account->id}/unsuspend"),
                 'impersonations' => SuperAdminArea::url('impersonations'),
-                'featureUsage' => SuperAdminArea::url('feature_usage'),
+                'featureUsage' => SuperAdminArea::url('feature-usage'),
             ],
         ];
     }

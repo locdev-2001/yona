@@ -115,7 +115,7 @@ class AuditLogsController extends Controller
 
         return match ($log->subject_type) {
             'accounts' => SuperAdminArea::url("accounts/{$log->subject_id}/overview"),
-            'users', 'agent_bots', 'platform_apps', 'access_tokens', 'installation_configs', 'account_users', 'impersonations' => SuperAdminArea::url("{$log->subject_type}/{$log->subject_id}"),
+            'users', 'agent_bots', 'platform_apps', 'access_tokens', 'installation_configs', 'account_users', 'impersonations' => SuperAdminArea::url(str_replace('_', '-', $log->subject_type)."/{$log->subject_id}"),
             default => null,
         };
     }

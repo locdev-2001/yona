@@ -47,7 +47,7 @@ abstract class Dashboard
     /** Tên số nhiều dùng cho URL: /admin/<resourceName>. */
     public function resourceName(): string
     {
-        return Str::snake(Str::pluralStudly(class_basename($this->modelClass())));
+        return Str::kebab(Str::pluralStudly(class_basename($this->modelClass())));
     }
 
     /** Tên số ít dùng cho tham số form + tiêu đề nút. */
