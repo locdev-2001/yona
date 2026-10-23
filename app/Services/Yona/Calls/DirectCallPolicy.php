@@ -39,4 +39,9 @@ final readonly class DirectCallPolicy implements CallPolicy
     {
         return false;
     }
+
+    public function mayReportTelemetry(Call $call, User $actor): bool
+    {
+        return $actor->id === $call->caller_id || $actor->id === $call->callee_id;
+    }
 }

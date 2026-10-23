@@ -41,4 +41,9 @@ final readonly class GroupCallPolicy implements CallPolicy
     {
         return $call->group->activeMemberFor($actor)?->isAdmin() ?? false;
     }
+
+    public function mayReportTelemetry(Call $call, User $actor): bool
+    {
+        return $call->group->activeMemberFor($actor) !== null;
+    }
 }

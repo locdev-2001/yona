@@ -3,7 +3,7 @@ import Avatar from 'dashboard/components-next/avatar/Avatar';
 import BottomSheet from 'dashboard/components-next/BottomSheet';
 import Button from 'dashboard/components-next/button/Button';
 import { t } from '../../i18n';
-import CallActionButton from './CallActionButton';
+import CallActionButton, { CallActionGrid } from './CallActionButton';
 import CallOrb from './CallOrb';
 import { PHONE_TOUCH_SIZE, TOUCH_HEIGHT, TOUCH_MIN_HEIGHT } from './touchTarget';
 import type { CallMediaKind } from './types';
@@ -119,7 +119,7 @@ export function RingingScene({ caller, onAccept, onDecline, onOpenChat, onMinimi
                     <span className="i-lucide-message-circle size-5" aria-hidden="true" />
                     <span className="text-xs">{t('CALLS.DIRECT.OPEN_CHAT')}</span>
                 </button>
-                <div className="grid grid-cols-3 place-items-center w-full">
+                <CallActionGrid className="w-full">
                     <CallActionButton
                         icon="i-lucide-phone"
                         label={t('CALLS.DIRECT.ACCEPT')}
@@ -129,7 +129,7 @@ export function RingingScene({ caller, onAccept, onDecline, onOpenChat, onMinimi
                     />
                     <CallActionButton icon="i-lucide-video" label={t('CALLS.RINGING.VIDEO')} tone="acceptAlt" onClick={() => onAccept('video')} />
                     <CallActionButton icon="i-lucide-phone-off" label={t('CALLS.DIRECT.DECLINE')} tone="end" onClick={onDecline} />
-                </div>
+                </CallActionGrid>
             </div>
         </section>
     );

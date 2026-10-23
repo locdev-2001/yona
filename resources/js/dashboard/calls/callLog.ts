@@ -115,13 +115,13 @@ export function callStartText(call: CallLogData, showsActor = true): string {
 // thúc đã nói đủ. Tin bắt đầu còn lại là sự kiện đang diễn ra (thẻ có nút Tham gia).
 export function withoutSupersededStartNotices<T extends { content_attributes?: Record<string, unknown> | null }>(messages: T[]): T[] {
     const finishedIds = new Set<number>();
-    messages.forEach(message => {
+    messages.forEach((message) => {
         const call = readCallLog(message.content_attributes);
         if (call?.id && (call.kind === GROUP_ROOM_KIND || call.kind === GROUP_CALL_KIND) && !isCallStartNotice(call)) finishedIds.add(call.id);
     });
     if (finishedIds.size === 0) return messages;
 
-    return messages.filter(message => {
+    return messages.filter((message) => {
         const call = readCallLog(message.content_attributes);
         return !(call?.id && isCallStartNotice(call) && finishedIds.has(call.id));
     });
@@ -158,8 +158,31 @@ function liveRoomView(live: OpenRoomSummary): CallLogView {
     };
 }
 
+function pendingGroupView(title: string, icon: string, media: 'audio' | 'video', groupName: string): CallLogView {
+    return {
+        tone: 'neutral',
+        icon,
+        title,
+        subtitle: groupName,
+        detail: null,
+        pill: t('CALLS.LOG.STATE_UPDATING'),
+        media,
+        isGroup: true,
+        canCallBack: false,
+        hasDetails: false,
+        canJoin: false,
+        attendees: [],
+        moreAttendees: 0,
+        preview: { text: title, icon, isAlert: false },
+    };
+}
+
 function groupRoomView(call: CallLogData, groupName: string, liveRoom: OpenRoomSummary | null): CallLogView {
-    if (isCallStartNotice(call) && liveRoom && liveRoom.call_id === call.id) return liveRoomView(liveRoom);
+    if (isCallStartNotice(call)) {
+        return liveRoom && liveRoom.call_id === call.id
+            ? liveRoomView(liveRoom)
+            : pendingGroupView(t('CALLS.LOG.GROUP_ROOM'), 'i-lucide-headphones', 'audio', groupName);
+    }
 
     const total = call.participants ?? call.attendees?.length ?? 0;
     const attendees = (call.attendees ?? []).slice(0, LISTED_ATTENDEES);
@@ -192,6 +215,7 @@ function groupCallView(call: CallLogData, groupName: string, live: GroupCallSumm
     const base = { icon, title, media: isVideo ? ('video' as const) : ('audio' as const), isGroup: true, canCallBack: false };
 
     if (call.status === GROUP_CALL_START_STATUS) {
+        if (!live || live.call_id !== call.id) return pendingGroupView(title, icon, base.media, groupName);
         const people = live?.participants ?? [];
 
         return {
@@ -232,7 +256,12 @@ function groupCallView(call: CallLogData, groupName: string, live: GroupCallSumm
     };
 }
 
-export function describeCall(call: CallLogData, groupName = '', live: GroupCallSummary | null = null, liveRoom: OpenRoomSummary | null = null): CallLogView {
+export function describeCall(
+    call: CallLogData,
+    groupName = '',
+    live: GroupCallSummary | null = null,
+    liveRoom: OpenRoomSummary | null = null,
+): CallLogView {
     if (call.kind === GROUP_ROOM_KIND) return groupRoomView(call, groupName, liveRoom);
     if (call.kind === GROUP_CALL_KIND) return groupCallView(call, groupName, live);
 
@@ -254,7 +283,13 @@ export function describeCall(call: CallLogData, groupName = '', live: GroupCallS
 
     if (outcome === 'completed') {
         const duration = formatCallDuration(call.duration_seconds ?? 0);
-        const icon = isVideo ? 'i-lucide-video' : !hasDirection ? 'i-lucide-phone' : isInbound ? 'i-lucide-phone-incoming' : 'i-lucide-phone-outgoing';
+        const icon = isVideo
+            ? 'i-lucide-video'
+            : !hasDirection
+              ? 'i-lucide-phone'
+              : isInbound
+                ? 'i-lucide-phone-incoming'
+                : 'i-lucide-phone-outgoing';
         const title = hasDirection ? t(isInbound ? 'CALLS.LOG.INCOMING' : 'CALLS.LOG.OUTGOING') : mediaLabel;
 
         return {

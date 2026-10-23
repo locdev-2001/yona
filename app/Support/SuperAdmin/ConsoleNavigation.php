@@ -31,6 +31,7 @@ final class ConsoleNavigation
             ],
             'data' => [
                 self::item('feature_usage', SuperAdminArea::url('feature-usage')),
+                self::item('call_quality', SuperAdminArea::url('call-quality')),
                 self::item('data', SuperAdminArea::url('data')),
             ],
             'content' => [self::item('sticker_packs', SuperAdminArea::url('sticker-packs'))],

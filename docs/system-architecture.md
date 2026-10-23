@@ -778,6 +778,19 @@ POST /webhooks/media/{provider} ─► MediaDrivers ─► MediaWebhooks ─► 
   `@livekit/components-react`, khoá phiên bản). `CallSessionProvider` gắn ở gốc app qua
   `children` của Inertia `App` (`resources/js/app.tsx`), nên chuyển trang không rớt phòng;
   `LiveKitSession` tải lười (chunk riêng) chỉ khi vào phòng, dịch người trong phòng sang kiểu
-  trung tính, phát âm thanh phòng (`RoomAudioRenderer`, tắt âm thanh phòng = `muted`), nhận
+  trung tính, phát âm thanh qua các `AudioTrack` của cùng Room (Web Audio để chỉnh gain từng người, tắt âm thanh phòng = `muted`), nhận
   lệnh bật/tắt mic, camera, màn hình, đổi thiết bị qua `MediaSessionHandle` (`mediaSession.ts`).
 
+
+
+### Số liệu và chất lượng cuộc gọi (22/10/2026)
+
+- `CallStatistics` là external store trung tính. Driver `LiveKitStatistics` đọc số thực từ sender/receiver, tính delta bitrate/FPS, giữ null cho trường không hỗ trợ. Lớp phủ và telemetry dùng chung snapshot; timer không nằm trong state của toàn màn gọi. Khi bật lớp phủ đọc khoảng 1 giây/lần; bình thường khoảng 5 giây/lần; gửi server khoảng 15 giây/lần.
+- `Calls\Telemetry` nhận mẫu và sự kiện qua contract trung tính, không biết LiveKit. Quyền gửi do `CallPolicy::mayReportTelemetry` của từng loại quyết định hoặc dựa vào participant đã vào; server tự xác định actor. Hai mặt tiền dùng chung controller/service: session `POST /api/v1/calls/{call}/telemetry`, token `POST /api/v1/telemetry/calls/{call}`. Mỗi request tối đa 64 KiB, giới hạn nhịp, whitelist trường và chống gửi lặp.
+- Hai bảng đã được founder duyệt: `call_telemetry_events`, `call_telemetry_samples`; giữ số liệu để phân tích, không tự xóa sau 30 ngày. `call_participant_id` nullable vì lỗi trước khi webhook xác nhận vẫn cần ghi, `user_id` luôn do server xác định. Không lưu nội dung hình/tiếng, SDP, IP/ICE address, token, deviceId hoặc UA nguyên văn. Client gửi chỉ họ browser/OS, major browser, cờ môi trường và tên asset build.
+- `/admin/call_quality` dùng guard quản trị hiện có: nhóm số liệu theo loại gọi, browser/OS, codec, nguồn và chiều; thời gian nối p50/p95 và lần phát audio đầu tiên; mở được từng cuộc xem tối đa 500 sự kiện và 100 mẫu gần nhất. Thiết bị không hỗ trợ trường thì hiển thị chưa có số liệu; long tasks của trang không phải FPS game.
+- `dashboard/calls/qualityProfile.ts` là nguồn duy nhất cho yêu cầu capture/publish và nhãn kiểm chất lượng: màn hình tối thiểu 1920×1080, 60 fps; camera có profile riêng. Driver kiểm capture trước publish, chỉ một encoding màn hình và không tự gán chất lượng đạt khi số đo thấp. Codec ưu tiên tín hiệu `MediaCapabilities` cho H.264/VP8; encoder thực phải đối chiếu telemetry, không suy từ tên codec.
+- `CallSettings`, `VolumeControl`, `ParticipantVolume` dùng lại Dialog/Button/Switch của portal. Tùy chọn lưu cục bộ: lọc ồn, hiện thống kê, âm lượng chung và gain từng người. Đầu ra chỉ hiện khi browser/AudioContext thực sự hỗ trợ đổi thiết bị; không dùng nút tắt âm thanh làm nút loa ngoài.
+- Bộ lọc nâng cao chạy AudioWorklet/WASM với asset cùng origin; lỗi khởi tạo/bộ xử lý quay về NS browser. Bật lọc nâng cao thì tắt NS browser để tránh lọc kép; AEC/AGC vẫn tách riêng. Track âm thanh màn hình không qua bộ lọc giọng nói.
+- Phòng đông giới hạn camera được gắn vào DOM: tối đa 8 trong lưới, 4 thumbnail khi xem màn hình, ưu tiên người nói gần đây; vẫn giữ mọi luồng audio. Adaptive stream ngừng video không được xem. Hiệu ứng quả cầu tối đa 30 lần vẽ/giây và ngừng vẽ khi tab ẩn.
+- Tin có `content_attributes.call` luôn dùng `CallMessageBubble`. Khi snapshot phòng/cuộc gọi chưa tới thì thẻ dùng trạng thái đang cập nhật, không rơi về chữ và không giả kết thúc 0 giây.

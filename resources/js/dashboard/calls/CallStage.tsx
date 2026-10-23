@@ -6,11 +6,13 @@ import CallControls from './CallControls';
 import CallDuration from './CallDuration';
 import CallTile from './CallTile';
 import type { CallActions, CallLocalState, CallRoomView, RenderCallMedia } from './types';
+import { useVisibleCameras } from './visibleCameras';
+import { useAlert } from 'dashboard/composables/useAlert';
 
 // Số cột theo số người: 1 → 1, 2–4 → 2, 5–9 → 3, nhiều hơn → 4 (điện thoại tối đa 2).
-function gridColumns(count: number, isPhone: boolean): string {
+function gridColumns(count: number): string {
     if (count <= 1) return 'grid-cols-1';
-    if (isPhone || count <= 4) return 'grid-cols-2';
+    if (count <= 4) return 'grid-cols-2';
     if (count <= 9) return 'grid-cols-3';
     return 'grid-cols-4';
 }
@@ -31,16 +33,32 @@ export default function CallStage({
     isPhone: boolean;
 }) {
     const stageRef = useRef<HTMLElement>(null);
-    const sharer = room.participants.find(participant => participant.isSharingScreen) ?? null;
+    const sharer = room.participants.find((participant) => participant.isSharingScreen) ?? null;
+    const visibleCameras = useVisibleCameras(room.participants, sharer !== null);
+    const participantCount = room.participants.length;
+    const phoneLayout = participantCount <= 2
+        ? 'flex flex-col items-center [justify-content:safe_center]'
+        : 'flex flex-wrap justify-center [align-content:safe_center]';
+    const phoneTileWidth = participantCount <= 1
+        ? 'w-full'
+        : participantCount === 2
+          ? 'w-[min(100%,calc((100cqh-0.75rem)/2))]'
+          : participantCount <= 4
+            ? 'w-[calc((100%-0.75rem)/2)]'
+            : 'w-[calc((100%-1.5rem)/3)]';
     const tileProps = {
         renderMedia,
         canModerate: local.canModerate,
         onMute: actions.muteParticipant,
         onRemove: actions.removeParticipant,
     };
-    const toggleFullscreen = () => {
-        if (document.fullscreenElement) void document.exitFullscreen();
-        else void stageRef.current?.requestFullscreen();
+    const toggleFullscreen = async () => {
+        try {
+            if (document.fullscreenElement) await document.exitFullscreen();
+            else await stageRef.current?.requestFullscreen();
+        } catch {
+            useAlert(t('CALLS.ROOM.FULLSCREEN_BLOCKED'));
+        }
     };
 
     return (
@@ -50,7 +68,9 @@ export default function CallStage({
                 <span className="text-sm font-semibold truncate">{room.title}</span>
                 {sharer && !isPhone ? (
                     <>
-                        <span aria-hidden="true" className="text-n-slate-10">•</span>
+                        <span aria-hidden="true" className="text-n-slate-10">
+                            •
+                        </span>
                         <span className="text-sm truncate text-n-slate-11">{t('CALLS.ROOM.SCREEN_OF', { name: sharer.name })}</span>
                     </>
                 ) : null}
@@ -63,24 +83,54 @@ export default function CallStage({
                         {t('CALLS.ROOM.LIVE')}
                     </span>
                 ) : null}
-                <Button sm slate ghost icon="i-lucide-message-circle" title={t('CALLS.ROOM.CHAT')} className=" max-md:!size-10" onClick={actions.openChat} />
-                <Button sm slate ghost icon="i-lucide-minimize-2" title={t('CALLS.ROOM.MINIMIZE')} className=" max-md:!size-10" onClick={actions.minimize} />
+                <Button
+                    sm
+                    slate
+                    ghost
+                    icon="i-lucide-message-circle"
+                    title={t('CALLS.ROOM.CHAT')}
+                    className=" max-md:!size-10"
+                    onClick={actions.openChat}
+                />
+                <Button
+                    sm
+                    slate
+                    ghost
+                    icon="i-lucide-minimize-2"
+                    title={t('CALLS.ROOM.MINIMIZE')}
+                    className=" max-md:!size-10"
+                    onClick={actions.minimize}
+                />
             </header>
 
-            <div className="flex-1 min-h-0 px-4 pb-2">
+            <div className="flex-1 min-h-0 overflow-y-auto px-4 pb-2">
                 {sharer ? (
                     <div className="flex flex-col h-full gap-3">
                         <CallTile participant={sharer} source="screen" {...tileProps} className="flex-1 min-h-0" />
                         <div className="flex flex-none [justify-content:safe_center] gap-3 h-28 overflow-x-auto">
-                            {room.participants.map(participant => (
-                                <CallTile key={participant.identity} participant={participant} source="camera" {...tileProps} className="flex-none aspect-video h-full" />
+                            {room.participants.map((participant) => (
+                                <CallTile
+                                    key={participant.identity}
+                                    participant={participant}
+                                    source="camera"
+                                    displayVideo={visibleCameras.has(participant.identity)}
+                                    {...tileProps}
+                                    className="flex-none aspect-video h-full"
+                                />
                             ))}
                         </div>
                     </div>
                 ) : (
-                    <div className={`grid h-full gap-3 auto-rows-fr ${gridColumns(room.participants.length, isPhone)}`}>
-                        {room.participants.map(participant => (
-                            <CallTile key={participant.identity} participant={participant} source="camera" {...tileProps} className="min-h-0" />
+                    <div className={`h-full gap-3 ${isPhone ? `${phoneLayout} [container-type:size]` : `grid auto-rows-fr ${gridColumns(participantCount)}`}`}>
+                        {room.participants.map((participant) => (
+                            <CallTile
+                                key={participant.identity}
+                                participant={participant}
+                                source="camera"
+                                displayVideo={visibleCameras.has(participant.identity)}
+                                {...tileProps}
+                                className={isPhone ? `aspect-square min-h-0 flex-none ${phoneTileWidth}` : 'min-h-0'}
+                            />
                         ))}
                     </div>
                 )}

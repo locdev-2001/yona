@@ -16,4 +16,6 @@ interface CallPolicy
     public function admit(Call $call, CallAttendee $attendee): Admission;
 
     public function mayModerate(Call $call, User $actor): bool;
+
+    public function mayReportTelemetry(Call $call, User $actor): bool;
 }

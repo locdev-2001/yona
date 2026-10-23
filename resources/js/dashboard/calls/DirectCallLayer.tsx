@@ -1,4 +1,4 @@
-import { useCallSession } from './callSession';
+import { isCallStageOpen, useCallSession } from './callSession';
 import type { CallSession, DirectCallState } from './callSession';
 import DirectCallScene from './DirectCallScene';
 import type { DirectCallPhase } from './DirectCallScene';
@@ -76,6 +76,7 @@ export function DirectCallOverlay({ isPhone, viewingConversationId }: { isPhone:
     if (!context) return null;
 
     const { session, direct, peer, phase } = context;
+    if (phase === 'connected' && isCallStageOpen(session)) return null;
     const { view } = direct;
     const showsScene = direct.isExpanded || (phase === 'connected' && session.stageOpen);
 

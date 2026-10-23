@@ -171,8 +171,12 @@ export class LineOrb {
     }
 
     start(animate: boolean) {
+        let lastFrame = 0;
         const draw = (now: number) => {
-            this.step(now);
+            if (!document.hidden && now - lastFrame >= 1000 / 30 && this.canvas.clientWidth > 0 && this.canvas.clientHeight > 0) {
+                lastFrame = now;
+                this.step(now);
+            }
             if (animate) this.frame = requestAnimationFrame(draw);
         };
         this.frame = requestAnimationFrame(draw);

@@ -27,7 +27,7 @@ import CallMiniPlayer from 'dashboard/calls/CallMiniPlayer';
 import { DirectCallOverlay, DirectOutgoingStrip } from 'dashboard/calls/DirectCallLayer';
 import GroupCallRinging from 'dashboard/calls/GroupCallRinging';
 import { useCallsEnabled } from 'dashboard/calls/useCallsEnabled';
-import { isGroupStageOpen, useCallSession } from 'dashboard/calls/callSession';
+import { isCallStageOpen, useCallSession } from 'dashboard/calls/callSession';
 import { useIsPhoneScreen } from 'dashboard/composables/useViewportWidth';
 
 // Port từ dashboard/routes/dashboard/Dashboard.vue (shell)
@@ -90,7 +90,7 @@ function DashboardFrame({ children }: { children: ReactNode }) {
                         <ProfileOverlay />
                         <YonaRelationshipsSync />
                         <SettingsOverlay />
-                        {call.room && isGroupStageOpen(call) ? (
+                        {call.room && isCallStageOpen(call) ? (
                             <CallStage room={call.room} local={call.local} actions={call.actions} renderMedia={call.renderMedia} isPhone={isPhone} />
                         ) : null}
                         {call.room && !call.stageOpen && !isPhone && call.sharer ? (

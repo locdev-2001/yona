@@ -2,6 +2,8 @@ import Button from 'dashboard/components-next/button/Button';
 import ButtonGroup from 'dashboard/components-next/buttonGroup/ButtonGroup';
 import { t } from '../../i18n';
 import DevicePicker from './DevicePicker';
+import CallSettings from './CallSettings';
+import { PHONE_TOUCH_SIZE } from './touchTarget';
 import type { CallActions, CallDeviceKind, CallLocalState } from './types';
 
 type Tone = 'neutral' | 'off' | 'active';
@@ -32,7 +34,14 @@ function DeviceToggle({
 }) {
     const toneProps = TONE_PROPS[tone];
     const mainButton = (
-        <Button sm {...toneProps} icon={icon} title={title} className={`!h-9 !w-10 !px-0 ${deviceKind ? '!rounded-e-none' : ''}`} onClick={onToggle} />
+        <Button
+            sm
+            {...toneProps}
+            icon={icon}
+            title={title}
+            className={`!h-9 !w-10 !px-0 ${PHONE_TOUCH_SIZE} ${deviceKind ? '!rounded-e-none' : ''}`}
+            onClick={onToggle}
+        />
     );
 
     if (!deviceKind || !actions) return mainButton;
@@ -41,8 +50,15 @@ function DeviceToggle({
         <ButtonGroup className="flex gap-px">
             {mainButton}
             <DevicePicker kind={deviceKind} listDevices={actions.listDevices} onSelect={actions.selectDevice}>
-                {toggle => (
-                    <Button sm {...toneProps} icon="i-lucide-chevron-down" title={chevronTitle} className="!h-9 !w-6 !px-0 !rounded-s-none" onClick={toggle} />
+                {(toggle) => (
+                    <Button
+                        sm
+                        {...toneProps}
+                        icon="i-lucide-chevron-down"
+                        title={chevronTitle}
+                        className="!h-9 !w-6 !px-0 !rounded-s-none"
+                        onClick={toggle}
+                    />
                 )}
             </DevicePicker>
         </ButtonGroup>
@@ -87,15 +103,8 @@ export default function CallControls({ local, actions, isPhone }: { local: CallL
                 tone={local.deafened ? 'off' : 'neutral'}
                 onToggle={actions.toggleDeafen}
             />
-            <Button
-                sm
-                ruby
-                solid
-                icon="i-lucide-phone-off"
-                title={t('CALLS.ROOM.LEAVE')}
-                className="!h-9 !w-12 !px-0 ms-2"
-                onClick={actions.leave}
-            />
+            <Button sm ruby solid icon="i-lucide-phone-off" title={t('CALLS.ROOM.LEAVE')} className="!h-9 !w-12 !px-0 ms-2" onClick={actions.leave} />
+            <CallSettings />
         </div>
     );
 }

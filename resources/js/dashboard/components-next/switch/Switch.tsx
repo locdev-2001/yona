@@ -7,10 +7,11 @@ interface SwitchProps {
     ariaLabel?: string;
     // Có nhãn thì cả hàng (nhãn + công tắc) là một nút, đích chạm cao 44px.
     label?: string;
+    className?: string;
     onChange: (value: boolean) => void;
 }
 
-export default function Switch({ value, ariaLabel = '', label, onChange }: SwitchProps) {
+export default function Switch({ value, ariaLabel = '', label, className = '', onChange }: SwitchProps) {
     const track = (
         <span
             className={`group relative block h-4 w-7 flex-shrink-0 rounded-full transition-colors duration-200 ease-in-out ${
@@ -37,7 +38,7 @@ export default function Switch({ value, ariaLabel = '', label, onChange }: Switc
                 role="switch"
                 aria-checked={value}
                 onClick={() => onChange(!value)}
-                className="flex min-h-11 w-full select-none items-center justify-between gap-4 rounded p-0 text-left text-sm text-n-slate-12 focus:outline-none focus-visible:ring-1 focus-visible:ring-n-brand"
+                className={`flex min-h-11 w-full select-none items-center justify-between gap-4 rounded p-0 text-left text-sm text-n-slate-12 focus:outline-none focus-visible:ring-1 focus-visible:ring-n-brand ${className}`}
             >
                 <span>{label}</span>
                 {track}
@@ -48,7 +49,7 @@ export default function Switch({ value, ariaLabel = '', label, onChange }: Switc
     return (
         <button
             type="button"
-            className="flex-shrink-0 select-none rounded-full focus:outline-none focus:ring-1 focus:ring-n-brand focus:ring-offset-2 focus:ring-offset-n-slate-2"
+            className={`flex-shrink-0 select-none rounded-full focus:outline-none focus:ring-1 focus:ring-n-brand focus:ring-offset-2 focus:ring-offset-n-slate-2 ${className}`}
             role="switch"
             aria-checked={value}
             onClick={() => onChange(!value)}

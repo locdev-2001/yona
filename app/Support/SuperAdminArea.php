@@ -34,7 +34,7 @@ final class SuperAdminArea
         $legacyResources = [
             'access_tokens', 'account_users', 'agent_bots', 'platform_apps',
             'installation_configs', 'app_config', 'audit_logs', 'channel_health',
-            'feature_usage', 'instance_status', 'sticker_packs', 'push_subscriptions',
+            'feature_usage', 'instance_status', 'sticker_packs', 'push_subscriptions', 'call_quality',
         ];
 
         if ($resource === 'sign_in' && $resourceIndex === 0) {

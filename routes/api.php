@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\Webhooks\TwilioController as TwilioWebhooksControll
 use App\Http\Controllers\Api\Webhooks\TwitterController as TwitterWebhooksController;
 use App\Http\Controllers\Api\Webhooks\WhatsappController as WhatsappWebhooksController;
 use App\Http\Controllers\Api\Webhooks\ZaloController as ZaloWebhooksController;
+use App\Http\Controllers\Calls\TelemetryController;
 use App\Http\Controllers\Platform\Api\V1\AccountsController as PlatformAccountsController;
 use App\Http\Controllers\Platform\Api\V1\AccountUsersController as PlatformAccountUsersController;
 use App\Http\Controllers\Platform\Api\V1\AgentBotsController as PlatformAgentBotsController;
@@ -40,8 +41,13 @@ use App\Http\RateLimiting\MessagingRateLimiters;
 use App\Http\RequestSigning\ProtectedRoutes;
 use Illuminate\Support\Facades\Route;
 
-// Mặt tiền api: API cho BÊN NGOÀI gọi vào, xác thực bằng token, hợp đồng công
-// khai (docs/code-standards.md §0.4). Widget website nhúng trên tên miền khách
+// Số đo cuộc gọi qua API token, dùng cùng lõi với mặt tiền session.
+Route::post('/api/v1/telemetry/calls/{call}', TelemetryController::class)
+    ->whereNumber('call')
+    ->middleware(['auth.api_token', 'auth', 'throttle:12,1,call-telemetry:']);
+
+// Mặt tiền api: API cho bên ngoài gọi vào, xác thực bằng token.
+// Widget website nhúng trên tên miền khách
 // hàng là người dùng đầu tiên của mặt tiền này — không session, không CSRF.
 //
 Route::middleware(ResolveWidgetChannel::class)
