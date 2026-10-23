@@ -1,6 +1,6 @@
 import { Link } from '@inertiajs/react';
 import type { ColumnDef } from '@tanstack/react-table';
-import { ArrowLeftIcon, UsersIcon } from 'lucide-react';
+import { ArrowLeftIcon, UsersIcon } from '@admin/components/icons';
 
 import { formatDateTime } from '@admin/lib/format';
 import DataTableEmpty from '@admin/views/datatables/datatable-empty';

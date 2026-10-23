@@ -1,6 +1,6 @@
 import { Link } from '@inertiajs/react';
 import type { ColumnDef } from '@tanstack/react-table';
-import { ChevronDownIcon, ChevronUpIcon, ScrollTextIcon, XIcon } from 'lucide-react';
+import { ChevronDownIcon, ChevronUpIcon, ScrollTextIcon, XIcon } from '@admin/components/icons';
 import { useId, useState } from 'react';
 import type { FormEvent } from 'react';
 

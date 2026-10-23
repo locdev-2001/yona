@@ -1,5 +1,5 @@
 // Third-party Imports
-import { HouseIcon, LogOutIcon } from 'lucide-react'
+import { HouseIcon, LogOutIcon } from '@admin/components/icons'
 
 // Component Imports
 import { Avatar, AvatarGeneratedFallback } from '@admin/components/ui/avatar'

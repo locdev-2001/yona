@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from 'react'
 
 // Third-party Imports
 import { addDays, addMonths, isSameDay, isSameMonth, isValid, startOfMonth, startOfWeek } from 'date-fns'
-import { CalendarIcon, ChevronLeftIcon, ChevronRightIcon } from 'lucide-react'
+import { CalendarIcon, ChevronLeftIcon, ChevronRightIcon } from '@admin/components/icons'
 
 // Component Imports
 import { Button } from '@admin/components/ui/button'

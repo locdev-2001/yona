@@ -3,7 +3,7 @@ import { useId, useRef } from 'react'
 import type { ClipboardEvent, KeyboardEvent, RefObject } from 'react'
 
 // Third-party Imports
-import { XIcon } from 'lucide-react'
+import { XIcon } from '@admin/components/icons'
 
 // Component Imports
 import { Button } from '@admin/components/ui/button'

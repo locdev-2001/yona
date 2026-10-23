@@ -1,0 +1,251 @@
+
+.traffic-chart > svg {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+}
+.distribution {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+}
+.donut {
+    margin: 0 auto;
+    flex: none;
+    position: relative;
+    width: var(--preview-chart-donut-size);
+    height: var(--preview-chart-donut-size);
+}
+.donut svg {
+    width: 100%;
+    height: 100%;
+}
+.traffic-chart {
+    position: relative;
+    color: var(--preview-text-secondary);
+    height: var(--preview-chart-height);
+}
+.chart-series {
+    display: flex;
+    flex-wrap: wrap;
+}
+.chart-series button {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--preview-control-gap);
+    background: transparent;
+    border: 0;
+    color: var(--preview-text-secondary);
+    padding: var(--preview-detail-gap) 0;
+    font-size: var(--preview-text-caption);
+}
+.chart-series button[aria-pressed='false'] {
+    opacity: 0.4;
+    text-decoration: line-through;
+}
+.chart-series i {
+    background: currentColor;
+    width: 7px;
+    height: 7px;
+    border-radius: var(--preview-control-radius);
+    display: inline-block;
+}
+.chart-tooltip {
+    background: var(--preview-surface-control);
+    border: 1px solid var(--preview-border-divider);
+    border-radius: var(--preview-control-radius);
+    padding: var(--preview-control-padding) var(--preview-widget-content-gap);
+    min-width: 145px;
+    color: var(--preview-text-primary);
+    font-size: var(--preview-text-caption);
+    box-shadow: 0 8px 30px #0002;
+}
+.chart-tooltip > strong {
+    display: block;
+    margin-bottom: var(--preview-control-gap);
+}
+.chart-tooltip p {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--preview-widget-padding);
+    margin-top: var(--preview-detail-gap);
+}
+
+@media (min-width: 1600px) {
+    .traffic-chart {
+        height: 205px;
+    }
+    .distribution {
+    }
+}
+@media (max-width: 1000px) {
+}
+@media (max-width: 760px) {
+    .traffic-chart {
+        height: 180px;
+    }
+    .distribution {
+    }
+    .donut {
+        width: 124px;
+        height: 124px;
+        flex-shrink: 0;
+    }
+}
+@media (max-width: 760px) {
+    .chart-series {
+    }
+    .chart-series button {
+        min-height: 44px;
+        font-size: var(--preview-text-caption);
+    }
+    .traffic-chart {
+        height: 225px;
+    }
+}
+
+@media (max-width: 760px) {
+    .donut {
+        width: var(--preview-chart-donut-size-mobile);
+        height: var(--preview-chart-donut-size-mobile);
+    }
+}
+.donut .recharts-wrapper {
+    transform: rotate(0);
+}
+.donut .recharts-tooltip-wrapper {
+    z-index: 8;
+}
+.donut .donut-label {
+    z-index: 1;
+}
+.donut .chart-tooltip strong,
+.design-donut-tooltip strong {
+    font-size: var(--preview-text-control);
+    line-height: 1.4;
+    letter-spacing: 0;
+}
+.donut .chart-tooltip span,
+.design-donut-tooltip span {
+    font-size: var(--preview-text-caption);
+}
+.chart-tooltip {
+    font-size: var(--preview-text-control);
+    line-height: 1.6;
+}
+.chart-series {
+    gap: var(--preview-widget-content-gap);
+    padding: var(--preview-widget-content-gap) var(--preview-widget-padding) 0;
+}
+.traffic-chart {
+    padding: 0;
+    margin: var(--preview-widget-content-gap) var(--preview-chart-inset) var(--preview-chart-inset);
+}
+.distribution {
+    padding: var(--preview-widget-padding);
+    gap: var(--preview-section-gap);
+}
+.catalogue-chart-grid .chart-series {
+    padding: 0;
+}
+.catalogue-chart-grid .traffic-chart {
+    margin: var(--preview-widget-content-gap) 0 0;
+}
+@media (max-width: 760px) {
+    .chart-series {
+        padding: var(--preview-control-gap) var(--preview-widget-padding-mobile) 0;
+    }
+    .traffic-chart {
+        margin: var(--preview-widget-content-gap) var(--preview-chart-inset-mobile) var(--preview-chart-inset-mobile);
+    }
+    .distribution {
+        padding: var(--preview-widget-padding-mobile);
+    }
+}
+.chart-legend i,
+.distribution-legend i {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    display: inline-block;
+    background: var(--preview-status-success-foreground);
+}
+.donut-label > strong {
+    font-size: var(--preview-text-metric);
+    line-height: 1.4;
+}
+.donut-label > span {
+    color: var(--preview-text-secondary);
+    font-size: var(--preview-text-caption);
+}
+.distribution-legend {
+    display: flex;
+    flex-direction: column;
+    gap: var(--preview-control-gap);
+}
+.distribution-legend > div {
+    display: flex;
+    justify-content: space-between;
+    font-size: var(--preview-text-control);
+}
+.distribution-legend span {
+    display: flex;
+    align-items: center;
+    gap: var(--preview-control-gap);
+    color: var(--preview-text-secondary);
+}
+.distribution-legend i {
+    background: currentColor;
+}
+
+.donut-label {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+}
+@media (max-width: 1000px) {
+    .distribution-legend {
+        min-width: 0;
+        gap: var(--preview-widget-content-gap);
+    }
+}
+@media (max-width: 760px) {
+    .distribution-legend {
+        min-width: 0;
+        flex: 1;
+        gap: var(--preview-widget-content-gap);
+    }
+    .distribution-legend > div {
+        font-size: var(--preview-text-caption);
+    }
+}
+.donut-label > strong {
+    font-size: var(--preview-text-metric);
+    font-weight: 650;
+}
+.donut-label > span {
+    font-size: var(--preview-text-caption);
+}
+.donut .recharts-wrapper {
+    transform: none;
+}
+.donut-label > strong {
+    font-size: var(--preview-text-metric-mobile-compact);
+    font-weight: 500;
+    line-height: var(--preview-heading-line-height);
+}
+.donut-label[data-compact='true'] > strong {
+    font-size: var(--preview-text-metric-mobile-compact);
+}
+
+.design-donut-tooltip {
+    position: fixed;
+    z-index: 50;
+    pointer-events: none;
+    max-width: calc(100vw - var(--preview-page-padding-mobile) * 2);
+    font-family: var(--admin-font-family);
+}

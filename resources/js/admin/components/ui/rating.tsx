@@ -2,7 +2,7 @@ import * as React from 'react'
 
 import { cva, type VariantProps } from 'class-variance-authority'
 
-import { StarIcon } from 'lucide-react'
+import { StarIcon } from '@admin/components/icons'
 
 import { cn } from '@admin/lib/utils'
 

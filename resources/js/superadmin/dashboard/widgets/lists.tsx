@@ -6,7 +6,7 @@ import { avatarSeed } from 'shared/avatar/avatarSeed';
 
 import { Button } from '@admin/components/ui/button';
 import { Separator } from '@admin/components/ui/separator';
-import { GoalDonut } from '@admin/views/dashboards/charts/chart-sales-metrics';
+import { DesignDonut as GoalDonut } from '../../design-preview/chart-components';
 import TotalEarningList from '@admin/views/dashboards/widgets/widget-total-earning';
 import StatusBadge from '@admin/views/datatables/status-badge';
 import { MEANING_TONE, TONE_FILL } from '@admin/views/dashboards/tones';

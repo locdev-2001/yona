@@ -14,7 +14,7 @@ import {
     PencilIcon,
     StickerIcon,
     VenetianMaskIcon,
-} from 'lucide-react';
+} from '@admin/components/icons';
 
 import Link from '@admin/components/Link';
 import { Alert, AlertDescription, AlertTitle } from '@admin/components/ui/alert';

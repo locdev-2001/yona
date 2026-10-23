@@ -1,6 +1,6 @@
 import { Link } from '@inertiajs/react';
 import type { ColumnDef } from '@tanstack/react-table';
-import { CircleCheckIcon, CircleXIcon, HeartPulseIcon, InboxIcon, SearchXIcon, TriangleAlertIcon, XIcon } from 'lucide-react';
+import { CircleCheckIcon, CircleXIcon, HeartPulseIcon, InboxIcon, SearchXIcon, TriangleAlertIcon, XIcon } from '@admin/components/icons';
 import { useId, useMemo, useState } from 'react';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@admin/components/ui/avatar';

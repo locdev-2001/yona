@@ -6,6 +6,7 @@
 
 return [
     'labels' => [
+        'language' => 'Ngôn ngữ',
         'console_name' => 'Bảng quản trị',
         'close' => 'Đóng',
         'cancel' => 'Huỷ',

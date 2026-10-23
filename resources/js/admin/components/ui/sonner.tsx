@@ -1,6 +1,6 @@
 import { useTheme } from '@admin/components/ThemeProvider'
 import { Toaster as Sonner, type ToasterProps } from 'sonner'
-import { CircleCheckIcon, InfoIcon, TriangleAlertIcon, OctagonXIcon } from 'lucide-react'
+import { CircleCheckIcon, InfoIcon, TriangleAlertIcon, OctagonXIcon } from '@admin/components/icons'
 import LoaderIcon from 'shared/components/loader/LoaderIcon'
 
 const Toaster = ({ ...props }: ToasterProps) => {

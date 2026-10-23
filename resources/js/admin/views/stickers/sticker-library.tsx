@@ -16,7 +16,7 @@ import {
   StickerIcon,
   Trash2Icon,
   TriangleAlertIcon
-} from 'lucide-react'
+} from '@admin/components/icons'
 import Loader from 'shared/components/loader/Loader'
 
 // Component Imports

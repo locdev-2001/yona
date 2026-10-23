@@ -3,7 +3,7 @@ import { useState } from 'react'
 import type { FormEvent } from 'react'
 
 // Third-party Imports
-import { EyeIcon, EyeOffIcon } from 'lucide-react'
+import { EyeIcon, EyeOffIcon } from '@admin/components/icons'
 
 // Components Import
 import { Alert, AlertDescription } from '@admin/components/ui/alert'

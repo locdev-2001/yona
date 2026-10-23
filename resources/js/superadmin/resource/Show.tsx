@@ -1,6 +1,6 @@
 import { router, useForm } from '@inertiajs/react';
 import { useState } from 'react';
-import { HashIcon, LayoutDashboardIcon, MailIcon, PencilIcon, PlusIcon, RefreshCwIcon, VenetianMaskIcon } from 'lucide-react';
+import { HashIcon, LayoutDashboardIcon, MailIcon, PencilIcon, PlusIcon, RefreshCwIcon, VenetianMaskIcon } from '@admin/components/icons';
 
 import Link from '@admin/components/Link';
 import { Alert, AlertDescription } from '@admin/components/ui/alert';

@@ -1,12 +1,10 @@
+import { Panel, PreviewButton, SegmentedControl } from '../design-preview/components';
+import '../dashboard/design.css';
 import { Head } from '@inertiajs/react';
-import { CheckIcon, CircleAlertIcon, InfoIcon, PlusIcon, RotateCcwIcon, Settings2Icon } from 'lucide-react';
+import { CheckIcon, CircleAlertIcon, InfoIcon, PlusIcon, RotateCcwIcon, Settings2Icon } from '@admin/components/icons';
 import { useMemo, useRef, useState } from 'react';
 
 import { Alert, AlertTitle } from '@admin/components/ui/alert';
-import { Button } from '@admin/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@admin/components/ui/card';
-import { ToggleGroup, ToggleGroupItem } from '@admin/components/ui/toggle-group';
-import PageHeader from '@admin/views/pages/page-header';
 
 import { t } from '../../i18n';
 import { resetLayout, saveLayout } from '../dashboard/api';
@@ -18,50 +16,14 @@ import type { DashboardProps, LayoutItem, WidgetMeta, WidgetSize } from '../dash
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
 
 function RangePicker({ ranges, value, onChange }: { ranges: string[]; value: string; onChange: (range: string) => void }) {
-    return (
-        <ToggleGroup
-            variant="outline"
-            size="sm"
-            spacing={0}
-            value={[value]}
-            onValueChange={values => values[0] && onChange(values[0])}
-            aria-label={t('ADMIN_DASHBOARD.RANGE.LABEL')}
-        >
-            {ranges.map(range => (
-                <ToggleGroupItem key={range} value={range} className="aria-pressed:bg-primary aria-pressed:text-primary-foreground px-3">
-                    {t(`ADMIN_DASHBOARD.RANGE.PRESETS.${range.toUpperCase()}`)}
-                </ToggleGroupItem>
-            ))}
-        </ToggleGroup>
-    );
+    return <SegmentedControl options={ranges} value={value} onChange={onChange} label={t('ADMIN_DASHBOARD.RANGE.LABEL')} getLabel={range => t(`ADMIN_DASHBOARD.RANGE.PRESETS.${range.toUpperCase()}`)} />;
 }
 
 function HiddenWidgets({ widgets, onShow }: { widgets: WidgetMeta[]; onShow: (widget: WidgetMeta) => void }) {
     return (
-        <section aria-labelledby="dashboard-hidden-widgets">
-            <Card size="sm" className="border-foreground/20 border border-dashed shadow-none ring-0">
-                <CardHeader>
-                    <CardTitle id="dashboard-hidden-widgets" role="heading" aria-level={2}>
-                        {t('ADMIN_DASHBOARD.EDIT.HIDDEN_TITLE')}
-                    </CardTitle>
-                    {widgets.length === 0 ? <CardDescription>{t('ADMIN_DASHBOARD.EDIT.HIDDEN_EMPTY')}</CardDescription> : null}
-                </CardHeader>
-                {widgets.length > 0 ? (
-                    <CardContent>
-                        <ul className="flex flex-wrap gap-2">
-                            {widgets.map(widget => (
-                                <li key={widget.key}>
-                                    <Button variant="outline" size="sm" onClick={() => onShow(widget)} title={widget.description}>
-                                        <PlusIcon />
-                                        {widget.title}
-                                    </Button>
-                                </li>
-                            ))}
-                        </ul>
-                    </CardContent>
-                ) : null}
-            </Card>
-        </section>
+        <Panel id="dashboard-hidden-widgets" title={t('ADMIN_DASHBOARD.EDIT.HIDDEN_TITLE')} description={widgets.length === 0 ? t('ADMIN_DASHBOARD.EDIT.HIDDEN_EMPTY') : undefined}>
+            <div className="toolbar-actions">{widgets.map(widget => <PreviewButton key={widget.key} onClick={() => onShow(widget)} title={widget.description}><PlusIcon />{widget.title}</PreviewButton>)}</div>
+        </Panel>
     );
 }
 
@@ -107,29 +69,16 @@ export default function SuperAdminDashboard(props: DashboardProps) {
               : '';
 
     return (
-        <div className="flex flex-col gap-6">
+        <div className="admin-dashboard">
             <Head title={t('ADMIN_DASHBOARD.TITLE')} />
-            {/* Cùng khuôn đầu trang với mọi trang console (cỡ tiêu đề, cỡ dòng mô tả). */}
-            <PageHeader
-                title={t('ADMIN_DASHBOARD.TITLE')}
-                description={t('ADMIN_DASHBOARD.DESCRIPTION')}
-                className="mb-0 md:mb-0"
-                actions={
-                    <>
-                        <RangePicker ranges={ranges} value={range} onChange={setRange} />
-                        {editing ? (
-                            <Button variant="outline" onClick={reset}>
-                                <RotateCcwIcon />
-                                {t('ADMIN_DASHBOARD.ACTIONS.RESET')}
-                            </Button>
-                        ) : null}
-                        <Button variant={editing ? 'default' : 'outline'} aria-pressed={editing} onClick={() => setEditing(value => !value)}>
-                            {editing ? <CheckIcon /> : <Settings2Icon />}
-                            {editing ? t('ADMIN_DASHBOARD.ACTIONS.DONE') : t('ADMIN_DASHBOARD.ACTIONS.CUSTOMIZE')}
-                        </Button>
-                    </>
-                }
-            />
+            <header className="page-intro">
+                <div><h1>{t('ADMIN_DASHBOARD.TITLE')}</h1><p>{t('ADMIN_DASHBOARD.DESCRIPTION')}</p></div>
+                <div className="toolbar-actions">
+                    <RangePicker ranges={ranges} value={range} onChange={setRange} />
+                    {editing && <PreviewButton onClick={reset}><RotateCcwIcon />{t('ADMIN_DASHBOARD.ACTIONS.RESET')}</PreviewButton>}
+                    <PreviewButton appearance={editing ? 'primary' : 'secondary'} aria-pressed={editing} onClick={() => setEditing(value => !value)}>{editing ? <CheckIcon /> : <Settings2Icon />}{t(editing ? 'ADMIN_DASHBOARD.ACTIONS.DONE' : 'ADMIN_DASHBOARD.ACTIONS.CUSTOMIZE')}</PreviewButton>
+                </div>
+            </header>
 
             {editing ? (
                 <Alert>

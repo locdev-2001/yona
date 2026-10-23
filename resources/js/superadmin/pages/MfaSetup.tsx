@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
 import { Head, router, usePage } from '@inertiajs/react';
-import { ChevronRightIcon, ClipboardIcon, CopyIcon, DownloadIcon, TriangleAlertIcon } from 'lucide-react';
+import { ChevronRightIcon, ClipboardIcon, CopyIcon, DownloadIcon, TriangleAlertIcon } from '@admin/components/icons';
 import QRCode from 'qrcode';
 import { toast } from 'sonner';
 

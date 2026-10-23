@@ -1,6 +1,6 @@
 import * as React from 'react'
 
-import { ChevronLeftIcon, ChevronRightIcon, MoreHorizontalIcon } from 'lucide-react'
+import { ChevronLeftIcon, ChevronRightIcon, MoreHorizontalIcon } from '@admin/components/icons'
 
 import { Button } from '@admin/components/ui/button'
 import { cn } from '@admin/lib/utils'

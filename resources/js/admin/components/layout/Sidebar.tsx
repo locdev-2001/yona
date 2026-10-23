@@ -4,8 +4,8 @@ import { type ComponentType } from 'react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 // Third-party Imports
-import * as Icon from 'lucide-react'
-import { ChevronRightIcon, SquareArrowOutUpRightIcon } from 'lucide-react'
+import * as Icon from '@admin/components/icons'
+import { ChevronRightIcon, SquareArrowOutUpRightIcon } from '@admin/components/icons'
 
 // Type Imports
 import type { MenuGroupSubItem, MenuItem, MenuLeafSubItem, MenuSubItem, NavItem } from '@admin/configs/navConfig'

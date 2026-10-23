@@ -1,8 +1,9 @@
+import { t } from '../../../i18n';
 // React Imports
 import { useEffect, useState } from 'react'
 
 // Third-party Imports
-import { ArrowUpIcon } from 'lucide-react'
+import { ArrowUpIcon } from '@admin/components/icons'
 
 // Component Imports
 import { Button } from '@admin/components/ui/button'
@@ -44,7 +45,7 @@ const ScrollToTop = () => {
       onClick={scrollToTop}
     >
       <ArrowUpIcon />
-      <span className='sr-only'>Scroll to top</span>
+      <span className='sr-only'>{t('ADMIN_DESIGN.scroll_to_top')}</span>
     </Button>
   )
 }

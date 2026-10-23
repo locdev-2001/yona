@@ -1,4 +1,4 @@
-import { ChevronRightIcon, MoreHorizontalIcon } from 'lucide-react'
+import { ChevronRightIcon, MoreHorizontalIcon } from '@admin/components/icons'
 
 import { cn } from '@admin/lib/utils'
 

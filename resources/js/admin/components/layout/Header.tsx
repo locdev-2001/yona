@@ -2,7 +2,7 @@
 import { Fragment, useMemo } from 'react'
 
 // Third-party Imports
-import { SearchIcon } from 'lucide-react'
+import { SearchIcon } from '@admin/components/icons'
 
 // Component Imports
 import ProfileDropdown from '@admin/components/shared/ProfileDropdown'

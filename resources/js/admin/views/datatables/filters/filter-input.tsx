@@ -1,5 +1,5 @@
 // Third-party Imports
-import { SearchIcon } from 'lucide-react'
+import { SearchIcon } from '@admin/components/icons'
 
 // Component Imports
 import { Input } from '@admin/components/ui/input'

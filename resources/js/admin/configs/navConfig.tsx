@@ -1,6 +1,6 @@
 // Third-party Imports
 import { usePage } from '@inertiajs/react'
-import type * as Icon from 'lucide-react'
+import type * as Icon from '@admin/components/icons'
 
 type IconName = keyof typeof Icon
 

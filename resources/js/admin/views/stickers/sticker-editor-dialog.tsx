@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useReducer, useRef, useState } from 'react'
 
 // Third-party Imports
-import { CircleAlertIcon, CircleCheckIcon, TriangleAlertIcon } from 'lucide-react'
+import { CircleAlertIcon, CircleCheckIcon, TriangleAlertIcon } from '@admin/components/icons'
 import Loader from 'shared/components/loader/Loader'
 
 // Component Imports

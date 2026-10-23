@@ -1,6 +1,6 @@
 import { Link } from '@inertiajs/react';
 import type { ColumnDef } from '@tanstack/react-table';
-import { ActivityIcon } from 'lucide-react';
+import { ActivityIcon } from '@admin/components/icons';
 
 import { EMPTY_VALUE, formatDateTime } from '@admin/lib/format';
 import { cn } from '@admin/lib/utils';

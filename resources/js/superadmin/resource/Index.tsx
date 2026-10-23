@@ -1,5 +1,5 @@
 import { router } from '@inertiajs/react';
-import { PlusIcon } from 'lucide-react';
+import { PlusIcon } from '@admin/components/icons';
 import { useMemo, useState } from 'react';
 
 import Link from '@admin/components/Link';

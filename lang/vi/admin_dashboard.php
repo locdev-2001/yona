@@ -85,6 +85,8 @@ return [
         'BASELINE' => 'Mốc 100% để so các bước sau',
     ],
     'TREND' => [
+        'SELECTED_RANGE' => 'Trong khoảng thời gian đã chọn',
+        'MESSAGE_COUNT' => '{count} tin',
         'TOTAL' => 'Tổng trong khoảng',
         'PEAK' => 'Ngày cao nhất',
         'PEAK_INCOMING' => 'Ngày nhiều tin vào nhất',
@@ -104,6 +106,8 @@ return [
         'DATE' => 'Ngày',
     ],
     'COHORT' => [
+        'FUTURE' => 'Chưa đến tuần này',
+        'OFFSET_WEEK' => 'Tuần {offset}',
         'WEEK' => 'Tuần đăng ký',
         'SIZE' => 'Tài khoản',
         'OFFSET_GROUP' => '% còn trả lời khách, theo tuần sau đăng ký',

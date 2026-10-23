@@ -1,8 +1,9 @@
-import { EllipsisVerticalIcon, EyeOffIcon, GripVerticalIcon, RefreshCwIcon } from 'lucide-react';
+import { WidgetCard as ApprovedWidgetCard } from '../design-preview/widget-card';
+import { PreviewButton } from '../design-preview/components';
+import { EllipsisVerticalIcon, EyeOffIcon, GripVerticalIcon, RefreshCwIcon } from '@admin/components/icons';
 import type { CSSProperties, HTMLAttributes, ReactNode, Ref } from 'react';
 
-import { Button } from '@admin/components/ui/button';
-import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from '@admin/components/ui/card';
+
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -12,12 +13,10 @@ import {
 } from '@admin/components/ui/dropdown-menu';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@admin/components/ui/select';
 import { cn } from '@admin/lib/utils';
-import { TONE_CHIP } from '@admin/views/dashboards/tones';
 
 import { t } from '../../i18n';
 import { SIZE_CLASS } from './layout';
 import type { LayoutItem, WidgetMeta, WidgetSize } from './types';
-import { WIDGET_BADGE } from './widgetTones';
 
 export type EditControls = {
     sizes: WidgetSize[];
@@ -63,16 +62,16 @@ function SizeSelect({ meta, item, edit }: { meta: WidgetMeta; item: LayoutItem; 
 
 function DragHandle({ meta, edit }: { meta: WidgetMeta; edit: EditControls }) {
     return (
-        <Button
+        <PreviewButton
             ref={edit.handleRef}
-            variant="ghost"
+            appearance="ghost"
             size="icon-sm"
             {...edit.handleProps}
             aria-label={t('ADMIN_DASHBOARD.ACTIONS.DRAG', { title: meta.title })}
-            className="text-muted-foreground -ml-2 cursor-grab touch-none active:cursor-grabbing"
+            className="dashboard-drag-handle"
         >
             <GripVerticalIcon />
-        </Button>
+        </PreviewButton>
     );
 }
 
@@ -80,15 +79,15 @@ function EditActions({ meta, item, edit }: { meta: WidgetMeta; item: LayoutItem;
     return (
         <>
             <SizeSelect meta={meta} item={item} edit={edit} />
-            <Button
-                variant="ghost"
+            <PreviewButton
+                appearance="ghost"
                 size="icon-sm"
                 onClick={edit.onHide}
                 aria-label={t('ADMIN_DASHBOARD.ACTIONS.HIDE', { title: meta.title })}
                 className="text-muted-foreground"
             >
                 <EyeOffIcon />
-            </Button>
+            </PreviewButton>
         </>
     );
 }
@@ -100,12 +99,12 @@ function WidgetMenu({ meta, busy, onRefresh, onHide }: { meta: WidgetMeta; busy:
     return (
         <DropdownMenu>
             <DropdownMenuTrigger
-                render={<Button variant="ghost" size="icon" className="text-muted-foreground size-6 rounded-full" />}
+                render={<PreviewButton appearance="ghost" size="icon" className="dashboard-widget-menu" />}
                 aria-label={t('ADMIN_DASHBOARD.ACTIONS.MENU', { title: meta.title })}
             >
                 <EllipsisVerticalIcon className={cn(busy && 'animate-pulse')} />
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-auto">
+            <DropdownMenuContent align="end" className="catalogue-popup">
                 <DropdownMenuGroup>
                     {onRefresh ? (
                         <DropdownMenuItem onClick={onRefresh} disabled={busy}>
@@ -129,7 +128,6 @@ function WidgetMenu({ meta, busy, onRefresh, onHide }: { meta: WidgetMeta; busy:
 // góc bằng tay nắm kéo, chọn độ rộng và nút ẩn.
 export function WidgetCard({ ref, meta, item, edit, onRefresh, onHide, busy = false, bare = false, children, style, dragging = false }: Props) {
     const headingId = `dashboard-widget-${meta.key}`;
-    const badge = WIDGET_BADGE[meta.key];
     const sectionProps = {
         ref,
         style,
@@ -163,16 +161,15 @@ export function WidgetCard({ ref, meta, item, edit, onRefresh, onHide, busy = fa
                             {meta.title}
                         </h2>
                         {onRefresh ? (
-                            <Button
-                                variant="outline"
+                            <div className="sr-only focus-within:not-sr-only"><PreviewButton
+                                appearance="secondary"
                                 size="sm"
                                 onClick={onRefresh}
                                 disabled={busy}
-                                className="sr-only focus-visible:not-sr-only focus-visible:mb-4"
                             >
                                 <RefreshCwIcon />
                                 {t('ADMIN_DASHBOARD.ACTIONS.REFRESH', { title: meta.title })}
-                            </Button>
+                            </PreviewButton></div>
                         ) : null}
                         {children}
                     </>
@@ -183,36 +180,10 @@ export function WidgetCard({ ref, meta, item, edit, onRefresh, onHide, busy = fa
 
     return (
         <section {...sectionProps}>
-            <Card className={cn('h-full', edit && 'border-foreground/20 border border-dashed ring-0', dragging && 'shadow-lg')}>
-                <CardHeader>
-                    <div className="flex min-w-0 items-center gap-1">
-                        {edit ? <DragHandle meta={meta} edit={edit} /> : null}
-                        {badge ? (
-                            <span
-                                aria-hidden="true"
-                                className={cn('mr-2 flex size-7 shrink-0 items-center justify-center rounded-sm', TONE_CHIP[badge.tone])}
-                            >
-                                {badge.icon}
-                            </span>
-                        ) : null}
-                        {/* Tiêu đề ô 16px, tiêu đề trang 20px: hai cấp tách rõ. */}
-                        <CardTitle id={headingId} role="heading" aria-level={2} className="min-w-0 text-base font-medium break-words">
-                            {meta.title}
-                        </CardTitle>
-                    </div>
-                    <CardDescription className="line-clamp-2">{meta.description}</CardDescription>
-                    {edit ? (
-                        <div className="col-span-full flex items-center justify-between gap-2 pt-2">
-                            <EditActions meta={meta} item={item} edit={edit} />
-                        </div>
-                    ) : (
-                        <CardAction>
-                            <WidgetMenu meta={meta} busy={busy} onRefresh={onRefresh} onHide={onHide} />
-                        </CardAction>
-                    )}
-                </CardHeader>
-                <CardContent className="@container flex flex-1 flex-col">{children}</CardContent>
-            </Card>
+            <ApprovedWidgetCard title={meta.title} description={meta.description} headingId={headingId} seed={meta.key} className="dashboard-approved-widget" action={<WidgetMenu meta={meta} busy={busy} onRefresh={onRefresh} onHide={onHide} />}>
+                {edit && <div className="dashboard-edit-controls"><DragHandle meta={meta} edit={edit} /><EditActions meta={meta} item={item} edit={edit} /></div>}
+                {children}
+            </ApprovedWidgetCard>
         </section>
     );
 }

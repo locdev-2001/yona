@@ -1,0 +1,40 @@
+@font-face {
+    font-family: 'Plus Jakarta Sans';
+    src: url('../../../fonts/plusjakartasans/PlusJakartaSans[wght].ttf') format('truetype');
+    font-weight: 200 800;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Be Vietnam Pro';
+    src: url('../../../fonts/BeVietnamPro/BeVietnamPro-Regular.woff2') format('woff2');
+    font-weight: 400;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Be Vietnam Pro';
+    src: url('../../../fonts/BeVietnamPro/BeVietnamPro-Medium.woff2') format('woff2');
+    font-weight: 500;
+    font-display: swap;
+}
+:root[data-font-trial] :is(.catalogue-root, .catalogue-popup, .catalogue-overlay, .catalogue-sheet),
+:root[data-font-trial] :is(.catalogue-root, .catalogue-popup, .catalogue-overlay, .catalogue-sheet) * {
+    font-family: var(--font-trial-family) !important;
+}
+.font-trial {
+    display: grid;
+    gap: var(--preview-control-gap);
+    padding: var(--preview-widget-padding);
+    border: 1px solid var(--preview-border-divider);
+    border-radius: var(--preview-panel-radius);
+    font-size: var(--preview-text-control);
+}
+.font-trial-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--preview-control-gap);
+}
+.font-trial-source {
+    color: var(--preview-text-secondary);
+    font-size: var(--preview-text-caption);
+}

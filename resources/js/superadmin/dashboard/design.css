@@ -1,0 +1,82 @@
+@import '../design-preview/dashboard-components.css';
+.admin-dashboard {
+    display: grid;
+    gap: var(--preview-section-gap);
+}
+.dashboard-approved-widget {
+    height: 100%;
+    min-width: 0;
+}
+.dashboard-edit-controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--preview-control-gap);
+}
+.admin-dashboard .page-intro {
+    flex-wrap: wrap;
+    gap: var(--preview-widget-content-gap);
+}
+.admin-dashboard .toolbar-actions {
+    flex-wrap: wrap;
+}
+.admin-dashboard .preview-panel {
+    padding: var(--preview-widget-padding);
+    border-radius: var(--preview-panel-radius);
+    background: var(--preview-surface-panel);
+}
+.admin-dashboard .panel-heading {
+    margin-bottom: var(--preview-widget-content-gap);
+}
+.admin-dashboard .dashboard-widget-menu,
+.admin-dashboard .dashboard-drag-handle {
+    width: var(--preview-widget-icon-size);
+    height: var(--preview-widget-icon-size);
+    min-height: var(--preview-widget-icon-size);
+    padding: 0;
+}
+.dashboard-drag-handle {
+    cursor: grab;
+    touch-action: none;
+}
+
+.dashboard-bento-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: stretch;
+    gap: var(--preview-section-gap);
+}
+.admin-dashboard .page-intro,
+.admin-dashboard .metrics-grid {
+    margin-bottom: 0;
+}
+.admin-dashboard .metrics-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+@media (min-width: 768px) {
+    .dashboard-bento-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+@media (min-width: 1280px) {
+    .dashboard-bento-grid {
+        grid-template-columns: repeat(12, minmax(0, 1fr));
+    }
+}
+@media (max-width: 1200px) {
+    .admin-dashboard .metrics-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+@media (max-width: 760px) {
+    .admin-dashboard .metrics-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+.dashboard-approved-widget .traffic-chart {
+    margin-inline: 0;
+}
+.dashboard-approved-widget .chart-series,
+.dashboard-approved-widget .distribution {
+    padding-inline: 0;
+}

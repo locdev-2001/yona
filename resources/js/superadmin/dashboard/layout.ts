@@ -1,17 +1,17 @@
 import type { LayoutItem, WidgetMeta, WidgetSize } from './types';
 
-// Lưới 4 cột từ xl (trừ thanh điều hướng), 2 cột từ md, 1 cột trên điện thoại.
-export const GRID_CLASS = 'grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4';
+// Lưới 12 cột chia widget theo tỉ lệ 1/3, 1/2, 2/3 và toàn dòng.
+export const GRID_CLASS = 'dashboard-bento-grid';
 
 // Ngoài chế độ tuỳ chỉnh, ô nhỏ phía sau được kéo lên lấp chỗ trống của hàng trên (bố cục đã lưu
 // có thể để thủng lưới). Lúc kéo thả thì giữ đúng thứ tự để vị trí thả khớp với điều người dùng thấy.
 export const GRID_DENSE_CLASS = 'grid-flow-row-dense';
 
 export const SIZE_CLASS: Record<WidgetSize, string> = {
-    sm: 'col-span-1',
-    md: 'col-span-1 md:col-span-2',
-    lg: 'col-span-1 md:col-span-2 xl:col-span-3',
-    full: 'col-span-1 md:col-span-2 xl:col-span-4',
+    sm: 'col-span-1 xl:col-span-4',
+    md: 'col-span-1 md:col-span-2 xl:col-span-6',
+    lg: 'col-span-1 md:col-span-2 xl:col-span-8',
+    full: 'col-span-1 md:col-span-2 xl:col-span-12',
 };
 
 export function defaultLayout(widgets: WidgetMeta[]): LayoutItem[] {

@@ -5,6 +5,7 @@
 
 return [
     'labels' => [
+        'language' => 'Language',
         'console_name' => 'Admin console',
         'close' => 'Close',
         'cancel' => 'Cancel',

@@ -1,5 +1,5 @@
 // Third-party Imports
-import { ChartNoAxesColumnIcon, CircleAlertIcon } from 'lucide-react'
+import { ChartNoAxesColumnIcon, CircleAlertIcon } from '@admin/components/icons'
 
 // Component Imports
 import { Alert, AlertAction, AlertTitle } from '@admin/components/ui/alert'

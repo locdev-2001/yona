@@ -1,5 +1,5 @@
 import { Link } from '@inertiajs/react';
-import { ChevronRightIcon, SlidersHorizontalIcon } from 'lucide-react';
+import { ChevronRightIcon, SlidersHorizontalIcon } from '@admin/components/icons';
 
 import { buttonVariants } from '@admin/components/ui/button';
 import { Card, CardContent } from '@admin/components/ui/card';

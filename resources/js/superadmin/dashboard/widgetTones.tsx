@@ -12,7 +12,7 @@ import {
     SmileIcon,
     TrophyIcon,
     UserPlusIcon,
-} from 'lucide-react';
+} from '@admin/components/icons';
 import type { ReactNode } from 'react';
 
 import { MEANING_TONE, type Tone } from '@admin/views/dashboards/tones';

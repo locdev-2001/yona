@@ -15,7 +15,7 @@ const Providers = ({ children, sidebarDefaultOpen }: Props) => {
   return (
     <ThemeProvider attribute='class' defaultTheme='light'>
       <TooltipProvider>
-        <SidebarProvider defaultOpen={sidebarDefaultOpen}>{children}</SidebarProvider>
+        <SidebarProvider defaultOpen={sidebarDefaultOpen} mobileBreakpoint={761}>{children}</SidebarProvider>
       </TooltipProvider>
     </ThemeProvider>
   )

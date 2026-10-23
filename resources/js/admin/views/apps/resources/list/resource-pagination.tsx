@@ -1,5 +1,5 @@
 // Third-party Imports
-import { ChevronLeftIcon, ChevronRightIcon } from 'lucide-react'
+import { ChevronLeftIcon, ChevronRightIcon } from '@admin/components/icons'
 
 // Component Imports
 import Link from '@admin/components/Link'

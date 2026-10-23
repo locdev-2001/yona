@@ -85,6 +85,8 @@ return [
         'FROM_PREVIOUS' => '{rate}% of previous step',
     ],
     'TREND' => [
+        'SELECTED_RANGE' => 'In the selected range',
+        'MESSAGE_COUNT' => '{count} messages',
         'TOTAL' => 'Total in range',
         'PEAK' => 'Peak day',
         'PEAK_INCOMING' => 'Busiest incoming day',
@@ -104,6 +106,8 @@ return [
         'DATE' => 'Date',
     ],
     'COHORT' => [
+        'FUTURE' => 'This week is not available yet',
+        'OFFSET_WEEK' => 'Week {offset}',
         'WEEK' => 'Signup week',
         'SIZE' => 'Accounts',
         'OFFSET_GROUP' => '% still replying, by week after signup',

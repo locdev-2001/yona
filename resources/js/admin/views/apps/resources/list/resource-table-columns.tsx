@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 
 // Third-party Imports
 import type { ColumnDef } from '@tanstack/react-table'
-import { EllipsisVerticalIcon, EyeIcon, LayoutDashboardIcon, PencilIcon, Trash2Icon } from 'lucide-react'
+import { EllipsisVerticalIcon, EyeIcon, LayoutDashboardIcon, PencilIcon, Trash2Icon } from '@admin/components/icons'
 import { router } from '@inertiajs/react'
 
 // Component Imports

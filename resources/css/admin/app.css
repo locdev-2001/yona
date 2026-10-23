@@ -1,5 +1,6 @@
 @import 'tailwindcss-v4' source(none);
 @import 'tw-animate-css';
+@import './typography.css';
 @import 'shadcn/tailwind.css';
 
 /* Chỉ quét đúng file mà entry console nạp; `npm run check:css` đối chiếu danh sách này với module graph thật. */
@@ -335,9 +336,9 @@ input[type='number']::-webkit-outer-spin-button {
 }
 
 :root {
-  --font-geist-sans: 'Be Vietnam Pro', ui-sans-serif, system-ui, sans-serif;
+  --font-geist-sans: var(--admin-font-family);
   --font-geist-mono: 'JetBrains Mono', ui-monospace, monospace;
-  --font-num-family: 'Be Vietnam Pro Tnum', 'Be Vietnam Pro', ui-sans-serif, system-ui, sans-serif;
+  --font-num-family: var(--admin-font-family);
 }
 
 @layer base {

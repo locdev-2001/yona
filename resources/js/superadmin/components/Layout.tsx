@@ -1,19 +1,23 @@
+import { DesignCopyProvider } from '../design-preview/copy';
+import { locales } from '../../i18n/generated';
+import { getLocale } from '../../i18n';
 import { usePage } from '@inertiajs/react';
 import { useCallback, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { toast } from 'sonner';
 
 import Providers from '@admin/components/Providers';
-import Footer from '@admin/components/layout/Footer';
-import Header from '@admin/components/layout/Header';
+import useThemeConfig from '@admin/configs/themeConfig';
+import { useTheme } from '@admin/components/ThemeProvider';
+import ConsoleHeader from './ConsoleHeader';
 import ScrollToTop from '@admin/components/layout/ScrollToTop';
-import Sidebar from '@admin/components/layout/Sidebar';
-import { SidebarInset } from '@admin/components/ui/sidebar';
+import ConsoleNavigation from './ConsoleNavigation';
 import { Toaster } from '@admin/components/ui/sonner';
 
 import { useConsoleLabels } from '../labels';
 import type { SuperAdminPageProps } from '../types';
 import CommandPalette, { useCommandPaletteShortcut } from './CommandPalette';
+import './console-shell.css';
 
 // Thanh bên tự ghi cookie `sidebar_state` khi thu gọn/mở; đọc lại để giữ trạng thái giữa các lần tải.
 function readSidebarOpen(): boolean {
@@ -39,36 +43,42 @@ function useFlashToasts(): void {
 
 function ConsoleShell({ children }: { children: ReactNode }) {
     const [paletteOpen, setPaletteOpen] = useState(false);
-    const togglePalette = useCallback(() => setPaletteOpen(value => !value), []);
+    const [searchQuery, setSearchQuery] = useState('');
+    const { theme } = useTheme();
+    const { templateName, subtitle, version } = useThemeConfig();
+    const togglePalette = useCallback(() => {
+        setSearchQuery('');
+        setPaletteOpen(value => !value);
+    }, []);
 
     useCommandPaletteShortcut(togglePalette);
     useFlashToasts();
 
     return (
         <>
-            <div className="flex h-full w-full min-w-0">
-                <Sidebar />
-                <SidebarInset className="flex min-w-0 flex-1 flex-col">
-                    <Header onOpenSearch={() => setPaletteOpen(true)} />
-                    <main className="mx-auto size-full max-w-360 flex-1 px-4 py-6 sm:px-6">{children}</main>
+            <div className="admin-preview admin-console-shell" data-theme={theme}>
+                <ConsoleNavigation />
+                <div className="preview-workspace">
+                    <ConsoleHeader onOpenSearch={(query = '') => { setSearchQuery(query); setPaletteOpen(true); }} />
+                    <main className="admin-console-content">{children}</main>
+                    <footer className="admin-console-footer"><span>©{new Date().getFullYear()} {templateName} · {subtitle}</span><span>{version}</span></footer>
                     <Toaster />
-                    <Footer />
-                </SidebarInset>
+                </div>
             </div>
             <ScrollToTop />
-            <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
+            <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} initialQuery={searchQuery} />
         </>
     );
 }
 
 // Khung console: thanh bên theo vùng chức năng (thu về dải icon trên máy tính, ngăn
-// trượt trên điện thoại), thanh trên có ô tìm kiếm Ctrl/Cmd+K và menu người dùng.
+// trượt trên điện thoại), thanh trên có tìm kiếm Ctrl/Cmd+K; tài khoản ở footer sidebar.
 export default function Layout({ children }: { children: ReactNode }) {
     const [sidebarDefaultOpen] = useState(readSidebarOpen);
 
     return (
-        <Providers sidebarDefaultOpen={sidebarDefaultOpen}>
+        <DesignCopyProvider value={(locales[getLocale()]?.ADMIN_DESIGN ?? {}) as Record<string, string>}><Providers sidebarDefaultOpen={sidebarDefaultOpen}>
             <ConsoleShell>{children}</ConsoleShell>
-        </Providers>
+        </Providers></DesignCopyProvider>
     );
 }

@@ -1,6 +1,6 @@
 import { Link } from '@inertiajs/react';
 import type { ColumnDef } from '@tanstack/react-table';
-import { ArrowDownIcon, ArrowLeftIcon, ArrowUpIcon, EyeOffIcon, ListFilterIcon, LockIcon, TableIcon, XIcon } from 'lucide-react';
+import { ArrowDownIcon, ArrowLeftIcon, ArrowUpIcon, EyeOffIcon, ListFilterIcon, LockIcon, TableIcon, XIcon } from '@admin/components/icons';
 import { useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
 

@@ -4,7 +4,7 @@ import { mergeProps } from '@base-ui/react/merge-props'
 import { useRender } from '@base-ui/react/use-render'
 import { cva, type VariantProps } from 'class-variance-authority'
 
-import { PanelLeftIcon } from 'lucide-react'
+import { PanelLeftIcon } from '@admin/components/icons'
 
 import { Button } from '@admin/components/ui/button'
 import { Input } from '@admin/components/ui/input'
@@ -46,6 +46,7 @@ function useSidebar() {
 
 function SidebarProvider({
   defaultOpen = true,
+  mobileBreakpoint,
   open: openProp,
   onOpenChange: setOpenProp,
   className,
@@ -53,11 +54,12 @@ function SidebarProvider({
   children,
   ...props
 }: React.ComponentProps<'div'> & {
+  mobileBreakpoint?: number
   defaultOpen?: boolean
   open?: boolean
   onOpenChange?: (open: boolean) => void
 }) {
-  const isMobile = useIsMobile()
+  const isMobile = useIsMobile(mobileBreakpoint)
   const [openMobile, setOpenMobile] = React.useState(false)
 
   // This is the internal state of the sidebar.

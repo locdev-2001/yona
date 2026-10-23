@@ -1,6 +1,6 @@
 import { Link, router } from '@inertiajs/react';
 import type { ColumnDef } from '@tanstack/react-table';
-import { BellIcon, BellOffIcon, BellRingIcon, ExternalLinkIcon, HistoryIcon, ListChecksIcon, PencilIcon, SendIcon, UsersIcon } from 'lucide-react';
+import { BellIcon, BellOffIcon, BellRingIcon, ExternalLinkIcon, HistoryIcon, ListChecksIcon, PencilIcon, SendIcon, UsersIcon } from '@admin/components/icons';
 import { useEffect, useId, useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
 

@@ -1,0 +1,66 @@
+@import '../design-preview/shell.css';
+@import '../design-preview/scrollbars.css';
+
+.admin-console-shell {
+    width: 100%;
+    min-width: 0;
+}
+.admin-console-shell .preview-workspace {
+    display: flex;
+    flex-direction: column;
+}
+.admin-console-content {
+    flex: 1;
+    min-width: 0;
+    padding: var(--preview-page-padding);
+}
+.admin-console-footer {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--preview-control-gap);
+    padding: var(--preview-widget-content-gap) var(--preview-page-padding);
+    color: var(--preview-text-secondary);
+    font-size: var(--preview-text-caption);
+}
+@media (max-width: 760px) {
+    .admin-console-content {
+        padding: var(--preview-page-padding-mobile);
+    }
+    .admin-console-footer {
+        flex-wrap: wrap;
+        padding-inline: var(--preview-page-padding-mobile);
+    }
+}
+
+:root[data-admin-preview] {
+    --font-geist-sans: var(--admin-font-family);
+    --font-num-family: var(--font-geist-sans);
+    --c-primary-50: from var(--preview-surface-control) r g b;
+    --c-primary-100: from var(--preview-surface-control) r g b;
+    --c-primary-600: from var(--preview-action-primary) r g b;
+    --c-primary-700: from var(--preview-action-primary) r g b;
+    --c-neutral-0: from var(--preview-surface-panel) r g b;
+    --c-neutral-50: from var(--preview-surface-canvas) r g b;
+    --c-neutral-100: from var(--preview-surface-control) r g b;
+    --c-neutral-200: from var(--preview-border-divider) r g b;
+    --c-neutral-300: from var(--preview-border-divider) r g b;
+    --c-neutral-400: from var(--preview-text-secondary) r g b;
+    --c-neutral-500: from var(--preview-text-secondary) r g b;
+    --c-neutral-600: from var(--preview-text-secondary) r g b;
+    --c-neutral-700: from var(--preview-text-primary) r g b;
+    --c-neutral-800: from var(--preview-text-primary) r g b;
+    --c-neutral-900: from var(--preview-text-primary) r g b;
+    --c-navy: from var(--preview-chart-connections) r g b;
+    --c-cyan: from var(--preview-chart-volume) r g b;
+    --c-success: from var(--preview-status-success-foreground) r g b;
+    --c-success-tint: from var(--preview-surface-control) r g b;
+    --c-warning: from var(--preview-status-warning-foreground) r g b;
+    --c-warning-tint: from var(--preview-surface-control) r g b;
+    --c-danger: from var(--preview-status-danger-foreground) r g b;
+    --c-danger-tint: from var(--preview-surface-control) r g b;
+    --chart-1: var(--preview-chart-messages);
+    --chart-2: var(--preview-chart-volume);
+    --chart-3: var(--preview-chart-connections);
+    --chart-4: var(--preview-chart-email);
+    --chart-5: var(--preview-chart-peak);
+}

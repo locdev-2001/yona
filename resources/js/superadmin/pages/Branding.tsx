@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { router, usePage } from '@inertiajs/react';
-import { ImageUpIcon, RotateCcwIcon } from 'lucide-react';
+import { ImageUpIcon, RotateCcwIcon } from '@admin/components/icons';
 
 import { Badge } from '@admin/components/ui/badge';
 import { Button } from '@admin/components/ui/button';

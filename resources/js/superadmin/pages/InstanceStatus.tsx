@@ -1,4 +1,4 @@
-import { ActivityIcon } from 'lucide-react';
+import { ActivityIcon } from '@admin/components/icons';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@admin/components/ui/card';
 import StatusBadge from '@admin/views/datatables/status-badge';

@@ -1,6 +1,6 @@
 import { router, usePage } from '@inertiajs/react';
-import * as Icon from 'lucide-react';
-import { ExternalLinkIcon } from 'lucide-react';
+import * as Icon from '@admin/components/icons';
+import { ExternalLinkIcon } from '@admin/components/icons';
 import LoaderIcon from 'shared/components/loader/LoaderIcon';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ComponentType } from 'react';
@@ -139,25 +139,26 @@ function useRemoteSearch(query: string, enabled: boolean): RemoteState {
 }
 
 // Bảng lệnh Ctrl/Cmd+K: nhảy tới trang (lọc không dấu) và tìm bản ghi trên máy chủ.
-export default function CommandPalette({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
+export default function CommandPalette({ open, onOpenChange, initialQuery = '' }: { open: boolean; onOpenChange: (open: boolean) => void; initialQuery?: string }) {
     const label = useConsoleLabels();
 
     return (
         <CommandDialog
             open={open}
             onOpenChange={onOpenChange}
+            className="catalogue-overlay"
             title={label('command_title')}
             description={label('command_placeholder')}
         >
-            {open ? <CommandPaletteContent onClose={() => onOpenChange(false)} /> : null}
+            {open ? <CommandPaletteContent initialQuery={initialQuery} onClose={() => onOpenChange(false)} /> : null}
         </CommandDialog>
     );
 }
 
-function CommandPaletteContent({ onClose }: { onClose: () => void }) {
+function CommandPaletteContent({ onClose, initialQuery }: { onClose: () => void; initialQuery: string }) {
     const label = useConsoleLabels();
     const { groups } = useConsoleNavigation();
-    const [query, setQuery] = useState('');
+    const [query, setQuery] = useState(initialQuery);
     const remote = useRemoteSearch(query, true);
 
     const allNavigation = useMemo(() => navigationOptions(groups), [groups]);
@@ -213,7 +214,7 @@ function CommandPaletteContent({ onClose }: { onClose: () => void }) {
     };
 
     return (
-        <Command shouldFilter={false} loop>
+        <Command className="catalogue-command" shouldFilter={false} loop>
             <CommandInput
                 autoFocus
                 aria-label={label('command_placeholder')}

@@ -2,7 +2,7 @@
 import type { FormEvent, ReactNode } from 'react'
 
 // Third-party Imports
-import { SearchIcon, XIcon } from 'lucide-react'
+import { SearchIcon, XIcon } from '@admin/components/icons'
 
 // Component Imports
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from '@admin/components/ui/input-group'

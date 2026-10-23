@@ -6,7 +6,7 @@ import { useState } from 'react'
 import type { Column, ColumnDef, ColumnPinningState } from '@tanstack/react-table'
 import { flexRender, getCoreRowModel, useReactTable } from '@tanstack/react-table'
 
-import { ArrowLeftFromLineIcon, ArrowRightFromLineIcon, EllipsisIcon, PinOffIcon } from 'lucide-react'
+import { ArrowLeftFromLineIcon, ArrowRightFromLineIcon, EllipsisIcon, PinOffIcon } from '@admin/components/icons'
 
 // Component Imports
 import { Button } from '@admin/components/ui/button'

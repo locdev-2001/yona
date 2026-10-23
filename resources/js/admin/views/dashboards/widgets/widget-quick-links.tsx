@@ -2,7 +2,7 @@
 import type { ReactNode } from 'react'
 
 // Third-party Imports
-import { ExternalLinkIcon } from 'lucide-react'
+import { ExternalLinkIcon } from '@admin/components/icons'
 
 // Component Imports
 import { Avatar, AvatarFallback } from '@admin/components/ui/avatar'

@@ -2,7 +2,7 @@
 import { useEffect, useId, useRef, useState } from 'react'
 
 // Third-party Imports
-import { ChevronsUpDownIcon } from 'lucide-react'
+import { ChevronsUpDownIcon } from '@admin/components/icons'
 import Loader from 'shared/components/loader/Loader'
 
 // Component Imports

@@ -1,7 +1,7 @@
 import { Link, router } from '@inertiajs/react';
 import { useState } from 'react';
 
-import { CheckIcon, CopyIcon, EyeIcon, EyeOffIcon, Trash2Icon } from 'lucide-react';
+import { CheckIcon, CopyIcon, EyeIcon, EyeOffIcon, Trash2Icon } from '@admin/components/icons';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@admin/components/ui/avatar';
 import { Badge } from '@admin/components/ui/badge';

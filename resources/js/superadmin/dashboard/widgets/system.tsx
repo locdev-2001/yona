@@ -1,4 +1,4 @@
-import { ActivityIcon, KanbanIcon, LayersIcon, LinkIcon, ScrollTextIcon } from 'lucide-react';
+import { ActivityIcon, KanbanIcon, LayersIcon, LinkIcon, ScrollTextIcon } from '@admin/components/icons';
 import type { ReactNode } from 'react';
 
 import { Button } from '@admin/components/ui/button';

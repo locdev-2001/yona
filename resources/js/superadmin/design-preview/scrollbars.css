@@ -1,0 +1,45 @@
+:root[data-admin-preview],
+:root[data-admin-preview] * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--preview-scrollbar-thumb) transparent;
+}
+:root[data-admin-preview]::-webkit-scrollbar,
+:root[data-admin-preview] *::-webkit-scrollbar {
+    width: var(--preview-scrollbar-size);
+    height: var(--preview-scrollbar-size);
+}
+:root[data-admin-preview]::-webkit-scrollbar-track,
+:root[data-admin-preview] *::-webkit-scrollbar-track {
+    background: transparent;
+}
+:root[data-admin-preview]::-webkit-scrollbar-thumb,
+:root[data-admin-preview] *::-webkit-scrollbar-thumb {
+    background: var(--preview-scrollbar-thumb);
+    border: 0;
+    border-radius: var(--preview-badge-radius);
+}
+:root[data-admin-preview]::-webkit-scrollbar-thumb:hover,
+:root[data-admin-preview] *::-webkit-scrollbar-thumb:hover {
+    background: var(--preview-scrollbar-thumb-hover);
+}
+:root[data-admin-preview]::-webkit-scrollbar-corner,
+:root[data-admin-preview] *::-webkit-scrollbar-corner {
+    background: transparent;
+}
+@supports selector(::-webkit-scrollbar) {
+    :root[data-admin-preview],
+    :root[data-admin-preview] * {
+        scrollbar-width: auto;
+        scrollbar-color: auto;
+    }
+}
+@media (forced-colors: active) {
+    :root[data-admin-preview],
+    :root[data-admin-preview] * {
+        scrollbar-color: auto;
+    }
+    :root[data-admin-preview]::-webkit-scrollbar-thumb,
+    :root[data-admin-preview] *::-webkit-scrollbar-thumb {
+        background: CanvasText;
+    }
+}

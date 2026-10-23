@@ -2,7 +2,7 @@
 import type { ReactNode } from 'react'
 
 // Third-party Imports
-import { ChevronDownIcon, ChevronUpIcon } from 'lucide-react'
+import { ChevronDownIcon, ChevronUpIcon } from '@admin/components/icons'
 
 // Component Imports
 import { Card, CardContent } from '@admin/components/ui/card'

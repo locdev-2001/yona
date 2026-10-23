@@ -38,3 +38,16 @@ export function normalizeSearch(value: string): string {
         .toLowerCase()
         .trim();
 }
+
+export function useActiveConsoleNavigation() {
+    const navigation = useConsoleNavigation();
+    const candidates = navigation.groups.flatMap(group => group.items.map(item => ({ group, item })))
+        .filter(({ item }) => !item.external && (item.exact
+            ? navigation.currentPath === item.url
+            : navigation.currentPath === item.url || navigation.currentPath.startsWith(`${item.url}/`)))
+        .sort((first, second) => second.item.url.length - first.item.url.length);
+    const active = candidates[0];
+    const activeChild = active?.item.children?.find(child => child.url === navigation.currentUrl);
+
+    return { ...navigation, group: active?.group, item: active?.item, activeId: activeChild ? `${active.item.key}:${activeChild.key}` : active?.item.key ?? '' };
+}

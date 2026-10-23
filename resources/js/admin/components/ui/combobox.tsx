@@ -2,7 +2,7 @@ import * as React from 'react'
 
 import { Combobox as ComboboxPrimitive } from '@base-ui/react'
 
-import { ChevronDownIcon, XIcon, CheckIcon } from 'lucide-react'
+import { ChevronDownIcon, XIcon, CheckIcon } from '@admin/components/icons'
 
 import { cn } from '@admin/lib/utils'
 import { Button } from '@admin/components/ui/button'
@@ -46,10 +46,18 @@ function ComboboxInput({
   disabled = false,
   showTrigger = true,
   showClear = false,
+  clearLabel,
+  triggerLabel,
+  hideTriggerOnClear = true,
+  keepClearMounted = false,
   ...props
 }: ComboboxPrimitive.Input.Props & {
   showTrigger?: boolean
   showClear?: boolean
+  clearLabel?: string
+  triggerLabel?: string
+  hideTriggerOnClear?: boolean
+  keepClearMounted?: boolean
 }) {
   return (
     <InputGroup className={cn('w-auto', className)}>
@@ -61,11 +69,15 @@ function ComboboxInput({
             variant='ghost'
             render={<ComboboxTrigger />}
             data-slot='input-group-button'
-            className='group-has-data-[slot=combobox-clear]/input-group:hidden data-pressed:bg-transparent'
+            className={cn(
+              hideTriggerOnClear && 'group-has-data-[slot=combobox-clear]/input-group:hidden',
+              'data-pressed:bg-transparent'
+            )}
+            aria-label={triggerLabel}
             disabled={disabled}
           />
         )}
-        {showClear && <ComboboxClear disabled={disabled} />}
+        {showClear && <ComboboxClear disabled={disabled} aria-label={clearLabel} keepMounted={keepClearMounted} />}
       </InputGroupAddon>
       {children}
     </InputGroup>
@@ -200,9 +212,11 @@ function ComboboxChip({
   className,
   children,
   showRemove = true,
+  removeLabel,
   ...props
 }: ComboboxPrimitive.Chip.Props & {
   showRemove?: boolean
+  removeLabel?: string
 }) {
   return (
     <ComboboxPrimitive.Chip
@@ -219,6 +233,7 @@ function ComboboxChip({
           render={<Button variant='ghost' size='icon-xs' />}
           className='-ml-1 opacity-50 hover:opacity-100'
           data-slot='combobox-chip-remove'
+          aria-label={removeLabel}
         >
           <XIcon className='pointer-events-none' />
         </ComboboxPrimitive.ChipRemove>

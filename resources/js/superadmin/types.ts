@@ -22,6 +22,7 @@ export type SuperAdminRow = {
 export type ConsoleLabelKey =
     | `resource_description_${string}`
     | 'console_name'
+    | 'language'
     | 'close'
     | 'cancel'
     | 'confirm'
@@ -131,6 +132,8 @@ export type ConsoleNavGroup = { key: string; label: string; items: ConsoleNavIte
 
 export type SuperAdminPageProps = {
     superAdmin: {
+        locale: string;
+        locales: { code: string; label: string; url: string }[];
         installationName: string;
         logo: string;
         logoThumbnail: string;

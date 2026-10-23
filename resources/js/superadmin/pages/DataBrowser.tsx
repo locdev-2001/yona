@@ -1,6 +1,6 @@
 import { Link } from '@inertiajs/react';
 import type { ColumnDef } from '@tanstack/react-table';
-import { DatabaseIcon } from 'lucide-react';
+import { DatabaseIcon } from '@admin/components/icons';
 import { useId, useMemo, useState } from 'react';
 
 import { Card } from '@admin/components/ui/card';

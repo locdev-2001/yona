@@ -1,5 +1,5 @@
 import { Link, router } from '@inertiajs/react';
-import { ArrowLeftIcon, Building2Icon } from 'lucide-react';
+import { ArrowLeftIcon, Building2Icon } from '@admin/components/icons';
 import { useMemo, useState } from 'react';
 
 import { buttonVariants } from '@admin/components/ui/button';

@@ -68,11 +68,7 @@ final class LandingPayload
      */
     private static function locales(): array
     {
-        $locales = array_map(fn (array $locale) => [
-            'code' => $locale['iso_639_1_code'],
-            'label' => $locale['name'],
-            'url' => request()->fullUrlWithQuery(['locale' => $locale['iso_639_1_code']]),
-        ], config('yona.available_locales', []));
+        $locales = LocaleOptions::forRequest(request());
 
         usort($locales, fn (array $a, array $b) => ($b['code'] === 'vi') <=> ($a['code'] === 'vi'));
 

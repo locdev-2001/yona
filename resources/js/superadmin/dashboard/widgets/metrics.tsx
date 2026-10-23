@@ -1,22 +1,23 @@
+import { DesignTimeSeries as TimeSeriesChart, DesignDonut as GoalDonut, chartSeriesColor } from '../../design-preview/chart-components';
+import { ChartInsights } from '../../design-preview/chart-insights';
+import { MetricCard } from '../../design-preview/components';
 import {
     ActivityIcon,
     ArrowDownLeftIcon,
     ArrowUpRightIcon,
     Building2Icon,
-    CalendarArrowUpIcon,
+    CalendarDays,
     InboxIcon,
     MessagesSquareIcon,
-    RepeatIcon,
+    Repeat,
     SigmaIcon,
     UserPlusIcon,
     UsersIcon,
-} from 'lucide-react';
+} from '@admin/components/icons';
 import type { ReactNode } from 'react';
 
 import { Separator } from '@admin/components/ui/separator';
-import TimeSeriesChart, { GoalDonut, MetricBoxes } from '@admin/views/dashboards/charts/chart-sales-metrics';
 import type { ChartSeries } from '@admin/views/dashboards/charts/chart-sales-metrics';
-import StatisticsCard from '@admin/views/dashboards/statistics/statistics-card-01';
 import FunnelProgress from '@admin/views/dashboards/widgets/widget-funnel';
 import ProductInsightsStats from '@admin/views/dashboards/widgets/widget-product-insights';
 import { CATEGORY_SERIES, MEANING_TONE, TONE_FILL, type Tone } from '@admin/views/dashboards/tones';
@@ -32,56 +33,21 @@ import type {
     SignupsTrendData,
 } from '../types';
 
-const KPI_ICON: Record<string, ReactNode> = {
-    accounts_total: <Building2Icon className="size-4" />,
-    accounts_new: <UserPlusIcon className="size-4" />,
-    accounts_active: <ActivityIcon className="size-4" />,
-    users_total: <UsersIcon className="size-4" />,
-    conversations_new: <MessagesSquareIcon className="size-4" />,
-    messages_incoming: <ArrowDownLeftIcon className="size-4" />,
-    messages_outgoing: <ArrowUpRightIcon className="size-4" />,
-    inboxes_total: <InboxIcon className="size-4" />,
-};
-
-// Màu theo nghĩa (MEANING_TONE): cùng chỉ số, cùng màu ở mọi trang.
-const KPI_TONE: Record<string, Tone> = {
-    accounts_total: MEANING_TONE.accounts,
-    accounts_new: MEANING_TONE.accounts,
-    accounts_active: MEANING_TONE.accounts,
-    users_total: MEANING_TONE.people,
-    conversations_new: MEANING_TONE.conversations,
-    messages_incoming: MEANING_TONE.messages,
-    messages_outgoing: MEANING_TONE.messages,
-    inboxes_total: MEANING_TONE.inboxes,
-};
-
 const trendOf = (change: number) => (change > 0 ? 'up' : change < 0 ? 'down' : 'flat');
 
 export function Kpis({ data }: { data: KpisData }) {
     return (
-        <div className="grid grid-cols-2 gap-4 @3xl:grid-cols-4 @3xl:gap-6">
+        <div className="metrics-grid">
             {data.metrics.map(metric => (
-                <StatisticsCard
+                <MetricCard
                     key={metric.key}
-                    tone={KPI_TONE[metric.key] ?? 'neutral'}
-                    icon={KPI_ICON[metric.key] ?? <SigmaIcon className="size-4" />}
+                    label={t(`ADMIN_DASHBOARD.METRICS.${metric.key.toUpperCase()}`)}
                     value={formatNumber(metric.value)}
-                    title={t(`ADMIN_DASHBOARD.METRICS.${metric.key.toUpperCase()}`)}
-                    changePercentage={
-                        metric.changePercent === null
-                            ? null
-                            : `${metric.changePercent > 0 ? '+' : ''}${formatPercent(metric.changePercent)}%`
-                    }
+                    purpose={metric.key === 'inboxes_total' ? 'connections' : metric.key.startsWith('messages_') || metric.key === 'conversations_new' ? 'messages' : 'users'}
+                    tone="brand"
                     trend={metric.changePercent === null ? 'flat' : trendOf(metric.changePercent)}
-                    // Mọi thẻ có kỳ trước cùng một kiểu so sánh: "Kỳ trước: N", thêm chip chênh lệch khi tính được.
-                    comparisonText={
-                        metric.previous === null ? undefined : t('ADMIN_DASHBOARD.RANGE.PREVIOUS', { value: formatNumber(metric.previous) })
-                    }
-                    note={
-                        metric.previous === null
-                            ? t('ADMIN_DASHBOARD.RANGE.SNAPSHOT')
-                            : t('ADMIN_DASHBOARD.RANGE.PREVIOUS', { value: formatNumber(metric.previous) })
-                    }
+                    change={metric.changePercent === null ? '' : `${metric.changePercent > 0 ? '+' : ''}${formatPercent(metric.changePercent)}%`}
+                    comparison={metric.previous === null ? t('ADMIN_DASHBOARD.RANGE.SNAPSHOT') : t('ADMIN_DASHBOARD.RANGE.PREVIOUS', { value: formatNumber(metric.previous) })}
                 />
             ))}
         </div>
@@ -126,7 +92,6 @@ function peak(dates: string[], values: number[]): { count: string; date: string 
     return max > 0 && dates[index] ? { count: formatNumber(max), date: formatDay(dates[index]) } : null;
 }
 
-// Hai ô tỉ lệ và ngày cao điểm ở trên (tổng tin vào/ra đã có ở hàng chỉ số), biểu đồ đường dưới.
 export function MessagesTrend({ data, title }: { data: MessagesTrendData; title: string }) {
     const dates = data.days.map(day => day.date);
     const incoming = data.days.map(day => day.incoming);
@@ -137,39 +102,33 @@ export function MessagesTrend({ data, title }: { data: MessagesTrendData; title:
 
     return (
         <div className="flex flex-1 flex-col gap-6">
-            <MetricBoxes
-                className="grid gap-4 @md:grid-cols-2"
-                metrics={[
-                    {
-                        key: 'ratio',
-                        tone: MEANING_TONE.messages,
-                        icon: <RepeatIcon className="size-5" />,
-                        title: t('ADMIN_DASHBOARD.TREND.REPLY_RATIO'),
-                        value: totalIn === 0 ? '-' : `${formatPercent((totalOut / totalIn) * 100)}%`,
-                    },
-                    {
-                        key: 'peak',
-                        tone: MEANING_TONE.messages,
-                        icon: <CalendarArrowUpIcon className="size-5" />,
-                        title: t('ADMIN_DASHBOARD.TREND.PEAK_INCOMING'),
-                        value: peakIncoming ? t('ADMIN_DASHBOARD.TREND.PEAK_MESSAGES', peakIncoming) : '-',
-                    },
-                ]}
-            />
-            {/* Biểu đồ đặt thẳng trong thẻ, không lồng thêm khung viền. Tin ra là chuỗi thứ hai của cùng họ "tin nhắn":
-                nét đứt cyan (màu chuỗi thứ hai), đọc được không qua màu. */}
+            <ChartInsights items={[
+                {
+                    id: 'ratio',
+                    icon: <Repeat />,
+                    label: t('ADMIN_DASHBOARD.TREND.REPLY_RATIO'),
+                    value: totalIn === 0 ? '-' : `${formatPercent((totalOut / totalIn) * 100)}%`,
+                    detail: t('ADMIN_DASHBOARD.TREND.SELECTED_RANGE'),
+                },
+                {
+                    id: 'peak',
+                    icon: <CalendarDays />,
+                    label: t('ADMIN_DASHBOARD.TREND.PEAK_INCOMING'),
+                    value: peakIncoming ? t('ADMIN_DASHBOARD.TREND.MESSAGE_COUNT', { count: peakIncoming.count }) : '-',
+                    detail: peakIncoming ? t('ADMIN_DASHBOARD.TREND.ON_DATE', { date: peakIncoming.date }) : '',
+                },
+            ]} />
             <DailyChart
                 title={title}
                 dates={dates}
                 variant="line"
                 series={[
-                    { key: 'incoming', label: t('ADMIN_DASHBOARD.SERIES.INCOMING'), values: incoming, color: TONE_FILL.primary },
+                    { key: 'incoming', label: t('ADMIN_DASHBOARD.SERIES.INCOMING'), values: incoming, color: chartSeriesColor(0) },
                     {
                         key: 'outgoing',
                         label: t('ADMIN_DASHBOARD.SERIES.OUTGOING'),
                         values: outgoing,
-                        color: TONE_FILL.cyan,
-                        dashed: true,
+                        color: chartSeriesColor(1),
                     },
                 ]}
             />
@@ -211,7 +170,7 @@ export function SignupsTrend({ data, title }: { data: SignupsTrendData; title: s
                 title={title}
                 dates={dates}
                 variant="bar"
-                series={[{ key: 'signups', label: t('ADMIN_DASHBOARD.SERIES.SIGNUPS'), values: counts, color: TONE_FILL[tone] }]}
+                series={[{ key: 'signups', label: t('ADMIN_DASHBOARD.SERIES.SIGNUPS'), values: counts, color: chartSeriesColor(1) }]}
             />
         </div>
     );
@@ -224,7 +183,7 @@ export function ConversationsByChannel({ data }: { data: ConversationsByChannelD
         key: `channel${index}`,
         label: item.platform.name,
         value: item.count,
-        color: CATEGORY_SERIES[index % CATEGORY_SERIES.length],
+        color: chartSeriesColor(index),
     }));
 
     return (
@@ -233,20 +192,7 @@ export function ConversationsByChannel({ data }: { data: ConversationsByChannelD
             slices={slices}
             centerValue={formatNumber(data.total)}
             centerLabel={t('ADMIN_DASHBOARD.CHANNELS.CENTER')}
-            legend={
-                <ul className="flex flex-col gap-2">
-                    {slices.map(slice => (
-                        <li key={slice.key} className="flex items-center gap-2 text-sm">
-                            <span className="size-2.5 shrink-0" style={{ backgroundColor: slice.color }} aria-hidden="true" />
-                            <span className="min-w-0 flex-1 truncate text-neutral-900">{slice.label}</span>
-                            <span className="font-num shrink-0 text-neutral-700">{formatNumber(slice.value)}</span>
-                            <span className="font-num w-12 shrink-0 text-right text-neutral-500">
-                                {data.total > 0 ? `${formatPercent((slice.value / data.total) * 100)}%` : '-'}
-                            </span>
-                        </li>
-                    ))}
-                </ul>
-            }
+            formatValue={formatNumber}
         />
     );
 }
