@@ -187,3 +187,20 @@ Nghiệm thu trực tiếp form runtime local: viewport 1280px, root/stage 1280p
 Ảnh production của người dùng cho thấy trình duyệt tô khối xám/trắng chữ vào ô email/mật khẩu. Gốc: ConsoleAuthLayout thiếu data-theme trong khi .admin-preview mặc định color-scheme dark, dù html đã dùng token sáng. Đã lấy theme từ cùng ThemeProvider để root auth đồng bộ với shell. Field controls dùng chung bổ sung trạng thái :autofill/:-webkit-autofill cho input trong nhóm, dùng surface-control/text-primary và field-height đã duyệt; không thêm màu, kích thước hoặc token mới, không tắt autocomplete.
 
 Nghiệm thu runtime local bằng dữ liệu minh họa, ép pseudo-state :autofill bằng DevTools (không dùng thông tin đăng nhập thật): sáng scheme light, chữ rgb(30,41,59), nền rgb(255,255,255); tối scheme dark, chữ rgb(248,245,235), nền rgb(48,48,41). Nền phủ đúng token hiện tại, focus vẫn ở wrapper, mobile 375px không tràn. Đã khôi phục guest middleware và theme sáng local sau kiểm tra. Ảnh autofill-light-local.png, autofill-dark-local.png, autofill-dark-mobile.png.
+
+## Kết quả triển khai và nghiệm thu production — 23/10/2026
+
+Production đã chạy commit 516cd2a0, gate kết thúc THÀNH CÔNG lúc 16:45:18 (giờ Việt Nam). Đã push main và nhánh admin. Health https://yona.vn/up trả 200; không có migration mới. Các bản triển khai trước trong cùng yêu cầu: 2f83d87e (revamp/route), a5bb89eb (wrapper auth), 516cd2a0 (theme/autofill).
+
+- GET /admin/login trả 200. /admin/sign_in chuyển 301 về /admin/login. /admin/agent_bots?search=a_b chuyển 301 về /admin/agent-bots?search=a_b; /admin/agent-bots khi chưa có phiên chuyển về /admin/login.
+- Form runtime production: viewport 1280px, root 1280px, panel 320px, font Manrope; mobile 375px trang 375px, panel 320px. Submit trống báo riêng “Vui lòng nhập Email.” và “Vui lòng nhập Mật khẩu.”. Chưa đăng nhập bằng tài khoản thật hoặc chạy lại 2FA production.
+- Autofill production: root data-theme light, native color-scheme light. Dùng dữ liệu minh họa và DevTools ép pseudo-state :autofill, xác nhận chữ rgb(30,41,59), nền rgb(255,255,255), inset theo field-height 40px (mobile 44px); không còn khối xám như ảnh người dùng. Ảnh autofill-production-after.png và autofill-production-mobile.png. Đã xóa dữ liệu minh họa, bỏ pseudo-state và khôi phục viewport sau nghiệm thu.
+- Log Viewer ngày 23/10 được đọc qua API: không có Error/Critical sau mốc bắt đầu triển khai 16:29:56; có các Warning queue.job.slow. Không lấy đuôi laravel.log cũ làm bằng chứng duy nhất. Gate báo Zalo connection #4 và #5 chưa kết nối/cần kiểm tra QR; #1 và #2 kết nối. Không can thiệp phiên Zalo trong đợt UI.
+
+### Đo tải lần đầu theo phản ánh người dùng
+
+Đo CDP Network trên trang đăng nhập production trước bản autofill, cache trình duyệt bị tắt khi đo cold và được bật lại sau đo: 37 request hoàn tất, khoảng 997 KB truyền; khoảng thời gian từ request đầu tới loadingFinished cuối là 1.332ms. Warm reload: khoảng 361ms và dữ liệu truyền đo được gần 0 KB. Đây là số đo request trong phiên nghiệm thu, không phải LCP/INP hay số đo API các màn có phiên đăng nhập.
+
+Gói i18n khoảng 245 KB nén (nạp chung cả en/vi), Manrope khoảng 161 KB, favicon khoảng 158 KB, chunk card khoảng 99 KB. Mã entry hiện import Layout tĩnh và import.meta.glob tải từng page khi mở lần đầu. Đây là các nguồn chi phí đã xác nhận; chưa tối ưu bundle hoặc thêm prefetch trong đợt này, chưa kết luận toàn bộ độ trễ của các màn đã đăng nhập đến từ frontend. Các lần curl TTFB biến động; một mẫu có TLS hoàn tất 0,131s và byte đầu 0,824s, nên không dùng một mẫu để quy kết thời gian PHP.
+
+Công việc revamp tổng thể vẫn đang tiến hành. Bằng chứng và bản tóm tắt triển khai được đính kèm vào công việc tương ứng; không đánh dấu đã nghiệm thu toàn bộ luồng admin/2FA.
