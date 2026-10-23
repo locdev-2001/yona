@@ -12,7 +12,7 @@ export default function SuperAdminSettings({ sections }: { sections: { key: stri
     const label = useConsoleLabels();
 
     return (
-        <div>
+        <div className="console-resource-page">
             <PageHeader className="lg:mb-10" title={label('settings_title')} description={label('settings_description')} />
 
             <Card className="gap-0 py-0">

@@ -117,7 +117,7 @@ export default function AppConfig({ config, title, values, definitions, strings 
     );
 
     return (
-        <div>
+        <div className="console-resource-page">
             <PageHeader
                 className="lg:mb-10"
                 title={strings?.title ?? label('settings_title')}

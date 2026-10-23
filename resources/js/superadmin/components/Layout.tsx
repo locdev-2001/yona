@@ -1,12 +1,9 @@
-import { DesignCopyProvider } from '../design-preview/copy';
-import { locales } from '../../i18n/generated';
-import { getLocale } from '../../i18n';
 import { usePage } from '@inertiajs/react';
 import { useCallback, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import { toast } from 'sonner';
 
-import Providers from '@admin/components/Providers';
+import ConsoleProviders from './ConsoleProviders';
 import useThemeConfig from '@admin/configs/themeConfig';
 import { useTheme } from '@admin/components/ThemeProvider';
 import ConsoleHeader from './ConsoleHeader';
@@ -77,8 +74,8 @@ export default function Layout({ children }: { children: ReactNode }) {
     const [sidebarDefaultOpen] = useState(readSidebarOpen);
 
     return (
-        <DesignCopyProvider value={(locales[getLocale()]?.ADMIN_DESIGN ?? {}) as Record<string, string>}><Providers sidebarDefaultOpen={sidebarDefaultOpen}>
+        <ConsoleProviders sidebarDefaultOpen={sidebarDefaultOpen}>
             <ConsoleShell>{children}</ConsoleShell>
-        </Providers></DesignCopyProvider>
+        </ConsoleProviders>
     );
 }

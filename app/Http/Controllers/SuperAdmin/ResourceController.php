@@ -41,6 +41,7 @@ abstract class ResourceController extends Controller
             'columns' => $this->columns($dashboard),
             'rows' => collect($records->items())->map(fn (Model $record) => [
                 'url' => $this->indexRowUrl($record),
+                'recordUrl' => $this->presenter->url($record),
                 'cells' => array_map(
                     fn (string $attribute) => $this->presenter->present($dashboard, $record, $attribute, false),
                     $dashboard->collectionAttributes(),
@@ -98,6 +99,7 @@ abstract class ResourceController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $record = $this->dashboard()->newRecord();
+        $this->validateRecord($request, $record);
         $this->assign($record, $request);
         $record->save();
 
@@ -108,6 +110,7 @@ abstract class ResourceController extends Controller
     public function update(Request $request, int $id): RedirectResponse
     {
         $record = $this->findRecord($id);
+        $this->validateRecord($request, $record);
         $this->assign($record, $request);
         $record->save();
 
@@ -149,6 +152,22 @@ abstract class ResourceController extends Controller
     protected function findRecord(int $id): Model
     {
         return $this->scopedQuery()->findOrFail($id);
+    }
+
+    private function validateRecord(Request $request, Model $record): void
+    {
+        $dashboard = $this->dashboard();
+        $rules = [];
+        $attributes = [];
+        $dictionary = (array) __('admin_layout.attributes');
+
+        foreach ($dashboard->validationRules($record) as $attribute => $constraints) {
+            $key = $dashboard->singularName().'.'.$attribute;
+            $rules[$key] = $constraints;
+            $attributes[$key] = $dashboard->formFieldLabel($attribute) ?? $dictionary[$attribute] ?? Str::headline($attribute);
+        }
+
+        $request->validate($rules, (array) __('admin_layout.validation'), $attributes);
     }
 
     /** Gán tham số form vào bản ghi; controller con đè khi cần xử lý riêng. */

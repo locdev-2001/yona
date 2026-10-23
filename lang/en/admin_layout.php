@@ -251,6 +251,7 @@ return [
     ],
 
     'flash' => [
+        'invalid_credentials' => 'Invalid credentials. Please try again.',
         'created' => 'Record created.',
         'updated' => 'Changes saved.',
         'destroyed' => 'Record deleted.',
@@ -320,5 +321,20 @@ return [
         'used_at' => 'Used at',
         'created_at' => 'Created at',
         'updated_at' => 'Updated at',
+    ],
+    'validation' => [
+        'required' => 'Please enter :attribute.',
+        'required_if' => 'Please enter :attribute when :other is :value.',
+        'string' => ':attribute must be text.',
+        'max' => ':attribute must not exceed :max characters.',
+        'min' => ':attribute must contain at least :min characters.',
+        'email' => 'Please enter a valid email address.',
+        'unique' => 'This :attribute is already in use.',
+        'date' => 'Please enter a valid date and time.',
+        'in' => 'The selected :attribute is invalid.',
+        'integer' => ':attribute must be an integer.',
+        'exists' => 'The selected :attribute does not exist.',
+        'regex' => ':attribute does not match the required format.',
+        'url' => 'Please enter a valid HTTP or HTTPS URL.',
     ],
 ];

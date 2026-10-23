@@ -219,6 +219,7 @@ export default function AuditLogs({ logs, pagination, filters, options }: Props)
                             value: draft.action ?? '',
                             onChange: value => set('action', value),
                             onSubmit: () => visitWithParams(PAGE_URL, draft),
+                            onClear: () => visitWithParams(PAGE_URL, { ...draft, action: '' }),
                         }}
                         filters={
                             <>

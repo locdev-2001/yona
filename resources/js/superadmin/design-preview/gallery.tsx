@@ -1,3 +1,4 @@
+import { AuthScreensDemo } from './auth-screens';
 import { ChartInsightsDemo } from './chart-insights';
 import { FontTrial } from './font-trial';
 import { CohortDemo } from './cohort-demo';
@@ -137,8 +138,9 @@ function SkeletonDemo() {
 }
 
 const catalogue = [
+    {id:'auth-screens',group:'data',title:'Auth screens · Đăng nhập và 2FA',description:'Bố cục sáng/tối đã duyệt, dùng lại Panel và field V1.',families:2,wide:true,content:AuthScreensDemo},
     {id:'chart-insights',group:'data',title:'Chart insights · Thống kê phụ',description:'Mẫu đã duyệt cho tỉ lệ tin ra / tin vào và ngày nhiều tin nhất.',families:1,wide:true,content:ChartInsightsDemo},
-    { id: 'cohort', group: 'data', title: 'Cohort · Ma trận giữ chân', description: 'Bản đề xuất: phần trăm, thanh tiến độ và cột tuần đăng ký được ghim. Chưa áp dụng vào admin.', families: 1, wide: true, content: CohortDemo },
+    { id: 'cohort', group: 'data', title: 'Cohort · Ma trận giữ chân', description: 'Phần trăm, thanh tiến độ và cột tuần đăng ký được ghim; dùng chung với màn Tổng quan.', families: 1, wide: true, content: CohortDemo },
     {
         id: 'actions',
         group: 'actions',
@@ -409,7 +411,11 @@ const catalogue = [
 
 export default function ComponentGallery({ theme, initialQuery = '' }: { theme: PreviewTheme; initialQuery?: string }) {
     const [group, setGroup] = useState('all');
-    const [query, setQuery] = useState(initialQuery);
+    const [query, setQuery] = useState(() => {
+        if (initialQuery || typeof window === 'undefined') return initialQuery;
+        const reviewId = new URLSearchParams(window.location.search).get('review');
+        return catalogue.find(component => component.id === reviewId)?.title ?? '';
+    });
     const matching = catalogue.filter(
         (component) =>
             (group === 'all' || component.group === group) &&

@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Support\SuperAdmin\Dashboard;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Validation\Rule;
 
 class UserDashboard extends Dashboard
 {
@@ -59,6 +60,18 @@ class UserDashboard extends Dashboard
     public function formAttributes(): array
     {
         return ['name', 'display_name', 'email', 'password', 'confirmed_at', 'type'];
+    }
+
+    public function validationRules(Model $record): array
+    {
+        return [
+            'name' => ['required', 'string', 'max:255'],
+            'display_name' => ['nullable', 'string', 'max:255'],
+            'email' => ['nullable', 'email', 'max:255', Rule::unique('users', 'email')->ignore($record->getKey())],
+            'password' => ['nullable', ...array_values(array_filter(User::passwordRules(), fn ($rule) => $rule !== 'required'))],
+            'confirmed_at' => ['nullable', 'date'],
+            'type' => ['nullable', Rule::in($this->selectOptions('type'))],
+        ];
     }
 
     public function searchableAttributes(): array

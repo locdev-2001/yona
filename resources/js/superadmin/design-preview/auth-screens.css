@@ -1,0 +1,128 @@
+.auth-preview-controls {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: var(--preview-control-gap);
+}
+.console-auth-stage {
+    position: relative;
+    isolation: isolate;
+    display: grid;
+    place-items: center;
+    min-width: 0;
+    min-height: calc(var(--preview-chart-height) * 3);
+    padding: var(--preview-widget-padding);
+    overflow: hidden;
+    border-radius: var(--preview-panel-radius);
+    background: var(--preview-surface-canvas);
+    color: var(--preview-text-primary);
+}
+.auth-circuit {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    pointer-events: none;
+}
+.auth-circuit-paths,
+.auth-circuit-pins {
+    stroke: var(--preview-border-divider);
+    stroke-width: 1;
+}
+.auth-circuit-pins {
+    opacity: 0.6;
+}
+.auth-circuit-node {
+    rx: var(--preview-control-radius);
+    fill: var(--preview-surface-panel);
+    stroke: var(--preview-border-divider);
+}
+.auth-circuit-dot {
+    fill: var(--preview-text-secondary);
+    opacity: 0.4;
+}
+.console-auth-stage .console-auth-page--embedded {
+    width: 100%;
+    background: transparent;
+}
+.console-auth-stage .console-auth-panel[data-slot='card'] {
+    width: 100%;
+    max-width: var(--preview-table-customize-width);
+    gap: var(--preview-widget-content-gap);
+    border: 1px solid var(--preview-border-divider);
+    border-radius: var(--preview-panel-radius);
+    box-shadow: none;
+}
+.console-auth-stage .console-auth-panel [data-slot='card-header'] {
+    gap: var(--preview-widget-content-gap);
+    text-align: center;
+}
+.console-auth-stage .console-auth-panel [data-slot='card-title'] {
+    font-size: var(--preview-text-section-title);
+}
+.console-auth-stage .console-auth-panel [data-slot='card-description'] {
+    font-size: var(--preview-text-caption);
+}
+.console-auth-stage [data-slot='field-group'] {
+    gap: var(--preview-control-padding);
+}
+.auth-brand-mark {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--preview-control-padding);
+}
+.auth-brand-mark img {
+    width: var(--preview-navigation-account-avatar-size);
+    height: var(--preview-navigation-account-avatar-size);
+    padding: var(--preview-detail-gap);
+    border: 1px solid var(--preview-border-divider);
+    border-radius: var(--preview-control-radius);
+    background: var(--preview-surface-control);
+    object-fit: contain;
+}
+.auth-brand-mark > span {
+    width: var(--preview-avatar-size);
+    height: 1px;
+    background: var(--preview-border-divider);
+}
+.auth-qr-placeholder {
+    display: grid;
+    justify-items: center;
+    gap: var(--preview-control-gap);
+    padding: var(--preview-widget-padding);
+    border: 1px solid var(--preview-border-divider);
+    border-radius: var(--preview-control-radius);
+    color: var(--preview-text-secondary);
+    font-size: var(--preview-text-caption);
+}
+.console-auth-stage .preview-button--primary {
+    background: var(--preview-action-primary);
+    color: var(--preview-text-on-action);
+}
+@media (max-width: 760px) {
+    .console-auth-stage {
+        padding: var(--preview-widget-padding-mobile);
+        min-height: calc(var(--preview-chart-height) * 2);
+    }
+    .auth-circuit {
+        opacity: 0.4;
+    }
+    .console-auth-stage .console-auth-panel [data-slot='card-header'],
+    .console-auth-stage .console-auth-panel [data-slot='card-content'] {
+        padding-inline: var(--preview-widget-padding-mobile);
+    }
+}
+.console-auth-stage input::placeholder,
+.console-auth-stage [data-slot='input-group-addon'] {
+    color: var(--preview-text-secondary);
+}
+.console-auth-stage--screen {
+    width: 100%;
+    min-height: 100dvh;
+    border-radius: 0;
+}
+.auth-brand-mark a {
+    display: inline-flex;
+}

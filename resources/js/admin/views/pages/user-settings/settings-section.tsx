@@ -10,7 +10,7 @@ type SettingsSectionProps = {
 // Một khối cài đặt: tiêu đề và mô tả bên trái, nội dung chiếm hai phần ba bên phải.
 const SettingsSection = ({ title, description, children }: SettingsSectionProps) => {
   return (
-    <div className='grid grid-cols-1 gap-10 lg:grid-cols-3'>
+    <div className='console-settings-section'>
       <div className='flex flex-col space-y-1'>
         <h3 className='text-base font-semibold'>{title}</h3>
         {description ? <p className='text-muted-foreground text-sm'>{description}</p> : null}

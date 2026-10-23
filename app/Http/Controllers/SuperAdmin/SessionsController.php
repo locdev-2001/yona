@@ -31,6 +31,9 @@ class SessionsController extends Controller
         $credentials = $request->validate([
             'super_admin.email' => 'required|string',
             'super_admin.password' => 'required|string',
+        ], (array) __('admin_layout.validation'), [
+            'super_admin.email' => __('admin_layout.labels.login_email'),
+            'super_admin.password' => __('admin_layout.labels.login_password'),
         ])['super_admin'];
 
         $throttleKey = $this->throttleKey($credentials['email'], $request);
@@ -47,7 +50,7 @@ class SessionsController extends Controller
         if ($superAdmin === null || ! Hash::check($credentials['password'], $superAdmin->password)) {
             RateLimiter::hit($throttleKey);
 
-            return redirect(SuperAdminArea::url('sign_in'))->with('error', 'Invalid credentials. Please try again.');
+            return redirect(SuperAdminArea::url('sign_in'))->with('error', __('admin_layout.flash.invalid_credentials'));
         }
 
         RateLimiter::clear($throttleKey);

@@ -253,6 +253,7 @@ return [
     ],
 
     'flash' => [
+        'invalid_credentials' => 'Email hoặc mật khẩu không đúng. Vui lòng thử lại.',
         'created' => 'Đã tạo bản ghi.',
         'updated' => 'Đã lưu thay đổi.',
         'destroyed' => 'Đã xoá bản ghi.',
@@ -322,5 +323,20 @@ return [
         'used_at' => 'Dùng lúc',
         'created_at' => 'Tạo lúc',
         'updated_at' => 'Cập nhật lúc',
+    ],
+    'validation' => [
+        'required' => 'Vui lòng nhập :attribute.',
+        'required_if' => 'Vui lòng nhập :attribute khi :other là :value.',
+        'string' => ':attribute phải là văn bản.',
+        'max' => ':attribute không được vượt quá :max ký tự.',
+        'min' => ':attribute phải có ít nhất :min ký tự.',
+        'email' => 'Vui lòng nhập địa chỉ email hợp lệ.',
+        'unique' => ':attribute này đã được sử dụng.',
+        'date' => 'Vui lòng nhập ngày giờ hợp lệ.',
+        'in' => 'Giá trị :attribute không hợp lệ.',
+        'integer' => ':attribute phải là số nguyên.',
+        'exists' => ':attribute đã chọn không tồn tại.',
+        'regex' => ':attribute không đúng định dạng yêu cầu.',
+        'url' => 'Vui lòng nhập URL HTTP hoặc HTTPS hợp lệ.',
     ],
 ];

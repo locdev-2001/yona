@@ -13,6 +13,7 @@ export type SuperAdminColumn = {
 };
 
 export type SuperAdminRow = {
+    recordUrl?: string | null;
     url: string | null;
     destroy_url?: string | null;
     cells: SuperAdminField[];

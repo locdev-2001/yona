@@ -2,7 +2,7 @@
     --preview-field-height: var(--preview-control-height);
 }
 
-:where(.admin-preview, .catalogue-overlay, .catalogue-sheet)
+:where(:root[data-admin-preview], .catalogue-overlay, .catalogue-sheet)
     :is(
         [data-slot='input'],
         [data-slot='textarea'],
@@ -26,40 +26,40 @@
     box-shadow: inset 0 0 0 1px var(--preview-border-divider);
     outline: 0;
 }
-:where(.admin-preview, .catalogue-overlay, .catalogue-sheet) [data-slot='input'] {
+:where(:root[data-admin-preview], .catalogue-overlay, .catalogue-sheet) [data-slot='input'] {
     padding: 0 var(--preview-control-padding);
 }
-:where(.admin-preview, .catalogue-overlay, .catalogue-sheet) [data-slot='textarea'] {
+:where(:root[data-admin-preview], .catalogue-overlay, .catalogue-sheet) [data-slot='textarea'] {
     height: auto !important;
     min-height: var(--preview-textarea-height);
     padding: var(--preview-control-padding);
 }
-:is(.admin-preview, .catalogue-overlay, .catalogue-sheet)
+:is(:root[data-admin-preview], .catalogue-overlay, .catalogue-sheet)
     :is([data-slot='input'], [data-slot='textarea'], [data-slot='select-trigger']):focus-visible,
-:where(.admin-preview, .catalogue-overlay, .catalogue-sheet)
+:where(:root[data-admin-preview], .catalogue-overlay, .catalogue-sheet)
     :is([data-slot='input-group'], .preview-search):focus-within {
     outline: 0;
     outline-offset: 0;
     box-shadow: 0 0 0 2px var(--preview-action-primary);
 }
-:is(.admin-preview, .catalogue-overlay, .catalogue-sheet)
+:is(:root[data-admin-preview], .catalogue-overlay, .catalogue-sheet)
     :is([data-slot='input'], [data-slot='textarea'], [data-slot='select-trigger'])[aria-invalid='true'],
-:where(.admin-preview, .catalogue-overlay, .catalogue-sheet) [data-slot='input-group']:has([aria-invalid='true']) {
+:where(:root[data-admin-preview], .catalogue-overlay, .catalogue-sheet) [data-slot='input-group']:has([aria-invalid='true']) {
     box-shadow: inset 0 0 0 1px var(--preview-status-danger-foreground);
 }
-:is(.admin-preview, .catalogue-overlay, .catalogue-sheet)
+:is(:root[data-admin-preview], .catalogue-overlay, .catalogue-sheet)
     :is([data-slot='input'], [data-slot='textarea'], [data-slot='select-trigger'])[aria-invalid='true']:focus-visible,
-:where(.admin-preview, .catalogue-overlay, .catalogue-sheet)
+:where(:root[data-admin-preview], .catalogue-overlay, .catalogue-sheet)
     [data-slot='input-group']:has([aria-invalid='true']):focus-within {
     box-shadow: 0 0 0 2px var(--preview-status-danger-foreground);
 }
-:where(.admin-preview, .catalogue-overlay, .catalogue-sheet) [data-slot='input-group'] {
+:where(:root[data-admin-preview], .catalogue-overlay, .catalogue-sheet) [data-slot='input-group'] {
     display: flex;
     align-items: center;
     gap: 0;
     padding: 0;
 }
-:where(.admin-preview, .catalogue-overlay, .catalogue-sheet)
+:where(:root[data-admin-preview], .catalogue-overlay, .catalogue-sheet)
     [data-slot='input-group']
     :is([data-slot='input-group-control'], [data-slot='command-input']) {
     box-sizing: border-box;
@@ -79,12 +79,12 @@
     box-shadow: none;
     outline: 0;
 }
-:where(.admin-preview, .catalogue-overlay, .catalogue-sheet) [data-slot='input-group'] input:focus-visible {
+:where(:root[data-admin-preview], .catalogue-overlay, .catalogue-sheet) [data-slot='input-group'] input:focus-visible {
     box-shadow: none;
     outline: 0;
     outline-offset: 0;
 }
-:where(.admin-preview, .catalogue-overlay, .catalogue-sheet) [data-slot='input-group-addon'] {
+:where(:root[data-admin-preview], .catalogue-overlay, .catalogue-sheet) [data-slot='input-group-addon'] {
     height: 100%;
     padding: 0 !important;
     margin: 0;
@@ -92,21 +92,21 @@
     background: transparent;
     border: 0;
 }
-:where(.admin-preview, .catalogue-overlay, .catalogue-sheet)
+:where(:root[data-admin-preview], .catalogue-overlay, .catalogue-sheet)
     [data-slot='input-group-addon'][data-align='inline-start'] {
     padding-left: var(--preview-control-padding) !important;
 }
-:where(.admin-preview, .catalogue-overlay, .catalogue-sheet)
+:where(:root[data-admin-preview], .catalogue-overlay, .catalogue-sheet)
     [data-slot='input-group']:has([data-align='inline-start'])
     [data-slot='input-group-control'] {
     padding-left: var(--preview-control-gap);
 }
-:where(.admin-preview, .catalogue-overlay, .catalogue-sheet) [data-slot='input-group-addon'] > .admin-icon {
+:where(:root[data-admin-preview], .catalogue-overlay, .catalogue-sheet) [data-slot='input-group-addon'] > .admin-icon {
     width: var(--preview-icon-control);
     height: var(--preview-icon-control);
     flex-shrink: 0;
 }
-:where(.admin-preview, .catalogue-overlay, .catalogue-sheet) [data-slot='input-group-addon'] button {
+:where(:root[data-admin-preview], .catalogue-overlay, .catalogue-sheet) [data-slot='input-group-addon'] button {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -122,17 +122,17 @@
     color: var(--preview-text-secondary);
     box-shadow: none;
 }
-:where(.admin-preview, .catalogue-overlay, .catalogue-sheet) [data-slot='input-group-addon'] button:focus-visible {
+:where(:root[data-admin-preview], .catalogue-overlay, .catalogue-sheet) [data-slot='input-group-addon'] button:focus-visible {
     outline: 2px solid var(--preview-action-primary);
     outline-offset: -4px;
     box-shadow: none;
 }
-:where(.admin-preview, .catalogue-overlay, .catalogue-sheet) .preview-search {
+:where(:root[data-admin-preview], .catalogue-overlay, .catalogue-sheet) .preview-search {
     width: var(--preview-search-width);
     padding: 0 var(--preview-control-padding);
     gap: var(--preview-control-gap);
 }
-:where(.admin-preview, .catalogue-overlay, .catalogue-sheet) .preview-search > input {
+:where(:root[data-admin-preview], .catalogue-overlay, .catalogue-sheet) .preview-search > input {
     height: 100%;
     min-width: 0;
     flex: 1;
@@ -143,7 +143,7 @@
     box-shadow: none;
     outline: 0;
 }
-:where(.admin-preview, .catalogue-overlay, .catalogue-sheet) .preview-search > input:focus-visible {
+:where(:root[data-admin-preview], .catalogue-overlay, .catalogue-sheet) .preview-search > input:focus-visible {
     box-shadow: none;
     outline: 0;
 }
@@ -168,12 +168,12 @@
     .catalogue-table-toolbar > .preview-search {
         width: 100%;
     }
-    :where(.admin-preview, .catalogue-overlay, .catalogue-sheet) .global-search {
+    :where(:root[data-admin-preview], .catalogue-overlay, .catalogue-sheet) .global-search {
         display: none;
     }
 }
 
-:is(.admin-preview, .catalogue-overlay, .catalogue-sheet) [data-slot='select-trigger'] {
+:is(:root[data-admin-preview], .catalogue-overlay, .catalogue-sheet) [data-slot='select-trigger'] {
     height: var(--preview-field-height);
     padding: 0 var(--preview-control-padding);
     border: 0;
@@ -181,13 +181,13 @@
     background: var(--preview-surface-control);
     box-shadow: inset 0 0 0 1px var(--preview-border-divider);
 }
-:is(.admin-preview, .catalogue-overlay, .catalogue-sheet) [data-slot='select-trigger']:focus-visible {
+:is(:root[data-admin-preview], .catalogue-overlay, .catalogue-sheet) [data-slot='select-trigger']:focus-visible {
     outline: 0;
     outline-offset: 0;
     box-shadow: 0 0 0 2px var(--preview-action-primary);
 }
 
-:is(.admin-preview, .catalogue-overlay, .catalogue-sheet) [data-slot='select-trigger'] {
+:is(:root[data-admin-preview], .catalogue-overlay, .catalogue-sheet) [data-slot='select-trigger'] {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -197,13 +197,13 @@
     color: var(--preview-text-primary);
     font-weight: 400;
 }
-:is(.admin-preview, .catalogue-overlay, .catalogue-sheet) [data-slot='select-value'] {
+:is(:root[data-admin-preview], .catalogue-overlay, .catalogue-sheet) [data-slot='select-value'] {
     display: flex;
     align-items: center;
     min-width: 0;
     line-height: var(--preview-body-line-height);
 }
-:is(.admin-preview, .catalogue-overlay, .catalogue-sheet) [data-slot='select-trigger'] > .admin-icon {
+:is(:root[data-admin-preview], .catalogue-overlay, .catalogue-sheet) [data-slot='select-trigger'] > .admin-icon {
     width: var(--preview-icon-control);
     height: var(--preview-icon-control);
     color: var(--preview-text-secondary);

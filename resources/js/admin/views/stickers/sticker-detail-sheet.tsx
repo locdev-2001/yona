@@ -25,6 +25,7 @@ import { hasFailedReedit } from 'dashboard/settings/customStickers/types'
 import type { LibrarySticker, LibraryStickerChanges } from 'dashboard/settings/customStickers/types'
 
 import { t } from '../../../i18n'
+import '../../../superadmin/design-preview/drawer.css'
 import StickerMetaFields, { changesFromDraft, draftFromSticker, isDraftChanged } from './sticker-meta-fields'
 import type { StickerMetaDraft } from './sticker-meta-fields'
 import { isAnimatedSticker } from './use-sticker-library'
@@ -128,7 +129,7 @@ function StickerDetail({
         <SheetDescription>{t('STICKER_LIBRARY.DETAIL_POSITION', { index: index + 1, total })}</SheetDescription>
       </SheetHeader>
 
-      <div className='flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto p-4'>
+      <div className='preview-drawer-body'>
         <div className='flex items-center gap-4'>
           <div className='bg-muted flex size-28 shrink-0 items-center justify-center overflow-hidden rounded-xl border'>
             {source ? <img src={source} alt={sticker.label ?? ''} className='size-24 object-contain' /> : null}
@@ -210,7 +211,7 @@ function StickerDetail({
         </div>
       </div>
 
-      <SheetFooter className='flex-row justify-end border-t'>
+      <SheetFooter className='preview-drawer-footer flex-row justify-end'>
         <Button variant='outline' onClick={cancel}>
           {t('STICKER_LIBRARY.CANCEL')}
         </Button>
@@ -238,7 +239,7 @@ const StickerDetailSheet = ({ sticker, revision, onRequestClose, ...props }: Sti
         if (!open) onRequestClose()
       }}
     >
-      <SheetContent className='gap-0 sm:max-w-md'>
+      <SheetContent className='catalogue-sheet preview-drawer gap-0' closeLabel={t('STICKER_LIBRARY.CLOSE')}>
         {sticker ? (
           <StickerDetail
             key={`${sticker.id}:${revision}`}

@@ -1,5 +1,6 @@
+import ConsoleAuthLayout from '../components/ConsoleAuthLayout';
 import { useEffect, useState } from 'react';
-import type { FormEvent } from 'react';
+import type { FormEvent, ReactNode } from 'react';
 import { Head, router, usePage } from '@inertiajs/react';
 import { ChevronRightIcon, ClipboardIcon, CopyIcon, DownloadIcon, TriangleAlertIcon } from '@admin/components/icons';
 import QRCode from 'qrcode';
@@ -110,7 +111,7 @@ export default function SuperAdminMfaSetup() {
                             </AlertDescription>
                         </Alert>
 
-                        <div className="grid grid-cols-2 gap-3 rounded-lg border p-4 sm:grid-cols-5">
+                        <div className="grid grid-cols-2 gap-3 rounded-lg border p-4">
                             {backupCodes.map((code, index) => (
                                 <span key={`${code}-${index}`} className="text-center font-mono text-sm">
                                     {code}
@@ -266,4 +267,4 @@ export default function SuperAdminMfaSetup() {
     );
 }
 
-SuperAdminMfaSetup.layout = null;
+SuperAdminMfaSetup.layout = (page: ReactNode) => <ConsoleAuthLayout>{page}</ConsoleAuthLayout>;

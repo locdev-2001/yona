@@ -64,3 +64,49 @@
     --chart-4: var(--preview-chart-email);
     --chart-5: var(--preview-chart-peak);
 }
+:root[data-admin-preview] {
+    --background: var(--preview-surface-canvas);
+    --foreground: var(--preview-text-primary);
+    --card: var(--preview-surface-panel);
+    --card-foreground: var(--preview-text-primary);
+    --popover: var(--preview-surface-control);
+    --popover-foreground: var(--preview-text-primary);
+    --primary: var(--preview-action-primary);
+    --primary-foreground: var(--preview-text-on-action);
+    --secondary: var(--preview-surface-control);
+    --secondary-foreground: var(--preview-text-primary);
+    --muted: var(--preview-surface-control);
+    --muted-foreground: var(--preview-text-secondary);
+    --accent: var(--preview-surface-control);
+    --accent-foreground: var(--preview-text-primary);
+    --border: var(--preview-border-divider);
+    --input: var(--preview-border-divider);
+    --ring: var(--preview-action-primary);
+    --destructive: var(--preview-status-danger-foreground);
+    --radius: var(--preview-control-radius);
+}
+:is(.admin-console-shell, .admin-console-auth) [data-slot='card'] {
+    border-radius: var(--preview-panel-radius);
+    background: var(--preview-surface-panel);
+    border: 0;
+    box-shadow: none;
+}
+:root[data-admin-preview] [data-slot='button']:not(.preview-button) {
+    min-height: var(--preview-control-height);
+    border-radius: var(--preview-control-radius);
+    font-size: var(--preview-text-control);
+}
+@media (max-width: 760px) {
+    :root[data-admin-preview] [data-slot='button']:not(.preview-button) {
+        min-height: var(--preview-control-height-touch);
+    }
+}
+
+:root[data-admin-preview] :is([data-slot='dialog-content'], [data-slot='sheet-content']) {
+    border-radius: var(--preview-panel-radius);
+    background: var(--preview-surface-panel);
+    color: var(--preview-text-primary);
+}
+:root[data-admin-preview] [data-slot='dialog-header'] {
+    padding-right: var(--preview-control-height);
+}

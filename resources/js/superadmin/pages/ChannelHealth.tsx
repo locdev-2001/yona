@@ -148,6 +148,7 @@ export default function ChannelHealth({ stats, items, filters, options }: Props)
                             value: search,
                             onChange: setSearch,
                             onSubmit: () => apply({ search }),
+                            onClear: () => apply({ search: '' }),
                         }}
                         filters={
                             <>

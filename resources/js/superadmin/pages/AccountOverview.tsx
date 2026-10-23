@@ -43,7 +43,7 @@ import PageHeader from '@admin/views/pages/page-header';
 import AccountStickerLibrary from '@admin/views/stickers/AccountStickerLibrary';
 
 import { t } from '../../i18n';
-import { STATUS_BADGE_STYLES } from '../components/FieldValue';
+import { StatusBadge as DesignStatusBadge } from '../design-preview/components';
 import { useConsoleDictionary, useConsoleLabels } from '../labels';
 import type { ChannelHealthItem } from './ChannelHealth';
 import { formatNumber, formatRelative } from './operationsFormat';
@@ -452,9 +452,9 @@ function UsersTable({ users }: { users: AccountUserRow[] }) {
                                         <span className="text-muted-foreground break-all">{user.email}</span>
                                     </div>
                                     {user.confirmed ? null : (
-                                        <Badge className={cn('h-auto rounded-sm border-none', STATUS_BADGE_STYLES.pending)}>
+                                        <DesignStatusBadge tone="warning">
                                             {label('UNCONFIRMED')}
-                                        </Badge>
+                                        </DesignStatusBadge>
                                     )}
                                 </div>
                             </TableCell>
@@ -506,17 +506,12 @@ function InboxesTable({ inboxes }: { inboxes: ChannelHealthItem[] }) {
                             </TableCell>
                             <TableCell>
                                 {inbox.healthy ? (
-                                    <Badge className={cn('h-auto rounded-sm border-none', STATUS_BADGE_STYLES.active)}>{label('HEALTHY')}</Badge>
+                                    <DesignStatusBadge tone="positive">{label('HEALTHY')}</DesignStatusBadge>
                                 ) : (
                                     <div className="flex flex-col gap-1">
-                                        <Badge
-                                            className={cn(
-                                                'h-auto rounded-sm border-none',
-                                                inbox.severity === 'warning' ? STATUS_BADGE_STYLES.pending : STATUS_BADGE_STYLES.suspended,
-                                            )}
-                                        >
+                                        <DesignStatusBadge tone={inbox.severity === 'warning' ? 'warning' : 'danger'}>
                                             {inbox.problemLabel}
-                                        </Badge>
+                                        </DesignStatusBadge>
                                         {problemDetail(inbox.detail) ? (
                                             <span className="text-muted-foreground text-xs break-words">{problemDetail(inbox.detail)}</span>
                                         ) : null}
@@ -561,21 +556,16 @@ export default function AccountOverview(props: AccountOverviewProps) {
 
     return (
         <>
-            <PageHeader title={label('PAGE.TITLE')} description={label('PAGE.DESCRIPTION', { name: account.name })} />
-            <div className="relative grid grid-cols-1 gap-6 lg:grid-cols-[350px_minmax(0,1fr)]">
+            <PageHeader className="console-overview-heading" title={label('PAGE.TITLE')} description={label('PAGE.DESCRIPTION', { name: account.name })} />
+            <div className="console-record-detail-layout console-record-detail-layout--split">
                 <RecordViewLeftPanel
                     titleAs="h2"
                     title={account.name}
                     avatarSeed={avatarSeed('account', account.id)}
                     badge={
-                        <Badge
-                            className={cn(
-                                'h-auto rounded-sm border-none',
-                                suspended ? STATUS_BADGE_STYLES.suspended : STATUS_BADGE_STYLES.active,
-                            )}
-                        >
+                        <DesignStatusBadge tone={suspended ? 'danger' : 'positive'}>
                             {label(`STATUS.${account.status}`)}
-                        </Badge>
+                        </DesignStatusBadge>
                     }
                     detailsTitle={consoleLabel('details')}
                     details={[

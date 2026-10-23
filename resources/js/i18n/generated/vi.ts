@@ -421,7 +421,53 @@ const messages: Record<string, unknown> = {
         "notification_unread_item": "Đánh dấu thông báo của {0} chưa đọc",
         "notification_read_item": "Đánh dấu thông báo của {0} đã đọc",
         "notification_restore_item": "Khôi phục thông báo của {0}",
-        "notification_archive_item": "Lưu trữ thông báo của {0}"
+        "notification_archive_item": "Lưu trữ thông báo của {0}",
+        "datatable_column_clear": "Xóa tìm cột",
+        "datatable_column_placeholder": "Tìm thuộc tính…",
+        "datatable_column_reorder": "Đổi vị trí cột {0}",
+        "datatable_column_search": "Tìm cột",
+        "datatable_column_toggle": "Hiển thị cột {0}",
+        "datatable_columns_count": "{0} thuộc tính",
+        "datatable_customize": "Tùy chỉnh cột",
+        "datatable_customize_close": "Đóng tùy chỉnh cột",
+        "datatable_deselect": "Bỏ chọn các dòng",
+        "datatable_hide_all": "Ẩn các cột tùy chọn",
+        "datatable_list": "Danh sách",
+        "datatable_next": "Trang sau của bảng",
+        "datatable_no_columns": "Không tìm thấy thuộc tính.",
+        "datatable_page_size": "Số dòng mỗi trang",
+        "datatable_page_summary": "Trang {0}/{1}",
+        "datatable_pagination": "Phân trang danh sách người dùng",
+        "datatable_prev": "Trang trước của bảng",
+        "datatable_range": "Hiển thị {0}–{1} trong {2}",
+        "datatable_reorder_hint": "Kéo để đổi vị trí. Với bàn phím: Space, phím mũi tên, Space.",
+        "datatable_required": "Cột cố định",
+        "datatable_restore": "Khôi phục mặc định",
+        "datatable_scroll": "Bảng dữ liệu, cuộn để xem thêm cột",
+        "datatable_selected": "Đã chọn {0} dòng",
+        "datatable_show_all": "Hiện tất cả cột",
+        "datatable_shown": "Thuộc tính hiển thị",
+        "datatable_sort": "Sắp xếp theo {0}"
+    },
+    "ADMIN_INSTANCE_STATUS": {
+        "METRICS": {
+            "VERSION": "Phiên bản Yona",
+            "POSTGRES": "Kết nối Postgres",
+            "MIGRATIONS": "Migration cơ sở dữ liệu",
+            "REDIS": "Kết nối Redis",
+            "REDIS_VERSION": "Phiên bản Redis",
+            "REDIS_CLIENTS": "Số kết nối Redis",
+            "REDIS_MEMORY": "Bộ nhớ Redis đang dùng",
+            "REDIS_PEAK": "Bộ nhớ Redis cao nhất",
+            "REDIS_MAX_MEMORY": "Redis maxmemory",
+            "REDIS_POLICY": "Redis maxmemory policy"
+        },
+        "STATUS": {
+            "true": "Hoạt động",
+            "false": "Mất kết nối",
+            "completed": "Đã chạy hết",
+            "pending": "Còn migration chưa chạy"
+        }
     },
     "ADMIN_LAYOUT": {
         "labels": {
@@ -761,6 +807,7 @@ const messages: Record<string, unknown> = {
             }
         },
         "flash": {
+            "invalid_credentials": "Email hoặc mật khẩu không đúng. Vui lòng thử lại.",
             "created": "Đã tạo bản ghi.",
             "updated": "Đã lưu thay đổi.",
             "destroyed": "Đã xoá bản ghi.",
@@ -828,6 +875,21 @@ const messages: Record<string, unknown> = {
             "used_at": "Dùng lúc",
             "created_at": "Tạo lúc",
             "updated_at": "Cập nhật lúc"
+        },
+        "validation": {
+            "required": "Vui lòng nhập :attribute.",
+            "required_if": "Vui lòng nhập :attribute khi :other là :value.",
+            "string": ":attribute phải là văn bản.",
+            "max": ":attribute không được vượt quá :max ký tự.",
+            "min": ":attribute phải có ít nhất :min ký tự.",
+            "email": "Vui lòng nhập địa chỉ email hợp lệ.",
+            "unique": ":attribute này đã được sử dụng.",
+            "date": "Vui lòng nhập ngày giờ hợp lệ.",
+            "in": "Giá trị :attribute không hợp lệ.",
+            "integer": ":attribute phải là số nguyên.",
+            "exists": ":attribute đã chọn không tồn tại.",
+            "regex": ":attribute không đúng định dạng yêu cầu.",
+            "url": "Vui lòng nhập URL HTTP hoặc HTTPS hợp lệ."
         }
     },
     "ADMIN_OPERATIONS": {

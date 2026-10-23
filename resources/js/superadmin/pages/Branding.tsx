@@ -43,13 +43,6 @@ type BrandingProps = {
 
 const BRANDING_URL = '/admin/branding';
 
-const PREVIEW_CLASSES: Record<BrandAssetSlot, { frame: string; image: string }> = {
-    logo: { frame: 'bg-white', image: 'max-h-12 max-w-full' },
-    logo_dark: { frame: 'bg-slate-900', image: 'max-h-12 max-w-full' },
-    logo_thumbnail: { frame: 'bg-white', image: 'size-14 rounded-md object-contain' },
-    favicon: { frame: 'bg-white', image: 'size-8 object-contain' },
-};
-
 export default function Branding({ assets, strings }: BrandingProps) {
     const label = useConsoleLabels();
     const errors = usePage<{ errors?: Record<string, string> }>().props.errors ?? {};
@@ -83,14 +76,13 @@ export default function Branding({ assets, strings }: BrandingProps) {
     const assetToReset = assets.find(asset => asset.slot === resetSlot);
 
     return (
-        <div>
+        <div className="console-resource-page">
             <PageHeader className="lg:mb-10" title={strings.title} description={strings.description} />
 
             <Card className="gap-0 py-0">
                 <CardContent className="px-0">
                     <ul className="divide-y">
                         {assets.map(asset => {
-                            const preview = PREVIEW_CLASSES[asset.slot];
                             const isUploading = uploadingSlot === asset.slot;
                             const error = failedSlot === asset.slot ? errors.file : undefined;
                             const inputId = `brand-asset-${asset.slot}`;
@@ -102,12 +94,12 @@ export default function Branding({ assets, strings }: BrandingProps) {
                                     className="flex flex-col gap-4 px-6 py-5 sm:flex-row sm:items-center"
                                 >
                                     <div
-                                        className={`flex h-20 w-full shrink-0 items-center justify-center rounded-md border px-4 sm:w-48 ${preview.frame}`}
+                                        className="console-branding-preview" data-asset={asset.slot}
                                     >
                                         <img
                                             src={asset.url}
                                             alt={strings.preview_alt.replace('{name}', asset.title)}
-                                            className={preview.image}
+                                            className="console-branding-image"
                                         />
                                     </div>
 

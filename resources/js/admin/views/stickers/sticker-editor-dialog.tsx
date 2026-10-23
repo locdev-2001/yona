@@ -666,7 +666,7 @@ const StickerEditorDialog = ({ session, imageSize, limits, onUpload, onUpdateExi
           if (!open) requestClose()
         }}
       >
-        <DialogContent className='max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-3xl'>
+        <DialogContent closeLabel={t('STICKER_LIBRARY.CLOSE')} className='max-h-[calc(100dvh-2rem)] overflow-y-auto sm:max-w-3xl'>
           <DialogHeader>
             <DialogTitle>{title}</DialogTitle>
             <DialogDescription className={cn(!item && 'sr-only')}>{item?.file.name ?? title}</DialogDescription>

@@ -651,3 +651,13 @@
 .data-table-column-view > :is(.column-view-title, .preview-search, .column-view-subtitle, .column-view-footer) {
     flex-shrink: 0;
 }
+.data-table-heading-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--preview-control-gap);
+    min-width: 0;
+}
+.admin-preview .preview-data-table :is([data-slot='table-head'], [data-slot='table-cell'])[data-pinned] {
+    background: var(--preview-surface-panel);
+}

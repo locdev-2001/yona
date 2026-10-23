@@ -6,7 +6,8 @@ import { ChevronLeftIcon, ChevronRightIcon } from '@admin/components/icons'
 
 // Component Imports
 import { Link } from '@inertiajs/react'
-import { Button, buttonVariants } from '@admin/components/ui/button'
+import { PreviewButton as Button } from '../../../../superadmin/design-preview/components'
+import { buttonVariants } from '@admin/components/ui/button'
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem } from '@admin/components/ui/pagination'
 
 // Hook Imports
@@ -35,7 +36,7 @@ export function ListPagination({ summary, current, last, hasMore, hrefFor, label
   })
 
   return (
-    <div className='flex items-center justify-between gap-3 px-6 py-4 max-sm:flex-col md:max-lg:flex-col'>
+    <div className='data-table-pagination console-resource-pagination'>
       <p className='text-muted-foreground text-sm whitespace-nowrap' aria-live='polite'>
         {summary}
       </p>
@@ -48,7 +49,7 @@ export function ListPagination({ summary, current, last, hasMore, hrefFor, label
                 <Link
                   href={hrefFor(current - 1)}
                   preserveScroll
-                  className={buttonVariants({ variant: 'ghost' })}
+                  className={buttonVariants({ variant: 'ghost', className: 'preview-button preview-button--ghost' })}
                   aria-label={labels.previous}
                 >
                   <ChevronLeftIcon aria-hidden='true' />
@@ -83,8 +84,8 @@ export function ListPagination({ summary, current, last, hasMore, hrefFor, label
                       href={hrefFor(page)}
                       preserveScroll
                       className={buttonVariants({
-                        size: 'icon',
-                        className: `${!isActive && 'bg-primary/10 text-primary hover:bg-primary/20 focus-visible:ring-primary/20 dark:focus-visible:ring-primary/40'}`
+                        size: 'icon', variant: 'ghost',
+                        className: 'preview-button preview-button--ghost'
                       })}
                       aria-current={isActive ? 'page' : undefined}
                     >
@@ -105,7 +106,7 @@ export function ListPagination({ summary, current, last, hasMore, hrefFor, label
                 <Link
                   href={hrefFor(current + 1)}
                   preserveScroll
-                  className={buttonVariants({ variant: 'ghost' })}
+                  className={buttonVariants({ variant: 'ghost', className: 'preview-button preview-button--ghost' })}
                   aria-label={labels.next}
                 >
                   <span className='max-sm:hidden'>{labels.next}</span>

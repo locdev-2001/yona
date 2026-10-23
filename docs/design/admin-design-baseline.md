@@ -62,7 +62,7 @@ Bổ sung ngoài registry: shell Sidebar/Topbar và các chart đường, donut,
 | 3 | Danh sách, lọc, bảng, phân trang và trang chi tiết | `resources/js/superadmin/resource/Index.tsx`, `resources/js/superadmin/resource/Show.tsx` |
 | 4 | Dashboard, widget và chart với dữ liệu thực | `resources/js/superadmin/dashboard/` |
 
-Các đường dẫn là điểm bắt đầu đối chiếu hiện trạng; phạm vi mỗi đợt cần bám màn hình được chọn. Hiện vẫn là nhánh thiết kế riêng, chưa merge/push/deploy và chưa bắt đầu thay UI admin thật.
+Các đường dẫn là điểm bắt đầu đối chiếu hiện trạng; phạm vi mỗi đợt cần bám màn hình được chọn. Shell và Tổng quan đã triển khai ở nhánh codex/admin-design-skeleton; commit e6164be3 đã push. Các nhóm màn hình tiếp theo được cập nhật trong admin-revamp-progress.md; chưa merge hoặc deploy.
 
 ## Tài liệu chi tiết và bằng chứng
 
@@ -86,7 +86,7 @@ Người dùng đã yêu cầu áp dụng font cho toàn dashboard admin. Nguồ
 
 Người dùng yêu cầu giảm cỡ số và khoảng trống của card, tránh đè nội dung. KPI dùng token text-metric-compact 32px, số giữa donut dùng text-metric-mobile-compact 24px; MetricCard dùng cutout 40px từ control-height, icon widget-icon-size 36px, khoảng cách từ token sẵn có. WidgetCard thường giữ góc cắt mặc định. Tooltip donut nổi ngoài vòng chart ở bên phải, mobile tự tránh tràn; dùng portal để không bị các card khác che.
 
-Component thống kê phụ Chart insights đang là đề xuất trong gallery, chưa được đưa vào baseline đã duyệt hay runtime.
+Component thống kê phụ ChartInsights đã được duyệt và áp dụng; xem quyết định bổ sung bên dưới.
 
 ### Đổi bộ icon theo yêu cầu người dùng
 
@@ -95,3 +95,7 @@ Dashboard và gallery dùng Reicon Outline, nguồn ánh xạ duy nhất tại `
 ## Thống kê phụ của chart (đã duyệt 23/10/2026)
 
 ChartInsights dùng một khối viền Panel với hai cột và đường chia, nhãn/icon trung tính 13px, giá trị 15px; mobile xếp dọc. Dùng token V1 sẵn có. Runtime Tin nhắn theo ngày dùng cùng component và CSS với gallery, truyền dữ liệu thật và bản dịch từ adapter.
+
+## Màn đăng nhập và 2FA (đã duyệt 23/10/2026)
+
+Người dùng chốt cả bản sáng và tối sau khi cung cấp ảnh tham chiếu: form gọn ở giữa, nền có bốn nhánh mạch, primary xanh V1; các bề mặt sáng giữ màu trắng. Không thêm token. AuthStage chứa nền mạch và stylesheet dùng chung; AuthPanel chứa khung nội dung; form đăng nhập của gallery chính là LoginForm được runtime dùng. Runtime lấy logo/tên cài đặt và bản dịch thật, màn 2FA giữ các bước nhập OTP và mã dự phòng.

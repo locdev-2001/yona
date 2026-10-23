@@ -15,7 +15,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\ValidationException;
 
 class AccountsController extends ResourceController
 {
@@ -112,17 +111,6 @@ class AccountsController extends ResourceController
 
         $category = trim((string) ($payload['suspension_category'] ?? ''));
         $reason = trim((string) ($payload['suspension_reason'] ?? ''));
-
-        if ($category === '' || $reason === '') {
-            throw ValidationException::withMessages([
-                'account.suspension_category' => $category === '' ? ['Suspension category is required'] : [],
-                'account.suspension_reason' => $reason === '' ? ['Suspension reason is required'] : [],
-            ]);
-        }
-
-        if (mb_strlen($reason) > AccountSuspension::MAX_REASON_LENGTH) {
-            throw ValidationException::withMessages(['account.suspension_reason' => ['Suspension reason is too long (maximum is 256 characters)']]);
-        }
 
         app(AccountSuspension::class)->suspend($account, $category, $reason);
     }

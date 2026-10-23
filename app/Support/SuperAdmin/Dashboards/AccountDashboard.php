@@ -4,9 +4,11 @@ namespace App\Support\SuperAdmin\Dashboards;
 
 use App\Models\Account;
 use App\Services\Admin\Operations\AccountActivity;
+use App\Services\Admin\Operations\AccountSuspension;
 use App\Support\SuperAdmin\Dashboard;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Validation\Rule;
 
 class AccountDashboard extends Dashboard
 {
@@ -51,6 +53,17 @@ class AccountDashboard extends Dashboard
     public function formAttributes(): array
     {
         return ['name', 'locale', 'status', 'suspension_category', 'suspension_reason'];
+    }
+
+    public function validationRules(Model $record): array
+    {
+        return [
+            'name' => ['required', 'string', 'max:255'],
+            'locale' => ['required', Rule::in($this->selectOptions('locale'))],
+            'status' => ['required', Rule::in($this->selectOptions('status'))],
+            'suspension_category' => ['exclude_unless:account.status,suspended', 'required', Rule::in(AccountSuspension::categories())],
+            'suspension_reason' => ['exclude_unless:account.status,suspended', 'required', 'string', 'max:'.AccountSuspension::MAX_REASON_LENGTH],
+        ];
     }
 
     // Hai trường lý do đình chỉ chỉ hiện khi chọn trạng thái `suspended`, đúng

@@ -3,7 +3,8 @@ import { PlusIcon } from '@admin/components/icons';
 import { useMemo, useState } from 'react';
 
 import Link from '@admin/components/Link';
-import { Button, buttonVariants } from '@admin/components/ui/button';
+import { Button } from '@admin/components/ui/button';
+import { PreviewButton } from '../design-preview/components';
 import { ConfirmDialog } from '@admin/views/apps/resources/dialogs/confirm-dialog';
 import ResourceListApp from '@admin/views/apps/resources/list';
 import { ResourcePagination } from '@admin/views/apps/resources/list/resource-pagination';
@@ -125,20 +126,31 @@ export default function ResourceIndex({
                 description={description}
                 actions={
                     actions.includes('new') ? (
-                        <Link href={`/admin/${resource}/new`} className={buttonVariants({ className: 'max-md:h-11' })}>
+                        <PreviewButton appearance="primary" render={<Link href={`/admin/${resource}/new`} />} nativeButton={false}>
                             <PlusIcon />
                             <span>{label('new_record')}</span>
-                        </Link>
+                        </PreviewButton>
                     ) : null
                 }
-                toolbar={
-                    <ResourceTableToolbar
+                table={<ResourceTable
+                    key={resource}
+                    storageKey={`yona.admin.table.${resource}`}
+                    label={title} rows={rows} columns={tableColumns} totalPages={pagination.last} totalRows={pagination.total}
+                    sorting={columns.some(column => column.name === order) ? { id: order, desc: direction === 'desc' } : null}
+                    onSort={sort} onOpenRow={url => router.visit(url)}
+                    search={<ResourceTableToolbar
                         search={query}
                         searchLabel={searchLabel}
                         clearLabel={label('clear_search')}
                         canClear={keyword !== ''}
-                        filters={
-                            filters.length > 0 ? (
+                        onSearchChange={setQuery}
+                        onSubmit={() => visit({ search: query.trim() })}
+                        onClear={() => {
+                            setQuery('');
+                            visit({ search: '' });
+                        }}
+                    />}
+                    filters={filters.length > 0 ? (
                                 <ResourceTableFilters
                                     label={label('filter')}
                                     allLabel={label('filter_all')}
@@ -149,48 +161,9 @@ export default function ResourceIndex({
                                         visit({ search: next ? `${next}:` : '' });
                                     }}
                                 />
-                            ) : null
-                        }
-                        onSearchChange={setQuery}
-                        onSubmit={() => visit({ search: query.trim() })}
-                        onClear={() => {
-                            setQuery('');
-                            visit({ search: '' });
-                        }}
-                    />
-                }
-                table={
-                    rows.length === 0 ? (
-                        <div className="flex flex-col items-center gap-2 border-t px-6 py-12 text-center">
-                            <p className="text-base font-medium">{label('no_records')}</p>
-                            {search ? <p className="text-muted-foreground text-sm">{label('no_records_hint')}</p> : null}
-                            {search ? (
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="mt-2"
-                                    render={<Link href={`/admin/${resource}`} />}
-                                    nativeButton={false}
-                                >
-                                    {label('clear_search')}
-                                </Button>
                             ) : null}
-                        </div>
-                    ) : (
-                        <ResourceTable
-                            label={title}
-                            rows={rows}
-                            columns={tableColumns}
-                            totalPages={pagination.last}
-                            sorting={columns.some(column => column.name === order) ? { id: order, desc: direction === 'desc' } : null}
-                            sortTitle={column => label('sort_by', { column })}
-                            onSort={sort}
-                            onOpenRow={url => router.visit(url)}
-                        />
-                    )
-                }
-                pagination={
-                    rows.length > 0 ? (
+                    empty={<div className="console-resource-empty"><p>{label('no_records')}</p>{search && <><p>{label('no_records_hint')}</p><Button variant="outline" onClick={() => { setQuery(''); visit({ search: '' }); }}>{label('clear_search')}</Button></>}</div>}
+                    pagination={rows.length > 0 ? (
                         <ResourcePagination
                             summary={`${showingFrom.toLocaleString('vi-VN')}-${(showingFrom + rows.length - 1).toLocaleString('vi-VN')} / ${label('records_total', { total: pagination.total.toLocaleString('vi-VN') })}`}
                             currentPage={pagination.current}
@@ -199,8 +172,8 @@ export default function ResourceIndex({
                             previousLabel={label('previous_page')}
                             nextLabel={label('next_page')}
                         />
-                    ) : null
-                }
+                    ) : null}
+                />}
             />
 
             <ConfirmDialog

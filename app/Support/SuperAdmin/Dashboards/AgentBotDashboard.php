@@ -43,6 +43,16 @@ class AgentBotDashboard extends Dashboard
         return ['name', 'account', 'description', 'outgoing_url'];
     }
 
+    public function validationRules(Model $record): array
+    {
+        return [
+            'name' => ['nullable', 'string', 'max:255'],
+            'account' => ['nullable', 'integer', 'exists:accounts,id'],
+            'description' => ['nullable', 'string', 'max:255'],
+            'outgoing_url' => ['nullable', 'url:http,https', 'max:255'],
+        ];
+    }
+
     public function displayResource(Model $record): string
     {
         return "AgentBot #{$record->id}";

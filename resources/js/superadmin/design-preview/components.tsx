@@ -36,6 +36,7 @@ export function SearchField({
     label,
     placeholder,
     clearLabel,
+    onClear,
     inputRef,
     className = '',
     shortcut = false,
@@ -47,6 +48,7 @@ export function SearchField({
     label: string;
     placeholder: string;
     clearLabel?: string;
+    onClear?: () => void;
     inputRef?: RefObject<HTMLInputElement | null>;
     className?: string;
     shortcut?: boolean;
@@ -80,6 +82,7 @@ export function SearchField({
                     aria-label={clearLabel ?? previewCopy.xoa_tim_kiem}
                     onClick={() => {
                         onChange('');
+                        onClear?.();
                         inputRef?.current?.focus();
                     }}
                 >
@@ -103,8 +106,8 @@ export function Panel({
     className = '',
     id,
 }: {
-    title: string;
-    description?: string;
+    title: ReactNode;
+    description?: ReactNode;
     action?: ReactNode;
     children: ReactNode;
     className?: string;
@@ -197,13 +200,17 @@ export function MetricCard({
     comparison,
     purpose = 'users',
     trend = 'up',
+    icon,
+    className = '',
 }: {
     label: string;
     value: string;
     change: string;
     tone: Tone;
     points?: number[];
-    comparison?: string;
+    comparison?: ReactNode;
+    icon?: ReactNode;
+    className?: string;
     purpose?: MetricPurpose;
     trend?: MetricTrend;
 }) {
@@ -215,10 +222,10 @@ export function MetricCard({
             title={label}
             seed={`metric-${purpose}`}
             cutoutSize={Number.parseFloat(dimensionTokens['control-height'])}
-            className={`metric-widget metric-widget--${purpose} ${value.length > 8 ? 'metric-widget--compact' : ''}`}
+            className={`metric-widget metric-widget--${purpose} ${className} ${value.length > 8 ? 'metric-widget--compact' : ''}`}
             action={
                 <span className="metric-widget-icon">
-                    <PurposeIcon aria-hidden="true" />
+                    {icon ?? <PurposeIcon aria-hidden="true" />}
                 </span>
             }
             footer={

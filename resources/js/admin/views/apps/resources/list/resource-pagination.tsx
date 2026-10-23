@@ -3,7 +3,8 @@ import { ChevronLeftIcon, ChevronRightIcon } from '@admin/components/icons'
 
 // Component Imports
 import Link from '@admin/components/Link'
-import { Button, buttonVariants } from '@admin/components/ui/button'
+import { PreviewButton as Button } from '../../../../../superadmin/design-preview/components'
+import { buttonVariants } from '@admin/components/ui/button'
 import { cn } from '@admin/lib/utils'
 import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem } from '@admin/components/ui/pagination'
 
@@ -35,7 +36,7 @@ export function ResourcePagination({
   })
 
   return (
-    <div className='flex items-center justify-between gap-3 px-6 py-4 max-sm:flex-col md:max-lg:flex-col'>
+    <div className='data-table-pagination console-resource-pagination'>
       <p className='text-muted-foreground text-sm whitespace-nowrap' aria-live='polite'>
         {summary}
       </p>
@@ -50,7 +51,7 @@ export function ResourcePagination({
                   <span className='max-sm:hidden'>{previousLabel}</span>
                 </Button>
               ) : (
-                <Link href={hrefFor(currentPage - 1)} aria-label={previousLabel} className={buttonVariants({ variant: 'ghost' })}>
+                <Link href={hrefFor(currentPage - 1)} aria-label={previousLabel} className={buttonVariants({ variant: 'ghost', className: 'preview-button preview-button--ghost' })}>
                   <ChevronLeftIcon aria-hidden='true' />
                   <span className='max-sm:hidden'>{previousLabel}</span>
                 </Link>
@@ -71,9 +72,9 @@ export function ResourcePagination({
                   <Link
                     href={hrefFor(page)}
                     className={cn(
-                      buttonVariants({ size: 'icon' }),
+                      buttonVariants({ size: 'icon', variant: 'ghost', className: 'preview-button preview-button--ghost' }),
                       !isActive &&
-                        'bg-primary/10 text-primary hover:bg-primary/20 focus-visible:ring-primary/20 dark:focus-visible:ring-primary/40'
+                        'console-resource-page-number'
                     )}
                     aria-current={isActive ? 'page' : undefined}
                   >
@@ -96,7 +97,7 @@ export function ResourcePagination({
                   <ChevronRightIcon aria-hidden='true' />
                 </Button>
               ) : (
-                <Link href={hrefFor(currentPage + 1)} aria-label={nextLabel} className={buttonVariants({ variant: 'ghost' })}>
+                <Link href={hrefFor(currentPage + 1)} aria-label={nextLabel} className={buttonVariants({ variant: 'ghost', className: 'preview-button preview-button--ghost' })}>
                   <span className='max-sm:hidden'>{nextLabel}</span>
                   <ChevronRightIcon aria-hidden='true' />
                 </Link>

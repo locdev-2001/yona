@@ -39,6 +39,11 @@ class PlatformAppDashboard extends Dashboard
         return ['name'];
     }
 
+    public function validationRules(Model $record): array
+    {
+        return ['name' => ['required', 'string', 'max:255']];
+    }
+
     public function displayResource(Model $record): string
     {
         return "PlatformApp #{$record->id}";

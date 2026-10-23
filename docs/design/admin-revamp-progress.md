@@ -102,3 +102,33 @@ Người dùng chọn chỉnh tiếp Chart insights trong gallery: mẫu mới g
 Người dùng duyệt mẫu ChartInsights trong gallery ngày 23/10/2026. Đã thay hai MetricBoxes phía trên Tin nhắn theo ngày bằng đúng component dùng chung với gallery; bỏ nhãn chờ duyệt trong gallery. Tách giá trị ngày cao điểm và chú thích ngày, bổ sung bản dịch Việt/Anh cho đơn vị tin và khoảng được chọn. Dữ liệu thật: 72,5%, 303 tin ngày 25/09; khi không có dữ liệu giữ dấu gạch thay vì tạo số giả.
 
 Nghiệm thu: desktop hai cột, mobile 375px xếp dọc, khối rộng 305px và trang scrollWidth 369px. Đổi sang English hiển thị 72.5%, In the selected range, 303 messages, on 25/09; đã chuyển về Tiếng Việt. TypeScript, Pint, i18n-check, build admin/SDK và preview đều đạt. Ảnh chart-insights-applied.png, chart-insights-applied-mobile.png. Chưa commit/push/deploy.
+
+## Đợt CRUD: danh sách, form và khung chi tiết (đang nghiệm thu)
+
+Tài khoản/Người dùng và các resource dùng chung đã nối vào Data table V1: server tiếp tục xử lý tìm kiếm, bộ lọc, sort và phân trang; renderer/panel tùy chỉnh cột dùng chung với gallery. Hiển thị/thứ tự cột lưu riêng theo tài nguyên. Bản dịch Việt/Anh cho điều khiển bảng đi qua DesignCopyProvider. Đã mở được bảng Tài khoản và panel, ẩn cột Ngôn ngữ thành công; bước reload bị gián đoạn do server kết thúc theo phiên lệnh.
+
+Đã chuyển server PHP/Vite sang tiến trình độc lập (8630/8631), giới hạn PHP dev server 2 worker và Node heap 1536 MB. Hai cổng vẫn lắng nghe sau nhiều lệnh kiểm tra. Trình duyệt đang giữ trang lỗi kết nối dạng data URL; công cụ từ chối truy cập trang lỗi, đang chờ người dùng tải lại tab trong ứng dụng. Chưa xác nhận lưu cột qua reload, tìm/lọc/sort/phân trang, theme tối và mobile, không đánh dấu hoàn tất.
+
+Form và khung chi tiết CRUD dùng lại Panel, field controls, ChartInsights và token V1. Tách CSS Panel/Badge khỏi preview.css thành panel-components.css dùng chung cho gallery/runtime. Không thêm token hay dữ liệu minh hoạ vào runtime. TypeScript và build admin/SDK đạt; Pint bản dịch và i18n-check đạt. Chưa commit/push các thay đổi đợt này, chưa deploy.
+
+## Nghiệm thu tiếp CRUD và các màn vận hành
+
+- Tài khoản/Người dùng: tìm không có kết quả → trạng thái rỗng, nút xóa tìm gửi lại server; sắp xếp tên tăng dần đưa Acme Inc lên đầu; trang 2 giữ query sort và hiển thị 21–40/40. Ẩn cột và đổi thứ tự bằng bàn phím còn giữ sau reload, khôi phục mặc định hoạt động. Header/cell dùng renderer V1 chung với gallery. Hàng danh tính đã đo 48px. Mobile: viewport 375px, trang 369px, bảng cuộn bên trong khung 337px.
+- Form/chi tiết CRUD: Panel, field, trạng thái và ChartInsights dùng component/token V1. Đã sửa bảng quan hệ thiếu ô làm lệch các cột, ánh xạ cell theo tên cột. Tách URL mở hàng khỏi URL bản ghi để menu Sửa/Tổng quan 360 không nối thêm đường dẫn vào /overview.
+- Theo duyệt của người dùng, thêm validation tập trung trong luồng lưu CRUD; quy tắc sống trong từng Dashboard. Tên trống của người dùng hiển thị lỗi dưới trường, không còn lỗi DB; tạm khóa thiếu nhóm/lý do báo riêng hai trường. Đã kiểm tra lỗi và hủy, xác nhận tài khoản vẫn hoạt động. Lưu tên PlatformApp local thành “MCP sticker local · UI V1”, reload vẫn đúng, sau đó đã khôi phục “MCP sticker local”.
+- Sức khỏe kênh/Cảnh báo/Mức dùng tính năng/Nhật ký/Dữ liệu: dùng chung DataTableGrid của V1; giữ lọc, phân trang, hàng mở rộng và ghim cột. Đã kiểm tra lọc cảnh báo còn một hộp thư, mở/hủy form luật, tìm nhật ký rỗng/xóa tìm, tìm bảng, ghim id trái/account_id phải. Các trang đã đo ở 375px không tràn ngang (trang 369px, khung bảng 337px).
+- Hồ sơ tài khoản: thẻ số liệu dùng MetricCard; chart sử dụng dùng DesignTimeSeries dạng cột; badge trạng thái và panel dùng bản V1. Đã mở dữ liệu thật, chuyển tab Hộp thư và reload. Mobile chart rộng 257px, trang 369px trong viewport 375px.
+- Trạng thái hệ thống: Panel/badge V1, bổ sung nhãn và trạng thái Việt/Anh. Thương hiệu: khung logo dùng token, giữ các thao tác upload/reset. Cấu hình: sửa lỗi tab kéo form mobile rộng 794px; sau sửa các trường rộng 337px, trang 369px. Chỉ mở phần Email không có khóa bí mật để lưu ảnh.
+- Kho sticker: drawer chi tiết dùng khung inset/radius/padding V1, nút Đóng có bản dịch. Đã mở bộ/chỉnh metadata/hủy, không đổi sticker. Mobile drawer từ x=8 đến x=367, rộng 359px trong viewport 375px. Các popup field dùng cùng stylesheet control của gallery.
+
+Ảnh mới trong admin-revamp/: accounts-desktop.png, users-desktop.png, users-dark.png, users-mobile.png, users-columns-mobile.png, user-detail-dark.png, user-form-validation.png, user-form-mobile.png, account-form-validation.png, account-detail-mobile.png, channel-health-before.png, channel-health-after.png, channel-health-mobile.png, alerts-rule-editor.png, alerts-mobile.png, feature-usage-desktop.png, feature-usage-mobile.png, data-table-pinned.png, data-table-mobile.png, audit-logs-mobile.png, instance-status-desktop.png, instance-status-mobile.png, branding-desktop.png, branding-mobile.png, app-config-email-desktop.png, app-config-email-mobile.png, sticker-detail-mobile.png, account-overview-desktop.png.
+
+## Chốt và áp dụng màn xác thực theo ảnh tham chiếu
+
+Người dùng duyệt cả bản sáng và tối ngày 23/10/2026. Đã áp dụng nền mạch/thẻ form vào đăng nhập và 2FA. AuthStage/AuthPanel dùng chung với gallery, LoginForm cũng dùng chung để chỉ chỉnh một nơi. Logo/tên lấy từ cấu hình cài đặt; bản dịch và lỗi dưới trường lấy từ server. Thông báo sai tài khoản/mật khẩu đã có Việt/Anh. Mã dự phòng xếp hai cột để vừa thẻ gọn; OTP dùng chiều cao control của từng breakpoint. Màu thanh tiến trình điều hướng cũng lấy primary V1.
+
+Nghiệm thu trực tiếp trên cùng form trong gallery: cả theme trắng/tối, nút hiện/ẩn mật khẩu, OTP và khung form ở 375px không tràn. Ảnh auth-login-reference.png, auth-login-reference-light.png, auth-mfa-reference.png, auth-shared-login-light.png. Phiên admin hiện đã đăng nhập nên chưa chạy lại luồng đăng nhập/ghi danh 2FA bằng một phiên mới; không tạo khóa 2FA trong gallery.
+
+Các thay đổi đợt này chưa commit/push/deploy. Công việc revamp tổng thể vẫn đang tiến hành.
+
+Kiểm tra cuối đợt: Pint toàn bộ PHP thay đổi, TypeScript, i18n-check, build admin/SDK và build gallery đều đạt; diff-check sạch. Nút hiện/ẩn mật khẩu đã kiểm tra trên LoginForm dùng chung. Link review trong gallery tự chọn component theo tham số review sau reload.

@@ -20,8 +20,6 @@ class InstallationConfigsController extends ResourceController
     {
         $payload = (array) $request->input('installation_config', []);
 
-        $request->validate(['installation_config.name' => 'required|string']);
-
         $record->name = $payload['name'];
         $record->value = ($payload['value'] ?? '') === '' ? null : $payload['value'];
         $record->locked = false;

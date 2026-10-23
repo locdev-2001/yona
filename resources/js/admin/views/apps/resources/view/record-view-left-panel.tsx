@@ -3,21 +3,15 @@ import type { ReactNode } from 'react'
 
 // Component Imports
 import { Avatar, AvatarGeneratedFallback, AvatarImage } from '@admin/components/ui/avatar'
-import { Badge } from '@admin/components/ui/badge'
-import { Card, CardContent } from '@admin/components/ui/card'
+import { StatusBadge } from '../../../../../superadmin/design-preview/components'
+import { ChartInsights } from '../../../../../superadmin/design-preview/chart-insights'
+import '../../../../../superadmin/resource/resources.css'
 import { Separator } from '@admin/components/ui/separator'
 
 // Util Imports
 import { cn } from '@admin/lib/utils'
 
 export type RecordStatusTone = 'active' | 'pending' | 'suspended' | 'inactive'
-
-const STATUS_DOT_STYLES: Record<RecordStatusTone, string> = {
-  active: 'bg-green-500',
-  pending: 'bg-amber-500',
-  suspended: 'bg-destructive',
-  inactive: 'bg-muted-foreground'
-}
 
 export type RecordDetailRow = {
   key: string
@@ -70,36 +64,26 @@ export function RecordViewLeftPanel({
   footer
 }: RecordViewLeftPanelProps) {
   return (
-    <Card className='lg:sticky lg:top-20 lg:max-h-[calc(100dvh-7.5rem)] lg:self-start lg:overflow-y-auto'>
-      <CardContent className='space-y-6 pt-6'>
+    <section className='preview-panel console-record-profile'>
+      <div className='console-record-profile-content'>
         <div className='flex flex-col items-center text-center'>
-          <Avatar className='size-24'>
+          <Avatar className='console-record-avatar'>
             {avatarUrl ? <AvatarImage src={avatarUrl} alt={title} /> : null}
             <AvatarGeneratedFallback seed={avatarSeed} name={title} />
           </Avatar>
           <TitleTag className='mt-4 line-clamp-4 text-xl font-semibold break-words'>{title}</TitleTag>
           {badge ? (
             typeof badge === 'string' ? (
-              <Badge variant='secondary' className='mt-2'>
+              <StatusBadge tone='system'>
                 {badge}
-              </Badge>
+              </StatusBadge>
             ) : (
               <div className='mt-2'>{badge}</div>
             )
           ) : null}
         </div>
 
-        {stats.length > 0 ? (
-          <div className='grid grid-cols-2 gap-3'>
-            {stats.map(stat => (
-              <div key={stat.key} className='bg-muted/40 flex flex-col items-center rounded-lg border p-4 text-center'>
-                <span className='text-primary mb-2 [&_svg]:size-5'>{stat.icon}</span>
-                <span className='text-lg font-semibold'>{stat.value}</span>
-                <span className='text-muted-foreground text-xs'>{stat.label}</span>
-              </div>
-            ))}
-          </div>
-        ) : null}
+        {stats.length > 0 && <ChartInsights items={stats.map(stat => ({ id: stat.key, label: stat.label, value: stat.value, detail: '', icon: stat.icon }))} />}
 
         <div className='space-y-3'>
           <h2 className='text-sm font-semibold'>{detailsTitle}</h2>
@@ -118,7 +102,7 @@ export function RecordViewLeftPanel({
                 </dt>
                 {row.status ? (
                   <dd className='flex items-center gap-2 font-medium'>
-                    <span className={cn('size-2 rounded-full', STATUS_DOT_STYLES[row.status])} />
+                    <span className='console-record-status-dot' data-tone={row.status} />
                     {row.value}
                   </dd>
                 ) : (
@@ -131,7 +115,7 @@ export function RecordViewLeftPanel({
 
         {actions ? <div className='flex gap-2 max-sm:flex-col'>{actions}</div> : null}
         {footer}
-      </CardContent>
-    </Card>
+      </div>
+    </section>
   )
 }

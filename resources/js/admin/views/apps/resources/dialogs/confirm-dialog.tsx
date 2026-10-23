@@ -2,7 +2,7 @@
 import type { ReactNode } from 'react'
 
 // Component Imports
-import { Button } from '@admin/components/ui/button'
+import { PreviewButton as Button } from '../../../../../superadmin/design-preview/components'
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@admin/components/ui/dialog'
 
 export interface ConfirmDialogProps {
@@ -33,7 +33,7 @@ export function ConfirmDialog({
 }: ConfirmDialogProps) {
   return (
     <Dialog open={open} onOpenChange={next => onOpenChange(next)}>
-      <DialogContent className='sm:max-w-md'>
+      <DialogContent showCloseButton={false} className='catalogue-overlay'>
         <DialogHeader className='space-y-2'>
           <DialogTitle>{title}</DialogTitle>
           {description ? <DialogDescription>{description}</DialogDescription> : null}
@@ -41,7 +41,7 @@ export function ConfirmDialog({
         {children}
         <div className='flex flex-col-reverse gap-4 sm:flex-row sm:justify-end'>
           <DialogClose render={<Button variant='outline' />}>{cancelLabel}</DialogClose>
-          <Button variant={confirmVariant} disabled={pending} onClick={onConfirm}>
+          <Button appearance={confirmVariant === 'destructive' ? 'secondary' : 'primary'} className={confirmVariant === 'destructive' ? 'catalogue-danger-button' : undefined} disabled={pending} onClick={onConfirm}>
             {confirmLabel}
           </Button>
         </div>

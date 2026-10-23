@@ -26,6 +26,12 @@ abstract class Dashboard
     /** @return list<string> */
     abstract public function formAttributes(): array;
 
+    /** @return array<string, array<int, mixed>> */
+    public function validationRules(Model $record): array
+    {
+        return [];
+    }
+
     /** @return array<string, callable(Builder): Builder> */
     public function collectionFilters(): array
     {

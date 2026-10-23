@@ -5,6 +5,7 @@ import { CheckIcon, CopyIcon, EyeIcon, EyeOffIcon, Trash2Icon } from '@admin/com
 
 import { Avatar, AvatarFallback, AvatarImage } from '@admin/components/ui/avatar';
 import { Badge } from '@admin/components/ui/badge';
+import { StatusBadge } from '../design-preview/components';
 import { Button } from '@admin/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@admin/components/ui/table';
 import { EMPTY_VALUE, formatDate as formatConsoleDate, formatDateTime as formatConsoleDateTime } from '@admin/lib/format';
@@ -94,26 +95,10 @@ export default function FieldValue({ field, nested = false }: { field: SuperAdmi
 }
 
 // Màu nhãn trạng thái như bảng người dùng mẫu: xanh = hoạt động, đỏ = tạm khoá.
-export const STATUS_BADGE_STYLES = {
-    active: 'bg-green-600/10 text-green-600 focus-visible:ring-green-600/20 dark:bg-green-400/10 dark:text-green-400 dark:focus-visible:ring-green-400/40',
-    pending:
-        'bg-amber-600/10 text-amber-600 focus-visible:ring-amber-600/20 dark:bg-amber-400/10 dark:text-amber-400 dark:focus-visible:ring-amber-400/40',
-    suspended: 'bg-destructive/10 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 text-destructive',
-} as const;
-
 function AccountStatus({ value }: { value: string }) {
     const { filter } = useConsoleDictionary();
 
-    return (
-        <Badge
-            className={cn(
-                'h-auto rounded-sm border-none focus-visible:outline-none',
-                value === 'suspended' ? STATUS_BADGE_STYLES.suspended : STATUS_BADGE_STYLES.active,
-            )}
-        >
-            {filter(value)}
-        </Badge>
-    );
+    return <StatusBadge tone={value === 'suspended' ? 'danger' : 'positive'}>{filter(value)}</StatusBadge>;
 }
 
 type SuspensionEvent = { category?: string; reason?: string; suspended_at?: string };
@@ -205,8 +190,10 @@ function HasMany({ value }: { value: HasManyValue }) {
                 <TableBody>
                     {value.rows.map(row => (
                         <TableRow key={row.url ?? row.cells.map(cell => String(cell.value)).join('-')}>
-                            {row.cells.map(cell => (
-                                <TableCell key={cell.name} className="h-14 first:pl-4">
+                            {value.columns.map(column => {
+                                const cell = row.cells.find(candidate => candidate.name === column.name);
+                                if (!cell) return <TableCell key={column.name}><Empty /></TableCell>;
+                                return <TableCell key={column.name} className="first:pl-4">
                                     {row.url && !['belongs_to', 'belongs_to_search', 'polymorphic'].includes(cell.type) ? (
                                         <Link href={row.url} className="hover:underline">
                                             <FieldValue field={cell} nested />
@@ -214,9 +201,9 @@ function HasMany({ value }: { value: HasManyValue }) {
                                     ) : (
                                         <FieldValue field={cell} nested />
                                     )}
-                                </TableCell>
-                            ))}
-                            <TableCell className="h-14 px-4 text-right">
+                                </TableCell>;
+                            })}
+                            <TableCell className="px-4 text-right">
                                 {row.destroy_url ? (
                                     <Button
                                         variant="ghost"

@@ -5,7 +5,6 @@ namespace App\Http\Controllers\SuperAdmin;
 use App\Models\Account;
 use App\Models\AccountUser;
 use App\Models\SuperAdminImpersonation;
-use App\Models\User;
 use App\Support\SuperAdmin\Dashboard;
 use App\Support\SuperAdmin\Dashboards\UserDashboard;
 use App\Support\SuperAdminArea;
@@ -44,8 +43,6 @@ class UsersController extends ResourceController
         // resource_params: mật khẩu để trống nghĩa là giữ nguyên.
         if (blank($payload['password'] ?? null)) {
             unset($payload['password']);
-        } else {
-            $request->validate(['user.password' => User::passwordRules()]);
         }
 
         foreach (['name', 'display_name', 'email', 'password', 'confirmed_at', 'type'] as $attribute) {

@@ -1,0 +1,73 @@
+.panel-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.panel-heading h2 {
+    letter-spacing: -0.1px;
+    font-size: var(--preview-text-section-title);
+}
+.panel-heading p {
+    color: var(--preview-text-secondary);
+    font-size: var(--preview-text-caption);
+    margin-top: var(--preview-detail-gap);
+}
+
+.preview-panel {
+    background: var(--preview-surface-panel);
+    border: 0;
+    overflow: hidden;
+    min-width: 0;
+    scroll-margin-top: 18px;
+    border-radius: var(--preview-panel-radius);
+}
+.status-badge {
+    width: fit-content;
+    align-self: flex-start;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    background: color-mix(in srgb, currentColor 6%, transparent);
+    white-space: nowrap;
+    border: 0;
+    font-weight: 500;
+    border-radius: var(--preview-control-radius);
+    min-height: var(--preview-badge-height);
+    padding: 0 var(--preview-control-padding);
+    gap: var(--preview-detail-gap);
+    font-size: var(--preview-text-caption);
+}
+:is(.admin-preview, .catalogue-overlay, .catalogue-sheet) .status-badge.tone-positive {
+    background: var(--preview-status-success-background);
+    color: var(--preview-text-on-status);
+}
+:is(.admin-preview, .catalogue-overlay, .catalogue-sheet) .status-badge.tone-warning {
+    background: var(--preview-status-warning-background);
+    color: var(--preview-text-on-warning);
+}
+:is(.admin-preview, .catalogue-overlay, .catalogue-sheet) .status-badge.tone-danger {
+    background: var(--preview-status-danger-background);
+    color: var(--preview-text-on-status);
+}
+:is(.admin-preview, .catalogue-overlay, .catalogue-sheet) .status-badge.tone-system {
+    background: var(--preview-category-system-background);
+    color: var(--preview-text-on-status);
+}
+.status-badge i {
+    background: currentColor;
+    border-radius: 50%;
+    width: 4px;
+    height: 4px;
+}
+
+.status-badge {
+    border-radius: var(--preview-badge-radius);
+    min-height: var(--preview-badge-height);
+    font-size: var(--preview-text-caption);
+    padding: 0 var(--preview-control-padding);
+}
+
+.catalogue-danger-button {
+    background: var(--preview-status-danger-background) !important;
+    color: var(--preview-text-on-status) !important;
+}

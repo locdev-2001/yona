@@ -1,4 +1,4 @@
-import { useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { Fragment, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { flexRender, type Column, type ColumnDef, type Table as TableInstance } from '@tanstack/react-table';
 import {
     closestCenter,
@@ -34,7 +34,7 @@ import { Popover, PopoverContent, PopoverTitle, PopoverTrigger } from '@admin/co
 import { Switch } from '@admin/components/ui/switch';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@admin/components/ui/table';
 import { PreviewButton, SearchField } from './components';
-import { previewCopy, previewText } from './copy';
+import { useDesignCopy } from './copy';
 import { spacingPixels } from './tokens';
 import './data-table.css';
 
@@ -54,6 +54,7 @@ export function SortableTableHeading<TRecord>({
     label: string;
     Icon: IconComponent;
 }) {
+    const { copy: previewCopy, text: previewText } = useDesignCopy();
     const sorted = column.getIsSorted();
     return (
         <button
@@ -77,6 +78,7 @@ function SortableField<TRecord>({
     column: Column<TRecord>;
     locked: boolean;
 }) {
+    const { copy: previewCopy, text: previewText } = useDesignCopy();
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
         id: field.id,
         disabled: locked,
@@ -126,6 +128,7 @@ function ColumnView<TRecord>({
     fields: TableField<TRecord>[];
     onRestore: () => void;
 }) {
+    const { copy: previewCopy, text: previewText } = useDesignCopy();
     const [open, setOpen] = useState(false);
     const [query, setQuery] = useState('');
     const searchRef = useRef<HTMLInputElement>(null);
@@ -154,7 +157,7 @@ function ColumnView<TRecord>({
             !table.getColumn(order[to])?.getCanHide()
         )
             return;
-        table.setColumnOrder(['select', ...arrayMove(order, from, to), 'actions']);
+        table.setColumnOrder([...(table.getAllLeafColumns().some(column => column.id === 'select') ? ['select'] : []), ...arrayMove(order, from, to), ...(table.getAllLeafColumns().some(column => column.id === 'actions') ? ['actions'] : [])]);
     }
     return (
         <Popover open={open} onOpenChange={setOpen}>
@@ -252,6 +255,10 @@ export function PreviewDataTable<TRecord>({
     bulkActions,
     onRestore,
     empty,
+    pagination,
+    resultCount,
+    label,
+    onOpenRow,
 }: {
     table: TableInstance<TRecord>;
     fields: TableField<TRecord>[];
@@ -261,19 +268,23 @@ export function PreviewDataTable<TRecord>({
     bulkActions: ReactNode;
     onRestore: () => void;
     empty: ReactNode;
+    pagination?: ReactNode;
+    resultCount?: number;
+    label?: string;
+    onOpenRow?: (record: TRecord) => void;
 }) {
-    const rows = table.getRowModel().rows;
+    const { copy: previewCopy, text: previewText } = useDesignCopy();
     const total = table.getFilteredRowModel().rows.length;
     const selected = table.getSelectedRowModel().rows.length;
     const { pageIndex, pageSize } = table.getState().pagination;
     const pageCount = Math.max(1, table.getPageCount());
     return (
-        <div className="preview-data-table">
+        <div className="preview-data-table" style={{ '--preview-table-selection-width': table.getAllLeafColumns().some(column => column.id === 'select') ? undefined : '0px' } as CSSProperties}>
             <div className="data-table-toolbar">
                 <div className="data-table-view-label">
                     <List />
                     <strong>{previewCopy.datatable_list}</strong>
-                    <span className="data-table-result-count">{total}</span>
+                    <span className="data-table-result-count">{resultCount ?? total}</span>
                 </div>
                 <div className="data-table-tools">
                     {search}
@@ -284,7 +295,7 @@ export function PreviewDataTable<TRecord>({
             <div className="data-table-filters">
                 {filters}
                 <span className="data-table-visible-count">
-                    {previewText('datatable_columns_count', table.getVisibleLeafColumns().length - 2)}
+                    {previewText('datatable_columns_count', table.getVisibleLeafColumns().filter(column => fields.some(field => field.id === column.id)).length)}
                 </span>
             </div>
             {selected > 0 && (
@@ -301,61 +312,8 @@ export function PreviewDataTable<TRecord>({
                     </PreviewButton>
                 </div>
             )}
-            <div className="data-table-grid" tabIndex={0} role="region" aria-label={previewCopy.datatable_scroll}>
-                <Table style={{ width: table.getTotalSize(), minWidth: '100%' }}>
-                    <colgroup>
-                        {table.getVisibleLeafColumns().map((column) => (
-                            <col key={column.id} style={{ width: column.getSize() }} />
-                        ))}
-                    </colgroup>
-                    <TableHeader>
-                        {table.getHeaderGroups().map((group) => (
-                            <TableRow key={group.id}>
-                                {group.headers.map((header) => (
-                                    <TableHead
-                                        key={header.id}
-                                        data-column={header.column.id}
-                                        scope="col"
-                                        aria-sort={
-                                            header.column.getIsSorted() === 'asc'
-                                                ? 'ascending'
-                                                : header.column.getIsSorted() === 'desc'
-                                                  ? 'descending'
-                                                  : undefined
-                                        }
-                                    >
-                                        {header.isPlaceholder
-                                            ? null
-                                            : flexRender(header.column.columnDef.header, header.getContext())}
-                                    </TableHead>
-                                ))}
-                            </TableRow>
-                        ))}
-                    </TableHeader>
-                    <TableBody>
-                        {rows.length > 0 ? (
-                            rows.map((row) => (
-                                <TableRow
-                                    key={row.id}
-                                    data-state={row.getIsSelected() ? 'selected' : undefined}
-                                    aria-selected={row.getIsSelected()}
-                                >
-                                    {row.getVisibleCells().map((cell) => (
-                                        <TableCell key={cell.id} data-column={cell.column.id}>
-                                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                                        </TableCell>
-                                    ))}
-                                </TableRow>
-                            ))
-                        ) : (
-                            <TableRow>
-                                <TableCell colSpan={table.getVisibleLeafColumns().length}>{empty}</TableCell>
-                            </TableRow>
-                        )}
-                    </TableBody>
-                </Table>
-            </div>
-            <div className="data-table-pagination">
+            <DataTableGrid table={table} empty={empty} label={label} onOpenRow={onOpenRow} />
+            {pagination !== undefined ? pagination : <div className="data-table-pagination">
                 <span className="data-table-range">
                     {previewText(
                         'datatable_range',
@@ -399,7 +357,87 @@ export function PreviewDataTable<TRecord>({
                         <ChevronRight />
                     </PreviewButton>
                 </nav>
-            </div>
+            </div>}
         </div>
+    );
+}
+
+export function DataTableGrid<TRecord>({ table, empty, label, onOpenRow, expandedRowId = null, renderExpanded, renderHeaderActions, pinning = false }: {
+    table: TableInstance<TRecord>;
+    renderHeaderActions?: (column: Column<TRecord>) => ReactNode;
+    pinning?: boolean;
+    empty: ReactNode;
+    label?: string;
+    onOpenRow?: (record: TRecord) => void;
+    expandedRowId?: string | null;
+    renderExpanded?: (record: TRecord) => ReactNode;
+}) {
+    const { copy: previewCopy } = useDesignCopy();
+    const rows = table.getRowModel().rows;
+    const columnStyle = (column: Column<TRecord>, heading = false): CSSProperties | undefined => {
+        if (!pinning) return undefined;
+        const side = column.getIsPinned();
+        return { left: side === 'left' ? column.getStart('left') : 'auto', right: side === 'right' ? column.getAfter('right') : 'auto', position: side || heading ? 'sticky' : 'relative', zIndex: heading ? side ? 5 : 3 : side ? 2 : 0 };
+    };
+    return (
+            <div className="data-table-grid" tabIndex={0} role="region" aria-label={label ?? previewCopy.datatable_scroll}>
+                <Table style={{ width: table.getTotalSize(), minWidth: '100%' }}>
+                    <colgroup>
+                        {table.getVisibleLeafColumns().map((column) => (
+                            <col key={column.id} style={{ width: column.getSize() }} />
+                        ))}
+                    </colgroup>
+                    <TableHeader>
+                        {table.getHeaderGroups().map((group) => (
+                            <TableRow key={group.id}>
+                                {group.headers.map((header) => (
+                                    <TableHead
+                                        key={header.id}
+                                        data-column={header.column.id}
+                                        scope="col"
+                                        className={header.column.columnDef.meta?.headerClassName}
+                                        style={columnStyle(header.column, true)}
+                                        data-pinned={pinning ? header.column.getIsPinned() || undefined : undefined}
+                                        aria-sort={
+                                            header.column.getIsSorted() === 'asc'
+                                                ? 'ascending'
+                                                : header.column.getIsSorted() === 'desc'
+                                                  ? 'descending'
+                                                  : undefined
+                                        }
+                                    >
+                                        <div className="data-table-heading-content">{header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}{!header.isPlaceholder && renderHeaderActions?.(header.column)}</div>
+                                    </TableHead>
+                                ))}
+                            </TableRow>
+                        ))}
+                    </TableHeader>
+                    <TableBody>
+                        {rows.length > 0 ? (
+                            rows.map((row) => (
+                                <Fragment key={row.id}><TableRow
+                                    data-state={row.getIsSelected() || row.id === expandedRowId ? 'selected' : undefined}
+                                    aria-selected={table.options.enableRowSelection ? row.getIsSelected() : undefined}
+                                    onClick={onOpenRow ? event => {
+                                        if (!(event.target as HTMLElement).closest('a,button,input,select,textarea,[role="menuitem"]')) onOpenRow(row.original);
+                                    } : undefined}
+                                >
+                                    {row.getVisibleCells().map((cell) => (
+                                        <TableCell key={cell.id} data-column={cell.column.id} className={cell.column.columnDef.meta?.cellClassName} style={columnStyle(cell.column)} data-pinned={pinning ? cell.column.getIsPinned() || undefined : undefined}>
+                                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                        </TableCell>
+                                    ))}
+                                </TableRow>
+                                {renderExpanded && row.id === expandedRowId && <TableRow><TableCell colSpan={row.getVisibleCells().length} className="data-table-expanded">{renderExpanded(row.original)}</TableCell></TableRow>}
+                                </Fragment>
+                            ))
+                        ) : (
+                            <TableRow>
+                                <TableCell colSpan={table.getVisibleLeafColumns().length}>{empty}</TableCell>
+                            </TableRow>
+                        )}
+                    </TableBody>
+                </Table>
+            </div>
     );
 }

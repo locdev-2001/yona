@@ -435,3 +435,7 @@
     width: var(--preview-widget-icon-size);
     height: var(--preview-widget-icon-size);
 }
+.metric-widget-icon .admin-icon {
+    width: var(--preview-widget-icon-size);
+    height: var(--preview-widget-icon-size);
+}

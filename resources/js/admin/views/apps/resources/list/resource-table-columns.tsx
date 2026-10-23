@@ -29,7 +29,7 @@ const LINKED_CELL_TYPES = ['belongs_to', 'belongs_to_search', 'polymorphic', 'se
 
 export type ResourceCell = { name: string; type: string; html_class: string; value: unknown }
 export type ResourceColumn = { name: string; label: string; html_class: string }
-export type ResourceRow = { url: string | null; cells: ResourceCell[] }
+export type ResourceRow = { recordUrl?: string | null; url: string | null; cells: ResourceCell[] }
 
 export type ResourceRowActionLabels = {
   view: string
@@ -60,7 +60,7 @@ function ResourceRowActions({
   labels,
   onDelete
 }: Omit<ResourceColumnsOptions, 'columns' | 'columnLabel' | 'renderCell'> & { row: ResourceRow }) {
-  const url = row.url
+  const url = row.recordUrl ?? row.url
 
   if (!url) {
     return null
@@ -140,10 +140,10 @@ function IdentityCell({
   const email = cellOf(row, 'email')
   const id = cellOf(row, 'id')?.value
   const subtitle = email ? renderCell(email) : id !== undefined && id !== null ? `#${String(id)}` : null
-  const title = <span className='font-medium'>{name}</span>
+  const title = <span className='block truncate font-medium' title={name}>{name}</span>
 
   return (
-    <div className='flex min-w-44 items-center gap-2'>
+    <div className='resource-table-identity'>
       <Avatar className='size-9'>
         {avatar ? <AvatarImage src={String(avatar)} alt={name} /> : null}
         <AvatarGeneratedFallback

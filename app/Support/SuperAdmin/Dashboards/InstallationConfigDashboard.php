@@ -6,6 +6,7 @@ use App\Models\InstallationConfig;
 use App\Support\SuperAdmin\Dashboard;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Validation\Rule;
 
 // Scoped_resource của controller chỉ lấy bản ghi chưa khoá.
 class InstallationConfigDashboard extends Dashboard
@@ -39,6 +40,14 @@ class InstallationConfigDashboard extends Dashboard
     public function formAttributes(): array
     {
         return ['name', 'value'];
+    }
+
+    public function validationRules(Model $record): array
+    {
+        return [
+            'name' => ['required', 'string', 'max:255', Rule::unique('installation_configs', 'name')->ignore($record->getKey())],
+            'value' => ['nullable', 'string'],
+        ];
     }
 
     public function availableActions(): array

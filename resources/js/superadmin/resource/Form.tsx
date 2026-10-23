@@ -1,7 +1,8 @@
 import { useForm } from '@inertiajs/react';
 
 import Link from '@admin/components/Link';
-import { Button, buttonVariants } from '@admin/components/ui/button';
+import { buttonVariants } from '@admin/components/ui/button';
+import { PreviewButton as Button } from '../design-preview/components';
 import { Field, FieldError, FieldLabel } from '@admin/components/ui/field';
 import { Input } from '@admin/components/ui/input';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from '@admin/components/ui/select';
@@ -81,10 +82,10 @@ export default function ResourceForm({ resource, resourceLabel, singular, singul
             }}
             actions={
                 <>
-                    <Button type="submit" disabled={processing}>
+                    <Button appearance="primary" type="submit" disabled={processing}>
                         {processing ? label('saving') : record ? label('save') : label('create')}
                     </Button>
-                    <Link href={cancelUrl} className={buttonVariants({ variant: 'outline' })}>
+                    <Link href={cancelUrl} className={buttonVariants({ variant: 'outline', className: 'preview-button preview-button--secondary' })}>
                         {label('cancel')}
                     </Link>
                 </>
@@ -116,7 +117,7 @@ export default function ResourceForm({ resource, resourceLabel, singular, singul
                                 <SelectTrigger id={id} className="w-full" aria-invalid={error ? true : undefined}>
                                     <SelectValue />
                                 </SelectTrigger>
-                                <SelectContent alignItemWithTrigger={false}>
+                                <SelectContent className="catalogue-overlay catalogue-select-popup" alignItemWithTrigger={false}>
                                     <SelectGroup>
                                         {options.map(option => (
                                             <SelectItem key={option.value} value={option.value}>

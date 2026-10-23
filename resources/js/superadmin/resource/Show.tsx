@@ -101,13 +101,13 @@ export default function ResourceShow({
         canEdit || (resource === 'accounts' && record.url) ? (
             <>
                 {canEdit ? (
-                    <Link href={`${record.url}/edit`} className={cn(buttonVariants(), 'sm:flex-1')}>
+                    <Link href={`${record.url}/edit`} className={cn(buttonVariants({ className: 'preview-button preview-button--primary' }), 'sm:flex-1')}>
                         <PencilIcon />
                         {label('edit')}
                     </Link>
                 ) : null}
                 {resource === 'accounts' && record.url ? (
-                    <Link href={`${record.url}/overview`} className={cn(buttonVariants({ variant: 'outline' }), 'sm:flex-1')}>
+                    <Link href={`${record.url}/overview`} className={cn(buttonVariants({ variant: 'outline', className: 'preview-button preview-button--secondary' }), 'sm:flex-1')}>
                         <LayoutDashboardIcon />
                         {label('account_overview')}
                     </Link>
@@ -121,8 +121,8 @@ export default function ResourceShow({
     return (
         <div
             className={cn(
-                'relative grid grid-cols-1 gap-6',
-                hasRightColumn ? 'lg:grid-cols-[350px_minmax(0,1fr)]' : 'max-w-xl',
+                'console-record-detail-layout',
+                hasRightColumn ? 'console-record-detail-layout--split' : 'max-w-xl',
             )}
         >
             <RecordViewLeftPanel

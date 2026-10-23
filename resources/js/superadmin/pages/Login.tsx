@@ -1,3 +1,5 @@
+import type { ReactNode } from 'react';
+import ConsoleAuthLayout from '../components/ConsoleAuthLayout';
 import { Head, useForm, usePage } from '@inertiajs/react';
 
 import Login from '@admin/views/pages/auth/login';
@@ -8,10 +10,11 @@ import type { SuperAdminPageProps } from '../types';
 
 export default function SuperAdminLogin() {
     const { flash } = usePage<SuperAdminPageProps>().props;
-    const { data, setData, post, processing } = useForm({
+    const { data, setData, post, processing, errors } = useForm({
         super_admin: { email: '', password: '' },
     });
     const label = useConsoleLabels();
+    const fieldErrors = errors as Record<string, string | undefined>;
     return (
         <>
             <Head title={label('login_title')} />
@@ -22,6 +25,7 @@ export default function SuperAdminLogin() {
                     password={data.super_admin.password}
                     error={flash?.error}
                     processing={processing}
+                    fieldErrors={{ email: fieldErrors['super_admin.email'], password: fieldErrors['super_admin.password'] }}
                     labels={{
                         email: label('login_email'),
                         emailPlaceholder: label('login_email_placeholder'),
@@ -39,4 +43,4 @@ export default function SuperAdminLogin() {
     );
 }
 
-SuperAdminLogin.layout = null;
+SuperAdminLogin.layout = (page: ReactNode) => <ConsoleAuthLayout>{page}</ConsoleAuthLayout>;
