@@ -181,3 +181,9 @@ Production đang ở f7661f97. Bốn commit main mới hơn là cập nhật UI 
 Deploy đầu 2f83d87e thành công nhưng nghiệm thu màn đăng nhập runtime production phát hiện admin-console-auth co còn 98px vì là flex item không được cấp width, kéo panel còn 50px. Đây là lỗi ở wrapper runtime, gallery không tái hiện. Đã dùng chung quy tắc width:100%/min-width:0 của admin-console-shell cho admin-console-auth; không thêm token hoặc thay layout mẫu đã duyệt.
 
 Nghiệm thu trực tiếp form runtime local: viewport 1280px, root/stage 1280px, panel 320px; mobile 375px trang 375px, panel 320px. Để mở cùng trang khi phiên local đã đăng nhập, tạm bỏ guest-only trong local lúc kiểm tra và đã khôi phục trước commit; auth production và routes được giữ nguyên. Ảnh production-login-narrow-before.png, auth-runtime-width-desktop.png, auth-runtime-width-mobile.png. Deploy bản sửa ngay trong cùng yêu cầu triển khai.
+
+## Sửa autofill theo ảnh người dùng — 23/10/2026
+
+Ảnh production của người dùng cho thấy trình duyệt tô khối xám/trắng chữ vào ô email/mật khẩu. Gốc: ConsoleAuthLayout thiếu data-theme trong khi .admin-preview mặc định color-scheme dark, dù html đã dùng token sáng. Đã lấy theme từ cùng ThemeProvider để root auth đồng bộ với shell. Field controls dùng chung bổ sung trạng thái :autofill/:-webkit-autofill cho input trong nhóm, dùng surface-control/text-primary và field-height đã duyệt; không thêm màu, kích thước hoặc token mới, không tắt autocomplete.
+
+Nghiệm thu runtime local bằng dữ liệu minh họa, ép pseudo-state :autofill bằng DevTools (không dùng thông tin đăng nhập thật): sáng scheme light, chữ rgb(30,41,59), nền rgb(255,255,255); tối scheme dark, chữ rgb(248,245,235), nền rgb(48,48,41). Nền phủ đúng token hiện tại, focus vẫn ở wrapper, mobile 375px không tràn. Đã khôi phục guest middleware và theme sáng local sau kiểm tra. Ảnh autofill-light-local.png, autofill-dark-local.png, autofill-dark-mobile.png.
