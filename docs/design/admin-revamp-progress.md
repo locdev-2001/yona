@@ -169,3 +169,9 @@ Kiểm tra HTTP local không có phiên: `/admin/login` trả 200; `/admin/sign_
 Nghiệm thu trình duyệt local: Agent bot mở chi tiết/form ở route mới, submit quay về chi tiết thành công và tên vẫn là “Nhân viên AI”; nhật ký mới hiển thị “Sửa agent bot” với liên kết /admin/agent-bots/128. Kho sticker tải hai bộ và nội dung qua API mới. Đã mở Sức khỏe kênh, Trạng thái hệ thống, Mức dùng tính năng, Access token, Ứng dụng nền tảng, Biến cấu hình hệ thống (tìm rỗng) và Cấu hình Email qua URL mới. Bookmark /admin/feature_usage/inbox_created chuyển về /admin/feature-usage/inbox-created, reload vẫn ra dữ liệu. Mobile 375px: trang 369px. HTTP kiểm tra URL cũ có query giữ nguyên query; /super_admin/sign_in chuyển 301 về /admin/login. route:list không còn đoạn tĩnh snake_case dưới /admin; /super_admin chỉ còn route chuyển hướng.
 
 TypeScript, Pint các PHP sửa, i18n-check, build admin/SDK và gallery đạt. Ảnh: kebab-agent-bot-detail.png, kebab-sticker-library.png, kebab-audit-logs.png, kebab-feature-usage-mobile.png (dùng các ảnh đợt trước làm đối chiếu). Chưa commit/push/deploy thay đổi route.
+
+## Chuẩn bị triển khai theo yêu cầu — 23/10/2026
+
+Đã commit đổi route tại 3ee754cb và tích hợp origin/main tại 98cd6917. Giữ cả cập nhật cuộc gọi lẫn Reicon/giấy phép, chuẩn hóa thêm call-quality (màn từ main mới), không đổi khóa dịch. TypeScript trên bản tích hợp đạt; Pint và i18n-check đạt. Đã mở /admin/call-quality với dữ liệu local và ghi ảnh release-call-quality-local.png. Ảnh production-login-before.png ghi nhận giao diện production cũ tại /admin/sign_in trước triển khai.
+
+Production đang ở f7661f97. Bốn commit main mới hơn là cập nhật UI cuộc gọi/tài liệu; plan trước triển khai xác nhận không có migration mới. Triển khai qua cổng yona-deploy theo lệnh deploy trực tiếp của người dùng, nghiệm thu production sẽ ghi tiếp sau khi server hoàn tất.
