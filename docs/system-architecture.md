@@ -652,12 +652,13 @@ POST /webhooks/media/{provider} ─► MediaDrivers ─► MediaWebhooks ─► 
   màn hình thì module tự đẩy cập nhật). Lõi không có `if` theo loại. Thêm loại = một module
   + một mục sổ.
 - **Phòng nhóm (module `App\Services\Groups\Calls`):** `GroupRoomPolicy` (≤25, quản trị
-  nhóm điều hành), `GroupRoomTrail` (tin "X đã mở phòng thoại" khi người đầu tiên vào, tin
-  "Phòng thoại đã kết thúc · thời lượng · số người" khi phòng đóng; phòng không ai vào thì
+  nhóm điều hành), `GroupRoomTrail` (tin "X đã mở phòng thoại" khi người đầu tiên vào; phòng đóng thì
+  chính tin đó được ghi đè thành "Phòng thoại đã kết thúc · thời lượng · số người", giữ
+  mốc thời gian nên thẻ đứng đúng chỗ cuộc gọi diễn ra; phòng không ai vào thì
   không ghi; tin nhóm lưu một bản cho mọi thành viên nên `content_attributes.call` mang dữ
   liệu có cấu trúc (người mở phòng, thời lượng, số người, tối đa 5 người tham gia) và giao diện
   dịch theo người đọc, `content` chỉ là bản ngôn ngữ mặc định cho tìm kiếm; đi qua
-  `GroupService::postNotice`, người mở phòng là người gửi của cả hai tin để mỗi thành viên thấy tin nằm theo người khởi tạo), `GroupRoomPresence` → job
+  `GroupService::postCallNotice` (một cuộc gọi một tin, phát `message.updated`), người mở phòng là người gửi để mỗi thành viên thấy tin nằm theo người khởi tạo), `GroupRoomPresence` → job
   `BroadcastGroupVoiceRoomJob` (duy nhất theo nhóm tới khi chạy, trễ 2 giây để gom; đẩy
   `voice_room.updated` tới từng thành viên với `account_id`/`conversation_id` của dòng họ).
   `GroupRoomSummaries` dựng ảnh chụp `voice_room` (người đang ngồi, ai chia sẻ màn hình, mở
@@ -699,7 +700,7 @@ POST /webhooks/media/{provider} ─► MediaDrivers ─► MediaWebhooks ─► 
   `my_invitation` của người xem) và vào sự kiện `group_call.updated` (`BroadcastGroupCallJob`,
   không trễ, mỗi thành viên một payload có lời mời của chính họ). `GroupCallTrail`: tin "X đã
   bắt đầu cuộc gọi nhóm" khi người đầu tiên vào (giao diện vẽ thẻ có nút Tham gia khi cuộc còn
-  diễn ra) và tin kết quả khi phòng đóng. API: `POST|DELETE /yona/groups/{id}/group_call`
+  diễn ra); phòng đóng thì chính tin đó đổi thành kết quả (cùng `postCallNotice`). API: `POST|DELETE /yona/groups/{id}/group_call`
   (gọi/vào, từ chối), `GET /yona/group_calls/ringing`, điều hành
   `…/group_call/participants/{userId}`.
 - **Mỗi người một cuộc gọi:** `CallService::join` cho người vào tự rời mọi cuộc khác đang ngồi
