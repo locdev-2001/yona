@@ -21,7 +21,7 @@ return [
     'SETTINGS_SCREEN' => [
         'TITLE' => 'Cài đặt',
         'EDIT_PROFILE' => 'Sửa hồ sơ',
-        'SEARCH' => 'Tìm kiếm',
+        'SEARCH' => 'Tìm mục cài đặt',
         'PREFERENCES' => 'Tuỳ chọn',
         'ACCOUNT_GROUP' => 'Tài khoản',
         'MY_PROFILE' => 'Hồ sơ của tôi',

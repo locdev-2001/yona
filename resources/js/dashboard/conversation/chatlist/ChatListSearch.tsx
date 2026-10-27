@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import { router } from '@inertiajs/react';
 
@@ -7,9 +7,12 @@ import { t } from '../../../i18n';
 import { useConversation } from '../ConversationContext';
 import ListHeaderButton from './ListHeaderButton';
 import SearchField from 'dashboard/components-next/search-field/SearchField';
+import { isTypingTarget } from 'shared/helpers/kbd';
 
 // Gõ xong mới hỏi máy chủ — mỗi phím không bắn một truy vấn.
 const SEARCH_DEBOUNCE_MS = 300;
+const FOCUS_SEARCH_KEY = '/';
+
 
 // Ô tìm ngay trong cột danh sách: lọc tại chỗ danh sách đang xem (hộp thư, tab,
 // trạng thái, bộ lọc giữ nguyên). Tìm mọi thứ trong hệ thống là ô ở sidebar.
@@ -17,6 +20,18 @@ const SEARCH_DEBOUNCE_MS = 300;
 export default function ChatListSearch({ actions, trailing }: { actions?: ReactNode; trailing?: ReactNode }) {
     const { accountId, listFilters, teamId, searchQuery, setSearchQuery, isComposing } = useConversation();
     const [draft, setDraft] = useState(searchQuery);
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        const onKeyDown = (event: KeyboardEvent) => {
+            if (event.key !== FOCUS_SEARCH_KEY || event.metaKey || event.ctrlKey || event.altKey) return;
+            if (isTypingTarget(event.target) || document.querySelector('[role=dialog][aria-modal=true], dialog[open]')) return;
+            event.preventDefault();
+            inputRef.current?.focus();
+        };
+        window.addEventListener('keydown', onKeyDown);
+        return () => window.removeEventListener('keydown', onKeyDown);
+    }, []);
 
     // Từ khoá đổi từ ngoài (điều hướng) thì ô theo; khoảng trắng đang gõ dở thì giữ.
     useEffect(() => {
@@ -38,6 +53,7 @@ export default function ChatListSearch({ actions, trailing }: { actions?: ReactN
     return (
         <div className="flex items-center gap-1.5 min-w-0">
             <SearchField
+                inputRef={inputRef}
                 value={draft}
                 placeholder={t('CHAT_LIST.SEARCH.INPUT')}
                 ariaLabel={t('CHAT_LIST.SEARCH.LABEL')}

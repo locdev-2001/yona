@@ -15,6 +15,7 @@ import { logout } from 'dashboard/helper/logout';
 import { accountScopedUrl } from 'dashboard/helper/URLHelper';
 import { useCurrentUserAvailability } from 'dashboard/realtime/hooks';
 import { isPhoneScreen } from 'dashboard/composables/useViewportWidth';
+import { isTypingTarget } from 'shared/helpers/kbd';
 import { avatarSeed } from 'shared/avatar/avatarSeed';
 import type { DashboardPageProps } from '../../types';
 import { readLastAppUrl, settingsHomeUrl, useSettingsPages } from './settingsPages';
@@ -29,8 +30,6 @@ interface NavLink {
 // Cú bấm thứ hai của một lần bấm đúp bánh răng rơi xuống nền mờ: bỏ qua trong khoảng này.
 const BACKDROP_CLOSE_GRACE_MS = 600;
 
-const isTypingTarget = (target: EventTarget | null) =>
-    target instanceof HTMLElement && (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName));
 
 // Màn Cài đặt: cửa sổ nổi giữa màn trên máy tính (bấm nền mờ để đóng), toàn màn trên
 // điện thoại. Cột trái gồm hồ sơ, trạng thái và danh mục trang cài đặt; bên phải là

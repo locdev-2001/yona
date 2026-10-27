@@ -19,7 +19,7 @@ return [
     'SETTINGS_SCREEN' => [
         'TITLE' => 'Settings',
         'EDIT_PROFILE' => 'Edit profile',
-        'SEARCH' => 'Search',
+        'SEARCH' => 'Search settings',
         'PREFERENCES' => 'Preferences',
         'ACCOUNT_GROUP' => 'Account',
         'MY_PROFILE' => 'My profile',

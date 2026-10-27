@@ -63,3 +63,8 @@ export function isTouchOnlyDevice(): boolean {
 
     return window.matchMedia('(hover: none)').matches;
 }
+
+/** Phím tắt một phím không được bắt khi người dùng đang gõ trong ô nhập. */
+export function isTypingTarget(target: EventTarget | null): boolean {
+    return target instanceof HTMLElement && (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName));
+}

@@ -19,7 +19,7 @@ return [
     'UNATTENDED_HEADING' => 'Unattended',
     // Yona: the list search box only narrows the list in view; the sidebar box searches everything.
     'SEARCH' => [
-        'INPUT' => 'Search',
+        'INPUT' => 'Search conversations',
         'LABEL' => 'Search conversations in this list',
         'CLEAR' => 'Clear search',
         'COMPOSE' => 'New message',

@@ -330,11 +330,12 @@ return [
     ],
     'SEARCH_IN_CONVERSATION' => [
         'OPEN' => 'Tìm trong hội thoại',
-        'PLACEHOLDER' => 'Tìm trong hội thoại',
+        'PLACEHOLDER' => 'Tìm trong hội thoại này',
         'OLDER' => 'Kết quả cũ hơn (Enter)',
         'NEWER' => 'Kết quả mới hơn (Shift+Enter)',
         'CLOSE' => 'Đóng tìm kiếm (Esc)',
         'NO_RESULTS' => 'Không thấy',
+        'SEARCHING' => 'Đang tìm…',
         'ERROR' => 'Lỗi, thử lại',
     ],
     'HEADER' => [

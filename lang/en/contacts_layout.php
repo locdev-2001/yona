@@ -138,7 +138,7 @@ return [
             'PENDING' => 'Pending',
         ],
         'ADD_FRIEND' => 'Add Friend',
-        'SEARCH_PLACEHOLDER' => 'Search',
+        'SEARCH_PLACEHOLDER' => 'Search friends',
         'SECTION' => '{label} — {count}',
         'STATUS_ONLINE' => 'Online',
         'STATUS_OFFLINE' => 'Offline',

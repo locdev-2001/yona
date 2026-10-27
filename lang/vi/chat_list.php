@@ -21,7 +21,7 @@ return [
     'UNATTENDED_HEADING' => 'Không giám sát',
     // Ô tìm trong cột danh sách chỉ lọc danh sách đang xem; tìm mọi thứ là ô ở sidebar.
     'SEARCH' => [
-        'INPUT' => 'Tìm kiếm',
+        'INPUT' => 'Tìm hội thoại',
         'LABEL' => 'Tìm hội thoại trong danh sách đang xem',
         'CLEAR' => 'Xoá từ khoá',
         'COMPOSE' => 'Soạn tin nhắn mới',

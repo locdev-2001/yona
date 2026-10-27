@@ -36,6 +36,7 @@ export function shortcutGroups(sendsWithEnter: boolean): ShortcutGroup[] {
             group: 'GENERAL',
             shortcuts: [
                 { action: 'COMMAND_BAR', keys: ['mod', 'K'] },
+                { action: 'FOCUS_LIST_SEARCH', keys: ['/'] },
                 { action: 'SHOW_SHORTCUTS', keys: ['mod', '/'] },
                 { action: 'CLOSE', keys: ['esc'] },
             ],

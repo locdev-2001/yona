@@ -3,12 +3,11 @@ import type { ReactNode } from 'react';
 
 import { t } from '../../../i18n';
 import CloseButton from 'dashboard/components-next/close-button/CloseButton';
+import { isTypingTarget } from 'shared/helpers/kbd';
 
 // Cú bấm mở hồ sơ có thể rơi tiếp xuống nền mờ vừa hiện: bỏ qua trong khoảng này.
 const BACKDROP_CLOSE_GRACE_MS = 600;
 
-const isTypingTarget = (target: EventTarget | null) =>
-    target instanceof HTMLElement && (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName));
 
 interface ProfileWindowProps {
     label: string;

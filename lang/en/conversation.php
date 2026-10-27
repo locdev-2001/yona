@@ -329,11 +329,12 @@ return [
     ],
     'SEARCH_IN_CONVERSATION' => [
         'OPEN' => 'Search in conversation',
-        'PLACEHOLDER' => 'Search in conversation',
+        'PLACEHOLDER' => 'Search this conversation',
         'OLDER' => 'Older result (Enter)',
         'NEWER' => 'Newer result (Shift+Enter)',
         'CLOSE' => 'Close search (Esc)',
         'NO_RESULTS' => 'No results',
+        'SEARCHING' => 'Searching…',
         'ERROR' => 'Error, try again',
     ],
     'HEADER' => [

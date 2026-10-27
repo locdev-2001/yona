@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { KeyboardEvent } from 'react';
 
 import Button from 'dashboard/components-next/button/Button';
+import SearchField from 'dashboard/components-next/search-field/SearchField';
 import { t } from '../../../../i18n';
 import { searchConversationMessages } from '../../api';
 import { useConversation } from '../../ConversationContext';
@@ -29,6 +30,7 @@ export default function ConversationSearchBar({ onClose }: { onClose: () => void
     const [result, setResult] = useState<SearchResult | null>(null);
     const [index, setIndex] = useState(-1);
     const [failed, setFailed] = useState(false);
+    const [isSearching, setSearching] = useState(false);
     const latestRequestRef = useRef(0);
     const inputRef = useRef<HTMLInputElement>(null);
 
@@ -42,9 +44,11 @@ export default function ConversationSearchBar({ onClose }: { onClose: () => void
             setResult(null);
             setIndex(-1);
             setFailed(false);
+            setSearching(false);
             return undefined;
         }
 
+        setSearching(true);
         const timer = setTimeout(() => {
             searchConversationMessages(accountId, conversationId, trimmed)
                 .then(messageIds => {
@@ -56,6 +60,9 @@ export default function ConversationSearchBar({ onClose }: { onClose: () => void
                 })
                 .catch(() => {
                     if (requestId === latestRequestRef.current) setFailed(true);
+                })
+                .finally(() => {
+                    if (requestId === latestRequestRef.current) setSearching(false);
                 });
         }, SEARCH_DEBOUNCE_MS);
 
@@ -79,7 +86,7 @@ export default function ConversationSearchBar({ onClose }: { onClose: () => void
         void focusMessage(result.messageIds[next]);
     };
 
-    const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
         if (event.key !== 'Escape' && event.key !== 'Enter') return;
 
         event.preventDefault();
@@ -89,7 +96,9 @@ export default function ConversationSearchBar({ onClose }: { onClose: () => void
         else step(event.shiftKey ? 'newer' : 'older');
     };
 
-    const statusText = failed
+    const statusText = isSearching
+        ? t('CONVERSATION.SEARCH_IN_CONVERSATION.SEARCHING')
+        : failed
         ? t('CONVERSATION.SEARCH_IN_CONVERSATION.ERROR')
         : result && total === 0
           ? t('CONVERSATION.SEARCH_IN_CONVERSATION.NO_RESULTS')
@@ -98,44 +107,46 @@ export default function ConversationSearchBar({ onClose }: { onClose: () => void
             : '';
 
     return (
-        <div
-            data-testid="conversation-search-bar"
-            role="search"
-            className="field-surface flex items-center w-full min-w-0 gap-1 h-9 ps-2.5 pe-1 rounded-lg"
-            onKeyDown={onKeyDown}
-        >
-            <span className="flex-shrink-0 i-lucide-search size-4 text-n-slate-10" aria-hidden />
-            <input
-                ref={inputRef}
-                type="search"
+        <div data-testid="conversation-search-bar" role="search" className="w-full min-w-0">
+            <SearchField
+                inputRef={inputRef}
                 value={query}
-                onChange={event => setQuery(event.target.value)}
                 placeholder={t('CONVERSATION.SEARCH_IN_CONVERSATION.PLACEHOLDER')}
-                aria-label={t('CONVERSATION.SEARCH_IN_CONVERSATION.PLACEHOLDER')}
-                className="flex-1 min-w-0 !m-0 !p-0 !h-auto !border-0 !bg-transparent !outline-none !shadow-none text-sm text-n-slate-12 placeholder:text-n-slate-10 [&::-webkit-search-cancel-button]:hidden"
+                className="pe-1"
+                clearable={false}
+                onChange={setQuery}
+                onKeyDown={onKeyDown}
+                trailing={
+                    <>
+                        <span
+                            data-testid="conversation-search-status"
+                            aria-live="polite"
+                            className="flex-shrink-0 text-xs tabular-nums text-n-slate-11 whitespace-nowrap"
+                        >
+                            {statusText}
+                        </span>
+                        <Button
+                            ghost
+                            slate
+                            xs
+                            icon="i-lucide-chevron-up"
+                            title={t('CONVERSATION.SEARCH_IN_CONVERSATION.OLDER')}
+                            disabled={!canStep(index, total, 'older')}
+                            onClick={() => step('older')}
+                        />
+                        <Button
+                            ghost
+                            slate
+                            xs
+                            icon="i-lucide-chevron-down"
+                            title={t('CONVERSATION.SEARCH_IN_CONVERSATION.NEWER')}
+                            disabled={!canStep(index, total, 'newer')}
+                            onClick={() => step('newer')}
+                        />
+                        <Button ghost slate xs icon="i-lucide-x" title={t('CONVERSATION.SEARCH_IN_CONVERSATION.CLOSE')} onClick={onClose} />
+                    </>
+                }
             />
-            <span data-testid="conversation-search-status" aria-live="polite" className="flex-shrink-0 text-xs tabular-nums text-n-slate-11 whitespace-nowrap">
-                {statusText}
-            </span>
-            <Button
-                ghost
-                slate
-                xs
-                icon="i-lucide-chevron-up"
-                title={t('CONVERSATION.SEARCH_IN_CONVERSATION.OLDER')}
-                disabled={!canStep(index, total, 'older')}
-                onClick={() => step('older')}
-            />
-            <Button
-                ghost
-                slate
-                xs
-                icon="i-lucide-chevron-down"
-                title={t('CONVERSATION.SEARCH_IN_CONVERSATION.NEWER')}
-                disabled={!canStep(index, total, 'newer')}
-                onClick={() => step('newer')}
-            />
-            <Button ghost slate xs icon="i-lucide-x" title={t('CONVERSATION.SEARCH_IN_CONVERSATION.CLOSE')} onClick={onClose} />
         </div>
     );
 }

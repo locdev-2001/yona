@@ -12,6 +12,7 @@ return [
     ],
     'ACTIONS' => [
         'COMMAND_BAR' => 'Tìm và mở mọi tính năng',
+        'FOCUS_LIST_SEARCH' => 'Tìm hội thoại trong danh sách',
         'SHOW_SHORTCUTS' => 'Xem phím tắt',
         'CLOSE' => 'Đóng cửa sổ đang mở',
         'GO_TO_INBOX' => 'Mở Hộp thư',

@@ -10,6 +10,7 @@ return [
     ],
     'ACTIONS' => [
         'COMMAND_BAR' => 'Find and open any feature',
+        'FOCUS_LIST_SEARCH' => 'Search conversations in the list',
         'SHOW_SHORTCUTS' => 'Show shortcuts',
         'CLOSE' => 'Close the open window',
         'GO_TO_INBOX' => 'Open Inbox',

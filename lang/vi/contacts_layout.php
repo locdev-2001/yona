@@ -139,7 +139,7 @@ return [
             'PENDING' => 'Đang chờ xử lý',
         ],
         'ADD_FRIEND' => 'Thêm Bạn',
-        'SEARCH_PLACEHOLDER' => 'Tìm kiếm',
+        'SEARCH_PLACEHOLDER' => 'Tìm bạn bè',
         'SECTION' => '{label} — {count}',
         'STATUS_ONLINE' => 'Trực tuyến',
         'STATUS_OFFLINE' => 'Ngoại tuyến',

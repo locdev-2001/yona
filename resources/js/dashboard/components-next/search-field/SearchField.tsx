@@ -1,3 +1,5 @@
+import type { KeyboardEvent, ReactNode, Ref } from 'react';
+
 import { t } from '../../../i18n';
 
 interface SearchFieldProps {
@@ -6,17 +8,34 @@ interface SearchFieldProps {
     placeholder: string;
     ariaLabel?: string;
     className?: string;
+    inputRef?: Ref<HTMLInputElement>;
+    // Phần đứng sau ô nhập trong cùng khung (bộ đếm kết quả, nút lên/xuống).
+    trailing?: ReactNode;
+    onKeyDown?: (event: KeyboardEvent<HTMLInputElement>) => void;
+    // Tắt nút xoá khi phần trailing đã có nút đóng riêng.
+    clearable?: boolean;
 }
 
 // Ô tìm chuẩn của bảng điều khiển: nền field-surface, một viền focus duy nhất ở
-// khung ngoài, nút xoá khi đã gõ, ESC xoá từ khoá.
-export default function SearchField({ value, onChange, placeholder, ariaLabel, className = '' }: SearchFieldProps) {
+// khung ngoài, nút xoá khi đã gõ, ESC xoá từ khoá (ô rỗng thì ESC đi tiếp ra ngoài).
+export default function SearchField({
+    value,
+    onChange,
+    placeholder,
+    ariaLabel,
+    className = '',
+    inputRef,
+    trailing,
+    onKeyDown,
+    clearable = true,
+}: SearchFieldProps) {
     const clearLabel = t('CHAT_LIST.SEARCH.CLEAR');
 
     return (
         <div className={`field-surface flex min-w-0 items-center gap-2 h-9 max-md:h-10 px-2.5 rounded-lg ${className}`}>
             <span className="i-lucide-search size-[1.125rem] shrink-0 text-n-slate-10" aria-hidden="true" />
             <input
+                ref={inputRef}
                 type="search"
                 value={value}
                 placeholder={placeholder}
@@ -27,10 +46,12 @@ export default function SearchField({ value, onChange, placeholder, ariaLabel, c
                     if (event.key === 'Escape' && value) {
                         event.stopPropagation();
                         onChange('');
+                        return;
                     }
+                    onKeyDown?.(event);
                 }}
             />
-            {value ? (
+            {value && clearable ? (
                 <button
                     type="button"
                     title={clearLabel}
@@ -41,6 +62,7 @@ export default function SearchField({ value, onChange, placeholder, ariaLabel, c
                     <span className="i-lucide-x size-3.5" aria-hidden="true" />
                 </button>
             ) : null}
+            {trailing}
         </div>
     );
 }
