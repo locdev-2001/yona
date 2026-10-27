@@ -80,17 +80,34 @@ export function useScrollToLatest({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [lastMessage?.id, conversationId]);
 
-    // Khung tin co lại (ô soạn bung ra, banner xuất hiện) mà đang ở đáy thì giữ đáy,
-    // không để tin cuối bị ô soạn che mất.
+    // Đang ở đáy thì giữ đáy khi khung co lại (ô soạn bung ra, banner xuất hiện)
+    // lẫn khi một tin cao thêm (ảnh, video, thẻ liên kết tải xong sau lần cuộn đầu).
     useLayoutEffect(() => {
         const panel = panelRef.current;
         if (!panel) return undefined;
 
-        const observer = new ResizeObserver(() => {
+        const resizeObserver = new ResizeObserver(() => {
             if (!isAwayFromLatestRef.current) panel.scrollTop = panel.scrollHeight;
         });
-        observer.observe(panel);
-        return () => observer.disconnect();
+        resizeObserver.observe(panel);
+        Array.from(panel.children).forEach(row => resizeObserver.observe(row));
+
+        const rowObserver = new MutationObserver(mutations => {
+            mutations.forEach(mutation => {
+                mutation.addedNodes.forEach(node => {
+                    if (node instanceof Element) resizeObserver.observe(node);
+                });
+                mutation.removedNodes.forEach(node => {
+                    if (node instanceof Element) resizeObserver.unobserve(node);
+                });
+            });
+        });
+        rowObserver.observe(panel, { childList: true });
+
+        return () => {
+            rowObserver.disconnect();
+            resizeObserver.disconnect();
+        };
     }, [panelRef]);
 
     const onScroll = useCallback(
