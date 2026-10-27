@@ -68,8 +68,8 @@ return [
             'ERROR_MESSAGE' => 'Đã có lỗi, vui lòng thử lại',
         ],
         'CONFIRM' => [
-            'TITLE' => 'Xác Nhận Xoá',
-            'MESSAGE' => 'Bạn có chắc muốn xoá? ',
+            'TITLE' => 'Xác nhận xoá',
+            'MESSAGE' => 'Bạn có chắc muốn xoá',
             'YES' => 'Có, xoá ',
             'NO' => 'Không, giữ ',
         ],

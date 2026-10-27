@@ -209,7 +209,7 @@ export default function CannedIndex() {
                         onConfirm={() => void confirmDeletion()}
                         title={t('CANNED_MGMT.DELETE.CONFIRM.TITLE')}
                         message={t('CANNED_MGMT.DELETE.CONFIRM.MESSAGE')}
-                        messageValue={` ${deletingRecord?.short_code ?? ''} ? `}
+                        messageValue={` ${deletingRecord?.short_code ?? ''}?`}
                         confirmText={`${t('CANNED_MGMT.DELETE.CONFIRM.YES')} ${deletingRecord?.short_code ?? ''}`}
                         rejectText={`${t('CANNED_MGMT.DELETE.CONFIRM.NO')} ${deletingRecord?.short_code ?? ''}`}
                     />

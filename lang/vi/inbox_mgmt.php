@@ -716,7 +716,7 @@ return [
         'AVATAR_DELETE_BUTTON_TEXT' => 'Xoá hình đại diện',
         'CONFIRM' => [
             'TITLE' => 'Xác nhận xoá',
-            'MESSAGE' => 'Bạn có muốn xoá? ',
+            'MESSAGE' => 'Bạn có muốn xoá',
             'PLACE_HOLDER' => 'Vui lòng điền {inboxName} để xác nhận',
             'YES' => 'Có, Xoá ',
             'NO' => 'Không, Giữ ',

@@ -8,7 +8,7 @@ return [
     'DESC' => 'Xoá người này khỏi danh sách',
     'CONFIRM' => [
         'TITLE' => 'Xác nhận xoá',
-        'MESSAGE' => 'Bạn có muốn xoá? ',
+        'MESSAGE' => 'Bạn có muốn xoá',
         'YES' => 'Có, Xoá',
         'NO' => 'Không, giữ',
     ],

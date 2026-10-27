@@ -81,7 +81,7 @@ return [
         ],
         'CONFIRM' => [
             'TITLE' => 'Xác nhận xoá',
-            'MESSAGE' => 'Bạn có chắc muốn xoá? ',
+            'MESSAGE' => 'Bạn có chắc muốn xoá',
             'YES' => 'Có, xóa ',
             'NO' => 'Không, giữ lại ',
         ],
