@@ -9,6 +9,7 @@ import { sendEmailTranscript } from 'dashboard/conversation/api';
 import type { Conversation } from 'dashboard/conversation/types';
 import { ApiError } from 'dashboard/helper/apiClient';
 import { t } from '../../i18n';
+import { isProductFeatureVisible } from 'shared/helpers/productVisibility';
 
 // Port từ widgets/conversation/EmailTranscriptModal.vue. Validate email như vuelidate
 // (required + email + minLength 4), lỗi hiện sau khi gõ ($touch). Khác biệt cố ý B5:
@@ -65,7 +66,10 @@ export default function EmailTranscriptModal({ show, currentChat, accountId, onC
         }
     };
 
-    const showAssigneeOption = Boolean(currentChat.meta.assignee) && currentChat.meta.assignee_type !== 'AgentBot';
+    const showAssigneeOption =
+        isProductFeatureVisible('conversationAssignment') &&
+        Boolean(currentChat.meta.assignee) &&
+        currentChat.meta.assignee_type !== 'AgentBot';
 
     return (
         <Modal show={show} onClose={onCancel}>

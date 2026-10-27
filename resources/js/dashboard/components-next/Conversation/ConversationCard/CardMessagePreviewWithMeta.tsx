@@ -1,7 +1,6 @@
 import Avatar from 'dashboard/components-next/avatar/Avatar';
-import { avatarSeed } from 'shared/avatar/avatarSeed';
-import type { AvailabilityStatus } from 'dashboard/constants/globals';
 import MessagePreview from './MessagePreview';
+import { cardAssigneeOf } from './cardAssignee';
 import CardLabels from './CardLabels';
 import type { AccountLabel } from './CardLabels';
 import type { Conversation } from 'dashboard/conversation/types';
@@ -20,13 +19,7 @@ export default function CardMessagePreviewWithMeta({
     accountLabels,
     hasLabels = false,
 }: CardMessagePreviewWithMetaProps) {
-    const agent = conversation.meta?.assignee;
-    const assignee = {
-        seed: avatarSeed('user', agent?.id),
-        name: agent?.name ?? agent?.available_name,
-        thumbnail: agent?.thumbnail,
-        status: agent?.availability_status as AvailabilityStatus | undefined,
-    };
+    const assignee = cardAssigneeOf(conversation);
     const unreadMessagesCount = conversation.unread_count;
 
     return (
@@ -48,7 +41,7 @@ export default function CardMessagePreviewWithMeta({
                         <CardLabels conversationLabels={conversation.labels} accountLabels={accountLabels} />
                     </div>
                 ) : null}
-                {assignee.name ? (
+                {assignee?.name ? (
                     <Avatar
                         seed={assignee.seed}
                         name={assignee.name}

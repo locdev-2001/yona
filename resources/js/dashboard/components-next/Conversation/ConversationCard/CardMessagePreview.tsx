@@ -1,7 +1,6 @@
 import Avatar from 'dashboard/components-next/avatar/Avatar';
-import { avatarSeed } from 'shared/avatar/avatarSeed';
-import type { AvailabilityStatus } from 'dashboard/constants/globals';
 import MessagePreview from './MessagePreview';
+import { cardAssigneeOf } from './cardAssignee';
 import type { Conversation } from 'dashboard/conversation/types';
 
 // Port từ components-next/Conversation/ConversationCard/CardMessagePreview.vue.
@@ -12,13 +11,7 @@ interface CardMessagePreviewProps {
 }
 
 export default function CardMessagePreview({ conversation }: CardMessagePreviewProps) {
-    const agent = conversation.meta?.assignee;
-    const assignee = {
-        seed: avatarSeed('user', agent?.id),
-        name: agent?.name ?? agent?.available_name,
-        thumbnail: agent?.thumbnail,
-        status: agent?.availability_status as AvailabilityStatus | undefined,
-    };
+    const assignee = cardAssigneeOf(conversation);
     const unreadMessagesCount = conversation.unread_count;
 
     return (
@@ -29,7 +22,7 @@ export default function CardMessagePreview({ conversation }: CardMessagePreviewP
                 className={`w-full ${unreadMessagesCount > 0 ? 'text-n-slate-12' : 'text-n-slate-11'}`}
             />
             <div className="flex items-center flex-shrink-0 gap-2 pb-2">
-                {assignee.name ? (
+                {assignee?.name ? (
                     <Avatar
                         seed={assignee.seed}
                         name={assignee.name}
