@@ -17,6 +17,7 @@ import {
 import { t } from '../../../i18n';
 import type { DashboardPageProps } from '../../types';
 import { ICONS } from 'dashboard/icons';
+import { isProductFeatureVisible, type ProductFeature } from 'shared/helpers/productVisibility';
 
 // Port từ routes/dashboard/settings/profile/NotificationPreferences.vue +
 // NotificationCheckBox.vue + constants.js (NOTIFICATION_TYPES).
@@ -24,10 +25,13 @@ import { ICONS } from 'dashboard/icons';
 // Lệch bản gốc có chủ đích: máy chủ không có khoá VAPID hoặc trình duyệt thiếu
 // Push API thì ẩn hẳn cột "Thông báo đẩy" và công tắc, không hứa điều không gửi được.
 
+// Hộp thư cá nhân không có đồng nghiệp: báo hội thoại mới cho cả hộp thư, nhắc tên và
+// hội thoại tham gia là tính năng nhiều người nên ẩn; hội thoại tự gán cho chủ hộp thư
+// nên "giao cho bạn" chính là báo hội thoại mới và tin mới.
 const NOTIFICATION_TYPES = [
-    { value: 'conversation_creation', labelKey: 'PROFILE_SETTINGS.FORM.NOTIFICATIONS.TYPES.CONVERSATION_CREATED' },
+    { value: 'conversation_creation', labelKey: 'PROFILE_SETTINGS.FORM.NOTIFICATIONS.TYPES.CONVERSATION_CREATED', feature: 'conversationParticipants' },
     { value: 'conversation_assignment', labelKey: 'PROFILE_SETTINGS.FORM.NOTIFICATIONS.TYPES.CONVERSATION_ASSIGNED' },
-    { value: 'conversation_mention', labelKey: 'PROFILE_SETTINGS.FORM.NOTIFICATIONS.TYPES.CONVERSATION_MENTION' },
+    { value: 'conversation_mention', labelKey: 'PROFILE_SETTINGS.FORM.NOTIFICATIONS.TYPES.CONVERSATION_MENTION', feature: 'conversationParticipants' },
     {
         value: 'assigned_conversation_new_message',
         labelKey: 'PROFILE_SETTINGS.FORM.NOTIFICATIONS.TYPES.ASSIGNED_CONVERSATION_NEW_MESSAGE',
@@ -35,8 +39,9 @@ const NOTIFICATION_TYPES = [
     {
         value: 'participating_conversation_new_message',
         labelKey: 'PROFILE_SETTINGS.FORM.NOTIFICATIONS.TYPES.PARTICIPATING_CONVERSATION_NEW_MESSAGE',
+        feature: 'conversationParticipants',
     },
-];
+].filter(({ feature }) => !feature || isProductFeatureVisible(feature as ProductFeature));
 
 const ALL_DELIVERY_TYPES = ['email', 'push'] as const;
 

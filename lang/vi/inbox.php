@@ -23,8 +23,8 @@ return [
     'TYPES' => [
         'CONVERSATION_MENTION' => 'Bạn đã được nhắc đến trong một hội thoại',
         'CONVERSATION_CREATION' => 'Có hội thoại mới',
-        'CONVERSATION_ASSIGNMENT' => 'Một hội thoại được giao cho bạn',
-        'ASSIGNED_CONVERSATION_NEW_MESSAGE' => 'Có tin nhắn mới trong hội thoại bạn phụ trách',
+        'CONVERSATION_ASSIGNMENT' => 'Có hội thoại mới',
+        'ASSIGNED_CONVERSATION_NEW_MESSAGE' => 'Có tin nhắn mới',
         'PARTICIPATING_CONVERSATION_NEW_MESSAGE' => 'Có tin nhắn mới trong hội thoại bạn tham gia',
         'SLA_MISSED_FIRST_RESPONSE' => 'Hội thoại trễ SLA phản hồi đầu tiên',
         'SLA_MISSED_NEXT_RESPONSE' => 'Hội thoại trễ SLA phản hồi kế tiếp',
@@ -32,7 +32,7 @@ return [
     ],
     'TYPES_NEXT' => [
         'CONVERSATION_MENTION' => 'Được nhắc tên',
-        'CONVERSATION_ASSIGNMENT' => 'Giao cho bạn',
+        'CONVERSATION_ASSIGNMENT' => 'Hội thoại mới',
         'CONVERSATION_CREATION' => 'Hội thoại mới',
         'SLA_MISSED_FIRST_RESPONSE' => 'Trễ SLA',
         'SLA_MISSED_NEXT_RESPONSE' => 'Trễ SLA',

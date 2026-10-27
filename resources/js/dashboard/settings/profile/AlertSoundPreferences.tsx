@@ -58,14 +58,16 @@ export default function AlertSoundPreferences({ value, onChange }: AlertSoundPre
                     <PreferenceRow label={t('ALERT_SOUND.TONE_LABEL')} htmlFor="alert-sound-tone">
                         <AlertTonePicker id="alert-sound-tone" value={value.tone} onChange={tone => update({ tone })} />
                     </PreferenceRow>
-                    <PreferenceRow label={t('PROFILE_SETTINGS.FORM.NOTIFICATIONS.SOUND.SCOPE')} htmlFor="alert-sound-scope">
-                        <SelectInput
-                            id="alert-sound-scope"
-                            value={value.scope}
-                            options={ALERT_SCOPES.map(scope => ({ value: scope, label: t(SCOPE_LABEL_KEYS[scope]) }))}
-                            onChange={scope => update({ scope: scope as AlertScope })}
-                        />
-                    </PreferenceRow>
+                    {ALERT_SCOPES.length > 1 ? (
+                        <PreferenceRow label={t('PROFILE_SETTINGS.FORM.NOTIFICATIONS.SOUND.SCOPE')} htmlFor="alert-sound-scope">
+                            <SelectInput
+                                id="alert-sound-scope"
+                                value={value.scope}
+                                options={ALERT_SCOPES.map(scope => ({ value: scope, label: t(SCOPE_LABEL_KEYS[scope]) }))}
+                                onChange={scope => update({ scope: scope as AlertScope })}
+                            />
+                        </PreferenceRow>
+                    ) : null}
                     <PreferenceRow
                         label={t('PROFILE_SETTINGS.FORM.NOTIFICATIONS.SOUND.ONLY_WHEN_HIDDEN')}
                         note={t('PROFILE_SETTINGS.FORM.NOTIFICATIONS.SOUND.ONLY_WHEN_HIDDEN_NOTE')}

@@ -23,8 +23,8 @@ return [
     'TYPES' => [
         'CONVERSATION_MENTION' => 'You have been mentioned in a conversation',
         'CONVERSATION_CREATION' => 'New conversation created',
-        'CONVERSATION_ASSIGNMENT' => 'A conversation has been assigned to you',
-        'ASSIGNED_CONVERSATION_NEW_MESSAGE' => 'New message in an assigned conversation',
+        'CONVERSATION_ASSIGNMENT' => 'New conversation',
+        'ASSIGNED_CONVERSATION_NEW_MESSAGE' => 'New message',
         'PARTICIPATING_CONVERSATION_NEW_MESSAGE' => 'New message in a conversation you are participating in',
         'SLA_MISSED_FIRST_RESPONSE' => 'SLA target first response missed for conversation',
         'SLA_MISSED_NEXT_RESPONSE' => 'SLA target next response missed for conversation',
@@ -32,7 +32,7 @@ return [
     ],
     'TYPES_NEXT' => [
         'CONVERSATION_MENTION' => 'Mentioned',
-        'CONVERSATION_ASSIGNMENT' => 'Assigned to you',
+        'CONVERSATION_ASSIGNMENT' => 'New conversation',
         'CONVERSATION_CREATION' => 'New Conversation',
         'SLA_MISSED_FIRST_RESPONSE' => 'SLA breach',
         'SLA_MISSED_NEXT_RESPONSE' => 'SLA breach',

@@ -1,12 +1,18 @@
 import { DEFAULT_ALERT_TONE, alertToneOrDefault, type AlertTone } from 'shared/alertSound/alertTones';
 import type { UISettings } from 'dashboard/composables/useUISettings';
+import { isProductFeatureVisible } from 'shared/helpers/productVisibility';
 
 // `users.ui_settings.notification_sound` — máy chủ kiểm ở App\Support\AlertSound\AgentAlertPreference.
 export const ALERT_PREFERENCE_UI_SETTINGS_KEY = 'notification_sound';
 
-export const ALERT_SCOPES = ['all', 'assigned'] as const;
+const ALL_ALERT_SCOPES = ['all', 'assigned'] as const;
 
-export type AlertScope = (typeof ALERT_SCOPES)[number];
+export type AlertScope = (typeof ALL_ALERT_SCOPES)[number];
+
+// Không còn phân công trên giao diện thì chỉ còn "mọi hội thoại"; lựa chọn cũ rơi về mặc định.
+export const ALERT_SCOPES: readonly AlertScope[] = ALL_ALERT_SCOPES.filter(
+    scope => scope !== 'assigned' || isProductFeatureVisible('conversationAssignment'),
+);
 
 export interface AgentAlertPreference {
     enabled: boolean;

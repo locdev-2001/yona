@@ -5,7 +5,7 @@
 return [
     'notification_title' => [
         'conversation_creation' => 'A conversation (#{display_id}) has been created in {inbox_name}',
-        'conversation_assignment' => 'A conversation (#{display_id}) has been assigned to you',
+        'conversation_assignment' => 'New conversation (#{display_id})',
         'assigned_conversation_new_message' => 'A new message is created in conversation (#{display_id})',
         'conversation_mention' => 'You have been mentioned in conversation (#{display_id})',
         'sla_missed_first_response' => 'SLA target first response missed for conversation (#{display_id})',
@@ -22,9 +22,9 @@ return [
     'no_content' => 'No content',
     'email' => [
         'conversation_creation' => '{agent_name}, A new conversation [ID - {display_id}] has been created in {inbox_name}.',
-        'conversation_assignment' => '{agent_name}, A new conversation [ID - {display_id}] has been assigned to you.',
+        'conversation_assignment' => '{agent_name}, a new conversation [ID - {display_id}] arrived in your inbox.',
         'conversation_mention' => '{agent_name}, You have been mentioned in conversation [ID - {display_id}]',
-        'assigned_conversation_new_message' => '{agent_name}, New message in your assigned conversation [ID - {display_id}].',
+        'assigned_conversation_new_message' => '{agent_name}, new message in conversation [ID - {display_id}].',
         'participating_conversation_new_message' => '{agent_name}, New message in your participating conversation [ID - {display_id}].',
     ],
     'account' => [
