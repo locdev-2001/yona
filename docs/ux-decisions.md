@@ -189,3 +189,7 @@ Chuyển kênh/hội thoại thu nhỏ màn gọi, giữ phiên media; mini play
 Số FPS preview được đo từ video đang hiển thị, độc lập với FPS/bitrate RTP gửi hoặc nhận. Khi không có người xem hoặc encoding tạm ngừng, giữ số truyền thực tế và ghi rõ trạng thái; không coi FPS gửi 0 là preview đứng. Mục tiêu 1080p60 không đổi; mẫu active chưa đạt vẫn cảnh báo. Chi tiết nghiệm thu và giới hạn nằm ở reports/call-scenes-audit-20261022.md.
 
 Bố cục người tham gia trên phone: hai người xếp dọc và tự giới hạn kích thước theo chiều cao vùng nội dung để giữ ô vuông; 3–4 người dùng hai cột, từ 5 người dùng ba cột. Hàng cuối căn giữa; khi không đủ chỗ thì cuộn. Kích thước dùng CSS container của vùng gọi, không thêm timer đo layout.
+
+## Khung ứng dụng (27/10/2026)
+
+**Màu nút chính:** nền `n-brand` là `#086DE0` ở cả hai theme để chữ trắng đạt 4.91:1 (WCAG AA). Chữ màu brand trên bề mặt dùng thang `blue-11` (tối là `#7EB6FF`), vì một màu xanh không thể vừa làm nền cho chữ trắng vừa làm chữ trên nền tối đạt 4.5:1.

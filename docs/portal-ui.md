@@ -37,6 +37,7 @@ Không chép giá trị RGB vào component. Theme sáng/tối tiếp tục dùng
 | Biến CSS | Sáng | Tối |
 |---|---|---|
 | `--blue-9` | `#2781F6` | `#2781F6` |
+| `--brand` (nền `bg-n-brand`) | `#086DE0` | `#086DE0` |
 | `--slate-12` | `#1C2024` | `#EDEEF0` |
 | `--slate-11` | `#60646C` | `#B0B4BA` |
 | `--surface-app` | `#FFFFFF` | `#18191B` |
@@ -45,6 +46,8 @@ Không chép giá trị RGB vào component. Theme sáng/tối tiếp tục dùng
 | `--teal-9` | `#12A594` | `#12A594` |
 | `--ruby-9` | `#E54666` | `#E54666` |
 | `--amber-9` | `#FFC53D` | `#FFC53D` |
+
+Từ 27/10/2026: nền `n-brand` đổi sang `#086DE0` để chữ trắng đạt 4.91:1 (cũ `#2781F6` chỉ 3.78:1); `text-n-brand` đi theo `--blue-11` (`#086DE0` sáng, `#7EB6FF` tối) qua `textColor` trong `tailwind.config.js`, nên chữ brand đọc được trên cả hai nền.
 
 Bảng này là bản đọc nguồn ngày 22/10/2026 để đối chiếu, không phải bảng hằng số mới cho component. Khi thay đổi màu, sửa biến CSS nguồn; giao diện chỉ dùng class/token ngữ nghĩa.
 

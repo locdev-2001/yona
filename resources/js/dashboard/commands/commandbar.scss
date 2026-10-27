@@ -1,6 +1,6 @@
 // Port từ style của routes/dashboard/commands/commandbar.vue
 ninja-keys {
-  --ninja-accent-color: rgba(39, 129, 246, 1);
+  --ninja-accent-color: rgb(var(--brand));
   --ninja-font-family: 'Inter';
   z-index: 9999;
 }

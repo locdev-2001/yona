@@ -228,6 +228,12 @@ const tailwindConfig = {
       ...colors,
       body: slateDark.slate7,
     },
+    // Chữ màu brand đặt trên bề mặt (sáng hoặc tối) nên đi theo thang blue-11; nền brand giữ
+    // sắc đậm để chữ trắng đạt WCAG AA ở cả hai theme.
+    textColor: ({ theme }) => ({
+      ...theme('colors'),
+      n: { ...theme('colors.n'), brand: 'rgb(var(--blue-11) / <alpha-value>)' },
+    }),
     keyframes: {
       ...defaultTheme.keyframes,
       wiggle: {
