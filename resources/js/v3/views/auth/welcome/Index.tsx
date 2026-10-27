@@ -5,7 +5,7 @@ import { router, usePage } from '@inertiajs/react';
 import type { SharedPageProps } from '../../../../types';
 
 import { t } from '../../../../i18n';
-import AuthShell from 'v3/components/AuthShell';
+import AuthShell, { authCard } from 'v3/components/AuthShell';
 import FormInput from 'v3/components/Form/Input';
 import NextButton from 'dashboard/components-next/button/Button';
 import { BrandMark } from '../../../components/BrandMark';
@@ -45,7 +45,7 @@ export default function WelcomeIndex() {
 
     return (
         <AuthShell>
-            <div className="w-full max-w-[460px] py-10 px-6 sm:px-10 bg-white outline outline-1 outline-n-container">
+            <div className={authCard}>
                 <BrandMark className="h-7" />
                 <h1 className="mt-6 text-2xl font-medium text-n-slate-12">{t('PEOPLE.WELCOME.TITLE')}</h1>
                 <p className="mt-2 text-sm text-n-slate-11">{t('PEOPLE.WELCOME.SUBTITLE')}</p>
