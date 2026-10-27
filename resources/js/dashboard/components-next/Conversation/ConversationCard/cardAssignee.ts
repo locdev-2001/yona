@@ -4,7 +4,7 @@ import { isProductFeatureVisible } from 'shared/helpers/productVisibility';
 import type { Conversation } from 'dashboard/conversation/types';
 
 export interface CardAssignee {
-    seed: string;
+    seed: string | undefined;
     name: string | undefined;
     thumbnail: string | undefined;
     status: AvailabilityStatus | undefined;
