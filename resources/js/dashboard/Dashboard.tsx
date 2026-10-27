@@ -99,7 +99,10 @@ function DashboardFrame({ children }: { children: ReactNode }) {
                     <RealtimeProvider />
                     <UnreadTitleSync />
                 </div>
-                {call.room && !call.stageOpen && isPhone ? <CallBar room={call.room} local={call.local} actions={call.actions} /> : null}
+                {/* Đang mở hội thoại thì thanh gọi nằm trong khung hội thoại, ngay trên ô nhập (ThreadCallBar). */}
+                {call.room && !call.stageOpen && isPhone && !conversationId ? (
+                    <CallBar room={call.room} local={call.local} actions={call.actions} atScreenBottom={!hasMobileTabBar || isSettingsScreen} />
+                ) : null}
                 {isPhone ? <DirectOutgoingStrip placement="bottom" /> : null}
                 {/* Trong luồng, không nổi: cột trên co lại nên thẻ cuối danh sách không bị che. */}
                 {hasMobileTabBar && !isSettingsScreen ? <MobileTabBar /> : null}

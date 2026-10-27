@@ -5,10 +5,24 @@ import CallDuration from './CallDuration';
 import type { CallActions, CallLocalState, CallRoomView } from './types';
 
 // Điện thoại không có thanh bên cố định: khối "Đã kết nối" thu thành một dải ngay trên thanh
-// tab, cùng nội dung với VoicePanel. Bấm vùng tên để mở lại màn phòng.
-export default function CallBar({ room, local, actions }: { room: CallRoomView; local: CallLocalState; actions: CallActions }) {
+// tab (hay trên ô nhập khi đang mở hội thoại), cùng nội dung với VoicePanel. Bấm vùng tên để mở
+// lại màn phòng. Nằm sát đáy màn hình thì chừa khoảng an toàn của iOS.
+export default function CallBar({
+    room,
+    local,
+    actions,
+    atScreenBottom = false,
+}: {
+    room: CallRoomView;
+    local: CallLocalState;
+    actions: CallActions;
+    atScreenBottom?: boolean;
+}) {
     return (
-        <div data-testid="call-bar" className="flex flex-none items-center gap-2 w-full min-w-0 px-3 h-14 bg-n-surface-panel">
+        <div
+            data-testid="call-bar"
+            className={`flex flex-none items-center gap-2 w-full min-w-0 px-3 bg-n-surface-panel ${atScreenBottom ? 'h-[calc(3.5rem+env(safe-area-inset-bottom))] pb-[env(safe-area-inset-bottom)]' : 'h-14'}`}
+        >
             <button type="button" className="flex flex-col flex-1 min-w-0 text-start" title={t('CALLS.ROOM.EXPAND')} onClick={actions.expand}>
                 <span className="flex items-center gap-1.5 text-sm font-semibold text-n-teal-11">
                     <Icon icon="i-lucide-signal" className="size-4 flex-shrink-0" />

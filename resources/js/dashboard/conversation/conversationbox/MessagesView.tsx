@@ -3,6 +3,7 @@ import type { UIEvent } from 'react';
 import { usePage } from '@inertiajs/react';
 
 import MessageList from 'dashboard/components-next/message/MessageList';
+import ThreadCallBar from 'dashboard/calls/ThreadCallBar';
 import { collectMediaAttachments } from 'dashboard/components-next/message/helpers/attachments';
 import Loader from 'shared/components/loader/Loader';
 import Modal from 'dashboard/components/Modal';
@@ -276,6 +277,7 @@ export default function MessagesView() {
                         </div>
                     </div>
                 )}
+                <ThreadCallBar />
                 {awaitsAcceptance ? (
                     <MessageRequestCard />
                 ) : (
