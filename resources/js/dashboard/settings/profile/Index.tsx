@@ -24,16 +24,18 @@ import MessageSignature from './MessageSignature';
 import ChangePassword from './ChangePassword';
 import NotificationPreferences from './NotificationPreferences';
 import AlertSoundPreferences from './AlertSoundPreferences';
+import MessageToastPreferences from './MessageToastPreferences';
+import {
+    MESSAGE_TOAST_POSITION_KEY,
+    messageToastPositionOf,
+    type MessageToastPosition,
+} from 'dashboard/notifications/toast/messageToastPosition';
 import MfaSettingsCard from './MfaSettingsCard';
 import ActiveSessions from './ActiveSessions';
 import FontSize from './FontSize';
 import UserLanguageSelect from './UserLanguageSelect';
 import type { UISettings } from 'dashboard/composables/useUISettings';
-import {
-    ALERT_PREFERENCE_UI_SETTINGS_KEY,
-    agentAlertPreferenceOf,
-    type AgentAlertPreference,
-} from 'dashboard/alertSound/preference';
+import { ALERT_PREFERENCE_UI_SETTINGS_KEY, agentAlertPreferenceOf } from 'dashboard/alertSound/preference';
 import type { DashboardPageProps } from '../../types';
 
 // Port từ dashboard/routes/dashboard/settings/profile/Index.vue — Access token
@@ -167,11 +169,11 @@ export default function ProfileSettingsIndex() {
         }
     };
 
-    const updateAlertSound = async (preference: AgentAlertPreference) => {
+    // Bộ nghe tin mới (âm báo, hộp báo) đọc tuỳ chọn từ props `auth` dùng chung của mọi trang.
+    const updateSharedUISetting = async (patch: UISettings) => {
         try {
-            await updateUISettings({ [ALERT_PREFERENCE_UI_SETTINGS_KEY]: preference });
+            await updateUISettings(patch);
             useAlert(t('PROFILE_SETTINGS.FORM.API.UPDATE_SUCCESS'));
-            // Bộ nghe tin mới đọc tuỳ chọn từ props `auth` dùng chung của mọi trang.
             router.reload({ only: ['auth'] });
         } catch (error) {
             useAlert(parseApiErrorMessage(error) || t('PROFILE_SETTINGS.FORM.API.UPDATE_ERROR'));
@@ -287,7 +289,13 @@ export default function ProfileSettingsIndex() {
                             <NotificationPreferences />
                             <AlertSoundPreferences
                                 value={agentAlertPreferenceOf(uiSettings)}
-                                onChange={preference => void updateAlertSound(preference)}
+                                onChange={preference => void updateSharedUISetting({ [ALERT_PREFERENCE_UI_SETTINGS_KEY]: preference })}
+                            />
+                            <MessageToastPreferences
+                                value={messageToastPositionOf(uiSettings)}
+                                onChange={(position: MessageToastPosition) =>
+                                    void updateSharedUISetting({ [MESSAGE_TOAST_POSITION_KEY]: position })
+                                }
                             />
                         </div>
                     </SectionLayout>

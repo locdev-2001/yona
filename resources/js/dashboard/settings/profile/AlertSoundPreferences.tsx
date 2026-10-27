@@ -17,7 +17,7 @@ interface AlertSoundPreferencesProps {
     onChange: (preference: AgentAlertPreference) => void;
 }
 
-function PreferenceRow({ label, htmlFor, note, children }: { label: string; htmlFor?: string; note?: string; children: ReactNode }) {
+export function PreferenceRow({ label, htmlFor, note, children }: { label: string; htmlFor?: string; note?: string; children: ReactNode }) {
     return (
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex flex-col gap-0.5 min-w-0">

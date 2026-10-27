@@ -33,20 +33,36 @@ self.addEventListener('fetch', event => {
     );
 });
 
+// Đang có tab Yona hiện trên màn hình thì tab đó tự hiện hộp báo trong trang (NewMessageToasts):
+// không bắn thêm thông báo của hệ điều hành. Tab ẩn hoặc đã đóng thì báo như cũ.
+async function hasVisibleDashboard() {
+    const windowClients = await clients.matchAll({ type: 'window', includeUncontrolled: true });
+    return windowClients.some(
+        client =>
+            client.frameType === 'top-level' &&
+            client.visibilityState === 'visible' &&
+            new URL(client.url).pathname.startsWith('/app/'),
+    );
+}
+
+async function showPushNotification(notification) {
+    if (await hasVisibleDashboard()) return;
+
+    await self.registration.showNotification(notification.title, {
+        body: notification.body,
+        tag: notification.tag,
+        // Cùng hội thoại vẫn kêu lại. Không có tag mà renotify=true thì Chrome ném TypeError.
+        renotify: Boolean(notification.tag),
+        icon: notification.icon,
+        data: { ...(notification.data || {}), url: notification.url },
+    });
+}
+
 self.addEventListener('push', event => {
     const notification = event.data ? event.data.json() : null;
     if (!notification) return;
 
-    const tasks = [
-        self.registration.showNotification(notification.title, {
-            body: notification.body,
-            tag: notification.tag,
-            // Cùng hội thoại vẫn kêu lại. Không có tag mà renotify=true thì Chrome ném TypeError.
-            renotify: Boolean(notification.tag),
-            icon: notification.icon,
-            data: { ...(notification.data || {}), url: notification.url },
-        }),
-    ];
+    const tasks = [showPushNotification(notification)];
 
     if (typeof notification.badge_count === 'number' && self.navigator && 'setAppBadge' in self.navigator) {
         tasks.push(self.navigator.setAppBadge(notification.badge_count).catch(() => undefined));

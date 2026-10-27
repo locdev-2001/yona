@@ -8,6 +8,7 @@ import ActionCableConnector from './ActionCableConnector';
 import ReconnectService from './ReconnectService';
 import { realtimeStore } from './store';
 import type { RealtimeIdentity } from './types';
+import NewMessageToasts from 'dashboard/notifications/toast/NewMessageToasts';
 
 // Tương đương App.vue: vueActionCable.init(store, pubsubToken) + new ReconnectService.
 // Kết nối là singleton module-level (window.reconnectService gốc) vì Dashboard
@@ -51,6 +52,7 @@ export default function RealtimeProvider() {
         <>
             <NetworkNotification />
             <NewMessageAlert />
+            <NewMessageToasts />
         </>
     );
 }

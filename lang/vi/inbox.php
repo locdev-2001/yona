@@ -86,4 +86,11 @@ return [
         'TAB_ALL' => 'Tất cả',
         'EMPTY_UNREAD' => 'Đã đọc hết thông báo',
     ],
+    'TOAST' => [
+        'REGION' => 'Tin mới',
+        'NOW' => 'vừa xong',
+        'CLOSE' => 'Đóng thông báo',
+        'OPEN_CONVERSATION' => 'Mở hội thoại',
+        'OPEN_FRIENDS' => 'Mở Bạn bè',
+    ],
 ];

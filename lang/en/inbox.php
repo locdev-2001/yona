@@ -86,4 +86,11 @@ return [
         'TAB_ALL' => 'All',
         'EMPTY_UNREAD' => 'You are all caught up',
     ],
+    'TOAST' => [
+        'REGION' => 'New messages',
+        'NOW' => 'just now',
+        'CLOSE' => 'Close notification',
+        'OPEN_CONVERSATION' => 'Open conversation',
+        'OPEN_FRIENDS' => 'Open Friends',
+    ],
 ];
