@@ -21,6 +21,7 @@ interface PopoverProps {
     align?: 'start' | 'end';
     disableMobileView?: boolean;
     closeOnScroll?: boolean;
+    triggerClassName?: string;
     onShow?: () => void;
     onHide?: () => void;
     trigger: (context: { isOpen: boolean }) => ReactNode;
@@ -28,7 +29,7 @@ interface PopoverProps {
 }
 
 const Popover = forwardRef<PopoverHandle, PopoverProps>(function Popover(
-    { align = 'end', disableMobileView = false, closeOnScroll = true, onShow, onHide, trigger, content },
+    { align = 'end', disableMobileView = false, closeOnScroll = true, triggerClassName = 'inline-flex', onShow, onHide, trigger, content },
     ref,
 ) {
     const [isActive, setIsActive] = useState(false);
@@ -125,7 +126,7 @@ const Popover = forwardRef<PopoverHandle, PopoverProps>(function Popover(
 
     return (
         <>
-            <span ref={triggerRef} className="inline-flex" onClick={toggle}>
+            <span ref={triggerRef} className={triggerClassName} onClick={toggle}>
                 {trigger({ isOpen: isActive })}
             </span>
             {isActive && isMobile

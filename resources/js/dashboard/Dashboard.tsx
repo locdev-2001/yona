@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { usePage } from '@inertiajs/react';
 
@@ -38,7 +38,6 @@ export default function Dashboard({ children }: { children: ReactNode }) {
 }
 
 function DashboardFrame({ children }: { children: ReactNode }) {
-    const [isMobileSidebarOpen, setMobileSidebarOpen] = useState(false);
     const page = usePage<DashboardPageProps & { conversationId?: number | null; isComposing?: boolean }>();
     const { auth, currentAccount, stickerDisplaySize, conversationId, isComposing } = page.props;
     const viewportWidth = useViewportWidth();
@@ -80,10 +79,7 @@ function DashboardFrame({ children }: { children: ReactNode }) {
             <div className="flex flex-col h-screen supports-[height:100dvh]:h-dvh w-full">
                 <PushSubscriptionSync />
                 <div className="flex flex-grow overflow-hidden text-n-slate-12 min-h-0 w-full">
-                    <Sidebar
-                        isMobileSidebarOpen={isMobileSidebarOpen}
-                        onCloseMobileSidebar={() => setMobileSidebarOpen(false)}
-                    />
+                    <Sidebar />
                     <main className="relative flex flex-1 h-full w-full min-h-0 px-0 overflow-hidden bg-n-surface-canvas">
                         {isSettingsScreen ? <SettingsShell>{children}</SettingsShell> : children}
                         <CommandBar />
@@ -106,12 +102,7 @@ function DashboardFrame({ children }: { children: ReactNode }) {
                 {call.room && !call.stageOpen && isPhone ? <CallBar room={call.room} local={call.local} actions={call.actions} /> : null}
                 {isPhone ? <DirectOutgoingStrip placement="bottom" /> : null}
                 {/* Trong luồng, không nổi: cột trên co lại nên thẻ cuối danh sách không bị che. */}
-                {hasMobileTabBar && !isSettingsScreen ? (
-                    <MobileTabBar
-                        isMobileSidebarOpen={isMobileSidebarOpen}
-                        onToggleSidebar={() => setMobileSidebarOpen(open => !open)}
-                    />
-                ) : null}
+                {hasMobileTabBar && !isSettingsScreen ? <MobileTabBar /> : null}
             </div>
         </StickerDisplaySizeProvider>
     );

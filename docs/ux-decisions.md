@@ -193,3 +193,5 @@ Bố cục người tham gia trên phone: hai người xếp dọc và tự gi�
 ## Khung ứng dụng (27/10/2026)
 
 **Màu nút chính:** nền `n-brand` là `#086DE0` ở cả hai theme để chữ trắng đạt 4.91:1 (WCAG AA). Chữ màu brand trên bề mặt dùng thang `blue-11` (tối là `#7EB6FF`), vì một màu xanh không thể vừa làm nền cho chữ trắng vừa làm chữ trên nền tối đạt 4.5:1.
+
+**Thanh tab điện thoại:** 5 ô theo thứ tự Hộp thư · Bạn bè · Tìm kiếm · Thông báo · Cài đặt (tối đa 5 để mỗi ô rộng 75px ở 375px). Tìm kiếm mở bảng lệnh Ctrl+K; Thông báo mở bảng của chuông và mang số chưa đọc; Cài đặt mở màn Cài đặt ở danh mục (hồ sơ, trạng thái, các trang cài đặt, phím tắt, đăng xuất), chọn mục nào mới vào trang đó, ✕ ở danh mục thoát Cài đặt. Bỏ ô "Thêm": ngăn kéo sidebar không còn mở trên điện thoại vì mọi thứ trong đó đã có chỗ khác (lọc kênh ở hàng chip của danh sách). Riêng sắp xếp, ẩn, đổi tên kênh hiện chỉ có ở sidebar máy tính. Thứ tự tab có thể đổi khi founder muốn.

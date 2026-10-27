@@ -31,8 +31,8 @@ export default function Sidebar({
     onCloseMobileSidebar,
 }: {
     isMobileSidebarOpen?: boolean;
-    onCloseMobileSidebar: () => void;
-}) {
+    onCloseMobileSidebar?: () => void;
+} = {}) {
     const { currentAccount, currentAccountUser, inboxes = [], teams = [] } = usePage<DashboardPageProps>().props;
     const accountId = currentAccount.id;
     const role = currentAccountUser.role;
@@ -198,7 +198,7 @@ export default function Sidebar({
             if (asideRef.current?.contains(target)) return;
             // Nền mờ của popover (panel chuông trên điện thoại) chỉ đóng popover, giữ ngăn kéo.
             if (target.closest('#mobile-sidebar-launcher, [data-popover-content], [data-popover-backdrop]')) return;
-            onCloseMobileSidebar();
+            onCloseMobileSidebar?.();
         };
         document.addEventListener('mousedown', onClickOutside);
         return () => document.removeEventListener('mousedown', onClickOutside);
@@ -206,7 +206,7 @@ export default function Sidebar({
 
     // Ô tìm kiếm mở bảng lệnh Ctrl+K (tìm tính năng, chuyển trang); không còn trang tìm kiếm riêng.
     const openSearch = () => {
-        onCloseMobileSidebar();
+        onCloseMobileSidebar?.();
         openCommandBar();
     };
 

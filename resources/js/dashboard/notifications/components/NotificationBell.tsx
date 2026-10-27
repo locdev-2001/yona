@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import type { ReactNode } from 'react';
 
 import Popover from 'dashboard/components-next/popover/Popover';
 import { formatUnreadCount } from 'dashboard/helper/notificationTray';
@@ -20,13 +21,22 @@ const BELL_FILTERS: Record<BellTab, FixedNotificationFilters> = {
 const TRIGGER_BASE_CLASS =
     'relative flex flex-shrink-0 items-center justify-center rounded-lg bg-n-surface-field text-n-slate-11 transition-all duration-100 ease-out hover:bg-n-surface-field-hover';
 
+export interface NotificationBellTriggerContext {
+    isOpen: boolean;
+    count: number;
+    label: string;
+}
+
 interface NotificationBellProps {
-    isCollapsed: boolean;
+    isCollapsed?: boolean;
+    // Nút mở khác nút chuông của sidebar (ô Thông báo trên thanh tab điện thoại); bảng thông báo giữ nguyên.
+    renderTrigger?: (context: NotificationBellTriggerContext) => ReactNode;
+    triggerClassName?: string;
     // Mở một thông báo hay sang trang đầy đủ thì ngăn kéo sidebar trên điện thoại cũng đóng.
     onNavigate?: () => void;
 }
 
-export default function NotificationBell({ isCollapsed, onNavigate }: NotificationBellProps) {
+export default function NotificationBell({ isCollapsed = false, renderTrigger, triggerClassName, onNavigate }: NotificationBellProps) {
     const count = useNotificationsUnreadCount();
     const [bellTab, setBellTab] = useState<BellTab>('unread');
     const label = t('INBOX.BELL.OPEN_LABEL', { count });
@@ -34,7 +44,8 @@ export default function NotificationBell({ isCollapsed, onNavigate }: Notificati
     return (
         <Popover
             align="start"
-            trigger={({ isOpen }) => (
+            triggerClassName={triggerClassName}
+            trigger={({ isOpen }) => renderTrigger ? renderTrigger({ isOpen, count, label }) : (
                 <button
                     type="button"
                     data-test-id="notification-bell"

@@ -14,6 +14,7 @@ import CloseButton from 'dashboard/components-next/close-button/CloseButton';
 import { logout } from 'dashboard/helper/logout';
 import { accountScopedUrl } from 'dashboard/helper/URLHelper';
 import { useCurrentUserAvailability } from 'dashboard/realtime/hooks';
+import { isPhoneScreen } from 'dashboard/composables/useViewportWidth';
 import { avatarSeed } from 'shared/avatar/avatarSeed';
 import type { DashboardPageProps } from '../../types';
 import { readLastAppUrl, settingsHomeUrl, useSettingsPages } from './settingsPages';
@@ -52,7 +53,14 @@ export default function SettingsShell({ children, currentUrl: overlayUrl, onClos
     const displayName = user.display_name || user.name;
     const settingsPages = useSettingsPages();
     const [query, setQuery] = useState('');
-    const [isNavOpen, setNavOpen] = useState(false);
+    // Điện thoại vào Cài đặt ở trang chủ (tab Cài đặt, bánh răng) thì thấy danh mục trước, chọn
+    // trang nào mới mở trang đó; vào thẳng một trang cụ thể (Ctrl+K) thì mở trang đó luôn.
+    const [opensAsMenu] = useState(
+        () => isPhoneScreen(window.innerWidth) && currentUrl.split('?')[0] === settingsHomeUrl(accountId),
+    );
+    const [isNavOpen, setNavOpen] = useState(opensAsMenu);
+    const [hasLeftMenu, setHasLeftMenu] = useState(false);
+    const firstUrl = useRef(currentUrl);
     const [showShortcuts, setShowShortcuts] = useState(false);
     const openedAt = useRef(Date.now());
 
@@ -110,7 +118,14 @@ export default function SettingsShell({ children, currentUrl: overlayUrl, onClos
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    useEffect(() => setNavOpen(false), [currentUrl]);
+    const leaveMenu = () => {
+        setNavOpen(false);
+        setHasLeftMenu(true);
+    };
+    useEffect(() => {
+        if (currentUrl !== firstUrl.current) leaveMenu();
+    }, [currentUrl]);
+    const closeNav = opensAsMenu && !hasLeftMenu ? close : () => setNavOpen(false);
 
     return (
         <div
@@ -139,6 +154,7 @@ export default function SettingsShell({ children, currentUrl: overlayUrl, onClos
                         <span className="text-sm font-semibold truncate text-n-slate-12">{displayName}</span>
                         <Link
                             href={settingsHomeUrl(accountId)}
+                            onClick={leaveMenu}
                             className="flex items-center gap-1 text-xs text-n-slate-11 hover:text-n-slate-12"
                         >
                             {t('SIDEBAR_ITEMS.SETTINGS_SCREEN.EDIT_PROFILE')}
@@ -149,7 +165,7 @@ export default function SettingsShell({ children, currentUrl: overlayUrl, onClos
                         type="button"
                         className="md:hidden grid place-content-center size-8 rounded-lg text-n-slate-11 hover:bg-n-alpha-2"
                         aria-label={t('SIDEBAR_ITEMS.SETTINGS_SCREEN.CLOSE')}
-                        onClick={() => setNavOpen(false)}
+                        onClick={closeNav}
                     >
                         <Icon icon="i-lucide-x" className="size-4" />
                     </button>
@@ -178,6 +194,7 @@ export default function SettingsShell({ children, currentUrl: overlayUrl, onClos
                                     <Link
                                         key={link.name}
                                         href={link.to}
+                                        onClick={leaveMenu}
                                         aria-current={isActive ? 'page' : undefined}
                                         className={`flex items-center gap-2.5 h-9 px-2.5 rounded-lg text-sm transition-colors ${
                                             isActive

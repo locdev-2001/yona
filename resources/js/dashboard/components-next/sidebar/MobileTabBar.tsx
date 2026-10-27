@@ -1,21 +1,21 @@
 import { useMemo } from 'react';
 import { Link, usePage } from '@inertiajs/react';
 
-import Icon from 'dashboard/components-next/icon/Icon';
-import { useNotificationsUnreadCount } from 'dashboard/notifications/useUnreadCount';
+import NotificationBell from 'dashboard/notifications/components/NotificationBell';
+import { openCommandBar } from 'dashboard/commands/commandBarStore';
+import { settingsHomeUrl, SETTINGS_MENU_NAME } from 'dashboard/settings/shell/settingsPages';
 import { t } from '../../../i18n';
 import type { DashboardPageProps } from '../../types';
 import { buildMenuItems } from './menuItems';
-import MobileSidebarLauncher from './MobileSidebarLauncher';
+import { MobileTabContent, mobileTabClassName } from './MobileTabItem';
 import { filterMenuByRole } from './permissions';
 import type { SidebarMenuChild, SidebarMenuItem } from './provider';
 
-// Thanh tab dưới của điện thoại (cao 60px kể cả viền): bốn nhóm chính như điều hướng máy tính, lấy thẳng từ
-// menu sidebar đã lọc quyền (nhân viên không thấy Báo cáo). Ô cuối mở ngăn kéo cho
-// phần còn lại (chuông, hồ sơ, đổi tài khoản, Chiến dịch, Trung tâm trợ giúp).
-export const MOBILE_TAB_GROUPS = ['Conversation', 'Contacts', 'Reports', 'Settings'] as const;
-
-const BADGE_LIMIT = 99;
+// Thanh tab dưới của điện thoại (cao 60px kể cả viền), tối đa 5 ô: Hộp thư · Bạn bè · Tìm kiếm ·
+// Thông báo · Cài đặt. Tab chuyển trang lấy từ menu sidebar đã lọc quyền; Tìm kiếm mở bảng lệnh
+// Ctrl+K, Thông báo mở bảng của chuông. Cài đặt mở màn Cài đặt ở danh mục (hồ sơ, trạng thái,
+// trang cài đặt, đăng xuất), không nhảy thẳng vào trang cài đặt đầu tiên của nhóm.
+export const MOBILE_TAB_GROUPS = ['Conversation', 'Contacts', 'Settings'] as const;
 
 export interface MobileTab {
     name: string;
@@ -46,10 +46,10 @@ function routePaths(item: SidebarMenuChild): string[] {
     ];
 }
 
-export function buildMobileTabs(menuItems: SidebarMenuItem[]): MobileTab[] {
+export function buildMobileTabs(menuItems: SidebarMenuItem[], accountId: number): MobileTab[] {
     return MOBILE_TAB_GROUPS.flatMap(groupName => {
         const group = menuItems.find(item => item.name === groupName);
-        const href = group ? firstHref(group) : undefined;
+        const href = groupName === SETTINGS_MENU_NAME ? settingsHomeUrl(accountId) : group && firstHref(group);
         if (!group || !href || typeof group.icon !== 'string') return [];
 
         return [{ name: group.name, label: group.label, icon: group.icon, href, activePaths: [...new Set(routePaths(group))] }];
@@ -61,56 +61,54 @@ export function isMobileTabActive(tab: MobileTab, url: string): boolean {
     return tab.activePaths.some(prefix => path === prefix || path.startsWith(`${prefix}/`));
 }
 
-interface MobileTabBarProps {
-    isMobileSidebarOpen: boolean;
-    onToggleSidebar: () => void;
-}
-
-export default function MobileTabBar({ isMobileSidebarOpen, onToggleSidebar }: MobileTabBarProps) {
+export default function MobileTabBar() {
     const { url, props } = usePage<DashboardPageProps>();
     const { currentAccount, currentAccountUser } = props;
-    const unreadCount = useNotificationsUnreadCount();
     const accountId = currentAccount.id;
     const role = currentAccountUser.role;
     const features = currentAccount.features;
 
     const tabs = useMemo(
-        () => buildMobileTabs(filterMenuByRole(buildMenuItems(accountId), role, features ?? {})),
+        () => buildMobileTabs(filterMenuByRole(buildMenuItems(accountId), role, features ?? {}), accountId),
         [accountId, role, features],
     );
+
+    const renderLink = (tab: MobileTab) => {
+        const isActive = isMobileTabActive(tab, url);
+        return (
+            <Link key={tab.name} href={tab.href} aria-current={isActive ? 'page' : undefined} className={mobileTabClassName(isActive)}>
+                <MobileTabContent icon={tab.icon} label={tab.label} />
+            </Link>
+        );
+    };
+    const [inboxTab, friendsTab, settingsTab] = MOBILE_TAB_GROUPS.map(name => tabs.find(tab => tab.name === name));
+    const searchLabel = t('SIDEBAR.GLOBAL_SEARCH');
 
     return (
         <nav
             aria-label={t('MOBILE_TAB_BAR.LABEL')}
             className="md:hidden flex-none grid grid-flow-col auto-cols-fr border-t border-n-weak bg-n-surface-panel pb-[env(safe-area-inset-bottom)]"
         >
-            {tabs.map(tab => {
-                const isActive = isMobileTabActive(tab, url);
-                const badgeCount = tab.name === 'Conversation' ? unreadCount : 0;
-
-                return (
-                    <Link
-                        key={tab.name}
-                        href={tab.href}
-                        aria-current={isActive ? 'page' : undefined}
-                        className={`relative flex flex-col items-center justify-center gap-0.5 h-[59px] min-w-0 px-0.5 text-xs ${
-                            isActive ? 'text-n-blue-11 font-medium' : 'text-n-slate-11'
-                        }`}
+            {inboxTab ? renderLink(inboxTab) : null}
+            {friendsTab ? renderLink(friendsTab) : null}
+            <button type="button" className={mobileTabClassName(false)} onClick={() => openCommandBar()}>
+                <MobileTabContent icon="i-lucide-search" label={searchLabel} />
+            </button>
+            <NotificationBell
+                triggerClassName="flex min-w-0"
+                renderTrigger={({ isOpen, count, label }) => (
+                    <button
+                        type="button"
+                        aria-label={label}
+                        aria-haspopup="dialog"
+                        aria-expanded={isOpen}
+                        className={mobileTabClassName(isOpen)}
                     >
-                        <Icon icon={tab.icon} className="size-5 shrink-0" />
-                        <span className="max-w-full truncate">{tab.label}</span>
-                        {badgeCount > 0 ? (
-                            <span
-                                className="absolute top-1.5 start-[calc(50%+0.25rem)] grid place-content-center min-w-4 h-4 px-1 rounded-full bg-n-brand text-xxs leading-none text-white tabular-nums"
-                                aria-label={t('MOBILE_TAB_BAR.UNREAD', { count: badgeCount })}
-                            >
-                                {badgeCount > BADGE_LIMIT ? `${BADGE_LIMIT}+` : badgeCount}
-                            </span>
-                        ) : null}
-                    </Link>
-                );
-            })}
-            <MobileSidebarLauncher isMobileSidebarOpen={isMobileSidebarOpen} onToggle={onToggleSidebar} />
+                        <MobileTabContent icon="i-lucide-bell" label={t('MOBILE_TAB_BAR.NOTIFICATIONS')} badgeCount={count} />
+                    </button>
+                )}
+            />
+            {settingsTab ? renderLink(settingsTab) : null}
         </nav>
     );
 }
