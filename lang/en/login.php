@@ -2,6 +2,8 @@
 
 return [
     'TITLE' => 'Login to {installationName}',
+    'SUBTITLE' => 'Welcome back to your inbox.',
+    'NO_ACCOUNT' => 'No account yet?',
     'EMAIL' => [
         'LABEL' => 'Email',
         'PLACEHOLDER' => 'example@companyname.com',
@@ -23,7 +25,7 @@ return [
         'NO_ACCOUNT_FOUND' => 'We couldn\'t find an account for your email address.',
     ],
     'FORGOT_PASSWORD' => 'Forgot your password?',
-    'CREATE_NEW_ACCOUNT' => 'Create a new account',
+    'CREATE_NEW_ACCOUNT' => 'Create an account',
     'SUBMIT' => 'Login',
     'SAML' => [
         'LABEL' => 'Login via SSO',

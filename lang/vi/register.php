@@ -4,6 +4,7 @@
 
 return [
     'TRY_WOOT' => 'Tạo tài khoản',
+    'SUBTITLE' => 'Một hộp thư cho Zalo, email và bạn bè trên Yona.',
     'GET_STARTED' => 'Bắt đầu với {installationName}',
     'TITLE' => 'Đăng kí',
     'TESTIMONIAL_HEADER' => 'Tất cả chỉ cần một bước để tiến về phía trước',
@@ -23,9 +24,9 @@ return [
         'ERROR' => 'Tên đầy đủ quá ngắn.',
     ],
     'EMAIL' => [
-        'LABEL' => 'Email công việc',
-        'PLACEHOLDER' => 'Nhập email công việc của bạn. Ví dụ: an{\'@\'}congty{\'.\'}vn',
-        'ERROR' => 'Vui lòng nhập địa chỉ email công việc hợp lệ.',
+        'LABEL' => 'Email',
+        'PLACEHOLDER' => 'ten{\'@\'}email.com',
+        'ERROR' => 'Vui lòng nhập địa chỉ email hợp lệ.',
     ],
     'PASSWORD' => [
         'LABEL' => 'Mật khẩu',

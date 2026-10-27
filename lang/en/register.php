@@ -2,6 +2,7 @@
 
 return [
     'TRY_WOOT' => 'Create an account',
+    'SUBTITLE' => 'One inbox for Zalo, email and friends on Yona.',
     'GET_STARTED' => 'Get started with {installationName}',
     'TITLE' => 'Register',
     'TESTIMONIAL_HEADER' => 'All it takes is one step to move forward',
@@ -21,9 +22,9 @@ return [
         'ERROR' => 'Full name is too short.',
     ],
     'EMAIL' => [
-        'LABEL' => 'Work email',
-        'PLACEHOLDER' => 'Enter your work email address. E.g., bruce@wayne.enterprises',
-        'ERROR' => 'Please enter a valid work email address.',
+        'LABEL' => 'Email',
+        'PLACEHOLDER' => 'you{\'@\'}email.com',
+        'ERROR' => 'Please enter a valid email address.',
     ],
     'PASSWORD' => [
         'LABEL' => 'Password',

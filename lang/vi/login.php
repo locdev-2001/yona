@@ -4,9 +4,11 @@
 
 return [
     'TITLE' => 'Đăng nhập {installationName}',
+    'SUBTITLE' => 'Mừng bạn quay lại hộp thư của mình.',
+    'NO_ACCOUNT' => 'Chưa có tài khoản?',
     'EMAIL' => [
         'LABEL' => 'Email',
-        'PLACEHOLDER' => 'example{\'@\'}companyname.com',
+        'PLACEHOLDER' => 'ten{\'@\'}email.com',
         'ERROR' => 'Vui lòng nhập một địa chỉ email hợp lệ',
     ],
     'PASSWORD' => [
@@ -25,7 +27,7 @@ return [
         'NO_ACCOUNT_FOUND' => 'Chúng tôi không tìm thấy tài khoản nào cho địa chỉ email của bạn.',
     ],
     'FORGOT_PASSWORD' => 'Quên mật khẩu?',
-    'CREATE_NEW_ACCOUNT' => 'Tạo mới tài khoản',
+    'CREATE_NEW_ACCOUNT' => 'Tạo tài khoản',
     'SUBMIT' => 'Đăng nhập',
     'SAML' => [
         'LABEL' => 'Đăng nhập bằng SSO',

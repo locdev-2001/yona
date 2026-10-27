@@ -6,7 +6,7 @@ import { t } from '../../../i18n';
 import { useAlert } from 'dashboard/composables/useAlert';
 import { useBranding } from 'shared/composables/useBranding';
 import FormInput from 'v3/components/Form/Input';
-import AuthShell, { authCard } from 'v3/components/AuthShell';
+import AuthShell, { AuthHomeLink, AuthSwitchLink, authCard } from 'v3/components/AuthShell';
 import OAuthButtons from 'v3/components/OAuthButtons';
 import NextButton from 'dashboard/components-next/button/Button';
 import MfaVerification from 'dashboard/components/auth/MfaVerification';
@@ -151,15 +151,7 @@ export default function LoginIndex() {
                         <h2 className="mt-6 text-2xl font-semibold text-n-slate-12">
                             {replaceInstallationName(t('LOGIN.TITLE'))}
                         </h2>
-                        <p className="mt-2 text-sm text-n-slate-11">
-                            {t('COMMON.OR')}{' '}
-                            <a
-                                href="/app/auth/signup"
-                                className="lowercase text-n-blue-10 font-medium hover:text-n-blue-11"
-                            >
-                                {t('LOGIN.CREATE_NEW_ACCOUNT')}
-                            </a>
-                        </p>
+                        <p className="mt-2 mb-0 text-sm text-n-slate-11">{t('LOGIN.SUBTITLE')}</p>
                     </div>
                     <OAuthButtons providers={oauthProviders} error={errors?.oauth} />
                     <form className="space-y-5" onSubmit={submitFormLogin}>
@@ -211,13 +203,8 @@ export default function LoginIndex() {
                             isLoading={showLoading}
                         />
                     </form>
-                    <a
-                        href="/"
-                        className="flex items-center gap-1.5 mt-6 text-sm font-medium w-fit text-n-slate-11 hover:text-n-slate-12"
-                    >
-                        <span className="i-lucide-arrow-left size-4" aria-hidden="true" />
-                        {t('LANDING.nav.back_to_home')}
-                    </a>
+                    <AuthSwitchLink prompt={t('LOGIN.NO_ACCOUNT')} label={t('LOGIN.CREATE_NEW_ACCOUNT')} href="/app/auth/signup" />
+                    <AuthHomeLink />
                 </div>
             )}
         </AuthShell>

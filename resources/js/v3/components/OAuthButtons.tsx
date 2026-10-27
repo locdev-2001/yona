@@ -26,7 +26,7 @@ export default function OAuthButtons({ providers = [], error }: OAuthButtonsProp
                         key={provider}
                         href={`/app/auth/oauth/${provider}`}
                         data-testid={`oauth_${provider}`}
-                        className="flex items-center justify-center gap-2 w-full h-11 md:h-10 px-4 rounded border border-n-slate-12 text-sm font-medium text-n-slate-12 hover:bg-n-alpha-2 active:scale-[0.97] transition-transform duration-150 ease-out"
+                        className="flex items-center justify-center gap-2 w-full h-11 px-4 rounded-lg border border-n-strong bg-n-surface-panel text-sm font-medium text-n-slate-12 hover:bg-n-surface-hover active:scale-[0.98] transition-transform duration-150 ease-out"
                     >
                         <span className={`${PROVIDER_BUTTONS[provider].icon} size-4`} aria-hidden="true" />
                         {t(PROVIDER_BUTTONS[provider].labelKey)}
