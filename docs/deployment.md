@@ -54,12 +54,14 @@ global của dự án khác.
 ### PHP extensions
 
 ```text
-bcmath curl dom fileinfo gd intl mbstring openssl pcntl
+bcmath curl dom fileinfo gd imagick intl mbstring openssl pcntl
 pdo_pgsql pgsql redis sodium xml zip Zend OPcache
 ```
 
 ```bash
-/www/server/php/84/bin/php -m | grep -Ei 'fileinfo|opcache|pdo_pgsql|pgsql|redis|pcntl'
+/www/server/php/84/bin/php -m | grep -Ei 'fileinfo|imagick|opcache|pdo_pgsql|pgsql|redis|pcntl'
+# Ảnh thu nhỏ của ảnh đính kèm cần imagick có WebP và autoOrient()
+/www/server/php/84/bin/php -r 'var_dump(method_exists(new Imagick, "autoOrient"), Imagick::queryFormats("WEBP"));'
 ```
 
 ### PHP functions phải mở

@@ -16,7 +16,7 @@ class ThumbnailGenerator
 
     private const QUALITY = 75;
 
-    // Ảnh nguồn lớn hơn thì không giải mã cả ảnh, tránh worker hết RAM.
+    // Ảnh nguồn lớn hơn (hoặc GIF động nhiều khung) thì không giải mã cả ảnh, tránh worker hết RAM.
     private const MAX_SOURCE_PIXELS = 40_000_000;
 
     /**
@@ -35,7 +35,7 @@ class ThumbnailGenerator
             $isAnimated = $probe->getNumberImages() > 1;
             $probe->clear();
 
-            if ($sourceWidth * $sourceHeight > self::MAX_SOURCE_PIXELS) {
+            if ($isAnimated || $sourceWidth * $sourceHeight > self::MAX_SOURCE_PIXELS) {
                 return ['width' => $sourceWidth, 'height' => $sourceHeight, 'thumbnail' => null];
             }
 
@@ -45,7 +45,7 @@ class ThumbnailGenerator
             $width = $image->getImageWidth();
             $height = $image->getImageHeight();
 
-            if ($isAnimated || max($width, $height) <= self::LONG_EDGE) {
+            if (max($width, $height) <= self::LONG_EDGE) {
                 $image->clear();
 
                 return ['width' => $width, 'height' => $height, 'thumbnail' => null];
