@@ -2,13 +2,16 @@ import type { ReactNode } from 'react';
 
 import { t } from '../../../i18n';
 import { useBranding } from 'shared/composables/useBranding';
+import { isProductFeatureVisible } from 'shared/helpers/productVisibility';
 import Wizard from 'dashboard/components/ui/Wizard';
 import type { WizardItem } from 'dashboard/components/ui/Wizard';
 import SettingsSubPageHeader from '../SettingsSubPageHeader';
 
-// Port từ settings/inbox/InboxChannels.vue — khung wizard 4 bước của luồng tạo
-// inbox; router-view thay bằng children.
-const STEPS = ['CHANNEL', 'INBOX', 'AGENT', 'FINISH'] as const;
+// Port từ settings/inbox/InboxChannels.vue — khung wizard của luồng tạo inbox;
+// router-view thay bằng children. Bước gán nhân viên chỉ có khi bật phân công.
+const STEPS = (['CHANNEL', 'INBOX', 'AGENT', 'FINISH'] as const).filter(
+    step => step !== 'AGENT' || isProductFeatureVisible('conversationAssignment'),
+);
 
 export const INBOX_WIZARD_ROUTES = {
     CHANNEL: 'settings_inbox_new',

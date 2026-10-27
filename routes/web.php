@@ -200,7 +200,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/app/email/oauth/{provider}/callback', [EmailOAuthController::class, 'callback'])
         ->where('provider', '[a-z]+')->name('email_oauth.callback');
 
-    Route::middleware(['account.scope', EnsureUsername::class])->prefix('/app/accounts/{account}')->whereNumber('account')->group(function () {
+    Route::middleware(['account.scope', 'account.hidden_pages', EnsureUsername::class])->prefix('/app/accounts/{account}')->whereNumber('account')->group(function () {
         Route::get('', fn (Account $account) => redirect("/app/accounts/{$account->id}/dashboard"));
         Route::get('/dashboard', [DashboardController::class, 'show'])->name('account_dashboard');
 
@@ -261,7 +261,10 @@ Route::middleware('auth')->group(function () {
                 // G1: bước quét QR có URL riêng như mọi bước khác của wizard — F5
                 // hay bấm quay lại KHÔNG được tạo thêm hộp thư mồ côi.
                 Route::get('/zalo', [InboxesSettingsController::class, 'connectZalo'])->name('settings_inboxes_connect_zalo');
-                Route::get('/agents', [InboxesSettingsController::class, 'addAgents'])->name('settings_inboxes_add_agents');
+                // Bước gán nhân viên của wizard đã gỡ: hộp thư cá nhân không có thành viên.
+                Route::get('/agents', fn (Account $account, int $inboxId) => redirect(
+                    "/app/accounts/{$account->id}/settings/inboxes/new/{$inboxId}/finish",
+                ))->name('settings_inboxes_add_agents');
                 Route::get('/finish', [InboxesSettingsController::class, 'finish'])->name('settings_inbox_finish');
             });
             // Kết nối hộp thư email bằng OAuth (Google/Microsoft); callback nằm ngoài account.

@@ -4,6 +4,7 @@ use App\Http\Middleware\AuthenticateApiAccessToken;
 use App\Http\Middleware\EnsureAccountRole;
 use App\Http\Middleware\ExpireIdleSuperAdminSession;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\RedirectHiddenPages;
 use App\Http\Middleware\SetCurrentAccount;
 use App\Http\Middleware\SetLocale;
 use App\Http\Middleware\StartSession;
@@ -75,6 +76,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'account.scope' => SetCurrentAccount::class,
             'account.role' => EnsureAccountRole::class,
+            'account.hidden_pages' => RedirectHiddenPages::class,
             'auth.api_token' => AuthenticateApiAccessToken::class,
         ]);
 

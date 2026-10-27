@@ -23,7 +23,7 @@ export const DEFAULT_INBOX_SETTINGS_TAB = 'inbox-settings';
 export function inboxSettingsTabKeys(inbox: InboxWithCapabilities | null | undefined): string[] {
     return [
         DEFAULT_INBOX_SETTINGS_TAB,
-        'collaborators',
+        ...(isProductFeatureVisible('conversationAssignment') ? ['collaborators'] : []),
         'business-hours',
         ...(isProductFeatureVisible('csat') ? ['csat'] : []),
         ...(inboxSupports(inbox, 'settings_pre_chat_form') ? ['pre-chat-form'] : []),
