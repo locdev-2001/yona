@@ -1,48 +1,66 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
-// Port từ dashboard/composables/loadWithRetry.js — nạp ảnh, thử lại tối đa
-// maxRetry lần với backoff tăng dần trước khi báo lỗi.
+// Nạp ảnh, thử lại với backoff tăng dần. Hết `maxRetry` lượt đầu thì báo lỗi để ô
+// hiện "Tải thất bại", nhưng vẫn thử tiếp ngầm tới `maxBackgroundAttempts` lượt:
+// lỗi tạm (máy chủ khởi động lại khi deploy, mạng chập chờn) qua đi thì ảnh tự hiện
+// mà không cần người dùng bấm. Mỗi lượt nạp mới (URL đổi, bấm tải lại) huỷ lượt cũ
+// để lượt cũ thất bại muộn không đè lên ảnh đã tải xong.
 interface LoadWithRetryConfig {
     maxRetry?: number;
     backoff?: number;
+    maxBackoff?: number;
+    maxBackgroundAttempts?: number;
 }
 
-export function useLoadWithRetry({ maxRetry = 3, backoff = 1000 }: LoadWithRetryConfig = {}) {
+function loadImage(url: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+        const image = new Image();
+        image.onload = () => resolve();
+        image.onerror = () => reject(new Error('Failed to load image'));
+        image.src = url;
+    });
+}
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+export function useLoadWithRetry({
+    maxRetry = 3,
+    backoff = 1000,
+    maxBackoff = 30000,
+    maxBackgroundAttempts = 20,
+}: LoadWithRetryConfig = {}) {
     const [isLoaded, setIsLoaded] = useState(false);
     const [hasError, setHasError] = useState(false);
-    const configRef = useRef({ maxRetry, backoff });
-    configRef.current = { maxRetry, backoff };
+    const configRef = useRef({ maxRetry, backoff, maxBackoff, maxBackgroundAttempts });
+    configRef.current = { maxRetry, backoff, maxBackoff, maxBackgroundAttempts };
+    const currentLoadRef = useRef(0);
+
+    useEffect(() => () => {
+        currentLoadRef.current += 1;
+    }, []);
 
     const loadWithRetry = useCallback(async (url: string) => {
-        const attemptLoad = () =>
-            new Promise<void>((resolve, reject) => {
-                const image = new Image();
-                image.onload = () => {
-                    setIsLoaded(true);
-                    setHasError(false);
-                    resolve();
-                };
-                image.onerror = () => reject(new Error('Failed to load image'));
-                image.src = url;
-            });
+        const loadId = ++currentLoadRef.current;
+        const isCurrent = () => loadId === currentLoadRef.current;
+        const config = configRef.current;
 
-        const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
-        const retry = async (attempt = 0): Promise<void> => {
+        for (let attempt = 0; attempt < config.maxBackgroundAttempts; attempt++) {
             try {
-                await attemptLoad();
+                await loadImage(url);
+                if (!isCurrent()) return;
+                setIsLoaded(true);
+                setHasError(false);
+                return;
             } catch {
-                if (attempt + 1 >= configRef.current.maxRetry) {
+                if (!isCurrent()) return;
+                if (attempt + 1 === config.maxRetry) {
                     setHasError(true);
                     setIsLoaded(false);
-                    return;
                 }
-                await sleep(configRef.current.backoff * (attempt + 1));
-                await retry(attempt + 1);
+                await sleep(Math.min(config.backoff * 2 ** attempt, config.maxBackoff));
+                if (!isCurrent()) return;
             }
-        };
-
-        await retry();
+        }
     }, []);
 
     return { isLoaded, hasError, setHasError, loadWithRetry };
