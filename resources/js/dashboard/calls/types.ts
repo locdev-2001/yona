@@ -81,6 +81,13 @@ export interface OpenRoomSummary {
     total: number;
 }
 
+// Một phòng thoại có tên của nhóm; `name` null là phòng mặc định, `live` khi đang có người ngồi.
+export interface VoiceRoomSummary {
+    id: number;
+    name: string | null;
+    live: OpenRoomSummary | null;
+}
+
 export type CallMediaKind = 'audio' | 'video';
 
 export interface CallPerson {

@@ -221,13 +221,13 @@ export default function CallSessionProvider({ children }: { children: ReactNode 
 
     const joinGroup = useCallback(
         (request: JoinGroupRoomRequest) => {
-            if (isInGroup('group_room', request.groupId)) {
+            if (isInGroup('group_room', request.groupId) && (!request.roomId || activeRef.current?.callId === request.roomCallId)) {
                 setStageOpen(true);
                 return;
             }
 
             setJoining(true);
-            joinGroupRoom(request.accountId, request.groupId)
+            joinGroupRoom(request.accountId, request.groupId, request.roomId ?? null)
                 .then((response) => {
                     leaveCurrentCall();
                     connectGroup('group_room', request, response, false);
@@ -554,6 +554,7 @@ export default function CallSessionProvider({ children }: { children: ReactNode 
         isJoining,
         groupId: active?.groupId ?? null,
         activeKind: active?.kind ?? null,
+        activeCallId: active?.callId ?? null,
         sharer: media.participants.find((participant) => participant.isSharingScreen) ?? null,
         actions,
         renderMedia: media.renderMedia,

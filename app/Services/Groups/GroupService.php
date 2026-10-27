@@ -466,8 +466,8 @@ final class GroupService
         DB::afterCommit(fn () => $this->refreshMemberRows($group));
     }
 
-    // Một cuộc gọi một tin: tin lúc bắt đầu được ghi đè bằng kết quả tại chỗ (giữ mốc thời gian
-    // và người gửi) để thẻ đứng nguyên vị trí cuộc gọi diễn ra; `message.updated` tự tới mọi
+    // Một cuộc gọi một tin: tin lúc bắt đầu được ghi đè bằng kết quả tại chỗ (giữ mốc thời gian,
+    // người gửi và các khoá chỉ có lúc bắt đầu như tên phòng) để thẻ đứng nguyên vị trí cuộc gọi diễn ra; `message.updated` tự tới mọi
     // thành viên. Chưa có tin bắt đầu (cuộc gọi mở trước khi đổi cách ghi) thì ghi tin mới.
     /** @param  array<string, mixed>  $call */
     public function postCallNotice(YonaGroup $group, string $content, array $call, ?User $initiator = null): void
@@ -486,7 +486,7 @@ final class GroupService
 
         $notice->update([
             'content' => $content,
-            'content_attributes' => [...(array) $notice->content_attributes, 'call' => $call],
+            'content_attributes' => [...(array) $notice->content_attributes, 'call' => [...(array) ($notice->content_attributes['call'] ?? []), ...$call]],
         ]);
     }
 

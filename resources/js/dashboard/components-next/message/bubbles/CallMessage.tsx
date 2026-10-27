@@ -8,7 +8,7 @@ import CallDetailsDialog from 'dashboard/calls/CallDetailsDialog';
 import { useJoinGroupCall } from 'dashboard/calls/GroupCallButtons';
 import { useGroupCall } from 'dashboard/calls/groupCalls';
 import { useJoinGroupRoom } from 'dashboard/calls/GroupRoomButton';
-import { useOpenRoom } from 'dashboard/calls/voiceRooms';
+import { useVoiceRooms } from 'dashboard/calls/voiceRooms';
 import { useCallSession } from 'dashboard/calls/callSession';
 import { GROUP_ROOM_KIND, describeCall, readCallLog } from 'dashboard/calls/callLog';
 import type { CallTone } from 'dashboard/calls/callLog';
@@ -72,14 +72,18 @@ export default function CallMessageBubble() {
     const conversation = useOptionalConversation();
     const call = readCallLog(contentAttributes) ?? {};
     const group = conversation?.selectedConversation?.group ?? null;
-    const view = describeCall(call, group?.name ?? '', useGroupCall(group), useOpenRoom(group));
+    const voiceRooms = useVoiceRooms(group);
+    const callRoom = voiceRooms.find(room => (call.room_id ? room.id === call.room_id : room.live?.call_id === call.id)) ?? null;
+    const view = describeCall(call, group?.name ?? '', useGroupCall(group), callRoom?.live ?? null);
     const joinGroupCall = useJoinGroupCall(conversation?.accountId ?? 0, group);
     const joinGroupRoom = useJoinGroupRoom(conversation?.accountId ?? 0, group);
     const session = useCallSession();
     // Thẻ đang diễn ra: Tham gia đúng loại (phòng thoại hay cuộc gọi nhóm); đang ở trong rồi thì là mở lại.
     const isRoom = call.kind === GROUP_ROOM_KIND;
-    const join = isRoom ? joinGroupRoom : joinGroupCall ? () => joinGroupCall(view.media) : null;
-    const isInThisCall = session.activeKind === (isRoom ? 'group_room' : 'group_call') && session.groupId === group?.id;
+    const join = isRoom ? (joinGroupRoom ? () => joinGroupRoom(callRoom) : null) : joinGroupCall ? () => joinGroupCall(view.media) : null;
+    const isInThisCall = isRoom
+        ? session.activeKind === 'group_room' && session.activeCallId === call.id
+        : session.activeKind === 'group_call' && session.groupId === group?.id;
     const isOwn = orientation === ORIENTATION.RIGHT;
     // Viền tách các avatar chồng nhau cùng màu nền thẻ, để không lộ khung sáng trên thẻ của mình.
     const attendeeRing = isOwn && view.tone !== 'danger' ? 'ring-n-solid-blue' : view.tone === 'danger' ? 'ring-n-ruby-2' : 'ring-n-solid-1';

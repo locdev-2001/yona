@@ -30,5 +30,11 @@ return [
         'NAME_REQUIRED' => 'Hãy đặt tên cho nhóm',
         'NAME_TOO_LONG' => 'Tên nhóm dài tối đa 100 ký tự',
         'MESSAGE_NOT_YOURS' => 'Bạn chỉ thu hồi được tin của mình',
+        'ROOM_NOT_FOUND' => 'Không tìm thấy phòng thoại này',
+        'ROOM_NAME_REQUIRED' => 'Hãy đặt tên cho phòng thoại',
+        'ROOM_NAME_TOO_LONG' => 'Tên phòng thoại dài tối đa :max ký tự',
+        'ROOM_LIMIT' => 'Nhóm đã có đủ :max phòng thoại',
+        'ROOM_LIVE' => 'Phòng đang có người, chờ mọi người rời phòng rồi xoá',
+        'LAST_ROOM' => 'Nhóm cần còn ít nhất một phòng thoại',
     ],
 ];

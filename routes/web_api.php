@@ -77,6 +77,7 @@ use App\Http\Controllers\WebApi\YonaGroupCallsController;
 use App\Http\Controllers\WebApi\YonaGroupInvitesController;
 use App\Http\Controllers\WebApi\YonaGroupMembersController;
 use App\Http\Controllers\WebApi\YonaGroupsController;
+use App\Http\Controllers\WebApi\YonaGroupVoiceRoomsController;
 use App\Http\Controllers\WebApi\ZaloConnectionsController;
 use App\Http\Middleware\EnsureStickerLibraryAccess;
 use App\Http\RateLimiting\MessagingRateLimiters;
@@ -238,6 +239,9 @@ Route::middleware(['auth.api_token', 'auth', 'account.scope'])
         Route::post('/yona/groups/{groupId}/call', [YonaGroupCallsController::class, 'store'])->whereNumber('groupId')->middleware('throttle:30,1');
         Route::post('/yona/groups/{groupId}/call/participants/{userId}/mute', [YonaGroupCallsController::class, 'mute'])->whereNumber(['groupId', 'userId'])->middleware('throttle:60,1');
         Route::delete('/yona/groups/{groupId}/call/participants/{userId}', [YonaGroupCallsController::class, 'remove'])->whereNumber(['groupId', 'userId'])->middleware('throttle:60,1');
+        Route::post('/yona/groups/{groupId}/voice_rooms', [YonaGroupVoiceRoomsController::class, 'store'])->whereNumber('groupId')->middleware('throttle:30,1');
+        Route::patch('/yona/groups/{groupId}/voice_rooms/{roomId}', [YonaGroupVoiceRoomsController::class, 'update'])->whereNumber(['groupId', 'roomId'])->middleware('throttle:30,1');
+        Route::delete('/yona/groups/{groupId}/voice_rooms/{roomId}', [YonaGroupVoiceRoomsController::class, 'destroy'])->whereNumber(['groupId', 'roomId']);
         Route::post('/yona/groups/{groupId}/group_call', [YonaGroupCallingController::class, 'store'])->whereNumber('groupId')->middleware('throttle:30,1');
         Route::delete('/yona/groups/{groupId}/group_call', [YonaGroupCallingController::class, 'decline'])->whereNumber('groupId')->middleware('throttle:60,1');
         Route::post('/yona/groups/{groupId}/group_call/participants/{userId}/mute', [YonaGroupCallingController::class, 'mute'])->whereNumber(['groupId', 'userId'])->middleware('throttle:60,1');

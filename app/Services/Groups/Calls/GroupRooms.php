@@ -6,6 +6,7 @@ use App\Exceptions\CallActionRejected;
 use App\Models\Call;
 use App\Models\User;
 use App\Models\YonaGroup;
+use App\Models\YonaGroupVoiceRoom;
 use App\Services\Calls\CallAttendee;
 use App\Services\Calls\CallJoin;
 use App\Services\Calls\CallMedia;
@@ -13,27 +14,28 @@ use App\Services\Calls\CallService;
 use App\Services\Calls\CallStatus;
 use App\Services\Calls\Media\MediaSource;
 use App\Services\Calls\ParticipantIdentity;
-use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
-// Phòng thoại nhóm luôn mở, dựng trên lõi cuộc gọi: mỗi nhóm có tối đa một dòng `calls` đang
-// mở. Vào phòng thì dùng dòng đó, chưa có thì mở dòng mới, rồi giao cho CallService.
+// Phòng thoại nhóm luôn mở, dựng trên lõi cuộc gọi: mỗi phòng có tên (GroupVoiceRooms) có tối
+// đa một dòng `calls` đang mở (`open_call_id`). Vào phòng thì dùng dòng đó, chưa có thì mở dòng
+// mới, rồi giao cho CallService. Lõi không biết phòng: nó chỉ thấy một cuộc gọi loại group_room.
 final readonly class GroupRooms
 {
-    public function __construct(private CallService $calls) {}
+    public function __construct(
+        private CallService $calls,
+        private GroupVoiceRooms $rooms,
+    ) {}
 
-    public function join(YonaGroup $group, User $user, CallMedia $media): CallJoin
+    // Không chỉ phòng thì vào phòng đầu danh sách.
+    public function join(YonaGroup $group, ?int $roomId, User $user, CallMedia $media): CallJoin
     {
         $attendee = CallAttendee::user($user);
         $admission = $this->calls->admit($this->draftRoomOf($group), $attendee);
-        $call = $this->openRoomOf($group, $media);
+        $room = $this->rooms->find($group, $roomId);
 
-        // Phòng vừa đóng giữa lúc tìm và lúc vào (người cuối rời, hết giờ chờ): mở phòng mới.
-        if ($call->refresh()->isEnded()) {
-            $call = $this->openRoomOf($group, $media);
-        }
-
-        return $this->calls->join($call, $attendee, $admission);
+        return $this->calls->join($this->openCallOf($room, $media), $attendee, $admission);
     }
 
     // Dòng chưa lưu chỉ để hỏi chính sách trước khi tạo phòng cho người không có quyền.
@@ -42,58 +44,56 @@ final readonly class GroupRooms
         return (new Call(['kind' => GroupRoomPolicy::KIND, 'yona_group_id' => $group->id]))->setRelation('group', $group);
     }
 
-    // Quản trị nhóm tắt mic hoặc mời một người ra khỏi phòng đang mở; quyền kiểm ở lõi.
+    // Quản trị nhóm tắt mic hoặc mời một người ra khỏi phòng người đó đang ngồi; quyền kiểm ở lõi.
     public function mute(YonaGroup $group, User $actor, int $targetUserId): void
     {
-        $this->calls->mute($this->currentRoomOf($group), $actor, ParticipantIdentity::forUser($targetUserId), MediaSource::Microphone);
+        $this->calls->mute($this->roomSeating($group, $targetUserId), $actor, ParticipantIdentity::forUser($targetUserId), MediaSource::Microphone);
     }
 
     public function remove(YonaGroup $group, User $actor, int $targetUserId): void
     {
-        $this->calls->remove($this->currentRoomOf($group), $actor, ParticipantIdentity::forUser($targetUserId));
+        $this->calls->remove($this->roomSeating($group, $targetUserId), $actor, ParticipantIdentity::forUser($targetUserId));
     }
 
-    // Người không còn trong nhóm: đưa khỏi phòng đang mở. Chạy trong job (EvictFromGroupVoiceRoomJob),
-    // nhà cung cấp lỗi thì ném ra để job thử lại.
+    // Người không còn trong nhóm: đưa khỏi mọi phòng đang mở của nhóm. Chạy trong job
+    // (EvictFromGroupVoiceRoomJob), nhà cung cấp lỗi thì ném ra để job thử lại.
     public function evict(YonaGroup $group, int $userId): void
     {
-        $call = $this->findOpenRoom($group);
-
-        if ($call !== null) {
-            $this->calls->disconnect($call, ParticipantIdentity::forUser($userId));
-        }
+        $this->openCallsOf($group)->each(fn (Call $call) => $this->calls->disconnect($call, ParticipantIdentity::forUser($userId)));
     }
 
-    private function currentRoomOf(YonaGroup $group): Call
+    private function roomSeating(YonaGroup $group, int $userId): Call
     {
-        return $this->findOpenRoom($group) ?? throw new CallActionRejected('CALL_ENDED');
+        return $this->openCallsOf($group)->first(fn (Call $call) => $call->presentParticipants()->where('user_id', $userId)->exists())
+            ?? throw new CallActionRejected('CALL_ENDED');
     }
 
-    private function findOpenRoom(YonaGroup $group): ?Call
+    /** @return Collection<int, Call> */
+    private function openCallsOf(YonaGroup $group): Collection
     {
-        return Call::query()->open()
-            ->where('kind', GroupRoomPolicy::KIND)
-            ->where('yona_group_id', $group->id)
-            ->first();
+        return Call::query()->open()->where('kind', GroupRoomPolicy::KIND)->where('yona_group_id', $group->id)->get();
     }
 
-    private function openRoomOf(YonaGroup $group, CallMedia $media): Call
+    // Khoá dòng phòng: hai người mở cùng một phòng cùng lúc thì chỉ một dòng `calls` được tạo.
+    private function openCallOf(YonaGroupVoiceRoom $room, CallMedia $media): Call
     {
-        if ($call = $this->findOpenRoom($group)) {
-            return $call;
-        }
+        return DB::transaction(function () use ($room, $media): Call {
+            $locked = YonaGroupVoiceRoom::query()->whereKey($room->id)->lockForUpdate()->firstOrFail();
 
-        try {
-            return Call::query()->create([
+            if ($call = $locked->liveCall()) {
+                return $call;
+            }
+
+            $call = Call::query()->create([
                 'uuid' => (string) Str::uuid(),
                 'kind' => GroupRoomPolicy::KIND,
-                'yona_group_id' => $group->id,
+                'yona_group_id' => $locked->yona_group_id,
                 'media' => $media,
                 'status' => CallStatus::Active,
             ]);
-        } catch (UniqueConstraintViolationException) {
-            // Hai người mở phòng cùng lúc: index một-phòng-mở-mỗi-nhóm giữ lại một dòng.
-            return $this->currentRoomOf($group);
-        }
+            $locked->update(['open_call_id' => $call->id]);
+
+            return $call;
+        });
     }
 }

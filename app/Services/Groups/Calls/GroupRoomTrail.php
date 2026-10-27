@@ -5,6 +5,7 @@ namespace App\Services\Groups\Calls;
 use App\Models\Call;
 use App\Models\CallParticipant;
 use App\Models\User;
+use App\Models\YonaGroupVoiceRoom;
 use App\Services\Calls\Kinds\CallTrail;
 use App\Services\Groups\GroupService;
 use Carbon\CarbonInterval;
@@ -30,6 +31,7 @@ final readonly class GroupRoomTrail implements CallTrail
             'kind' => $call->kind,
             'status' => $call->status->value,
             'actor' => $opener === null ? null : ['user_id' => $opener->id, 'name' => $opener->availableName()],
+            ...$this->roomOf($call),
         ], $opener);
     }
 
@@ -64,5 +66,14 @@ final readonly class GroupRoomTrail implements CallTrail
                 'avatar_url' => $user->avatarUrl() ?: null,
             ])->all(),
         ], $attendees->first());
+    }
+
+    // Thẻ ghi tên phòng; NULL là phòng mặc định, giao diện dịch tên theo người đọc.
+    /** @return array{room_id?: int, room_name?: string|null} */
+    private function roomOf(Call $call): array
+    {
+        $room = YonaGroupVoiceRoom::query()->where('open_call_id', $call->id)->first();
+
+        return $room === null ? [] : ['room_id' => $room->id, 'room_name' => $room->name];
     }
 }

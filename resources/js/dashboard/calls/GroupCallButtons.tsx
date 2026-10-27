@@ -6,6 +6,7 @@ import { t } from '../../i18n';
 import { useCallSession } from './callSession';
 import { useJoinGroupRoom } from './GroupRoomButton';
 import { useGroupCall } from './groupCalls';
+import { useVoiceRooms, voiceRoomName } from './voiceRooms';
 import type { CallMediaKind } from './types';
 import { useCallsEnabled } from './useCallsEnabled';
 
@@ -62,13 +63,14 @@ function SheetOption({ icon, label, hint, onClick }: { icon: string; label: stri
     );
 }
 
-// Điện thoại: một nút Gọi mở sheet ba lựa chọn (gọi thoại cả nhóm, gọi video cả nhóm, vào phòng
-// thoại), để mũ hẹp còn chỗ cho tên nhóm. Đang có phòng hay cuộc gọi thì nút nổi màu.
+// Điện thoại: một nút Gọi mở sheet (gọi thoại cả nhóm, gọi video cả nhóm, rồi từng phòng thoại
+// có tên của nhóm), để mũ hẹp còn chỗ cho tên nhóm. Đang có phòng hay cuộc gọi thì nút nổi màu.
 export function GroupCallMenu({ accountId, group, className = '' }: { accountId: number; group: GroupSummary; className?: string }) {
     const [isOpen, setOpen] = useState(false);
     const joinCall = useJoinGroupCall(accountId, group);
     const joinRoom = useJoinGroupRoom(accountId, group);
     const liveCall = useGroupCall(group);
+    const rooms = useVoiceRooms(group);
     const choose = (action: () => void) => {
         setOpen(false);
         action();
@@ -100,7 +102,15 @@ export function GroupCallMenu({ accountId, group, className = '' }: { accountId:
                         hint={t('CALLS.GROUP.VIDEO_HINT')}
                         onClick={() => choose(() => joinCall('video'))}
                     />
-                    <SheetOption icon="i-lucide-headphones" label={t('CALLS.ROOM.JOIN')} hint={t('CALLS.GROUP.ROOM_HINT')} onClick={() => choose(joinRoom)} />
+                    {rooms.map(room => (
+                        <SheetOption
+                            key={room.id}
+                            icon="i-lucide-headphones"
+                            label={voiceRoomName(room)}
+                            hint={room.live ? t('CALLS.ROOM.PEOPLE', { count: room.live.total }) : t('CALLS.GROUP.ROOM_HINT')}
+                            onClick={() => choose(() => joinRoom(room))}
+                        />
+                    ))}
                 </div>
             </BottomSheet>
         </>

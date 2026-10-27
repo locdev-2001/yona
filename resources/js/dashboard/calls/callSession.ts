@@ -13,6 +13,9 @@ export interface JoinGroupRoomRequest {
     conversationUrl: string;
     // Người xem là quản trị nhóm: được tắt mic / mời người khác ra.
     canModerate: boolean;
+    // Phòng thoại có tên muốn vào (không có thì phòng đầu danh sách) và cuộc gọi đang mở của nó.
+    roomId?: number | null;
+    roomCallId?: number | null;
 }
 
 export interface JoinGroupCallRequest extends JoinGroupRoomRequest {
@@ -66,6 +69,8 @@ export interface CallSession {
     // Nhóm của phòng hay cuộc gọi nhóm đang ở (để mũ khung chat biết mình đã ở trong đó).
     groupId: number | null;
     activeKind: ActiveCallKind | null;
+    // Cuộc gọi đang nối (để biết mình đang ngồi ở phòng thoại nào của nhóm).
+    activeCallId: number | null;
     sharer: CallParticipantView | null;
     actions: CallActions;
     renderMedia: RenderCallMedia;
@@ -92,6 +97,7 @@ const IDLE_SESSION: CallSession = {
     isJoining: false,
     groupId: null,
     activeKind: null,
+    activeCallId: null,
     sharer: null,
     actions: {
         toggleMic: noop,

@@ -30,5 +30,11 @@ return [
         'NAME_REQUIRED' => 'Give the group a name',
         'NAME_TOO_LONG' => 'Group names can be at most 100 characters',
         'MESSAGE_NOT_YOURS' => 'You can only recall your own messages',
+        'ROOM_NOT_FOUND' => 'This voice room was not found',
+        'ROOM_NAME_REQUIRED' => 'Give the voice room a name',
+        'ROOM_NAME_TOO_LONG' => 'Voice room names are at most :max characters',
+        'ROOM_LIMIT' => 'This group already has :max voice rooms',
+        'ROOM_LIVE' => 'People are in this room. Wait until everyone leaves to delete it',
+        'LAST_ROOM' => 'A group needs at least one voice room',
     ],
 ];

@@ -24,7 +24,6 @@ import ResolveAction from './ResolveAction';
 import SidepanelSwitch from './SidepanelSwitch';
 import { useContactPanelControl } from '../contactPanelVisibility';
 import ConversationSearchBar from './search/ConversationSearchBar';
-import GroupRoomButton from 'dashboard/calls/GroupRoomButton';
 import DirectCallButtons from 'dashboard/calls/DirectCallButtons';
 import { GroupCallButtons, GroupCallMenu } from 'dashboard/calls/GroupCallButtons';
 
@@ -141,7 +140,6 @@ export default function ConversationHeader({
                 </div>
                 <div className="flex flex-row items-center justify-end flex-shrink-0 gap-1 header-actions-wrap max-md:[&_[data-testid=sidepanel-switch]_button]:!size-11">
                     {group && isPhone ? <GroupCallMenu accountId={accountId} group={group} className="max-md:!size-11" /> : null}
-                    {group && !isPhone ? <GroupRoomButton accountId={accountId} group={group} isCompact /> : null}
                     {group && !isPhone ? <GroupCallButtons accountId={accountId} group={group} /> : null}
                     {!group && inbox?.channel_type === 'Channel::Yona' ? (
                         <DirectCallButtons accountId={accountId} conversation={selectedConversation} className="max-md:!size-11" />
@@ -220,7 +218,6 @@ export default function ConversationHeader({
                 </div>
             ) : (
                 <div className="flex flex-row items-center justify-start xl:justify-end flex-shrink-0 gap-2 w-full xl:w-auto header-actions-wrap">
-                    {group ? <GroupRoomButton accountId={accountId} group={group} isCompact={isActionsCompact} /> : null}
                     {group ? <GroupCallButtons accountId={accountId} group={group} /> : null}
                     {!group && inbox?.channel_type === 'Channel::Yona' ? <DirectCallButtons accountId={accountId} conversation={selectedConversation} /> : null}
                     {searchButton}

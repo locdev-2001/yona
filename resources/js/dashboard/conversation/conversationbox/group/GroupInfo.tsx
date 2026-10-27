@@ -8,6 +8,7 @@ import type { DialogHandle } from 'dashboard/components-next/dialog/Dialog';
 import Input from 'dashboard/components-next/input/Input';
 import { useAlert } from 'dashboard/composables/useAlert';
 import { useCallSession } from 'dashboard/calls/callSession';
+import GroupVoiceRoomList from 'dashboard/calls/GroupVoiceRoomList';
 import { openProfile } from 'dashboard/contacts/profile/profileOverlay';
 import { ensureYonaContact } from 'dashboard/friends/api';
 import { parseApiErrorMessage } from 'dashboard/helper/apiClient';
@@ -149,6 +150,8 @@ export default function GroupInfo({ group }: { group: GroupSummary }) {
                     <Button faded slate sm icon="i-lucide-user-plus" label={t('CHAT.GROUP.ADD_MEMBERS')} className="mt-2" onClick={() => addRef.current?.open()} />
                 ) : null}
             </div>
+
+            {isMember ? <GroupVoiceRoomList accountId={accountId} group={group} /> : null}
 
             {isAdmin ? <GroupInviteLinks accountId={accountId} groupId={group.id} /> : null}
 

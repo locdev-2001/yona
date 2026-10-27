@@ -14,8 +14,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
-// Phòng thoại nhóm: xem phòng đang mở, vào phòng (mở nếu chưa có) và nhận vé kết nối, quản
-// trị tắt mic / mời người ra.
+// Phòng thoại nhóm: xem các phòng, vào một phòng (mở nếu chưa có) và nhận vé kết nối, quản
+// trị tắt mic / mời người ra khỏi phòng người đó đang ngồi.
 class YonaGroupCallsController extends Controller
 {
     public function __construct(
@@ -29,17 +29,19 @@ class YonaGroupCallsController extends Controller
         $group = YonaGroup::query()->findOrFail($groupId);
         $this->permissions->activeMember($group, $request->user());
 
-        return response()->json(['voice_room' => $this->summaries->of($group)]);
+        return response()->json(['voice_rooms' => $this->summaries->snapshot($group)['voice_rooms']]);
     }
 
     public function store(Request $request, Account $account, int $groupId): JsonResponse
     {
         $input = $request->validate([
             'media' => ['sometimes', Rule::enum(CallMedia::class)],
+            'room_id' => ['sometimes', 'nullable', 'integer'],
         ]);
 
         $join = $this->groupRooms->join(
             YonaGroup::query()->findOrFail($groupId),
+            isset($input['room_id']) ? (int) $input['room_id'] : null,
             $request->user(),
             CallMedia::tryFrom($input['media'] ?? '') ?? CallMedia::Audio,
         );

@@ -651,7 +651,10 @@ POST /webhooks/media/{provider} ─► MediaDrivers ─► MediaWebhooks ─► 
   sử) và `presence` (`Kinds\CallPresenceObserver`, tuỳ chọn: người vào/ra, bật/tắt chia sẻ
   màn hình thì module tự đẩy cập nhật). Lõi không có `if` theo loại. Thêm loại = một module
   + một mục sổ.
-- **Phòng nhóm (module `App\Services\Groups\Calls`):** `GroupRoomPolicy` (≤25, quản trị
+- **Phòng nhóm (module `App\Services\Groups\Calls`):** nhóm có nhiều phòng thoại đặt tên
+  (`yona_group_voice_rooms`, `GroupVoiceRooms`: quản trị tạo/đổi tên/xoá, nhóm chưa có phòng được
+  tạo phòng mặc định lúc đọc); phòng trỏ tới cuộc gọi đang mở của nó (`open_call_id`, khoá dòng
+  phòng lúc mở), bảng `calls` và lõi không biết phòng. `GroupRoomPolicy` (≤25 mỗi phòng, quản trị
   nhóm điều hành), `GroupRoomTrail` (tin "X đã mở phòng thoại" khi người đầu tiên vào; phòng đóng thì
   chính tin đó được ghi đè thành "Phòng thoại đã kết thúc · thời lượng · số người", giữ
   mốc thời gian nên thẻ đứng đúng chỗ cuộc gọi diễn ra; phòng không ai vào thì
@@ -763,7 +766,8 @@ POST /webhooks/media/{provider} ─► MediaDrivers ─► MediaWebhooks ─► 
 | Route | Ghi chú |
 |---|---|
 | `GET /api/v1/accounts/{account}/yona/groups/{id}/call` | Phòng đang mở của nhóm (`voice_room`, null khi không ai ngồi) |
-| `POST /api/v1/accounts/{account}/yona/groups/{id}/call` (`media`: audio\|video) | Vào phòng thoại nhóm (mở nếu chưa có); trả `call`, `ticket` (`server_url`, `token`, `expires_at`; null khi chờ duyệt), `awaiting_approval`; đầy thì 409 |
+| `POST /api/v1/accounts/{account}/yona/groups/{id}/call` (`media`: audio\|video, `room_id` tuỳ chọn) | Vào một phòng thoại của nhóm (không có `room_id` thì phòng đầu danh sách; mở nếu chưa có); trả `call`, `ticket` (`server_url`, `token`, `expires_at`; null khi chờ duyệt), `awaiting_approval`; đầy thì 409 |
+| `POST /api/v1/accounts/{account}/yona/groups/{id}/voice_rooms` (`name`), `PATCH|DELETE …/voice_rooms/{roomId}` | Quản trị nhóm tạo, đổi tên, xoá phòng thoại; danh sách phòng (kèm ai đang ngồi) đi trong payload nhóm `voice_rooms` và sự kiện `voice_room.updated` |
 | `POST /…/yona/groups/{id}/call/participants/{userId}/mute` · `DELETE /…/call/participants/{userId}` | Quản trị nhóm tắt mic · mời ra khỏi phòng |
 | `POST /webhooks/media/{provider}` | Sự kiện phòng từ nhà cung cấp, không session; driver tự kiểm chữ ký |
 

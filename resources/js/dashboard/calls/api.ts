@@ -1,6 +1,6 @@
-import { deleteJson, getJson, postJson } from 'dashboard/helper/apiClient';
+import { deleteJson, getJson, patchJson, postJson } from 'dashboard/helper/apiClient';
 import type { ConversationGroupAvatar } from 'shared/avatar/avatarSeed';
-import type { CallMediaKind, DirectCallView, GroupCallSummary, OpenRoomSummary } from './types';
+import type { CallMediaKind, DirectCallView, GroupCallSummary, VoiceRoomSummary } from './types';
 
 // Vé vào phòng nhận từ máy chủ; lớp media dùng `server_url` + `token` để kết nối.
 export interface CallTicket {
@@ -29,10 +29,22 @@ export interface DirectCallJoinResponse extends CallJoinResponse {
 
 const groupCallUrl = (accountId: number, groupId: number) => `/api/v1/accounts/${accountId}/yona/groups/${groupId}/call`;
 
-export const joinGroupRoom = (accountId: number, groupId: number) => postJson<CallJoinResponse>(groupCallUrl(accountId, groupId), {});
+export const joinGroupRoom = (accountId: number, groupId: number, roomId: number | null = null) =>
+    postJson<CallJoinResponse>(groupCallUrl(accountId, groupId), roomId ? { room_id: roomId } : {});
 
 export const fetchGroupRoom = (accountId: number, groupId: number) =>
-    getJson<{ voice_room: OpenRoomSummary | null }>(groupCallUrl(accountId, groupId));
+    getJson<{ voice_rooms: VoiceRoomSummary[] }>(groupCallUrl(accountId, groupId));
+
+const voiceRoomsUrl = (accountId: number, groupId: number) => `/api/v1/accounts/${accountId}/yona/groups/${groupId}/voice_rooms`;
+
+export const createVoiceRoom = (accountId: number, groupId: number, name: string) =>
+    postJson<{ id: number; name: string | null }>(voiceRoomsUrl(accountId, groupId), { name });
+
+export const renameVoiceRoom = (accountId: number, groupId: number, roomId: number, name: string) =>
+    patchJson<{ id: number; name: string | null }>(`${voiceRoomsUrl(accountId, groupId)}/${roomId}`, { name });
+
+export const deleteVoiceRoom = (accountId: number, groupId: number, roomId: number) =>
+    deleteJson(`${voiceRoomsUrl(accountId, groupId)}/${roomId}`);
 
 export const muteGroupRoomParticipant = (accountId: number, groupId: number, userId: number) =>
     postJson(`${groupCallUrl(accountId, groupId)}/participants/${userId}/mute`, {});

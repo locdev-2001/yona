@@ -39,8 +39,9 @@ final class YonaGroupResource
             ...self::avatar($group, $membership->user_id),
             'member_count' => $group->member_count,
             'my_role' => $membership->isActive() ? $membership->role : null,
-            'voice_room' => $voiceRoom['voice_room'] ?? null,
-            // Mốc đóng trước khi tính `voice_room`: client so với sự kiện voice_room.updated để giữ bản mới hơn.
+            // Các phòng thoại có tên của nhóm, phòng đang mở có `live` (ai đang ngồi).
+            'voice_rooms' => $voiceRoom['voice_rooms'] ?? [],
+            // Mốc đóng trước khi tính `voice_rooms`: client so với sự kiện voice_room.updated để giữ bản mới hơn.
             'voice_room_as_of' => $voiceRoom['as_of'] ?? now()->getTimestampMs(),
             // Cuộc gọi nhóm có đổ chuông đang diễn ra, kèm lời mời của chính người xem; mốc như voice_room.
             'group_call' => isset($groupCall['group_call']) ? [...$groupCall['group_call'], 'my_invitation' => $myInvitation?->value] : null,

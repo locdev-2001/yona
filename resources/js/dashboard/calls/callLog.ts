@@ -31,6 +31,9 @@ export interface CallLogData {
     participants?: number;
     attendees?: CallAttendee[];
     actor?: { user_id: number; name: string } | null;
+    // Phòng thoại có tên của nhóm; tên null là phòng mặc định.
+    room_id?: number;
+    room_name?: string | null;
 }
 
 export type CallTone = 'success' | 'danger' | 'info' | 'neutral' | 'group' | 'live';
@@ -148,13 +151,13 @@ function outcomeOf(call: CallLogData): CallOutcome {
 }
 
 // Phòng thoại vừa mở mà còn đang mở (`live`): thẻ có người đang ngồi và nút Tham gia.
-function liveRoomView(live: OpenRoomSummary): CallLogView {
+function liveRoomView(live: OpenRoomSummary, title: string): CallLogView {
     const people = live.participants;
 
     return {
         tone: 'live',
         icon: 'i-lucide-headphones',
-        title: t('CALLS.LOG.GROUP_ROOM'),
+        title,
         subtitle: t('CALLS.LOG.ROOM_LIVE', { count: live.total }),
         detail: null,
         pill: t('CALLS.LOG.STATE_OPEN'),
@@ -165,7 +168,7 @@ function liveRoomView(live: OpenRoomSummary): CallLogView {
         canJoin: true,
         attendees: people.slice(0, LISTED_ATTENDEES),
         moreAttendees: Math.max(0, live.total - Math.min(people.length, LISTED_ATTENDEES)),
-        preview: { text: t('CALLS.LOG.GROUP_ROOM'), icon: 'i-lucide-headphones', isAlert: false },
+        preview: { text: title, icon: 'i-lucide-headphones', isAlert: false },
     };
 }
 
@@ -188,11 +191,17 @@ function pendingGroupView(title: string, icon: string, media: 'audio' | 'video',
     };
 }
 
+// Phòng thoại có tên thì thẻ mang tên phòng; tin cũ và phòng mặc định là "Phòng thoại nhóm".
+function roomTitle(call: CallLogData): string {
+    return call.room_name || t(call.room_id ? 'CALLS.ROOM.DEFAULT_NAME' : 'CALLS.LOG.GROUP_ROOM');
+}
+
 function groupRoomView(call: CallLogData, groupName: string, liveRoom: OpenRoomSummary | null): CallLogView {
+    const title = roomTitle(call);
     if (isCallStartNotice(call)) {
         return liveRoom && liveRoom.call_id === call.id
-            ? liveRoomView(liveRoom)
-            : pendingGroupView(t('CALLS.LOG.GROUP_ROOM'), 'i-lucide-headphones', 'audio', groupName);
+            ? liveRoomView(liveRoom, title)
+            : pendingGroupView(title, 'i-lucide-headphones', 'audio', groupName);
     }
 
     const total = call.participants ?? call.attendees?.length ?? 0;
@@ -202,7 +211,7 @@ function groupRoomView(call: CallLogData, groupName: string, liveRoom: OpenRoomS
     return {
         tone: 'group',
         icon: 'i-lucide-users',
-        title: t('CALLS.LOG.GROUP_ROOM'),
+        title,
         subtitle: t('CALLS.LOG.ROOM_PEOPLE', { group: groupName, count: total }),
         detail: t('CALLS.LOG.ENDED_FOR', { duration }),
         pill: t('CALLS.LOG.STATE_ENDED'),
@@ -213,7 +222,7 @@ function groupRoomView(call: CallLogData, groupName: string, liveRoom: OpenRoomS
         canJoin: false,
         attendees,
         moreAttendees: Math.max(0, total - attendees.length),
-        preview: { text: `${t('CALLS.LOG.GROUP_ROOM')} · ${duration}`, icon: 'i-lucide-users', isAlert: false },
+        preview: { text: `${title} · ${duration}`, icon: 'i-lucide-users', isAlert: false },
     };
 }
 
