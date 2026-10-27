@@ -87,6 +87,10 @@ trait AssignmentHandler
 
     private function processAssignmentActivities(): void
     {
+        if (! $this->account->featureEnabled('assignment_activity_messages')) {
+            return;
+        }
+
         $userName = auth()->user()?->name;
 
         $this->inAccountLocale(function () use ($userName) {

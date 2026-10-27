@@ -65,6 +65,10 @@ return [
     'captain_tasks' => true,
     'conversation_required_attributes' => false,
     'advanced_assignment' => false,
+    // Tin hoạt động "Chỉ định/Phân công … bởi …" trong dòng chat. Hộp thư cá nhân vẫn
+    // tự gán hội thoại cho chủ hộp thư (đường báo tin mới đi theo người được gán)
+    // nhưng không hiện dấu vết gán việc.
+    'assignment_activity_messages' => false,
     'whatsapp_manual_transfer' => false,
     'data_import' => false,
     'api_and_webhooks' => true,

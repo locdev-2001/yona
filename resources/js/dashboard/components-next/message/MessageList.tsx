@@ -17,6 +17,7 @@ import { readInReplyToId } from './helpers/replyQuote';
 import { messageSenderKey } from './helpers/senderIdentity';
 import { callNoticeSide } from './helpers/callNotice';
 import { withoutSupersededStartNotices } from 'dashboard/calls/callLog';
+import { withoutHiddenActivities } from 'dashboard/conversation/hiddenActivities';
 
 // Port từ dashboard/components-next/message/MessageList.vue — slot Vue
 // (beforeAll/unreadBadge/after) thành props ReactNode; gộp nhóm tin và mốc thời
@@ -124,7 +125,7 @@ const MessageList = forwardRef<HTMLUListElement, MessageListProps>(function Mess
     ref,
 ) {
     // Một sự kiện cuộc gọi một mục: tin bắt đầu đã có thẻ kết thúc thì không vẽ, kể cả khi gộp cụm.
-    const visibleMessages = useMemo(() => withoutSupersededStartNotices(messages), [messages]);
+    const visibleMessages = useMemo(() => withoutSupersededStartNotices(withoutHiddenActivities(messages)), [messages]);
     const groupPositions = useMemo(() => resolveGroupPositions(visibleMessages.map(toGroupableMessage)), [visibleMessages]);
     const resolveReactorName = useMemo(
         () => createReactorNameResolver(messages, groupMembers),
