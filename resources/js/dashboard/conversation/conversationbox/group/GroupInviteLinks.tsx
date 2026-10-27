@@ -9,11 +9,10 @@ import { t } from '../../../../i18n';
 import { createGroupInviteLink, fetchGroupInviteLinks, revokeGroupInviteLink } from '../../groupsApi';
 import type { GroupInviteLink } from '../../groupsApi';
 
-// Link mời của nhóm (chỉ quản trị): mỗi nhóm một link đang dùng, tạo link mới thì máy chủ thu
-// hồi link cũ. Sao chép ngay lúc tạo (máy chủ chỉ giữ bản băm nên sau đó không xem lại được).
+// Link mời của nhóm (chỉ quản trị): mỗi nhóm một link đang dùng, luôn hiện đầy đủ để chép lại;
+// tạo link mới thì máy chủ thu hồi link cũ. Link tạo trước khi máy chủ lưu token không dựng lại được.
 export default function GroupInviteLinks({ accountId, groupId }: { accountId: number; groupId: number }) {
     const [links, setLinks] = useState<GroupInviteLink[]>([]);
-    const [freshUrl, setFreshUrl] = useState<string | null>(null);
     const [isCreating, setCreating] = useState(false);
 
     const reload = useCallback(() => {
@@ -23,7 +22,6 @@ export default function GroupInviteLinks({ accountId, groupId }: { accountId: nu
     }, [accountId, groupId]);
 
     useEffect(() => {
-        setFreshUrl(null);
         reload();
     }, [reload]);
 
@@ -32,8 +30,7 @@ export default function GroupInviteLinks({ accountId, groupId }: { accountId: nu
     const create = async () => {
         setCreating(true);
         try {
-            const link = await createGroupInviteLink(accountId, groupId);
-            setFreshUrl(link.url);
+            await createGroupInviteLink(accountId, groupId);
             reload();
         } catch (error) {
             fail(error);
@@ -54,7 +51,6 @@ export default function GroupInviteLinks({ accountId, groupId }: { accountId: nu
     const revoke = async (linkId: number) => {
         try {
             await revokeGroupInviteLink(accountId, groupId, linkId);
-            setFreshUrl(null);
             reload();
             useAlert(t('CHAT.GROUP.INVITE_REVOKED'));
         } catch (error) {
@@ -78,20 +74,27 @@ export default function GroupInviteLinks({ accountId, groupId }: { accountId: nu
                 {t('CHAT.GROUP.INVITE_LINK')}
             </h3>
             <p className="m-0 text-xs text-n-slate-11">{t('CHAT.GROUP.INVITE_HINT')}</p>
-            {freshUrl ? (
-                <div className="flex items-center gap-2">
-                    <span className="field-surface flex items-center flex-1 min-w-0 h-10 px-3 rounded-lg text-sm text-n-slate-12 truncate">
-                        {freshUrl.replace(/^https?:\/\//, '')}
-                    </span>
-                    <Button sm label={t('CHAT.GROUP.COPY')} icon="i-lucide-copy" onClick={() => void copy(freshUrl)} />
-                </div>
-            ) : null}
             {links.length > 0 ? (
-                <ul className="flex flex-col gap-1 m-0 p-0 list-none">
+                <ul className="flex flex-col gap-2 m-0 p-0 list-none">
                     {links.map(link => (
-                        <li key={link.id} className="flex items-center justify-between gap-2 text-xs text-n-slate-11">
-                            <span className="min-w-0 truncate">{describe(link)}</span>
-                            <Button link ruby xs label={t('CHAT.GROUP.INVITE_REVOKE')} onClick={() => void revoke(link.id)} />
+                        <li key={link.id} className="flex flex-col gap-1">
+                            {link.url ? (
+                                <div className="flex items-center gap-2">
+                                    <span
+                                        data-testid="group-invite-url"
+                                        className="field-surface flex items-center flex-1 min-w-0 h-10 px-3 rounded-lg text-sm text-n-slate-12 truncate"
+                                    >
+                                        {link.url.replace(/^https?:\/\//, '')}
+                                    </span>
+                                    <Button sm label={t('CHAT.GROUP.COPY')} icon="i-lucide-copy" onClick={() => void copy(link.url as string)} />
+                                </div>
+                            ) : (
+                                <p className="m-0 text-xs text-n-slate-11">{t('CHAT.GROUP.INVITE_LEGACY')}</p>
+                            )}
+                            <div className="flex items-center justify-between gap-2 text-xs text-n-slate-11">
+                                <span className="min-w-0 truncate">{describe(link)}</span>
+                                <Button link ruby xs label={t('CHAT.GROUP.INVITE_REVOKE')} onClick={() => void revoke(link.id)} />
+                            </div>
                         </li>
                     ))}
                 </ul>

@@ -50,6 +50,8 @@ export interface GroupDetails extends GroupSummary {
 export interface GroupInviteLink {
     id: number;
     status: 'active' | 'revoked' | 'expired' | 'exhausted';
+    // Link đầy đủ để chép lại; null khi link đã hết dùng hoặc tạo trước khi máy chủ lưu token.
+    url: string | null;
     expires_at: number | null;
     max_uses: number | null;
     use_count: number;
@@ -105,7 +107,7 @@ export async function fetchGroupInviteLinks(accountId: number, groupId: number):
     return (await getJson<{ payload: GroupInviteLink[] }>(`${groupUrl(accountId, groupId)}/invite_links`)).payload;
 }
 
-export function createGroupInviteLink(accountId: number, groupId: number): Promise<GroupInviteLink & { token: string; url: string }> {
+export function createGroupInviteLink(accountId: number, groupId: number): Promise<GroupInviteLink & { token: string }> {
     return postJson(`${groupUrl(accountId, groupId)}/invite_links`, {});
 }
 

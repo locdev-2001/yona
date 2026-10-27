@@ -124,6 +124,7 @@ final class YonaGroupResource
         return [
             'id' => $link->id,
             'status' => $link->status(),
+            'url' => $link->isUsable() ? $link->url() : null,
             'expires_at' => $link->expires_at?->getTimestamp(),
             'max_uses' => $link->max_uses,
             'use_count' => $link->use_count,
