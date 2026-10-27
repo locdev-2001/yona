@@ -11,7 +11,7 @@ use App\Services\Groups\GroupService;
 use Carbon\CarbonInterval;
 
 // Dấu vết cuộc gọi nhóm trong hội thoại nhóm (người gọi là người gửi): một tin khi người gọi vào phòng (thẻ "Tham gia" khi
-// cuộc gọi còn diễn ra), một tin khi phòng đóng (kết quả, thời lượng, ai đã tham gia). Như phòng
+// cuộc gọi còn diễn ra), phòng đóng thì chính tin đó đổi thành kết quả, thời lượng, ai đã tham gia. Như phòng
 // thoại, lời hiển thị dịch theo người đọc từ `content_attributes.call`; `content` là bản ngôn ngữ
 // mặc định cho tìm kiếm.
 final readonly class GroupCallTrail implements CallTrail
@@ -25,8 +25,9 @@ final readonly class GroupCallTrail implements CallTrail
         $caller = User::query()->find($call->caller_id);
         $locale = (string) config('app.locale');
 
-        $this->groups->postNotice($call->group, __('calls.ACTIVITY.GROUP_CALL_STARTED', ['actor' => $caller?->availableName() ?? ''], $locale), [
-            'call' => [...$this->basics($call, $caller), 'status' => 'ringing'],
+        $this->groups->postCallNotice($call->group, __('calls.ACTIVITY.GROUP_CALL_STARTED', ['actor' => $caller?->availableName() ?? ''], $locale), [
+            ...$this->basics($call, $caller),
+            'status' => 'ringing',
         ], $caller);
     }
 
@@ -47,22 +48,20 @@ final readonly class GroupCallTrail implements CallTrail
                 'count' => $attendees->count(),
             ], $locale);
 
-        $this->groups->postNotice($call->group, $content, [
-            'call' => [
-                ...$this->basics($call, $caller),
-                // Phòng tự đóng khi còn đổ chuông thì chưa kịp chốt trạng thái: không ai nghe.
-                'status' => $call->status === CallStatus::Ringing ? CallStatus::Missed->value : $call->status->value,
-                'duration_seconds' => $durationSeconds,
-                'rang_at' => $call->created_at?->toIso8601String(),
-                'answered_at' => $call->answered_at?->toIso8601String(),
-                'ended_at' => $call->ended_at?->toIso8601String(),
-                'participants' => $attendees->count(),
-                'attendees' => $attendees->map(fn (User $user) => [
-                    'user_id' => $user->id,
-                    'name' => $user->availableName(),
-                    'avatar_url' => $user->avatarUrl() ?: null,
-                ])->all(),
-            ],
+        $this->groups->postCallNotice($call->group, $content, [
+            ...$this->basics($call, $caller),
+            // Phòng tự đóng khi còn đổ chuông thì chưa kịp chốt trạng thái: không ai nghe.
+            'status' => $call->status === CallStatus::Ringing ? CallStatus::Missed->value : $call->status->value,
+            'duration_seconds' => $durationSeconds,
+            'rang_at' => $call->created_at?->toIso8601String(),
+            'answered_at' => $call->answered_at?->toIso8601String(),
+            'ended_at' => $call->ended_at?->toIso8601String(),
+            'participants' => $attendees->count(),
+            'attendees' => $attendees->map(fn (User $user) => [
+                'user_id' => $user->id,
+                'name' => $user->availableName(),
+                'avatar_url' => $user->avatarUrl() ?: null,
+            ])->all(),
         ], $caller);
     }
 

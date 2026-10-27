@@ -111,19 +111,30 @@ export function callStartText(call: CallLogData, showsActor = true): string {
     return actor ? t('CALLS.LOG.ROOM_STARTED', { actor }) : t('CALLS.LOG.ROOM_STARTED_SOMEONE');
 }
 
-// Một sự kiện một mục: tin lúc bắt đầu của phòng hay cuộc gọi đã có tin kết thúc thì ẩn, thẻ kết
-// thúc đã nói đủ. Tin bắt đầu còn lại là sự kiện đang diễn ra (thẻ có nút Tham gia).
-export function withoutSupersededStartNotices<T extends { content_attributes?: Record<string, unknown> | null }>(messages: T[]): T[] {
-    const finishedIds = new Set<number>();
+// Một cuộc gọi một thẻ, đứng ở chỗ cuộc gọi bắt đầu. Máy chủ ghi kết quả đè lên chính tin bắt đầu;
+// dữ liệu cũ còn cặp tin bắt đầu + tin kết thúc riêng thì thẻ kết thúc được vẽ vào chỗ tin bắt đầu.
+export function withoutSupersededStartNotices<T extends { content?: string | null; content_attributes?: Record<string, unknown> | null }>(
+    messages: T[],
+): T[] {
+    const startedIds = new Set<number>();
+    const finishedById = new Map<number, T>();
     messages.forEach((message) => {
         const call = readCallLog(message.content_attributes);
-        if (call?.id && (call.kind === GROUP_ROOM_KIND || call.kind === GROUP_CALL_KIND) && !isCallStartNotice(call)) finishedIds.add(call.id);
+        if (!call?.id || (call.kind !== GROUP_ROOM_KIND && call.kind !== GROUP_CALL_KIND)) return;
+        if (isCallStartNotice(call)) startedIds.add(call.id);
+        else finishedById.set(call.id, message);
     });
-    if (finishedIds.size === 0) return messages;
+    const pairedIds = [...finishedById.keys()].filter((id) => startedIds.has(id));
+    if (pairedIds.length === 0) return messages;
+    const paired = new Set(pairedIds);
 
-    return messages.filter((message) => {
+    return messages.flatMap((message) => {
         const call = readCallLog(message.content_attributes);
-        return !(call?.id && isCallStartNotice(call) && finishedIds.has(call.id));
+        if (!call?.id || !paired.has(call.id)) return [message];
+        if (!isCallStartNotice(call)) return [];
+        const finished = finishedById.get(call.id) as T;
+
+        return [{ ...message, content: finished.content, content_attributes: finished.content_attributes }];
     });
 }
 
