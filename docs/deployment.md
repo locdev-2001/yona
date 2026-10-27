@@ -1423,6 +1423,27 @@ in cảnh báo. Chạy lại bao nhiêu lần cũng được.
 
 ---
 
+### Ảnh thu nhỏ cho ảnh đính kèm có từ trước
+
+Ảnh đính kèm tin nhắn mới được job `GenerateAttachmentThumbnailJob` (hàng đợi
+`media`) dựng ảnh thu nhỏ WebP cạnh dài 240px ở `<thư mục ảnh>/thumbs/<tên>.webp`
+và bù `meta.width/height` (đã xoay theo EXIF). Kiểm worker Horizon có chạy hàng
+`media`. Ảnh có từ trước bản này dựng một lần, chạy nền nhẹ CPU:
+
+```bash
+cd /www/wwwroot/yona.vn
+nice -n 19 php artisan attachments:generate-thumbnails --chunk=200
+# Chạy lại phải ra "Đã xử lý 0 ảnh"
+php artisan attachments:generate-thumbnails
+```
+
+Ảnh đã xử lý mang `meta.thumb` nên chạy lại không đọc lại ảnh. Ảnh chưa có ảnh
+thu nhỏ (đã nhỏ sẵn, GIF động, chưa dựng xong) vẫn hiện bằng ảnh gốc. Quay lại:
+cho `Attachment::thumbUrl()` trả `fileUrl()` rồi xoá các thư mục `thumbs/`; không
+có thay đổi schema.
+
+---
+
 ### Dọn liên hệ nháp rỗng của widget website
 
 Trước bản dựng khách LAZY (chỉ tạo contact + contact_inbox ở hành động thật đầu

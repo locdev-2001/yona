@@ -26,6 +26,8 @@ interface MediaTileProps {
     className?: string;
     style?: CSSProperties;
     hiddenCount?: number;
+    // Ô lưới nhỏ hơn ảnh thu nhỏ nên tải ảnh thu nhỏ; ảnh đứng riêng rộng hơn thì giữ ảnh gốc cho nét.
+    prefersThumbnail?: boolean;
     onOpen: () => void;
     onNaturalSize?: (size: NaturalSize) => void;
 }
@@ -52,15 +54,16 @@ function TileFailed({ canReload = false }: { canReload?: boolean }) {
     );
 }
 
-interface ImageTileContentProps extends Pick<MediaTileProps, 'attachment' | 'onNaturalSize'> {
+interface ImageTileContentProps extends Pick<MediaTileProps, 'attachment' | 'onNaturalSize' | 'prefersThumbnail'> {
     reloadNonce: number;
     onFailedChange: (hasFailed: boolean) => void;
 }
 
-function ImageTileContent({ attachment, onNaturalSize, reloadNonce, onFailedChange }: ImageTileContentProps) {
+function ImageTileContent({ attachment, prefersThumbnail = false, onNaturalSize, reloadNonce, onFailedChange }: ImageTileContentProps) {
     const { isLoaded, hasError, setHasError, loadWithRetry } = useLoadWithRetry();
     const [reloadKey, setReloadKey] = useState(0);
-    const imageUrl = attachment.data_url ? withReloadParam(attachment.data_url, reloadNonce) : '';
+    const sourceUrl = (prefersThumbnail && attachment.thumb_url) || attachment.data_url;
+    const imageUrl = sourceUrl ? withReloadParam(sourceUrl, reloadNonce) : '';
 
     useEffect(() => {
         if (!imageUrl) return;
@@ -136,7 +139,7 @@ function VideoTileContent({ attachment, onNaturalSize }: Pick<MediaTileProps, 'a
     );
 }
 
-function MediaTile({ attachment, className = '', style, hiddenCount, onOpen, onNaturalSize }: MediaTileProps) {
+function MediaTile({ attachment, className = '', style, hiddenCount, prefersThumbnail, onOpen, onNaturalSize }: MediaTileProps) {
     const isVideo = VIDEO_TYPES.includes(attachment.file_type);
     // Ảnh hỏng thì bấm ô là tải lại (mở trình xem một ảnh hỏng không giúp gì).
     const [hasImageFailed, setImageFailed] = useState(false);
@@ -170,6 +173,7 @@ function MediaTile({ attachment, className = '', style, hiddenCount, onOpen, onN
             ) : (
                 <ImageTileContent
                     attachment={attachment}
+                    prefersThumbnail={prefersThumbnail}
                     onNaturalSize={onNaturalSize}
                     reloadNonce={reloadNonce}
                     onFailedChange={setImageFailed}
@@ -240,6 +244,7 @@ export default function MediaGrid({ media, className = '' }: MediaGridProps) {
                                     key={tile.image.id}
                                     attachment={tile.image}
                                     className="aspect-square"
+                                    prefersThumbnail
                                     onOpen={() => setOpenedAttachment(tile.image)}
                                 />
                             ) : (
@@ -247,6 +252,7 @@ export default function MediaGrid({ media, className = '' }: MediaGridProps) {
                                     key={`overflow-${media[tile.firstHiddenIndex].id}`}
                                     attachment={media[tile.firstHiddenIndex]}
                                     className="aspect-square"
+                                    prefersThumbnail
                                     hiddenCount={tile.hiddenCount}
                                     onOpen={() => setOpenedAttachment(media[tile.firstHiddenIndex])}
                                 />

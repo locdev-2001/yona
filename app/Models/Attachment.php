@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Exceptions\MessageValidationException;
+use App\Jobs\Attachments\GenerateAttachmentThumbnailJob;
 use App\Jobs\Attachments\RetryAttachmentDownloadJob;
 use App\Models\Concerns\IndexedForSearch;
 use App\Support\FileUploadLimit;
@@ -11,6 +12,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -117,6 +119,9 @@ class Attachment extends Model
     // mật của kênh. Giữ loại kênh báo về để lượt tải lại suy loại như đường gốc.
     public const META_DOWNLOAD_RETRY = 'download_retry';
 
+    // Ảnh đã qua bước dựng ảnh thu nhỏ: true = có tệp thu nhỏ, false = không cần/không dựng được.
+    public const META_THUMBNAIL = 'thumb';
+
     // displayName() viết bằng SQL, trùng biểu thức index index_attachments_on_folded_display_name.
     public const DISPLAY_NAME_SQL = "COALESCE(NULLIF(attachments.filename, ''), attachments.fallback_title)";
 
@@ -160,6 +165,13 @@ class Attachment extends Model
         static::created(function (Attachment $attachment) {
             if ($attachment->awaitsDownloadRetry()) {
                 RetryAttachmentDownloadJob::schedule($attachment);
+            }
+        });
+
+        // Tạo mới hoặc gắn tệp mới (fallback tải lại được thành ảnh).
+        static::saved(function (Attachment $attachment) {
+            if (($attachment->wasRecentlyCreated || $attachment->wasChanged('path')) && $attachment->needsThumbnail()) {
+                GenerateAttachmentThumbnailJob::dispatch($attachment)->afterCommit();
             }
         });
 
@@ -431,7 +443,7 @@ class Attachment extends Model
     public function discardStoredFile(): void
     {
         if ($this->hasFile() && $this->ownsStoredFile()) {
-            Storage::disk($this->disk)->delete($this->path);
+            Storage::disk($this->disk)->delete(array_filter([$this->path, $this->hasThumbnail() ? $this->thumbnailPath() : null]));
         }
     }
 
@@ -446,7 +458,8 @@ class Attachment extends Model
             'filename' => $this->filename,
             'content_type' => $this->content_type,
             'byte_size' => $this->byte_size,
-            'meta' => $this->meta ?? [],
+            // Bản sao nằm ở đường dẫn mới, chưa có ảnh thu nhỏ: hook `created` dựng lại.
+            'meta' => Arr::except($this->meta ?? [], self::META_THUMBNAIL),
         ];
     }
 
@@ -627,11 +640,36 @@ class Attachment extends Model
         return (string) base64_decode(strtr($value, '-_', '+/'), true);
     }
 
-    // Gốc resize 250px qua ActiveStorage representation — chưa có biến thể ảnh
-    // nên trả cùng URL gốc (khác biệt cố ý, ghi ở trace).
+    // Ảnh chưa có ảnh thu nhỏ (đang dựng, đã nhỏ sẵn, GIF động) dùng chính ảnh gốc.
     public function thumbUrl(): string
     {
-        return $this->hasFile() && $this->isImage() ? $this->fileUrl() : '';
+        if (! $this->hasFile() || ! $this->isImage()) {
+            return '';
+        }
+
+        return $this->hasThumbnail() ? Storage::disk($this->disk)->url($this->thumbnailPath()) : $this->fileUrl();
+    }
+
+    public function needsThumbnail(): bool
+    {
+        return $this->isImage()
+            && $this->attachable_type === (new Message)->getMorphClass()
+            && $this->hasFile()
+            && $this->ownsStoredFile()
+            && ! array_key_exists(self::META_THUMBNAIL, $this->meta ?? []);
+    }
+
+    public function hasThumbnail(): bool
+    {
+        return $this->hasFile() && ($this->meta[self::META_THUMBNAIL] ?? false) === true;
+    }
+
+    // Tên ảnh thu nhỏ suy từ đường dẫn tệp gốc: tệp gốc đổi thì URL ảnh thu nhỏ đổi theo.
+    public function thumbnailPath(): string
+    {
+        $path = (string) $this->path;
+
+        return dirname($path).'/thumbs/'.pathinfo($path, PATHINFO_FILENAME).'.webp';
     }
 
     // Attachment#url — dùng chung cho avatar (A4) lẫn attachment tin nhắn.
