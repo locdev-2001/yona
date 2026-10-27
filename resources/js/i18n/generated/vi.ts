@@ -1595,7 +1595,7 @@ const messages: Record<string, unknown> = {
             },
             "CONFIRM": {
                 "TITLE": "Xác nhận xoá",
-                "MESSAGE": "Bạn có muốn xoá? ",
+                "MESSAGE": "Bạn có muốn xoá",
                 "YES": "Có, xoá ",
                 "NO": "Không, giữ "
             }
@@ -2835,7 +2835,18 @@ const messages: Record<string, unknown> = {
             "LEAVE": "Rời phòng",
             "MUTE_PARTICIPANT": "Tắt mic người này",
             "REMOVE_PARTICIPANT": "Mời ra khỏi phòng",
-            "MUTED": "Đang tắt mic"
+            "MUTED": "Đang tắt mic",
+            "DEFAULT_NAME": "Phòng thoại chung",
+            "CREATE": "Tạo phòng thoại",
+            "CREATE_CONFIRM": "Tạo phòng",
+            "RENAME": "Đổi tên phòng",
+            "NAME": "Tên phòng",
+            "NAME_PLACEHOLDER": "Ví dụ: Phòng văn nghệ",
+            "DELETE": "Xoá phòng",
+            "DELETE_TITLE": "Xoá phòng \"{name}\"?",
+            "DELETE_BODY": "Phòng biến mất khỏi danh sách của mọi thành viên. Lịch sử cuộc gọi trong hội thoại vẫn giữ.",
+            "ACTIONS": "Thao tác với phòng {name}",
+            "JOIN_NAMED": "Vào {name}"
         },
         "ERRORS": {
             "ROOM_FULL": "Phòng đã đủ :max người",
@@ -3029,7 +3040,7 @@ const messages: Record<string, unknown> = {
             },
             "CONFIRM": {
                 "TITLE": "Xác nhận xoá",
-                "MESSAGE": "Bạn có chắc muốn xoá? ",
+                "MESSAGE": "Bạn có chắc muốn xoá",
                 "YES": "Có, xóa ",
                 "NO": "Không, giữ lại "
             }
@@ -3207,7 +3218,7 @@ const messages: Record<string, unknown> = {
             "ADD": "Thêm",
             "ADDED": "Đã thêm {count} người vào nhóm",
             "INVITE_LINK": "Link mời vào nhóm",
-            "INVITE_HINT": "Ai có link cũng vào được nhóm. Link chỉ hiện đầy đủ ngay lúc tạo, hãy sao chép luôn. Tạo link mới thì link cũ hết hiệu lực.",
+            "INVITE_HINT": "Ai có link cũng vào được nhóm. Tạo link mới thì link cũ hết hiệu lực.",
             "INVITE_CREATE": "Tạo link mời",
             "INVITE_RENEW": "Tạo link mới",
             "INVITE_REVOKE": "Thu hồi",
@@ -3216,6 +3227,7 @@ const messages: Record<string, unknown> = {
             "INVITE_USES": "đã dùng {count} lần",
             "INVITE_EXPIRES": "hết hạn {date}",
             "INVITE_NO_EXPIRY": "không hết hạn",
+            "INVITE_LEGACY": "Link này tạo trước khi Yona lưu được link để xem lại. Tạo link mới để có link chép được.",
             "INVITE_EMPTY": "Chưa có link mời nào đang dùng.",
             "COPY": "Sao chép",
             "COPIED": "Đã sao chép link",
@@ -3310,7 +3322,7 @@ const messages: Record<string, unknown> = {
         "MENTION_HEADING": "Nhắn đến",
         "UNATTENDED_HEADING": "Không giám sát",
         "SEARCH": {
-            "INPUT": "Tìm kiếm",
+            "INPUT": "Tìm hội thoại",
             "LABEL": "Tìm hội thoại trong danh sách đang xem",
             "CLEAR": "Xoá từ khoá",
             "COMPOSE": "Soạn tin nhắn mới",
@@ -4144,7 +4156,7 @@ const messages: Record<string, unknown> = {
                 "PENDING": "Đang chờ xử lý"
             },
             "ADD_FRIEND": "Thêm Bạn",
-            "SEARCH_PLACEHOLDER": "Tìm kiếm",
+            "SEARCH_PLACEHOLDER": "Tìm bạn bè",
             "SECTION": "{label} — {count}",
             "STATUS_ONLINE": "Trực tuyến",
             "STATUS_OFFLINE": "Ngoại tuyến",
@@ -4661,11 +4673,12 @@ const messages: Record<string, unknown> = {
         },
         "SEARCH_IN_CONVERSATION": {
             "OPEN": "Tìm trong hội thoại",
-            "PLACEHOLDER": "Tìm trong hội thoại",
+            "PLACEHOLDER": "Tìm trong hội thoại này",
             "OLDER": "Kết quả cũ hơn (Enter)",
             "NEWER": "Kết quả mới hơn (Shift+Enter)",
             "CLOSE": "Đóng tìm kiếm (Esc)",
             "NO_RESULTS": "Không thấy",
+            "SEARCHING": "Đang tìm…",
             "ERROR": "Lỗi, thử lại"
         },
         "HEADER": {
@@ -5546,7 +5559,7 @@ const messages: Record<string, unknown> = {
         "DESC": "Xoá người này khỏi danh sách",
         "CONFIRM": {
             "TITLE": "Xác nhận xoá",
-            "MESSAGE": "Bạn có muốn xoá? ",
+            "MESSAGE": "Bạn có muốn xoá",
             "YES": "Có, Xoá",
             "NO": "Không, giữ"
         },
@@ -6113,7 +6126,13 @@ const messages: Record<string, unknown> = {
             "INVITE_UNUSABLE": "Link mời không còn dùng được",
             "NAME_REQUIRED": "Hãy đặt tên cho nhóm",
             "NAME_TOO_LONG": "Tên nhóm dài tối đa 100 ký tự",
-            "MESSAGE_NOT_YOURS": "Bạn chỉ thu hồi được tin của mình"
+            "MESSAGE_NOT_YOURS": "Bạn chỉ thu hồi được tin của mình",
+            "ROOM_NOT_FOUND": "Không tìm thấy phòng thoại này",
+            "ROOM_NAME_REQUIRED": "Hãy đặt tên cho phòng thoại",
+            "ROOM_NAME_TOO_LONG": "Tên phòng thoại dài tối đa :max ký tự",
+            "ROOM_LIMIT": "Nhóm đã có đủ :max phòng thoại",
+            "ROOM_LIVE": "Phòng đang có người, chờ mọi người rời phòng rồi xoá",
+            "LAST_ROOM": "Nhóm cần còn ít nhất một phòng thoại"
         }
     },
     "HELP_CENTER": {
@@ -7240,8 +7259,8 @@ const messages: Record<string, unknown> = {
         "TYPES": {
             "CONVERSATION_MENTION": "Bạn đã được nhắc đến trong một hội thoại",
             "CONVERSATION_CREATION": "Có hội thoại mới",
-            "CONVERSATION_ASSIGNMENT": "Một hội thoại được giao cho bạn",
-            "ASSIGNED_CONVERSATION_NEW_MESSAGE": "Có tin nhắn mới trong hội thoại bạn phụ trách",
+            "CONVERSATION_ASSIGNMENT": "Có hội thoại mới",
+            "ASSIGNED_CONVERSATION_NEW_MESSAGE": "Có tin nhắn mới",
             "PARTICIPATING_CONVERSATION_NEW_MESSAGE": "Có tin nhắn mới trong hội thoại bạn tham gia",
             "SLA_MISSED_FIRST_RESPONSE": "Hội thoại trễ SLA phản hồi đầu tiên",
             "SLA_MISSED_NEXT_RESPONSE": "Hội thoại trễ SLA phản hồi kế tiếp",
@@ -7249,7 +7268,7 @@ const messages: Record<string, unknown> = {
         },
         "TYPES_NEXT": {
             "CONVERSATION_MENTION": "Được nhắc tên",
-            "CONVERSATION_ASSIGNMENT": "Giao cho bạn",
+            "CONVERSATION_ASSIGNMENT": "Hội thoại mới",
             "CONVERSATION_CREATION": "Hội thoại mới",
             "SLA_MISSED_FIRST_RESPONSE": "Trễ SLA",
             "SLA_MISSED_NEXT_RESPONSE": "Trễ SLA",
@@ -7302,6 +7321,13 @@ const messages: Record<string, unknown> = {
             "TAB_UNREAD": "Chưa đọc",
             "TAB_ALL": "Tất cả",
             "EMPTY_UNREAD": "Đã đọc hết thông báo"
+        },
+        "TOAST": {
+            "REGION": "Tin mới",
+            "NOW": "vừa xong",
+            "CLOSE": "Đóng thông báo",
+            "OPEN_CONVERSATION": "Mở hội thoại",
+            "OPEN_FRIENDS": "Mở Bạn bè"
         }
     },
     "INBOX_MGMT": {
@@ -8018,7 +8044,7 @@ const messages: Record<string, unknown> = {
             "AVATAR_DELETE_BUTTON_TEXT": "Xoá hình đại diện",
             "CONFIRM": {
                 "TITLE": "Xác nhận xoá",
-                "MESSAGE": "Bạn có muốn xoá? ",
+                "MESSAGE": "Bạn có muốn xoá",
                 "PLACE_HOLDER": "Vui lòng điền {inboxName} để xác nhận",
                 "YES": "Có, Xoá ",
                 "NO": "Không, Giữ "
@@ -9503,6 +9529,7 @@ const messages: Record<string, unknown> = {
         },
         "ACTIONS": {
             "COMMAND_BAR": "Tìm và mở mọi tính năng",
+            "FOCUS_LIST_SEARCH": "Tìm hội thoại trong danh sách",
             "SHOW_SHORTCUTS": "Xem phím tắt",
             "CLOSE": "Đóng cửa sổ đang mở",
             "GO_TO_INBOX": "Mở Hộp thư",
@@ -9582,8 +9609,8 @@ const messages: Record<string, unknown> = {
                 "ERROR_MESSAGE": "Đã có lỗi, vui lòng thử lại"
             },
             "CONFIRM": {
-                "TITLE": "Xác Nhận Xoá",
-                "MESSAGE": "Bạn có chắc muốn xoá? ",
+                "TITLE": "Xác nhận xoá",
+                "MESSAGE": "Bạn có chắc muốn xoá",
                 "YES": "Có, xoá ",
                 "NO": "Không, giữ "
             }
@@ -9933,9 +9960,11 @@ const messages: Record<string, unknown> = {
     },
     "LOGIN": {
         "TITLE": "Đăng nhập {installationName}",
+        "SUBTITLE": "Mừng bạn quay lại hộp thư của mình.",
+        "NO_ACCOUNT": "Chưa có tài khoản?",
         "EMAIL": {
             "LABEL": "Email",
-            "PLACEHOLDER": "example{'@'}companyname.com",
+            "PLACEHOLDER": "ten{'@'}email.com",
             "ERROR": "Vui lòng nhập một địa chỉ email hợp lệ"
         },
         "PASSWORD": {
@@ -9954,7 +9983,7 @@ const messages: Record<string, unknown> = {
             "NO_ACCOUNT_FOUND": "Chúng tôi không tìm thấy tài khoản nào cho địa chỉ email của bạn."
         },
         "FORGOT_PASSWORD": "Quên mật khẩu?",
-        "CREATE_NEW_ACCOUNT": "Tạo mới tài khoản",
+        "CREATE_NEW_ACCOUNT": "Tạo tài khoản",
         "SUBMIT": "Đăng nhập",
         "SAML": {
             "LABEL": "Đăng nhập bằng SSO",
@@ -10012,7 +10041,7 @@ const messages: Record<string, unknown> = {
         "DELETE": {
             "TOOLTIP": "Xóa Macro",
             "CONFIRM": {
-                "MESSAGE": "Bạn có muốn xoá? ",
+                "MESSAGE": "Bạn có muốn xoá",
                 "YES": "Có, Xoá",
                 "NO": "Không"
             },
@@ -10290,9 +10319,7 @@ const messages: Record<string, unknown> = {
     },
     "MOBILE_TAB_BAR": {
         "LABEL": "Điều hướng chính",
-        "MORE": "Thêm",
-        "CLOSE_MENU": "Đóng",
-        "UNREAD": "{count} hội thoại chưa đọc"
+        "NOTIFICATIONS": "Thông báo"
     },
     "NETWORK": {
         "NOTIFICATION": {
@@ -10342,7 +10369,7 @@ const messages: Record<string, unknown> = {
     "NOTIFICATIONS": {
         "notification_title": {
             "conversation_creation": "Một hội thoại (#{display_id}) vừa được tạo trong {inbox_name}",
-            "conversation_assignment": "Một hội thoại (#{display_id}) vừa được giao cho bạn",
+            "conversation_assignment": "Có hội thoại mới (#{display_id})",
             "assigned_conversation_new_message": "Có tin nhắn mới trong hội thoại (#{display_id})",
             "conversation_mention": "Bạn được nhắc tên trong hội thoại (#{display_id})",
             "sla_missed_first_response": "Hội thoại (#{display_id}) đã trễ SLA phản hồi đầu tiên",
@@ -10359,9 +10386,9 @@ const messages: Record<string, unknown> = {
         "no_content": "Không có nội dung",
         "email": {
             "conversation_creation": "{agent_name}, một hội thoại mới [ID - {display_id}] vừa được tạo trong {inbox_name}.",
-            "conversation_assignment": "{agent_name}, một hội thoại mới [ID - {display_id}] vừa được giao cho bạn.",
+            "conversation_assignment": "{agent_name}, có hội thoại mới [ID - {display_id}] trong hộp thư của bạn.",
             "conversation_mention": "{agent_name}, bạn được nhắc tên trong hội thoại [ID - {display_id}]",
-            "assigned_conversation_new_message": "{agent_name}, có tin nhắn mới trong hội thoại bạn phụ trách [ID - {display_id}].",
+            "assigned_conversation_new_message": "{agent_name}, có tin nhắn mới trong hội thoại [ID - {display_id}].",
             "participating_conversation_new_message": "{agent_name}, có tin nhắn mới trong hội thoại bạn tham gia [ID - {display_id}]."
         },
         "account": {
@@ -10886,7 +10913,7 @@ const messages: Record<string, unknown> = {
                 "CONVERSATION_ASSIGNMENT": "Gửi thông báo qua email khi hội thoại được chỉ định cho tôi",
                 "CONVERSATION_CREATION": "Gửi thông báo qua email khi hội thoại mới được tạo",
                 "CONVERSATION_MENTION": "Gửi thông báo email khi bạn được nhắc đến trong 1 hội thoại",
-                "ASSIGNED_CONVERSATION_NEW_MESSAGE": "Gửi thông báo email khi có một tin nhắn mới được tạo trong hội thoại được phân công",
+                "ASSIGNED_CONVERSATION_NEW_MESSAGE": "Gửi thông báo email khi có tin nhắn mới",
                 "PARTICIPATING_CONVERSATION_NEW_MESSAGE": "Gửi email khi có tin nhắn mới trong hội thoại bạn tham gia",
                 "SLA_MISSED_FIRST_RESPONSE": "Gửi email khi một hội thoại trễ SLA phản hồi đầu tiên",
                 "SLA_MISSED_NEXT_RESPONSE": "Gửi email khi một hội thoại trễ SLA phản hồi kế tiếp",
@@ -10899,13 +10926,21 @@ const messages: Record<string, unknown> = {
                 "PUSH": "Thông báo đẩy",
                 "TYPES": {
                     "CONVERSATION_CREATED": "Có hội thoại mới",
-                    "CONVERSATION_ASSIGNED": "Một hội thoại được giao cho bạn",
+                    "CONVERSATION_ASSIGNED": "Có hội thoại mới",
                     "CONVERSATION_MENTION": "Bạn được nhắc tên trong một hội thoại",
-                    "ASSIGNED_CONVERSATION_NEW_MESSAGE": "Có tin nhắn mới trong hội thoại bạn phụ trách",
+                    "ASSIGNED_CONVERSATION_NEW_MESSAGE": "Có tin nhắn mới",
                     "PARTICIPATING_CONVERSATION_NEW_MESSAGE": "Có tin nhắn mới trong hội thoại bạn tham gia",
                     "SLA_MISSED_FIRST_RESPONSE": "Một hội thoại trễ SLA phản hồi đầu tiên",
                     "SLA_MISSED_NEXT_RESPONSE": "Một hội thoại trễ SLA phản hồi kế tiếp",
                     "SLA_MISSED_RESOLUTION": "Một hội thoại trễ SLA xử lý xong"
+                },
+                "TOAST_POSITION": {
+                    "TITLE": "Vị trí hộp báo tin mới",
+                    "NOTE": "Khi đang mở Yona, tin mới hiện trong trang ở góc này. Khi tab bị ẩn, thông báo đẩy của hệ điều hành vẫn hiện như cũ. Trên điện thoại hộp báo luôn ở trên cùng.",
+                    "TOP_RIGHT": "Góc trên bên phải",
+                    "BOTTOM_RIGHT": "Góc dưới bên phải",
+                    "BOTTOM_LEFT": "Góc dưới bên trái",
+                    "TOP_LEFT": "Góc trên bên trái"
                 },
                 "BROWSER_PERMISSION": "Hãy cho phép trình duyệt hiện thông báo đẩy để bạn nhận được chúng",
                 "PUSH_ENABLE_FAILED": "Không bật được thông báo đẩy trên trình duyệt này. Vui lòng thử lại sau.",
@@ -10935,7 +10970,7 @@ const messages: Record<string, unknown> = {
                 "CONVERSATION_ASSIGNMENT": "Gửi thông báo khi hội thoại được chỉ định cho tôi",
                 "CONVERSATION_CREATION": "Gửi thông báo khi hội thoại mới được tạo",
                 "CONVERSATION_MENTION": "Gửi thông báo đẩy khi bạn được nhắc đến trong 1 hội thoại",
-                "ASSIGNED_CONVERSATION_NEW_MESSAGE": "Gửi thông báo đẩy khi có một tin nhắn mới được tạo trong hội thoại được phân công",
+                "ASSIGNED_CONVERSATION_NEW_MESSAGE": "Gửi thông báo đẩy khi có tin nhắn mới",
                 "PARTICIPATING_CONVERSATION_NEW_MESSAGE": "Gửi thông báo đẩy khi có tin nhắn mới trong hội thoại bạn tham gia",
                 "HAS_ENABLED_PUSH": "Bạn đã bật tính năng thông báo cho trình duyệt này.",
                 "REQUEST_PUSH": "Bật thông báo",
@@ -11071,6 +11106,7 @@ const messages: Record<string, unknown> = {
     },
     "REGISTER": {
         "TRY_WOOT": "Tạo tài khoản",
+        "SUBTITLE": "Một hộp thư cho Zalo, email và bạn bè trên Yona.",
         "GET_STARTED": "Bắt đầu với {installationName}",
         "TITLE": "Đăng kí",
         "TESTIMONIAL_HEADER": "Tất cả chỉ cần một bước để tiến về phía trước",
@@ -11090,9 +11126,9 @@ const messages: Record<string, unknown> = {
             "ERROR": "Tên đầy đủ quá ngắn."
         },
         "EMAIL": {
-            "LABEL": "Email công việc",
-            "PLACEHOLDER": "Nhập email công việc của bạn. Ví dụ: an{'@'}congty{'.'}vn",
-            "ERROR": "Vui lòng nhập địa chỉ email công việc hợp lệ."
+            "LABEL": "Email",
+            "PLACEHOLDER": "ten{'@'}email.com",
+            "ERROR": "Vui lòng nhập địa chỉ email hợp lệ."
         },
         "PASSWORD": {
             "LABEL": "Mật khẩu",
@@ -11632,7 +11668,7 @@ const messages: Record<string, unknown> = {
         "SETTINGS_SCREEN": {
             "TITLE": "Cài đặt",
             "EDIT_PROFILE": "Sửa hồ sơ",
-            "SEARCH": "Tìm kiếm",
+            "SEARCH": "Tìm mục cài đặt",
             "PREFERENCES": "Tuỳ chọn",
             "ACCOUNT_GROUP": "Tài khoản",
             "MY_PROFILE": "Hồ sơ của tôi",

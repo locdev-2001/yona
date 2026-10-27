@@ -2835,7 +2835,18 @@ const messages: Record<string, unknown> = {
             "LEAVE": "Leave",
             "MUTE_PARTICIPANT": "Mute this person",
             "REMOVE_PARTICIPANT": "Remove from room",
-            "MUTED": "Muted"
+            "MUTED": "Muted",
+            "DEFAULT_NAME": "General voice room",
+            "CREATE": "Create a voice room",
+            "CREATE_CONFIRM": "Create room",
+            "RENAME": "Rename room",
+            "NAME": "Room name",
+            "NAME_PLACEHOLDER": "For example: Music room",
+            "DELETE": "Delete room",
+            "DELETE_TITLE": "Delete \"{name}\"?",
+            "DELETE_BODY": "The room disappears for every member. Call history in the conversation stays.",
+            "ACTIONS": "Actions for {name}",
+            "JOIN_NAMED": "Join {name}"
         },
         "ERRORS": {
             "ROOM_FULL": "The room is full (:max people)",
@@ -3207,7 +3218,7 @@ const messages: Record<string, unknown> = {
             "ADD": "Add",
             "ADDED": "Added {count} people to the group",
             "INVITE_LINK": "Invite link",
-            "INVITE_HINT": "Anyone with the link can join. The full link is only shown when you create it, so copy it right away. Creating a new link turns off the old one.",
+            "INVITE_HINT": "Anyone with the link can join. Creating a new link turns off the old one.",
             "INVITE_CREATE": "Create invite link",
             "INVITE_RENEW": "Create a new link",
             "INVITE_REVOKE": "Revoke",
@@ -3216,6 +3227,7 @@ const messages: Record<string, unknown> = {
             "INVITE_USES": "used {count} times",
             "INVITE_EXPIRES": "expires {date}",
             "INVITE_NO_EXPIRY": "never expires",
+            "INVITE_LEGACY": "This link was created before Yona could show links again. Create a new link to get one you can copy.",
             "INVITE_EMPTY": "No active invite links.",
             "COPY": "Copy",
             "COPIED": "Link copied",
@@ -3310,7 +3322,7 @@ const messages: Record<string, unknown> = {
         "MENTION_HEADING": "Mentions",
         "UNATTENDED_HEADING": "Unattended",
         "SEARCH": {
-            "INPUT": "Search",
+            "INPUT": "Search conversations",
             "LABEL": "Search conversations in this list",
             "CLEAR": "Clear search",
             "COMPOSE": "New message",
@@ -4144,7 +4156,7 @@ const messages: Record<string, unknown> = {
                 "PENDING": "Pending"
             },
             "ADD_FRIEND": "Add Friend",
-            "SEARCH_PLACEHOLDER": "Search",
+            "SEARCH_PLACEHOLDER": "Search friends",
             "SECTION": "{label} — {count}",
             "STATUS_ONLINE": "Online",
             "STATUS_OFFLINE": "Offline",
@@ -4661,11 +4673,12 @@ const messages: Record<string, unknown> = {
         },
         "SEARCH_IN_CONVERSATION": {
             "OPEN": "Search in conversation",
-            "PLACEHOLDER": "Search in conversation",
+            "PLACEHOLDER": "Search this conversation",
             "OLDER": "Older result (Enter)",
             "NEWER": "Newer result (Shift+Enter)",
             "CLOSE": "Close search (Esc)",
             "NO_RESULTS": "No results",
+            "SEARCHING": "Searching…",
             "ERROR": "Error, try again"
         },
         "HEADER": {
@@ -6113,7 +6126,13 @@ const messages: Record<string, unknown> = {
             "INVITE_UNUSABLE": "This invite link can no longer be used",
             "NAME_REQUIRED": "Give the group a name",
             "NAME_TOO_LONG": "Group names can be at most 100 characters",
-            "MESSAGE_NOT_YOURS": "You can only recall your own messages"
+            "MESSAGE_NOT_YOURS": "You can only recall your own messages",
+            "ROOM_NOT_FOUND": "This voice room was not found",
+            "ROOM_NAME_REQUIRED": "Give the voice room a name",
+            "ROOM_NAME_TOO_LONG": "Voice room names are at most :max characters",
+            "ROOM_LIMIT": "This group already has :max voice rooms",
+            "ROOM_LIVE": "People are in this room. Wait until everyone leaves to delete it",
+            "LAST_ROOM": "A group needs at least one voice room"
         }
     },
     "HELP_CENTER": {
@@ -7240,8 +7259,8 @@ const messages: Record<string, unknown> = {
         "TYPES": {
             "CONVERSATION_MENTION": "You have been mentioned in a conversation",
             "CONVERSATION_CREATION": "New conversation created",
-            "CONVERSATION_ASSIGNMENT": "A conversation has been assigned to you",
-            "ASSIGNED_CONVERSATION_NEW_MESSAGE": "New message in an assigned conversation",
+            "CONVERSATION_ASSIGNMENT": "New conversation",
+            "ASSIGNED_CONVERSATION_NEW_MESSAGE": "New message",
             "PARTICIPATING_CONVERSATION_NEW_MESSAGE": "New message in a conversation you are participating in",
             "SLA_MISSED_FIRST_RESPONSE": "SLA target first response missed for conversation",
             "SLA_MISSED_NEXT_RESPONSE": "SLA target next response missed for conversation",
@@ -7249,7 +7268,7 @@ const messages: Record<string, unknown> = {
         },
         "TYPES_NEXT": {
             "CONVERSATION_MENTION": "Mentioned",
-            "CONVERSATION_ASSIGNMENT": "Assigned to you",
+            "CONVERSATION_ASSIGNMENT": "New conversation",
             "CONVERSATION_CREATION": "New Conversation",
             "SLA_MISSED_FIRST_RESPONSE": "SLA breach",
             "SLA_MISSED_NEXT_RESPONSE": "SLA breach",
@@ -7302,6 +7321,13 @@ const messages: Record<string, unknown> = {
             "TAB_UNREAD": "Unread",
             "TAB_ALL": "All",
             "EMPTY_UNREAD": "You are all caught up"
+        },
+        "TOAST": {
+            "REGION": "New messages",
+            "NOW": "just now",
+            "CLOSE": "Close notification",
+            "OPEN_CONVERSATION": "Open conversation",
+            "OPEN_FRIENDS": "Open Friends"
         }
     },
     "INBOX_MGMT": {
@@ -9503,6 +9529,7 @@ const messages: Record<string, unknown> = {
         },
         "ACTIONS": {
             "COMMAND_BAR": "Find and open any feature",
+            "FOCUS_LIST_SEARCH": "Search conversations in the list",
             "SHOW_SHORTCUTS": "Show shortcuts",
             "CLOSE": "Close the open window",
             "GO_TO_INBOX": "Open Inbox",
@@ -9933,6 +9960,8 @@ const messages: Record<string, unknown> = {
     },
     "LOGIN": {
         "TITLE": "Login to {installationName}",
+        "SUBTITLE": "Welcome back to your inbox.",
+        "NO_ACCOUNT": "No account yet?",
         "EMAIL": {
             "LABEL": "Email",
             "PLACEHOLDER": "example@companyname.com",
@@ -9954,7 +9983,7 @@ const messages: Record<string, unknown> = {
             "NO_ACCOUNT_FOUND": "We couldn't find an account for your email address."
         },
         "FORGOT_PASSWORD": "Forgot your password?",
-        "CREATE_NEW_ACCOUNT": "Create a new account",
+        "CREATE_NEW_ACCOUNT": "Create an account",
         "SUBMIT": "Login",
         "SAML": {
             "LABEL": "Login via SSO",
@@ -10290,9 +10319,7 @@ const messages: Record<string, unknown> = {
     },
     "MOBILE_TAB_BAR": {
         "LABEL": "Main navigation",
-        "MORE": "More",
-        "CLOSE_MENU": "Close",
-        "UNREAD": "{count} unread conversations"
+        "NOTIFICATIONS": "Notifications"
     },
     "NETWORK": {
         "NOTIFICATION": {
@@ -10342,7 +10369,7 @@ const messages: Record<string, unknown> = {
     "NOTIFICATIONS": {
         "notification_title": {
             "conversation_creation": "A conversation (#{display_id}) has been created in {inbox_name}",
-            "conversation_assignment": "A conversation (#{display_id}) has been assigned to you",
+            "conversation_assignment": "New conversation (#{display_id})",
             "assigned_conversation_new_message": "A new message is created in conversation (#{display_id})",
             "conversation_mention": "You have been mentioned in conversation (#{display_id})",
             "sla_missed_first_response": "SLA target first response missed for conversation (#{display_id})",
@@ -10359,9 +10386,9 @@ const messages: Record<string, unknown> = {
         "no_content": "No content",
         "email": {
             "conversation_creation": "{agent_name}, A new conversation [ID - {display_id}] has been created in {inbox_name}.",
-            "conversation_assignment": "{agent_name}, A new conversation [ID - {display_id}] has been assigned to you.",
+            "conversation_assignment": "{agent_name}, a new conversation [ID - {display_id}] arrived in your inbox.",
             "conversation_mention": "{agent_name}, You have been mentioned in conversation [ID - {display_id}]",
-            "assigned_conversation_new_message": "{agent_name}, New message in your assigned conversation [ID - {display_id}].",
+            "assigned_conversation_new_message": "{agent_name}, new message in conversation [ID - {display_id}].",
             "participating_conversation_new_message": "{agent_name}, New message in your participating conversation [ID - {display_id}]."
         },
         "account": {
@@ -10886,7 +10913,7 @@ const messages: Record<string, unknown> = {
                 "CONVERSATION_ASSIGNMENT": "Send email notifications when a conversation is assigned to me",
                 "CONVERSATION_CREATION": "Send email notifications when a new conversation is created",
                 "CONVERSATION_MENTION": "Send email notifications when you are mentioned in a conversation",
-                "ASSIGNED_CONVERSATION_NEW_MESSAGE": "Send email notifications when a new message is created in an assigned conversation",
+                "ASSIGNED_CONVERSATION_NEW_MESSAGE": "Send email notifications when a new message arrives",
                 "PARTICIPATING_CONVERSATION_NEW_MESSAGE": "Send email notifications when a new message is created in a participating conversation",
                 "SLA_MISSED_FIRST_RESPONSE": "Send email notifications when a conversation misses first response SLA",
                 "SLA_MISSED_NEXT_RESPONSE": "Send email notifications when a conversation misses next response SLA",
@@ -10899,13 +10926,21 @@ const messages: Record<string, unknown> = {
                 "PUSH": "Push notification",
                 "TYPES": {
                     "CONVERSATION_CREATED": "A new conversation is created",
-                    "CONVERSATION_ASSIGNED": "A conversation is assigned to you",
+                    "CONVERSATION_ASSIGNED": "A new conversation arrives",
                     "CONVERSATION_MENTION": "You are mentioned in a conversation",
-                    "ASSIGNED_CONVERSATION_NEW_MESSAGE": "A new message is created in an assigned conversation",
+                    "ASSIGNED_CONVERSATION_NEW_MESSAGE": "A new message arrives",
                     "PARTICIPATING_CONVERSATION_NEW_MESSAGE": "A new message is created in a participating conversation",
                     "SLA_MISSED_FIRST_RESPONSE": "A conversation misses first response SLA",
                     "SLA_MISSED_NEXT_RESPONSE": "A conversation misses next response SLA",
                     "SLA_MISSED_RESOLUTION": "A conversation misses resolution SLA"
+                },
+                "TOAST_POSITION": {
+                    "TITLE": "New message pop-up position",
+                    "NOTE": "While Yona is open, new messages pop up in this corner. When the tab is hidden, system push notifications still show. On phones the pop-up is always at the top.",
+                    "TOP_RIGHT": "Top right",
+                    "BOTTOM_RIGHT": "Bottom right",
+                    "BOTTOM_LEFT": "Bottom left",
+                    "TOP_LEFT": "Top left"
                 },
                 "BROWSER_PERMISSION": "Enable push notifications for your browser so you’re able to receive them",
                 "PUSH_ENABLE_FAILED": "Could not turn on push notifications in this browser. Please try again later.",
@@ -10935,7 +10970,7 @@ const messages: Record<string, unknown> = {
                 "CONVERSATION_ASSIGNMENT": "Send push notifications when a conversation is assigned to me",
                 "CONVERSATION_CREATION": "Send push notifications when a new conversation is created",
                 "CONVERSATION_MENTION": "Send push notifications when you are mentioned in a conversation",
-                "ASSIGNED_CONVERSATION_NEW_MESSAGE": "Send push notifications when a new message is created in an assigned conversation",
+                "ASSIGNED_CONVERSATION_NEW_MESSAGE": "Send push notifications when a new message arrives",
                 "PARTICIPATING_CONVERSATION_NEW_MESSAGE": "Send push notifications when a new message is created in a participating conversation",
                 "HAS_ENABLED_PUSH": "You have enabled push for this browser.",
                 "REQUEST_PUSH": "Enable push notifications",
@@ -11071,6 +11106,7 @@ const messages: Record<string, unknown> = {
     },
     "REGISTER": {
         "TRY_WOOT": "Create an account",
+        "SUBTITLE": "One inbox for Zalo, email and friends on Yona.",
         "GET_STARTED": "Get started with {installationName}",
         "TITLE": "Register",
         "TESTIMONIAL_HEADER": "All it takes is one step to move forward",
@@ -11090,9 +11126,9 @@ const messages: Record<string, unknown> = {
             "ERROR": "Full name is too short."
         },
         "EMAIL": {
-            "LABEL": "Work email",
-            "PLACEHOLDER": "Enter your work email address. E.g., bruce@wayne.enterprises",
-            "ERROR": "Please enter a valid work email address."
+            "LABEL": "Email",
+            "PLACEHOLDER": "you{'@'}email.com",
+            "ERROR": "Please enter a valid email address."
         },
         "PASSWORD": {
             "LABEL": "Password",
@@ -11632,7 +11668,7 @@ const messages: Record<string, unknown> = {
         "SETTINGS_SCREEN": {
             "TITLE": "Settings",
             "EDIT_PROFILE": "Edit profile",
-            "SEARCH": "Search",
+            "SEARCH": "Search settings",
             "PREFERENCES": "Preferences",
             "ACCOUNT_GROUP": "Account",
             "MY_PROFILE": "My profile",
