@@ -1,6 +1,6 @@
 import type { MouseEvent, MouseEventHandler, ReactNode } from 'react';
 
-import { messageMarkdownHtml, sanitizeMessageHtml } from 'shared/helpers/externalLinks';
+import { getPlainText } from 'shared/helpers/MessageFormatter';
 import { messageTimestamp } from 'shared/helpers/timeHelper';
 import Icon from 'dashboard/components-next/icon/Icon';
 import { t } from '../../../../i18n';
@@ -15,7 +15,6 @@ import { bubbleCornerClass } from '../helpers/bubbleShape';
 import { readForwardedFrom } from '../helpers/forwardedFrom';
 import { readGroupSender } from '../helpers/groupSender';
 import { readReactions } from '../helpers/reactions';
-import { useInnerHtml } from '../helpers/useInnerHtml';
 
 // Port từ dashboard/components-next/message/bubbles/Base.vue — bỏ nhánh
 // CaptainGenerationDetails (EE).
@@ -117,9 +116,11 @@ export default function BaseBubble({
     const shouldShowMeta = !hideMeta && !shouldGroupWithNext && variant === MESSAGE_VARIANTS.EMAIL;
     const sentAtTooltip = messageTimestamp(createdAt, 'LLL d, h:mm a');
 
-    const replyQuotePreview = (() => {
+    // Chữ thuần để kẹp đúng 2 dòng: markdown dựng ra danh sách, đoạn là phần tử
+    // khối mà line-clamp không cắt được.
+    const replyQuoteText = (() => {
         if (!replyQuote) return '';
-        if (replyQuote.content) return messageMarkdownHtml(replyQuote.content);
+        if (replyQuote.content) return getPlainText(replyQuote.content);
         if (replyQuote.attachmentType) {
             const attachmentKey = `CHAT_LIST.ATTACHMENTS.${replyQuote.attachmentType}.CONTENT`;
             const attachmentLabel = t(attachmentKey);
@@ -128,7 +129,6 @@ export default function BaseBubble({
         if (replyQuote.unavailable) return t('CONVERSATION.REPLY_MESSAGE_NOT_FOUND');
         return t('CONVERSATION.REPLY_QUOTE.ORIGINAL');
     })();
-    const replyQuoteInnerHtml = useInnerHtml(sanitizeMessageHtml(replyQuotePreview));
 
     const jumpToRepliedMessage = (event: MouseEvent<HTMLButtonElement>) => {
         event.stopPropagation();
@@ -151,10 +151,9 @@ export default function BaseBubble({
                     senderName={replyQuote.senderName}
                     media={replyQuote.media}
                     text={
-                        <span
-                            className="block prose prose-bubble line-clamp-2"
-                            dangerouslySetInnerHTML={replyQuoteInnerHtml}
-                        />
+                        <span data-testid="reply-quote-text" className="line-clamp-2 break-words">
+                            {replyQuoteText}
+                        </span>
                     }
                 />
             </button>
