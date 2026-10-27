@@ -63,7 +63,7 @@ export default function ImageGrid({ images, isOwn, position, onImageError }: Ima
                             onClick={() => setLightboxIndex(tile.imageIndex)}
                         >
                             <img
-                                src={tile.image.thumb_url || tile.image.data_url}
+                                src={(plan.layout !== 'single' && tile.image.thumb_url) || tile.image.data_url}
                                 alt=""
                                 className={`block w-full object-cover ${plan.layout === 'single' ? 'max-h-[240px]' : 'h-full'}`}
                                 onError={() => onImageError?.(tile.image)}
