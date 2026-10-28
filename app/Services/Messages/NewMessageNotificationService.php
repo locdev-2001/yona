@@ -18,7 +18,7 @@ class NewMessageNotificationService
             return;
         }
 
-        $this->notifyConversationAssignee();
+        $this->notifyInboxOwner();
         $this->notifyParticipatingUsers();
     }
 
@@ -28,15 +28,16 @@ class NewMessageNotificationService
         return ($this->message->isIncoming() || $this->message->isOutgoing()) && ! $this->message->private;
     }
 
-    private function notifyConversationAssignee(): void
+    // Tin đi do chính chủ hộp thư gửi (kể cả gửi từ điện thoại) nên chỉ tin đến mới báo.
+    private function notifyInboxOwner(): void
     {
-        $assignee = $this->message->conversation->assignee;
+        $owner = $this->message->account->owner();
 
-        if ($assignee === null || $this->alreadyNotified($assignee) || $this->isSender($assignee)) {
+        if ($owner === null || ! $this->message->isIncoming() || $this->alreadyNotified($owner)) {
             return;
         }
 
-        $this->build('assigned_conversation_new_message', $assignee);
+        $this->build('assigned_conversation_new_message', $owner);
     }
 
     private function notifyParticipatingUsers(): void
@@ -67,13 +68,6 @@ class NewMessageNotificationService
             ->where('secondary_actor_type', $this->message->getMorphClass())
             ->where('secondary_actor_id', $this->message->id)
             ->exists();
-    }
-
-    private function isSender(User $user): bool
-    {
-        $sender = $this->message->sender;
-
-        return $sender instanceof User && $sender->id === $user->id;
     }
 
     private function build(string $notificationType, User $user): ?Notification

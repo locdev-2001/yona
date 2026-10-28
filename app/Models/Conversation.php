@@ -9,7 +9,6 @@ use App\Http\Resources\ConversationResource;
 use App\Http\Resources\MessageResource;
 use App\Jobs\Conversations\ActivityMessageJob;
 use App\Models\Concerns\AssignmentHandler;
-use App\Models\Concerns\AutoAssignmentHandler;
 use App\Models\Concerns\IndexedForSearch;
 use App\Models\Concerns\Labelable;
 use App\Models\Concerns\Reportable;
@@ -35,7 +34,7 @@ use Illuminate\Support\Traits\Localizable;
 class Conversation extends Model
 {
     /** @use HasFactory<ConversationFactory> */
-    use AssignmentHandler, AutoAssignmentHandler, HasFactory, IndexedForSearch, Labelable, Localizable, Reportable, SharesRequestModels, SharesThread;
+    use AssignmentHandler, HasFactory, IndexedForSearch, Labelable, Localizable, Reportable, SharesRequestModels, SharesThread;
 
     public const STATUS_OPEN = 0;
 

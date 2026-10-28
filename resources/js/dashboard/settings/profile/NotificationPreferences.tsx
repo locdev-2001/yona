@@ -26,8 +26,8 @@ import { isProductFeatureVisible, type ProductFeature } from 'shared/helpers/pro
 // Push API thì ẩn hẳn cột "Thông báo đẩy" và công tắc, không hứa điều không gửi được.
 
 // Hộp thư cá nhân không có đồng nghiệp: báo hội thoại mới cho cả hộp thư, nhắc tên và
-// hội thoại tham gia là tính năng nhiều người nên ẩn; hội thoại tự gán cho chủ hộp thư
-// nên "giao cho bạn" chính là báo hội thoại mới và tin mới.
+// hội thoại tham gia là tính năng nhiều người nên ẩn; chủ hộp thư nhận báo hội thoại mới
+// qua loại conversation_assignment và tin đến qua assigned_conversation_new_message.
 const NOTIFICATION_TYPES = [
     { value: 'conversation_creation', labelKey: 'PROFILE_SETTINGS.FORM.NOTIFICATIONS.TYPES.CONVERSATION_CREATED', feature: 'conversationParticipants' },
     { value: 'conversation_assignment', labelKey: 'PROFILE_SETTINGS.FORM.NOTIFICATIONS.TYPES.CONVERSATION_ASSIGNED' },

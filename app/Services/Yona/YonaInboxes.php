@@ -3,7 +3,6 @@
 namespace App\Services\Yona;
 
 use App\Models\Account;
-use App\Models\AccountUser;
 use App\Models\Channel\Yona;
 use App\Models\Inbox;
 use App\Models\User;
@@ -37,10 +36,6 @@ class YonaInboxes
 
     public function ownerOf(Inbox $inbox): ?User
     {
-        return AccountUser::query()
-            ->where('account_id', $inbox->account_id)
-            ->where('role', AccountUser::ROLE_ADMINISTRATOR)
-            ->orderBy('id')
-            ->first()?->user;
+        return $inbox->account->owner();
     }
 }

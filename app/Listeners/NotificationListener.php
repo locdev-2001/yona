@@ -29,12 +29,12 @@ class NotificationListener extends BaseListener
 
     public function conversationCreated(DomainEvent $event): void
     {
-        $this->notifyInboxMembers($event);
+        $this->notifyInboxOwner($event);
     }
 
     public function conversationBotHandoff(DomainEvent $event): void
     {
-        $this->notifyInboxMembers($event);
+        $this->notifyInboxOwner($event);
     }
 
     public function assigneeChanged(DomainEvent $event): void
@@ -102,16 +102,19 @@ class NotificationListener extends BaseListener
         (new NewMessageNotificationService($message))->perform();
     }
 
-    private function notifyInboxMembers(DomainEvent $event): void
+    // Báo hội thoại mới bằng loại conversation_assignment: tuỳ chọn email/push đã lưu của mọi
+    // người dùng đang bật đúng loại này (trước đây đến qua tự gán cho chủ hộp thư). Chủ hộp thư
+    // tự mở hội thoại thì không báo.
+    private function notifyInboxOwner(DomainEvent $event): void
     {
         [$conversation, $account] = $this->extractConversationAndAccount($event);
+        $owner = $account->owner();
 
-        if ($conversation->status === Conversation::STATUS_PENDING) {
+        if ($owner === null || $conversation->status === Conversation::STATUS_PENDING || $owner->is($event->data['performed_by'] ?? null)) {
             return;
         }
 
-        $conversation->inbox->members()->get()
-            ->each(fn (User $agent) => $this->build('conversation_creation', $agent, $account, $conversation));
+        $this->build('conversation_assignment', $owner, $account, $conversation);
     }
 
     private function build(string $notificationType, User $user, Account $account, Conversation $conversation): void

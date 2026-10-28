@@ -53,7 +53,7 @@ Stack: PHP 8.3+ / Laravel 13 · Inertia + React 19 (TypeScript), Tailwind + Radi
 ## Quyết định đã chốt — đừng làm sai lại
 
 - **Giữ toàn bộ hộp thư, Zalo cá nhân, Gmail** (19/10/2026). Không bao giờ gỡ kênh, bridge Zalo, IMAP. Phần B2B chỉ ẩn khỏi menu, không xoá code.
-- **CRM đã gỡ khỏi UI 100% ngày 27/10/2026**, backend và bảng giữ nguyên. Tự gán hội thoại cho chủ hộp thư vẫn chạy ngầm vì báo tin mới đi theo người được gán; không sinh tin hoạt động gán việc (xem `docs/ux-decisions.md`).
+- **CRM đã gỡ khỏi UI 100% ngày 27/10/2026**, backend và bảng giữ nguyên. Tự gán hội thoại đã tắt hẳn (28/10, gỡ `AssignmentJob`); báo hội thoại mới và tin đến gửi thẳng cho chủ hộp thư (`Account::owner()`), xem `docs/ux-decisions.md`.
 - **Account = hộp thư cá nhân**, không đổi tên bảng; dữ liệu production giữ nguyên. Dòng thành viên cũ ở account người khác giữ trong DB nhưng không mở được.
 - **Chat giữa người dùng = kênh `Channel::Yona`** trong hộp thư, gộp chung danh sách với Zalo/email. Lõi chat riêng (`Chat*`, `/chats`) đã bị gỡ.
 - **Zalo CÁ NHÂN, không phải Zalo OA.** QR login qua zca-js; rủi ro ToS phải nói trước.

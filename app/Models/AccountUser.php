@@ -81,7 +81,7 @@ class AccountUser extends Model
         });
     }
 
-    // Mặc định của bản gốc: chỉ bật báo khi được giao hội thoại (email + push).
+    // Mặc định: bật email + push cho loại conversation_assignment, loại dùng để báo hội thoại mới cho chủ hộp thư.
     public function createNotificationSetting(): NotificationSetting
     {
         $setting = NotificationSetting::query()->firstOrNew([

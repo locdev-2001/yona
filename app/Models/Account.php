@@ -154,6 +154,15 @@ class Account extends Model
         return $this->hasMany(AccountUser::class);
     }
 
+    // Chủ hộp thư: quản trị đầu tiên của account. Account ẩn giữ luồng nhóm không có ai.
+    public function owner(): ?User
+    {
+        return $this->accountUsers()
+            ->where('role', AccountUser::ROLE_ADMINISTRATOR)
+            ->orderBy('id')
+            ->first()?->user;
+    }
+
     public function users(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'account_users')

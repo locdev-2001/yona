@@ -232,11 +232,6 @@ class Inbox extends Model
         return $this->inboxMembers()->pluck('user_id')->map(fn ($id) => (int) $id)->all();
     }
 
-    public function autoAssignmentV2Enabled(): bool
-    {
-        return $this->account->featureEnabled('assignment_v2');
-    }
-
     public function campaigns(): HasMany
     {
         return $this->hasMany(Campaign::class);
