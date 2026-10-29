@@ -131,7 +131,7 @@ export function messageSenderKey(message: ConversationMessage): string | number 
 
 /**
  * Tên đứng trước dòng xem trước tin cuối ở danh sách hội thoại. Tin của chính
- * người đang xem là "Bạn"; tin khách 1-1 không cần tên vì tiêu đề thẻ đã là khách;
+ * người đang xem (kể cả tin tự gửi từ ứng dụng của kênh) là "Bạn"; tin khách 1-1 không cần tên vì tiêu đề thẻ đã là khách;
  * tin hoạt động không có người gửi.
  */
 export function previewSenderLabel(
@@ -141,7 +141,8 @@ export function previewSenderLabel(
     if (message.message_type === MESSAGE_TYPES.ACTIVITY) return null;
 
     const sender = message.sender ?? null;
-    if (sender?.type === 'user' && sender.id === viewer.currentUserId) return t('CHAT_LIST.SENDER_YOU');
+    const isOwnMessage = (sender?.type === 'user' && sender.id === viewer.currentUserId) || Boolean(message.content_attributes?.external_echo);
+    if (isOwnMessage) return t('CHAT_LIST.SENDER_YOU');
 
     const isIncoming = message.message_type === MESSAGE_TYPES.INCOMING;
     if (isIncoming && !readGroupSender(message.content_attributes ?? {})) return null;
