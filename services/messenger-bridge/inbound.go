@@ -228,7 +228,7 @@ func (slot *Slot) emitDurable(eventType string, occurredAt time.Time, fields map
 // bridge was offline, flagged as backfill.
 func (slot *Slot) handleInitialTable(tbl *table.LSTable) {
 	slot.directory.absorb(tbl)
-	slot.polls.absorb(tbl)
+	slot.absorbPolls(tbl)
 	slot.enqueueRegular(func() { slot.replayInitialTable(tbl) })
 }
 
@@ -258,7 +258,7 @@ func (slot *Slot) replayInitialTable(tbl *table.LSTable) {
 // wait on Meta (profile lookups before an inbound) to the regular job loop.
 func (slot *Slot) handleLiveTable(tbl *table.LSTable) {
 	slot.scheduleChatUpdates(slot.directory.absorb(tbl))
-	slot.polls.absorb(tbl)
+	slot.absorbPolls(tbl)
 	for _, typing := range tbl.LSUpdateTypingIndicator {
 		if typing.SenderId == slot.selfID() {
 			continue

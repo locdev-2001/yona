@@ -56,10 +56,25 @@ type pollTracker struct {
 	polls        map[int64]*trackedPoll
 	pollByMsg    map[string]int64
 	voteMessages map[string]bool
+	// cardPolls giữ thăm dò chỉ biết qua thẻ XMA (không kèm bảng thăm dò), theo khoá của thẻ.
+	cardPolls map[string]*trackedPoll
 }
 
 func newPollTracker() *pollTracker {
-	return &pollTracker{polls: make(map[int64]*trackedPoll), pollByMsg: make(map[string]int64), voteMessages: make(map[string]bool)}
+	return &pollTracker{
+		polls: make(map[int64]*trackedPoll), pollByMsg: make(map[string]int64), voteMessages: make(map[string]bool),
+		cardPolls: make(map[string]*trackedPoll),
+	}
+}
+
+// absorbPolls ghép bảng thăm dò của một LSTable và ghi lại chúng để đối chiếu với tin báo tạo/bình chọn.
+func (slot *Slot) absorbPolls(tbl *table.LSTable) {
+	slot.polls.absorb(tbl)
+	for _, poll := range tbl.LSAddPollForThread {
+		slot.log.Info().Str("event", "regular_poll_table").Int64("poll_id", poll.PollID).Int64("thread_key", poll.ThreadKey).
+			Str("last_message_id", poll.LastUpdateMessageID).Int64("last_event_type", poll.LastUpdateMessageEventType).
+			Int("options", len(tbl.LSAddPollOption)+len(tbl.LSAddPollOptionV2)).Int("votes", len(tbl.LSAddPollVote)+len(tbl.LSAddPollVoteV2)).Send()
+	}
 }
 
 func (tracker *pollTracker) pollLocked(id int64) *trackedPoll {
@@ -122,6 +137,54 @@ func (tracker *pollTracker) forgetStaleLocked() {
 	if len(tracker.pollByMsg) > 4096 {
 		tracker.pollByMsg = make(map[string]int64)
 		tracker.voteMessages = make(map[string]bool)
+	}
+	for key, poll := range tracker.cardPolls {
+		if now.Sub(poll.seenAt) > trackedPollMemory {
+			delete(tracker.cardPolls, key)
+		}
+	}
+}
+
+// classifyCard dựng thăm dò từ chính thẻ XMA khi không có bảng thăm dò: câu hỏi là tiêu đề thẻ,
+// lựa chọn là tối đa 3 dòng danh sách của thẻ kèm số phiếu. Lần đầu thấy thẻ là tin tạo, các lần
+// sau là bình chọn của cùng thăm dò.
+func (tracker *pollTracker) classifyCard(threadKey int64, card *table.LSInsertXmaAttachment) pollMessage {
+	tracker.mu.Lock()
+	defer tracker.mu.Unlock()
+	tracker.forgetStaleLocked()
+	key := "target:" + strconv.FormatInt(card.TargetId, 10)
+	if card.TargetId == 0 {
+		key = "title:" + strconv.FormatInt(threadKey, 10) + ":" + card.TitleText
+	}
+	poll, known := tracker.cardPolls[key]
+	if !known {
+		poll = &trackedPoll{id: card.TargetId, question: strings.TrimSpace(card.TitleText), options: make(map[int64]*trackedPollOption)}
+		tracker.cardPolls[key] = poll
+	}
+	poll.seenAt = time.Now()
+	items := []struct {
+		id    int64
+		text  string
+		votes int64
+	}{
+		{card.ListItemId1, card.ListItemTitleText1, card.ListItemTotalCount1},
+		{card.ListItemId2, card.ListItemTitleText2, card.ListItemTotalCount2},
+		{card.ListItemId3, card.ListItemTitleText3, card.ListItemTotalCount3},
+	}
+	for index, item := range items {
+		if strings.TrimSpace(item.text) == "" {
+			continue
+		}
+		id := item.id
+		if id == 0 {
+			id = int64(index + 1)
+		}
+		option := poll.optionLocked(id)
+		option.text, option.sortKey, option.voteCount = item.text, int64(index), item.votes
+	}
+	return pollMessage{
+		poll: poll, isCreation: poll.cardSourceID == "",
+		cardSourceID: poll.cardSourceID, cardChat: poll.chat, cardFromMe: poll.cardFromMe,
 	}
 }
 
@@ -200,11 +263,16 @@ func firstPollCard(cards []*table.WrappedXMA) *table.WrappedXMA {
 // handleRegularPoll lo tin thuộc về thăm dò: tin tạo thành thẻ thăm dò, tin bình chọn giữ dòng
 // hoạt động như app gốc và cập nhật số phiếu vào thẻ. false: không phải tin thăm dò đã biết.
 func (slot *Slot) handleRegularPoll(message *table.WrappedMessage, sourceID string, chat Chat, fromMe bool) (*messageContent, bool) {
-	kind, known := slot.polls.classify(message.MessageId, firstPollCard(message.XMAAttachments))
+	card := firstPollCard(message.XMAAttachments)
+	kind, known := slot.polls.classify(message.MessageId, card)
 	if !known {
-		return nil, false
+		if card == nil {
+			return nil, false
+		}
+		kind = slot.polls.classifyCard(message.ThreadKey, card.LSInsertXmaAttachment)
 	}
-	slot.log.Info().Str("event", "regular_poll").Str("source_id", sourceID).Int64("poll_id", kind.poll.id).Bool("creation", kind.isCreation).Send()
+	slot.log.Info().Str("event", "regular_poll").Str("source_id", sourceID).Int64("poll_id", kind.poll.id).Bool("from_table", known).
+		Bool("creation", kind.isCreation).Bool("has_card", card != nil).Send()
 	if kind.isCreation {
 		slot.polls.attachCard(kind.poll, sourceID, chat, fromMe)
 		content := newContent()

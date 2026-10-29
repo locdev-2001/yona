@@ -177,7 +177,8 @@ class MessengerPersonal extends Model implements DeclaresCapabilities, DeclaresC
 
     /**
      * Khai theo đường thực thi đã có (App\Services\MessengerPersonal\*). Chưa khai:
-     * outbound_sticker/edit, nhắc cả nhóm, mở chat mới, tạo nhóm, bình chọn (phase sau);
+     * outbound_sticker/edit, nhắc cả nhóm, mở chat mới, tạo nhóm, bình chọn từ Yona (phase sau; thẻ thăm
+     * dò nhận vào thì đi khoá `content_attributes.poll`, không cần năng lực riêng);
      * outbound_read_receipt: lõi chưa có lúc nào gọi driver báo "đã đọc".
      */
     public function capabilities(): CapabilitySet
