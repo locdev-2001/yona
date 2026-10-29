@@ -31,6 +31,7 @@ import AudioBubble from './bubbles/Audio';
 import FallbackBubble from './bubbles/Fallback';
 import LinkPreviewBubble from './bubbles/LinkPreview';
 import FileBubble from './bubbles/File';
+import LocationBubble from './bubbles/Location';
 import ImageBubble from './bubbles/Image';
 import StickerBubble from './bubbles/Sticker';
 import EmailBubble from './bubbles/Email/Index';
@@ -101,6 +102,7 @@ const BUBBLE_COMPONENTS = {
     [BUBBLE_NAMES.VIDEO]: VideoBubble,
     [BUBBLE_NAMES.AUDIO]: AudioBubble,
     [BUBBLE_NAMES.FILE]: FileBubble,
+    [BUBBLE_NAMES.LOCATION]: LocationBubble,
     [BUBBLE_NAMES.FALLBACK]: FallbackBubble,
 } as const;
 
