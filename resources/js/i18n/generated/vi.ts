@@ -601,6 +601,7 @@ const messages: Record<string, unknown> = {
             "call_quality": "Chất lượng cuộc gọi",
             "feature_usage": "Mức dùng tính năng",
             "data": "Trình duyệt dữ liệu",
+            "storage": "Dung lượng tệp",
             "sticker_packs": "Kho sticker",
             "agent_bots": "Agent bot",
             "platform_apps": "Ứng dụng nền tảng",
@@ -1054,7 +1055,8 @@ const messages: Record<string, unknown> = {
                 "SUSPENSIONS": "Lịch sử khoá",
                 "IMPERSONATIONS": "Lần đăng nhập hộ gần đây",
                 "STICKERS": "Kho sticker riêng",
-                "FEATURES": "Tính năng đã dùng"
+                "FEATURES": "Tính năng đã dùng",
+                "STORAGE": "Dung lượng tệp"
             },
             "COLUMNS": {
                 "NAME": "Tên",
@@ -1420,14 +1422,44 @@ const messages: Record<string, unknown> = {
                 "OPTIONS": "Tuỳ chọn ghim cột {column}"
             }
         },
+        "STORAGE": {
+            "TITLE": "Dung lượng tệp",
+            "DESCRIPTION": "Tính từ kích thước ghi lúc lưu tệp: đính kèm tin nhắn đã tải về kho và sticker tự tạo. Chưa gồm ảnh đại diện và sticker gửi lại.",
+            "TOTAL": "Tổng tệp đã lưu",
+            "FILES": "{count} tệp",
+            "DISK_FREE": "Đĩa còn trống",
+            "DISK_OF": "trên {total}",
+            "DISK_UNKNOWN": "Không đọc được dung lượng đĩa",
+            "RANKING": "Tài khoản chiếm nhiều nhất",
+            "RANKING_HINT": "Tối đa {limit} tài khoản",
+            "OPEN_ALL": "Xem mọi tài khoản",
+            "EMPTY_TITLE": "Chưa có tệp nào",
+            "EMPTY_DESCRIPTION": "Khi người dùng gửi, nhận tệp hoặc tạo sticker, dung lượng hiện ở đây.",
+            "COLUMNS": {
+                "ACCOUNT": "Tài khoản",
+                "TOTAL": "Tổng",
+                "FILES": "Số tệp"
+            },
+            "CATEGORIES": {
+                "image": "Ảnh",
+                "video": "Video",
+                "audio": "Âm thanh",
+                "file": "Tệp",
+                "sticker": "Sticker"
+            }
+        },
         "STICKERS": {
             "PLATFORM_TAB": "Kho chung",
             "ACCOUNT_TAB": "Kho của tài khoản",
             "ACCOUNT_TITLE": "Kho sticker của {name}",
             "ACCOUNT_DESCRIPTION": "Toàn quyền như quản trị viên của tài khoản: tạo bộ, tải lên, sửa, sắp xếp, xuất bản, xoá, chuyển bộ sang kho chung.",
             "PICK_ACCOUNT": "Tìm tài khoản theo tên hoặc ID…",
-            "PICK_ACCOUNT_TITLE": "Chọn một tài khoản",
-            "PICK_ACCOUNT_HINT": "Kho riêng của tài khoản chỉ tài khoản đó dùng được. Tìm theo tên hoặc ID để mở.",
+            "FILTER_ACCOUNTS": "Lọc theo tên hoặc ID tài khoản",
+            "NO_ACCOUNT_LIBRARIES": "Chưa tài khoản nào có sticker riêng.",
+            "COLUMN_ACCOUNT": "Tài khoản",
+            "COLUMN_PACKS": "Số bộ",
+            "COLUMN_STICKERS": "Số sticker",
+            "COLUMN_LAST_ADDED": "Thêm gần nhất",
             "NO_ACCOUNTS": "Không tìm thấy tài khoản.",
             "BACK_TO_ACCOUNT": "Về tài khoản"
         }
@@ -3506,6 +3538,37 @@ const messages: Record<string, unknown> = {
         "SENDING": "Đang gửi",
         "UNREAD_COUNT_OVERFLOW": "9+"
     },
+    "CHAT_WALLPAPER": {
+        "MENU_ITEM": "Đổi hình nền",
+        "TITLE": "Hình nền hội thoại",
+        "DESCRIPTION": "Chỉ bạn thấy hình nền này.",
+        "SCOPE_LABEL": "Áp dụng cho",
+        "SCOPE_CONVERSATION": "Chỉ hội thoại này",
+        "SCOPE_ALL": "Mọi hội thoại",
+        "NONE": "Không có",
+        "UPLOAD": "Tải ảnh lên",
+        "UPLOADING": "Đang tải…",
+        "UPLOAD_HINT": "JPG, PNG hoặc WebP, tối đa 5 MB.",
+        "UPLOAD_TOO_LARGE": "Ảnh phải nhỏ hơn hoặc bằng 5 MB.",
+        "UPLOAD_UNREADABLE": "Không đọc được ảnh này. Hãy thử ảnh khác.",
+        "YOUR_IMAGE": "Ảnh của bạn",
+        "REMOVE": "Bỏ hình nền",
+        "REMOVE_HINT_CONVERSATION": "Hội thoại này sẽ dùng lại hình nền mặc định của bạn.",
+        "DONE": "Xong",
+        "SAVE_FAILED": "Chưa lưu được hình nền. Hãy thử lại.",
+        "PRESETS": {
+            "MIST": "Sương mờ",
+            "SKY": "Bầu trời",
+            "MINT": "Bạc hà",
+            "PEACH": "Đào",
+            "LAVENDER": "Oải hương",
+            "SUNSET": "Hoàng hôn",
+            "OCEAN": "Đại dương",
+            "DOTS": "Chấm bi",
+            "GRID": "Ô kẻ",
+            "WAVES": "Sóng"
+        }
+    },
     "CHOICE_TOGGLE": {
         "YES": "Có",
         "NO": "Không"
@@ -4428,6 +4491,12 @@ const messages: Record<string, unknown> = {
         "SAVE_CONTACT": "Lưu liên hệ",
         "NO_CONTENT": "Không có nội dung để hiển thị",
         "MESSAGE_DELETED": "Tin nhắn đã bị xoá",
+        "POLL": {
+            "TITLE": "Thăm dò ý kiến",
+            "VOTES": "{count} phiếu",
+            "TOTAL_VOTES": "{count} lượt bình chọn",
+            "VOTE_IN_APP": "Bình chọn trong ứng dụng của kênh"
+        },
         "SHARED_ATTACHMENT": {
             "CONTACT": "{sender} đã chia sẻ một liên hệ",
             "LOCATION": "{sender} đã chia sẻ một vị trí",
@@ -5263,6 +5332,7 @@ const messages: Record<string, unknown> = {
             "bank_card": "[Tài khoản ngân hàng]",
             "reminder": "[Nhắc hẹn]",
             "call": "[Cuộc gọi]",
+            "poll": "[Thăm dò ý kiến]",
             "link": "[Liên kết]",
             "friend_request": "[Lời mời kết bạn]",
             "view_once": "[Ảnh/video xem một lần, mở app trên điện thoại để xem]",
@@ -7357,6 +7427,8 @@ const messages: Record<string, unknown> = {
             "DELETE": "Đã xóa thông báo",
             "MARK_ALL_READ": "Đã đánh dấu tất cả thông báo là đã đọc",
             "DELETE_ALL": "Đã xóa tất cả thông báo",
+            "MARK_CHANNELS_READ": "Đã đánh dấu đã đọc thông báo của kênh đã chọn",
+            "DELETE_CHANNELS": "Đã xóa thông báo của kênh đã chọn",
             "DELETE_ALL_READ": "Đã xóa mọi thông báo đã đọc"
         },
         "BELL": {
@@ -7365,7 +7437,14 @@ const messages: Record<string, unknown> = {
             "VIEW_ALL": "Xem tất cả thông báo",
             "TAB_UNREAD": "Chưa đọc",
             "TAB_ALL": "Tất cả",
-            "EMPTY_UNREAD": "Đã đọc hết thông báo"
+            "EMPTY_UNREAD": "Đã đọc hết thông báo",
+            "CHANNEL_FILTER": "Lọc thông báo theo kênh",
+            "MARK_READ": "Đánh dấu đã đọc",
+            "MARK_READ_ALL_HINT": "Đánh dấu đã đọc thông báo của mọi kênh",
+            "MARK_READ_CHANNELS_HINT": "Đánh dấu đã đọc thông báo của kênh đã chọn",
+            "DELETE": "Xóa",
+            "DELETE_ALL_HINT": "Xóa thông báo của mọi kênh",
+            "DELETE_CHANNELS_HINT": "Xóa thông báo của kênh đã chọn"
         },
         "TOAST": {
             "REGION": "Tin mới",
@@ -11765,6 +11844,11 @@ const messages: Record<string, unknown> = {
         "CUSTOM_ROLES": "Vai trò tùy chỉnh",
         "BETA": "Beta",
         "REPORTS_OVERVIEW": "Tổng quan",
+        "ITEM_MENU": "Tùy chọn cho {name}",
+        "CHANNEL_MENU": {
+            "MARK_NOTIFICATIONS_READ": "Đánh dấu đã đọc thông báo của kênh này",
+            "MARKED_NOTIFICATIONS_READ": "Đã đánh dấu đã đọc thông báo của kênh {name}"
+        },
         "REAUTHORIZE": "Kết nối hộp thư của bạn đã hết hạn, hãy kết nối lại\n để tiếp tục nhận và gửi tin nhắn",
         "HELP_CENTER": {
             "TITLE": "Trung tâm trợ giúp",

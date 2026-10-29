@@ -601,6 +601,7 @@ const messages: Record<string, unknown> = {
             "call_quality": "Call quality",
             "feature_usage": "Feature usage",
             "data": "Data browser",
+            "storage": "File storage",
             "sticker_packs": "Sticker library",
             "agent_bots": "Agent bots",
             "platform_apps": "Platform apps",
@@ -1054,6 +1055,7 @@ const messages: Record<string, unknown> = {
                 "SUSPENSIONS": "Suspension history",
                 "IMPERSONATIONS": "Recent impersonations",
                 "STICKERS": "Account sticker library",
+                "STORAGE": "File storage",
                 "FEATURES": "Features used"
             },
             "COLUMNS": {
@@ -1420,14 +1422,44 @@ const messages: Record<string, unknown> = {
                 "OPTIONS": "Pin options for {column} column"
             }
         },
+        "STORAGE": {
+            "TITLE": "File storage",
+            "DESCRIPTION": "Counted from the size recorded when each file was stored: message attachments kept in storage and custom stickers. Avatars and resent stickers are not included.",
+            "TOTAL": "Stored files",
+            "FILES": "{count} files",
+            "DISK_FREE": "Free disk space",
+            "DISK_OF": "of {total}",
+            "DISK_UNKNOWN": "Disk space unavailable",
+            "RANKING": "Largest accounts",
+            "RANKING_HINT": "Up to {limit} accounts",
+            "OPEN_ALL": "View all accounts",
+            "EMPTY_TITLE": "No files yet",
+            "EMPTY_DESCRIPTION": "Storage appears here once people send or receive files or create stickers.",
+            "COLUMNS": {
+                "ACCOUNT": "Account",
+                "TOTAL": "Total",
+                "FILES": "Files"
+            },
+            "CATEGORIES": {
+                "image": "Images",
+                "video": "Videos",
+                "audio": "Audio",
+                "file": "Files",
+                "sticker": "Stickers"
+            }
+        },
         "STICKERS": {
             "PLATFORM_TAB": "Shared library",
             "ACCOUNT_TAB": "Account library",
             "ACCOUNT_TITLE": "Sticker library of {name}",
             "ACCOUNT_DESCRIPTION": "Full control, same as the account administrator: create packs, upload, edit, reorder, publish, delete, move packs to the shared library.",
             "PICK_ACCOUNT": "Find an account by name or ID…",
-            "PICK_ACCOUNT_TITLE": "Pick an account",
-            "PICK_ACCOUNT_HINT": "An account library is only available to that account. Search by name or ID to open it.",
+            "FILTER_ACCOUNTS": "Filter by account name or ID",
+            "NO_ACCOUNT_LIBRARIES": "No account has its own stickers yet.",
+            "COLUMN_ACCOUNT": "Account",
+            "COLUMN_PACKS": "Packs",
+            "COLUMN_STICKERS": "Stickers",
+            "COLUMN_LAST_ADDED": "Last added",
             "NO_ACCOUNTS": "No account found.",
             "BACK_TO_ACCOUNT": "Back to account"
         }
@@ -3506,6 +3538,37 @@ const messages: Record<string, unknown> = {
         "SENDING": "Sending",
         "UNREAD_COUNT_OVERFLOW": "9+"
     },
+    "CHAT_WALLPAPER": {
+        "MENU_ITEM": "Change wallpaper",
+        "TITLE": "Chat wallpaper",
+        "DESCRIPTION": "Only you see the wallpaper.",
+        "SCOPE_LABEL": "Apply to",
+        "SCOPE_CONVERSATION": "This conversation",
+        "SCOPE_ALL": "All conversations",
+        "NONE": "None",
+        "UPLOAD": "Upload image",
+        "UPLOADING": "Uploading…",
+        "UPLOAD_HINT": "JPG, PNG or WebP, up to 5 MB.",
+        "UPLOAD_TOO_LARGE": "The image must be 5 MB or smaller.",
+        "UPLOAD_UNREADABLE": "This image could not be read. Try another one.",
+        "YOUR_IMAGE": "Your image",
+        "REMOVE": "Remove wallpaper",
+        "REMOVE_HINT_CONVERSATION": "This conversation goes back to your default wallpaper.",
+        "DONE": "Done",
+        "SAVE_FAILED": "Could not save the wallpaper. Please try again.",
+        "PRESETS": {
+            "MIST": "Mist",
+            "SKY": "Sky",
+            "MINT": "Mint",
+            "PEACH": "Peach",
+            "LAVENDER": "Lavender",
+            "SUNSET": "Sunset",
+            "OCEAN": "Ocean",
+            "DOTS": "Dots",
+            "GRID": "Grid",
+            "WAVES": "Waves"
+        }
+    },
     "CHOICE_TOGGLE": {
         "YES": "Yes",
         "NO": "No"
@@ -4428,6 +4491,12 @@ const messages: Record<string, unknown> = {
         "SAVE_CONTACT": "Save Contact",
         "NO_CONTENT": "No content to display",
         "MESSAGE_DELETED": "This message was deleted",
+        "POLL": {
+            "TITLE": "Poll",
+            "VOTES": "{count} vote | {count} votes",
+            "TOTAL_VOTES": "{count} vote in total | {count} votes in total",
+            "VOTE_IN_APP": "Vote in the channel’s app"
+        },
         "SHARED_ATTACHMENT": {
             "CONTACT": "{sender} has shared a contact",
             "LOCATION": "{sender} has shared a location",
@@ -5263,6 +5332,7 @@ const messages: Record<string, unknown> = {
             "bank_card": "[Bank account]",
             "reminder": "[Reminder]",
             "call": "[Call]",
+            "poll": "[Poll]",
             "link": "[Link]",
             "friend_request": "[Friend request]",
             "view_once": "[View-once photo/video, open the app on your phone to see it]",
@@ -7357,6 +7427,8 @@ const messages: Record<string, unknown> = {
             "DELETE": "Notification deleted",
             "MARK_ALL_READ": "All notifications marked as read",
             "DELETE_ALL": "All notifications deleted",
+            "MARK_CHANNELS_READ": "Notifications of the selected channels marked as read",
+            "DELETE_CHANNELS": "Notifications of the selected channels deleted",
             "DELETE_ALL_READ": "All read notifications deleted"
         },
         "BELL": {
@@ -7365,7 +7437,14 @@ const messages: Record<string, unknown> = {
             "VIEW_ALL": "View all notifications",
             "TAB_UNREAD": "Unread",
             "TAB_ALL": "All",
-            "EMPTY_UNREAD": "You are all caught up"
+            "EMPTY_UNREAD": "You are all caught up",
+            "CHANNEL_FILTER": "Filter notifications by channel",
+            "MARK_READ": "Mark as read",
+            "MARK_READ_ALL_HINT": "Mark notifications of every channel as read",
+            "MARK_READ_CHANNELS_HINT": "Mark notifications of the selected channels as read",
+            "DELETE": "Delete",
+            "DELETE_ALL_HINT": "Delete notifications of every channel",
+            "DELETE_CHANNELS_HINT": "Delete notifications of the selected channels"
         },
         "TOAST": {
             "REGION": "New messages",
@@ -11765,6 +11844,11 @@ const messages: Record<string, unknown> = {
         "CUSTOM_ROLES": "Custom Roles",
         "BETA": "Beta",
         "REPORTS_OVERVIEW": "Overview",
+        "ITEM_MENU": "Options for {name}",
+        "CHANNEL_MENU": {
+            "MARK_NOTIFICATIONS_READ": "Mark this channel's notifications as read",
+            "MARKED_NOTIFICATIONS_READ": "Notifications of channel {name} marked as read"
+        },
         "REAUTHORIZE": "Your inbox connection has expired, please reconnect\n to continue receiving and sending messages",
         "HELP_CENTER": {
             "TITLE": "Help Center",
