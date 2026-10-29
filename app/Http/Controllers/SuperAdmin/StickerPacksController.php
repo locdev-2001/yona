@@ -9,6 +9,7 @@ use App\Models\Sticker;
 use App\Support\SuperAdminArea;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -63,7 +64,7 @@ class StickerPacksController extends Controller
                 'name' => $row->name,
                 'packCount' => (int) $row->pack_count,
                 'stickerCount' => (int) $row->sticker_count,
-                'lastAddedAt' => $row->last_added_at,
+                'lastAddedAt' => $row->last_added_at ? Carbon::parse($row->last_added_at)->toIso8601String() : null,
             ]);
     }
 

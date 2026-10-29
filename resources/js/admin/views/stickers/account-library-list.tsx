@@ -33,7 +33,7 @@ type AccountLibraryListProps = {
 }
 
 const formatAddedAt = (value: string | null) =>
-  value ? new Date(value.replace(' ', 'T')).toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' }) : '—'
+  value ? new Date(value).toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' }) : '—'
 
 // Tài khoản đang có kho sticker riêng, mới thêm gần nhất lên đầu; bấm một dòng để mở kho đó.
 const AccountLibraryList = ({ libraries, search, listUrl, label }: AccountLibraryListProps) => {
