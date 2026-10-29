@@ -83,6 +83,14 @@ const INPUT_ATTRIBUTES: Record<FieldType, { type: string; autoComplete: string; 
     code: { type: 'text', autoComplete: 'one-time-code', inputMode: 'numeric' },
 };
 
+// Mã gửi qua đâu tuỳ bước Meta chọn; bước khác (thường là email) dựa vào lời dặn của Meta.
+const CODE_DESCRIPTION_KEYS: Record<string, string> = {
+    totp: 'CODE_DESC_TOTP',
+    sms: 'CODE_DESC_SMS',
+    whatsapp: 'CODE_DESC_WHATSAPP',
+    backup_code: 'CODE_DESC_BACKUP',
+};
+
 // Tiêu đề, mô tả, nhãn nút theo loại bước; bước lạ hiện nguyên lời dặn của sidecar.
 function stepCopy(step: LoginStep): { title: string | null; description: string | null; submit: string } {
     if (step.type === 'display_and_wait') {
@@ -100,7 +108,7 @@ function stepCopy(step: LoginStep): { title: string | null; description: string 
     if (hasField(step, 'code')) {
         return {
             title: t('INBOX_MGMT.MESSENGER_PERSONAL.STEP.CODE_TITLE'),
-            description: t('INBOX_MGMT.MESSENGER_PERSONAL.STEP.CODE_DESC'),
+            description: t(`INBOX_MGMT.MESSENGER_PERSONAL.STEP.${CODE_DESCRIPTION_KEYS[step.step_id] ?? 'CODE_DESC_OTHER'}`),
             submit: t('INBOX_MGMT.MESSENGER_PERSONAL.STEP.CODE_SUBMIT'),
         };
     }
@@ -262,6 +270,11 @@ export default function MessengerPersonalLoginPanel({ accountId, inboxId, onConn
         <form className="flex flex-col gap-3 w-full max-w-md" onSubmit={event => void submit(event)} data-testid="messenger-personal-step">
             {copy.title ? <p className="text-n-slate-12 text-sm font-medium">{copy.title}</p> : null}
             {copy.description ? <p className="text-n-slate-11 text-sm leading-[1.65]">{copy.description}</p> : null}
+            {step.instructions && copy.description !== step.instructions ? (
+                <p className="text-n-slate-11 text-xs leading-[1.65]">
+                    {t('INBOX_MGMT.MESSENGER_PERSONAL.STEP.META_SAYS', { message: step.instructions })}
+                </p>
+            ) : null}
 
             {step.type === 'user_input'
                 ? step.fields.map((field, index) => {
