@@ -46,7 +46,8 @@ import { t } from '../../i18n';
 import { StatusBadge as DesignStatusBadge } from '../design-preview/components';
 import { useConsoleDictionary, useConsoleLabels } from '../labels';
 import type { ChannelHealthItem } from './ChannelHealth';
-import { formatNumber, formatRelative } from './operationsFormat';
+import { formatBytes, formatNumber, formatRelative } from './operationsFormat';
+import { StorageBreakdown, type StorageBreakdownData } from './StorageUsage';
 
 type Option = { value: string; label: string };
 
@@ -103,8 +104,9 @@ export type AccountOverviewProps = {
     timeline: TimelineEvent[];
     features: FeatureUsed[];
     stickers: { packs: number; stickers: number };
+    storage: StorageBreakdownData;
     impersonations: Impersonation[];
-    urls: Record<'show' | 'edit' | 'stickers' | 'auditLogs' | 'data' | 'suspend' | 'unsuspend' | 'impersonations' | 'featureUsage', string>;
+    urls: Record<'show' | 'edit' | 'stickers' | 'auditLogs' | 'data' | 'suspend' | 'unsuspend' | 'impersonations' | 'featureUsage' | 'storage', string>;
     csrf: string;
 };
 
@@ -530,7 +532,7 @@ function InboxesTable({ inboxes }: { inboxes: ChannelHealthItem[] }) {
 }
 
 export default function AccountOverview(props: AccountOverviewProps) {
-    const { account, suspension, users, inboxes, stats, usage, onboarding, timeline, features, stickers, impersonations, urls, csrf } = props;
+    const { account, suspension, users, inboxes, stats, usage, onboarding, timeline, features, stickers, storage, impersonations, urls, csrf } = props;
     const { attribute } = useConsoleDictionary();
     const consoleLabel = useConsoleLabels();
     const [tab, setTab] = useState<Tab>(initialTab);
@@ -693,6 +695,17 @@ export default function AccountOverview(props: AccountOverviewProps) {
                                     <Onboarding onboarding={onboarding} />
                                 </SectionCard>
                             </div>
+                            <SectionCard
+                                title={label('SECTIONS.STORAGE')}
+                                description={`${formatBytes(storage.totalBytes)} · ${t('ADMIN_OPERATIONS.STORAGE.FILES', { count: formatNumber(storage.files) })}`}
+                                action={
+                                    <Link href={urls.storage} className={buttonVariants({ variant: 'outline', size: 'sm' })}>
+                                        {t('ADMIN_OPERATIONS.STORAGE.OPEN_ALL')}
+                                    </Link>
+                                }
+                            >
+                                <StorageBreakdown usage={storage} />
+                            </SectionCard>
                             <SectionCard title={label('SECTIONS.TIMELINE')}>
                                 <Timeline events={timeline.slice(0, 5)} />
                             </SectionCard>

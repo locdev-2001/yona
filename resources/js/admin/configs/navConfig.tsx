@@ -70,6 +70,7 @@ export const NAV_ICONS: Record<string, IconName> = {
   alerts: 'BellRingIcon',
   feature_usage: 'ChartColumnIcon',
   data: 'DatabaseIcon',
+  storage: 'Archive',
   sticker_packs: 'SmileIcon',
   agent_bots: 'BotIcon',
   platform_apps: 'BlocksIcon',

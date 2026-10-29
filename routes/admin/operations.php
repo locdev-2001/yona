@@ -11,6 +11,7 @@ use App\Http\Controllers\SuperAdmin\AuditLogsController;
 use App\Http\Controllers\SuperAdmin\ChannelHealthController;
 use App\Http\Controllers\SuperAdmin\DataBrowserController;
 use App\Http\Controllers\SuperAdmin\SearchController;
+use App\Http\Controllers\SuperAdmin\StorageUsageController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/channel-health', [ChannelHealthController::class, 'index']);
@@ -26,6 +27,7 @@ Route::get('/api/search', [SearchController::class, 'index'])->middleware('throt
 // Chỉ đọc: không có route ghi nào cho dữ liệu thô.
 Route::get('/data', [DataBrowserController::class, 'index']);
 Route::get('/data/{table}', [DataBrowserController::class, 'show'])->where('table', '[a-z0-9_]+');
+Route::get('/storage', [StorageUsageController::class, 'index']);
 
 Route::get('/accounts/{accountId}/sticker-packs', [AccountStickerPacksController::class, 'page'])->whereNumber('accountId');
 Route::prefix('/api/accounts/{accountId}/sticker-packs')->whereNumber('accountId')->group(function () {

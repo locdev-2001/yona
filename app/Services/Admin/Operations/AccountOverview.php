@@ -25,6 +25,7 @@ final class AccountOverview
     public function __construct(
         private readonly ChannelHealthInspector $channelHealth,
         private readonly FeatureUsage $featureUsage,
+        private readonly StorageUsage $storageUsage,
     ) {}
 
     public function find(int $accountId): Account
@@ -65,6 +66,7 @@ final class AccountOverview
             'timeline' => AccountActivity::timeline($account),
             'features' => $this->featureUsage->forAccount($account),
             'stickers' => $this->stickerStats($account),
+            'storage' => $this->storageUsage->forAccount($account),
             'impersonations' => $this->recentImpersonations($accountUsers->pluck('user_id')->all()),
             'urls' => [
                 'show' => SuperAdminArea::url("accounts/{$account->id}"),
@@ -76,6 +78,7 @@ final class AccountOverview
                 'unsuspend' => SuperAdminArea::url("accounts/{$account->id}/unsuspend"),
                 'impersonations' => SuperAdminArea::url('impersonations'),
                 'featureUsage' => SuperAdminArea::url('feature-usage'),
+                'storage' => SuperAdminArea::url('storage'),
             ],
         ];
     }

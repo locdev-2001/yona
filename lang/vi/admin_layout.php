@@ -135,6 +135,7 @@ return [
         'call_quality' => 'Chất lượng cuộc gọi',
         'feature_usage' => 'Mức dùng tính năng',
         'data' => 'Trình duyệt dữ liệu',
+        'storage' => 'Dung lượng tệp',
         'sticker_packs' => 'Kho sticker',
         'agent_bots' => 'Agent bot',
         'platform_apps' => 'Ứng dụng nền tảng',

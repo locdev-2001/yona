@@ -134,6 +134,7 @@ return [
         'call_quality' => 'Call quality',
         'feature_usage' => 'Feature usage',
         'data' => 'Data browser',
+        'storage' => 'File storage',
         'sticker_packs' => 'Sticker library',
         'agent_bots' => 'Agent bots',
         'platform_apps' => 'Platform apps',
