@@ -39,6 +39,8 @@ class InboundMapper
 
     private const KIND_SYSTEM = 'system';
 
+    private const KIND_POLL = 'poll';
+
     private const KIND_UNSUPPORTED = 'unsupported';
 
     private const CALL_DIRECTIONS = ['inbound', 'outbound'];
@@ -230,6 +232,7 @@ class InboundMapper
         return match ($content['kind'] ?? null) {
             self::KIND_VIEW_ONCE => __('conversations.messages.view_once', [], $locale),
             self::KIND_CALL => __('conversations.messages.call', [], $locale),
+            self::KIND_POLL => $text ?? self::text($content['poll']['question'] ?? null) ?? __('conversations.messages.poll', [], $locale),
             self::KIND_UNSUPPORTED => $text ?? __('conversations.messages.unsupported', [], $locale),
             default => $text,
         };
@@ -420,7 +423,7 @@ class InboundMapper
     }
 
     /**
-     * `card_update`: thẻ đã ghi nhận nội dung mới (kết cục cuộc gọi…). Chỉ đè các khoá thẻ
+     * `card_update`: thẻ đã ghi nhận nội dung mới (kết cục cuộc gọi, số phiếu thăm dò). Chỉ đè các khoá thẻ
      * trong `content_attributes`; lưu tin là lõi tự phát `message.updated`.
      *
      * @param  array<string, mixed>  $payload
@@ -446,7 +449,8 @@ class InboundMapper
     }
 
     /**
-     * Khoá thẻ trung tính bong bóng lõi đọc theo loại nội dung: `call` cho nhật ký cuộc gọi.
+     * Khoá thẻ trung tính bong bóng lõi đọc theo loại nội dung: `call` cho nhật ký cuộc gọi,
+     * `poll` cho thẻ thăm dò ý kiến.
      *
      * @param  array<string, mixed>  $content
      * @return array<string, mixed>
@@ -455,7 +459,42 @@ class InboundMapper
     {
         return array_filter([
             'call' => ($content['kind'] ?? null) === self::KIND_CALL ? $this->callLog($content, $fromMe) : null,
+            'poll' => ($content['kind'] ?? null) === self::KIND_POLL ? $this->pollCard($content['poll'] ?? null) : null,
         ], fn ($value) => $value !== null);
+    }
+
+    /**
+     * Thẻ thăm dò {id, question, options: [{id, text, votes}], total_votes}; số phiếu null khi kênh
+     * không cho biết (phiếu bầu được mã hoá).
+     *
+     * @return array{id: string|null, question: string|null, options: list<array{id: string|null, text: string, votes: int|null}>, total_votes: int|null}|null
+     */
+    private function pollCard(mixed $poll): ?array
+    {
+        if (! is_array($poll)) {
+            return null;
+        }
+
+        $options = [];
+
+        foreach (is_array($poll['options'] ?? null) ? $poll['options'] : [] as $option) {
+            $text = is_array($option) ? self::text($option['text'] ?? null) : null;
+
+            if ($text !== null) {
+                $options[] = [
+                    'id' => is_scalar($option['id'] ?? null) && $option['id'] !== '' ? (string) $option['id'] : null,
+                    'text' => $text,
+                    'votes' => is_int($option['votes'] ?? null) ? max(0, $option['votes']) : null,
+                ];
+            }
+        }
+
+        return [
+            'id' => is_scalar($poll['id'] ?? null) && $poll['id'] !== '' ? (string) $poll['id'] : null,
+            'question' => self::text($poll['question'] ?? null),
+            'options' => $options,
+            'total_votes' => is_int($poll['total_votes'] ?? null) ? max(0, $poll['total_votes']) : null,
+        ];
     }
 
     /**

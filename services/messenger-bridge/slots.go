@@ -105,6 +105,7 @@ type Slot struct {
 	sentIDs         *recentSet
 	reportedEvents  *recentSet
 	calls           *callTracker
+	polls           *pollTracker
 	lookups         *profileLookups
 	chatUpdates     *chatUpdates
 	// regularJobs runs regular-transport message handling off the socket read
@@ -242,6 +243,7 @@ func (manager *SlotManager) newSlot(connectionID int64, session *storedSession) 
 		sentIDs:        newRecentSet(sentIDMemory),
 		reportedEvents: newRecentSet(reportedEventMemory),
 		calls:          newCallTracker(),
+		polls:          newPollTracker(),
 		lookups:        newProfileLookups(),
 		chatUpdates:    newChatUpdates(),
 		regularJobs:    make(chan func(), regularJobQueueSize),

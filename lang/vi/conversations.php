@@ -75,6 +75,7 @@ return [
         'bank_card' => '[Tài khoản ngân hàng]',
         'reminder' => '[Nhắc hẹn]',
         'call' => '[Cuộc gọi]',
+        'poll' => '[Thăm dò ý kiến]',
         'link' => '[Liên kết]',
         'friend_request' => '[Lời mời kết bạn]',
         'view_once' => '[Ảnh/video xem một lần, mở app trên điện thoại để xem]',

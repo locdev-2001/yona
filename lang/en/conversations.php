@@ -81,6 +81,7 @@ return [
         'bank_card' => '[Bank account]',
         'reminder' => '[Reminder]',
         'call' => '[Call]',
+        'poll' => '[Poll]',
         'link' => '[Link]',
         'friend_request' => '[Friend request]',
         'view_once' => '[View-once photo/video, open the app on your phone to see it]',

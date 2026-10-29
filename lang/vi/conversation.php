@@ -64,6 +64,13 @@ return [
     'SAVE_CONTACT' => 'Lưu liên hệ',
     'NO_CONTENT' => 'Không có nội dung để hiển thị',
     'MESSAGE_DELETED' => 'Tin nhắn đã bị xoá',
+    // Thẻ thăm dò ý kiến của kênh (bình chọn diễn ra trong ứng dụng của kênh).
+    'POLL' => [
+        'TITLE' => 'Thăm dò ý kiến',
+        'VOTES' => '{count} phiếu',
+        'TOTAL_VOTES' => '{count} lượt bình chọn',
+        'VOTE_IN_APP' => 'Bình chọn trong ứng dụng của kênh',
+    ],
     'SHARED_ATTACHMENT' => [
         'CONTACT' => '{sender} đã chia sẻ một liên hệ',
         'LOCATION' => '{sender} đã chia sẻ một vị trí',

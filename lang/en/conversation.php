@@ -62,6 +62,13 @@ return [
     'SAVE_CONTACT' => 'Save Contact',
     'NO_CONTENT' => 'No content to display',
     'MESSAGE_DELETED' => 'This message was deleted',
+    // Thẻ thăm dò ý kiến của kênh (bình chọn diễn ra trong ứng dụng của kênh).
+    'POLL' => [
+        'TITLE' => 'Poll',
+        'VOTES' => '{count} vote | {count} votes',
+        'TOTAL_VOTES' => '{count} vote in total | {count} votes in total',
+        'VOTE_IN_APP' => 'Vote in the channel’s app',
+    ],
     'SHARED_ATTACHMENT' => [
         'CONTACT' => '{sender} has shared a contact',
         'LOCATION' => '{sender} has shared a location',

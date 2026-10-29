@@ -82,6 +82,7 @@ type messageContent struct {
 	Link     *linkInfo     `json:"link"`
 	Mentions []mention     `json:"mentions,omitempty"`
 	Call     *callInfo     `json:"call,omitempty"`
+	Poll     *pollInfo     `json:"poll,omitempty"`
 }
 
 func newContent() *messageContent {
@@ -227,6 +228,7 @@ func (slot *Slot) emitDurable(eventType string, occurredAt time.Time, fields map
 // bridge was offline, flagged as backfill.
 func (slot *Slot) handleInitialTable(tbl *table.LSTable) {
 	slot.directory.absorb(tbl)
+	slot.polls.absorb(tbl)
 	slot.enqueueRegular(func() { slot.replayInitialTable(tbl) })
 }
 
@@ -256,6 +258,7 @@ func (slot *Slot) replayInitialTable(tbl *table.LSTable) {
 // wait on Meta (profile lookups before an inbound) to the regular job loop.
 func (slot *Slot) handleLiveTable(tbl *table.LSTable) {
 	slot.scheduleChatUpdates(slot.directory.absorb(tbl))
+	slot.polls.absorb(tbl)
 	for _, typing := range tbl.LSUpdateTypingIndicator {
 		if typing.SenderId == slot.selfID() {
 			continue
@@ -334,6 +337,10 @@ func (slot *Slot) handleRegularMessage(message *table.WrappedMessage, backfill b
 	}
 	chat := slot.directory.chatForThread(message.ThreadKey, message.SenderId, selfID)
 	slot.logRegularCards(sourceID, message.XMAAttachments)
+	content, isPollCard := slot.handleRegularPoll(message, sourceID, chat, fromMe)
+	if !isPollCard {
+		content = convertRegularMessage(message)
+	}
 	err := slot.emitInbound(inboundMessage{
 		sourceID:  sourceID,
 		chat:      chat,
@@ -341,7 +348,7 @@ func (slot *Slot) handleRegularMessage(message *table.WrappedMessage, backfill b
 		fromMe:    fromMe,
 		backfill:  backfill,
 		timestamp: time.UnixMilli(message.TimestampMs),
-		content:   convertRegularMessage(message),
+		content:   content,
 	})
 	if err != nil {
 		slot.reportedEvents.forget(sourceID)
@@ -691,6 +698,9 @@ func (slot *Slot) handleEncryptedAction(event *events.FBMessage, chat Chat, send
 				})
 			}
 			return true
+		case *waConsumerApplication.ConsumerApplication_Content_PollUpdateMessage:
+			// Phiếu bầu trong chat mã hoá được mã hoá riêng bằng khoá của thăm dò; không đọc được số phiếu.
+			return true
 		case *waConsumerApplication.ConsumerApplication_Content_EditMessage:
 			target := encryptedSourceID(typed.EditMessage.GetKey().GetID())
 			if slot.reportedEvents.addIfAbsent("edit:" + target + ":" + strconv.FormatInt(typed.EditMessage.GetTimestampMS(), 10)) {
@@ -759,6 +769,9 @@ func (slot *Slot) convertConsumerContent(raw *waConsumerApplication.ConsumerAppl
 		location := typed.LocationMessage.GetLocation()
 		content.Location = &locationInfo{Lat: location.GetDegreesLatitude(), Lng: location.GetDegreesLongitude(),
 			Name: optionalString(firstNonEmpty(location.GetName(), typed.LocationMessage.GetAddress()))}
+	case *waConsumerApplication.ConsumerApplication_Content_PollCreationMessage:
+		content.Kind = contentKindPoll
+		content.Poll = encryptedPoll(typed.PollCreationMessage)
 	case *waConsumerApplication.ConsumerApplication_Content_LiveLocationMessage:
 		location := typed.LiveLocationMessage.GetLocation()
 		content.Location = &locationInfo{Lat: location.GetDegreesLatitude(), Lng: location.GetDegreesLongitude(), Name: optionalString(location.GetName())}
