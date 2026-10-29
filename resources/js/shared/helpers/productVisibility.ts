@@ -12,7 +12,6 @@ const PRODUCT_FEATURE_VISIBILITY = {
     widgetUpdates: false,
     widgetAi: false,
     widgetRequests: false,
-    advancedChannels: false,
     customAttributes: false,
     automations: false,
     agentBots: false,

@@ -108,7 +108,9 @@ class TwilioSms extends Model implements DeclaresCapabilities, DeclaresConnectio
     /** Twilio chỉ còn là nhà cung cấp WhatsApp ở màn "Thêm kênh"; SMS đã ẩn (#160), kênh cũ vẫn chạy. */
     public static function connection(): ChannelConnection
     {
-        return ChannelConnection::of('whatsapp', ConnectionMethod::Form)->ordered(60);
+        return ChannelConnection::of('whatsapp', ConnectionMethod::Form)
+            ->ordered(60)
+            ->withPlatform(ChannelPlatform::of('whatsapp', 'WhatsApp'));
     }
 
     /**

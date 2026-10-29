@@ -54,7 +54,7 @@ class FacebookPage extends Model implements DeclaresCapabilities, DeclaresConnec
 
     public function platform(): ChannelPlatform
     {
-        return ChannelPlatform::of('messenger', 'Messenger');
+        return ChannelPlatform::of('facebook', 'Facebook');
     }
 
     public static function channelRules(): array

@@ -49,7 +49,7 @@ export default function ChannelSelector({
 
             <div className="flex flex-col items-start gap-1.5">
                 <div className="flex items-center gap-2">
-                    <h3 className="text-n-slate-12 text-sm text-start font-medium capitalize">{title}</h3>
+                    <h3 className="text-n-slate-12 text-sm text-start font-medium">{title}</h3>
                     {isBeta && !isComingSoon ? (
                         <Label label={t('GENERAL.BETA')} title={t('GENERAL.BETA_DESCRIPTION')} color="blue" compact />
                     ) : null}
