@@ -1,0 +1,33 @@
+<?php
+
+return [
+    'MENU_ITEM' => 'Change wallpaper',
+    'TITLE' => 'Chat wallpaper',
+    'DESCRIPTION' => 'Only you see the wallpaper.',
+    'SCOPE_LABEL' => 'Apply to',
+    'SCOPE_CONVERSATION' => 'This conversation',
+    'SCOPE_ALL' => 'All conversations',
+    'NONE' => 'None',
+    'UPLOAD' => 'Upload image',
+    'UPLOADING' => 'Uploading…',
+    'UPLOAD_HINT' => 'JPG, PNG or WebP, up to 5 MB.',
+    'UPLOAD_TOO_LARGE' => 'The image must be 5 MB or smaller.',
+    'UPLOAD_UNREADABLE' => 'This image could not be read. Try another one.',
+    'YOUR_IMAGE' => 'Your image',
+    'REMOVE' => 'Remove wallpaper',
+    'REMOVE_HINT_CONVERSATION' => 'This conversation goes back to your default wallpaper.',
+    'DONE' => 'Done',
+    'SAVE_FAILED' => 'Could not save the wallpaper. Please try again.',
+    'PRESETS' => [
+        'MIST' => 'Mist',
+        'SKY' => 'Sky',
+        'MINT' => 'Mint',
+        'PEACH' => 'Peach',
+        'LAVENDER' => 'Lavender',
+        'SUNSET' => 'Sunset',
+        'OCEAN' => 'Ocean',
+        'DOTS' => 'Dots',
+        'GRID' => 'Grid',
+        'WAVES' => 'Waves',
+    ],
+];

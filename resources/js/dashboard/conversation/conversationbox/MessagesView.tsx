@@ -31,6 +31,7 @@ import ReplyBox from './ReplyBox';
 import ResizableEditorWrapper from './ResizableEditorWrapper';
 import type { ResizableEditorWrapperHandle } from './ResizableEditorWrapper';
 import { useMessageReply } from './useMessageReply';
+import { effectiveWallpaper, useChatWallpaperSettings, wallpaperStyle } from '../wallpaper/chatWallpaper';
 
 // Port từ dashboard/components/widgets/conversation/MessagesView.vue — rút về
 // kênh API. Bỏ: label suggestions (EE), referral bubble (WhatsApp), banner
@@ -79,6 +80,7 @@ export default function MessagesView() {
     const scrolledConversationRef = useRef<number | null>(null);
 
     const currentChat = selectedConversation!;
+    const chatWallpaperSettings = useChatWallpaperSettings();
     // Hội thoại chờ do bot giữ đã có băng bàn giao riêng ở khung trả lời.
     const awaitsAcceptance =
         currentChat.status === STATUS_TYPE.PENDING && currentChat.meta.assignee_type !== AGENT_BOT_ASSIGNEE_TYPE;
@@ -232,6 +234,7 @@ export default function MessagesView() {
             <MessageList
                 ref={conversationPanelRef}
                 className="conversation-panel flex-shrink flex-grow basis-px flex flex-col overflow-y-auto relative h-full m-0 pb-4"
+                backgroundStyle={wallpaperStyle(effectiveWallpaper(chatWallpaperSettings, currentChat.id))}
                 messages={messages}
                 channelType={inbox?.channel_type ?? null}
                 inboxCapabilities={inbox?.capabilities ?? []}

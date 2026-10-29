@@ -5,6 +5,7 @@ namespace App\Http\Controllers\WebApi;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Notifications\ConfirmationInstructions;
+use App\Services\Users\ChatWallpaperService;
 use App\Services\Users\PrivacySettings;
 use App\Services\Users\Username;
 use App\Support\AlertSound\AgentAlertPreference;
@@ -25,7 +26,7 @@ class ProfilesController extends Controller
         return response()->json($this->profilePayload($request->user()));
     }
 
-    public function update(Request $request): JsonResponse
+    public function update(Request $request, ChatWallpaperService $chatWallpapers): JsonResponse
     {
         $user = $request->user();
 
@@ -67,6 +68,7 @@ class ProfilesController extends Controller
             $request->validate([
                 ...AgentAlertPreference::rules(),
                 ...ColorScheme::rules(),
+                ...$chatWallpapers->rules($user),
                 // null = theo ngôn ngữ của tài khoản.
                 'ui_settings.locale' => ['nullable', 'string', Rule::in(array_column(config('yona.available_locales', []), 'iso_639_1_code'))],
             ]);
@@ -90,6 +92,10 @@ class ProfilesController extends Controller
         }
 
         $user->save();
+
+        if (array_key_exists(ChatWallpaperService::UI_SETTINGS_KEY, $data['ui_settings'] ?? [])) {
+            $chatWallpapers->pruneUnreferencedImages($user);
+        }
 
         if ($emailChanged) {
             $user->notify(new ConfirmationInstructions);

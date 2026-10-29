@@ -12,6 +12,7 @@ import {
 import { emitter } from 'shared/helpers/emitter';
 import { t } from '../../../i18n';
 import { useConversation } from '../ConversationContext';
+import ChatWallpaperDialog from '../wallpaper/ChatWallpaperDialog';
 import ResolveAction from './ResolveAction';
 
 // Port từ widgets/conversation/MoreActions.vue: ResolveAction + menu ⋮ (mute/unmute
@@ -30,6 +31,7 @@ export default function MoreActions({ isCompact = false, showResolveAction = tru
     const { selectedConversation, accountId, muteConversation, unmuteConversation } = useConversation();
     const [showEmailActionsModal, setShowEmailActionsModal] = useState(false);
     const [showActionsDropdown, setShowActionsDropdown] = useState(false);
+    const [showWallpaperDialog, setShowWallpaperDialog] = useState(false);
     const actionsRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -73,6 +75,7 @@ export default function MoreActions({ isCompact = false, showResolveAction = tru
         !selectedConversation.muted
             ? { icon: 'i-lucide-volume-off', label: t('CONTACT_PANEL.MUTE_CONTACT'), action: 'mute', value: 'mute' }
             : { icon: 'i-lucide-volume-1', label: t('CONTACT_PANEL.UNMUTE_CONTACT'), action: 'unmute', value: 'unmute' },
+        { icon: 'i-lucide-image', label: t('CHAT_WALLPAPER.MENU_ITEM'), action: 'wallpaper', value: 'wallpaper' },
         {
             icon: 'i-lucide-share',
             label: t('CONTACT_PANEL.SEND_TRANSCRIPT'),
@@ -89,6 +92,8 @@ export default function MoreActions({ isCompact = false, showResolveAction = tru
             mute();
         } else if (action === 'unmute') {
             unmute();
+        } else if (action === 'wallpaper') {
+            setShowWallpaperDialog(true);
         } else if (action === 'send_transcript') {
             toggleEmailModal();
         }
@@ -115,6 +120,9 @@ export default function MoreActions({ isCompact = false, showResolveAction = tru
                     />
                 ) : null}
             </div>
+            {showWallpaperDialog ? (
+                <ChatWallpaperDialog conversationId={selectedConversation.id} onClose={() => setShowWallpaperDialog(false)} />
+            ) : null}
             {showEmailActionsModal ? (
                 <EmailTranscriptModal
                     show={showEmailActionsModal}

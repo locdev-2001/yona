@@ -1,4 +1,5 @@
 import { forwardRef, Fragment, useMemo } from 'react';
+import type { CSSProperties } from 'react';
 import { messageSentAt } from 'dashboard/conversation/messageTime';
 import type { ReactNode, UIEventHandler } from 'react';
 import { fromUnixTime, isToday } from 'date-fns';
@@ -33,6 +34,8 @@ interface MessageListProps {
     chatAttachments?: MessageAttachment[];
     firstUnreadId?: number | null;
     className?: string;
+    // Hình nền khung chat: thay nền mặc định của danh sách, vạch ngày đổi sang dạng viên để đọc được trên nền.
+    backgroundStyle?: CSSProperties;
     beforeAll?: ReactNode;
     unreadBadge?: ReactNode;
     after?: ReactNode;
@@ -107,6 +110,7 @@ const MessageList = forwardRef<HTMLUListElement, MessageListProps>(function Mess
         chatAttachments = [],
         firstUnreadId = null,
         className = '',
+        backgroundStyle,
         beforeAll,
         unreadBadge,
         after,
@@ -133,7 +137,13 @@ const MessageList = forwardRef<HTMLUListElement, MessageListProps>(function Mess
     );
 
     return (
-        <ul ref={ref} className={`px-4 bg-n-surface-1 ${className}`} onScroll={onScroll}>
+        <ul
+            ref={ref}
+            className={`group/message-list px-4 bg-n-surface-1 ${className}`}
+            style={backgroundStyle}
+            data-wallpaper={backgroundStyle ? '' : undefined}
+            onScroll={onScroll}
+        >
             {beforeAll}
             {visibleMessages.map((message, index) => (
                 <Fragment key={message.id}>
@@ -143,7 +153,9 @@ const MessageList = forwardRef<HTMLUListElement, MessageListProps>(function Mess
                             data-testid="message-time-divider"
                             className="list-none flex justify-center py-2 text-xs font-medium text-n-slate-11"
                         >
-                            <time>{timeDividerLabel(messageSentAt(message))}</time>
+                            <time className="group-data-[wallpaper]/message-list:rounded-full group-data-[wallpaper]/message-list:px-2.5 group-data-[wallpaper]/message-list:py-1 group-data-[wallpaper]/message-list:overlay-surface">
+                                {timeDividerLabel(messageSentAt(message))}
+                            </time>
                         </li>
                     ) : null}
                     <Message

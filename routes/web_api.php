@@ -55,6 +55,7 @@ use App\Http\Controllers\WebApi\NotificationSubscriptionsController;
 use App\Http\Controllers\WebApi\PaymentAccountsController;
 use App\Http\Controllers\WebApi\PortalsController;
 use App\Http\Controllers\WebApi\PresenceController;
+use App\Http\Controllers\WebApi\Profile\ChatWallpaperController;
 use App\Http\Controllers\WebApi\Profile\MfaController;
 use App\Http\Controllers\WebApi\Profile\SessionsController as ProfileSessionsController;
 use App\Http\Controllers\WebApi\ProfileAvailabilityController;
@@ -94,6 +95,7 @@ Route::middleware('auth')->prefix('/api/v1')->group(function () {
     Route::get('/profile', [ProfilesController::class, 'show']);
     Route::match(['put', 'patch'], '/profile', [ProfilesController::class, 'update']);
     Route::delete('/profile/avatar', [ProfilesController::class, 'destroyAvatar']);
+    Route::post('/profile/chat_wallpaper', [ChatWallpaperController::class, 'store']);
     Route::post('/request_signing_key', [RequestSigningKeysController::class, 'store'])->defaults('surface', 'dashboard');
 
     // F8 MFA + user sessions — BEGIN (agent f8 sở hữu khối này)
