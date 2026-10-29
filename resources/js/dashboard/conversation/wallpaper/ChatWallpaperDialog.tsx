@@ -66,9 +66,7 @@ export default function ChatWallpaperDialog({ conversationId, onClose }: { conve
     const dialogRef = useRef<DialogHandle>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const settings = useChatWallpaperSettings();
-    const [scope, setScope] = useState<WallpaperScope>(() =>
-        settings.conversations[String(conversationId)] || !settings.default ? 'conversation' : 'all',
-    );
+    const [scope, setScope] = useState<WallpaperScope>('conversation');
     const [isUploading, setUploading] = useState(false);
     const selected = wallpaperForScope(settings, scope, conversationId);
 
