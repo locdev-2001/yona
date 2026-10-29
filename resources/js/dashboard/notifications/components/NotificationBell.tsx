@@ -39,6 +39,8 @@ interface NotificationBellProps {
 export default function NotificationBell({ isCollapsed = false, renderTrigger, triggerClassName, onNavigate }: NotificationBellProps) {
     const count = useNotificationsUnreadCount();
     const [bellTab, setBellTab] = useState<BellTab>('unread');
+    // Giữ bộ lọc kênh khi đổi tab Chưa đọc / Tất cả và khi đóng mở lại chuông.
+    const [selectedInboxIds, setSelectedInboxIds] = useState<number[]>([]);
     const label = t('INBOX.BELL.OPEN_LABEL', { count });
 
     return (
@@ -67,10 +69,12 @@ export default function NotificationBell({ isCollapsed = false, renderTrigger, t
                 </button>
             )}
             content={({ hide }) => (
-                <NotificationsProvider key={bellTab} fixedFilters={BELL_FILTERS[bellTab]}>
+                <NotificationsProvider key={bellTab} fixedFilters={BELL_FILTERS[bellTab]} inboxIds={selectedInboxIds}>
                     <NotificationBellPanel
                         activeTab={bellTab}
                         onTabChange={setBellTab}
+                        selectedInboxIds={selectedInboxIds}
+                        onSelectedInboxIdsChange={setSelectedInboxIds}
                         onNavigate={() => {
                             hide();
                             onNavigate?.();

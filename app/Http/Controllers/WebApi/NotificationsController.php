@@ -43,7 +43,7 @@ class NotificationsController extends Controller
         return response()->json((new AttentionCounter($account, $request->user()))->payload());
     }
 
-    // read_all: không có primary_actor thì đánh dấu đã đọc toàn bộ account.
+    // read_all: có primary_actor thì một hội thoại; không thì các kênh trong inbox_ids, hoặc toàn bộ account.
     public function readAll(Request $request, Account $account): Response
     {
         $query = $this->userNotifications($request, $account);
@@ -53,8 +53,12 @@ class NotificationsController extends Controller
             $query->where('primary_actor_type', $primaryActor->getMorphClass())
                 ->where('primary_actor_id', $primaryActor->id);
         } else {
-            // Chuông đếm cả hội thoại chưa đọc, nên "tất cả đã đọc" phải tắt cả chấm của chúng.
-            UnreadConversations::markAllSeen($account, $request->user(), $request->attributes->get('currentAccountUser'));
+            $inboxIds = $this->requestedInboxIds($request, $account);
+            if ($inboxIds !== null) {
+                $query->forInboxes($inboxIds);
+            }
+            // Chuông đếm cả hội thoại chưa đọc, nên "đã đọc" phải tắt cả chấm của chúng.
+            UnreadConversations::markAllSeen($account, $request->user(), $request->attributes->get('currentAccountUser'), $inboxIds);
         }
 
         Notification::markAllRead($query);
@@ -93,6 +97,7 @@ class NotificationsController extends Controller
             $request->input('type') === DeleteNotificationJob::TYPE_READ
                 ? DeleteNotificationJob::TYPE_READ
                 : DeleteNotificationJob::TYPE_ALL,
+            $this->requestedInboxIds($request, $account),
         );
 
         return response()->noContent(200);
@@ -139,9 +144,27 @@ class NotificationsController extends Controller
         };
     }
 
+    /**
+     * Bộ lọc kênh `inbox_ids[]`: null khi không gửi (mọi kênh); chỉ giữ kênh của account này,
+     * nên gửi toàn id lạ thì lọc ra rỗng chứ không rơi về "mọi kênh".
+     *
+     * @return list<int>|null
+     */
+    private function requestedInboxIds(Request $request, Account $account): ?array
+    {
+        if (! $request->has('inbox_ids')) {
+            return null;
+        }
+
+        $requestedIds = array_filter((array) $request->input('inbox_ids'), 'is_numeric');
+
+        return $account->inboxes()->whereIn('id', $requestedIds)->pluck('id')->map(fn ($id) => (int) $id)->all();
+    }
+
     private function finder(Request $request, Account $account): NotificationFinder
     {
         return new NotificationFinder($request->user(), $account, [
+            'inbox_ids' => $this->requestedInboxIds($request, $account),
             'page' => $request->query('page'),
             'includes' => (array) $request->query('includes', []),
             'sort_order' => $request->query('sort_order'),

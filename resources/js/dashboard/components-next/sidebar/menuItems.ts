@@ -4,6 +4,8 @@ import { COMPACT_INTERFACE } from 'shared/helpers/productVisibility';
 import { createElement } from 'react';
 import type { ReactNode } from 'react';
 import { accountScopedUrl, conversationListPageURL } from 'dashboard/helper/URLHelper';
+import { useAlert } from 'dashboard/composables/useAlert';
+import { markInboxesRead } from 'dashboard/notifications/markInboxesRead';
 import { SidebarChannelLeafContent } from './SidebarGroupLeaf';
 import type { SidebarMenuItem } from './provider';
 import { EMPTY_UNREAD_COUNTS } from './useConversationUnreadCounts';
@@ -177,6 +179,17 @@ export function buildMenuItems(
                         to: inboxListUrl(inbox.id),
                         component: ({ label, badgeCount }: { label: string; active: boolean; badgeCount?: number }) =>
                             createElement(SidebarChannelLeafContent, { label, badgeCount, inbox }),
+                        actions: [
+                            {
+                                key: 'mark-notifications-read',
+                                icon: 'i-lucide-check-check',
+                                label: t('SIDEBAR.CHANNEL_MENU.MARK_NOTIFICATIONS_READ'),
+                                onSelect: () =>
+                                    void markInboxesRead(accountId, [inbox.id])
+                                        .then(() => useAlert(t('SIDEBAR.CHANNEL_MENU.MARKED_NOTIFICATIONS_READ', { name: inbox.name })))
+                                        .catch(() => undefined),
+                            },
+                        ],
                     })),
                 },
             ],

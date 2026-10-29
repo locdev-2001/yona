@@ -214,6 +214,7 @@ export default function SidebarGroup({
                                 icon={child.icon}
                                 badgeCount={child.badgeCount}
                                 component={child.component}
+                                actions={child.actions}
                                 active={activeChild?.name === child.name}
                                 hidden={!(isExpanded || activeChild?.name === child.name)}
                             />

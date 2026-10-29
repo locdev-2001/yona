@@ -23,16 +23,17 @@ final class UnreadConversations
     }
 
     // "Đánh dấu tất cả đã đọc": như mở từng hội thoại có tin chưa đọc mà người này thấy,
-    // mọi trạng thái — chấm ở danh sách đã giải quyết cũng phải tắt.
-    public static function markAllSeen(Account $account, User $user, AccountUser $accountUser): void
+    // mọi trạng thái — chấm ở danh sách đã giải quyết cũng phải tắt. Có $inboxIds thì chỉ trong các kênh đó.
+    /** @param  list<int>|null  $inboxIds */
+    public static function markAllSeen(Account $account, User $user, AccountUser $accountUser, ?array $inboxIds = null): void
     {
         $seenAt = now();
+        $unseen = fn (): QueryBuilder => self::anyStatus($account, $user, $accountUser)
+            ->when($inboxIds !== null, fn (QueryBuilder $query) => $query->whereIn('conversations.inbox_id', $inboxIds));
 
         // Cột của người được giao trước: sau khi ghi agent_last_seen_at thì không còn hội thoại nào "chưa đọc" để lọc.
-        self::anyStatus($account, $user, $accountUser)
-            ->where('conversations.assignee_id', $user->id)
-            ->update(['assignee_last_seen_at' => $seenAt]);
-        self::anyStatus($account, $user, $accountUser)->update(['agent_last_seen_at' => $seenAt]);
+        $unseen()->where('conversations.assignee_id', $user->id)->update(['assignee_last_seen_at' => $seenAt]);
+        $unseen()->update(['agent_last_seen_at' => $seenAt]);
     }
 
     private static function anyStatus(Account $account, User $user, AccountUser $accountUser): QueryBuilder

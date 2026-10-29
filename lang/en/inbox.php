@@ -76,6 +76,8 @@ return [
         'DELETE' => 'Notification deleted',
         'MARK_ALL_READ' => 'All notifications marked as read',
         'DELETE_ALL' => 'All notifications deleted',
+        'MARK_CHANNELS_READ' => 'Notifications of the selected channels marked as read',
+        'DELETE_CHANNELS' => 'Notifications of the selected channels deleted',
         'DELETE_ALL_READ' => 'All read notifications deleted',
     ],
     'BELL' => [
@@ -85,6 +87,13 @@ return [
         'TAB_UNREAD' => 'Unread',
         'TAB_ALL' => 'All',
         'EMPTY_UNREAD' => 'You are all caught up',
+        'CHANNEL_FILTER' => 'Filter notifications by channel',
+        'MARK_READ' => 'Mark as read',
+        'MARK_READ_ALL_HINT' => 'Mark notifications of every channel as read',
+        'MARK_READ_CHANNELS_HINT' => 'Mark notifications of the selected channels as read',
+        'DELETE' => 'Delete',
+        'DELETE_ALL_HINT' => 'Delete notifications of every channel',
+        'DELETE_CHANNELS_HINT' => 'Delete notifications of the selected channels',
     ],
     'TOAST' => [
         'REGION' => 'New messages',

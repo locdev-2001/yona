@@ -220,3 +220,9 @@ Founder chốt: tính năng dành cho đội ngũ doanh nghiệp (nhân viên, t
 - **Ảnh hộp thư theo ảnh tài khoản:** kênh khai `profile_avatar` không còn ô "Hình đại diện kênh" để tải tay; ảnh lấy từ tài khoản và hiện ở thẻ phiên đầu trang cài đặt.
 - **Messenger cá nhân đăng nhập bằng mật khẩu:** Meta không có đăng nhập QR cho tài khoản cá nhân; màn kết nối bắt đọc cảnh báo (phiên không chính thức, có thể bị khoá, mật khẩu chỉ dùng một lần, nên bật 2FA) trước khi nhập email/SĐT và mật khẩu; bước tiếp theo (mã 2FA, duyệt trên thiết bị khác, xác minh) vẽ theo bước Meta trả về.
 
+
+## Dọn thông báo theo kênh (29/10/2026)
+
+- **Bộ lọc kênh trong chuông:** hàng chip kênh (dùng chung `FilterChip`/`InboxFilterChip` với hàng chip của danh sách hội thoại) nằm ngay dưới tiêu đề bảng Thông báo, chọn được nhiều kênh; "Mọi kênh" = không lọc. Chọn chip thay vì menu thả xuống vì bảng chuông cuộn bên trong, menu nổi bị cắt khi danh sách ngắn, và chip chạm 44px trên điện thoại. Bộ lọc giữ nguyên khi đổi tab Chưa đọc/Tất cả và khi đóng mở lại chuông trong phiên.
+- **Hai nút áp đúng bộ lọc:** "Đánh dấu đã đọc" và "Xóa" ở đầu bảng; không lọc thì áp mọi kênh như trước. Đánh dấu đã đọc tắt cả chấm chưa đọc của hội thoại trong các kênh đó (chuông đếm cả hai), kênh khác giữ nguyên. Xóa chỉ xoá thông báo, chấm chưa đọc của hội thoại vẫn còn cho tới khi đọc. Không hỏi xác nhận, giống trang thông báo đầy đủ.
+- **Menu từng kênh ở sidebar máy tính:** chuột phải vào kênh, hoặc nút ba chấm hiện khi rê chuột (luôn hiện trên màn cảm ứng), có "Đánh dấu đã đọc thông báo của kênh này". Điện thoại không mở ngăn kéo sidebar nên dùng bộ lọc trong chuông.

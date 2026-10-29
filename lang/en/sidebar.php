@@ -82,6 +82,11 @@ return [
     'CUSTOM_ROLES' => 'Custom Roles',
     'BETA' => 'Beta',
     'REPORTS_OVERVIEW' => 'Overview',
+    'ITEM_MENU' => 'Options for {name}',
+    'CHANNEL_MENU' => [
+        'MARK_NOTIFICATIONS_READ' => 'Mark this channel\'s notifications as read',
+        'MARKED_NOTIFICATIONS_READ' => 'Notifications of channel {name} marked as read',
+    ],
     'REAUTHORIZE' => 'Your inbox connection has expired, please reconnect
  to continue receiving and sending messages',
     'HELP_CENTER' => [

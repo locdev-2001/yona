@@ -18,6 +18,8 @@ class DeleteNotificationJob extends ApplicationJob
         private readonly User $user,
         private readonly Account $account,
         private readonly string $type = self::TYPE_ALL,
+        /** @var list<int>|null null = mọi kênh */
+        private readonly ?array $inboxIds = null,
     ) {
         $this->onQueue('low');
     }
@@ -27,7 +29,8 @@ class DeleteNotificationJob extends ApplicationJob
         $query = Notification::query()
             ->where('user_id', $this->user->id)
             ->where('account_id', $this->account->id)
-            ->when($this->type === self::TYPE_READ, fn ($builder) => $builder->whereNotNull('read_at'));
+            ->when($this->type === self::TYPE_READ, fn ($builder) => $builder->whereNotNull('read_at'))
+            ->when($this->inboxIds !== null, fn ($builder) => $builder->forInboxes($this->inboxIds));
 
         DB::transaction(fn () => $query->get()->each(fn (Notification $notification) => $notification->delete()));
     }

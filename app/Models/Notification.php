@@ -138,6 +138,14 @@ class Notification extends Model
         return $query->whereNull('read_at');
     }
 
+    // Lọc theo kênh: chỉ thông báo về hội thoại thuộc các kênh cho trước.
+    /** @param  list<int>  $inboxIds */
+    public function scopeForInboxes(Builder $query, array $inboxIds): Builder
+    {
+        return $query->where('primary_actor_type', (new Conversation)->getMorphClass())
+            ->whereIn('primary_actor_id', Conversation::query()->select('id')->whereIn('inbox_id', $inboxIds));
+    }
+
     // Đánh dấu đọc hàng loạt bằng một câu UPDATE rồi phát MỘT notification.updated mang
     // số chưa đọc cuối. Cập nhật từng bản ghi sẽ phát N event với số lùi dần; tab nhận
     // lệch thứ tự thì chuông và tiêu đề nháy số cũ.

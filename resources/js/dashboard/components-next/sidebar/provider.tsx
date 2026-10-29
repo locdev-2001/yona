@@ -1,5 +1,6 @@
 import { createContext, useContext, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
+import type { SidebarLeafAction } from './SidebarGroupLeaf';
 import { usePage } from '@inertiajs/react';
 
 import { putJson } from 'dashboard/helper/apiClient';
@@ -36,6 +37,7 @@ export interface SidebarMenuChild {
     collapsible?: boolean;
     showTreeLine?: boolean;
     component?: (props: { label: string; active: boolean; badgeCount?: number }) => ReactNode;
+    actions?: SidebarLeafAction[];
     // Nút phụ cạnh tiêu đề nhóm con (Kênh: sắp xếp).
     headerAction?: ReactNode;
     // Khi có, thay danh sách mục con của nhóm (Kênh: khung sắp xếp).

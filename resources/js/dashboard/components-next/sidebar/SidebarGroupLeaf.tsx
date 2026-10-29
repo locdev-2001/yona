@@ -1,6 +1,9 @@
-import type { ReactNode } from 'react';
+import { useState } from 'react';
+import type { MouseEvent, ReactNode } from 'react';
 import { Link } from '@inertiajs/react';
 
+import ContextMenu from 'dashboard/components/ui/ContextMenu';
+import MenuItem from 'dashboard/components/widgets/conversation/contextMenu/MenuItem';
 import { t } from '../../../i18n';
 import Icon from 'dashboard/components-next/icon/Icon';
 import ChannelIcon from 'dashboard/components-next/icon/ChannelIcon';
@@ -10,6 +13,14 @@ import SidebarUnreadBadge from './SidebarUnreadBadge';
 // Port từ sidebar/SidebarGroupLeaf.vue — tree-line connector giữ nguyên chuỗi class
 const TREE_CONNECTOR =
     "child-item before:content-[''] before:absolute before:start-0 before:w-0.5 before:h-full before:bg-n-slate-4 first:before:rounded-t last:before:h-1/5 last:after:content-[''] last:after:absolute last:after:start-0 last:after:bottom-[calc(50%_-_2px)] last:after:h-3 last:after:w-2.5 last:after:border-b-2 last:after:border-s-2 last:after:rounded-es last:after:border-n-slate-4";
+
+// Hành động trên một mục: mở bằng chuột phải hoặc nút ba chấm (luôn hiện trên màn cảm ứng).
+export interface SidebarLeafAction {
+    key: string;
+    icon: string;
+    label: string;
+    onSelect: () => void;
+}
 
 interface SidebarGroupLeafProps {
     label: string;
@@ -21,6 +32,7 @@ interface SidebarGroupLeafProps {
     thinTreeLine?: boolean;
     hidden?: boolean;
     component?: (props: { label: string; active: boolean; badgeCount?: number }) => ReactNode;
+    actions?: SidebarLeafAction[];
 }
 
 // Port từ sidebar/ChannelLeaf.vue — nội dung mục Channels: icon kênh + nhãn +
@@ -66,11 +78,25 @@ export default function SidebarGroupLeaf({
     thinTreeLine = false,
     hidden = false,
     component,
+    actions = [],
 }: SidebarGroupLeafProps) {
+    const [menuPosition, setMenuPosition] = useState<{ x: number; y: number } | null>(null);
+    const hasActions = actions.length > 0;
+
+    const openMenuAtPointer = (event: MouseEvent) => {
+        event.preventDefault();
+        setMenuPosition({ x: event.clientX, y: event.clientY });
+    };
+
+    const openMenuBelowButton = (event: MouseEvent<HTMLButtonElement>) => {
+        const buttonRect = event.currentTarget.getBoundingClientRect();
+        setMenuPosition({ x: buttonRect.left, y: buttonRect.bottom + 4 });
+    };
+
     return (
         <li
             className={[
-                'py-0.5 ps-2 ms-3 relative text-n-slate-11 min-w-0',
+                'group/leaf py-0.5 ps-2 ms-3 relative text-n-slate-11 min-w-0',
                 hideTreeLine ? '' : TREE_CONNECTOR,
                 !hideTreeLine && thinTreeLine ? 'before:!w-px last:after:!border-b last:after:!border-s' : '',
                 hidden ? 'hidden' : '',
@@ -83,7 +109,8 @@ export default function SidebarGroupLeaf({
                 title={label}
                 className={`flex h-8 items-center gap-2 px-2 py-1 rounded-lg ltr:hover:bg-gradient-to-r rtl:hover:bg-gradient-to-l from-transparent via-n-slate-3/70 to-n-slate-3/70 group min-w-0 ${
                     active ? 'text-n-slate-12 bg-n-surface-selected active' : ''
-                }`}
+                } ${hasActions ? '[@media(hover:none)]:pe-9' : ''}`}
+                onContextMenu={hasActions ? openMenuAtPointer : undefined}
             >
                 {component ? (
                     component({ label, active, badgeCount })
@@ -99,6 +126,38 @@ export default function SidebarGroupLeaf({
                     </>
                 )}
             </Link>
+            {hasActions ? (
+                <button
+                    type="button"
+                    aria-label={t('SIDEBAR.ITEM_MENU', { name: label })}
+                    aria-haspopup="menu"
+                    aria-expanded={menuPosition !== null}
+                    className={`absolute top-1/2 -translate-y-1/2 end-1 grid place-content-center size-7 rounded-md bg-n-slate-3 text-n-slate-11 hover:text-n-slate-12 focus-visible:opacity-100 [@media(hover:none)]:bg-transparent [@media(hover:none)]:opacity-100 ${
+                        menuPosition ? 'opacity-100' : 'opacity-0 group-hover/leaf:opacity-100'
+                    }`}
+                    onClick={openMenuBelowButton}
+                >
+                    <Icon icon="i-lucide-ellipsis" className="size-4" />
+                </button>
+            ) : null}
+            {menuPosition ? (
+                <ContextMenu x={menuPosition.x} y={menuPosition.y} onClose={() => setMenuPosition(null)}>
+                    <div role="menu" className="p-1 rounded-md overlay-surface">
+                        {actions.map(action => (
+                            <MenuItem
+                                key={action.key}
+                                label={action.label}
+                                icon={action.icon}
+                                className="w-max max-w-[calc(100vw-2rem)]"
+                                onClick={() => {
+                                    setMenuPosition(null);
+                                    action.onSelect();
+                                }}
+                            />
+                        ))}
+                    </div>
+                </ContextMenu>
+            ) : null}
         </li>
     );
 }

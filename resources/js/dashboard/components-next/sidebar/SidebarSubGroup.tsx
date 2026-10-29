@@ -124,6 +124,7 @@ export default function SidebarSubGroup({
                                 icon={child.icon}
                                 badgeCount={child.badgeCount}
                                 component={child.component}
+                                actions={child.actions}
                                 active={activeChild?.name === child.name}
                                 hideTreeLine={showTreeLine && !isExpanded}
                                 thinTreeLine

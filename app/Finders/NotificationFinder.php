@@ -57,6 +57,10 @@ class NotificationFinder
         if (! $this->typeIncluded('read')) {
             $this->notifications->unread();
         }
+
+        if (is_array($this->params['inbox_ids'] ?? null)) {
+            $this->notifications->forInboxes($this->params['inbox_ids']);
+        }
     }
 
     private function typeIncluded(string $type): bool

@@ -76,6 +76,8 @@ return [
         'DELETE' => 'Đã xóa thông báo',
         'MARK_ALL_READ' => 'Đã đánh dấu tất cả thông báo là đã đọc',
         'DELETE_ALL' => 'Đã xóa tất cả thông báo',
+        'MARK_CHANNELS_READ' => 'Đã đánh dấu đã đọc thông báo của kênh đã chọn',
+        'DELETE_CHANNELS' => 'Đã xóa thông báo của kênh đã chọn',
         'DELETE_ALL_READ' => 'Đã xóa mọi thông báo đã đọc',
     ],
     'BELL' => [
@@ -85,6 +87,13 @@ return [
         'TAB_UNREAD' => 'Chưa đọc',
         'TAB_ALL' => 'Tất cả',
         'EMPTY_UNREAD' => 'Đã đọc hết thông báo',
+        'CHANNEL_FILTER' => 'Lọc thông báo theo kênh',
+        'MARK_READ' => 'Đánh dấu đã đọc',
+        'MARK_READ_ALL_HINT' => 'Đánh dấu đã đọc thông báo của mọi kênh',
+        'MARK_READ_CHANNELS_HINT' => 'Đánh dấu đã đọc thông báo của kênh đã chọn',
+        'DELETE' => 'Xóa',
+        'DELETE_ALL_HINT' => 'Xóa thông báo của mọi kênh',
+        'DELETE_CHANNELS_HINT' => 'Xóa thông báo của kênh đã chọn',
     ],
     'TOAST' => [
         'REGION' => 'Tin mới',

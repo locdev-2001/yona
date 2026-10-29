@@ -19,7 +19,7 @@ import {
 import { INBOX_FILTER_TYPE, INBOX_SORT_BY, mergeNotifications, sortNotifications } from './helpers';
 import type { NotificationFilters, NotificationRealtimePayload, NotificationRecord, NotificationsMeta } from './types';
 import { scheduleUnreadCountRefresh } from './useUnreadCount';
-import { BUS_EVENTS, emitter } from 'shared/helpers/emitter';
+import { isInInboxes, markInboxesRead } from './markInboxesRead';
 
 // Danh sách + meta + cờ UI + hành động, cộng ba handler realtime. Trang
 // inbox-view và panel chuông cùng dùng. Số chưa đọc KHÔNG giữ ở đây: sau mỗi hành
@@ -69,9 +69,11 @@ interface NotificationsProviderProps {
     children: ReactNode;
     // Bộ lọc cố định (panel chuông): không đọc, không ghi bộ lọc người dùng chọn ở trang đầy đủ.
     fixedFilters?: FixedNotificationFilters;
+    // Bộ lọc kênh: danh sách, "đánh dấu đã đọc" và "xoá" chỉ trong các kênh này; rỗng = mọi kênh.
+    inboxIds?: number[];
 }
 
-export function NotificationsProvider({ children, fixedFilters }: NotificationsProviderProps) {
+export function NotificationsProvider({ children, fixedFilters, inboxIds }: NotificationsProviderProps) {
     const { auth, currentAccount } = usePage<DashboardPageProps>().props;
     const accountId = currentAccount.id;
 
@@ -95,8 +97,8 @@ export function NotificationsProvider({ children, fixedFilters }: NotificationsP
     const pageRef = useRef(1);
 
     const query = useMemo(
-        () => ({ status: filters.status, type: filters.type, sortOrder: filters.sortOrder }),
-        [filters.status, filters.type, filters.sortOrder],
+        () => ({ status: filters.status, type: filters.type, sortOrder: filters.sortOrder, inboxIds }),
+        [filters.status, filters.type, filters.sortOrder, inboxIds],
     );
 
     const fetchPage = useCallback(
@@ -209,28 +211,26 @@ export function NotificationsProvider({ children, fixedFilters }: NotificationsP
     );
 
     const markAllRead = useCallback(async () => {
-        await markNotificationsRead(accountId);
+        await markInboxesRead(accountId, inboxIds);
         const readAt = new Date().toISOString();
         setRecords(current => current.map(record => ({ ...record, read_at: record.read_at ?? readAt })));
-        emitter.emit(BUS_EVENTS.CONVERSATIONS_ALL_SEEN);
-        scheduleUnreadCountRefresh();
-        useAlert(t('INBOX.ALERTS.MARK_ALL_READ'));
-    }, [accountId]);
+        useAlert(t(inboxIds?.length ? 'INBOX.ALERTS.MARK_CHANNELS_READ' : 'INBOX.ALERTS.MARK_ALL_READ'));
+    }, [accountId, inboxIds]);
 
     const deleteAll = useCallback(async () => {
-        await deleteNotificationsRequest(accountId, 'all');
+        await deleteNotificationsRequest(accountId, 'all', inboxIds);
         setRecords([]);
         setMeta(current => ({ ...current, count: 0 }));
         scheduleUnreadCountRefresh();
-        useAlert(t('INBOX.ALERTS.DELETE_ALL'));
-    }, [accountId]);
+        useAlert(t(inboxIds?.length ? 'INBOX.ALERTS.DELETE_CHANNELS' : 'INBOX.ALERTS.DELETE_ALL'));
+    }, [accountId, inboxIds]);
 
     const deleteAllRead = useCallback(async () => {
-        await deleteNotificationsRequest(accountId, 'read');
+        await deleteNotificationsRequest(accountId, 'read', inboxIds);
         setRecords(current => current.filter(record => !record.read_at));
         scheduleUnreadCountRefresh();
         useAlert(t('INBOX.ALERTS.DELETE_ALL_READ'));
-    }, [accountId]);
+    }, [accountId, inboxIds]);
 
     const snooze = useCallback(
         async (notificationId: number, snoozedUntil: number | null) => {
@@ -249,12 +249,12 @@ export function NotificationsProvider({ children, fixedFilters }: NotificationsP
     const upsertFromRealtime = useCallback(
         (payload: NotificationRealtimePayload) => {
             const notification = payload?.notification as NotificationRecord | undefined;
-            if (notification?.id) {
+            if (notification?.id && isInInboxes(notification.primary_actor?.inbox_id, inboxIds)) {
                 setRecords(current => mergeNotifications(current, [notification]));
             }
             applyRealtimeCounts(payload);
         },
-        [applyRealtimeCounts],
+        [applyRealtimeCounts, inboxIds],
     );
 
     useRealtimeEvent<NotificationRealtimePayload>('notification.created', upsertFromRealtime);

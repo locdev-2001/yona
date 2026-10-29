@@ -17,6 +17,7 @@ import { markConversationSeen, nowInSeconds, unreadCountAfterSeen, type Conversa
 import { useContactUpdatedEvent } from 'dashboard/realtime/contactUpdated';
 import { useRealtimeEvent } from 'dashboard/realtime/hooks';
 import { BUS_EVENTS } from 'shared/helpers/emitter';
+import { isInInboxes, type ConversationsAllSeenPayload } from 'dashboard/notifications/markInboxesRead';
 import {
     DISCONNECT_DELAY_THRESHOLD,
     getSecondsSinceDisconnect,
@@ -895,9 +896,15 @@ export function ConversationProvider({
         setAllConversations((current) => applyUnreadCount(current, seenId, seenAt));
         setFilteredConversations((current) => applyUnreadCount(current, seenId, seenAt));
     });
-    useRealtimeEvent(BUS_EVENTS.CONVERSATIONS_ALL_SEEN, () => {
+    useRealtimeEvent<ConversationsAllSeenPayload | undefined>(BUS_EVENTS.CONVERSATIONS_ALL_SEEN, (payload) => {
         const seenAt = nowInSeconds();
-        setAllConversations((current) => current.map((item) => (item.unread_count > 0 ? { ...item, agent_last_seen_at: seenAt, unread_count: 0 } : item)));
+        setAllConversations((current) =>
+            current.map((item) =>
+                item.unread_count > 0 && isInInboxes(item.inbox_id, payload?.inboxIds)
+                    ? { ...item, agent_last_seen_at: seenAt, unread_count: 0 }
+                    : item,
+            ),
+        );
     });
     // Counts: ActionCableConnector emit 'fetch_conversation_stats' sau các event
     // created/status_changed/assignee.changed/updated/contact.deleted như gốc.

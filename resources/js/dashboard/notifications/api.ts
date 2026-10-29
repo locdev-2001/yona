@@ -16,6 +16,16 @@ export interface FetchNotificationsParams {
     status: string;
     type: string;
     sortOrder: string;
+    // Bộ lọc kênh: bỏ trống = mọi kênh.
+    inboxIds?: number[];
+}
+
+function appendInboxIds(query: URLSearchParams, inboxIds?: number[]): void {
+    inboxIds?.forEach(inboxId => query.append('inbox_ids[]', String(inboxId)));
+}
+
+function inboxIdsBody(inboxIds?: number[]): { inbox_ids?: number[] } {
+    return inboxIds?.length ? { inbox_ids: inboxIds } : {};
 }
 
 function notificationsUrl(accountId: number): string {
@@ -28,10 +38,12 @@ export async function fetchNotifications({
     status,
     type,
     sortOrder,
+    inboxIds,
 }: FetchNotificationsParams): Promise<{ payload: NotificationRecord[]; meta: NotificationsMeta }> {
     const query = new URLSearchParams({ page: String(page), sort_order: sortOrder });
     // `includes` gộp hai bộ lọc hiển thị (snoozed / read) như bản gốc.
     [status, type].filter(Boolean).forEach(value => query.append('includes[]', value));
+    appendInboxIds(query, inboxIds);
 
     const response = await getJson<NotificationsResponse>(`${notificationsUrl(accountId)}?${query.toString()}`);
 
@@ -64,6 +76,11 @@ export function markNotificationsRead(
     });
 }
 
+// Không có kênh nào = mọi kênh của account.
+export function markInboxNotificationsRead(accountId: number, inboxIds?: number[]): Promise<unknown> {
+    return postJson(`${notificationsUrl(accountId)}/read_all`, inboxIdsBody(inboxIds));
+}
+
 export function markNotificationUnread(accountId: number, notificationId: number): Promise<NotificationRecord> {
     return postJson<NotificationRecord>(`${notificationsUrl(accountId)}/${notificationId}/unread`, {});
 }
@@ -76,8 +93,8 @@ export function deleteNotification(accountId: number, notificationId: number): P
     return deleteJson(`${notificationsUrl(accountId)}/${notificationId}`);
 }
 
-export function deleteNotifications(accountId: number, type: 'all' | 'read'): Promise<unknown> {
-    return postJson(`${notificationsUrl(accountId)}/destroy_all`, { type });
+export function deleteNotifications(accountId: number, type: 'all' | 'read', inboxIds?: number[]): Promise<unknown> {
+    return postJson(`${notificationsUrl(accountId)}/destroy_all`, { type, ...inboxIdsBody(inboxIds) });
 }
 
 export function snoozeNotification(

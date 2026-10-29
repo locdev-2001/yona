@@ -85,6 +85,11 @@ return [
     'CUSTOM_ROLES' => 'Vai trò tùy chỉnh',
     'BETA' => 'Beta',
     'REPORTS_OVERVIEW' => 'Tổng quan',
+    'ITEM_MENU' => 'Tùy chọn cho {name}',
+    'CHANNEL_MENU' => [
+        'MARK_NOTIFICATIONS_READ' => 'Đánh dấu đã đọc thông báo của kênh này',
+        'MARKED_NOTIFICATIONS_READ' => 'Đã đánh dấu đã đọc thông báo của kênh {name}',
+    ],
     'REAUTHORIZE' => 'Kết nối hộp thư của bạn đã hết hạn, hãy kết nối lại
  để tiếp tục nhận và gửi tin nhắn',
     'HELP_CENTER' => [
