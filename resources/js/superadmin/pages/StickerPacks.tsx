@@ -1,10 +1,12 @@
 import { Link, router } from '@inertiajs/react';
-import { ArrowLeftIcon, Building2Icon } from '@admin/components/icons';
-import { useMemo, useState } from 'react';
+import { ArrowLeftIcon } from '@admin/components/icons';
+import { useMemo } from 'react';
 
 import { buttonVariants } from '@admin/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@admin/components/ui/tabs';
 import PageHeader from '@admin/views/pages/page-header';
+import AccountLibraryList from '@admin/views/stickers/account-library-list';
+import type { AccountLibraryPage } from '@admin/views/stickers/account-library-list';
 import AccountPicker from '@admin/views/stickers/account-picker';
 import AccountStickerLibrary, { accountStickersUrl } from '@admin/views/stickers/AccountStickerLibrary';
 import StickerLibrary from '@admin/views/stickers/sticker-library';
@@ -15,6 +17,16 @@ import { t } from '../../i18n';
 type AccountRef = { id: number; name: string; overviewUrl: string };
 
 const PLATFORM_URL = '/admin/sticker-packs';
+// Khớp StickerPacksController::ACCOUNTS_TAB.
+const ACCOUNTS_TAB = 'accounts';
+
+const accountLibrariesUrl = (platformUrl: string, { search, page }: { search?: string; page?: number }) => {
+    const query = new URLSearchParams({ tab: ACCOUNTS_TAB });
+    if (search) query.set('q', search);
+    if (page && page > 1) query.set('page', String(page));
+
+    return `${platformUrl}?${query.toString()}`;
+};
 
 const label = (key: string, params?: Record<string, string | number>) => t(`ADMIN_OPERATIONS.STICKERS.${key}`, params);
 
@@ -25,16 +37,19 @@ export default function StickerPacks({
     apiBaseUrl,
     account,
     platformUrl = PLATFORM_URL,
+    accountLibraries = null,
+    accountLibrariesSearch = '',
 }: {
     apiBaseUrl: string;
     account?: AccountRef;
     platformUrl?: string;
+    // Có khi mở tab "Kho của tài khoản" mà chưa chọn tài khoản: danh sách tài khoản có kho riêng.
+    accountLibraries?: AccountLibraryPage | null;
+    accountLibrariesSearch?: string;
 }) {
     const platformApi = useMemo(() => createStickerLibraryApi(apiBaseUrl, 'sticker-packs'), [apiBaseUrl]);
-    // Chưa chọn tài khoản mà bấm tab "Kho của tài khoản" thì hiện ô chọn tài khoản
-    // trong tab đó; ở tab Kho chung ô chọn không có việc gì nên không hiện.
-    const [choosingAccount, setChoosingAccount] = useState(false);
-    const tab = account || choosingAccount ? 'account' : 'platform';
+    const listUrl = (params: { search?: string; page?: number }) => accountLibrariesUrl(platformUrl, params);
+    const tab = account || accountLibraries ? 'account' : 'platform';
     const picker = (
         <AccountPicker
             className="sm:w-80"
@@ -66,12 +81,8 @@ export default function StickerPacks({
                 <Tabs
                     value={tab}
                     onValueChange={value => {
-                        if (value === 'platform') {
-                            if (account) router.visit(platformUrl);
-                            else setChoosingAccount(false);
-                        } else if (!account) {
-                            setChoosingAccount(true);
-                        }
+                        if (value === 'platform') router.visit(platformUrl);
+                        else if (!account) router.visit(listUrl({}));
                     }}
                 >
                     <TabsList variant="line" className="h-11 md:h-9">
@@ -88,13 +99,8 @@ export default function StickerPacks({
 
             {account ? (
                 <AccountStickerLibrary accountId={account.id} apiBaseUrl={apiBaseUrl} platformUrl={platformUrl} />
-            ) : choosingAccount ? (
-                <div className="flex flex-col items-center gap-3 border px-4 py-16 text-center">
-                    <Building2Icon className="text-muted-foreground size-8" aria-hidden="true" />
-                    <p className="font-medium">{label('PICK_ACCOUNT_TITLE')}</p>
-                    <p className="text-muted-foreground max-w-sm text-sm">{label('PICK_ACCOUNT_HINT')}</p>
-                    {picker}
-                </div>
+            ) : accountLibraries ? (
+                <AccountLibraryList libraries={accountLibraries} search={accountLibrariesSearch} listUrl={listUrl} label={label} />
             ) : (
                 <StickerLibrary key={apiBaseUrl} api={platformApi} />
             )}
