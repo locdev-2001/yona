@@ -29,6 +29,15 @@
             "port": 8612
         },
         {
+            "name": "messenger-bridge",
+            "runtimeExecutable": "bash",
+            "runtimeArgs": [
+                "-c",
+                "cd services/messenger-bridge && PATH=$HOME/.local/go/bin:$PATH GOTOOLCHAIN=local go run ."
+            ],
+            "port": 8614
+        },
+        {
             "name": "reverb",
             "runtimeExecutable": "php",
             "runtimeArgs": [

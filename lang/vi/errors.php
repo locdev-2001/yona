@@ -101,6 +101,34 @@ return [
     ],
     // Bảng chọn sticker và tin sticker (App\Services\Channels\Stickers). Lỗi phía
     // kênh dùng lại câu của từng kênh; ở đây chỉ là luật chung của lõi.
+    'messenger_personal' => [
+        'send' => [
+            'circuit_open' => 'Kết nối Messenger đang lỗi liên tục, tạm dừng gửi một lát.',
+            'session_lost' => 'Phiên Messenger đã hết, bạn đăng nhập lại Facebook trong cài đặt hộp thư giúp mình nhé.',
+            'missing_chat' => 'Không xác định được cuộc trò chuyện Messenger của hội thoại này.',
+            'bridge_unreachable' => 'Chưa gọi được dịch vụ Messenger, bạn thử lại sau ít phút.',
+            'secret_mismatch' => 'Dịch vụ Messenger đang sai cấu hình (khoá gửi tin), bạn báo quản trị viên giúp nhé.',
+            'rejected' => 'Messenger từ chối tin này (:detail).',
+            'media_fetch_failed' => 'Không đọc được tệp đính kèm để gửi (:detail).',
+            'bad_request' => 'Messenger không nhận tin này (:detail).',
+            'not_found' => 'Dịch vụ Messenger không tìm thấy phiên của hộp thư này, bạn đăng nhập lại giúp mình nhé.',
+            'session_cap_reached' => 'Máy chủ Messenger đang đầy, bạn thử lại sau nhé.',
+            'unknown' => 'Chưa gửi được tin này ra Messenger (:detail).',
+            'attachment_failed' => 'Không gửi được tệp ":filename": :reason',
+        ],
+        'action' => [
+            'session_lost' => 'Phiên Messenger đã hết, bạn đăng nhập lại Facebook trong cài đặt hộp thư giúp mình nhé.',
+            'bridge_unreachable' => 'Chưa gọi được dịch vụ Messenger, bạn thử lại sau ít phút.',
+            'secret_mismatch' => 'Dịch vụ Messenger đang sai cấu hình (khoá gửi tin), bạn báo quản trị viên giúp nhé.',
+            'rejected' => 'Messenger từ chối thao tác này (:detail).',
+            'media_fetch_failed' => 'Không đọc được tệp từ dịch vụ Messenger (:detail).',
+            'bad_request' => 'Messenger không còn nhận ra tin này (:detail).',
+            'not_found' => 'Dịch vụ Messenger không tìm thấy phiên của hộp thư này.',
+            'session_cap_reached' => 'Máy chủ Messenger đang đầy, bạn thử lại sau nhé.',
+            'missing_source_id' => 'Tin này chưa sang tới Messenger nên chưa đổi được ở đó.',
+            'unknown' => 'Thao tác này chưa sang được Messenger (:detail).',
+        ],
+    ],
     'stickers' => [
         'capability_not_supported' => 'Kênh này chưa gửi được sticker.',
         'not_found' => 'Không tìm thấy sticker này, bạn chọn sticker khác giúp mình nhé.',

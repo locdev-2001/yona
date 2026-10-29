@@ -148,32 +148,32 @@ class ZaloHealthMonitor
         return is_string($raw) ? Carbon::parse($raw) : null;
     }
 
-    private function threshold(): int
+    protected function threshold(): int
     {
         return (int) config('zalo.circuit_breaker.threshold', 5);
     }
 
-    private function windowSeconds(): int
+    protected function windowSeconds(): int
     {
         return (int) config('zalo.circuit_breaker.window_seconds', 3600);
     }
 
-    private function halfOpenSeconds(): int
+    protected function halfOpenSeconds(): int
     {
         return (int) config('zalo.circuit_breaker.half_open_seconds', 300);
     }
 
-    private function key(int $connectionId): string
+    protected function key(int $connectionId): string
     {
         return "zalo_circuit:{$connectionId}:error_count";
     }
 
-    private function openedAtKey(int $connectionId): string
+    protected function openedAtKey(int $connectionId): string
     {
         return "zalo_circuit:{$connectionId}:opened_at";
     }
 
-    private function bridgeFailureKey(int $connectionId): string
+    protected function bridgeFailureKey(int $connectionId): string
     {
         return "zalo_circuit:{$connectionId}:bridge_failures";
     }

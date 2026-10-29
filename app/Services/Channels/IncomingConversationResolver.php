@@ -39,11 +39,10 @@ class IncomingConversationResolver
         }
     }
 
+    /** Mỗi người là một hội thoại liền mạch như app chat: tin mới vào hội thoại gần nhất, đã xong thì tự mở lại. */
     private static function findReusableConversation(ContactInbox $contactInbox): ?Conversation
     {
-        return $contactInbox->inbox->lock_to_single_conversation
-            ? $contactInbox->conversations()->latest('id')->first()
-            : $contactInbox->conversations()->where('status', '!=', Conversation::STATUS_RESOLVED)->latest('id')->first();
+        return $contactInbox->conversations()->latest('id')->first();
     }
 
     /** @param array<string, mixed> $additionalAttributes */

@@ -17,6 +17,7 @@ use App\Models\Channel\Email;
 use App\Models\Channel\FacebookPage;
 use App\Models\Channel\Instagram;
 use App\Models\Channel\Line;
+use App\Models\Channel\MessengerPersonal;
 use App\Models\Channel\Sms;
 use App\Models\Channel\Telegram;
 use App\Models\Channel\Tiktok;
@@ -148,6 +149,7 @@ class AppServiceProvider extends ServiceProvider
             'Channel::TwitterProfile' => TwitterProfile::class,
             'Channel::Zalo' => Zalo::class,
             'Channel::Yona' => Yona::class,
+            'Channel::MessengerPersonal' => MessengerPersonal::class,
             'User' => User::class,
             'Contact' => Contact::class,
             'Inbox' => Inbox::class,

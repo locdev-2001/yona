@@ -107,7 +107,6 @@ class FacebookPage extends Model implements DeclaresCapabilities, DeclaresConnec
             Capability::ConversationOutboundResume,
             Capability::SessionOauth,
             Capability::SessionReauth,
-            Capability::SettingsSingleConversation,
         )->withTextFormat(TextFormat::Plain);
     }
 }

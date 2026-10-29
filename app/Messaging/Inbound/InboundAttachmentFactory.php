@@ -53,6 +53,7 @@ final class InboundAttachmentFactory
             filename: $spec->filename,
             headers: $spec->headers,
             basicAuth: $spec->basicAuth,
+            trustedService: $spec->trustedService,
         );
 
         if ($attributes === null) {

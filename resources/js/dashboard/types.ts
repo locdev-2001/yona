@@ -34,6 +34,8 @@ export interface DashboardPageProps extends SharedPageProps {
         name: string;
         channel_type: string;
         capabilities?: readonly string[];
+        // Chữ của mục nhắc cả nhóm khi kênh có chữ riêng (Messenger: "mọi người"); null là `All`.
+        everyone_mention_label?: string | null;
         // Kênh mất phiên xác thực (Zalo mất phiên, Facebook/Instagram bị Meta thu hồi
         // quyền, …) — điều khiển icon cảnh báo sidebar + banner khung chat.
         reauthorization_required?: boolean;

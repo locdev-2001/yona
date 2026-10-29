@@ -16,6 +16,8 @@
 #   DEPLOY_FRESH_DB_CONFIRM=         Bắt buộc khi FRESH_DB=1: đúng tên DB_DATABASE.
 #   DEPLOY_SEED_DEMO=0               Chạy DatabaseSeeder (workspace demo Acme Inc).
 #   DEPLOY_ZALO_BRIDGE=auto          1, 0 hoặc auto. Auto = bridge .env tồn tại.
+#   DEPLOY_MESSENGER_BRIDGE=auto     1, 0 hoặc auto. Auto = services/messenger-bridge/.env tồn tại.
+#   DEPLOY_GO_BIN=go                 Go >= 1.26 để build sidecar Messenger (cần gcc vì SQLCipher dùng CGO).
 #   DEPLOY_MANAGE_SERVICES=1         Tự dựng supervisor (queue+reverb), cron
 #                                      scheduler và pm2 startup. 0 = tự lo tay.
 #   DEPLOY_RUNTIME_USER=www          User chạy queue worker/Reverb/scheduler.
@@ -52,6 +54,7 @@ readonly SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 readonly APP_DIR="${DEPLOY_APP_DIR:-$SCRIPT_DIR}"
 readonly ENV_FILE="$APP_DIR/.env"
 readonly BRIDGE_DIR="$APP_DIR/services/zalo-bridge"
+readonly MESSENGER_BRIDGE_DIR="$APP_DIR/services/messenger-bridge"
 readonly STICKER_RENDERER_DIR="$APP_DIR/services/sticker-renderer"
 readonly PDF_RENDERER_DIR="$APP_DIR/services/pdf-renderer"
 readonly LOCK_FILE="$APP_DIR/storage/framework/cache/yona-deploy.lock"
@@ -63,6 +66,7 @@ readonly DEPLOY_FRESH_DB="${DEPLOY_FRESH_DB:-0}"
 readonly DEPLOY_FRESH_DB_CONFIRM="${DEPLOY_FRESH_DB_CONFIRM:-}"
 readonly DEPLOY_SEED_DEMO="${DEPLOY_SEED_DEMO:-0}"
 readonly DEPLOY_ZALO_BRIDGE="${DEPLOY_ZALO_BRIDGE:-auto}"
+readonly DEPLOY_MESSENGER_BRIDGE="${DEPLOY_MESSENGER_BRIDGE:-auto}"
 readonly DEPLOY_MANAGE_SERVICES="${DEPLOY_MANAGE_SERVICES:-1}"
 readonly DEPLOY_RUNTIME_USER="${DEPLOY_RUNTIME_USER:-www}"
 readonly DEPLOY_SUPERVISOR_CONF_DIR="${DEPLOY_SUPERVISOR_CONF_DIR:-/etc/supervisor/conf.d}"
@@ -79,10 +83,12 @@ readonly PHP_BIN="${DEPLOY_PHP_BIN:-php}"
 readonly NODE_BIN="${DEPLOY_NODE_BIN:-node}"
 readonly COMPOSER_BIN="${DEPLOY_COMPOSER_BIN:-composer}"
 readonly PNPM_BIN="${DEPLOY_PNPM_BIN:-pnpm}"
+readonly GO_BIN="${DEPLOY_GO_BIN:-go}"
 
 readonly CRON_FILE='/etc/cron.d/yona-scheduler'
 readonly SUPERVISOR_QUEUE_PROGRAM='yona-horizon'
 readonly SUPERVISOR_REVERB_PROGRAM='yona-reverb'
+readonly SUPERVISOR_MESSENGER_BRIDGE_PROGRAM='yona-messenger-bridge'
 # Program không còn dùng: yona-queue là worker `queue:work` trước khi chuyển
 # sang Horizon — để lại nghĩa là hai nguồn cùng lấy job từ một hàng đợi.
 readonly SUPERVISOR_LEGACY_PROGRAMS=('yona-queue' 'yona-ssr')
@@ -90,6 +96,8 @@ readonly SUPERVISOR_LEGACY_PROGRAMS=('yona-queue' 'yona-ssr')
 readonly MINIMUM_PHP_VERSION='8.3.0'
 readonly MINIMUM_NODE_MAJOR=22
 readonly DEFAULT_BRIDGE_PORT=8612
+readonly DEFAULT_MESSENGER_BRIDGE_PORT=8614
+readonly MESSENGER_BRIDGE_BINARY='bin/messenger-bridge'
 
 readonly VITE_MANIFEST='public/build/manifest.json'
 readonly SDK_BUNDLE='public/packs/js/sdk.js'
@@ -206,12 +214,53 @@ bridge_env_value() {
     env_file_value "$BRIDGE_DIR/.env" "$1"
 }
 
+messenger_bridge_env_value() {
+    env_file_value "$MESSENGER_BRIDGE_DIR/.env" "$1"
+}
+
 zalo_bridge_enabled() {
     case "${DEPLOY_ZALO_BRIDGE,,}" in
         auto) [[ -f "$BRIDGE_DIR/.env" ]] ;;
         1|true|yes|on) return 0 ;;
         *) return 1 ;;
     esac
+}
+
+messenger_bridge_enabled() {
+    case "${DEPLOY_MESSENGER_BRIDGE,,}" in
+        auto) [[ -f "$MESSENGER_BRIDGE_DIR/.env" ]] ;;
+        1|true|yes|on) return 0 ;;
+        *) return 1 ;;
+    esac
+}
+
+validate_messenger_environment() {
+    local pair main_key bridge_key
+
+    [[ -f "$MESSENGER_BRIDGE_DIR/.env" ]] \
+        || fail "Messenger bridge đã bật nhưng thiếu $MESSENGER_BRIDGE_DIR/.env."
+
+    for pair in \
+        MESSENGER_BRIDGE_WEBHOOK_SECRET:LARAVEL_WEBHOOK_SECRET \
+        MESSENGER_BRIDGE_SEND_SECRET:BRIDGE_SEND_SECRET \
+        MESSENGER_BRIDGE_UI_SECRET:BRIDGE_UI_SECRET; do
+        main_key="${pair%%:*}"
+        bridge_key="${pair##*:}"
+        [[ -n "$(env_value "$main_key")" ]] || fail "Thiếu $main_key trong Laravel .env."
+        [[ -n "$(messenger_bridge_env_value "$bridge_key")" ]] \
+            || fail "Thiếu $bridge_key trong services/messenger-bridge/.env."
+        [[ "$(env_value "$main_key")" == "$(messenger_bridge_env_value "$bridge_key")" ]] \
+            || fail "$main_key (Laravel) không khớp $bridge_key (messenger-bridge)."
+    done
+
+    [[ "$(messenger_bridge_env_value BRIDGE_HTTP_HOST)" == '127.0.0.1' ]] \
+        || fail 'BRIDGE_HTTP_HOST của messenger-bridge phải là 127.0.0.1 trên production.'
+    [[ "$(messenger_bridge_env_value LARAVEL_BASE_URL)" == https://* ]] \
+        || fail 'LARAVEL_BASE_URL của messenger-bridge phải dùng HTTPS.'
+    [[ "$(messenger_bridge_env_value BRIDGE_ENV)" == 'production' ]] \
+        || fail 'BRIDGE_ENV của messenger-bridge phải là production.'
+    [[ -n "$(messenger_bridge_env_value BRIDGE_SESSION_KEY)" && -n "$(messenger_bridge_env_value BRIDGE_DEVICE_KEY)" ]] \
+        || fail 'Thiếu BRIDGE_SESSION_KEY hoặc BRIDGE_DEVICE_KEY trong services/messenger-bridge/.env: phiên và khoá thiết bị Messenger phải mã hoá trên đĩa.'
 }
 
 validate_zalo_environment() {
@@ -338,6 +387,14 @@ validate_environment() {
     [[ "$reverb_scheme" == 'https' ]] || fail 'REVERB_SCHEME phải là https trên production.'
 
     validate_database_reset
+
+    case "${DEPLOY_MESSENGER_BRIDGE,,}" in
+        auto|1|0|true|false|yes|no|on|off) ;;
+        *) fail 'DEPLOY_MESSENGER_BRIDGE chỉ nhận auto, 1 hoặc 0.' ;;
+    esac
+    if messenger_bridge_enabled; then
+        validate_messenger_environment
+    fi
 
     if zalo_bridge_enabled; then
         validate_zalo_environment
@@ -732,6 +789,50 @@ deploy_zalo_bridge() {
     check_zalo_sessions "$bridge_port"
 }
 
+# Sidecar Go giữ phiên Messenger cá nhân (AGPL-3.0, mã công khai riêng thư mục). Build ra
+# binary mới rồi mới thay, để bản đang chạy không bị đụng khi build lỗi.
+deploy_messenger_bridge() {
+    local bridge_port program_command
+
+    messenger_bridge_enabled || {
+        log 'Bỏ qua Messenger bridge theo cấu hình deploy.'
+        return 0
+    }
+
+    require_command "$GO_BIN"
+    log 'Build Messenger bridge'
+    run env -C "$MESSENGER_BRIDGE_DIR" GOTOOLCHAIN=local CGO_ENABLED=1 \
+        "$GO_BIN" build -trimpath -ldflags "-s -w -X main.version=$(git -C "$APP_DIR" rev-parse --short HEAD)" \
+        -o "$MESSENGER_BRIDGE_BINARY.next" .
+    run mv -f "$MESSENGER_BRIDGE_DIR/$MESSENGER_BRIDGE_BINARY.next" "$MESSENGER_BRIDGE_DIR/$MESSENGER_BRIDGE_BINARY"
+    run mkdir -p "$APP_DIR/storage/logs/messenger-bridge"
+
+    if manage_services_enabled; then
+        program_command="$MESSENGER_BRIDGE_DIR/$MESSENGER_BRIDGE_BINARY"
+        run_privileged mkdir -p "$DEPLOY_SUPERVISOR_CONF_DIR"
+        if install_system_file \
+            "$DEPLOY_SUPERVISOR_CONF_DIR/$SUPERVISOR_MESSENGER_BRIDGE_PROGRAM.conf" 0644 \
+            "$(supervisor_program_config "$SUPERVISOR_MESSENGER_BRIDGE_PROGRAM" "$program_command" 30 1 "$MESSENGER_BRIDGE_DIR" "messenger-bridge/bridge.log")"; then
+            run_supervisorctl reread
+            run_supervisorctl update
+        fi
+        log 'Khởi động lại Messenger bridge'
+        run_supervisorctl restart "$SUPERVISOR_MESSENGER_BRIDGE_PROGRAM" \
+            || run_supervisorctl start "$SUPERVISOR_MESSENGER_BRIDGE_PROGRAM"
+    else
+        warn 'DEPLOY_MANAGE_SERVICES=0: tự khởi động lại Messenger bridge bằng tay.'
+    fi
+
+    bridge_port="$(messenger_bridge_env_value BRIDGE_HTTP_PORT)"
+    [[ -n "$bridge_port" ]] || bridge_port="$DEFAULT_MESSENGER_BRIDGE_PORT"
+
+    log "HTTP readiness Messenger bridge trên 127.0.0.1:$bridge_port"
+    run curl --fail --silent --show-error --max-time 10 \
+        --retry 15 --retry-delay 2 --retry-connrefused \
+        --output /dev/null \
+        "http://127.0.0.1:$bridge_port/"
+}
+
 check_zalo_sessions() {
     local bridge_port="$1"
     local connection_id found=0 health session_file ui_secret unhealthy=0
@@ -839,6 +940,8 @@ supervisor_program_config() {
     local command_line="$2"
     local stop_wait="$3"
     local numprocs="$4"
+    local directory="${5:-$APP_DIR}"
+    local log_file="${6:-$program.log}"
     local process_name=''
     local runtime_home
 
@@ -852,7 +955,7 @@ supervisor_program_config() {
     cat <<CONFIG
 ; File này do deploy.sh sinh ra. Sửa tay sẽ bị ghi đè ở lần deploy sau.
 [program:$program]
-directory=$APP_DIR
+directory=$directory
 command=$command_line
 ${process_name}numprocs=$numprocs
 user=$DEPLOY_RUNTIME_USER
@@ -864,7 +967,7 @@ stopwaitsecs=$stop_wait
 stopasgroup=true
 killasgroup=true
 redirect_stderr=true
-stdout_logfile=$APP_DIR/storage/logs/$program.log
+stdout_logfile=$APP_DIR/storage/logs/$log_file
 stdout_logfile_maxbytes=20MB
 stdout_logfile_backups=5
 umask=002
@@ -1308,6 +1411,7 @@ main() {
     step 'laravel cache'  prepare_laravel
     step 'permissions'    prepare_runtime_permissions
     step 'zalo bridge'    deploy_zalo_bridge
+    step 'messenger bridge' deploy_messenger_bridge
     step 'sticker renderer' deploy_sticker_renderer
     step 'pdf renderer'   deploy_pdf_renderer
     step 'services'       ensure_system_services

@@ -7,6 +7,7 @@ use App\Jobs\Conversations\ReopenSnoozedConversationsJob;
 use App\Jobs\Conversations\SweepOutboundOrderJob;
 use App\Jobs\Inboxes\FetchImapEmailInboxesJob;
 use App\Jobs\Inboxes\RenewMailboxPushSubscriptionsJob;
+use App\Jobs\MessengerPersonal\HealthSweepJob as MessengerPersonalHealthSweepJob;
 use App\Jobs\Notification\RemoveOldNotificationJob;
 use App\Jobs\Notification\ReopenSnoozedNotificationsJob;
 use App\Jobs\Search\ProcessSearchOutboxJob;
@@ -37,6 +38,8 @@ Schedule::job(new RenewMailboxPushSubscriptionsJob)->cron('20 3 * * *');
 // G1 Zalo: nhịp tim Laravel ↔ zalo-bridge. Không có nó, bridge chết là DB vẫn báo
 // "connected" và chủ shop không thấy gì (zalo-deep-audit 6.5).
 Schedule::job(new ZaloHealthSweepJob)->cron('*/1 * * * *')->withoutOverlapping();
+// Nhịp tim Laravel ↔ messenger-bridge: sidecar chết thì hộp thư Messenger cá nhân phải báo mất phiên.
+Schedule::job(new MessengerPersonalHealthSweepJob)->everyMinute()->withoutOverlapping();
 // Tin gửi ra kênh xếp hàng theo hội thoại (OutboundOrder): job đầu hàng mất thì
 // lượt quét này nhả hàng để tin sau không kẹt.
 Schedule::job(new SweepOutboundOrderJob)->everyMinute()->withoutOverlapping();

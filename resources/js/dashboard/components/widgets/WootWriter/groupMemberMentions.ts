@@ -24,11 +24,19 @@ export function isEveryoneMention(member: GroupMember): boolean {
     return member.external_id === EVERYONE_MENTION_ID;
 }
 
-/** Mục @All đứng đầu bảng khi từ khoá khớp `All` hoặc một tên gọi bản địa (vd. "Tất cả"). */
-export function withEveryoneMention(members: GroupMember[], searchKey: string, aliases: string[]): GroupMember[] {
-    const matchesSearch = searchByRelevance([EVERYONE_MENTION_NAME, ...aliases], searchKey, alias => alias).length > 0;
+/**
+ * Mục nhắc cả nhóm đứng đầu bảng khi từ khoá khớp nhãn của kênh (mặc định `All`, Messenger
+ * `mọi người`) hoặc một tên gọi bản địa (vd. "Tất cả").
+ */
+export function withEveryoneMention(
+    members: GroupMember[],
+    searchKey: string,
+    aliases: string[],
+    label: string = EVERYONE_MENTION_NAME,
+): GroupMember[] {
+    const matchesSearch = searchByRelevance([label, EVERYONE_MENTION_NAME, ...aliases], searchKey, alias => alias).length > 0;
 
-    return matchesSearch ? [{ external_id: EVERYONE_MENTION_ID, name: EVERYONE_MENTION_NAME }, ...members] : members;
+    return matchesSearch ? [{ external_id: EVERYONE_MENTION_ID, name: label }, ...members] : members;
 }
 
 /** Vị trí theo chỉ số chuỗi JavaScript (UTF-16) — máy chủ neo lại theo nội dung cuối. */

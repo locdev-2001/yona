@@ -93,6 +93,7 @@ class SetCurrentAccount
                     'name' => $inbox->name,
                     'channel_type' => $inbox->channel_type,
                     'capabilities' => $inbox->capabilities()->values(),
+                    'everyone_mention_label' => $inbox->everyoneMentionLabel(),
                     'avatar_url' => $inbox->avatarUrl(),
                     'platform' => $inbox->platform()->toArray(),
                     // Icon cảnh báo mất phiên trên sidebar Kênh + thẻ hội thoại

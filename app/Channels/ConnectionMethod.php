@@ -18,6 +18,9 @@ enum ConnectionMethod: string
     case Token = 'token';
     // Điền form thông số (widget website, máy chủ thư, nhà cung cấp tự quản).
     case Form = 'form';
+    // Đăng nhập nhiều bước bằng tài khoản của nền tảng (mật khẩu, 2FA, duyệt thiết bị)
+    // qua dịch vụ riêng; Yona không giữ mật khẩu (Messenger cá nhân).
+    case Credentials = 'credentials';
 
     /** Năng lực phiên mà kênh phải khai để khớp với cách kết nối này. */
     public function sessionCapability(): ?Capability
@@ -26,6 +29,7 @@ enum ConnectionMethod: string
             self::Qr => Capability::SessionQr,
             self::OauthRedirect, self::OauthPopup => Capability::SessionOauth,
             self::Token => Capability::SessionToken,
+            self::Credentials => Capability::SessionReauth,
             self::Form => null,
         };
     }

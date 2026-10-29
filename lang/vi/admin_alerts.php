@@ -16,6 +16,7 @@ return [
         'queue_backlog' => ['TITLE' => 'Job đang chờ', 'DESCRIPTION' => 'Tổng job chưa được xử lý trên mọi hàng đợi.'],
         'queue_wait' => ['TITLE' => 'Thời gian chờ hàng đợi', 'DESCRIPTION' => 'Job chờ lâu nhất trên mọi hàng đợi.'],
         'zalo_bridge_down' => ['TITLE' => 'zalo-bridge không phản hồi', 'DESCRIPTION' => 'Bridge không trả lời thì tin Zalo không gửi, không nhận được.'],
+        'messenger_bridge_down' => ['TITLE' => 'messenger-bridge không phản hồi', 'DESCRIPTION' => 'Sidecar không trả lời thì tin Messenger cá nhân không gửi, không nhận được.'],
     ],
     'STATUS' => [
         'ok' => 'Bình thường',

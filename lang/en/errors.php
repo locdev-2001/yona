@@ -103,6 +103,34 @@ return [
     ],
     // Bảng chọn sticker và tin sticker (App\Services\Channels\Stickers). Lỗi phía
     // kênh dùng lại câu của từng kênh; ở đây chỉ là luật chung của lõi.
+    'messenger_personal' => [
+        'send' => [
+            'circuit_open' => 'The Messenger connection keeps failing, sending is paused for a moment.',
+            'session_lost' => 'The Messenger session has ended, please log in to Facebook again in the inbox settings.',
+            'missing_chat' => 'Could not find the Messenger chat of this conversation.',
+            'bridge_unreachable' => 'Could not reach the Messenger service, please try again in a moment.',
+            'secret_mismatch' => 'The Messenger service is misconfigured (send key), please tell an administrator.',
+            'rejected' => 'Messenger rejected this message (:detail).',
+            'media_fetch_failed' => 'Could not read the attachment to send (:detail).',
+            'bad_request' => 'Messenger did not accept this message (:detail).',
+            'not_found' => 'The Messenger service has no session for this inbox, please log in again.',
+            'session_cap_reached' => 'The Messenger server is full, please try again later.',
+            'unknown' => 'Could not send this message to Messenger (:detail).',
+            'attachment_failed' => 'Could not send the file ":filename": :reason',
+        ],
+        'action' => [
+            'session_lost' => 'The Messenger session has ended, please log in to Facebook again in the inbox settings.',
+            'bridge_unreachable' => 'Could not reach the Messenger service, please try again in a moment.',
+            'secret_mismatch' => 'The Messenger service is misconfigured (send key), please tell an administrator.',
+            'rejected' => 'Messenger rejected this action (:detail).',
+            'media_fetch_failed' => 'Could not read the file from the Messenger service (:detail).',
+            'bad_request' => 'Messenger no longer recognises this message (:detail).',
+            'not_found' => 'The Messenger service has no session for this inbox.',
+            'session_cap_reached' => 'The Messenger server is full, please try again later.',
+            'missing_source_id' => 'This message has not reached Messenger yet, so it cannot be changed there.',
+            'unknown' => 'This action did not reach Messenger (:detail).',
+        ],
+    ],
     'stickers' => [
         'capability_not_supported' => 'This channel cannot send stickers.',
         'not_found' => 'This sticker could not be found, please pick another one.',

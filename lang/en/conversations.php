@@ -83,5 +83,15 @@ return [
         'call' => '[Call]',
         'link' => '[Link]',
         'friend_request' => '[Friend request]',
+        'view_once' => '[View-once photo/video, open the app on your phone to see it]',
+        'unsupported' => '[Message cannot be shown here, open the app to see it]',
+    ],
+
+    // Nhóm Messenger chưa đặt tên: ghép tên thành viên như app Messenger hiện.
+    'unnamed_group' => [
+        'one' => ':first',
+        'two' => ':first and :second',
+        'three' => ':first, :second and :third',
+        'others' => '{1} :names and :count other|[2,*] :names and :count others',
     ],
 ];

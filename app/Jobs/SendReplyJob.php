@@ -10,6 +10,7 @@ use App\Services\Facebook\SendOnFacebookService;
 use App\Services\Instagram\SendOnInstagramService;
 use App\Services\Line\SendOnLineService;
 use App\Services\Messages\SendEmailNotificationService;
+use App\Services\MessengerPersonal\SendOnMessengerPersonalService;
 use App\Services\Sms\SendOnSmsService;
 use App\Services\Telegram\SendOnTelegramService;
 use App\Services\Tiktok\SendOnTiktokService;
@@ -41,6 +42,7 @@ class SendReplyJob extends ApplicationJob
         'Channel::Tiktok' => SendOnTiktokService::class,
         'Channel::Zalo' => SendOnZaloService::class,
         'Channel::Yona' => SendOnYonaService::class,
+        'Channel::MessengerPersonal' => SendOnMessengerPersonalService::class,
     ];
 
     /** Tin chữ: người gửi đang nhìn bong bóng chờ tick, không xếp sau thông báo/phân công. */

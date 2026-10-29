@@ -26,6 +26,10 @@ const messages: Record<string, unknown> = {
             "zalo_bridge_down": {
                 "TITLE": "zalo-bridge unreachable",
                 "DESCRIPTION": "Without the bridge Zalo messages are neither sent nor received."
+            },
+            "messenger_bridge_down": {
+                "TITLE": "messenger-bridge unreachable",
+                "DESCRIPTION": "Without the sidecar personal Messenger messages are neither sent nor received."
             }
         },
         "STATUS": {
@@ -967,6 +971,11 @@ const messages: Record<string, unknown> = {
                 "awaiting_login": "Waiting for QR scan",
                 "bridge_unreachable": "Zalo bridge unreachable",
                 "circuit_open": "Repeated Zalo errors, paused",
+                "messenger_session_lost": "Personal Messenger session lost",
+                "messenger_disconnected": "Personal Messenger logged out",
+                "messenger_awaiting_login": "Waiting for Facebook login",
+                "messenger_bridge_unreachable": "Personal Messenger service unreachable",
+                "messenger_circuit_open": "Repeated personal Messenger errors, paused",
                 "reauthorization_required": "Sign-in required",
                 "authorization_errors": "Authentication errors (IMAP/SMTP, token)"
             },
@@ -5255,7 +5264,15 @@ const messages: Record<string, unknown> = {
             "reminder": "[Reminder]",
             "call": "[Call]",
             "link": "[Link]",
-            "friend_request": "[Friend request]"
+            "friend_request": "[Friend request]",
+            "view_once": "[View-once photo/video, open the app on your phone to see it]",
+            "unsupported": "[Message cannot be shown here, open the app to see it]"
+        },
+        "unnamed_group": {
+            "one": ":first",
+            "two": ":first and :second",
+            "three": ":first, :second and :third",
+            "others": "{1} :names and :count other|[2,*] :names and :count others"
         }
     },
     "COPILOT": {
@@ -5751,6 +5768,34 @@ const messages: Record<string, unknown> = {
                 "missing_source_id": "This message has not reached Zalo yet, so it cannot be changed there.",
                 "emoji_not_supported": "Zalo does not have this reaction.",
                 "unknown": "This action did not go through to Zalo (:detail)."
+            }
+        },
+        "messenger_personal": {
+            "send": {
+                "circuit_open": "The Messenger connection keeps failing, sending is paused for a moment.",
+                "session_lost": "The Messenger session has ended, please log in to Facebook again in the inbox settings.",
+                "missing_chat": "Could not find the Messenger chat of this conversation.",
+                "bridge_unreachable": "Could not reach the Messenger service, please try again in a moment.",
+                "secret_mismatch": "The Messenger service is misconfigured (send key), please tell an administrator.",
+                "rejected": "Messenger rejected this message (:detail).",
+                "media_fetch_failed": "Could not read the attachment to send (:detail).",
+                "bad_request": "Messenger did not accept this message (:detail).",
+                "not_found": "The Messenger service has no session for this inbox, please log in again.",
+                "session_cap_reached": "The Messenger server is full, please try again later.",
+                "unknown": "Could not send this message to Messenger (:detail).",
+                "attachment_failed": "Could not send the file \":filename\": :reason"
+            },
+            "action": {
+                "session_lost": "The Messenger session has ended, please log in to Facebook again in the inbox settings.",
+                "bridge_unreachable": "Could not reach the Messenger service, please try again in a moment.",
+                "secret_mismatch": "The Messenger service is misconfigured (send key), please tell an administrator.",
+                "rejected": "Messenger rejected this action (:detail).",
+                "media_fetch_failed": "Could not read the file from the Messenger service (:detail).",
+                "bad_request": "Messenger no longer recognises this message (:detail).",
+                "not_found": "The Messenger service has no session for this inbox.",
+                "session_cap_reached": "The Messenger server is full, please try again later.",
+                "missing_source_id": "This message has not reached Messenger yet, so it cannot be changed there.",
+                "unknown": "This action did not reach Messenger (:detail)."
             }
         },
         "stickers": {
@@ -7795,8 +7840,7 @@ const messages: Record<string, unknown> = {
                 "DESC": "Connect a personal Zalo account. Sign in once with a QR code and every conversation lands in this inbox.",
                 "CHANNEL_NAME": {
                     "LABEL": "Inbox Name",
-                    "PLACEHOLDER": "Enter your inbox name (eg: Zalo store)",
-                    "ERROR": "Please enter a valid inbox name"
+                    "PLACEHOLDER": "Leave blank or enter a name (e.g. Shop Zalo)"
                 },
                 "SUBMIT_BUTTON": "Create Zalo Channel",
                 "API": {
@@ -7889,6 +7933,10 @@ const messages: Record<string, unknown> = {
                     "ZALO": {
                         "TITLE": "Zalo",
                         "DESCRIPTION": "Connect a personal Zalo account by QR code"
+                    },
+                    "MESSENGER_PERSONAL": {
+                        "TITLE": "Personal Messenger",
+                        "DESCRIPTION": "Connect your personal Facebook account to receive and reply to Messenger chats"
                     }
                 }
             },
@@ -7949,6 +7997,91 @@ const messages: Record<string, unknown> = {
             "WHATSAPP_QR_INSTRUCTION": "Scan the QR code above to quickly test your WhatsApp inbox",
             "MESSENGER_QR_INSTRUCTION": "Scan the QR code above to quickly test your Facebook Messenger inbox",
             "TELEGRAM_QR_INSTRUCTION": "Scan the QR code above to quickly test your Telegram inbox"
+        },
+        "ACCOUNT_CHANNEL": {
+            "NAME_HINT": "Leave blank to use the account name. The inbox follows the account if it is renamed."
+        },
+        "MESSENGER_PERSONAL": {
+            "EVERYONE_MENTION_LABEL": "everyone",
+            "NAME_STEP": {
+                "TITLE": "Personal Messenger account",
+                "DESC": "Connect your Facebook account. Log in once and your 1-1 and group Messenger chats arrive in this inbox.",
+                "CHANNEL_NAME": {
+                    "LABEL": "Inbox name",
+                    "PLACEHOLDER": "Leave blank or enter a name (e.g. My Messenger)"
+                },
+                "SUBMIT_BUTTON": "Create Messenger channel",
+                "API": {
+                    "ERROR_MESSAGE": "Could not create the Messenger channel, please try again"
+                }
+            },
+            "CONNECT": {
+                "TITLE": "Log in to Facebook",
+                "DESC": "Log in to your Facebook account once. Yona keeps the session on the server so messages arrive even when Messenger is closed."
+            },
+            "RISK": {
+                "TITLE": "Before you log in",
+                "UNOFFICIAL": "This connection uses an unofficial login session; Meta may ask you to verify or temporarily lock the account.",
+                "PASSWORD": "Your password is used once to log in. Yona does not store it.",
+                "TWO_FACTOR": "We recommend turning on two-factor authentication for your Facebook account.",
+                "ACCEPT": "I understand, continue"
+            },
+            "FIELDS": {
+                "IDENTIFIER": "Email or phone number",
+                "PASSWORD": "Password",
+                "CODE": "Verification code",
+                "CODE_PLACEHOLDER": "6-digit code",
+                "REQUIRED": "Please fill in this field"
+            },
+            "STEP": {
+                "STARTING": "Starting the login session…",
+                "SUBMITTING": "Waiting for Meta…",
+                "LOGIN": "Log in",
+                "CODE_TITLE": "Enter your two-factor code",
+                "CODE_DESC": "Enter the 6-digit code from your authenticator app or the message Facebook sent you.",
+                "CODE_SUBMIT": "Confirm",
+                "APPROVE_TITLE": "Approve the login on another device",
+                "APPROVE_DESC": "Open Facebook/Messenger on your phone and tap Allow, then press Continue.",
+                "CONTINUE": "Continue",
+                "OTHER_TITLE": "Meta needs more information",
+                "RESTART": "Start over",
+                "CANCEL": "Cancel"
+            },
+            "SUCCESS": {
+                "TITLE": "Connected",
+                "DESC": "Messenger chats of this account will arrive in the inbox.",
+                "CONTINUE": "Continue"
+            },
+            "SESSION": {
+                "CONNECTED": "Connected",
+                "CONNECTED_SINCE": "Connected since {time}",
+                "ACCOUNT_UNKNOWN": "No Facebook account linked yet",
+                "LOST": "The Messenger session of this inbox has ended. You cannot send or receive messages until you log in again.",
+                "REASON": "Reason: {reason}",
+                "PENDING": "This inbox has not logged in to Facebook yet.",
+                "DISCONNECTED": "This inbox is disconnected from Messenger. Log in to link an account again.",
+                "LOGIN": "Log in",
+                "RELOGIN": "Log in again",
+                "DISCONNECT": "Disconnect",
+                "DISCONNECT_CONFIRM": "Disconnect this Facebook account? The inbox stops receiving Messenger chats until you log in again.",
+                "DISCONNECT_DONE": "Facebook account disconnected.",
+                "DISCONNECT_BRIDGE_DOWN": "Disconnected in Yona, but the Messenger service did not respond — the Facebook session may stay alive for a few minutes.",
+                "SOURCE_LINK": "Messenger connector source code"
+            },
+            "ERRORS": {
+                "BRIDGE_UNREACHABLE": "The Messenger connection is temporarily unavailable. Please try again in a few minutes and contact support if it persists.",
+                "BRIDGE_REJECTED": "The Messenger connection could not process the request. Please try again and contact support if it persists.",
+                "LOGIN_MISSING": "This login attempt is no longer active. Please start over.",
+                "ACCOUNT_MISMATCH": "You logged in to a different Facebook account. This inbox is linked to {name}.",
+                "ACCOUNT_IN_USE": "That Facebook account is already linked to the inbox \"{inbox}\". One account can serve only one inbox.",
+                "INVALID_CREDENTIALS": "The email/phone number or password is incorrect.",
+                "TWO_FACTOR_FAILED": "The verification code is incorrect or has expired.",
+                "CHECKPOINT": "Meta wants to verify your account. Finish the verification in the Messenger app, then try again.",
+                "LOGIN_EXPIRED": "The login attempt has expired. Please start over.",
+                "RATE_LIMITED": "Meta is temporarily blocking logins after too many attempts. Please wait a few minutes and try again.",
+                "SESSION_CAP_REACHED": "The Messenger server is at capacity. Please try again later or contact support.",
+                "BAD_REQUEST": "The submitted information is invalid. Please check and try again."
+            }
         },
         "ZALO_SESSION": {
             "LOST": "The Zalo session for this inbox has ended. You will not receive or send messages until you sign in again.",
@@ -8029,12 +8162,6 @@ const messages: Record<string, unknown> = {
             "ENABLE_CONTINUITY_VIA_EMAIL": {
                 "ENABLED": "Enabled",
                 "DISABLED": "Disabled"
-            },
-            "LOCK_TO_SINGLE_CONVERSATION": {
-                "ENABLED": "Reopen same conversation",
-                "DISABLED": "Create new conversations",
-                "ENABLED_DESCRIPTION": "When a contact messages again, the previous conversation will be reopened.",
-                "DISABLED_DESCRIPTION": "A new conversation will be created each time after the previous one is resolved."
             },
             "ENABLE_HMAC": {
                 "LABEL": "Enable"
@@ -8318,8 +8445,6 @@ const messages: Record<string, unknown> = {
             "ENABLE_CONTINUITY_VIA_EMAIL": "Enable conversation continuity via email",
             "ENABLE_CONTINUITY_VIA_EMAIL_SUB_TEXT": "Conversations will continue over email if the contact email address is available.",
             "ENABLE_CONTINUITY_VIA_EMAIL_DISABLED_TEXT": "This feature is available on a paid plan. Upgrade to enable conversation continuity via email.",
-            "LOCK_TO_SINGLE_CONVERSATION": "Conversation Routing",
-            "LOCK_TO_SINGLE_CONVERSATION_SUB_TEXT": "Configure conversation creation for existing contacts",
             "INBOX_UPDATE_TITLE": "Inbox Settings",
             "INBOX_UPDATE_SUB_TEXT": "Update your inbox settings",
             "AUTO_ASSIGNMENT_SUB_TEXT": "Enable or disable the automatic assignment of new conversations to the agents added to this inbox.",
@@ -8747,6 +8872,7 @@ const messages: Record<string, unknown> = {
             "INSTAGRAM": "Instagram",
             "TIKTOK": "TikTok",
             "ZALO": "Zalo",
+            "MESSENGER_PERSONAL": "Personal Messenger",
             "VOICE": "Voice"
         },
         "CONNECTION_CHECK": {

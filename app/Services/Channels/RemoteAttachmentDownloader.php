@@ -42,6 +42,10 @@ class RemoteAttachmentDownloader
     private const CHUNK_BYTES = 256 * 1024;
 
     /**
+     * `$trustedService`: URL trỏ vào dịch vụ cầu nối của chính Yona chạy cùng máy (sidecar
+     * kênh). Chỉ driver đã đối chiếu URL với địa chỉ cấu hình của dịch vụ đó mới được bật;
+     * chuyển hướng vẫn qua hàng rào mạng công cộng.
+     *
      * @param  array<string, string>  $headers
      * @param  array{0: string, 1: string}|null  $basicAuth
      * @return array<string, mixed>|null
@@ -52,11 +56,14 @@ class RemoteAttachmentDownloader
         ?string $filename = null,
         array $headers = [],
         ?array $basicAuth = null,
+        bool $trustedService = false,
     ): ?array {
         $temporaryPath = null;
 
         try {
-            SafeHttp::assertPublicUrl($url);
+            if (! $trustedService) {
+                SafeHttp::assertPublicUrl($url);
+            }
 
             $response = self::request($headers, $basicAuth)->get($url);
 

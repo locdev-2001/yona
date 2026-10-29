@@ -20,9 +20,8 @@ import SettingsToggleSection from 'dashboard/components-next/Settings/SettingsTo
 import WootInput from 'dashboard/components/widgets/forms/Input';
 import GreetingsEditor from 'shared/components/GreetingsEditor';
 import AccessToken from 'dashboard/settings/profile/AccessToken';
-import LockToSingleConversationPreview from '../components/LockToSingleConversationPreview';
 import SenderNameSection from '../components/SenderNameSection';
-import ZaloSessionBanner from '../channels/ZaloSessionBanner';
+import ChannelSessionBanner from '../channels/ChannelSessionBanner';
 import PreviewPane from '../widget-builder/components/PreviewPane';
 import { DEFAULT_WIDGET_SETTINGS } from '../widget-builder/draft';
 import SettingsSaveBar from '../settingsDraft/SettingsSaveBar';
@@ -55,7 +54,6 @@ interface InboxSettingsDraft {
     continuityViaEmail: boolean;
     senderNameType: string;
     businessName: string;
-    lockToSingleConversation: boolean;
     welcomeTitle: string;
     welcomeTagline: string;
     widgetColor: string;
@@ -75,7 +73,6 @@ function inboxSettingsDraftOf(inbox: Inbox): InboxSettingsDraft {
         continuityViaEmail: inbox.continuity_via_email ?? true,
         senderNameType: inbox.sender_name_type,
         businessName: inbox.business_name ?? '',
-        lockToSingleConversation: inbox.lock_to_single_conversation,
         welcomeTitle: inbox.welcome_title ?? '',
         welcomeTagline: inbox.welcome_tagline ?? '',
         widgetColor: inbox.widget_color ?? '',
@@ -125,10 +122,8 @@ export default function InboxSettingsPage({ inbox, senderEmailAddress, onInboxUp
     const hasWidgetSettings = inboxSupports(inbox, 'settings_web_widget');
     const hasWebhookSettings = inboxSupports(inbox, 'settings_webhook');
     const hasSenderNameSettings = inboxSupports(inbox, 'settings_sender_name');
-    const hasSingleConversationSettings = inboxSupports(inbox, 'settings_single_conversation');
-    // Kênh đăng nhập bằng QR (Zalo hôm nay, kênh sau tự khai `session_qr`) hiện
-    // thẻ tài khoản + đường quét lại ngay đầu tab: mất phiên là việc khẩn.
-    const hasQrSession = inboxSupports(inbox, 'session_qr');
+    // Kênh tài khoản cá nhân lấy ảnh hộp thư theo ảnh của tài khoản (hiện ở thẻ phiên phía trên), không tải tay.
+    const hasAccountAvatar = inboxSupports(inbox, 'profile_avatar');
 
     // shouldBeUrl của bản gốc: rỗng hợp lệ, có giá trị phải bắt đầu http.
     const webhookUrlInvalid = draft.webhookUrl ? !draft.webhookUrl.startsWith('http') : false;
@@ -146,7 +141,6 @@ export default function InboxSettingsPage({ inbox, senderEmailAddress, onInboxUp
                 allow_messages_after_resolved: submitted.allowMessagesAfterResolved,
                 greeting_enabled: submitted.greetingEnabled,
                 greeting_message: submitted.greetingMessage || '',
-                lock_to_single_conversation: submitted.lockToSingleConversation,
                 sender_name_type: submitted.senderNameType,
                 business_name: submitted.businessName || null,
             };
@@ -235,38 +229,37 @@ export default function InboxSettingsPage({ inbox, senderEmailAddress, onInboxUp
     return (
         <div className="flex flex-col md:flex-row items-center lg:items-start justify-between gap-5 lg:gap-10 mx-6">
             <div className={`flex-1 flex flex-col min-w-0 w-full ${hasWidgetSettings ? 'max-w-2xl' : 'max-w-4xl'}`}>
-                {hasQrSession ? (
-                    <ZaloSessionBanner
-                        accountId={accountId}
-                        inboxId={inbox.id}
-                        state={inbox.zalo_state}
-                        displayName={inbox.zalo_display_name}
-                        avatarUrl={inbox.avatar_url}
-                        phone={inbox.zalo_phone}
-                        lastConnectedAt={inbox.zalo_last_connected_at}
-                    />
-                ) : null}
-                <div className="flex flex-col gap-1 items-start mb-4">
-                    <label className="text-heading-3 text-n-slate-12">{t('INBOX_MGMT.ADD.WEBSITE_CHANNEL.CHANNEL_AVATAR.LABEL')}</label>
-                    <Avatar
-                        src={draft.avatarUrl}
-                        size={64}
-                        iconName={getInboxIconByType(inbox.channel_type)}
-                        name=""
-                        allowUpload
-                        roundedFull
-                        onUpload={({ file, url }) => {
-                            setAvatarFile(file);
-                            patchDraft({ avatarUrl: url ?? '' });
-                        }}
-                        onDelete={() => void handleAvatarDelete()}
-                    />
-                </div>
+                {/* Kênh có phiên đăng nhập hiện thẻ tài khoản + đường đăng nhập lại ngay đầu tab: mất phiên là việc khẩn. */}
+                <ChannelSessionBanner accountId={accountId} inbox={inbox} />
+                {hasAccountAvatar ? null : (
+                    <div className="flex flex-col gap-1 items-start mb-4">
+                        <label className="text-heading-3 text-n-slate-12">{t('INBOX_MGMT.ADD.WEBSITE_CHANNEL.CHANNEL_AVATAR.LABEL')}</label>
+                        <Avatar
+                            src={draft.avatarUrl}
+                            size={64}
+                            iconName={getInboxIconByType(inbox.channel_type)}
+                            name=""
+                            allowUpload
+                            roundedFull
+                            onUpload={({ file, url }) => {
+                                setAvatarFile(file);
+                                patchDraft({ avatarUrl: url ?? '' });
+                            }}
+                            onDelete={() => void handleAvatarDelete()}
+                        />
+                    </div>
+                )}
                 <SettingsFieldSection label={t(hasWidgetSettings ? 'INBOX_MGMT.ADD.WEBSITE_NAME.LABEL' : 'INBOX_MGMT.ADD.CHANNEL_NAME.LABEL')}>
                     <WootInput
                         value={draft.name}
                         className="[&>input]:!mb-0"
-                        placeholder={t(hasWidgetSettings ? 'INBOX_MGMT.ADD.WEBSITE_NAME.PLACEHOLDER' : 'INBOX_MGMT.ADD.CHANNEL_NAME.PLACEHOLDER')}
+                        placeholder={t(
+                            hasAccountAvatar
+                                ? 'INBOX_MGMT.ACCOUNT_CHANNEL.NAME_HINT'
+                                : hasWidgetSettings
+                                  ? 'INBOX_MGMT.ADD.WEBSITE_NAME.PLACEHOLDER'
+                                  : 'INBOX_MGMT.ADD.CHANNEL_NAME.PLACEHOLDER',
+                        )}
                         onChange={name => patchDraft({ name })}
                     />
                 </SettingsFieldSection>
@@ -290,19 +283,6 @@ export default function InboxSettingsPage({ inbox, senderEmailAddress, onInboxUp
                             onReset={() => void resetWebhookSecret()}
                         />
                     </SettingsFieldSection>
-                ) : null}
-
-                {hasSingleConversationSettings ? (
-                    <SettingsFieldSection
-                        label={t('INBOX_MGMT.SETTINGS_POPUP.LOCK_TO_SINGLE_CONVERSATION')}
-                        className="[&>div>div]:justify-end [&>div>div]:flex lg:[&>div:first-child]:h-12 [&>div:first-child]:h-16"
-                        extra={
-                            <LockToSingleConversationPreview
-                                lockToSingleConversation={draft.lockToSingleConversation}
-                                onUpdate={lockToSingleConversation => patchDraft({ lockToSingleConversation })}
-                            />
-                        }
-                    />
                 ) : null}
 
                 {hasSenderNameSettings ? <div className="py-2 mb-2">{senderNameSection}</div> : null}

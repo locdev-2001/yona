@@ -77,5 +77,15 @@ return [
         'call' => '[Cuộc gọi]',
         'link' => '[Liên kết]',
         'friend_request' => '[Lời mời kết bạn]',
+        'view_once' => '[Ảnh/video xem một lần, mở app trên điện thoại để xem]',
+        'unsupported' => '[Tin nhắn chưa hiển thị được, mở app để xem]',
+    ],
+
+    // Nhóm Messenger chưa đặt tên: ghép tên thành viên như app Messenger hiện.
+    'unnamed_group' => [
+        'one' => ':first',
+        'two' => ':first và :second',
+        'three' => ':first, :second và :third',
+        'others' => '{1} :names và :count người khác|[2,*] :names và :count người khác',
     ],
 ];

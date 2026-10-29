@@ -13,6 +13,7 @@ import WizardLayout, { INBOX_WIZARD_ROUTES } from './WizardLayout';
 import WebsiteChannelForm from './channels/Website';
 import EmailChannelForm from './channels/Email';
 import ZaloChannelForm from './channels/Zalo';
+import MessengerPersonalChannelForm from './channels/MessengerPersonal';
 import FacebookChannelForm from './channels/Facebook';
 import InstagramChannelForm from './channels/Instagram';
 import LineChannelForm from './channels/Line';
@@ -123,6 +124,7 @@ const CHANNEL_VIEWS: Record<string, (props: ChannelFormProps) => ReactElement> =
     website: WebsiteChannelForm,
     email: EmailChannelForm,
     zalo: ZaloChannelForm,
+    messenger_personal: MessengerPersonalChannelForm,
     facebook: FacebookChannelForm,
     instagram: InstagramChannelForm,
     line: LineChannelForm,

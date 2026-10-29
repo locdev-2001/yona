@@ -6,6 +6,7 @@ use App\Http\Resources\Concerns\SerializesAttributeMaps;
 use App\Models\Article;
 use App\Models\Channel\FacebookPage;
 use App\Models\Channel\Instagram;
+use App\Models\Channel\MessengerPersonal;
 use App\Models\Channel\Telegram;
 use App\Models\Channel\Tiktok;
 use App\Models\Channel\TwilioSms;
@@ -80,7 +81,6 @@ class InboxResource extends JsonResource
             'timezone' => $inbox->timezone,
             'callback_webhook_url' => ChannelSetupService::callbackUrlFor($inbox),
             'allow_messages_after_resolved' => $inbox->allow_messages_after_resolved,
-            'lock_to_single_conversation' => $inbox->lock_to_single_conversation,
             'sender_name_type' => $inbox->sender_name_type === Inbox::SENDER_NAME_TYPE_PROFESSIONAL
                 ? 'professional'
                 : 'friendly',
@@ -88,6 +88,7 @@ class InboxResource extends JsonResource
             // Năng lực kênh cho FE (docs/channel-capabilities.md §3) — thêm khoá mới ở
             // cuối khối lõi, không đụng thứ tự khoá đã có của partial gốc.
             'capabilities' => $inbox->capabilities()->values(),
+            'everyone_mention_label' => $inbox->everyoneMentionLabel(),
             'platform' => $inbox->platform()->toArray(),
             ...$this->sharedChannelAttributes($channel),
             ...$this->webWidgetAttributes($inbox),
@@ -116,6 +117,15 @@ class InboxResource extends JsonResource
                 'reauthorization_required' => $channel->reauthorizationRequired(),
             ],
             $channel instanceof Tiktok => ['reauthorization_required' => $channel->reauthorizationRequired()],
+            // Biểu ngữ phiên trên trang cấu hình hộp thư đọc trạng thái này.
+            $channel instanceof MessengerPersonal => [
+                'messenger_personal_state' => $channel->state,
+                'messenger_personal_display_name' => $channel->display_name,
+                'messenger_personal_session_lost_reason' => $channel->session_lost_reason,
+                'messenger_personal_last_connected_at' => $channel->last_connected_at?->toIso8601String(),
+                'messenger_personal_source_url' => filled(config('messenger_personal.source_url')) ? (string) config('messenger_personal.source_url') : null,
+                'reauthorization_required' => $channel->reauthorizationRequired(),
+            ],
             $channel instanceof Telegram => ['bot_name' => $channel->bot_name],
             $channel instanceof TwilioSms => [
                 'medium' => $channel->isSms() ? 'sms' : 'whatsapp',
@@ -271,7 +281,6 @@ class InboxResource extends JsonResource
     {
         return [
             'allow_messages_after_resolved' => $inbox->allow_messages_after_resolved,
-            'lock_to_single_conversation' => $inbox->lock_to_single_conversation,
             'auto_assignment_config' => $inbox->auto_assignment_config ?? [],
             'enable_auto_assignment' => $inbox->enable_auto_assignment,
             'enable_email_collect' => $inbox->enable_email_collect,

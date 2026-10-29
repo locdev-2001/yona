@@ -60,6 +60,8 @@ interface EditorProps {
     groupMembers?: GroupMember[];
     /** Kênh nhắc được cả nhóm một lần: bảng thành viên có thêm mục @All. */
     mentionsEveryone?: boolean;
+    /** Chữ của mục nhắc cả nhóm theo kênh; không có thì dùng `All`. */
+    everyoneMentionLabel?: string | null;
     onChange: (value: string) => void;
     onFocus?: () => void;
     onBlur?: () => void;
@@ -165,6 +167,7 @@ const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
         pickerBoundaryRef,
         groupMembers = NO_GROUP_MEMBERS,
         mentionsEveryone = false,
+        everyoneMentionLabel = null,
         onChange,
         onFocus,
         onBlur,
@@ -438,8 +441,13 @@ const Editor = forwardRef<EditorHandle, EditorProps>(function Editor(
         const matchedMembers = filterGroupMembers(groupMembers, mentionSearchKey);
         if (!mentionsEveryone || groupMembers.length === 0) return matchedMembers;
 
-        return withEveryoneMention(matchedMembers, mentionSearchKey, [t('CONVERSATION.PICKER.GROUP_MEMBER.EVERYONE_ALIAS')]);
-    }, [groupMembers, mentionSearchKey, mentionsEveryone]);
+        return withEveryoneMention(
+            matchedMembers,
+            mentionSearchKey,
+            [t('CONVERSATION.PICKER.GROUP_MEMBER.EVERYONE_ALIAS')],
+            everyoneMentionLabel ?? undefined,
+        );
+    }, [groupMembers, mentionSearchKey, mentionsEveryone, everyoneMentionLabel]);
     // Chỉ mở khi có người để chọn: bảng rỗng vẫn nuốt Enter và agent không gửi được tin.
     const shouldShowMemberMentions = showUserMentions && !isPrivate && memberItems.length > 0;
 

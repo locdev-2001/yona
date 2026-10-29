@@ -1818,6 +1818,12 @@ function startListenerForSlot(slotKey) {
                     );
                     const act = ev?.act != null ? String(ev.act) : '';
                     const threadId = ev?.threadId != null ? String(ev.threadId) : '';
+                    // Nhóm vừa đổi tên/ảnh: tin kế hỏi lại hồ sơ thay vì mang tên cũ trong
+                    // cache; giữ bản cũ làm dự phòng khi lần hỏi lại hỏng.
+                    const cachedGroup = slotGroupNameCache(slot)[threadId];
+                    if (cachedGroup && typeof cachedGroup === 'object') {
+                        cachedGroup.at = 0;
+                    }
                     void postZaloPersonalSocialEvent({
                         type: 'social_event',
                         social_kind: 'group_event',

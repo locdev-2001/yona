@@ -112,7 +112,6 @@ class Instagram extends Model implements DeclaresCapabilities, DeclaresConnectio
             Capability::ConversationOutboundResume,
             Capability::SessionOauth,
             Capability::SessionReauth,
-            Capability::SettingsSingleConversation,
         )->withTextFormat(TextFormat::Plain);
     }
 }

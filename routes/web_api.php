@@ -48,6 +48,7 @@ use App\Http\Controllers\WebApi\Integrations\SlackController as IntegrationSlack
 use App\Http\Controllers\WebApi\InviteLinksController;
 use App\Http\Controllers\WebApi\LabelsController;
 use App\Http\Controllers\WebApi\MacrosController;
+use App\Http\Controllers\WebApi\MessengerPersonalConnectionsController;
 use App\Http\Controllers\WebApi\NotificationsController;
 use App\Http\Controllers\WebApi\NotificationSettingsController;
 use App\Http\Controllers\WebApi\NotificationSubscriptionsController;
@@ -495,6 +496,15 @@ Route::middleware(['auth.api_token', 'auth', 'account.scope'])
         Route::post('/inboxes/{inboxId}/zalo/disconnect', [ZaloConnectionsController::class, 'disconnect'])->whereNumber('inboxId');
         Route::get('/inboxes/{inboxId}/zalo/health', [ZaloConnectionsController::class, 'health'])->whereNumber('inboxId');
         // G1 Zalo — END
+
+        // Messenger cá nhân: đăng nhập nhiều bước, ngắt kết nối, sức khoẻ phiên.
+        Route::prefix('/inboxes/{inboxId}/messenger_personal')->whereNumber('inboxId')->group(function () {
+            Route::post('/login/start', [MessengerPersonalConnectionsController::class, 'start'])->middleware('throttle:10,1');
+            Route::post('/login/submit', [MessengerPersonalConnectionsController::class, 'submit'])->middleware('throttle:20,1');
+            Route::post('/login/cancel', [MessengerPersonalConnectionsController::class, 'cancel']);
+            Route::post('/disconnect', [MessengerPersonalConnectionsController::class, 'disconnect']);
+            Route::get('/health', [MessengerPersonalConnectionsController::class, 'health']);
+        });
 
         // E2 search_controller.rb.
         Route::get('/search', [SearchController::class, 'index']);

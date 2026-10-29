@@ -95,8 +95,6 @@ enum Capability: string
 
     // §2.6 Cấu hình hộp thư: phần cài đặt kênh có thật VÀ lõi áp dụng nó. Trang cài đặt
     // hộp thư chỉ dựng tab/khối theo các năng lực này, không rẽ nhánh theo `channel_type`.
-    // Khách nhắn lại sau khi hội thoại đã xong: mở lại hội thoại cũ hay tạo mới (`lock_to_single_conversation`).
-    case SettingsSingleConversation = 'settings_single_conversation';
     // URL nhận sự kiện của hệ ngoài + khoá ký.
     case SettingsWebhook = 'settings_webhook';
     // Mã hộp thư + khoá HMAC cho Client API.

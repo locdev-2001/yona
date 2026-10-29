@@ -16,6 +16,7 @@ export const INBOX_TYPES = {
     TIKTOK: 'Channel::Tiktok',
     ZALO: 'Channel::Zalo',
     YONA: 'Channel::Yona',
+    MESSENGER_PERSONAL: 'Channel::MessengerPersonal',
 } as const;
 
 const INBOX_ICON_MAP_LINE: Record<string, string> = {
@@ -33,6 +34,7 @@ const INBOX_ICON_MAP_LINE: Record<string, string> = {
     [INBOX_TYPES.YONA]: ICONS.channelYona,
     [INBOX_TYPES.SMS]: ICONS.channelSms,
     [INBOX_TYPES.TWILIO]: ICONS.channelSms,
+    [INBOX_TYPES.MESSENGER_PERSONAL]: 'i-yona-messenger',
 };
 
 const DEFAULT_ICON_LINE = ICONS.channelDefault;
@@ -53,6 +55,7 @@ const INBOX_ICON_MAP_FILL: Record<string, string> = {
     [INBOX_TYPES.YONA]: ICONS.channelYona,
     [INBOX_TYPES.SMS]: ICONS.channelSms,
     [INBOX_TYPES.TWILIO]: ICONS.channelSms,
+    [INBOX_TYPES.MESSENGER_PERSONAL]: BRAND_ICONS.messenger,
 };
 
 const DEFAULT_ICON_FILL = ICONS.channelDefault;
@@ -90,6 +93,7 @@ const INBOX_LABEL_KEY_MAP: Record<string, string> = {
     [INBOX_TYPES.INSTAGRAM]: 'INSTAGRAM',
     [INBOX_TYPES.TIKTOK]: 'TIKTOK',
     [INBOX_TYPES.ZALO]: 'ZALO',
+    [INBOX_TYPES.MESSENGER_PERSONAL]: 'MESSENGER_PERSONAL',
 };
 
 /** NGUỒN DUY NHẤT của nhãn kênh — trả về khóa i18n, hoặc null nếu chưa khai báo. */

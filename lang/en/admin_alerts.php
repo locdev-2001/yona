@@ -12,6 +12,7 @@ return [
         'queue_backlog' => ['TITLE' => 'Pending jobs', 'DESCRIPTION' => 'Jobs waiting across all queues.'],
         'queue_wait' => ['TITLE' => 'Queue wait', 'DESCRIPTION' => 'Oldest pending job across all queues.'],
         'zalo_bridge_down' => ['TITLE' => 'zalo-bridge unreachable', 'DESCRIPTION' => 'Without the bridge Zalo messages are neither sent nor received.'],
+        'messenger_bridge_down' => ['TITLE' => 'messenger-bridge unreachable', 'DESCRIPTION' => 'Without the sidecar personal Messenger messages are neither sent nor received.'],
     ],
     'STATUS' => [
         'ok' => 'Normal',

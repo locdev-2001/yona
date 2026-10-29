@@ -721,6 +721,7 @@ export default function ReplyBox({
                     uiSettings={uiSettings}
                     groupMembers={mentionableMembers}
                     mentionsEveryone={inboxSupports(inbox, 'outbound_mention_all')}
+                    everyoneMentionLabel={inbox?.everyone_mention_label}
                     onChange={setMessage}
                     onFocus={() => setIsFocused(true)}
                     onBlur={() => setIsFocused(false)}

@@ -465,3 +465,16 @@ SOFTWARE.
 ```
 
 Theo thông báo của dự án, bộ icon có sử dụng các yếu tố từ Solar Icons của 480 Design (CC BY 4.0) và Zappicon. Nguồn và credit: https://github.com/dqev/reicon#credits.
+
+## Kết nối Messenger cá nhân (`services/messenger-bridge`)
+
+Sidecar Go kết nối tài khoản Messenger cá nhân, nằm riêng ở `services/messenger-bridge/` và phát hành theo **GNU Affero General Public License v3.0** (toàn văn ở `services/messenger-bridge/LICENSE`). Mã nguồn đầy đủ của thư mục này được công khai cho người dùng theo điều 13 của giấy phép; phần còn lại của Yona là chương trình riêng, chỉ giao tiếp với sidecar qua HTTP.
+
+Thư viện chính sidecar dùng:
+
+- `go.mau.fi/mautrix-meta` v0.2610.0 — AGPL-3.0. Giao thức Messenger (đăng nhập, kênh thường, đăng ký thiết bị mã hoá). Nguồn: https://github.com/mautrix/meta
+- `go.mau.fi/whatsmeow` — MPL-2.0. Giao thức mã hoá đầu cuối. Nguồn: https://github.com/tulir/whatsmeow
+- `github.com/beeper/req/v3` (bản vá của `imroc/req`) — MIT. Nguồn: https://github.com/beeper/req
+- `github.com/mutecomm/go-sqlcipher/v4` — BSD-3-Clause (kèm SQLCipher, BSD-3-Clause). Nguồn: https://github.com/mutecomm/go-sqlcipher
+
+Danh sách đầy đủ phụ thuộc và phiên bản nằm ở `services/messenger-bridge/go.mod`; giấy phép của từng gói đi kèm mã nguồn gói trong module cache của Go.

@@ -160,7 +160,6 @@ class Telegram extends Model implements DeclaresCapabilities, DeclaresConnection
             Capability::ThreadingContinuous,
             Capability::ConversationOutboundResume,
             Capability::SessionToken,
-            Capability::SettingsSingleConversation,
         )->withTextFormat(TextFormat::TelegramHtml);
     }
 }

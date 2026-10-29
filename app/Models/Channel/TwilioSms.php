@@ -127,7 +127,6 @@ class TwilioSms extends Model implements DeclaresCapabilities, DeclaresConnectio
             Capability::ThreadingContinuous,
             Capability::ConversationOutboundResume,
             Capability::SessionToken,
-            Capability::SettingsSingleConversation,
         )->withTextFormat(TextFormat::Plain);
 
         if ($this->isSms()) {

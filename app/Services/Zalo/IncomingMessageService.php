@@ -5,7 +5,6 @@ namespace App\Services\Zalo;
 use App\Actions\ContactMergeAction;
 use App\Builders\ContactInboxBuilder;
 use App\Builders\ContactInboxWithContactBuilder;
-use App\Jobs\Avatar\AvatarFromUrlJob;
 use App\Messaging\Inbound\AttachmentKind;
 use App\Messaging\Inbound\InboundAttachment;
 use App\Messaging\Inbound\InboundAttachmentFactory;
@@ -111,11 +110,6 @@ class IncomingMessageService
         46 => 'file',
         43 => 'location',
     ];
-
-    /** Nhóm là một "người" trên kênh: hồ sơ mang tên + ảnh nhóm, đánh dấu bằng khoá này. */
-    private const THREAD_KIND_ATTRIBUTE = Zalo::CONTACT_THREAD_KIND_ATTRIBUTE;
-
-    private const THREAD_KIND_GROUP = Zalo::CONTACT_THREAD_KIND_GROUP;
 
     /**
      * Cờ do lớp hàng đợi bật khi đã chờ hết lượt cho tin dội lại: dựng tin ngay
@@ -409,45 +403,16 @@ class IncomingMessageService
     private function refreshDisplayProfile(Contact $contact, string $threadUid): void
     {
         $user = is_array($this->params['user'] ?? null) ? $this->params['user'] : [];
-        $name = filled($user['name'] ?? null) ? (string) $user['name'] : null;
-        $attributes = $contact->additional_attributes ?? [];
-
-        if ($name !== null && $this->nameComesFromPlatform($contact)) {
-            $contact->name = $name;
-        }
-
-        $contact->additional_attributes = array_filter([
-            ...$attributes,
-            'social_zalo_user_id' => $attributes['social_zalo_user_id'] ?? $threadUid,
-            'social_zalo_user_name' => $name ?? ($attributes['social_zalo_user_name'] ?? null),
-            // Hồ sơ của một NHÓM mang tên + ảnh nhóm (bridge gửi sẵn ở `user`);
-            // đánh dấu để panel liên hệ / báo cáo phân biệt được với người thật.
-            self::THREAD_KIND_ATTRIBUTE => $this->isGroupThread()
-                ? self::THREAD_KIND_GROUP
-                : ($attributes[self::THREAD_KIND_ATTRIBUTE] ?? null),
-        ]);
-
-        if ($contact->isDirty()) {
-            $contact->save();
-        }
 
         // Lô lịch sử không kèm hồ sơ nên liên hệ tạo từ backfill không có ảnh;
         // builder chỉ thử đúng một lần lúc tạo, tin sau vẫn mang `user.avatar`.
-        if ($contact->avatar === null && filled($user['avatar'] ?? null)) {
-            AvatarFromUrlJob::dispatch($contact, (string) $user['avatar']);
-        }
-    }
-
-    /**
-     * Chỉ ghi đè tên do NỀN TẢNG đặt: tên ẩn danh builder sinh khi lô lịch sử
-     * không kèm hồ sơ (nhận ra vì chưa lần nào lưu được tên Zalo), hoặc chính
-     * tên Zalo lần trước. Tên agent sửa tay không bị đụng.
-     */
-    private function nameComesFromPlatform(Contact $contact): bool
-    {
-        $stored = trim((string) ($contact->additional_attributes['social_zalo_user_name'] ?? ''));
-
-        return $stored === '' || trim((string) $contact->name) === $stored;
+        app(ZaloContactProfile::class)->refresh(
+            $contact,
+            $threadUid,
+            filled($user['name'] ?? null) ? (string) $user['name'] : null,
+            filled($user['avatar'] ?? null) ? (string) $user['avatar'] : null,
+            $this->isGroupThread(),
+        );
     }
 
     /**

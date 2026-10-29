@@ -45,12 +45,15 @@ PostgreSQL (`pg_trgm`) · Redis (cache, queue, session) · Laravel Reverb
   interface `DeclaresCapabilities` (enum `Capability`); nền tảng hiển thị (logo,
   nhãn) khai qua `DeclaresPlatform`. Giao diện và lõi hỏi năng lực, không bao giờ
   rẽ nhánh theo `channel_type`.
-- Trang cài đặt hộp thư cũng dựng theo năng lực: nhóm `settings_*` (điều hướng hội
-  thoại, webhook, Client API, widget, form trước chat, tên người gửi, máy chủ thư)
-  là phần cấu hình kênh có thật **và** lõi áp dụng. Tab và khối lấy từ
-  `resources/js/dashboard/settings/inboxes/inboxSettingsTabs.ts`. Kênh khai
-  `settings_single_conversation` phải tạo hội thoại qua `IncomingConversationResolver`
-  hoặc `ConversationBuilder`.
+- Trang cài đặt hộp thư cũng dựng theo năng lực: nhóm `settings_*` (webhook, Client
+  API, widget, form trước chat, tên người gửi, máy chủ thư) là phần cấu hình kênh có
+  thật **và** lõi áp dụng. Tab và khối lấy từ
+  `resources/js/dashboard/settings/inboxes/inboxSettingsTabs.ts`. Tạo hội thoại qua
+  `IncomingConversationResolver` hoặc `ConversationBuilder`: mỗi người một hội thoại
+  liền mạch, tin mới vào hội thoại gần nhất (đã xong thì tự mở lại).
+- Kênh gắn một tài khoản cá nhân (Zalo, Messenger cá nhân) khai `NamesInboxAfterAccount`:
+  tên hộp thư để trống thì lấy tên tài khoản và đổi theo khi tài khoản đổi tên
+  (`App\Services\Channels\InboxNaming`), trừ khi chủ hộp thư tự đặt tên khác.
 - Gửi tin: `SendReplyJob::CHANNEL_SERVICES`. Hành động khác (thu hồi, cảm xúc,
   thành viên nhóm, sticker): `app/Services/Channels/ChannelActionRegistry.php`.
 - **Thêm kênh = thêm driver** (model + service + một dòng đăng ký), không sửa
@@ -202,7 +205,7 @@ tảng thành giá trị của lõi, không dựng Message/Attachment/Conversati
   echo khớp bí danh và đồng bộ hồ sơ nhóm — nợ có tên, chuyển sau.
 - **Năng lực là lời hứa:** kênh khai năng lực nào (`inbound_image/sticker/file/
   video/audio/location/contact_card/reply_to/forward`, `event_delivered/seen/
-  reaction/recall`, `outbound_*`, `settings_single_conversation`) thì phải làm được
+  reaction/recall`, `outbound_*`, `settings_*`) thì phải làm được
   đúng việc đó; repo không còn test tự động, nên kiểm bằng dùng thật trên giao
   diện khi thêm hoặc đổi kênh. **Thêm kênh = viết parser; thêm loại tin = thêm
   giá trị, không sửa kênh nào.**

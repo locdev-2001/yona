@@ -10,6 +10,7 @@ final class ChannelHealthDetectors
     /** @var list<class-string<ChannelProblemDetector>> */
     private const DETECTORS = [
         Detectors\ZaloSessionDetector::class,
+        Detectors\MessengerPersonalSessionDetector::class,
         Detectors\ReauthorizationDetector::class,
     ];
 

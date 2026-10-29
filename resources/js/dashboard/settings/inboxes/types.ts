@@ -58,7 +58,6 @@ export interface Inbox {
     timezone: string;
     callback_webhook_url: string | null;
     allow_messages_after_resolved: boolean;
-    lock_to_single_conversation: boolean;
     sender_name_type: 'friendly' | 'professional';
     business_name: string | null;
     // Năng lực kênh (docs/channel-capabilities.md §3) — giao diện gate theo đây,
@@ -85,6 +84,12 @@ export interface Inbox {
     zalo_uid?: string | null;
     zalo_phone?: string | null;
     zalo_last_connected_at?: string | null;
+    // Kênh Messenger cá nhân — trạng thái phiên cho biểu ngữ đăng nhập lại.
+    messenger_personal_state?: string | null;
+    messenger_personal_display_name?: string | null;
+    messenger_personal_session_lost_reason?: string | null;
+    messenger_personal_last_connected_at?: string | null;
+    messenger_personal_source_url?: string | null;
     website_token?: string | null;
     selected_feature_flags?: string[] | null;
     reply_time?: string | null;

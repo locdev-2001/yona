@@ -78,7 +78,6 @@ class Sms extends Model implements DeclaresCapabilities, DeclaresConnection, Dec
             Capability::ThreadingContinuous,
             Capability::ConversationOutboundResume,
             Capability::SessionToken,
-            Capability::SettingsSingleConversation,
         )->withTextFormat(TextFormat::Plain);
     }
 }

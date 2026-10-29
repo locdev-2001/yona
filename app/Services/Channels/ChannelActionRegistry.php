@@ -6,6 +6,8 @@ use App\Models\Inbox;
 use App\Services\Channels\Stickers\StickerCatalog;
 use App\Services\Facebook\FacebookOutboundActions;
 use App\Services\Instagram\InstagramOutboundActions;
+use App\Services\MessengerPersonal\GroupMembers as MessengerPersonalGroupMembers;
+use App\Services\MessengerPersonal\OutboundActions as MessengerPersonalOutboundActions;
 use App\Services\Widget\WidgetOutboundActions;
 use App\Services\Yona\YonaGroupMembers;
 use App\Services\Yona\YonaOutboundActions;
@@ -26,12 +28,19 @@ class ChannelActionRegistry
         'Channel::FacebookPage' => FacebookOutboundActions::class,
         'Channel::Instagram' => InstagramOutboundActions::class,
         'Channel::Yona' => YonaOutboundActions::class,
+        'Channel::MessengerPersonal' => MessengerPersonalOutboundActions::class,
     ];
 
     /** @var array<string, class-string<ChannelGroupMembers>> */
     private const GROUP_MEMBER_DRIVERS = [
         'Channel::Zalo' => ZaloGroupMembers::class,
         'Channel::Yona' => YonaGroupMembers::class,
+        'Channel::MessengerPersonal' => MessengerPersonalGroupMembers::class,
+    ];
+
+    /** Kênh có thư mục tin nhắn chờ phía nền tảng. @var array<string, class-string<ChannelMessageRequests>> */
+    private const MESSAGE_REQUEST_DRIVERS = [
+        'Channel::MessengerPersonal' => MessengerPersonalOutboundActions::class,
     ];
 
     /** Sticker gốc của nền tảng. Kho Yona không theo kênh nên không nằm ở đây (xem StickerLibrary). @var array<string, class-string<StickerCatalog>> */
@@ -49,6 +58,13 @@ class ChannelActionRegistry
     public static function groupMembersFor(Inbox $inbox): ?ChannelGroupMembers
     {
         $driver = self::GROUP_MEMBER_DRIVERS[$inbox->channel_type] ?? null;
+
+        return $driver === null ? null : app($driver);
+    }
+
+    public static function messageRequestsFor(Inbox $inbox): ?ChannelMessageRequests
+    {
+        $driver = self::MESSAGE_REQUEST_DRIVERS[$inbox->channel_type] ?? null;
 
         return $driver === null ? null : app($driver);
     }

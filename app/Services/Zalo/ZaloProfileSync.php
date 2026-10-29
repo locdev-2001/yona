@@ -4,6 +4,7 @@ namespace App\Services\Zalo;
 
 use App\Jobs\Avatar\AvatarFromUrlJob;
 use App\Models\Channel\Zalo;
+use App\Services\Channels\InboxNaming;
 use Illuminate\Support\Facades\Cache;
 
 /**
@@ -18,6 +19,8 @@ use Illuminate\Support\Facades\Cache;
  */
 class ZaloProfileSync
 {
+    public function __construct(private readonly InboxNaming $naming) {}
+
     private const AVATAR_MEMO_DAYS = 7;
 
     /** Hồ sơ còn thiếu thì mới đáng hỏi bridge — dùng chung cho nhịp tim và trang cấu hình. */
@@ -38,7 +41,12 @@ class ZaloProfileSync
         ], fn ($value) => $value !== null);
 
         if ($changes !== []) {
+            $previousName = $channel->display_name;
             $channel->update($changes);
+
+            if (array_key_exists('display_name', $changes) && $channel->inbox !== null) {
+                $this->naming->followAccount($channel->inbox->setRelation('channel', $channel), $previousName);
+            }
         }
 
         $avatarChanged = $this->syncInboxAvatar($channel, $this->text($profile['avatar'] ?? null), $authoritative);

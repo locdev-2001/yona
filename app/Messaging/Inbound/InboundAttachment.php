@@ -27,6 +27,7 @@ final class InboundAttachment
         public readonly ?float $longitude = null,
         public readonly ?string $title = null,
         public readonly array $meta = [],
+        public readonly bool $trustedService = false,
     ) {}
 
     /**
@@ -52,6 +53,26 @@ final class InboundAttachment
             headers: $headers,
             basicAuth: $basicAuth,
             urlIsPublic: $urlIsPublic ?? ($headers === [] && $basicAuth === null),
+        );
+    }
+
+    /**
+     * Tệp nằm trên dịch vụ cầu nối của chính Yona (sidecar kênh, thường ở 127.0.0.1) nên
+     * lõi bỏ qua hàng rào "chỉ mạng công cộng". Driver PHẢI đối chiếu URL với địa chỉ cấu
+     * hình của dịch vụ trước khi dùng — URL lạ đi đường này là SSRF. Luôn cần bí mật nên
+     * không bao giờ lộ ra trình duyệt.
+     *
+     * @param  array<string, string>  $headers
+     */
+    public static function fromTrustedService(string $url, AttachmentKind $kind, ?string $filename, array $headers): self
+    {
+        return new self(
+            kind: $kind,
+            downloadUrl: $url,
+            filename: $filename,
+            headers: $headers,
+            urlIsPublic: false,
+            trustedService: true,
         );
     }
 

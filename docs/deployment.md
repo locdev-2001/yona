@@ -21,6 +21,7 @@ quy trình deploy hằng ngày.
 | Queue | `artisan horizon` dưới Supervisor, dashboard `/horizon` |
 | Realtime | Reverb dưới Supervisor, `127.0.0.1:8611` |
 | Zalo bridge | PM2, `127.0.0.1:8612` |
+| Messenger bridge (Messenger cá nhân) | binary Go dưới Supervisor, `127.0.0.1:8614` |
 | Scheduler | cron `* * * * *` gọi `artisan schedule:run` |
 | Deploy user | `root` (chủ đích theo cấu hình aaPanel) |
 | PHP runtime group | `www` |
@@ -30,6 +31,7 @@ Internet ──443──▶ Nginx ──▶ public/index.php ──▶ PHP-FPM 8
                     └──▶ /app/<REVERB_APP_KEY>, /apps ──▶ Reverb :REVERB_SERVER_PORT (WebSocket)
 Laravel ──▶ Redis ──▶ Horizon (supervisor) ──▶ worker theo tier
 Laravel ◀─▶ Zalo bridge :8612 ──▶ Zalo
+Laravel ◀─▶ Messenger bridge :8614 ──▶ Meta (Messenger thường + mã hoá đầu cuối)
 ```
 
 Không có Horizon và không có Inertia SSR. Frontend là bundle Vite tĩnh trong
@@ -753,6 +755,82 @@ video gốc.
 ---
 
 
+## 6b. Messenger bridge (Messenger cá nhân)
+
+Sidecar Go `services/messenger-bridge/` giữ phiên Messenger của tài khoản Facebook cá
+nhân phía server, nhận tin ở cả kênh thường lẫn kênh mã hoá đầu cuối, gửi tin, rồi báo
+về Laravel qua `POST /webhooks/messenger-personal`. Một tiến trình phục vụ mọi tài khoản;
+khoá slot là `channel_messenger_personal.id`. Hợp đồng HTTP: README trong thư mục.
+
+**Giấy phép:** riêng thư mục này là AGPL-3.0 (`services/messenger-bridge/LICENSE`) vì dùng
+thư viện giao thức Messenger AGPL-3.0. Phải công khai mã thư mục cho người dùng: tách
+bằng `git subtree split --prefix=services/messenger-bridge` và đẩy sang repo công khai
+chỉ chứa sidecar; đặt `MESSENGER_BRIDGE_SOURCE_URL` trong `.env` Laravel tới repo đó
+để link "Mã nguồn kết nối Messenger" hiện ở trang cài đặt hộp thư. Không đưa mã Yona
+vào thư mục này.
+
+### Làm một lần trên server
+
+1. Cài Go **1.26.x** (tarball chính thức, ví dụ vào `/usr/local/go`) và `gcc` (kho khoá
+   thiết bị dùng SQLCipher qua CGO). `deploy.sh` gọi `go` theo `DEPLOY_GO_BIN`.
+2. Tạo `services/messenger-bridge/.env` từ `.env.production.example`, sinh secret:
+
+   ```bash
+   openssl rand -base64 32   # BRIDGE_SESSION_KEY
+   openssl rand -base64 32   # BRIDGE_DEVICE_KEY
+   openssl rand -hex 32      # mỗi secret UI / send / webhook
+   ```
+
+   Ba cặp phải khớp với `.env` Laravel: `MESSENGER_BRIDGE_UI_SECRET` = `BRIDGE_UI_SECRET`,
+   `MESSENGER_BRIDGE_SEND_SECRET` = `BRIDGE_SEND_SECRET`, `MESSENGER_BRIDGE_WEBHOOK_SECRET` =
+   `LARAVEL_WEBHOOK_SECRET`. Laravel cần thêm `MESSENGER_BRIDGE_URL=http://127.0.0.1:8614`.
+   `deploy.sh` từ chối deploy nếu lệch, nếu host không phải `127.0.0.1`, nếu
+   `LARAVEL_BASE_URL` không phải HTTPS, nếu `BRIDGE_ENV` khác `production`, hoặc thiếu
+   một trong hai khoá mã hoá.
+3. `BRIDGE_STATE_DIR` (mặc định trong mẫu: `storage/messenger-bridge`) phải ghi được
+   bởi user `www`. **Sao lưu thư mục này cùng hai khoá**: mất khoá là mọi tài khoản
+   phải đăng nhập lại.
+4. `request_terminate_timeout` của PHP-FPM và `proxy_read_timeout`/`fastcgi_read_timeout`
+   của Nginx phải ≥ 60 giây: bước đăng nhập Facebook có thể chờ Meta tới 60 giây.
+
+### deploy.sh làm gì
+
+`DEPLOY_MESSENGER_BRIDGE=auto` (mặc định, chạy khi có `.env` của sidecar): kiểm cấu hình
+như trên → `go build` ra `bin/messenger-bridge` (build lỗi thì bản đang chạy giữ nguyên)
+→ viết `/etc/supervisor/conf.d/yona-messenger-bridge.conf` (user `www`, cwd là thư mục
+sidecar, stdout vào `storage/logs/messenger-bridge/bridge.log`) → `supervisorctl restart`
+→ chờ `GET http://127.0.0.1:8614/` trả 200. Bước mới trong `deploy.sh` chỉ chạy từ lần
+deploy sau lần mang nó lên; lần đầu chạy tay đúng các lệnh trên.
+
+### Mã hoá at-rest
+
+- Phiên (cookie + phiên app) mỗi tài khoản: tệp JSON AES-256-GCM bằng `BRIDGE_SESSION_KEY`.
+- Khoá thiết bị mã hoá đầu cuối: SQLCipher (mã hoá cả tệp, AES-256) bằng `BRIDGE_DEVICE_KEY`.
+- Hàng đợi webhook trên đĩa cũng niêm phong AES-GCM. Tệp/thư mục quyền 0600/0700.
+
+Chống được lộ đĩa và bản sao lưu; không chống được người đã có root trên server (khoá
+nằm trong `.env` cùng máy, như Zalo).
+
+### Hạn mức và sức chứa
+
+`BRIDGE_MAX_SESSIONS` (mặc định 50) là trần **cả server**, không phải mỗi khách. Đo
+29/10/2026: một tiến trình với 1 tài khoản dùng khoảng 35MB RAM. Đầy thì người nối mới
+thấy "Máy chủ đang đầy". Nâng con số theo RAM còn trống.
+
+### Log
+
+JSON mỗi dòng ở `storage/logs/messenger-bridge/bridge.log` (Log Viewer thấy). Chỉ có loại
+sự kiện, mã hội thoại, `source_id`, thời gian từng chặng gửi, mã lỗi; không có nội dung
+tin, tên, cookie, token. Log của thư viện đi qua bộ lọc bỏ dữ liệu thô. Muốn chi tiết
+hơn khi điều tra: `BRIDGE_LOG_LEVEL=debug` rồi restart.
+
+### Hàng đợi webhook
+
+Tin đến, thu hồi, sửa tin, trạng thái phiên đi qua hàng đợi trên đĩa
+(`BRIDGE_STATE_DIR/outbox`): Laravel tạm ngừng (deploy, restart) thì sidecar thử lại mãi,
+giãn tới 1 giờ, không mất tin. Chỉ lỗi 4xx khác 401/403 mới vào `outbox-dead/` (gửi lại
+bằng cách chuyển tệp về `outbox/`).
+
 ## 7. Nginx
 
 Vhost chính `/www/server/panel/vhost/nginx/yona.vn.conf` — chỉ đổi document
@@ -1183,6 +1261,7 @@ Lưu ý vận hành:
 - **OAuth client cho nút "Tiếp tục với Google"** — xem ngay dưới. Chưa làm thì nút ẩn, không hỏng gì.
 - **Dọn access token mồ côi** — một lần, sau lần deploy đầu có lệnh `access-tokens:prune-orphans`. Xem ngay dưới.
 - **Kho sticker**: cài renderer, nginx cho tệp sticker, sao lưu thư mục sticker. Xem "Kho sticker" ngay dưới.
+- **Messenger bridge**: cài Go 1.26 + gcc, tạo `services/messenger-bridge/.env`, sao lưu thư mục state. Xem mục 6b.
 - **Hộp thư cá nhân cho người dùng cũ** — một lần, ngay sau lần deploy đầu có kênh Yona: `php artisan users:backfill-personal-inboxes --dry-run` để xem trước, rồi chạy lại không có `--dry-run`. Lệnh gán `@username` (gợi ý từ email) cho người chưa có và tạo hộp thư cá nhân + kênh Yona cho người còn thiếu; không sửa hay xoá dữ liệu cũ, chạy lại nhiều lần vẫn an toàn.
 
 Xong mấy thứ đó thì từ đây về sau chỉ còn `./deploy.sh`.
@@ -1992,6 +2071,7 @@ curl -fsS http://127.0.0.1:8612/ >/dev/null && echo "bridge OK"
 /www/wwwroot/yona.vn/storage/logs/reverb.log
 /www/wwwroot/yona.vn/storage/logs/scheduler.log
 /www/wwwroot/yona.vn/storage/logs/zalo-bridge/{out,error}.log
+/www/wwwroot/yona.vn/storage/logs/messenger-bridge/bridge.log
 ```
 
 Đọc qua giao diện: `/log-viewer` (chỉ super admin, chỉ `storage/logs`, không cho

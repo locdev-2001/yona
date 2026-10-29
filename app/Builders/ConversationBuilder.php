@@ -18,12 +18,9 @@ class ConversationBuilder
         return $this->lookUpExistingConversation() ?? $this->createNewConversation();
     }
 
+    /** Mỗi người là một hội thoại liền mạch (xem IncomingConversationResolver). */
     private function lookUpExistingConversation(): ?Conversation
     {
-        if (! $this->contactInbox->inbox->lock_to_single_conversation) {
-            return null;
-        }
-
         return $this->contactInbox->conversations()->latest('id')->first();
     }
 

@@ -16,6 +16,7 @@ use App\Models\Channel\Email;
 use App\Models\Channel\FacebookPage;
 use App\Models\Channel\Instagram;
 use App\Models\Channel\Line;
+use App\Models\Channel\MessengerPersonal;
 use App\Models\Channel\Sms;
 use App\Models\Channel\Telegram;
 use App\Models\Channel\Tiktok;
@@ -27,6 +28,7 @@ use App\Models\Channel\Zalo;
 use App\Models\Inbox;
 use App\Services\Channels\ChannelCredentialsCheck;
 use App\Services\Channels\ChannelSetupService;
+use App\Services\Channels\InboxNaming;
 use App\Support\Timezones;
 use App\Support\Widget\WidgetSettings;
 use Illuminate\Database\Eloquent\Builder;
@@ -56,6 +58,7 @@ class InboxesController extends Controller
         'tiktok' => Tiktok::class,
         'twitter_profile' => TwitterProfile::class,
         'zalo' => Zalo::class,
+        'messenger_personal' => MessengerPersonal::class,
     ];
 
     // inbox_attributes của bản gốc — cùng bộ cho POST lẫn PATCH (trừ name/avatar
@@ -72,7 +75,6 @@ class InboxesController extends Controller
         'out_of_office_message' => ['sometimes', 'nullable', 'string', 'max:10000'],
         'timezone' => ['sometimes', 'string', Timezones::VALIDATION_RULE],
         'allow_messages_after_resolved' => ['sometimes', 'boolean'],
-        'lock_to_single_conversation' => ['sometimes', 'boolean'],
         'sender_name_type' => ['sometimes', 'in:friendly,professional'],
         'business_name' => ['sometimes', 'nullable', 'string', 'max:255'],
     ];
@@ -152,13 +154,19 @@ class InboxesController extends Controller
 
         $inbox = $this->fetchInbox($request, $account, $inboxId);
 
+        $naming = app(InboxNaming::class);
         $data = $request->validate([
-            'name' => ['sometimes', 'string', 'max:255'],
+            // Kênh tài khoản cá nhân được để trống tên: hộp thư lấy tên tài khoản.
+            'name' => ['sometimes', ...($naming->followsAccount($inbox) ? ['nullable'] : []), 'string', 'max:255'],
             ...self::INBOX_ATTRIBUTE_RULES,
             ...self::WORKING_HOURS_RULES,
             'avatar' => ['sometimes', 'file', 'mimes:jpg,jpeg,png,gif,webp', 'max:15360'],
             'channel' => ['sometimes', 'array'],
         ]);
+
+        if (array_key_exists('name', $data)) {
+            $data['name'] = $naming->submitted($inbox, $data['name']);
+        }
 
         $this->fillChannel($inbox, $data['channel'] ?? []);
         app(ChannelCredentialsCheck::class)->verify($inbox->channel);

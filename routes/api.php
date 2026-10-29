@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\Webhooks\GmailPushController;
 use App\Http\Controllers\Api\Webhooks\InstagramController as InstagramWebhooksController;
 use App\Http\Controllers\Api\Webhooks\LineController as LineWebhooksController;
 use App\Http\Controllers\Api\Webhooks\MediaController as MediaWebhooksController;
+use App\Http\Controllers\Api\Webhooks\MessengerPersonalController as MessengerPersonalWebhooksController;
 use App\Http\Controllers\Api\Webhooks\SmsController as SmsWebhooksController;
 use App\Http\Controllers\Api\Webhooks\TelegramController as TelegramWebhooksController;
 use App\Http\Controllers\Api\Webhooks\TiktokController as TiktokWebhooksController;
@@ -36,6 +37,7 @@ use App\Http\Middleware\AuthenticatePlatformApp;
 use App\Http\Middleware\EnsureWidgetContact;
 use App\Http\Middleware\ResolveOrCreateWidgetContact;
 use App\Http\Middleware\ResolveWidgetChannel;
+use App\Http\Middleware\VerifyMessengerBridgeSecret;
 use App\Http\Middleware\VerifyZaloBridgeSecret;
 use App\Http\RateLimiting\MessagingRateLimiters;
 use App\Http\RequestSigning\ProtectedRoutes;
@@ -167,6 +169,11 @@ Route::post('/twilio/delivery_status', [TwilioWebhooksController::class, 'delive
 Route::post('/webhooks/zalo', ZaloWebhooksController::class)
     ->middleware(VerifyZaloBridgeSecret::class);
 // G1 Zalo webhook — END
+
+// Messenger cá nhân: sidecar Go (services/messenger-bridge) đẩy tin đến, sự kiện trên
+// tin và trạng thái phiên về đây; xác thực bằng secret dùng chung trên header.
+Route::post('/webhooks/messenger-personal', MessengerPersonalWebhooksController::class)
+    ->middleware(VerifyMessengerBridgeSecret::class);
 
 // Nhà cung cấp phòng media (cuộc gọi) báo vào/ra phòng; driver theo {provider} trong
 // config/calls.php tự kiểm chữ ký.

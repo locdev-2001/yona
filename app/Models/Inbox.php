@@ -7,6 +7,7 @@ use App\Channels\CapabilitySet;
 use App\Channels\ChannelPlatform;
 use App\Channels\DeclaresCapabilities;
 use App\Channels\DeclaresPlatform;
+use App\Channels\LabelsEveryoneMention;
 use App\Models\Concerns\Avatarable;
 use App\Models\Concerns\OutOfOffisable;
 use App\Models\Concerns\Reportable;
@@ -283,6 +284,14 @@ class Inbox extends Model
     public function isWebWidget(): bool
     {
         return $this->channel_type === 'Channel::WebWidget';
+    }
+
+    /** Chữ của mục nhắc cả nhóm khi kênh có chữ riêng; null là dùng chữ mặc định `All`. */
+    public function everyoneMentionLabel(): ?string
+    {
+        $channel = $this->channel;
+
+        return $channel instanceof LabelsEveryoneMention ? $channel->everyoneMentionLabel() : null;
     }
 
     /**

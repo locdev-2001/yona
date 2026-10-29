@@ -67,7 +67,6 @@ export const CHANNEL_CAPABILITIES = [
     'session_reauth',
     'session_disconnect',
     'health',
-    'settings_single_conversation',
     'settings_webhook',
     'settings_client_api',
     'settings_web_widget',

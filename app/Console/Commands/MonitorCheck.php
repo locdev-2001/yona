@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Services\MessengerPersonal\BridgeClient as MessengerBridgeClient;
 use App\Support\Alerts\OpsAlerter;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Cache;
@@ -23,10 +24,12 @@ class MonitorCheck extends Command
 {
     protected $signature = 'monitor:check';
 
-    protected $description = 'Kiểm tra Horizon, Reverb, zalo-bridge mỗi phút và cảnh báo khi đổi trạng thái';
+    protected $description = 'Kiểm tra Horizon, Reverb, zalo-bridge, messenger-bridge mỗi phút và cảnh báo khi đổi trạng thái';
 
-    public function __construct(private readonly OpsAlerter $alerter)
-    {
+    public function __construct(
+        private readonly OpsAlerter $alerter,
+        private readonly MessengerBridgeClient $messengerBridge,
+    ) {
         parent::__construct();
     }
 
@@ -35,6 +38,7 @@ class MonitorCheck extends Command
         $this->checkHorizon();
         $this->checkReverb();
         $this->checkZaloBridge();
+        $this->checkMessengerBridge();
 
         return self::SUCCESS;
     }
@@ -112,6 +116,21 @@ class MonitorCheck extends Command
         } catch (Throwable) {
             return false;
         }
+    }
+
+    // Máy chủ chưa cấu hình sidecar Messenger thì không giám sát: chưa triển khai không phải sự cố.
+    private function checkMessengerBridge(): void
+    {
+        if (! $this->messengerBridge->isConfigured()) {
+            return;
+        }
+
+        $this->reportTransition(
+            'messenger-bridge',
+            $this->messengerBridge->ping() !== null,
+            'messenger-bridge không phản hồi — tin Messenger cá nhân không gửi/nhận được.',
+            'messenger-bridge đã phản hồi trở lại.',
+        );
     }
 
     private function reportTransition(string $check, bool $healthy, string $downMessage, string $upMessage): void

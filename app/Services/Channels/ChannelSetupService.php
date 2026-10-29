@@ -81,9 +81,9 @@ class ChannelSetupService
             }
         }
 
-        // Kênh tự đặt tên (namesInboxItself) mà nhà cung cấp không trả tên thì dùng tên kênh.
-        if (blank($inbox->name) && method_exists($channel, 'name')) {
-            $inbox->forceFill(['name' => $channel->name()])->save();
+        // Kênh tự đặt tên (namesInboxItself) mà nhà cung cấp không trả tên thì dùng tên tự động.
+        if (blank($inbox->name)) {
+            $inbox->forceFill(['name' => app(InboxNaming::class)->automaticName($inbox)])->save();
         }
     }
 

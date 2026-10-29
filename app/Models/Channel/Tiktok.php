@@ -81,7 +81,6 @@ class Tiktok extends Model implements DeclaresCapabilities, DeclaresConnection, 
             Capability::ThreadingContinuous,
             Capability::SessionOauth,
             Capability::SessionReauth,
-            Capability::SettingsSingleConversation,
         )->withTextFormat(TextFormat::Plain);
     }
 }

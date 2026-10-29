@@ -26,6 +26,10 @@ const messages: Record<string, unknown> = {
             "zalo_bridge_down": {
                 "TITLE": "zalo-bridge không phản hồi",
                 "DESCRIPTION": "Bridge không trả lời thì tin Zalo không gửi, không nhận được."
+            },
+            "messenger_bridge_down": {
+                "TITLE": "messenger-bridge không phản hồi",
+                "DESCRIPTION": "Sidecar không trả lời thì tin Messenger cá nhân không gửi, không nhận được."
             }
         },
         "STATUS": {
@@ -967,6 +971,11 @@ const messages: Record<string, unknown> = {
                 "awaiting_login": "Chờ quét mã QR",
                 "bridge_unreachable": "Không gọi được cầu nối Zalo",
                 "circuit_open": "Zalo lỗi liên tiếp, tạm ngắt",
+                "messenger_session_lost": "Mất phiên Messenger cá nhân",
+                "messenger_disconnected": "Messenger cá nhân đã đăng xuất",
+                "messenger_awaiting_login": "Chờ đăng nhập Facebook",
+                "messenger_bridge_unreachable": "Không gọi được dịch vụ Messenger cá nhân",
+                "messenger_circuit_open": "Messenger cá nhân lỗi liên tiếp, tạm ngắt",
                 "reauthorization_required": "Cần đăng nhập lại",
                 "authorization_errors": "Lỗi xác thực (IMAP/SMTP, token)"
             },
@@ -5255,7 +5264,15 @@ const messages: Record<string, unknown> = {
             "reminder": "[Nhắc hẹn]",
             "call": "[Cuộc gọi]",
             "link": "[Liên kết]",
-            "friend_request": "[Lời mời kết bạn]"
+            "friend_request": "[Lời mời kết bạn]",
+            "view_once": "[Ảnh/video xem một lần, mở app trên điện thoại để xem]",
+            "unsupported": "[Tin nhắn chưa hiển thị được, mở app để xem]"
+        },
+        "unnamed_group": {
+            "one": ":first",
+            "two": ":first và :second",
+            "three": ":first, :second và :third",
+            "others": "{1} :names và :count người khác|[2,*] :names và :count người khác"
         }
     },
     "COPILOT": {
@@ -5751,6 +5768,34 @@ const messages: Record<string, unknown> = {
                 "missing_source_id": "Tin này chưa sang tới Zalo nên chưa đổi được ở đó.",
                 "emoji_not_supported": "Zalo không có biểu cảm này.",
                 "unknown": "Thao tác này chưa sang được Zalo (:detail)."
+            }
+        },
+        "messenger_personal": {
+            "send": {
+                "circuit_open": "Kết nối Messenger đang lỗi liên tục, tạm dừng gửi một lát.",
+                "session_lost": "Phiên Messenger đã hết, bạn đăng nhập lại Facebook trong cài đặt hộp thư giúp mình nhé.",
+                "missing_chat": "Không xác định được cuộc trò chuyện Messenger của hội thoại này.",
+                "bridge_unreachable": "Chưa gọi được dịch vụ Messenger, bạn thử lại sau ít phút.",
+                "secret_mismatch": "Dịch vụ Messenger đang sai cấu hình (khoá gửi tin), bạn báo quản trị viên giúp nhé.",
+                "rejected": "Messenger từ chối tin này (:detail).",
+                "media_fetch_failed": "Không đọc được tệp đính kèm để gửi (:detail).",
+                "bad_request": "Messenger không nhận tin này (:detail).",
+                "not_found": "Dịch vụ Messenger không tìm thấy phiên của hộp thư này, bạn đăng nhập lại giúp mình nhé.",
+                "session_cap_reached": "Máy chủ Messenger đang đầy, bạn thử lại sau nhé.",
+                "unknown": "Chưa gửi được tin này ra Messenger (:detail).",
+                "attachment_failed": "Không gửi được tệp \":filename\": :reason"
+            },
+            "action": {
+                "session_lost": "Phiên Messenger đã hết, bạn đăng nhập lại Facebook trong cài đặt hộp thư giúp mình nhé.",
+                "bridge_unreachable": "Chưa gọi được dịch vụ Messenger, bạn thử lại sau ít phút.",
+                "secret_mismatch": "Dịch vụ Messenger đang sai cấu hình (khoá gửi tin), bạn báo quản trị viên giúp nhé.",
+                "rejected": "Messenger từ chối thao tác này (:detail).",
+                "media_fetch_failed": "Không đọc được tệp từ dịch vụ Messenger (:detail).",
+                "bad_request": "Messenger không còn nhận ra tin này (:detail).",
+                "not_found": "Dịch vụ Messenger không tìm thấy phiên của hộp thư này.",
+                "session_cap_reached": "Máy chủ Messenger đang đầy, bạn thử lại sau nhé.",
+                "missing_source_id": "Tin này chưa sang tới Messenger nên chưa đổi được ở đó.",
+                "unknown": "Thao tác này chưa sang được Messenger (:detail)."
             }
         },
         "stickers": {
@@ -7795,8 +7840,7 @@ const messages: Record<string, unknown> = {
                 "DESC": "Kết nối một tài khoản Zalo cá nhân. Đăng nhập một lần bằng mã QR, mọi hội thoại sẽ đổ về hộp thư này.",
                 "CHANNEL_NAME": {
                     "LABEL": "Tên hộp thư",
-                    "PLACEHOLDER": "Nhập tên hộp thư (ví dụ: Zalo cửa hàng)",
-                    "ERROR": "Bạn hãy nhập tên hộp thư hợp lệ"
+                    "PLACEHOLDER": "Để trống hoặc nhập tên (ví dụ: Zalo cửa hàng)"
                 },
                 "SUBMIT_BUTTON": "Tạo kênh Zalo",
                 "API": {
@@ -7889,6 +7933,10 @@ const messages: Record<string, unknown> = {
                     "ZALO": {
                         "TITLE": "Zalo",
                         "DESCRIPTION": "Kết nối tài khoản Zalo cá nhân bằng mã QR"
+                    },
+                    "MESSENGER_PERSONAL": {
+                        "TITLE": "Messenger cá nhân",
+                        "DESCRIPTION": "Kết nối tài khoản Facebook cá nhân để nhận và trả lời tin Messenger"
                     }
                 }
             },
@@ -7949,6 +7997,91 @@ const messages: Record<string, unknown> = {
             "WHATSAPP_QR_INSTRUCTION": "Quét mã QR bên trên để thử nhanh hộp thư WhatsApp của bạn",
             "MESSENGER_QR_INSTRUCTION": "Quét mã QR bên trên để thử nhanh hộp thư Facebook Messenger của bạn",
             "TELEGRAM_QR_INSTRUCTION": "Quét mã QR bên trên để thử nhanh hộp thư Telegram của bạn"
+        },
+        "ACCOUNT_CHANNEL": {
+            "NAME_HINT": "Để trống để dùng tên tài khoản. Đổi tên tài khoản thì hộp thư đổi theo."
+        },
+        "MESSENGER_PERSONAL": {
+            "EVERYONE_MENTION_LABEL": "mọi người",
+            "NAME_STEP": {
+                "TITLE": "Tài khoản Messenger cá nhân",
+                "DESC": "Kết nối tài khoản Facebook của bạn. Đăng nhập một lần, tin Messenger 1-1 và nhóm sẽ đổ về hộp thư này.",
+                "CHANNEL_NAME": {
+                    "LABEL": "Tên hộp thư",
+                    "PLACEHOLDER": "Để trống hoặc nhập tên (ví dụ: Messenger của tôi)"
+                },
+                "SUBMIT_BUTTON": "Tạo kênh Messenger",
+                "API": {
+                    "ERROR_MESSAGE": "Chưa tạo được kênh Messenger, bạn hãy thử lại"
+                }
+            },
+            "CONNECT": {
+                "TITLE": "Đăng nhập Facebook",
+                "DESC": "Đăng nhập tài khoản Facebook một lần. Yona giữ phiên trên máy chủ để nhận tin cả khi bạn không mở Messenger."
+            },
+            "RISK": {
+                "TITLE": "Trước khi đăng nhập",
+                "UNOFFICIAL": "Kết nối dùng phiên đăng nhập không chính thức; Meta có thể yêu cầu xác minh hoặc tạm khoá tài khoản.",
+                "PASSWORD": "Mật khẩu chỉ dùng một lần để đăng nhập, Yona không lưu.",
+                "TWO_FACTOR": "Nên bật xác thực 2 lớp cho tài khoản Facebook.",
+                "ACCEPT": "Tôi hiểu, tiếp tục"
+            },
+            "FIELDS": {
+                "IDENTIFIER": "Email hoặc số điện thoại",
+                "PASSWORD": "Mật khẩu",
+                "CODE": "Mã xác thực",
+                "CODE_PLACEHOLDER": "Mã 6 số",
+                "REQUIRED": "Bạn hãy điền ô này"
+            },
+            "STEP": {
+                "STARTING": "Đang mở phiên đăng nhập…",
+                "SUBMITTING": "Đang chờ Meta phản hồi…",
+                "LOGIN": "Đăng nhập",
+                "CODE_TITLE": "Nhập mã xác thực 2 lớp",
+                "CODE_DESC": "Nhập mã 6 số từ ứng dụng xác thực hoặc tin nhắn Facebook gửi cho bạn.",
+                "CODE_SUBMIT": "Xác nhận",
+                "APPROVE_TITLE": "Duyệt đăng nhập trên thiết bị khác",
+                "APPROVE_DESC": "Mở Facebook/Messenger trên điện thoại và bấm Cho phép, rồi bấm Tiếp tục.",
+                "CONTINUE": "Tiếp tục",
+                "OTHER_TITLE": "Meta cần thêm thông tin",
+                "RESTART": "Đăng nhập lại từ đầu",
+                "CANCEL": "Huỷ"
+            },
+            "SUCCESS": {
+                "TITLE": "Đã kết nối",
+                "DESC": "Tin Messenger của tài khoản này sẽ đổ về hộp thư.",
+                "CONTINUE": "Tiếp tục"
+            },
+            "SESSION": {
+                "CONNECTED": "Đang kết nối",
+                "CONNECTED_SINCE": "Kết nối từ {time}",
+                "ACCOUNT_UNKNOWN": "Chưa gắn tài khoản Facebook nào",
+                "LOST": "Phiên Messenger của hộp thư này đã kết thúc. Bạn sẽ không nhận hay gửi được tin cho tới khi đăng nhập lại.",
+                "REASON": "Lý do: {reason}",
+                "PENDING": "Hộp thư này chưa đăng nhập Facebook.",
+                "DISCONNECTED": "Hộp thư này đã ngắt kết nối Messenger. Đăng nhập để gắn lại một tài khoản.",
+                "LOGIN": "Đăng nhập",
+                "RELOGIN": "Đăng nhập lại",
+                "DISCONNECT": "Ngắt kết nối",
+                "DISCONNECT_CONFIRM": "Ngắt kết nối tài khoản Facebook này? Hộp thư sẽ ngừng nhận tin Messenger cho tới khi bạn đăng nhập lại.",
+                "DISCONNECT_DONE": "Đã ngắt kết nối tài khoản Facebook.",
+                "DISCONNECT_BRIDGE_DOWN": "Đã ngắt trong Yona, nhưng dịch vụ Messenger chưa phản hồi — phiên bên Facebook có thể còn sống thêm ít phút.",
+                "SOURCE_LINK": "Mã nguồn kết nối Messenger"
+            },
+            "ERRORS": {
+                "BRIDGE_UNREACHABLE": "Kết nối Messenger đang tạm gián đoạn. Vui lòng thử lại sau ít phút, nếu vẫn lỗi hãy liên hệ hỗ trợ.",
+                "BRIDGE_REJECTED": "Kết nối Messenger chưa xử lý được yêu cầu. Vui lòng thử lại, nếu vẫn lỗi hãy liên hệ hỗ trợ.",
+                "LOGIN_MISSING": "Lượt đăng nhập này không còn. Hãy đăng nhập lại từ đầu.",
+                "ACCOUNT_MISMATCH": "Bạn vừa đăng nhập một tài khoản Facebook khác. Hộp thư này đang gắn tài khoản {name}.",
+                "ACCOUNT_IN_USE": "Tài khoản Facebook đó đã gắn vào hộp thư \"{inbox}\". Một tài khoản chỉ phục vụ được một hộp thư.",
+                "INVALID_CREDENTIALS": "Email/số điện thoại hoặc mật khẩu chưa đúng.",
+                "TWO_FACTOR_FAILED": "Mã xác thực chưa đúng hoặc đã hết hạn.",
+                "CHECKPOINT": "Meta yêu cầu xác minh tài khoản. Mở app Messenger hoàn tất xác minh rồi thử lại.",
+                "LOGIN_EXPIRED": "Lượt đăng nhập đã quá hạn. Hãy đăng nhập lại từ đầu.",
+                "RATE_LIMITED": "Meta đang tạm chặn đăng nhập vì thử nhiều lần. Bạn chờ ít phút rồi thử lại.",
+                "SESSION_CAP_REACHED": "Máy chủ Messenger đang phục vụ tối đa số tài khoản. Vui lòng thử lại sau hoặc liên hệ hỗ trợ.",
+                "BAD_REQUEST": "Thông tin gửi lên chưa hợp lệ. Bạn kiểm tra lại rồi thử lại."
+            }
         },
         "ZALO_SESSION": {
             "LOST": "Phiên Zalo của hộp thư này đã kết thúc. Bạn sẽ không nhận hay gửi được tin nhắn cho tới khi đăng nhập lại.",
@@ -8029,12 +8162,6 @@ const messages: Record<string, unknown> = {
             "ENABLE_CONTINUITY_VIA_EMAIL": {
                 "ENABLED": "Bật",
                 "DISABLED": "Không bật"
-            },
-            "LOCK_TO_SINGLE_CONVERSATION": {
-                "ENABLED": "Mở lại hội thoại cũ",
-                "DISABLED": "Tạo hội thoại mới",
-                "ENABLED_DESCRIPTION": "Khi liên hệ nhắn lại, hội thoại trước đó sẽ được mở lại.",
-                "DISABLED_DESCRIPTION": "Mỗi lần hội thoại trước đã kết thúc, hệ thống sẽ tạo hội thoại mới."
             },
             "ENABLE_HMAC": {
                 "LABEL": "Bật"
@@ -8318,8 +8445,6 @@ const messages: Record<string, unknown> = {
             "ENABLE_CONTINUITY_VIA_EMAIL": "Bật tiếp tục hội thoại qua email",
             "ENABLE_CONTINUITY_VIA_EMAIL_SUB_TEXT": "Khách đã rời widget thì trả lời của bạn được gửi tới email của khách, nếu khách đã để lại email.",
             "ENABLE_CONTINUITY_VIA_EMAIL_DISABLED_TEXT": "Tính năng này thuộc gói trả phí. Hãy nâng cấp để bật nối tiếp hội thoại qua email.",
-            "LOCK_TO_SINGLE_CONVERSATION": "Điều hướng hội thoại",
-            "LOCK_TO_SINGLE_CONVERSATION_SUB_TEXT": "Cấu hình cách tạo hội thoại cho liên hệ đã có",
             "INBOX_UPDATE_TITLE": "Cài đặt Hộp thư",
             "INBOX_UPDATE_SUB_TEXT": "Cập nhật cài đặt hộp thư của bạn",
             "AUTO_ASSIGNMENT_SUB_TEXT": "Tự động giao hội thoại mới cho nhân viên của hộp thư này.",
@@ -8747,6 +8872,7 @@ const messages: Record<string, unknown> = {
             "INSTAGRAM": "Instagram",
             "TIKTOK": "TikTok",
             "ZALO": "Zalo",
+            "MESSENGER_PERSONAL": "Messenger cá nhân",
             "VOICE": "Thoại"
         },
         "CONNECTION_CHECK": {

@@ -99,7 +99,6 @@ class Line extends Model implements DeclaresCapabilities, DeclaresConnection, De
             Capability::ThreadingContinuous,
             Capability::ConversationOutboundResume,
             Capability::SessionToken,
-            Capability::SettingsSingleConversation,
         )->withTextFormat(TextFormat::Plain);
     }
 }

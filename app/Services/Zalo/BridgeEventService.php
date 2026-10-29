@@ -14,9 +14,15 @@ use Illuminate\Support\Facades\Log;
  */
 class BridgeEventService
 {
+    private const SOCIAL_KIND_GROUP = 'group_event';
+
+    /** `GroupEventType.UPDATE_AVATAR` của zca-js. */
+    private const GROUP_EVENT_AVATAR_UPDATED = 'update_avatar';
+
     public function __construct(
         private readonly MessageEventService $messageEvents,
         private readonly TypingRelayService $typing,
+        private readonly ZaloContactProfile $contactProfiles,
     ) {}
 
     /** @param array<string, mixed> $payload */
@@ -33,6 +39,7 @@ class BridgeEventService
             'friend_request' => $this->handleFriendRequest($channel->inbox, $payload),
             'bridge_session' => $this->handleSession($channel, $payload),
             'relay_event' => $this->handleRelayEvent($channel->inbox, $payload),
+            'social_event' => $this->handleSocialEvent($channel->inbox, $payload),
             default => null,
         };
     }
@@ -90,6 +97,46 @@ class BridgeEventService
                 'message' => $message,
             ]),
         ]))->perform();
+    }
+
+    /**
+     * Sự kiện nhóm (đổi tên, đổi ảnh, vào/rời nhóm…) mang tên và ảnh hiện tại của nhóm:
+     * làm mới liên hệ nhóm ngay, không chờ tin kế. Nhóm chưa từng nhắn thì không mở gì.
+     * Lời mời kết bạn đã đi đường `friend_request` riêng.
+     *
+     * @param  array<string, mixed>  $payload
+     */
+    private function handleSocialEvent(Inbox $inbox, array $payload): void
+    {
+        $event = is_array($payload['event'] ?? null) ? $payload['event'] : [];
+        $group = is_array($event['data'] ?? null) ? $event['data'] : [];
+        $groupId = (string) ($payload['thread_id'] ?? '');
+
+        if (($payload['social_kind'] ?? null) !== self::SOCIAL_KIND_GROUP || $groupId === '' || ! array_key_exists('groupName', $group)) {
+            return;
+        }
+
+        $contact = $inbox->contactInboxes()->where('source_id', $groupId)->first()?->contact;
+
+        if ($contact === null) {
+            return;
+        }
+
+        $avatar = self::text($group['fullAvt'] ?? null) ?? self::text($group['avt'] ?? null);
+
+        $this->contactProfiles->refresh(
+            $contact,
+            $groupId,
+            self::text($group['groupName']),
+            $avatar,
+            isGroup: true,
+            avatarChanged: ($event['type'] ?? null) === self::GROUP_EVENT_AVATAR_UPDATED,
+        );
+    }
+
+    private static function text(mixed $value): ?string
+    {
+        return is_string($value) && trim($value) !== '' ? trim($value) : null;
     }
 
     /** @param array<string, mixed> $payload */

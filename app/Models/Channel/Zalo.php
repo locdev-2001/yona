@@ -10,6 +10,7 @@ use App\Channels\ConnectionMethod;
 use App\Channels\DeclaresCapabilities;
 use App\Channels\DeclaresConnection;
 use App\Channels\DeclaresPlatform;
+use App\Channels\NamesInboxAfterAccount;
 use App\Channels\TextFormat;
 use App\Models\Channel\Concerns\Channelable;
 use App\Models\Conversation;
@@ -26,7 +27,7 @@ use Illuminate\Database\Eloquent\Model;
  *
  * `id` của bản ghi này chính là `connection_id` mà bridge dùng làm khóa slot.
  */
-class Zalo extends Model implements DeclaresCapabilities, DeclaresConnection, DeclaresPlatform
+class Zalo extends Model implements DeclaresCapabilities, DeclaresConnection, DeclaresPlatform, NamesInboxAfterAccount
 {
     /**
      * Trần một tệp gửi ra Zalo. Đây là NGUỒN DUY NHẤT: chặn lúc đính kèm
@@ -91,6 +92,17 @@ class Zalo extends Model implements DeclaresCapabilities, DeclaresConnection, De
     public function name(): string
     {
         return 'Zalo';
+    }
+
+    public function accountDisplayName(): ?string
+    {
+        return filled($this->display_name) ? $this->display_name : null;
+    }
+
+    /** Tên hộp thư mặc định là tên tài khoản (InboxNaming), nên form tạo không bắt nhập tên. */
+    public static function namesInboxItself(): bool
+    {
+        return true;
     }
 
     public function platform(): ChannelPlatform
@@ -285,7 +297,6 @@ class Zalo extends Model implements DeclaresCapabilities, DeclaresConnection, De
             Capability::SessionReauth,
             Capability::SessionDisconnect,
             Capability::Health,
-            Capability::SettingsSingleConversation,
         )->withTextFormat(TextFormat::Plain)->withMaxAttachmentBytes(self::MAX_ATTACHMENT_BYTES);
     }
 }

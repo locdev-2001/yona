@@ -50,6 +50,14 @@ class InboxesSettingsController extends Controller
         ]);
     }
 
+    // Bước đăng nhập của kênh Messenger cá nhân — một bước, một URL như Zalo.
+    public function connectMessengerPersonal(Account $account, int $inboxId): Response
+    {
+        return Inertia::render('dashboard/settings/inboxes/channels/MessengerPersonalConnect', [
+            'inboxId' => $this->fetchInboxId($account, $inboxId),
+        ]);
+    }
+
     public function addAgents(Account $account, int $inboxId): Response
     {
         return Inertia::render('dashboard/settings/inboxes/AddAgents', [

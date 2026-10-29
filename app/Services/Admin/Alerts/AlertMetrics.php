@@ -5,6 +5,7 @@ namespace App\Services\Admin\Alerts;
 use App\Models\AlertRule;
 use App\Services\Admin\Alerts\Metrics\FailedJobsMetric;
 use App\Services\Admin\Alerts\Metrics\FailingChannelsMetric;
+use App\Services\Admin\Alerts\Metrics\MessengerBridgeMetric;
 use App\Services\Admin\Alerts\Metrics\QueueBacklogMetric;
 use App\Services\Admin\Alerts\Metrics\QueueWaitMetric;
 use App\Services\Admin\Alerts\Metrics\ZaloBridgeMetric;
@@ -36,6 +37,7 @@ final class AlertMetrics
             app(QueueBacklogMetric::class),
             app(QueueWaitMetric::class),
             app(ZaloBridgeMetric::class),
+            app(MessengerBridgeMetric::class),
         ];
     }
 
