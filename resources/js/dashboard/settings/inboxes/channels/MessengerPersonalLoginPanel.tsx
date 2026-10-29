@@ -11,7 +11,7 @@ import Loader from 'shared/components/loader/Loader';
 // Meta quyết định (sidecar trả `step`: ô nhập hoặc chờ duyệt trên thiết bị khác) → thẻ
 // tài khoản. Mật khẩu chỉ nằm trong state của form tới lúc gửi, không lưu ở đâu khác.
 
-type FieldType = 'text' | 'email' | 'phone' | 'password' | 'code';
+type FieldType = 'text' | 'email' | 'phone' | 'password' | 'code' | 'captcha';
 
 interface StepField {
     id: string;
@@ -25,6 +25,13 @@ interface LoginStep {
     step_id: string;
     instructions: string | null;
     fields: StepField[];
+    attachments?: StepAttachment[];
+}
+
+interface StepAttachment {
+    kind: 'image' | 'audio' | 'file';
+    mime_type: string;
+    data_base64: string;
 }
 
 interface LoginResponse {
@@ -70,6 +77,7 @@ function hasField(step: LoginStep, type: FieldType): boolean {
 function fieldLabel(step: LoginStep, field: StepField): string {
     if (field.type === 'password') return t('INBOX_MGMT.MESSENGER_PERSONAL.FIELDS.PASSWORD');
     if (field.type === 'code') return t('INBOX_MGMT.MESSENGER_PERSONAL.FIELDS.CODE');
+    if (field.type === 'captcha') return t('INBOX_MGMT.MESSENGER_PERSONAL.FIELDS.CAPTCHA');
     if (hasField(step, 'password')) return t('INBOX_MGMT.MESSENGER_PERSONAL.FIELDS.IDENTIFIER');
 
     return field.name;
@@ -81,6 +89,7 @@ const INPUT_ATTRIBUTES: Record<FieldType, { type: string; autoComplete: string; 
     phone: { type: 'text', autoComplete: 'username', inputMode: 'tel' },
     password: { type: 'password', autoComplete: 'current-password' },
     code: { type: 'text', autoComplete: 'one-time-code', inputMode: 'numeric' },
+    captcha: { type: 'text', autoComplete: 'off' },
 };
 
 // Mã gửi qua đâu tuỳ bước Meta chọn; bước khác (thường là email) dựa vào lời dặn của Meta.
@@ -103,6 +112,14 @@ function stepCopy(step: LoginStep): { title: string | null; description: string 
 
     if (hasField(step, 'password')) {
         return { title: null, description: null, submit: t('INBOX_MGMT.MESSENGER_PERSONAL.STEP.LOGIN') };
+    }
+
+    if (hasField(step, 'captcha')) {
+        return {
+            title: t('INBOX_MGMT.MESSENGER_PERSONAL.STEP.CAPTCHA_TITLE'),
+            description: t('INBOX_MGMT.MESSENGER_PERSONAL.STEP.CAPTCHA_DESC'),
+            submit: t('INBOX_MGMT.MESSENGER_PERSONAL.STEP.CODE_SUBMIT'),
+        };
     }
 
     if (hasField(step, 'code')) {
@@ -270,6 +287,20 @@ export default function MessengerPersonalLoginPanel({ accountId, inboxId, onConn
         <form className="flex flex-col gap-3 w-full max-w-md" onSubmit={event => void submit(event)} data-testid="messenger-personal-step">
             {copy.title ? <p className="text-n-slate-12 text-sm font-medium">{copy.title}</p> : null}
             {copy.description ? <p className="text-n-slate-11 text-sm leading-[1.65]">{copy.description}</p> : null}
+            {(step.attachments ?? []).map(attachment => {
+                const source = `data:${attachment.mime_type};base64,${attachment.data_base64}`;
+                if (attachment.kind === 'image') {
+                    return (
+                        <img
+                            key={source.slice(-32)}
+                            src={source}
+                            alt={t('INBOX_MGMT.MESSENGER_PERSONAL.STEP.CAPTCHA_IMAGE_ALT')}
+                            className="max-w-full rounded-lg border border-n-weak bg-white"
+                        />
+                    );
+                }
+                return attachment.kind === 'audio' ? <audio key={source.slice(-32)} controls src={source} className="w-full" /> : null;
+            })}
             {step.instructions && copy.description !== step.instructions ? (
                 <p className="text-n-slate-11 text-xs leading-[1.65]">
                     {t('INBOX_MGMT.MESSENGER_PERSONAL.STEP.META_SAYS', { message: step.instructions })}

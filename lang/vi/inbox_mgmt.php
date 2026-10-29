@@ -657,6 +657,7 @@ return [
             'PASSWORD' => 'Mật khẩu',
             'CODE' => 'Mã xác thực',
             'CODE_PLACEHOLDER' => 'Mã 6 số',
+            'CAPTCHA' => 'Ký tự trong ảnh',
             'REQUIRED' => 'Bạn hãy điền ô này',
         ],
         'STEP' => [
@@ -671,6 +672,9 @@ return [
             'CODE_DESC_OTHER' => 'Facebook vừa gửi mã xác thực cho bạn, thường qua email hoặc SMS. Lời nhắn của Meta bên dưới cho biết mã đi đâu.',
             'META_SAYS' => 'Meta: {message}',
             'CODE_SUBMIT' => 'Xác nhận',
+            'CAPTCHA_TITLE' => 'Xác minh bạn không phải máy',
+            'CAPTCHA_DESC' => 'Facebook yêu cầu gõ lại các ký tự trong ảnh. Khó đọc thì bấm nghe bản ghi âm.',
+            'CAPTCHA_IMAGE_ALT' => 'Ảnh captcha của Facebook',
             'APPROVE_TITLE' => 'Duyệt đăng nhập trên thiết bị khác',
             'APPROVE_DESC' => 'Mở Facebook/Messenger trên điện thoại và bấm Cho phép, rồi bấm Tiếp tục.',
             'CONTINUE' => 'Tiếp tục',

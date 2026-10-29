@@ -655,6 +655,7 @@ return [
             'PASSWORD' => 'Password',
             'CODE' => 'Verification code',
             'CODE_PLACEHOLDER' => '6-digit code',
+            'CAPTCHA' => 'Characters in the image',
             'REQUIRED' => 'Please fill in this field',
         ],
         'STEP' => [
@@ -669,6 +670,9 @@ return [
             'CODE_DESC_OTHER' => 'Facebook just sent you a verification code, usually by email or SMS. The note from Meta below says where it went.',
             'META_SAYS' => 'Meta: {message}',
             'CODE_SUBMIT' => 'Confirm',
+            'CAPTCHA_TITLE' => 'Prove you are not a robot',
+            'CAPTCHA_DESC' => 'Facebook asks you to type the characters in the image. If it is hard to read, play the audio version.',
+            'CAPTCHA_IMAGE_ALT' => 'Facebook captcha image',
             'APPROVE_TITLE' => 'Approve the login on another device',
             'APPROVE_DESC' => 'Open Facebook/Messenger on your phone and tap Allow, then press Continue.',
             'CONTINUE' => 'Continue',
