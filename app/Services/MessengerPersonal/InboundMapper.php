@@ -41,6 +41,10 @@ class InboundMapper
 
     private const KIND_UNSUPPORTED = 'unsupported';
 
+    private const CALL_DIRECTIONS = ['inbound', 'outbound'];
+
+    private const CALL_OUTCOMES = ['completed', 'missed', 'declined', 'canceled', 'busy'];
+
     /** @var array<string, AttachmentKind> `media[].kind` của hợp đồng → loại đính kèm của lõi */
     private const MEDIA_KINDS = [
         'image' => AttachmentKind::Image,
@@ -323,7 +327,7 @@ class InboundMapper
         return array_filter([
             ...$this->groupContext($chat, $payload, $content, $profile),
             'link_preview' => ($content['kind'] ?? null) === self::KIND_LINK ? $this->linkPreview($content['link'] ?? null) : null,
-            'call' => ($content['kind'] ?? null) === self::KIND_CALL ? $this->callLog($content, $fromMe) : null,
+            ...$this->cardAttributes($content, $fromMe),
         ], fn ($value) => $value !== null);
     }
 
@@ -416,20 +420,64 @@ class InboundMapper
     }
 
     /**
-     * Sidecar mô tả cuộc gọi bằng chuỗi trung tính (`missed_audio_call`, `video_call`…);
-     * thẻ cuộc gọi của lõi đọc `content_attributes.call` {media, direction, outcome}.
+     * `card_update`: thẻ đã ghi nhận nội dung mới (kết cục cuộc gọi…). Chỉ đè các khoá thẻ
+     * trong `content_attributes`; lưu tin là lõi tự phát `message.updated`.
+     *
+     * @param  array<string, mixed>  $payload
+     */
+    public function applyCardUpdate(Inbox $inbox, array $payload): void
+    {
+        $sourceId = trim((string) ($payload['target_source_id'] ?? ''));
+        $content = is_array($payload['content'] ?? null) ? $payload['content'] : [];
+        $cards = $this->cardAttributes($content, ($payload['from_me'] ?? false) === true);
+
+        if ($sourceId === '' || $cards === []) {
+            return;
+        }
+
+        $message = Message::query()->where('inbox_id', $inbox->id)->where('source_id', $sourceId)->first();
+
+        if ($message === null) {
+            return;
+        }
+
+        $message->content_attributes = [...($message->content_attributes ?? []), ...$cards];
+        $message->save();
+    }
+
+    /**
+     * Khoá thẻ trung tính bong bóng lõi đọc theo loại nội dung: `call` cho nhật ký cuộc gọi.
      *
      * @param  array<string, mixed>  $content
-     * @return array{media: string, direction: string, outcome: string|null}
+     * @return array<string, mixed>
+     */
+    private function cardAttributes(array $content, bool $fromMe): array
+    {
+        return array_filter([
+            'call' => ($content['kind'] ?? null) === self::KIND_CALL ? $this->callLog($content, $fromMe) : null,
+        ], fn ($value) => $value !== null);
+    }
+
+    /**
+     * Sidecar gửi `content.call` {direction, media, outcome, duration_seconds}; bản sidecar cũ chỉ
+     * có chuỗi mô tả (`missed_audio_call`, `video_call`…). Thẻ cuộc gọi của lõi đọc
+     * `content_attributes.call` {media, direction, outcome, duration_seconds}.
+     *
+     * @param  array<string, mixed>  $content
+     * @return array{media: string, direction: string, outcome: string|null, duration_seconds: int|null}
      */
     private function callLog(array $content, bool $fromMe): array
     {
+        $call = is_array($content['call'] ?? null) ? $content['call'] : [];
         $description = strtolower((string) ($content['text'] ?? ''));
+        $media = $call['media'] ?? (str_contains($description, 'video') ? 'video' : null);
+        $outcome = $call['outcome'] ?? (str_contains($description, 'missed') ? 'missed' : null);
 
         return [
-            'media' => str_contains($description, 'video') ? 'video' : 'voice',
-            'direction' => $fromMe ? 'outbound' : 'inbound',
-            'outcome' => str_contains($description, 'missed') ? 'missed' : null,
+            'media' => $media === 'video' ? 'video' : 'voice',
+            'direction' => in_array($call['direction'] ?? null, self::CALL_DIRECTIONS, true) ? $call['direction'] : ($fromMe ? 'outbound' : 'inbound'),
+            'outcome' => in_array($outcome, self::CALL_OUTCOMES, true) ? $outcome : null,
+            'duration_seconds' => is_int($call['duration_seconds'] ?? null) ? max(0, $call['duration_seconds']) : null,
         ];
     }
 

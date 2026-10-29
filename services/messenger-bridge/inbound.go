@@ -81,6 +81,7 @@ type messageContent struct {
 	Location *locationInfo `json:"location"`
 	Link     *linkInfo     `json:"link"`
 	Mentions []mention     `json:"mentions,omitempty"`
+	Call     *callInfo     `json:"call,omitempty"`
 }
 
 func newContent() *messageContent {
@@ -191,6 +192,14 @@ func (slot *Slot) senderPayload(senderID int64) map[string]any {
 		name, avatar = contact.name, contact.avatarURL
 	}
 	return map[string]any{"id": formatFBID(senderID), "name": nullableString(name), "avatar_url": nullableString(avatar)}
+}
+
+// emitCardUpdate báo nội dung mới của một thẻ đã báo trước đó (kết cục cuộc gọi, số phiếu thăm dò),
+// cùng hình dạng `content` của tin đến để Laravel đọc bằng một bộ bóc.
+func (slot *Slot) emitCardUpdate(chat Chat, targetSourceID string, fromMe bool, content *messageContent) {
+	slot.emitDurable("card_update", time.Now(), map[string]any{
+		"chat": chat, "target_source_id": targetSourceID, "from_me": fromMe, "content": content,
+	})
 }
 
 func (slot *Slot) emitEphemeral(eventType string, occurredAt time.Time, fields map[string]any) {
@@ -324,6 +333,7 @@ func (slot *Slot) handleRegularMessage(message *table.WrappedMessage, backfill b
 		return
 	}
 	chat := slot.directory.chatForThread(message.ThreadKey, message.SenderId, selfID)
+	slot.logRegularCards(sourceID, message.XMAAttachments)
 	err := slot.emitInbound(inboundMessage{
 		sourceID:  sourceID,
 		chat:      chat,
@@ -471,10 +481,26 @@ func (content *messageContent) absorbRegularCard(card *table.WrappedXMA) {
 	if link.URL == "" {
 		link.URL = card.PlayableUrl
 	}
-	if link.URL == "" && link.Title == nil {
+	if link.URL == "" {
+		// Thẻ không có gì để mở (nhật ký cuộc gọi, thông báo của Messenger): giữ lời của thẻ.
+		if content.Text == nil {
+			content.Text = optionalString(strings.TrimSpace(card.TitleText + "\n" + card.SubtitleText))
+		}
 		return
 	}
 	content.Link = link
+}
+
+// logRegularCards ghi loại của từng thẻ để nhận ra thẻ Messenger chưa đọc riêng (nhật ký cuộc gọi…).
+func (slot *Slot) logRegularCards(sourceID string, cards []*table.WrappedXMA) {
+	for _, card := range cards {
+		ctaType, nativeURL := "", ""
+		if card.CTA != nil {
+			ctaType, nativeURL = card.CTA.Type_, card.CTA.NativeUrl
+		}
+		slot.log.Info().Str("event", "regular_card").Str("source_id", sourceID).Str("cta_type", ctaType).Str("native_url", nativeURL).
+			Str("dataclass", card.XmaDataclass).Str("content_type", card.LoggingGenericXMAContentType).Str("title", card.TitleText).Send()
+	}
 }
 
 func looksLikeCoordinates(value string) bool {
@@ -874,48 +900,6 @@ func (slot *Slot) handleEncryptedTyping(presence *events.ChatPresence) {
 	slot.emitEphemeral("typing", time.Now(), map[string]any{
 		"chat": chat, "sender_id": formatFBID(jidFBID(presence.Sender)), "typing": presence.State == waTypes.ChatPresenceComposing,
 	})
-}
-
-func callMediaFromOffer(offer *events.CallOffer) string {
-	if offer.Data != nil && offer.Data.GetChildByTag("video").Tag != "" {
-		return callMediaVideo
-	}
-	return "audio"
-}
-
-// handleIncomingCall reports a ringing call once per call id as a call entry
-// in the conversation. Answering happens in the official app.
-func (slot *Slot) handleIncomingCall(meta waTypes.BasicCallMeta, media string) bool {
-	if !meta.GroupJID.IsEmpty() {
-		return true
-	}
-	callerID := jidFBID(meta.CallCreator)
-	if callerID == 0 || callerID == slot.selfID() {
-		return true
-	}
-	sourceID := encryptedSourceID("call-" + meta.CallID)
-	if !slot.reportedEvents.addIfAbsent(sourceID) {
-		return true
-	}
-	description := "incoming_audio_call"
-	if media == callMediaVideo {
-		description = "incoming_video_call"
-	}
-	content := newContent()
-	content.Kind = contentKindCall
-	content.Text = &description
-	timestamp := meta.Timestamp
-	if timestamp.IsZero() {
-		timestamp = time.Now()
-	}
-	if err := slot.emitInbound(inboundMessage{
-		sourceID: sourceID, chat: directChat(callerID), senderID: callerID, timestamp: timestamp, content: content,
-		backfill: !slot.offlineSyncDone.Load(),
-	}); err != nil {
-		slot.reportedEvents.forget(sourceID)
-		return false
-	}
-	return true
 }
 
 func firstNonEmpty(values ...string) string {

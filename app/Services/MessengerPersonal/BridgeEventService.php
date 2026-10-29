@@ -16,7 +16,7 @@ use App\Services\Conversations\TypingStatusManager;
 use Illuminate\Support\Facades\Log;
 
 /**
- * Điều phối một sự kiện webhook của sidecar theo `type`: tin đến và nhóm đổi hồ sơ qua InboundMapper,
+ * Điều phối một sự kiện webhook của sidecar theo `type`: tin đến, thẻ đổi nội dung và nhóm đổi hồ sơ qua InboundMapper,
  * biên nhận/cảm xúc/thu hồi/sửa qua MessageEventService, gõ phím qua ống "đang nhập…"
  * của lõi, trạng thái phiên vào bản ghi kênh.
  */
@@ -49,6 +49,7 @@ class BridgeEventService
         match ((string) ($payload['type'] ?? '')) {
             'inbound' => $this->inbound->write($inbox, $channel, $payload),
             'chat_updated' => $this->inbound->applyChatUpdate($inbox, $payload),
+            'card_update' => $this->inbound->applyCardUpdate($inbox, $payload),
             'receipt' => $this->apply($inbox, $this->receiptEvent($payload)),
             'reaction' => $this->apply($inbox, $this->reactionEvent($channel, $payload)),
             'unsend' => $this->apply($inbox, $this->targetOf($payload) === null ? null : new RecallEvent($this->targetOf($payload))),

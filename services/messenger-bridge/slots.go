@@ -104,6 +104,7 @@ type Slot struct {
 	messages        *messageIndex
 	sentIDs         *recentSet
 	reportedEvents  *recentSet
+	calls           *callTracker
 	lookups         *profileLookups
 	chatUpdates     *chatUpdates
 	// regularJobs runs regular-transport message handling off the socket read
@@ -240,6 +241,7 @@ func (manager *SlotManager) newSlot(connectionID int64, session *storedSession) 
 		messages:       newMessageIndex(),
 		sentIDs:        newRecentSet(sentIDMemory),
 		reportedEvents: newRecentSet(reportedEventMemory),
+		calls:          newCallTracker(),
 		lookups:        newProfileLookups(),
 		chatUpdates:    newChatUpdates(),
 		regularJobs:    make(chan func(), regularJobQueueSize),
@@ -649,10 +651,8 @@ func (slot *Slot) handleEncryptedEvent(generation uint64, event any) bool {
 		slot.handleEncryptedTyping(typed)
 	case *events.GroupInfo:
 		slot.handleEncryptedGroupInfo(typed)
-	case *events.CallOffer:
-		return slot.handleIncomingCall(typed.BasicCallMeta, callMediaFromOffer(typed))
-	case *events.CallOfferNotice:
-		return slot.handleIncomingCall(typed.BasicCallMeta, typed.Media)
+	case *events.CallOffer, *events.CallOfferNotice, *events.CallAccept, *events.CallReject, *events.CallTerminate:
+		return slot.handleCallEvent(typed)
 	case *events.UndecryptableMessage:
 		slot.log.Warn().Str("event", "e2ee_undecryptable").Str("source_id", encryptedSourceID(typed.Info.ID)).Send()
 	}
