@@ -17,11 +17,13 @@ interface NewChannelListProps {
     channels: ChannelConnection[];
 }
 
+const LISTED_CHANNEL_KEYS = ['zalo', 'messenger_personal', 'website', 'email', 'facebook'];
+
 export default function NewChannelList({ channels = [] }: NewChannelListProps) {
     const { currentAccount } = usePage<DashboardPageProps>().props;
     const accountId = currentAccount!.id;
 
-    const channelList: ChannelOption[] = channels.map(({ key, logo_url }) => ({
+    const channelList: ChannelOption[] = channels.filter(({ key }) => LISTED_CHANNEL_KEYS.includes(key)).map(({ key, logo_url }) => ({
         key,
         title: t(`INBOX_MGMT.ADD.AUTH.CHANNEL.${key.toUpperCase()}.TITLE`),
         description: t(`INBOX_MGMT.ADD.AUTH.CHANNEL.${key.toUpperCase()}.DESCRIPTION`),

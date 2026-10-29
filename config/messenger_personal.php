@@ -21,7 +21,7 @@ return [
     ],
 
     // Trang mã nguồn sidecar (nghĩa vụ AGPL). Rỗng thì giao diện ẩn liên kết.
-    'source_url' => env('MESSENGER_BRIDGE_SOURCE_URL', ''),
+    'source_url' => env('MESSENGER_BRIDGE_SOURCE_URL') ?: 'https://github.com/locdev-2001/yona-messenger-bridge',
 
     // Ngắt mạch khi Meta từ chối liên tiếp hoặc mất phiên, cùng luật với Zalo cá nhân.
     'circuit_breaker' => [
