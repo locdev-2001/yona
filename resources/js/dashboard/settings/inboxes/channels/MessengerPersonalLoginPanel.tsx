@@ -11,13 +11,14 @@ import Loader from 'shared/components/loader/Loader';
 // Meta quyết định (sidecar trả `step`: ô nhập hoặc chờ duyệt trên thiết bị khác) → thẻ
 // tài khoản. Mật khẩu chỉ nằm trong state của form tới lúc gửi, không lưu ở đâu khác.
 
-type FieldType = 'text' | 'email' | 'phone' | 'password' | 'code' | 'captcha';
+type FieldType = 'text' | 'email' | 'phone' | 'password' | 'code' | 'captcha' | 'select';
 
 interface StepField {
     id: string;
     name: string;
     type: FieldType;
     description: string | null;
+    options?: string[];
 }
 
 interface LoginStep {
@@ -90,6 +91,7 @@ const INPUT_ATTRIBUTES: Record<FieldType, { type: string; autoComplete: string; 
     password: { type: 'password', autoComplete: 'current-password' },
     code: { type: 'text', autoComplete: 'one-time-code', inputMode: 'numeric' },
     captcha: { type: 'text', autoComplete: 'off' },
+    select: { type: 'text', autoComplete: 'off' },
 };
 
 // Mã gửi qua đâu tuỳ bước Meta chọn; bước khác (thường là email) dựa vào lời dặn của Meta.
@@ -100,25 +102,78 @@ const CODE_DESCRIPTION_KEYS: Record<string, string> = {
     backup_code: 'CODE_DESC_BACKUP',
 };
 
+// Tên cách xác minh Meta trả về → khoá dịch. Duyệt trên thiết bị khác xếp cuối vì Facebook
+// có thể bắt chọn số đang hiện ở máy đăng nhập, mà Meta không gửi số đó sang Yona.
+const VERIFICATION_METHOD_KEYS: Record<string, string> = {
+    'Authentication app': 'APP',
+    'Text message': 'SMS',
+    WhatsApp: 'WHATSAPP',
+    Email: 'EMAIL',
+    'Backup code': 'BACKUP',
+    'Notification on another device': 'DEVICE',
+};
+const METHOD_LAST = 'Notification on another device';
+
+function orderedOptions(options: string[]): string[] {
+    return [...options].sort((a, b) => Number(a === METHOD_LAST) - Number(b === METHOD_LAST));
+}
+
+function optionLabel(option: string): { label: string; hint: string | null } {
+    const key = VERIFICATION_METHOD_KEYS[option];
+    if (!key) return { label: option, hint: null };
+    return {
+        label: t(`INBOX_MGMT.MESSENGER_PERSONAL.METHODS.${key}`),
+        hint: t(`INBOX_MGMT.MESSENGER_PERSONAL.METHODS.${key}_HINT`),
+    };
+}
+
 // Tiêu đề, mô tả, nhãn nút theo loại bước; bước lạ hiện nguyên lời dặn của sidecar.
-function stepCopy(step: LoginStep): { title: string | null; description: string | null; submit: string } {
+interface StepCopy {
+    title: string;
+    description: string | null;
+    note: string | null;
+    submit: string;
+    showMetaNote: boolean;
+}
+
+function stepCopy(step: LoginStep): StepCopy {
     if (step.type === 'display_and_wait') {
         return {
             title: t('INBOX_MGMT.MESSENGER_PERSONAL.STEP.APPROVE_TITLE'),
             description: t('INBOX_MGMT.MESSENGER_PERSONAL.STEP.APPROVE_DESC'),
-            submit: t('INBOX_MGMT.MESSENGER_PERSONAL.STEP.CONTINUE'),
+            note: t('INBOX_MGMT.MESSENGER_PERSONAL.STEP.APPROVE_NUMBER_NOTE'),
+            submit: t('INBOX_MGMT.MESSENGER_PERSONAL.STEP.APPROVE_SUBMIT'),
+            showMetaNote: true,
         };
     }
 
     if (hasField(step, 'password')) {
-        return { title: null, description: null, submit: t('INBOX_MGMT.MESSENGER_PERSONAL.STEP.LOGIN') };
+        return {
+            title: t('INBOX_MGMT.MESSENGER_PERSONAL.STEP.CREDENTIALS_TITLE'),
+            description: t('INBOX_MGMT.MESSENGER_PERSONAL.STEP.CREDENTIALS_DESC'),
+            note: null,
+            submit: t('INBOX_MGMT.MESSENGER_PERSONAL.STEP.LOGIN'),
+            showMetaNote: false,
+        };
+    }
+
+    if (hasField(step, 'select')) {
+        return {
+            title: t('INBOX_MGMT.MESSENGER_PERSONAL.STEP.METHOD_TITLE'),
+            description: t('INBOX_MGMT.MESSENGER_PERSONAL.STEP.METHOD_DESC'),
+            note: null,
+            submit: t('INBOX_MGMT.MESSENGER_PERSONAL.STEP.CONTINUE'),
+            showMetaNote: false,
+        };
     }
 
     if (hasField(step, 'captcha')) {
         return {
             title: t('INBOX_MGMT.MESSENGER_PERSONAL.STEP.CAPTCHA_TITLE'),
             description: t('INBOX_MGMT.MESSENGER_PERSONAL.STEP.CAPTCHA_DESC'),
+            note: null,
             submit: t('INBOX_MGMT.MESSENGER_PERSONAL.STEP.CODE_SUBMIT'),
+            showMetaNote: false,
         };
     }
 
@@ -126,14 +181,18 @@ function stepCopy(step: LoginStep): { title: string | null; description: string 
         return {
             title: t('INBOX_MGMT.MESSENGER_PERSONAL.STEP.CODE_TITLE'),
             description: t(`INBOX_MGMT.MESSENGER_PERSONAL.STEP.${CODE_DESCRIPTION_KEYS[step.step_id] ?? 'CODE_DESC_OTHER'}`),
+            note: null,
             submit: t('INBOX_MGMT.MESSENGER_PERSONAL.STEP.CODE_SUBMIT'),
+            showMetaNote: true,
         };
     }
 
     return {
         title: t('INBOX_MGMT.MESSENGER_PERSONAL.STEP.OTHER_TITLE'),
         description: step.instructions,
+        note: null,
         submit: t('INBOX_MGMT.MESSENGER_PERSONAL.STEP.CONTINUE'),
+        showMetaNote: false,
     };
 }
 
@@ -284,9 +343,16 @@ export default function MessengerPersonalLoginPanel({ accountId, inboxId, onConn
     const isSubmitting = phase === 'submitting';
 
     return (
-        <form className="flex flex-col gap-3 w-full max-w-md" onSubmit={event => void submit(event)} data-testid="messenger-personal-step">
-            {copy.title ? <p className="text-n-slate-12 text-sm font-medium">{copy.title}</p> : null}
-            {copy.description ? <p className="text-n-slate-11 text-sm leading-[1.65]">{copy.description}</p> : null}
+        <form
+            className="panel-surface flex flex-col gap-4 rounded-xl p-4 sm:p-5 w-full max-w-lg"
+            onSubmit={event => void submit(event)}
+            data-testid="messenger-personal-step"
+        >
+            <div className="flex flex-col gap-1">
+                <p className="text-n-slate-12 text-base font-medium">{copy.title}</p>
+                {copy.description ? <p className="text-n-slate-11 text-sm leading-[1.65]">{copy.description}</p> : null}
+            </div>
+
             {(step.attachments ?? []).map(attachment => {
                 const source = `data:${attachment.mime_type};base64,${attachment.data_base64}`;
                 if (attachment.kind === 'image') {
@@ -295,22 +361,59 @@ export default function MessengerPersonalLoginPanel({ accountId, inboxId, onConn
                             key={source.slice(-32)}
                             src={source}
                             alt={t('INBOX_MGMT.MESSENGER_PERSONAL.STEP.CAPTCHA_IMAGE_ALT')}
-                            className="max-w-full rounded-lg border border-n-weak bg-white"
+                            className="max-w-full self-start rounded-lg border border-n-weak bg-white"
                         />
                     );
                 }
                 return attachment.kind === 'audio' ? <audio key={source.slice(-32)} controls src={source} className="w-full" /> : null;
             })}
-            {step.instructions && copy.description !== step.instructions ? (
-                <p className="text-n-slate-11 text-xs leading-[1.65]">
+
+            {copy.showMetaNote && step.instructions ? (
+                <p className="rounded-lg bg-n-alpha-1 px-3 py-2 text-n-slate-11 text-xs leading-[1.65]">
                     {t('INBOX_MGMT.MESSENGER_PERSONAL.STEP.META_SAYS', { message: step.instructions })}
                 </p>
             ) : null}
 
             {step.type === 'user_input'
                 ? step.fields.map((field, index) => {
-                      const attributes = INPUT_ATTRIBUTES[field.type] ?? INPUT_ATTRIBUTES.text;
                       const invalid = touched && !(values[field.id] ?? '').trim();
+                      if (field.type === 'select') {
+                          return (
+                              <div key={field.id} role="radiogroup" className="flex flex-col gap-2">
+                                  {orderedOptions(field.options ?? []).map(option => {
+                                      const { label, hint } = optionLabel(option);
+                                      const selected = values[field.id] === option;
+                                      return (
+                                          <button
+                                              key={option}
+                                              type="button"
+                                              role="radio"
+                                              aria-checked={selected}
+                                              disabled={isSubmitting}
+                                              onClick={() => setValues(current => ({ ...current, [field.id]: option }))}
+                                              className={`flex items-start gap-3 rounded-lg border px-3 py-2.5 text-start transition-colors ${
+                                                  selected ? 'border-n-brand bg-n-brand/5' : 'border-n-weak hover:bg-n-alpha-1'
+                                              }`}
+                                          >
+                                              <span
+                                                  className={`mt-0.5 size-4 shrink-0 rounded-full border ${
+                                                      selected ? 'border-[5px] border-n-brand' : 'border-n-slate-8'
+                                                  }`}
+                                              />
+                                              <span className="flex min-w-0 flex-col gap-0.5">
+                                                  <span className="text-n-slate-12 text-sm font-medium">{label}</span>
+                                                  {hint ? <span className="text-n-slate-11 text-xs leading-[1.6]">{hint}</span> : null}
+                                              </span>
+                                          </button>
+                                      );
+                                  })}
+                                  {invalid ? (
+                                      <span className="text-n-ruby-11 text-xs">{t('INBOX_MGMT.MESSENGER_PERSONAL.FIELDS.CHOOSE_ONE')}</span>
+                                  ) : null}
+                              </div>
+                          );
+                      }
+                      const attributes = INPUT_ATTRIBUTES[field.type] ?? INPUT_ATTRIBUTES.text;
                       return (
                           <label key={field.id} className={`w-full ${invalid ? 'error' : ''}`}>
                               {fieldLabel(step, field)}
@@ -331,6 +434,8 @@ export default function MessengerPersonalLoginPanel({ accountId, inboxId, onConn
                   })
                 : null}
 
+            {copy.note ? <p className="text-n-amber-11 text-xs leading-[1.65]">{copy.note}</p> : null}
+
             {errorMessage ? <p className="text-n-ruby-11 text-sm leading-[1.65]">{errorMessage}</p> : null}
 
             {isSubmitting ? (
@@ -340,7 +445,7 @@ export default function MessengerPersonalLoginPanel({ accountId, inboxId, onConn
                 </div>
             ) : null}
 
-            <div className="sticky bottom-0 flex flex-wrap gap-2 bg-n-surface-app py-3 sm:static sm:bg-transparent sm:py-0">
+            <div className="flex flex-wrap gap-2">
                 <Button type="submit" solid blue isLoading={isSubmitting} label={copy.submit} className="flex-1 sm:flex-none" />
                 <Button type="button" faded slate label={t('INBOX_MGMT.MESSENGER_PERSONAL.STEP.CANCEL')} disabled={isSubmitting} onClick={cancel} />
             </div>

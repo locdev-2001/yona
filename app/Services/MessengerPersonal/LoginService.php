@@ -5,6 +5,7 @@ namespace App\Services\MessengerPersonal;
 use App\Models\Channel\MessengerPersonal;
 use App\Services\ProductEvents\ProductEventHooks;
 use Illuminate\Http\Client\Response;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 /**
@@ -61,7 +62,7 @@ class LoginService
 
         $channel->update(['login_token' => $loginToken, 'last_login_at' => now()]);
 
-        return ['ok' => true, 'step' => $response->json('step')];
+        return $this->stepResult($channel, $response);
     }
 
     /**
@@ -78,6 +79,12 @@ class LoginService
         $failure = $this->failureOf($response);
 
         if ($failure !== null) {
+            Log::warning('messenger_personal.login.failed', [
+                'connection_id' => $channel->connectionId(),
+                'error_code' => $failure['error_code'],
+                'bridge_message' => $response?->json('message'),
+            ]);
+
             if (in_array($failure['error_code'], self::TERMINAL_LOGIN_CODES, true)) {
                 $channel->update(['login_token' => null]);
             }
@@ -86,10 +93,39 @@ class LoginService
         }
 
         if ($response->json('done') === true) {
+            Log::info('messenger_personal.login.done', ['connection_id' => $channel->connectionId()]);
+
             return $this->finish($channel, (array) $response->json('account'));
         }
 
-        return ['ok' => true, 'step' => $response->json('step')];
+        return $this->stepResult($channel, $response);
+    }
+
+    /**
+     * Ghi lại hình dạng bước Meta đòi (không có giá trị người dùng nhập) để lần đăng nhập
+     * kẹt ở nhánh lạ đọc được từ log production.
+     *
+     * @return array<string, mixed>
+     */
+    private function stepResult(MessengerPersonal $channel, Response $response): array
+    {
+        $step = (array) $response->json('step');
+        $fields = is_array($step['fields'] ?? null) ? $step['fields'] : [];
+
+        Log::info('messenger_personal.login.step', [
+            'connection_id' => $channel->connectionId(),
+            'type' => $step['type'] ?? null,
+            'step_id' => $step['step_id'] ?? null,
+            'instructions' => $step['instructions'] ?? null,
+            'fields' => array_map(static fn ($field) => [
+                'id' => $field['id'] ?? null,
+                'type' => $field['type'] ?? null,
+                'options' => $field['options'] ?? [],
+            ], $fields),
+            'attachments' => count(is_array($step['attachments'] ?? null) ? $step['attachments'] : []),
+        ]);
+
+        return ['ok' => true, 'step' => $step];
     }
 
     /** @return array<string, mixed> */
