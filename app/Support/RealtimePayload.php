@@ -158,7 +158,7 @@ final class RealtimePayload
         return $content === null ? null : Str::limit($content, self::CONTENT_PREVIEW_LIMIT, '…');
     }
 
-    // MessagePreview.tsx / deletedMessageLabel() chỉ đọc 3 khoá này của content_attributes.
+    // MessagePreview.tsx / deletedMessageLabel() / previewSenderLabel() chỉ đọc các khoá này của content_attributes.
     /** @param array<string, mixed>|null $attributes @return array<string, mixed> */
     private static function compactContentAttributes(?array $attributes): array
     {
@@ -170,6 +170,14 @@ final class RealtimePayload
 
         if (! empty($attributes['deleted'])) {
             $compact['deleted'] = true;
+        }
+
+        if (! empty($attributes['external_echo'])) {
+            $compact['external_echo'] = true;
+        }
+
+        if (isset($attributes['sender']['name'])) {
+            $compact['sender'] = array_intersect_key($attributes['sender'], array_flip(['external_id', 'name']));
         }
 
         if (! empty($attributes['friend_request'])) {
