@@ -128,6 +128,9 @@ function optionLabel(option: string): { label: string; hint: string | null } {
     };
 }
 
+// Giữ khoảng cách giữa hai lần hỏi lại để không chạm giới hạn 20 lần mỗi phút của route.
+const MIN_POLL_GAP_MS = 4000;
+
 // Meta ghi con số phải bấm ngay trong lời dặn ("...then tap 86 to verify..."); không có số thì là duyệt thường.
 function approvalNumberOf(step: LoginStep): string | null {
     return step.instructions?.match(/\btap\s+(\d{1,3})\b/i)?.[1] ?? null;
@@ -229,11 +232,11 @@ export default function MessengerPersonalLoginPanel({ accountId, inboxId, onConn
         setPhase(next.type === 'display_and_wait' ? 'submitting' : 'step');
     };
 
+    // Bước chờ duyệt tự gửi ngay khi hiện; sidecar giữ yêu cầu tới khi có kết quả hoặc hết một lượt chờ.
     useEffect(() => {
         if (step?.type === 'display_and_wait' && phase === 'submitting') {
             void send(step, {});
         }
-        // Mỗi bước chờ duyệt tự gửi ngay khi hiện, và gửi lại khi sidecar báo vẫn đang chờ.
     }, [step]);
 
     const fail = (error: unknown, keepStep: boolean) => {
@@ -263,9 +266,10 @@ export default function MessengerPersonalLoginPanel({ accountId, inboxId, onConn
     const missingRequired = (current: LoginStep) =>
         current.type === 'user_input' && current.fields.some(field => !(values[field.id] ?? '').trim());
 
-    const send = async (current: LoginStep, input: Record<string, string>) => {
+    const send = async (current: LoginStep, input: Record<string, string>): Promise<void> => {
         setPhase('submitting');
         setErrorMessage(null);
+        const sentAt = Date.now();
         try {
             const result = await postJson<LoginResponse>(`${basePath}/login/submit`, { input });
             if (!loginOpenRef.current) return;
@@ -276,8 +280,9 @@ export default function MessengerPersonalLoginPanel({ accountId, inboxId, onConn
                 setPhase('done');
                 return;
             }
-            if (result.waiting && result.step) {
-                setStep({ ...result.step });
+            if (result.waiting) {
+                await new Promise(resolve => window.setTimeout(resolve, Math.max(0, MIN_POLL_GAP_MS - (Date.now() - sentAt))));
+                if (loginOpenRef.current) await send(current, {});
                 return;
             }
             const passedTitle = stepCopy(current).title;
