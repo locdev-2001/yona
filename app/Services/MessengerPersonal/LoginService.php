@@ -38,6 +38,9 @@ class LoginService
         'bad_request',
     ];
 
+    /** Tệp log riêng, ghi cả mức info dù production chỉ ghi cảnh báo vào log chung. */
+    private const LOG_CHANNEL = 'messenger_personal';
+
     /** Lượt đăng nhập ở sidecar đã chết: bỏ token để lần sau mở lượt mới. */
     private const TERMINAL_LOGIN_CODES = ['login_expired', self::ERROR_NO_LOGIN, 'checkpoint'];
 
@@ -79,7 +82,7 @@ class LoginService
         $failure = $this->failureOf($response);
 
         if ($failure !== null) {
-            Log::warning('messenger_personal.login.failed', [
+            Log::channel(self::LOG_CHANNEL)->warning('messenger_personal.login.failed', [
                 'connection_id' => $channel->connectionId(),
                 'error_code' => $failure['error_code'],
                 'bridge_message' => $response?->json('message'),
@@ -93,7 +96,7 @@ class LoginService
         }
 
         if ($response->json('done') === true) {
-            Log::info('messenger_personal.login.done', ['connection_id' => $channel->connectionId()]);
+            Log::channel(self::LOG_CHANNEL)->info('messenger_personal.login.done', ['connection_id' => $channel->connectionId()]);
 
             return $this->finish($channel, (array) $response->json('account'));
         }
@@ -112,7 +115,8 @@ class LoginService
         $step = (array) $response->json('step');
         $fields = is_array($step['fields'] ?? null) ? $step['fields'] : [];
 
-        Log::info('messenger_personal.login.step', [
+        Log::channel(self::LOG_CHANNEL)->info('messenger_personal.login.step', [
+            'waiting' => $response->json('waiting') === true,
             'connection_id' => $channel->connectionId(),
             'type' => $step['type'] ?? null,
             'step_id' => $step['step_id'] ?? null,
@@ -125,7 +129,7 @@ class LoginService
             'attachments' => count(is_array($step['attachments'] ?? null) ? $step['attachments'] : []),
         ]);
 
-        return ['ok' => true, 'step' => $step];
+        return ['ok' => true, 'step' => $step, 'waiting' => $response->json('waiting') === true];
     }
 
     /** @return array<string, mixed> */

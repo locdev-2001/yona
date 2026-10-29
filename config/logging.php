@@ -73,6 +73,14 @@ return [
             'replace_placeholders' => true,
         ],
 
+        'messenger_personal' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/messenger-personal.log'),
+            'level' => env('MESSENGER_PERSONAL_LOG_LEVEL', 'info'),
+            'days' => 14,
+            'replace_placeholders' => true,
+        ],
+
         'monthly' => [
             'driver' => 'monthly',
             'path' => storage_path('logs/laravel.log'),

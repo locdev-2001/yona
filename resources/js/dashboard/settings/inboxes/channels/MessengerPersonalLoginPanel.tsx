@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 
 import { t } from '../../../../i18n';
@@ -38,6 +38,7 @@ interface StepAttachment {
 interface LoginResponse {
     ok?: boolean;
     step?: LoginStep;
+    waiting?: boolean;
     done?: boolean;
     account?: { facebook_user_id: string | null; display_name: string | null; avatar_url: string | null };
 }
@@ -102,8 +103,8 @@ const CODE_DESCRIPTION_KEYS: Record<string, string> = {
     backup_code: 'CODE_DESC_BACKUP',
 };
 
-// Tên cách xác minh Meta trả về → khoá dịch. Duyệt trên thiết bị khác xếp cuối vì Facebook
-// có thể bắt chọn số đang hiện ở máy đăng nhập, mà Meta không gửi số đó sang Yona.
+// Tên cách xác minh Meta trả về → khoá dịch. Cách nhận mã xếp trước vì không phụ thuộc
+// việc có sẵn một thiết bị khác đang đăng nhập Facebook.
 const VERIFICATION_METHOD_KEYS: Record<string, string> = {
     'Authentication app': 'APP',
     'Text message': 'SMS',
@@ -127,6 +128,11 @@ function optionLabel(option: string): { label: string; hint: string | null } {
     };
 }
 
+// Meta ghi con số phải bấm ngay trong lời dặn ("...then tap 86 to verify..."); không có số thì là duyệt thường.
+function approvalNumberOf(step: LoginStep): string | null {
+    return step.instructions?.match(/\btap\s+(\d{1,3})\b/i)?.[1] ?? null;
+}
+
 // Tiêu đề, mô tả, nhãn nút theo loại bước; bước lạ hiện nguyên lời dặn của sidecar.
 interface StepCopy {
     title: string;
@@ -138,12 +144,15 @@ interface StepCopy {
 
 function stepCopy(step: LoginStep): StepCopy {
     if (step.type === 'display_and_wait') {
+        const approvalNumber = approvalNumberOf(step);
         return {
             title: t('INBOX_MGMT.MESSENGER_PERSONAL.STEP.APPROVE_TITLE'),
-            description: t('INBOX_MGMT.MESSENGER_PERSONAL.STEP.APPROVE_DESC'),
-            note: t('INBOX_MGMT.MESSENGER_PERSONAL.STEP.APPROVE_NUMBER_NOTE'),
+            description: approvalNumber
+                ? t('INBOX_MGMT.MESSENGER_PERSONAL.STEP.APPROVE_NUMBER_DESC', { number: approvalNumber })
+                : t('INBOX_MGMT.MESSENGER_PERSONAL.STEP.APPROVE_DESC'),
+            note: null,
             submit: t('INBOX_MGMT.MESSENGER_PERSONAL.STEP.APPROVE_SUBMIT'),
-            showMetaNote: true,
+            showMetaNote: approvalNumber === null,
         };
     }
 
@@ -203,6 +212,7 @@ export default function MessengerPersonalLoginPanel({ accountId, inboxId, onConn
     const [touched, setTouched] = useState(false);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [account, setAccount] = useState<LoginResponse['account'] | null>(null);
+    const [passedSteps, setPassedSteps] = useState<string[]>([]);
     const loginOpenRef = useRef(false);
 
     const basePath = `/api/v1/accounts/${accountId}/inboxes/${inboxId}/messenger_personal`;
@@ -216,8 +226,15 @@ export default function MessengerPersonalLoginPanel({ accountId, inboxId, onConn
         setStep(next);
         setValues({});
         setTouched(false);
-        setPhase('step');
+        setPhase(next.type === 'display_and_wait' ? 'submitting' : 'step');
     };
+
+    useEffect(() => {
+        if (step?.type === 'display_and_wait' && phase === 'submitting') {
+            void send(step, {});
+        }
+        // Mỗi bước chờ duyệt tự gửi ngay khi hiện, và gửi lại khi sidecar báo vẫn đang chờ.
+    }, [step]);
 
     const fail = (error: unknown, keepStep: boolean) => {
         const { code, message } = errorMessageOf(error);
@@ -233,6 +250,7 @@ export default function MessengerPersonalLoginPanel({ accountId, inboxId, onConn
     const start = async () => {
         setPhase('starting');
         setErrorMessage(null);
+        setPassedSteps([]);
         try {
             const result = await postJson<LoginResponse>(`${basePath}/login/start`, {});
             loginOpenRef.current = true;
@@ -245,17 +263,12 @@ export default function MessengerPersonalLoginPanel({ accountId, inboxId, onConn
     const missingRequired = (current: LoginStep) =>
         current.type === 'user_input' && current.fields.some(field => !(values[field.id] ?? '').trim());
 
-    const submit = async (event: FormEvent) => {
-        event.preventDefault();
-        if (!step) return;
-        setTouched(true);
-        if (missingRequired(step)) return;
-
+    const send = async (current: LoginStep, input: Record<string, string>) => {
         setPhase('submitting');
         setErrorMessage(null);
         try {
-            const input = step.type === 'user_input' ? values : {};
             const result = await postJson<LoginResponse>(`${basePath}/login/submit`, { input });
+            if (!loginOpenRef.current) return;
             if (result.done) {
                 loginOpenRef.current = false;
                 setAccount(result.account ?? null);
@@ -263,10 +276,26 @@ export default function MessengerPersonalLoginPanel({ accountId, inboxId, onConn
                 setPhase('done');
                 return;
             }
+            if (result.waiting && result.step) {
+                setStep({ ...result.step });
+                return;
+            }
+            const passedTitle = stepCopy(current).title;
+            if (!result.step || stepCopy(result.step).title !== passedTitle) {
+                setPassedSteps(steps => [...steps, passedTitle]);
+            }
             showStep(result.step);
         } catch (error) {
-            fail(error, true);
+            if (loginOpenRef.current) fail(error, true);
         }
+    };
+
+    const submit = async (event: FormEvent) => {
+        event.preventDefault();
+        if (!step) return;
+        setTouched(true);
+        if (missingRequired(step)) return;
+        await send(step, step.type === 'user_input' ? values : {});
     };
 
     const cancel = () => {
@@ -348,6 +377,17 @@ export default function MessengerPersonalLoginPanel({ accountId, inboxId, onConn
             onSubmit={event => void submit(event)}
             data-testid="messenger-personal-step"
         >
+            {passedSteps.length > 0 ? (
+                <ol className="flex flex-col gap-1.5 border-b border-n-weak pb-3 m-0 p-0 list-none">
+                    {passedSteps.map((title, index) => (
+                        <li key={`${index}-${title}`} className="flex items-center gap-2 text-n-slate-11 text-sm">
+                            <span className="i-lucide-circle-check size-4 shrink-0 text-n-teal-10" />
+                            <span className="truncate">{title}</span>
+                        </li>
+                    ))}
+                </ol>
+            ) : null}
+
             <div className="flex flex-col gap-1">
                 <p className="text-n-slate-12 text-base font-medium">{copy.title}</p>
                 {copy.description ? <p className="text-n-slate-11 text-sm leading-[1.65]">{copy.description}</p> : null}
@@ -367,6 +407,12 @@ export default function MessengerPersonalLoginPanel({ accountId, inboxId, onConn
                 }
                 return attachment.kind === 'audio' ? <audio key={source.slice(-32)} controls src={source} className="w-full" /> : null;
             })}
+
+            {step.type === 'display_and_wait' && approvalNumberOf(step) ? (
+                <div className="flex items-center justify-center rounded-xl bg-n-alpha-1 py-4">
+                    <span className="text-n-slate-12 text-5xl font-semibold tabular-nums">{approvalNumberOf(step)}</span>
+                </div>
+            ) : null}
 
             {copy.showMetaNote && step.instructions ? (
                 <p className="rounded-lg bg-n-alpha-1 px-3 py-2 text-n-slate-11 text-xs leading-[1.65]">
@@ -441,13 +487,28 @@ export default function MessengerPersonalLoginPanel({ accountId, inboxId, onConn
             {isSubmitting ? (
                 <div className="text-n-slate-11 text-sm flex items-center gap-2">
                     <Loader size={16} />
-                    <span>{t('INBOX_MGMT.MESSENGER_PERSONAL.STEP.SUBMITTING')}</span>
+                    <span>
+                        {t(
+                            step.type === 'display_and_wait'
+                                ? 'INBOX_MGMT.MESSENGER_PERSONAL.STEP.WAITING_APPROVAL'
+                                : 'INBOX_MGMT.MESSENGER_PERSONAL.STEP.SUBMITTING',
+                        )}
+                    </span>
                 </div>
             ) : null}
 
             <div className="flex flex-wrap gap-2">
-                <Button type="submit" solid blue isLoading={isSubmitting} label={copy.submit} className="flex-1 sm:flex-none" />
-                <Button type="button" faded slate label={t('INBOX_MGMT.MESSENGER_PERSONAL.STEP.CANCEL')} disabled={isSubmitting} onClick={cancel} />
+                {step.type === 'display_and_wait' && isSubmitting ? null : (
+                    <Button type="submit" solid blue isLoading={isSubmitting} label={copy.submit} className="flex-1 sm:flex-none" />
+                )}
+                <Button
+                    type="button"
+                    faded
+                    slate
+                    label={t('INBOX_MGMT.MESSENGER_PERSONAL.STEP.CANCEL')}
+                    disabled={isSubmitting && step.type !== 'display_and_wait'}
+                    onClick={cancel}
+                />
             </div>
         </form>
     );

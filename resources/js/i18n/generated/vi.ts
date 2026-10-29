@@ -8051,13 +8051,14 @@ const messages: Record<string, unknown> = {
                 "CAPTCHA_DESC": "Facebook yêu cầu gõ lại các ký tự trong ảnh. Khó đọc thì bấm nghe bản ghi âm.",
                 "CAPTCHA_IMAGE_ALT": "Ảnh captcha của Facebook",
                 "APPROVE_TITLE": "Xác nhận trên thiết bị khác",
-                "APPROVE_DESC": "Mở thông báo Facebook trên điện thoại hoặc máy tính đang đăng nhập Facebook, xác nhận đây là bạn, rồi bấm Tôi đã xác nhận.",
+                "APPROVE_DESC": "Facebook vừa gửi thông báo tới điện thoại hoặc máy tính đang đăng nhập Facebook của bạn. Mở thông báo và xác nhận đây là bạn. Yona tự tiếp tục khi bạn duyệt xong.",
                 "CREDENTIALS_TITLE": "Đăng nhập tài khoản Facebook",
                 "CREDENTIALS_DESC": "Dùng email hoặc số điện thoại và mật khẩu Facebook của bạn. Yona không lưu mật khẩu.",
                 "METHOD_TITLE": "Chọn cách xác minh",
                 "METHOD_DESC": "Facebook cần xác minh đây là bạn. Nên chọn cách nhận mã: ứng dụng xác thực, SMS hoặc email.",
-                "APPROVE_SUBMIT": "Tôi đã xác nhận",
-                "APPROVE_NUMBER_NOTE": "Nếu Facebook bắt chọn một con số đang hiện ở máy kia, Yona chưa hiện được số đó. Bấm Huỷ, đăng nhập lại và chọn cách nhận mã.",
+                "APPROVE_SUBMIT": "Kiểm tra lại",
+                "APPROVE_NUMBER_DESC": "Facebook vừa gửi thông báo tới điện thoại hoặc máy tính đang đăng nhập Facebook của bạn. Mở thông báo và bấm số {number}. Yona tự tiếp tục khi bạn duyệt xong.",
+                "WAITING_APPROVAL": "Đang chờ bạn xác nhận trên thiết bị kia…",
                 "CONTINUE": "Tiếp tục",
                 "OTHER_TITLE": "Meta cần thêm thông tin",
                 "RESTART": "Đăng nhập lại từ đầu",
@@ -8075,7 +8076,7 @@ const messages: Record<string, unknown> = {
                 "BACKUP": "Mã khôi phục",
                 "BACKUP_HINT": "Một trong các mã 8 số bạn đã lưu khi bật xác thực 2 lớp.",
                 "DEVICE": "Duyệt trên thiết bị khác",
-                "DEVICE_HINT": "Facebook có thể bắt chọn một con số Yona chưa hiện được. Nên chọn cách nhận mã."
+                "DEVICE_HINT": "Bấm vào thông báo Facebook trên điện thoại, có thể phải chọn đúng con số Yona hiện ra."
             },
             "SUCCESS": {
                 "TITLE": "Đã kết nối",
