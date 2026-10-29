@@ -238,6 +238,19 @@ còn nằm trong DB, không còn code dùng).
 gửi chữ thuần (`text`), lựa chọn (nếu loại tin có) thành danh sách đánh số
 (`text_numbered`). Log `messaging.delivery.degraded`.
 
+### Thẻ xem trước liên kết (mọi kênh, hai chiều)
+
+Khoá trung tính `content_attributes.link_preview` (`url`, `title`, `description`,
+`image`, `source`), một bong bóng dùng chung `bubbles/LinkPreview.tsx`. Driver có sẵn
+dữ liệu thẻ (Zalo, Messenger cá nhân) đổ vào khoá này; sau đó `LinkPreviewListener`
+(nghe `message.created`) hẹn `BuildLinkPreviewJob` (hàng `low`) cho mọi tin chữ có
+liên kết, kể cả tin gửi đi. `App\Services\LinkPreviews\LinkPreviewBuilder` lấp chỗ
+trống bằng Open Graph của trang (qua `SafeHttp`, đọc tới `</head>`, đệm theo URL 24
+giờ, hỏng thì 1 giờ), dữ liệu kênh luôn thắng, và lưu ảnh xem trước về đĩa `public`
+(`link-previews/<sha1 nội dung>`) vì URL CDN của nền tảng có hạn dùng. Trang không có
+ảnh lẫn `og:url` (tường đăng nhập) không thành thẻ. Bỏ qua kênh email, tin có đính kèm
+và tin đã là thẻ riêng của kênh.
+
 ### Sticker và kho sticker Yona
 
 Tin sticker là `content_type: sticker` với payload ở `content_attributes.sticker`;
