@@ -7326,7 +7326,8 @@ const messages: Record<string, unknown> = {
             "REGION": "New messages",
             "NOW": "just now",
             "CLOSE": "Close notification",
-            "OPEN_CONVERSATION": "Open conversation",
+            "DISMISS": "Dismiss",
+            "REPLY": "Reply",
             "OPEN_FRIENDS": "Open Friends"
         }
     },

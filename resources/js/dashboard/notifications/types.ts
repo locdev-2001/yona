@@ -18,6 +18,8 @@ export interface NotificationRecord {
     notification_type: NotificationType;
     push_message_title: string;
     push_message_body: string;
+    // Nội dung không kèm tên người gửi; bản ghi cũ trong bộ đệm có thể chưa có.
+    message_preview?: string;
     primary_actor_type: string;
     primary_actor_id: number;
     // Thông báo kết bạn (primary_actor_type 'Friendship') chỉ mang id và meta.sender.

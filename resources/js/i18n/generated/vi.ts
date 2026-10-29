@@ -7326,7 +7326,8 @@ const messages: Record<string, unknown> = {
             "REGION": "Tin mới",
             "NOW": "vừa xong",
             "CLOSE": "Đóng thông báo",
-            "OPEN_CONVERSATION": "Mở hội thoại",
+            "DISMISS": "Bỏ qua",
+            "REPLY": "Trả lời",
             "OPEN_FRIENDS": "Mở Bạn bè"
         }
     },

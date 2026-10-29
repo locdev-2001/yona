@@ -74,6 +74,7 @@ class NotificationResource extends JsonResource
             'notification_type' => $notification->typeName(),
             'push_message_title' => $notification->pushMessageTitle(),
             'push_message_body' => $notification->pushMessageBody(),
+            'message_preview' => $notification->pushMessagePreview(),
             'primary_actor_type' => $notification->primary_actor_type,
             'primary_actor_id' => $notification->primary_actor_id,
             'primary_actor' => match (true) {

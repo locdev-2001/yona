@@ -3,6 +3,7 @@
 namespace App\Services\Messages;
 
 use App\Builders\NotificationBuilder;
+use App\Models\Conversation;
 use App\Models\ConversationParticipant;
 use App\Models\Message;
 use App\Models\Notification;
@@ -37,7 +38,16 @@ class NewMessageNotificationService
             return;
         }
 
-        $this->build('assigned_conversation_new_message', $owner);
+        $this->build($this->opensConversation() ? 'conversation_assignment' : 'assigned_conversation_new_message', $owner);
+    }
+
+    // Tin đến đầu tiên báo "Hội thoại mới" kèm nội dung tin; hội thoại ở mục Yêu cầu chỉ báo tin đến.
+    private function opensConversation(): bool
+    {
+        $conversation = $this->message->conversation;
+
+        return $conversation->status !== Conversation::STATUS_PENDING
+            && ! $conversation->messages()->incoming()->where('id', '<', $this->message->id)->exists();
     }
 
     private function notifyParticipatingUsers(): void

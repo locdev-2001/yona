@@ -4,7 +4,6 @@ import { router, usePage } from '@inertiajs/react';
 
 import Avatar from 'dashboard/components-next/avatar/Avatar';
 import Button from 'dashboard/components-next/button/Button';
-import Logo from 'dashboard/components-next/icon/Logo';
 import { useRealtimeEvent } from 'dashboard/realtime/hooks';
 import { avatarSeed } from 'shared/avatar/avatarSeed';
 import type { DashboardPageProps } from 'dashboard/types';
@@ -39,6 +38,10 @@ const setToasts = (next: MessageToast[]) => {
     listeners.forEach(listener => listener());
 };
 const dismissToast = (id: number) => setToasts(toasts.filter(toast => toast.notification.id !== id));
+const isSameSubject = (toast: MessageToast, notification: NotificationRecord) =>
+    toast.notification.id === notification.id ||
+    (toast.notification.primary_actor_type === notification.primary_actor_type &&
+        toast.notification.primary_actor_id === notification.primary_actor_id);
 const subscribe = (listener: () => void) => {
     listeners.add(listener);
     return () => listeners.delete(listener);
@@ -76,7 +79,8 @@ export default function NewMessageToasts() {
             if (flags && !flags.has(`push_${notification.notification_type}`)) return;
         }
 
-        setToasts([{ notification, url }, ...toasts.filter(toast => toast.notification.id !== notification.id)].slice(0, MAX_VISIBLE_TOASTS));
+        // Mỗi hội thoại một hộp báo: tin sau thay hộp báo trước, không xếp chồng.
+        setToasts([{ notification, url }, ...toasts.filter(toast => !isSameSubject(toast, notification))].slice(0, MAX_VISIBLE_TOASTS));
     });
 
     if (!visibleToasts.length) return null;
@@ -84,7 +88,7 @@ export default function NewMessageToasts() {
     return createPortal(
         <section
             aria-label={t('INBOX.TOAST.REGION')}
-            className={`fixed z-[60] flex gap-2 w-80 max-md:inset-x-2 max-md:top-2 max-md:bottom-auto max-md:w-auto max-md:flex-col ${MESSAGE_TOAST_POSITION_CLASSES[position]}`}
+            className={`fixed z-[60] flex gap-2 w-[22rem] max-md:inset-x-2 max-md:top-2 max-md:bottom-auto max-md:w-auto max-md:flex-col ${MESSAGE_TOAST_POSITION_CLASSES[position]}`}
         >
             {visibleToasts.map(toast => (
                 <MessageToastCard key={toast.notification.id} toast={toast} />
@@ -95,10 +99,10 @@ export default function NewMessageToasts() {
 }
 
 function MessageToastCard({ toast }: { toast: MessageToast }) {
-    const { installationName } = usePage<DashboardPageProps>().props.globalConfig;
     const { notification, url } = toast;
     const sender = notification.primary_actor?.meta?.sender;
     const isFriendship = notification.primary_actor_type === 'Friendship';
+    const senderName = sender?.name ?? notification.push_message_title;
     const timer = useRef<number | undefined>(undefined);
     const close = () => dismissToast(notification.id);
     const startTimer = () => {
@@ -120,42 +124,42 @@ function MessageToastCard({ toast }: { toast: MessageToast }) {
     return (
         <div
             role="status"
-            className="overlay-surface shadow-overlay rounded-xl p-3 flex flex-col gap-2 min-w-0"
+            className="overlay-surface shadow-overlay rounded-xl p-4 flex items-start gap-3 min-w-0"
             onMouseEnter={() => window.clearTimeout(timer.current)}
             onMouseLeave={startTimer}
         >
-            <div className="flex items-center gap-1.5 min-w-0 text-xs text-n-slate-11">
-                <Logo className="size-4" />
-                <span className="font-medium text-n-slate-12">{installationName}</span>
-                <span className="truncate">· {t('INBOX.TOAST.NOW')}</span>
-                <button
-                    type="button"
-                    aria-label={t('INBOX.TOAST.CLOSE')}
-                    title={t('INBOX.TOAST.CLOSE')}
-                    className="ms-auto grid place-content-center size-6 shrink-0 rounded-md text-n-slate-11 hover:bg-n-surface-hover hover:text-n-slate-12"
-                    onClick={close}
-                >
-                    <span className="i-lucide-x size-3.5" aria-hidden="true" />
-                </button>
-            </div>
-            <button type="button" className="flex items-start gap-2.5 min-w-0 text-start" onClick={open}>
-                <Avatar
-                    seed={avatarSeed(isFriendship ? 'user' : 'contact', sender?.id)}
-                    name={sender?.name ?? notification.push_message_title}
-                    src={sender?.thumbnail}
-                    size={36}
-                    roundedFull
-                />
-                <span className="flex flex-col min-w-0 gap-0.5">
-                    <span className="text-sm font-medium truncate text-n-slate-12">{sender?.name ?? notification.push_message_title}</span>
-                    <span className="text-sm line-clamp-2 text-n-slate-11">{notification.push_message_body}</span>
-                </span>
-            </button>
-            {url ? (
-                <div className="flex justify-end">
-                    <Button sm faded blue label={t(isFriendship ? 'INBOX.TOAST.OPEN_FRIENDS' : 'INBOX.TOAST.OPEN_CONVERSATION')} onClick={open} />
+            <Avatar
+                seed={avatarSeed(isFriendship ? 'user' : 'contact', sender?.id)}
+                name={senderName}
+                src={sender?.thumbnail}
+                size={40}
+                roundedFull
+            />
+            <div className="flex flex-col flex-1 min-w-0">
+                <div className="flex items-center gap-2 min-w-0 h-6">
+                    <span className="text-sm font-semibold truncate text-n-slate-12">{senderName}</span>
+                    <span className="w-px h-3.5 shrink-0 bg-n-strong" aria-hidden="true" />
+                    <span className="text-sm shrink-0 text-n-slate-11">{t('INBOX.TOAST.NOW')}</span>
+                    <button
+                        type="button"
+                        aria-label={t('INBOX.TOAST.CLOSE')}
+                        title={t('INBOX.TOAST.CLOSE')}
+                        className="grid ms-auto -me-1.5 size-7 shrink-0 place-content-center rounded-md text-n-slate-11 hover:bg-n-surface-hover hover:text-n-slate-12"
+                        onClick={close}
+                    >
+                        <span className="i-lucide-x size-4" aria-hidden="true" />
+                    </button>
                 </div>
-            ) : null}
+                <p className="text-sm line-clamp-2 text-n-slate-11 break-words">
+                    {notification.message_preview ?? notification.push_message_body}
+                </p>
+                <div className="flex items-center gap-2 mt-3">
+                    <Button sm outline slate label={t('INBOX.TOAST.DISMISS')} onClick={close} />
+                    {url ? (
+                        <Button sm solid blue label={t(isFriendship ? 'INBOX.TOAST.OPEN_FRIENDS' : 'INBOX.TOAST.REPLY')} onClick={open} />
+                    ) : null}
+                </div>
+            </div>
         </div>
     );
 }

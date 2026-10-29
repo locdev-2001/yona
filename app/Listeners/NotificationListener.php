@@ -27,11 +27,6 @@ class NotificationListener extends BaseListener
         }
     }
 
-    public function conversationCreated(DomainEvent $event): void
-    {
-        $this->notifyInboxOwner($event);
-    }
-
     public function conversationBotHandoff(DomainEvent $event): void
     {
         $this->notifyInboxOwner($event);
@@ -102,9 +97,9 @@ class NotificationListener extends BaseListener
         (new NewMessageNotificationService($message))->perform();
     }
 
-    // Báo hội thoại mới bằng loại conversation_assignment: tuỳ chọn email/push đã lưu của mọi
-    // người dùng đang bật đúng loại này (trước đây đến qua tự gán cho chủ hộp thư). Chủ hộp thư
-    // tự mở hội thoại thì không báo.
+    // Bot chuyển hội thoại cho người: báo chủ hộp thư bằng loại conversation_assignment ("Hội thoại
+    // mới"), loại mà tuỳ chọn email/push mặc định đang bật. Hội thoại mới thật sự được báo ở tin đến
+    // đầu tiên (NewMessageNotificationService), vì lúc tạo hội thoại chưa có tin để làm nội dung.
     private function notifyInboxOwner(DomainEvent $event): void
     {
         [$conversation, $account] = $this->extractConversationAndAccount($event);

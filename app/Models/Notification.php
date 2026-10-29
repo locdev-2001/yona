@@ -40,6 +40,18 @@ class Notification extends Model
     // Số từ giữ lại trong nội dung xem trước (content.truncate_words(10)).
     private const PREVIEW_WORD_LIMIT = 10;
 
+    // Tin dùng làm nội dung xem trước của từng loại thông báo.
+    private const PREVIEW_MESSAGE_SOURCES = [
+        'conversation_creation' => 'first',
+        'sla_missed_first_response' => 'first',
+        'assigned_conversation_new_message' => 'secondary_actor',
+        'participating_conversation_new_message' => 'secondary_actor',
+        'conversation_mention' => 'secondary_actor',
+        'conversation_assignment' => 'latest',
+        'sla_missed_next_response' => 'latest',
+        'sla_missed_resolution' => 'latest',
+    ];
+
     protected $fillable = [
         'account_id',
         'user_id',
@@ -191,6 +203,7 @@ class Notification extends Model
             // cùng nội dung, FE đọc push_message_body.
             'push_message_title' => $this->pushMessageBody(),
             'push_message_body' => $this->pushMessageBody(),
+            'message_preview' => $this->pushMessagePreview(),
         ];
     }
 
@@ -227,21 +240,46 @@ class Notification extends Model
 
     public function pushMessageBody(): string
     {
+        if ($this->isFriendshipType()) {
+            return $this->friendshipCounterpart()?->availableName().': '.$this->pushMessagePreview();
+        }
+
+        if (! array_key_exists($this->typeName(), self::PREVIEW_MESSAGE_SOURCES)) {
+            return '';
+        }
+
+        return ($this->previewMessage()?->sender?->name ?? '').': '.$this->pushMessagePreview();
+    }
+
+    // Nội dung không kèm tên người gửi, cho chỗ đã hiện tên riêng (hộp báo tin mới).
+    public function pushMessagePreview(): string
+    {
+        if ($this->isFriendshipType()) {
+            return __("notifications.friendship.{$this->typeName()}");
+        }
+
+        return array_key_exists($this->typeName(), self::PREVIEW_MESSAGE_SOURCES)
+            ? $this->messageContent($this->previewMessage())
+            : '';
+    }
+
+    private function isFriendshipType(): bool
+    {
+        return in_array($this->typeName(), ['friend_request', 'friend_request_accepted'], true);
+    }
+
+    private function previewMessage(): ?Message
+    {
         $conversation = $this->conversation();
 
-        return match ($this->typeName()) {
-            'conversation_creation',
-            'sla_missed_first_response' => $this->messageBody($conversation?->firstMessage),
-            'assigned_conversation_new_message',
-            'participating_conversation_new_message',
-            'conversation_mention' => $this->messageBody($this->secondaryActor),
-            'conversation_assignment',
-            'sla_missed_next_response',
-            'sla_missed_resolution' => $this->messageBody($this->lastIncomingOrOutgoingMessage($conversation)),
-            'friend_request',
-            'friend_request_accepted' => $this->friendshipCounterpart()?->availableName().': '.__("notifications.friendship.{$this->typeName()}"),
-            default => '',
+        $actor = match (self::PREVIEW_MESSAGE_SOURCES[$this->typeName()] ?? null) {
+            'first' => $conversation?->firstMessage,
+            'secondary_actor' => $this->secondaryActor,
+            'latest' => $this->lastIncomingOrOutgoingMessage($conversation),
+            default => null,
         };
+
+        return $actor instanceof Message ? $actor : null;
     }
 
     // Người còn lại của lời mời kết bạn (secondary_actor).
@@ -259,14 +297,6 @@ class Notification extends Model
         }
 
         return $conversation->lastIncomingMessage ?? $conversation->lastOutgoingMessage;
-    }
-
-    private function messageBody(mixed $actor): string
-    {
-        $message = $actor instanceof Message ? $actor : null;
-        $senderName = $message?->sender?->name ?? '';
-
-        return "$senderName: ".$this->messageContent($message);
     }
 
     private function messageContent(?Message $message): string
