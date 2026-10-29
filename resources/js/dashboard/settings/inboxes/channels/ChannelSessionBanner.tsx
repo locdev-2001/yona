@@ -30,6 +30,11 @@ const SESSION_BANNERS: Record<string, ComponentType<SessionBannerProps>> = {
     'Channel::MessengerPersonal': MessengerPersonalSessionBanner,
 };
 
+/** Kênh có biểu ngữ phiên riêng thì cảnh báo kết nối chung không nhắc lại ở tab cấu hình. */
+export function hasChannelSessionBanner(inbox: Pick<Inbox, 'channel_type'>): boolean {
+    return inbox.channel_type in SESSION_BANNERS;
+}
+
 export default function ChannelSessionBanner({ accountId, inbox }: SessionBannerProps) {
     const Banner = SESSION_BANNERS[inbox.channel_type];
 

@@ -129,16 +129,18 @@ export default function MessengerPersonalSessionBanner({ accountId, inbox }: Mes
 
     return (
         <div className="mb-4 flex flex-col gap-3" data-testid="messenger-personal-session">
-            <Banner
-                colorScheme={isSessionLost ? 'alert' : 'warning'}
-                bannerMessage={message}
-                hasActionButton={!isLoggingIn}
-                actionButtonLabel={t(
-                    isSessionLost ? 'INBOX_MGMT.MESSENGER_PERSONAL.SESSION.RELOGIN' : 'INBOX_MGMT.MESSENGER_PERSONAL.SESSION.LOGIN',
-                )}
-                onPrimaryAction={() => setLoggingIn(true)}
-            />
-            {isSessionLost && reason ? (
+            {isLoggingIn ? null : (
+                <Banner
+                    colorScheme={isSessionLost ? 'alert' : 'warning'}
+                    bannerMessage={message}
+                    hasActionButton
+                    actionButtonLabel={t(
+                        isSessionLost ? 'INBOX_MGMT.MESSENGER_PERSONAL.SESSION.RELOGIN' : 'INBOX_MGMT.MESSENGER_PERSONAL.SESSION.LOGIN',
+                    )}
+                    onPrimaryAction={() => setLoggingIn(true)}
+                />
+            )}
+            {isSessionLost && reason && !isLoggingIn ? (
                 <p className="text-n-slate-11 text-xs">{t('INBOX_MGMT.MESSENGER_PERSONAL.SESSION.REASON', { reason })}</p>
             ) : null}
             {loginPanel}

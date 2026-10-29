@@ -16,6 +16,7 @@ import CollaboratorsPage from './settingsPage/CollaboratorsPage';
 import CustomerSatisfactionPage from './settingsPage/CustomerSatisfactionPage';
 import ConfigurationPage from './settingsPage/ConfigurationPage';
 import InboxConnectionAlert from './components/InboxConnectionAlert';
+import { hasChannelSessionBanner } from './channels/ChannelSessionBanner';
 import BotConfigurationPage from './settingsPage/BotConfigurationPage';
 import { confirmDiscardUnsavedChanges } from './settingsDraft/useUnsavedChangesGuard';
 import { DEFAULT_INBOX_SETTINGS_TAB, inboxSettingsTabKeys } from './inboxSettingsTabs';
@@ -109,15 +110,17 @@ export default function InboxShow({ inboxId, tab = null, senderEmailAddress, tim
                     </SettingIntroBanner>
                     <section className="w-full overflow-auto py-8">
                         <div className="max-w-7xl mx-auto w-full">
-                            <InboxConnectionAlert
-                                inbox={inbox}
-                                className="mx-6 mb-6"
-                                onFixSettings={
-                                    tabKeys.includes('configuration') && selectedTabKey !== 'configuration'
-                                        ? () => onTabChange(tabKeys.indexOf('configuration'))
-                                        : undefined
-                                }
-                            />
+                            {selectedTabKey === DEFAULT_INBOX_SETTINGS_TAB && hasChannelSessionBanner(inbox) ? null : (
+                                <InboxConnectionAlert
+                                    inbox={inbox}
+                                    className="mx-6 mb-6"
+                                    onFixSettings={
+                                        tabKeys.includes('configuration') && selectedTabKey !== 'configuration'
+                                            ? () => onTabChange(tabKeys.indexOf('configuration'))
+                                            : undefined
+                                    }
+                                />
+                            )}
                             {selectedTabKey === DEFAULT_INBOX_SETTINGS_TAB ? (
                                 <InboxSettingsPage inbox={inbox} senderEmailAddress={senderEmailAddress} onInboxUpdated={setInbox} />
                             ) : null}
