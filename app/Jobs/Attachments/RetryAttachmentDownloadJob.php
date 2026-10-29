@@ -20,8 +20,11 @@ use Illuminate\Support\Facades\Log;
  */
 class RetryAttachmentDownloadJob extends ApplicationJob
 {
-    /** Độ trễ trước mỗi lượt tải lại, tính từ lượt hỏng ngay trước nó. */
-    public const RETRY_DELAYS_SECONDS = [30, 120, 300];
+    /**
+     * Độ trễ trước mỗi lượt tải lại, tính từ lượt hỏng ngay trước nó. CDN của kênh có lúc
+     * trả 5xx cho ảnh vừa gửi hàng chục phút liền, nên các lượt cuối giãn tới vài giờ.
+     */
+    public const RETRY_DELAYS_SECONDS = [30, 120, 300, 1800, 7200, 21600];
 
     public function __construct(
         public readonly Attachment $attachment,
