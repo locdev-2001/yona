@@ -16,7 +16,7 @@ function LinkPreviewCard({ parts, preview }: { parts: LinkPreviewParts; preview:
         <a
             href={parts.url}
             {...EXTERNAL_LINK_PROPS}
-            className="block max-w-[320px] overflow-hidden rounded-lg border border-n-container bg-n-solid-2"
+            className="block w-80 max-w-full overflow-hidden rounded-lg border border-n-container bg-n-solid-2"
             data-testid="link-preview-card"
         >
             {preview.image ? (
