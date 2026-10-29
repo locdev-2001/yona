@@ -22,6 +22,7 @@
 /public/storage
 /storage/*.key
 /storage/pail
+/storage/messenger-bridge/
 /vendor
 _ide_helper.php
 Homestead.json
