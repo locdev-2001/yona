@@ -6,10 +6,10 @@ require (
 	github.com/coder/websocket v1.8.15
 	github.com/mutecomm/go-sqlcipher/v4 v4.4.2
 	github.com/rs/zerolog v1.35.1
-	go.mau.fi/mautrix-meta v0.2610.0
-	go.mau.fi/whatsmeow v0.0.0-20261014094007-f16f9ca30d6a
+	go.mau.fi/mautrix-meta v0.2610.1-0.20261029231756-3aa2b79a721d
+	go.mau.fi/whatsmeow v0.0.0-20261027104441-1eec1136a50b
 	google.golang.org/protobuf v1.36.12
-	maunium.net/go/mautrix v0.32.0
+	maunium.net/go/mautrix v0.32.1-0.20261027121747-b5763ae4f269
 )
 
 require (
@@ -34,7 +34,7 @@ require (
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/petermattis/goid v0.0.0-20260918085751-abfca077860b // indirect
 	github.com/quic-go/qpack v0.6.0 // indirect
-	github.com/quic-go/quic-go v0.61.0 // indirect
+	github.com/quic-go/quic-go v0.64.1 // indirect
 	github.com/refraction-networking/utls v1.8.2 // indirect
 	github.com/rs/xid v1.6.0 // indirect
 	github.com/tidwall/gjson v1.20.0 // indirect
@@ -46,7 +46,7 @@ require (
 	github.com/vmihailenco/tagparser/v2 v2.0.0 // indirect
 	github.com/yuin/goldmark v1.8.6 // indirect
 	go.mau.fi/libsignal v0.2.2 // indirect
-	go.mau.fi/util v0.11.0 // indirect
+	go.mau.fi/util v0.11.1-0.20261026174803-9e6b9c87cfbc // indirect
 	go.mau.fi/zeroconfig v0.2.0 // indirect
 	golang.org/x/crypto v0.58.0 // indirect
 	golang.org/x/exp v0.0.0-20261014143641-f0251eb4aa3e // indirect
