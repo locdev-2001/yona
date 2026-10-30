@@ -46,6 +46,7 @@ use App\Services\Email\SocketMailServerProbe;
 use App\Services\Email\Verification\MailDomainResolver;
 use App\Services\Email\Verification\TimeLimitedMailDomainResolver;
 use App\Services\Stickers\StickerLibraryManager;
+use App\Support\MessengerBridgeLog;
 use App\Support\Queue\SlowJobBreakdown;
 use App\Support\SharedModels;
 use App\Support\SystemAccess;
@@ -69,6 +70,7 @@ use Laravel\Horizon\Events\LongWaitDetected;
 use Laravel\Horizon\Horizon;
 use Laravel\Pulse\Facades\Pulse;
 use Livewire\Livewire;
+use Opcodes\LogViewer\Facades\LogViewer;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -257,6 +259,8 @@ class AppServiceProvider extends ServiceProvider
         if (class_exists(Horizon::class)) {
             Horizon::auth(fn () => $canOpen());
         }
+
+        LogViewer::extend(MessengerBridgeLog::TYPE, MessengerBridgeLog::class);
 
         // Xoá file log từ giao diện web: không. Log là thứ duy nhất dựng lại
         // được chuyện gì đã xảy ra với tin nhắn khách khi có sự cố.
