@@ -25,6 +25,7 @@ final class LandingPayload
         return [
             'page' => $page,
             'meta' => $extra['meta'] ?? $strings['meta'],
+            'seo' => LandingSeo::forPage($page),
             'brand' => [
                 'name' => config('yona.branding.brand_name'),
                 'logo' => app(BrandAssets::class)->logo(),

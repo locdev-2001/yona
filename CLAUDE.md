@@ -12,7 +12,7 @@
 > - **Cấm tạo tài khoản thử trên production.** Thử luồng khách thì làm ở local (xem README, mục Chạy local).
 
 **Repo:** github.com/locflamedia/yona · **Domain:** yona.vn · **Team:** bootstrapped, 3 dev
-**Định vị:** Hộp thư cá nhân đa kênh: mỗi người đăng ký có một hộp thư riêng, nhắn với người dùng Yona khác, kết nối Zalo cá nhân và Gmail/email để gom tin về một chỗ. B2C, không còn B2B (không nhân viên, team, gán việc, báo cáo). Chốt lại ngày 19/10/2026.
+**Định vị (30/10/2026):** Nền tảng hợp nhất giao tiếp, mục tiêu mang các nền tảng giao tiếp về một nơi. Tên Yona lấy cảm hứng từ Yoneda Lemma; “từ phân mảnh đến hợp nhất” là cách thương hiệu chuyển hóa cảm hứng đó thành sản phẩm. Nguồn chuẩn: `docs/brand-positioning.md`. Hộp thư là cách tổ chức trải nghiệm; Zalo cá nhân, Gmail và người dùng Yona là các kết nối hiện có, không định nghĩa toàn bộ thương hiệu. Sản phẩm vẫn B2C, không có nhân viên/team/phân công/báo cáo. Không diễn đạt mục tiêu dài hạn thành tuyên bố đã hỗ trợ mọi nền tảng.
 **Đối tượng:** người dùng cá nhân. Mỗi user = một hộp thư (một account do chính họ làm quản trị), không có thành viên bên trong.
 
 ---
@@ -25,7 +25,7 @@ Production https://yona.vn vẫn chạy bản trước đổi hướng cho tới
 
 **Cuộc gọi (đang làm, kế hoạch `plans/261020-group-calls-livekit/`):** lõi `App\Services\Calls` trung tính + driver LiveKit (phase 4) và phòng thoại nhóm (phase 5: mic, camera, chia sẻ màn hình, quản trị tắt mic/mời ra, người đang ngồi trong danh sách) đã lên `main`; nút gọi chỉ hiện khi LiveKit đã cấu hình, production chưa cài LiveKit (phase 7).
 
-**Chưa có:** gọi 1-1 có đổ chuông (phase 6), LiveKit trên production (phase 7), meeting (schema chờ duyệt) · tin chờ/chặn cho người lạ trên kênh Yona · landing và `docs/brand-positioning.md` đang viết theo hướng "app nhắn tin bạn bè, bỏ kênh" (SAI), cần viết lại.
+**Chưa có:** gọi 1-1 có đổ chuông (phase 6), LiveKit trên production (phase 7), meeting (schema chờ duyệt) · tin chờ/chặn cho người lạ trên kênh Yona. Nội dung giới thiệu và nhận diện theo định vị nền tảng tại `docs/brand-positioning.md`, không quay lại mô tả Yona chỉ bằng một kênh hoặc hộp thư.
 
 **5 kiểu gọi (chốt 21/10/2026):** voice room của nhóm (luôn mở, không chuông, thoại + chia sẻ màn hình, không camera, ≤25) · voice call 1-1 · video call 1-1 · call group thoại/video (ai cũng gọi, đổ chuông cả nhóm, ≤50, 45 giây là nhỡ) · meeting. Màn đổ chuông: Nghe · Video · Từ chối; nghe máy là mở màn gọi lớn, chỉ thu nhỏ khi bấm. Chốt thêm 21/10: mọi cuộc gọi đổ chuông 45 giây là nhỡ (cả 1-1); mỗi người chỉ ở một cuộc gọi/phòng tại một lúc, vào cái này thì tự rời cái kia; nhóm >50 người vẫn đổ chuông cả nhóm, ai vào trước được; người nhỡ tự vào lại thì tính đã nghe; điện thoại dùng một nút Gọi mở sheet (voice room / gọi thoại / gọi video). Schema gọi nhóm đã duyệt: `calls.kind = group_call` + bảng `call_invitations`. **Meeting tạm hoãn** (21/10): ưu tiên kiểm kỹ các tính năng gọi đã làm trước.
 

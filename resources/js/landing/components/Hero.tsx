@@ -55,8 +55,12 @@ export function Hero({ config, copy }: { config: LandingConfig; copy: LandingCop
                 {hero.title_lead}
                 <br />
                 <span className="text-neutral-900">{hero.title_focus}</span>
-                <br />
-                {hero.title_tail}
+                {hero.title_tail && (
+                    <>
+                        <br />
+                        {hero.title_tail}
+                    </>
+                )}
             </h1>
 
             <p className="relative mx-auto mt-6 max-w-reading text-pretty text-center text-base font-light text-neutral-700">

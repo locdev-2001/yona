@@ -22,6 +22,7 @@
 /public/storage
 /storage/*.key
 /storage/pail
+/storage/framework/landing-prerender/
 /storage/messenger-bridge/
 /vendor
 _ide_helper.php

@@ -123,6 +123,14 @@ Repo không viết test tự động; nghiệm thu bằng thao tác thật trên
 bước đối chiếu bundle. Ngoại lệ: lời giới thiệu của trang chủ nằm ở
 `resources/js/landing/copy.ts`.
 
+Trang chủ được render sẵn từ chính component React trong `pnpm build`.
+`scripts/prerender-landing.mjs` tạo `public/build/landing-prerender.json` cho
+Việt/Anh, khách và người đã đăng nhập. Laravel thay URL, logo, năm và các nhãn
+cấu hình ở thời điểm request; React hydrate lại cùng nội dung. Khi triển khai,
+cần chuyển cả thư mục `public/build`, gồm tệp JSON này. Không chỉnh tay bản
+render sẵn. Khi chạy Vite dev server hoặc chưa có artifact, trang dùng client
+render như trước.
+
 ---
 
 ## Bố cục repo

@@ -2,11 +2,11 @@
 
 return [
     'TRY_WOOT' => 'Create an account',
-    'SUBTITLE' => 'One inbox for Zalo, email and friends on Yona.',
+    'SUBTITLE' => 'Connect your platforms. Unify your communication.',
     'GET_STARTED' => 'Get started with {installationName}',
     'TITLE' => 'Register',
-    'TESTIMONIAL_HEADER' => 'All it takes is one step to move forward',
-    'TESTIMONIAL_CONTENT' => 'You\'re one step away from engaging your customers, retaining them and finding new ones.',
+    'TESTIMONIAL_HEADER' => 'Many platforms. One place to communicate.',
+    'TESTIMONIAL_CONTENT' => 'Connect the platforms you use and continue your conversations in one shared space.',
     'TERMS_ACCEPT' => 'By creating an account, you agree to our <a href="{termsURL}">T & C</a> and <a href="{privacyURL}">Privacy policy</a>',
     'OAUTH' => [
         'GOOGLE_SIGNUP' => 'Sign up with Google',

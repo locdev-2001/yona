@@ -9902,31 +9902,31 @@ const messages: Record<string, unknown> = {
     },
     "LANDING": {
         "meta": {
-            "title": "Yona · One personal inbox for Zalo, email and friends",
-            "description": "Bring your personal Zalo messages, Gmail and chats with friends on Yona into one inbox of your own. Find people by @username, open it in your browser, install it on your phone."
+            "title": "Yona — Unified communication platform",
+            "description": "Connect communication platforms in one shared space with Yona. Read, reply and find your conversations in one place, right in your browser."
         },
         "nav": {
             "back_to_home": "Back to home"
         },
         "demo": {
             "meta": {
-                "title": "Yona · One personal inbox for Zalo, email and friends",
-                "description": "Sign up with email or Google and get your own inbox right away: connect personal Zalo and Gmail, and message friends by @username."
+                "title": "Yona — Unified communication platform",
+                "description": "Connect communication platforms in one shared space with Yona. Read, reply and find your conversations in one place, right in your browser."
             },
             "form": {
                 "phone_invalid": "That phone number is not valid. Use 0912345678 or +84912345678."
             },
             "thanks": {
                 "meta": {
-                    "title": "Yona · One personal inbox for Zalo, email and friends",
-                    "description": "Bring your personal Zalo messages, Gmail and chats with friends on Yona into one inbox of your own."
+                    "title": "Yona — Unified communication platform",
+                    "description": "Connect communication platforms in one shared space with Yona. Read, reply and find your conversations in one place, right in your browser."
                 }
             }
         },
         "zalo_page": {
             "meta": {
-                "title": "Read and reply to personal Zalo in your Yona inbox",
-                "description": "Scan a QR code to bring your personal Zalo messages into your Yona inbox, next to Gmail and chats with friends. The connection is unofficial, so Zalo may restrict the account."
+                "title": "Yona — Unified communication platform",
+                "description": "Connect communication platforms in one shared space with Yona. Read, reply and find your conversations in one place, right in your browser."
             },
             "hero": {
                 "eyebrow": "Personal Zalo"
@@ -10197,7 +10197,7 @@ const messages: Record<string, unknown> = {
     },
     "LOGIN": {
         "TITLE": "Login to {installationName}",
-        "SUBTITLE": "Welcome back to your inbox.",
+        "SUBTITLE": "Continue your conversations on Yona.",
         "NO_ACCOUNT": "No account yet?",
         "EMAIL": {
             "LABEL": "Email",
@@ -10225,7 +10225,7 @@ const messages: Record<string, unknown> = {
         "SAML": {
             "LABEL": "Login via SSO",
             "TITLE": "Initiate Single Sign-on (SSO)",
-            "SUBTITLE": "Enter your work email to access your organization",
+            "SUBTITLE": "Continue your conversations on Yona.",
             "BACK_TO_LOGIN": "Login via Password",
             "WORK_EMAIL": {
                 "LABEL": "Work Email",
@@ -11343,11 +11343,11 @@ const messages: Record<string, unknown> = {
     },
     "REGISTER": {
         "TRY_WOOT": "Create an account",
-        "SUBTITLE": "One inbox for Zalo, email and friends on Yona.",
+        "SUBTITLE": "Connect your platforms. Unify your communication.",
         "GET_STARTED": "Get started with {installationName}",
         "TITLE": "Register",
-        "TESTIMONIAL_HEADER": "All it takes is one step to move forward",
-        "TESTIMONIAL_CONTENT": "You're one step away from engaging your customers, retaining them and finding new ones.",
+        "TESTIMONIAL_HEADER": "Many platforms. One place to communicate.",
+        "TESTIMONIAL_CONTENT": "Connect the platforms you use and continue your conversations in one shared space.",
         "TERMS_ACCEPT": "By creating an account, you agree to our <a href=\"{termsURL}\">T & C</a> and <a href=\"{privacyURL}\">Privacy policy</a>",
         "OAUTH": {
             "GOOGLE_SIGNUP": "Sign up with Google"

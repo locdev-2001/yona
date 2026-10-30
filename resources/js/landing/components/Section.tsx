@@ -100,7 +100,7 @@ export function Section({
     className = '',
 }: SectionProps) {
     return (
-        <section id={id} className={`relative ${SURFACE[surface]} overflow-x-clip`}>
+        <section id={id} className={`relative scroll-mt-16 ${SURFACE[surface]} overflow-x-clip`}>
             {backdrop && <div aria-hidden className={`pointer-events-none absolute inset-0 ${backdrop}`} />}
             {marks && <CornerMarks accent={accent} />}
             {art && (

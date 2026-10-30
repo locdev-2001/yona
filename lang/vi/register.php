@@ -4,11 +4,11 @@
 
 return [
     'TRY_WOOT' => 'Tạo tài khoản',
-    'SUBTITLE' => 'Một hộp thư cho Zalo, email và bạn bè trên Yona.',
+    'SUBTITLE' => 'Kết nối các nền tảng. Hợp nhất giao tiếp.',
     'GET_STARTED' => 'Bắt đầu với {installationName}',
-    'TITLE' => 'Đăng kí',
-    'TESTIMONIAL_HEADER' => 'Tất cả chỉ cần một bước để tiến về phía trước',
-    'TESTIMONIAL_CONTENT' => 'Bạn chỉ còn một bước nữa là có thể thu hút khách hàng của mình, giữ chân họ và tìm kiếm những khách hàng mới.',
+    'TITLE' => 'Đăng ký',
+    'TESTIMONIAL_HEADER' => 'Nhiều nền tảng. Một nơi giao tiếp.',
+    'TESTIMONIAL_CONTENT' => 'Kết nối các nền tảng bạn đang dùng và tiếp tục các cuộc trò chuyện trong một không gian thống nhất.',
     'TERMS_ACCEPT' => 'Khi tạo tài khoản, bạn đồng ý với <a href="{termsURL}">Điều khoản</a> và <a href="{privacyURL}">Chính sách riêng tư</a> của chúng tôi',
     'OAUTH' => [
         'GOOGLE_SIGNUP' => 'Đăng ký bằng Google',

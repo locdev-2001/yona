@@ -1,86 +1,62 @@
 # Định vị thương hiệu Yona
 
-Nguồn chuẩn cho mọi nội dung công khai: landing yona.vn, trang mạng xã hội của
-Yona, mô tả ứng dụng, bài giới thiệu. Đổi định vị thì sửa file này trước, các bề
-mặt khác theo sau.
+Nguồn chuẩn cho nội dung công khai và nhận diện. Cập nhật ngày 30/10/2026 theo định hướng người sáng lập: Yona lấy cảm hứng từ Yoneda Lemma, mang các nền tảng giao tiếp về một nơi. Định hướng này thay thế việc định nghĩa thương hiệu bằng “hộp thư cá nhân cho Zalo, email và bạn bè”. Sản phẩm vẫn phục vụ cá nhân; không tự suy ra chuyển hướng sang CRM hoặc phần mềm quản lý đội ngũ.
 
-Chốt với founder ngày 19/10/2026. Thay cả bản 10/10/2026 (nền tảng cho doanh
-nghiệp) lẫn bản sáng 19/10/2026 ("ứng dụng nhắn tin bạn bè, bỏ kênh"): cả hai
-đều đã bỏ.
+## Bản chất và mục tiêu
 
-## Loại sản phẩm
+**Yona là nền tảng hợp nhất giao tiếp.** Yona kết nối các nền tảng giao tiếp trong một không gian chung, giúp người dùng theo dõi, tiếp tục và tìm lại các cuộc trò chuyện đang nằm rải rác ở nhiều ứng dụng.
 
-**Hộp thư cá nhân đa kênh.** Ai đăng ký cũng có ngay một hộp thư của riêng mình
-và một `@username`. Trong hộp thư đó, người dùng:
+Mục tiêu dài hạn là mang các nền tảng giao tiếp về một nơi. Nội dung phải phân biệt mục tiêu này với các kết nối hiện có; không khẳng định đã hỗ trợ mọi nền tảng. Hộp thư là một cách tổ chức trải nghiệm, không phải toàn bộ bản sắc. Zalo, Gmail và những kết nối khác là các phần của nền tảng, không định nghĩa tên gọi, headline hay mục đích tồn tại của Yona.
 
-- nhắn với người dùng Yona khác, tìm nhau bằng `@username`;
-- kết nối **Zalo cá nhân** (quét mã QR) để đọc và trả lời tin Zalo;
-- kết nối **Gmail/email** để thư về cùng hộp thư.
+## Tên Yona và nguồn cảm hứng
 
-Chạy trên trình duyệt, cài lên điện thoại như một ứng dụng (PWA). Ứng dụng gốc
-iOS/Android làm sau.
+Người sáng lập chọn tên Yona từ **Yoneda Lemma — bổ đề Yoneda** trong lý thuyết phạm trù. Một cách diễn giải trực giác là hiểu một đối tượng qua các mối liên hệ của nó. Yona chuyển cảm hứng ấy thành hướng sản phẩm: từ những kết nối rời rạc đến một trải nghiệm giao tiếp thống nhất.
 
-Sản phẩm dành cho cá nhân (B2C). Không có nhân viên, đội, gán việc, báo cáo hay
-bất cứ thứ gì dành cho doanh nghiệp.
+“Từ phân mảnh đến hợp nhất” là cách diễn giải của thương hiệu, không phải phát biểu toán học của bổ đề. Không tuyên bố bổ đề chứng minh việc gom ứng dụng, hoặc rằng sản phẩm đang thực thi một thuật toán Yoneda.
 
-## Người dùng mục tiêu
+Nguồn đối chiếu toán học: [MIT — The Yoneda lemma](https://math.mit.edu/~hrm/papers/lectures-905-906.pdf).
 
-Người Việt đang nhắn tin rải rác ở nhiều nơi (Zalo, email, ứng dụng khác) và muốn
-đọc, trả lời tất cả ở một chỗ. Mỗi người dùng là một cá nhân với một hộp thư và
-một `@username`.
+## Hệ thông điệp
 
-## Thông điệp
+- **Loại nền tảng:** Nền tảng hợp nhất giao tiếp.
+- **Thông điệp cốt lõi:** Kết nối các nền tảng. Hợp nhất giao tiếp.
+- **Headline trang chủ:** Nhiều nền tảng. Một nơi giao tiếp.
+- **Lợi ích:** Theo dõi tập trung; tiếp tục cuộc trò chuyện qua kết nối tương ứng; tìm lại nội dung trong các cuộc trò chuyện đã kết nối.
+- **Mô tả ngắn:** Yona kết nối các nền tảng giao tiếp trong một không gian thống nhất, giúp bạn đọc, trả lời và tìm lại các cuộc trò chuyện ở một nơi.
+- **Lời kêu gọi chính:** Tạo tài khoản. Khi đã đăng nhập: Mở Yona.
 
-- **Tên hiển thị:** Yona - Hộp thư cá nhân cho Zalo, email và bạn bè
-- **Tagline:** Zalo, email và bạn bè, chung một hộp thư của riêng bạn.
-- **Ba lợi ích dẫn đầu, theo thứ tự:**
-  1. **Mọi tin nhắn ở một chỗ:** tin Zalo cá nhân, thư Gmail và tin từ bạn bè
-     trên Yona xếp chung một danh sách; mỗi cuộc trò chuyện ghi rõ kênh, trả lời
-     là đi đúng về kênh đó.
-  2. **Nhắn bạn bè bằng `@username`:** gõ tên là tìm thấy, không cần trao số điện
-     thoại; nhắn ngay trong hộp thư, không phải mở ứng dụng khác.
-  3. **Trò chuyện đầy đủ:** trả lời trích dẫn, cảm xúc, thu hồi, sticker, ảnh và
-     file, thẻ chuyển khoản VietQR; thêm nhãn, ghi chú riêng, câu trả lời mẫu,
-     liên hệ, bộ lọc, tìm kiếm, thông báo đẩy trên trình duyệt.
-- **Giọng điệu:** thân thiện, gần gũi, câu ngắn, nói thật. Như một người bạn chỉ
-  cho bạn mình cách gom tin nhắn về một chỗ; không thuật ngữ kỹ thuật, không hô
-  hào, không hứa quá.
-- **Lời kêu gọi chính:** Tạo tài khoản. Lời kêu gọi phụ: Đăng nhập. Người đã đăng
-  nhập thấy: Mở Yona.
+Trình tự câu chuyện trên website: nền tảng → vấn đề phân mảnh → trải nghiệm hợp nhất → kết nối hiện có → nguồn gốc Yona → cách bắt đầu và câu hỏi thực tế. Tránh biến trang thành một danh sách tính năng hoặc logo tích hợp.
 
-## Nói thật về Zalo cá nhân
+## Văn phong
 
-Zalo cá nhân kết nối bằng đăng nhập QR không chính thức, nên Zalo có thể hạn chế
-tài khoản hoặc ngắt kết nối. Mọi chỗ giới thiệu Zalo phải có một câu nhắc nhẹ,
-trung thực về rủi ro này (landing đặt ở khối "Riêng tư và an toàn"). Không bao
-giờ nói "an toàn tuyệt đối", "không bao giờ bị khoá", "chính thức".
+Rõ, điềm tĩnh, chính xác, có chiều sâu. Mỗi đoạn giải thích một giá trị hoặc trả lời một câu hỏi của người đọc. Ưu tiên động từ cụ thể như kết nối, đọc, trả lời, tìm lại. Giải thích “hợp nhất” bằng hành vi thật, không lặp thuật ngữ như một khẩu hiệu.
 
-## Kênh được quảng bá
+Không dùng giọng xuề xòa như “gom tin”, “lục lại”, “nói thật những gì nên biết”, hoặc các câu sáo rỗng như “giải pháp toàn diện”, “đột phá”, “nâng tầm”, “cách mạng hóa”. Cũng không nhồi lý thuyết phạm trù vào mọi đoạn. Câu chuyện Yoneda giải thích nguồn gốc tên và cách suy nghĩ, không đòi hỏi người dùng biết toán.
 
-Chỉ ba nguồn tin: **Zalo cá nhân**, **Gmail/email**, **người dùng Yona**. Các kênh
-khác vẫn có trong code (Messenger, Instagram, Telegram…) nhưng không nêu ở nội
-dung công khai.
+## Hiện trạng dùng để chứng minh
 
-## Không được nói
+Trên nhánh mã hiện tại, người dùng có thể kết nối Zalo cá nhân, Gmail và nhắn với người dùng Yona qua `@username`. Hội thoại giữ nguồn kênh; trả lời được gửi qua kết nối tương ứng. Nhóm có trong repo; không lấy tài liệu cũ để kết luận chưa có. Các tính năng gọi phụ thuộc cấu hình và triển khai.
 
-- Bất cứ thứ gì B2B: CRM, khách hàng, doanh nghiệp, cửa hàng, nhân viên, đội ngũ,
-  team, gán việc, báo cáo, chiến dịch, tự động hoá, widget website, Help Center,
-  omnichannel.
-- Nhóm chat giữa người dùng Yona: chưa có.
-- Gọi thoại, gọi video: chưa có.
-- Tin chờ cho người lạ, chặn người dùng: chưa có trên kênh Yona.
-- Mã hoá đầu cuối: không có (máy chủ lưu và đọc được nội dung tin).
-- Miễn phí mãi mãi, gói cước, giá: chưa có quyết định về gói cước.
-- App gốc iOS/Android: chưa có, chỉ có cài từ trình duyệt (PWA).
-- Kết nối Zalo "an toàn tuyệt đối" hay "chính thức".
-- Số người dùng, đánh giá, logo đối tác: chưa có số thật thì không nêu.
-- Định vị "ứng dụng nhắn tin bạn bè" bỏ kênh: sai, Zalo và email là phần lõi.
+Không mô tả một kênh là đang khả dụng chỉ vì có tên driver trong code. Nội dung giới thiệu kết nối phải dựa trên luồng có thể sử dụng và nêu rõ điều kiện khi cần. Không hứa đồng bộ toàn bộ lịch sử, hợp nhất danh tính giữa các kênh, hoặc chuyển tiếp mọi định dạng khi chưa xác minh.
 
-## Mô tả ngắn dùng lại
+## Nguyên tắc minh bạch
 
-- **Một câu (tối đa 160 ký tự):** Yona gom tin Zalo cá nhân, Gmail và tin từ bạn
-  bè trên Yona về một hộp thư của riêng bạn, ngay trên trình duyệt.
-- **Đoạn ngắn (tiểu sử trang mạng xã hội, tối đa 255 ký tự):** Hộp thư cá nhân
-  cho Zalo, email và bạn bè. Kết nối Zalo cá nhân bằng mã QR, kết nối Gmail, nhắn
-  bạn bè bằng @username, tất cả ở một chỗ. Mở trên trình duyệt, cài lên điện
-  thoại. Tạo tài khoản tại yona.vn
+- Kết nối Zalo cá nhân qua QR không phải tích hợp chính thức của Zalo; có thể gián đoạn hoặc khiến tài khoản bị hạn chế. Đặt thông tin này cạnh phần giới thiệu kết nối và trong thông tin sử dụng, không dùng làm định vị trung tâm.
+- Tin nhắn được lưu trên máy chủ; không có mã hóa đầu cuối. Không dùng khóa, khiên hay chữ “riêng tư tuyệt đối” để tạo ấn tượng sai.
+- Không bịa số người dùng, đánh giá, khách hàng, giải thưởng hoặc quan hệ đối tác.
+- Không hứa miễn phí mãi mãi, app gốc iOS/Android hoặc hỗ trợ mọi nền tảng.
+- Nội dung điều khoản/chính sách cần đúng cơ chế vận hành; không dùng văn phong marketing để thay đổi các cam kết pháp lý.
+
+## Nội dung và SEO
+
+Trang chủ sở hữu ý định tìm hiểu Yona và nền tảng hợp nhất giao tiếp. Cụm từ chính: “nền tảng hợp nhất giao tiếp”; các cụm hỗ trợ: “kết nối các nền tảng nhắn tin”, “quản lý tin nhắn nhiều ứng dụng”, “tin nhắn và email ở một nơi”. Đây là định hướng biên tập, chưa phải dữ liệu lượng tìm kiếm hay độ khó.
+
+Title, mô tả, H1, các heading, footer và bản Việt/Anh phải kể cùng một câu chuyện. Tên các kết nối xuất hiện trong phần khả năng hiện có và hướng dẫn thực tế. Chỉ tạo trang con khi có nội dung và luồng thực tương ứng; không tạo nhiều URL cùng một nội dung để nhắm từ khóa. Không nhồi từ khóa và không cam kết thứ hạng. Câu chuyện tên gọi không thay cho việc giải thích sản phẩm bằng ngôn ngữ người dùng hiểu.
+
+## Cơ sở cho nhận diện
+
+Lãnh địa ý nghĩa là **sự liên hệ và hợp nhất**: các thành phần giữ bản sắc nhưng tham gia một cấu trúc chung. Người sáng lập chốt brief ngày 30/10/2026: **Y + tin nhắn + kết nối + hội tụ**. Chữ Y cần là cấu trúc chính và nhận ra được; hai nhánh gợi các hướng hội thoại cùng đi vào một điểm nối và một thân chung. Tránh chỉ dán một chữ vào hình chứa. Logo cần ít nét, có quy luật hình học rõ và đứng được ở một màu. Chưa chốt biểu tượng, màu hoặc kiểu chữ. Các phương án cá voi, chữ y cam, bong bóng khoét Y và vòng vuông ghép mảnh trước đây không được xem là phương án đã duyệt.
+
+Qua các mẫu tham khảo ngày 30/10, người sáng lập đánh giá cao nét y viết tự nhiên và cách chi tiết có nghĩa hòa vào nét chữ, đặc biệt ví dụ đuôi chữ thành jack 3.5. Đây là chỉ dẫn về nguyên tắc sáng tạo, chưa phải quyết định dùng nguyên một kiểu đầu nối hoặc sao chép hình tham khảo. Phát triển một bản có chủ đích mỗi vòng để đánh giá.
+
+Phản hồi hình thức mới nhất ngày 30/10: **nét cứng, mạnh mẽ và dứt khoát**. Phương án nét mềm dạng dấu phẩy đã bị loại. Ưu tiên mảng và nét chéo có lực, góc cắt rõ, khoảng âm gọn; không tiếp tục mặc định nét cong mềm hoặc thư pháp.

@@ -1,5 +1,5 @@
 import type { ReactElement } from 'react';
-import { createRoot } from 'react-dom/client';
+import { createRoot, hydrateRoot } from 'react-dom/client';
 
 import { landingConfig, type LandingPage } from './config';
 import { Shell } from './components/Shell';
@@ -26,5 +26,11 @@ if (container) {
     };
     const page = pages[config.page];
 
-    createRoot(container).render(page === null ? <Landing /> : <Shell config={config}>{page}</Shell>);
+    const content = page === null ? <Landing /> : <Shell config={config}>{page}</Shell>;
+
+    if (container.hasChildNodes()) {
+        hydrateRoot(container, content);
+    } else {
+        createRoot(container).render(content);
+    }
 }

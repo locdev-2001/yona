@@ -9902,31 +9902,31 @@ const messages: Record<string, unknown> = {
     },
     "LANDING": {
         "meta": {
-            "title": "Yona · Hộp thư cá nhân cho Zalo, email và bạn bè",
-            "description": "Gom tin nhắn Zalo cá nhân, Gmail và tin từ bạn bè trên Yona về một hộp thư của riêng bạn. Tìm nhau bằng @username, mở ngay trên trình duyệt, cài lên điện thoại."
+            "title": "Yona — Nền tảng hợp nhất giao tiếp",
+            "description": "Kết nối các nền tảng giao tiếp trong một không gian thống nhất với Yona. Đọc, trả lời và tìm lại các cuộc trò chuyện ở một nơi."
         },
         "nav": {
             "back_to_home": "Về trang chủ"
         },
         "demo": {
             "meta": {
-                "title": "Yona · Hộp thư cá nhân cho Zalo, email và bạn bè",
-                "description": "Đăng ký Yona bằng email hoặc tài khoản Google là có ngay một hộp thư riêng: kết nối Zalo cá nhân và Gmail, nhắn với bạn bè bằng @username."
+                "title": "Yona — Nền tảng hợp nhất giao tiếp",
+                "description": "Kết nối các nền tảng giao tiếp trong một không gian thống nhất với Yona. Đọc, trả lời và tìm lại các cuộc trò chuyện ở một nơi."
             },
             "form": {
                 "phone_invalid": "Số điện thoại chưa đúng. Nhập dạng 0912345678 hoặc +84912345678."
             },
             "thanks": {
                 "meta": {
-                    "title": "Yona · Hộp thư cá nhân cho Zalo, email và bạn bè",
-                    "description": "Gom tin nhắn Zalo cá nhân, Gmail và tin từ bạn bè trên Yona về một hộp thư của riêng bạn."
+                    "title": "Yona — Nền tảng hợp nhất giao tiếp",
+                    "description": "Kết nối các nền tảng giao tiếp trong một không gian thống nhất với Yona. Đọc, trả lời và tìm lại các cuộc trò chuyện ở một nơi."
                 }
             }
         },
         "zalo_page": {
             "meta": {
-                "title": "Đọc và trả lời Zalo cá nhân trong hộp thư Yona",
-                "description": "Quét mã QR để đưa tin nhắn Zalo cá nhân về hộp thư Yona, đọc chung một chỗ với Gmail và tin từ bạn bè. Kết nối không chính thức nên tài khoản Zalo có thể bị hạn chế."
+                "title": "Yona — Nền tảng hợp nhất giao tiếp",
+                "description": "Kết nối các nền tảng giao tiếp trong một không gian thống nhất với Yona. Đọc, trả lời và tìm lại các cuộc trò chuyện ở một nơi."
             },
             "hero": {
                 "eyebrow": "Zalo cá nhân"
@@ -10197,7 +10197,7 @@ const messages: Record<string, unknown> = {
     },
     "LOGIN": {
         "TITLE": "Đăng nhập {installationName}",
-        "SUBTITLE": "Mừng bạn quay lại hộp thư của mình.",
+        "SUBTITLE": "Tiếp tục những cuộc trò chuyện trên Yona.",
         "NO_ACCOUNT": "Chưa có tài khoản?",
         "EMAIL": {
             "LABEL": "Email",
@@ -10225,7 +10225,7 @@ const messages: Record<string, unknown> = {
         "SAML": {
             "LABEL": "Đăng nhập bằng SSO",
             "TITLE": "Bắt đầu đăng nhập một lần (SSO)",
-            "SUBTITLE": "Nhập email công việc để vào tổ chức của bạn",
+            "SUBTITLE": "Tiếp tục những cuộc trò chuyện trên Yona.",
             "BACK_TO_LOGIN": "Đăng nhập bằng mật khẩu",
             "WORK_EMAIL": {
                 "LABEL": "Email công việc",
@@ -11343,11 +11343,11 @@ const messages: Record<string, unknown> = {
     },
     "REGISTER": {
         "TRY_WOOT": "Tạo tài khoản",
-        "SUBTITLE": "Một hộp thư cho Zalo, email và bạn bè trên Yona.",
+        "SUBTITLE": "Kết nối các nền tảng. Hợp nhất giao tiếp.",
         "GET_STARTED": "Bắt đầu với {installationName}",
-        "TITLE": "Đăng kí",
-        "TESTIMONIAL_HEADER": "Tất cả chỉ cần một bước để tiến về phía trước",
-        "TESTIMONIAL_CONTENT": "Bạn chỉ còn một bước nữa là có thể thu hút khách hàng của mình, giữ chân họ và tìm kiếm những khách hàng mới.",
+        "TITLE": "Đăng ký",
+        "TESTIMONIAL_HEADER": "Nhiều nền tảng. Một nơi giao tiếp.",
+        "TESTIMONIAL_CONTENT": "Kết nối các nền tảng bạn đang dùng và tiếp tục các cuộc trò chuyện trong một không gian thống nhất.",
         "TERMS_ACCEPT": "Khi tạo tài khoản, bạn đồng ý với <a href=\"{termsURL}\">Điều khoản</a> và <a href=\"{privacyURL}\">Chính sách riêng tư</a> của chúng tôi",
         "OAUTH": {
             "GOOGLE_SIGNUP": "Đăng ký bằng Google"

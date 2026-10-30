@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Support\LandingSeo;
 use Illuminate\Http\Response;
 
 /**
@@ -23,19 +24,11 @@ use Illuminate\Http\Response;
  */
 class SitemapController extends Controller
 {
-    private const ROUTES = [
-        'home',
-        'channels.zalo_personal',
-        'demo_request.create',
-        'legal.terms',
-        'legal.privacy',
-    ];
-
     public function __invoke(): Response
     {
         $entries = array_map(
-            fn (string $name) => sprintf('<url><loc>%s</loc></url>', e(route($name))),
-            self::ROUTES,
+            fn (string $url) => sprintf('<url><loc>%s</loc></url>', e($url)),
+            LandingSeo::sitemapUrls(),
         );
 
         $xml = '<?xml version="1.0" encoding="UTF-8"?>'."\n"

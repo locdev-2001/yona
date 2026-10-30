@@ -20,10 +20,14 @@
             <meta name="robots" content="noindex, follow">
         @endif
         @if ($landingConfig['page'] !== 'not_found')
-            <link rel="canonical" href="{{ url()->current() }}">
+            <link rel="canonical" href="{{ $landingConfig['seo']['canonical'] }}">
+            @foreach ($landingConfig['seo']['alternates'] as $alternate)
+                <link rel="alternate" hreflang="{{ str_replace('_', '-', $alternate['locale']) }}" href="{{ $alternate['url'] }}">
+            @endforeach
+            <link rel="alternate" hreflang="x-default" href="{{ $landingConfig['seo']['default'] }}">
         @endif
         <meta property="og:type" content="website">
-        <meta property="og:url" content="{{ url()->current() }}">
+        <meta property="og:url" content="{{ $landingConfig['seo']['canonical'] }}">
         <meta property="og:title" content="{{ $landingConfig['meta']['title'] }}">
         <meta property="og:description" content="{{ $landingConfig['meta']['description'] }}">
         <meta property="og:image" content="{{ url('/open-graph-1200x630.png') }}">
@@ -42,7 +46,7 @@
         @vite(['resources/css/landing.css', 'resources/js/landing/main.tsx'])
     </head>
     <body data-page="{{ $landingConfig['page'] }}">
-        <div id="app"></div>
+        <div id="app">{!! \App\Support\LandingPrerender::html($landingConfig) !!}</div>
         {{-- Widget chat của chính Yona (bản chạy thật ở yona.vn) — mọi trang công
              khai, không nhúng vào partials.analytics vì partial đó dùng chung cho
              dashboard/superadmin/survey. Trang 404 thì không: nó cũng là trang lỗi

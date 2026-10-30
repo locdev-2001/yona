@@ -4,7 +4,7 @@
 
 return [
     'TITLE' => 'Đăng nhập {installationName}',
-    'SUBTITLE' => 'Mừng bạn quay lại hộp thư của mình.',
+    'SUBTITLE' => 'Tiếp tục những cuộc trò chuyện trên Yona.',
     'NO_ACCOUNT' => 'Chưa có tài khoản?',
     'EMAIL' => [
         'LABEL' => 'Email',
@@ -32,7 +32,7 @@ return [
     'SAML' => [
         'LABEL' => 'Đăng nhập bằng SSO',
         'TITLE' => 'Bắt đầu đăng nhập một lần (SSO)',
-        'SUBTITLE' => 'Nhập email công việc để vào tổ chức của bạn',
+        'SUBTITLE' => 'Tiếp tục những cuộc trò chuyện trên Yona.',
         'BACK_TO_LOGIN' => 'Đăng nhập bằng mật khẩu',
         'WORK_EMAIL' => [
             'LABEL' => 'Email công việc',

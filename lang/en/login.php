@@ -2,7 +2,7 @@
 
 return [
     'TITLE' => 'Login to {installationName}',
-    'SUBTITLE' => 'Welcome back to your inbox.',
+    'SUBTITLE' => 'Continue your conversations on Yona.',
     'NO_ACCOUNT' => 'No account yet?',
     'EMAIL' => [
         'LABEL' => 'Email',
@@ -30,7 +30,7 @@ return [
     'SAML' => [
         'LABEL' => 'Login via SSO',
         'TITLE' => 'Initiate Single Sign-on (SSO)',
-        'SUBTITLE' => 'Enter your work email to access your organization',
+        'SUBTITLE' => 'Continue your conversations on Yona.',
         'BACK_TO_LOGIN' => 'Login via Password',
         'WORK_EMAIL' => [
             'LABEL' => 'Work Email',
