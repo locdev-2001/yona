@@ -472,7 +472,7 @@ Sidecar Go kết nối tài khoản Messenger cá nhân, nằm riêng ở `servi
 
 Thư viện chính sidecar dùng:
 
-- `go.mau.fi/mautrix-meta` v0.2610.0 — AGPL-3.0. Giao thức Messenger (đăng nhập, kênh thường, đăng ký thiết bị mã hoá). Nguồn: https://github.com/mautrix/meta
+- `go.mau.fi/mautrix-meta` v0.2610.1-0.20261029231756-3aa2b79a721d — AGPL-3.0. Giao thức Messenger (đăng nhập, kênh thường, đăng ký thiết bị mã hoá). Nguồn: https://github.com/mautrix/meta
 - `go.mau.fi/whatsmeow` — MPL-2.0. Giao thức mã hoá đầu cuối. Nguồn: https://github.com/tulir/whatsmeow
 - `github.com/beeper/req/v3` (bản vá của `imroc/req`) — MIT. Nguồn: https://github.com/beeper/req
 - `github.com/mutecomm/go-sqlcipher/v4` — BSD-3-Clause (kèm SQLCipher, BSD-3-Clause). Nguồn: https://github.com/mutecomm/go-sqlcipher
