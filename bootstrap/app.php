@@ -65,6 +65,10 @@ return Application::configure(basePath: dirname(__DIR__))
         // Widget/Platform API cũng phải nói đúng ngôn ngữ của tài khoản.
         $middleware->api(append: [SetLocale::class]);
 
+        // Tin đến từ kênh ngoài vẫn được nhận trong lúc deploy: controller chỉ xác thực rồi
+        // xếp job, còn nếu trả 503 thì nền tảng/bridge lùi lịch gửi lại tới vài phút.
+        $middleware->preventRequestsDuringMaintenance(except: ['bot', 'webhooks/*', 'twilio/*']);
+
         // Request mang api_access_token không có cookie phiên → miễn CSRF
         // (token là bằng chứng chống CSRF), như API controller.
         // StartSession: không hồi sinh phiên mà request khác đã huỷ giữa chừng.

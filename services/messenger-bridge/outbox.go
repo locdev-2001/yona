@@ -26,7 +26,7 @@ const (
 	webhookSecretHeader      = "X-Messenger-Bridge-Secret"
 	webhookRequestTimeout    = 15 * time.Second
 	unauthorizedRetryDelay   = 30 * time.Second
-	firstTransientRetryDelay = 30 * time.Second
+	firstTransientRetryDelay = 2 * time.Second
 	maxTransientRetryDelay   = time.Hour
 	idleOutboxPoll           = 10 * time.Second
 	responseDrainLimit       = 64 << 10
