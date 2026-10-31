@@ -33,9 +33,10 @@ const (
 // apiError is the only error shape the HTTP layer returns. Its message is a
 // short English sentence and never contains user data.
 type apiError struct {
-	status  int
-	code    string
-	message string
+	status     int
+	code       string
+	message    string
+	loginEnded bool
 }
 
 func (err *apiError) Error() string { return err.code + ": " + err.message }
@@ -55,6 +56,15 @@ var (
 	errMediaFetch     = newAPIError(http.StatusBadGateway, codeMediaFetchFailed, "The media could not be fetched.")
 	errUnknownFailure = newAPIError(http.StatusInternalServerError, codeUnknown, "The bridge failed to handle the request.")
 )
+
+// endedLogin marks a login failure after which the attempt no longer exists, so
+// the caller starts a new login instead of resubmitting the same token. It
+// copies the error because the package-level errors are shared.
+func endedLogin(err error) *apiError {
+	ended := *asAPIError(err)
+	ended.loginEnded = true
+	return &ended
+}
 
 func asAPIError(err error) *apiError {
 	var typed *apiError

@@ -39,7 +39,14 @@ class MessengerPersonalConnectionsController extends Controller
     {
         $channel = $this->fetchChannel($request, $account, $inboxId);
 
-        return $this->respond($this->login->submit($channel, $this->rawInput($request)));
+        return $this->respond($this->login->submit($channel, $this->loginId($request), $this->rawInput($request)));
+    }
+
+    private function loginId(Request $request): ?string
+    {
+        $loginId = $request->input('login_id');
+
+        return is_string($loginId) ? $loginId : null;
     }
 
     /**
@@ -68,7 +75,7 @@ class MessengerPersonalConnectionsController extends Controller
 
     public function cancel(Request $request, Account $account, int $inboxId): JsonResponse
     {
-        return $this->respond($this->login->cancel($this->fetchChannel($request, $account, $inboxId)));
+        return $this->respond($this->login->cancel($this->fetchChannel($request, $account, $inboxId), $this->loginId($request)));
     }
 
     public function disconnect(Request $request, Account $account, int $inboxId): JsonResponse

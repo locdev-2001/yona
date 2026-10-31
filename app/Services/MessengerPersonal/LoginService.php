@@ -13,6 +13,9 @@ use Illuminate\Support\Str;
  * mật khẩu, mã 2FA, duyệt trên thiết bị khác…) → sidecar báo xong kèm danh tính tài
  * khoản. Bước kế do Meta quyết định nên giao diện vẽ theo `step` sidecar trả về.
  *
+ * Mỗi form đăng nhập giữ `login_id` của lượt nó mở và gửi kèm mọi lần nộp: form cũ (tab
+ * khác, panel mở từ trước) không nộp nhầm vào lượt của form khác.
+ *
  * Mật khẩu chỉ đi xuyên qua (BridgeClient → sidecar): không lưu, không ghi log.
  */
 class LoginService
@@ -41,9 +44,6 @@ class LoginService
     /** Tệp log riêng, ghi cả mức info dù production chỉ ghi cảnh báo vào log chung. */
     private const LOG_CHANNEL = 'messenger_personal';
 
-    /** Lượt đăng nhập ở sidecar đã chết: bỏ token để lần sau mở lượt mới. */
-    private const TERMINAL_LOGIN_CODES = ['login_expired', self::ERROR_NO_LOGIN, 'checkpoint'];
-
     public function __construct(
         private readonly BridgeClient $bridge,
         private readonly HealthMonitor $monitor,
@@ -65,34 +65,37 @@ class LoginService
 
         $channel->update(['login_token' => $loginToken, 'last_login_at' => now()]);
 
-        return $this->stepResult($channel, $response);
+        return [...$this->stepResult($channel, $response), 'login_id' => $this->loginIdOf($loginToken)];
     }
 
     /**
      * @param  array<string, string>  $input
      * @return array<string, mixed>
      */
-    public function submit(MessengerPersonal $channel, array $input): array
+    public function submit(MessengerPersonal $channel, ?string $loginId, array $input): array
     {
-        if (blank($channel->login_token)) {
-            return $this->error(409, self::ERROR_NO_LOGIN);
+        if (! $this->isCurrentLogin($channel, $loginId)) {
+            return [...$this->error(409, self::ERROR_NO_LOGIN), 'login_ended' => true];
         }
 
         $response = $this->bridge->submitLogin((string) $channel->login_token, $input);
         $failure = $this->failureOf($response);
 
         if ($failure !== null) {
+            $loginEnded = $response?->json('login_ended') === true;
+
             Log::channel(self::LOG_CHANNEL)->warning('messenger_personal.login.failed', [
                 'connection_id' => $channel->connectionId(),
                 'error_code' => $failure['error_code'],
+                'login_ended' => $loginEnded,
                 'bridge_message' => $response?->json('message'),
             ]);
 
-            if (in_array($failure['error_code'], self::TERMINAL_LOGIN_CODES, true)) {
+            if ($loginEnded) {
                 $channel->update(['login_token' => null]);
             }
 
-            return $failure;
+            return [...$failure, 'login_ended' => $loginEnded];
         }
 
         if ($response->json('done') === true) {
@@ -132,10 +135,16 @@ class LoginService
         return ['ok' => true, 'step' => $step, 'waiting' => $response->json('waiting') === true];
     }
 
-    /** @return array<string, mixed> */
-    public function cancel(MessengerPersonal $channel): array
+    /**
+     * Form cũ huỷ thì bỏ qua: lượt hiện tại thuộc form khác.
+     *
+     * @return array<string, mixed>
+     */
+    public function cancel(MessengerPersonal $channel, ?string $loginId): array
     {
-        $this->cancelPendingLogin($channel);
+        if ($this->isCurrentLogin($channel, $loginId)) {
+            $this->cancelPendingLogin($channel);
+        }
 
         return ['ok' => true];
     }
@@ -241,6 +250,19 @@ class LoginService
             ...$this->error(409, self::ERROR_ACCOUNT_IN_USE, ['{inbox}' => $inboxName]),
             'inbox_name' => $inboxName,
         ];
+    }
+
+    private function isCurrentLogin(MessengerPersonal $channel, ?string $loginId): bool
+    {
+        return filled($channel->login_token)
+            && filled($loginId)
+            && hash_equals($this->loginIdOf((string) $channel->login_token), $loginId);
+    }
+
+    /** Token chỉ dành cho sidecar; trình duyệt nhận dấu băm của nó để chỉ ra lượt của mình. */
+    private function loginIdOf(string $loginToken): string
+    {
+        return hash('sha256', $loginToken);
     }
 
     private function cancelPendingLogin(MessengerPersonal $channel): void

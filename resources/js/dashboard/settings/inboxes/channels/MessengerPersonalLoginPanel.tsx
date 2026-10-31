@@ -37,6 +37,7 @@ interface StepAttachment {
 
 interface LoginResponse {
     ok?: boolean;
+    login_id?: string;
     step?: LoginStep;
     waiting?: boolean;
     done?: boolean;
@@ -46,12 +47,13 @@ interface LoginResponse {
 interface LoginErrorBody {
     error_code?: string;
     message?: string;
+    login_ended?: boolean;
 }
 
 type Phase = 'risk' | 'starting' | 'step' | 'submitting' | 'done' | 'error';
 
-// Lỗi mà lượt đăng nhập ở sidecar vẫn còn: sửa ô nhập rồi gửi lại được.
-const RETRYABLE_ERRORS = ['invalid_credentials', 'two_factor_failed', 'bad_request', 'rate_limited'];
+// Lượt đã hết vì những lỗi này thì mở lượt mới ngay cũng hỏng: để người dùng tự bấm đăng nhập lại.
+const RESTART_LATER_ERRORS = ['rate_limited', 'session_cap_reached'];
 
 interface MessengerPersonalLoginPanelProps {
     accountId: number;
@@ -60,7 +62,7 @@ interface MessengerPersonalLoginPanelProps {
     onCancel?: () => void;
 }
 
-function errorMessageOf(error: unknown): { code: string | null; message: string } {
+function errorMessageOf(error: unknown): { code: string | null; message: string; loginEnded: boolean } {
     const body = (error as { body?: LoginErrorBody } | null)?.body;
     const code = body?.error_code ?? null;
     const key = code ? `INBOX_MGMT.MESSENGER_PERSONAL.ERRORS.${code.toUpperCase()}` : null;
@@ -69,6 +71,7 @@ function errorMessageOf(error: unknown): { code: string | null; message: string 
     return {
         code,
         message: body?.message || (translated && translated !== key ? translated : t('INBOX_MGMT.MESSENGER_PERSONAL.ERRORS.BRIDGE_UNREACHABLE')),
+        loginEnded: body?.login_ended === true,
     };
 }
 
@@ -217,6 +220,7 @@ export default function MessengerPersonalLoginPanel({ accountId, inboxId, onConn
     const [account, setAccount] = useState<LoginResponse['account'] | null>(null);
     const [passedSteps, setPassedSteps] = useState<string[]>([]);
     const loginOpenRef = useRef(false);
+    const loginIdRef = useRef<string | null>(null);
 
     const basePath = `/api/v1/accounts/${accountId}/inboxes/${inboxId}/messenger_personal`;
 
@@ -239,24 +243,31 @@ export default function MessengerPersonalLoginPanel({ accountId, inboxId, onConn
         }
     }, [step]);
 
-    const fail = (error: unknown, keepStep: boolean) => {
-        const { code, message } = errorMessageOf(error);
-        setErrorMessage(message);
-        if (keepStep && code && RETRYABLE_ERRORS.includes(code)) {
+    // Lượt còn sống thì giữ bước để sửa và gửi lại; lượt đã hết thì mở lượt mới, giữ câu báo lỗi trên bước đầu.
+    const fail = (error: unknown, duringStep: boolean) => {
+        const { code, message, loginEnded } = errorMessageOf(error);
+        if (duringStep && !loginEnded) {
+            setErrorMessage(message);
             setPhase('step');
             return;
         }
         loginOpenRef.current = false;
+        if (duringStep && !(code && RESTART_LATER_ERRORS.includes(code))) {
+            void start(message);
+            return;
+        }
+        setErrorMessage(message);
         setPhase('error');
     };
 
-    const start = async () => {
+    const start = async (notice: string | null = null) => {
         setPhase('starting');
-        setErrorMessage(null);
+        setErrorMessage(notice);
         setPassedSteps([]);
         try {
             const result = await postJson<LoginResponse>(`${basePath}/login/start`, {});
             loginOpenRef.current = true;
+            loginIdRef.current = result.login_id ?? null;
             showStep(result.step);
         } catch (error) {
             fail(error, false);
@@ -271,7 +282,7 @@ export default function MessengerPersonalLoginPanel({ accountId, inboxId, onConn
         setErrorMessage(null);
         const sentAt = Date.now();
         try {
-            const result = await postJson<LoginResponse>(`${basePath}/login/submit`, { input });
+            const result = await postJson<LoginResponse>(`${basePath}/login/submit`, { login_id: loginIdRef.current, input });
             if (!loginOpenRef.current) return;
             if (result.done) {
                 loginOpenRef.current = false;
@@ -306,7 +317,7 @@ export default function MessengerPersonalLoginPanel({ accountId, inboxId, onConn
     const cancel = () => {
         if (loginOpenRef.current) {
             loginOpenRef.current = false;
-            postJson(`${basePath}/login/cancel`, {}).catch(() => undefined);
+            postJson(`${basePath}/login/cancel`, { login_id: loginIdRef.current }).catch(() => undefined);
         }
         setValues({});
         setStep(null);

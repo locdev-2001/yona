@@ -215,7 +215,7 @@ func (manager *LoginManager) Start(ctx context.Context, token string, connection
 func (manager *LoginManager) Submit(ctx context.Context, token string, input map[string]string) (*loginResult, error) {
 	attempt, err := manager.liveAttempt(token)
 	if err != nil {
-		return nil, err
+		return nil, endedLogin(err)
 	}
 	if input == nil {
 		input = map[string]string{}
@@ -244,7 +244,7 @@ func (manager *LoginManager) Submit(ctx context.Context, token string, input map
 		manager.log.Warn().Str("event", "login_failed").Int64("connection_id", attempt.connectionID).
 			Str("code", loginErrorCode(err)).AnErr("error", err).
 			Int64("duration_ms", time.Since(outcome.startedAt).Milliseconds()).Send()
-		return nil, mapLoginError(err)
+		return nil, endedLogin(mapLoginError(err))
 	}
 	if step != nil {
 		attempt.lastStep = step
@@ -263,7 +263,7 @@ func (manager *LoginManager) Submit(ctx context.Context, token string, input map
 	account, err := manager.slots.ActivateLogin(activationCtx, session)
 	if err != nil {
 		manager.log.Warn().Str("event", "login_activation_failed").Int64("connection_id", attempt.connectionID).AnErr("error", err).Send()
-		return nil, err
+		return nil, endedLogin(err)
 	}
 	manager.log.Info().Str("event", "login_completed").Int64("connection_id", attempt.connectionID).
 		Int64("duration_ms", time.Since(attempt.createdAt).Milliseconds()).Send()

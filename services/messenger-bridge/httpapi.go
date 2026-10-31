@@ -157,7 +157,11 @@ func writeOK(writer http.ResponseWriter, fields map[string]any) {
 
 func writeError(writer http.ResponseWriter, err error) {
 	typed := asAPIError(err)
-	writeJSON(writer, typed.status, map[string]any{"ok": false, "code": typed.code, "message": typed.message})
+	body := map[string]any{"ok": false, "code": typed.code, "message": typed.message}
+	if typed.loginEnded {
+		body["login_ended"] = true
+	}
+	writeJSON(writer, typed.status, body)
 }
 
 func (api *HTTPAPI) handleRoot(writer http.ResponseWriter, _ *http.Request) {
