@@ -72,13 +72,6 @@ class IncomingMessageService
      */
     private const ZCA_QUOTE_FIELDS = ['content', 'msgType', 'propertyExt', 'uidFrom', 'msgId', 'cliMsgId', 'ts', 'ttl'];
 
-    /**
-     * Ảnh Zalo trên CDN `*.zdn.vn` có hai bản: `/jpg/…/<id>.jpg` và bản gốc
-     * JPEG XL `/jxl/…/<id>.jxl`. Từ 28/10/2026 bản jpg của ảnh gửi từ điện thoại
-     * trả 500 trong khi bản jxl vẫn tải được, nên bản jxl là URL thay thế.
-     */
-    private const JPEG_XL_URL_PATTERN = '~^(https://[a-z0-9.-]+\.zdn\.vn/(?:[a-z]+/)?)jpg(/.+)\.jpg$~i';
-
     // Thứ tự tra URL ảnh sticker trong payload bridge (zca-js đặt nhiều tên).
     private const STICKER_URL_KEYS = ['stickerUrl', 'url', 'thumbnail', 'stickerSpriteUrl'];
 
@@ -843,16 +836,8 @@ class IncomingMessageService
             self::ATTACHMENT_KINDS[$kind] ?? AttachmentKind::File,
             $this->params['media_filename'] ?? null,
             urlIsPublic: true,
-            alternativeUrls: self::jpegXlAlternative((string) $url),
+            alternativeUrls: ZaloPhotoUrl::alternativesFor((string) $url),
         );
-    }
-
-    /** @return list<string> */
-    private static function jpegXlAlternative(string $url): array
-    {
-        return preg_match(self::JPEG_XL_URL_PATTERN, $url, $parts) === 1
-            ? ["{$parts[1]}jxl{$parts[2]}.jxl"]
-            : [];
     }
 
     /**
