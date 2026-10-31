@@ -7,6 +7,11 @@ use Illuminate\Support\Str;
 // deploy.sh đọc lại chính file đó, không chép tay lần hai.
 $tiers = require __DIR__.'/queue_tiers.php';
 
+// Worker rảnh ngủ bao lâu trước khi hỏi lại hàng đợi. Mặc định 3s cộng 0–3s vào
+// mọi tin đến, tin gửi và lượt phát realtime. Không dùng `block_for` của Redis:
+// worker nhiều hàng đợi sẽ BLPOP lần lượt từng hàng, việc ở hàng thứ N chờ N lần.
+$idlePollSeconds = 0.25;
+
 return [
 
     /*
@@ -239,6 +244,7 @@ return [
             'memory' => 256,
             'tries' => 3,
             'timeout' => 60,
+            'sleep' => $idlePollSeconds,
             'nice' => 0,
         ],
 
@@ -257,6 +263,7 @@ return [
             // < retry_after của Redis (180s, config/queue.php). Sai thứ tự thì
             // Redis trả job về hàng đợi trong lúc worker vẫn đang chạy nó.
             'timeout' => 150,
+            'sleep' => $idlePollSeconds,
             'nice' => 0,
         ],
 
@@ -271,6 +278,7 @@ return [
             'memory' => 256,
             'tries' => 3,
             'timeout' => 150,
+            'sleep' => $idlePollSeconds,
             'nice' => 0,
         ],
 
