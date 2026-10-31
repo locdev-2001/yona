@@ -14,7 +14,7 @@
         "check:ui:self": "python3 scripts/check-ui.py --self-test"
     },
     "dependencies": {
-        "@base-ui/react": "1.6.0",
+        "@base-ui/react": "1.9.0",
         "@blobatar/react": "2.7.0",
         "@dnd-kit/core": "^6.3.1",
         "@dnd-kit/sortable": "^10.0.0",
