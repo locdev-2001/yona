@@ -52,6 +52,9 @@ class Zalo extends Model implements DeclaresCapabilities, DeclaresConnection, De
     /** Chủ hộp thư chủ động ngắt kết nối (hoặc đổi tài khoản) — khác hẳn mất phiên ngoài ý muốn. */
     public const STATE_DISCONNECTED = 'disconnected';
 
+    /** Lý do kèm STATE_DISCONNECTED khi chủ hộp thư tự ngắt; mở QR sau đó vẫn giữ lý do này. */
+    public const REASON_USER_DISCONNECTED = 'user_disconnected';
+
     /** Giá trị `thread_type` của luồng nhóm (0 = chat 1-1). */
     public const THREAD_TYPE_GROUP = 1;
 
@@ -208,6 +211,16 @@ class Zalo extends Model implements DeclaresCapabilities, DeclaresConnection, De
     public function isGroupThread(Conversation $conversation): bool
     {
         return $this->threadTypeOf($conversation) === self::THREAD_TYPE_GROUP;
+    }
+
+    /**
+     * Chủ hộp thư tự ngắt kết nối và chưa nối lại tài khoản nào: lần quét kế tiếp được
+     * gắn tài khoản Zalo khác. Mở QR đổi state sang chờ quét nhưng giữ nguyên lý do.
+     */
+    public function disconnectedByOwner(): bool
+    {
+        return in_array($this->state, [self::STATE_DISCONNECTED, self::STATE_QR_WAITING], true)
+            && $this->session_lost_reason === self::REASON_USER_DISCONNECTED;
     }
 
     /** Trạng thái phiên do webhook `bridge_session` của bridge đẩy về. */

@@ -105,6 +105,7 @@ class QrLoginService
             ];
         }
 
+        $stateBeforeScan = $channel->only(['state', 'session_lost_reason']);
         $response = $this->bridge->promote($channel, $channel->qr_token);
 
         if ($response === null) {
@@ -122,9 +123,10 @@ class QrLoginService
 
         if ($conflict !== null) {
             // Slot ở bridge đã kết nối rồi: không đăng xuất thì listener vừa mở sẽ
-            // đá phiên của hộp thư kia ra (zalo-deep-audit 6.4).
+            // đá phiên của hộp thư kia ra (zalo-deep-audit 6.4). Bridge đã kịp báo
+            // `session_ok` về trong lúc promote, nên trả trạng thái về như trước khi quét.
             $this->bridge->logout($channel);
-            $channel->update(['qr_token' => null]);
+            $channel->refresh()->update(['qr_token' => null, ...$stateBeforeScan]);
 
             return $conflict;
         }
@@ -163,7 +165,7 @@ class QrLoginService
         $response = $this->bridge->logout($channel);
 
         $channel->update(['qr_token' => null]);
-        $channel->markState(Zalo::STATE_DISCONNECTED, 'user_disconnected');
+        $channel->markState(Zalo::STATE_DISCONNECTED, Zalo::REASON_USER_DISCONNECTED);
 
         return [
             'ok' => true,
@@ -194,9 +196,7 @@ class QrLoginService
             return null;
         }
 
-        $userSwitchedOnPurpose = $channel->state === Zalo::STATE_DISCONNECTED;
-
-        if (filled($channel->zalo_uid) && ! $userSwitchedOnPurpose && $zaloUid !== $channel->zalo_uid) {
+        if (filled($channel->zalo_uid) && ! $channel->disconnectedByOwner() && $zaloUid !== $channel->zalo_uid) {
             return [
                 'ok' => false,
                 'status' => 409,
