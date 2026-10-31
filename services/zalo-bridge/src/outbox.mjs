@@ -32,6 +32,9 @@ export function createOutbox({
 }) {
     let _counter = 1;
     let _draining = false;
+    // Lượt drain đang chạy chỉ đi qua danh sách lấy lúc bắt đầu: tin enqueue giữa chừng
+    // phải được quét lại ngay khi lượt đó xong, không nằm chờ nhịp interval kế tiếp.
+    let _drainRequested = false;
     let _authBlocked = false;
     let _interval = null;
 
@@ -176,8 +179,12 @@ export function createOutbox({
     }
 
     async function drain() {
-        if (_draining) return;
+        if (_draining) {
+            _drainRequested = true;
+            return;
+        }
         _draining = true;
+        _drainRequested = false;
         try {
             for (const filePath of listPending()) {
                 const rec = readJsonSync(filePath);
@@ -231,6 +238,9 @@ export function createOutbox({
             }
         } finally {
             _draining = false;
+        }
+        if (_drainRequested) {
+            void drain();
         }
     }
 
