@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/rs/zerolog"
 	"go.mau.fi/mautrix-meta/pkg/messagix"
@@ -31,6 +32,8 @@ const (
 	webhookPath             = "/webhooks/messenger-personal"
 	dotEnvFileName          = ".env"
 	listFieldSeparator      = ","
+	metaDialTimeout         = 30 * time.Second
+	metaDialKeepAlive       = 30 * time.Second
 )
 
 // Schemes both the Messenger client and the end-to-end client accept.
@@ -178,7 +181,10 @@ func (config *Config) MetaProxyHost() string {
 // MetaProxy when it is set: Meta places logins at the proxy's location
 // instead of the server's.
 func (config *Config) metaClientConfig() *messagix.Config {
-	settings, _ := exhttp.ClientSettings{}.WithProxy(config.MetaProxy)
+	// A socks5 proxy dials through the base dialer; the zero settings have none and panic.
+	settings, _ := exhttp.ClientSettings{}.
+		WithDial((&net.Dialer{Timeout: metaDialTimeout, KeepAlive: metaDialKeepAlive}).DialContext).
+		WithProxy(config.MetaProxy)
 	return &messagix.Config{ClientSettings: settings}
 }
 
