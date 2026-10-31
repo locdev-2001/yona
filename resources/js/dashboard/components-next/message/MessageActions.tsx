@@ -33,6 +33,12 @@ const HOVERLESS_POINTER_QUERY = '(hover: none)';
 export const LONG_PRESS_MS = 450;
 const LONG_PRESS_MOVE_TOLERANCE_PX = 10;
 
+// Vuốt bong bóng sang phải để trả lời: qua ngưỡng thì rung nhẹ, nhả tay là trả lời.
+// Chỉ nhận khi chiều ngang trội rõ so với chiều dọc, để cuộn danh sách không bị bắt nhầm.
+const SWIPE_REPLY_THRESHOLD_PX = 56;
+const SWIPE_REPLY_MAX_PX = 72;
+const SWIPE_HORIZONTAL_DOMINANCE = 1.5;
+
 function useHoverlessPointer(): boolean {
     const [isHoverless, setHoverless] = useState(
         () => window.matchMedia?.(HOVERLESS_POINTER_QUERY).matches ?? false,
@@ -50,6 +56,26 @@ function useHoverlessPointer(): boolean {
     }, []);
 
     return isHoverless;
+}
+
+// Nhả tay sau khi nhấn giữ, trình duyệt vẫn có thể bắn click vào thứ đang nằm
+// dưới ngón tay, tức mục của sheet vừa mở. Sau một lần nhấn giữ, `touchend`
+// thường không còn huỷ được nên không chặn ở đó; click đầu tiên trước lần chạm
+// mới thuộc về cử chỉ mở sheet và bị nuốt. Trả hàm gỡ bộ chặn.
+function swallowReleaseClick(): () => void {
+    const swallow = (event: Event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        release();
+    };
+    const release = () => {
+        window.removeEventListener('click', swallow, true);
+        window.removeEventListener('touchstart', release, true);
+    };
+    window.addEventListener('click', swallow, true);
+    window.addEventListener('touchstart', release, true);
+
+    return release;
 }
 
 // Người dùng đang bôi đen chữ trong tin thì chuột phải phải ra menu gốc của
@@ -140,7 +166,9 @@ export default function MessageActions({
     const areaRef = useRef<HTMLDivElement>(null);
     const barRef = useRef<HTMLDivElement>(null);
     const moreButtonRef = useRef<HTMLButtonElement>(null);
-    const longPressRef = useRef<{ timer: number; x: number; y: number; fired: boolean } | null>(null);
+    const longPressRef = useRef<{ timer: number; x: number; y: number; axis: 'x' | 'y' | null } | null>(null);
+    const [swipeOffset, setSwipeOffset] = useState(0);
+    const releaseClickGuardRef = useRef<(() => void) | null>(null);
 
     useEffect(() => {
         if (!isPickerOpen) return undefined;
@@ -153,7 +181,13 @@ export default function MessageActions({
         return () => document.removeEventListener('mousedown', onPointerDownOutside);
     }, [isPickerOpen]);
 
-    useEffect(() => () => window.clearTimeout(longPressRef.current?.timer), []);
+    useEffect(
+        () => () => {
+            window.clearTimeout(longPressRef.current?.timer);
+            releaseClickGuardRef.current?.();
+        },
+        [],
+    );
 
     const images = (attachments ?? []).filter(attachment => attachment.file_type === ATTACHMENT_TYPES.IMAGE);
     const copyableImageUrl = images.length === 1 ? images[0].data_url : null;
@@ -262,15 +296,17 @@ export default function MessageActions({
     };
 
     const onTouchStart = (event: ReactTouchEvent<HTMLDivElement>) => {
-        if (!hasActions || event.touches.length !== 1) return;
+        // Sheet render qua portal nhưng sự kiện React vẫn nổi lên đây: chỉ nhận cử chỉ bắt đầu trong bong bóng.
+        if (!hasActions || event.touches.length !== 1 || !areaRef.current?.contains(event.target as Node)) return;
         const touch = event.touches[0];
         cancelLongPress();
         longPressRef.current = {
             x: touch.clientX,
             y: touch.clientY,
-            fired: false,
+            axis: null,
             timer: window.setTimeout(() => {
-                if (longPressRef.current) longPressRef.current.fired = true;
+                releaseClickGuardRef.current?.();
+                releaseClickGuardRef.current = swallowReleaseClick();
                 navigator.vibrate?.(10);
                 openMenuAt('sheet', touch.clientX, touch.clientY);
             }, LONG_PRESS_MS),
@@ -281,16 +317,28 @@ export default function MessageActions({
         const start = longPressRef.current;
         const touch = event.touches[0];
         if (!start || !touch) return;
-        const moved = Math.hypot(touch.clientX - start.x, touch.clientY - start.y);
-        if (moved > LONG_PRESS_MOVE_TOLERANCE_PX) cancelLongPress();
+        const dx = touch.clientX - start.x;
+        const dy = touch.clientY - start.y;
+        if (Math.hypot(dx, dy) <= LONG_PRESS_MOVE_TOLERANCE_PX) return;
+        cancelLongPress();
+
+        start.axis ??= flags.reply && dx > Math.abs(dy) * SWIPE_HORIZONTAL_DOMINANCE ? 'x' : 'y';
+        if (start.axis !== 'x') return;
+
+        const offset = Math.min(Math.max(dx, 0), SWIPE_REPLY_MAX_PX);
+        if (offset >= SWIPE_REPLY_THRESHOLD_PX && swipeOffset < SWIPE_REPLY_THRESHOLD_PX) navigator.vibrate?.(10);
+        setSwipeOffset(offset);
     };
 
-    // Nhả tay sau khi đã mở sheet thì chặn cú chạm đó, để không mở luôn ảnh hay
-    // liên kết nằm dưới ngón tay.
-    const onTouchEnd = (event: ReactTouchEvent<HTMLDivElement>) => {
+    const endGesture = () => {
         cancelLongPress();
-        if (longPressRef.current?.fired) event.preventDefault();
         longPressRef.current = null;
+        setSwipeOffset(0);
+    };
+
+    const onTouchEnd = () => {
+        if (swipeOffset >= SWIPE_REPLY_THRESHOLD_PX) runAction('reply');
+        endGesture();
     };
 
     const isBarVisible = !isHoverlessPointer && (flags.react || flags.reply || menuGroups.length > 0);
@@ -383,13 +431,27 @@ export default function MessageActions({
     return (
         <div
             ref={areaRef}
-            className={`${className} ${isHoverlessPointer && hasActions ? 'select-none [-webkit-touch-callout:none]' : ''}`.trim()}
+            className={`${className} relative ${isHoverlessPointer && hasActions ? 'select-none touch-pan-y [-webkit-touch-callout:none]' : ''} ${
+                swipeOffset > 0 ? '' : 'transition-transform duration-200'
+            }`.trim()}
+            style={swipeOffset > 0 ? { transform: `translateX(${swipeOffset}px)` } : undefined}
             onContextMenu={onContextMenu}
             onTouchStart={onTouchStart}
             onTouchMove={onTouchMove}
             onTouchEnd={onTouchEnd}
-            onTouchCancel={cancelLongPress}
+            onTouchCancel={endGesture}
         >
+            {swipeOffset > 0 ? (
+                <span
+                    aria-hidden="true"
+                    style={{ opacity: Math.min(swipeOffset / SWIPE_REPLY_THRESHOLD_PX, 1) }}
+                    className={`absolute top-1/2 -translate-y-1/2 right-full me-2 size-8 grid place-content-center rounded-full ${
+                        swipeOffset >= SWIPE_REPLY_THRESHOLD_PX ? 'bg-n-brand text-white' : 'bg-n-alpha-2 text-n-slate-11'
+                    }`}
+                >
+                    <Icon icon="i-lucide-reply" className="size-4" />
+                </span>
+            ) : null}
             {orientation === ORIENTATION.RIGHT ? bar : null}
             {children}
             {orientation === ORIENTATION.LEFT ? bar : null}
