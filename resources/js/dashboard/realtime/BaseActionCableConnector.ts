@@ -9,6 +9,9 @@ import type { RealtimeIdentity } from './types';
 // heartbeat POST /presence (server broadcast presence.update về kênh pubsub_token).
 const PRESENCE_INTERVAL = 20000;
 const RECONNECT_INTERVAL = 1000;
+// Ẩn lâu hơn mức này (PWA bị đẩy xuống nền) thì hệ điều hành có thể đã cắt socket mà
+// pusher-js chưa biết: mở lại là nối lại ngay và tải bù, không chờ hết thời gian ping.
+const RESUME_RECONNECT_AFTER_MS = 3000;
 
 // pusher-js: state đi qua initialized → connecting → connected → (unavailable|disconnected|failed).
 const PUSHER_CONNECTED_STATE = 'connected';
@@ -46,6 +49,7 @@ class BaseActionCableConnector {
     private presenceTimer: ReturnType<typeof setTimeout> | null = null;
     private readonly presenceInterval: number;
     private hasBeenConnected = false;
+    private hiddenAt: number | null = null;
 
     constructor(identity: RealtimeIdentity, presenceInterval = PRESENCE_INTERVAL) {
         this.identity = identity;
@@ -59,8 +63,24 @@ class BaseActionCableConnector {
         });
 
         this.connection.bind('state_change', this.onConnectionStateChange);
+        document.addEventListener('visibilitychange', this.onVisibilityChange);
         this.triggerPresenceInterval();
     }
+
+    private onVisibilityChange = () => {
+        if (document.visibilityState === 'hidden') {
+            this.hiddenAt = Date.now();
+            return;
+        }
+        const hiddenFor = this.hiddenAt === null ? 0 : Date.now() - this.hiddenAt;
+        this.hiddenAt = null;
+        if (!this.hasBeenConnected || hiddenFor < RESUME_RECONNECT_AFTER_MS) return;
+
+        // Đi qua đúng luồng mất kết nối → nối lại → onReconnect (tải bù) sẵn có.
+        const pusher = this.echo.connector.pusher;
+        pusher.disconnect();
+        pusher.connect();
+    };
 
     protected get connection(): PusherConnection {
         return this.echo.connector.pusher.connection as unknown as PusherConnection;
@@ -79,6 +99,8 @@ class BaseActionCableConnector {
                 void this.updatePresence();
             }
             this.onConnected();
+            // Vừa nối lại sau khi mất: tải bù ngay, không đợi nhịp kiểm tra kế tiếp.
+            if (BaseActionCableConnector.isDisconnected) this.checkConnection();
             return;
         }
         if (this.hasBeenConnected && PUSHER_LOST_STATES.includes(current)) {
@@ -139,6 +161,7 @@ class BaseActionCableConnector {
             this.presenceTimer = null;
         }
         this.connection.unbind('state_change', this.onConnectionStateChange);
+        document.removeEventListener('visibilitychange', this.onVisibilityChange);
         this.echo.disconnect();
     }
 
