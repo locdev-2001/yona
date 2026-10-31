@@ -13,6 +13,8 @@ import (
 	"strings"
 
 	"github.com/rs/zerolog"
+	"go.mau.fi/mautrix-meta/pkg/messagix"
+	"go.mau.fi/util/exhttp"
 )
 
 const (
@@ -31,6 +33,9 @@ const (
 	listFieldSeparator      = ","
 )
 
+// Schemes both the Messenger client and the end-to-end client accept.
+var metaProxySchemes = map[string]bool{"http": true, "https": true, "socks5": true}
+
 type Config struct {
 	Environment        string
 	HTTPHost           string
@@ -47,6 +52,7 @@ type Config struct {
 	MaxSessions        int
 	MaxMediaBytes      int64
 	FetchHostAllowlist map[string]bool
+	MetaProxy          string
 	LogFile            string
 	LogLevel           zerolog.Level
 	LibraryLogLevel    zerolog.Level
@@ -84,6 +90,7 @@ func LoadConfig() (*Config, error) {
 		LaravelBaseURL: strings.TrimRight(strings.TrimSpace(os.Getenv("LARAVEL_BASE_URL")), "/"),
 		StateDir:       envOrDefault("BRIDGE_STATE_DIR", defaultStateDir),
 		LogFile:        strings.TrimSpace(os.Getenv("BRIDGE_LOG_FILE")),
+		MetaProxy:      strings.TrimSpace(os.Getenv("BRIDGE_META_PROXY")),
 	}
 	var err error
 	if config.HTTPPort, err = envInt("BRIDGE_HTTP_PORT", defaultHTTPPort); err != nil {
@@ -133,6 +140,9 @@ func (config *Config) validate() error {
 	if config.DeviceKey == nil {
 		return errors.New("BRIDGE_DEVICE_KEY is required (32 bytes, base64)")
 	}
+	if err := validateMetaProxy(config.MetaProxy); err != nil {
+		return err
+	}
 	if !config.IsProduction() {
 		return nil
 	}
@@ -152,6 +162,33 @@ func (config *Config) validate() error {
 	}
 	if !strings.HasPrefix(config.LaravelBaseURL, "https://") {
 		return errors.New("production boot refused: LARAVEL_BASE_URL must use https")
+	}
+	return nil
+}
+
+// MetaProxyHost names the proxy without its credentials, for logs.
+func (config *Config) MetaProxyHost() string {
+	if parsed, err := url.Parse(config.MetaProxy); err == nil {
+		return parsed.Host
+	}
+	return ""
+}
+
+// metaClientConfig sends every Messenger request and socket through
+// MetaProxy when it is set: Meta places logins at the proxy's location
+// instead of the server's.
+func (config *Config) metaClientConfig() *messagix.Config {
+	settings, _ := exhttp.ClientSettings{}.WithProxy(config.MetaProxy)
+	return &messagix.Config{ClientSettings: settings}
+}
+
+func validateMetaProxy(raw string) error {
+	if raw == "" {
+		return nil
+	}
+	parsed, err := url.Parse(raw)
+	if err != nil || !metaProxySchemes[parsed.Scheme] || parsed.Host == "" {
+		return errors.New("BRIDGE_META_PROXY must look like http://host:port or socks5://user:pass@host:port")
 	}
 	return nil
 }

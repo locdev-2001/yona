@@ -811,6 +811,20 @@ deploy sau lần mang nó lên; lần đầu chạy tay đúng các lệnh trên
 Chống được lộ đĩa và bản sao lưu; không chống được người đã có root trên server (khoá
 nằm trong `.env` cùng máy, như Zalo).
 
+### Proxy tới Meta (`BRIDGE_META_PROXY`)
+
+Facebook đoán vị trí lần đăng nhập từ IP gọi tới nó. IP server `103.166.182.185` (dải
+ZOZO, Hà Nội) bị dữ liệu vị trí riêng của Facebook xếp vào Hàng Châu, Trung Quốc, dù mọi
+nguồn công khai đều ghi Việt Nam (đo 31/10/2026). Đặt `BRIDGE_META_PROXY` (http, https
+hoặc socks5, có thể kèm `user:pass@`) để kết nối của sidecar tới Meta (đăng nhập, socket
+Messenger, socket mã hoá đầu cuối và media của nó) đi qua proxy. Webhook về Laravel, tải
+tệp từ Laravel, và việc Laravel tự tải ảnh/tệp thường từ CDN của Meta vẫn đi thẳng. Giá
+trị sai định dạng thì sidecar từ chối khởi động; dòng `bridge_starting` trong log ghi host
+proxy đang dùng (không ghi mật khẩu). Đổi proxy rồi restart sidecar: phiên đã lưu nối lại
+qua proxy mới mà không phải đăng nhập lại, nhưng Facebook có thể đòi xác minh vì IP đổi.
+Nên dùng proxy IP nhà mạng Việt Nam cố định, không xoay IP: Facebook coi IP đổi liên tục
+là đáng ngờ.
+
 ### Hạn mức và sức chứa
 
 `BRIDGE_MAX_SESSIONS` (mặc định 50) là trần **cả server**, không phải mỗi khách. Đo

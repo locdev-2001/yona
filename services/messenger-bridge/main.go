@@ -77,7 +77,7 @@ func run() error {
 	api := &HTTPAPI{config: config, slots: slots, logins: logins, media: media, log: log, version: buildVersion()}
 
 	log.Info().Str("event", "bridge_starting").Str("version", api.version).Str("environment", config.Environment).
-		Int("max_sessions", config.MaxSessions).Send()
+		Int("max_sessions", config.MaxSessions).Str("meta_proxy", config.MetaProxyHost()).Send()
 	go outbox.Run(ctx)
 	go media.RunJanitor(ctx)
 	go logins.RunJanitor(ctx)

@@ -176,7 +176,7 @@ func (manager *LoginManager) Start(ctx context.Context, token string, connection
 		ctx:          manager.libraryLog.With().Int64("connection_id", connectionID).Logger().WithContext(attemptCtx),
 		cancel:       cancel,
 		client: messagix.NewClient(&cookies.Cookies{Platform: platform},
-			manager.libraryLog.With().Int64("connection_id", connectionID).Logger(), &messagix.Config{}),
+			manager.libraryLog.With().Int64("connection_id", connectionID).Logger(), manager.slots.config.metaClientConfig()),
 	}
 	manager.mu.Lock()
 	if _, exists := manager.attempts[token]; exists {

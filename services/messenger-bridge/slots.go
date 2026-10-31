@@ -438,7 +438,7 @@ func (slot *Slot) loadAndConnect(ctx context.Context, generation uint64) error {
 	slot.mu.Lock()
 	session := slot.session
 	slot.mu.Unlock()
-	client := messagix.NewClient(session.toCookies(), slot.libraryLog.With().Str("component", "messagix").Logger(), &messagix.Config{})
+	client := messagix.NewClient(session.toCookies(), slot.libraryLog.With().Str("component", "messagix").Logger(), slot.manager.config.metaClientConfig())
 	if session.NativeSession != nil {
 		client.MessengerLite.SetNativeSession(session.NativeSession)
 	}
@@ -594,6 +594,11 @@ func (slot *Slot) attachEncryptedClient(generation uint64) error {
 	client, err := regular.PrepareE2EEClient()
 	if err != nil {
 		return fmt.Errorf("prepare client: %w", err)
+	}
+	if proxy := slot.manager.config.MetaProxy; proxy != "" {
+		if err := client.SetProxyAddress(proxy); err != nil {
+			return fmt.Errorf("set proxy: %w", err)
+		}
 	}
 	client.SynchronousAck = true
 	client.EnableDecryptedEventBuffer = true
