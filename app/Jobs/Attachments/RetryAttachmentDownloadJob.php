@@ -52,8 +52,8 @@ class RetryAttachmentDownloadJob extends ApplicationJob
             return;
         }
 
-        $downloaded = RemoteAttachmentDownloader::download(
-            url: (string) $attachment->external_url,
+        $downloaded = RemoteAttachmentDownloader::downloadFirstAvailable(
+            urls: $attachment->downloadRetryUrls(),
             accountId: $attachment->account_id,
             filename: $attachment->fallback_title,
         );

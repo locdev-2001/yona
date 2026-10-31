@@ -29,6 +29,8 @@ return [
 
     'attachments' => [
         'download_url_ttl' => (int) env('ATTACHMENT_DOWNLOAD_URL_TTL', 300),
+        // Chuyển ảnh JPEG XL của kênh sang JPEG để mọi trình duyệt xem được; cần ffmpeg có libjxl.
+        'ffmpeg_path' => env('FFMPEG_PATH', 'ffmpeg'),
     ],
 
     /*

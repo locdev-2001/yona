@@ -14,6 +14,7 @@ final class InboundAttachment
      * @param  array<string, string>  $headers
      * @param  array{0: string, 1: string}|null  $basicAuth
      * @param  array<string, mixed>  $meta
+     * @param  list<string>  $alternativeUrls
      */
     private function __construct(
         public readonly AttachmentKind $kind,
@@ -28,15 +29,18 @@ final class InboundAttachment
         public readonly ?string $title = null,
         public readonly array $meta = [],
         public readonly bool $trustedService = false,
+        public readonly array $alternativeUrls = [],
     ) {}
 
     /**
      * `$urlIsPublic`: URL mở được từ trình duyệt mà không cần token → khi tải hỏng, lõi
      * giữ liên kết trong fallback và tự tải lại nền. Mặc định suy từ việc có header/basic
      * auth hay không; kênh nhúng token vào URL (Telegram) phải nói rõ `false`.
+     * `$alternativeUrls`: bản khác của cùng tệp, lõi thử lần lượt khi `$url` tải hỏng.
      *
      * @param  array<string, string>  $headers
      * @param  array{0: string, 1: string}|null  $basicAuth
+     * @param  list<string>  $alternativeUrls
      */
     public static function download(
         string $url,
@@ -45,6 +49,7 @@ final class InboundAttachment
         array $headers = [],
         ?array $basicAuth = null,
         ?bool $urlIsPublic = null,
+        array $alternativeUrls = [],
     ): self {
         return new self(
             kind: $kind,
@@ -53,6 +58,7 @@ final class InboundAttachment
             headers: $headers,
             basicAuth: $basicAuth,
             urlIsPublic: $urlIsPublic ?? ($headers === [] && $basicAuth === null),
+            alternativeUrls: $alternativeUrls,
         );
     }
 

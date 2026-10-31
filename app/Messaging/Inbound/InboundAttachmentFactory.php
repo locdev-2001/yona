@@ -47,8 +47,8 @@ final class InboundAttachmentFactory
             ]);
         }
 
-        $attributes = RemoteAttachmentDownloader::download(
-            url: $spec->downloadUrl,
+        $attributes = RemoteAttachmentDownloader::downloadFirstAvailable(
+            urls: [$spec->downloadUrl, ...$spec->alternativeUrls],
             accountId: $accountId,
             filename: $spec->filename,
             headers: $spec->headers,
@@ -62,6 +62,7 @@ final class InboundAttachmentFactory
                 filename: $spec->filename ?? self::filenameFromUrl($spec->downloadUrl),
                 externalUrl: $spec->urlIsPublic ? $spec->downloadUrl : null,
                 reportedFileType: $spec->kind->fileType(),
+                alternativeUrls: $spec->urlIsPublic ? $spec->alternativeUrls : [],
             ));
         }
 

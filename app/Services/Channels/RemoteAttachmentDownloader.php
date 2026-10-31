@@ -59,6 +59,7 @@ class RemoteAttachmentDownloader
         bool $trustedService = false,
     ): ?array {
         $temporaryPath = null;
+        $transcodedPath = null;
 
         try {
             if (! $trustedService) {
@@ -84,10 +85,23 @@ class RemoteAttachmentDownloader
             }
 
             $contentType = MimeType::resolveForFile($response->header('Content-Type'), $temporaryPath);
+            $storedFilename = $filename ?: self::filenameFrom($url, $contentType);
+
+            // CDN khai `image/jpeg` cho tệp JPEG XL nên nhận dạng theo chính nội dung.
+            if (MimeType::sniffFile($temporaryPath) === JpegXlTranscoder::CONTENT_TYPE) {
+                $transcodedPath = JpegXlTranscoder::toJpeg($temporaryPath);
+
+                if ($transcodedPath === null) {
+                    return null;
+                }
+
+                $contentType = JpegXlTranscoder::OUTPUT_CONTENT_TYPE;
+                $storedFilename = JpegXlTranscoder::jpegFilename($storedFilename);
+            }
 
             return Attachment::storeLocalFile(
-                $temporaryPath,
-                $filename ?: self::filenameFrom($url, $contentType),
+                $transcodedPath ?? $temporaryPath,
+                $storedFilename,
                 $contentType,
                 $accountId,
             );
@@ -96,10 +110,40 @@ class RemoteAttachmentDownloader
 
             return null;
         } finally {
-            if ($temporaryPath !== null && is_file($temporaryPath)) {
-                @unlink($temporaryPath);
+            foreach ([$temporaryPath, $transcodedPath] as $localPath) {
+                if ($localPath !== null && is_file($localPath)) {
+                    @unlink($localPath);
+                }
             }
         }
+    }
+
+    /**
+     * Thử lần lượt URL chính rồi các URL thay thế kênh khai cho cùng tệp (bản khác định
+     * dạng trên cùng CDN), lấy bản đầu tiên tải được.
+     *
+     * @param  list<string>  $urls
+     * @param  array<string, string>  $headers
+     * @param  array{0: string, 1: string}|null  $basicAuth
+     * @return array<string, mixed>|null
+     */
+    public static function downloadFirstAvailable(
+        array $urls,
+        ?int $accountId,
+        ?string $filename = null,
+        array $headers = [],
+        ?array $basicAuth = null,
+        bool $trustedService = false,
+    ): ?array {
+        foreach ($urls as $url) {
+            $downloaded = self::download($url, $accountId, $filename, $headers, $basicAuth, $trustedService);
+
+            if ($downloaded !== null) {
+                return $downloaded;
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -111,8 +155,10 @@ class RemoteAttachmentDownloader
      *
      * Cũng chính vì mở được không cần bí mật, đính kèm có `$externalUrl` được tải
      * lại nền (`RetryAttachmentDownloadJob`); `$reportedFileType` là loại kênh báo
-     * về, để lượt tải lại suy `file_type` y như đường tải gốc.
+     * về, để lượt tải lại suy `file_type` y như đường tải gốc; `$alternativeUrls` là các
+     * bản thay thế lượt tải lại cũng thử sau `$externalUrl`.
      *
+     * @param  list<string>  $alternativeUrls
      * @return array<string, mixed>
      */
     public static function fallbackAttributes(
@@ -120,6 +166,7 @@ class RemoteAttachmentDownloader
         ?string $filename = null,
         ?string $externalUrl = null,
         ?int $reportedFileType = null,
+        array $alternativeUrls = [],
     ): array {
         $attributes = [
             'account_id' => $accountId,
@@ -129,7 +176,10 @@ class RemoteAttachmentDownloader
         ];
 
         if (filled($externalUrl)) {
-            $attributes['meta'] = [Attachment::META_DOWNLOAD_RETRY => ['reported_file_type' => $reportedFileType]];
+            $attributes['meta'] = [Attachment::META_DOWNLOAD_RETRY => array_filter([
+                'reported_file_type' => $reportedFileType,
+                'alternative_urls' => $alternativeUrls,
+            ], fn ($value) => $value !== [])];
         }
 
         return $attributes;

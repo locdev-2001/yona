@@ -527,6 +527,18 @@ class Attachment extends Model
         return is_int($reportedFileType) ? $reportedFileType : null;
     }
 
+    /**
+     * URL lượt tải lại thử theo thứ tự: liên kết gốc rồi các bản thay thế kênh đã khai.
+     *
+     * @return list<string>
+     */
+    public function downloadRetryUrls(): array
+    {
+        $alternativeUrls = $this->meta[self::META_DOWNLOAD_RETRY]['alternative_urls'] ?? [];
+
+        return [(string) $this->external_url, ...array_values(array_filter((array) $alternativeUrls, 'is_string'))];
+    }
+
     public function withAttachedFile(): bool
     {
         return in_array($this->file_type, self::FILE_BEARING_TYPES, true) && $this->hasFile();

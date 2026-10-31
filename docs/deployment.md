@@ -640,6 +640,26 @@ gửi thành ảnh PNG kèm bản chữ. Ảnh vẽ trong chính tiến trình b
 CARD_RENDER_ALLOW_PRIVATE_MEDIA=1   # chỉ local; production để 0
 ```
 
+### Ảnh JPEG XL của kênh: ffmpeg có libjxl cho worker Laravel
+
+Ảnh Zalo trên CDN `*.zdn.vn` có bản JPEG XL (`/jxl/…/<id>.jxl`) bên cạnh bản
+`.jpg`. Từ 28/10/2026 bản `.jpg` của ảnh gửi từ điện thoại trả 500, nên driver
+Zalo khai thêm bản `.jxl` làm URL thay thế. Lõi tải bản đầu tiên tải được; nội dung
+là JPEG XL thì đổi sang JPEG bằng `ffmpeg` trước khi lưu, vì Chrome chưa hiển thị
+JPEG XL.
+
+`ffmpeg` phải chạy được bằng user của Horizon và có bộ giải mã `libjxl` (gói ffmpeg
+của Ubuntu 24.04 có sẵn). Không nằm trong `PATH` thì đặt `FFMPEG_PATH` trong `.env`
+gốc của Laravel (bridge đọc `services/zalo-bridge/.env` riêng).
+
+```bash
+ffmpeg -hide_banner -decoders | grep libjxl
+# mong đợi: V....D libjxl  libjxl JPEG XL (codec jpegxl)
+```
+
+Thiếu bộ giải mã thì ảnh vẫn ở dạng dự phòng có liên kết gốc như trước, và mỗi lần
+hỏng để lại một dòng `[CHANNEL] Không chuyển được ảnh JPEG XL sang JPEG` trong log.
+
 ### Gửi video dạng video gốc: ffmpeg + ffprobe
 
 Video nhân viên gửi cho khách Zalo đi thành video phát được (khách thấy khung
