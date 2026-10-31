@@ -7930,6 +7930,7 @@ const messages: Record<string, unknown> = {
                     "DESC": "Mở Zalo trên điện thoại, vào phần quét mã QR rồi quét mã bên dưới.",
                     "STARTING": "Đang mở phiên đăng nhập…",
                     "WAITING": "Đang tạo mã QR…",
+                    "SCAN_PROMPT": "Mở Zalo trên điện thoại và quét mã này để đăng nhập.",
                     "SCANNED": "Đã quét mã QR. Đang hoàn tất kết nối…",
                     "CONFIRMING": "Đang hoàn tất kết nối…",
                     "REFRESHING": "Mã QR đã hết hạn. Đang tạo mã mới…",

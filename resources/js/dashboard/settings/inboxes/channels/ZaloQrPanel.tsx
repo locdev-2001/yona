@@ -213,9 +213,18 @@ export default function ZaloQrPanel({ accountId, inboxId, boundAccountName, onCo
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
+    const isAwaitingScan = phase === 'waiting' && !isRefreshing && qrImage !== null;
+    const showsSpinner = phase !== 'error' && !isAwaitingScan;
+
+    const waitingMessageKey = isRefreshing
+        ? 'INBOX_MGMT.ADD.ZALO_CHANNEL.QR.REFRESHING'
+        : isAwaitingScan
+          ? 'INBOX_MGMT.ADD.ZALO_CHANNEL.QR.SCAN_PROMPT'
+          : 'INBOX_MGMT.ADD.ZALO_CHANNEL.QR.WAITING';
+
     const statusMessage =
         phase === 'waiting'
-            ? t(isRefreshing ? 'INBOX_MGMT.ADD.ZALO_CHANNEL.QR.REFRESHING' : 'INBOX_MGMT.ADD.ZALO_CHANNEL.QR.WAITING')
+            ? t(waitingMessageKey)
             : t(PHASE_MESSAGE_KEY[phase] ?? 'INBOX_MGMT.ADD.ZALO_CHANNEL.QR.WAITING');
 
     const retry = () => {
@@ -240,7 +249,7 @@ export default function ZaloQrPanel({ accountId, inboxId, boundAccountName, onCo
             ) : null}
 
             <div className="text-n-slate-11 text-sm leading-[1.65] mb-2 flex items-center gap-2">
-                {phase === 'error' ? null : <Loader size={16} />}
+                {showsSpinner ? <Loader size={16} /> : null}
                 <span className={phase === 'error' ? 'text-n-ruby-11' : ''}>
                     {phase === 'error' ? errorMessage : statusMessage}
                 </span>

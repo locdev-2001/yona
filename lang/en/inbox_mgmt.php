@@ -475,6 +475,7 @@ return [
                 'DESC' => 'Open Zalo on your phone, go to the QR scanner and scan the code below.',
                 'STARTING' => 'Starting the sign-in session…',
                 'WAITING' => 'Generating the QR code…',
+                'SCAN_PROMPT' => 'Open Zalo on your phone and scan this code to sign in.',
                 'SCANNED' => 'QR code scanned. Finishing the connection…',
                 'CONFIRMING' => 'Finishing the connection…',
                 'REFRESHING' => 'The QR code expired. Generating a new one…',
