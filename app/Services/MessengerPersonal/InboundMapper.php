@@ -331,6 +331,8 @@ class InboundMapper
             ...$this->groupContext($chat, $payload, $content, $profile),
             'link_preview' => ($content['kind'] ?? null) === self::KIND_LINK ? $this->linkPreview($content['link'] ?? null) : null,
             ...$this->cardAttributes($content, $fromMe),
+            // Tin bridge kéo bù lúc vừa nối lại: ghi vào dòng hội thoại nhưng không báo.
+            'history' => ($payload['backfill'] ?? null) === true ? true : null,
         ], fn ($value) => $value !== null);
     }
 
