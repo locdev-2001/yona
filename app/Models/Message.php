@@ -301,6 +301,12 @@ class Message extends Model
         return ($this->content_attributes['deleted'] ?? false) === true;
     }
 
+    /** Tin cũ driver kéo về khi nối lại kênh (`content_attributes.history`): ghi vào dòng hội thoại nhưng không phải hoạt động mới để báo. */
+    public function isHistory(): bool
+    {
+        return ($this->content_attributes['history'] ?? false) === true;
+    }
+
     /** Agent chuyển tiếp trong Yona, hoặc khách chuyển tiếp trên nền tảng (`content_attributes.forwarded_from`). */
     public function isForwarded(): bool
     {

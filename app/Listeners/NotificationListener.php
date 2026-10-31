@@ -93,6 +93,11 @@ class NotificationListener extends BaseListener
     {
         [$message] = $this->extractMessageAndAccount($event);
 
+        // Lô lịch sử khi nối lại kênh có thể là hàng trăm hội thoại: không báo, không gửi email.
+        if ($message->isHistory()) {
+            return;
+        }
+
         (new MentionService($message))->perform();
         (new NewMessageNotificationService($message))->perform();
     }

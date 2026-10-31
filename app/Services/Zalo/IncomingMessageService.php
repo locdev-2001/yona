@@ -615,6 +615,10 @@ class IncomingMessageService
             $attributes['external_echo'] = true;
         }
 
+        if ($this->isBackfill()) {
+            $attributes['history'] = true;
+        }
+
         return $attributes;
     }
 

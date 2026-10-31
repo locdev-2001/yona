@@ -10,7 +10,8 @@ class EmailNotificationJob extends ApplicationJob
 {
     public function __construct(private readonly int $notificationId)
     {
-        $this->onQueue('default');
+        // Gửi SMTP mất vài giây mỗi thư: đứng sau sự kiện kênh để một đợt thư không giữ chân tin đến.
+        $this->onQueue('mailers');
     }
 
     public function handle(): void
