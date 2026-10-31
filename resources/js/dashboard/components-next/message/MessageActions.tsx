@@ -78,6 +78,17 @@ function swallowReleaseClick(): () => void {
     return release;
 }
 
+// Bong bóng đã `select-none`, nhưng iOS nhấn giữ vào vùng không chọn được thì
+// bôi đen luôn vùng chọn được bao quanh (cả danh sách tin) và hiện menu gốc
+// Sao chép/Tra cứu. Chặn bôi đen trên toàn trang trong lúc ngón tay còn đặt
+// trên tin. Trả hàm gỡ bộ chặn.
+function blockTextSelection(): () => void {
+    const preventSelection = (event: Event) => event.preventDefault();
+    document.addEventListener('selectstart', preventSelection);
+
+    return () => document.removeEventListener('selectstart', preventSelection);
+}
+
 // Người dùng đang bôi đen chữ trong tin thì chuột phải phải ra menu gốc của
 // trình duyệt để chép đúng đoạn đã chọn.
 function hasTextSelectionInside(element: HTMLElement): boolean {
@@ -169,6 +180,7 @@ export default function MessageActions({
     const longPressRef = useRef<{ timer: number; x: number; y: number; axis: 'x' | 'y' | null } | null>(null);
     const [swipeOffset, setSwipeOffset] = useState(0);
     const releaseClickGuardRef = useRef<(() => void) | null>(null);
+    const releaseSelectionGuardRef = useRef<(() => void) | null>(null);
 
     useEffect(() => {
         if (!isPickerOpen) return undefined;
@@ -185,6 +197,7 @@ export default function MessageActions({
         () => () => {
             window.clearTimeout(longPressRef.current?.timer);
             releaseClickGuardRef.current?.();
+            releaseSelectionGuardRef.current?.();
         },
         [],
     );
@@ -300,6 +313,8 @@ export default function MessageActions({
         if (!hasActions || event.touches.length !== 1 || !areaRef.current?.contains(event.target as Node)) return;
         const touch = event.touches[0];
         cancelLongPress();
+        releaseSelectionGuardRef.current?.();
+        releaseSelectionGuardRef.current = blockTextSelection();
         longPressRef.current = {
             x: touch.clientX,
             y: touch.clientY,
@@ -307,6 +322,7 @@ export default function MessageActions({
             timer: window.setTimeout(() => {
                 releaseClickGuardRef.current?.();
                 releaseClickGuardRef.current = swallowReleaseClick();
+                window.getSelection()?.removeAllRanges();
                 navigator.vibrate?.(10);
                 openMenuAt('sheet', touch.clientX, touch.clientY);
             }, LONG_PRESS_MS),
@@ -332,6 +348,8 @@ export default function MessageActions({
 
     const endGesture = () => {
         cancelLongPress();
+        releaseSelectionGuardRef.current?.();
+        releaseSelectionGuardRef.current = null;
         longPressRef.current = null;
         setSwipeOffset(0);
     };
