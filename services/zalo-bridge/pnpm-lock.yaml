@@ -30,8 +30,8 @@ importers:
         specifier: ^0.33.5
         version: 0.33.5
       zca-js:
-        specifier: 2.1.2
-        version: 2.1.2
+        specifier: 2.2.0
+        version: 2.2.0
 
 packages:
 
@@ -1175,8 +1175,8 @@ packages:
   yoga-layout@3.2.1:
     resolution: {integrity: sha512-0LPOt3AxKqMdFBZA3HBAt/t/8vIKq7VaQYbuA8WxCgung+p9TVyKRYdpvCb80HcdTN2NkbIKbhNwKUfm3tQywQ==}
 
-  zca-js@2.1.2:
-    resolution: {integrity: sha512-82+zCqoIXnXEF6C9YuN3Kf7WKlyyujY/6Ejl2n8PkwazYkBK0k7kiPd8S7nHvC5Wl7vjwGRhDYeAM8zTHyoRxQ==}
+  zca-js@2.2.0:
+    resolution: {integrity: sha512-pBU0T0/uadH3Neq7yMssUmE769VVuqKhL8YD1HqQQG8e6lkwueAopNu0vhJdqiJRHZdPIEomT2FxRzauOx4pgA==}
     engines: {node: '>=18.0.0'}
 
 snapshots:
@@ -2334,7 +2334,7 @@ snapshots:
 
   yoga-layout@3.2.1: {}
 
-  zca-js@2.1.2:
+  zca-js@2.2.0:
     dependencies:
       crypto-js: 4.2.0
       form-data: 4.0.6
