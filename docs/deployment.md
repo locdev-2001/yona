@@ -825,6 +825,24 @@ qua proxy mới mà không phải đăng nhập lại, nhưng Facebook có thể
 Nên dùng proxy IP nhà mạng Việt Nam cố định, không xoay IP: Facebook coi IP đổi liên tục
 là đáng ngờ.
 
+Production đang dùng Cloudflare WARP chạy ngay trên server ở chế độ proxy cục bộ (cài
+31/10/2026, `warp-cli` 2026.8): chỉ bridge đi qua `socks5://127.0.0.1:40000`, mọi lưu
+lượng khác của server vẫn ra bằng IP cũ. Đi qua WARP, IP ra là IPv6 của Cloudflare được
+định vị Hà Nội. Cài lại trên máy mới, **chuyển chế độ proxy trước khi `connect`**, nếu
+không WARP kéo cả lưu lượng server (kể cả SSH) qua Cloudflare:
+
+```bash
+apt-get install -y cloudflare-warp   # sau khi thêm kho pkg.cloudflareclient.com
+warp-cli --accept-tos registration new
+warp-cli --accept-tos mode proxy && warp-cli --accept-tos proxy port 40000
+warp-cli --accept-tos settings | grep -i mode   # phải là WarpProxy on port 40000
+warp-cli --accept-tos connect
+curl -s -x socks5h://127.0.0.1:40000 https://www.cloudflare.com/cdn-cgi/trace | grep -E '^(ip|loc|warp)='
+```
+
+WARP ngừng thì bridge không tới được Meta; tắt proxy bằng cách bỏ dòng
+`BRIDGE_META_PROXY` rồi restart sidecar.
+
 ### Hạn mức và sức chứa
 
 `BRIDGE_MAX_SESSIONS` (mặc định 50) là trần **cả server**, không phải mỗi khách. Đo
