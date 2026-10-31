@@ -160,6 +160,7 @@ function createSlotState() {
         botId: 0,
         listenerStarted: false,
         outboundEchoIds: new Map(),
+        outboundSendsInFlight: 0,
         // P11: workspace bind lúc promote (B1 token-từ-session) + allowlist reflect cache
         workspaceId: '',
         allowlist: null,
@@ -187,6 +188,18 @@ function pruneOutboundEchoIds(slot) {
     while (m.size > OUTBOUND_ECHO_MAX_IDS) {
         const first = m.keys().next().value;
         m.delete(first);
+    }
+}
+
+// msgId của tin bridge gửi chỉ được ghi khi Zalo trả kết quả, nên echo có thể tới
+// trước lúc đó. Đếm lượt gửi đang dở để phân biệt: không có lượt nào dở mà echo
+// không khớp msgId nào thì chắc chắn tin được gửi từ thiết bị khác của chủ tài khoản.
+async function trackOutboundSend(slot, send) {
+    slot.outboundSendsInFlight = (slot.outboundSendsInFlight || 0) + 1;
+    try {
+        return await send();
+    } finally {
+        slot.outboundSendsInFlight -= 1;
     }
 }
 
@@ -1886,6 +1899,7 @@ function startListenerForSlot(slotKey) {
             return;
         }
         noteSlotAlive(slot, cid, bid);
+        const sendInFlightAtArrival = slot.outboundSendsInFlight > 0;
         if (message?.data?.msgType && message.data.msgType !== 'webchat') {
             console.log('[zalo-bridge:raw-media]', JSON.stringify({ isSelf: message.isSelf, msgType: message.data.msgType, content: message.data.content, propertyExt: message.data.propertyExt }));
         }
@@ -1985,6 +1999,8 @@ function startListenerForSlot(slotKey) {
         }
         if (isSelf) {
             payload.bridge_outbound_echo = consumeBridgeOutboundEcho(slot, sourceId);
+            // Laravel khỏi phải chờ msgId của chiều ra: lúc tin tới không có lượt gửi nào dở.
+            payload.sent_from_other_device = !payload.bridge_outbound_echo && !sendInFlightAtArrival;
         }
 
         // F14 — direction signal cho metering:
@@ -2245,7 +2261,7 @@ async function bridgeSendTextOrMedia(slot, body) {
     });
     let ok = false;
     try {
-        const out = await sendTextOrMediaThroughZca(slot, body, timing);
+        const out = await trackOutboundSend(slot, () => sendTextOrMediaThroughZca(slot, body, timing));
         ok = true;
         return out;
     } finally {
@@ -2682,8 +2698,12 @@ function buildExpress() {
             await fs.mkdir(tmpDir, { recursive: true });
             tmpPath = path.join(tmpDir, safeAttachmentFilename(req.file.originalname, ext));
             await fs.writeFile(tmpPath, req.file.buffer);
-            const sendResult = await slot.api.sendMessage({ msg: cap, attachments: [tmpPath] }, String(thread_id), tt);
-            const out = registerAllOutboundSourceIds(slot, sendResult);
+            const out = await trackOutboundSend(slot, async () =>
+                registerAllOutboundSourceIds(
+                    slot,
+                    await slot.api.sendMessage({ msg: cap, attachments: [tmpPath] }, String(thread_id), tt),
+                ),
+            );
             return res.json({ ok: true, source_id: out.source_id, source_ids: out.source_ids });
         } catch (e) {
             console.error('sendAttachment', e);

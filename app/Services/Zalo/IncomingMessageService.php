@@ -275,7 +275,8 @@ class IncomingMessageService
      */
     private function guardEchoStillSettling(?string $sourceId): void
     {
-        if ($sourceId === null || $this->direction() === 'in' || $this->isBackfill()) {
+        // Bridge xác nhận không có lượt gửi nào dở khi tin tới: tin gửi từ thiết bị khác, không có cuộc đua.
+        if ($sourceId === null || $this->direction() === 'in' || $this->isBackfill() || ($this->params['sent_from_other_device'] ?? null) === true) {
             return;
         }
 
